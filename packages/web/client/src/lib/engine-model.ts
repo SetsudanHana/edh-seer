@@ -107,6 +107,23 @@ export interface EngineModel {
   jobs: [string, CutRow[]][];
 }
 
+/** THE SHORTEST WALK FROM ONE CARD TO ANOTHER along real links, both ends included (#769). A tap on
+ *  a card the middle does not work with drew the route as one straight line through cards it never
+ *  touched; the route goes hop by hop instead. Empty when nothing links the two. */
+export function linkPath(partners: EngineModel["partners"], from: string, to: string): string[] {
+  const prev = new Map<string, string>([[from, from]]);
+  const queue = [from];
+  for (const x of queue) {
+    if (x === to) {
+      const path = [to];
+      while (path[0] !== from) path.unshift(prev.get(path[0]!)!);
+      return path;
+    }
+    for (const y of partners.get(x)?.keys() ?? []) if (!prev.has(y)) { prev.set(y, x); queue.push(y); }
+  }
+  return [];
+}
+
 /** The projection's node identity, copied rather than imported: `@edh-seer/matcher/graph-projection`
  *  pulls the whole engine into the bundle for three lines. `engine-model.test.ts` holds the two
  *  equal. */

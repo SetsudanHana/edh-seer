@@ -60,11 +60,13 @@ export function PageMap({ page: ownPage, slug: ownSlug, rows: ownRows, base, pai
   const world = useRef<{ cards: Map<string, EngineCard> }>({ cards: new Map() });
   for (const [id, c] of map.cards) if (!world.current.cards.has(id) || id === slug) world.current.cards.set(id, c);
   // THE ROUTE, updated in the render that changes the page, so the map is told the new middle and
-  // where it came from in one step. Arriving at the card the route last came from is going back.
+  // where it came from in one step. Arriving at a card the route already passed through is going
+  // back TO it (#769): it was lifted out of the route and the route re-joined, drawing a straight
+  // line between two cards that need not be linked.
   const [walk, setWalk] = useState<{ slug: string; trail: string[] }>({ slug, trail: [] });
   if (walk.slug !== slug) {
-    const back = walk.trail.at(-1) === slug;
-    setWalk({ slug, trail: back ? walk.trail.slice(0, -1) : [...walk.trail.filter((x) => x !== slug && x !== walk.slug), walk.slug].slice(-6) });
+    const i = walk.trail.indexOf(slug);
+    setWalk({ slug, trail: i >= 0 ? walk.trail.slice(0, i) : [...walk.trail.filter((x) => x !== walk.slug), walk.slug].slice(-6) });
   }
   const trail = walk.slug === slug ? walk.trail : [];
   const narrow = useNarrow();
