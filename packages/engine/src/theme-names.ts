@@ -15,7 +15,7 @@ import { tagFamily, type Tag } from "./tags.js";
  *  distinct theme phrases across 67 named decks, and most of the long tail is `enters:<creature
  *  type>` -- walls, elementals, constructs, dinosaurs, rats, shapeshifters -- which a player names
  *  the same way every time, by the tribe. So the type-line cases are listed, everything else
- *  entering is typal, and a deck making one kind of token is named for the token. Together those
+ *  entering is tribal, and a deck making one kind of token is named for the token. Together those
  *  name 67 of 67 named decks. A tag that reaches none of them keeps its mechanical phrase, which is
  *  the conservative direction: a wrong name for a deck is worse than an unglamorous true one. */
 export const THEME_NAMES: Record<string, string> = {
@@ -48,18 +48,28 @@ export const THEME_NAMES: Record<string, string> = {
   "mill:any": "Mill",
   "combat-damage:creature": "Combat damage",
   "upkeep:any": "Upkeep triggers",
+  // THE NAMES A DECK TECH USES (owner, 2026-09-27, #616: "no magic player uses phrasing like
+  // 'Creatures Entering', 'Wizard typal'"). The same words the report's group names use
+  // (`groupName` in the web client), so a theme and its group are called one thing.
+  "static:pump": "Anthems",
+  "fodder:creature": "Sac fodder",
+  "graveyard-recursion:creature": "Reanimator",
+  "cast:instant-sorcery": "Spellslinger",
+  "scales:creature": "Go wide",
+  "scales:land": "Lands matter",
   // A deck built to make its entry triggers happen more than once. EDHREC files the effects that do
   // it under Blink; the engine's own phrase, "re-firing entry triggers", says the mechanism.
   "etb-refire": "Blink",
 };
 
-/** Subjects of `enters:` that are NOT creature types, so the typal rule must not claim them. Every
- *  one of these is a card type, a supertype or a non-creature subtype, and each already has its own
- *  entry above -- this list exists so a subject the table has never seen falls to the typal rule
- *  only when it really is a tribe. */
+/** Subjects of `enters:` and `scales:` that are NOT creature types, so the tribal rule must not
+ *  claim them. Every one of these is a card type, a supertype, a non-creature subtype or a class the
+ *  engine counts (a party, what you donated) -- this list exists so a subject the table has never
+ *  seen falls to the tribal rule only when it really is a tribe. */
 const NOT_A_TRIBE = new Set([
   "creature", "artifact", "enchantment", "land", "planeswalker", "instant", "sorcery", "battle",
   "legendary", "token", "permanent", "aura", "equipment", "vehicle", "saga", "curse", "any",
+  "spell", "instant-sorcery", "basic", "historic", "card", "party", "donated",
 ]);
 
 /** Title case for a tribe as it is printed in a name: "time lord" -> "Time Lord". */
@@ -74,12 +84,15 @@ export function themeName(tag: Tag, fallback: string): string {
   const named = THEME_NAMES[tag];
   if (named !== undefined) return named;
   const family = tagFamily(tag);
-  if (family !== "enters" && family !== "create-token") return fallback;
+  if (family !== "enters" && family !== "create-token" && family !== "scales") return fallback;
   const subject = tag.slice(family.length + 1);
-  // A NEGATION IS NOT A TRIBE. `themeSubjectKey` writes one as `-creature`, and "Non-Creature typal"
-  // is not a deck anyone has built.
-  if (subject.startsWith("-") || NOT_A_TRIBE.has(subject)) return fallback;
+  // A NEGATION IS NOT A TRIBE. `themeSubjectKey` writes one as `-creature`, and "Non-Creature tribal"
+  // is not a deck anyone has built. Nor is anything that is not a plain word or two.
+  if (subject.startsWith("-") || NOT_A_TRIBE.has(subject) || !/^[a-z]+( [a-z]+)*$/.test(subject)) return fallback;
   // A deck making one KIND of token is named for the token, not for the act: "goblins created" was
   // the last mechanical phrase left standing over the 71 calibration decks.
-  return family === "create-token" ? `${titleCase(subject)} tokens` : `${titleCase(subject)} typal`;
+  // "TRIBAL", NOT "TYPAL" (#616): Wizards of the Coast renamed the card type, and players did not.
+  // A deck that counts its Clerics (`scales:cleric`) is a Cleric tribal deck like one that watches
+  // them enter; it read "counts your Clerics".
+  return family === "create-token" ? `${titleCase(subject)} tokens` : `${titleCase(subject)} tribal`;
 }
