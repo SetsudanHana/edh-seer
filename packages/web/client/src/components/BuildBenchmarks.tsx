@@ -914,7 +914,9 @@ function DeckMathRows({
             *  268 decks 2,000 times each (`mana-base.ts`), which is also why it is "about". */}
           {manaBase ? (
             <p className="text-sm">
-              Your mana base costs about <span className="stat-num">{manaBase.total.toFixed(1)}</span> turns in every 10
+              {/* SAID AS WHAT IT MEASURES (persona round 2026-09-29: four seats listed "0.6 turns in
+                *  every 10" as a phrase they could not decode -- every 10 turns, or games?). */}
+              Your mana base loses about <span className="stat-num">{manaBase.total.toFixed(1)}</span> of a turn over a game&apos;s first 10 turns, against a perfect one for this deck
               <span className="text-xs text-(--muted)">
                 {" "}— {manaBaseParts.map(([name, cost]) => `${name} ${cost.toFixed(1)}`).join(" · ")}
               </span>

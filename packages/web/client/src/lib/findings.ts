@@ -397,7 +397,7 @@ function landFinding(report: DeckReport): Finding | null {
       + (lands.ifTrimmed?.ramp ? `Trimming ramp to its target with rocks or dorks moves it to ${lands.ifTrimmed.ramp.target}. ` : "")
       + (lands.ifTrimmed?.draw ? `Trimming draw to its target moves it to ${lands.ifTrimmed.draw.target}. ` : "")
       + (lands.manaBase
-        ? `That costs about ${lands.manaBase.costs.count.toFixed(1)} turns in every 10 to missed land drops and dead land draws. `
+        ? `That loses about ${lands.manaBase.costs.count.toFixed(1)} of a turn over a game's first 10 turns to missed land drops and dead land draws. `
         : "")
       + "Within three lands of the model the difference is too small to measure.",
     figure: `${lands.actual}/${lands.target}`,
