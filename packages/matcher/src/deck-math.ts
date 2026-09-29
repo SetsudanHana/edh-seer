@@ -93,6 +93,8 @@ export function computeDeckMath(
   // then get an empty map and a row of refusals rather than a wrong number.
   opts: {
     comboCards?: readonly string[];
+    /** Cards that turn a known loop into a win (`combo-payoffs.ts`), named on the combo win plan. */
+    comboPayoffs?: readonly string[];
     landRecommendation?: LandRecommendation;
     primary?: Archetype;
     castCurves?: ReadonlyMap<string, CastCurve>;
@@ -221,7 +223,7 @@ export function computeDeckMath(
       : {}),
   }));
 
-  const wincons = winconReport(deck, { comboCards: opts.comboCards });
+  const wincons = winconReport(deck, { comboCards: opts.comboCards, comboPayoffs: opts.comboPayoffs });
 
   const cast = deckCastability(deck, castCurves);
   // THE COMMANDER'S OWN ROW (roadmap K5). `deckCastability` prices every nonland and then reports

@@ -161,12 +161,13 @@ export interface WinconReport {
  *  contains a known combo" and claims nothing more. */
 export function winconReport(
   deck: readonly DeckCard[],
-  opts: { comboCards?: readonly string[] } = {},
+  opts: { comboCards?: readonly string[]; comboPayoffs?: readonly string[] } = {},
 ): WinconReport {
   const members = detectWincons(deck);
   const payoffs = [...new Set(deck.filter(isWidePayoff).map((dc) => dc.card.name))].sort();
   if (payoffs.length === 0) members.delete("go-wide");
   const combo = (opts.comboCards ?? []).filter((n) => deck.some((dc) => dc.card.name === n));
+  const comboPayoffs = [...(opts.comboPayoffs ?? [])].filter((n) => deck.some((dc) => dc.card.name === n)).sort();
   if (combo.length > 0) members.set("combo", new Set(combo));
 
   // A floor, in the idiom `ARCHETYPE_FLOOR` already uses for the same reason: two stray cards are
@@ -188,6 +189,9 @@ export function winconReport(
       class: cls, count, share: total > 0 ? count / total : 0,
       cards: [...(members.get(cls) ?? [])].sort(),
       ...(cls === "go-wide" ? { payoffs } : {}),
+      // THE COMBO'S WIN, NAMED (owner, 2026-09-29): a loop repeats an event forever, and these are the
+      // cards that turn that event into lost games for the table.
+      ...(cls === "combo" && comboPayoffs.length > 0 ? { payoffs: comboPayoffs } : {}),
     }))
     .sort((a, b) => b.count - a.count || a.class.localeCompare(b.class));
 

@@ -20,19 +20,24 @@ export interface InfiniteCombo {
   manaValue: number;
   /** Two cards at or under the ceiling: what bracket 3 does not allow. */
   cheap: boolean;
+  /** The deck's cards that turn this loop into a win (`combo.payoffs`), carried through. */
+  payoffs?: { name: string; on: string[]; effect: string }[];
 }
 
 type Bracket = NonNullable<DeckReport["bracket"]>;
 
 export function infiniteCombos(
-  combos: readonly { cards: string[]; result: string }[] | undefined,
+  combos: readonly { cards: string[]; result: string; payoffs?: InfiniteCombo["payoffs"] }[] | undefined,
   manaValueOf: (name: string) => number | undefined,
 ): InfiniteCombo[] {
   return (combos ?? [])
     .filter((c) => isInfiniteCombo(c.result))
     .map((c) => {
       const manaValue = c.cards.reduce((t, n) => t + (manaValueOf(n) ?? 0), 0);
-      return { cards: c.cards, result: c.result, manaValue, cheap: c.cards.length <= 2 && manaValue <= CHEAP_COMBO_MV };
+      return {
+        cards: c.cards, result: c.result, manaValue, cheap: c.cards.length <= 2 && manaValue <= CHEAP_COMBO_MV,
+        ...(c.payoffs?.length ? { payoffs: c.payoffs } : {}),
+      };
     })
     .sort((a, b) => Number(b.cheap) - Number(a.cheap) || a.manaValue - b.manaValue || a.cards.join().localeCompare(b.cards.join()));
 }

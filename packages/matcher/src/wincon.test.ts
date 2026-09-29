@@ -192,6 +192,16 @@ test("two stray cards are not a win plan, but one alt-win is", () => {
   expect(report.focus).toBeGreaterThan(0.9);
 });
 
+/** A LOOP'S PAYOFF IS ITS WIN (owner, 2026-09-29): the combo class names the cards that turn what the
+ *  loop repeats into lost games, even when they are not the loop's own pieces. */
+test("the combo class names the deck's payoffs for its loops", () => {
+  const deck = [mk("Gravecrawler", {}), mk("Phyrexian Altar", {}), mk("Blood Artist", {})];
+  const report = winconReport(deck, { comboCards: ["Gravecrawler", "Phyrexian Altar"], comboPayoffs: ["Blood Artist", "Not In Deck"] });
+  const combo = report.classes.find((c) => c.class === "combo")!;
+  expect(combo.cards).toEqual(["Gravecrawler", "Phyrexian Altar"]);
+  expect(combo.payoffs).toEqual(["Blood Artist"]);
+});
+
 /** A known combo is real data -- the report already carries it from the combo index -- but it is
  *  NOT chain detection, and the class exists to say the deck has one, not to claim we derived it. */
 test("a known combo becomes the combo class, and it is not inferred from the graph", () => {

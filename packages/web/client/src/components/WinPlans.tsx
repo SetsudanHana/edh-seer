@@ -114,7 +114,7 @@ function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][num
         </p>
       ) : route ? <p className="text-xs text-(--muted)">No turn: {route.caveat}.</p> : null}
       {wins.length ? <Names lead="Turns it into a win" names={wins} art={art} /> : null}
-      {setup.length ? <Names lead={wins.length ? "Makes the board" : undefined} names={setup} art={art} /> : null}
+      {setup.length ? <Names lead={wins.length ? (plan.class === "combo" ? "The loop" : "Makes the board") : undefined} names={setup} art={art} /> : null}
     </div>
   );
 }

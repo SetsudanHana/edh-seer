@@ -67,6 +67,9 @@ export interface CutInput {
   isLand: boolean;
   isCommander: boolean;
   isComboPiece: boolean;
+  /** The card turns one of the deck's known loops into a win (`combo-payoffs.ts`): cutting it
+   *  leaves the loop running with nothing to show for it. */
+  isComboPayoff?: boolean;
   /** THE ENGINE READ THIS CARD'S ORACLE TEXT. False when the card resolved but carries no derived
    *  tags, which is a DIFFERENT fact from "nothing connects to it" and the one this list must not
    *  confuse with it. An underived card forms no edge BY CONSTRUCTION — the same reason
@@ -186,6 +189,7 @@ function mergeFaces(rows: readonly CutInput[]): CutInput[] {
       isLand: prev.isLand && r.isLand,
       isCommander: prev.isCommander || r.isCommander,
       isComboPiece: prev.isComboPiece || r.isComboPiece,
+      isComboPayoff: prev.isComboPayoff || r.isComboPayoff,
       fillsDeckRole: prev.fillsDeckRole || r.fillsDeckRole,
       derived: prev.derived || r.derived,
       unmetConditions: [...new Set([...(prev.unmetConditions ?? []), ...(r.unmetConditions ?? [])])],
@@ -204,7 +208,7 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
   const median = medianPartnerCount(merged);
   const out: CutCandidate[] = [];
   for (const c of merged) {
-    if (c.isLand || c.isCommander || c.isComboPiece) continue;
+    if (c.isLand || c.isCommander || c.isComboPiece || c.isComboPayoff) continue;
     // A functional role protects the card outright -- see the header. This is the gate that keeps
     // Sol Ring off the list.
     if (c.roles.length > 0) continue;
@@ -269,7 +273,7 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
 export function unjudgedCandidates(cards: readonly CutInput[], limit = 12): string[] {
   const merged = mergeFaces(cards);
   const out = merged.filter(
-    (c) => !c.derived && !c.isLand && !c.isCommander && !c.isComboPiece
+    (c) => !c.derived && !c.isLand && !c.isCommander && !c.isComboPiece && !c.isComboPayoff
       && c.roles.length === 0 && !c.fillsDeckRole,
   );
   out.sort((a, b) => b.manaValue - a.manaValue || a.name.localeCompare(b.name));
@@ -397,6 +401,7 @@ export function trimOrder(
       protections.push(`connects to ${c.partnerCount} cards, more than half this deck`);
     }
     if (c.isComboPiece) protections.push("half of a combo the deck assembles");
+    if (c.isComboPayoff) protections.push("turns one of the deck's combos into a win");
     // A deck role forms no edge BY DESIGN, so its low partner count is the engine's own silence and
     // not evidence about the card. Same protection the passive list gives it.
     if (c.fillsDeckRole) protections.push("does its work without forming edges (cost reduction, tax and friends)");

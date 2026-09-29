@@ -42,6 +42,7 @@ import { tokenQuotes } from "./rules.js";
 import { cutCandidates, deckSlack, trimOrder, unjudgedCandidates } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
 import { recommendedLands } from "./land-count.js";
+import { comboPayoffs } from "./combo-payoffs.js";
 import { commanderIdentity } from "./answer-pool.js";
 import { deckCastability, type CardCastability } from "./castability.js";
 import { loadThemeStats } from "./theme-stats.js";
@@ -656,6 +657,14 @@ export function analyzeDeckStructured(
   const deckNames = new Set([...resolved.map((dc) => dc.card.name), ...companionSet]);
   const foundCombos: Combo[] = combos?.combosContainedIn(deckNames) ?? [];
   const comboCardNames = new Set(foundCombos.flatMap((c) => c.cards));
+  // A LOOP'S PAYOFF IS ITS WIN CONDITION (owner, 2026-09-29): every card that eats what a known loop
+  // repeats and reaches the opponents, beyond the loop's own pieces (`combo-payoffs.ts`).
+  const combosWithPayoffs: Combo[] = foundCombos.map((c) => {
+    const payoffs = comboPayoffs(resolved, c);
+    return payoffs.length > 0 ? { ...c, payoffs } : c;
+  });
+  // Every payoff the win plan names; the cut list reads only the ones not already protected as pieces.
+  const comboPayoffNames = new Set(combosWithPayoffs.flatMap((c) => (c.payoffs ?? []).map((p) => p.name)));
   const tagsByName = new Map(lookupPool.map((dc) => [dc.card.name, dc.tags] as const));
 
   const VERSATILITY_STEP = 0.15;
@@ -1004,6 +1013,7 @@ export function analyzeDeckStructured(
       isLand: !(nonlandByName.get(physical) ?? true),
       isCommander: c.isCommander,
       isComboPiece: comboCardNames.has(physical),
+      isComboPayoff: comboPayoffNames.has(physical) && !comboCardNames.has(physical),
       fillsDeckRole: deckRoleCards.has(physical),
       // Absent from the map means the PHYSICAL card is not in `resolved` at all, which cannot
       // happen for a rated card (review fix, 2026-08-27: this comment previously said the opposite
@@ -1025,7 +1035,7 @@ export function analyzeDeckStructured(
   // faked.
   const deckMath = resolved.length > commanderSet.size
     ? computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, {
-        comboCards, landRecommendation: landRec, primary: strategies[0]?.name,
+        comboCards, comboPayoffs: [...comboPayoffNames].sort(), landRecommendation: landRec, primary: strategies[0]?.name,
         castCurves: manaSim.curves,
         // The clock's mana budget, off the same two arms — see `pressure.ts`.
         manaBudget: manaSim.manaMedian,
@@ -1078,7 +1088,7 @@ export function analyzeDeckStructured(
      *  maker touches it. Empty when `tokenTags` was never supplied -- most of the ~15 existing
      *  callers, none of which need the graph view. */
     tokenNodes: tokenNodesReport,
-    combos: foundCombos,
+    combos: combosWithPayoffs,
     themes,
     manaCurve: deckStats.manaCurve,
     landCount: deckStats.landCount,

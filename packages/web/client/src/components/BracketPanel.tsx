@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { DeckReport } from "../types.js";
-import { bracketWhy, infiniteCombos } from "../lib/bracket-why.js";
+import { bracketWhy, infiniteCombos, type InfiniteCombo } from "../lib/bracket-why.js";
 import { CardName } from "./card-drawer.js";
 import { ComboLoop } from "./ComboLoop.js";
 import { ComboFeature, comboParts } from "./ComboFeature.js";
@@ -54,7 +54,7 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf, model }: {
   if (!bracket) return null;
   const why = bracketWhy(bracket, combos ? listed : []);
   // THE FIRST COMBO, DRAWN AS MOCKED UP (Combo mockup, 2026-09-27); the rest stay rows.
-  const lead = listed[0] && model ? comboParts(listed[0].cards, model) : null;
+  const lead = listed[0] && model ? comboParts(listed[0].cards, model, ((listed[0] as InfiniteCombo).payoffs ?? []).map((p) => p.name)) : null;
   const rows = lead ? listed.slice(1) : listed;
   const shownCombos = allCombos ? rows : rows.slice(0, COMBO_ROWS);
   // ONE PIP PER PIECE OF EVIDENCE THE LIST BELOW NAMES, so the eye goes band -> why without

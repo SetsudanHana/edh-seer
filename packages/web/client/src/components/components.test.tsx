@@ -59,6 +59,13 @@ test("a colour row says which end of the fraction the deck is, and prints its tu
 // "this deck is broken" and "five Daleks inside a creature deck".
 
 
+test("ComboList names the cards that turn a loop into a win", () => {
+  const combos = [{ cards: ["Gravecrawler", "Phyrexian Altar"], result: "Infinite death triggers",
+    payoffs: [{ name: "Blood Artist", on: ["dies"], effect: "player-life-loss" }, { name: "Zulaport Cutthroat", on: ["dies"], effect: "player-life-loss" }] }];
+  render(<ComboList combos={combos} />);
+  expect(screen.getByTestId("combo-payoffs")).toHaveTextContent("Wins through Blood Artist, Zulaport Cutthroat");
+});
+
 test("ComboList shows the combo result", () => {
   render(<ComboList combos={SAMPLE.report.combos} />);
   expect(screen.getByText(/Infinite loop/)).toBeInTheDocument();
