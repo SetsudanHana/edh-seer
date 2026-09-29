@@ -3,6 +3,7 @@ import { unaskableNote } from "../lib/unaskable.js";
 import { eventKeyAction, eventKeyClause, eventMatchRank, matchSpans } from "../lib/demand-sentence.js";
 import { eventGlyphs, eventGroup, sameTerm, type EventTerm, type TermOp, type TermSide } from "../lib/event-terms.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+import { baseOf, isPattern, narrowingOf, verbOfKey } from "@edh-seer/matcher/event-pattern";
 
 /** THE SEARCH IS A SENTENCE (owner, 2026-09-27: mockup B, with the mana font).
  *
@@ -36,10 +37,19 @@ const Glyphs = ({ keyName }: { keyName: string }) => (
 );
 const Trigger = () => <i aria-hidden="true" className="ms ms-ability-triggered text-(--muted) text-[0.8em]" />;
 
+/** A target in a player's words: "creature", "token", "Wizard", "nontoken". */
+const narrowWord = (key: string): string => {
+  const n = narrowingOf(key);
+  if (!n) return key;
+  if (n.slot === "token") return n.value === "t" ? "a token" : "not a token";
+  const word = n.value.replace(/-/g, " ");
+  return n.slot === "subtype" ? word.replace(/\b\w/g, (c) => c.toUpperCase()) : word;
+};
+
 export const termWords = (t: Pick<EventTerm, "key" | "side">): string =>
   t.side === "makes" ? (eventKeyAction(t.key) ?? eventKeyClause(t.key)) : eventKeyClause(t.key);
 
-export function EventSentence({ terms, colours, noun, makes, pays, makesCount, paysCount, demand, onChange, onRemoveColour, onOpen }: {
+export function EventSentence({ terms, colours, noun, makes, pays, narrowings = [], makesCount, paysCount, demand, onChange, onRemoveColour, onOpen }: {
   terms: EventTerm[];
   /** Colour identity, drawn as the sentence's first words. */
   colours: string[];
@@ -48,6 +58,9 @@ export function EventSentence({ terms, colours, noun, makes, pays, makesCount, p
   /** The keys a card can be asked to make, and to pay off. */
   makes: string[];
   pays: string[];
+  /** THE TARGETS AN EVENT CAN BE NARROWED TO (`event-pattern.ts`): one-slot patterns such as
+   *  `dies|creature|*|*` or `sacrifice|*|*|t`. Offered in a term's own menu; none on an old index. */
+  narrowings?: string[];
   makesCount: (key: string) => number;
   paysCount: (key: string) => number;
   /** How many cards ask for the event: the list's order, as it was in the pickers. */
@@ -80,6 +93,47 @@ export function EventSentence({ terms, colours, noun, makes, pays, makesCount, p
   const setOp = (t: EventTerm, op: TermOp) => { onChange(terms.map((x) => (sameTerm(x, t) ? { ...x, op } : x))); setMenu(null); };
   const toggleMenu = (t: EventTerm, at: "join" | "term") =>
     setMenu((m) => (m && m.id === idOf(t) && m.at === at ? null : { id: idOf(t), at }));
+  // NARROW A TERM TO ITS TARGET (owner, 2026-09-29: "you have plain sacrifice but you can narrow it
+  // down by picking up the target"). The event is asked once; what it happens to is picked here.
+  const [narrowQuery, setNarrowQuery] = useState("");
+  const targetsOf = (t: EventTerm): { key: string; count: number }[] => {
+    if (!isPattern(t.key)) return [];
+    const verb = verbOfKey(t.key);
+    const count = t.side === "makes" ? makesCount : paysCount;
+    return narrowings.filter((k) => verbOfKey(k) === verb).map((key) => ({ key, count: count(key) }))
+      .filter((x) => x.count > 0).sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
+  };
+  const narrowTo = (t: EventTerm, key: string) => {
+    if (key !== t.key && terms.some((x) => x.side === t.side && x.key === key)) { setMenu(null); return; }
+    onChange(terms.map((x) => (sameTerm(x, t) ? { ...x, key } : x)));
+    setMenu(null); setNarrowQuery("");
+  };
+  const NARROW_ROWS = 8;
+  const narrowMenu = (t: EventTerm) => {
+    const targets = targetsOf(t);
+    if (targets.length === 0) return null;
+    const needle = narrowQuery.trim().toLowerCase();
+    const matched = needle ? targets.filter((x) => termWords({ key: x.key, side: t.side }).toLowerCase().includes(needle)) : targets;
+    const base = baseOf(t.key);
+    const count = t.side === "makes" ? makesCount : paysCount;
+    return (
+      <div className="border-t-2 border-(--separator)" role="group" aria-label="What it happens to">
+        <p className="eyebrow text-(--muted) px-3 pt-2.5 pb-1 m-0">What it happens to</p>
+        {targets.length > NARROW_ROWS ? (
+          <input type="text" value={narrowQuery} onChange={(e) => setNarrowQuery(e.target.value)} aria-label="Find a target"
+            placeholder="e.g. creature, token, Wizard" className="mx-3 mb-1 min-h-9 w-[calc(100%-1.5rem)] rounded-(--field-radius) border border-(--field-border) bg-(--field-background) px-2 placeholder:italic" />
+        ) : null}
+        {[{ key: base, count: count(base) }, ...matched.slice(0, NARROW_ROWS)].map((x) => (
+          <button key={x.key} type="button" role="menuitemradio" aria-checked={t.key === x.key} onClick={() => narrowTo(t, x.key)}
+            className={`flex w-full items-baseline justify-between gap-3 border-t border-(--separator) px-3 py-2 text-left hover:bg-(--surface-secondary) ${t.key === x.key ? "bg-(--surface-secondary)" : ""}`}>
+            <span className={t.key === x.key ? "text-(--accent)" : ""}>{x.key === base ? "anything" : narrowWord(x.key)}</span>
+            <span className="font-mono tabular-nums text-(--muted)">{x.count.toLocaleString("en-US")}</span>
+          </button>
+        ))}
+        {matched.length > NARROW_ROWS ? <p className="px-3 py-1.5 m-0 text-xs text-(--muted)">{matched.length - NARROW_ROWS} more: type to find one</p> : null}
+      </div>
+    );
+  };
   const modeMenu = (t: EventTerm) => (
     <div ref={menuRef} role="menu" aria-label={`How "${termWords(t)}" joins the search`}
       className="absolute left-0 top-full z-30 mt-1 w-72 max-w-[85vw] overflow-hidden rounded-(--field-radius) border border-(--field-border) bg-(--field-background) text-sm shadow-lg">
@@ -92,6 +146,7 @@ export function EventSentence({ terms, colours, noun, makes, pays, makesCount, p
       ))}
       <button type="button" role="menuitem" onClick={() => { remove(t); setMenu(null); }}
         className="w-full border-t border-(--separator) px-3 py-2.5 text-left text-(--muted) hover:bg-(--surface-secondary)">remove</button>
+      {narrowMenu(t)}
     </div>
   );
   const remove = (t: EventTerm) => onChange(terms.filter((x) => !sameTerm(x, t)));

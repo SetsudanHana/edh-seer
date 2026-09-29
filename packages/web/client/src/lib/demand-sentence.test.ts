@@ -228,6 +228,13 @@ test("a clause is present tense, and works after 'when'", () => {
   expect(eventKeyClause("draw|-|-|-")).toBe("a card is drawn");
   expect(eventKeyClause("mill|-|-|-")).toBe("a card is milled");
   expect(eventKeyClause("gain-life|-|-|-")).toBe("life is gained");
+  // A PATTERN'S OPEN SLOTS READ AS "ANY" (owner, 2026-09-29: one event, narrowed to its target).
+  expect(eventKeyAction("sacrifice|*|*|*")).toBe("sacrifice a permanent");
+  expect(eventKeyAction("sacrifice|*|*|t")).toBe("sacrifice a token");
+  expect(eventKeyAction("sacrifice|*|*|n")).toBe("sacrifice a nontoken permanent");
+  expect(eventKeyClause("enters|*|wizard|*")).toBe("a Wizard enters the battlefield");
+  expect(eventKeyClause("copies|*|*|*")).toBe("an ability to copy");
+  expect(eventKeyClause("applies:pump|*|*|*")).toMatch(/^a permanent /);
 });
 
 test("a self trigger names the card, and still conjugates", () => {

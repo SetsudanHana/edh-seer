@@ -909,3 +909,51 @@ test("with no cause asked there is nothing to measure, so the order is not offer
   expect(within(screen.getByLabelText("Order")).queryByRole("option", { name: "How much it does" })).toBeNull();
 });
 
+
+/** ONE ROW PER EVENT, NARROWED BY ITS TARGET (owner, 2026-09-29). An index built with patterns
+ *  offers "dies" once, and the term's own menu narrows it to what dies. */
+const PAT = { dies: "dies|*|*|*", diesCreature: "dies|creature|*|*", diesToken: "dies|*|*|t" };
+const ZERO = Array.from({ length: 32 }, () => 0);
+const PATTERN_FREQ: EventFrequencyFile = {
+  supply: { ...FREQ.supply, "dies|artifact|-|-": 1, [PAT.dies]: 2, [PAT.diesCreature]: 1, [PAT.diesToken]: 1 },
+  consume: { ...FREQ.consume, [PAT.dies]: 2, [PAT.diesCreature]: 2 },
+  byIdentity: { ...FREQ.byIdentity, "dies|artifact|-|-": ZERO, [PAT.dies]: ZERO, [PAT.diesCreature]: ZERO, [PAT.diesToken]: ZERO },
+};
+const PATTERN_MEMBERS: Record<string, EventMembers> = {
+  ...MEMBERS,
+  [PAT.dies]: { p: [0, 2], c: [0, 1] },
+  [PAT.diesCreature]: { p: [0], c: [0, 1] },
+  [PAT.diesToken]: { p: [2], c: [] },
+};
+const patternProps = { frequency: async () => PATTERN_FREQ, members: async (_b: string, k: string) => PATTERN_MEMBERS[k] ?? null };
+
+test("an index with patterns lists each event once, not once per type", async () => {
+  atUrl("/cards", patternProps);
+  await userEvent.click(await screen.findByRole("button", { name: "+ add" }));
+  await userEvent.type(screen.getByLabelText("Find an event"), "graveyard");
+  const list = await screen.findByRole("group", { name: "Events" });
+  // One death row; the creature and artifact keys are not rows of their own.
+  expect(within(list).getAllByRole("button", { name: /^Cards that make it happen: .*graveyard|^Cards that make it happen: .*dies/ })).toHaveLength(1);
+});
+
+test("a term narrows to its target from its own menu, and back to anything", async () => {
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(PAT.dies)}`, patternProps);
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+  const sentence = screen.getByRole("group", { name: "Your search" });
+  await userEvent.click(within(sentence).getByRole("button", { name: /^makes: / }));
+  const targets = screen.getByRole("group", { name: "What it happens to" });
+  expect(within(targets).getByRole("menuitemradio", { name: /^anything/ })).toHaveAttribute("aria-checked", "true");
+  await userEvent.click(within(targets).getByRole("menuitemradio", { name: /^creature/ }));
+  await waitFor(() => expect(new URLSearchParams(spy.search).getAll("produce")).toEqual([PAT.diesCreature]));
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Skullclamp/ })).toBeNull();
+  // And the term reads as its target.
+  expect(within(screen.getByRole("group", { name: "Your search" })).getByRole("button", { name: /^makes: .*creature/ })).toBeInTheDocument();
+});
+
+test("an index built before patterns keeps offering its keys, and a term offers no narrowing", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}`);
+  const sentence = await screen.findByRole("group", { name: "Your search" });
+  await userEvent.click(within(sentence).getByRole("button", { name: /^makes: / }));
+  expect(screen.queryByRole("group", { name: "What it happens to" })).toBeNull();
+});

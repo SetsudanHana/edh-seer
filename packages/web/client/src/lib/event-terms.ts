@@ -111,7 +111,7 @@ const VERB_GLYPH: Record<string, string> = {
   "create-token": "token",
 };
 export function eventGlyphs(key: string): string[] {
-  const [, types = "-", subtype = "-", flag = "-"] = key.split("|");
+  const [, types = "-", subtype = "-", flag = "-"] = key.replace(/\|\*(?=\||$)/g, "|-").split("|");
   const out: string[] = [];
   const type = types.split(",").find((t) => TYPE_GLYPH.has(t));
   if (type) out.push(type);

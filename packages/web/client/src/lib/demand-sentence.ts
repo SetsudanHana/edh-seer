@@ -639,11 +639,17 @@ const COLOUR_WORD: Record<string, string> = { W: "white", U: "blue", B: "black",
 
 const CARD_TYPE_WORDS = new Set(["artifact", "creature", "enchantment", "land", "planeswalker", "instant", "sorcery", "battle", "permanent", "kindred"]);
 
+/** A PATTERN'S OPEN SLOTS READ AS THE ENGINE'S "ANY" (`event-pattern.ts`): `dies|*|*|*` is worded as
+ *  `dies|-|-|-` and `sacrifice|*|*|t` as `sacrifice|-|-|t`, so every form of the sentence says a
+ *  pattern the way it already says the key it unions. */
+const openSlots = (key: string): string => key.replace(/\|\*(?=\||$)/g, "|-");
+
 /** THE EIGHT CARD TYPES A STATIC CAN NAME (CR 205.2a), minus the ones no EDH card carries. A list
  *  covering five or more of them is a way of writing "anything", not a distinction. */
 const PERMANENT_TYPES: ReadonlySet<string> = new Set(["artifact", "battle", "creature", "enchantment", "land", "planeswalker"]);
 
 export function eventKeySentence(key: string, subject?: string, colors?: string[]): string {
+  key = openSlots(key);
   const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
 
   // A phase and a player action carry no subject to glue a noun onto -- the same two escapes
@@ -677,7 +683,8 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
       }
     }
     const head = nouns.length <= 1 ? nouns.join(" ") : `${nouns.slice(0, -1).join(", ")} or ${nouns.at(-1)}`;
-    const noun = subtype !== "-" && type !== "-" ? `${capitalize(subtype.split(",")[0]!)} ${type.split(",").join(" or ")}` : head;
+    // NO NOUN AT ALL IS A PATTERN'S BASE (`applies:pump|*|*|*`): what the static reaches, of any kind.
+    const noun = subtype !== "-" && type !== "-" ? `${capitalize(subtype.split(",")[0]!)} ${type.split(",").join(" or ")}` : head || "permanent";
     return `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun} ${does}`;
   }
 
@@ -693,7 +700,7 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
   }
   // THE OTHER TWO FEEDER SHAPES (2026-09-09): a copier wants a KIND of ability, an outlet wants
   // something to EAT. Neither is an event; both read as the thing wanted.
-  if (verb === "copies") return `${/^[aeiou]/i.test(subtype) ? "an" : "a"} ${subtype} ability to copy`;
+  if (verb === "copies") return subtype === "-" ? "an ability to copy" : `${/^[aeiou]/i.test(subtype) ? "an" : "a"} ${subtype} ability to copy`;
   if (verb === "fodder") {
     const eaten = subtype !== "-" ? feederNoun(subtype) : type !== "-" ? type : "permanent";
     return `${/^[aeiou]/i.test(eaten) ? "an" : "a"} ${eaten} to sacrifice`;
@@ -769,6 +776,7 @@ const diesProper = (type: string): boolean =>
  *  you control"), a static's reach, a graveyard fill. Those are standing facts, and conjugating
  *  them would invent an event nothing fires -- the same rule `eventKeySentence` already keeps. */
 export function eventKeyClause(key: string, subject?: string, colors?: string[]): string {
+  key = openSlots(key);
   const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
 
   if (type === "-" && subtype === "-") {
@@ -811,6 +819,7 @@ export function eventKeyClause(key: string, subject?: string, colors?: string[])
  *  one die -- and the caller falls back to the clause. Inventing a verb for every key would give
  *  every row a phrase and give some of them a lie. */
 export function eventKeyAction(key: string, colors?: string[]): string | undefined {
+  key = openSlots(key);
   const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
 
   // AN OUTLET EATS SOMETHING, and "sacrifice a creature" is the phrase a player uses for it. The
@@ -841,8 +850,10 @@ export function eventKeyAction(key: string, colors?: string[]): string | undefin
   const noun = subjectNoun(type, subtype, token, colors);
   // A FILL'S OBJECT IS A CARD when the key names no type, the same known object `mill` and
   // `discard` have: you put a CARD into a graveyard, not "anything".
+  // A NONTOKEN FLAG WITH NO CLASS still narrows the object: "sacrifice a nontoken permanent", not the
+  // "sacrifice a permanent" a search narrowed to "not a token" read as (2026-09-29).
   const object = noun === null
-    ? (verb === "fills" ? "a card" : DEFAULT_OBJECT[verb] ?? "anything")
+    ? (token === "n" ? "a nontoken permanent" : verb === "fills" ? "a card" : DEFAULT_OBJECT[verb] ?? "anything")
     : `${noun.article} ${noun.phrase}`;
   // `put ONTO the battlefield` -- the object belongs inside the phrase, not after it.
   const around = action.match(/^(.*)\b(ONTO|INTO)\b(.*)$/);
@@ -1003,6 +1014,7 @@ function editDistance(a: string, b: string, max: number): number {
  *  better hit (a word's start over its inside). Every typed word must hit SOMETHING -- the label,
  *  the clause, the action or a synonym -- so extra words narrow rather than widen. */
 export function eventMatchRank(key: string, query: string, typos = false): number | null {
+  key = openSlots(key);
   const typed = typedWords(query);
   if (typed.length === 0) return 0;
   const verb = key.split("|")[0] ?? "";
