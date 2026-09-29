@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import type { Characteristics, GameEvent } from "@edh-seer/tagger";
 import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, enterAsCopyAbilities, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import type { CardTags } from "@edh-seer/tagger";
+import { subjectMatches } from "./subject.js";
 
 const chars = (types: string[], subtypes: string[] = []): Characteristics => ({
   types, subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [],
@@ -713,4 +714,20 @@ test("start your engines! watches an opponent losing life and gains speed", () =
 test("an emblem implies nothing", () => {
   const emblem: Characteristics = { ...chars(["emblem"], ["chandra"]), emblem: true };
   expect(impliedEvents(emblem)).toEqual([]);
+});
+
+/** EVOLVE (owner ruling 2026-09-28, #715): the intervening if compares with THIS card's printed
+ *  stats, so a bigger creature entering evolves it and a smaller one does not. */
+test("evolve triggers on a creature bigger in power or toughness than the card itself", () => {
+  const sage = { types: ["creature"], subtypes: ["elf", "druid"], colors: [], identity: [], cmc: 2, power: "1", toughness: "2", token: false, keywords: ["Evolve"] };
+  const [evolve] = keywordAbilities(sage as never).filter((a) => a.trigger?.verbs.includes("enters"));
+  expect(evolve).toBeDefined();
+  const subj = evolve!.trigger!.subject;
+  expect(subj).toMatchObject({ type: "creature", control: "you", other: true });
+  const matches = (power: number, toughness: number) => subjectMatches({ type: "creature", control: "you", token: false, power, toughness } as never, subj, {});
+  expect(matches(3, 3)).toBe(true);   // Twenty-Toed Toad
+  expect(matches(1, 3)).toBe(true);   // bigger toughness alone
+  expect(matches(1, 1)).toBe(false);  // Llanowar Elves
+  // A * P/T names no number: no trigger rather than a guess.
+  expect(keywordAbilities({ ...sage, power: "*" } as never).some((a) => a.trigger?.verbs.includes("enters"))).toBe(false);
 });

@@ -3354,3 +3354,21 @@ test("doubling power and toughness is a pump over the class it names", () => {
   expect(ug.repeats).toBe("per-cycle");
   expect(ug.effect).toMatchObject({ kind: "pump", subject: { type: "creature", control: "you", scope: "each" } });
 });
+
+// #715 (owner lost-pair re-judge 2026-09-28): two enter payoffs the derive layer starved.
+test("a reveal-until dig types the card it puts onto the battlefield", () => {
+  const text = "Whenever one or more creatures you control deal combat damage to a player, you may sacrifice one of them. If you do, reveal cards from the top of your library until you reveal a creature card that shares a creature type with the sacrificed creature. Put that card onto the battlefield and the rest on the bottom of your library in a random order.";
+  const emits = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "one or more creatures you control", control: "you" },
+    actions: [{ verb: "sacrifice", object: "one of them", optional: true }, { verb: "put", object: "that card", fromZone: "library", toZone: "battlefield" }] }],
+  "Descendants' Fury", { 1: text }).abilities.flatMap((a) => a.emits ?? []);
+  expect(emits.find((e) => e.verb === "enters")?.subject).toMatchObject({ type: "creature", fromZone: "library" });
+});
+
+test("a zone-less return after an exile in the same clause is a flicker", () => {
+  const flicker = (text: string, actions: { verb: string; object: string }[]) => deriveAbilities([{ id: 2, abilityType: "activated", actions }],
+    "Jill, Shiva's Dominant", { 2: text }).abilities.find((a) => a.effect.kind === "flicker");
+  expect(flicker("Exile Jill, then return it to the battlefield transformed under its owner's control.",
+    [{ verb: "exile", object: "Jill" }, { verb: "return", object: "it" }])?.emits?.[0]).toMatchObject({ verb: "enters", subject: { self: true, fromZone: "exile" } });
+  // No exile before it: a bounce-to-hand "return" is not rewritten.
+  expect(flicker("Return it to its owner's hand.", [{ verb: "return", object: "it" }])).toBeUndefined();
+});

@@ -209,7 +209,10 @@ import { emblemRecipient } from "../emblem.js";
 // 191: #711 part 2 -- a static clause with no action that reads `<recipient> have "<ability>"` is a
 // grant (Enduring Vitality); "you may cast <class> spells as though they had flash" is a static
 // grant to that class (Shimmer Myr); doubling power and toughness is a pump (Unnatural Growth).
-export const DERIVE_VERSION = 191;
+// 192: #715 -- "reveal until you reveal a <class> card ... put that card onto the battlefield" types
+// the put with that class (Descendants' Fury); a zone-less "return it to the battlefield" after an
+// exile in the same clause is a flicker (Jill, Shiva's Dominant).
+export const DERIVE_VERSION = 192;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1067,6 +1070,10 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
  *  an opponent controls dies" (owner-judged FALSE). The type stays the pronoun's own; only an
  *  unstated controller is inherited. */
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
+/** "…, then return it to the battlefield…" after an exile in the same clause (#715, Jill). */
+const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|that card|those cards) to the battlefield\b/i;
+/** "…until you reveal a creature card…": the class a reveal-until dig puts somewhere (#715). */
+const REVEAL_UNTIL = /\buntil you reveal (an? [a-z ]{1,40}?) card\b/i;
 
 /** The recipient of a counter, when it is the card itself. Anchored at the END of the trigger
  *  subject so "on this creature" is the recipient and not a stray mention. */
@@ -1271,6 +1278,13 @@ export function deriveAbilities(
       const named = grants.filter((a) => /\bprepared\b/i.test(a.object ?? ""));
       const which = new Set(named.length > 0 ? named : grants.length === 1 ? grants : []);
       if (which.size > 0) clause = { ...clause, actions: (clause.actions ?? []).map((a) => which.has(a) ? { ...a, verb: "prepare" } : a) };
+    }
+    // "EXILE JILL, THEN RETURN IT TO THE BATTLEFIELD TRANSFORMED" (#715): the model gave the return no
+    // zones, so the flicker read as an exile and nothing more, and the re-entry fed no enter payoff.
+    // Filled from the clause's own words, only when an exile precedes it in the same clause.
+    const acts = clause.actions ?? [];
+    if (acts.some((a) => a.verb === "exile") && RETURN_TO_BATTLEFIELD.test(clauseText)) {
+      clause = { ...clause, actions: acts.map((a) => a.verb === "return" && !a.toZone && !a.fromZone ? { ...a, fromZone: "exile", toZone: "battlefield" } : a) };
     }
     // A QUOTED GRANT THE MODEL LEFT WITHOUT AN ACTION (#711): Enduring Vitality's `Creatures you
     // control have "{T}: Add one mana of any color."` came back as a static clause with no actions,
@@ -1641,6 +1655,19 @@ export function deriveAbilities(
         if (inherited && inherited !== "any") {
           for (const e of emits) if (e.subject.control === "any") e.subject.control = inherited;
           if (subject && subject.control === "any") subject.control = inherited;
+        }
+      }
+      // "REVEAL CARDS ... UNTIL YOU REVEAL A CREATURE CARD ... PUT THAT CARD ONTO THE BATTLEFIELD"
+      // (Descendants' Fury, #715): a class-restricted dig (AF10 ruling 4) whose class is named by the
+      // REVEAL, which is no action, so "that card" had no antecedent and every creature's own entry
+      // trigger went unfed. Types an untyped emit only; a named class on the put itself stands.
+      const revealed = action.fromZone === "library" && /^that card$/i.test(objectText) ? REVEAL_UNTIL.exec(text)?.[1] : undefined;
+      const revealedClass = revealed ? parseSubject(revealed) : undefined;
+      if (revealedClass && (revealedClass.type !== undefined || revealedClass.subtype !== undefined)) {
+        for (const e of emits) {
+          if (e.subject.type !== undefined || e.subject.subtype !== undefined) continue;
+          if (revealedClass.type !== undefined) e.subject.type = revealedClass.type;
+          if (revealedClass.subtype !== undefined) e.subject.subtype = revealedClass.subtype;
         }
       }
       // "Whenever you activate an ability ... copy THAT ability" (Rings of Brighthearth): the object
