@@ -368,7 +368,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             <Movement count={unmetDemand ? "its first turns, how it wins, and what its cards are still waiting for" : "its first turns, and how it wins"}>
               {/* SIDE BY SIDE AS THE WIDTH ALLOWS (#770): first turns, how you win and what the cards wait
                 *  for were three blocks stacked in the left 1024px of a 2560 screen. */}
-              <div className="grid gap-8 items-start [grid-template-columns:repeat(auto-fill,minmax(min(100%,40rem),1fr))]">
+              <div className="grid gap-8 items-start [grid-template-columns:repeat(auto-fit,minmax(min(100%,40rem),1fr))]">
                 {/* THE TURNS AS TILES, AND ONE TURN'S CARDS AT A TIME. */}
                 {turns ? <FirstTurns model={turns} /> : null}
                 <HowYouWin report={report} manaValueOf={manaValueOf} model={themes} />

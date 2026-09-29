@@ -84,7 +84,8 @@ export function SuggestedCards({ cards, empty, label }: {
 function CandidateGrid({ cards, empty, label }: { cards: readonly SuggestedCard[]; empty: string; label?: string }) {
   const [all, setAll] = useState(false);
   // A WIDE CONTAINER SHOWS THEM ALL (#770): three cards and "Show all 8" beside 2,000px of nothing
-  // is the empty band. Every card is rendered and the fold is CSS, keyed on the container (a 40rem
+  // is the empty band. And the tiles GROW to an eighth of the row there (2026-09-29): capped at
+  // 11rem, eight suggestions used 60% of a 2560 screen and a third of a 3840 one. Every card is rendered and the fold is CSS, keyed on the container (a 40rem
   // fix cell stays folded on a 4K screen); `n+4` is `CARD_CAP + 1`.
   const fold = !all && cards.length > CARD_CAP;
   return (
@@ -95,7 +96,7 @@ function CandidateGrid({ cards, empty, label }: { cards: readonly SuggestedCard[
         : (
           // THREE ACROSS ON A PHONE (phone pass, 2026-09-27): two full card images a row made each
           // list of four about 700px tall.
-          <ul className={`grid grid-cols-3 gap-x-2 gap-y-4 sm:gap-x-3 sm:grid-cols-[repeat(auto-fill,minmax(9.5rem,11rem))] ${fold ? "[&>li:nth-child(n+4)]:hidden @min-[64rem]:[&>li:nth-child(n+4)]:flex" : ""}`} aria-label={label} data-fold={fold ? CARD_CAP : undefined}>
+          <ul className={`grid grid-cols-3 gap-x-2 gap-y-4 sm:gap-x-3 sm:grid-cols-[repeat(auto-fill,minmax(max(9.5rem,calc((100%_-_5.25rem)/8)),1fr))] ${fold ? "[&>li:nth-child(n+4)]:hidden @min-[64rem]:[&>li:nth-child(n+4)]:flex" : ""}`} aria-label={label} data-fold={fold ? CARD_CAP : undefined}>
             {cards.map((c) => <Candidate key={c.name} c={c} />)}
           </ul>
         )}
