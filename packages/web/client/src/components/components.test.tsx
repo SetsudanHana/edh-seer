@@ -1738,8 +1738,9 @@ test("the land row names the ramp and draw package and where the target goes on 
     ...DECK_MATH,
     lands: { ...DECK_MATH.lands, target: 32, accelerants: 9, drawPieces: 14, ifTrimmed: { ramp: { over: 6, target: 35 } } },
   };
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={rani} />);
-  expect(screen.getByText(/9 rocks, dorks and land ramp · 14 draw cards/i)).toBeInTheDocument();
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={rani}
+    parents={[{ name: "Ramp", key: "ramp", count: 16, target: 10, leaves: ["ramp"] }]} />);
+  expect(screen.getByText(/14 draw cards · 9 of your 16 ramp cards that keep producing mana/i)).toBeInTheDocument();
   expect(screen.getByText(/Ramp is 6 over its target/i)).toHaveTextContent(
     "Ramp is 6 over its target: if you cut rocks or dorks to get there, plan for about 35 lands.",
   );
