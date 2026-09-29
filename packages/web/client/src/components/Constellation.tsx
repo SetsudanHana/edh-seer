@@ -238,6 +238,9 @@ class Sky {
     const from = prev ? this.place.get(prev) : undefined;
     const here = this.place.get(focus) ?? (from ? { x: from.x, y: from.y - G.step } : { x: 0, y: 0 });
     this.place.set(focus, here);
+    // A card the route passes through that was never on the map (the shortest way to a card the
+    // middle does not work with, #769) takes a free spot by the middle, so the route can bend at it.
+    for (const id of visited) if (!this.place.has(id)) this.place.set(id, this.freeSpot(here));
     // The named cards first, on the outer rings; the small ones after, inside them.
     for (const { p } of partners.filter((x) => !x.minor)) if (!this.place.has(p.card.id)) this.place.set(p.card.id, this.freeSpot(here));
     for (const { p } of partners.filter((x) => x.minor)) if (!this.place.has(p.card.id)) this.place.set(p.card.id, this.freeSpot(here, G.inner));
