@@ -1502,6 +1502,15 @@ test("a historic cast watcher narrows, and only historic cards satisfy it", () =
   // An ordinary creature is not historic, so it does not satisfy the trigger -- the narrowing is
   // real, which is the whole reason the gate must not fire here.
   expect(pairReasons(plain, jhoira, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
+  // "A LEGENDARY spell" narrows the same way (#713: Gix, Yawgmoth Praetor -> Rona, Herald of Invasion).
+  const rona = base("Rona, Herald of Invasion", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: "spell", control: "you", token: null, legendary: true } },
+    effect: { kind: "untap" },
+  }]);
+  expect(pairReasons(legendary, rona, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
+  expect(pairReasons(artifact, rona, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
+  expect(pairReasons(plain, rona, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
 });
 
 test("a negated subject keys and reads as the negation, not as one arbitrary member", () => {

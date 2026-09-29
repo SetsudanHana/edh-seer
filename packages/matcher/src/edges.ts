@@ -795,6 +795,9 @@ function castConsumerNarrows(subject: SubjectFilter): boolean {
   if (subject.subtype !== undefined || subject.colors !== undefined) return true;
   if (subject.stats !== undefined || subject.chosenType === true) return true;
   if (subject.historic === true) return true;
+  // "Whenever you cast a LEGENDARY spell" (Rona, Herald of Invasion, #713) names which spell as
+  // surely as "historic" does; read as the bare umbrella, no legend in the deck could untap Rona.
+  if (subject.legendary === true) return true;
   // "a prepared spell" (Codie, Ravenous Codex) names which spell: only a prepare spell's cast meets it (CR 722.3d).
   if (subject.prepared === true) return true;
   if (subject.token !== null && subject.token !== undefined) return true;
