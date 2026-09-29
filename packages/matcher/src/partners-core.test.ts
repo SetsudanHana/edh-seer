@@ -2025,3 +2025,27 @@ test("a condition's demand is a demand key, the same as a trigger on that event"
   const alesha = card([{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["attacks:any"], effect: { kind: "graveyard-recursion" } }]);
   expect(demandKeysOf(alesha).some((k) => k.startsWith("attacks"))).toBe(false);
 });
+
+// #682 (owner 2026-09-29): a card no Commander deck can play keeps its page, and is never a
+// candidate: no other page suggests it, and no search lists or counts it.
+test("a card not legal in Commander has a page but is never suggested, listed or counted", () => {
+  const ticket = { ...krenko, card: { ...krenko.card, name: "Ticket Krenko", commanderLegality: "not_legal" } } as DeckCard;
+  const { shards, index, events, freq } = buildPartnerArtifact([ticket, impactTremors], H);
+  const pages = Object.fromEntries([...shards.values()].flatMap((s) => Object.entries(s)));
+  expect(pages["ticket-krenko"]).toBeDefined();
+  // Its own page still finds Impact Tremors; Impact Tremors' page does not find it.
+  expect(pages["ticket-krenko"]!.partners.map((p) => p.name)).toContain("Impact Tremors");
+  expect(pages["impact-tremors"]!.partners.map((p) => p.name)).not.toContain("Ticket Krenko");
+  const at = index.findIndex((e) => e.name === "Ticket Krenko");
+  for (const m of events.values()) expect([...m.p, ...m.c]).not.toContain(at);
+  // Every event Krenko is counted under when playable, it is absent from when it is not.
+  const playable = buildPartnerArtifact([krenko, impactTremors], H).freq;
+  const without = buildPartnerArtifact([impactTremors], H).freq;
+  const krenkoKeys = Object.keys(playable).filter((k) => playable[k]! > (without[k] ?? 0));
+  expect(krenkoKeys.length).toBeGreaterThan(0);
+  for (const k of krenkoKeys) expect(freq[k] ?? 0).toBe(without[k] ?? 0);
+  // Banned is the same answer.
+  const banned = { ...krenko, card: { ...krenko.card, commanderLegality: "banned" } } as DeckCard;
+  const bannedFreq = buildPartnerArtifact([banned, impactTremors], H).freq;
+  for (const k of krenkoKeys) expect(bannedFreq[k] ?? 0).toBe(without[k] ?? 0);
+});
