@@ -18,8 +18,12 @@ import { findings } from "../lib/findings.js";
  *
  *  NO SCORE AND NO TARGET LIVES HERE. A tool that grades a deck before showing it understood it
  *  has not earned the criticism. Everything on this panel is a description. */
-export function RecognitionPanel({ data, assumptions, assumptionsSet, part }: {
+export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inline }: {
   data: AnalyzeResponse;
+  /** THE THEME ON ONE LINE WITH ITS LABEL, for the report rail, where the chapter's own name heads
+   *  the column: a "main theme" kicker stacked under that heading is the two-label stack the
+   *  No-Kicker Rule forbids (designer review, 2026-09-29). */
+  inline?: boolean;
   /** THE FIRST SCREEN IS THE MOCKUP'S (owner, 2026-09-27: "the top of the report is different from
    *  the screens you mocked up"): the theme sits beside the commander's map ("identity"), and the
    *  verdict, the assumptions and the card counts follow the map ("rest"). Both when omitted. */
@@ -96,12 +100,14 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet, part }: {
       <div data-testid="recognition-identity" className="flex flex-col gap-1">
           {/* NAMED AS WHAT IT IS (review 2026-09-25): "Blink" as a bare display line read as a heading
             *  for a section, not as the report's verdict on the deck. */}
-          {theme ? <span className="eyebrow text-(--muted)">main theme</span> : null}
-          <p
-            data-testid="recognition-theme"
-            className="text-2xl sm:text-3xl font-bold leading-tight tracking-[-0.02em] text-(--foreground)"
-          >
-            {theme ?? noThemeLabel}
+          <p className={inline ? "flex flex-wrap items-baseline gap-x-3" : "contents"}>
+            {theme ? <span className="eyebrow text-(--muted)">main theme</span> : null}
+            <span
+              data-testid="recognition-theme"
+              className={`${inline ? "text-2xl" : "block text-2xl sm:text-3xl"} font-bold leading-tight tracking-[-0.02em] text-(--foreground)`}
+            >
+              {theme ?? noThemeLabel}
+            </span>
           </p>
   
           <p className="text-sm text-(--muted)">

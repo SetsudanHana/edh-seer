@@ -30,9 +30,17 @@ const NS = "http://www.w3.org/2000/svg";
  *  over height and must match the frame's CSS aspect ratio. */
 /** `inner` and `minorR`: where the cards past `cap` go when the map draws every partner (the
  *  Glance mockup, 2026-09-27): smaller, unnamed discs on a ring inside the named ones. */
-interface Geometry { aspect: number; cap: number; rings: number[]; inner: number[]; step: number; minW: number; focusR: number; visitedR: number; partnerR: number; minorR: number; otherR: number }
-const WIDE: Geometry = { aspect: 880 / 720, cap: MAP_CAP, rings: [230, 300], inner: [150, 188], step: 300, minW: 900, focusR: 58, visitedR: 34, partnerR: 26, minorR: 13, otherR: 18 };
-const NARROW: Geometry = { aspect: 20 / 23, cap: 10, rings: [150, 210], inner: [98, 124], step: 220, minW: 440, focusR: 44, visitedR: 28, partnerR: 24, minorR: 11, otherR: 14 };
+/** `stretch`: how much wider than tall the rings are drawn. A circle in a frame wider than it was
+ *  built for leaves bands of nothing either side (see `BROAD`). */
+interface Geometry { aspect: number; stretch: number; cap: number; rings: number[]; inner: number[]; step: number; minW: number; focusR: number; visitedR: number; partnerR: number; minorR: number; otherR: number }
+const WIDE: Geometry = { aspect: 880 / 720, stretch: 1, cap: MAP_CAP, rings: [230, 300], inner: [150, 188], step: 300, minW: 900, focusR: 58, visitedR: 34, partnerR: 26, minorR: 13, otherR: 18 };
+const NARROW: Geometry = { aspect: 20 / 23, stretch: 1, cap: 10, rings: [150, 210], inner: [98, 124], step: 220, minW: 440, focusR: 44, visitedR: 28, partnerR: 24, minorR: 11, otherR: 14 };
+/** THE MAP ALONE ACROSS A CHAPTER (designer review, 2026-09-29). With the report rail up, Glance's
+ *  theme and key move into the rail and the map has the chapter's whole width -- but a circle is
+ *  capped by the screen's HEIGHT, so at 1920 it filled 45% of the row and at 3840 42%, with empty
+ *  bands either side. The same height, 16:9, and the rings drawn as ellipses to reach the edges. */
+const BROAD: Geometry = { ...WIDE, aspect: 16 / 9, stretch: 1.7, minW: 1310 };
+const geometry = (narrow: boolean, broad: boolean) => (narrow ? NARROW : broad ? BROAD : WIDE);
 
 /** The partners the map draws for a card, strongest first, sectors in the report's order. */
 export function mapPartners(o: OrbitModel, cap = MAP_CAP): MapPartner[] {
@@ -221,7 +229,7 @@ class Sky {
     for (let k = 0; k < 36; k++) {
       const a = (k / 36) * Math.PI * 2;
       for (const rr of rings) {
-        const pt = { x: here.x + Math.cos(a) * rr, y: here.y + Math.sin(a) * rr };
+        const pt = { x: here.x + Math.cos(a) * rr * this.geo.stretch, y: here.y + Math.sin(a) * rr };
         let d = Infinity;
         for (const q of this.place.values()) d = Math.min(d, Math.hypot(q.x - pt.x, q.y - pt.y));
         if (d > bestD) { bestD = d; best = pt; }
@@ -456,7 +464,7 @@ class Sky {
 
 export type { MenuItem };
 
-export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, onHover, onBlank, menuFor, isAdded, pick = mapPartners, label }: {
+export function Constellation({ model, orbit, trail, lit, still, narrow, broad = false, onTap, onHover, onBlank, menuFor, isAdded, pick = mapPartners, label }: {
   /** Every card the map may draw, by id: a deck's engine model, or the cards a card page names. */
   model: Pick<EngineModel, "cards">; orbit: OrbitModel;
   /** The cards put in the middle before this one, oldest first. */
@@ -466,6 +474,8 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   /** Reduced motion or paused: nothing runs, arrows carry the direction. */
   still: boolean;
   narrow: boolean;
+  /** Wide and short: the map has a chapter's width to itself (`BROAD`). Ignored when `narrow`. */
+  broad?: boolean;
   onTap: (id: string) => void;
   /** A tap on the map's empty space. */
   onBlank?: () => void;
@@ -500,7 +510,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
     return () => { s.stop(); unbind(); for (const g of Object.values(L)) g?.replaceChildren(); sky.current = null; };
   }, [model]);
 
-  useEffect(() => { const s = sky.current; if (s) { s.geo = narrow ? NARROW : WIDE; } }, [narrow]);
+  useEffect(() => { const s = sky.current; if (s) { s.geo = geometry(narrow, broad); } }, [narrow, broad]);
   useEffect(() => { const s = sky.current; if (s) { s.still = still; if (still) s.settle(); } }, [still]);
 
   useEffect(() => {
@@ -508,7 +518,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
     if (!s) return;
     s.walk(orbit.focus.id, trail.at(-1), pick(orbit, s.geo.cap), [...trail]);
     // `orbit` changes with its focus, and `trail` with it; both are read here, once per step.
-  }, [orbit, trail, narrow]);
+  }, [orbit, trail, narrow, broad]);
 
   // A new card in the middle: whatever the menu was about has moved.
   useEffect(() => { setMenu(null); }, [orbit]);
@@ -519,7 +529,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
     ...(menuFor?.(menu.id) ?? []),
     ...(menu.id === null ? [
       ...(trail.length ? [{ label: "See my path", run: () => sky.current?.fitPath() }] : []),
-      { label: `Frame ${displayName(orbit.focus)} and its cards`, run: () => sky.current?.fit([orbit.focus.id, ...pick(orbit, (narrow ? NARROW : WIDE).cap).map(({ p }) => p.card.id)], 1.15) },
+      { label: `Frame ${displayName(orbit.focus)} and its cards`, run: () => sky.current?.fit([orbit.focus.id, ...pick(orbit, geometry(narrow, broad).cap).map(({ p }) => p.card.id)], 1.15) },
     ] : []),
   ];
   const close = (back: boolean) => {
@@ -531,7 +541,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   return (
     <div className="relative">
       <svg ref={svg} role="group" aria-label={label ?? `${name} and the ${orbit.direct + orbit.directTokens} cards it works with`}
-        viewBox="-450 -368 900 736" className={`block h-auto w-full select-none touch-pan-y ${narrow ? "aspect-[20/23]" : "aspect-[880/720]"}`}>
+        viewBox="-450 -368 900 736" className={`block h-auto w-full select-none touch-pan-y ${narrow ? "aspect-[20/23]" : broad ? "aspect-[16/9]" : "aspect-[880/720]"}`}>
         <defs>
           <clipPath id="constellation-disc" clipPathUnits="objectBoundingBox"><circle cx={0.5} cy={0.5} r={0.5} /></clipPath>
           <clipPath id="constellation-disc-u" clipPathUnits="userSpaceOnUse"><circle r={50} /></clipPath>

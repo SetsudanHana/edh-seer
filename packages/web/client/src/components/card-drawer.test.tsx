@@ -109,15 +109,29 @@ function Opener({ id }: { id: string }) {
   return <button onClick={() => open(id)}>open it</button>;
 }
 
-test("opening the drawer tells the page to make room, and closing gives it back", async () => {
-  render(<CardDrawerProvider graph={graph}><Opener id="Sol Ring" /></CardDrawerProvider>);
-  expect(document.body.classList.contains("drawer-docked")).toBe(false);
+/** THE RESERVE FOLLOWS THE RAIL, NEVER THE CARD (owner, 2026-09-29). Toggled on each open, it
+ *  re-flowed the whole report -- the row just clicked moved 240px down at 1920. A surface with a
+ *  rail holds the space while it is mounted; opening and closing a card changes nothing on `body`. */
+function RailOn() {
+  const { setRailOn } = useCardDrawer();
+  useEffect(() => { setRailOn(true); return () => setRailOn(false); }, [setRailOn]);
+  return null;
+}
+
+test("opening a card never moves the page: the rail holds the space while the report is up", async () => {
+  const { unmount } = render(<CardDrawerProvider graph={graph}><Opener id="Sol Ring" /></CardDrawerProvider>);
+  // No rail (a precon page): the card floats over the page, and nothing is reserved.
   await userEvent.click(screen.getByText("open it"));
-  expect(document.body.classList.contains("drawer-docked")).toBe(true);
-  // Closed through the panel's own control, not a test-only hook: the class has to come back off
-  // the way a reader takes it off.
+  expect(document.body.classList.contains("drawer-rail")).toBe(false);
+  unmount();
+  const withRail = render(<CardDrawerProvider graph={graph}><RailOn /><Opener id="Sol Ring" /></CardDrawerProvider>);
+  expect(document.body.classList.contains("drawer-rail")).toBe(true);
+  await userEvent.click(screen.getByText("open it"));
+  expect(document.body.classList.contains("drawer-rail")).toBe(true);
   await userEvent.click(screen.getByRole("button", { name: /close/i }));
-  expect(document.body.classList.contains("drawer-docked")).toBe(false);
+  expect(document.body.classList.contains("drawer-rail")).toBe(true);
+  withRail.unmount();
+  expect(document.body.classList.contains("drawer-rail")).toBe(false);
 });
 
 /** AND THE RESERVE IS THE DRAWER'S OWN WIDTH. `sm:w-80` on the fixed container is 20rem (below `sm` it is a full-width sheet); a reserve
@@ -125,10 +139,12 @@ test("opening the drawer tells the page to make room, and closing gives it back"
  *  visible in jsdom. Read off the source so the two cannot drift apart silently. */
 test("the reserve matches the drawer's width, at the breakpoint where there is room", () => {
   const css = readFileSync(join(WEB, "client", "src", "index.css"), "utf8");
-  const rule = /@media \(min-width: 100rem\) \{\s*body\.drawer-docked \{ padding-inline-end: (\d+)rem; \}/.exec(css);
-  expect(rule, "body.drawer-docked rule at min-width: 100rem").not.toBeNull();
+  const rule = /@media \(min-width: 100rem\) \{\s*body\.drawer-rail \{ padding-inline-end: (\d+)rem; \}/.exec(css);
+  expect(rule, "body.drawer-rail rule at min-width: 100rem").not.toBeNull();
   const source = readFileSync(join(WEB, "client", "src", "components", "card-drawer.tsx"), "utf8");
-  const width = /className="fixed inset-y-0 right-0 z-30 w-full sm:w-(\d+)/.exec(source);
+  const width = /fixed inset-y-0 right-0 z-30 w-full sm:w-(\d+)/.exec(source);
+  // The rail is the same width as the card that covers it, so a card opening on the rail moves nothing.
+  expect(/fixed inset-y-0 right-0 z-20 hidden w-(\d+)/.exec(source)?.[1]).toBe(width?.[1]);
   expect(width, "the fixed drawer container's width").not.toBeNull();
   // Tailwind's spacing scale is 0.25rem per step, so `w-80` is 20rem.
   expect(Number(rule![1]) * 4).toBe(Number(width![1]));

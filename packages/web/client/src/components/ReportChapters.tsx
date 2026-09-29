@@ -37,6 +37,8 @@ import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
 import { useCardDrawer } from "./card-drawer.js";
+import { ReportRailSummaries } from "./ReportRail.js";
+import { createPortal } from "react-dom";
 
 /** A movement, not a panel: an `h2` with an optional sentence beside it, then whatever it contains.
  *
@@ -178,7 +180,11 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
    *  links and offers the walk; walking re-centres the commander's map on Glance and scrolls to it,
    *  where a full-screen second map used to open over the report. */
   const drawer = useCardDrawer();
-  const { setExtras } = drawer;
+  const { setExtras, setRailOn, railHost, setRailBack } = drawer;
+  // THE RAIL IS THE REPORT'S (drawer option B, owner 2026-09-29): on while the chapters are up, and
+  // the card that covers it goes back to the chapter the reader is in.
+  useEffect(() => { setRailOn(true); return () => setRailOn(false); }, [setRailOn]);
+  const [readSlot, setReadSlot] = useState<HTMLElement | null>(null);
   // WHETHER THE DECK'S DEFINING CARD IS ONE OF THE UNREAD — the single fact all four personas
   // reached independently on 2026-08-27, because the gate's name list is alphabetical and capped at
   // eight. A two-faced commander rates one row per face and both carry the same `derived` flag, so
@@ -244,6 +250,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   }, [report.archetypes, cuts, report.cards, nonlandNames]);
 
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
+  useEffect(() => { setRailBack(`Back to ${title(current ?? "read").toLowerCase()}`); return () => setRailBack(null); },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [current, setRailBack]);
   // ONE RUN PER REPORT, read by the findings (cards under each) and the lists below them (AO4).
   // PAIRED AGAINST THE PAGE'S CUT LIST (a folded twin stands in for its cut, it is not one), so every cut
   // shown can carry the card that takes its slot (baseline round 2026-09-26: "cuts and adds are not
@@ -256,6 +265,10 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
     // into that row (2026-09-25) the first heading sat flush against the row's rule.
     <>
+    {railHost ? createPortal(
+      <ReportRailSummaries current={current ?? "read"} report={report} cutCount={cuts.length} readSlot={setReadSlot} />,
+      railHost,
+    ) : null}
     <div className="flex flex-col lg:flex-row lg:gap-10 lg:items-start lg:pt-6">
       <ChapterRail current={current} comboCount={data.report.combos?.length ?? 0} />
       {/* `min-w-0` so a wide child (the theme matrix, the cards table) shrinks inside the flex row
@@ -277,7 +290,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               <h3 id="commander-map-title" className="sr-only">What your commander works with</h3>
               <div id="commander-map" className="scroll-mt-40" />
               <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre}
-                lead={<RecognitionPanel data={data} part="identity" />} />
+                lead={<RecognitionPanel data={data} part="identity" inline={!!railHost} />} leadTarget={railHost ? readSlot : null} />
             </section>
           ) : <RecognitionPanel data={data} part="identity" />}
           {/* THE LINE FOR THE TABLE BESIDE THE VERDICT (#770): a 48rem card alone under a 2560 map
