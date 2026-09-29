@@ -312,6 +312,15 @@ export const causeCountTail = (rows: InjectableCard["partners"], subject?: strin
 /** "1 card", "17 cards": the noun the count line opens with. */
 export const cardsNoun = (n: number): string => (n === 1 ? "card" : "cards");
 
+/** THE WITHHELD LINE, AGREEING WITH ITS NUMBER (design review 2026-09-29: "1 other cards care"). */
+export const withheldVerb = (dir: GroupDirection, n: number): string => {
+  const one = n === 1;
+  const verb = dir === "causes" ? (one ? "causes it" : "cause it")
+    : dir === "feeds" ? (one ? "uses it" : "use it")
+    : one ? "cares about it" : "care about it";
+  return `other ${cardsNoun(n)} ${verb} too`;
+};
+
 /** WHERE A GROUP'S WITHHELD COUNT LINKS (roadmap AJ3), and it is built ONCE for both readers.
  *
  *  THE PARAM FOLLOWS THE DIRECTION THE SENTENCE CLAIMS. A group whose rows all CAUSE the event
@@ -459,13 +468,12 @@ export function cardPageHtml(
     // card's, and the app has printed it under every group since the list was grouped.
     const dir = dirHere;
     const withheld = withheldFrom(dir, g.event, g.rows.length, card.rarity, card.pool);
-    const verb = dir === "causes" ? "cause it" : dir === "feeds" ? "use it" : "care about it";
     // AND THE CRAWLER GETS THE SAME LINK THE APP DRAWS (roadmap AJ3), from the same builder: two
     // readers printing one sentence is exactly how AJ1's withheld count came to say one direction
     // and count the other.
     const href = searchHref(dir, g.event, kind === "commander" ? card.identity : undefined);
     const more = withheld > 0
-      ? `\n    <p><a href="${esc(href)}">${withheld.toLocaleString("en-US")} other cards ${verb} too</a>. These are the ones with the most connections.</p>`
+      ? `\n    <p><a href="${esc(href)}">${withheld.toLocaleString("en-US")} ${withheldVerb(dir, withheld)}</a>. These are the ones with the most connections.</p>`
       : "";
     const { head, rows: cells } = factorLead(g.rows);
     const lead = head === "" ? "" : `    <p>${esc(head)}:</p>\n`;

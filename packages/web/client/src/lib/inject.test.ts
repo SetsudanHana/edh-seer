@@ -6,6 +6,7 @@ import {
   groupPartnerRows,
   BROWSE_LETTERS, browseIndexHtml, browseLetterHtml, browseSegment, cardPageHtml, groupDirection,
   htmlHeaders, injectPage, withheldFrom, type InjectableCard,
+  withheldVerb,
 } from "./inject.js";
 
 /** THE REAL SHELL, not a fixture of one. Every replacement here is a regex against tags this repo
@@ -681,4 +682,11 @@ test("partner rows group by event, read rows first", () => {
   const groups = groupPartnerRows([row("A", "e1", true), row("B", "e2"), row("C", "e1"), row("D", "e1", true), row("E", "e1")]);
   expect(groups.map((g) => g.event)).toEqual(["e1", "e2"]);
   expect(groups[0]!.rows.map((r) => r.name)).toEqual(["C", "E", "A", "D"]);
+});
+
+test("the withheld line agrees with its number", () => {
+  expect(withheldVerb("asks", 1)).toBe("other card cares about it too");
+  expect(withheldVerb("asks", 36)).toBe("other cards care about it too");
+  expect(withheldVerb("causes", 1)).toBe("other card causes it too");
+  expect(withheldVerb("feeds", 2)).toBe("other cards use it too");
 });

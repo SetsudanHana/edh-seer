@@ -759,7 +759,7 @@ export function CardSearch({
                 <label className="flex items-center gap-2">
                   <span className="eyebrow">Order</span>
                   <select
-                    className="field w-40"
+                    className="field w-48"
                     value={orderOf(eventQuery)}
                     onChange={(e) => {
                       const { dir: _dir, ...rest } = eventQuery;

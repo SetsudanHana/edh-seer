@@ -3,7 +3,7 @@ import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { Link } from "react-router";
 import { groupAnchor } from "../lib/group-anchor.js";
 import { hueOf } from "../lib/page-orbit.js";
-import { cardsNoun, causeCountTail, groupDirection, groupPartnerRows, searchHref, withheldFrom } from "../lib/inject.js";
+import { cardsNoun, causeCountTail, withheldVerb, groupDirection, groupPartnerRows, searchHref, withheldFrom } from "../lib/inject.js";
 import type { PartnerRow } from "../lib/partners.js";
 import { CardTile } from "./CardTile.js";
 
@@ -168,11 +168,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                 {/* A FEEDER GROUP RUNS THE OTHER WAY (skeptic review, 2026-09-17): its tiles are cards
                   * this card counts, so "ask for it" named the wrong direction under them. A feeder
                   * row is the one whose sentence opens on the row's card being controlled. */}
-                {dir === "causes"
-                  ? "other cards cause it too. These are the ones with the most connections."
-                  : dir === "feeds"
-                  ? "other cards use it too. These are the ones with the most connections."
-                  : "other cards care about it too. These are the ones with the most connections."}
+                {withheldVerb(dir, withheld)}. These are the ones with the most connections.
                 </Link>
               </p>
             )}
