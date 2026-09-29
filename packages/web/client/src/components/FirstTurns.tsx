@@ -67,7 +67,9 @@ function Tile({ step, on, commander, pick }: { step: TurnStep; on: boolean; comm
       <span className="stat-num text-xl leading-none">{step.mana}</span>
       <span className="text-[11px] text-(--muted)">mana</span>
       <span className="text-[11px] stat-num">{fresh ? `+${fresh} spells` : "no new"}</span>
-      {commander ? <span className="text-[11px] text-(--accent)">commander</span> : null}
+      {/* ON THE PICKED TILE'S TINT THE ACCENT FAILS CONTRAST (axe, persona round 2026-09-29), so the
+        *  picked tile says it in the foreground; the border already carries the accent. */}
+      {commander ? <span className={`text-[11px] ${on ? "text-(--foreground)" : "text-(--accent)"}`}>commander</span> : null}
     </button>
   );
 }
