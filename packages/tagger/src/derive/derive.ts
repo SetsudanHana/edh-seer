@@ -1076,6 +1076,7 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
  *  unstated controller is inherited. */
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
 /** "…card in your graveyard" / "…from a graveyard": an object that names its zone (#716, Emry). */
+const ZONE_MOVING_VERBS: ReadonlySet<string> = new Set(["cast", "play", "return", "put", "exile"]);
 const OBJECT_IN_GRAVEYARD = /\b(?:in|from) (?:your|a|an opponent's|target player's|their) graveyard\b/i;
 /** "…, then return it to the battlefield…" after an exile in the same clause (#715, Jill). */
 const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|that card|those cards) to the battlefield\b/i;
@@ -1298,8 +1299,12 @@ export function deriveAbilities(
     // THE ZONE THE OBJECT NAMES WHEN THE MODEL GAVE NONE (#716): Emry, Lurker of the Loch's "cast
     // target artifact card IN YOUR GRAVEYARD" came back with `fromZone: null`, so the cast from a
     // graveyard -- recursion -- read as a plain cast and Mnemonic Sphere's self-sacrifice fed nothing.
-    if ((clause.actions ?? []).some((a) => !a.fromZone && OBJECT_IN_GRAVEYARD.test(a.object ?? ""))) {
-      clause = { ...clause, actions: (clause.actions ?? []).map((a) => !a.fromZone && OBJECT_IN_GRAVEYARD.test(a.object ?? "") ? { ...a, fromZone: "graveyard" } : a) };
+    // Only a verb that MOVES a card out of a zone (review): a count ("for each card in your
+    // graveyard") names the graveyard without taking anything from it.
+    const zoneless = (a: { verb?: string; fromZone?: string | null; object?: string }) =>
+      !a.fromZone && ZONE_MOVING_VERBS.has(a.verb ?? "") && OBJECT_IN_GRAVEYARD.test(a.object ?? "");
+    if ((clause.actions ?? []).some(zoneless)) {
+      clause = { ...clause, actions: (clause.actions ?? []).map((a) => zoneless(a) ? { ...a, fromZone: "graveyard" } : a) };
     }
     // A QUOTED GRANT THE MODEL LEFT WITHOUT AN ACTION (#711): Enduring Vitality's `Creatures you
     // control have "{T}: Add one mana of any color."` came back as a static clause with no actions,
@@ -1762,7 +1767,8 @@ export function deriveAbilities(
         // in Half is played on your own creature, so the creature that dies is yours and Vengeful
         // Bloodwitch drains. Read off the whole card, the copies being the next sentence -- the same
         // test `rules.json`'s `controllerGetsCopies` makes for the removal role.
-        const yours = own || CONTROLLER_GETS_COPIES.test(cardText);
+        // THE CLAUSE, not the card (review): a modal card's other destroy mode stays removal.
+        const yours = own || CONTROLLER_GETS_COPIES.test(clauseText);
         for (const e of emits) {
           if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = yours ? "you" : "opp";
         }

@@ -921,6 +921,9 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   if (castSelfSupplied(producer, consumer)) return false;
   if (selfEtbSelfSupplied(producer, consumer)) return false;
   if (producer.verb === "enters" && producer.subject.zone === "graveyard") {
+    // A MILL DOES NOT PROMISE A NONCREATURE, NONLAND CARD (#716), for a trigger ("whenever an
+    // artifact card is put into your graveyard") exactly as for a recursion (`reanimatorEdges`).
+    if (producer.milled === true && namesNoncreatureClass(consumer.subject)) return false;
     return graveyardFillMatches(producer.subject, consumer.subject, h);
   }
   // SELF ON BOTH SIDES: a card adapting ITSELF cannot put the counter on another card's "this

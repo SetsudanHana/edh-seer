@@ -5749,4 +5749,12 @@ test("a milled fill does not promise an artifact card, but a discard does and a 
   expect(enables(filler("discard"), recursion("artifact"))).toBe(true);
   expect(enables(filler("mill"), recursion("land"))).toBe(true);
   expect(enables(filler("mill"), recursion("creature"))).toBe(true);
+  // The same question asked by a TRIGGER ("whenever an artifact card is put into your graveyard").
+  const watcher = (type: string) => base(`${type} watcher`, [{
+    kind: "triggered", trigger: { verbs: ["enters-graveyard"], subject: { type, control: "you", token: null } }, effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  const fires = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => directedReasons(p, c, H).length > 0;
+  expect(fires(filler("mill"), watcher("artifact"))).toBe(false);
+  expect(fires(filler("discard"), watcher("artifact"))).toBe(true);
+  expect(fires(filler("mill"), watcher("creature"))).toBe(true);
 });
