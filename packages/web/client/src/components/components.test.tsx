@@ -972,6 +972,22 @@ test("leaf shares total 100% even when a card fills two leaves, and the header s
   expect(header).toHaveTextContent(/some fill two of these roles/);
 });
 
+// #735 (axe, list): a `<li role="presentation">` group header among the leaf rows broke the list.
+// Every list holds only real list items, and each parent is a group named by its header.
+test("the role groups keep list semantics: every list holds only real list items", () => {
+  const { container } = render(<BuildBenchmarks categories={OVERLAP_CATEGORIES} parents={OVERLAP_PARENTS} />);
+  const lists = [...container.querySelectorAll("ul, ol")];
+  expect(lists.length).toBeGreaterThan(0);
+  for (const list of lists) {
+    for (const child of list.children) {
+      expect(child.tagName).toBe("LI");
+      expect(child.getAttribute("role")).toBeNull();
+    }
+  }
+  const group = screen.getByRole("group", { name: "Consistency" });
+  expect(within(group).getAllByRole("listitem")).toHaveLength(2);
+});
+
 // The overlap clause is a disclosure, not decoration: with no overlap there is nothing to disclose
 // and the header states the whole and stops.
 test("a parent whose leaves do not overlap states the whole and nothing else", () => {
