@@ -75,106 +75,103 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf, model }: {
   return (
     <div className="flex flex-col gap-3" data-testid="bracket-panel">
       <h3 className="eyebrow">Which table this is for</h3>
-      {/* TWO COLUMNS ON A WIDE SCREEN (#770): the band and its Game Changers beside the combos,
-        *  which stacked under them left the right half of a 2560 screen empty. */}
-      <div className="grid gap-4 2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] 2xl:gap-x-12 2xl:items-start">
-        <div className="flex flex-col gap-3">
-          {/* LESS IS MORE (owner, 2026-09-27: "we should rely more on data visualisation than the
-            *  text"). The panel carried a definition per box, a paragraph on where each list comes from
-            *  and a footnote per band. The band now names its own ends, the combos are drawn as loops,
-            *  and the rest is one line at the foot. */}
-          <div className="flex flex-col gap-1.5 max-w-md">
-            {/* ONE TRACK, SEGMENTED -- not three pills: a band REPORTS, a tab strip INVITES. */}
-            <div
-              className="flex overflow-hidden rounded-(--radius) border border-(--separator)"
-              role="img"
-              aria-label={`Bracket ${bracket.band} of WotC's five Commander brackets, from 1, the most casual table, to 5, the most competitive`}
-            >
-              {BANDS.map((b, i) => {
-                const here = b === bracket.band;
-                return (
-                  <span
-                    key={b}
-                    data-testid="bracket-cell"
-                    data-here={here ? "1" : undefined}
-                    className={`flex-1 text-center stat-num text-sm py-1.5 ${i > 0 ? "border-l border-(--separator)" : ""} ${
-                      // --fill, NOT --accent: a bracket is not an alert.
-                      here ? "bg-(--fill) text-(--foreground)" : "text-(--muted)"
-                    }`}
-                  >
-                    {CELL_LABEL[b]}
-                  </span>
-                );
-              })}
-            </div>
-            {/* WHICH END IS WHICH, on the track itself rather than in a sentence under it. */}
-            <div className="flex justify-between text-xs text-(--muted)" aria-hidden="true">
-              <span>casual</span><span>competitive</span>
-            </div>
-            <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="text-sm">Bracket {CELL_LABEL[bracket.band]}</span>
-              {/* THE PIPS CARRY A WORD, and the word does the addition out loud. BOTH COUNTS, ZEROS
-                *  INCLUDED (persona round 2026-09-27: a deck with no combo or no Game Changer said
-                *  nothing, and "none found" read as "never looked"). */}
-              <span className="flex items-baseline gap-1.5 text-xs text-(--muted)" data-testid="bracket-counts">
-                {pips > 0 ? (
-                  <span className="flex items-center gap-1" aria-hidden="true">
-                    {Array.from({ length: pips }, (_, i) => (
-                      <span key={i} data-testid="bracket-pip" className="h-1.5 w-1.5 rounded-full bg-(--fill)" />
-                    ))}
-                  </span>
-                ) : null}
-                {`${bracket.gameChangers.length ? plural(bracket.gameChangers.length, "Game Changer") : "no Game Changers"}, ${bracket.infiniteCombos ? plural(bracket.infiniteCombos, "infinite combo") : "no infinite combos"}`}
+      {/* LESS IS MORE (owner, 2026-09-27: "we should rely more on data visualisation than the
+        *  text"). The panel carried a definition per box, a paragraph on where each list comes from
+        *  and a footnote per band. The band now names its own ends, the combos are drawn as loops,
+        *  and the rest is one line at the foot. */}
+      <div className="flex flex-col gap-1.5 max-w-md">
+        {/* ONE TRACK, SEGMENTED -- not three pills: a band REPORTS, a tab strip INVITES. */}
+        <div
+          className="flex overflow-hidden rounded-(--radius) border border-(--separator)"
+          role="img"
+          aria-label={`Bracket ${bracket.band} of WotC's five Commander brackets, from 1, the most casual table, to 5, the most competitive`}
+        >
+          {BANDS.map((b, i) => {
+            const here = b === bracket.band;
+            return (
+              <span
+                key={b}
+                data-testid="bracket-cell"
+                data-here={here ? "1" : undefined}
+                className={`flex-1 text-center stat-num text-sm py-1.5 ${i > 0 ? "border-l border-(--separator)" : ""} ${
+                  // --fill, NOT --accent: a bracket is not an alert.
+                  here ? "bg-(--fill) text-(--foreground)" : "text-(--muted)"
+                }`}
+              >
+                {CELL_LABEL[b]}
               </span>
-            </div>
-            {/* WHY, IN ONE SENTENCE A PLAYER CAN SAY AT THE TABLE. */}
-            <p data-testid="bracket-why" className="text-sm max-w-[65ch]">{why}</p>
-          </div>
-
-          {bracket.gameChangers.length > 0 && (
-            <div className="flex flex-col gap-1.5">
-              <span className="eyebrow text-(--muted)">{plural(bracket.gameChangers.length, "Game Changer")} · on Wizards&rsquo; list</span>
-              <span className="flex flex-wrap gap-1">
-                {bracket.gameChangers.map((n) => <span key={n} className="rounded-full border border-(--separator) px-2 py-0.5 text-xs"><CardName name={n} /></span>)}
-              </span>
-            </div>
-          )}
-          {/* A 4-5 DECK WITH NO CHEAP COMBO: the Game Changer count is what put it there. */}
-          {bracket.band === "4-5" && bracket.cheapCombos.length === 0 && (
-            <p className="text-xs text-(--muted) max-w-[65ch]">More Game Changers than bracket 3 allows is what puts this deck in 4–5.</p>
-          )}
-          {/* WHAT WAS LOOKED AT, WHOSE CALL EACH HALF IS, AND WHAT A LIST CANNOT SPLIT: one line. */}
-          <p data-testid="bracket-checked" className="text-xs text-(--muted) max-w-[65ch]">
-            {split ? <>{split} </> : null}
-            Game Changers are Wizards&rsquo; list; the combos are Commander Spellbook&rsquo;s, and counting them is our call.
-            The band does not count mass land destruction or chained extra turns; &ldquo;Say this at the table&rdquo; says whether any card does them.{" "}
-            <a
-              className="text-(--accent) underline underline-offset-2"
-              href="https://magic.wizards.com/en/news/announcements/introducing-commander-brackets-beta"
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              Wizards&rsquo; bracket guide
-            </a>
-          </p>
+            );
+          })}
         </div>
-        {listed.length > 0 && (
-          <div className="flex flex-col gap-1.5">
-            <span className="eyebrow text-(--muted)">{plural(bracket.infiniteCombos || listed.length, "infinite combo")} · each repeats without limit</span>
+        {/* WHICH END IS WHICH, on the track itself rather than in a sentence under it. */}
+        <div className="flex justify-between text-xs text-(--muted)" aria-hidden="true">
+          <span>casual</span><span>competitive</span>
+        </div>
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span className="text-sm">Bracket {CELL_LABEL[bracket.band]}</span>
+          {/* THE PIPS CARRY A WORD, and the word does the addition out loud. BOTH COUNTS, ZEROS
+            *  INCLUDED (persona round 2026-09-27: a deck with no combo or no Game Changer said
+            *  nothing, and "none found" read as "never looked"). */}
+          <span className="flex items-baseline gap-1.5 text-xs text-(--muted)" data-testid="bracket-counts">
+            {pips > 0 ? (
+              <span className="flex items-center gap-1" aria-hidden="true">
+                {Array.from({ length: pips }, (_, i) => (
+                  <span key={i} data-testid="bracket-pip" className="h-1.5 w-1.5 rounded-full bg-(--fill)" />
+                ))}
+              </span>
+            ) : null}
+            {`${bracket.gameChangers.length ? plural(bracket.gameChangers.length, "Game Changer") : "no Game Changers"}, ${bracket.infiniteCombos ? plural(bracket.infiniteCombos, "infinite combo") : "no infinite combos"}`}
+          </span>
+        </div>
+        {/* WHY, IN ONE SENTENCE A PLAYER CAN SAY AT THE TABLE. */}
+        <p data-testid="bracket-why" className="text-sm max-w-[65ch]">{why}</p>
+      </div>
+
+      {bracket.gameChangers.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="eyebrow text-(--muted)">{plural(bracket.gameChangers.length, "Game Changer")} · on Wizards&rsquo; list</span>
+          <span className="flex flex-wrap gap-1">
+            {bracket.gameChangers.map((n) => <span key={n} className="rounded-full border border-(--separator) px-2 py-0.5 text-xs"><CardName name={n} /></span>)}
+          </span>
+        </div>
+      )}
+      {listed.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="eyebrow text-(--muted)">{plural(bracket.infiniteCombos || listed.length, "infinite combo")} · each repeats without limit</span>
+          {/* THE LEAD COMBO AND THE REST SIDE BY SIDE on a wide screen (#770); stacked below 1800px. */}
+          <div className={`grid gap-4 items-start ${lead && shownCombos.length ? "min-[1800px]:grid-cols-[minmax(0,68rem)_minmax(0,1fr)]" : ""}`}>
             {lead ? <ComboFeature parts={lead} result={listed[0]!.result} manaValue={listed[0]!.manaValue} cheap={listed[0]!.cheap} /> : null}
             {shownCombos.length ? (
-              <ul className="grid gap-2 lg:grid-cols-2" aria-label={lead ? "The deck's other infinite combos" : "The infinite combos in this deck"}>
+              <ul className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(min(100%,23rem),1fr))]" aria-label={lead ? "The deck's other infinite combos" : "The infinite combos in this deck"}>
                 {shownCombos.map((c) => <ComboLoop key={c.cards.join("|")} cards={c.cards} result={c.result} manaValue={c.manaValue} cheap={c.cheap} artOf={artOf} />)}
               </ul>
             ) : null}
-            {rows.length > COMBO_ROWS ? (
-              <button type="button" className="self-start min-h-9 text-xs text-(--accent) underline underline-offset-2" onClick={() => setAllCombos(!allCombos)}>
-                {allCombos ? "Show fewer" : `Show all ${rows.length}`}
-              </button>
-            ) : null}
           </div>
-        )}
-      </div>
+          {rows.length > COMBO_ROWS ? (
+            <button type="button" className="self-start min-h-9 text-xs text-(--accent) underline underline-offset-2" onClick={() => setAllCombos(!allCombos)}>
+              {allCombos ? "Show fewer" : `Show all ${rows.length}`}
+            </button>
+          ) : null}
+        </div>
+      )}
+      {/* A 4-5 DECK WITH NO CHEAP COMBO: the Game Changer count is what put it there. */}
+      {bracket.band === "4-5" && bracket.cheapCombos.length === 0 && (
+        <p className="text-xs text-(--muted) max-w-[65ch]">More Game Changers than bracket 3 allows is what puts this deck in 4–5.</p>
+      )}
+      {/* WHAT WAS LOOKED AT, WHOSE CALL EACH HALF IS, AND WHAT A LIST CANNOT SPLIT: one line. */}
+      <p data-testid="bracket-checked" className="text-xs text-(--muted) max-w-[65ch]">
+        {split ? <>{split} </> : null}
+        Game Changers are Wizards&rsquo; list; the combos are Commander Spellbook&rsquo;s, and counting them is our call.
+        The band does not count mass land destruction or chained extra turns; &ldquo;Say this at the table&rdquo; says whether any card does them.{" "}
+        <a
+          className="text-(--accent) underline underline-offset-2"
+          href="https://magic.wizards.com/en/news/announcements/introducing-commander-brackets-beta"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          Wizards&rsquo; bracket guide
+        </a>
+      </p>
     </div>
   );
 }

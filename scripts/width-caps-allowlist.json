@@ -1,16 +1,6 @@
 {
   "note": "Today's inventory of width caps (2026-09-28, #770). NOT a list of exceptions: each entry is a cap still to be removed, and scripts/check_width_caps.mjs fails if an entry outlives its cap. Shrink this file in the PR that fixes a page.",
   "files": {
-    "packages/web/client/src/App.tsx": {
-      "max-w-5xl": { "count": 1, "why": "report <main>: capped below xl only (`xl:max-w-none`); check the 1024-1280 band when the chapters are fixed" }
-    },
-    "packages/web/client/src/components/ArchetypeBoard.tsx": {
-      "max-w-3xl": { "count": 1, "why": "archetype board block, fix under #770" },
-      "max-w-5xl": { "count": 1, "why": "archetype board section container, fix under #770" }
-    },
-    "packages/web/client/src/components/BuildBenchmarks.tsx": {
-      "max-w-4xl": { "count": 2, "why": "build benchmarks containers, fix under #770" }
-    },
     "packages/web/client/src/components/Calibrate.tsx": {
       "max-w-5xl": { "count": 1, "why": "#calibrate is a dev-only judging tool, not shipped; can stay if the owner agrees" }
     },
@@ -19,9 +9,6 @@
     },
     "packages/web/client/src/components/EventSentence.tsx": {
       "max-w-4xl": { "count": 1, "why": "event sentence block, fix under #770" }
-    },
-    "packages/web/client/src/components/ReportLoading.tsx": {
-      "max-w-xl": { "count": 1, "why": "loading message box, transient; review under #770" }
     },
     "packages/web/client/src/index.css": {
       "max-width: 64rem": { "count": 3, "why": ".intro, .site-footer and .site-header bands at 1024px (header and footer uncapped at 80rem), fix under #770" },

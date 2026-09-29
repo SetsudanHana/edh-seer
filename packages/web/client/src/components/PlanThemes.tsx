@@ -63,8 +63,9 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
       {/* ONE ROW PER THEME (owner, 2026-09-27: "less is more", "rely more on data visualisation than
         *  the text"). Each theme was a card of images, chips and sentences, three of them 1,800px
         *  tall; now a bar and its key cards, and the rest on a tap. */}
-      {/* TWO COLUMNS OF THEMES ON A WIDE SCREEN (#770): a row's bar stays about 800px long. */}
-      <ul className="grid grid-cols-1 2xl:grid-cols-2 2xl:gap-x-12 2xl:items-start" aria-label="Themes">
+      {/* ROWS IN 44rem CELLS, more across as the screen widens (#770). Every bar is drawn on one
+        *  scale and every track is the same width, so bars in two columns still compare. */}
+      <ul className="grid gap-x-8 items-start [grid-template-columns:repeat(auto-fill,minmax(min(100%,44rem),1fr))]" aria-label="Themes">
         {roots.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} main={main} top={top} also={folded.get(g.tag) ?? []} />)}
       </ul>
       {helpers.length ? (
@@ -73,7 +74,7 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
             {showHelpers ? "Hide the supporting groups" : `Supporting groups · ${helpers.length}`}
           </button>
           {showHelpers ? (
-            <ul className="flex flex-col" aria-label="Supporting groups">
+            <ul className="grid gap-x-8 items-start [grid-template-columns:repeat(auto-fill,minmax(min(100%,44rem),1fr))]" aria-label="Supporting groups">
               {helpers.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} top={top} />)}
             </ul>
           ) : null}

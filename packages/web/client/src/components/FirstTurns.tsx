@@ -27,8 +27,8 @@ export function FirstTurns({ model }: { model: Model }) {
   const lastStep = steps.at(-1)!;
   const step = steps.find((s) => s.turn === turn) ?? steps[0]!;
   return (
-    <section aria-labelledby="first-turns-title" className="flex flex-col gap-3" data-testid="first-turns">
-      <h3 id="first-turns-title" className="eyebrow text-(--foreground)">Your first {FIRST_TURNS} turns</h3>
+    <div className="flex flex-col gap-3" data-testid="first-turns">
+      <h3 className="eyebrow text-(--foreground)">Your first {FIRST_TURNS} turns</h3>
       <p className="text-sm max-w-[65ch]" data-testid="first-turns-headline">
         {third ? <>By turn 3 you can cast <b>{third.castable} of your {nonland} spells</b>, and by turn {lastStep.turn}, {lastStep.castable}.</> : null}
         {commander?.turn !== undefined
@@ -53,7 +53,7 @@ export function FirstTurns({ model }: { model: Model }) {
         </div>
       </div>
       <TurnCards step={step} commanderHere={commander?.turn === step.turn ? commander.name : undefined} />
-    </section>
+    </div>
   );
 }
 

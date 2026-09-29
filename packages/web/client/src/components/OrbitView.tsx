@@ -1,8 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
-import { buildEngineModel, displayName, tokenLabel, type EngineCard, type EngineModel } from "../lib/engine-model.js";
+import { buildEngineModel, displayName, linkPath, tokenLabel, type EngineCard, type EngineModel } from "../lib/engine-model.js";
 import { mainTheme } from "../lib/main-theme.js";
-import { stepRoute } from "../lib/walk-route.js";
 import { buildOrbit, countText, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
 export { countText };
 import { slugOf } from "@edh-seer/matcher/slug";
@@ -58,11 +57,25 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   const [trail, setTrail] = useState<string[]>([]);
   // THE PATH FOLLOWS THE MIDDLE, WHOEVER MOVED IT (demo recording, 2026-09-27): the drawer's "Walk
   // the map from here" sets the middle from outside, and the path stayed empty after it. A card
-  // already on the path is a step back to it; any other is a step on, along the deck's links (#769).
+  // already on the path is a step back to it; any other is a step on.
+  //
+  // A STEP ON GOES ALONG THE LINKS (#769): a card the middle does not work with is reached through
+  // the cards between them, so every leg of the gold route is a real link. A card the walk already
+  // passed through cuts the loop back to it. Two cards nothing joins keep the one straight step.
   const [seen, setSeen] = useState(focusId);
   if (seen !== focusId) {
     setSeen(focusId);
-    setTrail(stepRoute(trail, seen, focusId, (id) => m.partners.get(id)?.keys() ?? []));
+    const i = trail.indexOf(focusId);
+    if (i >= 0) setTrail(trail.slice(0, i));
+    else {
+      const via = linkPath(m.partners, seen, focusId).slice(0, -1);
+      let next = [...trail];
+      for (const id of via.length ? via : [seen]) {
+        const j = next.indexOf(id);
+        next = [...(j >= 0 ? next.slice(0, j) : next), id];
+      }
+      setTrail(next.slice(-6));
+    }
   }
   const still = useReducedMotion();
   const [paused, setPaused] = usePaused();

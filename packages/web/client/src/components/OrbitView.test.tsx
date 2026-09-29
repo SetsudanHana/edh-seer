@@ -92,6 +92,25 @@ test("a middle set from outside the map, as the drawer's walk does, still draws 
   expect(screen.queryByRole("navigation", { name: "Your path" })).toBeNull();
 });
 
+/** #769, THE OWNER'S REPRO: a card on the map that the middle does not work with, walked to, drew
+ *  the gold route as one straight line through cards it never touched. Reducer works with a Cleric,
+ *  not with Payoff A, so the route has to go through one. */
+test("walking to a card the middle doesn't work with routes along real links", async () => {
+  const { report, graph } = engineDeck();
+  const m = buildEngineModel(report, graph);
+  expect(m.partners.get("Payoff A")?.has("Reducer")).toBe(false);
+  const { container, rerender } = render(<OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} />);
+  rerender(<OrbitView report={report} graph={graph} focusId="Reducer" onFocus={() => {}} />);
+  const steps = screen.getByRole("navigation", { name: "Your path" }).textContent!.split("›");
+  expect(steps[0]).toBe("Payoff A");
+  expect(steps.at(-1)).toBe("Reducer");
+  expect(steps.length).toBe(3);
+  for (let i = 1; i < steps.length; i++) expect(m.partners.get(steps[i - 1]!)?.has(steps[i]!)).toBe(true);
+  // The route bends at the card between them: three points, not two.
+  await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+  expect(container.querySelector("[data-testid=constellation-route]")!.getAttribute("points")!.trim().split(" ")).toHaveLength(3);
+});
+
 // LESS IS MORE (owner, 2026-09-27): "every other card connects" was an all-is-well line; the panel
 // now says only what does not connect.
 test("when every card connects, the panel lists nothing and says nothing", () => {

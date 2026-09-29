@@ -297,12 +297,12 @@ export function BuildBenchmarks({
             *  question and are routed to different sub-tabs. Foreground weight is the whole
             *  difference from a child heading; the children keep the muted eyebrow. */}
           <h3 className="eyebrow text-(--foreground)">How the roles are spent</h3>
-          {/* Capped for the same reason as a lone block below: the count sat a screen from its row.
+          {/* Rows in 28rem cells so the count sits beside its row; more across when wide (#770).
             *  A GROUP OF LISTS, NOT ONE LIST WITH HEADER ROWS (#735): a `<li role="presentation">`
             *  header among the leaf rows broke the list for a screen reader (axe: a `<ul>` must
             *  only directly contain `<li>`). Each parent is now a labelled group holding its
             *  header and its own list, so every `listitem` is still a leaf row. */}
-          <div className="flex flex-col gap-1.5 max-w-4xl">
+          <div className="flex flex-col gap-1.5">
             {/* THE FOUR PARENT COUNTS-AGAINST-TARGET MOVED TO `DeckGauges`, one floor dial per
               *  parent, on the Summary sub-tab. That is where a reader now sees Interaction's 19
               *  against its target of 10 as a mark; printing the same ratio here as well would put
@@ -356,14 +356,14 @@ export function BuildBenchmarks({
                       )}
                     </span>
                   </div>
-                  <ul className="flex flex-col gap-1.5">
+                  <ul className="grid gap-x-8 gap-y-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,28rem),1fr))]">
                     {p.leaves.map((leaf) => leafRow(leaf, p.name, sumOfLeaves))}
                   </ul>
                 </div>
               ) : null;
             })}
             {ungrouped.length ? (
-              <ul className="flex flex-col gap-1.5">
+              <ul className="grid gap-x-8 gap-y-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,28rem),1fr))]">
                 {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
               </ul>
             ) : null}
@@ -519,8 +519,7 @@ function DeckMathRows({
           *  clock turn, which asked nearly every deck for about five of every kind and so told
           *  every deck it was short. What a player can act on is which of their cards answer what,
           *  and how often one is in hand: the count, the chance, and the names. */}
-        {/* AS MANY COLUMNS OF ANSWER ROWS AS THE WIDTH HOLDS (#770), not one capped column. */}
-        <ul className="grid gap-2.5 gap-x-12 sm:grid-cols-[repeat(auto-fill,minmax(24rem,1fr))]">
+        <ul className="grid gap-x-8 gap-y-2.5 items-start [grid-template-columns:repeat(auto-fill,minmax(min(100%,36rem),1fr))]">
           {answers.map((a) => {
             const none = a.count === 0;
             // The mode sub-counts (design §7): a zero is the finding on a row that HAS answers --
@@ -1180,10 +1179,9 @@ function DeckMathRows({
               *  nothing, which is the exact defect this same item found in the Fixes chapter. */}
             {(() => {
               const blocks = s.blocks.filter(Boolean);
-              // A LONE BLOCK IS CAPPED, not stretched (look-and-feel review 2026-09-24): full width at
-              // 1920px put "Land" at x=168 and its "4 short" at x=1880, a screen's width apart. 56rem
-              // is the width two blocks get side by side, so one alone reads the same as a pair.
-              if (blocks.length < 2) return <div className="max-w-4xl flex flex-col gap-5">{blocks.map((block, i) => <Fragment key={i}>{block}</Fragment>)}</div>;
+              // A LONE BLOCK IS NOT CAPPED (#770): its rows sit in grid cells of their own, so "Land"
+              // and its "4 short" stay a cell apart, not a screen (look-and-feel review 2026-09-24).
+              if (blocks.length < 2) return <div className="flex flex-col gap-5">{blocks.map((block, i) => <Fragment key={i}>{block}</Fragment>)}</div>;
               return (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-5 items-start [&>*]:min-w-0">
                   {blocks.map((block, i) => (

@@ -280,9 +280,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
                 lead={<RecognitionPanel data={data} part="identity" />} />
             </section>
           ) : <RecognitionPanel data={data} part="identity" />}
-          {/* SIDE BY SIDE ON A WIDE SCREEN (#770): the line for the table and the verdict with the card
-            *  counts are two short blocks, and stacked they filled a third of a 2560 screen. */}
-          <div className="grid gap-8 2xl:grid-cols-2 2xl:items-start">
+          {/* THE LINE FOR THE TABLE BESIDE THE VERDICT (#770): a 48rem card alone under a 2560 map
+            *  left two-thirds of the row empty. On a phone and a laptop they still stack. */}
+          <div className={`grid gap-6 items-start ${talk ? "lg:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]" : ""}`}>
             {talk ? <TableTalkLine talk={talk} /> : null}
             <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" />
           </div>
@@ -366,9 +366,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             // No title of its own: its sections are headed "Your first 5 turns", "How you win" and
             // "What your cards are waiting for" already.
             <Movement count={unmetDemand ? "its first turns, how it wins, and what its cards are still waiting for" : "its first turns, and how it wins"}>
-              {/* TWO COLUMNS ON A WIDE SCREEN (#770): the first turns beside how it wins, where one
-                *  1024px column left most of a 2560 screen empty. */}
-              <div className="grid gap-8 2xl:grid-cols-2 2xl:items-start">
+              {/* SIDE BY SIDE AS THE WIDTH ALLOWS (#770): first turns, how you win and what the cards wait
+                *  for were three blocks stacked in the left 1024px of a 2560 screen. */}
+              <div className="grid gap-8 items-start [grid-template-columns:repeat(auto-fill,minmax(min(100%,40rem),1fr))]">
                 {/* THE TURNS AS TILES, AND ONE TURN'S CARDS AT A TIME. */}
                 {turns ? <FirstTurns model={turns} /> : null}
                 <HowYouWin report={report} manaValueOf={manaValueOf} model={themes} />
@@ -376,16 +376,14 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
                   *  more"). With every demand met it said "everything your cards care about, something in
                   *  the deck causes" under a second copy of the turn-7 line: nothing to act on. */}
                 {unmetDemand ? (
-                  <div className="2xl:col-span-2">
-                    <BuildBenchmarks
-                      categories={report.buildCategories}
-                      parents={report.buildParents}
-                      deckMath={report.deckMath}
-                      answerCoverage={report.answerCoverage}
-                      sections={["waiting"]}
-                      showBenchmarks={false}
-                    />
-                  </div>
+                  <BuildBenchmarks
+                    categories={report.buildCategories}
+                    parents={report.buildParents}
+                    deckMath={report.deckMath}
+                    answerCoverage={report.answerCoverage}
+                    sections={["waiting"]}
+                    showBenchmarks={false}
+                  />
                 ) : null}
               </div>
             </Movement>
@@ -490,8 +488,8 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  half the row was reserved for nothing at every width above 1280px. A defect I
             *  introduced two commits ago and did not look at. */}
           <Movement title="What to change">
-            {/* NO CAP (#770): each cut is a card in a grid that adds columns with the width, so a
-              *  cut's name and its figure sit in one card however wide the screen is. */}
+            {/* NO WIDTH CAP (#770): the cuts are an auto-fit grid of 25rem cards, so a wide screen
+              *  gets more cards across, never a name and its "5 mana" a screen apart. */}
             <div className="min-w-0">
             <CutList
               cuts={cuts}
@@ -510,9 +508,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  A failed run drops the section rather than claiming the deck has nothing to add. */}
           {suggestions.state !== "error" ? (
             <Movement title="Strengthen what works">
-              <div>
-                <StrengthenLists routes={suggestions.value?.routes} plan={suggestions.value?.plan} />
-              </div>
+              <StrengthenLists routes={suggestions.value?.routes} plan={suggestions.value?.plan} />
             </Movement>
           ) : null}
         </Chapter>
