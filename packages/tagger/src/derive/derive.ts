@@ -686,10 +686,16 @@ function boundedGrantClass(s: SubjectFilter): boolean {
  *  go-wide shape, and the #681 spell-grant one. A colour narrowing ("other blue creatures") counts.
  *  Read from the recipient TEXT, not the parsed subject, because "nontoken", "tapped" and "attacking"
  *  creatures parse to the same bare creature and stay refused; so do "all creatures" (anyone's
- *  board) and a one-shot "gain ... until end of turn", which the ruling does not cover. */
-const EVERY_CREATURE_YOU_CONTROL = /^(?:other )?(?:(?:white|blue|black|red|green|colorless)(?:,? and |,? or | ))?creatures you control$/i;
+ *  board) and a one-shot grant, which the ruling does not cover.
+ *
+ *  STATIC BY ITS VERB, not by a list of durations (review): a static grant says "have"/"has", a
+ *  one-shot one "gain(s)" whatever follows it -- "until end of turn", "until end of combat", or no
+ *  duration at all on an activated "{T}: Creatures you control gain haste". Singular or plural:
+ *  "each other creature you control has ward". One colour only; a colour LIST is left refused. */
+const EVERY_CREATURE_YOU_CONTROL = /^(?:each )?(?:other )?(?:(?:white|blue|black|red|green|colorless) )?creatures? you control$/i;
+const STATIC_GRANT_VERB = /\bcreatures? you control (?:have|has)\b/i;
 function everyCreatureYouControl(who: string, clauseText: string): boolean {
-  return EVERY_CREATURE_YOU_CONTROL.test(who.trim()) && !/\buntil end of turn\b|\bthis turn\b/i.test(clauseText);
+  return EVERY_CREATURE_YOU_CONTROL.test(who.trim()) && STATIC_GRANT_VERB.test(clauseText);
 }
 /** Who LOSES abilities: "Creatures lose all abilities", "Enchanted creature loses all abilities". */
 const LOSES_ABILITIES = /^(.*?\S)\s+\bloses?\s+all\s+abilities\b/i;

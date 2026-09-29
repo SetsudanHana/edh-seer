@@ -340,7 +340,11 @@ test("a static grant to every creature you control keeps its recipient; a one-sh
   ).abilities[0]?.effect.subject;
   expect(grant("Creatures you control have haste")).toMatchObject({ type: "creature", control: "you" });
   expect(grant("Other blue creatures you control have haste.")).toMatchObject({ type: "creature", control: "you", colors: ["U"] });
+  expect(grant("Each other creature you control has haste.")).toMatchObject({ type: "creature", control: "you" });
   expect(grant("Creatures you control gain haste until end of turn.")).toBeUndefined();
+  // One-shot by its verb, whatever the duration -- or none at all.
+  expect(grant("Creatures you control gain haste until end of combat.")).toBeUndefined();
+  expect(grant("{T}: Creatures you control gain haste.")).toBeUndefined();
   expect(grant("All creatures have haste.")).toBeUndefined();
 });
 
