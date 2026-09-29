@@ -3504,3 +3504,39 @@ test("an open threshold is no count, and a compound zone is no antecedent (revie
   ]);
   expect(typed?.emits?.find((e) => e.verb === "enters")?.subject.type).toBe("creature");
 });
+
+// #798 (owner's edge-magnitude sheet, 2026-09-29): Garna draws only for an ATTACKING creature's death.
+test("'draw a card if it was attacking. Otherwise, ...' puts the combat state on the draw only (Garna)", () => {
+  const text = "Whenever another creature you control dies, draw a card if it was attacking. Otherwise, Garna deals 1 damage to each opponent.";
+  const out = deriveAbilities([{ id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "another creature you control", control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }, { verb: "deal-damage", object: "each opponent", amount: "1" }] }],
+  "Garna, Bloodfist of Keld", { 1: text }).abilities;
+  expect(out.find((a) => a.effect.kind === "draw-card")?.trigger?.subject.combat).toBe("attacking");
+  // "Otherwise" is every other death: no combat state, and "not attacking" is not expressible.
+  expect(out.find((a) => a.effect.kind === "damage")?.trigger?.subject.combat).toBeUndefined();
+});
+
+// Real oracle text only: Echoing Assault, first reached for here from memory, sacrifices at the NEXT END STEP.
+test("a token sacrificed AT END OF COMBAT, or decayed, dies attacking; one sacrificed at the next end step does not (#798)", () => {
+  const death = (name: string, text: string, object: string, rider = "it") => deriveAbilities([{ id: 1, abilityType: "triggered",
+    trigger: { event: "attacks", subject: "you", control: "you" },
+    actions: [{ verb: "create", object, amount: "1" }, { verb: "sacrifice", object: rider }] }], name, { 1: text })
+    .abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies");
+  expect(death("Mordor Trebuchet", "Whenever you attack with one or more Goblins and/or Orcs, create a 2/1 colorless Construct artifact creature token with flying named Ballistic Boulder that's tapped and attacking. Sacrifice that token at end of combat.",
+    "a 2/1 colorless Construct artifact creature token with flying named Ballistic Boulder", "that token")?.subject.combat).toBe("attacking");
+  expect(death("Jadar, Ghoulcaller of Nephalia", "At the beginning of your end step, if you control no creatures with decayed, create a 2/2 black Zombie creature token with decayed.",
+    "a 2/2 black Zombie creature token with decayed")?.subject.combat).toBe("attacking");
+  expect(death("Urabrask's Forge", "At the beginning of combat on your turn, put an oil counter on this artifact, then create an X/1 red Phyrexian Horror creature token with trample and haste, where X is the number of oil counters on this artifact. Sacrifice that token at the beginning of the next end step.",
+    "an X/1 red Phyrexian Horror creature token with trample and haste", "that token")?.subject.combat).toBeUndefined();
+});
+
+test("the self-or-class twin keeps the combat state its condition set (review of #798)", () => {
+  const out = deriveAbilities([{ id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "this creature or another creature you control", control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }] }], "Test Card",
+    { 1: "Whenever this creature or another creature you control dies, draw a card if it was attacking." }).abilities;
+  const draws = out.filter((a) => a.effect.kind === "draw-card");
+  expect(draws.length).toBeGreaterThan(1);
+  for (const d of draws) expect(d.trigger?.subject.combat).toBe("attacking");
+});
