@@ -330,15 +330,22 @@ test("a grant narrowed to commanders keeps its subject, though it names no subty
   expect(abilities[0].effect.subject?.type).toBe("creature");
 });
 
-// THE OTHER DIRECTION, and it is what the subtype rule is FOR: an untyped grant to the whole board is
-// the ordinary-card claim the rubric calls false, and the carve-out must not widen to it.
-test("a grant to every creature you control still keeps no subject", () => {
-  const { abilities } = deriveAbilities(
+// REVERSED BY THE OWNER, 2026-09-28 (#711): a STATIC grant to every creature you control links to each
+// creature it applies to, the #561 go-wide shape. A one-shot grant and anyone's board stay refused.
+test("a static grant to every creature you control keeps its recipient; a one-shot one does not", () => {
+  const grant = (text: string) => deriveAbilities(
     [{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "haste" }] }],
     "Anger",
-    { 1: "Creatures you control have haste" },
-  );
-  expect(abilities[0]?.effect.subject).toBeUndefined();
+    { 1: text },
+  ).abilities[0]?.effect.subject;
+  expect(grant("Creatures you control have haste")).toMatchObject({ type: "creature", control: "you" });
+  expect(grant("Other blue creatures you control have haste.")).toMatchObject({ type: "creature", control: "you", colors: ["U"] });
+  expect(grant("Each other creature you control has haste.")).toMatchObject({ type: "creature", control: "you" });
+  expect(grant("Creatures you control gain haste until end of turn.")).toBeUndefined();
+  // One-shot by its verb, whatever the duration -- or none at all.
+  expect(grant("Creatures you control gain haste until end of combat.")).toBeUndefined();
+  expect(grant("{T}: Creatures you control gain haste.")).toBeUndefined();
+  expect(grant("All creatures have haste.")).toBeUndefined();
 });
 
 test("a kindred anthem names its targets, so it survives the static-subject guard", () => {
@@ -993,7 +1000,10 @@ test("a recipient is the last SENTENCE before the verb, and a comma-separated ty
     id: 1, abilityType: "static",
     actions: [{ verb: "grant-ability", object: "haste" }],
   }], "Anger", { 1: "As long as this card is in your graveyard and you control a Mountain, creatures you control have haste." });
-  expect(anger.abilities.find((a) => a.effect.kind === "keyword-grant")?.effect.subject).toBeUndefined();
+  // No Mountain read out of the condition; the recipient is every creature you control (#711). A
+  // haste grant derives as `speed-increase`, so this reads the ability, not a `keyword-grant`.
+  expect(anger.abilities[0]?.effect.subject).toMatchObject({ type: "creature", control: "you" });
+  expect(anger.abilities[0]?.effect.subject?.subtype).toBeUndefined();
 
   // But a recipient may LIST its types, and those commas are part of the recipient. Raphael grants
   // lifelink to four tribes; splitting on every comma left only the last one.
@@ -2672,7 +2682,8 @@ test("a grant to creature TOKENS keeps its token subject; a grant to creatures s
   expect(tokens.abilities[0]?.effect.subject).toMatchObject({ token: true, type: "creature", control: "you" });
   const creatures = deriveAbilities([{
     id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "haste" }],
-  }], "Fervor", { 1: "Creatures you control have haste." });
+  }], "Fervor", { 1: "Creatures you control gain haste until end of turn." });
+  // A one-shot grant to every creature stays refused (#711 admits the static one).
   expect(creatures.abilities[0]?.effect.subject).toBeUndefined();
 });
 
@@ -2850,8 +2861,9 @@ test("a grant to a TYPE-narrowed class keeps its recipient; a state-narrowed or 
     .toMatchObject({ control: "you", legendary: true, type: "creature" });
   expect(grant("Walker Guard", "Each other planeswalker you control has hexproof.", "hexproof"))
     .toMatchObject({ control: "you", type: "planeswalker" });
-  // Unchanged refusals: the whole board, and board state dressed as a class.
-  expect(grant("Concordant Crossroads", "Creatures you control have haste.", "haste")).toBeUndefined();
+  // Unchanged refusals: anyone's whole board, and board state dressed as a class. (Your own whole
+  // board is a class since #711.)
+  expect(grant("Concordant Crossroads", "All creatures have haste.", "haste")).toBeUndefined();
   expect(grant("Nontoken Anthem", "Nontoken creatures you control have vigilance.", "vigilance")).toBeUndefined();
   expect(grant("Tapped Anthem", "Other tapped creatures you control have hexproof.", "hexproof")).toBeUndefined();
   expect(grant("Mithril Coat", "Equipped creature has indestructible.", "indestructible")).toBeUndefined();

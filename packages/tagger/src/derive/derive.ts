@@ -204,7 +204,9 @@ import { emblemRecipient } from "../emblem.js";
 // Syr Konrad's "or put into a graveyard from anywhere", "or leaves your graveyard").
 // 189: "each creature assigns combat damage equal to its toughness" is a static damage-multiplier over
 // creatures whose toughness exceeds their power (owner ruling 2026-09-28, Doran).
-export const DERIVE_VERSION = 189;
+// 190: a static grant to "(other) (colour) creatures you control" keeps its recipient (owner ruling
+// 2026-09-28, #711): Anger's haste and Unctus's loot link to every creature they apply to.
+export const DERIVE_VERSION = 190;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -679,6 +681,22 @@ function boundedGrantClass(s: SubjectFilter): boolean {
   const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
   return types.length === 1 && !WHOLE_BOARD_TYPES.has(types[0]!);
 }
+/** EVERY CREATURE YOU CONTROL IS A CLASS OF THE DECK FOR A STATIC GRANT (owner ruling 2026-09-28,
+ *  #711): Anger's haste, Unctus's granted loot link to each creature they apply to -- the #561
+ *  go-wide shape, and the #681 spell-grant one. A colour narrowing ("other blue creatures") counts.
+ *  Read from the recipient TEXT, not the parsed subject, because "nontoken", "tapped" and "attacking"
+ *  creatures parse to the same bare creature and stay refused; so do "all creatures" (anyone's
+ *  board) and a one-shot grant, which the ruling does not cover.
+ *
+ *  STATIC BY ITS VERB, not by a list of durations (review): a static grant says "have"/"has", a
+ *  one-shot one "gain(s)" whatever follows it -- "until end of turn", "until end of combat", or no
+ *  duration at all on an activated "{T}: Creatures you control gain haste". Singular or plural:
+ *  "each other creature you control has ward". One colour only; a colour LIST is left refused. */
+const EVERY_CREATURE_YOU_CONTROL = /^(?:each )?(?:other )?(?:(?:white|blue|black|red|green|colorless) )?creatures? you control$/i;
+const STATIC_GRANT_VERB = /\bcreatures? you control (?:have|has)\b/i;
+function everyCreatureYouControl(who: string, clauseText: string): boolean {
+  return EVERY_CREATURE_YOU_CONTROL.test(who.trim()) && STATIC_GRANT_VERB.test(clauseText);
+}
 /** Who LOSES abilities: "Creatures lose all abilities", "Enchanted creature loses all abilities". */
 const LOSES_ABILITIES = /^(.*?\S)\s+\bloses?\s+all\s+abilities\b/i;
 /** The same defect one verb over. `copy` records the copy SOURCE as its object -- Shapesharer's
@@ -868,7 +886,7 @@ function effectSubject(
         const spells = spellsYouCast(s, who, clauseText);
         if (spells) return spells as ReturnType<typeof parseSubject>;
       }
-      if (!boundedGrantClass(s)) return parseSubject("");
+      if (!boundedGrantClass(s) && !(action.verb === "grant-ability" && everyCreatureYouControl(who, clauseText))) return parseSubject("");
       return s;
     }
   }
