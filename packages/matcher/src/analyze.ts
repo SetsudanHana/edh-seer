@@ -945,11 +945,10 @@ export function analyzeDeckStructured(
     .map((dc) => cardSignalOf(dc.card, dc.tags!));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);
-  // TASK 9: `recommendedLands` (the Karsten regression) is called ONCE here and threaded to both
-  // `computeBuild` (the score, gated) and `computeDeckMath` below (the panel row) -- before this,
+  // TASK 9: `recommendedLands` (`mana-base.ts`'s `landTarget`) is called ONCE here and threaded to
+  // both `computeBuild` (the score) and `computeDeckMath` below (the panel row) -- before this,
   // `computeBuild` never saw this number at all and scored a flat 36 while the panel showed the
-  // regression's own answer, so the two disagreed about the same deck. `land-count.ts` stays the
-  // only place `karstenLands` itself runs.
+  // formula's own answer, so the two disagreed about the same deck.
   const landRec = recommendedLands(resolved, { commanderNames: [...commanderSet] });
   // A DECK'S COLOUR IDENTITY IS ITS COMMANDERS' (CR 903.4), never the union of the 99 -- an
   // off-identity card in a pasted list is an illegal card, not a sixth colour, and reading it as

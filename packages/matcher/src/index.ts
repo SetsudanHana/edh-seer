@@ -34,6 +34,10 @@ export {
 } from "./mana-audit.js";
 export { landInputs, recommendedLands, type LandRecommendation } from "./land-count.js";
 export {
+  colourMiss, colourSources, landTarget, manaBaseScore, tappedLandCount, LAND_FORMULA, MANA_BASE_COST,
+  SIMULATED_MAX_LANDS, SIMULATED_MIN_LANDS, type LandFormulaInputs, type ManaBaseScore,
+} from "./mana-base.js";
+export {
   cardCastability, deckCastability, type CardCastability, type DeckCastability,
 } from "./castability.js";
 export { detectWincons, focusIndex, winconReport, type WinconReport } from "./wincon.js";

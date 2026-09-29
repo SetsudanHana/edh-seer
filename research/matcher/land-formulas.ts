@@ -3,7 +3,8 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { detectBuildCategories, gatedLandsTarget } from "../../packages/matcher/src/build.js";
+import { karstenLands } from "@edh-seer/engine";
+import { detectBuildCategories } from "../../packages/matcher/src/build.js";
 import { landInputs, recommendedLands } from "../../packages/matcher/src/land-count.js";
 import { STANDARD_KEEP, pLandDrops } from "../../packages/matcher/src/mulligan.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
@@ -16,7 +17,8 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *  a formula that disagrees may be right about a deck nobody in this corpus built. Read it as a
  *  descriptive fit test.
  *
- *  Karsten is the incumbent (`land-count.ts`, a published regression). The other four come from
+ *  The shipped target is `mana-base.ts`'s `landTarget` (2026-09-29), which replaced Karsten's
+ *  published regression and its [28, 39] gate; Karsten is kept here, ungated, as a column. The other four come from
  *  community sources collected 2026-08-23 and are transcribed here verbatim from their posts, with
  *  every interpretation of an ambiguous term written down beside it.
  *
@@ -74,13 +76,11 @@ const FORMULAS: { name: string; source: string; f: (x: Facts) => number }[] = [
   { name: "Flat37", source: "37", f: () => 37 },
 ];
 
-function report(rows: { deck: string; facts: Facts; karsten: number }[]): void {
-  // THE INCUMBENT IS THE GATED TARGET, NOT RAW KARSTEN. `gatedLandsTarget` already refuses an
-  // extrapolation and falls back to the flat 36, so scoring the raw regression would measure a
-  // number the product never shows anyone. Both are reported: the gap between them IS the gate.
-  const cols = ["Gated", "KarstenRaw", ...FORMULAS.map((f) => f.name)];
+function report(rows: { deck: string; facts: Facts; shipped: number; karsten: number }[]): void {
+  // THE INCUMBENT IS WHAT THE PRODUCT SHOWS (`landTarget`), with Karsten's regression beside it.
+  const cols = ["Shipped", "KarstenRaw", ...FORMULAS.map((f) => f.name)];
   const preds = (r: typeof rows[number]): number[] =>
-    [gatedLandsTarget(r.karsten).target, r.karsten, ...FORMULAS.map((f) => Math.round(f.f(r.facts)))];
+    [r.shipped, r.karsten, ...FORMULAS.map((f) => Math.round(f.f(r.facts)))];
 
   console.log(`  ${"deck".padEnd(30)} ${"runs".padStart(4)} ${cols.map((c) => c.padStart(13)).join("")}`);
   for (const r of rows) {
@@ -101,7 +101,7 @@ function report(rows: { deck: string; facts: Facts; karsten: number }[]): void {
     const bias = d.reduce((a, b) => a + b, 0) / d.length;
     const within = abs.filter((v) => v <= 2).length;
     const all = rows.map((r) => preds(r)[i]);
-    const src = i === 0 ? "SHIPPED: karsten, flat 36 if outside" : i === 1 ? "published regression, ungated" : FORMULAS[i - 2].source;
+    const src = i === 0 ? "SHIPPED: landTarget (mana-base.ts)" : i === 1 ? "published regression, ungated" : FORMULAS[i - 2].source;
     console.log(
       `  ${cols[i].padEnd(16)} ${src.padEnd(32)} ${mae.toFixed(2).padStart(6)} ` +
       `${(bias >= 0 ? "+" : "") + bias.toFixed(2)}`.padStart(8) +
@@ -151,10 +151,10 @@ function report(rows: { deck: string; facts: Facts; karsten: number }[]): void {
  *  and no Commander deck can reach it. Spec §10.1. */
 const NEEDS = [3, 4] as const;
 
-function probabilityReport(rows: { deck: string; facts: Facts; karsten: number }[]): void {
-  const cols = ["Gated", ...FORMULAS.map((f) => f.name)];
+function probabilityReport(rows: { deck: string; facts: Facts; shipped: number; karsten: number }[]): void {
+  const cols = ["Shipped", ...FORMULAS.map((f) => f.name)];
   const preds = (r: typeof rows[number]): number[] =>
-    [gatedLandsTarget(r.karsten).target, ...FORMULAS.map((f) => Math.round(f.f(r.facts)))];
+    [r.shipped, ...FORMULAS.map((f) => Math.round(f.f(r.facts)))];
   const pct = (v: number): string => `${(v * 100).toFixed(1)}%`;
 
   for (const need of NEEDS) {
@@ -214,7 +214,7 @@ async function main(): Promise<void> {
   const store = await connect(loadConfig());
   const lookup = mongoLookup(store);
   const cardTags = createTagsLookup(store.db);
-  const rows: { deck: string; facts: Facts; karsten: number }[] = [];
+  const rows: { deck: string; facts: Facts; shipped: number; karsten: number }[] = [];
 
   for (const file of readdirSync(DECK_DIR).filter((f) => f.endsWith(".txt")).sort()) {
     const sections = parseDecklistSections(readFileSync(join(DECK_DIR, file), "utf8"));
@@ -232,13 +232,14 @@ async function main(): Promise<void> {
     const members = detectBuildCategories([...library]);
 
     const rec = recommendedLands(deck, { commanderNames: sections.commanders });
-    // Karsten's own inputs supply avgManaValue, so the curve every formula reads is the same one --
-    // an MDFC counts as a spell here too, and the formulas cannot disagree about the input.
+    // `landInputs` supplies avgManaValue, so the curve every formula reads is the same one, and the
+    // formulas cannot disagree about the input.
     const inputs = landInputs(deck, { commanderNames: sections.commanders });
 
     rows.push({
       deck: file.replace(/\.txt$/, ""),
-      karsten: rec.target,
+      shipped: rec.target,
+      karsten: Math.round(karstenLands({ ...inputs, mdfcUntapped: 0, mdfcTapped: 0 })),
       facts: {
         actual: rec.actual,
         avgManaValue: inputs.avgManaValue,

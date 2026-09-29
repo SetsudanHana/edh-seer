@@ -137,14 +137,14 @@ test("an answer row says how many of its answers exile, and how many recur", () 
 
 /** Fix F1 (task 9, controller review 2026-08-21): a landfall deck's `computeDeckMath` panel row and
  *  `computeBuild`'s score both apply `ARCHETYPE_TARGET_DELTAS.landfall`'s `lands: +4` on top of the
- *  identical gated Karsten target, so they can never again print two different numbers for "what
+ *  identical land target, so they can never again print two different numbers for "what
  *  this deck wants". This is the exact `rakdos-landfall` shape the review measured live: gated
  *  target 39, score's scored target 43 -- before the fix the panel stayed at 39. */
 test("a landfall deck's panel target and scored target agree, including the archetype delta", () => {
   const deck = fillTo(100, []);
   const rec: LandRecommendation = {
     avgManaValue: 3.2, rampPlusDraw: 0, fastMana: 0, commanders: 1,
-    mdfcUntapped: 0, mdfcTapped: 0, actual: 39, target: 39, // inside [28, 39]: the gate reads 'derived'
+    mdfcUntapped: 0, mdfcTapped: 0, actual: 39, commanderManaValue: 0, target: 39,
   };
 
   const scoredTarget = computeBuild(deck, "landfall", rec.target)
@@ -163,6 +163,11 @@ test("a landfall deck's panel target and scored target agree, including the arch
   expect(noPrimary.lands.archetypeDelta).toBe(0);
   expect(noPrimary.lands.archetypeLabel).toBeUndefined();
   expect(noPrimary.lands.target).toBe(39);
+  // The mana base is scored against the SAME target the row prints, delta included: a landfall deck
+  // at 39 against 43 pays for four short, the plain one at 39 against 39 for none.
+  expect(dm.lands.manaBase!.target).toBe(43);
+  expect(dm.lands.manaBase!.costs.count).toBeGreaterThan(0);
+  expect(noPrimary.lands.manaBase!.costs.count).toBe(0);
 });
 
 test("answer rows carry their colour pool -- says how many answers of the class the deck's colours can supply at all", () => {

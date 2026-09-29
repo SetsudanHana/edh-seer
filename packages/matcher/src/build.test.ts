@@ -309,39 +309,33 @@ test("lands counts copies, not distinct names (basics don't collapse to 1)", () 
   expect(suggestions.some((s) => /Lands 1 —/.test(s))).toBe(false);
 });
 
-// TASK 9 (owner, 2026-08-21): `computeBuild`'s third argument is `land-count.ts`'s own rounded
-// Karsten target, threaded in from `analyze.ts` rather than recomputed here -- these tests exercise
-// `gatedLandsTarget`'s decision directly through `computeBuild`, which is where the score is made.
-test("computeBuild scores the derived land target when it falls inside the regression's tested range", () => {
-  const { buildCategories, landsTargetSource } = computeBuild([], undefined, 34); // inside [28, 39]
+// TASK 9 (owner, 2026-08-21): `computeBuild`'s third argument is `land-count.ts`'s own land target,
+// threaded in from `analyze.ts` rather than recomputed here.
+test("computeBuild scores the derived land target it is given", () => {
+  const { buildCategories, landsTargetSource } = computeBuild([], undefined, 34);
   expect(landsTargetSource).toBe("derived");
   expect(buildCategories.find((c) => c.category === "lands")!.target).toBe(34);
 });
 
-test("computeBuild falls back to the flat convention when the derived target extrapolates past the tested range", () => {
-  // 50: izzet-big-mana's own witness in the task brief (avgManaValue 5.98 -> 50 lands in a 99-card
-  // deck), well past the top published arm (39).
-  const { buildCategories, landsTargetSource } = computeBuild([], undefined, 50);
+/** THE GATE IS GONE (2026-09-29). It refused anything outside [28, 39] and scored 36 instead, which
+ *  answered izzet-big-mana's 45-land curve with 36 -- the worst of every option the goldfish
+ *  measured. `landTarget` clamps to its own simulated range, so a 45 is scored as a 45. */
+test("computeBuild scores a high land target as itself, not as the flat convention", () => {
+  const { buildCategories, landsTargetSource } = computeBuild([], undefined, 45);
+  expect(landsTargetSource).toBe("derived");
+  expect(buildCategories.find((c) => c.category === "lands")!.target).toBe(45);
+});
+
+test("computeBuild falls back when no derived target is supplied at all", () => {
+  const { landsTargetSource, buildCategories } = computeBuild([], undefined);
   expect(landsTargetSource).toBe("flat");
   expect(buildCategories.find((c) => c.category === "lands")!.target).toBe(36); // BASE_TARGETS.lands
 });
 
-test("computeBuild falls back when no derived target is supplied at all", () => {
-  const { landsTargetSource } = computeBuild([], undefined);
-  expect(landsTargetSource).toBe("flat");
-});
-
-test("the tested range's boundary values, 28 and 39, are INSIDE it -- not fencepost exclusions", () => {
-  expect(computeBuild([], undefined, 28).landsTargetSource).toBe("derived"); // lower published arm
-  expect(computeBuild([], undefined, 39).landsTargetSource).toBe("derived"); // upper published arm
-  expect(computeBuild([], undefined, 27).landsTargetSource).toBe("flat"); // one below the floor
-  expect(computeBuild([], undefined, 40).landsTargetSource).toBe("flat"); // one above the ceiling
-});
-
 test("landfall's +4 delta still applies on top of a DERIVED land target, not only the flat one", () => {
-  // The regression reads castability (curve, ramp, fast mana); it has no term for how often a
+  // The land formula reads the curve, the commander and cheap ramp; it has no term for how often a
   // landfall payoff wants to see a land drop, so the delta is not double-counting a fact the
-  // regression can already see -- see adjustedTargets's doc comment for the full argument.
+  // formula can already see -- see adjustedTargets's doc comment for the full argument.
   const derived = computeBuild([], undefined, 34).buildCategories.find((c) => c.category === "lands")!.target;
   const landfall = computeBuild([], "landfall", 34).buildCategories.find((c) => c.category === "lands")!.target;
   expect(derived).toBe(34);

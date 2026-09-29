@@ -349,7 +349,7 @@ function synergyFinding(report: DeckReport): Finding | null {
   };
 }
 
-/** LANDS AGAINST THE REGRESSION'S OWN TARGET. Both directions are a finding — a deck four lands
+/** LANDS AGAINST THE MODEL'S OWN TARGET. Both directions are a finding — a deck four lands
  *  under floods out on spells it cannot cast, and one four over draws lands instead of action —
  *  which is why this is the one source whose shortfall is an ABSOLUTE distance from target.
  *
@@ -359,9 +359,8 @@ function synergyFinding(report: DeckReport): Finding | null {
  *  more lands than its curve needs (chapter 6's finding). Three of three judges filed it, one as
  *  *"same deck, same model, opposite verdicts"*.
  *
- *  The band wins, and this finding's own body is the argument for it: the published formulas
- *  disagree with each other by about four lands on the same deck, so a one-land deviation is not a
- *  finding, it is the instrument's resolution. One threshold, imported from the same constant the
+ *  The band wins, and the simulation behind the target is the argument for it: one to three lands
+ *  off costs about 0.03 turns in every 10, which is below what the model can resolve. One threshold, imported from the same constant the
  *  dial reads, so the two cannot drift apart again. */
 function landFinding(report: DeckReport): Finding | null {
   const lands = report.deckMath?.lands;
@@ -376,8 +375,11 @@ function landFinding(report: DeckReport): Finding | null {
       ? `You are running ${delta} more ${delta === 1 ? "land" : "lands"} than this curve needs.`
       : `You are ${-delta} ${delta === -1 ? "land" : "lands"} short.`,
     detail: `${lands.actual} lands against a modelled ${lands.target}, at an average cost of `
-      + `${lands.avgManaValue.toFixed(2)}. Land counts are a model and the published formulas `
-      + "disagree with each other by about four lands on the same deck.",
+      + `${lands.avgManaValue.toFixed(2)}. `
+      + (lands.manaBase
+        ? `That costs about ${lands.manaBase.costs.count.toFixed(1)} turns in every 10 to missed land drops and dead land draws. `
+        : "")
+      + "Within three lands of the model the difference is too small to measure.",
     figure: `${lands.actual}/${lands.target}`,
     figureLabel: "lands",
     filled: Math.min(1, lands.actual / lands.target),

@@ -163,7 +163,7 @@ test("a partial hole is named as a hole, not generalised", () => {
 
 test("lands are a finding in BOTH directions", () => {
   const lands = (actual: number) => ({
-    lands: { actual, target: 36, avgManaValue: 3.29, targetSource: "flat", rawTarget: 40, archetypeDelta: 0, rampPlusDraw: 6, fastMana: 0, mdfc: 0 },
+    lands: { actual, target: 36, avgManaValue: 3.29, targetSource: "derived", rawTarget: 36, archetypeDelta: 0, rampPlusDraw: 6, fastMana: 0, mdfc: 0 },
   }) as DeckReport["deckMath"];
   expect(findings(report({ deckMath: lands(30) }))[0].headline).toContain("short");
   expect(findings(report({ deckMath: lands(42) }))[0].headline).toContain("more");
@@ -172,8 +172,8 @@ test("lands are a finding in BOTH directions", () => {
   // reads anything within `LAND_BAND` as on-band (labelled "inside the model's ±3" since
   // 2026-09-22, "on the modelled count" only at zero); this used to fire on any non-zero
   // delta, so a deck at 38 against 36 was simultaneously on the modelled count and two lands over.
-  // Three of three judges filed it. The band wins, and this finding's own body is the argument:
-  // the published formulas disagree by about four lands on the same deck.
+  // Three of three judges filed it. The band wins: one to three lands off costs about 0.03 turns in
+  // every 10 in the goldfish behind the target, below what it can resolve.
   expect(findings(report({ deckMath: lands(38) })), "38 vs 36 is inside the band").toEqual([]);
   expect(findings(report({ deckMath: lands(39) })), "39 vs 36 is on the band edge").toEqual([]);
   expect(findings(report({ deckMath: lands(40) }))[0].headline).toContain("more");
