@@ -508,7 +508,7 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
       out.push({ verb: "enters", subject: {
         control: e.subject.control, token: null, zone: "graveyard",
         ...(e.subject.self === true ? { self: true } : {}),
-      } });
+      }, ...(e.verb === "mill" ? { milled: true as const } : {}) });
     } else if (e.verb === "dies" && e.subject.token !== true) {
       // A DEATH fills the graveyard with a typed card; a `leaves` does not -- a flicker, a bounce
       // or an exile moved the permanent anywhere but a graveyard (CR 700.4), and until 2026-09-05

@@ -50,7 +50,7 @@
       "a": "Misty Rainforest",
       "b": "Yuna, Grand Summoner",
       "class": "intervening-if",
-      "why": "STILL CLAIMED on the shipped engine as of 2026-09-07. Yuna reads '...is put into a graveyard from the battlefield, IF IT HAD ONE OR MORE COUNTERS ON IT'. A sacrificed fetchland carries none, so the intervening-if is not being applied. \u2014 FIXED 2026-09-20 (AL4): the condition is a refusal when the producer IS the dying thing and cannot carry a counter. Banked here so a regression fails the compass.",
+      "why": "STILL CLAIMED on the shipped engine as of 2026-09-07. Yuna reads '...is put into a graveyard from the battlefield, IF IT HAD ONE OR MORE COUNTERS ON IT'. A sacrificed fetchland carries none, so the intervening-if is not being applied. — FIXED 2026-09-20 (AL4): the condition is a refusal when the producer IS the dying thing and cannot carry a counter. Banked here so a regression fails the compass.",
       "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
       "tag": "dies:permanent"
     },
@@ -161,6 +161,15 @@
       "source": "owner ruling 2026-09-28 (compass misses)",
       "verified": true,
       "tag": "enters:creature"
+    },
+    {
+      "a": "Takenuma, Abandoned Mire",
+      "b": "Emry, Lurker of the Loch",
+      "class": "generic",
+      "why": "Owner verdict 2026-09-28 (lost-pair re-judge): a random mill of three does not promise an artifact card for Emry's artifact recursion. A chosen discard does (Frantic Search -> Torrential Gearhulk is REAL); a mill feeding a LAND recursion is real on the compass (Ark of Hunger -> Life from the Loam). Guards the #716 gate.",
+      "source": "owner verdict 2026-09-28 (#716)",
+      "verified": true,
+      "tag": "graveyard-recursion:artifact"
     }
   ],
   "knownDefects": [],

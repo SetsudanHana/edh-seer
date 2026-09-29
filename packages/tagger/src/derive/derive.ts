@@ -212,7 +212,10 @@ import { emblemRecipient } from "../emblem.js";
 // 192: #715 -- "reveal until you reveal a <class> card ... put that card onto the battlefield" types
 // the put with that class (Descendants' Fury); a zone-less "return it to the battlefield" after an
 // exile in the same clause is a flicker (Jill, Shiva's Dominant).
-export const DERIVE_VERSION = 192;
+// 193: #716 -- a targeted destroy whose controller gets copies back is aimed at your own creature
+// (Saw in Half, owner ruling #513); an object naming "in/from ... graveyard" sets a missing fromZone
+// (Emry, Lurker of the Loch's cast from your graveyard is recursion).
+export const DERIVE_VERSION = 193;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1051,6 +1054,8 @@ function printedTriggerPhrase(text: string, subjectText: string): string {
  *  overridden. `sacrifice` is absent on purpose: a sacrifice outlet eats YOUR creatures, and that is
  *  the aristocrats edge this engine most wants to find. */
 const REMOVAL_VERBS = new Set(["destroy", "exile"]);
+/** Same words as `rules.json`'s `controllerGetsCopies` (matcher), which the tagger cannot import. */
+const CONTROLLER_GETS_COPIES = /its controller creates [^.]{0,40}tokens? that (?:are|is a) cop(?:y|ies) of/i;
 
 /** AN ACTION WITH NO PLAYER NAMED IS THE CONTROLLER'S (CR 111.2; `subject.ts` already says this is
  *  where "you draw" comes from, and never applied it). "Draw a card", "you may cast that card",
@@ -1070,6 +1075,9 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
  *  an opponent controls dies" (owner-judged FALSE). The type stays the pronoun's own; only an
  *  unstated controller is inherited. */
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
+/** "…card in your graveyard" / "…from a graveyard": an object that names its zone (#716, Emry). */
+const ZONE_MOVING_VERBS: ReadonlySet<string> = new Set(["cast", "play", "return", "put", "exile"]);
+const OBJECT_IN_GRAVEYARD = /\b(?:in|from) (?:your|a|an opponent's|target player's|their) graveyard\b/i;
 /** "…, then return it to the battlefield…" after an exile in the same clause (#715, Jill). */
 const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|that card|those cards) to the battlefield\b/i;
 /** "…until you reveal a creature card…": the class a reveal-until dig puts somewhere (#715). */
@@ -1287,6 +1295,16 @@ export function deriveAbilities(
     // ONE return only (review): with two, nothing says which one the words describe.
     if (acts.some((a) => a.verb === "exile") && acts.filter((a) => a.verb === "return").length === 1 && RETURN_TO_BATTLEFIELD.test(clauseText)) {
       clause = { ...clause, actions: acts.map((a) => a.verb === "return" && !a.toZone && !a.fromZone ? { ...a, fromZone: "exile", toZone: "battlefield" } : a) };
+    }
+    // THE ZONE THE OBJECT NAMES WHEN THE MODEL GAVE NONE (#716): Emry, Lurker of the Loch's "cast
+    // target artifact card IN YOUR GRAVEYARD" came back with `fromZone: null`, so the cast from a
+    // graveyard -- recursion -- read as a plain cast and Mnemonic Sphere's self-sacrifice fed nothing.
+    // Only a verb that MOVES a card out of a zone (review): a count ("for each card in your
+    // graveyard") names the graveyard without taking anything from it.
+    const zoneless = (a: { verb?: string; fromZone?: string | null; object?: string }) =>
+      !a.fromZone && ZONE_MOVING_VERBS.has(a.verb ?? "") && OBJECT_IN_GRAVEYARD.test(a.object ?? "");
+    if ((clause.actions ?? []).some(zoneless)) {
+      clause = { ...clause, actions: (clause.actions ?? []).map((a) => zoneless(a) ? { ...a, fromZone: "graveyard" } : a) };
     }
     // A QUOTED GRANT THE MODEL LEFT WITHOUT AN ACTION (#711): Enduring Vitality's `Creatures you
     // control have "{T}: Add one mana of any color."` came back as a static clause with no actions,
@@ -1745,8 +1763,14 @@ export function deriveAbilities(
         // ...EXCEPT AN EXILE FROM YOUR OWN GRAVEYARD (recall v6 #172): Lazotep Quarry's "exile
         // target creature card ... from your graveyard" is aimed at nothing but yours.
         const own = action.fromZone === "graveyard" && exilesOwnGraveyard(action.object ?? "", clauseText);
+        // ...AND A DESTROY WHOSE CONTROLLER GETS COPIES BACK (owner ruling 2026-09-27, #513/#716): Saw
+        // in Half is played on your own creature, so the creature that dies is yours and Vengeful
+        // Bloodwitch drains. Read off the whole card, the copies being the next sentence -- the same
+        // test `rules.json`'s `controllerGetsCopies` makes for the removal role.
+        // THE CLAUSE, not the card (review): a modal card's other destroy mode stays removal.
+        const yours = own || CONTROLLER_GETS_COPIES.test(clauseText);
         for (const e of emits) {
-          if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = own ? "you" : "opp";
+          if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = yours ? "you" : "opp";
         }
       }
       // WHAT YOU PUT ONTO THE BATTLEFIELD ENTERS UNDER YOUR CONTROL (CR 110.2a: "If an effect
