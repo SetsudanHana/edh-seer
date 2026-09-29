@@ -37,6 +37,10 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
   const peek = usePeekState();
   // THE FLIP IS THE PAGE'S, NOT THE PICTURE'S (owner, 2026-09-08): the ability rows turn with it.
   const [back, setBack] = useState(false);
+  // ONLY WHERE THE MIDDLE IS SHORT: a card with no partner list (Sol Ring, "counts toward your
+  // Ramp total") has one paragraph there. A card with partners fills the middle with its map and
+  // list, which a third column would only narrow.
+  const readsBeside = surface === "card" && page.partners.length === 0;
   const faceView = { face: back && page.backArtCrop ? 1 : 0, names: page.name.split(" // ") };
   // THE MARK IS CHROME, NEVER PROSE (owner's rule, 2026-09-20: "if it is part of the whole sentence
   // then do not replace it, but if we have the top search, then I would replace that"). A tab is a
@@ -62,7 +66,12 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
       * on the right, a text-only card left its image stranded ~850px from the words at 1920px. On the
       * left the image sits beside the title the way Scryfall lays a card out, and the content keeps
       * every column the width buys -- the no-cap ruling above still holds. */}
-    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-x-10 lg:items-start">
+    {/* THE READING BESIDE THE PROSE FROM 1920, ON A CARD WITH NO PARTNER LIST (designer review
+      * 2026-09-29): Sol Ring's page was the image, one column of prose ending near 1080px, and three
+      * quarters of a 3840 screen blank; "How we read this card" sat stacked under the image. From
+      * 120rem it takes a third column beside the prose. Not on the commander page, whose own content
+      * is two columns from there. */}
+    <article className={`flex flex-col gap-10 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-x-10 lg:items-start ${readsBeside ? "min-[120rem]:grid-cols-[20rem_minmax(0,68ch)_minmax(0,32rem)]" : ""}`}>
       <div className="flex flex-col gap-8 min-w-0 lg:col-start-2 lg:row-start-1">
         <header className="flex flex-col gap-3">
           {/* THE PAGE'S ONE `h1` (owner, 2026-09-17); the wordmark in the shell is a link. */}
@@ -101,7 +110,7 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
           : (<>
             <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} back={back} onFlip={() => { setBack((b) => !b); }} />
             {railExtra}
-            <div className="hidden lg:flex lg:flex-col gap-3">
+            <div className={`hidden lg:flex lg:flex-col gap-3 ${readsBeside ? "min-[120rem]:hidden" : ""}`}>
               {/* A label, not a heading: the rail is the card's, and a screen reader's heading list
                 *  should carry the page's sections, not the rail's captions (cohesion sweep). */}
               <p className="eyebrow text-(--muted)">how we read this card</p>
@@ -112,6 +121,13 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
             </div>
           </>)}
       </aside>
+      {readsBeside && peek.stack.length === 0 ? (
+        <section aria-label="How we read this card" className="hidden min-[120rem]:flex min-[120rem]:col-start-3 min-[120rem]:row-start-1 flex-col gap-3">
+          <p className="eyebrow text-(--muted)">how we read this card</p>
+          <EngineReading clauses={page.clauses} abilities={page.abilities} rarity={page.rarity}
+            grouped={new Set(page.partners.map((r) => r.event))} headless />
+        </section>
+      ) : null}
     </article>
     </FaceContext.Provider>
     </PeekContext.Provider>

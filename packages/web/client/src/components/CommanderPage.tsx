@@ -145,6 +145,13 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
       railExtra={pair ? <CardArt artCrop={pair.artCrop} backArtCrop={pair.backArtCrop} name={pair.name} /> : undefined}
     >
 
+      {/* THE MAP BESIDE THE FACTS FROM 1920 (designer review 2026-09-29): every block stopped at
+        *  ~1070px, 27% of a 3840 screen, and the map started at the fold below all of it. From
+        *  120rem the facts, the pairings and the "Works well with" lead sit in a 68ch column, the map
+        *  beside them from the top; the list of partners follows at full width. Below that, the
+        *  order is unchanged. */}
+      <div className="flex flex-col gap-8 min-[120rem]:grid min-[120rem]:grid-cols-[minmax(0,68ch)_minmax(0,1fr)] min-[120rem]:gap-x-10 min-[120rem]:items-start">
+      <div className="flex flex-col gap-8 min-w-0">
       {/* ONE LINE, NOT A PANEL. It was a ~1,000px surface holding two items and ~30px of content,
         * and both of them were kickers -- "ITS EVENTS POINT AT" stacked above "Tokens" -- which is
         * the one typographic rule this system names outright: a label pairs INLINE with its value or
@@ -261,7 +268,6 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         </div>
       </details>
 
-      <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
           <h2 className="text-2xl font-bold tracking-[-0.01em]">Works well with</h2>
           <p className="text-(--muted) max-w-[65ch]">
@@ -271,6 +277,8 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
             {fallback ? " The pair's own list was not built; showing each card's own." : ""}
           </p>
         </div>
+      </div>
+      <div className="min-w-0">
         {/* A NEW PICTURE PER LIST: the pair and the colour change which list this is, and a map
           *  that kept the last list's cards drew them as faint leftovers. */}
         <PageMap key={`${withSlug ?? ""}|${pair ? "pair" : ""}|${colour ?? ""}`} page={page} slug={slug} rows={ranked.partners} base="/commanders"
@@ -280,6 +288,8 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           // THE COUNT SAYS WHAT IT COUNTS (persona round, 2026-09-27: 34 on the card page, 30 here,
           // for the same card, read as the site disagreeing with itself).
           countNote={`that a deck led by ${page.name.split(",")[0]}${pair ? ` and ${pair.name.split(",")[0]}` : ""} can play`} />
+      </div>
+      </div>
         <PartnerList
           subject={page.name}
           // THE SCOPE THE COUNTS WERE TAKEN AT (AJ5), handed to the link under them: `key` is the
@@ -293,7 +303,6 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
             ? "No pairings yet: we couldn't read this card's text, so there is nothing to rank them by."
             : "No standout pairings in these colours. Whatever this commander helps, hundreds of other cards help just as well, or none of the possible pairings held up."}
         />
-      </section>
 
     </CardShell>
   );
