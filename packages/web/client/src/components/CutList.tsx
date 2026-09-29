@@ -84,7 +84,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
                 : <>Every card here fills a role or works with your themes, so the {over} have to come from {hasSurplus ? "a role you run more of than you need, below, or from " : ""}the cards you like least.</>}
           </p>
           {toCut.length ? (
-            <ol className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
+            <ol className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,25rem),1fr))]">
               {toCut.map((c) => <CutCard key={c.name} c={c} />)}
             </ol>
           ) : null}
@@ -105,7 +105,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
           {clear.length ? (
             <section aria-labelledby="cuts-clear" className="flex flex-col gap-2">
               <h4 id="cuts-clear" className="text-base font-semibold">Nothing argues for keeping these</h4>
-              <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
+              <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,25rem),1fr))]">
                 {clear.map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
               </ul>
             </section>
@@ -113,7 +113,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
           {maybe.length ? (
             <section aria-labelledby="cuts-maybe" className="flex flex-col gap-2">
               <h4 id="cuts-maybe" className="text-base font-semibold">{clear.length ? "Weak here, but something argues for them" : "The weakest here, though something argues for each"}</h4>
-              <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
+              <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,25rem),1fr))]">
                 {maybe.slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
               </ul>
               {maybe.length > maybeN ? (
@@ -130,7 +130,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
       {roleSwaps.length ? (
         <section aria-labelledby="cuts-role-swaps" className="flex flex-col gap-2 pt-2">
           <h4 id="cuts-role-swaps" className="text-base font-semibold">Better cards for the same job</h4>
-          <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
+          <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,25rem),1fr))]">
             {roleSwaps.map((p) => (
               <li key={p.cut} className="flex flex-col gap-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm" data-testid="role-swap">
                 <p className="flex items-center gap-2"><span><span className="text-(--muted)">Out: </span><CardName name={p.cut} /></span><CardMenuButton name={p.cut} className="ml-auto" /></p>

@@ -519,7 +519,8 @@ function DeckMathRows({
           *  clock turn, which asked nearly every deck for about five of every kind and so told
           *  every deck it was short. What a player can act on is which of their cards answer what,
           *  and how often one is in hand: the count, the chance, and the names. */}
-        <ul className="flex flex-col gap-2.5 max-w-3xl">
+        {/* AS MANY COLUMNS OF ANSWER ROWS AS THE WIDTH HOLDS (#770), not one capped column. */}
+        <ul className="grid gap-2.5 gap-x-12 sm:grid-cols-[repeat(auto-fill,minmax(24rem,1fr))]">
           {answers.map((a) => {
             const none = a.count === 0;
             // The mode sub-counts (design §7): a zero is the finding on a row that HAS answers --

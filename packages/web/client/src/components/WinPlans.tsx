@@ -54,7 +54,7 @@ export function WinPlans({ wincons, routes, pressure, model }: {
         {fastest ? <>Fastest: {fastest.label}, around <b>turn {fastest.turn}</b>{fastest.kind === "combo" ? " at the earliest" : ""}. </> : null}
         {lean}
       </p>
-      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 max-w-2xl" role={pickable ? "group" : undefined} aria-label={pickable ? "Pick a plan" : undefined}>
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3" role={pickable ? "group" : undefined} aria-label={pickable ? "Pick a plan" : undefined}>
         {classes.map((c) => <Tile key={c.class} plan={c} route={routes ? routeOf(c.class) ?? null : undefined}
           picked={pickable && c.class === plan.class} onPick={pickable ? () => setPicked(c.class) : undefined} />)}
       </div>

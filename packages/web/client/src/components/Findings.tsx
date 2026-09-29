@@ -104,9 +104,11 @@ export function Findings({ report, diff, suggestions }: {
     return <SuggestedCards cards={listed.get(f.id)} empty={EMPTY[f.kind] ?? ""} label="Cards that fit" />;
   };
   return (
-    // 64rem: at 1920px a fix's headline and its figure ("10/13") sat 1,500px apart, and the figure
-    // is what the headline is about (UI review 2026-09-25).
-    <section className="flex flex-col gap-3 max-w-5xl">
+    // A FIX'S HEADLINE STAYS NEAR ITS FIGURE by the columns, not by a cap (#770): at 1920px an
+    // uncapped row put "10/13" 1,500px from its headline (UI review 2026-09-25), and the 64rem cap
+    // that fixed it left most of a wide screen empty. Two columns of fixes at 2xl keep each row
+    // about 800px wide.
+    <section className="flex flex-col gap-3">
       <div className="flex items-baseline gap-3 flex-wrap">
         {/* "What is wrong with this deck" under a chapter titled "Fixes" was the same heading
           *  twice (T1). The count beside it is what this line is actually for. */}
@@ -121,7 +123,7 @@ export function Findings({ report, diff, suggestions }: {
           {all.length + unseen.length === 1 ? "suggestion" : "suggestions"}, biggest payoff first
         </span>
       </div>
-      {all.length > 0 ? <ul className="flex flex-col border-t border-(--separator)">
+      {all.length > 0 ? <ul className="grid grid-cols-1 2xl:grid-cols-2 2xl:gap-x-12 border-t border-(--separator)">
         {shown.map((f, i) => (
           <li
             key={f.id}

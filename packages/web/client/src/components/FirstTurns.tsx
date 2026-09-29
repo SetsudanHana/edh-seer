@@ -27,15 +27,15 @@ export function FirstTurns({ model }: { model: Model }) {
   const lastStep = steps.at(-1)!;
   const step = steps.find((s) => s.turn === turn) ?? steps[0]!;
   return (
-    <div className="flex flex-col gap-3" data-testid="first-turns">
-      <h3 className="eyebrow text-(--foreground)">Your first {FIRST_TURNS} turns</h3>
+    <section aria-labelledby="first-turns-title" className="flex flex-col gap-3" data-testid="first-turns">
+      <h3 id="first-turns-title" className="eyebrow text-(--foreground)">Your first {FIRST_TURNS} turns</h3>
       <p className="text-sm max-w-[65ch]" data-testid="first-turns-headline">
         {third ? <>By turn 3 you can cast <b>{third.castable} of your {nonland} spells</b>, and by turn {lastStep.turn}, {lastStep.castable}.</> : null}
         {commander?.turn !== undefined
           ? <> Your commander, <CardName name={commander.name} /> ({commander.manaValue} mana), comes down on <b>turn {commander.turn}</b> in half your games.</>
           : commander ? <> Your commander, <CardName name={commander.name} />, costs {commander.manaValue}: more than the deck typically has by turn 8.</> : null}
       </p>
-      <div className="flex flex-col gap-2 max-w-2xl">
+      <div className="flex flex-col gap-2">
         <div className="grid grid-cols-5 gap-1.5" role="group" aria-label="Pick a turn">
           {steps.map((s) => (
             <Tile key={s.turn} step={s} on={s.turn === turn} commander={commander?.turn === s.turn}
@@ -53,7 +53,7 @@ export function FirstTurns({ model }: { model: Model }) {
         </div>
       </div>
       <TurnCards step={step} commanderHere={commander?.turn === step.turn ? commander.name : undefined} />
-    </div>
+    </section>
   );
 }
 

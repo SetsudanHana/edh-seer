@@ -113,7 +113,9 @@ async function usedWidth(page: Page): Promise<{ viewport: number; sections: { na
     const vw = document.documentElement.clientWidth;
     const roots = [...document.querySelectorAll<HTMLElement>("main section, main [data-chapter], main > *")]
       .filter((el, i, all) => all.indexOf(el) === i && el.getBoundingClientRect().height > 80);
-    const sections = roots.map((el) => {
+    // Inline, not a named function: tsx names a `const f = () => {}` with a `__name` helper that
+    // does not exist inside the page.
+    const boxes = roots.map((el) => {
       let lo = Infinity, hi = -Infinity;
       for (const d of [el, ...el.querySelectorAll<HTMLElement>("*")]) {
         const r = d.getBoundingClientRect();
@@ -126,6 +128,22 @@ async function usedWidth(page: Page): Promise<{ viewport: number; sections: { na
         lo = Math.min(lo, Math.max(0, r.left));
         hi = Math.max(hi, Math.min(vw, r.right));
       }
+      const r = el.getBoundingClientRect();
+      return { lo, hi, top: r.top, bottom: r.bottom };
+    });
+    // A SECTION IS JUDGED WITH ITS ROW (#770). Two sections side by side in a grid each span half
+    // the screen, and together they fill it; scored alone, a well-used two-column row read as two
+    // empty bands. So a section's extent is joined with every section beside it: one that overlaps
+    // it vertically and neither holds nor sits inside it.
+    const sections = roots.map((el, i) => {
+      let { lo, hi } = boxes[i]!;
+      const b = boxes[i]!;
+      roots.forEach((other, j) => {
+        const o = boxes[j]!;
+        if (j === i || other.contains(el) || el.contains(other) || o.hi <= o.lo) return;
+        if (Math.min(b.bottom, o.bottom) - Math.max(b.top, o.top) <= 0) return;
+        lo = Math.min(lo, o.lo); hi = Math.max(hi, o.hi);
+      });
       const name = el.id || el.getAttribute("aria-label") || el.dataset.chapter
         || el.querySelector("h1,h2,h3")?.textContent?.trim().slice(0, 40) || el.tagName.toLowerCase();
       return { name, used: hi > lo ? Math.round(((hi - lo) / vw) * 100) / 100 : 0 };

@@ -52,7 +52,8 @@ test("every CSS custom property a component names is defined in index.css", () =
     for (const token of named) {
       if (defined.has(token) || FOREIGN.test(token)) continue;
       // A file may define its own local token; `index.css` is the shared one but not the only one.
-      if (new RegExp(`${token}\\s*:`).test(body)) continue;
+      // In a stylesheet (`--x: 1`) or as an inline style's key (`style={{ "--x": 1 }}`).
+      if (new RegExp(`${token}"?\\s*:`).test(body)) continue;
       missing.set(token, [...(missing.get(token) ?? []), file.slice(CLIENT_SRC.length)]);
     }
   }

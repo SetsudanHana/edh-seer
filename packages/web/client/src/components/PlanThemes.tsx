@@ -54,7 +54,7 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
   const top = Math.max(1, ...m.groups.map(size));
   if (!m.totalLinks) return null;
   return (
-    <section aria-labelledby="plan-themes" className="flex flex-col gap-3 max-w-5xl">
+    <section aria-labelledby="plan-themes" className="flex flex-col gap-3">
       <h3 id="plan-themes" className="text-lg font-semibold">What your deck does</h3>
       {/* NO GROUP IS THE MAIN THEME: said, not left as two unrelated names on two chapters. */}
       {main && !matched ? (
@@ -63,7 +63,8 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
       {/* ONE ROW PER THEME (owner, 2026-09-27: "less is more", "rely more on data visualisation than
         *  the text"). Each theme was a card of images, chips and sentences, three of them 1,800px
         *  tall; now a bar and its key cards, and the rest on a tap. */}
-      <ul className="flex flex-col" aria-label="Themes">
+      {/* TWO COLUMNS OF THEMES ON A WIDE SCREEN (#770): a row's bar stays about 800px long. */}
+      <ul className="grid grid-cols-1 2xl:grid-cols-2 2xl:gap-x-12 2xl:items-start" aria-label="Themes">
         {roots.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} main={main} top={top} also={folded.get(g.tag) ?? []} />)}
       </ul>
       {helpers.length ? (

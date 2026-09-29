@@ -280,8 +280,12 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
                 lead={<RecognitionPanel data={data} part="identity" />} />
             </section>
           ) : <RecognitionPanel data={data} part="identity" />}
-          {talk ? <TableTalkLine talk={talk} /> : null}
-          <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" />
+          {/* SIDE BY SIDE ON A WIDE SCREEN (#770): the line for the table and the verdict with the card
+            *  counts are two short blocks, and stacked they filled a third of a 2560 screen. */}
+          <div className="grid gap-8 2xl:grid-cols-2 2xl:items-start">
+            {talk ? <TableTalkLine talk={talk} /> : null}
+            <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" />
+          </div>
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one
             *  scroll there is no "above the tabs" left, so the FIGURE rides the sticky header on
@@ -362,7 +366,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             // No title of its own: its sections are headed "Your first 5 turns", "How you win" and
             // "What your cards are waiting for" already.
             <Movement count={unmetDemand ? "its first turns, how it wins, and what its cards are still waiting for" : "its first turns, and how it wins"}>
-              <div className="max-w-5xl flex flex-col gap-8">
+              {/* TWO COLUMNS ON A WIDE SCREEN (#770): the first turns beside how it wins, where one
+                *  1024px column left most of a 2560 screen empty. */}
+              <div className="grid gap-8 2xl:grid-cols-2 2xl:items-start">
                 {/* THE TURNS AS TILES, AND ONE TURN'S CARDS AT A TIME. */}
                 {turns ? <FirstTurns model={turns} /> : null}
                 <HowYouWin report={report} manaValueOf={manaValueOf} model={themes} />
@@ -370,14 +376,16 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
                   *  more"). With every demand met it said "everything your cards care about, something in
                   *  the deck causes" under a second copy of the turn-7 line: nothing to act on. */}
                 {unmetDemand ? (
-                  <BuildBenchmarks
-                    categories={report.buildCategories}
-                    parents={report.buildParents}
-                    deckMath={report.deckMath}
-                    answerCoverage={report.answerCoverage}
-                    sections={["waiting"]}
-                    showBenchmarks={false}
-                  />
+                  <div className="2xl:col-span-2">
+                    <BuildBenchmarks
+                      categories={report.buildCategories}
+                      parents={report.buildParents}
+                      deckMath={report.deckMath}
+                      answerCoverage={report.answerCoverage}
+                      sections={["waiting"]}
+                      showBenchmarks={false}
+                    />
+                  </div>
                 ) : null}
               </div>
             </Movement>
@@ -447,7 +455,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         <Chapter id="roles" title={title("roles")}>
           {/* THE FIVE ROLES AS BARS, FIRST (owner, 2026-09-27): the Build score's inputs, moved here from
             *  under its dial, where they counted the same cards a chapter before these shelves. */}
-          <div className="max-w-5xl"><RoleBars data={data} /></div>
+          <RoleBars data={data} />
           {/* THE CARDS LEAD, the counts follow (2026-09-26): the Graph tab's "Cards judged by their
             *  job" moved here, so a role's number and the cards it counts sit in one chapter. */}
           <Movement title="Your cards, by the job they do" count="cards that do two jobs sit on both shelves">
@@ -482,9 +490,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  half the row was reserved for nothing at every width above 1280px. A defect I
             *  introduced two commits ago and did not look at. */}
           <Movement title="What to change">
-            {/* 64rem, the width of the Fixes list above it: a cut's name and its "5 mana - 0.0"
-              *  sat 1,700px apart at 1920px (UI review 2026-09-25). */}
-            <div className="max-w-5xl min-w-0">
+            {/* NO CAP (#770): each cut is a card in a grid that adds columns with the width, so a
+              *  cut's name and its figure sit in one card however wide the screen is. */}
+            <div className="min-w-0">
             <CutList
               cuts={cuts}
               unjudged={report.unjudged}
@@ -502,7 +510,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  A failed run drops the section rather than claiming the deck has nothing to add. */}
           {suggestions.state !== "error" ? (
             <Movement title="Strengthen what works">
-              <div className="max-w-5xl">
+              <div>
                 <StrengthenLists routes={suggestions.value?.routes} plan={suggestions.value?.plan} />
               </div>
             </Movement>
