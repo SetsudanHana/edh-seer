@@ -3033,7 +3033,11 @@ function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
   // enchantment you control. For a permanent that ENTERS as a copy only; the 7,622-edge mesh the
   // static gate records came from SPELL copies. Not onto another clone ("you would not typically
   // put a clone on a clone", judged uncertain) and not onto a token node.
-  if (copy?.enters && ENTERS_AS_COPY_CUE.test(p.card.oracleText ?? "") && !c.isToken
+  // Not a card with itself (a creature clone is a creature), and not twice: a TYPAL clone static is
+  // already claimed by `staticEdges` under the same tag (review).
+  const typalClone = (p.tags?.abilities ?? []).some((a) => a.kind === "static" && a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined);
+  if (copy?.enters && !typalClone && p.card.name !== c.card.name
+    && ENTERS_AS_COPY_CUE.test(p.card.oracleText ?? "") && !c.isToken
     && !ENTERS_AS_COPY_CUE.test(c.card.oracleText ?? "")
     && !(copy.notLegendary && c.tags.characteristics.types.includes("legendary"))
     && subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) {

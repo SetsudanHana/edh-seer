@@ -5680,4 +5680,8 @@ test("a permanent that enters as a copy links to each card it can copy, and to n
   // A token copy is not a clone permanent.
   const helm = clone("Helm of the Host", "At the beginning of combat on your turn, create a token that's a copy of equipped creature.");
   expect(claims(helm, spellCard("Grizzly Bears", "creature"))).toBe(false);
+  // Never a card with itself: a creature clone is a creature.
+  const clone2 = clone("Clone", "You may have this creature enter as a copy of any creature on the battlefield.");
+  clone2.tags.characteristics.types = ["creature"];
+  expect(claims(clone2, clone2)).toBe(false);
 });
