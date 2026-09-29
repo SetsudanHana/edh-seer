@@ -214,9 +214,8 @@ body {
    jump, and the reduced-motion block below turns it off -- that block covered `.reveal` only, so
    the transition had to be added to it rather than assumed into it. */
 @media (min-width: 100rem) {
-  body.drawer-docked { padding-inline-end: 20rem; }
+  body.drawer-rail { padding-inline-end: 20rem; }
 }
-body { transition: padding-inline-end 200ms ease-out; }
 
 /* THE APP RESERVES ITS OWN SPACE, AND THAT IS THE WHOLE CLS FIX.
  *

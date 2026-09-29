@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, displayName, linkPath, tokenLabel, type EngineCard, type EngineModel } from "../lib/engine-model.js";
@@ -20,7 +21,7 @@ import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./
  *  A TAP READS, A SECOND TAP MOVES: the rule `EgoView` settled on, so a mis-aimed tap never throws
  *  the reader somewhere else. Where they have been is the gold route on the map, and the card they
  *  came from is a button at the top of the panel. */
-export function OrbitView({ report, graph, focusId, onFocus, model, sticky = true, lead }: {
+export function OrbitView({ report, graph, focusId, onFocus, model, sticky = true, lead, leadTarget }: {
   report: DeckReport; graph: CardGraph;
   focusId: string;
   onFocus: (id: string) => void;
@@ -33,6 +34,10 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
    *  the deck's theme, over the map's key. With it the key sits left of the map, as drawn, and on a
    *  phone the order is this, the map, then the key. */
   lead?: React.ReactNode;
+  /** THE RAIL'S GLANCE SLOT (owner, 2026-09-29): from 1600px the column beside the map -- the theme,
+   *  the map's key and the card it is centred on -- lives in the rail, and the map takes the row. A
+   *  portal, so the column keeps its state and stays wired to the map. */
+  leadTarget?: HTMLElement | null;
 }) {
   const m = useMemo(() => model ?? buildEngineModel(report, graph), [model, report, graph]);
   const o = useMemo(() => {
@@ -149,7 +154,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   const prev = trail.length ? m.cards.get(trail[trail.length - 1]!) : undefined;
 
   const map = (
-    <Constellation model={m} orbit={o} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow} onTap={tap} onHover={setHover} onBlank={blank}
+    <Constellation model={m} orbit={o} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow} broad={lead !== undefined && !!leadTarget} onTap={tap} onHover={setHover} onBlank={blank}
       pick={lead !== undefined ? allPartners : undefined} menuFor={menuFor} isAdded={(id) => { const c = m.cards.get(id); return !!c && !c.isToken && drawer.isAdded(c.physical); }} />
   );
   const panelBody = (
@@ -186,6 +191,25 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
     </>
   );
   const panelKey = `${o.focus.id}|${pair ?? ""}|${sector ?? ""}`;
+
+  if (lead !== undefined && leadTarget) {
+    return (
+      <>
+        {createPortal(
+          <div className="flex flex-col gap-4">
+            {lead}
+            <div ref={panel} key={panelKey} className="orbit-panel-in flex min-w-0 flex-col gap-3 text-sm" aria-live="polite">
+              {panelBody}
+            </div>
+          </div>,
+          leadTarget,
+        )}
+        {/* 16:9, as `BROAD` draws it: the same height cap as beside the key, and the width that
+          *  the key used to take. */}
+        <div className="min-w-0 mx-auto w-full py-2 max-w-[calc((100svh-15rem)*1.7778)]">{map}</div>
+      </>
+    );
+  }
 
   if (lead !== undefined) {
     // THE MOCKUP'S FIRST SCREEN: theme and key on the left, the map on the right, both inside one

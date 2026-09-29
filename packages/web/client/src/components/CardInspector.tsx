@@ -20,8 +20,10 @@ type Edge = CardGraph["edges"][number];
  *  oracle-text-derived sentence that explains it. That is a real limit, recorded on the ROADMAP,
  *  not papered over with an invented id here. */
 export function CardInspector({
-  node, edges, flow, textOf, nameOf, onClose, phone = "sheet", extra,
+  node, edges, flow, textOf, nameOf, onClose, phone = "sheet", extra, closeLabel,
 }: {
+  /** What the close control says; "close" unless the card is covering a rail ("Back to Game plan"). */
+  closeLabel?: string;
   /** What the report adds about this card, above its links: in the report's drawer, the card's own
    *  small map and a way to walk the commander's map from it. */
   extra?: ReactNode;
@@ -203,8 +205,14 @@ export function CardInspector({
         phone === "half" ? "bottom-2 top-auto max-h-[50%] sm:top-2 sm:max-h-none" : "inset-y-2"
       } sm:left-auto sm:w-72 sm:max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm flex flex-col gap-3`}
     >
-      <button type="button" onClick={onClose} className="eyebrow self-end text-(--muted)">
-        close
+      <button type="button" onClick={onClose} className={closeLabel ? "self-start inline-flex items-center gap-2 rounded-(--radius) border border-(--separator) px-3 min-h-9 text-sm hover:border-(--accent) hover:text-(--accent)" : "eyebrow self-end text-(--muted)"}>
+        {/* A DRAWN ARROW, not a "←" glyph: DESIGN.md keeps Unicode out of the icon set. */}
+        {closeLabel ? (
+          <svg aria-hidden="true" viewBox="0 0 16 16" className="size-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M13 8H3M7 4 3 8l4 4" />
+          </svg>
+        ) : null}
+        {closeLabel ?? "close"}
       </button>
 
       {/* BOUNDED, BECAUSE THE IMAGE WAS EATING THE WHOLE PANEL AND THE RELATIONSHIPS ARE THE PRODUCT.

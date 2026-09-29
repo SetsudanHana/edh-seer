@@ -58,12 +58,37 @@ interface CardDrawerApi {
   isAdded: (name: string) => boolean;
   /** The report registers what it adds to the drawer; null when it unmounts. */
   setExtras: (extras: DrawerExtras | null) => void;
+  /** THE RAIL (owner, 2026-09-29, option B of the drawer mockups): a surface that has chapter
+   *  summaries switches it on, and from 1600px the page keeps 20rem for it at all times, so opening
+   *  a card changes what the rail shows and never where anything else sits. */
+  setRailOn: (on: boolean) => void;
+  /** Where a chapter summary portals to: the rail's own element, null below 1600px or with no rail. */
+  railHost: HTMLElement | null;
+  /** What the card's close control says while it covers the rail ("Back to Game plan"). */
+  setRailBack: (label: string | null) => void;
 }
 
 const CardDrawerContext = createContext<CardDrawerApi>({
   open: () => {}, close: () => {}, openSuggestion: () => {}, live: false, known: new Set(), tokens: new Map(),
   added: new Set(), isAdded: () => false, setExtras: () => {},
+  setRailOn: () => {}, railHost: null, setRailBack: () => {},
 });
+
+/** From 1600px (`100rem`), where the page has the width to keep a rail beside it; the same
+ *  breakpoint `index.css` reserves the rail's space at. */
+const RAIL_QUERY = "(min-width: 100rem)";
+function useRailWidth(): boolean {
+  const [wide, setWide] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.(RAIL_QUERY).matches);
+  useEffect(() => {
+    const mq = window.matchMedia?.(RAIL_QUERY);
+    if (!mq) return;
+    const on = () => setWide(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return wide;
+}
 
 export function useCardDrawer(): CardDrawerApi {
   return useContext(CardDrawerContext);
@@ -83,6 +108,12 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   const setOpenId = useCallback((id: string | null) => { setOpenIdRaw(id); setSuggestion(null); }, []);
   const shown = openId ?? (suggestion ? `suggestion:${suggestion.card.name}` : null);
   const [extras, setExtras] = useState<DrawerExtras | null>(null);
+  const [railOn, setRailOn] = useState(false);
+  const [railEl, setRailEl] = useState<HTMLElement | null>(null);
+  const [railBack, setRailBack] = useState<string | null>(null);
+  const wide = useRailWidth();
+  /** The rail is SHOWING: switched on by the surface, and the screen is wide enough to keep it. */
+  const railShown = railOn && wide;
   // A TOKEN NEVER WINS A NAME COLLISION HERE. `nodeId` gives a token its own id precisely because
   // 92 of 661 distinct token names collide with a real card's, and every caller of this drawer is
   // naming a card from the DECK — so index the card nodes and let a token be reached by clicking
@@ -165,8 +196,11 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   const isAdded = useCallback((name: string) => added.has(physicalName(name)), [added, physicalName]);
 
   const api = useMemo<CardDrawerApi>(
-    () => ({ open, close: () => setOpenId(null), openSuggestion, live: true, known: new Set(byName.keys()), tokens, added, isAdded, setExtras }),
-    [open, openSuggestion, setOpenId, byName, tokens, added, isAdded],
+    () => ({
+      open, close: () => setOpenId(null), openSuggestion, live: true, known: new Set(byName.keys()), tokens, added, isAdded, setExtras,
+      setRailOn, railHost: railShown ? railEl : null, setRailBack,
+    }),
+    [open, openSuggestion, setOpenId, byName, tokens, added, isAdded, railShown, railEl],
   );
 
   // Escape closes it. The panel has a close button of its own, but this drawer floats over a
@@ -190,6 +224,9 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
     const down = (e: PointerEvent) => { from = { x: e.clientX, y: e.clientY }; opened.current = false; };
     const click = (e: MouseEvent) => {
       if (opened.current) { opened.current = false; return; }
+      // ON THE RAIL A CARD STAYS UNTIL THE READER GOES BACK: a click elsewhere on the page is
+      // reading the page, and the card beside it is what they are reading it against.
+      if (railShown) return;
       if (panel.current?.contains(e.target as Node)) return;
       if (Math.hypot(e.clientX - from.x, e.clientY - from.y) > 5) return;
       setOpenId(null);
@@ -197,7 +234,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
     document.addEventListener("pointerdown", down, true);
     document.addEventListener("click", click);
     return () => { document.removeEventListener("pointerdown", down, true); document.removeEventListener("click", click); };
-  }, [shown, setOpenId]);
+  }, [shown, setOpenId, railShown]);
 
   /** THE DRAWER IS DOCKED FROM 1600px, NOT LAID OVER THE PAGE (owner's call, 2026-09-03; from `xl`
    *  until 2026-09-27, when the owner moved it up -- see `index.css`).
@@ -220,11 +257,15 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
    *  branch reads false in this repo's own harness (`playwright-max-width-matchmedia-false`), which
    *  would render the docked tree in every screenshot that is supposed to show the overlay.
    *  `index.css` carries the `@media (min-width: 100rem)` and the transition; this only says WHEN. */
+  // THE RESERVE FOLLOWS THE RAIL, NEVER THE CARD (owner, 2026-09-29: "on some views it is causing
+  // a very big shift in layout"). Toggled on each open, it re-flowed the whole report: measured at
+  // 1920 on Rani, the row just clicked moved 240px down the screen. A surface with a rail holds the
+  // space for as long as it is mounted; one without (a precon page) has the card float over it.
   useEffect(() => {
-    if (shown === null) return;
-    document.body.classList.add("drawer-docked");
-    return () => document.body.classList.remove("drawer-docked");
-  }, [shown]);
+    if (!railOn) return;
+    document.body.classList.add("drawer-rail");
+    return () => document.body.classList.remove("drawer-rail");
+  }, [railOn]);
 
   const node = openId ? graph?.nodes.find((n) => n.id === openId) ?? null : null;
   const edges = useMemo(
@@ -235,6 +276,17 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   return (
     <CardDrawerContext.Provider value={api}>
       {children}
+      {railOn
+        // THE RAIL ITSELF, from 1600px: the chapter the reader is in, summarised, until a card takes
+        // its place. Below 1600px it is not drawn and a card opens as the overlay it always was.
+        ? createPortal(
+            <aside aria-label="Chapter summary" data-testid="report-rail"
+              className="fixed inset-y-0 right-0 z-20 hidden w-80 flex-col overflow-y-auto border-l border-(--separator) bg-(--background) px-4 pb-6 pt-[calc(var(--site-header-h,0px)+1.5rem)] min-[100rem]:flex">
+              <div ref={setRailEl} className="flex flex-col gap-4" />
+            </aside>,
+            document.body,
+          )
+        : null}
       {node
         // A PORTAL, AND IT IS LOAD-BEARING — the first cut rendered in place and was measured wrong
         // in the running app: `App.tsx`'s `.reveal` animation runs `animation-fill-mode: both`, so it LEAVES a `transform`
@@ -244,11 +296,12 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
         // avoid. Nothing in jsdom sees this; only the browser did.
         ? createPortal(
             // The inspector positions itself `absolute inset-y-2 right-2` against this element.
-            <div ref={panel} className="fixed inset-y-0 right-0 z-30 w-full sm:w-80 sm:max-w-[90vw]">
+            <div ref={panel} className={`fixed inset-y-0 right-0 z-30 w-full sm:w-80 sm:max-w-[90vw] ${railShown ? "bg-(--background)" : ""}`}>
               <CardInspector
                 node={node}
                 edges={edges}
                 onClose={() => setOpenId(null)}
+                closeLabel={railShown && railBack ? railBack : undefined}
                 nameOf={nameOf}
                 extra={extras?.model.cards.get(node.id) ? (
                   // THE WALK, ONE TAP AWAY (report cohesion audit, 2026-09-27). The small map of the

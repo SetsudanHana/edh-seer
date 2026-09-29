@@ -168,35 +168,31 @@ export function ChapterRail({ current, comboCount }: { current: ChapterId | null
   );
 }
 
-/** WHICH CHAPTER THE READER IS IN, for the rail's `aria-current`.
+/** WHICH CHAPTER THE READER IS IN, for the rail's `aria-current` and the report rail's summary.
  *
- *  One observer over the six sections, with the viewport's top edge pushed down past the sticky
- *  header and its bottom edge pulled up to the halfway line: a chapter counts as current while its
- *  content occupies the top half of what is actually visible. Without the bottom margin every
- *  chapter below the fold on a tall screen intersects at once and the rail lights four links.
+ *  A READING LINE, NOT A BAND. One observer over the six sections whose root is squeezed to a thin
+ *  strip 40% of the way down the viewport: the chapter current is the one crossing that line. The
+ *  band it replaced ran from under the sticky bars to the halfway mark and credited the TOPMOST
+ *  chapter touching it -- so at 2560 and 3840, with "Game plan" a sixth of the way down the
+ *  screen, the last lines of Scores still touched the band and the rail went on summarising
+ *  Scores (designer review, 2026-09-29). A line is only ever crossed by one chapter.
  *
- *  The topmost intersecting section wins, in document order, so scrolling never lights a chapter
- *  the reader has already passed.
+ *  40% sits below every pinned bar on every screen the report ships to (site header, report header
+ *  and, below `lg`, the chapter bar: under 200px, a third of a 390x844 phone's 40%), so the bars no
+ *  longer need counting. Re-created when the layout crosses `lg` all the same, as the bars' own
+ *  heights change there.
+ *
+ *  The topmost intersecting section wins, in document order -- with a line that is a tie-break
+ *  only for sections that touch.
  *
  *  Falls back to `null` where there is no `IntersectionObserver` (jsdom): no chapter is current,
  *  every link still navigates, and nothing throws. */
 export function useCurrentChapter(): ChapterId | null {
   const [current, setCurrent] = useState<ChapterId | null>(null);
-  // BOTH PINNED BARS, for the same reason the scroll offset counts both: below `lg` the rail is a
-  // second bar, and a band that started 58px too high kept crediting the chapter ABOVE the one on
-  // screen -- measured on a phone, the rail said `Plan` with `Can the mana deliver it?` filling the
-  // viewport. Re-created when the layout crosses `lg`, which is when the rail's own height changes
-  // between 58 and 0.
   const stacked = useIsNarrow(1023);
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
     const visible = new Set<string>();
-    const px = (name: string): number =>
-      Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue(name) || "0", 10) || 0;
-    // EVERY BAR ABOVE THE CHAPTER, not just the report's own. The site header went sticky on
-    // 2026-09-04 and it sits above these two, so a rootMargin counting only the report header
-    // reports the chapter that is CURRENTLY UNDERNEATH the site header as the one on screen.
-    const header = px("--site-header-h") + px("--report-header-h") + px("--report-rail-h");
     const observer = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
@@ -204,12 +200,12 @@ export function useCurrentChapter(): ChapterId | null {
           else visible.delete(e.target.id);
         }
         const first = CHAPTERS.find((c) => visible.has(c.id));
-        // NO NULL ON A GAP. Between two chapters' observed bands nothing intersects, and clearing
-        // the rail there makes it blink on every scroll. The last answer stands until another
-        // chapter claims it.
+        // NO NULL ON A GAP. Between two chapters nothing crosses the line, and clearing the rail
+        // there makes it blink on every scroll. The last answer stands until another chapter
+        // claims it.
         if (first) setCurrent(first.id);
       },
-      { rootMargin: `-${header}px 0px -50% 0px` },
+      { rootMargin: "-40% 0px -59% 0px" },
     );
     for (const c of CHAPTERS) {
       const el = document.getElementById(c.id);
