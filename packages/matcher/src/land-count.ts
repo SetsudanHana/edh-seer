@@ -1,7 +1,7 @@
 import type { KarstenInputs } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectBuildCategories } from "./build.js";
 import { classifyAccelerant } from "./goldfish.js";
-import { landTarget } from "./mana-base.js";
+import { RAMP_RESILIENCE, drawCredit, landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
 
 /** The mana value at or below which acceleration counts for Karsten's 0.28 bucket. Cheap ramp
@@ -139,7 +139,8 @@ export interface RoleTargets { ramp?: number; consistency?: number }
 /** Target vs actual land count for a deck.
  *
  *  The target is `mana-base.ts`'s `landTarget`: the curve and the commander, less 0.57 of a land
- *  per accelerant and 0.25 per draw card, both counted ONLY UP TO THEIR ROLE TARGETS (owner,
+ *  per rock-equivalent of ramp (each piece weighted by how long it keeps producing) and each draw
+ *  card's credit by its mana value, both counted ONLY UP TO THEIR ROLE TARGETS (owner,
  *  2026-09-29). The goldfish that measured those rates never loses a rock and always wants more of
  *  both, so ramp and draw past what real decks run are not allowed to talk the deck out of lands.
  *  How many lands is still a different question from which ones, and `manaBaseScore` prices both
@@ -153,31 +154,53 @@ export function recommendedLands(
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const commanderManaValue = Math.max(0, ...deck.filter((dc) => commanders.has(dc.card.name)).map((dc) => dc.card.manaValue));
   const accelerants = library.filter((dc) => classifyAccelerant(dc) !== null).length;
-  const drawPieces = detectBuildCategories([...library]).get("draw")?.size ?? 0;
+  const drawCards = detectBuildCategories([...library]).get("draw") ?? new Set<string>();
+  const drawPieces = drawCards.size;
 
   // THE ROLE COUNTS THE BUILD PANEL SHOWS: a parent's count is the union of its leaves over the
   // whole deck, exactly as `computeBuild` counts it, so "Ramp 16 of 10" here is the panel's 16.
   const members = detectBuildCategories([...deck]);
-  const roleCount = (key: "ramp" | "consistency"): number => {
+  const roleMembers = (key: "ramp" | "consistency"): Set<string> => {
     const union = new Set<string>();
     for (const leaf of BUILD_PARENTS.find((p) => p.key === key)!.leaves) for (const n of members.get(leaf) ?? []) union.add(n);
-    return union.size;
+    return union;
   };
-  const { ramp: rampTarget, consistency: consistencyTarget } = opts.roleTargets ?? {};
-  const accel = rampTarget === undefined ? accelerants : Math.min(accelerants, rampTarget);
-  const draw = consistencyTarget === undefined ? drawPieces : Math.min(drawPieces, consistencyTarget);
-  const at = (a: number, d: number) => landTarget({ avgManaValue: inputs.avgManaValue, commanderManaValue, accelerants: a, drawPieces: d });
-  const target = at(accel, draw);
+  const roleCount = (key: "ramp" | "consistency"): number => roleMembers(key).size;
 
+  // EACH RAMP PIECE AT WHAT IT KEEPS PRODUCING (`RAMP_RESILIENCE`): land ramp whole, a rock 0.7, a
+  // dork 0.5, and a one-shot -- a Ramp-role card the goldfish does not play, a ritual or a Treasure
+  // maker -- 0.15. Copies count, as `accelerants` always has.
+  const rampRoleNames = roleMembers("ramp");
+  const rampWeights = library.flatMap((dc): number[] => {
+    const a = classifyAccelerant(dc);
+    if (a) return [RAMP_RESILIENCE[a.kind]];
+    return rampRoleNames.has(dc.card.name) && !isLand(dc) ? [RAMP_RESILIENCE.oneShot] : [];
+  }).sort((x, y) => y - x);
+  // EACH DRAW CARD AT WHAT ITS MANA VALUE SAVES (`drawCredit`), best first.
+  const drawCredits = library.filter((dc) => drawCards.has(dc.card.name)).map((dc) => drawCredit(dc.card.manaValue)).sort((x, y) => y - x);
+
+  // UP TO THE ROLE TARGETS, THE STRONGEST PIECES COUNTED FIRST: a deck past its Ramp target is
+  // credited for its best ten pieces, not for whichever ten came first.
+  const { ramp: rampTarget, consistency: consistencyTarget } = opts.roleTargets ?? {};
+  const sum = (xs: readonly number[]): number => xs.reduce((a, b) => a + b, 0);
+  const upTo = (xs: readonly number[], cap: number | undefined): number => sum(cap === undefined ? xs : xs.slice(0, cap));
+  const at = (ramp: readonly number[], draw: readonly number[]) => landTarget({
+    avgManaValue: inputs.avgManaValue, commanderManaValue,
+    accelerants: upTo(ramp, rampTarget), drawCredit: upTo(draw, consistencyTarget),
+  });
+  const target = at(rampWeights, drawCredits);
+
+  // A TRIM CUTS THE WEAKEST PIECES: the one-shots before the rocks, the six-drop draw before the
+  // cantrips.
   const trims: NonNullable<LandRecommendation["ifTrimmed"]> = {};
   if (rampTarget !== undefined) {
     const over = roleCount("ramp") - rampTarget;
-    const t = over > 0 ? at(accel - Math.min(over, accel), draw) : target;
+    const t = over > 0 ? at(rampWeights.slice(0, Math.max(0, rampWeights.length - over)), drawCredits) : target;
     if (t > target) trims.ramp = { over, target: t };
   }
   if (consistencyTarget !== undefined) {
     const over = roleCount("consistency") - consistencyTarget;
-    const t = over > 0 ? at(accel, draw - Math.min(over, draw)) : target;
+    const t = over > 0 ? at(rampWeights, drawCredits.slice(0, Math.max(0, drawCredits.length - over))) : target;
     if (t > target) trims.draw = { over, target: t };
   }
   return {

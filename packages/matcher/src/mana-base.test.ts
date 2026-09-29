@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import {
   colourMiss, colourSources, landTarget, manaBaseScore, tappedLandCount, MANA_BASE_COST, SIMULATED_MAX_LANDS, SIMULATED_MIN_LANDS,
+  drawCredit,
 } from "./mana-base.js";
 import type { Color } from "./mana-audit.js";
 import type { DeckCard } from "./types.js";
@@ -14,8 +15,8 @@ const spell = (name: string, manaCost: string, manaValue: number) => mk(name, "S
 const land = (name: string, oracleText: string) => mk(name, "Land", { oracleText });
 const sources = (entries: [Color, number][]) => new Map<Color, number>(entries);
 
-const at = (avgManaValue: number, extra: Partial<{ commanderManaValue: number; accelerants: number; drawPieces: number }> = {}) =>
-  landTarget({ avgManaValue, commanderManaValue: 0, accelerants: 0, drawPieces: 0, ...extra });
+const at = (avgManaValue: number, extra: Partial<{ commanderManaValue: number; accelerants: number; drawCredit: number }> = {}) =>
+  landTarget({ avgManaValue, commanderManaValue: 0, accelerants: 0, drawCredit: 0, ...extra });
 
 test("the land target reads the curve, the commander, and the ramp and draw package", () => {
   // 27.0 + 3.95 * 3 = 38.85
@@ -24,7 +25,7 @@ test("the land target reads the curve, the commander, and the ramp and draw pack
   expect(at(3, { commanderManaValue: 6 })).toBe(42);
   // Ten rocks are 5.7 fewer; eight draw cards 2 fewer.
   expect(at(3, { accelerants: 10 })).toBe(33);
-  expect(at(3, { drawPieces: 8 })).toBe(37);
+  expect(at(3, { drawCredit: 2 })).toBe(37);
 });
 
 /** izzet-big-mana: an average of 5.98 asked Karsten for 50 lands, which the old gate answered with
@@ -32,7 +33,7 @@ test("the land target reads the curve, the commander, and the ramp and draw pack
  *  at the edge. */
 test("a big curve gets a big target, clamped only at the simulated range", () => {
   // 27.0 + 23.6 + 2.7 - 4.6 - 2.0 = 46.8
-  expect(at(5.98, { accelerants: 8, drawPieces: 8, commanderManaValue: 5 })).toBe(47);
+  expect(at(5.98, { accelerants: 8, drawCredit: 2, commanderManaValue: 5 })).toBe(47);
   expect(at(9, { commanderManaValue: 10 })).toBe(SIMULATED_MAX_LANDS);
   expect(at(0.5, { accelerants: 30 })).toBe(SIMULATED_MIN_LANDS);
 });
@@ -110,4 +111,13 @@ test("a source's {T}: Add is read per line, and a sacrifice in the cost is not a
     rock("Other Line", "{T}: Draw a card.\nWhenever you cast a spell, add {G}."),
   ]);
   expect(s.get("G")).toBe(2);
+});
+
+// Owner, 2026-09-29: cantrips help find lands, a six-mana draw spell does not. Measured in the goldfish.
+test("a draw card's credit follows its cost, at half the goldfish rate", () => {
+  expect(drawCredit(1)).toBeCloseTo(0.15);
+  expect(drawCredit(2)).toBeCloseTo(0.215);
+  expect(drawCredit(2)).toBeGreaterThan(drawCredit(4));
+  expect(drawCredit(4)).toBeGreaterThan(drawCredit(5));
+  expect(drawCredit(7)).toBeLessThan(0);
 });
