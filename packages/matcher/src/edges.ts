@@ -1190,6 +1190,8 @@ const COPY_OF_TOKEN_CUE = /copy of (?:a |an |another |target |that )*(?:\w+ )?to
  *  Read off the printed cue, not a derived field -- none records it, and adding one is a schema and
  *  re-derive question this fix does not need to answer for three cards. */
 const COPY_EXCLUDES_LEGENDARY_CUE = /\bnonlegendary\b/i;
+/** "…a copy of that creature, except it's 1/1": the stats belong to the copy, not the target. */
+const COPY_PT_EXCEPTION_CUE = /\bexcept (?:it|they)(?:'s|'re| is| are) \d+\/\d+\b/i;
 
 /** Board state and provenance a copy claim must not carry into the type test: `token` means opposite
  *  things on the two shapes of the family, and `control`/`zone`/`counter` describe the object being
@@ -1269,7 +1271,13 @@ function copySubject(
   // subject ("may have this creature enter as a copy of ANY creature", genuinely unrestricted, read
   // through the fallback). A card-wide test with no such scoping would have refused that real claim.
   const notLegendary = typed.length > 0 && COPY_EXCLUDES_LEGENDARY_CUE.test(oracle);
-  return { subject: { ...strip(raw), control: "any", token: null } as SubjectFilter, enters, notLegendary };
+  // A P/T EXCEPTION DESCRIBES THE COPY, NOT WHAT IS COPIED (#714): Echoing Assault's "create a token
+  // that's a copy of that creature, except it's 1/1" derives `power = 1, toughness = 1`, and reading
+  // that as the target left Disciple of Freyalise's own entry trigger unclaimed. A printed stat
+  // narrowing on the TARGET ("with power 2 or less") has no "except" and keeps its stats.
+  const { stats: _stats, ...unstatted } = strip(raw);
+  const target = COPY_PT_EXCEPTION_CUE.test(oracle) ? unstatted : strip(raw);
+  return { subject: { ...target, control: "any", token: null } as SubjectFilter, enters, notLegendary };
 }
 
 /** Could the producer ITSELF be the object its own emit describes?
@@ -1674,8 +1682,13 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
         //    own BODY entering, because the body was the only supply left to write a sentence from
         //    ("When Krenko, Mob Boss enters, Quest for the Goblin Lord puts counters on it" -- the
         //    one-shot reading of a repeatable engine). See `ReasonOptions.tokensMediate`.
+        //  - and a DEPARTURE is never traded (#714). A token node implies its own ENTRY, never its
+        //    own death: Urabrask's Forge's "sacrifice that token at the beginning of the next end
+        //    step" was dropped for a Horror-token hop that states no departure, so Nadier's
+        //    Nightblade drained off nothing the Forge makes.
         if (
-          e.subject.token === true && t.verb !== "create-token" && !p.isToken && !c.isToken
+          e.subject.token === true && t.verb !== "create-token" && t.verb !== "leaves" && t.verb !== "dies"
+          && !p.isToken && !c.isToken
           && (opts.tokensMediate ?? true) && hasMediatingToken(p.card)
         ) continue;
         // A SELF trigger watches ONE permanent — its own. `selfEtbSelfSupplied` excludes implied and
