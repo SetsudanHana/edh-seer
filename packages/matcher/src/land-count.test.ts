@@ -85,9 +85,9 @@ test("the recommendation comes back with the count the deck actually runs", () =
   ];
   const rec = recommendedLands(deck);
   expect(rec.actual).toBe(37);
-  // 24.1 + 3.25 * 3 = 33.85, no commander and no acceleration.
-  expect(rec.target).toBe(34);
-  expect(rec.target).toBe(landTarget({ avgManaValue: 3, rampPlusDraw: 0, commanderManaValue: 0 }));
+  // 27.0 + 3.95 * 3 = 38.85, no commander, no ramp and no draw.
+  expect(rec.target).toBe(39);
+  expect(rec.target).toBe(landTarget({ avgManaValue: 3, commanderManaValue: 0, accelerants: 0, drawPieces: 0 }));
 });
 
 test("MDFC counts are zero, and say so rather than being silently absent", () => {
@@ -128,7 +128,7 @@ test("a modal DFC with a land back is counted as a land, and does not discount t
   expect(rec.actual).toBe(32);
   // ...and the target reads no MDFC term at all: it is the formula on the nonland pool alone.
   const inputs = landInputs(deck);
-  expect(rec.target).toBe(landTarget({ ...inputs, commanderManaValue: 0 }));
+  expect(rec.target).toBe(landTarget({ avgManaValue: inputs.avgManaValue, commanderManaValue: 0, accelerants: 0, drawPieces: 0 }));
 });
 
 /** THE SAME DOUBLE COUNT IN THE OTHER DIRECTION. `avgManaValue` is the regression's dominant term,
@@ -167,4 +167,38 @@ test("an MDFC is not also counted as cheap ramp", () => {
   const inputs = landInputs(deck);
   expect(inputs.mdfcTapped).toBe(1);
   expect(inputs.rampPlusDraw).toBe(0);
+});
+
+/** RAMP COUNTS ONLY UP TO ITS ROLE TARGET, AND A TRIM SAYS WHERE THE TARGET GOES (owner,
+ *  2026-09-29: "for rani it shows we are above the ramp target, so if fixing that places our target
+ *  land count higher"). The goldfish that measured 0.57 of a land per rock never loses one and always
+ *  wants more, so twelve rocks against a target of eight only buy eight rocks' worth of lands. */
+test("ramp past its role target does not lower the land target, and the trim raises it", () => {
+  const rampTags = (id: string) => ({
+    oracleId: id, schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: {
+      types: ["artifact"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [],
+    },
+    abilities: [{ kind: "activated" as const, effect: { kind: "mana-generation" as const } }],
+  });
+  const rock = (i: number): DeckCard => ({
+    ...mk(`Rock-${i}`, 2, "{T}: Add {C}.", "Artifact", { producedMana: ["C"] }),
+    tags: rampTags(`rock-${i}`),
+  });
+  const deck = [
+    ...Array.from({ length: 12 }, (_, i) => rock(i)),
+    ...Array.from({ length: 48 }, (_, i) => mk(`Spell-${i}`, 3)),
+    ...Array.from({ length: 37 }, (_, i) => land(`Swamp-${i}`)),
+  ];
+  const free = recommendedLands(deck);
+  const capped = recommendedLands(deck, { roleTargets: { ramp: 8 } });
+  expect(free.accelerants).toBe(12);
+  // Twelve rocks count as eight: four rocks' worth of lands (2.28) comes back.
+  expect(capped.target - free.target).toBeGreaterThanOrEqual(2);
+  // Ramp runs 4 over its target; cutting four rocks costs another 2.28 lands on top of the cap.
+  expect(capped.ifTrimmed?.ramp?.over).toBe(4);
+  expect(capped.ifTrimmed!.ramp!.target).toBeGreaterThan(capped.target);
+  // At or under target there is nothing to trim.
+  expect(recommendedLands(deck, { roleTargets: { ramp: 14 } }).ifTrimmed).toBeUndefined();
 });

@@ -144,7 +144,7 @@ test("a landfall deck's panel target and scored target agree, including the arch
   const deck = fillTo(100, []);
   const rec: LandRecommendation = {
     avgManaValue: 3.2, rampPlusDraw: 0, fastMana: 0, commanders: 1,
-    mdfcUntapped: 0, mdfcTapped: 0, actual: 39, commanderManaValue: 0, target: 39,
+    mdfcUntapped: 0, mdfcTapped: 0, actual: 39, commanderManaValue: 0, accelerants: 0, drawPieces: 0, target: 39,
   };
 
   const scoredTarget = computeBuild(deck, "landfall", rec.target)

@@ -37,7 +37,7 @@ import { makeFold } from "./theme-fold.js";
 import { magnitudeMultipliers } from "./magnitude.js";
 import { buildSupplyDemand } from "./supply-demand.js";
 import { detectArchetypes } from "./archetypes.js";
-import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
+import { adjustedParentTargets, computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating, templateBlend } from "./build.js";
 import { tokenQuotes } from "./rules.js";
 import { cutCandidates, deckSlack, trimOrder, unjudgedCandidates } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
@@ -949,7 +949,16 @@ export function analyzeDeckStructured(
   // both `computeBuild` (the score) and `computeDeckMath` below (the panel row) -- before this,
   // `computeBuild` never saw this number at all and scored a flat 36 while the panel showed the
   // formula's own answer, so the two disagreed about the same deck.
-  const landRec = recommendedLands(resolved, { commanderNames: [...commanderSet] });
+  // RAMP AND DRAW COUNT ONLY UP TO THEIR ROLE TARGETS (owner, 2026-09-29): the same template the
+  // build scores against, read here first so the land target and the Ramp row agree on "enough".
+  const roleTargetsOf = adjustedParentTargets(templateBlend(strategies));
+  const landRec = recommendedLands(resolved, {
+    commanderNames: [...commanderSet],
+    roleTargets: {
+      ramp: roleTargetsOf.find((p) => p.key === "ramp")?.target,
+      consistency: roleTargetsOf.find((p) => p.key === "consistency")?.target,
+    },
+  });
   // A DECK'S COLOUR IDENTITY IS ITS COMMANDERS' (CR 903.4), never the union of the 99 -- an
   // off-identity card in a pasted list is an illegal card, not a sixth colour, and reading it as
   // one would tell a mono-black deck it has white's enchantment removal available.

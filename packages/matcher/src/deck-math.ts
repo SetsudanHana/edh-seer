@@ -292,6 +292,10 @@ export function computeDeckMath(
     // colours and the tapped lands, against the SAME target this row prints, archetype delta in.
     manaBase: manaBaseScore(deck, { target: finalLandsTarget, actual: rec.actual }, commanderNames),
     commanderManaValue: rec.commanderManaValue,
+    accelerants: rec.accelerants,
+    drawPieces: rec.drawPieces,
+    // THE SAME ARCHETYPE DELTA AS THE TARGET, so a trimmed landfall deck still reads its +4.
+    ...(rec.ifTrimmed ? { ifTrimmed: Object.fromEntries(Object.entries(rec.ifTrimmed).map(([k, v]) => [k, { over: v.over, target: v.target + archetypeDelta }])) } : {}),
     targetSource: landsGate.source,
     // The regression's own answer, kept even on a fallback -- "wants 36" with no working when the
     // curve's own math says 50 reads as the report hiding the number it didn't like.

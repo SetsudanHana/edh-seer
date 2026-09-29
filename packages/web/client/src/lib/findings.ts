@@ -375,7 +375,15 @@ function landFinding(report: DeckReport): Finding | null {
       ? `You are running ${delta} more ${delta === 1 ? "land" : "lands"} than this curve needs.`
       : `You are ${-delta} ${delta === -1 ? "land" : "lands"} short.`,
     detail: `${lands.actual} lands against a modelled ${lands.target}, at an average cost of `
-      + `${lands.avgManaValue.toFixed(2)}. `
+      + `${lands.avgManaValue.toFixed(2)}`
+      // THE TARGET IS FOR A PACKAGE (owner, 2026-09-29), so the finding names it, and where the
+      // count goes if an over-target role is trimmed back.
+      + (lands.accelerants !== undefined
+        ? ` with ${lands.accelerants} rocks, dorks and land ramp and ${lands.drawPieces ?? 0} draw cards`
+        : "")
+      + ". "
+      + (lands.ifTrimmed?.ramp ? `Trimming ramp to its target with rocks or dorks moves it to ${lands.ifTrimmed.ramp.target}. ` : "")
+      + (lands.ifTrimmed?.draw ? `Trimming draw to its target moves it to ${lands.ifTrimmed.draw.target}. ` : "")
       + (lands.manaBase
         ? `That costs about ${lands.manaBase.costs.count.toFixed(1)} turns in every 10 to missed land drops and dead land draws. `
         : "")
