@@ -53,9 +53,12 @@ export function ComboList({ combos }: { combos: DeckReport["combos"] }) {
           No known infinite combos in this list, checked against the Commander Spellbook database.
         </p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        // A GRID OF CARDS, AS WIDE AS THE PAGE ALLOWS (designer review 2026-09-29): one text line per
+        // combo ended at 40% of a 1920 screen, 20% of a 3840 one, under a divider that ran the full
+        // width. A phone still gets one column.
+        <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr))]">
           {combos.map((c, i) => (
-            <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5 border-b border-(--separator)">
+            <li key={i} className="flex flex-wrap items-center content-start gap-x-3 gap-y-1 rounded-(--radius) border border-(--separator) bg-(--surface) p-3">
               <span className="pip shrink-0">{c.cards.length + (c.requires?.length ?? 0)}</span>
               <span className="text-sm flex items-center gap-2 flex-wrap">
                 {/* Each piece opens its own inspector: "these three go infinite" is only
@@ -94,7 +97,7 @@ export function ComboList({ combos }: { combos: DeckReport["combos"] }) {
               {/* A LOOP'S PAYOFF IS ITS WIN (owner, 2026-09-29): the cards in this deck that eat what the
                 *  loop repeats and reach the opponents, found in the graph rather than the database. */}
               {c.payoffs?.length ? (
-                <span className="basis-full pl-9 text-xs text-(--muted) flex flex-wrap items-baseline gap-1" data-testid="combo-payoffs">
+                <span className="basis-full text-xs text-(--muted) flex flex-wrap items-baseline gap-1" data-testid="combo-payoffs">
                   Wins through
                   {c.payoffs.map((p, k) => (
                     <span key={p.name}>
