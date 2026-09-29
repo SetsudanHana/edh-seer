@@ -28,6 +28,7 @@ import { chooseCuts, swapCandidates } from "../lib/cut-choice.js";
 import { mainTheme } from "../lib/main-theme.js";
 import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
+import { useIsNarrow } from "../lib/use-narrow.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
 import { StrengthenLists } from "./SuggestedCards.js";
@@ -261,6 +262,12 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   const cutNames = useMemo(() => [...cuts.map((c) => c.name), ...swapCandidates(report, cuts)], [report, cuts]);
   const suggestions = useSuggestions(data, cutNames);
 
+  // THE LINE FOR THE TABLE ON A PHONE'S FIRST SCREENS (persona round 2026-09-29). Below the
+  // commander's map it sat 1,650px down a 390px page, and the phone seat -- solved the round before,
+  // when it was on the first screen -- built its sentence from two chapters instead. Below `lg` it
+  // rides with the theme, above the map; from `lg` it keeps its place beside the verdict.
+  const narrow = useIsNarrow(1023);
+  const talkFirst = narrow && !!talk && !!(themes && commanderId);
   return (
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
     // into that row (2026-09-25) the first heading sat flush against the row's rule.
@@ -290,13 +297,18 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               <h3 id="commander-map-title" className="sr-only">What your commander works with</h3>
               <div id="commander-map" className="scroll-mt-40" />
               <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre}
-                lead={<RecognitionPanel data={data} part="identity" inline={!!railHost} />} leadTarget={railHost ? readSlot : null} />
+                lead={talkFirst ? (
+                  <div className="flex flex-col gap-4">
+                    <RecognitionPanel data={data} part="identity" />
+                    <TableTalkLine talk={talk!} />
+                  </div>
+                ) : <RecognitionPanel data={data} part="identity" inline={!!railHost} />} leadTarget={railHost ? readSlot : null} />
             </section>
           ) : <RecognitionPanel data={data} part="identity" />}
           {/* THE LINE FOR THE TABLE BESIDE THE VERDICT (#770): a 48rem card alone under a 2560 map
             *  left two-thirds of the row empty. On a phone and a laptop they still stack. */}
-          <div className={`grid gap-6 items-start ${talk ? "lg:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]" : ""}`}>
-            {talk ? <TableTalkLine talk={talk} /> : null}
+          <div className={`grid gap-6 items-start ${talk && !talkFirst ? "lg:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]" : ""}`}>
+            {talk && !talkFirst ? <TableTalkLine talk={talk} /> : null}
             <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" />
           </div>
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
