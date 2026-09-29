@@ -78,7 +78,11 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
           <span className="eyebrow text-(--muted)">Upgrade for synergy</span>
           <h2 id="swaps-title" className="text-2xl font-bold">{spell(p.swaps.length)} swaps that make the deck work together</h2>
           <p className="max-w-[70ch] text-(--muted)">Each card out works with few other cards in the deck; each card in works with many. The bars count the deck cards each one works with.</p>
-          <ul className="flex flex-col gap-2.5" data-testid="precon-swaps">
+          {/* SIDE BY SIDE AS THE WIDTH ALLOWS (designer review 2026-09-29): each swap row spanned the
+            *  screen, and at 3840 "TAKE OUT" sat at the left edge, "PUT IN" at half way and the bars
+            *  at the far right, 1,700px of row between them. A row keeps its own out -> in -> bars
+            *  shape; a wide screen takes two, three or four of them across. */}
+          <ul className="grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,40rem),1fr))]" data-testid="precon-swaps">
             {p.swaps.map((s) => (
               <li key={s.in.name} className="grid gap-x-4 gap-y-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 sm:grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)_12rem] sm:items-center">
                 <div className="flex flex-col"><span className="eyebrow text-(--muted)">Take out</span><b>{s.out.name}</b><span className="text-sm text-(--muted)">works with {s.out.connections} of its cards</span></div>
@@ -103,8 +107,8 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
           ) : null}
           {p.gaps.length ? (
             <p className="text-sm text-(--muted)">
-              Also worth knowing: {p.gaps.map((g, i) => <span key={g.group}>{i > 0 ? " and " : ""}<b className="text-(--foreground)">{g.target - g.have} short on {g.group.toLowerCase()}</b></span>)} for a typical Commander deck.
-              {p.report ? <> The <a href={p.report} className="text-(--accent) underline underline-offset-2">full report</a> lists cards for {p.gaps.length === 1 ? "it" : "both"}.</> : null}
+              Also worth knowing: {p.gaps.map((g, i) => <span key={g.group}>{i === 0 ? "" : i === p.gaps.length - 1 ? " and " : ", "}<b className="text-(--foreground)">{g.target - g.have} short on {g.group.toLowerCase()}</b></span>)} for a typical Commander deck.
+              {p.report ? <> The <a href={p.report} className="text-(--accent) underline underline-offset-2">full report</a> lists cards for {p.gaps.length === 1 ? "it" : p.gaps.length === 2 ? "both" : "each"}.</> : null}
             </p>
           ) : null}
         </section>
