@@ -395,6 +395,11 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     if (/\bcounters?\b/i.test(o)) return "counter-placement";
     if (/\blife\b/i.test(o)) return "lifegain";
     if (/\bmana\b/i.test(o)) return "mana-generation";
+    // "Double the power and toughness of each creature you control" (Unnatural Growth, #711) is a
+    // pump: it was refused as unguessable, so the clause claimed nothing at all. Read off the OBJECT
+    // alone (review): "power" is a common word elsewhere in a clause ("creatures with power 4 or
+    // greater"), and the thing doubled is what decides the kind.
+    if (/\bpower\b/i.test(action.object ?? "")) return "pump";
     // Doubling something the object does not name is not guessable; refuse rather than pick.
     return null;
   }

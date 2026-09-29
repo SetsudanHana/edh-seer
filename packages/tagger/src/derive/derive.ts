@@ -206,7 +206,10 @@ import { emblemRecipient } from "../emblem.js";
 // creatures whose toughness exceeds their power (owner ruling 2026-09-28, Doran).
 // 190: a static grant to "(other) (colour) creatures you control" keeps its recipient (owner ruling
 // 2026-09-28, #711): Anger's haste and Unctus's loot link to every creature they apply to.
-export const DERIVE_VERSION = 190;
+// 191: #711 part 2 -- a static clause with no action that reads `<recipient> have "<ability>"` is a
+// grant (Enduring Vitality); "you may cast <class> spells as though they had flash" is a static
+// grant to that class (Shimmer Myr); doubling power and toughness is a pump (Unnatural Growth).
+export const DERIVE_VERSION = 191;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -788,6 +791,28 @@ function toughnessDamageAbility(text: string): Ability | undefined {
   return undefined;
 }
 
+/** `<recipient> have "<ability>"`: a granted ability, quoted -- which `segment()` rewrites to "have
+ *  that ability", the quote moving to a child clause of its own. */
+const QUOTED_GRANT = /\b(?:have|has) (?:"|that ability\b)/i;
+/** "YOU MAY CAST ARTIFACT SPELLS AS THOUGH THEY HAD FLASH" (Shimmer Myr, #711): a spell-side grant to a
+ *  class you cast, which the clause layer records as a bare `cast` and derive mapped to nothing. The
+ *  owner's ruling links it to each card of that class, as #681 does for a spell grant. Only the
+ *  unconditional hand-cast shape; "from your graveyard", "during your turn" and a cost rider stay
+ *  unread. The type line sits in no zone, so the subject is the class, controlled by you. */
+// A CLASS IS REQUIRED: "you may cast spells as though they had flash" (Vedalken Orrery, High Fae
+// Trickster) would link every nonland card, and the ruling named a class. It stays unread (review).
+const CAST_AS_FLASH = /^you may cast (artifact|creature|enchantment|planeswalker|instant|sorcery|legendary|green|blue|black|red|white|colorless) spells as though they had flash$/i;
+function castAsFlashAbility(text: string): Ability | undefined {
+  for (const sentence of text.split(/\.\s*/)) {
+    const m = CAST_AS_FLASH.exec(sentence.trim());
+    if (!m) continue;
+    const subject: SubjectFilter = { ...parseSubject(`${m[1]} spells`), control: "you", scope: "all" };
+    delete subject.fromZone;
+    return { kind: "static", repeats: "continuous", effect: { kind: "speed-increase", subject } };
+  }
+  return undefined;
+}
+
 // Bounded captures that end on a fixed word: no lazy group beside an optional whitespace tail
 // (the polynomial shape CodeQL fails a PR on).
 const OR_PUT_INTO_GRAVEYARD = /,\s?or (?:a|an) ([a-z ]{1,40}) (?:is|are) put into (a|your) graveyard from anywhere\b/i;
@@ -1246,6 +1271,14 @@ export function deriveAbilities(
       const named = grants.filter((a) => /\bprepared\b/i.test(a.object ?? ""));
       const which = new Set(named.length > 0 ? named : grants.length === 1 ? grants : []);
       if (which.size > 0) clause = { ...clause, actions: (clause.actions ?? []).map((a) => which.has(a) ? { ...a, verb: "prepare" } : a) };
+    }
+    // A QUOTED GRANT THE MODEL LEFT WITHOUT AN ACTION (#711): Enduring Vitality's `Creatures you
+    // control have "{T}: Add one mana of any color."` came back as a static clause with no actions,
+    // the quoted ability segmented as a clause of its own -- so nothing said who receives it. The
+    // grant is on the text; the recipient gate is the ordinary grant path's.
+    // No action, or only the placeholder `none` the canonical record stores (Enduring Vitality's).
+    if (clause.abilityType === "static" && (clause.actions ?? []).every((a) => !a.verb || a.verb === "none") && QUOTED_GRANT.test(clauseText)) {
+      clause = { ...clause, actions: [{ verb: "grant-ability", object: "that ability" }] };
     }
     const actors = clauseText ? actionRecipients(clauseText) : {};
     const actorFor = (verb?: string): Control | undefined =>
@@ -1841,6 +1874,8 @@ export function deriveAbilities(
     if (drain) { if (face) drain.face = face; abilities.push(drain); }
     const toughnessDamage = toughnessDamageAbility(text);
     if (toughnessDamage) { if (face) toughnessDamage.face = face; abilities.push(toughnessDamage); }
+    const castAsFlash = kind === "static" ? castAsFlashAbility(text) : undefined;
+    if (castAsFlash) { if (face) castAsFlash.face = face; abilities.push(castAsFlash); }
 
     // A TRIGGER is a consumer signal in its own right, independent of what the effect does. Geode
     // Rager's "Landfall — whenever a land you control enters, GOAD each creature target player
