@@ -65,9 +65,13 @@ function main(argv) {
   for (const f of iterFiles(codePaths)) {
     let text;
     try { text = readFileSync(f, "utf8"); } catch { continue; }
+    // A FILE-LOCAL TOKEN IS NOT FLOATING: a component may define its own property and read it
+    // (a Tailwind `[--tile:...]` class, or an inline style's `"--n": 3` key), the same allowance
+    // `css-tokens.test.ts` makes. Only a token defined nowhere -- theme or the file itself -- fails.
+    const local = new Set([...text.matchAll(/(--[A-Za-z0-9_-]+)"?\s*:/g)].map((m) => m[1]));
     text.split(/\r\n|\r|\n/).forEach((line, i) => {
       for (const m of line.matchAll(REF)) {
-        if (!defined.has(m[1])) missing.push(`${f}:${i + 1}: var(${m[1]}) is NOT defined in the theme`);
+        if (!defined.has(m[1]) && !local.has(m[1])) missing.push(`${f}:${i + 1}: var(${m[1]}) is NOT defined in the theme`);
       }
     });
   }
