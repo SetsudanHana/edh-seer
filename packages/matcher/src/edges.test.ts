@@ -5652,3 +5652,36 @@ test("a per-combat pump over every creature you control reaches each creature, a
   expect(links(pump("once", "each"), spellCard("Grizzly Bears", "creature"))).toBe(false);
   expect(links(pump("per-cycle", "target"), spellCard("Grizzly Bears", "creature"))).toBe(false);
 });
+
+/** A CLONE LINKS TO WHAT IT CAN COPY (owner ruling 2026-09-28, #712): a weak but real edge. Machine
+ *  God's Effigy copies any creature; Estrid's Invocation an enchantment you control, carried on the
+ *  clone's `copy` emit. Not onto another clone, and not for a token copy. */
+test("a permanent that enters as a copy links to each card it can copy, and to no clone", () => {
+  const clone = (name: string, text: string, emitType?: string) => {
+    const d = base(name, [{
+      kind: "static", repeats: "continuous", effect: { kind: "clone" },
+      ...(emitType ? { emits: [{ verb: "copy", subject: { type: emitType, control: "you", token: null } }] } : {}),
+    }] as unknown as CardTags["abilities"]);
+    (d.card as { oracleText: string }).oracleText = text;
+    d.tags.characteristics.types = ["artifact"];
+    return d;
+  };
+  const effigy = clone("Machine God's Effigy", "You may have this artifact enter as a copy of any creature on the battlefield, except it's an artifact.");
+  const estrid = clone("Estrid's Invocation", "You may have this enchantment enter as a copy of an enchantment you control.", "enchantment");
+  const claims = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => directedReasons(p, c, H).some((r) => r.producer === p.card.name && r.tag === "static:clone");
+  expect(claims(effigy, spellCard("Foundry Inspector", "creature"))).toBe(true);
+  expect(claims(effigy, spellCard("Forest", "land"))).toBe(false);
+  expect(claims(estrid, spellCard("Sphere Grid", "enchantment"))).toBe(true);
+  expect(claims(estrid, spellCard("Grizzly Bears", "creature"))).toBe(false);
+  // Clone onto clone: judged uncertain by the owner, so no claim.
+  const metamorph = spellCard("Phyrexian Metamorph", "creature");
+  (metamorph.card as { oracleText: string }).oracleText = "You may have this creature enter as a copy of any artifact or creature on the battlefield.";
+  expect(claims(effigy, metamorph)).toBe(false);
+  // A token copy is not a clone permanent.
+  const helm = clone("Helm of the Host", "At the beginning of combat on your turn, create a token that's a copy of equipped creature.");
+  expect(claims(helm, spellCard("Grizzly Bears", "creature"))).toBe(false);
+  // Never a card with itself: a creature clone is a creature.
+  const clone2 = clone("Clone", "You may have this creature enter as a copy of any creature on the battlefield.");
+  clone2.tags.characteristics.types = ["creature"];
+  expect(claims(clone2, clone2)).toBe(false);
+});

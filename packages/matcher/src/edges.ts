@@ -11,7 +11,7 @@ import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
-  enterAsCopySentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, creatureConditionSentence,
+  enterAsCopySentence, entersAsCopyOfSentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, creatureConditionSentence,
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
@@ -1224,10 +1224,18 @@ function copySubject(
   // no subject at all, and creature is the honest default there: every printed member of that
   // family copies a creature at minimum. Anything else untyped is REFUSED, not widened.
   const abilities = p.tags?.abilities ?? [];
-  const typed = abilities
-    .filter((a) => (a.effect.kind === "clone" || a.effect.kind === "token-generation")
-      && (a.effect.subject?.type !== undefined || a.effect.subject?.subtype !== undefined))
-    .map((a) => a.effect.subject as Partial<SubjectFilter>);
+  const hasClass = (s?: Partial<SubjectFilter>) => s?.type !== undefined || s?.subtype !== undefined;
+  const typed = [
+    ...abilities
+      .filter((a) => (a.effect.kind === "clone" || a.effect.kind === "token-generation") && hasClass(a.effect.subject))
+      .map((a) => a.effect.subject as Partial<SubjectFilter>),
+    // A CLONE STATIC CARRIES WHAT IT COPIES ON ITS `copy` EMIT, not its effect subject (#712):
+    // Estrid's Invocation's "enter as a copy of an enchantment you control" derived the enchantment
+    // there, and the creature fallback below made it claim creatures instead.
+    ...abilities
+      .filter((a) => a.effect.kind === "clone")
+      .flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "copy" && hasClass(e.subject)).map((e) => e.subject as Partial<SubjectFilter>)),
+  ];
   // THE FIRST typed branch, not all of them. Merging every branch into an `anyOf` was built and
   // MEASURED: it recovers Saheeli's Artistry's creature mode (its artifact mode derives first) and
   // costs a FALSE claim on the frozen panel -- 86.4% -> 86.2%, false 63 -> 64. Under-claiming is the
@@ -3016,8 +3024,32 @@ function counterCostEdges({ p, c, h, pEvents, reasons }: PairScope): void {
 // copy at the next end step, Kiki-Jiki sacrifices it: the copy has the copied card's own "leaves"
 // or "dies" ability, so Watcher for Tomorrow's copy returns its hideaway card. Read off the copying
 // ability's own `temporary` departure (DERIVE 173), not guessed; it repeats as that ability does.
+/** "Enter(s) as a copy of" -- a clone permanent, never a token copy or a "becomes a copy". */
+const ENTERS_AS_COPY_CUE = /\benters? as a copy of\b/i;
 function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
   const copy = copySubject(p);
+  // A CLONE LINKS TO WHAT IT CAN COPY (owner ruling 2026-09-28, #712): "a weak but real edge" --
+  // Machine God's Effigy makes a more resilient copy of a creature, Estrid's Invocation one of an
+  // enchantment you control. For a permanent that ENTERS as a copy only; the 7,622-edge mesh the
+  // static gate records came from SPELL copies. Not onto another clone ("you would not typically
+  // put a clone on a clone", judged uncertain) and not onto a token node.
+  // Not a card with itself (a creature clone is a creature), and not twice: a TYPAL clone static is
+  // already claimed by `staticEdges` under the same tag (review).
+  const typalClone = (p.tags?.abilities ?? []).some((a) => a.kind === "static" && a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined);
+  if (copy?.enters && !typalClone && p.card.name !== c.card.name
+    && ENTERS_AS_COPY_CUE.test(p.card.oracleText ?? "") && !c.isToken
+    && !ENTERS_AS_COPY_CUE.test(c.card.oracleText ?? "")
+    && !(copy.notLegendary && c.tags.characteristics.types.includes("legendary"))
+    && subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) {
+    reasons.push({
+      tag: "static:clone",
+      text: entersAsCopyOfSentence(p.card.name, c.card.name),
+      effectKind: "clone",
+      repeatability: "static",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+  }
   const temp = (p.tags?.abilities ?? []).find((a) => a.temporary === true && a.effect.kind === "token-generation");
   const exits = new Set((temp?.emits ?? []).map((e) => e.verb).filter((v) => v === "leaves" || v === "dies"));
   if (copy && !c.isToken) {
