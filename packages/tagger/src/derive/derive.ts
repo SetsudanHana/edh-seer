@@ -215,7 +215,10 @@ import { emblemRecipient } from "../emblem.js";
 // 193: #716 -- a targeted destroy whose controller gets copies back is aimed at your own creature
 // (Saw in Half, owner ruling #513); an object naming "in/from ... graveyard" sets a missing fromZone
 // (Emry, Lurker of the Loch's cast from your graveyard is recursion).
-export const DERIVE_VERSION = 193;
+// 194: #717 -- a cost reduction over "spell(s) you cast" is your class, with a stat-vs-stat narrowing
+// read (Doran, Besieged by Time); "if you would draw a card ... instead" is a draw replacement, a
+// payoff for draws (Alhammarret's Archive).
+export const DERIVE_VERSION = 194;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -963,6 +966,17 @@ function effectSubject(
   // effect side recognised every other spelling of self except the plain name.
   else if (isSelfSubject(object, cardName)) subject.self = true;
   if (ATTACKS_YOU.test(object)) subject.control = "opp";
+  // A COST REDUCTION OVER "SPELL(S) YOU CAST" IS A CLASS OF YOUR DECK (#717): Doran, Besieged by Time's
+  // "Each creature spell you cast with toughness greater than its power costs {1} less" came back as
+  // the singular "creature spell you cast ...", parsed to `{creature, any}` with no scope, and the
+  // static guard dropped it -- so Bedrock Tortoise, a 0/6, got no discount. The plural ("artifact
+  // spells you cast", Foundry Inspector) already worked; the class is the same either way.
+  if (kind === "cost-reduction" && SPELLS_YOU_CAST.test(object)) {
+    subject.control = "you";
+    subject.scope ??= "all";
+    const cmp = STAT_VS_STAT.exec(object);
+    if (cmp) subject.stats = [...(subject.stats ?? []), { metric: cmp[1]!.toLowerCase() as "power" | "toughness", op: "gt", vs: cmp[2]!.toLowerCase() as "power" | "toughness" }];
+  }
   if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) {
     subject.zone = action.fromZone;
     // Only when the object text stated no owner of its own -- an explicit one is more specific.
@@ -1075,6 +1089,10 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
  *  an opponent controls dies" (owner-judged FALSE). The type stays the pronoun's own; only an
  *  unstated controller is inherited. */
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
+/** "…spell(s) you cast" as a cost reducer's object (#717, Doran). */
+const SPELLS_YOU_CAST = /\bspells? you cast\b/i;
+/** "with toughness greater than its power" -- one stat against another on the same card (#717). */
+const STAT_VS_STAT = /\bwith (power|toughness) greater than (?:its|their) (power|toughness)\b/i;
 /** "…card in your graveyard" / "…from a graveyard": an object that names its zone (#716, Emry). */
 const ZONE_MOVING_VERBS: ReadonlySet<string> = new Set(["cast", "play", "return", "put", "exile"]);
 const OBJECT_IN_GRAVEYARD = /\b(?:in|from) (?:your|a|an opponent's|target player's|their) graveyard\b/i;

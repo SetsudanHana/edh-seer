@@ -3390,3 +3390,19 @@ test("an object naming 'in your graveyard' supplies the zone the model left out"
     "Emry, Lurker of the Loch", { 3: "Choose target artifact card in your graveyard. You may cast that card this turn." }).abilities;
   expect(emry.find((a) => a.effect.kind === "graveyard-recursion")?.effect.subject).toMatchObject({ type: "artifact", zone: "graveyard" });
 });
+
+// #717 (owner lost-pair re-judge 2026-09-28): two statics.
+test("a cost reduction over 'spell you cast' is your class, with its stat-vs-stat narrowing", () => {
+  const doran = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "cost-modify", object: "creature spell you cast with toughness greater than its power", amount: "-1" }] }],
+    "Doran, Besieged by Time", { 1: "Each creature spell you cast with toughness greater than its power costs {1} less to cast." }).abilities[0]!;
+  expect(doran.effect).toMatchObject({ kind: "cost-reduction", subject: { type: "creature", control: "you", scope: "all", stats: [{ metric: "toughness", op: "gt", vs: "power" }] } });
+});
+
+test("'if you would draw a card ... instead' is a draw replacement, a payoff for draws", () => {
+  const archive = deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "draw", object: "two cards" }] }],
+    "Alhammarret's Archive", { 2: "If you would draw a card except the first one you draw in each of your draw steps, draw two cards instead." }).abilities;
+  const payoff = archive.find((a) => a.trigger?.verbs.includes("draw"));
+  expect(payoff?.effect.kind).toBe("draw-card");
+  // It draws nothing of its own: no draw emit from the replacement.
+  expect(archive.some((a) => (a.emits ?? []).some((e) => e.verb === "draw"))).toBe(false);
+});
