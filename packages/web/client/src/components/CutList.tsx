@@ -15,8 +15,19 @@ import { SwapLine } from "./SuggestedPairs.js";
  *  same way: a relation it cannot express looks exactly like a card doing nothing (see matcher's
  *  `cut-list.ts`). The caption is not decoration — it is the difference between a tool that helps
  *  and one that confidently deletes a player's best card. */
+/** Scrolls to a role's shelf on the Roles chapter, or to the chapter when the shelf is not drawn.
+ *  Never through the URL: the report's hash holds the deck. */
+function toShelf(shelf: string | undefined): void {
+  const at = (shelf && document.getElementById(`shelf-${shelf}`)) || document.getElementById("roles");
+  at?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 /** A role group over its target, with the cards in it: where the rest of a trim comes from. */
-export interface Surplus { name: string; count: number; target: number; over: number; cards: EngineCard[] }
+export interface Surplus {
+  name: string; count: number; target: number; over: number; cards: EngineCard[];
+  /** The build category of the role's first shelf, which carries the role's heading on Roles. */
+  shelf?: string;
+}
 
 export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pairs, deckSize }:
   {
@@ -148,13 +159,26 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
         <section aria-labelledby="cuts-surplus" className="flex flex-col gap-3 pt-2">
           <h4 id="cuts-surplus" className="text-base font-semibold">Room in your roles</h4>
           {/* ONE LINE PER ROLE (owner, 2026-09-27: one place per fact). The cards are on the Roles
-            *  shelves, which now say how many are over; they were repeated here as card images. */}
-          <ul className="flex flex-col gap-1 text-sm">
+            *  shelves, which now say how many are over; they were repeated here as card images.
+            *
+            *  EACH ROLE IS ITS OWN WAY TO ITS SHELF (owner, 2026-09-29: "this looks ugly and if I click
+            *  it it does not work"). Four identical "Pick them on the shelf" links followed the rows,
+            *  and each was `href="#roles"`: the report keeps the deck in the URL's hash, so a click
+            *  replaced the deck instead of scrolling. The whole row is now one button, and it scrolls
+            *  to that role's own shelf, not to the top of the chapter. */}
+          <p className="text-sm text-(--muted) max-w-[65ch]">Pick a role to choose its cards on the shelf.</p>
+          <ul className="flex flex-wrap gap-2 text-sm">
             {surplus!.map((g) => (
               <li key={g.name}>
-                <b>{BUILD_CATEGORY_LABEL[g.name] ?? g.name}</b>{" "}
-                <span className="tabular-nums text-(--muted)">{g.count} against {g.target}: up to {g.over} can go.</span>{" "}
-                <a href="#roles" className="text-(--accent) underline underline-offset-2">Pick them on the shelf</a>
+                <button
+                  type="button"
+                  onClick={() => toShelf(g.shelf)}
+                  className="flex min-h-11 items-baseline gap-2 rounded-(--radius) border border-(--separator) px-3 py-2 text-left hover:border-(--foreground)"
+                >
+                  <b>{BUILD_CATEGORY_LABEL[g.name] ?? g.name}</b>
+                  <span className="tabular-nums text-(--muted)">{g.count} against {g.target}: up to {g.over} can go</span>
+                  <span aria-hidden="true" className="text-(--accent)">&darr;</span>
+                </button>
               </li>
             ))}
           </ul>
