@@ -259,7 +259,7 @@ test("an analysis in flight says so instead of leaving the page empty", async ()
   await userEvent.type(screen.getByRole("textbox", { name: /commander/i }), "1 Krenko, Mob Boss");
   await userEvent.type(screen.getByRole("textbox", { name: /decklist/i }), "1 Impact Tremors\n1 Sol Ring");
   await userEvent.click(screen.getByRole("button", { name: /analyse deck/i }));
-  expect(await screen.findByRole("status")).toHaveTextContent("Reading 2 lines for Krenko, Mob Boss");
+  expect(await screen.findByRole("status")).toHaveTextContent("Reading 3 cards for Krenko, Mob Boss");
   expect(screen.queryByRole("link", { name: /how the engine decides/i })).toBeNull();
   window.history.replaceState(null, "", "/");
 });
