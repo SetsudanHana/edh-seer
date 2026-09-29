@@ -29,3 +29,11 @@ test("evalStatPredicate: relational comparison (metric vs metric)", () => {
   expect(evalStatPredicate({ metric: "toughness", op: "gte", vs: "power" }, wall)).toBe(true);
   expect(evalStatPredicate({ metric: "toughness", op: "gte", vs: "power" }, beater)).toBe(false);
 });
+
+test("evalStatPredicate: mana-value parity, zero is even (#713)", () => {
+  const mv = (manaValue: number) => ({ power: 0, toughness: 0, manaValue });
+  expect(evalStatPredicate({ metric: "mana-value", op: "odd" }, mv(3))).toBe(true);
+  expect(evalStatPredicate({ metric: "mana-value", op: "odd" }, mv(4))).toBe(false);
+  expect(evalStatPredicate({ metric: "mana-value", op: "even" }, mv(0))).toBe(true);
+  expect(evalStatPredicate({ metric: "mana-value", op: "odd" }, mv(0))).toBe(false);
+});

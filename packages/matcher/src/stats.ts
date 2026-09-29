@@ -21,5 +21,8 @@ export function evalStatPredicate(
     case "lt": return lhs < rhs;
     case "gt": return lhs > rhs;
     case "eq": return lhs === rhs;
+    // Zero is even (CR 202.3's mana value is a whole number; "odd" never meets a 0).
+    case "odd": return Math.abs(lhs) % 2 === 1;
+    case "even": return lhs % 2 === 0;
   }
 }

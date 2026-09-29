@@ -436,3 +436,11 @@ test("a producer disjunction satisfies a consumer that any branch satisfies", ()
   expect(subjectMatches(eats, s({ subtype: "treasure" }), H)).toBe(true);
   expect(subjectMatches(eats, s({ type: "land" }), H)).toBe(false);
 });
+
+test("a parity demand is met by a known mana value of that parity, and by an UNKNOWN one (#713)", () => {
+  const odd = s({ type: "permanent", stats: [{ metric: "mana-value", op: "odd" }] });
+  expect(subjectMatches(s({ type: "permanent", manaValue: 3 }), odd, H)).toBe(true);
+  expect(subjectMatches(s({ type: "permanent", manaValue: 2 }), odd, H)).toBe(false);
+  // All Is Dust's sacrificed permanents: a class holding both parities, not a 0.
+  expect(subjectMatches(s({ type: "permanent" }), odd, H)).toBe(true);
+});

@@ -313,3 +313,8 @@ test("validateSubject leaves stats absent when not provided (no regression)", ()
   const out = parseAbilities(raw);
   expect(out[0].trigger!.subject.stats).toBeUndefined();
 });
+
+test("a parity stat predicate takes no rhs and is kept; with one it is dropped (#713)", () => {
+  const raw = JSON.stringify({ abilities: [{ kind: "triggered", trigger: { verbs: ["cast"], subject: { type: "spell", control: "you", token: null, stats: [{ metric: "mana-value", op: "odd" }, { metric: "mana-value", op: "even", value: 2 }] } }, effect: { kind: "draw-card" } }] });
+  expect(parseAbilities(raw)[0].trigger!.subject.stats).toEqual([{ metric: "mana-value", op: "odd" }]);
+});
