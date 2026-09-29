@@ -988,6 +988,7 @@ export const emitKeysOf = (d: DeckCard): string[] =>
 /** A `conditionCares` theme tag ("gain-life:any", "cast:-creature", "dies:creature") as event keys.
  *  A leading "-" is a negated class ("-creature": a noncreature spell), read the way prowess reads
  *  it; "any" names no class. */
+const POOL_CONDITION_FAMILIES = /^(?:gain-life|cast):/;
 function conditionDemandKeys(tag: string): string[] {
   const [verb, cls] = tag.split(":");
   if (!verb || !cls) return [];
@@ -1009,7 +1010,10 @@ export const demandKeysOf = (d: DeckCard): string[] => [
   // more life this turn" fires at the end step, so its TRIGGER names no lifegain, and the card was
   // missing from every "cares about lifegain" list. The derived `conditionCares` tag says what the
   // condition wants; it becomes the same event key a trigger on it would have.
-  ...abilitiesOf(d).flatMap((a) => (a.conditionCares ?? []).flatMap(conditionDemandKeys)),
+  // THE RULED FAMILIES ONLY (review): lifegain and spells cast. The older condition tags ("if you
+  // attacked", "a creature died", counters, descend) are not wired here -- "if you attacked" is a
+  // step from the self-trigger shape above, and none of them is measured as a pool demand.
+  ...abilitiesOf(d).flatMap((a) => (a.conditionCares ?? []).filter((t) => POOL_CONDITION_FAMILIES.test(t)).flatMap(conditionDemandKeys)),
   // ALL THREE FEEDER SHAPES ARE DEMANDS. Listing only board counts here left Strionic Resonator --
   // no trigger, no emit, one copy-ability -- with no demand at all, so `isSubstantive` dropped it
   // from the pool and its page had no rows, feeder pass or not (found on the first rebuild).
