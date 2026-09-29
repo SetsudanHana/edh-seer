@@ -3,7 +3,7 @@ import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { Link } from "react-router";
 import { groupAnchor } from "../lib/group-anchor.js";
 import { hueOf } from "../lib/page-orbit.js";
-import { causeCountTail, groupDirection, groupPartnerRows, searchHref, withheldFrom } from "../lib/inject.js";
+import { cardsNoun, causeCountTail, groupDirection, groupPartnerRows, searchHref, withheldFrom } from "../lib/inject.js";
 import type { PartnerRow } from "../lib/partners.js";
 import { CardTile } from "./CardTile.js";
 
@@ -78,7 +78,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
     // tile-sized columns now holds every group, each spanning as many columns as it has tiles, and
     // `dense` lets a later, smaller group fill the gap an earlier one left. A group's own hue rule
     // across its top says where it starts and ends, since neighbours now sit a tile-gap apart.
-    <div className="@container flex flex-col gap-8 sm:grid sm:grid-flow-row-dense sm:items-start sm:gap-x-4 sm:gap-y-10 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))] [--cols:4] lg:[--cols:5] xl:[--cols:6] 2xl:[--cols:8] min-[3400px]:[--cols:16] [--tile:calc((100cqw_-_(var(--cols)_-_1)*1rem_-_1px)/var(--cols))]">
+    <div className="@container flex flex-col gap-8 sm:grid sm:grid-flow-row-dense sm:gap-x-4 sm:gap-y-0 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))] [--cols:4] lg:[--cols:5] xl:[--cols:6] 2xl:[--cols:8] min-[150rem]:[--cols:10] min-[212.5rem]:[--cols:14] [--tile:calc((100cqw_-_(var(--cols)_-_1)*1rem_-_1px)/var(--cols))]">
       {groups.map((group, gi) => {
         // THE SAME DIRECTION DECIDES THE COUNTER AND THE VERB (2026-09-19). This read `pool` for
         // every group and then printed "cause it" under producer rows -- the sentence named one
@@ -91,7 +91,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
           // works with JavaScript off -- which the prerendered page needs -- and holds no state.
           <section key={group.event} id={groupAnchor(group.event)}
             style={{ "--n": group.rows.length, borderTopColor: hueOf(gi) } as React.CSSProperties}
-            className="flex flex-col gap-3 break-inside-avoid min-w-0 scroll-mt-[calc(var(--site-header-h,0px)+1rem)] sm:border-t-2 sm:pt-3 sm:[grid-column:span_min(var(--n),var(--cols))]">
+            className="flex flex-col gap-3 break-inside-avoid min-w-0 scroll-mt-[calc(var(--site-header-h,0px)+1rem)] sm:grid sm:[grid-template-rows:subgrid] sm:[grid-row:span_3] sm:content-start sm:gap-y-3 sm:mb-10 sm:border-t-2 sm:pt-3 sm:[grid-column:span_min(var(--n),var(--cols))]">
             <div className="flex flex-col gap-0.5">
               {/* THE HEADING RUNS THE GROUP'S OWN DIRECTION (roadmap AK4). Under a producer group
                 * the cards DO this -- "sacrifice a creature" -- and under an asker group they are
@@ -114,7 +114,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
               {rarity[group.event] !== undefined && (
                 <p className="text-(--muted) text-sm">
                   <span className="tabular-nums">{rarity[group.event]!.toLocaleString("en-US")}</span>{" "}
-                  {causeCountTail(group.rows, subject, identity ? subject : undefined)}
+                  {cardsNoun(rarity[group.event]!)} {causeCountTail(group.rows, subject, identity ? subject : undefined)}
                 </p>
               )}
             </div>
@@ -138,6 +138,10 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                 </li>
               ))}
             </ul>
+            {/* THREE ROWS SHARED WITH THE ROW'S OTHER GROUPS (design review 2026-09-29): heading, tiles,
+              * footer, as a subgrid, so a one-card group whose heading wraps no longer drops its
+              * tiles below its neighbours'. */}
+            <div className="flex flex-col gap-3">
             {group.rows.length > PHONE_ROW && !opened.has(group.event) && (
               <button
                 type="button"
@@ -172,6 +176,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                 </Link>
               </p>
             )}
+            </div>
           </section>
         );
       })}

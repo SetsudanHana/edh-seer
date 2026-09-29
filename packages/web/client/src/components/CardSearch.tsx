@@ -709,7 +709,7 @@ export function CardSearch({
             <h2 className="eyebrow text-(--muted) mt-8">
               {commanderMode ? "Most connected commanders" : "Most connected cards"}
             </h2>
-            <ul aria-label={commanderMode ? "Most connected commanders" : "Most connected cards"} className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
+            <ul aria-label={commanderMode ? "Most connected commanders" : "Most connected cards"} className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
               {(commanderMode ? index.filter((e) => e.commander) : index).slice(0, BROWSE_COUNT).map((e) => (
                 <li key={e.slug} className="min-w-0">
                   <CardTile
@@ -797,7 +797,7 @@ export function CardSearch({
             {/* TILES (owner, 2026-09-17): the whole card small, the name, its pips, and under it why
               * it is on the list -- the chip labels that hit. A list with no reason is what this
               * product refuses everywhere else. */}
-            <ul aria-label="Results" className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
+            <ul aria-label="Results" className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
               {matches.slice(0, shown).map((e) => {
                 // WHY IT IS ON THE LIST, in the sentences that were asked. Every kept row answers
                 // every term (the query ANDs), so the caption is the question rather than a

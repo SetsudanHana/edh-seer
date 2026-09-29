@@ -117,8 +117,8 @@ test("the static block prints how many cards can cause each event, per group", (
   // AND THE COUNT SAYS WHOSE IT IS (2026-09-22): every row here ASKS, so this page's card is one of
   // the cards that cause the event -- the reason those rows are its partners at all.
   // #755: and it names the population it counts, so it is not read as the size of the list.
-  expect(html).toContain("a creature token enters the battlefield — 1,234 cards in the game can cause this, Krenko, Mob Boss among them.");
-  expect(html).toContain("a creature dies — 1,451 cards in the game can cause this, Krenko, Mob Boss among them.");
+  expect(html).toContain("a creature token enters the battlefield — 1,234 cards in the game can cause this (Krenko is one).");
+  expect(html).toContain("a creature dies — 1,451 cards in the game can cause this (Krenko is one).");
   // One list per event, the count directly above its own list.
   expect(html.match(/<ol>/g)).toHaveLength(2);
   expect(html.indexOf("1,234 cards")).toBeLessThan(html.indexOf("purphoros-god-of-the-forge"));

@@ -299,11 +299,18 @@ export const causeCountTail = (rows: InjectableCard["partners"], subject?: strin
   // above a list of one read as a count of the list. The figure is every card that could cause the
   // event -- in the commander's colours on a commander page (AJ5), in the whole game on a card page
   // -- so it says which, and the list under it is plainly a different thing.
-  const where = commander ? `in ${commander}'s colours` : "in the game";
+  // THE SHORT NAME, ONCE (design review 2026-09-29): "17 cards in Inalla, Archmage Ritualist's
+  // colours can cause this, Inalla, Archmage Ritualist among them" ran to five lines over a one-card
+  // group and pushed its tiles out of line with the row.
+  const short = (name: string): string => name.split(" // ")[0]!.split(",")[0]!;
+  const where = commander ? `in ${short(commander)}'s colours` : "in the game";
   return subject && rows.every((r) => r.producer !== true && !/^While you control /i.test(r.reason))
-    ? `cards ${where} can cause this, ${subject} among them`
-    : `cards ${where} can cause this`;
+    ? `${where} can cause this (${short(subject)} is one)`
+    : `${where} can cause this`;
 };
+
+/** "1 card", "17 cards": the noun the count line opens with. */
+export const cardsNoun = (n: number): string => (n === 1 ? "card" : "cards");
 
 /** WHERE A GROUP'S WITHHELD COUNT LINKS (roadmap AJ3), and it is built ONCE for both readers.
  *
@@ -447,7 +454,7 @@ export function cardPageHtml(
       ? eventKeyClause(g.event)
       : eventKeyAction(g.event) ?? eventKeyClause(g.event);
     const count = n === undefined ? ""
-      : `    <p>${esc(said)} — ${n.toLocaleString("en-US")} ${esc(causeCountTail(g.rows, card.name, kind === "commander" ? card.name : undefined))}.</p>\n`;
+      : `    <p>${esc(said)} — ${n.toLocaleString("en-US")} ${cardsNoun(n)} ${esc(causeCountTail(g.rows, card.name, kind === "commander" ? card.name : undefined))}.</p>\n`;
     // THE WITHHELD COUNT, in the HTML too: it is the other number that makes this block this
     // card's, and the app has printed it under every group since the list was grouped.
     const dir = dirHere;
