@@ -81,6 +81,7 @@ const PROSE: Record<string, string> = {
   "719": "Cases: solved, a word", "725": "monarch", "726": "initiative", "731": "day/night",
   "903": "Commander", "903.3": "the commander designation is a deck fact (matcher asserts it)",
   "118.3b": "paying life is losing life — prompt rule",
+  "118.7a": "a generic reduction takes off generic mana only — reduction.ts records the printed mana; the reader applies it",
   "113.3": "schema: the ability kinds a card can name as an OBJECT (abilityKind, AC12)",
   "707.10": "schema / effect-kind: an ability is the third copyable object, kind copy-ability (AC12; derive.test asserts Gogo)",
   "707.2": "effect-kind: a clone's 'except it has this ability' is an exception to the copy, not the object copied (effect-kind.test asserts Cryptoplasm)",

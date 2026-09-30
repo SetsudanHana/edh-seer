@@ -1,7 +1,9 @@
 /** WHAT A COST REDUCTION TAKES OFF, AND WHETHER IT DISCOUNTS ONLY ITS OWN CARD (#804).
  *
  *  A recast loop balances only if its mana covers the recast, so a reducer's size is part of the
- *  loop: Heartless Summoning takes Gravecrawler from {B} to nothing. The clause's `amount` states
+ *  loop: Heartless Summoning takes Acererak the Archlich from {2}{B} to {B}. `mana` is what the card
+ *  prints, and a generic reduction takes off GENERIC mana only (CR 118.7a): Gravecrawler's {B} stays
+ *  {B} (owner, 2026-09-30). The clause's `amount` states
  *  it on 201 of 518 corpus reducers, in four spellings ("-2", "{2}", "{2} less", "-{2}"), and not at
  *  all on Urza's Incubator. The printed text says it on every one that has a number, so the text
  *  is read first and the amount is the fallback.
