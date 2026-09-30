@@ -10,6 +10,9 @@ test("a lone string and a one-element list are the same field; an OR-list in ano
   expect(differingFields(f({ type: "creature" }), f({ type: ["creature"] }))).toEqual([]);
   expect(differingFields(f({ type: ["instant", "sorcery"] }), f({ type: ["sorcery", "instant"] }))).toEqual([]);
   expect(differingFields(f({ control: "you", token: null }), f({ control: "any" }))).toEqual(["control", "token"]);
+  // anyOf holds filters: the same filters built with their keys in another order are the same field.
+  expect(differingFields(f({ anyOf: [{ type: "creature", control: "you" }, { subtype: "elf" }] }),
+    f({ anyOf: [{ subtype: "elf" }, { control: "you", type: "creature" }] }))).toEqual([]);
 });
 
 test("coverage, agreement and disagreements grouped by the fields that differ, weighted by cards", () => {

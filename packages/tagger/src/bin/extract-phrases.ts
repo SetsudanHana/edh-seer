@@ -5,7 +5,7 @@
  *
  *  THE CARD'S OWN NAME IS WRITTEN "~" (Scryfall's convention): "Meathook Massacre II" as a trigger
  *  subject is a self-reference, not a phrase of the filter language, and 2,000 names would each be a
- *  singleton. Legendary short names ("Gandalf" for "Gandalf, Shadow's Foe") and each face's name count.
+ *  singleton. Matched case-sensitively. Legendary short names ("Gandalf" for "Gandalf, Shadow's Foe") and each face's name count.
  *
  *  One line per phrase, sorted by kind, then cards descending, then phrase, so a re-run is
  *  byte-identical and a diff shows only what moved.
@@ -43,7 +43,8 @@ for (const kind of ["subject", "object"] as const) {
 writeFileSync(PHRASES_PATH, lines.join("\n") + "\n");
 console.log(`wrote ${PHRASES_PATH}`);
 
-/** The card's names, longest first, replaced whole-word and case-insensitively by "~". */
+/** The card's names, longest first, replaced whole-word by "~". CASE-SENSITIVE: Oracle capitalises a
+ *  name, and Storm, Force of Nature's "has storm" is the keyword, not the card (review). */
 function selfAsTilde(phrase: string, name: string): string {
   const names = new Set<string>();
   for (const face of name.split(" // ")) {
@@ -53,7 +54,7 @@ function selfAsTilde(phrase: string, name: string): string {
   }
   let out = phrase;
   for (const n of [...names].sort((a, b) => b.length - a.length)) {
-    out = out.replace(new RegExp(`(?<![\\w'])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w'])`, "gi"), "~");
+    out = out.replace(new RegExp(`(?<![\\w'])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w'])`, "g"), "~");
   }
   return out;
 }

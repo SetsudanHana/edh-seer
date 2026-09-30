@@ -1681,7 +1681,7 @@
 {"kind":"object","phrase":"any target","cards":741}
 {"kind":"object","phrase":"Trample","cards":677}
 {"kind":"object","phrase":"enchanted creature","cards":624}
-{"kind":"object","phrase":"~","cards":614}
+{"kind":"object","phrase":"~","cards":609}
 {"kind":"object","phrase":"Flash","cards":607}
 {"kind":"object","phrase":"that card","cards":574}
 {"kind":"object","phrase":"each opponent","cards":542}
@@ -1752,9 +1752,9 @@
 {"kind":"object","phrase":"target player or planeswalker","cards":125}
 {"kind":"object","phrase":"another creature","cards":122}
 {"kind":"object","phrase":"target nonland permanent","cards":121}
-{"kind":"object","phrase":"vigilance","cards":119}
+{"kind":"object","phrase":"vigilance","cards":120}
 {"kind":"object","phrase":"a Food token","cards":117}
-{"kind":"object","phrase":"lifelink","cards":116}
+{"kind":"object","phrase":"lifelink","cards":117}
 {"kind":"object","phrase":"three cards","cards":115}
 {"kind":"object","phrase":"your library for a basic land card","cards":112}
 {"kind":"object","phrase":"be countered","cards":108}
@@ -2055,6 +2055,7 @@
 {"kind":"object","phrase":"any number of cards","cards":18}
 {"kind":"object","phrase":"any number of targets","cards":18}
 {"kind":"object","phrase":"enchanted land","cards":18}
+{"kind":"object","phrase":"fear","cards":18}
 {"kind":"object","phrase":"one of the top three cards of your library","cards":18}
 {"kind":"object","phrase":"target artifact, creature, or land","cards":18}
 {"kind":"object","phrase":"target permanent you control","cards":18}
@@ -2075,7 +2076,6 @@
 {"kind":"object","phrase":"a permanent","cards":17}
 {"kind":"object","phrase":"a tapped 2/2 black Zombie creature token","cards":17}
 {"kind":"object","phrase":"all enchantments","cards":17}
-{"kind":"object","phrase":"fear","cards":17}
 {"kind":"object","phrase":"finality","cards":17}
 {"kind":"object","phrase":"gain life","cards":17}
 {"kind":"object","phrase":"protection from the color of your choice until end of turn","cards":17}
@@ -2127,6 +2127,7 @@
 {"kind":"object","phrase":"enchanted creature, vigilance","cards":15}
 {"kind":"object","phrase":"one mana of any type that land produced","cards":15}
 {"kind":"object","phrase":"shield","cards":15}
+{"kind":"object","phrase":"suspend","cards":15}
 {"kind":"object","phrase":"target artifact or land","cards":15}
 {"kind":"object","phrase":"target creature gains haste until end of turn","cards":15}
 {"kind":"object","phrase":"target permanent card","cards":15}
@@ -2151,7 +2152,6 @@
 {"kind":"object","phrase":"deathtouch until end of turn","cards":14}
 {"kind":"object","phrase":"lifelink until end of turn","cards":14}
 {"kind":"object","phrase":"open an Attraction","cards":14}
-{"kind":"object","phrase":"suspend","cards":14}
 {"kind":"object","phrase":"target artifact or creature an opponent controls","cards":14}
 {"kind":"object","phrase":"target creature gains first strike until end of turn","cards":14}
 {"kind":"object","phrase":"target enchantment card","cards":14}
@@ -2178,6 +2178,7 @@
 {"kind":"object","phrase":"a 2/2 black Zombie creature token with decayed","cards":13}
 {"kind":"object","phrase":"a 5/5 red Dragon creature token with flying","cards":13}
 {"kind":"object","phrase":"a Saproling","cards":13}
+{"kind":"object","phrase":"a six-sided die","cards":13}
 {"kind":"object","phrase":"all creatures your opponents control","cards":13}
 {"kind":"object","phrase":"all graveyards","cards":13}
 {"kind":"object","phrase":"all other cards revealed this way","cards":13}
@@ -2212,7 +2213,6 @@
 {"kind":"object","phrase":"a 3/3 green Elephant creature token","cards":12}
 {"kind":"object","phrase":"a card from target opponent's hand","cards":12}
 {"kind":"object","phrase":"a land card from among them","cards":12}
-{"kind":"object","phrase":"a six-sided die","cards":12}
 {"kind":"object","phrase":"be regenerated this turn","cards":12}
 {"kind":"object","phrase":"each other creature you control","cards":12}
 {"kind":"object","phrase":"five cards","cards":12}
@@ -9332,7 +9332,7 @@
 {"kind":"object","phrase":"a player or battle","cards":1}
 {"kind":"object","phrase":"a random creature card from among them","cards":1}
 {"kind":"object","phrase":"a reach counter, a vigilance counter, or a trample counter","cards":1}
-{"kind":"object","phrase":"a red Aura enchantment token named Mark of ~ attached to another target creature","cards":1}
+{"kind":"object","phrase":"a red Aura enchantment token named Mark of the Rani attached to another target creature","cards":1}
 {"kind":"object","phrase":"a red Aura enchantment token named Smoke Blessing","cards":1}
 {"kind":"object","phrase":"a red Elemental creature token with trample and \"This token's power and toughness are each equal to the number of instant and sorcery cards in your graveyard plus the number of cards with flashback you own in exile.\"","cards":1}
 {"kind":"object","phrase":"a red and white creature token with those characteristics","cards":1}
@@ -9594,7 +9594,6 @@
 {"kind":"object","phrase":"a white card with mana value X from your hand","cards":1}
 {"kind":"object","phrase":"a white card, a blue card, a black card, a red card, and a green card","cards":1}
 {"kind":"object","phrase":"a white creature you control","cards":1}
-{"kind":"object","phrase":"a ~","cards":1}
 {"kind":"object","phrase":"abilities your opponents activate cost {1} more to activate unless they're mana abilities","cards":1}
 {"kind":"object","phrase":"able to block it this turn don't block","cards":1}
 {"kind":"object","phrase":"absorb 1","cards":1}
@@ -12591,6 +12590,7 @@
 {"kind":"object","phrase":"flashback ability with cost equal to its mana cost","cards":1}
 {"kind":"object","phrase":"flashback until end of turn","cards":1}
 {"kind":"object","phrase":"flashback until end of turn with cost equal to its mana cost","cards":1}
+{"kind":"object","phrase":"flashback until end of turn with flashback cost equal to its mana cost","cards":1}
 {"kind":"object","phrase":"flashback with cost equal to its mana cost","cards":1}
 {"kind":"object","phrase":"flashback with cost equal to that card's mana cost","cards":1}
 {"kind":"object","phrase":"flashback {2}{G}","cards":1}
@@ -15022,7 +15022,7 @@
 {"kind":"object","phrase":"the next face-down creature spell you cast this turn","cards":1}
 {"kind":"object","phrase":"the next instance of damage to you from a source of your choice of the chosen color this turn","cards":1}
 {"kind":"object","phrase":"the next instant or sorcery spell with mana value 2 or less you cast this turn","cards":1}
-{"kind":"object","phrase":"the next instant or sorcery spell you cast this turn has ~","cards":1}
+{"kind":"object","phrase":"the next instant or sorcery spell you cast this turn has storm","cards":1}
 {"kind":"object","phrase":"the next instant or sorcery spell you cast this turn that targets only a single opponent or a single permanent an opponent controls will be copied for each other opponent, with each copy targeting the chosen player or permanent","cards":1}
 {"kind":"object","phrase":"the next instant spell you cast this turn has cascade","cards":1}
 {"kind":"object","phrase":"the next loyalty ability you activate this turn","cards":1}
@@ -15867,6 +15867,7 @@
 {"kind":"object","phrase":"trap counter","cards":1}
 {"kind":"object","phrase":"treasure","cards":1}
 {"kind":"object","phrase":"triggered abilities you control cause you to sacrifice or exile creature tokens you control","cards":1}
+{"kind":"object","phrase":"truth or consequences","cards":1}
 {"kind":"object","phrase":"twenty cards","cards":1}
 {"kind":"object","phrase":"twice X","cards":1}
 {"kind":"object","phrase":"twice X 1/1 black and green Pest creature tokens","cards":1}
@@ -17035,7 +17036,6 @@
 {"kind":"object","phrase":"~ to it","cards":1}
 {"kind":"object","phrase":"~ to its owner's hand","cards":1}
 {"kind":"object","phrase":"~ to up to one target creature you control","cards":1}
-{"kind":"object","phrase":"~ until end of turn with ~ cost equal to its mana cost","cards":1}
 {"kind":"object","phrase":"~ with three time counters on it","cards":1}
 {"kind":"object","phrase":"~, +1/+0 for each artifact you control","cards":1}
 {"kind":"object","phrase":"~, +1/+0 for each instant and sorcery card in your graveyard","cards":1}

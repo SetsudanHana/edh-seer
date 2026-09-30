@@ -31,11 +31,19 @@ export interface PhraseDiff {
 
 const EXAMPLES = 20;
 
+/** JSON with object keys sorted at every depth: `anyOf` holds filters, and two parsers need not build
+ *  their keys in the same order (review). */
+function stable(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(stable).join(",")}]`;
+  if (v && typeof v === "object") return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${stable((v as Record<string, unknown>)[k])}`).join(",")}}`;
+  return JSON.stringify(v);
+}
+
 /** One field's value in a comparable form. */
 function canon(v: unknown): string {
   if (v === undefined) return "undefined";
   const list = typeof v === "string" ? [v] : Array.isArray(v) ? v : undefined;
-  return list ? JSON.stringify(list.map((x) => JSON.stringify(x)).sort()) : JSON.stringify(v);
+  return list ? JSON.stringify(list.map(stable).sort()) : stable(v);
 }
 
 /** The fields on which two filters differ, sorted. */
