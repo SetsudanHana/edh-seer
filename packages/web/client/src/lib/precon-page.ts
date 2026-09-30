@@ -1,4 +1,5 @@
 import type { DeckSuggestions, SuggestedCard } from "@edh-seer/matcher/suggest-static";
+import type { BracketTarget, UpgradePackage } from "@edh-seer/matcher/upgrade-package";
 import type { AnalyzeResponse, DeckReport } from "../types.js";
 import { primaryType } from "./deck-shape.js";
 import { buildEngineModel } from "./engine-model.js";
@@ -38,6 +39,14 @@ export interface PreconPage {
   decklist: { group: string; cards: { name: string; count: number }[] }[];
   /** The report's own link for this list (`/#deck=…`), when the list fits in one. */
   report?: string;
+  /** THE UPGRADE PACKAGE FOR EACH BRACKET TARGET (#767): bring-down cuts first when the precon starts
+   *  above the target, then role sections of paired swaps, a reason on both sides. Absent on a page
+   *  built before packages existed. */
+  packages?: UpgradePackage[];
+  /** Targets no cut can reach: the page says so instead of offering a package. */
+  unreachable?: BracketTarget[];
+  /** Slug and art for every card a package adds, by name. */
+  packageCards?: Record<string, PreconCard>;
 }
 export interface PreconCard { name: string; slug: string; art?: string }
 

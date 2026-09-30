@@ -137,3 +137,15 @@ export function swapCandidates(report: DeckReport, cuts: readonly CutChoice[]): 
     .slice(0, SWAP_CANDIDATES)
     .map((t) => t.name);
 }
+
+/** THE CARDS A ROLE SECTION OF THE PRECON UPGRADE PACKAGE MAY CUT (#767): every card the report would
+ *  keep only for the role it fills, and no theme's key card. `swapCandidates` without its cap and
+ *  without its cheap-ramp rule: there a swap only had to work with more of the deck, here the card
+ *  coming in must be strictly better at the same job, which no Sol Ring loses to. */
+export function roleSwapCuts(report: DeckReport, model?: EngineModel | null): string[] {
+  const drivers = new Set<string>();
+  if (model) for (const g of model.groups) for (const id of g.hubs) { const c = model.cards.get(id); if (c) drivers.add(c.physical); }
+  return (report.trim ?? [])
+    .filter((t) => !drivers.has(t.name) && t.protections.length > 0 && t.protections.every((p) => /^fills /.test(p)))
+    .map((t) => t.name);
+}
