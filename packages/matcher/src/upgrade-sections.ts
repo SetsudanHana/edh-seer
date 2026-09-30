@@ -118,7 +118,10 @@ function triggers(d: DeckCard): Set<string> {
 /** A STAT LIMIT MUST BE THE SAME LIMIT: Despark's "with mana value 4 or greater" and Isolate's "with
  *  mana value 1" both print the phrase, and are opposite cards. */
 const STAT_CLAUSE = /\bwith (?:mana value|power|toughness)[^.,;]*/g;
-const printed = (d: DeckCard) => (d.card.oracleText ?? "").replace(/\([^)]*\)/g, "").toLowerCase();
+/** REMINDER TEXT, one parenthesis at a time: "[^()]" stops at the next "(", so a run of unclosed ones
+ *  is read once, not once per "(" (CodeQL, 2026-09-30). */
+const REMINDER = /\([^()]*\)/g;
+const printed = (d: DeckCard) => (d.card.oracleText ?? "").replace(REMINDER, "").toLowerCase();
 
 export function newConditions(cut: DeckCard, add: DeckCard): boolean {
   const a = printed(add);
