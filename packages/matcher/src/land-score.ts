@@ -53,7 +53,9 @@ const MANA_LINE = /^\{t\}(?:, pay \d+ life)?: add ([^.]*)\./;
  *  Add" line with nothing after it but a painland's damage does. */
 /** WHAT THE LINE ADDS, WITH NOTHING ATTACHED: symbols joined by "or", or one mana of any colour
  *  (your commander's included). "{W} for each enchantment you control" can add nothing. */
-const PLAIN_YIELD = /^(?:(?:\{[wubrgc]\})+(?:,? or |, )?)+$|^one mana of any colou?r(?: in your commander['’]s colou?r identity)?$/;
+// A SEPARATOR BETWEEN EVERY GROUP, never optional: with it optional the groups could split one run of
+// symbols many ways, which backtracks exponentially on a long one (CodeQL, 2026-09-30).
+const PLAIN_YIELD = /^(?:\{[wubrgc]\})+(?:(?:,? or |, )(?:\{[wubrgc]\})+)*$|^one mana of any colou?r(?: in your commander['’]s colou?r identity)?$/;
 const BASIC_TYPES: Record<string, string> = { plains: "W", island: "U", swamp: "B", mountain: "R", forest: "G" };
 function tapColours(dc: DeckCard): string[] {
   const out = new Set<string>();
