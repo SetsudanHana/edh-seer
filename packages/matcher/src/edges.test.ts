@@ -5855,3 +5855,33 @@ describe("an own-board static -N/-N kills only for a creature that comes back (#
     expect(dies(2)).toEqual([]);
   });
 });
+
+/** PLAY-FROM-TOP LINKS TO ITS CLASS (owner ruling 2026-09-30, after #856), the way a typed tutor or a
+ *  typed recursion does: Mystic Forge to the artifacts it lets you cast from the top, Conspicuous
+ *  Snoop to the Goblins. Same narrowing bar as recursion, so "lands and spells" (Future Sight) and an
+ *  untyped permission (Bolas's Citadel) link nothing. Live subjects, 2026-09-30. */
+describe("a play-from-top permission links to the cards of its class", () => {
+  const pft = (name: string, subject: Partial<SubjectFilter>) => base(name, [
+    { kind: "static", effect: { kind: "play-from-top", subject: { zone: "library", scope: "all", ...subject, control: "you", token: null } }, repeats: "continuous" },
+  ] as CardTags["abilities"]);
+  const card = (name: string, types: string[], subtypes: string[] = [], extra: Partial<CardTags["characteristics"]> = {}) => {
+    const c = base(name, [], subtypes);
+    c.tags.characteristics = { ...c.tags.characteristics, types, ...extra };
+    return c;
+  };
+  const links = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) =>
+    directedReasons(p, c, H).filter((r) => r.tag.startsWith("play-from-top:")).map((r) => r.text);
+  const ring = card("Sol Ring", ["artifact"], [], { colors: [] });
+  const goblin = card("Goblin Guide", ["creature"], ["goblin"], { colors: ["R"] });
+  const bear = card("Grizzly Bears", ["creature"], ["bear"], { colors: ["G"] });
+  test("a class it names", () => {
+    expect(links(pft("Mystic Forge", { type: "artifact", colors: ["C"] }), ring)).toEqual(["Mystic Forge lets you cast Sol Ring from the top of your library"]);
+    expect(links(pft("Conspicuous Snoop", { type: "spell", subtype: "goblin" }), goblin)).toHaveLength(1);
+    expect(links(pft("Conspicuous Snoop", { type: "spell", subtype: "goblin" }), bear)).toEqual([]);
+  });
+  test("the whole board, or nothing named, links nothing", () => {
+    expect(links(pft("Future Sight", { type: "spell" }), bear)).toEqual([]);
+    expect(links(pft("Courser of Kruphix", { type: "land" }), card("Forest", ["land"], ["forest"]))).toEqual([]);
+    expect(links(pft("Bolas's Citadel", {}), ring)).toEqual([]);
+  });
+});

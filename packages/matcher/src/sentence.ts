@@ -782,6 +782,11 @@ export function recursionTargetSentence(producer: string, consumer: string): str
   return `${producer} can bring back ${consumer}`;
 }
 
+/** A play-from-top permission and a card of its class (#856, owner 2026-09-30). */
+export function playFromTopSentence(producer: string, consumer: string, land = false): string {
+  return `${producer} lets you ${land ? "play" : "cast"} ${consumer} from the top of your library`;
+}
+
 /** A fill and the delve spell it pays for (CR 702.66): the producer puts cards in your graveyard,
  *  the consumer exiles them as mana. */
 export function delveSentence(producer: string, consumer: string): string {

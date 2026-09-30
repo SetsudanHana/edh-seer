@@ -15,7 +15,7 @@ import {
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, digsRatherThanSearches, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
+  staticGrantSentence, typeGrantNoun, recursionTargetSentence, playFromTopSentence, tutorSentence, digsRatherThanSearches, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
@@ -1500,7 +1500,7 @@ function ownBoardKill(a: Ability): number | undefined {
 /** Kinds that record a fact for loop economics and claim nothing pairwise: `bounce` (#802) and
  *  `play-from-top` (#856). Each derived blank before its kind existed, so reading it blank keeps
  *  every edge where it was. */
-const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top"]);
+const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top"]);  // play-from-top: read raw by `playFromTopEdges`
 const forPairs = new WeakMap<CardTags, Map<number | undefined, CardTags>>();
 function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
   const tags = dc.tags;
@@ -1702,6 +1702,8 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
   reuseEdges(s);
   flashTimingEdges(s);
   delveEdges(s);
+  // The one channel that reads a FACT kind: see `playFromTopEdges`.
+  playFromTopEdges({ ...s, p: p0 as TaggedCard, c: c0 as TaggedCard });
   // NO "RECURSION RE-FIRES A DEATH TRIGGER" PASS. One existed for a day (PR #295, recall v4 #145:
   // Sheoldred returning Vindictive Lich "so it can die again") and the owner judged all three of its
   // panel claims FALSE on 2026-09-09: "the edge should be just reanimation -- sure it can die again,
@@ -3112,6 +3114,44 @@ function typedRecursionEdges({ p, c, h, reasons }: PairScope): void {
       consumer: c.card.name,
       producer: p.card.name,
     });
+  }
+}
+
+// PLAY-FROM-TOP -> THE CARDS OF ITS CLASS (owner ruling 2026-09-30, after #856). Mystic Forge lets
+// you cast artifacts from the top of your library, and that relates it to each artifact in the deck
+// the way a typed tutor or a typed recursion relates to its class. Same bar as the recursion pass:
+// a subtype, stats, legendary, historic, a conjunction of types, or a lone type outside the whole
+// board. "Lands and spells" (Future Sight, Experimental Frenzy), "lands" (Courser of Kruphix) and
+// an untyped permission (Bolas's Citadel) are the whole deck and link nothing. The kind is a FACT
+// kind for every other channel (`FACT_KINDS`), so this pass reads the card as derived.
+// CEILING: "artifact spells and colorless spells" (Mystic Forge) parses as colorless artifacts, so a
+// coloured artifact or a colourless non-artifact is not linked.
+function playFromTopEdges({ p, c, h, reasons }: PairScope): void {
+  for (const a of p.tags.abilities) {
+    if (a.effect.kind !== "play-from-top" || !a.effect.subject) continue;
+    // A token is never in a library (CR 111.7), and a card does not play itself from the top here.
+    if (c.isToken || p === c) continue;
+    const s = a.effect.subject;
+    if (s.control === "opp" || !(recursionClassNarrows(s) || s.historic === true)) continue;
+    const found = characteristicsSubject(c.tags, c.card.name);
+    // A card's printed characteristics sit in no zone; "spell" is every nonland card, so a class
+    // narrowed by a subtype or history is tested without it.
+    const { zone: _z, scope: _sc, fromZone: _fz, anyOf, ...rest } = s;
+    const spellOnly = list(rest.type).length === 1 && list(rest.type)[0] === "spell";
+    if (spellOnly && isLandOnly(c.tags)) continue; // a land is played, never a spell (CR 305.1)
+    const { type: _t, ...untyped } = rest;
+    const shared: SubjectFilter = spellOnly ? untyped as SubjectFilter : rest;
+    const matched = anyOf?.find((b) => subjectMatches(found, { ...shared, ...b }, h));
+    if (anyOf?.length ? !matched : !subjectMatches(found, shared, h)) continue;
+    reasons.push({
+      tag: `play-from-top:${themeSubjectKey(matched ?? keyedOn(shared, found))}`,
+      text: playFromTopSentence(p.card.name, c.card.name, isLandOnly(c.tags)),
+      effectKind: a.effect.kind,
+      repeatability: "static",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+    return; // one claim per pair
   }
 }
 
