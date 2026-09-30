@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within, act } from "@testing-librar
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { expect, test, vi } from "vitest";
-import { CardSearch, QUERY_SETTLE_MS, SEARCH_LIMIT } from "./CardSearch.js";
+import { browseCount, CardSearch, QUERY_SETTLE_MS, SEARCH_LIMIT } from "./CardSearch.js";
 import type { EventFrequencyFile, EventMembers, NameIndexEntry } from "../lib/partners.js";
 import { eventKeyAction } from "../lib/demand-sentence.js";
 
@@ -956,4 +956,12 @@ test("an index built before patterns keeps offering its keys, and a term offers 
   const sentence = await screen.findByRole("group", { name: "Your search" });
   await userEvent.click(within(sentence).getByRole("button", { name: /^makes: / }));
   expect(screen.queryByRole("group", { name: "What it happens to" })).toBeNull();
+});
+
+/** TWO FULL ROWS AT ANY WIDTH (#770): a flat twelve filled 12 of 16 columns at 3840. */
+test("the unasked page browses two full rows of tiles, and never fewer than twelve", () => {
+  expect(browseCount(0)).toBe(12);
+  expect(browseCount(3)).toBe(12);
+  expect(browseCount(8)).toBe(16);
+  expect(browseCount(16)).toBe(32);
 });

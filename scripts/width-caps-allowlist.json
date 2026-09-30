@@ -7,12 +7,6 @@
         "why": "#calibrate is a dev-only judging tool, not shipped; can stay if the owner agrees"
       }
     },
-    "packages/web/client/src/components/EventSentence.tsx": {
-      "max-w-4xl": {
-        "count": 1,
-        "why": "event sentence block, fix under #770"
-      }
-    },
     "packages/web/client/src/index.css": {
       "max-width: 64rem": {
         "count": 3,
