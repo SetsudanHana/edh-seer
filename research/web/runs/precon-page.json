@@ -22,11 +22,30 @@
       "goal": "I own this precon and keep losing to my friends' upgraded decks: find what to change first"
     },
     {
-      "id": "swaps",
+      "id": "upgrades",
       "goal": "see what each change is and what it replaces",
       "acts": [
         {
-          "click": "a[href='#swaps']"
+          "any": [
+            {
+              "click": "a[href='#upgrades']"
+            },
+            {
+              "click": "a[href='#swaps']"
+            }
+          ]
+        },
+        {
+          "click": "button[aria-expanded]:has-text('more')"
+        }
+      ]
+    },
+    {
+      "id": "bracket-3",
+      "goal": "my friends play at bracket 3: see what changes if I aim for that",
+      "acts": [
+        {
+          "click": "button[aria-pressed]:has-text('Bracket 3')"
         }
       ]
     }
