@@ -1,5 +1,5 @@
 import type { Reason } from "@edh-seer/engine";
-import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
+import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
@@ -1454,6 +1454,59 @@ export interface ReasonOptions {
   /** The deck's TYPED "whenever a <type> enters" triggers, for `reuseEdges` (#571): which card
    *  watches what entering. Absent on a card page and in the compass. */
   enterWatchers?: { name: string; subject: SubjectFilter }[];
+  /** The lowest printed toughness among the deck's creatures that come back by themselves, set only
+   *  when the deck also has a death payoff -- see `revenantToughness`. Absent on a card page and in
+   *  the compass, where an own-board static -N/-N kills nothing. */
+  revenantToughness?: number;
+}
+
+/** A STATIC -N/-N ON YOUR OWN CREATURES IS A DOWNSIDE (owner ruling 2026-09-30, #805 b). The sweep
+ *  ruling (2026-09-10) makes every "creatures get -N/-N" emit `dies`, which is right for Toxic Deluge
+ *  and wrong for Heartless Summoning: it was claiming "Blood Artist dies thanks to Heartless
+ *  Summoning" in any deck. Its kill counts only when the victim COMES BACK by itself -- a printed
+ *  self-recursion (Gravecrawler, Reassembling Skeleton), undying or persist -- AND the deck has a
+ *  death payoff: the Spellbook line Gravecrawler + Pitiless Plunderer + Heartless Summoning.
+ *  Returns the lowest such toughness, so a -N/-N reaches the deck when N meets it.
+ *  CEILING: printed toughness only; a -N/-N stacked with another, or a pump, is not added up. */
+export function revenantToughness(deck: DeckCard[]): number | undefined {
+  const payoff = deck.some((dc) => (dc.tags?.abilities ?? []).some((a) =>
+    a.trigger?.verbs.includes("dies") === true && a.trigger.subject.self !== true));
+  if (!payoff) return undefined;
+  const toughness = deck.flatMap((dc) => {
+    const ch = dc.tags?.characteristics;
+    if (!ch || ch.token || !ch.types.includes("creature")) return [];
+    const back = (ch.keywords ?? []).some((k) => /^(?:undying|persist)$/i.test(k))
+      || dc.tags!.abilities.some((a) => a.effect.kind === "graveyard-recursion" && a.effect.subject?.self === true);
+    const t = Number(ch.toughness);
+    return back && ch.toughness !== null && Number.isFinite(t) ? [t] : [];
+  });
+  return toughness.length ? Math.min(...toughness) : undefined;
+}
+
+/** How much toughness an own-board static -N/-N takes off, or undefined when the ability is not one. */
+function ownBoardKill(a: Ability): number | undefined {
+  if (a.kind !== "static" || a.effect.kind !== "debuff" || a.effect.subject?.control !== "you") return undefined;
+  if (!(a.emits ?? []).some((e) => e.verb === "dies")) return undefined;
+  const n = /\/\s*-(\d+)\s*$/.exec(a.amount ?? "");
+  return n ? Number(n[1]) : 0;
+}
+
+/** The card with every own-board -N/-N death this deck does not support taken off its emits. The
+ *  same object back when nothing is dropped, so the per-tags caches downstream still hit. */
+const killStripped = new WeakMap<CardTags, Map<number | undefined, CardTags>>();
+function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
+  const tags = dc.tags;
+  if (!tags || !tags.abilities.some((a) => ownBoardKill(a) !== undefined)) return dc;
+  const floor = opts.revenantToughness;
+  const dead = (a: Ability) => { const n = ownBoardKill(a); return n !== undefined && !(floor !== undefined && n >= floor); };
+  if (!tags.abilities.some(dead)) return dc;
+  const byFloor = killStripped.get(tags) ?? killStripped.set(tags, new Map()).get(tags)!;
+  let out = byFloor.get(floor);
+  if (!out) {
+    out = { ...tags, abilities: tags.abilities.map((a) => dead(a) ? { ...a, emits: (a.emits ?? []).filter((e) => e.verb !== "dies") } : a) };
+    byFloor.set(floor, out);
+  }
+  return { ...dc, tags: out };
 }
 
 /** AN AURA DIES WITH ITS HOST (CR 704.5m; recall v6 #57, Chime of Night <- Dockside Chef). "When
@@ -1596,7 +1649,9 @@ function silencedBy(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
     && subjectMatches(characteristicsSubject(c.tags!, c.card.name), a.effect.subject, h));
 }
 
-export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: ReasonOptions = {}): Reason[] {
+export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: ReasonOptions = {}): Reason[] {
+  const p = withLiveKills(p0, opts);
+  const c = p0 === c0 ? p : withLiveKills(c0, opts);
   if (!p.tags || !c.tags) return [];
   if (silencedBy(p, c, h)) return [];
   // Both sides carry tags from here on, which is what `TaggedCard` records for the channels.

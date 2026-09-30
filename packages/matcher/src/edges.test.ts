@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
+import { pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import type { Reason } from "@edh-seer/engine";
@@ -5819,4 +5819,39 @@ test("a fetch's entering land is named by the branch that matched, not the first
   const swampWatcher = base("Swamp Watcher", [{ kind: "triggered",
     trigger: { verbs: ["enters"], subject: { control: "you", token: null, subtype: "swamp" } }, effect: { kind: "drain" } }]);
   expect(directedReasons(mire, swampWatcher, H).map((r) => r.text)[0]).toMatch(/^When a Swamp enters thanks to Bloodstained Mire/);
+});
+
+/** A STATIC -N/-N ON YOUR OWN CREATURES IS A DOWNSIDE (owner ruling 2026-09-30, #805 b). Heartless
+ *  Summoning kills an X/1 as it enters, and that counts only when the victim comes back by itself
+ *  (Gravecrawler, Reassembling Skeleton, undying, persist) AND the deck has a death payoff: the
+ *  Spellbook line Gravecrawler + Pitiless Plunderer + Heartless Summoning. Live shapes, 2026-09-30. */
+describe("an own-board static -N/-N kills only for a creature that comes back (#805)", () => {
+  const you = { control: "you", token: null, type: "creature", scope: "all" } as const;
+  const heartless = base("Heartless Summoning", [
+    { kind: "static", effect: { kind: "debuff", subject: you }, amount: "-1/-1", emits: [{ verb: "dies", subject: you }], repeats: "continuous" },
+  ] as CardTags["abilities"]);
+  heartless.tags.characteristics.types = ["enchantment"];
+  const plunderer = base("Pitiless Plunderer", [{
+    kind: "triggered", effect: { kind: "token-generation", subject: { control: "you", token: true, subtype: "treasure" } },
+    trigger: { verbs: ["dies"], subject: { control: "you", token: null, other: true, type: "creature" } }, repeats: "repeatable",
+  }] as CardTags["abilities"]);
+  const gravecrawler = base("Gravecrawler", [{
+    kind: "static", effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, self: true, zone: "graveyard" } }, repeats: "continuous",
+  }] as CardTags["abilities"], ["zombie"]);
+  gravecrawler.tags.characteristics.toughness = "1" as never;
+  const bear = base("Grizzly Bears", [], ["bear"]);
+  bear.tags.characteristics.toughness = "2" as never;
+  const dies = (t?: number) => directedReasons(heartless, plunderer, H, { revenantToughness: t }).filter((r) => r.tag.startsWith("dies:"));
+
+  test("the deck fact: the lowest toughness among creatures that come back, and only beside a death payoff", () => {
+    expect(revenantToughness([heartless, plunderer, gravecrawler, bear])).toBe(1);
+    expect(revenantToughness([heartless, gravecrawler, bear])).toBeUndefined();
+    expect(revenantToughness([heartless, plunderer, bear])).toBeUndefined();
+  });
+  test("the kill feeds the payoff only when a victim comes back", () => {
+    expect(dies(1).length).toBeGreaterThan(0);
+    expect(dies(undefined)).toEqual([]);
+    // -1/-1 does not kill a creature whose toughness is 2.
+    expect(dies(2)).toEqual([]);
+  });
 });
