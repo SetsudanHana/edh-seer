@@ -107,6 +107,16 @@ function bouncesUnstated(action: Action): boolean {
   return !/\bcards?\b/i.test(object) && (PERMANENT_NOUN.test(object) || SPELL_NOUN.test(object));
 }
 
+/** "YOU MAY cast artifact spells ... FROM THE TOP OF YOUR LIBRARY" (#856): the permission and the phrase
+ *  after it in one sentence. Not a cascade's "When you cast this spell, exile cards from the top of
+ *  your library" (no "you may"), nor its "You may cast it" (a sentence of its own). String search. */
+export function playsFromTop(text: string): boolean {
+  return text.toLowerCase().split(".").some((sentence) => {
+    const at = sentence.indexOf("from the top of your library");
+    return at > 0 && /\byou may (?:play|cast)\b/.test(sentence.slice(0, at));
+  });
+}
+
 /** Does a dig's object name a class -- a type, subtype, stat predicate or name, on the subject or
  *  in an `anyOf` branch? "Two of them" and "a card" do not. See the `put library -> hand` row. */
 function digNamesAClass(object: string): boolean {
@@ -119,7 +129,7 @@ function digNamesAClass(object: string): boolean {
 /** Kinds whose whole meaning is the zone the subject sits in: `edges.ts` will not draw a
  *  reanimator edge unless `effect.subject.zone === "graveyard"`, so a recursion effect that loses
  *  the zone is a recursion no graveyard-filler can ever feed. */
-export const ZONE_SCOPED_KINDS: ReadonlySet<string> = new Set(["graveyard-recursion", "graveyard-hate", "bounce"]);
+export const ZONE_SCOPED_KINDS: ReadonlySet<string> = new Set(["graveyard-recursion", "graveyard-hate", "bounce", "play-from-top"]);
 
 /** "enters with N counters on it" — the card's own entry, CR 614.1c. Anchored on "enters with" so a
  *  clause that merely mentions entering ("whenever a creature enters, put a counter on it") is not
@@ -483,6 +493,11 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     return "top-set";
   }
   if (bouncesUnstated(action)) return "bounce";
+  if ((verb === "cast" || verb === "play") && (playsFromTop(`${verb} ${action.object ?? ""}`) || playsFromTop(clauseText))) return "play-from-top";
+  // A CARD PUTTING ITSELF BACK ON TOP (#856): Sensei's Divining Top. Tucking ANOTHER permanent is
+  // removal and stays unclassified -- see the `put -> library` note on ZONE_RULES.
+  if (verb === "put" && action.fromZone === "battlefield" && action.toZone === "library"
+      && /^this\b/i.test(action.object ?? "") && ON_TOP.test(clauseText)) return "top-set";
   for (const r of ZONE_RULES) {
     if (r.verb !== verb) continue;
     if (r.from !== undefined && (action.fromZone ?? null) !== r.from) continue;
