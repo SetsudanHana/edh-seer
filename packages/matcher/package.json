@@ -45,7 +45,8 @@
     "./bracket-guard": "./src/bracket-guard.ts",
     "./land-score": "./src/land-score.ts",
     "./upgrade-sections": "./src/upgrade-sections.ts",
-    "./upgrade-reasons": "./src/upgrade-reasons.ts"
+    "./upgrade-reasons": "./src/upgrade-reasons.ts",
+    "./upgrade-gatherer": "./src/upgrade-gatherer.ts"
   },
   "scripts": {
     "gen:quality-weights": "tsx src/bin/gen-quality-weights.ts",
