@@ -266,7 +266,10 @@ import { emblemRecipient } from "../emblem.js";
 // control get +1/+1 and have undying" keeps its recipient (Mikaeus, the Unhallowed).
 // 214: a keyword named INSIDE a quoted ability is not a granted keyword (Way of the Wildspeaker's
 // "[-4]: Create a 4/4 ... Beast token with trample" grants no trample).
-export const DERIVE_VERSION = 214;
+// 215: #886 -- a return that marks what it returns (finality counter, or a keyword counter the trigger
+// excludes) is `oncePerObject` (Meathook Massacre II, Luminous Broodmoth); #887 -- a flicker's "return
+// that card" takes its subject from the exile (Displacer Kitten: nonland permanent you control).
+export const DERIVE_VERSION = 215;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1864,8 +1867,12 @@ export function deriveAbilities(
       // with a subject produces a junk `static:` tag that can match another card's junk tag and
       // form an edge that is not real. A STATIC ability additionally has to name its targets --
       // see namesItsTargets -- or the very same edge forms against the whole deck.
+      // A FLICKER'S "return THAT CARD" means what the exile named (#887): Displacer Kitten's
+      // "nonland permanent you control" was read off the pronoun as any permanent anyone controls.
+      // The emits already resolve it; the subject now does too. Flicker only: measured, not assumed.
+      const subjectAction = effectKind === "flicker" && antecedent && !emitsSelf ? { ...action, object: antecedent } : action;
       const subject = effectKind
-        ? effectSubject(action, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
+        ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
       // See THAT_TYPED. Read BEFORE the actor, which is a stronger statement and overrides it.
       const objectText = (action.object ?? "").trim();
@@ -2109,6 +2116,16 @@ export function deriveAbilities(
         const k = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === action.verb).length;
         const delay = DELAYED_RETURN.exec(nthSentenceWith(text, action.verb, k));
         if (delay) ability.delayedUntil = /upkeep/i.test(delay[0]) ? "next-upkeep" : "next-end-step";
+      }
+      // A RETURN THAT MARKS WHAT IT RETURNS happens once per object (#886): a finality counter exiles
+      // it the next time it would die (CR 122.1h, Meathook Massacre II), and a keyword counter the
+      // trigger excludes takes it out of the trigger (Luminous Broodmoth's flying counter on a
+      // creature "without flying"). Still repeatable -- every OTHER creature returns once too.
+      if ((action.verb === "return" || action.verb === "put") && action.toZone === "battlefield") {
+        const marks = (clause.actions ?? []).filter((x) => x.verb === "add-counter")
+          .map((x) => (x.object ?? "").toLowerCase().replace(/\s*counters?$/, "").trim());
+        const excluded = trigger?.subject.notKeyword ?? [];
+        if (marks.some((m) => m === "finality" || excluded.includes(m))) ability.oncePerObject = true;
       }
       const made = ability.temporary ? emits.find((e) => e.verb === "create-token") : undefined;
       if (made) {

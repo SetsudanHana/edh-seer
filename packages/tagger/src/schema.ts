@@ -962,6 +962,11 @@ export interface Ability {
    *  whose value `edges.ts` reads as the ability's repeatability. It is what stops a loop: a return
    *  that lands at end of turn cannot be sacrificed again this turn. Set on the returning ability only. */
   delayedUntil?: "next-end-step" | "next-upkeep";
+  /** THE RETURN MARKS WHAT IT RETURNS so the same object cannot come back through it again (#886):
+   *  a finality counter (CR 122.1h, Meathook Massacre II), or a keyword counter the trigger excludes
+   *  (Luminous Broodmoth's flying counter on a creature "without flying"). The ability still fires
+   *  for every other object, so `repeats` is untouched; a loop reader must not cycle one card on it. */
+  oncePerObject?: true;
   /** WHICH TRIGGERS THIS ABILITY DOUBLES. Present only on `trigger-doubling`.
    *
    *  Panharmonicon prints "If an artifact or creature ENTERING causes a triggered ability of a

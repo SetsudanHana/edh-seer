@@ -46,7 +46,7 @@ infinite loops):
 | `bounce` | the `bounce` kind (#802): repeatable, aimed by its subject; a self-bounce recasts itself (Acererak) | 27 | 9% (2,320) | 253 |
 | `return` | a recast is paid only when the cycle casts the card; mana is a budget off the cycle, not a step; a one-card cycle (Acererak) is a loop when a payer that leaves it alive covers it | 32 | 15% (1,010) | 221 |
 | `land` | lands are played and tokens never cast: no recast | 32 | 15% (1,007) | 220 |
-| `subject` | flicker, untap and recursion reach only what their subject names; recursion to hand needs a recast; a return that marks what it returns (finality / flying counter) is once per creature | 32 | 29% (384) | 43 |
+| `subject` | flicker, untap and recursion reach only what their subject names; recursion to hand needs a recast; a return that marks what it returns (finality / flying counter, tag `oncePerObject`) is once per creature | 32 | 29% (384) | 43 |
 | `cast` | a card re-entered is not re-cast, a copy is not cast unless the copier casts it, "if you cast it" does not fire on a flicker | 32 | 40% (280) | 40 |
 | `copyloop` | a copier that re-enters and copies from its entry (Dualcaster Mage + a flicker spell) loops without a return | 37 | 41% (292) | 40 |
 | `top` | Sensei's Divining Top puts itself on top and a `play-from-top` permission casts it again | 44/156 | 41% (298) | 40 |
@@ -55,3 +55,14 @@ Still not modelled: a self-damage loop kept alive by a second card (Boros Reckon
 whose redirect is not read as a replacement), The Chain Veil's re-activation (`extra-loyalty`),
 Stridehangar Automaton's surplus token, Mikaeus's undying board, and the everything-is-a-land deck's
 37 Princess Yue variants.
+
+**DERIVE 215 (#886, #887): the last two text workarounds are gone.** A return that marks what it
+returns is `oncePerObject` on the ability, and a flicker's "return that card" takes its subject from the
+exile (Displacer Kitten: nonland permanent you control). `abil.py` reads both off the tags. Re-measured
+on a scratch static build (`STATIC=http://localhost:<port> npx tsx research/combos/collect.ts`, then
+`tags.ts`, both honour `STATIC`): **recall 44/156, precision 123/297 (41%), 40 loops in combo-free decks**
+-- the same as the text reads, one false loop fewer. The 71 decks' 59,588 reasons did not move: the
+edges already read the emits, which resolved the pronoun.
+
+`probe.ts <card names>` prints a card's stored clauses and a fresh derive -- the first thing to run on a
+detector miss.

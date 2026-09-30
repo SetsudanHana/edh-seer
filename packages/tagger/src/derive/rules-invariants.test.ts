@@ -34,6 +34,7 @@ const TESTED: Record<string, string> = {
   "702.162": "characteristics.test.ts — a More Than Meets the Eye card is cast from either face",
   "113.8": "derive.test.ts — \"you\" in a granted ability is the recipient's controller (Hellish Rebuke)",
   "122.1b": "subject.test.ts — every keyword counter named by rule 122.1b is in the dictionary",
+  "122.1h": "derive.test.ts — a return with a finality counter is once per object (#886)",
   "614.1c": "derive.test.ts — entering WITH counters is 614.1c, not placing counters later",
   "701": "cr-completeness.test.ts — every CR 701 keyword action is covered by a verb or excluded",
   "702": "cr-completeness.test.ts — every CR 702 keyword ability is known",

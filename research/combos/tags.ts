@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { normalizeName } from "../../packages/data/src/names.js";
 import { StaticLookup } from "../../packages/matcher/src/static-lookup.js";
 const D = JSON.parse(readFileSync("research/combos/decks.json", "utf8")) as any[];
-const lookup = new StaticLookup("https://edhseer.cards/static", fetch);
+const lookup = new StaticLookup(process.env.STATIC ?? "https://edhseer.cards/static", fetch);
 const names = [...new Set(D.flatMap((d) => d.cards.map((c: any) => normalizeName(c.n))))];
 for (let i = 0; i < names.length; i += 40) {
   for (let a = 0; ; a++) {
@@ -22,7 +22,7 @@ for (const n of names) {
     unless: a.unless ?? null, delayed: a.delayedBy ?? null, threshold: a.threshold ?? null,
     // The tag facts #802-#860 added for this detector (2026-09-30).
     sub: a.effect?.subject ?? null, red: a.reduces ?? null, pay: a.payment ?? null, grants: a.grants ?? null,
-    repl: a.replacement ?? false, until: a.delayedUntil ?? null, clause: a.clause ?? null,
+    repl: a.replacement ?? false, until: a.delayedUntil ?? null, clause: a.clause ?? null, once: a.oncePerObject === true,
   }));
   chars[card.name] = { types: tags.characteristics?.types ?? [], subtypes: tags.characteristics?.subtypes ?? [],
     colors: tags.characteristics?.colors ?? [], keywords: tags.characteristics?.keywords ?? [],

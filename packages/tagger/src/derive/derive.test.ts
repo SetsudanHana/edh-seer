@@ -3545,6 +3545,36 @@ test("the self-or-class twin keeps the combat state its condition set (review of
   for (const d of draws) expect(d.trigger?.subject.combat).toBe("attacking");
 });
 
+// #886 (#726 loop research): a return that marks what it returns cannot bring the same creature back twice.
+test("a return with a finality counter, or a keyword counter the trigger excludes, is once per object", () => {
+  const derive = (name: string, clause: object, text: string) => deriveAbilities([{ id: 1, ...clause } as never], name, { 1: text }).abilities
+    .find((a) => a.effect.kind === "graveyard-recursion");
+  const dies = (subject: string) => ({ event: "dies", subject, control: "you" });
+  const back = { verb: "return", object: "it", fromZone: "graveyard", toZone: "battlefield" };
+  expect(derive("Meathook Massacre II", { abilityType: "triggered", trigger: dies("a creature you control"),
+    actions: [{ ...back, object: "that card" }, { verb: "add-counter", object: "finality", amount: "1" }] },
+    "Whenever a creature you control dies, you may pay 3 life. If you do, return that card under your control with a finality counter on it.")?.oncePerObject).toBe(true);
+  expect(derive("Luminous Broodmoth", { abilityType: "triggered", trigger: dies("a creature you control without flying"),
+    actions: [back, { verb: "add-counter", object: "flying counter" }] },
+    "Whenever a creature you control without flying dies, return it to the battlefield under its owner's control with a flying counter on it.")?.oncePerObject).toBe(true);
+  // A +1/+1 counter marks nothing the trigger reads: the creature can come back again.
+  expect(derive("Test Card", { abilityType: "triggered", trigger: dies("a creature you control"),
+    actions: [back, { verb: "add-counter", object: "+1/+1", amount: "1" }] },
+    "Whenever a creature you control dies, return it to the battlefield with a +1/+1 counter on it.")?.oncePerObject).toBeUndefined();
+});
+
+// #887 (#726 loop research): a flicker's "return that card" is what the exile named.
+test("a flicker's subject is the exiled class, not the pronoun (Displacer Kitten)", () => {
+  const kitten = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a noncreature spell", control: "you" },
+    actions: [{ verb: "exile", object: "up to one target nonland permanent you control", fromZone: "battlefield", toZone: "exile", optional: true },
+      { verb: "return", object: "that card", fromZone: "exile", toZone: "battlefield" }] } as never], "Displacer Kitten",
+  { 1: "Whenever you cast a noncreature spell, exile up to one target nonland permanent you control, then return that card to the battlefield under its owner's control." })
+    .abilities.find((a) => a.effect.kind === "flicker");
+  expect(kitten?.effect.subject?.control).toBe("you");
+  expect(kitten?.effect.subject?.notType).toEqual(["land"]);
+  expect(kitten?.effect.subject?.self).toBeUndefined();
+});
+
 // #801 (#726 loop research): a return "at the beginning of the next end step" cannot close a loop this turn.
 test("a return at the beginning of the next end step is delayed; the exile before it and a token's end-step sacrifice are not", () => {
   const derive = (name: string, clause: object, text: string) => deriveAbilities([{ id: 1, ...clause } as never], name, { 1: text }).abilities;
