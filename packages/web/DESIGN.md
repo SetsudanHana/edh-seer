@@ -459,7 +459,10 @@ entry. A component-sized cap (a dial, a chart, a popover under 36rem) passes.
 half the screen empty. `research/web/ui-review-capture.ts` measures every section's used width
 at 1920, 2560 and 3840 -- the painted extent of the section and everything beside it in its row,
 over the viewport -- against a floor of **60%**, pre-registered 2026-09-30 after measuring the
-report and the site pages (report chapters 74-82%, site pages a 97% median). A section under it
+report and the site pages (report chapters 74-82%, site pages a 97% median). Reach alone can be
+fooled -- one right-aligned score makes an empty row reach the far edge -- so the row must also be
+**filled** 40% (the union of what is drawn in it, pre-registered 2026-09-30: report chapters fill
+72-82%, site pages 85%, at the median). A section under either floor
 fails the run unless `research/web/empty-band-allowlist.json` names it, with why: a page with too
 little to show, never a layout that could fill the row. The list ratchets both ways like the
 caps list. It runs with every UI review capture (`research/web/runs/site.json` covers the card,

@@ -108,10 +108,16 @@ const UHD = { viewport: { width: 3840, height: 2160 } };
  *  a 97% median, and every section left under 60% was either a measuring artefact (fixed) or a page
  *  with little to show, named in `empty-band-allowlist.json`. A new one fails the run. */
 const EMPTY_BAND = 0.6;
+/** AND HOW MUCH OF THE ROW HOLDS SOMETHING, a second floor beside the reach (designer review
+ *  2026-09-30: one right-aligned score made a mostly empty row reach the far edge). PRE-REGISTERED
+ *  2026-09-30 after measuring the same runs: report chapters fill 72-82% at the median and no
+ *  section under 45% (the slots note beside the uncounted fixes); site pages 85% at the median, and
+ *  everything under 40% already named in the allowlist. */
+const FILL_FLOOR = 0.4;
 const BAND_ALLOW = join(dirname(fileURLToPath(import.meta.url)), "empty-band-allowlist.json");
 
 /** One section under the floor, as the run met it. */
-export type Band = { step: string; viewport: number; section: string; used: number };
+export type Band = { step: string; viewport: number; section: string; used: number; filled: number };
 /** A named exception: the run's surface and step, a section-name pattern, and why it is allowed
  *  under the floor. The surface is part of the name: the report and the site runs both have a
  *  step called `card`. */
@@ -133,7 +139,7 @@ export function bandGate(bands: readonly Band[], allow: readonly BandAllow[], st
 /** HOW MUCH OF THE SCREEN EACH SECTION USES: the horizontal extent of everything visible inside it,
  *  over the viewport width. A lone 65ch paragraph centred on a 2560 screen reads low, and that is
  *  the point -- DESIGN.md says a capped paragraph belongs beside something. */
-async function usedWidth(page: Page): Promise<{ viewport: number; sections: { name: string; used: number }[]; minUsed: number }> {
+async function usedWidth(page: Page): Promise<{ viewport: number; sections: { name: string; used: number; filled: number }[]; minUsed: number }> {
   return page.evaluate(() => {
     const vw = document.documentElement.clientWidth;
     const roots = [...document.querySelectorAll<HTMLElement>("main section, main [data-chapter], main > *")]
@@ -142,6 +148,7 @@ async function usedWidth(page: Page): Promise<{ viewport: number; sections: { na
     // does not exist inside the page.
     const boxes = roots.map((el) => {
       let lo = Infinity, hi = -Infinity;
+      const spans: [number, number][] = [];
       for (const d of [el, ...el.querySelectorAll<HTMLElement>("*")]) {
         const r = d.getBoundingClientRect();
         if (r.width < 1 || r.height < 1 || getComputedStyle(d).visibility === "hidden") continue;
@@ -152,9 +159,11 @@ async function usedWidth(page: Page): Promise<{ viewport: number; sections: { na
         if (!painted) continue;
         lo = Math.min(lo, Math.max(0, r.left));
         hi = Math.max(hi, Math.min(vw, r.right));
+        // A LEAF'S SPAN, for how much of the row is FILLED rather than how far it reaches.
+        if (d.children.length === 0 || /^(IMG|SVG|CANVAS|VIDEO|svg)$/.test(d.tagName)) spans.push([Math.max(0, r.left), Math.min(vw, r.right)]);
       }
       const r = el.getBoundingClientRect();
-      return { lo, hi, top: r.top, bottom: r.bottom };
+      return { lo, hi, top: r.top, bottom: r.bottom, spans };
     });
     // A SECTION IS JUDGED WITH ITS ROW (#770). Two sections side by side in a grid each span half
     // the screen, and together they fill it; scored alone, a well-used two-column row read as two
@@ -171,15 +180,27 @@ async function usedWidth(page: Page): Promise<{ viewport: number; sections: { na
     const sections = roots.map((el, i) => {
       let { lo, hi } = boxes[i]!;
       const b = boxes[i]!;
+      const spans = [...b.spans];
       for (const { d, r } of leaves) {
         if (el.contains(d)) continue;
         // Half the leaf's own height, to 40px: a leaf is usually one line of text, 20px tall.
         if (Math.min(b.bottom, r.bottom) - Math.max(b.top, r.top) < Math.min(40, r.height / 2)) continue;
         lo = Math.min(lo, Math.max(0, r.left)); hi = Math.max(hi, Math.min(vw, r.right));
+        spans.push([Math.max(0, r.left), Math.min(vw, r.right)]);
       }
+      // FILLED, NOT REACHED (designer review 2026-09-30): the reach runs from the leftmost to the
+      // rightmost thing in the row, so one right-aligned score or "..." menu made a mostly empty row
+      // pass. The union of the leaves' spans is how much of the width actually holds something.
+      spans.sort((x, y) => x[0] - y[0]);
+      let filled = 0, runLo = -1, runHi = -1;
+      for (const [a, z] of spans) {
+        if (z <= a) continue;
+        if (a > runHi) { if (runHi > runLo) filled += runHi - runLo; runLo = a; runHi = z; } else runHi = Math.max(runHi, z);
+      }
+      if (runHi > runLo) filled += runHi - runLo;
       const name = el.id || el.getAttribute("aria-label") || el.dataset.chapter
         || el.querySelector("h1,h2,h3")?.textContent?.trim().slice(0, 40) || el.tagName.toLowerCase();
-      return { name, used: hi > lo ? Math.round(((hi - lo) / vw) * 100) / 100 : 0 };
+      return { name, used: hi > lo ? Math.round(((hi - lo) / vw) * 100) / 100 : 0, filled: Math.round((filled / vw) * 100) / 100 };
     });
     return { viewport: vw, sections, minUsed: sections.length ? Math.min(...sections.map((x) => x.used)) : 1 };
   });
@@ -642,9 +663,9 @@ async function main(runPath: string): Promise<void> {
           if (label !== "phone") {
             const w = await usedWidth(page);
             metrics[`${key}-width-${w.viewport}`] = w;
-            for (const x of w.sections.filter((x) => x.used < EMPTY_BAND)) {
-              console.log(`  EMPTY BAND ${key} @${w.viewport}: "${x.name}" uses ${Math.round(x.used * 100)}% of the width`);
-              bands.push({ step: step.id, viewport: w.viewport, section: x.name, used: x.used });
+            for (const x of w.sections.filter((x) => x.used < EMPTY_BAND || x.filled < FILL_FLOOR)) {
+              console.log(`  EMPTY BAND ${key} @${w.viewport}: "${x.name}" reaches ${Math.round(x.used * 100)}% of the width, fills ${Math.round(x.filled * 100)}%`);
+              bands.push({ step: step.id, viewport: w.viewport, section: x.name, used: x.used, filled: x.filled });
             }
           }
           if (label === "wide" || label === "uhd") {
@@ -756,7 +777,7 @@ async function main(runPath: string): Promise<void> {
   // THE SPACE GATE (#770). Pre-registered floor, named exceptions; see `bandGate`.
   const allowed = (JSON.parse(readFileSync(BAND_ALLOW, "utf8")) as { entries: BandAllow[] }).entries;
   const gate = bandGate(bands, allowed.filter((a) => a.surface === run.surface), new Set(run.steps.map((s) => s.id)));
-  for (const b of gate.fail) console.log(`FAIL empty band: ${b.step} @${b.viewport} "${b.section}" uses ${Math.round(b.used * 100)}% (floor ${EMPTY_BAND * 100}%)`);
+  for (const b of gate.fail) console.log(`FAIL empty band: ${b.step} @${b.viewport} "${b.section}" reaches ${Math.round(b.used * 100)}% (floor ${EMPTY_BAND * 100}%), fills ${Math.round(b.filled * 100)}% (floor ${FILL_FLOOR * 100}%)`);
   for (const a of gate.stale) console.log(`FAIL stale allowlist entry: ${a.step} /${a.section}/ matched nothing -- remove it from ${BAND_ALLOW}`);
   if (gate.fail.length || gate.stale.length) process.exitCode = 1;
   else console.log(`space gate: ok (${bands.length} allowlisted band(s))`);
@@ -817,8 +838,8 @@ function selfTest(): void {
 
   const allow: BandAllow[] = [{ surface: "site", step: "card", section: "^What it does", why: "sparse page" }, { surface: "site", step: "gone", section: "x", why: "fixed" }, { surface: "site", step: "plan", section: "^Old$", why: "fixed" }];
   const g = bandGate([
-    { step: "card", viewport: 2560, section: "What it does in a deck", used: 0.4 },
-    { step: "mana", viewport: 2560, section: "Curve", used: 0.3 },
+    { step: "card", viewport: 2560, section: "What it does in a deck", used: 0.4, filled: 0.3 },
+    { step: "mana", viewport: 2560, section: "Curve", used: 0.3, filled: 0.2 },
   ], allow, new Set(["card", "mana", "plan"]));
   eq(g.fail.map((b) => b.section), ["Curve"], "a band no entry names fails");
   // "plan" ran and matched nothing: stale. "gone" never ran: not judged.
