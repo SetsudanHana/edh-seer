@@ -7,7 +7,7 @@ for (const f of readdirSync("packages/cli/decks/calibration").filter((f) => f.en
   const s = parseDecklistSections(readFileSync(`packages/cli/decks/calibration/${f}`, "utf8"));
   let r: any;
   for (let a = 0; ; a++) {
-    try { r = await analyzeDeckStatic(s.deck.join("\n"), s.commanders.join("\n"), "https://edhseer.cards/static"); break; }
+    try { r = await analyzeDeckStatic(s.deck.join("\n"), s.commanders.join("\n"), process.env.STATIC ?? "https://edhseer.cards/static"); break; }
     catch (e) { if (a > 4) throw e; await new Promise((res) => setTimeout(res, 2000 * 2 ** a)); }
   }
   const rep = r.report;

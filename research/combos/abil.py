@@ -15,10 +15,6 @@ SELF = "self"
 # THE FIXES FROM THE 2026-09-30 TAG WORK (#726 comments), each switchable so its effect is measured
 # on its own: FIXES=none python3 research/combos/abil.py reproduces the regex detector.
 FIXES = set((os.environ.get("FIXES") or "cost,reduce,bounce,return,land,subject,cast,copyloop,top").split(","))
-# A RETURN THAT MARKS WHAT IT RETURNS happens once per creature: a finality counter exiles it next time
-# (Meathook Massacre II), a flying counter takes it out of "without flying" (Luminous Broodmoth). The
-# tags do not say so yet, so it is read off the text.
-ONCE_PER_OBJECT = re.compile(r"with a (finality|flying) counter")
 CH = json.load(open("research/combos/chars.json")) if os.path.exists("research/combos/chars.json") else {}
 
 def ab(n):
@@ -138,10 +134,8 @@ def build(d):
             if a["eff"] == "untap" and UNTAPPER.search(T[x]) and is_perm(C[y]) and ("subject" not in FIXES or fits(sb, y)):
                 for j, b in enumerate(Y):
                     if b["k"] == "activated" and ((b.get("pay") or {}).get("tap") if "cost" in FIXES else "{t}" in (b["cost"] or "").lower()): add(src, (y, j), "untap")
-            # A FLICKER reaches what its subject names; "nonland" is in the text when the subject lost it
-            # (Displacer Kitten's derived subject is typeless).
-            if a["eff"] == "flicker" and is_perm(C[y]) and ETB.search(T[y]) and (
-                    "subject" not in FIXES or (fits(sb, y) and not (land_only(y) and "nonland" in T[x]))):
+            # A FLICKER reaches what its subject names (#887: Displacer Kitten's is "nonland permanent you control").
+            if a["eff"] == "flicker" and is_perm(C[y]) and ETB.search(T[y]) and ("subject" not in FIXES or fits(sb, y)):
                 add(src, (y, SELF), "flicker")
             # A COPY IS NOT CAST unless the copier casts it (Isochron Scepter, Mizzix's Mastery: "cast
             # the copy"): only then do the deck's cast triggers hear it (`cast` fix).
@@ -150,7 +144,9 @@ def build(d):
             if a["eff"] == "graveyard-recursion" and "creature" in types(C[y]) and not sb.get("self"):
                 if "subject" not in FIXES:
                     add(src, (y, SELF), "recursion")
-                elif fits(sb, y) and not ONCE_PER_OBJECT.search(T[x]):
+                # A RETURN THAT MARKS WHAT IT RETURNS brings one creature back once (#886: `oncePerObject`,
+                # Meathook Massacre II's finality counter, Luminous Broodmoth's flying counter).
+                elif fits(sb, y) and not a.get("once"):
                     # TO HAND IS NOT BACK IN PLAY: the card must be cast again, and paid for (Evolution
                     # Witness). A return that enters says so in its emits.
                     if "enters" in a["emits"]: add(src, (y, SELF), "recursion")

@@ -266,7 +266,10 @@ import { emblemRecipient } from "../emblem.js";
 // control get +1/+1 and have undying" keeps its recipient (Mikaeus, the Unhallowed).
 // 214: a keyword named INSIDE a quoted ability is not a granted keyword (Way of the Wildspeaker's
 // "[-4]: Create a 4/4 ... Beast token with trample" grants no trample).
-export const DERIVE_VERSION = 214;
+// 215: #886 -- a return that marks what it returns (finality counter, or a keyword counter the trigger
+// excludes) is `oncePerObject` (Meathook Massacre II, Luminous Broodmoth); #887 -- a flicker's "return
+// that card" takes its subject from the exile (Displacer Kitten: nonland permanent you control).
+export const DERIVE_VERSION = 215;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1202,6 +1205,8 @@ const STAT_VS_STAT = /\bwith (power|toughness) greater than (?:its|their) (power
 const ZONE_MOVING_VERBS: ReadonlySet<string> = new Set(["cast", "play", "return", "put", "exile"]);
 const OBJECT_IN_GRAVEYARD = /\b(?:in|from) (?:your|a|an opponent's|target player's|their) graveyard\b/i;
 /** "…, then return it to the battlefield…" after an exile in the same clause (#715, Jill). */
+/** "...with a finality counter on it" -- the counter rides on the returned object itself (#886). */
+const RETURNED_WITH_COUNTER = /\bwith an? ([a-z]+) counter on (?:it|them|him|her)\b/i;
 const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|him|her|this card|that card|those cards) to the battlefield\b/i;
 /** "…return it to the battlefield transformed…": the back face enters (CR 712.14a, #715). Every
  *  corpus phrasing: him/her (Ajani, Tamiyo), "this card", "put … onto", "from your graveyard" and
@@ -1864,8 +1869,15 @@ export function deriveAbilities(
       // with a subject produces a junk `static:` tag that can match another card's junk tag and
       // form an edge that is not real. A STATIC ability additionally has to name its targets --
       // see namesItsTargets -- or the very same edge forms against the whole deck.
+      // A FLICKER'S "return THAT CARD" means what the exile named (#887): Displacer Kitten's
+      // "nonland permanent you control" was read off the pronoun as any permanent anyone controls.
+      // The emits already resolve it; the subject now does too. Flicker only: measured, not assumed.
+      // Only an exile IN THIS CLAUSE is the antecedent: a cross-clause "the exiled cards" (Petradon) falls
+      // back to the trigger's subject, which names the card and not what it exiled (review).
+      const exiledHere = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).some((x) => x.verb === "exile");
+      const subjectAction = effectKind === "flicker" && antecedent && exiledHere && !emitsSelf ? { ...action, object: antecedent } : action;
       const subject = effectKind
-        ? effectSubject(action, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
+        ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
       // See THAT_TYPED. Read BEFORE the actor, which is a stronger statement and overrides it.
       const objectText = (action.object ?? "").trim();
@@ -2109,6 +2121,17 @@ export function deriveAbilities(
         const k = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === action.verb).length;
         const delay = DELAYED_RETURN.exec(nthSentenceWith(text, action.verb, k));
         if (delay) ability.delayedUntil = /upkeep/i.test(delay[0]) ? "next-upkeep" : "next-end-step";
+      }
+      // A RETURN THAT MARKS WHAT IT RETURNS happens once per object (#886): a finality counter exiles
+      // it the next time it would die (CR 122.1h, Meathook Massacre II), and a keyword counter the
+      // trigger excludes takes it out of the trigger (Luminous Broodmoth's flying counter on a
+      // creature "without flying"). Still repeatable -- every OTHER creature returns once too.
+      // Read on the return's OWN sentence, "with a <kind> counter on it", so a counter put on some other
+      // object in the clause marks nothing (review).
+      if ((action.verb === "return" || action.verb === "put") && action.toZone === "battlefield") {
+        const k = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === action.verb).length;
+        const mark = RETURNED_WITH_COUNTER.exec(nthSentenceWith(text, action.verb, k))?.[1]?.toLowerCase();
+        if (mark && (mark === "finality" || (trigger?.subject.notKeyword ?? []).includes(mark))) ability.oncePerObject = true;
       }
       const made = ability.temporary ? emits.find((e) => e.verb === "create-token") : undefined;
       if (made) {
