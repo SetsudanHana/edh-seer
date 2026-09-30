@@ -83,3 +83,13 @@ test("a draw doubler is a draw replacement; dredge and Laboratory Maniac are not
   expect(replacementOf("If you would draw a card while your library has no cards in it, you win the game instead.")).toBeNull();
   expect(replacementOf("If you would draw a card, instead look at the top three cards of your library, then put one into your hand and the rest into your graveyard.")).toBeNull();
 });
+
+// #858: the passive frame ("tokens would be created") and "an effect would create" are the same CR 614
+// token multiplier as Xorn's "you would create". Printed text, 2026-09-30.
+test("a token multiplier in the passive, or with an effect as its actor", () => {
+  const stride = replacementOf("If one or more artifact tokens would be created under your control, those tokens plus an additional 1/1 colorless Thopter artifact creature token with flying are created instead.");
+  expect(stride).toMatchObject({ verbs: ["create-token"], kind: "token-doubling", subjectText: "one or more artifact tokens" });
+  expect(replacementOf("If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.")?.kind).toBe("token-doubling");
+  // Without "instead" it is not a replacement at all.
+  expect(replacementOf("Whenever one or more artifact tokens are created under your control, draw a card.")).toBeNull();
+});

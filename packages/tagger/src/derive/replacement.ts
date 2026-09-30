@@ -71,8 +71,17 @@ const TEMPLATES: {
     verbs: ["counter-added"], kind: "counter-placement", subject: 2, counter: 1,
   },
   // "If you would create one or more Treasure tokens, instead create ..."
+  // ...and "If an effect would create ..." (Doubling Season, Parallel Lives, Anointed Procession, #858).
   {
-    re: /\bif\s+(?:you|a player|an opponent|one or more players)\s+would create\s+([^,.]+)/i,
+    re: /\bif\s+(?:you|a player|an opponent|one or more players|an effect|a spell or ability)\s+would create\s+([^,.]+)/i,
+    verbs: ["create-token"], kind: "token-doubling", subject: 1,
+  },
+  // THE PASSIVE FRAME (#858): "If one or more artifact tokens would be created under your control,
+  // those tokens plus an additional Thopter ... are created instead" (Stridehangar Automaton, 18
+  // corpus cards). It derived a static `token-generation` whose emit never fires, and nothing heard
+  // another card's token being made.
+  {
+    re: /\bif\s+((?:one or more|a|an)\s+[a-z0-9/ ,-]{0,40}?\btokens?)\s+would be created\b/i,
     verbs: ["create-token"], kind: "token-doubling", subject: 1,
   },
   // "If a creature you control would deal damage TO a permanent or player, it deals double that

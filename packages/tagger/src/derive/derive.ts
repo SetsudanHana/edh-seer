@@ -252,7 +252,9 @@ import { emblemRecipient } from "../emblem.js";
 // 208: #856 -- a static permission to play or cast from the top of your library is `play-from-top`
 // (Mystic Forge, Crystal Skull, Bolas's Citadel), and a card putting itself back on top is a self
 // `top-set` (Sensei's Divining Top).
-export const DERIVE_VERSION = 208;
+// 209: #858 -- "tokens would be created ... instead" and "an effect would create ... instead" are CR 614
+// token multipliers hearing another card's token creation (Stridehangar Automaton, Doubling Season).
+export const DERIVE_VERSION = 209;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
