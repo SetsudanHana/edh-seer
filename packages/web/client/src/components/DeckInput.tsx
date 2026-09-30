@@ -145,7 +145,9 @@ export function DeckInput({
   }
 
   return (
-    <div className="flex flex-col gap-3 border border-(--separator) rounded-(--radius) p-4 bg-(--surface)">
+    // `deck-form` / `deck-form-list`: on a wide home page the list box grows to fill the screen
+    // (index.css, THE PASTE BOX TAKES THE SCREEN).
+    <div className="deck-form flex flex-col gap-3 border border-(--separator) rounded-(--radius) p-4 bg-(--surface)">
       <div className="flex flex-col gap-1">
         <label className="eyebrow" htmlFor="commanders-input">
           Commander
@@ -165,7 +167,7 @@ export function DeckInput({
           onChange={(e) => onCommandersChange(e.target.value)}
         />
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="deck-form-list flex flex-col gap-1">
         <label className="eyebrow" htmlFor="decklist-input">
           Decklist
         </label>
