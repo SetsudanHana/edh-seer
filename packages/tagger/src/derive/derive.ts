@@ -256,7 +256,9 @@ import { emblemRecipient } from "../emblem.js";
 // token multipliers hearing another card's token creation (Stridehangar Automaton, Doubling Season).
 // 210: #859 -- "you may activate ... loyalty abilities" twice, as though none were activated, or at
 // instant speed is `extra-loyalty`, read off the printed sentence (The Chain Veil, Oath of Teferi).
-export const DERIVE_VERSION = 210;
+// 211: a quoted or emblem-granted loyalty permission is the emblem's, not the card's (Teferi,
+// Temporal Archmage's -10 claimed every planeswalker beside its own emblem node).
+export const DERIVE_VERSION = 211;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the

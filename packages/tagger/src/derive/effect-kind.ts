@@ -125,6 +125,10 @@ export function extraLoyalty(text: string): "yours" | "self" | undefined {
   for (const sentence of text.toLowerCase().split(".")) {
     const at = sentence.indexOf("you may activate");
     if (at < 0 || sentence.indexOf("loyalty abilit", at) < 0 || !AGAIN.some((w) => sentence.includes(w))) continue;
+    // A QUOTED PERMISSION BELONGS TO WHAT THE QUOTE IS ON: Teferi, Temporal Archmage's "You get an
+    // emblem with 'You may activate ...'" is the EMBLEM's ability, and the emblem is its own node
+    // (2026-09-08). Read on the card, it claimed every planeswalker a second time.
+    if (sentence.includes("emblem") || /["“']/.test(sentence.slice(0, at))) continue;
     return sentence.includes("planeswalkers you control") || sentence.includes("planeswalker you control") ? "yours" : "self";
   }
   return undefined;

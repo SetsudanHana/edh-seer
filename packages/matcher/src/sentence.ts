@@ -787,6 +787,11 @@ export function playFromTopSentence(producer: string, consumer: string, land = f
   return `${producer} lets you ${land ? "play" : "cast"} ${consumer} from the top of your library`;
 }
 
+/** An extra loyalty activation and a planeswalker it reaches (#859, owner 2026-09-30). */
+export function extraLoyaltySentence(producer: string, consumer: string): string {
+  return `${producer} lets ${consumer} activate its loyalty abilities again`;
+}
+
 /** A fill and the delve spell it pays for (CR 702.66): the producer puts cards in your graveyard,
  *  the consumer exiles them as mana. */
 export function delveSentence(producer: string, consumer: string): string {

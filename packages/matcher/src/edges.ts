@@ -15,7 +15,7 @@ import {
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, recursionTargetSentence, playFromTopSentence, tutorSentence, digsRatherThanSearches, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
+  staticGrantSentence, typeGrantNoun, recursionTargetSentence, playFromTopSentence, extraLoyaltySentence, tutorSentence, digsRatherThanSearches, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
@@ -1500,7 +1500,8 @@ function ownBoardKill(a: Ability): number | undefined {
 /** Kinds that record a fact for loop economics and claim nothing pairwise: `bounce` (#802),
  *  `play-from-top` (#856) and `extra-loyalty` (#859). Each derived blank before its kind existed, so reading it blank keeps
  *  every edge where it was. */
-const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top", "extra-loyalty"]);  // play-from-top: read raw by `playFromTopEdges`
+// play-from-top and extra-loyalty are read raw by `playFromTopEdges` and `extraLoyaltyEdges`.
+const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top", "extra-loyalty"]);
 const forPairs = new WeakMap<CardTags, Map<number | undefined, CardTags>>();
 function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
   const tags = dc.tags;
@@ -1702,8 +1703,10 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
   reuseEdges(s);
   flashTimingEdges(s);
   delveEdges(s);
-  // The one channel that reads a FACT kind: see `playFromTopEdges`.
-  playFromTopEdges({ ...s, p: p0 as TaggedCard, c: c0 as TaggedCard });
+  // The channels that read a FACT kind raw: see `playFromTopEdges`.
+  const raw: PairScope = { ...s, p: p0 as TaggedCard, c: c0 as TaggedCard };
+  playFromTopEdges(raw);
+  extraLoyaltyEdges(raw);
   // NO "RECURSION RE-FIRES A DEATH TRIGGER" PASS. One existed for a day (PR #295, recall v4 #145:
   // Sheoldred returning Vindictive Lich "so it can die again") and the owner judged all three of its
   // panel claims FALSE on 2026-09-09: "the edge should be just reanimation -- sure it can die again,
@@ -3148,6 +3151,29 @@ function playFromTopEdges({ p, c, h, reasons }: PairScope): void {
       text: playFromTopSentence(p.card.name, c.card.name, isLandOnly(c.tags)),
       effectKind: a.effect.kind,
       repeatability: "static",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+    return; // one claim per pair
+  }
+}
+
+// EXTRA LOYALTY -> YOUR PLANESWALKERS (owner ruling 2026-09-30, after #859). Oath of Teferi and The
+// Chain Veil let each planeswalker you control activate again, which is the whole of what they do for
+// a superfriends deck. A self one (Urza, Planeswalker; Teferi, Master of Time) improves only itself.
+// Read raw, like `playFromTopEdges`: the kind is a FACT kind for every other channel.
+function extraLoyaltyEdges({ p, c, h, reasons }: PairScope): void {
+  if (p === c || c.isToken) return;
+  for (const a of p.tags.abilities) {
+    if (a.effect.kind !== "extra-loyalty" || !a.effect.subject || a.effect.subject.self === true) continue;
+    const { scope: _s, ...wanted } = a.effect.subject;
+    if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), wanted, h)) continue;
+    reasons.push({
+      tag: `extra-loyalty:${themeSubjectKey(wanted)}`,
+      text: extraLoyaltySentence(p.card.name, c.card.name),
+      effectKind: a.effect.kind,
+      repeatability:
+        a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
       consumer: c.card.name,
       producer: p.card.name,
     });
