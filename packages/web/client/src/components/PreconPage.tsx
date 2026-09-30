@@ -60,7 +60,9 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
             {p.commanders.map((c, i) => <span key={c}>{i > 0 ? " and " : ""}<Link className="hover:text-(--foreground)" to={`/commanders/${slugOfName(c)}`}>{c}</Link></span>)}
             {pip ? <> · <span aria-hidden="true" className="inline-flex align-[-0.15em]"><ManaSymbols cost={pip} /></span> {identityLabel(p.identity)}</> : null}
           </p>
-          <div className="flex flex-wrap gap-2" data-testid="precon-facts">
+          {/* THREE ACROSS ON A PHONE TOO (designer review 2026-09-30): at 8rem each the tiles wrapped
+            *  two and one, leaving "Bracket" alone on its row. */}
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap" data-testid="precon-facts">
             {p.theme ? <Fact label="Main theme" value={p.theme} /> : null}
             {p.synergy ? <Fact label="Synergy" value={<>{p.synergy.score.toFixed(1)}<span className="text-sm text-(--muted)">/5</span></>} note={p.synergy.band.toLowerCase()} /> : null}
             {p.bracket ? <Fact label="Bracket" value={p.bracket.band.replace("-", "–")} note={p.bracket.gameChangers ? `${p.bracket.gameChangers} Game Changer${p.bracket.gameChangers === 1 ? "" : "s"}` : "no Game Changers"} /> : null}
@@ -153,7 +155,7 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
 
 function Fact({ label, value, note }: { label: string; value: React.ReactNode; note?: string }) {
   return (
-    <div className="flex min-w-32 flex-col gap-0.5 rounded-(--radius) border border-(--separator) bg-(--surface) px-3 py-2">
+    <div className="flex min-w-0 sm:min-w-32 flex-col gap-0.5 rounded-(--radius) border border-(--separator) bg-(--surface) px-3 py-2">
       <span className="eyebrow text-(--muted)">{label}</span>
       <b className="text-xl">{value}</b>
       {note ? <span className="text-xs text-(--muted)">{note}</span> : null}

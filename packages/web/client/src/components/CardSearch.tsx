@@ -716,10 +716,13 @@ export function CardSearch({
             {/* THE COUNT AND THE EXAMPLES SHARE A ROW FROM 1600px (#770), so the grid starts higher. */}
             <div className="flex flex-col gap-2 min-[100rem]:flex-row min-[100rem]:items-end min-[100rem]:gap-16">
             <div className="flex flex-col gap-2">
-            <p className="text-3xl font-bold tracking-[-0.01em] tabular-nums">
+            {/* ON A PHONE THE COUNT JOINS ITS SENTENCE (designer review 2026-09-30, #770): as a 30px
+              * figure on its own line it pushed the first tiles below a 390px screen on /commanders. */}
+            <p className="hidden sm:block text-3xl font-bold tracking-[-0.01em] tabular-nums">
               {(commanderMode ? index.filter((e) => e.commander).length : index.length).toLocaleString("en-US")}
             </p>
             <p className="text-(--muted) max-w-[55ch]">
+              <b className="sm:hidden text-(--foreground) tabular-nums">{(commanderMode ? index.filter((e) => e.commander).length : index.length).toLocaleString("en-US")}{" "}</b>
               {commanderMode
                 // The colour picker is one "Add a filter" away, not on screen, so the sentence
                 // names the control that is (UI review 2026-09-25).
@@ -732,7 +735,7 @@ export function CardSearch({
             </div>
             <div className="flex flex-col gap-2">
             <p className="eyebrow text-(--muted) mt-4 min-[100rem]:mt-0">or ask, for example</p>
-            <ul className="flex flex-wrap gap-2 list-none p-0 m-0" aria-label="Example questions">
+            <ul className="flex flex-wrap gap-2 list-none p-0 m-0 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:-mx-(--gutter) max-sm:px-(--gutter) max-sm:[scrollbar-width:none] [&>li]:shrink-0" aria-label="Example questions">
               {EXAMPLES[mode].map((ex) => (
                 <li key={ex.label}>
                   <button type="button" className="chip" onClick={() => setEvents(ex.q)}>{ex.label}</button>
@@ -745,7 +748,7 @@ export function CardSearch({
               * filled the left 500px of a 1920px screen and left the rest black, and a reader with no
               * name in mind had nowhere to start. The index ships ordered by partner count (#368),
               * so its head IS the most connected cards; no ranking is invented here. */}
-            <h2 className="eyebrow text-(--muted) mt-8">
+            <h2 className="eyebrow text-(--muted) mt-6 sm:mt-8">
               {commanderMode ? "Most connected commanders" : "Most connected cards"}
             </h2>
             <ul ref={browseGrid} aria-label={commanderMode ? "Most connected commanders" : "Most connected cards"} className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
