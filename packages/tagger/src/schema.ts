@@ -983,6 +983,9 @@ export interface Ability {
   amount?: string;
   /** The events one use supplies, parsed from `amount` and the emit (edge magnitude, DERIVE 199). */
   count?: EventCount;
+  /** A cost reduction's printed mana off ("{2}", "{X}", "{U}") and whether it discounts only its own
+   *  card ("this spell costs ... less"). See `derive/reduction.ts` (#804, DERIVE 204). */
+  reduces?: { mana: string; self?: true };
   /** THE PAYMENT THAT STOPS THIS ABILITY'S EFFECT (CR 118.12a), verbatim from the clause: Rhystic
    *  Study draws "unless that player pays {1}", a counterspell counters "unless its controller pays
    *  {3}", an upkeep cost sacrifices "unless you pay {W}{W}". The effect is what happens when the

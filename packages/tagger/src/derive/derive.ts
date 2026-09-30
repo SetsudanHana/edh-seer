@@ -18,6 +18,7 @@ import { parseSubject, parseCounter } from "./subject.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
+import { reductionOf } from "./reduction.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { eventAmountFor } from "./event-amount.js";
@@ -239,7 +240,9 @@ import { emblemRecipient } from "../emblem.js";
 // on the returning ability (Shirei, Shizo's Caretaker): it cannot close a loop this turn.
 // 203: #803 -- an ability on an instant or sorcery beyond its on-cast effect (a granted "when this
 // creature dies, return it", Undying Malice) repeats once: the spell is gone once it resolves.
-export const DERIVE_VERSION = 203;
+// 204: #804 -- a cost reduction records what it takes off (`reduces.mana`, from the printed "costs {2}
+// less", else the clause amount) and whether it discounts only its own card (`reduces.self`).
+export const DERIVE_VERSION = 204;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -2124,6 +2127,8 @@ export function deriveAbilities(
       // inherits its trigger is never batched, and an or-limb twin shares its clause's reading.
       const count = countOf(abilities[i].amount, abilities[i].emits?.[0], text, abilities[i].replacement === true);
       if (count) abilities[i] = { ...abilities[i], count };
+      const reduces = abilities[i].effect?.kind === "cost-reduction" ? reductionOf(text ?? "", abilities[i].amount) : undefined;
+      if (reduces) abilities[i] = { ...abilities[i], reduces };
       if (abilities[i].trigger && BATCHED.test(clause.trigger?.subject ?? "")) {
         abilities[i] = { ...abilities[i], trigger: { ...abilities[i].trigger!, batched: true } };
       }
