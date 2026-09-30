@@ -3691,6 +3691,13 @@ test("a board-wide keyword grant keeps its recipient and names the keyword (Mika
   const lord = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "flying and first strike" }] }],
     "X", { 1: "Other Merfolk you control have flying and first strike." }).abilities.find((a) => a.effect.kind === "keyword-grant")!;
   expect(lord.grants).toEqual(["first strike", "flying"]);
+  // A keyword inside a quoted ABILITY is that ability's, not a grant; a quoted keyword list is one.
+  const wild = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "\"[\u22124]: Create a 4/4 green Beast creature token with trample.\"" }] }],
+    "Way of the Wildspeaker", { 1: "Planeswalkers you control gain \"[\u22124]: Create a 4/4 green Beast creature token with trample.\"" }).abilities.find((a) => a.effect.kind === "keyword-grant");
+  expect(wild?.grants).toBeUndefined();
+  const zhulodok = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "\"Cascade, cascade.\"" }] }],
+    "Zhulodok, Void Gorger", { 1: "Colorless spells you cast from your hand with mana value 7 or greater gain \"Cascade, cascade.\"" }).abilities.find((a) => a.effect.kind === "keyword-grant");
+  expect(zhulodok?.grants).toEqual(["cascade"]);
   // An unhyphenated "nontoken" recipient stays refused, as before.
   const riot = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "riot" }] }],
     "Uncivil Unrest", { 1: "Nontoken creatures you control have riot." }).abilities.find((a) => a.effect.kind === "keyword-grant")!;

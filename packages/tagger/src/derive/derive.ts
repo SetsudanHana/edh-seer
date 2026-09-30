@@ -264,7 +264,9 @@ import { emblemRecipient } from "../emblem.js";
 // with mana value 2 or less".
 // 213: #857 -- a keyword grant names its keywords (`grants`), and "other non-Human creatures you
 // control get +1/+1 and have undying" keeps its recipient (Mikaeus, the Unhallowed).
-export const DERIVE_VERSION = 213;
+// 214: a keyword named INSIDE a quoted ability is not a granted keyword (Way of the Wildspeaker's
+// "[-4]: Create a 4/4 ... Beast token with trample" grants no trample).
+export const DERIVE_VERSION = 214;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -860,8 +862,29 @@ const QUOTED_GRANT = /\b(?:have|has) (?:"|that ability\b)/i;
 /** The CR keyword abilities (702.x) a grant's objects name, lowercased and sorted: "hexproof and haste"
  *  -> ["haste", "hexproof"]. A word that is no keyword ability ("a +1/+1 counter") names nothing. */
 const KEYWORD_ABILITIES: readonly string[] = (crKeywords as { abilities: string[] }).abilities.map((k) => k.toLowerCase());
+// A QUOTED ABILITY'S OWN WORDS ARE NOT GRANTED KEYWORDS: Way of the Wildspeaker hands planeswalkers
+// "[-4]: Create a 4/4 green Beast creature token with trample" -- the trample is the token's. A quote
+// that is only keywords ("Cascade, cascade.", Zhulodok) is kept. A quote is an ability when it has a
+// colon (activated, loyalty) or opens with a trigger word.
+const OPEN_QUOTE = new Set(['"', "\u201c"]);
+const CLOSE_QUOTE = new Set(['"', "\u201d"]);
+const quotedAbility = (q: string): boolean => q.includes(":") || /^\s*(?:when|whenever|at)\b/i.test(q);
+/** The text with every quoted ABILITY blanked, by a character scan -- a quote regex whose open and body
+ *  classes overlap is the polynomial shape CodeQL fails the required check on. */
+function withoutQuotedAbilities(text: string): string {
+  let out = "";
+  for (let i = 0; i < text.length; i++) {
+    if (!OPEN_QUOTE.has(text[i]!)) { out += text[i]; continue; }
+    let j = i + 1;
+    while (j < text.length && !CLOSE_QUOTE.has(text[j]!)) j++;
+    const body = text.slice(i + 1, j);
+    out += quotedAbility(body) ? " " : body;
+    i = j;
+  }
+  return out;
+}
 function grantedKeywords(objects: string[]): string[] {
-  const text = objects.join(" ").toLowerCase();
+  const text = objects.map(withoutQuotedAbilities).join(" ").toLowerCase();
   return KEYWORD_ABILITIES.filter((k) => new RegExp(`(?:^|[^a-z])${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z])`).test(text)).sort();
 }
 
