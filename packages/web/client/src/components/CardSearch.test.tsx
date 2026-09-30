@@ -93,8 +93,9 @@ test("the search box is labelled and holds focus on arrival", async () => {
  *  reads as a page that failed to load. */
 test("before anything is typed the page says what it holds, and lists nothing", async () => {
   at();
-  // The figure leads and the sentence follows it, so they are two elements.
-  expect(await screen.findByText("4")).toBeInTheDocument();
+  // The figure leads and the sentence follows it, so they are two elements. On a phone the figure
+  // joins the sentence instead: two copies, one shown at each width (jsdom applies no CSS).
+  expect(await screen.findAllByText("4")).toHaveLength(2);
   expect(screen.getByText(/Type a name to start/)).toBeInTheDocument();
   // Scoped to the results list: the page foot carries links of its own.
   expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
