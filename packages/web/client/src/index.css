@@ -709,6 +709,39 @@ h1.intro-thesis { margin-block-end: 0; }
   html[data-route="home"]:not([data-report]) .intro > h2 { break-after: avoid; }
 }
 
+/* THREE COLUMNS FROM 1600px (owner, 2026-09-30, #770: mockup A of "Home page at 2K/4K"). The paste
+   box stretched 1,300-3,200px wide for 30-character decklist lines, and the pitch column stood empty
+   below its headline. Now: the pitch with the intro's figures and worked pairing, a 40rem paste box
+   whose buttons stay on screen, and `HomeSide` -- where to start, or the list read back. A returning
+   reader has no pitch: the box and the side panel share the row. */
+@media (min-width: 100rem) {
+  html[data-route="home"]:not([data-report]) #root main:has(> .home-side) {
+    display: grid;
+    grid-template-columns: minmax(0, 40rem) minmax(0, 1fr);
+    column-gap: 3rem;
+    align-items: start;
+  }
+  html[data-route="home"]:not([data-report]) #root main:has(> .home-side):has(> .home-pitch) {
+    grid-template-columns: minmax(0, 34rem) minmax(0, 40rem) minmax(0, 1fr);
+  }
+  html[data-route="home"]:not([data-report]) #root main:has(> .home-side) > * { grid-column: 1 / -1; }
+  html[data-route="home"]:not([data-report]) #root main:has(> .home-side) > .home-pitch { grid-column: 1; grid-row: 1; }
+  html[data-route="home"]:not([data-report]) #root main:has(> .home-side):has(> .home-pitch) > .deck-form { grid-column: 2; grid-row: 1; }
+  html[data-route="home"]:not([data-report]) #root main:has(> .home-side):not(:has(> .home-pitch)) > .deck-form { grid-column: 1; grid-row: 1; }
+  html[data-route="home"]:not([data-report]) #root main:has(> .home-side) > .home-side { grid-column: -2; grid-row: 1; align-self: stretch; }
+}
+/* The intro's pieces keep their look once lifted into the pitch: `.intro h2` no longer reaches them. */
+.home-lift > h2 {
+  margin: 1.5rem 0 0;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+}
+.home-lift > .figures { margin-top: 1.5rem; }
+.home-lift > .edge-demo { margin: 0.75rem 0 0; }
+.home-lift { color: var(--muted); font-size: 0.875rem; line-height: 1.65; }
+
 /* THE PASTE BOX TAKES THE SCREEN (#770, measured 2026-09-30). `#root` reserves one viewport so the
    intro never shifts when the app mounts (see `#root` above), and on a wide screen the form filled
    a third of it: 950px of nothing at 2560 between the form and the intro, 1,600px at 3840. The
