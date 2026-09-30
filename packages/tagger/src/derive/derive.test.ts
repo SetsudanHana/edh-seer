@@ -3644,3 +3644,32 @@ test("a mode with no trigger of its own takes the trigger of the 'choose' header
   ], "X", { 1: "Whenever you cast a spell, choose one —", 2: "This spell can't be countered.", 3: "Draw a card." }, undefined, "Whenever you cast a spell, choose one —").abilities;
   expect(cut.find((a) => a.effect.kind === "draw-card")?.trigger).toBeUndefined();
 });
+
+// #860: "copy the exiled card" names the card an IMPRINT clause exiled from your hand -- a separate
+// clause, so the in-clause antecedent never saw it and the copy read as a clone. Live clause shapes.
+test("an imprinted card is the antecedent of 'the exiled card' in a later clause (Isochron Scepter)", () => {
+  const text = "Imprint — When this artifact enters, you may exile an instant card with mana value 2 or less from your hand.\n{2}, {T}: You may copy the exiled card. If you do, you may cast the copy without paying its mana cost.";
+  const out = deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this artifact" }, actions: [{ verb: "exile", object: "an instant card with mana value 2 or less from your hand", fromZone: "hand", toZone: "exile", optional: true }] },
+    { id: 2, abilityType: "activated", actions: [{ verb: "copy", object: "the exiled card", optional: true }, { verb: "cast", object: "the copy", optional: true }] },
+  ], "Isochron Scepter", {
+    1: "When this artifact enters, you may exile an instant card with mana value 2 or less from your hand.",
+    2: "You may copy the exiled card. If you do, you may cast the copy without paying its mana cost.",
+  }, { 2: "{2}, {T}" }, text).abilities.filter((a) => a.clause === 2);
+  expect(out.map((a) => a.effect.kind)).not.toContain("clone");
+  expect(out.some((a) => a.effect.kind === "copy-spell")).toBe(true);
+  // "The copy" is what the COPY copied, not the nearest thing named (Surge to Victory: a creature pump
+  // sits between the exile and the copy).
+  const surge = deriveAbilities([
+    { id: 1, abilityType: "spell", actions: [
+      { verb: "exile", object: "target instant or sorcery card from your graveyard", fromZone: "graveyard", toZone: "exile" },
+      { verb: "modify-pt", object: "creatures you control" },
+    ] },
+    { id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "a creature you control dealing combat damage to a player", control: "you" },
+      actions: [{ verb: "copy", object: "the exiled card" }, { verb: "cast", object: "the copy", optional: true }] },
+  ], "Surge to Victory", { 1: "Exile target instant or sorcery card from your graveyard. Creatures you control get +X/+0 until end of turn, where X is that card's mana value.", 2: "Whenever a creature you control deals combat damage to a player this turn, copy the exiled card. You may cast the copy without paying its mana cost." }).abilities;
+  expect(surge.filter((a) => a.clause === 2).map((a) => a.effect.kind)).not.toContain("clone");
+  expect(surge.flatMap((a) => a.emits ?? []).find((e) => e.verb === "cast")?.subject.type).toEqual(["instant", "sorcery"]);
+  const cast = out.flatMap((a) => a.emits ?? []).find((e) => e.verb === "cast");
+  expect(cast?.subject).toMatchObject({ type: "instant", stats: [{ metric: "mana-value", op: "lte", value: 2 }] });
+});
