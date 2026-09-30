@@ -274,7 +274,10 @@ export function EventSentence({ terms, colours, noun, makes, pays, narrowings = 
         </button>
       </div>
       {open && (
-        <div className="flex flex-col gap-1 w-full max-w-4xl">
+        // THE LIST TAKES THE ROW, ITS GROUPS SIDE BY SIDE (#770): capped at 56rem it filled 35% of a
+        // 2560 screen and 23% of a 3840 one, one group under the next. The box you type in keeps a
+        // line length, as prose does.
+        <div className="flex flex-col gap-1 w-full">
           <input
             ref={field}
             type="text"
@@ -282,15 +285,17 @@ export function EventSentence({ terms, colours, noun, makes, pays, narrowings = 
             onChange={(e) => { setQuery(e.target.value); setWideGroups(new Set()); }}
             aria-label="Find an event"
             placeholder="find an event: graveyard, gain life, artifact…"
-            className="min-h-11 rounded-(--field-radius) border border-(--accent) bg-(--field-background) px-3"
+            className="min-h-11 w-full max-w-[60ch] rounded-(--field-radius) border border-(--accent) bg-(--field-background) px-3"
           />
           <div role="group" aria-label="Events" className="max-h-[28rem] overflow-y-auto overscroll-contain rounded-(--field-radius) border border-(--field-border) bg-(--field-background)">
             {/* SAID EVEN WHEN SOMETHING ELSE MATCHES (#730): "copy" lists copy triggers, and without this
               * a player asking for spell copiers read those as the answer. */}
             {unaskable ? <p className="px-3 py-2 text-sm m-0 border-b border-(--separator)" data-testid="unaskable-note">{unaskable}</p> : null}
             {rows.typos && rows.groups.length > 0 && <p className="px-3 pt-2 text-(--muted) text-xs m-0">Nothing matched exactly; these are close spellings.</p>}
+            {/* `-mt-px`: every group draws its rule above it, and the box clips the first row's. */}
+            <div className="-mt-px grid gap-x-6 md:grid-cols-[repeat(auto-fill,minmax(min(100%,34rem),1fr))]">
             {rows.groups.map((g) => (
-              <section key={g.label} className="px-3 pt-2 pb-1 border-t border-(--separator) first:border-t-0">
+              <section key={g.label} className="px-3 pt-2 pb-1 border-t border-(--separator)">
                 <h3 className="eyebrow text-(--muted) flex items-center gap-2 m-0 py-1">
                   {g.glyph && <i aria-hidden="true" className={`ms ms-${g.glyph} tracking-normal`} />}{g.label}
                 </h3>
@@ -320,6 +325,7 @@ export function EventSentence({ terms, colours, noun, makes, pays, narrowings = 
                 ) : null}
               </section>
             ))}
+            </div>
             {/* SOME THEMES ARE NOT EVENTS YET (search sweep, 2026-09-27): ramp, extra turns, goad, energy
               * have no event the engine reads, and a bare "no match" read as a typo. */}
             {rows.groups.length === 0 && !unaskable && <p className="px-3 py-2 text-(--muted) text-sm m-0">Nothing matches that. You can search for things that happen in a game, like &ldquo;a creature dies&rdquo;. Some, like ramp, extra turns or goad, cannot be searched yet.</p>}

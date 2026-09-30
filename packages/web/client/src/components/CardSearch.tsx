@@ -23,8 +23,28 @@ import type { CardPageData } from "../lib/partners.js";
  *  it is input latency, not motion, so `tokens/motion.json` has no say in it. */
 export const QUERY_SETTLE_MS = 250;
 
-/** Tiles on the unasked page: two rows at the widest grid (six across), four on a phone. */
-const BROWSE_COUNT = 12;
+/** Rows of tiles on the unasked page: two full rows at the grid's width, and never fewer than
+ *  twelve tiles (four rows on a phone). A flat twelve filled 12 of 16 columns at 3840 and left a
+ *  third of the row empty (#770). */
+const BROWSE_ROWS = 2;
+const BROWSE_MIN = 12;
+export const browseCount = (cols: number): number => Math.max(BROWSE_MIN, cols * BROWSE_ROWS);
+
+/** How many columns an auto-fill grid is drawing, following resizes. */
+function useGridColumns(): [(el: HTMLElement | null) => void, number] {
+  const [el, setEl] = useState<HTMLElement | null>(null);
+  const [cols, setCols] = useState(0);
+  useEffect(() => {
+    if (!el) return;
+    const read = () => setCols(getComputedStyle(el).gridTemplateColumns.split(" ").filter(Boolean).length);
+    read();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [el]);
+  return [setEl, cols];
+}
 
 /** WHAT THIS PAGE CAN ANSWER, AS THREE QUESTIONS A READER CAN CLICK (owner, 2026-09-17: the landing
  *  was a wall of chips and a count). Asked in the engine's own events since AJ3, so the empty state
@@ -378,6 +398,7 @@ export function CardSearch({
 
   // THE CAP IS A PAGE (UX review, 2026-09-17). "467 match, showing the first 50" with no way to the
   // rest was a dead end; each press shows another fifty, and a new question starts over.
+  const [browseGrid, browseCols] = useGridColumns();
   const [shown, setShown] = useState(SEARCH_LIMIT);
   useEffect(() => { setShown(SEARCH_LIMIT); }, [matches]);
 
@@ -535,6 +556,7 @@ export function CardSearch({
     }
   };
 
+  const browsing = browseCount(browseCols);
   return (
     <PeekContext.Provider value={peek}>
     {/* THE LIST IS A GRID OF TILES NOW, so the reading measure that bounded a column of names would
@@ -709,8 +731,8 @@ export function CardSearch({
             <h2 className="eyebrow text-(--muted) mt-8">
               {commanderMode ? "Most connected commanders" : "Most connected cards"}
             </h2>
-            <ul aria-label={commanderMode ? "Most connected commanders" : "Most connected cards"} className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
-              {(commanderMode ? index.filter((e) => e.commander) : index).slice(0, BROWSE_COUNT).map((e) => (
+            <ul ref={browseGrid} aria-label={commanderMode ? "Most connected commanders" : "Most connected cards"} className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
+              {(commanderMode ? index.filter((e) => e.commander) : index).slice(0, browsing).map((e) => (
                 <li key={e.slug} className="min-w-0">
                   <CardTile
                     slug={e.slug} name={e.name} art={e.art} identity={e.identity}
