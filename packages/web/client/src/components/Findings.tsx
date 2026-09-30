@@ -128,11 +128,18 @@ export function Findings({ report, diff, suggestions }: {
         {shown.map((f, i) => (
           <li
             key={f.id}
-            className="grid grid-cols-1 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] gap-3 sm:gap-5 py-5 border-b border-(--separator)"
+            className="@container grid grid-cols-1 sm:grid-cols-[2.5rem_minmax(0,1fr)] gap-3 sm:gap-5 py-5 border-b border-(--separator)"
           >
             <span aria-hidden="true" className="hidden sm:block stat-num text-sm text-(--muted) pt-1.5">{i + 1}</span>
-            <div className="flex flex-col gap-2.5 min-w-0 order-2 sm:order-none">
-              <h3 className="text-xl sm:text-2xl font-bold leading-tight tracking-[-0.02em] flex gap-3">
+            {/* THE FIX BESIDE ITS CARDS, AND THE FIGURE BESIDE ITS HEADLINE (designer review
+              * 2026-09-30, #770). At 2560 the three "Cards that fit" filled 35-45% of the row under
+              * the text with the rest blank, and "15/16" sat 800-1,500px from the headline it
+              * scores. Where the row is wide enough the cards take the second column; the figure
+              * rides in the headline's own row, as it already did on a phone. */}
+            <div className="min-w-0 grid gap-x-10 gap-y-4 items-start @min-[64rem]:grid-cols-[minmax(0,40rem)_minmax(0,1fr)]">
+            <div className="flex flex-col gap-2.5 min-w-0">
+              <div className="flex flex-col-reverse sm:flex-row sm:items-start gap-3 sm:gap-6">
+              <h3 className="text-xl sm:text-2xl font-bold leading-tight tracking-[-0.02em] flex gap-3 min-w-0">
                 <span aria-hidden="true" className="w-[3px] shrink-0 rounded-full self-stretch bg-(--separator)" />
                 <span>{f.headline}</span>
                 {/* CAUSED BY THE EDIT YOU JUST MADE, which is a different fact from "worst first" and
@@ -143,6 +150,8 @@ export function Findings({ report, diff, suggestions }: {
                   </span>
                 ) : null}
               </h3>
+              <Figure f={f} />
+              </div>
               <p className="text-sm text-(--muted) max-w-[62ch] tabular-nums">{f.detail}</p>
               {/* WHAT THE RANKING IS BY, stated on the row it ranks -- a ranked list whose order the
                 *  reader cannot check from the screen it appears on is the skeptic persona's standing
@@ -170,9 +179,9 @@ export function Findings({ report, diff, suggestions }: {
                   {f.action}
                 </p>
               ) : null}
-              {cardsFor(f)}
             </div>
-            <div className="order-1 sm:order-none"><Figure f={f} /></div>
+            {cardsFor(f)}
+            </div>
           </li>
         ))}
       </ul> : null}
@@ -209,6 +218,9 @@ export function Findings({ report, diff, suggestions }: {
       {/* WHERE THE SLOTS COME FROM. A surplus is not a fault, so it sits beside the list rather than
         *  competing for a rank inside it — and it names the CATEGORY, never a member, because
         *  nothing in this engine ranks two ramp cards against each other. */}
+      {/* THE SLOTS AND THE UNCOUNTED FIXES SHARE A ROW FROM 1600px (designer review 2026-09-30):
+        *  each is capped text, and stacked they sat alone in the left third of a 2560 row. */}
+      <div className={`grid gap-x-10 gap-y-3 items-start ${trade && unseen.length > 0 ? "min-[100rem]:grid-cols-2" : ""}`}>
       {trade ? (
         <div className="self-start flex gap-3.5 items-start rounded-(--radius) border border-(--separator) bg-(--surface) px-4 py-3.5">
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
@@ -246,6 +258,7 @@ export function Findings({ report, diff, suggestions }: {
           </ul>
         </section>
       ) : null}
+      </div>
     </section>
   );
 }
