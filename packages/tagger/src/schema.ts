@@ -946,6 +946,9 @@ export interface Ability {
    *  discarded, exiled, tapped or has counters removed, each with a count. A part it cannot read is
    *  kept verbatim in `other`, never dropped. See `derive/payment.ts`. */
   payment?: Payment;
+  /** The CR keyword abilities a `keyword-grant` hands out, lowercased: ["undying"], ["haste",
+   *  "hexproof"] (#857, DERIVE 213). The effect subject says who gets them. */
+  grants?: string[];
   /** WHAT CREATED THIS DELAYED TRIGGER ("when you next cast ... this turn", CR 603.7):
    *  "chapter" (Summon: Fenrir's II), "spell" (Doublecast), or the activation cost that makes it --
    *  Yuna, Grand Summoner's "{T}". Present only on such a trigger (`delayedTriggerRepeats`). It

@@ -19,6 +19,7 @@ import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger 
 import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
 import { reductionOf } from "./reduction.js";
+import crKeywords from "./cr-keywords.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
@@ -261,7 +262,9 @@ import { emblemRecipient } from "../emblem.js";
 // 212: #860 -- "the exiled card" in a later clause is what an earlier clause exiled, and "cast the copy"
 // is what the copy copied: Isochron Scepter's copy is a spell copy and its cast names "an instant card
 // with mana value 2 or less".
-export const DERIVE_VERSION = 212;
+// 213: #857 -- a keyword grant names its keywords (`grants`), and "other non-Human creatures you
+// control get +1/+1 and have undying" keeps its recipient (Mikaeus, the Unhallowed).
+export const DERIVE_VERSION = 213;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -747,8 +750,12 @@ function boundedGrantClass(s: SubjectFilter): boolean {
  *  one-shot one "gain(s)" whatever follows it -- "until end of turn", "until end of combat", or no
  *  duration at all on an activated "{T}: Creatures you control gain haste". Singular or plural:
  *  "each other creature you control has ward". One colour only; a colour LIST is left refused. */
-const EVERY_CREATURE_YOU_CONTROL = /^(?:each )?(?:other )?(?:(?:white|blue|black|red|green|colorless) )?creatures? you control$/i;
-const STATIC_GRANT_VERB = /\bcreatures? you control (?:have|has)\b/i;
+// A HYPHENATED NEGATED SUBTYPE NARROWS TOO (#857): Mikaeus, the Unhallowed's "other non-Human
+// creatures you control ... have undying" -- `parseSubject` keeps it as `notSubtype`. The unhyphenated
+// "nontoken" stays refused, per the note above. And the grant may follow the anthem in one sentence:
+// "get +1/+1 and have undying".
+const EVERY_CREATURE_YOU_CONTROL = /^(?:each )?(?:other )?(?:non-[a-z]+ )?(?:(?:white|blue|black|red|green|colorless) )?creatures? you control$/i;
+const STATIC_GRANT_VERB = /\bcreatures? you control (?:get [+-][\dX]+\/[+-][\dX]+ and )?(?:have|has)\b/i;
 function everyCreatureYouControl(who: string, clauseText: string): boolean {
   return EVERY_CREATURE_YOU_CONTROL.test(who.trim()) && STATIC_GRANT_VERB.test(clauseText);
 }
@@ -820,7 +827,11 @@ function grantRecipient(clauseText: string): string | undefined {
   // "this turn" stripped with a string op, not an optional regex tail: a lazy capture beside an
   // optional `\s+this turn` is the polynomial shape CodeQL fails a PR on.
   if (asYouCast) return `${asYouCast.endsWith(" this turn") ? asYouCast.slice(0, -" this turn".length) : asYouCast} you cast`;
-  return recipientBefore(clauseText, GRANTED_TO);
+  const who = recipientBefore(clauseText, GRANTED_TO);
+  // AN ANTHEM BEFORE THE GRANT IS NOT THE RECIPIENT (#857): "Other non-Human creatures you control get
+  // +1/+1 and have undying" hands the grant to the creatures, not to "... get +1/+1 and". String ops.
+  const at = who?.toLowerCase().lastIndexOf(" get ") ?? -1;
+  return who && at > 0 && /^[+-][\dX]+\/[+-][\dX]+ and$/i.test(who.slice(at + " get ".length)) ? who.slice(0, at) : who;
 }
 /** "EACH CREATURE ... ASSIGNS COMBAT DAMAGE EQUAL TO ITS TOUGHNESS" (owner ruling 2026-09-28: Doran,
  *  the Siege Tower relates to creatures whose toughness exceeds their power). Read from the clause
@@ -846,6 +857,14 @@ function toughnessDamageAbility(text: string): Ability | undefined {
 /** `<recipient> have "<ability>"`: a granted ability, quoted -- which `segment()` rewrites to "have
  *  that ability", the quote moving to a child clause of its own. */
 const QUOTED_GRANT = /\b(?:have|has) (?:"|that ability\b)/i;
+/** The CR keyword abilities (702.x) a grant's objects name, lowercased and sorted: "hexproof and haste"
+ *  -> ["haste", "hexproof"]. A word that is no keyword ability ("a +1/+1 counter") names nothing. */
+const KEYWORD_ABILITIES: readonly string[] = (crKeywords as { abilities: string[] }).abilities.map((k) => k.toLowerCase());
+function grantedKeywords(objects: string[]): string[] {
+  const text = objects.join(" ").toLowerCase();
+  return KEYWORD_ABILITIES.filter((k) => new RegExp(`(?:^|[^a-z])${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z])`).test(text)).sort();
+}
+
 /** A reference to the card an imprint exiled: "the exiled card", "a card exiled with this artifact". */
 const EXILED_REF = /^(?:the exiled card|the imprinted card|a card exiled with (?:this|~)(?: [a-z]+)?)$/i;
 /** "YOU MAY CAST ARTIFACT SPELLS AS THOUGH THEY HAD FLASH" (Shimmer Myr, #711): a spell-side grant to a
@@ -2226,6 +2245,12 @@ export function deriveAbilities(
       if (count) abilities[i] = { ...abilities[i], count };
       const payment = abilities[i].cost !== undefined ? paymentOf(abilities[i].cost, cardName) : undefined;
       if (payment) abilities[i] = { ...abilities[i], payment };
+      // WHICH KEYWORDS A GRANT HANDS OUT (#857): read off the clause's grant objects against the CR
+      // keyword-ability list. CEILING: a clause with two grants gives each ability the union.
+      if (abilities[i].effect?.kind === "keyword-grant") {
+        const grants = grantedKeywords((clause.actions ?? []).filter((a) => a.verb === "grant-ability").map((a) => a.object ?? ""));
+        if (grants.length > 0) abilities[i] = { ...abilities[i], grants };
+      }
       const reduces = abilities[i].effect?.kind === "cost-reduction" ? reductionOf(text ?? "", abilities[i].amount) : undefined;
       if (reduces) abilities[i] = { ...abilities[i], reduces };
       if (abilities[i].trigger && BATCHED.test(clause.trigger?.subject ?? "")) {
