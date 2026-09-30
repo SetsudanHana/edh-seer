@@ -15,7 +15,7 @@ import {
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, recursionTargetSentence, playFromTopSentence, extraLoyaltySentence, tutorSentence, digsRatherThanSearches, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
+  staticGrantSentence, typeGrantNoun, recursionTargetSentence, playFromTopSentence, extraLoyaltySentence, imprintSentence, tutorSentence, digsRatherThanSearches, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
@@ -1707,6 +1707,7 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
   const raw: PairScope = { ...s, p: p0 as TaggedCard, c: c0 as TaggedCard };
   playFromTopEdges(raw);
   extraLoyaltyEdges(raw);
+  imprintEdges(s);
   // NO "RECURSION RE-FIRES A DEATH TRIGGER" PASS. One existed for a day (PR #295, recall v4 #145:
   // Sheoldred returning Vindictive Lich "so it can die again") and the owner judged all three of its
   // panel claims FALSE on 2026-09-09: "the edge should be just reanimation -- sure it can die again,
@@ -3178,6 +3179,41 @@ function extraLoyaltyEdges({ p, c, h, reasons }: PairScope): void {
       producer: p.card.name,
     });
     return; // one claim per pair
+  }
+}
+
+// IMPRINT -> THE CARDS OF ITS CLASS (owner ruling 2026-09-30, after #860). Isochron Scepter exiles an
+// instant with mana value 2 or less from your hand and casts copies of it; Spellbinder, Elite Arcanist
+// and Panoptic Mirror are the same shape. It relates to each card of that class the way a typed tutor
+// does, on the same bar (`recursionClassNarrows`). An imprint is an `exiled` emit from your hand on a
+// card that also COPIES: a card exiling ITSELF from hand (Rakish Revelers), or one that casts the card
+// itself (a plot, Jace Reawakened), is not one.
+function imprintEdges({ p, c, h, reasons }: PairScope): void {
+  if (p === c || c.isToken) return;
+  // IT COPIES WHAT IT EXILED: a copy of the SAME class (#860 resolves "copy the exiled card" to it).
+  // Jace Reawakened exiles a cheap nonland card from hand to PLOT it -- the card itself is cast later,
+  // once -- and its -6 copies "a spell"; read as an imprint it claimed 42 cards of a deck.
+  const classOf = (x: SubjectFilter) => JSON.stringify([list(x.type), list(x.subtype), x.stats ?? []]);
+  const copied = new Set(p.tags.abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "copy").map((e) => classOf(e.subject))));
+  if (copied.size === 0) return;
+  for (const a of p.tags.abilities) {
+    for (const e of a.emits ?? []) {
+      if (e.verb !== "exiled" || e.subject.fromZone !== "hand" || e.subject.self === true) continue;
+      if (!copied.has(classOf(e.subject))) continue;
+      const { fromZone: _f, zone: _z, scope: _s, ...wanted } = e.subject;
+      if (!recursionClassNarrows(wanted)) continue;
+      const found = characteristicsSubject(c.tags, c.card.name);
+      if (!subjectMatches(found, wanted, h)) continue;
+      reasons.push({
+        tag: `imprint:${themeSubjectKey(keyedOn(wanted, found))}`,
+        text: imprintSentence(p.card.name, c.card.name),
+        effectKind: a.effect.kind || "copy-spell",
+        repeatability: "activated",
+        consumer: c.card.name,
+        producer: p.card.name,
+      });
+      return; // one claim per pair
+    }
   }
 }
 
