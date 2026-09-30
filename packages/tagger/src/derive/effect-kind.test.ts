@@ -894,3 +894,24 @@ test("a card putting itself on top of its owner's library sets the top (Sensei's
   // Tucking ANOTHER permanent is removal and stays unclassified.
   expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "library" }, "Put target creature on top of its owner's library.")).toBeNull();
 });
+
+// #859: activating loyalty abilities again, or at instant speed. The model answers `other` for all of
+// these, so they derived nothing. Printed text, 2026-09-30.
+test("an extra loyalty activation is extra-loyalty, for your planeswalkers or for itself", () => {
+  const veil = deriveAbilities([{ id: 2, abilityType: "activated", actions: [{ verb: "other", object: "For each planeswalker you control, you may activate one of its loyalty abilities" }] }],
+    "The Chain Veil", { 2: "For each planeswalker you control, you may activate one of its loyalty abilities once this turn as though none of its loyalty abilities have been activated this turn." }, { 2: "{4}, {T}" }).abilities;
+  expect(veil).toHaveLength(1);
+  expect(veil[0]).toMatchObject({ kind: "activated", cost: "{4}, {T}", payment: { mana: "{4}", tap: true }, effect: { kind: "extra-loyalty", subject: { control: "you", type: "planeswalker" } } });
+  const oath = deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "other" }] }], "Oath of Teferi",
+    { 2: "You may activate the loyalty abilities of planeswalkers you control twice each turn rather than only once." }).abilities;
+  expect(oath.map((a) => [a.kind, a.effect.kind])).toEqual([["static", "extra-loyalty"]]);
+  const urza = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "other" }] }], "Urza, Planeswalker",
+    { 1: "You may activate the loyalty abilities of Urza twice each turn rather than only once." }).abilities;
+  expect(urza[0]?.effect.subject?.self).toBe(true);
+  const emperor = deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "none" }] }], "The Wandering Emperor",
+    { 2: "As long as The Wandering Emperor entered this turn, you may activate her loyalty abilities any time you could cast an instant." }).abilities;
+  expect(emperor[0]?.effect).toMatchObject({ kind: "extra-loyalty", subject: { self: true } });
+  // A cost INCREASE on loyalty abilities is not one (Carth the Lion).
+  expect(deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "cost-modify" }] }], "Carth the Lion",
+    { 2: "Planeswalkers' loyalty abilities you activate cost an additional [+1] to activate." }).abilities.some((a) => a.effect.kind === "extra-loyalty")).toBe(false);
+});

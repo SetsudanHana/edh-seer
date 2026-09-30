@@ -8,7 +8,7 @@
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
-import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName, playsFromTop } from "./effect-kind.js";
+import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
@@ -254,7 +254,9 @@ import { emblemRecipient } from "../emblem.js";
 // `top-set` (Sensei's Divining Top).
 // 209: #858 -- "tokens would be created ... instead" and "an effect would create ... instead" are CR 614
 // token multipliers hearing another card's token creation (Stridehangar Automaton, Doubling Season).
-export const DERIVE_VERSION = 209;
+// 210: #859 -- "you may activate ... loyalty abilities" twice, as though none were activated, or at
+// instant speed is `extra-loyalty`, read off the printed sentence (The Chain Veil, Oath of Teferi).
+export const DERIVE_VERSION = 210;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -2093,6 +2095,15 @@ export function deriveAbilities(
     // it (#856). Only when the clause derived no play-from-top of its own.
     if (kind === "static" && playsFromTop(text) && !abilities.slice(before).some((a) => a.effect.kind === "play-from-top")) {
       abilities.push({ kind: "static", repeats: "continuous", effect: { kind: "play-from-top", subject: { control: "you", token: null, zone: "library" } }, ...(face ? { face } : {}) });
+    }
+    // ANOTHER LOYALTY ACTIVATION (#859), off the printed sentence: the model answers `other`.
+    const extra = extraLoyalty(text);
+    if (extra && !abilities.slice(before).some((a) => a.effect.kind === "extra-loyalty")) {
+      const subject: SubjectFilter = extra === "self"
+        ? { control: "you", token: null, self: true }
+        : { control: "you", token: null, type: "planeswalker", scope: "all" };
+      abilities.push({ kind, effect: { kind: "extra-loyalty", subject }, ...(trigger ? { trigger } : {}),
+        ...(kind === "activated" ? { cost } : {}), ...(face ? { face } : {}) });
     }
     const castAsFlash = kind === "static" ? castAsFlashAbility(text) : undefined;
     if (castAsFlash) { if (face) castAsFlash.face = face; abilities.push(castAsFlash); }

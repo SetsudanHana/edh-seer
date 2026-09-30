@@ -117,6 +117,19 @@ export function playsFromTop(text: string): boolean {
   });
 }
 
+/** "YOU MAY ACTIVATE ... LOYALTY ABILITIES" again or at instant speed (#859): whose they are -- your
+ *  planeswalkers, or the card's own. A cost increase (Carth the Lion) names no permission. String
+ *  search per sentence, no regex over the text. */
+const AGAIN = ["twice", "as though none", "any time you could cast an instant", "on any player's turn"];
+export function extraLoyalty(text: string): "yours" | "self" | undefined {
+  for (const sentence of text.toLowerCase().split(".")) {
+    const at = sentence.indexOf("you may activate");
+    if (at < 0 || sentence.indexOf("loyalty abilit", at) < 0 || !AGAIN.some((w) => sentence.includes(w))) continue;
+    return sentence.includes("planeswalkers you control") || sentence.includes("planeswalker you control") ? "yours" : "self";
+  }
+  return undefined;
+}
+
 /** Does a dig's object name a class -- a type, subtype, stat predicate or name, on the subject or
  *  in an `anyOf` branch? "Two of them" and "a card" do not. See the `put library -> hand` row. */
 function digNamesAClass(object: string): boolean {
