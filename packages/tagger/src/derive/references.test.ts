@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Action, ClauseRecord } from "../canonicalize.js";
-import { antecedentIsSelf, antecedentSource, antecedentText, exiledAcrossClauses } from "./references.js";
+import { antecedentIsSelf, antecedentSource, antecedentText, exiledAcrossClauses, zoneAfterEvent } from "./references.js";
 
 const acts = (...xs: [string, string][]) => xs.map(([verb, object]) => ({ verb, object }) as Action);
 
@@ -39,4 +39,17 @@ test("'the exiled card' in a later clause is what an earlier clause exiled (Isoc
   expect(r.clause.actions?.[0]?.object).toBe("an instant card with mana value 2 or less from your hand");
   const own = exiledAcrossClauses(c(3, acts(["exile", "target creature"], ["copy", "the exiled card"])), "something earlier", "X");
   expect(own.clause.actions?.[1]?.object).toBe("the exiled card");
+});
+
+test("a trigger subject is a referent only when it names a thing: a player, a time or a chapter is not (#896 task 4)", () => {
+  const it = acts(["cast", "it"]);
+  for (const t of ["you", "the next end step", "chapter iii", "each player"]) expect(antecedentSource(it, 0, t, "Galvanoth")).toEqual({ to: "none" });
+  for (const t of ["a creature an opponent controls", "a Goblin you control", "your commander", "a card", "Galvanoth"]) expect(antecedentSource(it, 0, t, "Galvanoth")).toEqual({ to: "trigger" });
+});
+
+test("where the triggering object is when the ability resolves", () => {
+  expect(zoneAfterEvent("dies")).toBe("graveyard");
+  expect(zoneAfterEvent("discarded")).toBe("graveyard");
+  expect(zoneAfterEvent("exiled")).toBe("exile");
+  expect(zoneAfterEvent("attacks")).toBeUndefined();
 });

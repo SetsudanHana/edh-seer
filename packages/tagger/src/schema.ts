@@ -19,6 +19,10 @@ export interface StatPredicate {
 
 /** A characteristic filter: what a trigger cares about, or what an effect targets/produces. */
 export interface SubjectFilter {
+  /** THE OBJECT IS THE ONE THE TRIGGER IS ABOUT, not another of its class (#896 task 4, #823): Mari,
+   *  the Killing Quill's "whenever a creature an opponent controls dies, exile IT". The other fields
+   *  still say its class; this says it is that same object, so a sentence reads "exiles it". */
+  ref?: "trigger";
   /** A card type, or an array of types meaning OR (e.g. ["instant","sorcery"]). */
   type?: string | string[];
   /** Card types the text NEGATED ("noncreature spell", "nonland permanent"), as the card says it.

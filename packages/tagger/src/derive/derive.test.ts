@@ -3545,6 +3545,43 @@ test("the self-or-class twin keeps the combat state its condition set (review of
   for (const d of draws) expect(d.trigger?.subject.combat).toBe("attacking");
 });
 
+// #896 task 4: what a reference points at.
+test("'exile it' after a death is the dying card, in the graveyard: no battlefield leave (Mari, the Killing Quill, #823)", () => {
+  const mari = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "a creature an opponent controls", control: "opponent" },
+    actions: [{ verb: "exile", object: "it" }, { verb: "add-counter", object: "hit", amount: "1" }] } as never], "Mari, the Killing Quill",
+  { 1: "Whenever a creature an opponent controls dies, exile it with a hit counter on it." }).abilities;
+  const exiled = mari.flatMap((a) => a.emits ?? []).find((e) => e.verb === "exiled");
+  expect(exiled?.subject).toMatchObject({ control: "opp", type: "creature", fromZone: "graveyard", ref: "trigger" });
+  const leaves = mari.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves");
+  expect(leaves?.subject.fromZone).toBe("graveyard");
+});
+
+test("after a reveal, 'it' is the revealed card, not the triggering object (Matter Reshaper)", () => {
+  const out = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "this creature", control: "you" },
+    actions: [{ verb: "put", object: "it", fromZone: "library", toZone: "battlefield", optional: true }] } as never], "Matter Reshaper",
+  { 1: "When this creature dies, reveal the top card of your library. You may put it onto the battlefield if it's a permanent card with mana value 3 or less. Otherwise, put that card into your hand." }).abilities;
+  expect(out.flatMap((a) => a.emits ?? []).some((e) => e.subject.ref === "trigger")).toBe(false);
+});
+
+test("a trigger that names a player or a time is no referent: 'cast it' on your upkeep is not 'cast you' (Galvanoth)", () => {
+  const out = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" },
+    actions: [{ verb: "cast", object: "it", fromZone: "library" }] } as never], "Galvanoth",
+  { 1: "At the beginning of your upkeep, you may look at the top card of your library. If it's an instant or sorcery card, you may cast it without paying its mana cost." }).abilities;
+  expect(out.flatMap((a) => a.emits ?? []).every((e) => e.subject.ref === undefined)).toBe(true);
+});
+
+test("'the exiled cards' in a later clause are what an earlier clause exiled (Petradon)", () => {
+  const flicker = deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" },
+      actions: [{ verb: "exile", object: "two target lands", fromZone: "battlefield", toZone: "exile" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "leaves", subject: "this creature", control: "you" },
+      actions: [{ verb: "return", object: "the exiled cards", fromZone: "exile", toZone: "battlefield" }] },
+  ] as never, "Petradon", { 1: "When this creature enters, exile two target lands.", 2: "When this creature leaves the battlefield, return the exiled cards to the battlefield under their owners' control." })
+    .abilities.find((a) => a.effect.kind === "flicker");
+  expect(flicker?.effect.subject?.type).toBe("land");
+  expect(flicker?.effect.subject?.self).toBeUndefined();
+});
+
 // #886 (#726 loop research): a return that marks what it returns cannot bring the same creature back twice.
 test("a return with a finality counter, or a keyword counter the trigger excludes, is once per object", () => {
   const derive = (name: string, clause: object, text: string) => deriveAbilities([{ id: 1, ...clause } as never], name, { 1: text }).abilities
@@ -3577,8 +3614,8 @@ test("a flicker's subject is the exiled class, not the pronoun (Displacer Kitten
   expect(kitten?.effect.subject?.control).toBe("you");
   expect(kitten?.effect.subject?.notType).toEqual(["land"]);
   expect(kitten?.effect.subject?.self).toBeUndefined();
-  // A cross-clause "the exiled cards" has no exile in its own clause: the trigger's subject is not
-  // what was exiled, so the flicker claims no type (Petradon, review).
+  // A cross-clause "the exiled cards" is never the trigger's subject: it is what the earlier clause
+  // exiled (Petradon; review of #895, then #896 task 4).
   const petradon = deriveAbilities([
     { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" },
       actions: [{ verb: "exile", object: "two target lands", fromZone: "battlefield", toZone: "exile" }] },
@@ -3587,7 +3624,7 @@ test("a flicker's subject is the exiled class, not the pronoun (Displacer Kitten
   ] as never, "Petradon", { 1: "When this creature enters, exile two target lands.", 2: "When this creature leaves the battlefield, return the exiled cards to the battlefield under their owners' control." })
     .abilities.find((a) => a.effect.kind === "flicker");
   expect(petradon).toBeDefined();
-  expect(petradon?.effect.subject?.type).toBeUndefined();
+  expect(petradon?.effect.subject?.type).toBe("land");
 });
 
 // #801 (#726 loop research): a return "at the beginning of the next end step" cannot close a loop this turn.

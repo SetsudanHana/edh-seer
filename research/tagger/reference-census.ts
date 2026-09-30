@@ -27,7 +27,7 @@ for await (const d of s.db.collection("cardClauses").find({ isToken: { $ne: true
       let kind: string, text: string | undefined;
       if (o !== printed) { kind = "earlier clause"; text = o; }
       else if (PRONOUN_OBJECT.test(o)) {
-        const src = antecedentSource(actions, i, r.clause.trigger?.subject);
+        const src = antecedentSource(actions, i, r.clause.trigger?.subject, d.name as string);
         const t = (r.clause.trigger?.subject ?? "").trim();
         const selfTrigger = SELF_REFERENCE.test(t) || isSelfSubject(t, d.name);
         kind = antecedentIsSelf(actions, i, d.name) ? "self (action)" : src.to === "trigger" && selfTrigger ? "self (trigger)" : src.to === "action" ? "this clause" : src.to;

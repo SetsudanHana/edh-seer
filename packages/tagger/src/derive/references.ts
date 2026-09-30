@@ -4,9 +4,11 @@
  *  action, the trigger's subject, or nowhere -- and `antecedentText` turns that into the text derive
  *  parses. It used to be three closures inside `deriveAbilities`, each grown for one bug; it is one
  *  module now so the resolver can be measured and changed in one place. Behaviour is unchanged from
- *  the closures (DERIVE 215, corpus re-derived byte-identical). */
+ *  the closures at DERIVE 215 (corpus re-derived byte-identical); DERIVE 216 changed three rules, each
+ *  marked #896 task 4 below. */
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import { isSelfSubject, SELF_REFERENCE } from "./self-reference.js";
+import { parseSubject } from "./subject.js";
 
 /** AN AURA'S "ENCHANT X" LINE BOUNDS ITS "ENCHANTED PERMANENT" (UX sweep 2026-09-06, E1). Kaya's
  *  Ghostform prints `Enchant creature or planeswalker you control` and then `When enchanted
@@ -48,8 +50,10 @@ export const PRONOUN_SOURCE = /^(?:your |their |a |an )?librar(?:y|ies)(?: for)?
 export const PRONOUN_OBJECT =
   /^(?:(?:the |that |those )?(?:searched|exiled|chosen) cards?|that cards?|those cards|it|them|her|him|herself|himself|the cards?|one|one of those cards|the copy|that copy)$/i;
 
-/** A reference to the card an imprint exiled: "the exiled card", "a card exiled with this artifact". */
-export const EXILED_REF = /^(?:the exiled card|the imprinted card|a card exiled with (?:this|~)(?: [a-z]+)?)$/i;
+/** A reference to the card an imprint exiled: "the exiled card", "a card exiled with this artifact".
+ *  PLURAL TOO (#896 task 4): Petradon's leaves trigger returns "the exiled cards" its enters trigger
+ *  exiled, and read as its own trigger's "this creature" the flicker claimed a creature. */
+export const EXILED_REF = /^(?:the exiled cards?|the imprinted card|a card exiled with (?:this|~)(?: [a-z]+)?)$/i;
 
 /** A zone named as an object ("shuffle your library"): never what a later pronoun means. */
 export const ZONE_OBJECT = /^(?:your|their|its owner's|that player's|each player's) (?:library|graveyard|hand)(?: and (?:your |their )?(?:library|graveyard|hand))?(?: into (?:your|their) library)?$/i;
@@ -68,7 +72,7 @@ export type Source = { to: "action"; action: number } | { to: "trigger" } | { to
  *  Generalised past the fetch: "exile target creature you control, then return IT to the
  *  battlefield" is the same shape, and a flicker whose emit is untyped is the same wildcard.
  *  The antecedent is the nearest EARLIER action in the clause that names a thing of its own. */
-export function antecedentSource(actions: readonly Action[], idx: number, triggerSubject: string | undefined): Source {
+export function antecedentSource(actions: readonly Action[], idx: number, triggerSubject: string | undefined, cardName?: string): Source {
   // A REFERENCE THAT NAMES ITS VERB takes that verb's object (#860): "cast THE COPY" means what the
   // earlier `copy` copied, and "copy THE EXILED CARD" what the earlier `exile` exiled -- not the
   // nearest thing named. Surge to Victory's "creatures you control get +X/+0" sits between its
@@ -79,7 +83,7 @@ export function antecedentSource(actions: readonly Action[], idx: number, trigge
     for (let i = idx - 1; i >= 0; i--) {
       const a = actions[i]!;
       if (a.verb !== verb) continue;
-      return PRONOUN_OBJECT.test((a.object ?? "").trim()) ? antecedentSource(actions, i, triggerSubject) : { to: "action", action: i };
+      return PRONOUN_OBJECT.test((a.object ?? "").trim()) ? antecedentSource(actions, i, triggerSubject, cardName) : { to: "action", action: i };
     }
     if (verb === "copy") return { to: "none" };
   }
@@ -94,7 +98,28 @@ export function antecedentSource(actions: readonly Action[], idx: number, trigge
   // Kaya's Ghostform: "When ENCHANTED PERMANENT dies, return THAT CARD to the battlefield." The
   // antecedent is the trigger's subject, not an earlier action -- there is no earlier action.
   const t = (triggerSubject ?? "").trim();
-  return t === "" || PRONOUN_OBJECT.test(t) ? { to: "none" } : { to: "trigger" };
+  return t === "" || PRONOUN_OBJECT.test(t) || !namesAThing(t, cardName) ? { to: "none" } : { to: "trigger" };
+}
+
+/** A TRIGGER SUBJECT IS A REFERENT ONLY WHEN IT NAMES A THING (#896 task 4). "At the beginning of your
+ *  upkeep, cast IT" (Galvanoth) and "At the beginning of the next end step, return THOSE CARDS" name a
+ *  player or a time, never the card the pronoun means -- that card was revealed or exiled by text the
+ *  clause did not record. Resolved to "you", the emit was an UNTYPED cast: a wildcard that fed every
+ *  "whenever you cast" payoff. Unresolved is silent, which is right. 80 references (census). */
+function namesAThing(t: string, cardName: string | undefined): boolean {
+  if (SELF_REFERENCE.test(t) || isSelfSubject(t, cardName)) return true;
+  const s = parseSubject(t);
+  return s.type !== undefined || s.subtype !== undefined || s.commander === true || /\b(?:cards?|permanents?|spells?|tokens?)\b/i.test(t);
+}
+
+/** WHERE A TRIGGER'S OBJECT IS WHEN THE ABILITY RESOLVES (#896 task 4, #823). "Whenever a creature an
+ *  opponent controls dies, exile IT" (Mari, the Killing Quill) exiles a card from a GRAVEYARD: the
+ *  action states no zone, and without one the exile read as a creature leaving the battlefield -- a
+ *  false `leaves` event, and the sentence "exiles a creature an opponent controls". */
+export function zoneAfterEvent(event: string | undefined): "graveyard" | "exile" | undefined {
+  if (event === "dies" || event === "put-into-graveyard" || event === "discarded" || event === "sacrificed" || event === "milled") return "graveyard";
+  if (event === "exiled") return "exile";
+  return undefined;
 }
 
 /** The text a source names, as derive parses it. A trigger subject is BOUNDED BY THE ENCHANT LINE
