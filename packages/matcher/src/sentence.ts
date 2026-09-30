@@ -792,6 +792,11 @@ export function extraLoyaltySentence(producer: string, consumer: string): string
   return `${producer} lets ${consumer} activate its loyalty abilities again`;
 }
 
+/** An imprint and a card of its class (#860, owner 2026-09-30). */
+export function imprintSentence(producer: string, consumer: string): string {
+  return `${producer} can imprint ${consumer} and cast copies of it`;
+}
+
 /** A fill and the delve spell it pays for (CR 702.66): the producer puts cards in your graveyard,
  *  the consumer exiles them as mana. */
 export function delveSentence(producer: string, consumer: string): string {

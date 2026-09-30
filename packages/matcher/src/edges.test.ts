@@ -5907,3 +5907,38 @@ describe("an extra loyalty activation links to each planeswalker you control", (
     expect(links(extra("Urza, Planeswalker", { self: true }), pw)).toEqual([]);
   });
 });
+
+/** AN IMPRINT LINKS TO THE CARDS OF ITS CLASS (owner ruling 2026-09-30, after #860): Isochron Scepter
+ *  exiles an instant with mana value 2 or less from your hand and casts copies of it, so it relates to
+ *  each such instant in the deck. A card exiling ITSELF from hand (Rakish Revelers) or a card that
+ *  never uses what it exiled is no imprint. Live shapes, DERIVE 212. */
+describe("an imprint links to the cards it can imprint", () => {
+  const imprinter = (name: string, exiled: Partial<SubjectFilter>, uses = true) => base(name, [
+    { kind: "triggered", effect: { kind: "" }, emits: [{ verb: "exiled", subject: { ...exiled, control: "you", token: null, fromZone: "hand" } }] },
+    ...(uses ? [{ kind: "activated", effect: { kind: "copy-spell" }, emits: [{ verb: "copy", subject: { ...exiled, control: "you", token: null } }, { verb: "cast", subject: { ...exiled, control: "you", token: null } }] }] : []),
+  ] as CardTags["abilities"]);
+  const card = (name: string, types: string[], mv: number) => {
+    const c = base(name, []);
+    c.tags.characteristics = { ...c.tags.characteristics, types, cmc: mv };
+    (c.card as { manaValue: number }).manaValue = mv;
+    return c;
+  };
+  const scepter = imprinter("Isochron Scepter", { type: "instant", stats: [{ metric: "mana-value", op: "lte", value: 2 }] });
+  const links = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) =>
+    directedReasons(p, c, H).filter((r) => r.tag.startsWith("imprint:")).map((r) => r.text);
+  test("the class it names", () => {
+    expect(links(scepter, card("Dramatic Reversal", ["instant"], 2))).toEqual(["Isochron Scepter can imprint Dramatic Reversal and cast copies of it"]);
+    expect(links(scepter, card("Cryptic Command", ["instant"], 4))).toEqual([]);
+    expect(links(scepter, card("Grizzly Bears", ["creature"], 2))).toEqual([]);
+  });
+  test("itself, or an exile it never uses, is no imprint", () => {
+    expect(links(imprinter("Rakish Revelers", { self: true }), card("Dramatic Reversal", ["instant"], 2))).toEqual([]);
+    expect(links(imprinter("Spellbinder", { type: "instant" }, false), card("Dramatic Reversal", ["instant"], 2))).toEqual([]);
+    // A plot casts the card itself, once (Jace Reawakened); its -6 copies "a spell", not the exiled class.
+    const jace = base("Jace Reawakened", [
+      { kind: "triggered", effect: { kind: "" }, emits: [{ verb: "exiled", subject: { control: "you", token: null, fromZone: "hand", notType: ["land"], stats: [{ metric: "mana-value", op: "lte", value: 3 }] } }] },
+      { kind: "activated", effect: { kind: "copy-spell" }, emits: [{ verb: "copy", subject: { control: "you", token: null, type: "spell" } }] },
+    ] as CardTags["abilities"]);
+    expect(links(jace, card("Dramatic Reversal", ["instant"], 2))).toEqual([]);
+  });
+});
