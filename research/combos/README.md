@@ -60,8 +60,8 @@ Stridehangar Automaton's surplus token, Mikaeus's undying board, and the everyth
 returns is `oncePerObject` on the ability, and a flicker's "return that card" takes its subject from the
 exile (Displacer Kitten: nonland permanent you control). `abil.py` reads both off the tags. Re-measured
 on a scratch static build (`STATIC=http://localhost:<port> npx tsx research/combos/collect.ts`, then
-`tags.ts`, both honour `STATIC`): **recall 44/156, precision 123/297 (41%), 40 loops in combo-free decks**
--- the same as the text reads, one false loop fewer. The 71 decks' 59,588 reasons did not move: the
+`tags.ts`, both honour `STATIC`): **recall 44/156, precision 123/298 (41%), 40 loops in combo-free decks**
+-- identical to the text reads. The 71 decks' 72,631 reasons did not move (0 lost, 0 won): the
 edges already read the emits, which resolved the pronoun.
 
 `probe.ts <card names>` prints a card's stored clauses and a fresh derive -- the first thing to run on a

@@ -1205,6 +1205,8 @@ const STAT_VS_STAT = /\bwith (power|toughness) greater than (?:its|their) (power
 const ZONE_MOVING_VERBS: ReadonlySet<string> = new Set(["cast", "play", "return", "put", "exile"]);
 const OBJECT_IN_GRAVEYARD = /\b(?:in|from) (?:your|a|an opponent's|target player's|their) graveyard\b/i;
 /** "…, then return it to the battlefield…" after an exile in the same clause (#715, Jill). */
+/** "...with a finality counter on it" -- the counter rides on the returned object itself (#886). */
+const RETURNED_WITH_COUNTER = /\bwith an? ([a-z]+) counter on (?:it|them|him|her)\b/i;
 const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|him|her|this card|that card|those cards) to the battlefield\b/i;
 /** "…return it to the battlefield transformed…": the back face enters (CR 712.14a, #715). Every
  *  corpus phrasing: him/her (Ajani, Tamiyo), "this card", "put … onto", "from your graveyard" and
@@ -1870,7 +1872,10 @@ export function deriveAbilities(
       // A FLICKER'S "return THAT CARD" means what the exile named (#887): Displacer Kitten's
       // "nonland permanent you control" was read off the pronoun as any permanent anyone controls.
       // The emits already resolve it; the subject now does too. Flicker only: measured, not assumed.
-      const subjectAction = effectKind === "flicker" && antecedent && !emitsSelf ? { ...action, object: antecedent } : action;
+      // Only an exile IN THIS CLAUSE is the antecedent: a cross-clause "the exiled cards" (Petradon) falls
+      // back to the trigger's subject, which names the card and not what it exiled (review).
+      const exiledHere = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).some((x) => x.verb === "exile");
+      const subjectAction = effectKind === "flicker" && antecedent && exiledHere && !emitsSelf ? { ...action, object: antecedent } : action;
       const subject = effectKind
         ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
@@ -2121,11 +2126,12 @@ export function deriveAbilities(
       // it the next time it would die (CR 122.1h, Meathook Massacre II), and a keyword counter the
       // trigger excludes takes it out of the trigger (Luminous Broodmoth's flying counter on a
       // creature "without flying"). Still repeatable -- every OTHER creature returns once too.
+      // Read on the return's OWN sentence, "with a <kind> counter on it", so a counter put on some other
+      // object in the clause marks nothing (review).
       if ((action.verb === "return" || action.verb === "put") && action.toZone === "battlefield") {
-        const marks = (clause.actions ?? []).filter((x) => x.verb === "add-counter")
-          .map((x) => (x.object ?? "").toLowerCase().replace(/\s*counters?$/, "").trim());
-        const excluded = trigger?.subject.notKeyword ?? [];
-        if (marks.some((m) => m === "finality" || excluded.includes(m))) ability.oncePerObject = true;
+        const k = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === action.verb).length;
+        const mark = RETURNED_WITH_COUNTER.exec(nthSentenceWith(text, action.verb, k))?.[1]?.toLowerCase();
+        if (mark && (mark === "finality" || (trigger?.subject.notKeyword ?? []).includes(mark))) ability.oncePerObject = true;
       }
       const made = ability.temporary ? emits.find((e) => e.verb === "create-token") : undefined;
       if (made) {

@@ -3561,6 +3561,10 @@ test("a return with a finality counter, or a keyword counter the trigger exclude
   expect(derive("Test Card", { abilityType: "triggered", trigger: dies("a creature you control"),
     actions: [back, { verb: "add-counter", object: "+1/+1", amount: "1" }] },
     "Whenever a creature you control dies, return it to the battlefield with a +1/+1 counter on it.")?.oncePerObject).toBeUndefined();
+  // A finality counter on some OTHER object marks nothing about the returned card (review).
+  expect(derive("Test Card", { abilityType: "triggered", trigger: dies("a creature you control"),
+    actions: [back, { verb: "add-counter", object: "finality", amount: "1" }] },
+    "Whenever a creature you control dies, return it to the battlefield. Put a finality counter on target creature an opponent controls.")?.oncePerObject).toBeUndefined();
 });
 
 // #887 (#726 loop research): a flicker's "return that card" is what the exile named.
@@ -3573,6 +3577,17 @@ test("a flicker's subject is the exiled class, not the pronoun (Displacer Kitten
   expect(kitten?.effect.subject?.control).toBe("you");
   expect(kitten?.effect.subject?.notType).toEqual(["land"]);
   expect(kitten?.effect.subject?.self).toBeUndefined();
+  // A cross-clause "the exiled cards" has no exile in its own clause: the trigger's subject is not
+  // what was exiled, so the flicker claims no type (Petradon, review).
+  const petradon = deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" },
+      actions: [{ verb: "exile", object: "two target lands", fromZone: "battlefield", toZone: "exile" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "leaves", subject: "this creature", control: "you" },
+      actions: [{ verb: "return", object: "the exiled cards", fromZone: "exile", toZone: "battlefield" }] },
+  ] as never, "Petradon", { 1: "When this creature enters, exile two target lands.", 2: "When this creature leaves the battlefield, return the exiled cards to the battlefield under their owners' control." })
+    .abilities.find((a) => a.effect.kind === "flicker");
+  expect(petradon).toBeDefined();
+  expect(petradon?.effect.subject?.type).toBeUndefined();
 });
 
 // #801 (#726 loop research): a return "at the beginning of the next end step" cannot close a loop this turn.
