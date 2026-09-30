@@ -1,0 +1,34 @@
+{
+  "surface": "precon-page",
+  "baseUrl": "http://localhost:5173",
+  "keyScreens": [
+    {
+      "id": "precon",
+      "path": "/precons/party-time-commander-legends-battle-for-baldurs-gate"
+    }
+  ],
+  "measure": [
+    "h1",
+    "h2",
+    "p.eyebrow",
+    ".chip",
+    ".btn-primary",
+    ".btn-secondary"
+  ],
+  "steps": [
+    {
+      "id": "precon",
+      "path": "/precons/party-time-commander-legends-battle-for-baldurs-gate",
+      "goal": "I own this precon and keep losing to my friends' upgraded decks: find what to change first"
+    },
+    {
+      "id": "swaps",
+      "goal": "see what each change is and what it replaces",
+      "acts": [
+        {
+          "click": "a[href='#swaps']"
+        }
+      ]
+    }
+  ]
+}
