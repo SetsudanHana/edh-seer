@@ -188,6 +188,15 @@
    not in that calc. */
 html { scroll-padding-top: var(--site-header-h, 0px); }
 
+/* EVERYTHING A STEP BIGGER ON A 4K SCREEN (owner, 2026-09-30, #770: "I would make everything
+   bigger"). At 3840 CSS px the type kept its 1920 size and small print read as specks; a 3840 screen
+   shown at 1x is a big monitor, not a denser one. Every rem-sized thing -- type, spacing, the rail,
+   the tiles -- grows by a quarter from 3200px, so 3840 lays out like a 3072px screen. Media queries
+   measured in rem are NOT affected (they use the browser's initial size), so no breakpoint moves. */
+@media (min-width: 200rem) {
+  html { font-size: 125%; }
+}
+
 /* THE PAGE'S OWN GROUND, and it was `main`'s until the static intro moved content outside it: below
    `main` the body showed the browser default, so the explainer sat on white. A background painted by
    a layout element only covers what that element covers. */
