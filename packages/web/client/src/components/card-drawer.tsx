@@ -17,6 +17,9 @@ export interface DrawerExtras {
   where?: (name: string) => string[];
   /** A link group's name as the report says it (the main theme by its name on Glance). */
   groupName?: (key: string, name: string) => string;
+  /** Open two cards as a pair on the commander's map: the first in the middle, the second lit
+   *  (pair-view mockups F1/F2, owner 2026-09-30: "why won't we just reuse constellation for it"). */
+  pair?: (centre: string, partner: string) => void;
 }
 
 /** THE INSPECTOR, REACHABLE FROM ANY CARD NAME IN THE REPORT.
@@ -66,12 +69,16 @@ interface CardDrawerApi {
   railHost: HTMLElement | null;
   /** What the card's close control says while it covers the rail ("Back to Game plan"). */
   setRailBack: (label: string | null) => void;
+  /** THE PAIR, ON THE MAP: what opens two cards together on the commander's map, by name or id,
+   *  or null where there is no map or the two do not work together -- so a caller renders no
+   *  button that would do nothing. */
+  pairOf: (a: string, b: string) => (() => void) | null;
 }
 
 const CardDrawerContext = createContext<CardDrawerApi>({
   open: () => {}, close: () => {}, openSuggestion: () => {}, live: false, known: new Set(), tokens: new Map(),
   added: new Set(), isAdded: () => false, setExtras: () => {},
-  setRailOn: () => {}, railHost: null, setRailBack: () => {},
+  setRailOn: () => {}, railHost: null, setRailBack: () => {}, pairOf: () => null,
 });
 
 /** From 1600px (`100rem`), where the page has the width to keep a rail beside it; the same
@@ -211,12 +218,28 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   const added = useMemo<ReadonlySet<string>>(() => new Set((addedNames ?? []).map(physicalName)), [graph]);
   const isAdded = useCallback((name: string) => added.has(physicalName(name)), [added, physicalName]);
 
+  const pairOf = useCallback((a: string, b: string) => {
+    const show = extras?.pair;
+    if (!show) return null;
+    const x = byName.get(a) ?? a;
+    const links = extras.model.partners.get(x);
+    // A CARD THAT WORKS WITH ANOTHER THROUGH ITS TOKEN pairs with the token (measured on the Rani
+    // deck: five of the six rows in "Cards that carry it" name The Rani, and every one of their
+    // sentences is "When Mark of the Rani enters…"); the map draws the token, not its maker.
+    const direct = byName.get(b) ?? b;
+    const y = links?.has(direct) ? direct
+      : [...(links?.keys() ?? [])].find((id) => extras.model.cards.get(id)?.madeBy?.includes(b));
+    if (!y || x === y) return null;
+    // The drawer closes: the pair opens where the map is, and on a phone the drawer covers it.
+    return () => { setOpenId(null); show(x, y); };
+  }, [extras, byName, setOpenId]);
+
   const api = useMemo<CardDrawerApi>(
     () => ({
       open, close: () => setOpenId(null), openSuggestion, live: true, known: new Set(byName.keys()), tokens, added, isAdded, setExtras,
-      setRailOn, railHost: railShown ? railEl : null, setRailBack,
+      setRailOn, railHost: railShown ? railEl : null, setRailBack, pairOf,
     }),
-    [open, openSuggestion, setOpenId, byName, tokens, added, isAdded, railShown, railEl],
+    [open, openSuggestion, setOpenId, byName, tokens, added, isAdded, railShown, railEl, pairOf],
   );
 
   // Escape closes it. The panel has a close button of its own, but this drawer floats over a
@@ -320,6 +343,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
                 onClose={() => setOpenId(null)}
                 closeLabel={railShown && backTo ? backTo : undefined}
                 nameOf={nameOf}
+                pairOf={extras?.pair ? (partner) => pairOf(node.id, partner) : undefined}
                 extra={extras?.model.cards.get(node.id) ? (
                   // THE WALK, ONE TAP AWAY (report cohesion audit, 2026-09-27). The small map of the
                   // card's links that sat above it went (owner, same day: "not very useful … for fresh

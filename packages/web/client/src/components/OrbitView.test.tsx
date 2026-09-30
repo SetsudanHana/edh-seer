@@ -277,3 +277,39 @@ test("tapping a card opens it in the drawer; tapping empty space clears the pick
   await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
   expect(node()).toHaveAttribute("aria-pressed", "false");
 });
+
+/** PAIR-VIEW MOCKUPS F1/F2 (owner, 2026-09-30): a pairing asked for elsewhere in the report opens
+ *  on the map, both cards' faces side by side, with the way back to where it was asked. */
+test("a pair asked from outside the map opens with both faces, how common it is, and the way back", async () => {
+  const { report, graph } = engineDeck();
+  const run = vi.fn();
+  render(<OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} ask={{ partner: "Cleric 1", back: { label: "Back to game plan", run } }} />);
+  expect(await screen.findByRole("heading", { name: "Payoff A and Cleric 1" })).toBeInTheDocument();
+  expect(screen.getByText("Read both cards")).toBeInTheDocument();
+  // A generic link says it is one of many, and shows them.
+  expect(screen.getByText(/One of \d+ cards that work with Payoff A this way/)).toBeInTheDocument();
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: "← Back to game plan" }));
+  expect(run).toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Show them" }));
+  expect(screen.getByText("While you control one of these, Payoff A counts it")).toBeInTheDocument();
+});
+
+test("a pair asked with a new middle opens on that middle, not reset by the move", () => {
+  const { report, graph } = engineDeck();
+  const o = buildOrbit(buildEngineModel(report, graph), "Payoff B")!;
+  const partner = o.sectors[0]!.partners[0]!.card;
+  const { rerender } = render(<OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} />);
+  rerender(<OrbitView report={report} graph={graph} focusId="Payoff B" onFocus={() => {}} ask={{ partner: partner.id }} />);
+  expect(screen.getByRole("heading", { name: `Payoff B and ${partner.name}` })).toBeInTheDocument();
+  // Asked from the map itself, there is nowhere to go back to.
+  expect(screen.queryByRole("button", { name: /^← Back to/ })).toBeNull();
+});
+
+test("two pieces of one infinite combo say so, and the way to the combo", () => {
+  const { report, graph } = engineDeck();
+  const withCombo = { ...report, combos: [{ cards: ["Payoff A", "Cleric 1"], result: "Infinite life" }] } as typeof report;
+  render(<OrbitView report={withCombo} graph={graph} focusId="Payoff A" onFocus={() => {}} ask={{ partner: "Cleric 1" }} />);
+  expect(screen.getByText(/Together they go infinite/)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "See the combo" })).toBeInTheDocument();
+});

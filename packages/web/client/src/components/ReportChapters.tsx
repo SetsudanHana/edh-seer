@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AnalyzeResponse } from "../types.js";
 import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
@@ -21,7 +21,7 @@ import { ManaTimeline } from "./ManaTimeline.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { PlanThemes } from "./PlanThemes.js";
-import { OrbitView } from "./OrbitView.js";
+import { OrbitView, type PairAsk } from "./OrbitView.js";
 import { RoleShelves, roleShelves } from "./RoleShelves.js";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { chooseCuts, swapCandidates } from "../lib/cut-choice.js";
@@ -166,6 +166,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   }, [themes]);
   const unmetDemand = (report.deckMath?.demand ?? []).some((d) => d.available !== null && d.suppliers === 0);
   const [centre, setCentre] = useState<string | null>(null);
+  // THE PAIR ASKED FOR FROM ELSEWHERE IN THE REPORT (pair-view mockups F1/F2, owner 2026-09-30): a
+  // new object per ask, so asking for the same pair again opens it again.
+  const [pairAsk, setPairAsk] = useState<PairAsk | undefined>(undefined);
   // A NEW REPORT STARTS FROM ITS COMMANDER (owner, 2026-09-27: "with Rani deck I managed somehow to
   // get Essence Flux as my starting point"). This component stays mounted from one deck to the next,
   // so the card walked to on the last deck stayed the middle whenever the new deck also played it.
@@ -175,6 +178,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   if (shownReport !== report) {
     setShownReport(report);
     setCentre(null);
+    setPairAsk(undefined);
     setWalkGen((g) => g + 1);
   }
   /** ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27). The card drawer draws the card's own
@@ -182,6 +186,8 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
    *  where a full-screen second map used to open over the report. */
   const drawer = useCardDrawer();
   const { setExtras, setRailOn, railHost, setRailBack } = drawer;
+  const chapterNow = useRef(current);
+  chapterNow.current = current;
   // THE RAIL IS THE REPORT'S (drawer option B, owner 2026-09-29): on while the chapters are up, and
   // the card that covers it goes back to the chapter the reader is in.
   useEffect(() => { setRailOn(true); return () => setRailOn(false); }, [setRailOn]);
@@ -228,6 +234,26 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         ...(cutSet.has(name) ? ["on the cut list"] : []),
       ],
       groupName: (key, name) => key === main?.tag ? main.name : key === main?.second?.tag ? main.second.name : name,
+      // THE PAIR OPENS ON THE MAP, AND SAYS WHERE IT CAME FROM (mockup F1: "Back to game plan"). The
+      // way back is the control that asked, taken now, before the page scrolls away from it.
+      pair: (a, b) => {
+        const from = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
+        const chapter = chapterNow.current ?? "read";
+        setCentre(a);
+        setPairAsk({
+          partner: b,
+          back: from && chapter !== "read" ? {
+            label: `Back to ${CHAPTERS.find((c) => c.id === chapter)!.title.toLowerCase()}`,
+            // A control inside the card drawer is gone once the drawer closes: then the chapter.
+            run: () => {
+              const to = from.isConnected ? from : document.getElementById(chapter);
+              to?.scrollIntoView?.({ behavior: "smooth", block: from.isConnected ? "center" : "start" });
+              if (from.isConnected) from.focus({ preventScroll: true });
+            },
+          } : undefined,
+        });
+        document.getElementById("commander-map")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      },
     });
     return () => setExtras(null);
   }, [themes, setExtras, report, cuts]);
@@ -311,7 +337,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             <section aria-labelledby="commander-map-title" className="flex flex-col">
               <h3 id="commander-map-title" className="sr-only">What your commander works with</h3>
               <div id="commander-map" className="scroll-mt-40" />
-              <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre}
+              <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre} ask={pairAsk}
                 lead={talkFirst ? (
                   <div className="flex flex-col gap-4">
                     <RecognitionPanel data={data} part="identity" />

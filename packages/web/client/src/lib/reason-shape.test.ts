@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { distinctiveReason, reasonShapes, reasonTemplate } from "./reason-shape.js";
+import { distinctivePair, distinctiveReason, reasonShapes, reasonTemplate } from "./reason-shape.js";
 import type { DeckReport } from "../types.js";
 
 type Card = DeckReport["cards"][number];
@@ -58,6 +58,8 @@ test("a row with something else to say keeps that sentence", () => {
   const names = new Set(cards.map((c) => c.name));
   const { shared } = reasonShapes(cards);
   expect(distinctiveReason(mixed, shared, names)).toBe("Both returns a creature from your graveyard");
+  // The same sentence keeps the card it pairs with, so the row can open the pair on the map.
+  expect(distinctivePair(mixed, shared, names)).toEqual({ text: "Both returns a creature from your graveyard", partner: "Partner" });
 });
 
 // A TABLE CAN BE A STUCK RECORD IN MORE THAN ONE VOICE. The review deck's second-commonest sentence

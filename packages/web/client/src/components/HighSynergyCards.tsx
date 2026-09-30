@@ -1,7 +1,7 @@
 import type { DeckReport } from "../types.js";
-import { CardName, ReasonText } from "./card-drawer.js";
+import { CardName, ReasonText, useCardDrawer } from "./card-drawer.js";
 import { CardMenuButton } from "./card-menu.js";
-import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
+import { distinctivePair, reasonShapes } from "../lib/reason-shape.js";
 import { CATEGORY_LABELS } from "./CardList.js";
 
 const ANCHOR_SHARE = 0.75; // tunable: a card is an "anchor" if its authority ≥ this share of the deck max.
@@ -10,6 +10,7 @@ const ANCHOR_GLOSS = "key card: most of this deck's synergy runs through it";
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
+  const { pairOf } = useCardDrawer();
   const ranked = cards
     .filter((c) => (c.synergyRating ?? 0) > 0)
     .slice()
@@ -38,7 +39,9 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
         *  more of them per row rather than to stretch any of them. */}
       <ul className="flex flex-col xl:grid xl:grid-cols-2 xl:gap-x-8 [&>*]:min-w-0">
         {ranked.map((c) => {
-          const topReason = distinctiveReason(c, shapes.shared, names);
+          const top = distinctivePair(c, shapes.shared, names);
+          const topReason = top?.text;
+          const showPair = top ? pairOf(c.name, top.partner) : null;
           const isAnchor = maxAuthority > 0 && (c.authority ?? 0) >= ANCHOR_SHARE * maxAuthority;
           return (
             <li key={c.name} className="flex items-center gap-3 py-1.5 border-b border-(--separator)">
@@ -89,6 +92,14 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                   *  the same unverifiable line, and the row already earns two lines. */}
                 {topReason ? (
                   <ReasonText text={topReason} className="block text-xs text-(--muted)" />
+                ) : null}
+                {/* THE PAIR, ON THE MAP (pair-view mockups F1/F2, owner 2026-09-30: "avoid the text
+                  *  flood"): both cards' faces side by side, the partner lit among the cards that
+                  *  do the same. A button of its own, as the sentence's names are buttons already. */}
+                {showPair ? (
+                  <button type="button" onClick={showPair} className="min-h-9 -my-1.5 text-xs text-(--accent) hover:underline">
+                    See the two on the map
+                  </button>
                 ) : null}
                 {/* AND THE SENTENCE IS ONE OF MANY, which is what made three identical lines with
                   *  three different numbers read as a contradiction. Measured on the example deck:

@@ -20,8 +20,11 @@ type Edge = CardGraph["edges"][number];
  *  oracle-text-derived sentence that explains it. That is a real limit, recorded on the ROADMAP,
  *  not papered over with an invented id here. */
 export function CardInspector({
-  node, edges, flow, textOf, nameOf, onClose, phone = "sheet", extra, closeLabel, docked = false,
+  node, edges, flow, textOf, nameOf, onClose, phone = "sheet", extra, closeLabel, docked = false, pairOf,
 }: {
+  /** What opens this card and a partner as a pair on the commander's map, or null when that pair
+   *  is not on it (see `pairOf` in `card-drawer.tsx`). */
+  pairOf?: (partner: string) => (() => void) | null;
   /** Covering the report rail: the rail's own shape (flush, full height, its padding), rather than
    *  a panel inset in its container. See `RAIL_BOX` in `card-drawer.tsx`. */
   docked?: boolean;
@@ -182,6 +185,16 @@ export function CardInspector({
               {e.reasonTexts.map((text, i) => (
                 <p key={i} className="text-(--muted) text-xs">{text}</p>
               ))}
+              {/* THE PAIR ON THE MAP (pair-view mockups F1/F2, owner 2026-09-30): both cards' faces
+                *  side by side, and the partner lit among the cards that do the same. */}
+              {(() => {
+                const show = pairOf?.(partner);
+                return show ? (
+                  <button type="button" onClick={show} className="min-h-9 -my-1 self-start text-xs text-(--accent) hover:underline">
+                    See the two on the map
+                  </button>
+                ) : null;
+              })()}
               {/* THE EVIDENCE, ONE CLICK FROM THE CLAIM, AND COLLAPSED BY DEFAULT. Sixty-two rows of
                 *  oracle text would bury the relationships this panel exists to list -- and the
                 *  reader who wants to CHECK one claim wants one card's text, not every card's. The
