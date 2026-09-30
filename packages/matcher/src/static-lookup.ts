@@ -306,6 +306,13 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
     })());
   }
 
+  /** EVERY COMMANDER-LEGAL LAND by name and identity (#767), or empty on a build from before
+   *  `lands.json` existed, which the caller reads as "fall back to the name index's lands". */
+  async lands(): Promise<{ name: string; identity: string[] }[]> {
+    const res = await this.fetchCached("/lands.json");
+    return res.ok ? (await res.json() as { name: string; identity: string[] }[]) : [];
+  }
+
   async nameIndex(): Promise<NameIndexEntry[]> {
     const body = await this.nameIndexBody();
     if (!body) return [];

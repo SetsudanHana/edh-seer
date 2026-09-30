@@ -151,7 +151,7 @@ export function killsOwnCreatures(tags: CardTags | null | undefined, oracle = ""
 }
 
 /** The name index, decoded into what `suggest.ts` ranks on. */
-async function decodeIndex(lookup: StaticLookup): Promise<IndexCard[]> {
+export async function decodeIndex(lookup: StaticLookup): Promise<IndexCard[]> {
   const [rows, vocab] = await Promise.all([lookup.nameIndex(), lookup.nameIndexVocabulary()]);
   const land = vocab.types.indexOf("land");
   return rows.map((row, pos) => ({
@@ -165,7 +165,7 @@ async function decodeIndex(lookup: StaticLookup): Promise<IndexCard[]> {
 }
 
 /** The engine's view of a card, built the way `build-static.ts` builds the partner corpus. */
-function deckCards(lookup: StaticLookup): (name: string) => Promise<DeckCard | null> {
+export function deckCards(lookup: StaticLookup): (name: string) => Promise<DeckCard | null> {
   const cache = new Map<string, Promise<DeckCard | null>>();
   return (name) => {
     let p = cache.get(name);

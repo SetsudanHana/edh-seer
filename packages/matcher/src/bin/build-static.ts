@@ -240,6 +240,16 @@ writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify({
   pairTags: partners.pairTagNames,
   cards: partners.index,
 }));
+// EVERY LAND A COMMANDER DECK CAN PLAY (#767), by name and colour identity. The name index holds only
+// substantive cards, and a plain dual -- Godless Shrine, an untapped check land -- has no emit and no
+// trigger, so it is not there; the precon upgrade package reads this to find a better land. Front
+// faces only: a spell that transforms into a land is not played as one.
+const lands = [...new Map(cards
+  .filter((c) => /\bland\b/i.test((c.typeLine ?? "").split("//")[0]!) && c.legalities?.commander !== "not_legal" && c.legalities?.commander !== "banned")
+  .map((c) => [c.name, { name: c.name, identity: c.colorIdentity ?? [] }] as const)).values()]
+  .sort((a, b) => a.name.localeCompare(b.name));
+writeFileSync(join(stagingDir, "lands.json"), JSON.stringify(lands));
+console.log(`lands: ${lands.length}`);
 // THE EVENT INDEX (roadmap AJ3): who causes each event and who asks for it, as positions in the
 // name index the page has already fetched. Sharded like the card and partner artifacts, so a
 // reader pays for the events they picked and not for the 1,187 they did not.
@@ -274,7 +284,7 @@ for (const f of readdirSync(cardsDir).sort()) {
   hash.update(f);
   hash.update(readFileSync(join(cardsDir, f)));
 }
-for (const f of ["token-tags.json", "token-art.json", "event-frequency.json", "name-index.json"]) {
+for (const f of ["token-tags.json", "token-art.json", "event-frequency.json", "name-index.json", "lands.json"]) {
   hash.update(f);
   hash.update(readFileSync(join(stagingDir, f)));
 }
