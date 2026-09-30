@@ -78,8 +78,12 @@ function Movement({
  *  `scroll-mt` is `--report-header-h`, measured by `ReportHeader` — the anchor is what an in-page
  *  link lands on, and without it every chapter title parks UNDER the header, which is the same
  *  defect class as R2's hardcoded `top-[33px]` one component over. */
-function Chapter({ id, title, children }: {
-  id: ChapterId; title: string; children: React.ReactNode;
+function Chapter({ id, title, aside, children }: {
+  id: ChapterId; title: string;
+  /** Beside the title, in its row: what the chapter answers, when the page is wide enough to say
+   *  it up there rather than under a full-width picture. */
+  aside?: React.ReactNode;
+  children: React.ReactNode;
 }) {
   return (
     <section
@@ -91,9 +95,12 @@ function Chapter({ id, title, children }: {
       // tell which chapter they were in. Both are measured, neither is a constant.
       className="flex flex-col gap-8 scroll-mt-[calc(var(--report-header-h,0px)+var(--report-rail-h,0px)+1rem)]"
     >
-      <h2 id={`${id}-title`} className="text-2xl sm:text-3xl font-bold tracking-[-0.02em]">
-        {title}
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-3">
+        <h2 id={`${id}-title`} className="text-2xl sm:text-3xl font-bold tracking-[-0.02em]">
+          {title}
+        </h2>
+        {aside}
+      </div>
       {children}
     </section>
   );
@@ -313,6 +320,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   // and the line for the table started at y=1086 of a 1080 screen and 1424 of a 1440 one -- the first
   // screen was the map alone. Beside it, under the theme, it is on the first screen at every width.
   const talkInRail = !!railHost && !!talk && !!(themes && commanderId);
+  const verdictAbove = !!railHost && !!(themes && commanderId);
   return (
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
     // into that row (2026-09-25) the first heading sat flush against the row's rule.
@@ -326,7 +334,11 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
       {/* `min-w-0` so a wide child (the theme matrix, the cards table) shrinks inside the flex row
         *  instead of widening it — the narrow-width defence this repo has already paid for twice. */}
       <div className="flex flex-col gap-16 lg:gap-20 min-w-0 flex-1 pt-6 lg:pt-0">
-        <Chapter id="read" title={title("read")}>
+        {/* THE VERDICT IN THE HEADING ROW WHERE THE MAP TAKES THE ROW BELOW IT (designer review
+          *  2026-09-30, #770): with the rail up the 16:9 map fills the first screen, and "A well-built
+          *  deck..." and "See the suggestions" sat under it, below the fold at 1920 and 2560, while
+          *  the row beside the chapter's title stood empty. */}
+        <Chapter id="read" title={title("read")} aside={verdictAbove ? <RecognitionPanel data={data} part="verdict" /> : undefined}>
           {/* A deck the format would not let you play is not a deck this report can diagnose. It
             *  renders nothing when the deck is clean, which is every one of the 71 calibration
             *  decks. */}
@@ -359,7 +371,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  left two-thirds of the row empty. On a phone and a laptop they still stack. */}
           <div className={`grid gap-6 items-start ${talk && !talkFirst && !talkInRail ? "lg:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]" : ""}`}>
             {talk && !talkFirst && !talkInRail ? <TableTalkLine talk={talk} /> : null}
-            <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" />
+            <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" verdictAbove={verdictAbove} />
           </div>
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one

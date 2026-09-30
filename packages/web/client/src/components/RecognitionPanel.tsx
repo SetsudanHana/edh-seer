@@ -18,7 +18,7 @@ import { findings } from "../lib/findings.js";
  *
  *  NO SCORE AND NO TARGET LIVES HERE. A tool that grades a deck before showing it understood it
  *  has not earned the criticism. Everything on this panel is a description. */
-export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inline }: {
+export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inline, verdictAbove = false }: {
   data: AnalyzeResponse;
   /** THE THEME ON ONE LINE WITH ITS LABEL, for the report rail, where the chapter's own name heads
    *  the column: a "main theme" kicker stacked under that heading is the two-label stack the
@@ -27,7 +27,10 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inli
   /** THE FIRST SCREEN IS THE MOCKUP'S (owner, 2026-09-27: "the top of the report is different from
    *  the screens you mocked up"): the theme sits beside the commander's map ("identity"), and the
    *  verdict, the assumptions and the card counts follow the map ("rest"). Both when omitted. */
-  part?: "identity" | "rest";
+  part?: "identity" | "rest" | "verdict";
+  /** THE VERDICT RIDES IN THE CHAPTER'S HEADING ROW ("verdict"), so "rest" leaves it out (designer
+   *  review 2026-09-30, #770: under a 16:9 map it sat below the fold at 1920 and 2560). */
+  verdictAbove?: boolean;
   /** The game-state controls (speed, the monarch…), folded here rather than above everything:
    *  "the initiative" was the first thing a beginner met, before any answer (appeal review
    *  2026-09-26). */
@@ -140,6 +143,19 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inli
         </div>
   );
   if (part === "identity") return identity;
+  if (part === "verdict") {
+    return said || suggestions > 0 ? (
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        {said ? <p data-testid="recognition-verdict" className="max-w-[60ch] text-base sm:text-lg">{said}</p> : null}
+        {suggestions > 0 ? (
+          <button type="button" onClick={toSuggestions}
+            className="min-h-11 rounded-(--radius) border border-(--accent) px-4 text-sm font-medium text-(--accent) hover:bg-(--accent) hover:text-(--background)">
+            See the {suggestions === 1 ? "suggestion" : `${suggestions} suggestions`} &darr;
+          </button>
+        ) : null}
+      </div>
+    ) : null;
+  }
   return (
     <section className="flex flex-col gap-4">
       {/* The chapter above is titled "Deck at a glance"; an h2 reading "What this deck is" under
@@ -155,8 +171,8 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inli
         <div className="flex min-w-0 flex-col gap-3">
       {part !== "rest" ? identity : null}
             {/* THE ANSWER TO "IS MY DECK GOOD?", in words that say which score is which. */}
-          {said ? <p data-testid="recognition-verdict" className="max-w-[60ch] text-base sm:text-lg">{said}</p> : null}
-          {suggestions > 0 ? (
+          {said && !verdictAbove ? <p data-testid="recognition-verdict" className="max-w-[60ch] text-base sm:text-lg">{said}</p> : null}
+          {suggestions > 0 && !verdictAbove ? (
             <p>
               <button type="button" onClick={toSuggestions}
                 className="min-h-11 rounded-(--radius) border border-(--accent) px-4 text-sm font-medium text-(--accent) hover:bg-(--accent) hover:text-(--background)">
