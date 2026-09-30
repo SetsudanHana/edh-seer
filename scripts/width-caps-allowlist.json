@@ -6,12 +6,6 @@
         "count": 1,
         "why": "#calibrate is a dev-only judging tool, not shipped; can stay if the owner agrees"
       }
-    },
-    "packages/web/client/src/index.css": {
-      "max-width: 64rem": {
-        "count": 3,
-        "why": ".intro, .site-footer and .site-header bands at 1024px (header and footer uncapped at 80rem), fix under #770"
-      }
     }
   }
 }
