@@ -600,10 +600,12 @@ export function poolPartnersFor(
  *  cards really are equally specific, and the only orderings that would separate them are quality
  *  or popularity. Twenty rows that all say "triggers when a creature enters" are ONE fact printed
  *  twenty times; a few of them plus a count says the same thing and leaves room for the card's
- *  other interactions. `pool` carries the count. Three until 2026-09-16, eight since: the tie is
- *  broken by partner count (`degreeOf`), so the eight are the eight best connected, and a page that
- *  shows them reads as the corpus's own top cards rather than a random sample. */
-export const PER_EVENT_CAP = 8;
+ *  other interactions. `pool` carries the count. Three until 2026-09-16, eight until 2026-09-30, ten
+ *  since (owner, #770: at 3840 a lone group of eight filled 8 of 14 tile columns, "10 should be
+ *  sufficient, and then you get pointed to the search"): the tie is broken by partner count
+ *  (`degreeOf`), so the ten are the ten best connected, and a page that shows them reads as the
+ *  corpus's own top cards rather than a random sample. */
+export const PER_EVENT_CAP = 10;
 
 /** HOW CONNECTED A CARD IS, for tie-breaking only (see `specificity`): its candidate partner count
  *  from the map `buildPartnerArtifact` hands in, the same population the pages' "N cards can cause
