@@ -23,7 +23,7 @@ import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
 import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
-import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, type ReasonOptions } from "./edges.js";
+import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { GETS_AN_EMBLEM } from "@edh-seer/tagger/emblem";
 import { flipPerspective } from "./perspective.js";
@@ -277,7 +277,8 @@ export function analyzeDeckStructured(
     .filter((a) => a.trigger?.verbs.includes("enters") && a.trigger.subject.self !== true
       && (Array.isArray(a.trigger.subject.subtype) ? a.trigger.subject.subtype.length > 0 : a.trigger.subject.subtype !== undefined))
     .map((a) => ({ name: dc.card.name, subject: a.trigger!.subject })));
-  const reasonOpts: ReasonOptions = { landTypes: deckLandTypes(resolved), enterWatchers };
+  // The fifth: whether an own-board static -N/-N kills anything worth killing (#805).
+  const reasonOpts: ReasonOptions = { landTypes: deckLandTypes(resolved), enterWatchers, revenantToughness: revenantToughness(resolved) };
   // THE COMPANION, READ LIKE A DECK CARD FOR ITS RELATIONS AND COUNTED NOWHERE. A companion that is
   // also in the deck is a 903.11a violation legality reports; here it is simply not added twice.
   const deckNameSet = new Set(resolved.map((dc) => dc.card.name));
