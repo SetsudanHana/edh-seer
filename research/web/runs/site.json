@@ -1,0 +1,69 @@
+{
+  "surface": "site",
+  "baseUrl": "http://localhost:5173",
+  "keyScreens": [
+    {
+      "id": "landing",
+      "path": "/"
+    },
+    {
+      "id": "precon",
+      "path": "/precons"
+    }
+  ],
+  "measure": [
+    "h1",
+    "h2",
+    "p.eyebrow",
+    ".chip",
+    ".btn-primary",
+    ".btn-secondary",
+    "[data-testid='bar-label']",
+    "[data-testid='bar-readout']",
+    "[data-testid='paint-legend-row']",
+    "[data-testid='graph-search-count']",
+    "svg circle",
+    "button[data-chapter]"
+  ],
+  "steps": [
+    {
+      "id": "arrive",
+      "path": "/",
+      "goal": "work out what this site does and whether it is going to be any use to me"
+    },
+    {
+      "id": "card-search",
+      "path": "/cards",
+      "goal": "look up one card I am thinking about putting in"
+    },
+    {
+      "id": "card",
+      "path": "/cards/sol-ring",
+      "goal": "find out what this card would actually do for a deck"
+    },
+    {
+      "id": "commanders",
+      "path": "/commanders",
+      "goal": "find a commander to build around"
+    },
+    {
+      "id": "commander",
+      "path": "/commanders/sarevok-deathbringer",
+      "goal": "work out what sort of deck this commander wants me to build"
+    },
+    {
+      "id": "precons",
+      "path": "/precons",
+      "goal": "find the precon I own"
+    },
+    {
+      "id": "precon",
+      "goal": "see how my precon works and what to upgrade first",
+      "acts": [
+        {
+          "click": "main a[href^='/precons/']"
+        }
+      ]
+    }
+  ]
+}

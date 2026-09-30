@@ -1,0 +1,23 @@
+{
+  "note": "Sections allowed under the used-width floor (EMPTY_BAND in ui-review-capture.ts, 60% of the viewport, #770). NOT a list of layouts that are fine: each entry is a page with too little to show to fill a wide row, named with the run (surface) and step it was met on. The capture fails on a band no entry names, and on an entry for a step it ran that matched nothing -- remove an entry in the PR that fills its page.",
+  "entries": [
+    {
+      "surface": "site",
+      "step": "card",
+      "section": "^(What it does in a deck|How we read this card|Sol Ring)$",
+      "why": "Sol Ring's page: a ramp card, counted rather than paired, so it has its image, one paragraph and one read line and no partner list. 54% at 1920, 42% at 3840. Nothing on it is capped."
+    },
+    {
+      "surface": "site",
+      "step": "commander",
+      "section": "^event-",
+      "why": "Sarevok has one event group of eight tiles; a tile keeps its size by design (PartnerList, #770), so eight fill 8 of 14 columns at 3840 (51%). The rest of the group is a link to search."
+    },
+    {
+      "surface": "site",
+      "step": "precons",
+      "section": "· \\d{4}$",
+      "why": "The precon index flows its sets in columns; the last set in the longest column stands alone once the others have ended (31% at 2560, 47% at 1920). Every other row fills the width."
+    }
+  ]
+}
