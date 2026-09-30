@@ -269,12 +269,19 @@ body {
   min-block-size: 100svh;
 }
 
-h1,
-h2,
-h3 {
-  font-family: var(--font-sans);
-  font-weight: 700;
-  letter-spacing: -0.01em;
+/* IN THE BASE LAYER, SO A LABEL CLASS ON A HEADING WINS (designer review 2026-09-30, #770). Outside
+   any layer this rule beat `.eyebrow` (components layer) whatever the specificity, so every heading
+   that is also a label -- "Most connected cards", "Say this at the table", "Your first 5 turns",
+   "How you win", "Possible cuts" -- rendered in bold sans capitals instead of the mono label DESIGN.md
+   gives labels, beside labels that were not headings and did. */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
 }
 
 /* EVERY DISCLOSURE IN THE APP IS 44px TALL. It was 24 -- WCAG 2.2 SC 2.5.8's floor, cleared by a
