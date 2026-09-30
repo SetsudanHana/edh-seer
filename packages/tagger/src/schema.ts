@@ -836,6 +836,27 @@ export interface EventCount {
   sameAsImproved?: true;
 }
 
+/** One object an activation cost consumes, with how many (#806). See `derive/payment.ts`. */
+export type CostObject = { amount: string; subject: SubjectFilter | { self: true; zone?: string } };
+/** An activation cost, read -- `Ability.payment`. */
+export interface Payment {
+  /** The mana symbols, in printed order: "{1}{B}", "{X}{X}". */
+  mana?: string;
+  /** {T} and {Q}. */
+  tap?: true;
+  untap?: true;
+  /** A planeswalker's loyalty cost: "+1", "-2", "0", "-X". */
+  loyalty?: string;
+  life?: string;
+  sacrifice?: CostObject[];
+  discard?: CostObject[];
+  exile?: CostObject[];
+  tapOther?: CostObject[];
+  returnToHand?: CostObject[];
+  removeCounter?: (CostObject & { counter?: string })[];
+  other?: string[];
+}
+
 export interface Ability {
   kind: AbilityKind;
   /** WHICH FACE PRINTS THIS ABILITY — absent for the front face and for every single-face card,
@@ -908,6 +929,10 @@ export interface Ability {
    *  The distinction is load-bearing — it is the difference between a free sacrifice outlet and a
    *  static ability. */
   cost?: string;
+  /** `cost`, read (#806, DERIVE 207): mana, {T}/{Q}, loyalty, life, and what is sacrificed,
+   *  discarded, exiled, tapped or has counters removed, each with a count. A part it cannot read is
+   *  kept verbatim in `other`, never dropped. See `derive/payment.ts`. */
+  payment?: Payment;
   /** WHAT CREATED THIS DELAYED TRIGGER ("when you next cast ... this turn", CR 603.7):
    *  "chapter" (Summon: Fenrir's II), "spell" (Doublecast), or the activation cost that makes it --
    *  Yuna, Grand Summoner's "{T}". Present only on such a trigger (`delayedTriggerRepeats`). It
