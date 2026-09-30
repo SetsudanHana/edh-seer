@@ -5885,3 +5885,25 @@ describe("a play-from-top permission links to the cards of its class", () => {
     expect(links(pft("Bolas's Citadel", {}), ring)).toEqual([]);
   });
 });
+
+/** EXTRA-LOYALTY LINKS TO YOUR PLANESWALKERS (owner ruling 2026-09-30, after #859): Oath of Teferi and
+ *  The Chain Veil let each planeswalker you control activate again. A self one (Urza, Planeswalker)
+ *  improves only itself and links nothing. */
+describe("an extra loyalty activation links to each planeswalker you control", () => {
+  const extra = (name: string, subject: Partial<SubjectFilter>, kind: "static" | "activated" = "static") => base(name, [
+    { kind, effect: { kind: "extra-loyalty", subject: { ...subject, control: "you", token: null } }, ...(kind === "activated" ? { cost: "{4}, {T}" } : {}) },
+  ] as CardTags["abilities"]);
+  const pw = base("Teferi, Temporal Archmage", [], ["teferi"]);
+  pw.tags.characteristics.types = ["legendary", "planeswalker"];
+  const bear = base("Grizzly Bears", [], ["bear"]);
+  const links = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) =>
+    directedReasons(p, c, H).filter((r) => r.tag.startsWith("extra-loyalty:")).map((r) => r.text);
+  test("yours: each planeswalker, and nothing else", () => {
+    expect(links(extra("The Chain Veil", { type: "planeswalker", scope: "all" }, "activated"), pw))
+      .toEqual(["The Chain Veil lets Teferi, Temporal Archmage activate its loyalty abilities again"]);
+    expect(links(extra("Oath of Teferi", { type: "planeswalker", scope: "all" }), bear)).toEqual([]);
+  });
+  test("its own: nothing", () => {
+    expect(links(extra("Urza, Planeswalker", { self: true }), pw)).toEqual([]);
+  });
+});

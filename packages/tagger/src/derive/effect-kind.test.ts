@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { actionEffectKind, bounceOrigin, extraPhaseName, playsFromTop } from "./effect-kind.js";
+import { actionEffectKind, bounceOrigin, extraLoyalty, extraPhaseName, playsFromTop } from "./effect-kind.js";
 import { deriveAbilities } from "./derive.js";
 import { EFFECT_KINDS } from "../schema.js";
 
@@ -911,6 +911,9 @@ test("an extra loyalty activation is extra-loyalty, for your planeswalkers or fo
   const emperor = deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "none" }] }], "The Wandering Emperor",
     { 2: "As long as The Wandering Emperor entered this turn, you may activate her loyalty abilities any time you could cast an instant." }).abilities;
   expect(emperor[0]?.effect).toMatchObject({ kind: "extra-loyalty", subject: { self: true } });
+  // An emblem grant quoting the permission is the emblem's, not the card's (Teferi, Temporal Archmage).
+  expect(extraLoyalty("You get an emblem with \"You may activate loyalty abilities of planeswalkers you control on any player's turn any time you could cast an instant.\"")).toBeUndefined();
+  expect(extraLoyalty("You may activate loyalty abilities of planeswalkers you control on any player's turn any time you could cast an instant.")).toBe("yours");
   // A cost INCREASE on loyalty abilities is not one (Carth the Lion).
   expect(deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "cost-modify" }] }], "Carth the Lion",
     { 2: "Planeswalkers' loyalty abilities you activate cost an additional [+1] to activate." }).abilities.some((a) => a.effect.kind === "extra-loyalty")).toBe(false);
