@@ -1492,23 +1492,27 @@ function ownBoardKill(a: Ability): number | undefined {
 }
 
 /** The card as the pair channels read it: every own-board -N/-N death this deck does not support
- *  taken off its emits, and a BOUNCE read as the blank effect it derived as before #802. A bounce
+ *  taken off its emits, and a FACT kind (a bounce, #802) read as the blank effect it derived before. A bounce
  *  makes a card castable again and the recast is paid in full (owner, 2026-09-30), so its kind is
  *  a fact for loop economics and claims nothing here; relabelling it moved 12 reasons (Reanimate
  *  "re-firing" Acererak's return-to-hand, Arid Archway's sentence losing its surveil). The same
  *  object back when nothing changes, so the per-tags caches downstream still hit. */
+/** Kinds that record a fact for loop economics and claim nothing pairwise: `bounce` (#802) and
+ *  `play-from-top` (#856). Each derived blank before its kind existed, so reading it blank keeps
+ *  every edge where it was. */
+const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top"]);
 const forPairs = new WeakMap<CardTags, Map<number | undefined, CardTags>>();
 function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
   const tags = dc.tags;
   if (!tags) return dc;
   const floor = opts.revenantToughness;
   const dead = (a: Ability) => { const n = ownBoardKill(a); return n !== undefined && !(floor !== undefined && n >= floor); };
-  if (!tags.abilities.some((a) => dead(a) || a.effect.kind === "bounce")) return dc;
+  if (!tags.abilities.some((a) => dead(a) || FACT_KINDS.has(a.effect.kind))) return dc;
   const byFloor = forPairs.get(tags) ?? forPairs.set(tags, new Map()).get(tags)!;
   let out = byFloor.get(floor);
   if (!out) {
     out = { ...tags, abilities: tags.abilities.map((a) => {
-      const b = a.effect.kind === "bounce" ? { ...a, effect: { kind: "" as const } } : a;
+      const b = FACT_KINDS.has(a.effect.kind) ? { ...a, effect: { kind: "" as const } } : a;
       return dead(b) ? { ...b, emits: (b.emits ?? []).filter((e) => e.verb !== "dies") } : b;
     }) };
     byFloor.set(floor, out);

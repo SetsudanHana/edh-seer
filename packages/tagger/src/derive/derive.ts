@@ -8,7 +8,7 @@
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
-import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName } from "./effect-kind.js";
+import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName, playsFromTop } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
@@ -249,7 +249,10 @@ import { emblemRecipient } from "../emblem.js";
 // (Hullbreaker Horror's bounces fire on every spell you cast).
 // 207: #806 -- an activation cost is read into `payment` beside the raw `cost` (mana, {T}/{Q},
 // loyalty, life, sacrifice, discard, exile, tapping another, counters; an unread part kept verbatim).
-export const DERIVE_VERSION = 207;
+// 208: #856 -- a static permission to play or cast from the top of your library is `play-from-top`
+// (Mystic Forge, Crystal Skull, Bolas's Citadel), and a card putting itself back on top is a self
+// `top-set` (Sensei's Divining Top).
+export const DERIVE_VERSION = 208;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1007,6 +1010,10 @@ function effectSubject(
     subject.scope ??= "all";
     const cmp = STAT_VS_STAT.exec(object);
     if (cmp) subject.stats = [...(subject.stats ?? []), { metric: cmp[1]!.toLowerCase() as "power" | "toughness", op: "gt", vs: cmp[2]!.toLowerCase() as "power" | "toughness" }];
+  }
+  if (kind === "play-from-top") {
+    subject.zone = "library";
+    delete subject.fromZone;
   }
   if (kind === "bounce" && !action.fromZone) {
     const zone = bounceOrigin(action);
@@ -2080,6 +2087,11 @@ export function deriveAbilities(
     if (drain) { if (face) drain.face = face; abilities.push(drain); }
     const toughnessDamage = toughnessDamageAbility(text);
     if (toughnessDamage) { if (face) toughnessDamage.face = face; abilities.push(toughnessDamage); }
+    // THE MODEL LEFT BOLAS'S CITADEL'S PERMISSION EMPTY (verb `none`); the printed sentence still says
+    // it (#856). Only when the clause derived no play-from-top of its own.
+    if (kind === "static" && playsFromTop(text) && !abilities.slice(before).some((a) => a.effect.kind === "play-from-top")) {
+      abilities.push({ kind: "static", repeats: "continuous", effect: { kind: "play-from-top", subject: { control: "you", token: null, zone: "library" } }, ...(face ? { face } : {}) });
+    }
     const castAsFlash = kind === "static" ? castAsFlashAbility(text) : undefined;
     if (castAsFlash) { if (face) castAsFlash.face = face; abilities.push(castAsFlash); }
 

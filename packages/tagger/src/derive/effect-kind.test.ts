@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { actionEffectKind, bounceOrigin, extraPhaseName } from "./effect-kind.js";
+import { actionEffectKind, bounceOrigin, extraPhaseName, playsFromTop } from "./effect-kind.js";
 import { deriveAbilities } from "./derive.js";
 import { EFFECT_KINDS } from "../schema.js";
 
@@ -858,4 +858,39 @@ test("an unstated origin is read off the object: a permanent is on the battlefie
   const lion = deriveAbilities([{ id: 1, abilityType: "triggered", actions: [{ verb: "return", object: "a creature you control", toZone: "hand" }] }],
     "Whitemane Lion", { 1: "When this creature enters, return a creature you control to its owner's hand." }).abilities[0]!;
   expect(lion.effect).toMatchObject({ kind: "bounce", subject: { type: "creature", zone: "battlefield" } });
+});
+
+// #856: casting or playing from the top of your library, and a card putting itself back on top.
+// Live clause shapes, 2026-09-30.
+test("a static permission to cast or play from the top of your library is play-from-top, with its class", () => {
+  const forge = deriveAbilities([{ id: 2, abilityType: "static", actions: [
+    { verb: "cast", object: "artifact spells and colorless spells from the top of your library", fromZone: "library", optional: true },
+  ] }], "Mystic Forge", { 2: "You may cast artifact spells and colorless spells from the top of your library." }).abilities[0]!;
+  expect(forge.effect).toMatchObject({ kind: "play-from-top", subject: { zone: "library" } });
+  const skull = deriveAbilities([{ id: 2, abilityType: "static", actions: [
+    { verb: "play", object: "historic lands from the top of your library", optional: true },
+    { verb: "cast", object: "historic spells from the top of your library", fromZone: "library", optional: true },
+  ] }], "Crystal Skull, Isu Spyglass", { 2: "You may play historic lands and cast historic spells from the top of your library." }).abilities;
+  expect(skull.map((a) => a.effect.kind)).toEqual(["play-from-top", "play-from-top"]);
+  // The model left Bolas's Citadel's clause empty; the printed sentence still says it.
+  const citadel = deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "none" }] }], "Bolas's Citadel",
+    { 2: "You may play lands and cast spells from the top of your library. If you cast a spell this way, pay life equal to its mana value rather than pay its mana cost." }).abilities;
+  expect(citadel.map((a) => a.effect.kind)).toEqual(["play-from-top"]);
+  expect(citadel[0]!.effect.subject?.zone).toBe("library");
+  // A cascade, or a cast trigger that reveals from the top, is not a permission.
+  expect(playsFromTop("When you cast this spell, exile cards from the top of your library until you exile a nonland card that costs less.")).toBe(false);
+  expect(playsFromTop("When you cast this spell, reveal cards from the top of your library until you reveal X creature cards.")).toBe(false);
+  // A cascade-shaped cast of a card exiled from the top is not a permission.
+  expect(actionEffectKind({ verb: "cast", object: "it", fromZone: "exile" }, "Exile cards from the top of your library until you exile a nonland card. You may cast it without paying its mana cost.")).not.toBe("play-from-top");
+});
+
+test("a card putting itself on top of its owner's library sets the top (Sensei's Divining Top)", () => {
+  const top = deriveAbilities([{ id: 2, abilityType: "activated", actions: [
+    { verb: "draw", object: "a card", amount: "1" },
+    { verb: "put", object: "this artifact", fromZone: "battlefield", toZone: "library" },
+  ] }], "Sensei's Divining Top", { 2: "Draw a card, then put this artifact on top of its owner's library." }, { 2: "{T}" }).abilities;
+  expect(top.map((a) => a.effect.kind)).toEqual(["draw-card", "top-set"]);
+  expect(top[1]!.effect.subject?.self).toBe(true);
+  // Tucking ANOTHER permanent is removal and stays unclassified.
+  expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "library" }, "Put target creature on top of its owner's library.")).toBeNull();
 });

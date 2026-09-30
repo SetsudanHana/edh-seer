@@ -739,6 +739,12 @@ export const EFFECT_KINDS = [
   // bounce is a loop only when producers or discounts pay for it. A fact for loop economics, not a
   // free-recast synergy; until 2026-09-30 it derived an empty kind and the return was invisible.
   "bounce",
+  // PLAYING FROM THE TOP OF YOUR LIBRARY (#856): Mystic Forge, Crystal Skull, Bolas's Citadel, Future
+  // Sight, Experimental Frenzy. A static permission, parallel to casting from the graveyard
+  // (`graveyard-recursion`), with the class it lets you play as its subject and `zone: library`. With
+  // Sensei's Divining Top putting itself back on top, it is a recast loop. A fact for loop economics;
+  // whether it links to its class is not ruled, so the pair channels read it as blank.
+  "play-from-top",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];
