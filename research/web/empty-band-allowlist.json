@@ -9,12 +9,6 @@
     },
     {
       "surface": "site",
-      "step": "commander",
-      "section": "^event-",
-      "why": "Sarevok has one event group of eight tiles; a tile keeps its size by design (PartnerList, #770), so eight fill 8 of 14 columns at 3840 (51%). The rest of the group is a link to search."
-    },
-    {
-      "surface": "site",
       "step": "precons",
       "section": "· \\d{4}$",
       "why": "The precon index flows its sets in columns; the last set in the longest column stands alone once the others have ended (31% at 2560, 47% at 1920). Every other row fills the width."
