@@ -8,7 +8,7 @@
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
-import { ZONE_SCOPED_KINDS, actionEffectKind, exilesOwnGraveyard, extraPhaseName } from "./effect-kind.js";
+import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
@@ -242,7 +242,9 @@ import { emblemRecipient } from "../emblem.js";
 // creature dies, return it", Undying Malice) repeats once: the spell is gone once it resolves.
 // 204: #804 -- a cost reduction records what it takes off (`reduces.mana`, from the printed "costs {2}
 // less", else the clause amount) and whether it discounts only its own card (`reduces.self`).
-export const DERIVE_VERSION = 204;
+// 205: #802 -- a return to hand from the battlefield or the stack is `bounce`, with the zone on its
+// subject (Boomerang, Hullbreaker Horror, Narset's Reversal, Remand). A fact, not a synergy.
+export const DERIVE_VERSION = 205;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1000,6 +1002,10 @@ function effectSubject(
     subject.scope ??= "all";
     const cmp = STAT_VS_STAT.exec(object);
     if (cmp) subject.stats = [...(subject.stats ?? []), { metric: cmp[1]!.toLowerCase() as "power" | "toughness", op: "gt", vs: cmp[2]!.toLowerCase() as "power" | "toughness" }];
+  }
+  if (kind === "bounce" && !action.fromZone) {
+    const zone = bounceOrigin(action);
+    if (zone) subject.zone = zone;
   }
   if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) {
     subject.zone = action.fromZone;

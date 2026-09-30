@@ -1491,19 +1491,26 @@ function ownBoardKill(a: Ability): number | undefined {
   return n ? Number(n[1]) : 0;
 }
 
-/** The card with every own-board -N/-N death this deck does not support taken off its emits. The
- *  same object back when nothing is dropped, so the per-tags caches downstream still hit. */
-const killStripped = new WeakMap<CardTags, Map<number | undefined, CardTags>>();
+/** The card as the pair channels read it: every own-board -N/-N death this deck does not support
+ *  taken off its emits, and a BOUNCE read as the blank effect it derived as before #802. A bounce
+ *  makes a card castable again and the recast is paid in full (owner, 2026-09-30), so its kind is
+ *  a fact for loop economics and claims nothing here; relabelling it moved 12 reasons (Reanimate
+ *  "re-firing" Acererak's return-to-hand, Arid Archway's sentence losing its surveil). The same
+ *  object back when nothing changes, so the per-tags caches downstream still hit. */
+const forPairs = new WeakMap<CardTags, Map<number | undefined, CardTags>>();
 function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
   const tags = dc.tags;
-  if (!tags || !tags.abilities.some((a) => ownBoardKill(a) !== undefined)) return dc;
+  if (!tags) return dc;
   const floor = opts.revenantToughness;
   const dead = (a: Ability) => { const n = ownBoardKill(a); return n !== undefined && !(floor !== undefined && n >= floor); };
-  if (!tags.abilities.some(dead)) return dc;
-  const byFloor = killStripped.get(tags) ?? killStripped.set(tags, new Map()).get(tags)!;
+  if (!tags.abilities.some((a) => dead(a) || a.effect.kind === "bounce")) return dc;
+  const byFloor = forPairs.get(tags) ?? forPairs.set(tags, new Map()).get(tags)!;
   let out = byFloor.get(floor);
   if (!out) {
-    out = { ...tags, abilities: tags.abilities.map((a) => dead(a) ? { ...a, emits: (a.emits ?? []).filter((e) => e.verb !== "dies") } : a) };
+    out = { ...tags, abilities: tags.abilities.map((a) => {
+      const b = a.effect.kind === "bounce" ? { ...a, effect: { kind: "" as const } } : a;
+      return dead(b) ? { ...b, emits: (b.emits ?? []).filter((e) => e.verb !== "dies") } : b;
+    }) };
     byFloor.set(floor, out);
   }
   return { ...dc, tags: out };

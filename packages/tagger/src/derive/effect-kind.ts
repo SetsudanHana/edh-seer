@@ -78,7 +78,34 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
   // WITHOUT -- put->library 348 (Sensei's Divining Top, Brainstorm-shaped, not a tutor), put->hand
   // 343, of which the typed ones are what this row admits.
   { verb: "put", from: "library", to: "hand", kind: "search" },
+  // BOUNCE (#802): to hand from the battlefield or the stack. The graveyard origin is recursion,
+  // above; an unstated origin stays unclassified.
+  { verb: "return", from: "battlefield", to: "hand", kind: "bounce" },
+  { verb: "put", from: "battlefield", to: "hand", kind: "bounce" },
+  { verb: "return", from: "stack", to: "hand", kind: "bounce" },
+  { verb: "put", from: "stack", to: "hand", kind: "bounce" },
 ];
+
+/** WHERE A RETURN TO HAND COMES FROM WHEN THE CLAUSE DID NOT SAY (#802): 268 corpus actions state
+ *  no origin, and most are plain bounces ("another target creature you control", "target nonland
+ *  permanent", "this enchantment"). A permanent noun is on the battlefield and a spell on the
+ *  stack; both at once ("target spell or permanent") is a bounce with no one zone. A CARD is in a
+ *  hidden zone or a graveyard ("a creature card you own from outside the game"), and a bare pronoun
+ *  names nothing, so those stay unclassified. */
+const PERMANENT_NOUN = /\b(?:permanents?|creatures?|lands?|artifacts?|enchantments?|planeswalkers?|battles?|vehicles?|auras?|equipment)\b/i;
+const SPELL_NOUN = /\bspells?\b/i;
+export function bounceOrigin(action: Action): "battlefield" | "stack" | undefined {
+  if (action.fromZone === "battlefield" || action.fromZone === "stack") return action.fromZone;
+  const object = action.object ?? "";
+  if (action.fromZone || /\bcards?\b/i.test(object)) return undefined;
+  const permanent = PERMANENT_NOUN.test(object), spell = SPELL_NOUN.test(object);
+  return permanent && !spell ? "battlefield" : spell && !permanent ? "stack" : undefined;
+}
+function bouncesUnstated(action: Action): boolean {
+  if (action.fromZone || action.toZone !== "hand" || (action.verb !== "return" && action.verb !== "put")) return false;
+  const object = action.object ?? "";
+  return !/\bcards?\b/i.test(object) && (PERMANENT_NOUN.test(object) || SPELL_NOUN.test(object));
+}
 
 /** Does a dig's object name a class -- a type, subtype, stat predicate or name, on the subject or
  *  in an `anyOf` branch? "Two of them" and "a card" do not. See the `put library -> hand` row. */
@@ -92,7 +119,7 @@ function digNamesAClass(object: string): boolean {
 /** Kinds whose whole meaning is the zone the subject sits in: `edges.ts` will not draw a
  *  reanimator edge unless `effect.subject.zone === "graveyard"`, so a recursion effect that loses
  *  the zone is a recursion no graveyard-filler can ever feed. */
-export const ZONE_SCOPED_KINDS: ReadonlySet<string> = new Set(["graveyard-recursion", "graveyard-hate"]);
+export const ZONE_SCOPED_KINDS: ReadonlySet<string> = new Set(["graveyard-recursion", "graveyard-hate", "bounce"]);
 
 /** "enters with N counters on it" — the card's own entry, CR 614.1c. Anchored on "enters with" so a
  *  clause that merely mentions entering ("whenever a creature enters, put a counter on it") is not
@@ -455,6 +482,7 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
       && /\bfrom your hand\b/i.test(action.object ?? "") && (!ON_THE_BOTTOM.test(clauseText) || ON_TOP.test(clauseText))) {
     return "top-set";
   }
+  if (bouncesUnstated(action)) return "bounce";
   for (const r of ZONE_RULES) {
     if (r.verb !== verb) continue;
     if (r.from !== undefined && (action.fromZone ?? null) !== r.from) continue;
