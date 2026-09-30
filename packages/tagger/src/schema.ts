@@ -745,6 +745,13 @@ export const EFFECT_KINDS = [
   // Sensei's Divining Top putting itself back on top, it is a recast loop. A fact for loop economics;
   // whether it links to its class is not ruled, so the pair channels read it as blank.
   "play-from-top",
+  // ANOTHER LOYALTY ACTIVATION (#859): The Chain Veil, Oath of Teferi, Urza Assembles the Titans --
+  // "activate ... twice", "as though none ... have been activated" -- and instant-speed activation
+  // (Teferi, Master of Time; The Wandering Emperor), which is more activations per round. Subject:
+  // your planeswalkers, or the card itself. The model answers `other` for every one, so it is read
+  // off the printed sentence. A fact for loop economics (Teferi, Temporal Archmage's untap + The Chain
+  // Veil); the pair channels read it blank.
+  "extra-loyalty",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];

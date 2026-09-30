@@ -36,6 +36,7 @@
     "graveyard-hate": 0.3,
     "bounce": 0.2,
     "play-from-top": 0.2,
+    "extra-loyalty": 0.2,
     "exile-processing": 0.6,
     "keyword-grant": 0.3,
     "speed-increase": 0.3,
