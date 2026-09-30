@@ -117,7 +117,7 @@ function namesAThing(t: string, cardName: string | undefined): boolean {
  *  action states no zone, and without one the exile read as a creature leaving the battlefield -- a
  *  false `leaves` event, and the sentence "exiles a creature an opponent controls". */
 export function zoneAfterEvent(event: string | undefined): "graveyard" | "exile" | undefined {
-  if (event === "dies" || event === "put-into-graveyard" || event === "discarded" || event === "sacrificed" || event === "mill" || event === "milled") return "graveyard";
+  if (event === "dies" || event === "put-into-graveyard" || event === "discarded" || event === "sacrificed" || event === "milled") return "graveyard";
   if (event === "exiled") return "exile";
   return undefined;
 }

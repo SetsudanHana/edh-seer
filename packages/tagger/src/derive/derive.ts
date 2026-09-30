@@ -1314,6 +1314,8 @@ export function textForClause(
   return hits.length === 1 ? hits[0] : "";
 }
 
+/** A clause that reveals or looks at cards: its pronouns may mean a card no action records (#896 task 4). */
+const REVEALS = /\b(?:reveals?|looks? at)\b/i;
 const ENTERS_PREPARED = /\benters prepared\b/i;
 const BECOMES_PREPARED = /\bbecomes? prepared\b/i;
 
@@ -1729,7 +1731,11 @@ export function deriveAbilities(
       // THE TRIGGERING OBJECT ITSELF (#896 task 4, #823): "whenever a creature an opponent controls dies,
       // exile IT" is that card, in the graveyard the event put it in -- not another creature, and not
       // on the battlefield. The emit keeps the trigger's class, takes the zone, and says it is `ref`.
-      const refersToTrigger = antecedent !== undefined && !emitsSelf && sourceOf((clause.actions ?? []).indexOf(action)).to === "trigger";
+      // NOT AFTER A REVEAL OR A LOOK: "When Matter Reshaper dies, reveal the top card of your library. You
+      // may put IT onto the battlefield" means the revealed card, which the clause records no action for.
+      // 124 of 671 trigger references sit in such a clause; they keep their old reading, unmarked.
+      const refersToTrigger = antecedent !== undefined && !emitsSelf && !REVEALS.test(text)
+        && sourceOf((clause.actions ?? []).indexOf(action)).to === "trigger";
       // The EVENT outranks a "battlefield" the model wrote on the action: a card that died is not there
       // (Hofri Ghostforge, Eater of Virtue, Chaos Shrine's Black Crystal wrote it; review of S3).
       const zone = refersToTrigger && (!action.fromZone || action.fromZone === "battlefield") ? zoneAfterEvent(clause.trigger?.event) : undefined;

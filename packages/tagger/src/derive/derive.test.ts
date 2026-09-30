@@ -3556,6 +3556,13 @@ test("'exile it' after a death is the dying card, in the graveyard: no battlefie
   expect(leaves?.subject.fromZone).toBe("graveyard");
 });
 
+test("after a reveal, 'it' is the revealed card, not the triggering object (Matter Reshaper)", () => {
+  const out = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "this creature", control: "you" },
+    actions: [{ verb: "put", object: "it", fromZone: "library", toZone: "battlefield", optional: true }] } as never], "Matter Reshaper",
+  { 1: "When this creature dies, reveal the top card of your library. You may put it onto the battlefield if it's a permanent card with mana value 3 or less. Otherwise, put that card into your hand." }).abilities;
+  expect(out.flatMap((a) => a.emits ?? []).some((e) => e.subject.ref === "trigger")).toBe(false);
+});
+
 test("a trigger that names a player or a time is no referent: 'cast it' on your upkeep is not 'cast you' (Galvanoth)", () => {
   const out = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" },
     actions: [{ verb: "cast", object: "it", fromZone: "library" }] } as never], "Galvanoth",
