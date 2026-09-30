@@ -200,6 +200,32 @@ test("the drawer walks the commander's map from the card, then closes", async ()
   expect(screen.queryByTestId("card-inspector")).toBeNull();
 });
 
+/** PAIR-VIEW MOCKUPS F1/F2 (owner, 2026-09-30): a link in the drawer opens the two cards as a pair
+ *  on the commander's map, and the drawer closes. Without the report's map, nothing is offered. */
+test("a link in the drawer opens the pair on the map, then the drawer closes", async () => {
+  const { report, graph: bare } = engineDeck();
+  const m = buildEngineModel(report, bare);
+  // The drawer lists the graph's edges; the fixture's links live in the report, so one is drawn.
+  const other = [...m.partners.get("Reducer")!.keys()][0]!;
+  const deckGraph = { ...bare, edges: [{ from: "Reducer", to: other, weight: 1, tags: [], reasonTexts: ["Reducer reduces what it costs"] }] } as typeof bare;
+  const pair = vi.fn();
+  function Register({ withPair }: { withPair: boolean }) {
+    const { setExtras, open } = useCardDrawer();
+    useEffect(() => { setExtras({ model: m, walk: () => {}, ...(withPair ? { pair } : {}) }); open("Reducer"); }, [setExtras, open, withPair]);
+    return null;
+  }
+  const { unmount } = render(<CardDrawerProvider graph={deckGraph}><Register withPair={false} /></CardDrawerProvider>);
+  expect(within(await screen.findByTestId("card-inspector")).queryByRole("button", { name: "See the two on the map" })).toBeNull();
+  unmount();
+  render(<CardDrawerProvider graph={deckGraph}><Register withPair /></CardDrawerProvider>);
+  const drawer = await screen.findByTestId("card-inspector");
+  fireEvent.click(within(drawer).getAllByRole("button", { name: "See the two on the map" })[0]!);
+  expect(pair).toHaveBeenCalledTimes(1);
+  const [a, b] = pair.mock.calls[0]!;
+  expect([a, b]).toEqual(["Reducer", other]);
+  expect(screen.queryByTestId("card-inspector")).toBeNull();
+});
+
 /** THE DRAWER MOCKUP (2026-09-27): what the card does in this deck leads, in the map's groups and
  *  the report's own words; the engine's link lists are one tap away, folded. */
 test("the drawer says what the card works with and where the report names it", async () => {

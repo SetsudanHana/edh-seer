@@ -136,7 +136,8 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf, model }: {
         </div>
       )}
       {listed.length > 0 && (
-        <div className="flex flex-col gap-1.5">
+        // `deck-combos`: where a pair's "See the combo" lands (pair-view mockup F2).
+        <div id="deck-combos" className="flex flex-col gap-1.5 scroll-mt-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)]">
           <span className="eyebrow text-(--muted)">{plural(bracket.infiniteCombos || listed.length, "infinite combo")} · each repeats without limit</span>
           {/* THE LEAD COMBO AND THE REST SIDE BY SIDE on a wide screen (#770); stacked below 1800px. */}
           <div className={`grid gap-4 items-start ${lead && shownCombos.length ? "min-[1800px]:grid-cols-[minmax(0,68rem)_minmax(0,1fr)]" : ""}`}>

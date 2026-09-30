@@ -6,6 +6,7 @@ import { mainTheme } from "../lib/main-theme.js";
 import { buildOrbit, countText, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
 export { countText };
 import { slugOf } from "@edh-seer/matcher/slug";
+import { isInfiniteCombo } from "@edh-seer/matcher/brackets";
 import { ReasonText, useCardDrawer } from "./card-drawer.js";
 import { allPartners, Constellation, type MenuItem } from "./Constellation.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
@@ -21,7 +22,12 @@ import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./
  *  A TAP READS, A SECOND TAP MOVES: the rule `EgoView` settled on, so a mis-aimed tap never throws
  *  the reader somewhere else. Where they have been is the gold route on the map, and the card they
  *  came from is a button at the top of the panel. */
-export function OrbitView({ report, graph, focusId, onFocus, model, sticky = true, lead, leadTarget }: {
+/** A PAIR ASKED FOR FROM ELSEWHERE IN THE REPORT (pair-view mockups F1/F2, owner 2026-09-30): the
+ *  partner of the card in the middle to light, and the way back to where it was asked. A new object
+ *  per ask, so the same pair asked twice opens twice. */
+export interface PairAsk { partner: string; back?: { label: string; run: () => void } }
+
+export function OrbitView({ report, graph, focusId, onFocus, model, sticky = true, lead, leadTarget, ask }: {
   report: DeckReport; graph: CardGraph;
   focusId: string;
   onFocus: (id: string) => void;
@@ -38,6 +44,8 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
    *  the map's key and the card it is centred on -- lives in the rail, and the map takes the row. A
    *  portal, so the column keeps its state and stays wired to the map. */
   leadTarget?: HTMLElement | null;
+  /** Open this partner of `focusId` as a pair, as "How it works with…" does. */
+  ask?: PairAsk;
 }) {
   const m = useMemo(() => model ?? buildEngineModel(report, graph), [model, report, graph]);
   const o = useMemo(() => {
@@ -86,15 +94,33 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   const [paused, setPaused] = usePaused();
   const [hover, setHover] = useState<string | null>(null);
   const drawer = useCardDrawer();
-  useEffect(() => { setSel(null); setPair(null); setSector(null); setHover(null); }, [focusId]);
+  const [askBack, setAskBack] = useState<PairAsk["back"]>(undefined);
+  useEffect(() => { setSel(null); setPair(null); setSector(null); setHover(null); setAskBack(undefined); }, [focusId]);
+  // AFTER THE RESET ABOVE: an ask usually moves the middle too, and both run in the same commit.
+  useEffect(() => {
+    if (!ask) return;
+    setSel(ask.partner); setPair(ask.partner); setSector(null); setAskBack(ask.back);
+  }, [ask]);
   // ON A PHONE THE PANEL IS UNDER THE RING, a screen down: a tapped card changed a panel nobody
   // could see, and two phone seats tapped again thinking the tap was lost (appeal review
   // 2026-09-26). The panel comes up to meet the tap.
   const panel = useRef<HTMLDivElement>(null);
+  // A PAIR COMES UP FROM ITS TOP (pair-view round, 2026-09-30): taller than a phone's screen, it
+  // came up by its foot, and the way back and both faces were above the fold.
+  // Measured and scrolled by hand, a frame later: a smooth `scrollIntoView` here stopped 93px short
+  // of the page's own scroll padding in Chromium, under the site header.
   useEffect(() => {
-    if (!narrow || sector === null) return;
-    panel.current?.scrollIntoView?.({ block: "nearest", behavior: still ? "auto" : "smooth" });
-  }, [sector, narrow, still]);
+    if (!narrow || (sector === null && pair === null)) return;
+    const behavior = still ? "auto" : "smooth";
+    if (pair === null) { panel.current?.scrollIntoView?.({ block: "nearest", behavior }); return; }
+    const id = requestAnimationFrame(() => {
+      const el = panel.current;
+      if (!el) return;
+      const pad = (parseFloat(getComputedStyle(el).scrollMarginTop) || 0) + (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0);
+      window.scrollTo?.({ top: el.getBoundingClientRect().top + window.scrollY - pad, behavior });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [sector, pair, narrow, still]);
   if (!o) return null;
 
   const centre = (id: string) => {
@@ -184,7 +210,10 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
         </button>
       ) : null}
       {selected
-        ? <PartnerPanel focus={o.focus} p={selected} onCentre={() => centre(selected.card.id)} onClose={() => { setSel(null); setPair(null); }} />
+        ? <PartnerPanel focus={o.focus} p={selected} back={askBack} still={still}
+            same={sameAs(o, selected)} onSame={() => { const s = o.sectors.find((x) => x.partners.includes(selected)); if (s) { setPair(null); setSector(sectorKey(s)); } }}
+            combo={(report.combos ?? []).some((c) => isInfiniteCombo(c.result) && c.cards.includes(o.focus.physical) && c.cards.includes(selected.card.physical))}
+            onCentre={() => centre(selected.card.id)} onClose={() => { setSel(null); setPair(null); }} />
         : openSector
           ? <SectorPanel s={openSector} focus={o.focus} onPick={(id) => { setSel(id); setPair(id); }} onClose={() => setSector(null)} />
           : <Summary o={o} paused={paused} onPause={still ? undefined : () => setPaused(!paused)} onSector={(s) => setSector(sectorKey(s))} onCentre={centre} />}
@@ -218,7 +247,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
       <div className="grid gap-4 py-2 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] lg:gap-x-8 lg:items-start">
         <div className="lg:col-start-1 lg:row-start-1">{lead}</div>
         <div className="min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:max-w-[calc((100svh-15rem)*1.2222)]">{map}</div>
-        <div ref={panel} key={panelKey} className="orbit-panel-in flex min-w-0 flex-col gap-3 text-sm scroll-mt-4 lg:col-start-1 lg:row-start-2" aria-live="polite">
+        <div ref={panel} key={panelKey} className="orbit-panel-in flex min-w-0 flex-col gap-3 text-sm scroll-mt-[calc(var(--report-header-h,0px)+var(--report-rail-h,0px)+1rem)] lg:col-start-1 lg:row-start-2" aria-live="polite">
           {panelBody}
         </div>
       </div>
@@ -453,17 +482,61 @@ export function sameLine(partners: OrbitPartner[], partnerOf: (l: OrbitPartner["
   return [...rows.values()];
 }
 
-function PartnerPanel({ focus, p, onCentre, onClose }: { focus: EngineCard; p: OrbitPartner; onCentre: () => void; onClose: () => void }) {
+/** How many of the middle card's partners work with it the way this one does, itself included: the
+ *  row `sameLine` folds it into. One for a pair nothing else repeats. */
+function sameAs(o: OrbitModel, p: OrbitPartner): number {
+  const s = o.sectors.find((x) => x.partners.includes(p));
+  if (!s) return 1;
+  const partnerOf = (l: OrbitPartner["links"][number]) => (l.from === o.focus.id ? l.to : l.from);
+  return sameLine(s.partners, partnerOf).find((r) => r.cards.includes(p))?.cards.length ?? 1;
+}
+
+/** THE PAIR, AS TWO CARDS (pair-view mockups F1/F2, owner 2026-09-30: "avoid the text flood … with
+ *  some more card images"). Both faces at a size their text can be read at, the line between them,
+ *  and where the pair sits among the rest: one of many cards that do the same, or a combo. */
+function PartnerPanel({ focus, p, back, still, same, onSame, combo, onCentre, onClose }: {
+  focus: EngineCard; p: OrbitPartner;
+  /** Where the pair was asked from, when it was asked from elsewhere in the report. */
+  back?: PairAsk["back"];
+  still: boolean;
+  same: number; onSame: () => void;
+  /** The two are pieces of one infinite combo. */
+  combo: boolean;
+  onCentre: () => void; onClose: () => void;
+}) {
+  const first = firstPart(focus);
   return (
     <>
-      <div className="flex items-start gap-2">
-        <CardFace card={focus} className="w-20" />
-        <CardFace card={p.card} className="w-20" />
+      <div className="flex items-center gap-2">
+        {back ? (
+          <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-3 hover:border-(--foreground)" onClick={back.run}>← {back.label}</button>
+        ) : null}
         <button type="button" aria-label="Close" className="ml-auto flex min-h-11 min-w-11 items-center justify-center rounded-(--radius) border border-(--separator) text-lg" onClick={onClose}>✕</button>
       </div>
       <h3 className="font-semibold text-base">{displayName(focus)} and {displayName(p.card)}{p.card.isToken ? <span className="text-(--muted) font-normal"> {tokenLabel(p.card)}</span> : null}</h3>
+      {/* LARGE ENOUGH TO READ: at 5rem the faces were two thumbnails, and the text the pair rests on
+        *  was a fold away. */}
+      <div className="grid max-w-[28rem] grid-cols-2 gap-3">
+        <CardFace card={focus} className="w-full" />
+        <CardFace card={p.card} className="w-full" />
+      </div>
       <Lines links={p.links.slice(0, 6)} />
       {p.links.length > 6 ? <p className="text-(--muted)">…and {p.links.length - 6} more lines between them.</p> : null}
+      {/* A GENERIC LINK SAYS SO (mockup F1: "One of 38"): Arcane Signet sets off Displacer Kitten as
+        *  any noncreature spell would, and the pair alone read as if it were special. */}
+      {same > 2 ? (
+        <p className="text-(--muted)">
+          One of {same} cards that work with {first} this way.{" "}
+          <button type="button" className="min-h-9 text-(--accent) hover:underline" onClick={onSame}>Show them</button>
+        </p>
+      ) : null}
+      {combo ? (
+        <p>
+          Together they go infinite.{" "}
+          <button type="button" className="min-h-9 text-(--accent) hover:underline"
+            onClick={() => document.getElementById("deck-combos")?.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "start" })}>See the combo</button>
+        </p>
+      ) : null}
       <ReadCards cards={[focus, p.card]} />
       <details className="text-xs text-(--muted)"><summary className="cursor-pointer">What the labels mean</summary><div className="mt-1"><RepeatKey /></div></details>
       <button type="button" className="min-h-11 self-start rounded-(--radius) border border-(--accent) px-4 text-(--accent)" onClick={onCentre}>Put {firstPart(p.card)} in the middle</button>

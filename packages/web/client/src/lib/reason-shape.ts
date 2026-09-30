@@ -73,8 +73,18 @@ export function distinctiveReason(
   shared: readonly SharedShape[],
   names: ReadonlySet<string>,
 ): string | undefined {
-  const reasons = everyReason(card);
-  if (shared.length === 0) return reasons[0]?.text;
+  return distinctivePair(card, shared, names)?.text;
+}
+
+/** The same sentence with the card it pairs this one with, so the row can open the pair on the
+ *  commander's map (pair-view mockups F1/F2, owner 2026-09-30). */
+export function distinctivePair(
+  card: Card,
+  shared: readonly SharedShape[],
+  names: ReadonlySet<string>,
+): { text: string; partner: string } | undefined {
+  const reasons = (card.topPartners ?? []).flatMap((p) => (p.reasons ?? []).map((r) => ({ text: r.text, partner: p.name })));
+  if (shared.length === 0) return reasons[0];
   const templates = new Set(shared.map((s) => s.template));
-  return reasons.find((r) => !templates.has(reasonTemplate(r.text, names)))?.text;
+  return reasons.find((r) => !templates.has(reasonTemplate(r.text, names)));
 }
