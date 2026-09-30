@@ -244,7 +244,9 @@ import { emblemRecipient } from "../emblem.js";
 // less", else the clause amount) and whether it discounts only its own card (`reduces.self`).
 // 205: #802 -- a return to hand from the battlefield or the stack is `bounce`, with the zone on its
 // subject (Boomerang, Hullbreaker Horror, Narset's Reversal, Remand). A fact, not a synergy.
-export const DERIVE_VERSION = 205;
+// 206: #846 -- a triggered mode bullet with no trigger of its own takes its "choose" header's
+// (Hullbreaker Horror's bounces fire on every spell you cast).
+export const DERIVE_VERSION = 206;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1321,6 +1323,10 @@ export function deriveAbilities(
   /** The nearest earlier clause's own trigger event, for a trigger-less continuation to inherit.
    *  See `rawTrigger` below. */
   let inheritedRaw: RawTrigger | undefined;
+  /** The nearest earlier clause's whole trigger, for a mode bullet that states none (#846). */
+  let inheritedTrigger: (typeof clauses)[number]["trigger"];
+  /** ...and the trigger the header DERIVED, which the bullet takes verbatim. */
+  let headerTrigger: Ability["trigger"];
 
   for (let clause of clauses) {
     // The whole clause goes, not just its trigger. What is quoted on a created token is a complete
@@ -1337,6 +1343,21 @@ export function deriveAbilities(
       ? Object.entries(clauseTexts).filter(([id]) => clauseFaces?.[Number(id)] === face).map(([, t]) => t).join("\n")
       : cardText;
     const kind = abilityKind(clause);
+    // A MODE TAKES ITS HEADER'S TRIGGER (#846). "Whenever you cast a spell, choose up to one —"
+    // segments into a trigger clause and one clause per bullet, and the model repeats the trigger on
+    // some bullets (Kairi, the Swirling Sky) and not on others (Hullbreaker Horror, 306 corpus
+    // clauses). A bullet without one derived an ability with no trigger that never fires, so it
+    // takes the nearest earlier triggered clause's, by the same adjacency rule as the raw event
+    // below. The header keeps its own blank ability, so no edge the header formed is lost.
+    // THE DERIVED TRIGGER IS COPIED, NOT RE-READ: the header's subject is read against the header's
+    // text (Teval's Judgment: "cards leave YOUR GRAVEYARD" -> zone graveyard), and a bullet's text
+    // ("Draw a card.") would lose it and read a graveyard exit as a battlefield one.
+    // A CR 614 BULLET KEEPS ITS OWN: Rankle and Torbran's "if a source would deal damage ... instead"
+    // synthesizes the damage trigger it hears (`replacementOf`), and the header's would erase it.
+    const inherits = kind === "triggered" && !clause.trigger?.event && inheritedTrigger !== undefined
+      && !replacementOf(textForClause(clause, clauseTexts));
+    if (inherits) clause = { ...clause, trigger: inheritedTrigger };
+    else if (!clause.trigger?.event && kind !== "triggered") { inheritedTrigger = undefined; headerTrigger = undefined; }
     // THE RAW TRIGGER EVENT, FOR THE LABELLER ONLY (`repeatsFor`). An event outside the `Verb`
     // union reaches `unknownTriggers` below and the ability derives with no trigger, so this is the
     // one channel through which "at the beginning of your first main phase" can still say it is a
@@ -2114,6 +2135,7 @@ export function deriveAbilities(
       // which is wrong on every row of any card whose first clause derives nothing (Samut: 4
       // clauses, 3 abilities, every zipped row a lie).
       abilities[i] = { ...abilities[i], clause: clause.id };
+      if (inherits && headerTrigger && abilities[i].trigger) abilities[i] = { ...abilities[i], trigger: headerTrigger };
       const repeats = exhaust ? "once" : delayed?.repeats ?? repeatsFor(abilities[i], text, cost, rawTrigger);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
       if (delayed && abilities[i].trigger) abilities[i] = { ...abilities[i], delayedBy: delayed.delayedBy };
@@ -2168,6 +2190,11 @@ export function deriveAbilities(
       const damageTrigger = abilities[i].trigger;
       const eventAmount = damageTrigger?.verbs.some((v) => v.includes("damage")) ? eventAmountFor(text) : undefined;
       if (damageTrigger && eventAmount) abilities[i] = { ...abilities[i], trigger: { ...damageTrigger, amount: eventAmount } };
+    }
+    // A clause that states its own trigger is the header any following bullets inherit (#846).
+    if (!inherits && clause.trigger?.event) {
+      inheritedTrigger = clause.trigger;
+      headerTrigger = abilities.slice(before).find((a) => a.trigger)?.trigger;
     }
   }
   // AN OPPONENT'S GRAVEYARD, TAKEN ON THE WAY IN (recall v4 #28, 2026-09-09). Valgavoth, Terror

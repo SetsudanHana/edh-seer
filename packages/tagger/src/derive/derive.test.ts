@@ -3604,3 +3604,43 @@ test("only the DELAYED return in a clause is delayed; an immediate return beside
   "Swift Warkite", { 1: "When this creature enters, you may put a creature card with mana value 3 or less from your hand or graveyard onto the battlefield. That creature gains haste. Return it to your hand at the beginning of the next end step." }).abilities;
   expect(warkite.find((a) => (a.emits ?? []).some((e) => e.verb === "enters"))?.delayedUntil).toBeUndefined();
 });
+
+// #846: a mode bullet the model left without a trigger takes its header's (Hullbreaker Horror, the
+// corpus clauses). Without it the bounce derived with no trigger and no repeats, and never fired.
+test("a mode with no trigger of its own takes the trigger of the 'choose' header above it", () => {
+  const text = "Whenever you cast a spell, choose up to one —\n• Return target spell you don't control to its owner's hand.\n• Return target nonland permanent to its owner's hand.";
+  const out = deriveAbilities([
+    { id: 3, abilityType: "triggered", trigger: { event: "cast", subject: "a spell", control: "you" }, actions: [{ verb: "none" }] },
+    { id: 4, abilityType: "triggered", actions: [{ verb: "return", object: "target spell you don't control", fromZone: "stack", toZone: "hand", optional: true }] },
+    { id: 5, abilityType: "triggered", actions: [{ verb: "return", object: "target nonland permanent", fromZone: "battlefield", toZone: "hand", optional: true }] },
+  ], "Hullbreaker Horror", { 3: "Whenever you cast a spell, choose up to one —", 4: "Return target spell you don't control to its owner's hand.", 5: "Return target nonland permanent to its owner's hand." }, undefined, text).abilities;
+  const bounces = out.filter((a) => a.effect.kind === "bounce");
+  expect(bounces).toHaveLength(2);
+  for (const b of bounces) {
+    expect(b.trigger?.verbs).toEqual(["cast"]);
+    expect(b.trigger?.subject).toMatchObject({ control: "you", type: "spell" });
+    expect(b.repeats).toBe("repeatable");
+  }
+  // The header's DERIVED trigger is copied: Teval's Judgment's graveyard exit stays a graveyard exit.
+  const teval = deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "leaves", subject: "one or more cards", control: "you" }, actions: [{ verb: "none" }] },
+    { id: 2, abilityType: "triggered", actions: [{ verb: "draw", object: "a card", amount: "1" }] },
+  ], "Teval's Judgment", { 1: "Whenever one or more cards leave your graveyard, choose one that hasn't been chosen this turn —", 2: "Draw a card." },
+  undefined, "Whenever one or more cards leave your graveyard, choose one that hasn't been chosen this turn —\n• Draw a card.").abilities;
+  const header = teval.find((a) => a.clause === 1)!.trigger!;
+  expect(header.subject.zone).toBe("graveyard");
+  expect(teval.find((a) => a.effect.kind === "draw-card")?.trigger).toEqual(header);
+  // A replacement bullet keeps the damage trigger it synthesizes (Rankle and Torbran's fifth mode).
+  const rt = deriveAbilities([
+    { id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "Rankle and Torbran", control: "you" }, actions: [{ verb: "none" }] },
+    { id: 5, abilityType: "triggered", actions: [{ verb: "deal-damage", object: "that much damage plus 2" }] },
+  ], "Rankle and Torbran", { 2: "Whenever Rankle and Torbran deals combat damage to a player or battle, choose any number —", 5: "If a source would deal damage to a player or battle this turn, it deals that much damage plus 2 instead." }).abilities;
+  expect(rt.find((a) => a.clause === 5)?.trigger?.verbs).not.toEqual(["combat-damage"]);
+  // A static clause in between ends the inheritance.
+  const cut = deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell", control: "you" }, actions: [{ verb: "none" }] },
+    { id: 2, abilityType: "static", actions: [{ verb: "cant", object: "be countered" }] },
+    { id: 3, abilityType: "triggered", actions: [{ verb: "draw", object: "a card" }] },
+  ], "X", { 1: "Whenever you cast a spell, choose one —", 2: "This spell can't be countered.", 3: "Draw a card." }, undefined, "Whenever you cast a spell, choose one —").abilities;
+  expect(cut.find((a) => a.effect.kind === "draw-card")?.trigger).toBeUndefined();
+});
