@@ -9,8 +9,8 @@ import { CardTile } from "./CardTile.js";
 
 /** THE PARTNER LIST, GROUPED BY THE EVENT THAT EARNED EACH ROW.
  *
- *  A FLAT LIST WAS THE WRONG SHAPE FOR THIS DATA. `PER_EVENT_CAP` gives each event at most three
- *  rows, and those three carry near-identical sentences by construction -- "When a Goblin enters
+ *  A FLAT LIST WAS THE WRONG SHAPE FOR THIS DATA. `PER_EVENT_CAP` gives each event at most ten
+ *  rows (three when this was written), and they carry near-identical sentences by construction -- "When a Goblin enters
  *  thanks to Krenko, X triggers" three times over. Read as one list that is repetition; read under
  *  the event they share it is one fact with three examples, which is what the cap was designed to
  *  produce in the first place.
@@ -68,9 +68,10 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
   // then took a whole band, and on a commander page five of ten groups used under a quarter of a
   // 2560 screen. Now each group is as wide as its tiles (`--n` of them, never less than room for its
   // heading, never more than the row), and groups flow side by side.
-  // THE TILE IS A SHARE OF THE LIST'S OWN WIDTH, the one the old column counts gave (4, 5, 6, then
-  // 8 across), so a full group of eight still fills the row and nothing is halved; past 3400px two
-  // groups of eight share a row. A phone keeps one group per band, three tiles across.
+  // THE TILE IS A SHARE OF THE LIST'S OWN WIDTH, the one the old column counts gave (4, 5, 6, 8,
+  // then 10 across from 1920px, where a full group of ten fills the row since the cap went from
+  // eight to ten, 2026-09-30); nothing is halved, and past 3400px a group of ten fills 10 of 14.
+  // A phone keeps one group per band, three tiles across.
   return (
     // AND THE ROWS PACK DENSE (#770, measured 2026-09-29). Groups flowed in rank order, so Krenko's
     // two-card group ahead of an eight-card one left six tile slots empty on a 2560 screen, and the
@@ -78,7 +79,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
     // tile-sized columns now holds every group, each spanning as many columns as it has tiles, and
     // `dense` lets a later, smaller group fill the gap an earlier one left. A group's own hue rule
     // across its top says where it starts and ends, since neighbours now sit a tile-gap apart.
-    <div className="@container flex flex-col gap-8 sm:grid sm:grid-flow-row-dense sm:gap-x-4 sm:gap-y-0 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))] [--cols:4] lg:[--cols:5] xl:[--cols:6] 2xl:[--cols:8] min-[150rem]:[--cols:10] min-[212.5rem]:[--cols:14] [--tile:calc((100cqw_-_(var(--cols)_-_1)*1rem_-_1px)/var(--cols))]">
+    <div className="@container flex flex-col gap-8 sm:grid sm:grid-flow-row-dense sm:gap-x-4 sm:gap-y-0 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))] [--cols:4] lg:[--cols:5] xl:[--cols:6] 2xl:[--cols:8] min-[120rem]:[--cols:10] min-[212.5rem]:[--cols:14] [--tile:calc((100cqw_-_(var(--cols)_-_1)*1rem_-_1px)/var(--cols))]">
       {groups.map((group, gi) => {
         // THE SAME DIRECTION DECIDES THE COUNTER AND THE VERB (2026-09-19). This read `pool` for
         // every group and then printed "cause it" under producer rows -- the sentence named one
