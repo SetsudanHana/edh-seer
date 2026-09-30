@@ -37,7 +37,10 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
       {/* TWO ACROSS AT xl (roadmap T11). Measured at 1960px: the ink stopped at 567px of a 1782px
         *  row. The rows are short by nature -- a score, a name, one reason -- so the fix is to place
         *  more of them per row rather than to stretch any of them. */}
-      <ul className="flex flex-col xl:grid xl:grid-cols-2 xl:gap-x-8 [&>*]:min-w-0">
+      {/* AS MANY ACROSS AS FIT, 40rem EACH (designer review 2026-09-30, #770): two columns at 3840
+        *  left each row's text ending halfway, its "..." pinned at the far edge. Two at 1920, three
+        *  at 2560 and 3840, and six rows divide evenly either way. */}
+      <ul className="flex flex-col xl:grid xl:[grid-template-columns:repeat(auto-fill,minmax(40rem,1fr))] xl:gap-x-8 [&>*]:min-w-0">
         {ranked.map((c) => {
           const top = distinctivePair(c, shapes.shared, names);
           const topReason = top?.text;
