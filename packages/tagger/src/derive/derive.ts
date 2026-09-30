@@ -866,10 +866,25 @@ const KEYWORD_ABILITIES: readonly string[] = (crKeywords as { abilities: string[
 // "[-4]: Create a 4/4 green Beast creature token with trample" -- the trample is the token's. A quote
 // that is only keywords ("Cascade, cascade.", Zhulodok) is kept. A quote is an ability when it has a
 // colon (activated, loyalty) or opens with a trigger word.
-const QUOTED = /["\u201c][^"\u201d]*["\u201d]/g;
-const quotedAbility = (q: string): boolean => q.includes(":") || /^["\u201c]\s*(?:when|whenever|at)\b/i.test(q);
+const OPEN_QUOTE = new Set(['"', "\u201c"]);
+const CLOSE_QUOTE = new Set(['"', "\u201d"]);
+const quotedAbility = (q: string): boolean => q.includes(":") || /^\s*(?:when|whenever|at)\b/i.test(q);
+/** The text with every quoted ABILITY blanked, by a character scan -- a quote regex whose open and body
+ *  classes overlap is the polynomial shape CodeQL fails the required check on. */
+function withoutQuotedAbilities(text: string): string {
+  let out = "";
+  for (let i = 0; i < text.length; i++) {
+    if (!OPEN_QUOTE.has(text[i]!)) { out += text[i]; continue; }
+    let j = i + 1;
+    while (j < text.length && !CLOSE_QUOTE.has(text[j]!)) j++;
+    const body = text.slice(i + 1, j);
+    out += quotedAbility(body) ? " " : body;
+    i = j;
+  }
+  return out;
+}
 function grantedKeywords(objects: string[]): string[] {
-  const text = objects.map((o) => o.replace(QUOTED, (q) => quotedAbility(q) ? " " : q)).join(" ").toLowerCase();
+  const text = objects.map(withoutQuotedAbilities).join(" ").toLowerCase();
   return KEYWORD_ABILITIES.filter((k) => new RegExp(`(?:^|[^a-z])${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z])`).test(text)).sort();
 }
 
