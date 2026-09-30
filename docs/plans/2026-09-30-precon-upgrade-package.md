@@ -114,7 +114,8 @@ Target 4 has no guard.
 3. Each candidate swap is taken in rank order. It is taken only if the guard still passes on the
    deck with every swap taken so far.
 4. A card is cut at most once and added at most once in a package.
-5. Each section keeps its top 5 swaps, and the page shows 3.
+5. Each section keeps its top 5 swaps, and the page shows 3. (Raised to 10 by the owner after task 9,
+   2026-09-30: "5 seems to be low".)
 
 ## Pre-registered measures (task 1)
 
