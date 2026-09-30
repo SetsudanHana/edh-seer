@@ -26,6 +26,7 @@ import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.js";
+import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, PRONOUN_OBJECT } from "./references.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
 
@@ -601,30 +602,6 @@ function stripCardName(text: string, cardName?: string): string {
   return out.replace(/\s+/g, " ").trim();
 }
 
-/** AN AURA'S "ENCHANT X" LINE BOUNDS ITS "ENCHANTED PERMANENT" (UX sweep 2026-09-06, E1). Kaya's
- *  Ghostform prints `Enchant creature or planeswalker you control` and then `When enchanted
- *  permanent dies` -- and "enchanted permanent" parsed as ANY permanent, so a land dying (Fabled
- *  Passage) and an enchantment leaving (Mystic Remora, Dress Down) each "enabled" it: six false rows
- *  on the site's own example deck. The Enchant line is the only thing the permanent can be, so the
- *  subject text takes it verbatim ("enchanted creature or planeswalker you control") and the
- *  parser does the rest. Census (`bin/enchant-restriction-census.ts`): 50 cards whose subject is
- *  wider than their Enchant line, 29 derived. A card without an Enchant line, or without its text
- *  here, keeps "permanent" -- nothing is guessed. */
-const ENCHANT_LINE = /^Enchant ([^\n]+)$/m;
-const ENCHANTED_PERMANENT = /\benchanted permanent\b/i;
-/** `enchantText` is the text the Enchant line is read from: the clause's OWN FACE when faces are
- *  known (a two-face card with two Auras must not bind face A's line to face B's clause), and the
- *  whole card otherwise. Reminder text after the line is dropped -- by string ops, not by a
- *  trailing `\s*(...)?\s*$` (CodeQL js/polynomial-redos on the first cut). */
-function boundedByEnchantLine(text: string, enchantText: string): string {
-  if (!ENCHANTED_PERMANENT.test(text)) return text;
-  const raw = enchantText.match(ENCHANT_LINE)?.[1];
-  if (!raw) return text;
-  const paren = raw.indexOf("(");
-  const line = (paren >= 0 ? raw.slice(0, paren) : raw).trim().replace(/\.$/, "");
-  return line ? text.replace(ENCHANTED_PERMANENT, `enchanted ${line}`) : text;
-}
-
 /** Both corrections above, at the one place a subject becomes structured. */
 function subjectFrom(text: string, cardName?: string, cardText = ""): ReturnType<typeof parseSubject> {
   const stripped = stripCardName(boundedByEnchantLine(text, cardText).replace(SELF_DISJUNCT, ""), cardName);
@@ -635,13 +612,6 @@ function subjectFrom(text: string, cardName?: string, cardText = ""): ReturnType
   return subject;
 }
 
-/** The "your library for ..." preamble a search object always carries; stripping it leaves the thing
- *  actually searched for, which is the subject the pronoun that follows refers to. */
-const PRONOUN_SOURCE = /^(?:your |their |a |an )?librar(?:y|ies)(?: for)?\s*/i;
-
-/** Objects that name no thing of their own and inherit one from earlier in the clause. A closed list,
- *  read off the 107 untyped `enters` emits in the corpus rather than guessed: "that creature" names a
- *  type and must keep parsing as itself, so only bare back-references belong here. */
 /** Verbs whose object is the thing being multiplied, so a narrowing inside it decides WHICH cards
  *  the multiplier touches. */
 const MULTIPLIER_VERBS: ReadonlySet<string> = new Set(["double", "triple"]);
@@ -650,14 +620,6 @@ const MULTIPLIER_VERBS: ReadonlySet<string> = new Set(["double", "triple"]);
  *  demand-only and names no kind) and an ATTACHMENT (the Equipment's own host). Both are checkable
  *  by a player and not by this engine. */
 const UNEXPRESSIBLE_NARROWING = /\bwith counters on (?:them|it)\b|\bequipped creature\b|\benchanted creature\b/i;
-
-// "HER" AND "HIM" ARE PRONOUNS TOO. The Origins flip-walkers and their kin say "exile her, then
-// return her to the battlefield" where every other card says "it"; nine corpus cards, all
-// planeswalkers. Unlisted, "her" parsed as a noun with no class and the re-entry became an
-// untyped `enters` with no self flag -- the wildcard shape this file's own comments warn about --
-// so Chandra, Fire of Kaladesh "supplied" Horn of Gondor's own ETB (owner, 2026-09-08).
-const PRONOUN_OBJECT =
-  /^(?:(?:the |that |those )?(?:searched|exiled|chosen) cards?|that cards?|those cards|it|them|her|him|herself|himself|the cards?|one|one of those cards|the copy|that copy)$/i;
 
 /** The effect's subject, with the origin zone restored for the kinds that are defined by it. The
  *  clause states the zone on the ACTION (`fromZone: "graveyard"`), never inside the object text, so
@@ -891,8 +853,6 @@ function grantedKeywords(objects: string[]): string[] {
   return KEYWORD_ABILITIES.filter((k) => new RegExp(`(?:^|[^a-z])${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z])`).test(text)).sort();
 }
 
-/** A reference to the card an imprint exiled: "the exiled card", "a card exiled with this artifact". */
-const EXILED_REF = /^(?:the exiled card|the imprinted card|a card exiled with (?:this|~)(?: [a-z]+)?)$/i;
 /** "YOU MAY CAST ARTIFACT SPELLS AS THOUGH THEY HAD FLASH" (Shimmer Myr, #711): a spell-side grant to a
  *  class you cast, which the clause layer records as a bare `cast` and derive mapped to nothing. The
  *  owner's ruling links it to each card of that class, as #681 does for a spell grant. Only the
@@ -1187,8 +1147,6 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
  *  an opponent controls dies" (owner-judged FALSE). The type stays the pronoun's own; only an
  *  unstated controller is inherited. */
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
-/** A zone named as an object ("shuffle your library"): never what a later pronoun means. */
-const ZONE_OBJECT = /^(?:your|their|its owner's|that player's|each player's) (?:library|graveyard|hand)(?: and (?:your |their )?(?:library|graveyard|hand))?(?: into (?:your|their) library)?$/i;
 /** The count an antecedent object states up front: "up to five Doctor cards", "two basic land cards". */
 // Never an open threshold: "two or more creature cards" is no fixed two (review).
 const ANTECEDENT_COUNT = /^(?:up to )?(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+)\b(?! or (?:more|fewer|less|greater))/i;
@@ -1399,23 +1357,8 @@ export function deriveAbilities(
   /** What an earlier clause exiled, for "the exiled card" in a later one (#860). */
   let lastExiled: string | undefined;
   for (let clause of clauses) {
-    // "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860). Isochron Scepter exiles "an instant
-    // card with mana value 2 or less from your hand" in one clause and copies "the exiled card" in the
-    // next; Surge to Victory exiles "target instant or sorcery card" and copies it from a later
-    // trigger. The in-clause antecedent never sees across clauses, so the copy read as a CLONE (of
-    // the trigger's creature, for Surge) and its cast named nothing. Only when THIS clause exiled
-    // nothing before the reference: an in-clause exile is the nearer antecedent (Identity Thief).
-    const before0 = clause.actions ?? [];
-    const refersBack = (a: Action, i: number): boolean =>
-      EXILED_REF.test((a.object ?? "").trim()) && !before0.slice(0, i).some((b) => b.verb === "exile");
-    if (lastExiled && before0.some(refersBack)) {
-      const from = lastExiled;
-      clause = { ...clause, actions: before0.map((a, i) => refersBack(a, i) ? { ...a, object: from } : a) };
-    }
-    for (const a of clause.actions ?? []) {
-      const o = (a.object ?? "").trim();
-      if (a.verb === "exile" && o && !PRONOUN_OBJECT.test(o) && !SELF_REFERENCE.test(o) && !isSelfSubject(o, cardName)) lastExiled = o;
-    }
+    // "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860): see `exiledAcrossClauses`.
+    ({ clause, lastExiled } = exiledAcrossClauses(clause, lastExiled, cardName));
     // The whole clause goes, not just its trigger. What is quoted on a created token is a complete
     // ability -- Vivi's Persistence's Wizard both watches the cast AND deals the damage -- so
     // keeping the effect and dropping the trigger would leave the card claiming to do a thing it
@@ -1524,60 +1467,10 @@ export function deriveAbilities(
       }
       continue;
     }
-    // A fetch is two actions: `search "your library for a Swamp or Mountain card"`, then
-    // `put "that card" onto the battlefield`. The EMIT comes from the put, whose object is a
-    // pronoun, so the enters event carried no type at all -- and an untyped producer subject is a
-    // wildcard that satisfies every consumer filter in the matcher. Windswept Heath "supplied" every
-    // enters trigger in its deck. The type is not missing, it is just on the other action.
-    // Generalised past the fetch: "exile target creature you control, then return IT to the
-    // battlefield" is the same shape, and a flicker whose emit is untyped is the same wildcard.
-    // The antecedent is the nearest EARLIER action in the clause that names a thing of its own.
-    const antecedentFor = (idx: number): string | undefined => {
-      // A REFERENCE THAT NAMES ITS VERB takes that verb's object (#860): "cast THE COPY" means what the
-      // earlier `copy` copied, and "copy THE EXILED CARD" what the earlier `exile` exiled -- not the
-      // nearest thing named. Surge to Victory's "creatures you control get +X/+0" sits between its
-      // exile and its copy, and the nearest-object walk cast a creature.
-      const own = ((clause.actions ?? [])[idx]?.object ?? "").trim();
-      const verb = /^(?:the|that) cop(?:y|ies)$/i.test(own) ? "copy" : /^(?:the |that |those )?exiled cards?$/i.test(own) ? "exile" : undefined;
-      if (verb) {
-        for (let i = idx - 1; i >= 0; i--) {
-          const a = (clause.actions ?? [])[i]!;
-          if (a.verb !== verb) continue;
-          const o = (a.object ?? "").trim();
-          return PRONOUN_OBJECT.test(o) ? antecedentFor(i) : boundedByEnchantLine(o.replace(PRONOUN_SOURCE, ""), enchantText);
-        }
-        if (verb === "copy") return undefined;
-      }
-      for (let i = idx - 1; i >= 0; i--) {
-        const o = ((clause.actions ?? [])[i]?.object ?? "").trim();
-        // A ZONE IS NO THING A PRONOUN MEANS (owner's edge-magnitude sheet, 2026-09-29): The Five
-        // Doctors' "put those cards onto the battlefield" found the shuffle's "your library" and
-        // entered untyped, which is how it "fed" Gallifrey Stands' own ETB.
-        if (o === "" || PRONOUN_OBJECT.test(o) || SELF_REFERENCE.test(o) || ZONE_OBJECT.test(o)) continue;
-        return boundedByEnchantLine(o.replace(PRONOUN_SOURCE, ""), enchantText);
-      }
-      // Kaya's Ghostform: "When ENCHANTED PERMANENT dies, return THAT CARD to the battlefield." The
-      // antecedent is the trigger's subject, not an earlier action -- there is no earlier action.
-      // AND IT IS BOUNDED BY THE ENCHANT LINE like the trigger itself: the returned card is the
-      // creature or planeswalker that died, so the emit says so -- without this the emit stayed
-      // "any permanent enters" and Dress Down "entered thanks to Kaya's Ghostform".
-      const t = boundedByEnchantLine((clause.trigger?.subject ?? "").trim(), enchantText);
-      return t === "" || PRONOUN_OBJECT.test(t) ? undefined : t;
-    };
-    /** ...and the case `antecedentFor` deliberately walks PAST: the nearest earlier action names the
-     *  CARD, not a class. Necromancy reads `cast "this spell"` then `sacrifice "it"`, so the hunt for
-     *  a class found nothing and the pronoun stayed untyped — a wildcard emit that satisfies every
-     *  consumer filter, which is how a REANIMATION spell came to "fill the graveyard" for anything
-     *  recursive. The antecedent is not missing here, it is the card. */
-    const antecedentIsSelf = (idx: number): boolean => {
-      for (let i = idx - 1; i >= 0; i--) {
-        const o = ((clause.actions ?? [])[i]?.object ?? "").trim();
-        // A zone names nothing here either -- the same skip `antecedentFor` makes (review).
-        if (o === "" || PRONOUN_OBJECT.test(o) || ZONE_OBJECT.test(o)) continue;
-        return SELF_REFERENCE.test(o) || isSelfSubject(o, cardName);
-      }
-      return false;
-    };
+    // WHAT A REFERENCE OBJECT POINTS AT: see `references.ts`.
+    const antecedentFor = (idx: number): string | undefined =>
+      antecedentText(clause.actions ?? [], antecedentSource(clause.actions ?? [], idx, clause.trigger?.subject), clause.trigger?.subject, enchantText);
+    const antecedentIsSelf = (idx: number): boolean => selfAntecedent(clause.actions ?? [], idx, cardName);
     /** CR 614 multiplier, read off the clause text — the "would ... instead" frame the clause layer
      *  does not record. Bound per CLAUSE because that is where the sentence sits: verified against
      *  all 16 corpus cards carrying one of the templates, and in every case `segment()` gives the
