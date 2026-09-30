@@ -571,6 +571,12 @@ export function CardSearch({
         <LegacyDeckRedirect to="/analysis/cards" {...(hash !== undefined ? { hash } : {})}
           {...(replace !== undefined ? { replace } : {})} />
       )}
+      {/* THE CONTROLS AS TWO COLUMNS FROM 1600px (designer review 2026-09-30, #770): stacked, the
+        * title, the name box, "Cards that + add" and "Add a filter" were a narrow left column with
+        * 75-85% of a 2560 screen blank beside it, and pushed the grid to one visible row at 1920.
+        * The name on the left, the question on the right. */}
+      <div className="flex flex-col gap-6 min-[100rem]:grid min-[100rem]:grid-cols-[minmax(0,34rem)_minmax(0,1fr)] min-[100rem]:gap-x-16 min-[100rem]:items-start">
+      <div className="flex flex-col gap-6 min-w-0">
       <header className="flex flex-col gap-3">
         {/* THE LABEL IS NOT THE PAGE. "Cards" at 48px was the largest thing on a screen whose real
           * lead is the box you type in -- a generic noun out-ranking the only control that does
@@ -601,6 +607,8 @@ export function CardSearch({
             text-(--field-foreground) placeholder:text-(--field-placeholder) placeholder:italic px-3"
         />
       </label>
+      </div>
+      <div className="flex flex-col gap-6 min-w-0">
 
       {/* THE PANEL IS A LIST OF ROWS YOU ADD (owner, 2026-09-21: "cards are like 20 % of the
         *  screen, which is not very userfriendly"). Measured on the deployed page at 1920x1080
@@ -694,6 +702,8 @@ export function CardSearch({
           </details>
         )}
       </div>
+      </div>
+      </div>
 
       {index === null
         ? <p className="text-(--muted)">Loading cards…</p>
@@ -703,6 +713,9 @@ export function CardSearch({
         // AN EMPTY QUERY OWNS THE SPACE IT IS IN rather than leaving a bare box above a screen of
         // nothing. It says what is here, in the figure that makes the claim concrete.
         ? <div className="flex flex-col gap-2 pt-6">
+            {/* THE COUNT AND THE EXAMPLES SHARE A ROW FROM 1600px (#770), so the grid starts higher. */}
+            <div className="flex flex-col gap-2 min-[100rem]:flex-row min-[100rem]:items-end min-[100rem]:gap-16">
+            <div className="flex flex-col gap-2">
             <p className="text-3xl font-bold tracking-[-0.01em] tabular-nums">
               {(commanderMode ? index.filter((e) => e.commander).length : index.length).toLocaleString("en-US")}
             </p>
@@ -716,7 +729,9 @@ export function CardSearch({
                 ? "commanders with a page here. Type a name, or add a filter to pick colours."
                 : "cards with a page here. Type a name to start."}
             </p>
-            <p className="eyebrow text-(--muted) mt-4">or ask, for example</p>
+            </div>
+            <div className="flex flex-col gap-2">
+            <p className="eyebrow text-(--muted) mt-4 min-[100rem]:mt-0">or ask, for example</p>
             <ul className="flex flex-wrap gap-2 list-none p-0 m-0" aria-label="Example questions">
               {EXAMPLES[mode].map((ex) => (
                 <li key={ex.label}>
@@ -724,6 +739,8 @@ export function CardSearch({
                 </li>
               ))}
             </ul>
+            </div>
+            </div>
             {/* SOMETHING TO BROWSE BEFORE ANYTHING IS ASKED (UI review 2026-09-25). The prompt above
               * filled the left 500px of a 1920px screen and left the rest black, and a reader with no
               * name in mind had nowhere to start. The index ships ordered by partner count (#368),
