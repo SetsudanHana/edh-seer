@@ -501,7 +501,7 @@ test("a blank effect is phrased from its emits, and only where the emit reads on
   const e = (verb: string, subject: object) => ({ verb, subject: { token: null, ...subject } });
   // Fear of Sleep Paralysis.
   expect(emitPhrase([e("taps", { control: "any", type: "creature", scope: "target" })])).toBe("taps a creature");
-  // Mari, the Killing Quill.
+  // A typed exile off the board (Mari's emit before DERIVE 216 carried this shape, #823).
   expect(emitPhrase([e("exiled", { control: "opp", type: "creature" }), e("leaves", { control: "opp", type: "creature" })])).toBe("exiles a creature an opponent controls");
   // Displacer Kitten: the return is a sibling ability of the same clause, and makes it a flicker.
   const kitten = { control: "you", type: ["creature", "artifact"], scope: "target" };
@@ -533,4 +533,16 @@ test("a keyword grant's sentence names its keywords", () => {
   expect(staticGrantSentence("Feywild Visitor", "B", "keyword-grant")).toBe("Feywild Visitor gives B an extra ability");
   expect(reasonSentence({ producer: "Aggravated Assault", consumer: "Mikaeus", eventKey: "enters|-|-|creature", effectKind: "keyword-grant", keywords: ["undying"] }))
     .toMatch(/Mikaeus grants undying$/);
+});
+
+// #823: Mari exiles the creature that died, not another one (#896 task 4 marks it `ref: "trigger"`).
+test("the triggering object reads as the pronoun: Mari + a destroy spell 'exiles it'; the card's own trigger 'itself'", () => {
+  const mari = [
+    { verb: "exiled", subject: { control: "opp", token: null, type: "creature", fromZone: "graveyard", ref: "trigger" as const } },
+    { verb: "leaves", subject: { control: "opp", token: null, type: "creature", zone: "graveyard", fromZone: "graveyard", ref: "trigger" as const } },
+  ];
+  expect(reasonSentence({ producer: "Go for the Throat", consumer: "Mari, the Killing Quill", eventKey: "dies:creature", subjectNoun: "a creature", emits: mari }))
+    .toBe("When a creature dies thanks to Go for the Throat, Mari, the Killing Quill exiles it");
+  expect(reasonSentence({ producer: "Incandescent Soulstoke", consumer: "Cavalier of Thorns", eventKey: "dies:creature", self: true, emits: mari }))
+    .toBe("When Cavalier of Thorns dies thanks to Incandescent Soulstoke, it exiles itself");
 });
