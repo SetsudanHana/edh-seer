@@ -14,6 +14,12 @@ const page: PreconPage = {
   route: null, gaps: [{ group: "Ramp", have: 9, target: 11 }],
   decklist: [{ group: "Creatures", cards: [{ name: "Burakos, Party Leader", count: 1 }] }, { group: "Lands", cards: [{ name: "Plains", count: 10 }] }],
   report: "/#deck=abc",
+  packages: [{
+    target: 2, from: "1-2", bringDown: [],
+    sections: [{ id: "synergy", swaps: [{ kind: "synergy", out: { name: "Stick Together", reason: "Stick Together works with 13 cards in this deck." }, in: { name: "Pious Evangel", reason: "Pious Evangel <b>gains</b> life" } }] }],
+  }],
+  unreachable: [3],
+  packageCards: { "Pious Evangel": { name: "Pious Evangel", slug: "pious-evangel" } },
 };
 const index: PreconIndexEntry[] = [
   { slug: page.slug, name: page.name, setCode: "CLB", setName: page.setName, releaseDate: page.releaseDate, commanders: page.commanders, identity: page.identity, theme: page.theme },
@@ -39,8 +45,11 @@ test("a precon page is served with its own head, its crawler block and its recor
   expect(html).not.toContain('name="robots" content="noindex"');
   expect(html).toContain(`data-slug="${preconDataSlug(page.slug)}"`);
   expect(html).toContain('<a href="/precons/draconic-dissent-baldurs-gate">Draconic Dissent</a>');
-  // The engine's sentence is escaped, never markup.
-  expect(html).toContain("Pious Evangel &lt;b&gt;gains&lt;/b&gt; life");
+  // The package is there, by bracket and section, and the engine's sentence is escaped, never markup.
+  expect(html).toContain("<h2>Upgrades at bracket 2</h2>");
+  expect(html).toContain("<h3>Cards that work together</h3>");
+  expect(html).toContain('Take out Stick Together: Stick Together works with 13 cards in this deck. Put in <a href="/cards/pious-evangel">Pious Evangel</a>: Pious Evangel &lt;b&gt;gains&lt;/b&gt; life');
+  expect(html).toContain("No swaps bring this deck to bracket 3");
   expect(res.headers.get("x-robots-tag")).toBeNull();
 });
 
