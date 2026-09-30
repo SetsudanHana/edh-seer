@@ -27,6 +27,12 @@ test("a shock land never enters tapped; a gain land always; a check land some tu
   expect(landFacts(locthwain, needed, []).tapped).toBe(1);
 });
 
+// CR 305.6: A BASIC LAND TYPE IS A MANA ABILITY, printed only as reminder text, which is not read.
+test("a basic land type makes its colour: a shock land's reminder text is not needed", () => {
+  expect(landFacts(shrine, needed, []).colours).toEqual(["W", "B"]);
+  expect(landFacts(plains, needed, []).colours).toEqual(["W"]);
+});
+
 test("colours count only when the deck asks for them", () => {
   expect(landFacts(tower, needed, []).colours).toEqual(["W", "B"]);
 });
