@@ -19,13 +19,13 @@ code was.
 
 | Measure | Baseline | Run 1 | Run 2 | Run 3 |
 |---|---|---|---|---|
-| H1, the guard | pass (vacuous) | FAIL 1 | FAIL 1 | RUN3_H1 |
-| H2, reasons | pass (vacuous) | pass | pass | RUN3_H2 |
-| H3, legality | pass (vacuous) | FAIL 3 | pass | RUN3_H3 |
-| H4, role swaps are real | pass (vacuous) | FAIL 15 | pass | RUN3_H4 |
-| H5, lands | pass (vacuous) | FAIL 124 | FAIL 1 | RUN3_H5 |
-| S1, 5+ swaps at every target (floor 90%) | 0.0% | 93.4% | **89.3% MISS** | RUN3_S1 |
-| S2, synergy kept at target 3 (floor 18 of 20) | none to measure | 19 of 20 | 19 of 20 | RUN3_S2 |
+| H1, the guard | pass (vacuous) | FAIL 1 | FAIL 1 | **pass** |
+| H2, reasons | pass (vacuous) | pass | pass | **pass** |
+| H3, legality | pass (vacuous) | FAIL 3 | pass | **pass** |
+| H4, role swaps are real | pass (vacuous) | FAIL 15 | pass | **pass** |
+| H5, lands | pass (vacuous) | FAIL 124 | FAIL 1 | **pass** |
+| S1, 5+ swaps at every target (floor 90%) | 0.0% | 93.4% | **89.3% MISS** | **92.9% pass** |
+| S2, synergy kept at target 3 (floor 18 of 20) | none to measure | 19 of 20 | 19 of 20 | **19 of 20 pass** |
 
 **Run 1** (the task 7 build):
 
@@ -64,11 +64,49 @@ It ranks them by, in order:
 3. the fewest swaps lost;
 4. the most synergy kept.
 
-RUN3_NOTES
+Every hard measure passes, and so do S1 and S2. Compared with run 2:
+
+- the pages hold 5,218 swaps across the three targets, up from 5,045;
+- 14 precons are still under five swaps at some target, down from 21;
+- the precons the pip order had emptied gained swaps:
+  - Built From Scratch, 0 → 3 at every target;
+  - Scrappy Survivors, 3 → 7;
+  - Fae Dominion, 4/2/2 → 10/9/9;
+  - Living Energy, 4/2/2 → 5/5/5;
+- every package now carries the report's reading after its swaps (`after`), which the page quotes.
+
+The build took 91 minutes for all 197 precons.
 
 ## What the pages hold now
 
-RUN3_TABLE
+Tabulated from the 197 run 3 pages:
+
+| | Bracket 2 | Bracket 3 | Bracket 4 |
+|---|---|---|---|
+| Packages | 195 | 196 | 197 |
+| Unreachable | 2 | 1 | 0 |
+| Median swaps per package | 9 | 9 | 9 |
+| Fewest / most | 1 / 16 | 1 / 16 | 1 / 16 |
+| Packages that open with bring-down cuts | 43 (54 cuts) | 7 (7 cuts) | 0 |
+| Lands | 429 | 434 | 434 |
+| Ramp | 54 | 54 | 54 |
+| Consistency | 117 | 119 | 119 |
+| Interaction | 143 | 146 | 146 |
+| Wipes | 68 | 69 | 69 |
+| Synergy | 884 | 908 | 910 |
+
+- **Unreachable targets.** Mystic Intellect can't reach bracket 2, and Quick Draw can't reach 2 or 3:
+  no cut brings them under.
+- **Precons under five swaps.** The ones under five at some target are mostly decks with little
+  left to improve by these rules:
+  - Turtle Power (1);
+  - Squirreled Away, The Fantastic Four (both editions), Grand Larceny and Draconic Domination (4);
+  - Prismari Artistry, Quandrix Unlimited, Seize Control and Built From Scratch (both editions)
+    (3);
+  - Jeskai Striker (4 at brackets 3 and 4), The Hosts of Mordor (4 at bracket 2) and Quick Draw (1,
+    at its one reachable target).
+- **Role sections are thin next to lands and synergy.** "Strictly better at the same job" is a high
+  bar by design (owner, 2026-09-30).
 
 ## The persona
 
