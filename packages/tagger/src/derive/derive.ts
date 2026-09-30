@@ -19,6 +19,7 @@ import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger 
 import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
 import { reductionOf } from "./reduction.js";
+import { paymentOf } from "./payment.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { eventAmountFor } from "./event-amount.js";
@@ -246,7 +247,9 @@ import { emblemRecipient } from "../emblem.js";
 // subject (Boomerang, Hullbreaker Horror, Narset's Reversal, Remand). A fact, not a synergy.
 // 206: #846 -- a triggered mode bullet with no trigger of its own takes its "choose" header's
 // (Hullbreaker Horror's bounces fire on every spell you cast).
-export const DERIVE_VERSION = 206;
+// 207: #806 -- an activation cost is read into `payment` beside the raw `cost` (mana, {T}/{Q},
+// loyalty, life, sacrifice, discard, exile, tapping another, counters; an unread part kept verbatim).
+export const DERIVE_VERSION = 207;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -2155,6 +2158,8 @@ export function deriveAbilities(
       // inherits its trigger is never batched, and an or-limb twin shares its clause's reading.
       const count = countOf(abilities[i].amount, abilities[i].emits?.[0], text, abilities[i].replacement === true);
       if (count) abilities[i] = { ...abilities[i], count };
+      const payment = abilities[i].cost !== undefined ? paymentOf(abilities[i].cost, cardName) : undefined;
+      if (payment) abilities[i] = { ...abilities[i], payment };
       const reduces = abilities[i].effect?.kind === "cost-reduction" ? reductionOf(text ?? "", abilities[i].amount) : undefined;
       if (reduces) abilities[i] = { ...abilities[i], reduces };
       if (abilities[i].trigger && BATCHED.test(clause.trigger?.subject ?? "")) {
