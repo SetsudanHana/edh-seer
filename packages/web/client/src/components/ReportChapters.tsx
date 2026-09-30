@@ -309,6 +309,10 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   // rides with the theme, above the map; from `lg` it keeps its place beside the verdict.
   const narrow = useIsNarrow(1023);
   const talkFirst = narrow && !!talk && !!(themes && commanderId);
+  // AND IN THE RAIL FROM 1600px (#770, measured 2026-09-30): the map takes the chapter's row at 16:9,
+  // and the line for the table started at y=1086 of a 1080 screen and 1424 of a 1440 one -- the first
+  // screen was the map alone. Beside it, under the theme, it is on the first screen at every width.
+  const talkInRail = !!railHost && !!talk && !!(themes && commanderId);
   return (
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
     // into that row (2026-09-25) the first heading sat flush against the row's rule.
@@ -343,13 +347,18 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
                     <RecognitionPanel data={data} part="identity" />
                     <TableTalkLine talk={talk!} />
                   </div>
+                ) : talkInRail ? (
+                  <div className="flex flex-col gap-4">
+                    <RecognitionPanel data={data} part="identity" inline />
+                    <TableTalkLine talk={talk!} />
+                  </div>
                 ) : <RecognitionPanel data={data} part="identity" inline={!!railHost} />} leadTarget={railHost ? readSlot : null} />
             </section>
           ) : <RecognitionPanel data={data} part="identity" />}
           {/* THE LINE FOR THE TABLE BESIDE THE VERDICT (#770): a 48rem card alone under a 2560 map
             *  left two-thirds of the row empty. On a phone and a laptop they still stack. */}
-          <div className={`grid gap-6 items-start ${talk && !talkFirst ? "lg:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]" : ""}`}>
-            {talk && !talkFirst ? <TableTalkLine talk={talk} /> : null}
+          <div className={`grid gap-6 items-start ${talk && !talkFirst && !talkInRail ? "lg:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]" : ""}`}>
+            {talk && !talkFirst && !talkInRail ? <TableTalkLine talk={talk} /> : null}
             <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" />
           </div>
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
