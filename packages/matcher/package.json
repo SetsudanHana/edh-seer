@@ -41,7 +41,10 @@
     "./eval-pairs-core": "./src/eval-pairs-core.ts",
     "./event-pattern": "./src/event-pattern.ts",
     "./theme-stats": "./src/theme-stats.ts",
-    "./upgrade-package": "./src/upgrade-package.ts"
+    "./upgrade-package": "./src/upgrade-package.ts",
+    "./bracket-guard": "./src/bracket-guard.ts",
+    "./land-score": "./src/land-score.ts",
+    "./upgrade-sections": "./src/upgrade-sections.ts"
   },
   "scripts": {
     "gen:quality-weights": "tsx src/bin/gen-quality-weights.ts",

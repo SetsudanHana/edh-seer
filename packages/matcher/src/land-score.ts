@@ -75,9 +75,12 @@ function tapColours(dc: DeckCard): string[] {
 export function unusualText(dc: DeckCard): string {
   return printedLines(dc).filter((l) => !PLAIN.some((re) => re.test(l))).join("\n");
 }
+/** REMINDER TEXT, one parenthesis at a time: "[^()]" stops at the next "(", so a run of unclosed ones
+ *  is read once, not once per "(" (CodeQL, 2026-09-30). */
+const REMINDER = /\([^()]*\)/g;
 function printedLines(dc: DeckCard): string[] {
   const name = dc.card.name.toLowerCase();
-  return (dc.card.oracleText ?? "").replace(/\([^)]*\)/g, "").toLowerCase().split(name).join("~")
+  return (dc.card.oracleText ?? "").replace(REMINDER, "").toLowerCase().split(name).join("~")
     .replace(/\bthis land\b/g, "~").split("\n").map((l) => l.trim()).filter(Boolean);
 }
 /** A TAPPED LAND'S CONSOLATION: the life or the scry a land hands you FOR entering tapped is what
