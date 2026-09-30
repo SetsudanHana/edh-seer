@@ -972,14 +972,18 @@ test("a granted keyword recovers WHO receives it, and only forms an edge when it
   const grant = svyelun.abilities.find((a) => a.effect.kind === "keyword-grant");
   expect(grant?.effect.subject).toMatchObject({ subtype: "merfolk", control: "you" });
 
-  // A grant to every creature keeps its theme tag and forms no static edge: the recipient names no
-  // subtype, so nothing typal survives and `namesItsTargets` drops the subject outright.
+  // A STATIC grant to every creature you control keeps its recipient since the owner's 2026-09-28
+  // ruling (#711, Anger's haste), and since #857 when it follows an anthem in the same sentence
+  // (Spidersilk Armor). A ONE-SHOT grant ("gain ... until end of turn") is still refused.
   const generic = deriveAbilities([{
     id: 1, abilityType: "static",
-    actions: [{ verb: "grant-ability", object: "trample" }],
+    actions: [{ verb: "grant-ability", object: "reach" }],
   }], "Spidersilk Armor", { 1: "Creatures you control get +0/+1 and have reach." });
   const g2 = generic.abilities.find((a) => a.effect.kind === "keyword-grant");
-  expect(g2?.effect.subject).toBeUndefined();
+  expect(g2?.effect.subject).toMatchObject({ control: "you", type: "creature" });
+  const oneShot = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "grant-ability", object: "trample" }] }],
+    "Overrun-ish", { 1: "Creatures you control get +3/+3 and gain trample until end of turn." }).abilities.find((a) => a.effect.kind === "keyword-grant");
+  expect(oneShot?.effect.subject?.type).toBeUndefined();
 });
 
 test("a recipient is the last SENTENCE before the verb, and a comma-separated typal list survives", () => {
@@ -3672,4 +3676,24 @@ test("an imprinted card is the antecedent of 'the exiled card' in a later clause
   expect(surge.flatMap((a) => a.emits ?? []).find((e) => e.verb === "cast")?.subject.type).toEqual(["instant", "sorcery"]);
   const cast = out.flatMap((a) => a.emits ?? []).find((e) => e.verb === "cast");
   expect(cast?.subject).toMatchObject({ type: "instant", stats: [{ metric: "mana-value", op: "lte", value: 2 }] });
+});
+
+// #857: Mikaeus, the Unhallowed's undying grant lost its recipient AND its keyword. The live clause.
+test("a board-wide keyword grant keeps its recipient and names the keyword (Mikaeus, the Unhallowed)", () => {
+  const out = deriveAbilities([{ id: 3, abilityType: "static", actions: [
+    { verb: "modify-pt", object: "other non-Human creatures you control", amount: "+1/+1" },
+    { verb: "grant-ability", object: "undying" },
+  ] }], "Mikaeus, the Unhallowed", { 3: "Other non-Human creatures you control get +1/+1 and have undying." }).abilities;
+  const grant = out.find((a) => a.effect.kind === "keyword-grant")!;
+  expect(grant.grants).toEqual(["undying"]);
+  expect(grant.effect.subject).toMatchObject({ control: "you", other: true, type: "creature", notSubtype: ["human"] });
+  // Two keywords in one grant, and a word that is no keyword ability is not one.
+  const lord = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "flying and first strike" }] }],
+    "X", { 1: "Other Merfolk you control have flying and first strike." }).abilities.find((a) => a.effect.kind === "keyword-grant")!;
+  expect(lord.grants).toEqual(["first strike", "flying"]);
+  // An unhyphenated "nontoken" recipient stays refused, as before.
+  const riot = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "riot" }] }],
+    "Uncivil Unrest", { 1: "Nontoken creatures you control have riot." }).abilities.find((a) => a.effect.kind === "keyword-grant")!;
+  expect(riot.grants).toEqual(["riot"]);
+  expect(riot.effect.subject?.type).toBeUndefined();
 });
