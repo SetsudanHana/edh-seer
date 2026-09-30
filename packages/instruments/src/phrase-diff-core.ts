@@ -47,7 +47,7 @@ function canon(v: unknown): string {
 }
 
 /** The fields on which two filters differ, sorted. */
-export function differingFields(a: SubjectFilter, b: SubjectFilter): string[] {
+export function differingFields(a: object, b: object): string[] {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
   return [...keys].filter((k) => canon((a as Record<string, unknown>)[k]) !== canon((b as Record<string, unknown>)[k])).sort();
 }
