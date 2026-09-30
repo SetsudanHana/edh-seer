@@ -5,12 +5,12 @@
  *  own numbers after the swaps rather than the builder's claims about them.
  *
  *    npx tsx packages/instruments/src/precon-package-score.ts [--pages <dir>] [--static static-out | https://edhseer.cards/static]
- *                                                             [--precons packages/data/precons.json] [--only "<precon name>"] [--json <file>]
+ *                                                             [--precons packages/data/precons.json] [--only "<precon name>"]
  *
  *  `--pages` (a directory or a URL) defaults to the precon pages `build-precons` wrote into the static build. A page with no
  *  `packages` counts as a miss on S1, which is the baseline before the package ships. Exits 1 on any
  *  hard violation. */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { docToCard } from "@edh-seer/data/docs";
 import { normalizeName } from "@edh-seer/data/names";
@@ -137,6 +137,4 @@ for (const m of ["H1", "H2", "H3", "H4", "H5"] as const) {
 console.log(`S1: ${(100 * s1).toFixed(1)}% of ${pages.length} precons have 5+ swaps at every target (floor ${100 * S1_FLOOR}%) -- ${s1 >= S1_FLOOR ? "pass" : "MISS"}`);
 console.log(`S2: ${s2.length ? `${kept} of ${s2.length} sampled precons kept their synergy (floor ${S2_KEPT} of ${S2_SAMPLE}) -- ${kept >= S2_KEPT ? "pass" : "MISS"}` : "no target-3 packages in the sample"}`);
 if (missing) console.log(`${missing} precon(s) had no page in ${pagesDir}`);
-const json = arg("--json");
-if (json) writeFileSync(json, JSON.stringify({ version, s1, s2, violations }, null, 1));
 if (violations.length) process.exit(1);
