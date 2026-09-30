@@ -15,9 +15,11 @@ import { allPartners, Constellation } from "./Constellation.js";
 import { useNarrow } from "./engine-parts.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+import { UpgradePackages } from "./UpgradePackages.js";
+import { defaultTarget, swapsOf } from "../lib/precon-upgrades.js";
 
 /** `/precons/:slug` (Precon mockup, 2026-09-27): the precon's theme and scores beside its
- *  commander's map, then the swaps that make its cards work together more, then the list. The page
+ *  commander's map, then its upgrade packages by bracket (#767), then the list. The page
  *  is the file `build-precons` wrote; only the map is drawn live, from the list, once the page is up. */
 export function PreconPage() {
   const { slug = "" } = useParams();
@@ -40,10 +42,9 @@ export function PreconPage() {
   return <PreconView page={rec.page} siblings={rec.siblings} />;
 }
 
-const MAX_BAR = (p: Page) => Math.max(1, ...p.swaps.flatMap((s) => [s.out.connections, s.in.connections]));
-
 function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord["siblings"] }) {
-  const max = MAX_BAR(p);
+  const opening = defaultTarget(p);
+  const upgrades = opening ? swapsOf(p.packages!.find((k) => k.target === opening)!).length : 0;
   const pip = p.identity.map((c) => `{${c}}`).join("");
   return (
     <div className="flex flex-col gap-12 py-6" data-testid="precon-page">
@@ -70,10 +71,10 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
           <p className="max-w-[60ch] text-lg">
             {/* SAID AS WHAT IT IS: an engine that reads no link is not a deck with none (Yidris, Zedruu). */}
             {p.commanderLinks > 0 ? `${p.commanders[0]} works with ${p.commanderLinks} of its cards.` : `No card in it links to ${p.commanders[0]} in a way the engine reads yet.`}
-            {p.swaps.length ? ` ${spell(p.swaps.length)} swaps below give its loosest cards a job in its plan.` : ""}
+            {upgrades ? ` ${spell(upgrades)} swaps below upgrade it, at the bracket you play at.` : ""}
           </p>
           <div className="flex flex-wrap gap-2">
-            {p.swaps.length ? <a href="#swaps" className="inline-flex min-h-11 items-center rounded-full bg-(--accent) px-5 font-medium text-(--accent-foreground)">See the {spell(p.swaps.length).toLowerCase()} swaps ↓</a> : null}
+            {upgrades ? <a href="#upgrades" className="inline-flex min-h-11 items-center rounded-full bg-(--accent) px-5 font-medium text-(--accent-foreground)">See the upgrades ↓</a> : null}
             {p.report ? <a href={p.report} className="inline-flex min-h-11 items-center rounded-full border border-(--separator) px-5 font-medium hover:border-(--foreground)">Open the full report</a> : null}
           </div>
         </div>
@@ -82,48 +83,24 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
         </div>
       </section>
 
-      {p.swaps.length ? (
-        <section id="swaps" className="flex scroll-mt-24 flex-col gap-3" aria-labelledby="swaps-title">
-          <span className="eyebrow text-(--muted)">Upgrade for synergy</span>
-          <h2 id="swaps-title" className="text-2xl font-bold">{spell(p.swaps.length)} swaps that make the deck work together</h2>
-          <p className="max-w-[70ch] text-(--muted)">Each card out works with few other cards in the deck; each card in works with many. The bars count the deck cards each one works with.</p>
-          {/* SIDE BY SIDE AS THE WIDTH ALLOWS (designer review 2026-09-29): each swap row spanned the
-            *  screen, and at 3840 "TAKE OUT" sat at the left edge, "PUT IN" at half way and the bars
-            *  at the far right, 1,700px of row between them. A row keeps its own out -> in -> bars
-            *  shape; a wide screen takes two, three or four of them across. */}
-          {/* AN EVEN COUNT SPLITS EVENLY (designer review 2026-09-30): four swaps in auto-fit's three
-            *  columns left the fourth alone with two thirds of its row empty. */}
-          <ul className={`grid gap-2.5 ${p.swaps.length % 2 === 0 ? "min-[100rem]:grid-cols-2 min-[200rem]:grid-cols-4" : "[grid-template-columns:repeat(auto-fit,minmax(min(100%,40rem),1fr))]"}`} data-testid="precon-swaps">
-            {p.swaps.map((s) => (
-              <li key={s.in.name} className="grid gap-x-4 gap-y-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 sm:grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)_12rem] sm:items-center">
-                <div className="flex flex-col"><span className="eyebrow text-(--muted)">Take out</span><b>{s.out.name}</b><span className="text-sm text-(--muted)">works with {s.out.connections} of its cards</span></div>
-                <span aria-hidden="true" className="text-xl text-(--accent)">→</span>
-                <div className="flex items-center gap-3">
-                  {s.in.art ? <img src={cardImageUrl(s.in.art) ?? undefined} alt="" width={488} height={680} loading="lazy" className="w-14 shrink-0 rounded-[4.5%/3.3%] shadow-md shadow-black/40" /> : null}
-                  <div className="flex min-w-0 flex-col"><span className="eyebrow text-(--accent)">Put in</span><Link to={`/cards/${s.in.slug}`} className="font-bold hover:text-(--accent)">{s.in.name}</Link><span className="text-sm text-(--muted)">works with {s.in.connections} of its cards</span></div>
-                </div>
-                <div className="flex flex-col gap-1.5" aria-hidden="true">
-                  <Bar n={s.out.connections} max={max} tone="bg-(--fill)" />
-                  <Bar n={s.in.connections} max={max} tone="bg-(--accent)" />
-                </div>
-                {s.in.reason ? <p className="border-t border-(--separator) pt-2 text-sm text-(--muted) sm:col-span-4">{s.in.reason}</p> : null}
-              </li>
-            ))}
-          </ul>
-          {p.route ? (
-            <div className="flex items-center gap-3 rounded-(--radius) border border-dashed border-(--accent) p-3">
-              {p.route.art ? <img src={cardImageUrl(p.route.art) ?? undefined} alt="" width={488} height={680} loading="lazy" className="w-14 shrink-0 rounded-[4.5%/3.3%]" /> : null}
-              <div className="flex flex-col"><span className="eyebrow text-(--accent)">Opens a route</span><Link to={`/cards/${p.route.slug}`} className="font-bold hover:text-(--accent)">{p.route.name}</Link><span className="text-sm text-(--muted)">{p.route.reach} of its cards reach {p.route.to} through it.</span></div>
-            </div>
-          ) : null}
-          {p.gaps.length ? (
-            <p className="text-sm text-(--muted)">
-              Also worth knowing: {p.gaps.map((g, i) => <span key={g.group}>{i === 0 ? "" : i === p.gaps.length - 1 ? " and " : ", "}<b className="text-(--foreground)">{g.target - g.have} short on {g.group.toLowerCase()}</b></span>)} for a typical Commander deck.
-              {p.report ? <> The <a href={p.report} className="text-(--accent) underline underline-offset-2">full report</a> lists cards for {p.gaps.length === 1 ? "it" : p.gaps.length === 2 ? "both" : "each"}.</> : null}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
+      <UpgradePackages page={p}>
+        {p.route || p.gaps.length ? (
+          <>
+            {p.route ? (
+              <div className="flex items-center gap-3 rounded-(--radius) border border-dashed border-(--accent) p-3">
+                {p.route.art ? <img src={cardImageUrl(p.route.art) ?? undefined} alt="" width={488} height={680} loading="lazy" className="w-14 shrink-0 rounded-[4.5%/3.3%]" /> : null}
+                <div className="flex flex-col"><span className="eyebrow text-(--accent)">Opens a route</span><Link to={`/cards/${p.route.slug}`} className="font-bold hover:text-(--accent)">{p.route.name}</Link><span className="text-sm text-(--muted)">{p.route.reach} of its cards reach {p.route.to} through it.</span></div>
+              </div>
+            ) : null}
+            {p.gaps.length ? (
+              <p className="text-sm text-(--muted)">
+                {p.gaps.map((g, i) => <span key={g.group}>{i === 0 ? "" : i === p.gaps.length - 1 ? " and " : ", "}<b className="text-(--foreground)">{g.target - g.have} short on {g.group.toLowerCase()}</b></span>)}, against a typical Commander deck.
+                {p.report ? <> The <a href={p.report} className="text-(--accent) underline underline-offset-2">full report</a> lists cards for {p.gaps.length === 1 ? "it" : p.gaps.length === 2 ? "both" : "each"}.</> : null}
+              </p>
+            ) : null}
+          </>
+        ) : null}
+      </UpgradePackages>
 
       <section className="flex flex-col gap-1" aria-labelledby="list-title">
         <span className="eyebrow text-(--muted)">The decklist</span>
@@ -160,14 +137,6 @@ function Fact({ label, value, note }: { label: string; value: React.ReactNode; n
       <b className="text-xl">{value}</b>
       {note ? <span className="text-xs text-(--muted)">{note}</span> : null}
     </div>
-  );
-}
-
-function Bar({ n, max, tone }: { n: number; max: number; tone: string }) {
-  return (
-    <span className="flex items-center gap-2 text-xs tabular-nums text-(--muted)">
-      <span className={`block h-2 rounded ${tone}`} style={{ width: `${Math.max(4, (n / max) * 100)}%` }} />{n}
-    </span>
   );
 }
 

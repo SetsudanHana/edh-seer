@@ -1,0 +1,76 @@
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import { expect, test } from "vitest";
+import type { UpgradePackage, UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
+import type { PreconPage } from "../lib/precon-page.js";
+import { beside, UpgradePackages } from "./UpgradePackages.js";
+
+const swap = (out: string, into: string): UpgradeSwap => ({
+  kind: "land", out: { name: out, reason: `${out} enters tapped.` }, in: { name: into, reason: `${into} never enters tapped and makes white or black.` },
+});
+const pkg = (target: 2 | 3 | 4, lands: number, bringDown: UpgradeSwap[] = []): UpgradePackage => ({
+  target, from: "3", bringDown,
+  sections: [
+    { id: "lands", swaps: Array.from({ length: lands }, (_, i) => swap(`Tapped ${i}`, `Untapped ${i}`)) },
+    { id: "ramp", swaps: [] },
+  ],
+});
+const page = (over: Partial<PreconPage> = {}): PreconPage => ({
+  slug: "p", name: "P", setCode: "X", setName: "X", releaseDate: null, commanders: ["C"], identity: ["W", "B"], theme: null, synergy: null,
+  bracket: { band: "3", gameChangers: 1, combos: 0 }, commanderLinks: 0, swaps: [], route: null, gaps: [], decklist: [],
+  packages: [pkg(2, 2, [{ kind: "bring-down", out: { name: "Smothering Tithe", reason: "Smothering Tithe is on the official Game Changer list." }, in: { name: "Mind Stone", reason: "Mind Stone does the same ramp." } }]), pkg(3, 5), pkg(4, 1)],
+  ...over,
+});
+const show = (p: PreconPage) => render(<MemoryRouter><UpgradePackages page={p} /></MemoryRouter>);
+
+test("opens on the bracket the precon already sits in, and says what that bracket allows", () => {
+  show(page());
+  expect(screen.getByRole("button", { name: "Bracket 3" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByText(/Up to three Game Changers/)).toBeInTheDocument();
+  expect(screen.getByText(/after them the deck still fits bracket 3/)).toBeInTheDocument();
+});
+
+test("a section shows three swaps, and the rest on request", () => {
+  show(page());
+  const lands = screen.getByRole("heading", { name: "Lands" }).parentElement!;
+  expect(within(lands).getAllByRole("listitem")).toHaveLength(3);
+  fireEvent.click(within(lands).getByRole("button", { name: "Show 2 more" }));
+  expect(within(lands).getAllByRole("listitem")).toHaveLength(5);
+  // An empty section is not drawn.
+  expect(screen.queryByRole("heading", { name: "Ramp" })).toBeNull();
+});
+
+test("switching down a bracket shows the cuts that get the deck there first", () => {
+  show(page());
+  fireEvent.click(screen.getByRole("button", { name: "Bracket 2" }));
+  expect(screen.getByRole("heading", { name: "First, to reach bracket 2" })).toBeInTheDocument();
+  expect(screen.getByText(/It starts at bracket 3, so the first swap brings it down/)).toBeInTheDocument();
+});
+
+test("the summary says what the swaps do to the synergy score, and when a higher bracket changes nothing", () => {
+  const two = { ...pkg(2, 2), after: { band: "1-2" as const, synergy: 3.4, mana: 0.9 } };
+  const three = { ...pkg(3, 2), after: { band: "1-2" as const, synergy: 3.4, mana: 0.9 } };
+  show(page({ bracket: { band: "1-2", gameChangers: 0, combos: 0 }, synergy: { score: 3, band: "Focused" }, packages: [two, three] }));
+  expect(screen.getByText(/its synergy score goes from 3.0 to 3.4 of 5/)).toBeInTheDocument();
+  expect(screen.queryByTestId("precon-same-swaps")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Bracket 3" }));
+  expect(screen.getByTestId("precon-same-swaps")).toHaveTextContent("the same swaps as at bracket 2");
+});
+
+test("a bracket no swap can reach says why instead of offering a package", () => {
+  show(page({ packages: [pkg(3, 1), pkg(4, 1)], unreachable: [2] }));
+  fireEvent.click(screen.getByRole("button", { name: "Bracket 2" }));
+  expect(screen.getByTestId("precon-unreachable")).toHaveTextContent("a commander can’t be swapped out");
+});
+
+test("a reason beside its card's name drops the name it opens with", () => {
+  expect(beside("Orzhov Basilica", "Orzhov Basilica enters tapped.")).toBe("Enters tapped.");
+  expect(beside("Pious Evangel // Wayward Disciple", "Pious Evangel puts cards into the graveyard")).toBe("Puts cards into the graveyard");
+  expect(beside("Crib Swap", "When a creature enters, Crib Swap…")).toBe("When a creature enters, Crib Swap…");
+  expect(beside("Path to Exile", "Path to Exile is the same removal for 2 less mana.")).toBe("The same removal for 2 less mana.");
+});
+
+test("a page built before packages draws nothing", () => {
+  const { container } = show(page({ packages: undefined }));
+  expect(container).toBeEmptyDOMElement();
+});

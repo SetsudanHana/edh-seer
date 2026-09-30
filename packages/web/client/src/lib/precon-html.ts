@@ -1,5 +1,6 @@
 import { slugOf } from "@edh-seer/matcher/slug";
 import type { PreconPage } from "./precon-page.js";
+import { afterLine, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_MEANING } from "./precon-upgrades.js";
 
 /** THE PRECON PAGES AS A CRAWLER READS THEM (and a reader, for the moment before the app boots):
  *  the same facts the React page draws, as plain HTML inside `.prerendered`, which the app hides
@@ -22,7 +23,8 @@ export function preconTitle(p: Pick<PreconPage, "name" | "setName">): string {
 }
 export function preconDescription(p: PreconPage): string {
   const lead = p.commanders.join(" and ");
-  const swaps = p.swaps.length ? ` ${p.swaps.length} swaps that make its cards work together, each with the reason written out.` : "";
+  const n = (p.packages ?? []).length;
+  const swaps = n ? ` Upgrades for bracket ${(p.packages ?? []).map((k) => k.target).join(", ")}, each swap with its reasons written out.` : "";
   return `${p.name}, the ${p.setName} Commander precon led by ${lead}${p.theme ? `: ${p.theme}` : ""}.${swaps}`;
 }
 
@@ -39,14 +41,25 @@ export function preconPageHtml(p: PreconPage, siblings: readonly PreconIndexEntr
     p.commanderLinks ? `${p.commanders[0] ? esc(p.commanders[0]) : "The commander"} works with ${p.commanderLinks} of its cards` : "",
   ].filter(Boolean);
   if (facts.length) lines.push(`    <p>${facts.join(" · ")}</p>`);
-  if (p.swaps.length) {
-    lines.push(`    <h2>Upgrades for synergy</h2>`);
-    lines.push(`    <ol>`);
-    for (const s of p.swaps) {
-      lines.push(`      <li>Take out ${esc(s.out.name)} (works with ${s.out.connections} of its cards), put in <a href="/cards/${esc(s.in.slug)}">${esc(s.in.name)}</a> (works with ${s.in.connections}).${s.in.reason ? ` ${esc(s.in.reason)}` : ""}</li>`);
+  for (const k of p.packages ?? []) {
+    lines.push(`    <h2>Upgrades at bracket ${k.target}</h2>`);
+    lines.push(`    <p>${esc(TARGET_MEANING[k.target])} ${k.target === 2 ? esc(GAME_CHANGER) : ""}${esc(startsAbove(k))}</p>`.replace(" </p>", "</p>"));
+    lines.push(`    <p>${esc(afterLine(k, p.synergy?.score ?? null))}${sameAsBelow(k, p.packages ?? []) ? ` ${esc(sameAsBelow(k, p.packages ?? []))}` : ""}</p>`);
+    const groups = [
+      ...(k.bringDown.length ? [{ title: `First, to reach bracket ${k.target}`, swaps: k.bringDown }] : []),
+      ...k.sections.filter((x) => x.swaps.length).map((x) => ({ title: SECTION_TITLE[x.id], swaps: x.swaps })),
+    ];
+    for (const g of groups) {
+      lines.push(`    <h3>${esc(g.title)}</h3>`);
+      lines.push(`    <ol>`);
+      for (const w of g.swaps) {
+        const slug = p.packageCards?.[w.in.name]?.slug ?? slugOf(w.in.name);
+        lines.push(`      <li>Take out ${esc(w.out.name)}: ${esc(w.out.reason)} Put in <a href="/cards/${esc(slug)}">${esc(w.in.name)}</a>: ${esc(w.in.reason)}</li>`);
+      }
+      lines.push(`    </ol>`);
     }
-    lines.push(`    </ol>`);
   }
+  for (const t of p.unreachable ?? []) lines.push(`    <p>No swaps bring this deck to bracket ${t}: what keeps it above is its commander, or a combo made with its commander.</p>`);
   if (p.route) lines.push(`    <p>Opens a route: <a href="/cards/${esc(p.route.slug)}">${esc(p.route.name)}</a>. ${p.route.reach} of its cards reach ${esc(p.route.to)} through it.</p>`);
   if (p.gaps.length) lines.push(`    <p>Also short, against a typical Commander deck: ${p.gaps.map((g) => `${esc(g.group.toLowerCase())} ${g.have} of ${g.target}`).join(", ")}.</p>`);
   lines.push(`    <h2>The decklist</h2>`);
