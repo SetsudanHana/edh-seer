@@ -13,6 +13,7 @@ import { cardImageUrl } from "./card-node.js";
 import { CardDrawerProvider, useCardDrawer } from "./card-drawer.js";
 import { allPartners, Constellation } from "./Constellation.js";
 import { useNarrow } from "./engine-parts.js";
+import { useIsNarrow } from "../lib/use-narrow.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 
 /** `/precons/:slug` (Precon mockup, 2026-09-27): the precon's theme and scores beside its
@@ -46,7 +47,11 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
   const pip = p.identity.map((c) => `{${c}}`).join("");
   return (
     <div className="flex flex-col gap-12 py-6" data-testid="precon-page">
-      <section className="grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)]">
+      {/* THE MAP TAKES THE ROW (designer review 2026-09-30, #770): capped at 30rem it was a 480x393
+        *  picture in the top-right corner of a 2560 screen with ~1,500px of nothing between it and
+        *  the header. The header keeps its measure; the map has the rest, 16:9 from 1600px, held to
+        *  the screen's height so the swaps still start on the first screen. */}
+      <section className="grid items-center gap-8 lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)]">
         <div className="flex flex-col gap-3">
           <nav aria-label="Breadcrumb" className="text-sm text-(--muted)"><Link to="/precons" className="hover:text-(--foreground)">Precons</Link> › {p.setName}</nav>
           <span className="eyebrow text-(--muted)">Commander precon · {p.setName}{p.releaseDate ? ` · ${year(p.releaseDate)}` : ""}</span>
@@ -70,7 +75,9 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
             {p.report ? <a href={p.report} className="inline-flex min-h-11 items-center rounded-full border border-(--separator) px-5 font-medium hover:border-(--foreground)">Open the full report</a> : null}
           </div>
         </div>
-        <PreconMap page={p} />
+        <div className="min-w-0 w-full justify-self-center lg:max-w-[calc(55svh*1.2222)] min-[100rem]:max-w-[calc(55svh*1.7778)]">
+          <PreconMap page={p} />
+        </div>
       </section>
 
       {p.swaps.length ? (
@@ -82,7 +89,9 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
             *  screen, and at 3840 "TAKE OUT" sat at the left edge, "PUT IN" at half way and the bars
             *  at the far right, 1,700px of row between them. A row keeps its own out -> in -> bars
             *  shape; a wide screen takes two, three or four of them across. */}
-          <ul className="grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,40rem),1fr))]" data-testid="precon-swaps">
+          {/* AN EVEN COUNT SPLITS EVENLY (designer review 2026-09-30): four swaps in auto-fit's three
+            *  columns left the fourth alone with two thirds of its row empty. */}
+          <ul className={`grid gap-2.5 ${p.swaps.length % 2 === 0 ? "min-[100rem]:grid-cols-2 min-[200rem]:grid-cols-4" : "[grid-template-columns:repeat(auto-fit,minmax(min(100%,40rem),1fr))]"}`} data-testid="precon-swaps">
             {p.swaps.map((s) => (
               <li key={s.in.name} className="grid gap-x-4 gap-y-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 sm:grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)_12rem] sm:items-center">
                 <div className="flex flex-col"><span className="eyebrow text-(--muted)">Take out</span><b>{s.out.name}</b><span className="text-sm text-(--muted)">works with {s.out.connections} of its cards</span></div>
@@ -117,12 +126,16 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
       <section className="flex flex-col gap-1" aria-labelledby="list-title">
         <span className="eyebrow text-(--muted)">The decklist</span>
         <h2 id="list-title" className="mb-2 text-2xl font-bold">What&rsquo;s in the box</h2>
+        {/* THE TYPES SIDE BY SIDE AND THE NAMES IN COLUMNS (designer review 2026-09-30, #770): each
+          *  type was one running line of names, 3,600px long at 3840. */}
+        <div className="grid items-start gap-x-8 min-[100rem]:grid-cols-2 min-[200rem]:grid-cols-4">
         {p.decklist.map((g) => (
-          <div key={g.group} className="grid gap-1 border-t border-(--separator) py-2.5 sm:grid-cols-[12rem_1fr] sm:gap-4">
+          <div key={g.group} className="flex flex-col gap-2 border-t border-(--separator) py-3">
             <h3 className="text-sm font-semibold">{g.group} · {g.cards.reduce((t, c) => t + c.count, 0)}</h3>
-            <p className="text-sm">{g.cards.map((c, i) => <span key={c.name}>{i > 0 ? " · " : ""}{c.count > 1 ? `${c.count} ` : ""}<Link to={`/cards/${slugOfName(c.name)}`} className="hover:text-(--accent)">{c.name}</Link></span>)}</p>
+            <ul className="columns-2 sm:columns-[11rem] gap-x-6 text-sm">{g.cards.map((c) => <li key={c.name} className="break-inside-avoid py-0.5">{c.count > 1 ? `${c.count} ` : ""}<Link to={`/cards/${slugOfName(c.name)}`} className="hover:text-(--accent)">{c.name}</Link></li>)}</ul>
           </div>
         ))}
+        </div>
       </section>
 
       {siblings.length ? (
@@ -171,7 +184,7 @@ function PreconMap({ page }: { page: Page }) {
     return () => { live = false; };
   }, [page]);
   if (!data?.graph) {
-    return <div className="flex aspect-[880/720] w-full items-center justify-center rounded-(--radius) text-sm text-(--muted)">{data === null ? "" : "Drawing the commander's map"}</div>;
+    return <div className="flex aspect-[880/720] min-[100rem]:aspect-[16/9] w-full items-center justify-center rounded-(--radius) text-sm text-(--muted)">{data === null ? "" : "Drawing the commander's map"}</div>;
   }
   return (
     <CardDrawerProvider graph={data.graph}>
@@ -183,6 +196,7 @@ function PreconMap({ page }: { page: Page }) {
 function MapOf({ data, commanders }: { data: AnalyzeResponse; commanders: string[] }) {
   const drawer = useCardDrawer();
   const narrow = useNarrow();
+  const broad = !useIsNarrow(1599);
   const [lit, setLit] = useState<string | null>(null);
   const model = useMemo(() => buildEngineModel(data.report, data.graph!), [data]);
   const wanted = new Set(commanders.flatMap((c) => [c, c.split(" // ")[0]!]));
@@ -190,7 +204,7 @@ function MapOf({ data, commanders }: { data: AnalyzeResponse; commanders: string
   const orbit = useMemo(() => (id ? buildOrbit(model, id) : null), [model, id]);
   if (!orbit) return null;
   return (
-    <Constellation model={model} orbit={orbit} trail={[]} lit={lit} still={false} narrow={narrow} pick={allPartners}
+    <Constellation model={model} orbit={orbit} trail={[]} lit={lit} still={false} narrow={narrow} broad={broad} pick={allPartners}
       onTap={(t) => { const c = model.cards.get(t); if (c && !c.isToken) drawer.open(drawer.known.has(c.name) ? c.name : c.physical); setLit(t); }}
       onHover={setLit} onBlank={() => setLit(null)} />
   );
