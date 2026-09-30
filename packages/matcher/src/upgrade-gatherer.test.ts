@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import type { Card, Combo } from "@edh-seer/engine";
 import { bringDown } from "./bracket-guard.js";
 import { gatherPackage, type GatherInput } from "./upgrade-gatherer.js";
-import type { LandOption, RoleOption } from "./upgrade-sections.js";
+import type { RoleOption } from "./upgrade-sections.js";
 import type { LandFacts } from "./land-score.js";
 
 const card = (name: string, manaValue: number, gameChanger?: boolean): Card => ({
