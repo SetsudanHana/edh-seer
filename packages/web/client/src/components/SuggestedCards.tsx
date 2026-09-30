@@ -68,7 +68,8 @@ export function SuggestedCards({ cards, empty, label }: {
 }) {
   if (cards === undefined) {
     return (
-      <p role="status" className="text-sm text-(--muted) flex items-center gap-2 min-h-11">
+      // `aria-busy`: the list is on its way. The UI review capture waits for it before measuring.
+      <p role="status" aria-busy="true" className="text-sm text-(--muted) flex items-center gap-2 min-h-11">
         {/* lucide `loader-circle`, drawn inline, never a glyph. */}
         <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           strokeWidth="2" strokeLinecap="round" className="shrink-0 motion-safe:animate-spin">

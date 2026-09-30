@@ -18,7 +18,8 @@
  *
  *  Output lands in `persona-shots/<surface>/`, already gitignored. */
 import { mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { chromium, type BrowserContext, type Page } from "@playwright/test";
 import { AxeBuilder } from "@axe-core/playwright";
 import { parseDecklistSections } from "../../packages/data/src/index.js";
@@ -101,9 +102,33 @@ const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true };
  *  expanded frames and no per-selector metrics, which do not change with width. */
 const WIDE = { viewport: { width: 2560, height: 1440 } };
 const UHD = { viewport: { width: 3840, height: 2160 } };
-/** Below this share of the viewport a section is an EMPTY BAND (DESIGN.md, Width). CEILING: a first
- *  guess, printed rather than gated until today's pages are measured and a floor is pre-registered. */
+/** Below this share of the viewport a section is an EMPTY BAND (DESIGN.md, Width). PRE-REGISTERED
+ *  2026-09-30 (#770), after measuring the report (two decks) and the site run at 1920 / 2560 / 3840:
+ *  report chapters sit at 74-82% (the chapter rail and the report rail take the rest), site pages at
+ *  a 97% median, and every section left under 60% was either a measuring artefact (fixed) or a page
+ *  with little to show, named in `empty-band-allowlist.json`. A new one fails the run. */
 const EMPTY_BAND = 0.6;
+const BAND_ALLOW = join(dirname(fileURLToPath(import.meta.url)), "empty-band-allowlist.json");
+
+/** One section under the floor, as the run met it. */
+export type Band = { step: string; viewport: number; section: string; used: number };
+/** A named exception: the run's surface and step, a section-name pattern, and why it is allowed
+ *  under the floor. The surface is part of the name: the report and the site runs both have a
+ *  step called `card`. */
+export type BandAllow = { surface: string; step: string; section: string; why: string };
+
+/** THE GATE, AS A RATCHET BOTH WAYS -- `scripts/check_width_caps.mjs`'s shape. A band no entry names
+ *  fails; so does an entry for a step this run captured that matched nothing, or the list would
+ *  keep slack a fixed page left behind. Entries for steps the run never visited are not judged. */
+export function bandGate(bands: readonly Band[], allow: readonly BandAllow[], steps: ReadonlySet<string>): { fail: Band[]; stale: BandAllow[] } {
+  const hits = new Set<BandAllow>();
+  const fail = bands.filter((b) => {
+    const e = allow.find((a) => a.step === b.step && new RegExp(a.section).test(b.section));
+    if (e) hits.add(e);
+    return !e;
+  });
+  return { fail, stale: allow.filter((a) => steps.has(a.step) && !hits.has(a)) };
+}
 
 /** HOW MUCH OF THE SCREEN EACH SECTION USES: the horizontal extent of everything visible inside it,
  *  over the viewport width. A lone 65ch paragraph centred on a 2560 screen reads low, and that is
@@ -133,17 +158,25 @@ async function usedWidth(page: Page): Promise<{ viewport: number; sections: { na
     });
     // A SECTION IS JUDGED WITH ITS ROW (#770). Two sections side by side in a grid each span half
     // the screen, and together they fill it; scored alone, a well-used two-column row read as two
-    // empty bands. So a section's extent is joined with every section beside it: one that overlaps
-    // it vertically and neither holds nor sits inside it.
+    // empty bands. So a section's extent is joined with everything painted beside it: every leaf
+    // (text, image, drawing) outside it with at least half its height, up to 40px, beside it. Leaves, not
+    // sections: the neighbour is often not a section -- the commander page's map beside "Pair
+    // with", Glance's first turns beside "How you win", the precon index's columns -- and those
+    // rows read as 27-54% empty bands when only sections were joined (measured 2026-09-30).
+    const leaves = [...document.querySelectorAll<HTMLElement>("main *")].filter((d) => {
+      if (d.children.length !== 0 && !/^(IMG|SVG|CANVAS|VIDEO|svg)$/.test(d.tagName)) return false;
+      const r = d.getBoundingClientRect();
+      return r.width >= 1 && r.height >= 1 && getComputedStyle(d).visibility !== "hidden";
+    }).map((d) => ({ d, r: d.getBoundingClientRect() }));
     const sections = roots.map((el, i) => {
       let { lo, hi } = boxes[i]!;
       const b = boxes[i]!;
-      roots.forEach((other, j) => {
-        const o = boxes[j]!;
-        if (j === i || other.contains(el) || el.contains(other) || o.hi <= o.lo) return;
-        if (Math.min(b.bottom, o.bottom) - Math.max(b.top, o.top) <= 0) return;
-        lo = Math.min(lo, o.lo); hi = Math.max(hi, o.hi);
-      });
+      for (const { d, r } of leaves) {
+        if (el.contains(d)) continue;
+        // Half the leaf's own height, to 40px: a leaf is usually one line of text, 20px tall.
+        if (Math.min(b.bottom, r.bottom) - Math.max(b.top, r.top) < Math.min(40, r.height / 2)) continue;
+        lo = Math.min(lo, Math.max(0, r.left)); hi = Math.max(hi, Math.min(vw, r.right));
+      }
       const name = el.id || el.getAttribute("aria-label") || el.dataset.chapter
         || el.querySelector("h1,h2,h3")?.textContent?.trim().slice(0, 40) || el.tagName.toLowerCase();
       return { name, used: hi > lo ? Math.round(((hi - lo) / vw) * 100) / 100 : 0 };
@@ -563,6 +596,7 @@ async function main(runPath: string): Promise<void> {
   try {
   const manifest: Record<string, unknown>[] = [];
   const metrics: Record<string, unknown> = {};
+  const bands: Band[] = [];
   const axe: Record<string, unknown> = {};
 
   // --- the walkthrough pass: every step, both widths, one deck per seat -----------------------
@@ -610,6 +644,7 @@ async function main(runPath: string): Promise<void> {
             metrics[`${key}-width-${w.viewport}`] = w;
             for (const x of w.sections.filter((x) => x.used < EMPTY_BAND)) {
               console.log(`  EMPTY BAND ${key} @${w.viewport}: "${x.name}" uses ${Math.round(x.used * 100)}% of the width`);
+              bands.push({ step: step.id, viewport: w.viewport, section: x.name, used: x.used });
             }
           }
           if (label === "wide" || label === "uhd") {
@@ -718,6 +753,13 @@ async function main(runPath: string): Promise<void> {
     const mm = m as { overflowsHorizontally?: boolean; scrollWidth?: number; clientWidth?: number };
     if (mm.overflowsHorizontally) console.log(`OVERFLOW ${id}: scrollWidth ${mm.scrollWidth} > clientWidth ${mm.clientWidth}`);
   }
+  // THE SPACE GATE (#770). Pre-registered floor, named exceptions; see `bandGate`.
+  const allowed = (JSON.parse(readFileSync(BAND_ALLOW, "utf8")) as { entries: BandAllow[] }).entries;
+  const gate = bandGate(bands, allowed.filter((a) => a.surface === run.surface), new Set(run.steps.map((s) => s.id)));
+  for (const b of gate.fail) console.log(`FAIL empty band: ${b.step} @${b.viewport} "${b.section}" uses ${Math.round(b.used * 100)}% (floor ${EMPTY_BAND * 100}%)`);
+  for (const a of gate.stale) console.log(`FAIL stale allowlist entry: ${a.step} /${a.section}/ matched nothing -- remove it from ${BAND_ALLOW}`);
+  if (gate.fail.length || gate.stale.length) process.exitCode = 1;
+  else console.log(`space gate: ok (${bands.length} allowlisted band(s))`);
   console.log(`now run the judge: .claude/skills/ui-review/SKILL.md`);
   } finally {
     await browser.close();
@@ -772,6 +814,15 @@ function selfTest(): void {
   // The regression this metric shipped with: below the fold is not offscreen.
   eq(isOffscreen({ x: 0, y: 3000, w: 10, h: 10 }, vp, 5000), false, "below the fold is on the page");
   eq(isOffscreen({ x: 0, y: 5000, w: 10, h: 10 }, vp, 5000), true, "past the document bottom is not");
+
+  const allow: BandAllow[] = [{ surface: "site", step: "card", section: "^What it does", why: "sparse page" }, { surface: "site", step: "gone", section: "x", why: "fixed" }, { surface: "site", step: "plan", section: "^Old$", why: "fixed" }];
+  const g = bandGate([
+    { step: "card", viewport: 2560, section: "What it does in a deck", used: 0.4 },
+    { step: "mana", viewport: 2560, section: "Curve", used: 0.3 },
+  ], allow, new Set(["card", "mana", "plan"]));
+  eq(g.fail.map((b) => b.section), ["Curve"], "a band no entry names fails");
+  // "plan" ran and matched nothing: stale. "gone" never ran: not judged.
+  eq(g.stale.map((a) => a.step), ["plan"], "an entry for a step that ran and matched nothing is stale");
 
   console.log("self-test: ok");
 }
