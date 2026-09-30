@@ -17,6 +17,7 @@ import { searchWithState, stateFromSearch } from "./lib/game-state.js";
 import type { GameState } from "@edh-seer/engine";
 import { deckSourceOf, importDeck } from "./lib/deck-import.js";
 import { ReportLoading } from "./components/ReportLoading.js";
+import { HomeSide, useIntroLift } from "./components/HomeSide.js";
 
 const CardPage = lazy(() => import("./components/CardPage.js").then((m) => ({ default: m.CardPage })));
 const CardSearch = lazy(() => import("./components/CardSearch.js").then((m) => ({ default: m.CardSearch })));
@@ -249,6 +250,9 @@ export default function App() {
    *  introduce itself. Named once because the lead above the form and the example-deck button below
    *  it are two halves of the same empty state and must appear and vanish together. */
   const firstVisit = !data && !loading && !fromLink && decklist.trim() === "";
+  // THE INTRO'S FIGURES AND WORKED PAIRING RIDE IN THE PITCH FROM 1600px (mockup A, #770).
+  const liftSlot = useRef<HTMLDivElement>(null);
+  useIntroLift(liftSlot, firstVisit);
   // What the loading skeleton names: the same summary the collapsed deck bar prints, in cards, not
   // lines (#759: "88 lines" beside "read 100 of 100 cards" was two numbers for one deck).
   const loadingCards = cardCount(commanders, decklist) ?? undefined;
@@ -442,6 +446,7 @@ export default function App() {
             You also get your mana curve, land count, ramp, draw and removal counts, and combos. No
             account needed.
           </p>
+          <div ref={liftSlot} className="home-lift flex flex-col" />
         </div>
       )}
       {
@@ -501,6 +506,10 @@ export default function App() {
         shareLink={link}
         hasReport={!!data}
       />
+      {/* WHERE TO START, OR WHAT WE READ: the home page's third column from 1600px (mockup A). */}
+      {!data && !loading && !fromLink ? (
+        <HomeSide commanders={commanders} decklist={decklist} onPick={(c, d) => { setCommanders(c); setDecklist(d); }} />
+      ) : null}
       {error && (
         <div className="text-danger border border-danger rounded-(--radius) p-3 text-sm font-mono">{error}</div>
       )}
