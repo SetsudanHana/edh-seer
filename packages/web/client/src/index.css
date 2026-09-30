@@ -704,10 +704,11 @@ h1.intro-thesis { margin-block-end: 0; }
    intro never shifts when the app mounts (see `#root` above), and on a wide screen the form filled
    a third of it: 950px of nothing at 2560 between the form and the intro, 1,600px at 3840. The
    reserve stays -- it is what keeps CLS at zero -- and the list box grows into it, so a 100-card
-   list shows whole instead of ten lines at a time. `main` is as tall as the reserve and no taller,
-   so the intro starts exactly where it did. */
+   list shows whole instead of ten lines at a time. `main` is the reserve less the site header above
+   it, so the form's buttons stay on the first screen (designer review 2026-09-30: at the full 100svh
+   "Analyse deck" sat on the bottom edge, cut off), and the intro starts where it did. */
 @media (min-width: 80rem) {
-  html[data-route="home"]:not([data-report]) #root main { min-block-size: 100svh; }
+  html[data-route="home"]:not([data-report]) #root main { min-block-size: calc(100svh - var(--site-header-h, 0px)); }
   html[data-route="home"]:not([data-report]) #root main > .deck-form { flex: 1 1 auto; align-self: stretch; }
   html[data-route="home"]:not([data-report]) .deck-form-list { flex: 1 1 auto; }
   html[data-route="home"]:not([data-report]) .deck-form-list > textarea { flex: 1 1 auto; }
