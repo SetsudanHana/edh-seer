@@ -733,6 +733,12 @@ export const EFFECT_KINDS = [
   // table's whole life, and an emblem is not a token (CR 111.1 vs 114.1). Forms an edge only to the
   // emblem NODE the card structurally creates (`createsReasons`, matcher), never to a token payoff.
   "emblem",
+  // RETURNING A PERMANENT OR A SPELL TO ITS OWNER'S HAND (#802): Boomerang, Hullbreaker Horror,
+  // Narset's Reversal, Remand. The subject's `zone` says which -- battlefield or stack. It makes the
+  // card castable again and NOTHING MORE (owner, 2026-09-30): the recast still costs its mana, so a
+  // bounce is a loop only when producers or discounts pay for it. A fact for loop economics, not a
+  // free-recast synergy; until 2026-09-30 it derived an empty kind and the return was invisible.
+  "bounce",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];

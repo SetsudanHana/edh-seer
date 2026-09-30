@@ -107,6 +107,10 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     // interaction, same band as player-life-loss/lifegain. NOT graveyard-recursion (0.8) despite
     // the similar name: these two kinds are opposites (deny vs. reuse a graveyard).
     "graveyard-hate": 0.3,
+    // A BOUNCE (#802) makes a card castable again and nothing more: the recast is paid in full
+    // (owner, 2026-09-30). It derived an empty kind until then, weighted UNKNOWN_KIND_WEIGHT, so it
+    // keeps that weight and no edge's weight moves with the relabel.
+    bounce: 0.2,
     // A PROCESSOR (AF7b, 2026-09-16): spending an opponent's exiled card is a rider on a body --
     // Nullifier counters, Ruin Processor gains life, Blight Herder makes tokens -- so it sits between
     // hate (0.3) and recursion (0.8), neither a role nor a whole engine.

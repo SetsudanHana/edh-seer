@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
-import { actionEffectKind, extraPhaseName } from "./effect-kind.js";
+import { actionEffectKind, bounceOrigin, extraPhaseName } from "./effect-kind.js";
+import { deriveAbilities } from "./derive.js";
 import { EFFECT_KINDS } from "../schema.js";
 
 test("the origin zone decides the kind, because the zone is the card", () => {
@@ -822,4 +823,39 @@ test("a tutored put into a graveyard is not a mill", () => {
     .not.toBe("mill");
   expect(actionEffectKind({ ...put, object: "the rest" }, "Reveal the top five cards of your library. Put the rest into your graveyard."))
     .toBe("mill");
+});
+
+// #802: returning a spell or a permanent to its owner's hand. Live clause shapes, 2026-09-30.
+test("a return to hand from the battlefield or the stack is a bounce, with the zone on its subject", () => {
+  const narset = deriveAbilities([{ id: 1, abilityType: "spell", actions: [
+    { verb: "copy", object: "target instant or sorcery spell" },
+    { verb: "return", object: "target instant or sorcery spell", fromZone: "stack", toZone: "hand" },
+  ] }], "Narset's Reversal", { 1: "Copy target instant or sorcery spell, then return it to its owner's hand." }).abilities;
+  expect(narset.map((a) => a.effect.kind)).toEqual(["copy-spell", "bounce"]);
+  expect(narset[1]!.effect.subject).toMatchObject({ type: ["instant", "sorcery"], zone: "stack" });
+  const boomerang = deriveAbilities([{ id: 1, abilityType: "spell", actions: [
+    { verb: "return", object: "target permanent", fromZone: "battlefield", toZone: "hand" },
+  ] }], "Boomerang", { 1: "Return target permanent to its owner's hand." }).abilities[0]!;
+  expect(boomerang.effect).toMatchObject({ kind: "bounce", subject: { type: "permanent", zone: "battlefield" } });
+  expect(actionEffectKind({ verb: "put", object: "that spell", fromZone: "stack", toZone: "hand" }, "")).toBe("bounce");
+  // A card coming back from the GRAVEYARD to hand is still recursion.
+  expect(actionEffectKind({ verb: "return", object: "target creature card from your graveyard", fromZone: "graveyard", toZone: "hand" }, "")).toBe("graveyard-recursion");
+});
+
+test("an unstated origin is read off the object: a permanent is on the battlefield, a spell on the stack (#802)", () => {
+  const k = (object: string) => actionEffectKind({ verb: "return", object, toZone: "hand" }, "");
+  expect(k("another target creature you control")).toBe("bounce");
+  expect(k("target nonland permanent")).toBe("bounce");
+  expect(k("this enchantment")).toBe("bounce");
+  expect(k("target spell or permanent")).toBe("bounce");
+  expect(bounceOrigin({ verb: "return", object: "target creature you control", toZone: "hand" })).toBe("battlefield");
+  expect(bounceOrigin({ verb: "return", object: "target spell", toZone: "hand" })).toBe("stack");
+  expect(bounceOrigin({ verb: "return", object: "target spell or permanent", toZone: "hand" })).toBeUndefined();
+  // A CARD is in a hidden zone or a graveyard, and a bare pronoun says nothing.
+  expect(k("a creature card you own from outside the game")).toBeNull();
+  expect(k("that card")).toBeNull();
+  expect(k("it")).toBeNull();
+  const lion = deriveAbilities([{ id: 1, abilityType: "triggered", actions: [{ verb: "return", object: "a creature you control", toZone: "hand" }] }],
+    "Whitemane Lion", { 1: "When this creature enters, return a creature you control to its owner's hand." }).abilities[0]!;
+  expect(lion.effect).toMatchObject({ kind: "bounce", subject: { type: "creature", zone: "battlefield" } });
 });

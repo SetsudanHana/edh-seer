@@ -1177,8 +1177,7 @@
         "event": "return-to-hand"
       }
     ],
-    "effectKind": null,
-    "needsEffectKind": "bounce",
+    "effectKind": "bounce",
     "uses": []
   },
   "removal-nonland": {
