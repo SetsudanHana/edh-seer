@@ -525,3 +525,12 @@ test("a control change an opponent gains reads as giving it away", () => {
   expect(emitPhrase([{ verb: "gains-control", subject: { control: "opp", token: null, type: "permanent" } }])).toBe("gives an opponent control of a permanent");
   expect(emitPhrase([{ verb: "gains-control", subject: { control: "opp", token: null, self: true } }])).toBe("gives an opponent control of itself");
 });
+
+// A keyword grant names what it grants (#857's `grants`); a quoted ability keeps the wide phrase.
+test("a keyword grant's sentence names its keywords", () => {
+  expect(staticGrantSentence("Spidersilk Armor", "Arbor Adherent", "keyword-grant", undefined, ["reach"])).toBe("Spidersilk Armor gives Arbor Adherent reach");
+  expect(staticGrantSentence("A", "B", "keyword-grant", undefined, ["first strike", "flying", "trample"])).toBe("A gives B first strike, flying and trample");
+  expect(staticGrantSentence("Feywild Visitor", "B", "keyword-grant")).toBe("Feywild Visitor gives B an extra ability");
+  expect(reasonSentence({ producer: "Aggravated Assault", consumer: "Mikaeus", eventKey: "enters|-|-|creature", effectKind: "keyword-grant", keywords: ["undying"] }))
+    .toMatch(/Mikaeus grants undying$/);
+});

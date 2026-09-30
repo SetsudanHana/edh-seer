@@ -461,9 +461,12 @@ export function reasonSentence(input: {
    *  cost pays (#799). "When Carrion Feeder dies" was about a card that is the OUTLET, not the thing
    *  dying: the sentence says the owner chose the death, and to which card. */
   sacrificedTo?: string;
+  /** The keywords a `keyword-grant` hands out (`Ability.grants`): "grants flying" over "grants a keyword". */
+  keywords?: readonly string[];
 }): string {
   const verb = eventVerbPhrase(input.eventKey);
-  const phrase = effectPhrase(input.effectKind, input.amount, input.effectTarget, input.effectRecipient, input.counterKind)
+  const phrase = (input.effectKind === "keyword-grant" && input.keywords?.length ? `grants ${keywordList(input.keywords)}` : undefined)
+    ?? effectPhrase(input.effectKind, input.amount, input.effectTarget, input.effectRecipient, input.counterKind)
     ?? emitPhrase(input.emits ?? []);
   if (input.self) {
     const effect = phrase ? `it ${phrase}` : "it triggers";
@@ -651,12 +654,21 @@ const GRANT_PHRASES: Record<string, string> = {
 /** Replaces the ternary's non-cost-reduction branch, whose old text — "P's <kind> applies to C" —
  *  was the third of the three phrases the design named for removal ("'s static applies to"). */
 export function staticGrantSentence(
-  producer: string, consumer: string, kind: string, noun?: string,
+  producer: string, consumer: string, kind: string, noun?: string, keywords?: readonly string[],
 ): string {
   const phrase = kind === "type-grant" && noun
     ? `an extra ${noun} type`
-    : GRANT_PHRASES[kind] ?? `its ${kind.replace(/-/g, " ")}`;
+    : kind === "keyword-grant" && keywords?.length
+      ? keywordList(keywords)
+      : GRANT_PHRASES[kind] ?? `its ${kind.replace(/-/g, " ")}`;
   return `${producer} gives ${consumer} ${phrase}`;
+}
+
+/** THE KEYWORDS A GRANT HANDS OUT, AS PROSE (`Ability.grants`, #857): "reach", "flying and first
+ *  strike", "flying, first strike and trample". Only CR keyword abilities are ever listed, so a quoted
+ *  ability (Feywild Visitor's trigger, the J12 case) still reads "an extra ability". */
+export function keywordList(keywords: readonly string[]): string {
+  return keywords.length <= 1 ? keywords.join("") : `${keywords.slice(0, -1).join(", ")} and ${keywords[keywords.length - 1]}`;
 }
 
 /** WHICH KIND OF TYPE a `type-grant` hands out, for the sentence only -- never for matching.

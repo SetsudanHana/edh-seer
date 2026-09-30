@@ -1951,7 +1951,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
             : clonesOnEntry ? enterAsCopySentence(p.card.name, c.card.name)
             : reasonSentence({
             producer: enteringFaceName(p, e0) ?? p.card.name, consumer: c.card.name, eventKey: key,
-            effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
+            effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true, keywords: a.grants,
             ...(t.subject.self !== true && sacrificedTo(p, origin, e0) ? { sacrificedTo: sacrificedTo(p, origin, e0) } : {}),
             // A BLANK EFFECT IS READ OFF ITS EMITS (#647 item 5), its clause siblings' too: Displacer
             // Kitten's return is its own ability, and without it the flicker read as an exile.
@@ -2598,7 +2598,7 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
       text: a.effect.kind === "cost-reduction"
         ? costReductionSentence(p.card.name, c.card.name)
         : staticGrantSentence(p.card.name, c.card.name, a.effect.kind,
-          typeGrantNoun(a.effect.subject?.type, c.tags.characteristics.types)),
+          typeGrantNoun(a.effect.subject?.type, c.tags.characteristics.types), a.grants),
       effectKind: a.effect.kind,
       repeatability:
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
