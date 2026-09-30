@@ -19,6 +19,8 @@ import { buildEngineModel } from "../client/src/lib/engine-model.ts";
 import { chooseCuts, swapCandidates } from "../client/src/lib/cut-choice.ts";
 import { preconPage, type PreconPage } from "../client/src/lib/precon-page.ts";
 import { encodeShare, shareUrl } from "../client/src/lib/share-link.ts";
+import { preconPackages } from "../client/src/lib/precon-packages.ts";
+import { StaticLookup } from "@edh-seer/matcher/static-lookup";
 
 const arg = (name: string, fallback?: string) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : fallback; };
 const repo = resolve(import.meta.dirname, "..", "..", "..");
@@ -39,6 +41,9 @@ const version = (await (await fetchImpl(`${baseUrl}/manifest.json`)).json() as {
 const outDir = arg("--out") ?? join(source, version, "precons");
 mkdirSync(outDir, { recursive: true });
 
+// ONE LOOKUP FOR EVERY PRECON'S UPGRADE PACKAGES: their candidate pools overlap almost entirely, so
+// each card shard is read once for the whole build.
+const packageLookup = new StaticLookup(baseUrl, fetchImpl);
 const precons = (JSON.parse(readFileSync(preconsPath, "utf8")) as Precon[]).filter((p) => !onlyIdx || p.name === onlyIdx);
 const taken = new Set<string>();
 const index: Pick<PreconPage, "slug" | "name" | "setCode" | "setName" | "releaseDate" | "commanders" | "identity" | "theme">[] = [];
@@ -57,6 +62,19 @@ for (const p of precons) {
       cuts: [...cuts.map((c) => c.name), ...swapCandidates(data.report, cuts)],
     });
     const page = preconPage({ slug, name: p.name, setCode: p.setCode, setName: p.setName, releaseDate: p.releaseDate, commanders: p.commanders }, data, suggestions);
+    const pk = await preconPackages({
+      lookup: packageLookup, commanders: p.commanders, deckNames: [...p.commanders, ...p.cards.map((c) => c.name)],
+      data, model: model && model.totalLinks ? model : null, suggestions, cards: p.cards,
+      // THE REPORT'S OWN READING OF THE SWAPPED LIST, so a package is held to the numbers the site
+      // would show for it, not to the builder's estimate of them.
+      analyse: async (list) => {
+        const r = (await analyzeDeckStatic(list, p.commanders.join("\n"), baseUrl, fetchImpl)).report;
+        return { band: r.bracket?.band ?? "1-2", mana: r.deckMath?.lands.manaBase?.total ?? 0, synergy: r.synergyOverall ?? 0 };
+      },
+    });
+    page.packages = pk.packages;
+    if (pk.unreachable.length) page.unreachable = pk.unreachable;
+    page.packageCards = pk.cards;
     // THE FULL REPORT IS ONE LINK AWAY, the same link "Copy link" makes, so it opens the list ready to edit.
     const payload = await encodeShare({ commanders: p.commanders.join("\n"), decklist: p.cards.map((c) => `${c.count} ${c.name}`).join("\n") });
     if (payload) page.report = shareUrl("", "/", payload);
@@ -64,7 +82,8 @@ for (const p of precons) {
     index.push({ slug, name: p.name, setCode: p.setCode, setName: p.setName, releaseDate: p.releaseDate, commanders: p.commanders, identity: page.identity, theme: page.theme });
     // A NAME THAT DID NOT RESOLVE IS A CARD THE PAGE SILENTLY LACKS (a meld card listed with its
     // back did, 2026-09-27): said on every line, so the log shows it.
-    console.log(`${slug}: ${page.swaps.length} swaps, synergy ${page.synergy?.score.toFixed(1) ?? "-"}${data.missing.length ? ` | UNRESOLVED ${data.missing.join("; ")}` : ""}`);
+    const counts = pk.packages.map((k) => `${k.target}:${k.bringDown.length + k.sections.reduce((n, x) => n + x.swaps.length, 0)}`).join(" ");
+    console.log(`${slug}: ${page.swaps.length} swaps, packages ${counts}${pk.unreachable.length ? ` (unreachable ${pk.unreachable.join(",")})` : ""}, synergy ${page.synergy?.score.toFixed(1) ?? "-"}${data.missing.length ? ` | UNRESOLVED ${data.missing.join("; ")}` : ""}`);
   } catch (err) {
     failed++;
     console.warn(`${slug}: failed`, err);

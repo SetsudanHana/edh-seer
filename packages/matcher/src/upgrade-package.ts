@@ -44,6 +44,10 @@ export interface UpgradePackage {
   /** Cuts first, when `from` is above the target (owner, 2026-09-30). Empty otherwise. */
   bringDown: UpgradeSwap[];
   sections: UpgradeSection[];
+  /** THE DECK AFTER THE SWAPS, as the report reads it (#767, persona re-run 2026-09-30: "would I keep
+   *  up?"): its band, its synergy score and its mana base total. Absent when the builder had no
+   *  analysis to hand. */
+  after?: { band: DeckBracket["band"]; synergy: number; mana: number };
 }
 
 export const SECTION_SHOWN = 3;
