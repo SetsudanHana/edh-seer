@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **215** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **216** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -113,6 +113,7 @@ Defined in [`SubjectFilter`](../../packages/tagger/src/schema.ts).
 
 | field | type | | what it carries |
 |---|---|---|---|
+| `ref` | `"trigger"` | optional | THE OBJECT IS THE ONE THE TRIGGER IS ABOUT, not another of its class (#896 task 4, #823): Mari, the Killing Quill's "whenever a creature an opponent controls dies, exile IT". The other fields still say its class; this says it is that same object, so a sentence reads "exiles it". |
 | `type` | `string \| string[]` | optional | A card type, or an array of types meaning OR (e.g. ["instant","sorcery"]). |
 | `notType` | `string[]` | optional | Card types the text NEGATED ("noncreature spell", "nonland permanent"), as the card says it. |
 | `notSubtype` | `string[]` | optional | SUBTYPES the text negated — "target **non-Dragon** creature card", "each non-Zombie creature". |

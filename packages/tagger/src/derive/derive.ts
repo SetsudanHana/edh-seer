@@ -26,7 +26,7 @@ import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.js";
-import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, PRONOUN_OBJECT } from "./references.js";
+import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, PRONOUN_OBJECT, zoneAfterEvent } from "./references.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
 
@@ -270,7 +270,10 @@ import { emblemRecipient } from "../emblem.js";
 // 215: #886 -- a return that marks what it returns (finality counter, or a keyword counter the trigger
 // excludes) is `oncePerObject` (Meathook Massacre II, Luminous Broodmoth); #887 -- a flicker's "return
 // that card" takes its subject from the exile (Displacer Kitten: nonland permanent you control).
-export const DERIVE_VERSION = 215;
+// 216: #896 task 4 -- a reference to the triggering object is `ref: "trigger"` and takes the zone the
+// event left it in (Mari, the Killing Quill exiles from a graveyard); a trigger subject that names a
+// player or a time is no referent (Galvanoth); "the exiled cards" crosses clauses like the singular (Petradon).
+export const DERIVE_VERSION = 216;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1468,8 +1471,9 @@ export function deriveAbilities(
       continue;
     }
     // WHAT A REFERENCE OBJECT POINTS AT: see `references.ts`.
+    const sourceOf = (idx: number) => antecedentSource(clause.actions ?? [], idx, clause.trigger?.subject, cardName);
     const antecedentFor = (idx: number): string | undefined =>
-      antecedentText(clause.actions ?? [], antecedentSource(clause.actions ?? [], idx, clause.trigger?.subject), clause.trigger?.subject, enchantText);
+      antecedentText(clause.actions ?? [], sourceOf(idx), clause.trigger?.subject, enchantText);
     const antecedentIsSelf = (idx: number): boolean => selfAntecedent(clause.actions ?? [], idx, cardName);
     /** CR 614 multiplier, read off the clause text — the "would ... instead" frame the clause layer
      *  does not record. Bound per CLAUSE because that is where the sentence sits: verified against
@@ -1722,7 +1726,14 @@ export function deriveAbilities(
       // typed exile; tested on the RAW object here, before the antecedent, the way emits.ts tests
       // it for a direct call. The fact is `temporary` on the maker's own ability (below).
       const temporaryRider = action.verb === "exile" && LEAVES_SAME_TURN.test(text) && TEMPORARY_TOKEN_REF.test((action.object ?? "").trim());
-      const emits = temporaryRider ? [] : actionEmits(antecedent ? { ...action, object: antecedent } : action, text, { self: emitsSelf })
+      // THE TRIGGERING OBJECT ITSELF (#896 task 4, #823): "whenever a creature an opponent controls dies,
+      // exile IT" is that card, in the graveyard the event put it in -- not another creature, and not
+      // on the battlefield. The emit keeps the trigger's class, takes the zone, and says it is `ref`.
+      const refersToTrigger = antecedent !== undefined && !emitsSelf && sourceOf((clause.actions ?? []).indexOf(action)).to === "trigger";
+      // The EVENT outranks a "battlefield" the model wrote on the action: a card that died is not there
+      // (Hofri Ghostforge, Eater of Virtue, Chaos Shrine's Black Crystal wrote it; review of S3).
+      const zone = refersToTrigger && (!action.fromZone || action.fromZone === "battlefield") ? zoneAfterEvent(clause.trigger?.event) : undefined;
+      const emits = temporaryRider ? [] : actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, text, { self: emitsSelf })
         .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
@@ -1755,6 +1766,7 @@ export function deriveAbilities(
       // is the opponent whose permanent carries it, so the emit reads `opp` -- the same seat
       // swap `flipPerspective` makes for an opponent's emblem.
       if (grantedTo) for (const e of emits) if (e.subject.control === "you" && e.subject.self !== true) e.subject.control = grantedTo.control;
+      if (refersToTrigger) for (const e of emits) e.subject.ref = "trigger";
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 
       // A subject is attached ONLY when there is a kind. matcher's edges.ts emits a
