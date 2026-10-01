@@ -29,7 +29,7 @@
  *    group   := premod* head?                                            -- words in a group are ANDed
  *    post    := control | "you own" | with-stat | with-keyword | with-counter | zone
  *             | "named" name | "of the chosen" kind | "attached to" object | "for each" phrase */
-import type { Control, PlayerCondition, StatPredicate, SubjectFilter } from "../schema.js";
+import type { Control, PlayerCondition, StatPredicate, SubjectFilter, SubjectRelation } from "../schema.js";
 import { CARD_TYPES, TYPES, counterKindOf, resolveTypes, singulars } from "../derive/subject.js";
 import { KEYWORD_ABILITIES, SPELL_SUBTYPES, SUBTYPE_TYPES, SUBTYPES } from "../derive/subtypes.js";
 
@@ -216,7 +216,10 @@ interface Reading {
   condition?: PlayerCondition;
   printedIn?: string;
   otherThanRef?: true;
+  notZone?: "battlefield";
+  relation?: SubjectRelation;
   sharesAlternatives?: NonNullable<SubjectFilter["shares"]>[];
+  relationAlternatives?: Partial<SubjectFilter>[];
   zoneAlternatives?: string[];
   zoneAlternativesFrom?: boolean;
   keywordAlternatives?: string[];
@@ -941,6 +944,8 @@ function zonePhrase(c: Cursor, r: Reading): boolean {
       c.eat("from"); if (!c.eat("your")) c.eat("their");
       // "from your hand or the top of your library".
       if (c.eat("the", "top", "of")) { if (!c.eat("your")) c.eat("their"); }
+      // "from graveyards and/or the battlefield" (Ketramose): either origin.
+      if (from && c.peek() === "the" && c.peek(1) === "battlefield") { c.i += 2; r.zoneAlternatives = [z, "battlefield"]; r.zoneAlternativesFrom = true; delete r.fromZone; if (owner) r.control = owner; return true; }
       const z2 = ZONES.get(c.peek() ?? "");
       if (z2 && z2 !== z) { c.i++; r.zoneAlternatives = [z, z2]; r.zoneAlternativesFrom = from; if (from) delete r.fromZone; else delete r.zone; }
       else c.i = save;
@@ -964,6 +969,55 @@ function relatedObject(c: Cursor): boolean {
 }
 
 function post(c: Cursor, r: Reading): boolean | null {
+  // ---- The last fourteen (#896), each read from its card. ----
+  // "a creature card not on the battlefield" (Anafenza, Sanctifier en-Vec).
+  // Bound to the last alternative only: "a black or red permanent, spell, or CARD not on the
+  // battlefield" -- the noun-phrase list reads that one.
+  if (c.peek() === "not" && c.peek(1) === "on" && c.peek(2) === "the" && c.peek(3) === "battlefield") {
+    if (r.groups.length > 1) return null;
+    c.i += 4; r.notZone = "battlefield"; return true;
+  }
+  // "target spell if it would destroy a land you control" (Equinox).
+  {
+    const save = c.i;
+    if (c.eat("if", "it", "would", "destroy")) { const w = parse(c.t.slice(c.i).join(" ")); if (w) { const { control, token: _t, scope: _s, ...x } = w; r.relation = { kind: "would-destroy", what: { ...x, ...(control !== "any" ? { control } : {}) } }; c.i = c.t.length; return true; } }
+    c.i = save;
+  }
+  // "any number of Aura cards that could enchant it" (Bruna, Light of Alabaster).
+  if (c.eat("that", "could", "enchant", "it")) { r.relation = { kind: "could-enchant", with: "ref" }; return true; }
+  // "that isn't the target of an ability from another creature named ~" (Goblin Artisans).
+  {
+    const save = c.i;
+    if (c.eat("that", "isn't", "the", "target", "of")) {
+      const w = parse(c.t.slice(c.i).join(" "));
+      if (w) { const { token: _t, scope: _s, control: _c, ...x } = w; r.relation = { kind: "targeted-by", by: x, negated: true }; c.i = c.t.length; return true; }
+    }
+    c.i = save;
+  }
+  // "target creature that has an activated ability with {T} in its cost" (Magewright's Stone).
+  if (c.eat("that", "has", "an", "activated", "ability", "with", "{t}", "in", "its", "cost")) { r.relation = { kind: "has-ability", abilityKind: "activated", tapCost: true }; return true; }
+  // "target land that is snow or could produce {C}" (Break the Ice): either.
+  {
+    const save = c.i;
+    if (c.eat("that", "is", "snow", "or", "could", "produce") && /^\{[wubrgc]\}$/.test(c.peek() ?? "") && c.i + 1 === c.t.length) {
+      const mana = c.t[c.i++]!.slice(1, -1).toUpperCase();
+      r.relationAlternatives = [{ snow: true }, { relation: { kind: "could-produce", mana: [mana] } }]; return true;
+    }
+    c.i = save;
+  }
+  // "each battle they protect" (Joyful Stormsculptor): the opponents named before.
+  if (c.eat("they", "protect") && r.groups.some((g) => g.types.includes("battle"))) { r.relation = { kind: "protected-by", control: "opp" }; return true; }
+  // "a card with two or more card types" (Rendmaw, Creaking Nest).
+  {
+    const save = c.i;
+    if (c.eat("with") && isNumber(c.peek()) && c.peek(1) === "or" && c.peek(2) === "more" && c.peek(3) === "card" && c.peek(4) === "types" && c.i + 5 === c.t.length) {
+      r.relation = { kind: "card-type-count", op: "gte", value: numberValue(c.peek())! }; c.i = c.t.length; return true;
+    }
+    c.i = save;
+  }
+  // "target planeswalker that was activated this turn or tapped creature" (Cut Short): the history,
+  // then the other alternative -- read by the noun-phrase list.
+  if (c.eat("that", "was", "activated", "this", "turn")) { if (!r.history.includes("activated")) r.history.push("activated"); return true; }
   // ---- Single-card shapes from the census tail (#896), each read from the card's own text. ----
   // "a card you didn't control" (Valgavoth): one you never controlled.
   if (c.eat("you", "didn't", "control")) { if (!r.history.includes("not-controlled-by-you")) r.history.push("not-controlled-by-you"); return true; }
@@ -2258,6 +2312,8 @@ function lower(r: Reading): SubjectFilter | null {
   if (r.condition) out.condition = r.condition;
   if (r.printedIn) out.printedIn = r.printedIn;
   if (r.otherThanRef) out.otherThanRef = true;
+  if (r.notZone) out.notZone = r.notZone;
+  if (r.relation) out.relation = r.relation;
   // Alternatives the outer subject cannot hold, each as `anyOf` (and only one such list per subject).
   const alts: Partial<SubjectFilter>[][] = [];
   if (r.ownOrControl) { if (out.control !== "any") return null; alts.push([{ owner: "you" }, { control: "you" }]); }
@@ -2272,6 +2328,10 @@ function lower(r: Reading): SubjectFilter | null {
   if (r.sharesAlternatives) {
     if (out.anyOf) return null;
     out.anyOf = r.sharesAlternatives.map((x) => ({ shares: x }));
+  }
+  if (r.relationAlternatives) {
+    if (out.anyOf) return null;
+    out.anyOf = r.relationAlternatives;
   }
   if (r.historic) out.historic = true;
   if (r.outlaw) out.outlaw = true;
@@ -2440,13 +2500,23 @@ function nounPhraseList(toks: string[]): SubjectFilter | null {
   // Never inside a relative clause: "a spell that targets an opponent OR a creature ..." lists what
   // the spell targets, not two subjects.
   const relative = toks.findIndex((w) => w === "that" || w === "that's" || w === "who" || w === "which");
-  const stop = relative < 0 ? toks.length : relative;
+  // "target planeswalker that was activated this turn OR tapped creature" (Cut Short): a relative
+  // clause that ends at "this turn", then the next alternative.
+  const afterTurn = relative < 0 ? -1 : toks.findIndex((w, k) => k > relative && w === "or" && toks[k - 1] === "turn" && toks[k - 2] === "this");
+  const stop = relative < 0 ? toks.length : afterTurn > 0 ? toks.length : relative;
   // A LIST NAMING A PLAYER ("target player or planeswalker", "another target creature, planeswalker, or
   // player") splits at every joiner and comma: its items are nouns, and a player is no adjective.
   // A player as an ITEM, not "you control" or "an opponent controls" inside another item.
   const withPlayer = toks.slice(0, stop).some((w, k) => PLAYER_WORDS.has(w)
     && !["control", "controls", "own", "owns", "cast", "casts", "don't"].includes(toks[k + 1] ?? "")
     && (w !== "you" || k === 0 || [",", "or", "and", "and/or"].includes(toks[k - 1]!)));
+  // A COLOUR PREFIX every item shares ("a BLACK OR RED permanent, spell, or card"): skipped when
+  // finding the first item's noun, and given to every later item.
+  const q0 = toks.findIndex((w) => !QUANTIFIER_WORDS.has(w));
+  let colourEnd = q0;
+  while (COLOR_WORDS[toks[colourEnd] ?? ""] && (toks[colourEnd + 1] === "or" || toks[colourEnd + 1] === "and") && COLOR_WORDS[toks[colourEnd + 2] ?? ""]) colourEnd += 2;
+  if (colourEnd > q0 || (COLOR_WORDS[toks[colourEnd] ?? ""] && toks[colourEnd + 2] === ",")) colourEnd++; else colourEnd = q0;
+  const colourLead = toks.slice(q0, colourEnd);
   for (let k = 1; k < stop - 1; k++) {
     // "tokens plus a Mutagen token": one more, joined like "and".
     const joiner = toks[k] === "and" || toks[k] === "or" || toks[k] === "and/or" || toks[k] === "plus";
@@ -2454,7 +2524,7 @@ function nounPhraseList(toks: string[]): SubjectFilter | null {
     // enchantment" (only reached when the one-noun-phrase reading failed).
     // The first item is one bare noun, so no leading adjective is left behind ("target ATTACKING
     // Cleric, Rogue, ..." shares "attacking" with every item).
-    const q = toks.findIndex((w) => !QUANTIFIER_WORDS.has(w));
+    const q = colourEnd;
     // ...or an ability ("target activated ability, triggered ability, or legendary spell", Tale's End).
     const commaList = (toks[q + 1] === "," || (toks[q + 1] === "ability" && toks[q + 2] === ",")) && toks.slice(0, stop).some((w, j) => w === "," && (toks[j + 1] === "or" || toks[j + 1] === "and"));
     const comma = toks[k] === "," && !["and", "or", "and/or"].includes(toks[k + 1]!) && (withPlayer || NP_START.has(toks[k + 1]!) || commaList);
@@ -2469,10 +2539,12 @@ function nounPhraseList(toks: string[]): SubjectFilter | null {
     // "... or its controller": the player who controls the item before.
     const itsController = joiner && toks[k + 1] === "its" && toks[k + 2] === "controller";
     // "two lands and THIS ARTIFACT": the card itself as the last item.
-    const thisItem = joiner && toks[k + 1] === "this" && k + 3 === toks.length;
+    const thisItem = (joiner && toks[k + 1] === "this" && k + 3 === toks.length)
+      || (joiner && toks[k + 1] === "the" && (toks[k + 2] === "sacrificed" || toks[k + 2] === "chosen") && k + 4 === toks.length);
     // "all creatures and GRAVEYARDS".
     const zoneItem = joiner && toks[k + 1] === "graveyards" && k + 2 === toks.length;
-    if (!comma && (!joiner || !(NP_START.has(toks[k + 1]!) || withPlayer || colourStart || closed || itsController || thisItem || zoneItem || (commaList && toks[k - 1] === ",")))) continue;
+    const turnSplit = joiner && k === afterTurn;
+    if (!comma && (!joiner || !(NP_START.has(toks[k + 1]!) || withPlayer || colourStart || closed || itsController || thisItem || zoneItem || turnSplit || (commaList && toks[k - 1] === ",")))) continue;
     const end = toks[k - 1] === "," ? k - 1 : k;
     parts.push(toks.slice(from, end));
     from = k + 1;
@@ -2482,12 +2554,18 @@ function nounPhraseList(toks: string[]): SubjectFilter | null {
   // A bare item takes the first item's quantifier: "target player or planeswalker" is a target too.
   const lead: string[] = [];
   for (const w of parts[0]!) { if (QUANTIFIER_WORDS.has(w)) lead.push(w); else break; }
-  const items = parts.map((p, i) => (i > 0 && !QUANTIFIER_WORDS.has(p[0]!) && p[0] !== "you" && p[0] !== "this" ? [...lead, ...p] : p));
+  const items = parts.map((p, i) => (i > 0 && !QUANTIFIER_WORDS.has(p[0]!) && p[0] !== "you" && p[0] !== "this" && p[0] !== "the" ? [...lead, ...colourLead, ...p] : p));
   const parsed = items.map((p, i) => {
     // "up to one target creature or ITS CONTROLLER": the player who controls the other item.
     if (p.join(" ") === "its controller" || p.join(" ") === "target its controller" || p.join(" ") === "up to one target its controller") return { control: "any" as const, token: null, player: true as const };
     // "all creatures and GRAVEYARDS" (Ultimate Nullification): every card in them.
     if (p.join(" ") === "graveyards" || p.join(" ") === "all graveyards") return { control: "any" as const, token: null, zone: "graveyard" };
+    // "and THE SACRIFICED CARD" (Rescue from the Underworld), "or THE CHOSEN CREATURE" (Cloak and
+    // Dagger): an object the sentence named earlier, of its class.
+    if (i > 0 && p[0] === "the" && (p[1] === "sacrificed" || p[1] === "chosen") && p.length === 3) {
+      const t = parse(`a ${p[2]}`);
+      if (t) { const { scope: _s, ...x } = t; return { ...x, ref: "sentence" as const }; }
+    }
     // "a loyalty ability ACTIVATION" (Repeated Reverberation): the ability.
     if (p.at(-1) === "activation" && p.at(-2) === "ability") return parse(p.slice(0, -1).join(" "));
     // "two lands and THIS ARTIFACT": the card itself, of its type. Never FIRST: "this creature or

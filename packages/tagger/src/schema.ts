@@ -28,6 +28,16 @@ export interface StatPredicate {
 }
 
 /** A characteristic filter: what a trigger cares about, or what an effect targets/produces. */
+/** See `SubjectFilter.relation`. */
+export type SubjectRelation =
+  | { kind: "would-destroy"; what: Partial<SubjectFilter> }
+  | { kind: "could-enchant"; with: "ref" }
+  | { kind: "targeted-by"; by: Partial<SubjectFilter>; negated?: true }
+  | { kind: "has-ability"; abilityKind: "activated"; tapCost: true }
+  | { kind: "could-produce"; mana: string[] }
+  | { kind: "protected-by"; control: Control }
+  | { kind: "card-type-count"; op: StatOp; value: number };
+
 /** See `SubjectFilter.condition`. `vs` compares with you, with the most of any player, or with
  *  the maximum (speed). */
 export type PlayerCondition = { of?: "controller" | "owner" } & (
@@ -47,7 +57,7 @@ export interface SubjectFilter {
   /** THE OBJECT IS THE ONE THE TRIGGER IS ABOUT, not another of its class (#896 task 4, #823): Mari,
    *  the Killing Quill's "whenever a creature an opponent controls dies, exile IT". The other fields
    *  still say its class; this says it is that same object, so a sentence reads "exiles it". */
-  ref?: "trigger";
+  ref?: "trigger" | "sentence";
   /** A card type, or an array of types meaning OR (e.g. ["instant","sorcery"]). */
   type?: string | string[];
   /** Card types the text NEGATED ("noncreature spell", "nonland permanent"), as the card says it.
@@ -407,6 +417,15 @@ export interface SubjectFilter {
    *  matcher abstains (the one object excluded is not known here), as it does for a variable rhs.
    *  Set by the filter grammar (#896). */
   otherThanRef?: true;
+  /** NOT IN A ZONE: "a card not on the battlefield" (Sanctifier en-Vec, Anafenza). A producer with no
+   *  `zone` is on the battlefield and fails. Set by the filter grammar (#896). */
+  notZone?: "battlefield";
+  /** A RELATION OR CAPABILITY one card's text states and no producer does (#896), each read from that
+   *  card: what a spell would destroy (Equinox), what an Aura could enchant (Bruna), what targets it
+   *  (Goblin Artisans), a tap ability (Magewright's Stone), mana it could produce (Break the Ice), who
+   *  protects a battle (Joyful Stormsculptor), how many card types (Rendmaw). CEILING: refused by the
+   *  matcher, as the other relations -- a demand nothing can check claims no cards. */
+  relation?: SubjectRelation;
   /** Which phase or step an `extra-phase` effect grants, over a closed CR vocabulary: `untap`,
    *  `upkeep`, `draw`, `main`, `combat`, `beginning`, `end`. Same shape as `counter` above, and for
    *  the same reason: a coarse `extra-phase` conflated units the game itself keeps apart -- an

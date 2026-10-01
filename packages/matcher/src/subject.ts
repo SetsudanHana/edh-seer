@@ -54,7 +54,10 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // with another object, what happened to it this turn, a name relation. A demand nothing can check
   // claims nothing -- here, so a branch of an `anyOf` carrying one is refused too.
   if (consumer.targets !== undefined || consumer.abilityOf !== undefined || consumer.shares !== undefined
-    || consumer.history?.length || consumer.nameRelation !== undefined || consumer.combatWith !== undefined || consumer.condition !== undefined || consumer.printedIn !== undefined) return false;
+    || consumer.history?.length || consumer.nameRelation !== undefined || consumer.combatWith !== undefined || consumer.condition !== undefined || consumer.printedIn !== undefined
+    || consumer.relation !== undefined || consumer.ref === "sentence") return false;
+  // "a card not on the battlefield": a producer with no zone is on the battlefield.
+  if (consumer.notZone === "battlefield" && producer.zone === undefined) return false;
   // "from anywhere other than your hand": an unstated origin is the hand (a card's own cast).
   if (consumer.notFromZone !== undefined && (producer.fromZone ?? "hand") === consumer.notFromZone) return false;
   // A PLAYER BRANCH ("target player or planeswalker"): met by a player-shaped producer, one that

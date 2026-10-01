@@ -504,6 +504,14 @@ test("relations no producer states are refused, also inside an anyOf branch", ()
   // A player's condition and a name's first printing: no producer states either.
   expect(subjectMatches(s({ control: "opp" }), s({ control: "opp", condition: { kind: "controls", what: { subtype: "elf" }, negated: true } }), H)).toBe(false);
   expect(subjectMatches(s({ type: "artifact" }), s({ type: "permanent", printedIn: "antiquities" }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "land" }), s({ type: "land", relation: { kind: "could-produce", mana: ["C"] } }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "creature" }), s({ anyOf: [{ type: "creature", ref: "sentence" }] }), H)).toBe(false);
+});
+
+test("not on the battlefield: a producer with no zone is on it", () => {
+  const want = s({ type: "creature", notZone: "battlefield" });
+  expect(subjectMatches(s({ type: "creature" }), want, H)).toBe(false);
+  expect(subjectMatches(s({ type: "creature", zone: "graveyard" }), want, H)).toBe(true);
 });
 
 test("a total over the chosen objects abstains, as a variable rhs does", () => {
