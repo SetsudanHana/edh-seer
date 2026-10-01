@@ -137,8 +137,21 @@ test("CR 115.1: what a spell targets is its own field (owner 2026-10-01, the her
     anyOf: [{ subtype: "equipment" }, { targets: { control: "you", token: null, type: "creature" } }] });
 });
 
-test("a one-value adjective in only some alternatives is refused", () => {
-  for (const p of ["target artifact or tapped creature", "target tapped or blocking creature"]) expect(parse(p), p).toBeNull();
+test("an adjective in only some alternatives is that alternative's own branch", () => {
+  expect(parse("target artifact or tapped creature")!.anyOf).toEqual([{ type: "artifact" }, { type: "creature", tapped: true }]);
+  // A noun-less alternative takes the head noun after it.
+  expect(parse("target tapped or blocking creature")).toMatchObject({ type: "creature", anyOf: [{ tapped: true }, { combat: "blocking" }] });
+  expect(parse("target attacking, blocking, or tapped creature")!.anyOf).toEqual([{ combat: "attacking" }, { combat: "blocking" }, { tapped: true }]);
+  expect(parse("target artifact, enchantment, or tapped creature an opponent controls")).toMatchObject({ control: "opp", scope: "target" });
+  // ...only the head noun: snow creatures or Zombie creatures.
+  expect(parse("other snow and Zombie creatures you control")).toMatchObject({ type: "creature", other: true, anyOf: [{ snow: true }, { subtype: "zombie" }] });
+  expect(parse("a Swamp, Mountain, black permanent, or red permanent")!.anyOf).toEqual(
+    [{ subtype: "swamp" }, { subtype: "mountain" }, { type: "permanent", colors: ["B"] }, { type: "permanent", colors: ["R"] }]);
+  // Two states joined by "and" are both, and two adjectives before "or" may share the first: refused.
+  expect(parse("a tapped and attacking token that's a copy of it")).toBeNull();
+  expect(parse("a goaded attacking or blocking creature")).toBeNull();
+  // "attacking, blocking, or tapped" is a list; "nonartifact, nonblack" is still both.
+  expect(parse("target nonartifact, nonblack creature")).toMatchObject({ type: "creature", notColors: ["B"] });
   // A negated colour that starts a new noun phrase is that phrase's own: two branches.
   expect(parse("target land or nonblack creature")!.anyOf).toEqual([{ type: "land" }, { type: "creature", notColors: ["B"] }]);
   expect(parse("target multicolored creature or multicolored enchantment")).toMatchObject({ colorCount: "multi" });
@@ -248,7 +261,7 @@ test("copy exceptions, conditions on the target, alternatives, destinations", ()
   expect(parse("all creatures that aren't of the chosen type")).toMatchObject({ except: [{ chosenType: true }] });
   expect(parse("a spell with power, toughness, or mana value 4")!.anyOf).toHaveLength(3);
   // A one-value adjective in one alternative only (review): legendary binds to the creature alone.
-  expect(parse("target artifact or legendary creature")).toBeNull();
+  expect(parse("target artifact or legendary creature")!.anyOf).toEqual([{ type: "artifact" }, { type: "creature", legendary: true }]);
 });
 
 test("players with a history, counted creations, ordinals, tokens named after a card", () => {
@@ -271,8 +284,7 @@ test("lists whose items each carry their own colour, and a post-modifier after t
  *  the schema cannot hold (dropping it would WIDEN the claim), a reference, or not a filter at all. */
 test("refusals", () => {
   for (const p of [
-    // A colour that belongs to one alternative, and a zone that belongs to one alternative.
-    "a Swamp, Mountain, black permanent, or red permanent",
+    // A zone that belongs to one alternative.
     "target spell, nonland permanent, or card in a graveyard",
     // References (task 4) and non-filters (tasks 5, 6).
     "this creature", "that card", "Flying", "{C}", "chapter II",
@@ -286,4 +298,40 @@ test("the lexer: one token per word, size, mana symbol, comma and '~'; sentence 
   expect(lex("~")).toEqual(["~"]);
   expect(parse("~")).toBeNull();
   expect(lex("a creature.")).toBeNull();
+});
+
+test("relations to a reference, histories, negations by exclusion, and ownership", () => {
+  expect(parse("an Aura attached to this creature")).toMatchObject({ subtype: "aura" });
+  expect(parse("other creatures you control that are enchanted by Auras you control")).toMatchObject({ control: "you", status: ["enchanted"], other: true });
+  expect(parse("target creature you cast this turn")).toMatchObject({ control: "you", history: ["cast"] });
+  // "this turn" after spells you cast is the effect's duration, not a history.
+  expect(parse("Artifact spells you cast this turn")).toEqual({ control: "you", token: null, type: "artifact", scope: "all" });
+  expect(parse("target spell cast from a graveyard")).toMatchObject({ type: "spell", fromZone: "graveyard" });
+  expect(parse("each creature without a +1/+1 counter on it")).toMatchObject({ except: [{ counter: "+1/+1" }] });
+  expect(parse("target non-outlaw creature")).toMatchObject({ except: [{ outlaw: true }] });
+  expect(parse("each creature that isn't all colors")).toMatchObject({ except: [{ colorCount: "all" }] });
+  expect(parse("Other Pegasi, Unicorns, and Horses you control")).toMatchObject({ subtype: ["pegasus", "unicorn", "horse"] });
+  expect(parse("two cards your opponents own from exile")).toMatchObject({ owner: "opp", fromZone: "exile" });
+  expect(parse("Spells you cast but don't own")).toMatchObject({ control: "you", owner: "opp" });
+  expect(parse("creatures the active player controls")).toMatchObject({ control: "any", type: "creature" });
+  expect(parse("creatures your team controls")).toMatchObject({ control: "you", type: "creature" });
+  expect(parse("a spell you've cast")).toMatchObject({ control: "you", history: ["cast"] });
+});
+
+test("conditions on a target, shared stats, counts read past, and bigger numbers", () => {
+  expect(parse("target spell if its mana value is X")).toMatchObject({ stats: [{ metric: "mana-value", op: "eq", variable: true }] });
+  expect(parse("target spell if it has the same name as that card")).toMatchObject({ nameRelation: "same" });
+  expect(parse("target creature if it attacked or blocked this turn")).toMatchObject({ history: ["attacked-or-blocked"] });
+  expect(parse("each creature with the same mana value as the sacrificed creature")).toMatchObject({ shares: { what: "mana-value", with: "ref" } });
+  expect(parse("target spell with a single target")).toMatchObject({ restricted: true });
+  expect(parse("any number of cards that have mana value 9")).toMatchObject({ stats: [{ metric: "mana-value", op: "eq", value: 9 }] });
+  expect(parse("target creature with total power and toughness 5 or less")!.stats).toEqual(
+    [{ metric: "power", op: "lte", value: 5 }, { metric: "toughness", op: "lte", value: 5 }]);
+  // A keyword list then a count: the count's "counters" is no counter kind.
+  expect(parse("a creature token with flying, where X is the number of counters on this creature")).toMatchObject({ keyword: ["flying"] });
+  expect(parse("creatures you control equal to the number of lands controlled by the player who controls the fewest")).toMatchObject({ control: "you", type: "creature" });
+  expect(parse("thirteen creatures of their choice")).toMatchObject({ type: "creature" });
+  expect(parse("two cards from the top five of your library")).toMatchObject({ fromZone: "library" });
+  expect(parse("an Elf, Warrior, or Tyvar card")).toMatchObject({ subtype: ["elf", "warrior", "tyvar"] });
+  expect(parse("a card named Magnifying Glass and/or a card named Thinking Cap")!.anyOf).toEqual([{ named: "magnifying glass" }, { named: "thinking cap" }]);
 });

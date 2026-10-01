@@ -28,6 +28,7 @@ const TESTED: Record<string, string> = {
   "707.9b": "grammar/filter.test.ts — a copy's exceptions ('except it isn't legendary', 'except it has haste') are kept (#896)",
   "108.3": "grammar/filter.test.ts — ownership beside control: 'you control but don't own' (#896)",
   "715": "grammar/filter.test.ts — an Adventure is a card's layout, read as a status (#896)",
+  "810": "grammar/filter.test.ts — a Two-Headed Giant team's permanents ('creatures your team controls') are yours (#896)",
   "701.15": "grammar/filter.test.ts — goaded is a status the filter can demand (#896)",
   "701.60": "grammar/filter.test.ts — suspected is a status the filter can demand (#896)",
   "702.33": "grammar/filter.test.ts — a kicked spell is a status the filter can demand (#896)",
