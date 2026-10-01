@@ -36,6 +36,8 @@ const NUMBER: Record<string, string> = {
   eight: "8", nine: "9", ten: "10", eleven: "11", twelve: "12", thirteen: "13", fourteen: "14",
   fifteen: "15", twenty: "20", x: "X",
 };
+const BACKREF_TAIL = / (?:(?:that player|that opponent|they|he or she|its controller|that creature's controller|that permanent's controller|the chosen player|those players|that player or that planeswalker's controller) (?:controls?|owns?)|(?:\w+ed|dealt damage|put into (?:a|your|their) graveyards?|exiled with [\w~ ]+|returned to [\w ]+|chosen|revealed|discarded|milled|drawn|sacrificed|destroyed|tapped|untapped|blocking|attacking) this way)$/i;
+
 /** "two", "X", "3", "that many": the amount as the store spells it. */
 function amountOf(word: string): string | undefined {
   const w = word.toLowerCase();
@@ -75,6 +77,23 @@ const COUNT = /^(?:(up to )?(a|an|one|two|three|four|five|six|seven|eight|nine|t
  *  or a back-reference ("it", "that card", "those cards"), which task 4's resolver owns. */
 function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | null {
   const t = phrase.trim();
+  // A BACK-REFERENCED CONTROLLER ("target artifact that player controls", "each creature they
+  // control") or a set the sentence made ("all creatures tapped this way", "each card revealed this
+  // way"): the class is read, and the object is marked a back-reference, so derive keeps the stored
+  // object, whose antecedent reading names the player or the set.
+  // ...also mid-phrase ("a creature they control with the greatest mana value"): read with "a player
+  // controls" in its place, the controller the filter grammar holds as "any".
+  const mid = / (?:that player|that opponent|they|he or she|its controller|those players) (?:controls?)\b(?=.)/i.exec(t);
+  if (mid) {
+    const r = objectOf(`${t.slice(0, mid.index)} a player controls${t.slice(mid.index + mid[0].length)}`);
+    return r && { ...r, object: { ...r.object, ref: "sentence" } };
+  }
+  const back = BACKREF_TAIL.exec(t);
+  if (back && back.index > 0) {
+    const head = t.slice(0, back.index);
+    const r = objectOf(head) ?? (/^(?:all|each) /i.test(head) ? objectOf(head.replace(/^(?:all|each) /i, "a ")) : null);
+    return r && { ...r, object: { ...r.object, ref: "sentence" } };
+  }
   if (/^(?:this [a-z]+|~|this|him|her)$/i.test(t)) return { object: SELF };
   // An Aura's or Equipment's host: its class, as the trigger grammar reads it (the text keeps the rest).
   const host = /^(?:enchanted|equipped) (creature|permanent|land|artifact|planeswalker)$/i.exec(t);
