@@ -3859,3 +3859,11 @@ test("CR 903.5b: Guardian Project's 'doesn't have the same name' claims, as a na
   expect(unknownTriggers).toEqual([]);
   expect(abilities[0]?.trigger?.subject).toMatchObject({ type: "creature", token: false, uniqueName: true });
 });
+
+// #731 / #896 task 6: a counter placement's subject is its printed target, not "a permanent".
+test("a counter placement targets what the text targets", () => {
+  const { abilities } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "add-counter", object: "+1/+1" }] }],
+    "Some Card", { 1: "Put a +1/+1 counter on target creature." });
+  expect(abilities[0]?.effect).toMatchObject({ kind: "counter-placement", subject: { type: "creature", scope: "target" } });
+  expect(abilities[0]?.emits?.[0]).toMatchObject({ verb: "counter-added", subject: { type: "creature", counter: "+1/+1" } });
+});

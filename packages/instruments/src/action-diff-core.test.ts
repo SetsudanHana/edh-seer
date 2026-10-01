@@ -3,11 +3,12 @@ import { gunzipSync } from "node:zlib";
 import { expect, test } from "vitest";
 import { parse } from "@edh-seer/tagger/grammar";
 import { parseSubject } from "@edh-seer/tagger/subject";
-import { actionDiff, align, diffActions, familyOf, readActions, type ActionReading, type ActionRow, type StoredAction } from "./action-diff-core.js";
+import { actionDiff, align, diffActions, familyOf, readActions, storedCounter, type ActionReading, type ActionRow, type StoredAction } from "./action-diff-core.js";
 
 const subjectOf = (t: string) => parse(t) ?? parseSubject(t);
 const row = (effect: string, actions: StoredAction[], cards = 1): ActionRow => ({ effect, type: "spell", actions, cards });
-const asRead = (a: StoredAction): ActionReading => ({ verb: a.verb, object: subjectOf(a.object), ...(a.amount ? { amount: a.amount } : {}), ...(a.fromZone ? { fromZone: a.fromZone } : {}), ...(a.toZone ? { toZone: a.toZone } : {}), ...(a.optional ? { optional: true } : {}) });
+const asRead = (a: StoredAction): ActionReading => ({ verb: a.verb, object: subjectOf(a.object),
+  ...(a.verb === "add-counter" || a.verb === "remove-counter" ? { counter: storedCounter(a.object) } : {}), ...(a.amount ? { amount: a.amount } : {}), ...(a.fromZone ? { fromZone: a.fromZone } : {}), ...(a.toZone ? { toZone: a.toZone } : {}), ...(a.optional ? { optional: true } : {}) });
 
 test("families follow the owner's order; an unlisted verb is `other`", () => {
   expect(familyOf("draw")).toBe("draw-search");

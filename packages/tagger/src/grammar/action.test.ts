@@ -67,6 +67,20 @@ test("damage and life: the recipient is the object, the dealer is not the actor,
   expect(read("Your life total becomes 10.")).toMatchObject([{ verb: "set-life", amount: "10" }]);
 });
 
+test("counters: the kind is `counter`, the recipient the object (#731)", () => {
+  expect(read("put a +1/+1 counter on target creature you control.")).toMatchObject([
+    { verb: "add-counter", counter: "+1/+1", amount: "1", text: "target creature you control", object: { type: "creature", control: "you", scope: "target" } },
+  ]);
+  expect(read("This creature enters with X +1/+1 counters on it.")).toMatchObject([{ verb: "add-counter", counter: "+1/+1", amount: "X", object: { self: true } }]);
+  expect(read("Put two +1/+1 counters and a flying counter on ~.").map((r) => [r.counter, r.amount])).toEqual([["+1/+1", "2"], ["flying", "1"]]);
+  expect(read("Distribute three +1/+1 counters among one, two, or three target creatures you control.")).toMatchObject([{ counter: "+1/+1", amount: "3", object: { type: "creature" } }]);
+  expect(read("Create a Saproling.", "{1}, Remove a +1/+1 counter from a creature you control")).toMatchObject([
+    { verb: "remove-counter", counter: "+1/+1", object: { type: "creature", control: "you" } },
+  ]);
+  expect(read("you get {E}{E} .")).toMatchObject([{ verb: "add-counter", counter: "energy", amount: "2" }]);
+  expect(read("Proliferate.")).toMatchObject([{ verb: "proliferate" }]);
+});
+
 test("a cost's actions come first, the cost's own words read the same way", () => {
   expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }]);
   // A cost the segmenter left in the text is still a cost; ability words and table rows are labels.
@@ -81,6 +95,7 @@ test("readings align to stored actions by verb, in order", () => {
 test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.945],
   ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.895],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.775],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")

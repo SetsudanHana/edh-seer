@@ -15,6 +15,7 @@
  *  Counted per ACTION, weighted by the cards printing the clause, and reported per verb family (the
  *  order the owner ruled, 2026-10-01): draw/search, damage/life, counters, tokens, zone, other. */
 import type { SubjectFilter } from "@edh-seer/tagger/schema";
+import { counterKindOf, parseCounter } from "@edh-seer/tagger/subject";
 import { differingFields } from "./phrase-diff-core.js";
 
 export interface StoredAction { verb: string; object: string; fromZone?: string; toZone?: string; amount?: string; optional?: true }
@@ -31,6 +32,7 @@ export interface ActionReading {
   optional?: true;
   actor?: unknown;
   condition?: string;
+  counter?: string;
 }
 export type ActionParser = (effect: string, type: string | null, cost?: string) => ActionReading[] | null;
 
@@ -55,12 +57,23 @@ export interface ActionDiff { families: Record<Family, FamilyTally>; nondetermin
 const EXAMPLES = 20;
 const json = (v: unknown) => (v === undefined ? "undefined" : JSON.stringify(v));
 
+/** The counter KIND a stored counter action names in its object ("+1/+1", "a stun counter",
+ *  "target creature, +1/+1"). */
+export const storedCounter = (object: string): string => counterKindOf(object) ?? parseCounter(object.toLowerCase()) ?? object;
+
 /** The fields a stored action and a reading differ on, sorted. `subjectOf` reads the stored object
  *  the way derive does. */
 export function actionDiff(stored: StoredAction, read: ActionReading, subjectOf: (text: string) => Partial<SubjectFilter>): string[] {
   const out: string[] = [];
   if (stored.verb !== read.verb) out.push("verb");
   for (const f of ["amount", "fromZone", "toZone", "optional"] as const) if (json(stored[f]) !== json(read[f])) out.push(f);
+  // A COUNTER action's stored object is the counter KIND ("+1/+1"); the reading carries the kind as
+  // `counter` and the recipient as its object, which the store has no slot for (#731).
+  if (stored.verb === "proliferate") return out.sort();
+  if (stored.verb === "add-counter" || stored.verb === "remove-counter") {
+    if (storedCounter(stored.object) !== (read.counter ?? "")) out.push("counter");
+    return out.sort();
+  }
   for (const f of differingFields(subjectOf(stored.object), read.object ?? {})) out.push(`object.${f}`);
   return out.sort();
 }
