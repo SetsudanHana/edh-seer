@@ -52,6 +52,7 @@ const ACTORS: [string, ActionReading["actor"]][] = ([
   ["the attacking player", { control: "opp", scope: "that" }],
   ["two target players", { control: "any", scope: "target" }], ["any number of target players", { control: "any", scope: "target" }],
   ["any number of target opponents", { control: "opp", scope: "target" }], ["players", { control: "any", scope: "each" }],
+  ["those players", { control: "any", scope: "that" }],
   ["they", { control: "any", scope: "that" }],
 ] as [string, ActionReading["actor"]][]).sort((a, b) => b[0].length - a[0].length);
 
@@ -71,7 +72,7 @@ const COUNT = /^(?:(up to )?(a|an|one|two|three|four|five|six|seven|eight|nine|t
 function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | null {
   const t = phrase.trim();
   if (/^(?:this card|~|this)$/i.test(t)) return { object: SELF };
-  if (/^(?:it|them|that card|those cards|the revealed card|that spell)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   const m = COUNT.exec(t);
   // "up to two" is the store's "2", the convention derive's scaling reads ("up to X ... where X is").
   const amount = m ? (m[2] ? amountOf(m[2]) : m[3]!.toLowerCase().replace(/^all the$/, "all")) : undefined;
@@ -121,7 +122,65 @@ const DRAW_SEARCH: Record<string, [string, Handler]> = {
   }],
 };
 
-const HANDLERS: Record<string, [string, Handler]> = { ...DRAW_SEARCH };
+/** An amount of life or damage: "3", "X", "that much", "twice that much", "equal to its power",
+ *  "half their life, rounded up". `null` when the words are none of these. */
+function lifeAmount(words: string): string | null {
+  const w = words.trim();
+  if (amountOf(w)) return amountOf(w)!;
+  if (/^(?:that much|twice that much|that many|half that much|half their life|half your life|that much plus (?:one|two|\d+))$/i.test(w)) return w.toLowerCase();
+  return null;
+}
+
+/** "gain 3 life", "gain life equal to its toughness", "gain 2 life for each creature you control". */
+function lifeOf(rest: string): Args | null {
+  // The store writes the counted thing alone ("its power", not "equal to its power").
+  const eq = /^life equal to (.+)$/.exec(rest);
+  if (eq) return { amount: eq[1]! };
+  const each = /^(\w+) life for each (.+)$/.exec(rest);
+  if (each && amountOf(each[1]!)) return { amount: `${amountOf(each[1]!)} for each ${each[2]}` };
+  const m = /^(.+?) life(?:, rounded (?:up|down))?$/.exec(rest);
+  const amount = m ? lifeAmount(m[1]!) : null;
+  return amount ? { amount } : null;
+}
+
+const DAMAGE_LIFE: Record<string, [string, Handler]> = {
+  gain: ["gain-life", lifeOf],
+  lose: ["lose-life", (rest) => (/^half (?:their|your) life(?:, rounded (?:up|down))?$/.test(rest) ? { amount: "half" } : lifeOf(rest))],
+  // Paying life is losing it (CR 118.3b's reading the store already uses: "pay X life" is lose-life).
+  pay: ["lose-life", (rest) => (/ life$/.test(rest) ? lifeOf(rest) : null)],
+  deal: ["deal-damage", (rest) => {
+    // "2 damage to any target and 3 damage to you": one action per recipient, as the store writes it.
+    const parts = rest.split(/,? and (?=(?:\w+|half X|that much) damage\b)|, (?=(?:\w+|half X) damage\b)/);
+    const out: Args[] = [];
+    for (const part of parts) {
+      const one = damageOf(part);
+      if (!one) return null;
+      out.push(one);
+    }
+    return out;
+  }],
+};
+
+/** "3 damage to any target", "damage equal to its power to target creature", "damage to target
+ *  creature equal to the number of lands you control", "2 damage divided as you choose among one or
+ *  two targets". The store writes the counted thing alone ("its power"). */
+function damageOf(rest: string): Args | null {
+  let m = /^damage equal to (.+?) to (.+)$/.exec(rest) ?? /^damage equal to (.+?) divided as you choose among (.+)$/.exec(rest);
+  if (m) { const r = objectOf(m[2]!); return r && { object: r.object, amount: m[1]!, text: m[2] }; }
+  m = /^damage to (.+?) equal to (.+)$/.exec(rest);
+  if (m) { const r = objectOf(m[1]!); return r && { object: r.object, amount: m[2]!, text: m[1] }; }
+  m = /^(.+?) damage(?:, rounded (?:up|down),)? (?:to|divided as you choose among) (.+)$/.exec(rest);
+  const amount = m ? lifeAmount(m[1]!.replace(/ (?:combat|noncombat)$/, "")) ?? (/^half X$/.test(m[1]!) ? "half X" : null) : null;
+  // "divided as you choose among one, two, or three targets": any targets, however many.
+  const r = m && amount ? objectOf(m[2]!) ?? (/^(?:one|one or two|one, two, or three|any number of|up to \w+) (?:other )?targets$/.test(m[2]!) ? { object: ANY_TARGET } : null) : null;
+  return r && amount ? { object: r.object, amount, text: m![2] } : null;
+}
+const ANY_TARGET = parse("any target")!;
+
+/** "your life total becomes 10". */
+const SET_LIFE = /^(?:your|their|each player's) life total becomes (.+)$/i;
+
+const HANDLERS: Record<string, [string, Handler]> = { ...DRAW_SEARCH, ...DAMAGE_LIFE };
 /** The verb words, with their third-person forms, longest first. */
 const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new RegExp(`^(?:${v}|${v}s|${v.replace(/y$/, "ies")}|${v}es)\\b`, "i"), v]);
 
@@ -165,6 +224,9 @@ function readPhrase(phrase: string, condition: string | undefined, carried?: Act
   let t = phrase.trim().replace(/^(?:then|instead|also) /i, "");
   // "draw X cards, where X is the number of ...": X is the amount, the rest says what it counts.
   const where = t.indexOf(", where X is ");
+  // The store writes the counted thing as the amount ("the greatest number of creatures you control
+  // that ..."), which is what derive's scaling reads; a bare "X" reads as an X in the mana cost.
+  const counted = where >= 0 ? t.slice(where + ", where X is ".length) : undefined;
   if (where >= 0) t = t.slice(0, where);
   // "each player who controls a creature with power 4 or greater draws a card": that subset.
   const who = /^(each player|each opponent) who [^,]+? (?=(?:draws?|discards?|mills?|scr(?:y|ies)|surveils?|search(?:es)?|reveals?|may)\b)/i.exec(t);
@@ -175,6 +237,18 @@ function readPhrase(phrase: string, condition: string | undefined, carried?: Act
   if (tail) { condition = [condition, tail.text].filter(Boolean).join(", "); t = t.slice(0, tail.at); }
   let actor: ActionReading["actor"] = carried;
   let optional = false;
+  if (carried === UNKNOWN_ACTOR && !actorOf(t) && !/^you /i.test(t)) return null;
+  // A DAMAGE SOURCE ("~ deals", "this creature deals", "it deals", "enchanted creature deals"): the
+  // dealer, which derive reads off the card, not the actor.
+  // "you may have it deal 1 damage to any target": the same, optional.
+  const haveSource = /^you (may )?have (.{1,60}?) (?=deal )/i.exec(t);
+  if (haveSource) { optional = optional || Boolean(haveSource[1]); t = t.slice(haveSource[0].length); actor = undefined; }
+  // Whatever stands before "deals" is the dealer: "~", "this creature", "target creature you control",
+  // "each Wolf tapped this way", "they each".
+  const deals = t.search(/(?:^| )deals? (?=\S)/);
+  if (!haveSource && deals > 0 && deals <= 70 && !t.slice(0, deals).includes(",")) { t = t.slice(deals + 1); actor = undefined; }
+  const setLife = SET_LIFE.exec(t);
+  if (setLife) return [{ verb: "set-life", amount: setLife[1]!, ...(condition ? { condition } : {}) }];
   // "you may have target player discard a card": the actor is who is made to.
   const have = /^you (may )?have (.+)$/i.exec(t);
   const made = have && ACTORS.find(([w]) => have[2]!.toLowerCase().startsWith(w + " "));
@@ -193,7 +267,19 @@ function readPhrase(phrase: string, condition: string | undefined, carried?: Act
     const rest = t.slice(m[0].length).trim();
     const args = handler(rest);
     if (!args) return null;
-    return [args].flat().map((a) => ({ verb, ...a, ...(a.object && a.text === undefined && /\S/.test(rest) && !/^(?:\d+|x)$/i.test(rest) ? { text: objectPhrase(verb, rest) } : {}), ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
+    const all: Args[] = [args].flat().map((a) => (counted && a.amount !== undefined && /\bX\b/.test(a.amount) ? { ...a, amount: counted } : a));
+    // A BACK-REFERENCE ("itself", "that player") keeps the stored object: derive resolves it, so it
+    // gets no printed text to overwrite that with.
+    const isRef = (a: Args) => a.object?.ref === "sentence";
+    // A life change's object is the player it happens to, as the store writes it ("you gain 3 life":
+    // object "you").
+    if (verb === "gain-life" || verb === "lose-life") {
+      // An actor with no text ("you and that player each lose 1 life") keeps the stored object.
+      const who = actor ? actor.text : "you";
+      return all.map((a) => ({ verb, ...a, ...(who !== undefined ? { object: parse(who) ?? { control: "any" as const, token: null, ref: "sentence" as const }, text: who } : {}),
+        ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
+    }
+    return all.map((a) => ({ verb, ...(isRef(a) ? (({ text: _t, ...rest }: Args) => rest)(a) : a), ...(a.object && !isRef(a) && a.text === undefined && /\S/.test(rest) && !/^(?:\d+|x)$/i.test(rest) ? { text: objectPhrase(verb, rest) } : {}), ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
   }
   return null;
 }
@@ -203,6 +289,25 @@ function readPhrase(phrase: string, condition: string | undefined, carried?: Act
 function objectPhrase(verb: string, rest: string): string {
   if (verb === "search") return rest.replace(/^.*? for /, "");
   return rest.replace(/ at random$/, "");
+}
+
+/** A phrase opened by a subject this grammar cannot name ("each of its controller's opponents draws a
+ *  card and gains 2 life"): the phrases after it are that subject's too, so none of them is read. */
+const UNKNOWN_ACTOR: NonNullable<ActionReading["actor"]> = { control: "any" };
+/** A PLAYER named by a phrase this grammar does not know, doing something: "each of its controller's
+ *  opponents draws", "the player with the most life loses". Only these carry; "~ gets +1/+1 and you
+ *  draw a card" and "exile it, then draw" do not. */
+function playerSubject(phrase: string): boolean {
+  const at = phrase.search(/ (?:draws|gains|loses|discards|mills|sacrifices|searches|reveals|creates|scries|surveils)\b/i);
+  const subject = at > 0 && at <= 100 ? phrase.slice(0, at) : "";
+  return subject !== "" && !subject.includes(",") && /\b(?:players?|opponents?|controller|owner)\b/i.test(subject);
+}
+
+/** The actor a phrase opens with, if any. */
+function actorOf(phrase: string): ActionReading["actor"] | undefined {
+  const t = phrase.trim().replace(/^(?:then|instead|also) /i, "").toLowerCase();
+  const hit = ACTORS.find(([w]) => t.startsWith(w + " "));
+  return hit ? { ...hit[1]!, text: phrase.trim().replace(/^(?:then|instead|also) /i, "").slice(0, hit[0].length) } : undefined;
 }
 
 /** A sentence's opener: "If you do, ...", "If ..., ...", "Otherwise, ...". */
@@ -246,13 +351,18 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     else if (open) s = s.slice(open[0].length);
     s = s.replace(/^([A-Z])/, (c) => c.toLowerCase());
     // "you and target opponent each draw three cards": one action per player.
-    const both = /^you and (another target player|target opponent|target player|that player|each opponent|defending player|the attacking player|the controller of [^,]+?) each (.+)$/i.exec(s);
+    const both = /^you and (another target player|target opponent|target player|that player|those players|each opponent|each other player|defending player|the attacking player|the controller of [^,]{1,40}) each (.+)$/i.exec(s);
     if (both) {
-      for (const who of ["you", both[1]!.replace(/^another target player$/, "target player").replace(/^the controller of .+$/, "that player")]) {
-        for (const p of phrases(`${who} ${both[2]}`)) { const r = readPhrase(p, condition); if (r) out.push(...r); }
-      }
+      // One action per player and phrase -- the store writes either one or two -- and no actor text,
+      // so each keeps its stored object: neither "you" nor the other player alone is right for a
+      // store that wrote the pair as one action.
+      const pair: NonNullable<ActionReading["actor"]> = { control: "any", scope: "each" };
+      for (let k = 0; k < 2; k++) for (const p of phrases(both[2]!)) { const r = readPhrase(p, condition, pair); if (r) out.push(...r); }
       continue;
     }
+    // "You and <someone this grammar cannot name> ...": the actions are both players', so none is read
+    // as yours alone.
+    if (/^you and /i.test(s)) continue;
     let carried: ActionReading["actor"];
     const at = out.length;
     for (const p of phrases(s)) {
@@ -261,7 +371,10 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       // "discard a card or pay {2}", "sacrifice a creature or discard a card": either is an action.
       for (const alt of main!.split(/ or (?=(?:pay|sacrifice|discard|draw|mill|exile|lose|reveal|search)\b)/)) {
         const r = readPhrase(alt, condition, carried);
-        if (r) { out.push(...r); carried = r[0]?.actor ?? carried; }
+        if (r) out.push(...r);
+        // The actor carries even past a phrase this grammar does not read yet: "target opponent
+        // sacrifices a creature, discards a card, and loses 3 life" -- all three are theirs.
+        carried = r?.[0]?.actor ?? actorOf(alt) ?? (r === null && playerSubject(alt.trim()) ? UNKNOWN_ACTOR : carried);
       }
       const pay = payment ? readPhrase(payment, "unless") : null;
       if (pay) out.push(...pay);
