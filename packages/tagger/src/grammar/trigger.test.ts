@@ -109,9 +109,53 @@ test("named-only events, state triggers and the reflexive", () => {
 });
 
 test("refuses what it cannot read completely", () => {
-  expect(parseTrigger("When a spell or ability an opponent controls causes you to discard this card", null)).toBeNull();
+  expect(parseTrigger("Whenever a creature frobnicates", null)).toBeNull();
   expect(parseTrigger("At the beginning of your upkeep, choose flying, first strike, trample", null)).toBeNull();
-  expect(parseTrigger("Whenever you cast a spell with {X} in its mana cost", null)).toBeNull();
+});
+
+test("strict first: a compound is never read as one verb with the rest as a qualifier", () => {
+  expect(events("Whenever a creature you control of the chosen type enters or attacks")).toEqual(["enters", "attacks"]);
+  expect(parseTrigger("Whenever you play a land from exile or cast a spell from exile", null)).toMatchObject([{ event: "play" }, { event: "cast" }]);
+  expect(events("Whenever an equipped creature you control other than ~ attacks or dies")).toEqual(["attacks", "dies"]);
+});
+
+test("a qualifier the filter grammar cannot read cuts the subject and narrows the event", () => {
+  expect(one("Whenever you cast a spell with {X} in its mana cost")).toMatchObject({ event: "cast", subject: { type: "spell" }, narrowing: "with {X} in its mana cost" });
+  expect(one("Whenever a creature you control with a mana ability attacks")).toMatchObject({ event: "attacks", narrowing: "with a mana ability" });
+  // Every narrowing is kept, never overwritten.
+  expect(one("When you next cast a spell with {X} in its mana cost this turn").narrowing).toBe("next with {X} in its mana cost this turn");
+});
+
+test("a caused event is that event, narrowed by its cause", () => {
+  expect(one("Whenever a spell or ability an opponent controls causes you to discard a card")).toMatchObject({ event: "discarded", control: "you", narrowing: "caused by a spell or ability an opponent controls" });
+  expect(one("Whenever a spell or ability an opponent controls causes a land to be put into your graveyard from the battlefield")).toMatchObject({ event: "dies", subject: { type: "land" } });
+});
+
+test("one player the matcher cannot pick out is anyone's, narrowed", () => {
+  expect(one("Whenever enchanted player casts a spell")).toMatchObject({ event: "cast", control: "any", narrowing: "enchanted player" });
+  expect(one("At the beginning of the chosen player's upkeep")).toMatchObject({ event: "upkeep", narrowing: "chosen player" });
+  expect(one("At the beginning of that turn's end step")).toMatchObject({ event: "end-step", narrowing: "that turn" });
+});
+
+test("delayed triggers name the object before them; a name the census kept is `named`", () => {
+  expect(one("When the creature put onto the battlefield with this enchantment dies").subject).toMatchObject({ ref: "sentence", type: "creature" });
+  expect(one("When Jumblebones leaves the battlefield")).toMatchObject({ event: "leaves", subject: { named: "jumblebones" } });
+});
+
+test("self or a class it need not belong to is two readings", () => {
+  expect(parseTrigger("Whenever this creature or a Dragon you control dies", null)).toMatchObject([{ subject: { self: true } }, { subject: { subtype: "dragon" } }]);
+});
+
+test("activations: an ability that isn't a mana ability is an activated ability (CR 605.1a)", () => {
+  expect(one("Whenever you activate an ability that isn't a mana ability").subject).toMatchObject({ abilityKind: ["activated"] });
+  expect(one("Whenever an opponent activates an ability of a permanent that isn't a mana ability")).toMatchObject({ control: "opp", narrowing: "of a permanent" });
+});
+
+test("named-only events the vocabulary has no word for are `other`", () => {
+  expect(one("Whenever you open an Attraction").event).toBe("other");
+  expect(one("Whenever chaos ensues").event).toBe("other");
+  expect(one("Whenever you get one or more {E}")).toMatchObject({ event: "counter-added", subject: { counter: "energy" } });
+  expect(one("Whenever you pay life")).toMatchObject({ event: "life-lost", narrowing: "pay" });
 });
 
 test("over the census: deterministic, every event a clause-vocabulary word, coverage not below its floor", async () => {
@@ -128,7 +172,7 @@ test("over the census: deterministic, every event a clause-vocabulary word, cove
     read++; uses += cards;
     for (const x of [r].flat()) if (x.event !== "reflexive") expect(TRIGGERS as readonly string[], p).toContain(x.event);
   }
-  // A RATCHET, raised as coverage grows (S1's end target is 95% / 98%).
-  expect(read / preambles.size).toBeGreaterThanOrEqual(0.86);
-  expect(uses / total).toBeGreaterThanOrEqual(0.975);
+  // Every printed preamble in the census reads (#896: 100%, as the filter grammar's phrases).
+  expect(read).toBe(preambles.size);
+  expect(uses).toBe(total);
 });
