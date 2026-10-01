@@ -991,6 +991,16 @@ const OPENER = /^(if you do|if you don't|if [^,]+|otherwise|then|as an additiona
 
 /** The actions a clause's printed text states that this grammar reads completely, in printed order:
  *  the cost's first (as the store writes them), then the effect's. */
+/** Collects the phrases `parseActions` could not read, while `unreadPhrases` runs it. */
+let unread: string[] | null = null;
+
+/** DIAGNOSTIC (instruments only): the action phrases of a clause the grammar did not read, as
+ *  printed -- what `packages/instruments/src/action-blockers.ts` clusters to rank the next work. */
+export function unreadPhrases(effect: string, type: string | null, cost?: string): string[] {
+  unread = [];
+  try { parseActions(effect, type, cost); return unread; } finally { unread = null; }
+}
+
 export function parseActions(effect: string, _type: string | null, cost?: string): ActionReading[] {
   const out: ActionReading[] = [];
   // A mode's or a result's label is not text the action reads: a Spree mode's added cost ("+ {2} —"),
@@ -1011,6 +1021,7 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   for (const part of cost ? cost.split(/, (?=\{|[A-Z]|[−+]?\d)/) : []) {
     const r = readPhrase(part.replace(/^([A-Z])/, (c) => c.toLowerCase()), undefined);
     if (r) out.push(...r);
+    else unread?.push(part);
   }
   // Quoted ability text belongs to what is granted, not to this clause's own actions.
   // A QUOTED ability is one atom: never split, never read as this clause's own actions, and kept in
@@ -1068,6 +1079,7 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       for (const alt of main!.split(/ or (?=(?:pay|sacrifice|discard|draw|mill|exile|lose|reveal|search)\b)/)) {
         const r = readPhrase(alt, mainCondition, carried);
         if (r) out.push(...r);
+        else unread?.push(alt.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!).trim());
         // The actor carries even past a phrase this grammar does not read yet: "target opponent
         // sacrifices a creature, discards a card, and loses 3 life" -- all three are theirs.
         carried = r?.[0]?.actor ?? actorOf(alt) ?? (r === null && playerSubject(alt.trim()) ? UNKNOWN_ACTOR : carried);
