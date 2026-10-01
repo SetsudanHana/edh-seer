@@ -105,7 +105,7 @@ const VERB_WORDS = new Set(["be", "block", "attack", "untap", "not", "pay", "sac
   "repeat", "reselect", "ignore", "secretly", "begin", "phase", "distribute", "circle", "attach", "fly", "flies", "doesn't", "don't",
   "cause", "enter", "visit", "bands", "proliferate", "populate", "connive", "surveil", "manifest", "amass", "adapt", "bolster",
   "support", "fateseal", "incubate", "discover", "forage", "suspect", "goad", "detain", "exert", "monstrosity", "learn", "seek",
-  "conjure", "perpetually", "roll", "flip", "vote", "shuffle", "win", "lose", "double", "triple", "switch", "exchange", "reveal", "go", "use", "guess", "reorder", "reverse"]);
+  "conjure", "perpetually", "roll", "flip", "vote", "shuffle", "win", "lose", "double", "triple", "switch", "exchange", "reveal", "plotting", "go", "use", "guess", "reorder", "reverse"]);
 /** A TIME: the phrase IS a turn, phase, step, chapter, day or night ("your upkeep", "the next end
  *  step", "an additional combat phase", "chapter II"). Anchored at the start: a filter that merely
  *  mentions a turn ("a creature that entered THIS TURN") is a filter, and a clause that ends "until
@@ -113,11 +113,11 @@ const VERB_WORDS = new Set(["be", "block", "attack", "untap", "not", "pay", "sac
 const TIME = /^(?:chapter\b|(?:i|ii|iii|iv|v|vi)(?:,|$| or )|at the beginning of\b|each of (?:your|their) \w+ (?:main phases|turns|upkeeps)\b|when(?:ever)? you\b|if it's the (?:first|second|last)\b|day\b|night\b|(?:(?:your|each|the|their|that player's|an opponent's|each opponent's|each player's|target opponent's|target player's|this|that)\s+)?(?:(?:next|first|second|last|extra|additional|precombat|postcombat)\s+)*(?:turns?|upkeeps?|end steps?|main phases?|combat(?: phases?| steps?| damage steps?)?|draw steps?|untap steps?|beginning(?: phases?)?|cleanup steps?)\b|(?:an?|one|two|x)\s+(?:(?:extra|additional|precombat|postcombat)\s+)*(?:turns?|upkeeps?|end steps?|main phases?|combat(?: phases?)?|beginning phases?)\b)/;
 /** AN AMOUNT, not a class: "1 damage", "X times", "half your life", "equal to its power", "life".
  *  Task 6's magnitudes. */
-const AMOUNT = /^(?:(?:\d+|x|one|two|three|half|twice)\s+(?:damage|life|times)\b|(?:damage|life|half|twice|equal to)\b|x,?\s+where\b|all (?:(?:non)?combat )?damage\b|all but \d|(?:non)?combat damage\b|\d+ for each\b|excess damage\b|base (?:power|toughness)\b|energy equal\b|an amount\b|a number of times\b|an additional time\b|once for each\b|\d+, divided\b)/;
+const AMOUNT = /^(?:(?:\d+|x|one|two|three|half|twice)\s+(?:damage|life|times)\b|(?:damage|life|half|twice|equal to)\b|x,?\s+where\b|all (?:(?:non)?combat )?damage\b|all but \d|(?:non)?combat damage\b|\d+ for each\b|excess damage\b|base (?:power|toughness)\b|energy equal\b|an amount\b|a number of times\b|an additional time\b|(?:any number of )?players' life totals$|once for each\b|\d+, divided\b)/;
 /** "your second spell", "their first card": the Nth event of a turn, a trigger condition (task 5). */
-const ORDINAL = /^(?:your|their|an opponent's|each player's|a player's)\s+(?:first|second|third|fourth|fifth)\b/;
+const ORDINAL = /^(?:your|their|an opponent's|each player's|a player's)\s+(?:first|second|third|fourth|fifth|next)\b|\byou next cast\b|\bfor the first time each turn$/;
 /** A player doing something: "you discard a card", "you cast a noncreature spell" -- a clause. */
-const PLAYER_CLAUSE = /^(?:you|you've|players?|an opponent|each player|each opponent|target player|target opponent|a player)\s+(?:tap|visit|open|waterbend|was|were|been|gained|lost|skip|skips|place|fully|expend|decide|cycled|chose|remove|return|put|rolling|rolls|sacrifices|scries|owns?|giving|gaining|cast|discard|exile|sacrifice|search|reveal|note|choose|lose|gain|draw|mill|create|attack|block|roll|flip|play|activate|control|don't|do|have|has)\b/;
+const PLAYER_CLAUSE = /^(?:you and an opponent each|you|you've|players?|an opponent|each player|each opponent|target player|target opponent|a player)\s+(?:controls|tap|visit|open|waterbend|was|were|been|gained|lost|skip|skips|place|fully|expend|decide|cycled|chose|remove|return|put|rolling|rolls|sacrifices|scries|owns?|giving|gaining|cast|discard|exile|sacrifice|search|reveal|note|choose|lose|gain|draw|mill|create|attack|block|roll|flip|play|activate|control|don't|do|have|has)\b/;
 /** A type-setting or rules-bending effect's object: "a Vampire in addition to its other types",
  *  "Angel creature type", "creature spells as though they had flash". */
 const EFFECT_OBJECT = /\bin addition to (?:its|their) other\b|(?<!chosen )\b(?:creature )?type$|\bas though\b/;
@@ -133,7 +133,7 @@ const FRAGMENT = /^(?:your|their|its|any|each|one|the rest|all|this|that|both|ei
 function isBareName(phrase: string): boolean {
   const words = phrase.trim().split(/\s+/);
   if (words.length === 0 || words.length > 6 || !/^\p{Lu}/u.test(words[0]!)) return false;
-  const joiners = new Set(["of", "the", "and", "to", "a", "in", "for", "power", "toughness"]);
+  const joiners = new Set(["of", "the", "and", "or", "to", "a", "in", "for", "power", "toughness"]);
   return words.every((w) => /^\p{Lu}[\p{L}\d'’,-]*$/u.test(w) || joiners.has(w))
     && !words.some((w) => {
       const l = w.toLowerCase().replace(/[,'’]s?$/, "");
@@ -144,9 +144,10 @@ function isBareName(phrase: string): boolean {
  *  subtype, colour, player, status or P/T -- a vote ("carnage or homage"), a keyword action ("loot"),
  *  a counter kind ("bore"), a participle ("sacrificed"). Every such phrase that IS a filter ("Angel",
  *  "blue", "opponent", "tapped", "10/10") carries one of those words. */
-const FILTER_WORD = /^(?:(?:non-?)?(?:creatures?|artifacts?|enchantments?|lands?|planeswalkers?|spells?|cards?|permanents?|tokens?|instants?|sorcer(?:y|ies)|battles?|abilities|ability|kindred|tribal|legendary|basic|snow|white|blue|black|red|green|colou?rless|multicolou?red|monocolou?red|you|players?|opponents?|target|attacking|blocking|blocked|unblocked|tapped|untapped|suspected|goaded|face-(?:up|down)|enchanted|equipped|historic|outlaws?)|[+-]?(?:\d+|x|\*)\/[+-]?(?:\d+|x|\*))$/;
+const FILTER_WORD = /^(?:(?:non-?)?(?:sources?|creatures?|artifacts?|enchantments?|lands?|planeswalkers?|spells?|cards?|permanents?|tokens?|instants?|sorcer(?:y|ies)|battles?|abilities|ability|kindred|tribal|legendary|basic|snow|white|blue|black|red|green|colou?rless|multicolou?red|monocolou?red|you|players?|opponents?|target|attacking|blocking|blocked|unblocked|tapped|untapped|suspected|goaded|face-(?:up|down)|enchanted|equipped|historic|outlaws?)|[+-]?(?:\d+|x|\*)\/[+-]?(?:\d+|x|\*))$/;
 function isNoFilterWord(text: string): boolean {
-  const words = text.split(/\s+or\s+|\s+/);
+  // "a crime", "each foe": an article or "each" adds no filter word.
+  const words = text.replace(/^(?:an?|each) /, "").split(/\s+or\s+|\s+/);
   if (words.length > 2 || (words.length === 2 && !/\sor\s/.test(text))) return false;
   return words.every((w) => !FILTER_WORD.test(w) && !SUBTYPES.has(w) && !SUBTYPES.has(w.replace(/s$/, "")) && !SUBTYPES.has(w.replace(/(?:es|ves)$/, "")));
 }
@@ -163,7 +164,7 @@ const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are
 const RELATIVE = /\b(?:that|that's|who|which|whose)\b/;
 /** A REFERENCE inside a longer phrase: what was exiled, revealed or chosen earlier, "those", "that
  *  many". Task 4 and #900's population, resolved by `derive/references.ts`, not by a filter. */
-const INNER_REFERENCE = /^chosen\b|^an? chosen\b|\b(?:you|your opponent|they) chose\b|^(?:a |an |up to \w+ |two of the )?(?:revealed|returned)\b|\bnoted\b|\bpiles?\b|\bsector\b|\bthe same way\b|\bthey find\b|\bstored results\b|^his\b|(?<!cop(?:y|ies) )\bof (?:enchanted|equipped) \w+$|(?<!cop(?:y|ies) )\bof the (?:exiled|chosen|last chosen) (?:cards?|permanent)\b|\bthe most votes\b|\b(?:not |other than (?:up to \w+ |one |the )?)chosen\b|\bnot in a chosen\b|\bits controller (?:controls|'s)\b|\bit (?:blocked|was blocking)\b|\bof that colou?r\b|\bfrom (?:it|them|that (?:hand|source's|player's)|the (?:chosen|other) pile|the pile of|its controller's|chosen)\b|\b(?:attached to (?:it|them|that \w+)|blocking (?:it|them)|blocked by it|it's blocking|this way|exiled with|from among|of them|of those|those|they (?:control|own|don't)|that (?:card|creature|player|spell|permanent|ability|many|much|token|land|artifact|opponent))\b/;
+const INNER_REFERENCE = /^chosen\b|^an? chosen\b|\b(?:you|your opponent|they) chose\b|^(?:a |an |up to \w+ |two of the )?(?:revealed|returned)\b|\bnoted\b|\bpiles?\b|\bsector\b|\bthe same way\b|\bthey find\b|\bstored results\b|^his\b|\bamong them$|\bcopy of the chosen card\b|\b(?:weren't|were) chosen\b|\bother than \w+ chosen\b|^a target of\b|(?<!name )\bchosen for\b|^(?:new )?targets for\b|\bfound in\b|\bused to craft\b|(?<!cop(?:y|ies) )\bof (?:enchanted|equipped) \w+$|(?<!cop(?:y|ies) )\bof the (?:exiled|chosen|last chosen) (?:cards?|permanent)\b|\bthe most votes\b|\b(?:not |other than (?:up to \w+ |one |the )?)chosen\b|\bnot in a chosen\b|\bits controller (?:controls|'s)\b|\bit (?:blocked|was blocking)\b|\bof that colou?r\b|\bfrom (?:it|them|that (?:hand|source's|player's)|the (?:chosen|other) pile|the pile of|its controller's|chosen)\b|\b(?:attached to (?:it|them|that \w+)|blocking (?:it|them)|blocked by it|it's blocking|this way|exiled with|from among|of them|of those|those|they (?:control|own|don't)|that (?:card|creature|player|spell|permanent|ability|many|much|token|land|artifact|opponent))\b/;
 
 export function domainOf(phrase: string): string {
   // "~" is the card's own name: a self-reference, except where it is what a filter names -- after
@@ -174,10 +175,24 @@ export function domainOf(phrase: string): string {
   const amountless = phrase.split(/["“]|\bwhere\b|\bequal to\b|\bless than\b|\bgreater than\b|\bfor each\b/)[0]!;
   if (!appositionToken && amountless.replace(/\bnamed .*$/, "").replace(/\btargets? .*~/, "").replace(/\bby ~/g, "").includes("~")) return "reference";
   const text = phrase.toLowerCase().replace(/’/g, "'").trim();
+  // A DEFECT OF THE CLAUSE STORE, not English: two fields run together ("target Villain you
+  // control|menace"), a die row cut off ("Orcs 2", "you 3"), "first strike" split in two ("target
+  // creature's strike"). Explicit shapes only; each was read in the census.
+  // Also a subject whose verb was dropped ("an opponent by a red instant or sorcery spell you control",
+  // Chandra's Phoenix: "is dealt damage" is gone), and a token given its maker's ability word ("a 5/4 ...
+  // Dragon Spirit creature token with Enrage", Vrondiss: the token's ability is a quoted trigger), and a
+  // subtype the census rewrote as "~" because a card bears its name ("target ~ creature",
+  // Assembly-Worker's "target Assembly-Worker creature").
+  if (/\||^\w+ \d+$|^strike of\b|'s strike$|\bentering from causing\b|^an opponent by\b|\btoken with enrage$|^target ~ creature$/.test(text)) return "malformed";
   if (text.startsWith("(")) return "reminder";
   if (text.startsWith('"') || text.startsWith("“")) return "quoted";
   // Ability text: a loyalty ability ("[+1]: ...") or "activated ability: ...".
   if (/^\[[^\]]*\]:|^(?:an? )?(?:activated|triggered) ability:|^activated ability\b/.test(text)) return "ability-text";
+  // "each creature: Prevent the next 1 damage ...", 'with "Creatures you control ... get +3/+3."'.
+  if (/^[^:"]{1,20}: \p{Lu}/u.test(phrase) || /^with ["“]/.test(text)) return "ability-text";
+  // An ability paraphrased by the clause store ("an activated ability that taps this Saga for {C}",
+  // Urza's Saga; "music counter ability", Musician).
+  if (/^an activated ability that (?:costs|taps)\b|\bcounter ability$/.test(text)) return "ability-text";
   // A recipient with the ability it is granted: "planeswalkers you control [0]: proliferate", "lands
   // you control; {T}: add {G}", "creatures you control, abilities 1 and 2". Text, not a filter.
   if (/\]:|\}\s*:|\bability:|\babilities \d|; \w+ ability$|: [a-z]+ \{|^[+\-−]\{/.test(text.split(/["“]|\btoken\b/)[0]!)) return "ability-text";
@@ -201,7 +216,9 @@ export function domainOf(phrase: string): string {
   // A colour choice: "a color of your choice", "any color", "any one color", "any combination of colors".
   if (/^(?:a color|any (?:one )?colou?r|any combination of colou?rs|a colou?r of your choice)\b/.test(text)) return "mana";
   // "each kind of counter", "a third of their life".
-  if (/^each (?:kind of )?counter\b|^each kind of counter\b/.test(text)) return "counter";
+  if (/^each (?:kind of )?counter\b|^each kind of counter\b|^a kind of counter\b/.test(text)) return "counter";
+  // "a +1/+1, first strike, or trample counter": a choice of counter kinds.
+  if (/^an? [^"]*, (?:or|and) [\w ]+ counter$/.test(text)) return "counter";
   if (/^(?:a third|half|a quarter) of\b/.test(text)) return "amount";
   // A count or an arithmetic amount: "for each land you control", "X plus 3", "any amount".
   if (/^for each\b|^x (?:plus|minus|of|if|\{)|^any amount\b|^one energy\b/.test(text)) return "amount";
@@ -236,10 +253,14 @@ export function domainOf(phrase: string): string {
   if (/\bcard types among\b/.test(text.split(/["“]/)[0]!)) return "amount";
   // A dig ("all but the bottom card of each opponent's library") or players' zones as the object.
   if (/^all but the bottom\b|^(?:any number of )?target players' (?:graveyards|hands|libraries)$/.test(text)) return "zone";
-  if (/\bof dungeons\b/.test(text)) return "game-piece";
+  if (/\bof dungeons\b|\bability stickers\b|^one result\b/.test(text)) return "game-piece";
+  // A vote ("evidence vote", Tivit) and named vote choices ("Redhorn Pass or Mines of Moria", Travel
+  // Through Caradhras).
+  if (/^\w+ vote$/.test(text)) return "fragment";
+  if (/^\p{Lu}\S* \p{Lu}\S*(?: (?:of|the) \p{Lu}\S*)* or \p{Lu}\S*(?: (?:of|the))? \p{Lu}\S*(?: (?:of|the) \p{Lu}\S*)*$/u.test(phrase)) return "name";
   // A MAIN VERB after a filter-shaped subject that a stat's amount hides from the head below:
   // "creatures with power less than this creature's power CAN'T BLOCK ...", "... ASSIGNS combat damage".
-  if (/\b(?:can't (?:block|attack|be cast)|assigns? combat damage|stations permanents|are goaded|are no longer|gains? \w+ until)\b/.test(text.split(/["“]/)[0]!)) return "clause";
+  if (/\b(?:can't (?:block|attack|be cast)|assigns? combat damage|stations permanents|are goaded|are no longer|gains? (?:\w+ ){1,3}until|isn't \w+ until|costs nothing|attack this turn$|an additional sacrifice|are colorless$|is created under)\b/.test(text.split(/["“]/)[0]!)) return "clause";
   // A stat or a total of a NAMED object: "Aetherwing's power equal to ...", "defending player's life total".
   if (!/\b(?:is|are|equals|switched)\b/.test(text) && /^(?!(?:target|each|all|an?|any|up|another|other|switch|exchange|double)\b)[^ ]+(?: [^ ]+){0,3}'s (?:base )?(?:power|toughness|life total|combat damage|counters|text box|stored results)\b/.test(text)
     || /^(?:target|each) [\w ]+'s (?:power and toughness|combat damage|life total)\b(?!.*\b(?:is|are|switched)\b)/.test(text)) return "amount";
@@ -247,6 +268,14 @@ export function domainOf(phrase: string): string {
   if (/\bdraft(?:ed|ing)?\b/.test(text)) return "draft";
   // A mode or a result chosen earlier: "Ghost mode chosen".
   if (/\bmode chosen$/.test(text)) return "reference";
+  // A named card moved or pumped ("Arachnus Web to target creature", "Celeborn +1/+1 until end of
+  // turn"): the card itself, a reference.
+  {
+    const m = /^(\p{Lu}[\p{L}'’ -]*?) (?:to target\b|[+-]\d+\/[+-]\d+)/u.exec(phrase);
+    if (m && isBareName(m[1]!)) return "reference";
+  }
+  // A named card's controller ("Xantcha's controller"): the card itself, through a reference.
+  if (/^\p{Lu}[\p{L}'’ -]*'s (?:controller|owner)$/u.test(phrase) && isBareName(phrase.replace(/'s (?:controller|owner)$/, ""))) return "reference";
   // "Beregond or another Human you control": the card's own name, then a class -- the self-or-class
   // twin (task 4), not one filter.
   if (/^\p{Lu}[\p{L}'’ -]*? or another\b/u.test(phrase) && !/^(?:target|each|all|an?|another)\b/.test(text) && isBareName(phrase.split(/ or another\b/)[0]!)) return "reference";
@@ -265,13 +294,18 @@ export function domainOf(phrase: string): string {
   // "This token can't block."'), a count ("a card for each counter you have") or a stat's amount ("with
   // mana value less than that creature's") does not make the phrase a clause or a reference.
   const head = text.split(/["“]|\bfor each\b|\bwhere\b|\bequal to\b|\bthe number of\b|\bless than\b|\bgreater than\b|\bsame name as\b|\bshares? a\b|\bshares? no\b/)[0]!;
-  if (INNER_REFERENCE.test(head)) return "reference";
+  // A token "with flying and THAT ABILITY" names its class in full; the ability it is granted is the
+  // action's (as a quoted one is), not a reference the filter must resolve.
+  if (INNER_REFERENCE.test(/\btokens?\b/.test(head) ? head.replace(/(?:,? and| with) that ability$/, "") : head)) return "reference";
   // A condition on a target ("target spell if it WAS kicked") is not the phrase's own verb.
   const main = head.split(/\bif\b/)[0]!;
   const verb = CLAUSE_VERB.exec(main);
   if (verb && !RELATIVE.test(main.slice(0, verb.index))) return "clause";
   // A counter kind named alone: "impostor counter", "loyalty counters on a planeswalker".
   if (/^(?:[+-]\S+|[a-z-]+) counters?(?: on\b|$)/.test(text)) return "counter";
-  if (isNoFilterWord(text)) return "fragment";
+  // A capitalised word after the article is a name ("a Jace"), never a fragment.
+  if (isNoFilterWord(text) && !/^(?:an?|each) \p{Lu}/u.test(phrase)) return "fragment";
+  // "a creature card name": a name to choose, not a card.
+  if (/^an? [\w ]*card name$/.test(text)) return "name";
   return "filter";
 }

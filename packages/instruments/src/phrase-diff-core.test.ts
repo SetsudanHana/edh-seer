@@ -66,12 +66,17 @@ test("domainOf: what is not a filter phrase, and what stays one", () => {
     ["revealed creature or land card", "reference"], ["creatures not chosen by their controller", "reference"],
     ["all activated abilities of the exiled card", "reference"], ["Beregond or another Human you control", "reference"],
     ["a creature card you drafted that isn't in your deck", "draft"], ["planar die", "game-piece"], ["Dáin", "name"],
+    ["your next instant or sorcery spell this turn", "ordinal"], ["Xantcha's controller", "reference"],
+    ["Orcs 2", "malformed"], ["target ~ creature", "malformed"], ["an activated ability that taps this Saga for {C}", "ability-text"], ["evidence vote", "fragment"], ["Redhorn Pass or Mines of Moria", "name"], ["lands each player controls other than six chosen", "reference"], ["target Villain you control|menace", "malformed"], ["a crime", "fragment"],
+    ["each creature: Prevent the next 1 damage that would be dealt to this creature by ~ this turn.", "ability-text"],
+    ["a +1/+1, first strike, or trample counter", "counter"], ["Celeborn +1/+1 until end of turn for each card looked at while scrying this way", "reference"],
+    ["an opponent controls a creature with power 4 or greater", "clause"], ["target snow permanent isn't snow until end of turn", "clause"],
     // ...and filters, however close they sit to a rule above.
     ["Angel", "filter"], ["attacking", "filter"], ["10/10", "filter"], ["snow", "filter"],
     ["target creature card with a sticker on it", "filter"], ["target creature you control into a 1/1 Citizen", "filter"],
     ["target spell if it was kicked", "filter"], ["a token that's a copy of the exiled card", "filter"],
     ["target creature you control and target creature the opponent to your left controls", "filter"],
-    ["up to X target creatures divided as you choose", "filter"], ["an instant or sorcery spell with mana value greater than the number of experience counters you have", "filter"],
+    ["up to X target creatures divided as you choose", "filter"], ["target creature's controller", "filter"], ["a 1/1 red Mercenary creature token with that ability", "filter"], ["a Jace", "filter"], ["a source", "filter"], ["a white Avatar creature token with power and toughness each equal to your life total", "filter"], ["an instant or sorcery spell with mana value greater than the number of experience counters you have", "filter"],
     ["a green Ooze creature token with \"This token's power is equal to the number of card types among cards in your graveyard.\"", "filter"],
   ];
   for (const [phrase, domain] of cases) expect(domainOf(phrase), phrase).toBe(domain);
