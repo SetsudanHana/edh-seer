@@ -154,6 +154,20 @@ test("mana, tapping and restrictions: the mana as printed, the restricted thing 
     .toBe("attack you unless their controller pays {2} for each creature they control that's attacking you");
 });
 
+test("the long tail: counterspells, control, fights, keyword actions", () => {
+  expect(read("Counter target spell unless its controller pays {2}.")).toMatchObject([{ verb: "counter-spell", text: "target spell", condition: "unless its controller pays {2}" }]);
+  expect(read("Gain control of target creature until end of turn.")).toMatchObject([{ verb: "gain-control", text: "target creature" }]);
+  // The store's pair, or the other creature alone when the fighter is a back-reference.
+  expect(read("Target creature you control fights target creature you don't control.")[0]?.text).toBe("target creature you control and target creature you don't control");
+  expect(read("you may have it fight target creature you don't control.")).toMatchObject([{ verb: "fight", text: "target creature you don't control", optional: true }]);
+  expect(read("it connives.")).toMatchObject([{ verb: "connive" }]);
+  expect(read("it connives.")[0]?.text).toBeUndefined();
+  expect(read("copy it for each time you've cast your commander from the command zone this game.")).toMatchObject([{ verb: "copy", amount: "for each time you've cast your commander from the command zone this game" }]);
+  expect(read("bolster 2.")).toMatchObject([{ verb: "bolster", amount: "2" }]);
+  expect(read("you become the monarch.")).toMatchObject([{ verb: "monarch" }]);
+  expect(read("venture into the dungeon.")).toMatchObject([{ verb: "venture-into-the-dungeon" }]);
+});
+
 test("a cost's actions come first, the cost's own words read the same way", () => {
   expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }, { verb: "create" }]);
   // A cost the segmenter left in the text is still a cost; ability words and table rows are labels.
@@ -174,6 +188,9 @@ test.each([
   ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.88],
   ["pump/grant", ["modify-pt", "grant-ability"], 0.795],
   ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.735],
+  ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
+    "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
+    "explore", "connive", "endure"], 0.74],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")

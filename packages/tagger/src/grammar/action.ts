@@ -434,6 +434,67 @@ const MANA_TAP: Record<string, [string, Handler]> = {
   }],
 };
 
+/** A thing-object verb's object: a class, the card itself, or a back-reference (kept as stored). */
+function thing(rest: string): Args | null {
+  const r = objectOf(rest);
+  return r && { object: r.object, ...(r.object.ref ? {} : { text: rest }) };
+}
+/** "bolster 2", "adapt X", "monstrosity 3": the number is the amount; the store's object stays. */
+const numbered = (rest: string): Args | null => (/^(?:\d+|x)$/i.test(rest) ? { amount: rest.toUpperCase() === "X" ? "X" : rest } : null);
+
+const TAIL: Record<string, [string, Handler]> = {
+  counter: ["counter-spell", (rest) => (/\bspells?\b|^(?:it|that spell|them)$|abilit/i.test(rest) ? thing(rest) : null)],
+  regenerate: ["regenerate", thing],
+  transform: ["transform", thing],
+  goad: ["goad", thing],
+  detain: ["detain", thing],
+  suspect: ["suspect", thing],
+  copy: ["copy", (rest) => {
+    const each = rest.indexOf(" for each ");
+    const r = thing(each >= 0 ? rest.slice(0, each) : rest);
+    return r && { ...r, ...(each >= 0 ? { amount: rest.slice(each + 1) } : {}) };
+  }],
+  attach: ["attach", (rest) => {
+    const to = rest.indexOf(" to ");
+    return to > 0 && objectOf(rest.slice(to + 4)) ? thing(rest.slice(0, to)) : null;
+  }],
+  bolster: ["bolster", numbered],
+  adapt: ["adapt", numbered],
+  monstrosity: ["monstrosity", numbered],
+  support: ["support", numbered],
+  discover: ["discover", numbered],
+  "collect evidence": ["collect-evidence", numbered],
+  "venture into the dungeon": ["venture-into-the-dungeon", (rest) => (rest === "" ? {} : null)],
+  "manifest dread": ["manifest-dread", (rest) => (rest === "" ? {} : null)],
+  learn: ["learn", (rest) => (rest === "" ? {} : null)],
+};
+
+/** "<subject> explores", "<subject> connives", "<subject> fights <other>", "<subject> is goaded",
+ *  "you become the monarch", "the Ring tempts you": actions whose subject stands first. */
+function subjectAction(t: string): ActionReading[] | null {
+  if (/^you become the monarch$/i.test(t)) return [{ verb: "monarch" }];
+  if (/^you take the initiative$/i.test(t)) return [{ verb: "initiative" }];
+  if (/^the ring tempts you$/i.test(t)) return [{ verb: "ring-tempts" }];
+  const have = /^you (may )?have (.+)$/i.exec(t);
+  const body = have ? have[2]! : t;
+  const opt = have?.[1] ? { optional: true as const } : {};
+  const kw = /^(.+?) (explores|connives|endures (\d+|x)|is goaded|fights?) ?(.*)$/i.exec(body);
+  if (!kw) return null;
+  const who = objectOf(kw[1]!);
+  if (!who) return null;
+  const word = kw[2]!.toLowerCase();
+  const self = who.object.ref || who.object.self ? {} : { text: kw[1]! };
+  if (word.startsWith("fight")) {
+    // The store writes the pair, "A and B", or B alone when A is the card or a back-reference.
+    const other = objectOf(kw[4]!);
+    if (!other) return null;
+    return [{ verb: "fight", object: other.object, text: "text" in self ? `${kw[1]} and ${kw[4]}` : kw[4]!, ...(/^up to /i.test(kw[4]!) ? { optional: true as const } : {}), ...opt }];
+  }
+  if (kw[4]) return null;
+  const verb = word === "explores" ? "explore" : word === "connives" ? "connive" : word === "is goaded" ? "goad" : "endure";
+  return [{ verb, object: who.object, ...self, ...(kw[3] ? { amount: kw[3] } : {}), ...opt }];
+}
+
 /** "<subject> enters tapped [unless ...]": tapped as it arrives, the store's `tap` on the card.
  *  "<subject> can't block", "doesn't untap during ...", "attacks each combat if able": a
  *  restriction, the store's `cant` with the restricted thing as its object. */
@@ -476,7 +537,7 @@ function entersWithOf(t: string): [string, string | undefined] | null {
 /** "your life total becomes 10". */
 const SET_LIFE = /^(?:your|their|each player's) life total becomes (.+)$/i;
 
-const HANDLERS: Record<string, [string, Handler]> = { ...ZONE, ...MANA_TAP, ...DRAW_SEARCH, ...DAMAGE_LIFE, ...COUNTERS, ...TOKENS };
+const HANDLERS: Record<string, [string, Handler]> = { ...ZONE, ...MANA_TAP, ...TAIL, ...DRAW_SEARCH, ...DAMAGE_LIFE, ...COUNTERS, ...TOKENS };
 /** The verb words, with their third-person forms, longest first. */
 const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new RegExp(`^(?:${v}|${v}s|${v.replace(/y$/, "ies")}|${v}es)\\b`, "i"), v]);
 
@@ -611,6 +672,8 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   let actor: ActionReading["actor"] = carried;
   let optional = false;
   if (carried === UNKNOWN_ACTOR && !actorOf(t) && !/^you /i.test(t)) return null;
+  const sa = subjectAction(t);
+  if (sa) return sa.map((a) => ({ ...a, ...(condition ? { condition } : {}) }));
   const rs = restrictionOf(t);
   // A restriction's "unless" is part of it: "can't attack you unless their controller pays {2}" is a
   // tax, which derive reads off the restriction's own words.
@@ -658,6 +721,8 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
     let args = handler(rest);
     // "put" is a counter's verb first ("put a +1/+1 counter on ..."), else a zone move.
     if (!args && base === "put") { [verb, handler] = ZONE.put!; args = handler(rest); }
+    // "gain control of target creature [until end of turn]": not life.
+    if (!args && base === "gain" && /^control of /i.test(rest)) { verb = "gain-control"; args = thing(rest.slice("control of ".length).replace(DURATION, "")); }
     if (!args) return null;
     // "destroy up to one target artifact": a zone move of up to N may move none (the store's optional).
     if ((ZONE[base] || base === "tap" || base === "untap") && /^(?:up to |any number of )/i.test(rest)) optional = true;
