@@ -67,7 +67,7 @@ test("domainOf: what is not a filter phrase, and what stays one", () => {
     ["all activated abilities of the exiled card", "reference"], ["Beregond or another Human you control", "reference"],
     ["a creature card you drafted that isn't in your deck", "draft"], ["planar die", "game-piece"], ["Dáin", "name"],
     ["your next instant or sorcery spell this turn", "ordinal"], ["Xantcha's controller", "reference"],
-    ["Orcs 2", "malformed"], ["target Villain you control|menace", "malformed"], ["a crime", "fragment"],
+    ["Orcs 2", "malformed"], ["target ~ creature", "malformed"], ["an activated ability that taps this Saga for {C}", "ability-text"], ["evidence vote", "fragment"], ["Redhorn Pass or Mines of Moria", "name"], ["lands each player controls other than six chosen", "reference"], ["target Villain you control|menace", "malformed"], ["a crime", "fragment"],
     ["each creature: Prevent the next 1 damage that would be dealt to this creature by ~ this turn.", "ability-text"],
     ["a +1/+1, first strike, or trample counter", "counter"], ["Celeborn +1/+1 until end of turn for each card looked at while scrying this way", "reference"],
     ["an opponent controls a creature with power 4 or greater", "clause"], ["target snow permanent isn't snow until end of turn", "clause"],

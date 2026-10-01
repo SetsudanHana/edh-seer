@@ -422,3 +422,38 @@ test("the card itself is an item only after another: 'this creature or another A
   expect(parse("this creature and another target creature")).toBeNull();
 });
 
+test("the census tail, each shape read from its card's own text", () => {
+  // Admiral Beckett Brass, Steel Hellkite: a player's history, and by what.
+  expect(parse("target nonland permanent controlled by a player who was dealt combat damage by three or more Pirates this turn")!.condition)
+    .toEqual({ kind: "history", event: "dealt-combat-damage", by: { subtype: "pirate" }, of: "controller" });
+  expect(parse("each nonland permanent with mana value X whose controller was dealt combat damage by this creature this turn")!.condition)
+    .toEqual({ kind: "history", event: "dealt-combat-damage", by: "self", of: "controller" });
+  // Grim Reminder, Creeping Dread, Grudge Keeper, Oath of Mages.
+  expect(parse("each opponent who cast a spell this turn with the same name as that card")!.condition).toEqual({ kind: "did", verb: "cast", what: { type: "spell", nameRelation: "same" } });
+  expect(parse("each opponent who voted for a choice you didn't vote for")!.condition).toEqual({ kind: "chose", choice: "a choice you didn't vote for" });
+  expect(parse("target player who has more life than the first player and is their opponent")).toMatchObject({ control: "opp", condition: { kind: "count", what: "life", op: "gt", vs: "ref" } });
+  // Expropriate, Stalking Leonin.
+  expect(parse("a permanent owned by the money voter")!.condition).toEqual({ kind: "chose", choice: "money", of: "owner" });
+  expect(parse("target creature that's attacking you if it's controlled by the chosen player")).toMatchObject({ combatWith: { role: "attacking", with: "you" }, condition: { kind: "chosen", of: "controller" } });
+  // Gilt-Leaf Winnower: power and toughness unequal, either way round.
+  expect(parse("target non-Elf creature whose power and toughness aren't equal")!.anyOf).toEqual([{ stats: [{ metric: "power", op: "lt", vs: "toughness" }] }, { stats: [{ metric: "power", op: "gt", vs: "toughness" }] }]);
+  // Rivals' Duel: no shared creature type with the other target.
+  expect(parse("two target creatures that share no creature types")!.shares).toEqual({ what: "creature-type", with: "ref", negated: true });
+  // Marvin, Bladegraft Aspirant: whose abilities, and what they target.
+  expect(parse("all activated abilities of creatures you control that don't have the same name as this creature")!.abilityOf).toEqual({ control: "you", type: "creature", notNamed: "~" });
+  expect(parse("Activated abilities of Equipment you control that target this creature")).toMatchObject({ abilityOf: { subtype: "equipment" }, targets: { self: true } });
+  // Nacatl War-Pride, Daretti: copies' states and class.
+  expect(parse("tokens that are copies of this creature and that are tapped and attacking")).toMatchObject({ tapped: true, combat: "attacking" });
+  expect(parse("tokens that are copies of target artifact card in a graveyard or artifact on the battlefield")).toMatchObject({ token: true, type: "artifact" });
+  // Tale's End, Repeated Reverberation, Ultimate Nullification.
+  expect(parse("target activated ability, triggered ability, or legendary spell")!.anyOf).toEqual([{ abilityKind: ["activated"] }, { abilityKind: ["triggered"] }, { type: "spell", legendary: true }]);
+  expect(parse("an instant spell, a sorcery spell, or a loyalty ability activation")!.anyOf).toEqual([{ type: "instant" }, { type: "sorcery" }, { abilityKind: ["loyalty"] }]);
+  expect(parse("all creatures and graveyards")!.anyOf).toEqual([{ type: "creature", scope: "all" }, { zone: "graveyard" }]);
+  // Trinisphere: its cost, not its mana value -- variable, the matcher abstains.
+  expect(parse("each spell that would cost less than three mana to cast")!.stats).toEqual([{ metric: "mana-value", op: "lt", variable: true }]);
+  // Season of the Witch: the exception is a class of its own.
+  expect(parse("all untapped creatures that didn't attack this turn, except for creatures that couldn't attack")).toMatchObject({ tapped: false, history: ["not-attacked"], except: [{ type: "creature", history: ["could-not-attack"] }] });
+  // Master of the Hunt (CR 702.22b).
+  expect(parse("a 1/1 green Wolf creature token named Wolves of the Hunt with bands with other creatures named Wolves of the Hunt")).toMatchObject({ keyword: ["bands with other"] });
+});
+

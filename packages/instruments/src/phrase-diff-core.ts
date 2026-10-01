@@ -164,7 +164,7 @@ const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are
 const RELATIVE = /\b(?:that|that's|who|which|whose)\b/;
 /** A REFERENCE inside a longer phrase: what was exiled, revealed or chosen earlier, "those", "that
  *  many". Task 4 and #900's population, resolved by `derive/references.ts`, not by a filter. */
-const INNER_REFERENCE = /^chosen\b|^an? chosen\b|\b(?:you|your opponent|they) chose\b|^(?:a |an |up to \w+ |two of the )?(?:revealed|returned)\b|\bnoted\b|\bpiles?\b|\bsector\b|\bthe same way\b|\bthey find\b|\bstored results\b|^his\b|\bamong them$|\bcopy of the chosen card\b|\b(?:weren't|were) chosen\b|(?<!name )\bchosen for\b|^(?:new )?targets for\b|\bfound in\b|\bused to craft\b|(?<!cop(?:y|ies) )\bof (?:enchanted|equipped) \w+$|(?<!cop(?:y|ies) )\bof the (?:exiled|chosen|last chosen) (?:cards?|permanent)\b|\bthe most votes\b|\b(?:not |other than (?:up to \w+ |one |the )?)chosen\b|\bnot in a chosen\b|\bits controller (?:controls|'s)\b|\bit (?:blocked|was blocking)\b|\bof that colou?r\b|\bfrom (?:it|them|that (?:hand|source's|player's)|the (?:chosen|other) pile|the pile of|its controller's|chosen)\b|\b(?:attached to (?:it|them|that \w+)|blocking (?:it|them)|blocked by it|it's blocking|this way|exiled with|from among|of them|of those|those|they (?:control|own|don't)|that (?:card|creature|player|spell|permanent|ability|many|much|token|land|artifact|opponent))\b/;
+const INNER_REFERENCE = /^chosen\b|^an? chosen\b|\b(?:you|your opponent|they) chose\b|^(?:a |an |up to \w+ |two of the )?(?:revealed|returned)\b|\bnoted\b|\bpiles?\b|\bsector\b|\bthe same way\b|\bthey find\b|\bstored results\b|^his\b|\bamong them$|\bcopy of the chosen card\b|\b(?:weren't|were) chosen\b|\bother than \w+ chosen\b|^a target of\b|(?<!name )\bchosen for\b|^(?:new )?targets for\b|\bfound in\b|\bused to craft\b|(?<!cop(?:y|ies) )\bof (?:enchanted|equipped) \w+$|(?<!cop(?:y|ies) )\bof the (?:exiled|chosen|last chosen) (?:cards?|permanent)\b|\bthe most votes\b|\b(?:not |other than (?:up to \w+ |one |the )?)chosen\b|\bnot in a chosen\b|\bits controller (?:controls|'s)\b|\bit (?:blocked|was blocking)\b|\bof that colou?r\b|\bfrom (?:it|them|that (?:hand|source's|player's)|the (?:chosen|other) pile|the pile of|its controller's|chosen)\b|\b(?:attached to (?:it|them|that \w+)|blocking (?:it|them)|blocked by it|it's blocking|this way|exiled with|from among|of them|of those|those|they (?:control|own|don't)|that (?:card|creature|player|spell|permanent|ability|many|much|token|land|artifact|opponent))\b/;
 
 export function domainOf(phrase: string): string {
   // "~" is the card's own name: a self-reference, except where it is what a filter names -- after
@@ -178,13 +178,21 @@ export function domainOf(phrase: string): string {
   // A DEFECT OF THE CLAUSE STORE, not English: two fields run together ("target Villain you
   // control|menace"), a die row cut off ("Orcs 2", "you 3"), "first strike" split in two ("target
   // creature's strike"). Explicit shapes only; each was read in the census.
-  if (/\||^\w+ \d+$|^strike of\b|'s strike$|\bentering from causing\b/.test(text)) return "malformed";
+  // Also a subject whose verb was dropped ("an opponent by a red instant or sorcery spell you control",
+  // Chandra's Phoenix: "is dealt damage" is gone), and a token given its maker's ability word ("a 5/4 ...
+  // Dragon Spirit creature token with Enrage", Vrondiss: the token's ability is a quoted trigger), and a
+  // subtype the census rewrote as "~" because a card bears its name ("target ~ creature",
+  // Assembly-Worker's "target Assembly-Worker creature").
+  if (/\||^\w+ \d+$|^strike of\b|'s strike$|\bentering from causing\b|^an opponent by\b|\btoken with enrage$|^target ~ creature$/.test(text)) return "malformed";
   if (text.startsWith("(")) return "reminder";
   if (text.startsWith('"') || text.startsWith("“")) return "quoted";
   // Ability text: a loyalty ability ("[+1]: ...") or "activated ability: ...".
   if (/^\[[^\]]*\]:|^(?:an? )?(?:activated|triggered) ability:|^activated ability\b/.test(text)) return "ability-text";
   // "each creature: Prevent the next 1 damage ...", 'with "Creatures you control ... get +3/+3."'.
   if (/^[^:"]{1,20}: \p{Lu}/u.test(phrase) || /^with ["“]/.test(text)) return "ability-text";
+  // An ability paraphrased by the clause store ("an activated ability that taps this Saga for {C}",
+  // Urza's Saga; "music counter ability", Musician).
+  if (/^an activated ability that (?:costs|taps)\b|\bcounter ability$/.test(text)) return "ability-text";
   // A recipient with the ability it is granted: "planeswalkers you control [0]: proliferate", "lands
   // you control; {T}: add {G}", "creatures you control, abilities 1 and 2". Text, not a filter.
   if (/\]:|\}\s*:|\bability:|\babilities \d|; \w+ ability$|: [a-z]+ \{|^[+\-−]\{/.test(text.split(/["“]|\btoken\b/)[0]!)) return "ability-text";
@@ -245,7 +253,11 @@ export function domainOf(phrase: string): string {
   if (/\bcard types among\b/.test(text.split(/["“]/)[0]!)) return "amount";
   // A dig ("all but the bottom card of each opponent's library") or players' zones as the object.
   if (/^all but the bottom\b|^(?:any number of )?target players' (?:graveyards|hands|libraries)$/.test(text)) return "zone";
-  if (/\bof dungeons\b/.test(text)) return "game-piece";
+  if (/\bof dungeons\b|\bability stickers\b|^one result\b/.test(text)) return "game-piece";
+  // A vote ("evidence vote", Tivit) and named vote choices ("Redhorn Pass or Mines of Moria", Travel
+  // Through Caradhras).
+  if (/^\w+ vote$/.test(text)) return "fragment";
+  if (/^\p{Lu}\S* \p{Lu}\S*(?: (?:of|the) \p{Lu}\S*)* or \p{Lu}\S*(?: (?:of|the))? \p{Lu}\S*(?: (?:of|the) \p{Lu}\S*)*$/u.test(phrase)) return "name";
   // A MAIN VERB after a filter-shaped subject that a stat's amount hides from the head below:
   // "creatures with power less than this creature's power CAN'T BLOCK ...", "... ASSIGNS combat damage".
   if (/\b(?:can't (?:block|attack|be cast)|assigns? combat damage|stations permanents|are goaded|are no longer|gains? (?:\w+ ){1,3}until|isn't \w+ until|costs nothing|attack this turn$|an additional sacrifice|are colorless$|is created under)\b/.test(text.split(/["“]/)[0]!)) return "clause";

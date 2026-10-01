@@ -28,6 +28,7 @@ const TESTED: Record<string, string> = {
   "707.9b": "grammar/filter.test.ts — a copy's exceptions ('except it isn't legendary', 'except it has haste') are kept (#896)",
   "108.3": "grammar/filter.test.ts — ownership beside control: 'you control but don't own' (#896)",
   "715": "grammar/filter.test.ts — an Adventure is a card's layout, read as a status (#896)",
+  "702.22b": "grammar/filter.test.ts — 'bands with other' is a keyword a token can have (Master of the Hunt) (#896)",
   "702.95": "grammar/filter.test.ts — a soulbond pair is a status the filter can demand ('a creature paired with it') (#896)",
   "810": "grammar/filter.test.ts — a Two-Headed Giant team's permanents ('creatures your team controls') are yours (#896)",
   "701.15": "grammar/filter.test.ts — goaded is a status the filter can demand (#896)",

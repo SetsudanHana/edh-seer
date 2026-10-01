@@ -30,9 +30,14 @@ export interface StatPredicate {
 /** A characteristic filter: what a trigger cares about, or what an effect targets/produces. */
 /** See `SubjectFilter.condition`. `vs` compares with you, with the most of any player, or with
  *  the maximum (speed). */
-export type PlayerCondition = { of?: "controller" } & (
+export type PlayerCondition = { of?: "controller" | "owner" } & (
   | { kind: "controls"; what: Partial<SubjectFilter>; negated?: true; most?: true }
-  | { kind: "count"; what: "life" | "life-lost" | "poison" | "hand" | "lands" | "speed"; op: "lt" | "lte" | "eq" | "gte" | "gt"; value?: number; vs?: "you" | "most" | "max" }
+  | { kind: "count"; what: "life" | "life-lost" | "poison" | "hand" | "lands" | "speed"; op: "lt" | "lte" | "eq" | "gte" | "gt"; value?: number; vs?: "you" | "most" | "max" | "ref" }
+  // What happened to the player this turn, and by what: "who was dealt combat damage by three or
+  // more Pirates this turn".
+  | { kind: "history"; event: string; by?: "self" | Partial<SubjectFilter> }
+  // The player chosen earlier in the effect: "if it's controlled by the chosen player".
+  | { kind: "chosen" }
   | { kind: "did"; verb: string; negated?: true; can?: true; what?: Partial<SubjectFilter> }
   | { kind: "chose"; choice: string }
   | { kind: "coin" }
@@ -358,7 +363,7 @@ export interface SubjectFilter {
    *  creature", "a creature that doesn't share a color with ...". `with` is "self", "ref" (an object
    *  named elsewhere in the sentence) or a filter. CEILING: `eventMatches` refuses a consumer carrying
    *  it. Set by the filter grammar (#896). */
-  shares?: { what: "creature-type" | "color" | "card-type" | "name" | "mana-value" | "type" | "controller" | "power" | "toughness"; with: "self" | "ref" | Partial<SubjectFilter>; negated?: true };
+  shares?: { what: "creature-type" | "color" | "card-type" | "name" | "mana-value" | "type" | "controller" | "power" | "toughness" | "total-power-toughness"; with: "self" | "ref" | Partial<SubjectFilter>; negated?: true };
   /** WHAT HAPPENED TO IT THIS TURN: "a creature that was dealt damage this turn", "all creatures that
    *  attacked this turn", "a creature card put into your graveyard from the battlefield this turn".
    *  Closed vocabulary. CEILING: `eventMatches` refuses a consumer carrying it. Set by the filter
