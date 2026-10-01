@@ -219,6 +219,36 @@ test("grant objects: the recipient is the filter", () => {
   expect(parse("target creature +2/+0")).toMatchObject({ type: "creature", scope: "target" });
 });
 
+test("origins excluded, combat relations, ownership", () => {
+  expect(parse("a spell from anywhere other than your hand")).toMatchObject({ type: "spell", notFromZone: "hand" });
+  expect(parse("a creature blocking this creature")).toMatchObject({ combatWith: { role: "blocking", with: "self" } });
+  expect(parse("target creature without flying that's attacking you")).toMatchObject({ notKeyword: ["flying"], combatWith: { role: "attacking", with: "you" } });
+  expect(parse("a spell you don't own")).toMatchObject({ owner: "opp" });
+  expect(parse("target permanent you own or control")).toMatchObject({ anyOf: [{ owner: "you" }, { control: "you" }] });
+  expect(parse("a permanent other than a basic land")).toMatchObject({ type: "permanent", except: [{ type: "land", basic: true }] });
+});
+
+test("a spell or an ability is two branches, and a restriction binds both", () => {
+  expect(parse("target spell or ability")).toEqual({ control: "any", token: null, scope: "target",
+    anyOf: [{ type: "spell" }, { abilityKind: ["activated", "triggered"] }] });
+  expect(parse("target spell or ability that targets only a single permanent or player")).toMatchObject({ restricted: true });
+});
+
+test("copy exceptions, conditions on the target, alternatives, destinations", () => {
+  expect(parse("a token that's a copy of target creature you control, except it isn't legendary")).toEqual({ control: "any", token: true, type: "creature", legendary: false });
+  expect(parse("target creature if it's white")).toMatchObject({ type: "creature", colors: ["W"] });
+  expect(parse("a Desert card from your hand or library")).toMatchObject({ subtype: "desert", anyOf: [{ fromZone: "hand" }, { fromZone: "library" }] });
+  expect(parse("spells with flash or flying from the top of your library")).toMatchObject({ anyOf: [{ keyword: ["flash"] }, { keyword: ["flying"] }] });
+  expect(parse("target creature into their library")).toEqual({ control: "any", token: null, type: "creature", scope: "target" });
+  expect(parse("up to one card of each permanent type from your graveyard")).toMatchObject({ type: "permanent", fromZone: "graveyard" });
+  expect(parse("target creature, haste until end of turn")).toMatchObject({ type: "creature", scope: "target" });
+  expect(parse("any target that isn't a Dragon")).toMatchObject({ scope: "target", notSubtype: ["dragon"] });
+  expect(parse("all creatures that aren't of the chosen type")).toMatchObject({ except: [{ chosenType: true }] });
+  expect(parse("a spell with power, toughness, or mana value 4")!.anyOf).toHaveLength(3);
+  // A one-value adjective in one alternative only (review): legendary binds to the creature alone.
+  expect(parse("target artifact or legendary creature")).toBeNull();
+});
+
 /** REFUSED: the grammar answers null, and derive keeps `parseSubject`'s answer. Each is a narrowing
  *  the schema cannot hold (dropping it would WIDEN the claim), a reference, or not a filter at all. */
 test("refusals", () => {
@@ -228,8 +258,6 @@ test("refusals", () => {
     "target spell, nonland permanent, or card in a graveyard",
     // References (task 4) and non-filters (tasks 5, 6).
     "this creature", "that card", "Flying", "{C}", "chapter II",
-    // Two objects of different kinds.
-    "target spell, activated ability, or triggered ability",
   ]) expect(parse(p), p).toBeNull();
 });
 

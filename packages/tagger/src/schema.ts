@@ -356,6 +356,14 @@ export interface SubjectFilter {
   nameRelation?: "chosen" | "same" | "different";
   /** A NAME THE SUBJECT DOES NOT HAVE: "target permanent not named ~". Lowercased, "~" for the card. */
   notNamed?: string;
+  /** AN ORIGIN THE SUBJECT DID NOT COME FROM: "a spell from anywhere other than your hand". A producer
+   *  that states no origin was cast from hand (a card's own cast), so it fails a `hand` exclusion.
+   *  Set by the filter grammar (#896). */
+  notFromZone?: string;
+  /** A COMBAT RELATION to another object: "a creature blocking this creature" (`blocking`, self),
+   *  "target creature blocking or blocked by ~", "target creature that's attacking you". CEILING:
+   *  refused by the matcher, as the other relations no producer states. Set by the filter grammar. */
+  combatWith?: { role: "blocking" | "blocked-by" | "blocking-or-blocked-by" | "attacking"; with: "self" | "ref" | "you" | Partial<SubjectFilter> };
   /** EXCLUSIONS: "all creatures except for Merfolk, Krakens ...", "each creature except for tokens
    *  you control". A producer matching any of them fails. Set by the filter grammar (#896). */
   except?: Partial<SubjectFilter>[];

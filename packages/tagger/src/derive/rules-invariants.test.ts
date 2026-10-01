@@ -25,6 +25,7 @@ const TESTED: Record<string, string> = {
   "205.4c": "grammar/filter.test.ts — nonbasic is `basic: false` (#896)",
   "205.4g": "grammar/filter.test.ts — snow is a supertype (`snow`, #896)",
   "111.4": "grammar/filter.test.ts — a token's own name is not a card to look for ('Marit Lage, a legendary ... token', 'token ... named Storm Crow') (#896)",
+  "707.9b": "grammar/filter.test.ts — a copy's exceptions ('except it isn't legendary', 'except it has haste') are kept (#896)",
   "108.3": "grammar/filter.test.ts — ownership beside control: 'you control but don't own' (#896)",
   "715": "grammar/filter.test.ts — an Adventure is a card's layout, read as a status (#896)",
   "701.15": "grammar/filter.test.ts — goaded is a status the filter can demand (#896)",

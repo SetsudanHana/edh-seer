@@ -496,3 +496,28 @@ test("a variable stat rhs ('mana value X or less') abstains: the matcher cannot 
   expect(subjectMatches(s({ type: "creature", manaValue: 9 }), want, H)).toBe(true);
   expect(subjectMatches(s({ type: "creature", manaValue: 9 }), s({ type: "creature", stats: [{ metric: "mana-value", op: "lte", value: 3 }] }), H)).toBe(false);
 });
+
+test("relations no producer states are refused, also inside an anyOf branch", () => {
+  const spell = s({ type: "instant" });
+  expect(subjectMatches(spell, s({ type: "spell", combatWith: { role: "blocking", with: "self" } }), H)).toBe(false);
+  expect(subjectMatches(spell, s({ anyOf: [{ type: "spell", targets: { self: true } }] }), H)).toBe(false);
+});
+
+test("from anywhere other than your hand: an unstated origin is the hand", () => {
+  const want = s({ type: "spell", notFromZone: "hand" });
+  expect(subjectMatches(s({ type: "instant" }), want, H)).toBe(false);
+  expect(subjectMatches(s({ type: "instant", fromZone: "graveyard" }), want, H)).toBe(true);
+});
+
+test("a player branch is met by a player-shaped producer only", () => {
+  const want = s({ control: "any", anyOf: [{ player: true }, { type: "planeswalker" }] });
+  expect(subjectMatches(s({ control: "opp" }), want, H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature" }), want, H)).toBe(false);
+  expect(subjectMatches(s({ type: "planeswalker" }), want, H)).toBe(true);
+});
+
+test("exclusions: a producer matching one fails", () => {
+  const want = s({ type: "creature", except: [{ subtype: "merfolk" }] });
+  expect(subjectMatches(s({ type: "creature", subtype: "merfolk" }), want, H)).toBe(false);
+  expect(subjectMatches(s({ type: "creature", subtype: "bear" }), want, H)).toBe(true);
+});
