@@ -17,7 +17,8 @@ import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
 import { parse as parseFilter } from "../grammar/filter.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
-import { printedPreamble } from "../grammar/preamble.js";
+import { effectText, printedPreamble } from "../grammar/preamble.js";
+import { alignVerbs, parseActions } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
@@ -296,7 +297,12 @@ import { emblemRecipient } from "../emblem.js";
 // 226: ...a condition on where the SOURCE is (Inalla's eminence) and Bowmasters' "except the first
 // one they draw in each of their draw steps" narrow no event a card supplies, so they claim.
 // 227: Guardian Project's "doesn't have the same name" is `uniqueName` (CR 903.5b, owner 2026-10-01).
-export const DERIVE_VERSION = 227;
+// 228: #896 task 6 -- the action grammar takes draw/search (draw, discard, mill, scry, surveil,
+// search, reveal): a stored action of those verbs is rewritten from the printed phrase it reads.
+// 229: ...a back-referenced actor ("that player mills") keeps the stored object.
+// 230: ...wider phrasing: "X cards, where X is ...", "each player who ...", "you and X each".
+// 231: ..."up to X" is the amount X, as the store wrote it (Harvest Season's scaling).
+export const DERIVE_VERSION = 231;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1324,6 +1330,48 @@ function narrowingRepresented(r: TriggerReading, text: string): boolean {
  *  preamble, or a reflexive "when you do", which the stored path already handles. A compound
  *  ("enters or attacks") is one stored clause per event, so the reading naming the clause's own
  *  event is taken. CEILING: a compound stored as ONE clause keeps only that event. */
+/** THE VERB FAMILIES THE ACTION GRAMMAR HAS TAKEN OVER (#896 task 6), one per PR in the owner's order
+ *  (2026-10-01): draw and search first. */
+const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(["draw", "discard", "mill", "scry", "surveil", "search", "reveal"]);
+/** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
+ *  cards" -> object "target player"); see `RECIPIENT_VERBS` in emits.ts. */
+const PLAYER_OBJECT_VERBS: ReadonlySet<string> = new Set(["draw", "mill", "discard", "scry", "surveil"]);
+
+/** THE ACTION GRAMMAR WINS (owner, 2026-10-01): a clause's stored actions of a taken-over family are
+ *  rewritten from the printed text where the grammar read the phrase completely -- object, amount,
+ *  optional, zones and the kept condition. The rest of derive reads the rewritten record exactly as
+ *  it read the stored one. CEILING: a phrase the store left out (the "reveal it" of a tutor) is not
+ *  ADDED: an inserted action becomes the antecedent of the "it" after it, and the references
+ *  resolver (#900) reads the revealed card's class off the text, not off an action. */
+function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost: string | undefined, cardName: string | undefined): ClauseRecord {
+  if (!text || !clause.actions?.length) return clause;
+  const readings = parseActions(effectText(text, cardName ?? ""), clause.abilityType ?? null, cost)
+    .filter((r) => GRAMMAR_ACTION_VERBS.has(r.verb));
+  if (readings.length === 0) return clause;
+  const stored = clause.actions;
+  const aligned = new Map(alignVerbs(stored.map((a) => a.verb ?? ""), readings.map((r) => r.verb)).map(([i, j]) => [j, i]));
+  const out: Action[] = [...stored];
+  readings.forEach((r, j) => {
+    const i = aligned.get(j);
+    if (i === undefined) return;
+    const base = stored[i]!;
+    // A BACK-REFERENCED actor ("that player mills X cards", Geth) keeps the stored object: derive's
+    // antecedent reading of who "that player" is beats the grammar's "any player".
+    const named = r.actor?.text !== undefined && r.actor.scope !== "that";
+    const object = PLAYER_OBJECT_VERBS.has(r.verb) ? (named ? r.actor!.text : r.actor ? base.object : r.text ?? base.object) : r.text ?? base.object;
+    out[i] = ({
+      ...base,
+      ...(object !== undefined ? { object } : {}),
+      ...(r.amount !== undefined ? { amount: r.amount } : {}),
+      ...(r.fromZone !== undefined ? { fromZone: r.fromZone } : {}),
+      ...(r.toZone !== undefined ? { toZone: r.toZone } : {}),
+      optional: r.optional === true,
+      ...(r.condition ? { condition: r.condition } : {}),
+    });
+  });
+  return { ...clause, actions: out };
+}
+
 type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter } | { refused: string; subject?: SubjectFilter };
 
 function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean): GrammarTrigger[] | null {
@@ -1509,6 +1557,7 @@ export function deriveAbilities(
     // keeping the effect and dropping the trigger would leave the card claiming to do a thing it
     // never does. The token's own derived row carries both halves.
     if (grantedToken?.has(clause.id)) continue;
+    clause = withGrammarActions(clause, clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
     // matcher can stop reading a back-face ability against the card's UNION of types.
     const face = clauseFaces?.[clause.id];

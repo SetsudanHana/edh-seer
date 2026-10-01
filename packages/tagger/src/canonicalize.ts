@@ -47,6 +47,10 @@ export interface Action {
    *  The action is what happens when the payment is NOT made; the payment is its floor. Added
    *  2026-09-17 for the rate axis, after the census showed the prompt had been dropping it. */
   unless?: { cost: string; payer: string } | null;
+  /** THE PRINTED CONDITION on an action the action grammar read ("if you do", "if you control an
+   *  artifact", "instead"): KEPT, and the action still claims (owner, 2026-10-01, #896 task 6). Set at
+   *  derive time, never stored; nothing reads it yet. */
+  condition?: string;
 }
 
 export interface ClauseRecord {
