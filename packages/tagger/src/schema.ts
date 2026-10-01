@@ -21,9 +21,23 @@ export interface StatPredicate {
    *  words did before; X is chosen as the spell resolves, and the other rhs need a value from
    *  outside the subject. */
   variable?: true;
+  /** A SUM OVER THE CHOSEN OBJECTS, not each one's: "creatures with total power 12 or greater". Set by
+   *  the filter grammar (#896). CEILING: the matcher abstains, as for `variable` -- no single object
+   *  carries the sum. ("total ... N or less" bounds each object by N, and is said without it.) */
+  total?: true;
 }
 
 /** A characteristic filter: what a trigger cares about, or what an effect targets/produces. */
+/** See `SubjectFilter.condition`. `vs` compares with you, with the most of any player, or with
+ *  the maximum (speed). */
+export type PlayerCondition = { of?: "controller" } & (
+  | { kind: "controls"; what: Partial<SubjectFilter>; negated?: true; most?: true }
+  | { kind: "count"; what: "life" | "life-lost" | "poison" | "hand" | "lands" | "speed"; op: "lt" | "lte" | "eq" | "gte" | "gt"; value?: number; vs?: "you" | "most" | "max" }
+  | { kind: "did"; verb: string; negated?: true; can?: true; what?: Partial<SubjectFilter> }
+  | { kind: "chose"; choice: string }
+  | { kind: "coin" }
+);
+
 export interface SubjectFilter {
   /** THE OBJECT IS THE ONE THE TRIGGER IS ABOUT, not another of its class (#896 task 4, #823): Mari,
    *  the Killing Quill's "whenever a creature an opponent controls dies, exile IT". The other fields
@@ -344,7 +358,7 @@ export interface SubjectFilter {
    *  creature", "a creature that doesn't share a color with ...". `with` is "self", "ref" (an object
    *  named elsewhere in the sentence) or a filter. CEILING: `eventMatches` refuses a consumer carrying
    *  it. Set by the filter grammar (#896). */
-  shares?: { what: "creature-type" | "color" | "card-type" | "name" | "mana-value" | "type"; with: "self" | "ref" | Partial<SubjectFilter>; negated?: true };
+  shares?: { what: "creature-type" | "color" | "card-type" | "name" | "mana-value" | "type" | "controller"; with: "self" | "ref" | Partial<SubjectFilter>; negated?: true };
   /** WHAT HAPPENED TO IT THIS TURN: "a creature that was dealt damage this turn", "all creatures that
    *  attacked this turn", "a creature card put into your graveyard from the battlefield this turn".
    *  Closed vocabulary. CEILING: `eventMatches` refuses a consumer carrying it. Set by the filter
@@ -373,6 +387,17 @@ export interface SubjectFilter {
    *  so `eventMatches` refuses a consumer carrying it, as it refuses `restricted` -- a demand nothing
    *  can check claims no cards rather than every spell. Set by the filter grammar. */
   targets?: Partial<SubjectFilter>;
+  /** A CONDITION ON A PLAYER, or on an object's CONTROLLER (`of: "controller"`), that no producer
+   *  states (#896): "each opponent who doesn't control an Elf" (`controls`, negated), "each player
+   *  with exactly 13 life" (`count`), "each opponent who doesn't sacrifice a permanent" (`did`, the
+   *  effect's own punisher choice), "creatures controlled by players who chose peace" (`chose`),
+   *  "each player whose coin comes up tails" (`coin`). CEILING: refused by the matcher, as the other
+   *  relations -- a demand nothing can check claims no cards. Set by the filter grammar. */
+  condition?: PlayerCondition;
+  /** THE SET A NAME WAS FIRST PRINTED IN: "a permanent with a name originally printed in the Arabian
+   *  Nights expansion", lowercased. CEILING: no producer states it; refused by the matcher. Set by the
+   *  filter grammar (#896). */
+  printedIn?: string;
   /** Which phase or step an `extra-phase` effect grants, over a closed CR vocabulary: `untap`,
    *  `upkeep`, `draw`, `main`, `combat`, `beginning`, `end`. Same shape as `counter` above, and for
    *  the same reason: a coarse `extra-phase` conflated units the game itself keeps apart -- an

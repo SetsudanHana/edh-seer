@@ -60,7 +60,7 @@ test("control, ownership, and who casts", () => {
 test("players are subjects too", () => {
   expect(parse("you")).toEqual({ control: "you", token: null });
   expect(parse("each opponent")).toEqual({ control: "opp", token: null, scope: "each" });
-  expect(parse("one or more of your opponents")).toBeNull();
+  expect(parse("one or more of your opponents")).toEqual({ control: "opp", token: null, scope: "all" });
 });
 
 test("the quantifier: target binds the player in a possessive, not the cards; 'another' is singular, 'other' a class", () => {
@@ -225,8 +225,9 @@ test("a player beside an object is a branch of its own", () => {
 test("alternatives with types of their own, and a leading subtype that all of them share", () => {
   expect(parse("a creature card or Garruk planeswalker card")!.anyOf).toEqual([{ type: "creature" }, { type: "planeswalker", subtype: "garruk" }]);
   expect(parse("an Adventure instant or sorcery spell")).toMatchObject({ type: ["instant", "sorcery"], subtype: "adventure" });
-  // After a noun, only another noun: "blocking enchanted creature" is a participle with an object.
-  expect(parse("all non-Wall creatures blocking enchanted creature")).toBeNull();
+  // After a noun, only another noun: "blocking enchanted creature" is a participle with an object, a
+  // combat relation to the creature the Aura enchants.
+  expect(parse("all non-Wall creatures blocking enchanted creature")).toMatchObject({ notSubtype: ["wall"], combatWith: { role: "blocking", with: "ref" } });
 });
 
 test("grant objects: the recipient is the filter", () => {
@@ -335,3 +336,58 @@ test("conditions on a target, shared stats, counts read past, and bigger numbers
   expect(parse("an Elf, Warrior, or Tyvar card")).toMatchObject({ subtype: ["elf", "warrior", "tyvar"] });
   expect(parse("a card named Magnifying Glass and/or a card named Thinking Cap")!.anyOf).toEqual([{ named: "magnifying glass" }, { named: "thinking cap" }]);
 });
+
+test("conditions on a player or an object's controller (refused by the matcher, never dropped)", () => {
+  expect(parse("each opponent who doesn't control an Elf")).toMatchObject({ control: "opp", condition: { kind: "controls", what: { subtype: "elf" }, negated: true } });
+  expect(parse("each player who controls the most creatures")!.condition).toEqual({ kind: "controls", what: { type: "creature" }, most: true });
+  expect(parse("each opponent who has three or more poison counters")!.condition).toEqual({ kind: "count", what: "poison", op: "gte", value: 3 });
+  expect(parse("target opponent who has more life than you do")!.condition).toEqual({ kind: "count", what: "life", op: "gt", vs: "you" });
+  expect(parse("each player with exactly 13 life")!.condition).toEqual({ kind: "count", what: "life", op: "eq", value: 13 });
+  expect(parse("each opponent who doesn't sacrifice a permanent")!.condition).toEqual({ kind: "did", verb: "sacrifice", negated: true, what: { type: "permanent" } });
+  expect(parse("creatures controlled by players who chose war")).toMatchObject({ type: "creature", condition: { kind: "chose", choice: "war", of: "controller" } });
+  expect(parse("target creature whose controller controls an Island")).toMatchObject({ condition: { kind: "controls", what: { subtype: "island" }, of: "controller" } });
+  expect(parse("each player whose coin comes up tails")!.condition).toEqual({ kind: "coin" });
+  expect(parse("each opponent who lost life this turn")).toMatchObject({ history: ["lost-life"] });
+});
+
+test("copy exceptions that set characteristics replace what was copied (CR 707.9b)", () => {
+  expect(parse("a token that's a copy of target non-Frog creature, except it's a 1/1 green Frog")).toEqual({ control: "any", token: true, type: "creature", subtype: "frog", colors: ["G"],
+    stats: [{ metric: "power", op: "eq", value: 1 }, { metric: "toughness", op: "eq", value: 1 }] });
+  expect(parse("a token that's a copy of it, except it's a 4/4 black Zombie")).toMatchObject({ subtype: "zombie", colors: ["B"] });
+  expect(parse("a token that's a copy of target creature, except it's a legendary Alien named Prisoner Zero")).toMatchObject({ legendary: true, named: "prisoner zero", subtype: "alien" });
+  expect(parse("a token that's a copy of this creature, except it has haste and loses soulbond")).toMatchObject({ keyword: ["haste"], notKeyword: ["soulbond"] });
+  expect(parse("a token that's a copy of target creature you control, except it enters with an additional +1/+1 counter on it")).toMatchObject({ counter: "+1/+1" });
+  // An exception on a copy of a reference is kept too.
+  expect(parse("a token that's a copy of it, except it isn't legendary")).toEqual({ control: "any", token: true, legendary: false });
+});
+
+test("named tokens with commas and quoted abilities, keyword costs, histories with a dealer", () => {
+  expect(parse("Voja, Friend to Elves, a legendary 3/3 green and white Wolf creature token")).toMatchObject({ token: true, subtype: "wolf", legendary: true });
+  expect(parse('Cragflame, a legendary colorless Equipment artifact token with "Equipped creature gets +1/+1 and has vigilance, trample, and haste" and equip {2}')).toMatchObject({ subtype: "equipment", keyword: ["equip"] });
+  expect(parse("a 1/1 white Human creature token with ward {2}")).toMatchObject({ keyword: ["ward"] });
+  expect(parse("another creature dealt damage this turn by a Spider you controlled")).toMatchObject({ other: true, history: ["dealt-damage-by-ref"] });
+  expect(parse("target player dealt damage by this creature this turn")).toMatchObject({ scope: "target", history: ["dealt-damage-by-self"] });
+  expect(parse("a creature you control dealing combat damage to a player")).toMatchObject({ control: "you", history: ["dealing-combat-damage-to-player"] });
+  expect(parse("target creature that blocked or was blocked by a Zombie this turn")).toMatchObject({ history: ["blocked-or-was-blocked-by-ref"] });
+});
+
+test("list items with their own zones, totals, printings, and smaller forms", () => {
+  expect(parse("a permanent you control or a card from your hand or graveyard")!.anyOf).toEqual([{ type: "permanent" }, { anyOf: [{ fromZone: "hand" }, { fromZone: "graveyard" }] }]);
+  // A zone binds its own noun: the artifact is not in your hand, nor yours.
+  expect(parse("an artifact or a card in your hand")!.anyOf).toEqual([{ control: "any", type: "artifact" }, { control: "you", zone: "hand" }]);
+  // ...but one noun said twice shares it.
+  expect(parse("artifact spells and colorless spells from the top of your library")).toMatchObject({ fromZone: "library" });
+  // An item needs its own noun: "all black and all red creature cards" is not two items.
+  expect(parse("all black and all red creature cards from their graveyard")).toBeNull();
+  expect(parse("creatures with total power 12 or greater")!.stats).toEqual([{ metric: "power", op: "gte", value: 12, total: true }]);
+  expect(parse("each nontoken permanent with a name originally printed in the Antiquities expansion")).toMatchObject({ printedIn: "antiquities", token: false });
+  expect(parse("all cards from all opponents' hands and graveyards")).toMatchObject({ control: "opp", anyOf: [{ fromZone: "hand" }, { fromZone: "graveyard" }] });
+  expect(parse("a card named Nissa, Genesis Mage from your graveyard")).toMatchObject({ named: "nissa, genesis mage", fromZone: "graveyard" });
+  expect(parse("Abilities your opponents activate that target a Merfolk you control")).toMatchObject({ control: "opp", targets: { subtype: "merfolk", control: "you" } });
+  expect(parse("one or more of your opponents")).toEqual({ control: "opp", token: null, scope: "all" });
+  expect(parse("on target creature you control")).toMatchObject({ control: "you", type: "creature", scope: "target" });
+  expect(parse("target spell that wasn't cast from its owner's hand")).toMatchObject({ notFromZone: "hand" });
+  expect(parse("a creature paired with it")).toMatchObject({ type: "creature", status: ["paired"] });
+  expect(parse("Aura spells with enchant creature")).toMatchObject({ subtype: "aura", keyword: ["enchant"] });
+});
+

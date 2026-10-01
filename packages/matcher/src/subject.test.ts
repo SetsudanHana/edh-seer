@@ -501,6 +501,14 @@ test("relations no producer states are refused, also inside an anyOf branch", ()
   const spell = s({ type: "instant" });
   expect(subjectMatches(spell, s({ type: "spell", combatWith: { role: "blocking", with: "self" } }), H)).toBe(false);
   expect(subjectMatches(spell, s({ anyOf: [{ type: "spell", targets: { self: true } }] }), H)).toBe(false);
+  // A player's condition and a name's first printing: no producer states either.
+  expect(subjectMatches(s({ control: "opp" }), s({ control: "opp", condition: { kind: "controls", what: { subtype: "elf" }, negated: true } }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "artifact" }), s({ type: "permanent", printedIn: "antiquities" }), H)).toBe(false);
+});
+
+test("a total over the chosen objects abstains, as a variable rhs does", () => {
+  const want = s({ type: "creature", stats: [{ metric: "power", op: "gte", value: 12, total: true }] });
+  expect(subjectMatches(s({ type: "creature", stats: [{ metric: "power", op: "eq", value: 2 }] }), want, H)).toBe(true);
 });
 
 test("from anywhere other than your hand: an unstated origin is the hand", () => {
