@@ -1703,7 +1703,7 @@ export function parse(text: string): SubjectFilter | null {
   // A TOKEN'S QUOTED ABILITY ("a 1/1 Rat creature token with \"This token can't block.\"") is
   // rules text the token has, not a class it belongs to. Read past, after "with" or "and".
   // CEILING: the ability is not kept; a demand on a granted ability would need it.
-  if (/\btokens?\b/i.test(text)) text = text.replace(/\s+(?:and|with)\s+"[^"]*"/g, "").replace(/,?\s+and\s+"[^"]*"/g, "");
+  if (/\btokens?\b/i.test(text)) text = text.replace(/ (?:and|with) "[^"]*"/g, "").replace(/,? and "[^"]*"/g, "");
   const toks = lex(text);
   if (!toks || toks.length === 0) return null;
   // "Enchant creature you control": the keyword line names the class the Aura can enchant

@@ -180,7 +180,7 @@ export function domainOf(phrase: string): string {
   if (/^\[[^\]]*\]:|^(?:an? )?(?:activated|triggered) ability:|^activated ability\b/.test(text)) return "ability-text";
   // A recipient with the ability it is granted: "planeswalkers you control [0]: proliferate", "lands
   // you control; {T}: add {G}", "creatures you control, abilities 1 and 2". Text, not a filter.
-  if (/\]:|\}\s*:|\bability:|\babilities \d|; \w+ ability$|: [a-z]+ \{|^[+-−]\{/.test(text.split(/["“]|\btoken\b/)[0]!)) return "ability-text";
+  if (/\]:|\}\s*:|\bability:|\babilities \d|; \w+ ability$|: [a-z]+ \{|^[+\-−]\{/.test(text.split(/["“]|\btoken\b/)[0]!)) return "ability-text";
   // A parenthesised note or a "Name — {1} — 5/2" row is no filter phrase.
   if (/[()]/.test(text) || /\s[—–]\s\{/.test(text)) return "reminder";
   // Split on the dash a keyword's cost hangs off ("Ward—Discard a card.") and on ";" too.
