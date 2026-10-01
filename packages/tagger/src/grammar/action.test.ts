@@ -14,7 +14,7 @@ test("draw, mill, scry, surveil: the amount as the store spells it, the object a
   // "where X is ..." is the counted thing as the amount, the store's form and what scaling reads.
   expect(read("Draw X cards, where X is that creature's power.")).toMatchObject([{ verb: "draw", amount: "that creature's power" }]);
   expect(read("Target opponent sacrifices a creature or planeswalker, discards a card, and loses 3 life.")).toMatchObject([
-    { verb: "discard", actor: { control: "opp" } }, { verb: "lose-life", text: "target opponent" },
+    { verb: "sacrifice", actor: { control: "opp" } }, { verb: "discard", actor: { control: "opp" } }, { verb: "lose-life", text: "target opponent" },
   ]);
 });
 
@@ -45,7 +45,7 @@ test("discard and search: a whole hand, a class, one search per zone named", () 
   expect(read("Target player discards a card at random.")).toMatchObject([{ verb: "discard", amount: "1" }]);
   expect(read("you may search your library for a basic land card, put it onto the battlefield tapped, then shuffle.")[0])
     .toMatchObject({ verb: "search", fromZone: "library", object: { type: "land", basic: true }, text: "a basic land card", optional: true });
-  expect(read("Search target player's graveyard, hand, and library for any number of cards with that name and exile them.").map((r) => r.fromZone))
+  expect(read("Search target player's graveyard, hand, and library for any number of cards with that name and exile them.").filter((r) => r.verb === "search").map((r) => r.fromZone))
     .toEqual(["graveyard", "hand", "library"]);
 });
 
@@ -88,7 +88,7 @@ test("tokens: the printed phrase, its count, a quoted ability kept whole", () =>
   expect(read("create two Treasure tokens.")).toMatchObject([{ verb: "create", amount: "2", object: { subtype: "treasure" } }]);
   expect(read("create a Clue token, a Food token, and a Treasure token.").map((r) => r.object?.subtype)).toEqual(["clue", "food", "treasure"]);
   expect(read("you may sacrifice another creature you control. If you do, create a number of Treasure tokens equal to that creature's power."))
-    .toMatchObject([{ verb: "create", amount: "that creature's power", text: "Treasure tokens" }]);
+    .toMatchObject([{ verb: "sacrifice", optional: true }, { verb: "create", amount: "that creature's power", text: "Treasure tokens" }]);
   expect(read("Create an X/X colorless Shapeshifter creature token with changeling and deathtouch, where X is the number of land cards in your graveyard.")[0]?.text)
     .toMatch(/, where X is the number of land cards in your graveyard$/);
   // A copy of a back-reference keeps the stored object.
@@ -99,9 +99,35 @@ test("tokens: the printed phrase, its count, a quoted ability kept whole", () =>
   expect(read('Creatures you control have "Whenever this creature attacks, draw a card."')).toEqual([]);
 });
 
+test("zone moves: the zones, the count kept in the text, a back-reference kept as stored", () => {
+  expect(read("Return target creature card from your graveyard to your hand.")).toMatchObject([
+    { verb: "return", text: "target creature card from your graveyard", fromZone: "graveyard", toZone: "hand", object: { type: "creature" } },
+  ]);
+  // A permanent returned with no "from" leaves the battlefield; a pronoun keeps the stored object.
+  expect(read("Return target nonland permanent to its owner's hand.")).toMatchObject([{ fromZone: "battlefield", toZone: "hand" }]);
+  expect(read("return it to the battlefield tapped under its owner's control.")).toMatchObject([{ verb: "return", toZone: "battlefield" }]);
+  expect(read("return it to the battlefield tapped under its owner's control.")[0]?.text).toBeUndefined();
+  // No amount: a zone move's count is in its text, as the store writes it.
+  expect(read("each opponent sacrifices two creatures of their choice.")).toMatchObject([{ verb: "sacrifice", text: "two creatures of their choice", actor: { control: "opp" } }]);
+  expect(read("each opponent sacrifices two creatures of their choice.")[0]?.amount).toBeUndefined();
+  expect(read("Destroy up to one target artifact or enchantment.")).toMatchObject([{ verb: "destroy", optional: true }]);
+  expect(read("Exile the top card of your library.")).toMatchObject([{ verb: "exile", fromZone: "library", toZone: "exile" }]);
+  // Two destinations are two moves; counters it arrives with are counters.
+  expect(read("Put one of them into your hand and the rest on the bottom of your library in any order.").map((r) => r.toZone)).toEqual(["hand", "library"]);
+  expect(read("Exile ~ with three time counters on it.")).toMatchObject([{ verb: "exile" }, { verb: "add-counter", counter: "time", amount: "3" }]);
+  // A destination is the zone named, not the last word: "instead of into that player's graveyard".
+  expect(read("put it on the bottom of its owner's library instead of into that player's graveyard.")).toEqual([]);
+  // "until they exile a nonland card" says which card, not how long.
+  expect(read("that player exiles cards from the top of their library until they exile a nonland card.")).toEqual([]);
+  // "from their graveyard": whose is a back-reference, so the stored object stays.
+  expect(read("Put a land card from their graveyard onto the battlefield tapped under your control.")[0]?.text).toBeUndefined();
+  expect(read("Then shuffle.")).toMatchObject([{ verb: "shuffle", text: "your library" }]);
+});
+
 test("a cost's actions come first, the cost's own words read the same way", () => {
   expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }, { verb: "create" }]);
   // A cost the segmenter left in the text is still a cost; ability words and table rows are labels.
+  expect(read("Remove a time counter from this card.", "Sacrifice an artifact, creature, or land")[0]).toMatchObject({ verb: "sacrifice", text: "an artifact, creature, or land" });
   expect(read("Crescent Fang — Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.")[0]?.verb).toBe("search");
 });
 
@@ -115,6 +141,7 @@ test.each([
   ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.895],
   ["counters", ["add-counter", "remove-counter", "proliferate"], 0.775],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.9],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.88],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")
