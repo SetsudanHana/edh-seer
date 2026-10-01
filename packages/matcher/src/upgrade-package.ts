@@ -51,7 +51,9 @@ export interface UpgradePackage {
 }
 
 export const SECTION_SHOWN = 3;
-export const SECTION_MAX = 5;
+/** Ten, not five (owner, 2026-09-30: "5 seems to be low"): the synergy section sat at five in 156 of
+ *  196 bracket 3 packages, with up to ten loose cuts (`SWAP_CANDIDATES`) waiting behind it. */
+export const SECTION_MAX = 10;
 
 /** THE TARGET TABLE. The bands cannot tell 1 from 2 or 4 from 5 (`brackets.ts`), so neither can the
  *  targets: 2 is band 1-2, 3 is band 3 or lower, and 4 takes any band. */
