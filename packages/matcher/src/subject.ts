@@ -96,6 +96,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   if (consumer.legendary === false && producer.legendary === true) return false;
   if (consumer.basic === false && producer.basic === true) return false;
   if (consumer.snow === true && producer.snow !== true) return false;
+  if (consumer.snow === false && producer.snow === true) return false;
   // A DECK fact, not a printed one — see commander.ts. Same asymmetry as the two supertypes above:
   // a consumer that does not ask is unaffected, one that does is satisfied only by a designated
   // commander. Kediss, Emberclaw Familiar is why: its "a commander you control" derived untyped and

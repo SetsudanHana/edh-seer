@@ -212,9 +212,9 @@ export interface SubjectFilter {
   colorCount?: "multi" | "mono" | "all" | "exactly-two" | "colored";
   /** EVERY colour listed, not any: "a spell that's both black and green". `colors` is an OR-list. */
   allColors?: string[];
-  /** The SNOW supertype, CR 205.4g: "target snow land". Shaped like `legendary`. Set by the filter
-   *  grammar (#896). */
-  snow?: true;
+  /** The SNOW supertype, CR 205.4g: "target snow land". Shaped like `legendary`; `false` is "nonsnow".
+   *  Set by the filter grammar (#896). */
+  snow?: boolean;
   /** A `leaves` demand that REFUSES a death. "Whenever one or more other creatures you control leave
    *  the battlefield without dying" (Dour Port-Mage) and Taeko's "if it didn't die" are `leaves`
    *  minus `dies` (CR 700.4). Demand only -- read by `eventMatches`, never stamped on a producer, so

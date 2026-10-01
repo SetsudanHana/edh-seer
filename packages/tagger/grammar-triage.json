@@ -1,6 +1,6 @@
 {
   "_what": "H3 for the filter grammar (#896 task 2): every group of phrases on which packages/tagger/src/grammar/filter.ts and parseSubject disagree, grouped by the SubjectFilter fields that differ, over packages/tagger/phrases.jsonl. Each group is labelled after reading EVERY member, not a sample. 'grammar right' cites the rule or the printed text; 'grammar wrong' must be fixed before task 3 switches derive over; 'both wrong' says what neither reads. phrase-diff-triage.test.ts fails when a group appears, disappears or changes size, and when the parsed count moves, so a change to either parser is re-triaged and banked here.",
-  "parsed": 6233,
+  "parsed": 6270,
   "groups": {
     "control": {
       "distinct": 79,
@@ -27,7 +27,7 @@
       "why": "'up to one other target creature', 'one or more other creatures', 'any number of other permanents': 'other' after a count. parseSubject's `other` regex accepts at most one word before it. Also 'target creature other than this creature', 'all creatures other than this creature': the same fact as 'another' written out."
     },
     "fromZone": {
-      "distinct": 107,
+      "distinct": 108,
       "label": "grammar right",
       "rule": "CR 400.1",
       "why": "'target card from an opponent's graveyard', '... from defending player's graveyard': the same ORIGIN_ZONE possessive gap as the fromZone,scope group, where the possessive carries no 'target'. Also 'lands from the top of your library' and 'creature spells from the top of your library' (Courser/Future Sight family: the origin is the library), and 'up to two target cards from a single graveyard' / 'from graveyards' / 'from all graveyards' (the cards come from a graveyard; 'single' constrains how many graveyards, not the class). parseSubject's ORIGIN_ZONE reads none of these."
@@ -207,7 +207,7 @@
       "why": "'target nonbasic land' (`basic: false`); parseSubject dropped it, so the filter claimed basics too."
     },
     "snow": {
-      "distinct": 18,
+      "distinct": 21,
       "label": "grammar right",
       "rule": "CR 205.4g",
       "why": "'a snow land', 'Snow creatures you control' (`snow`); parseSubject had no field."
@@ -453,7 +453,7 @@
       "why": "Every member read. colors: a colour inside 'protection from white' is the keyword's, not the token's."
     },
     "anyOf,colors": {
-      "distinct": 5,
+      "distinct": 11,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; colors: a colour inside 'protection from white' is the keyword's, not the token's."
@@ -531,7 +531,7 @@
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
     },
     "anyOf,type": {
-      "distinct": 26,
+      "distinct": 27,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
@@ -1423,6 +1423,42 @@
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. except: 'except for Merfolk, Krakens ...', 'except for tokens you control'."
+    },
+    "abilityKind,keyword": {
+      "distinct": 5,
+      "label": "grammar right",
+      "rule": "CR 113.3, printed text",
+      "why": "Every member read. abilityKind: the kinds of ability named; keyword: keyword lists with commas and 'protection from X', 'that has convoke', 'with a cycling ability'."
+    },
+    "anyOf,colors,control": {
+      "distinct": 5,
+      "label": "grammar right",
+      "rule": "CR 108.3, CR 112.2, CR 115.1, printed text",
+      "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; colors: a colour inside 'protection from white' is the keyword's; control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller."
+    },
+    "abilityKind,abilityOf,control,keyword,scope,type": {
+      "distinct": 2,
+      "label": "grammar right",
+      "rule": "CR 108.3, CR 112.2, CR 113.3, CR 115.1, printed text",
+      "why": "Every member read. abilityKind: the kinds of ability named; abilityOf: whose ability: 'a loyalty ability of a Chandra planeswalker', 'from an artifact source'; control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; keyword: keyword lists with commas and 'protection from X', 'that has convoke', 'with a cycling ability'; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+    },
+    "abilityKind,anyOf": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 113.3, printed text",
+      "why": "Every member read. abilityKind: the kinds of ability named; anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'."
+    },
+    "allTypes,anyOf,colors,type": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "Every member read. allTypes: compound types bind their own alternative; anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; colors: a colour inside 'protection from white' is the keyword's; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+    },
+    "anyOf,colors,fromZone,type": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 400.1, printed text",
+      "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; colors: a colour inside 'protection from white' is the keyword's; fromZone: the origin ('from the top five cards of your library', 'from outside the game'); type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     }
   }
 }

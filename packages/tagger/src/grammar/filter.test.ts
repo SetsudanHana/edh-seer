@@ -138,7 +138,9 @@ test("CR 115.1: what a spell targets is its own field (owner 2026-10-01, the her
 });
 
 test("a one-value adjective in only some alternatives is refused", () => {
-  for (const p of ["target artifact or tapped creature", "target tapped or blocking creature", "target land or nonblack creature"]) expect(parse(p), p).toBeNull();
+  for (const p of ["target artifact or tapped creature", "target tapped or blocking creature"]) expect(parse(p), p).toBeNull();
+  // A negated colour that starts a new noun phrase is that phrase's own: two branches.
+  expect(parse("target land or nonblack creature")!.anyOf).toEqual([{ type: "land" }, { type: "creature", notColors: ["B"] }]);
   expect(parse("target multicolored creature or multicolored enchantment")).toMatchObject({ colorCount: "multi" });
 });
 
@@ -255,6 +257,14 @@ test("players with a history, counted creations, ordinals, tokens named after a 
   expect(parse("a second target creature you control")).toMatchObject({ type: "creature", scope: "target", control: "you" });
   expect(parse("a Tarmogoyf token")).toEqual({ control: "any", token: true });
   expect(parse("target land you control as a 4/4 Elemental creature")).toMatchObject({ type: "land", control: "you" });
+});
+
+test("lists whose items each carry their own colour, and a post-modifier after the last item", () => {
+  expect(parse("a Swamp or black permanent")!.anyOf).toEqual([{ subtype: "swamp" }, { type: "permanent", colors: ["B"] }]);
+  expect(parse("Black spells and green spells you cast")).toMatchObject({ control: "you", type: "spell", anyOf: [{ colors: ["B"] }, { colors: ["G"] }] });
+  expect(parse("artifact spells and colorless spells from the top of your library")).toMatchObject({ fromZone: "library", control: "you" });
+  expect(parse("an exhaust ability")).toEqual({ control: "any", token: null, abilityKind: ["activated"], keyword: ["exhaust"] });
+  expect(parse("target nonsnow creature")).toMatchObject({ snow: false });
 });
 
 /** REFUSED: the grammar answers null, and derive keeps `parseSubject`'s answer. Each is a narrowing

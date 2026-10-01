@@ -115,9 +115,9 @@ const TIME = /^(?:chapter\b|(?:i|ii|iii|iv|v|vi)(?:,|$)|day\b|night\b|(?:(?:your
  *  Task 6's magnitudes. */
 const AMOUNT = /^(?:(?:\d+|x|one|two|three|half|twice)\s+(?:damage|life|times)\b|(?:damage|life|half|twice|equal to)\b|x,?\s+where\b|all (?:(?:non)?combat )?damage\b|all but \d|(?:non)?combat damage\b|\d+ for each\b)/;
 /** "your second spell", "their first card": the Nth event of a turn, a trigger condition (task 5). */
-const ORDINAL = /^(?:your|their|an opponent's|each player's)\s+(?:first|second|third|fourth|fifth)\b/;
+const ORDINAL = /^(?:your|their|an opponent's|each player's|a player's)\s+(?:first|second|third|fourth|fifth)\b/;
 /** A player doing something: "you discard a card", "you cast a noncreature spell" -- a clause. */
-const PLAYER_CLAUSE = /^(?:you|players?|an opponent|each player|each opponent|target player|target opponent|a player)\s+(?:gained|lost|skip|place|fully|expend|decide|cycled|chose|cast|discard|exile|sacrifice|search|reveal|note|choose|lose|gain|draw|mill|create|attack|block|roll|flip|play|activate|control|don't|do|have|has)\b/;
+const PLAYER_CLAUSE = /^(?:you|players?|an opponent|each player|each opponent|target player|target opponent|a player)\s+(?:gained|lost|skip|skips|place|fully|expend|decide|cycled|chose|remove|return|put|rolling|rolls|sacrifices|scries|owns?|giving|gaining|cast|discard|exile|sacrifice|search|reveal|note|choose|lose|gain|draw|mill|create|attack|block|roll|flip|play|activate|control|don't|do|have|has)\b/;
 /** A type-setting or rules-bending effect's object: "a Vampire in addition to its other types",
  *  "Angel creature type", "creature spells as though they had flash". */
 const EFFECT_OBJECT = /\bin addition to (?:its|their) other\b|(?<!chosen )\b(?:creature )?type$|\bas though\b/;
@@ -153,7 +153,7 @@ const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are
 const RELATIVE = /\b(?:that|that's|who|which|whose)\b/;
 /** A REFERENCE inside a longer phrase: what was exiled, revealed or chosen earlier, "those", "that
  *  many". Task 4 and #900's population, resolved by `derive/references.ts`, not by a filter. */
-const INNER_REFERENCE = /^chosen\b|\bfrom (?:it|them|that (?:hand|source's|player's)|the (?:chosen|other) pile|the pile of|its controller's|chosen)\b|\b(?:attached to (?:it|them|that \w+)|blocking (?:it|them)|blocked by it|it's blocking|this way|exiled with|from among|of them|of those|those|they (?:control|own|don't)|that (?:card|creature|player|spell|permanent|ability|many|much|token|land|artifact|opponent))\b/;
+const INNER_REFERENCE = /^chosen\b|\b(?:not|other than (?:up to \w+ |one |the )?)chosen\b|\bnot in a chosen\b|\bits controller (?:controls|'s)\b|\bit (?:blocked|was blocking)\b|\bof that colou?r\b|\bfrom (?:it|them|that (?:hand|source's|player's)|the (?:chosen|other) pile|the pile of|its controller's|chosen)\b|\b(?:attached to (?:it|them|that \w+)|blocking (?:it|them)|blocked by it|it's blocking|this way|exiled with|from among|of them|of those|those|they (?:control|own|don't)|that (?:card|creature|player|spell|permanent|ability|many|much|token|land|artifact|opponent))\b/;
 
 export function domainOf(phrase: string): string {
   // "~" is the card's own name: a self-reference, except where it is what a filter names -- after

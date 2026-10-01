@@ -177,7 +177,7 @@ interface Reading {
   /** `false` is the negation ("nonlegendary", "nonbasic"); undefined says nothing. */
   legendary?: boolean;
   basic?: boolean;
-  snow: boolean;
+  snow?: boolean;
   notColors: string[];
   colorCount?: SubjectFilter["colorCount"];
   hasCounter?: boolean;
@@ -223,7 +223,7 @@ interface Reading {
 const reading = (): Reading => ({
   token: null, groups: [{ types: [], subtypes: [], adj: [] }], plural: false, target: false, each: false,
   all: false, other: false, otherWord: false, notTypes: [], notSubtypes: [], colors: new Set(), colorAfterHead: false, stats: [], ability: false, abilityKinds: [],
-  keywords: [], notKeywords: [], snow: false, notColors: [], restarted: false, status: [], notStatus: [], history: [], determined: false, historic: false, outlaw: false,
+  keywords: [], notKeywords: [], notColors: [], restarted: false, status: [], notStatus: [], history: [], determined: false, historic: false, outlaw: false,
   modified: false, prepared: false, commander: false, chosenType: false, restricted: false,
   tokenHead: false,
 });
@@ -399,10 +399,25 @@ function nominalWord(c: Cursor, r: Reading): boolean | null {
     if (rest === "commander") { (r.except ??= []).push({ commander: true }); c.i++; return true; }
     if (COLOR_WORDS[rest]) { if (!r.notColors.includes(COLOR_WORDS[rest]!)) r.notColors.push(COLOR_WORDS[rest]!); g.adj.push(w); c.i++; return true; }
     if (rest === "basic") { r.basic = false; g.adj.push(w); c.i++; return true; }
+    if (rest === "snow") { r.snow = false; g.adj.push(w); c.i++; return true; }
     if (rest === "legendary") { r.legendary = false; g.adj.push(w); c.i++; return true; }
     // nonhistoric, non-outlaw, nonattacking, nonsnow...: an inverse the schema cannot say.
     // `parseSubject` drops these, which widens the claim.
     return null;
+  }
+  // A KEYWORD ABILITY as the object: "an exhaust ability", "a ninjutsu ability", "an eternalize or embalm
+  // ability" -- an ability, with the keyword it is.
+  {
+    const save = c.i;
+    const ks = keywordList(c);
+    // These keyword abilities are activated ones (exhaust, ninjutsu, boast, embalm, ...).
+    const asAbility = () => { if (!r.abilityKinds.includes("activated")) r.abilityKinds.push("activated"); (g.kinds ??= []).push("activated"); };
+    if (ks && (c.peek() === "ability" || c.peek() === "abilities")) { r.keywords.push(...ks); asAbility(); return true; }
+    if (ks && c.peek() === "or") {
+      c.i++; const more = keywordList(c);
+      if (more && (c.peek() === "ability" || c.peek() === "abilities")) { r.keywordAlternatives = [...ks, ...more]; asAbility(); return true; }
+    }
+    c.i = save;
   }
   // A ROLE's own name ("a Wicked Role token", CR 111.10): the token's name, read past like any
   // token name (G2b); the class is the Role subtype.
@@ -976,6 +991,14 @@ function post(c: Cursor, r: Reading): boolean | null {
   // A DESTINATION is the action's: "target creature into their library", "target Equipment you control
   // to target creature", "up to two Forest cards onto the battlefield tapped".
   if (c.eat("onto", "the", "battlefield")) { c.eat("tapped"); return c.done || null; }
+  // The EVENT's participle ("land cards put onto the battlefield", "all land cards returned to the
+  // battlefield"): the trigger's event, not the class. CEILING: read past.
+  if (c.eat("put", "onto", "the", "battlefield") || c.eat("returned", "to", "the", "battlefield") || (c.peek() === "returned" && c.i + 1 === c.t.length && (c.i++, true))) return true;
+  // "on top of your library", "on the bottom of its owner's library": a destination.
+  if (c.eat("on", "top", "of") || c.eat("on", "the", "bottom", "of") || c.eat("on", "the", "top", "of")) {
+    if (!(c.eat("your") || c.eat("its", "owner's") || c.eat("their"))) return null;
+    return c.eat("library") ? true : null;
+  }
   // "target land you control as a 4/4 Elemental creature", "a creature as your Ring-bearer": what it
   // becomes or is chosen as -- the action's, like a destination.
   if (c.peek() === "as" && c.i + 1 < c.t.length) {
@@ -1353,7 +1376,7 @@ function lower(r: Reading): SubjectFilter | null {
   if (r.combat) out.combat = r.combat;
   if (r.legendary !== undefined) out.legendary = r.legendary;
   if (r.basic !== undefined) out.basic = r.basic;
-  if (r.snow) out.snow = true;
+  if (r.snow !== undefined) out.snow = r.snow;
   if (r.tapped !== undefined) out.tapped = r.tapped;
   if (r.notColors.length) out.notColors = WUBRG.filter((x) => r.notColors.includes(x));
   if (r.colorCount) out.colorCount = r.colorCount;
@@ -1521,7 +1544,10 @@ function nounPhraseList(toks: string[]): SubjectFilter | null {
   for (let k = 1; k < stop - 1; k++) {
     const joiner = toks[k] === "and" || toks[k] === "or" || toks[k] === "and/or";
     const comma = toks[k] === "," && !["and", "or", "and/or"].includes(toks[k + 1]!) && (withPlayer || NP_START.has(toks[k + 1]!));
-    if (!comma && (!joiner || !(NP_START.has(toks[k + 1]!) || withPlayer))) continue;
+    // A colour after "or" starts a new noun phrase once the one before has its noun: "a Swamp or black
+    // permanent", "target black creature or black planeswalker".
+    const colourStart = joiner && /^(?:non-?)?(?:white|blue|black|red|green|colorless)$/.test(toks[k + 1]!) && k > 0 && !/^(?:non-?)?(?:white|blue|black|red|green)$/.test(toks[k - 1]!);
+    if (!comma && (!joiner || !(NP_START.has(toks[k + 1]!) || withPlayer || colourStart))) continue;
     const end = toks[k - 1] === "," ? k - 1 : k;
     parts.push(toks.slice(from, end));
     from = k + 1;
@@ -1540,6 +1566,17 @@ function nounPhraseList(toks: string[]): SubjectFilter | null {
   if (parsed.some((f) => !f || f.anyOf || (f.type === undefined && f.subtype === undefined && f.player !== true))) return null;
   if (parsed.every((f) => f!.player === true)) return null;
   const fs = parsed as SubjectFilter[];
+  // A POST-MODIFIER AFTER THE LAST ITEM binds them all ("Black spells and green spells YOU CAST",
+  // "artifact spells and colorless spells FROM THE TOP OF YOUR LIBRARY") when the items before it have
+  // none of their own.
+  const last = fs.at(-1)!;
+  const POST_WORDS = new Set(["you", "control", "controls", "own", "owns", "from", "in", "with", "without", "named", "that", "who", "cast", "an", "opponent"]);
+  items.slice(0, -1).forEach((it, i) => {
+    if (it.slice(1).some((w) => POST_WORDS.has(w)) || fs[i]!.player) return;
+    const f = fs[i] as unknown as Record<string, unknown>;
+    if (f.control === "any" && last.control !== "any" && !last.player) f.control = last.control;
+    for (const k of ["owner", "fromZone", "zone", "notFromZone"] as const) if (f[k] === undefined && last[k] !== undefined) f[k] = last[k];
+  });
   const keys = new Set(fs.flatMap((f) => Object.keys(f)));
   const out: Record<string, unknown> = {};
   const differ: string[] = [];
