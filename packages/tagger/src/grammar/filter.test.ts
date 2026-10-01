@@ -457,3 +457,21 @@ test("the census tail, each shape read from its card's own text", () => {
   expect(parse("a 1/1 green Wolf creature token named Wolves of the Hunt with bands with other creatures named Wolves of the Hunt")).toMatchObject({ keyword: ["bands with other"] });
 });
 
+test("the last fourteen: relations one card states, things not on the battlefield, earlier objects", () => {
+  expect(parse("target spell if it would destroy a land you control")!.relation).toEqual({ kind: "would-destroy", what: { type: "land", control: "you" } });
+  expect(parse("any number of Aura cards that could enchant it")!.relation).toEqual({ kind: "could-enchant", with: "ref" });
+  expect(parse("target creature that has an activated ability with {T} in its cost")!.relation).toEqual({ kind: "has-ability", abilityKind: "activated", tapCost: true });
+  expect(parse("target land that is snow or could produce {C}")!.anyOf).toEqual([{ snow: true }, { relation: { kind: "could-produce", mana: ["C"] } }]);
+  expect(parse("a card with two or more card types")!.relation).toEqual({ kind: "card-type-count", op: "gte", value: 2 });
+  expect(parse("each opponent and each battle they protect")!.anyOf).toEqual([{ control: "opp", player: true }, { control: "any", type: "battle", relation: { kind: "protected-by", control: "opp" } }]);
+  expect(parse("target artifact spell you control that isn't the target of an ability from another creature named ~")!.relation).toMatchObject({ kind: "targeted-by", negated: true });
+  // "not on the battlefield" binds the alternative it follows; a shared colour prefix binds them all.
+  expect(parse("a black or red permanent, spell, or card not on the battlefield")).toEqual({ control: "any", token: null, colors: ["B", "R"], anyOf: [{ type: "permanent" }, { type: "spell" }, { notZone: "battlefield" }] });
+  expect(parse("a nontoken creature an opponent owns or a creature card not on the battlefield")!.anyOf).toEqual([{ token: false, owner: "opp" }, { token: null, notZone: "battlefield" }]);
+  // An object the sentence named earlier.
+  expect(parse("target creature card and the sacrificed card")!.anyOf).toEqual([{ type: "creature", scope: "target" }, { ref: "sentence" }]);
+  // A relative clause that ends at "this turn", then the next alternative (Cut Short).
+  expect(parse("target planeswalker that was activated this turn or tapped creature")!.anyOf).toEqual([{ type: "planeswalker", history: ["activated"] }, { type: "creature", tapped: true }]);
+  expect(parse("one or more cards from graveyards and/or the battlefield")!.anyOf).toEqual([{ fromZone: "graveyard" }, { fromZone: "battlefield" }]);
+});
+

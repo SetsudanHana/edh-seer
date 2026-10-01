@@ -348,7 +348,7 @@ export function eventVerbPhrase(key: string): string {
   return VERB_PHRASES[verb] ?? `${verb.replace(/-/g, " ")}s`;
 }
 
-interface EmitLike { verb: string; subject: { self?: boolean; ref?: "trigger"; control?: string; token?: boolean | null; subtype?: string | string[]; type?: string | string[]; fromZone?: string } }
+interface EmitLike { verb: string; subject: { self?: boolean; ref?: "trigger" | "sentence"; control?: string; token?: boolean | null; subtype?: string | string[]; type?: string | string[]; fromZone?: string } }
 
 /** THE EFFECT READ OFF WHAT THE ABILITY DOES, when derive left its kind blank (#647 item 5). 5,480
  *  of 67,734 reasons on the 71 decks ended "<card> triggers" and wore "what it does isn't read yet"

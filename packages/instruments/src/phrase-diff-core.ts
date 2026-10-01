@@ -182,8 +182,10 @@ export function domainOf(phrase: string): string {
   // Chandra's Phoenix: "is dealt damage" is gone), and a token given its maker's ability word ("a 5/4 ...
   // Dragon Spirit creature token with Enrage", Vrondiss: the token's ability is a quoted trigger), and a
   // subtype the census rewrote as "~" because a card bears its name ("target ~ creature",
-  // Assembly-Worker's "target Assembly-Worker creature").
-  if (/\||^\w+ \d+$|^strike of\b|'s strike$|\bentering from causing\b|^an opponent by\b|\btoken with enrage$|^target ~ creature$/.test(text)) return "malformed";
+  // Assembly-Worker's "target Assembly-Worker creature"), and two clauses run together ("target card
+  // from the top two cards of target opponent's chosen card from your graveyard", Phyrexian Grimoire:
+  // "Target opponent chooses one of the top two cards of your graveyard").
+  if (/\||^\w+ \d+$|^strike of\b|'s strike$|\bentering from causing\b|^an opponent by\b|\btoken with enrage$|^target ~ creature$|\btarget opponent's chosen card\b/.test(text)) return "malformed";
   if (text.startsWith("(")) return "reminder";
   if (text.startsWith('"') || text.startsWith("“")) return "quoted";
   // Ability text: a loyalty ability ("[+1]: ...") or "activated ability: ...".

@@ -1,6 +1,6 @@
 {
   "_what": "H3 for the filter grammar (#896 task 2): every group of phrases on which packages/tagger/src/grammar/filter.ts and parseSubject disagree, grouped by the SubjectFilter fields that differ, over packages/tagger/phrases.jsonl. Each group is labelled after reading EVERY member, not a sample. 'grammar right' cites the rule or the printed text; 'grammar wrong' must be fixed before task 3 switches derive over; 'both wrong' says what neither reads. phrase-diff-triage.test.ts fails when a group appears, disappears or changes size, and when the parsed count moves, so a change to either parser is re-triaged and banked here.",
-  "parsed": 6811,
+  "parsed": 6824,
   "groups": {
     "control": {
       "distinct": 87,
@@ -519,7 +519,7 @@
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; other: 'other than this X' and 'other' after a count; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
     },
     "anyOf,scope,type": {
-      "distinct": 5,
+      "distinct": 6,
       "label": "grammar right",
       "rule": "CR 115.1, printed text",
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; 'each of up to three targets' is targeted; a quantifier inside a token's quoted ability is not the token's; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
@@ -531,7 +531,7 @@
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
     },
     "anyOf,type": {
-      "distinct": 37,
+      "distinct": 38,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
@@ -615,7 +615,7 @@
       "why": "Every member read. status: a status or designation: face-down/up, enchanted/equipped after a determiner, blocked/unblocked, goaded, suspected, kicked, renowned, double-faced, modal, suspended, fortified, Adventure, no abilities."
     },
     "anyOf,control,type": {
-      "distinct": 7,
+      "distinct": 8,
       "label": "grammar right",
       "rule": "CR 108.3, CR 112.2, CR 115.1, printed text",
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
@@ -705,7 +705,7 @@
       "why": "Every member read. notSubtype: 'that isn't a Demon, Devil, or Imp'; a negated subtype inside a token's quoted ability is not the token's; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not a subtype; Adventure is a card's layout (`status`), not its subtype; a planeswalker subtype counts before 'planeswalker'."
     },
     "anyOf": {
-      "distinct": 11,
+      "distinct": 13,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'."
@@ -1281,7 +1281,7 @@
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; fromZone: the origin ('from the top five cards of your library', 'from outside the game'); keyword: keyword lists with commas and 'protection from X', 'that has convoke', 'with a cycling ability'."
     },
     "anyOf,type,umbrella": {
-      "distinct": 1,
+      "distinct": 2,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object; umbrella: the umbrella is the head noun's."
@@ -1927,6 +1927,42 @@
       "label": "grammar right",
       "rule": "CR 115.1, printed text",
       "why": "Every member read. scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; shares: 'that shares a creature type / color / card type with ...'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+    },
+    "relation": {
+      "distinct": 2,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "Every member read. relation: a relation or capability one card states (would destroy, could enchant, targeted by, tap ability, could produce, protected by, card-type count) that parseSubject dropped or misread as a class; the matcher refuses it."
+    },
+    "abilityKind,relation": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 113.3, printed text",
+      "why": "Every member read. abilityKind: the kinds of ability named; relation: a relation or capability one card states (would destroy, could enchant, targeted by, tap ability, could produce, protected by, card-type count) that parseSubject dropped or misread as a class; the matcher refuses it."
+    },
+    "anyOf,control,scope,type": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 108.3, CR 112.2, CR 115.1, printed text",
+      "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+    },
+    "anyOf,control,token": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 108.3, CR 112.2, CR 115.1, CR 707.2, printed text",
+      "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; token: a copy of a nontoken creature is a token; 'Zombies and/or tokens' is an OR the outer `token` cannot say."
+    },
+    "control,relation,type": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 108.3, CR 112.2, CR 115.1, printed text",
+      "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; relation: a relation or capability one card states (would destroy, could enchant, targeted by, tap ability, could produce, protected by, card-type count) that parseSubject dropped or misread as a class; the matcher refuses it; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+    },
+    "named,relation,type": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 111.4, printed text",
+      "why": "Every member read. named: a token's own name is not a card to look for; a card name runs past its comma and stops at ';'; 'named ~' is one token; relation: a relation or capability one card states (would destroy, could enchant, targeted by, tap ability, could produce, protected by, card-type count) that parseSubject dropped or misread as a class; the matcher refuses it; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     }
   }
 }
