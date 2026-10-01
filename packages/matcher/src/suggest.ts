@@ -178,18 +178,22 @@ export interface Replacement {
  *  over target and another is short, the swap moves a slot across; otherwise it stays inside its
  *  job, and a cut with no role takes a plan card.
  *
- *  AN ADD MUST OUT-CONNECT THE CUT or there is no pair -- a sideways swap is advice with nothing
- *  behind it. Each add is used once, and the running counts move with every cross-job pair, so the
+ *  AN ADD MUST DO MORE FOR THE DECK THAN THE CUT or there is no pair -- a sideways swap is advice
+ *  with nothing behind it. What "more" means is `pick`'s: the report weighs both cards by its own
+ *  per-card strength (`suggest-static`, `card-strength.ts`); without one, the add must out-connect
+ *  the cut. Each add is used once, and the running counts move with every cross-job pair, so the
  *  surplus that justified the first swap is not spent twice. */
-export function pairReplacements(
+export type PickAdd = (cut: CutSide, list: readonly Candidate[]) => Candidate | undefined | Promise<Candidate | undefined>;
+/** The add that out-connects the cut, first in the list's order. */
+export const outConnects: PickAdd = (cut, list) => list.find((c) => c.connections.length > cut.connections);
+export async function pairReplacements(
   cuts: readonly CutSide[], groups: readonly GroupState[],
-  pool: ReadonlyMap<number, Candidate>, plan: readonly Candidate[],
-): Replacement[] {
+  pool: ReadonlyMap<number, Candidate>, plan: readonly Candidate[], pick: PickAdd = outConnects,
+): Promise<Replacement[]> {
   const count = new Map(groups.map((g) => [g.name, g.count] as const));
   const shortBy = (g: GroupState): number => (g.target - count.get(g.name)!) / g.target;
   const used = new Set<number>();
-  const firstBetter = (list: readonly Candidate[], than: number): Candidate | undefined =>
-    list.find((c) => !used.has(c.card.pos) && c.connections.length > than);
+  const firstBetter = (list: readonly Candidate[], cut: CutSide) => pick(cut, list.filter((c) => !used.has(c.card.pos)));
   const out: Replacement[] = [];
   for (const cut of cuts) {
     // A CUT FILLING TWO GROUPS' LEAVES takes the first in `buildParents` order (Consistency, Ramp,
@@ -201,7 +205,7 @@ export function pairReplacements(
       const short = groups
         .filter((u) => u !== g && u.target > 0 && count.get(u.name)! < u.target)
         .sort((a, b) => shortBy(b) - shortBy(a))[0];
-      const add = short && firstBetter(gapList(pool, short.leaves, short.costBand, Infinity), cut.connections);
+      const add = short && await firstBetter(gapList(pool, short.leaves, short.costBand, Infinity), cut);
       if (short && add) {
         const gFrom = count.get(g.name)!;
         const uFrom = count.get(short.name)!;
@@ -216,11 +220,11 @@ export function pairReplacements(
       // THE CUT'S OWN ROLE, NOT ONLY ITS GROUP: Despark (removal) for Spirit Bonds (protection) is
       // "Interaction for Interaction" and a different job (Party Time, 2026-09-27).
       const own = g.leaves.filter((l) => cut.roles.includes(l));
-      const add = firstBetter(gapList(pool, own, g.costBand, Infinity).filter((c) => c.card.mv <= cap), cut.connections);
+      const add = await firstBetter(gapList(pool, own, g.costBand, Infinity).filter((c) => c.card.mv <= cap), cut);
       if (add) pick = { cut: cut.name, add, rule: "same-job", counts: [] };
     }
     if (!pick && !g) {
-      const add = firstBetter(plan, cut.connections);
+      const add = await firstBetter(plan, cut);
       if (add) pick = { cut: cut.name, add, rule: "no-role", counts: [] };
     }
     if (pick) {

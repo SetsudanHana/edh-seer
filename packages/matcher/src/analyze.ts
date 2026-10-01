@@ -4,7 +4,6 @@ import {
   rankThemes,
   computeCohesion,
   loadImpactWeights,
-  impactEdgeWeight,
   computeDeckStats,
   computeSynergyRatings,
   describeTag,
@@ -33,6 +32,7 @@ import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
 import { cardSignalOf } from "./card-signal.js";
 import { buildAxis, maxAxisWeight } from "./axis.js";
+import { AXIS_ON_THRESHOLD, FEEDER_SHARE, edgeWeight } from "./card-strength.js";
 import { makeFold } from "./theme-fold.js";
 import { magnitudeMultipliers } from "./magnitude.js";
 import { buildSupplyDemand } from "./supply-demand.js";
@@ -475,9 +475,7 @@ export function analyzeDeckStructured(
     }
   }
   const axis = buildAxis(commanderThemeTags, deckFreq, themeStats);
-  const AXIS_BOOST = 1.5; // tunable: a fully on-axis edge counts 2.5x an off-axis one.
-  const AXIS_ON_THRESHOLD = 0.25; // tunable: min axis weight for an edge to count on-axis (calibrated).
-  const FEEDER_SHARE = 0.25; // tunable: a feeder gets this share of a payoff-edge's weight (√-damped).
+  // AXIS_BOOST, AXIS_ON_THRESHOLD and FEEDER_SHARE live in `card-strength.ts`, which swaps read too.
   const ROLE_BLEND = impactWeights.roleBlend ?? 1; // config, not a constant: see spec §3.1
 
   // Axis / coverage pass (undirected — unchanged semantics).
@@ -628,13 +626,11 @@ export function analyzeDeckStructured(
       const direct = [...directedReasons(p, c, hierarchy, reasonOpts), ...meldReason(p, c)]; // p feeds c
       const reasons = hop ? [...direct, ...hop] : direct;
       if (reasons.length === 0) continue;
-      const maxW = maxAxisWeight(reasons, axis);
-      const axisBoost = 1 + AXIS_BOOST * maxW;
       // Two weights, not one: the discount belongs to the crowded side. A supply-glutted tag cuts
       // what the FEEDER earns for supplying it and leaves the payoff's support alone; a
       // demand-glutted tag does the mirror.
-      const wPayoff = impactEdgeWeight(reasons, impactWeights, (tag) => mag.payoff.get(tag) ?? 1) * axisBoost;
-      const wFeeder = impactEdgeWeight(reasons, impactWeights, (tag) => mag.feeder.get(tag) ?? 1) * axisBoost;
+      const wPayoff = edgeWeight(reasons, impactWeights, axis, (tag) => mag.payoff.get(tag) ?? 1);
+      const wFeeder = edgeWeight(reasons, impactWeights, axis, (tag) => mag.feeder.get(tag) ?? 1);
       // Commander boost: credit is amplified when the OTHER endpoint is the commander (mirrors the
       // old boostForA/boostForB semantics).
       const payoffBoost = isCommanderNode(p) ? COMMANDER_BOOST : 1;

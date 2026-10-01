@@ -10,7 +10,8 @@
  *  only a stale artifact produces one, and a card with no reason under it is a claim with nothing
  *  behind it. Unmet-demand candidates, which come from an over-collecting key filter, are shown only
  *  when the engine finds a reason from them to a deck card. */
-import type { DeckReport, Reason } from "@edh-seer/engine";
+import { loadImpactWeights, type DeckReport, type ImpactWeights, type Reason } from "@edh-seer/engine";
+import { cardStrength, type CardLink, type Strength } from "./card-strength.js";
 import { extendRoutes, findRoutes, indexRoutes, type RouteHop } from "./routes.js";
 import { docToCard } from "@edh-seer/data/docs";
 import { normalizeName } from "@edh-seer/data/names";
@@ -73,7 +74,12 @@ export interface SuggestedPair {
   add: SuggestedCard;
   rule: "cross-job" | "same-job" | "no-role";
   counts: { group: string; from: number; to: number }[];
+  /** The deck cards the cut has a reason with, read as the add is (`cutStrength.partners`). */
   cutConnections: number;
+  /** Both cards weighed by the report's per-card formula, against the deck without the cut: the
+   *  add's is always the greater, which is the one claim a pair makes. */
+  cutStrength: Strength;
+  addStrength: Strength;
 }
 export interface DeckSuggestions {
   /** Keyed by `buildParents[].name` ("Interaction"). */
@@ -95,6 +101,10 @@ const PLAN_LIMIT = 8;
  *  speed and accuracy (A-vs-B 2026-09-24).
  *  CEILING: an on-plan card the hint misses and connection count ranks low is never asked about. */
 const SHORTLIST = 6;
+/** A card the engine could not read does nothing measurable for the deck. */
+const NO_STRENGTH: Strength = { strength: 0, partners: 0, onTheme: 0, commander: false };
+/** A deck card in the shape `verify` asks about: only its name is read. */
+const deckIndexCard = (name: string): IndexCard => ({ pos: -1, name, slug: "", identity: [], isLand: false, mv: 0, roles: [], answers: [] });
 /** Routes listed, the client's `ROUTE_MIDDLE_CAP`: a list long enough to scroll is not read. */
 const ROUTE_LIMIT = 4;
 /** A route's far side: events at least this many deck cards supply, the deck's `ROUTE_KEYS` most
@@ -195,12 +205,18 @@ interface Verified {
   /** The engine's raw reasons between this card and the deck, both directions, carrying the ability
    *  indices `findRoutes` needs (ability routes, spec 2026-09-25). */
   hops: Reason[];
+  /** What the card does for this deck, by the report's per-card formula (`card-strength.ts`). Only
+   *  meaningful when both directions were asked (`producerOnly` false). */
+  strength: Strength;
 }
 type Verify = (candidate: IndexCard, against: readonly string[], producerOnly: boolean) => Promise<Verified | null>;
 
 /** Run the engine on (deck card, candidate) in both directions -- or candidate -> deck card only,
  *  for an unmet demand the candidate must SUPPLY -- and keep the deck cards it draws a reason with. */
-function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: ReasonOptions["landTypes"], axis: Map<string, number>): Verify {
+function verifier(
+  dc: (name: string) => Promise<DeckCard | null>, landTypes: ReasonOptions["landTypes"], axis: Map<string, number>,
+  commanders: ReadonlySet<string>, weights: ImpactWeights,
+): Verify {
   const h = loadHierarchy();
   // NO TOKEN NODE EXISTS HERE, exactly as on a card page: the report drops a maker's direct "a token
   // enters" edge for the two-hop path through the token node, and a suggestion has no node to carry
@@ -234,6 +250,7 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
       const fedBy: string[] = [];
       const hops: Reason[] = [];
       const feedWeight = new Map<string, number>();
+      const links: CardLink[] = [];
       let onPlan = 0;
       for (const name of against) {
         const x = await dc(name);
@@ -249,6 +266,7 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
         const found = [...out, ...into];
         if (found.length === 0) continue;
         hops.push(...found);
+        links.push({ feeds: out, fedBy: into, commander: commanders.has(name) });
         if (out.length > 0) { feeds.push(name); feedWeight.set(name, maxAxisWeight(out, axis)); }
         if (into.length > 0) fedBy.push(name);
         connections.push(name);
@@ -265,7 +283,7 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
         }
       }
       if (connections.length === 0) return null;
-      return { card: suggestedCard(candidate, y, connections, reasons), onPlan, score: 0, feeds, fedBy, feedWeight, hops };
+      return { card: suggestedCard(candidate, y, connections, reasons), onPlan, score: 0, feeds, fedBy, feedWeight, hops, strength: cardStrength(links, weights, axis) };
     } catch (err) {
       console.warn("[suggest] the engine could not read", candidate.name, err);
       return null;
@@ -491,16 +509,44 @@ export async function suggestForDeck(input: {
     connections: rowOf.get(name)?.partners ?? 0,
     manaValue: rowOf.get(name)?.manaValue,
   }));
-  const pairsRanked = pairReplacements(cuts, groups, pool, planRanked);
-
   // ONE PREFETCH FOR EVERY CANDIDATE THAT MIGHT BE SHOWN, so verification reads a warm lookup.
   const shown = unique([
     ...planRanked, ...buildRanked.flatMap(([, l]) => l), ...answersRanked.flatMap(([, l]) => l),
-    ...synergyRanked.flatMap(([, l]) => l), ...pairsRanked.map((p) => p.add),
+    ...synergyRanked.flatMap(([, l]) => l),
   ].map((c) => c.card.name).concat(buildRanked.flatMap(([, , , , st]) => st.map((c) => c.name))));
   await lookup.prefetch(shown.map(normalizeName));
-  const verify = verifier(dc, deckLandTypes(deckDcs), axis);
+  const verify = verifier(dc, deckLandTypes(deckDcs), axis, commanderNames, loadImpactWeights());
   const nonland = physical.filter((n) => !atName.get(n)?.isLand);
+  // AN UNREADABLE CARD IS LEFT TO `verify`, which drops it and says so.
+  const harmsDeck = (name: string): Promise<boolean> => dc(name).then((d) => killsOwnCreatures(d?.tags, d?.card.oracleText), () => false);
+
+  // A SWAP'S ADD MUST DO MORE FOR THIS DECK THAN ITS CUT, BY THE REPORT'S OWN MEASURE (owner,
+  // 2026-10-01): both are read the same way, against the deck without the cut, and weighed by the
+  // per-card formula the report rates cards with (`card-strength.ts`) -- links on the deck's theme
+  // and links with the commander count for more. A distinct-partner count let thirteen off-theme
+  // links outrank nine on it. Each cut asks the first `SHORTLIST` of its list and keeps the
+  // strongest add that beats it; a card that kills its own creatures, or that the engine joins to
+  // nothing, is passed over for the next.
+  const without = (cut: string) => nonland.filter((n) => n !== cut);
+  const cutReads = new Map<string, Promise<Strength>>();
+  const cutStrength = (name: string): Promise<Strength> => {
+    let p = cutReads.get(name);
+    if (!p) cutReads.set(name, p = verify(deckIndexCard(name), without(name), false).then((v) => v?.strength ?? NO_STRENGTH));
+    return p;
+  };
+  const chosen = new Map<string, Verified>();
+  const pairsRanked = await pairReplacements(cuts, groups, pool, planRanked, async (cut, list) => {
+    const before = (await cutStrength(cut.name)).strength;
+    let best: { c: Candidate; v: Verified } | undefined;
+    for (const c of list.slice(0, SHORTLIST)) {
+      if (await harmsDeck(c.card.name)) continue;
+      const v = await verify(c.card, without(cut.name), false);
+      if (!v) { console.warn("[suggest] stale pair: the engine draws nothing for", c.card.name); continue; }
+      if (v.strength.strength > before && (!best || v.strength.strength > best.v.strength.strength)) best = { c, v };
+    }
+    if (best) chosen.set(cut.name, best.v);
+    return best?.c;
+  });
 
   const out: DeckSuggestions = { build: {}, answers: {}, synergy: {}, plan: [], pairs: [], routes: [] };
   // WHAT EACH CARD COUNTS AS, on the row: the finding names the group, and the row has to say this
@@ -542,15 +588,14 @@ export async function suggestForDeck(input: {
     }
     out.synergy[key] = cards;
   }
-  // AN UNREADABLE CARD IS LEFT TO `verify`, which drops it and says so.
-  const harmsDeck = (name: string): Promise<boolean> => dc(name).then((d) => killsOwnCreatures(d?.tags, d?.card.oracleText), () => false);
   for (const p of pairsRanked) {
-    if (await harmsDeck(p.add.card.name)) continue;
-    const add = await verify(p.add.card, p.add.connections.map((x) => x.deckCard), false);
-    if (!add) { console.warn("[suggest] stale pair: the engine draws nothing for", p.add.card.name); continue; }
-    const cutConnections = cuts.find((c) => c.name === p.cut)?.connections ?? 0;
-    out.pairs.push({ cut: p.cut, add: { ...add.card }, rule: p.rule, counts: p.counts, cutConnections });
+    const add = chosen.get(p.cut)!;
+    const cutS = await cutStrength(p.cut);
+    out.pairs.push({ cut: p.cut, add: { ...add.card }, rule: p.rule, counts: p.counts, cutConnections: cutS.partners, cutStrength: cutS, addStrength: add.strength });
   }
+  // THE BIGGEST GAIN FIRST: the precon package takes its synergy swaps in this order.
+  const gain = (p: SuggestedPair) => p.addStrength.strength - p.cutStrength.strength;
+  out.pairs.sort((a, b) => gain(b) - gain(a));
 
   // ONE CARD, ONE PLACE: a card a finding already names leaves the plan list and says so there.
   const planSafe: Candidate[] = [];

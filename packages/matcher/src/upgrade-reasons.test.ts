@@ -37,6 +37,10 @@ test("a bring-down cut says what the bracket allows, and explains the Game Chang
 });
 
 test("a synergy pair reads both counts, and keeps the engine's own sentence", () => {
-  expect(synergyReasons({ name: "Stick Together", connections: 13 }, { name: "Pious Evangel", connections: 42, reason: "Pious Evangel puts cards into the graveyard" }))
-    .toEqual({ out: "Stick Together works with 13 cards in this deck; Pious Evangel works with 42.", in: "Pious Evangel puts cards into the graveyard" });
+  const side = (name: string, partners: number, onTheme: number, commander = false) => ({ name, partners, onTheme, commander });
+  expect(synergyReasons(side("Stick Together", 13, 2), { ...side("Pious Evangel", 9, 7), reason: "Pious Evangel puts cards into the graveyard" }))
+    .toEqual({ out: "Stick Together works with 13 cards in this deck, 2 of them on its theme; Pious Evangel works with 9 cards, 7 of them on it.", in: "Pious Evangel puts cards into the graveyard" });
+  // What can make a card with fewer links the stronger one is said, never left to a count.
+  expect(synergyReasons(side("Jazal Goldmane", 16, 0), { ...side("Daxos", 4, 0, true), reason: "r" }).out)
+    .toBe("Jazal Goldmane works with 16 cards in this deck, none of them on its theme; Daxos works with 4 cards, none of them on it, and with your commander.");
 });

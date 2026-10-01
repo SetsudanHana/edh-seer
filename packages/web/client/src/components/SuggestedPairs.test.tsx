@@ -6,10 +6,10 @@ import { SwapLine } from "./SuggestedPairs.js";
 
 const chaosWarp = { name: "Chaos Warp", slug: "chaos-warp", identity: ["R"], mv: 3, connections: ["A", "B", "C", "D"], reasons: [{ text: "Chaos Warp answers what the deck cannot.", others: [] }] };
 const crossJob: SuggestedPair = {
-  cut: "Mind Stone", add: chaosWarp, rule: "cross-job", cutConnections: 1,
+  cut: "Mind Stone", add: chaosWarp, rule: "cross-job", cutConnections: 1, cutStrength: { strength: 1, partners: 1, onTheme: 0, commander: false }, addStrength: { strength: 2, partners: 4, onTheme: 1, commander: false },
   counts: [{ group: "Ramp", from: 13, to: 12 }, { group: "Interaction", from: 7, to: 8 }],
 };
-const sameJob: SuggestedPair = { cut: "Murder", add: chaosWarp, rule: "same-job", cutConnections: 0, counts: [] };
+const sameJob: SuggestedPair = { cut: "Murder", add: chaosWarp, rule: "same-job", cutConnections: 0, cutStrength: { strength: 1, partners: 0, onTheme: 0, commander: false }, addStrength: { strength: 2, partners: 4, onTheme: 1, commander: false }, counts: [] };
 const inRouter = (ui: React.ReactNode) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 test("a cross-job swap says what comes in, and both group counts in order", () => {

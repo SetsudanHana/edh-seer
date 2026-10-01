@@ -69,10 +69,10 @@ const add = (name: string) => ({ name, slug: name.toLowerCase().replace(/\W+/g, 
  *  a cut's slot sits on that cut's own card, not in a list of its own. */
 test("a cut at deck size carries the card that could take its slot", () => {
   render(<MemoryRouter><CutList cuts={[cut("Multiclass Baldric"), cut("Other")]} slack={[]} deckSize={100}
-    pairs={[{ cut: "Multiclass Baldric", add: add("Pious Evangel"), rule: "no-role", counts: [], cutConnections: 1 }]} /></MemoryRouter>);
+    pairs={[{ cut: "Multiclass Baldric", add: add("Pious Evangel"), rule: "no-role", counts: [], cutConnections: 1, cutStrength: { strength: 1, partners: 1, onTheme: 0, commander: false }, addStrength: { strength: 2, partners: 4, onTheme: 1, commander: false } }]} /></MemoryRouter>);
   const row = screen.getByRole("heading", { name: /Multiclass Baldric/ }).closest("li")!;
   expect(within(row).getByTestId("swap")).toHaveTextContent("Swap it for Pious Evangel");
-  expect(within(row).getByTestId("swap")).toHaveTextContent("works with 3 of your cards");
+  expect(within(row).getByTestId("swap")).toHaveTextContent("works with 4 of your cards, 1 on your deck's theme");
   expect(within(row).getByTestId("swap")).toHaveTextContent("Pious Evangel works with A.");
   expect(within(screen.getByRole("heading", { name: /^Other/ }).closest("li")!).queryByTestId("swap")).toBeNull();
   expect(screen.queryByRole("region", { name: "A card that could take the slot" })).toBeNull();
@@ -82,7 +82,7 @@ test("a cut at deck size carries the card that could take its slot", () => {
 test("over 100, the list leads with exactly as many cuts as the deck is over, weakest first", () => {
   const cuts = [cut("Maybe 1", { keeps: ["rates 1.5 of 5 in this deck"] }), cut("Clear 1"), cut("Clear 2"), cut("Maybe 2", { keeps: ["rates 1.5 of 5 in this deck"] })];
   render(<MemoryRouter><CutList cuts={cuts} slack={[]} deckSize={103}
-    pairs={[{ cut: "Clear 1", add: add("Swap In"), rule: "no-role", counts: [], cutConnections: 0 }]} /></MemoryRouter>);
+    pairs={[{ cut: "Clear 1", add: add("Swap In"), rule: "no-role", counts: [], cutConnections: 0, cutStrength: { strength: 1, partners: 0, onTheme: 0, commander: false }, addStrength: { strength: 2, partners: 4, onTheme: 1, commander: false } }]} /></MemoryRouter>);
   expect(screen.getByTestId("cuts-over")).toHaveTextContent("Your list has 103 cards, 3 over 100. These 3 are doing the least here, weakest first: take them out and it is 100.");
   expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/2 mana$/, ""))).toEqual(["Clear 1", "Clear 2", "Maybe 1"]);
   expect(screen.getByText(/If you would rather keep one of these,/).parentElement).toHaveTextContent("the next weakest is Maybe 2.");
@@ -105,7 +105,7 @@ test("over 100 with too few cuts, the list says how many are still to find and w
 });
 
 test("at deck size, a swap for a role card sits under the cuts; over 100 it does not", () => {
-  const pairs = [{ cut: "Despark", add: add("Better Removal"), rule: "same-job" as const, counts: [], cutConnections: 1 }];
+  const pairs = [{ cut: "Despark", add: add("Better Removal"), rule: "same-job" as const, counts: [], cutConnections: 1, cutStrength: { strength: 1, partners: 1, onTheme: 0, commander: false }, addStrength: { strength: 2, partners: 4, onTheme: 1, commander: false } }];
   const { unmount } = render(<MemoryRouter><CutList cuts={[cut("Listed")]} slack={[]} deckSize={100} pairs={pairs} /></MemoryRouter>);
   const row = within(screen.getByRole("region", { name: "Better cards for the same job" })).getByTestId("role-swap");
   expect(row).toHaveTextContent("Out: Despark");

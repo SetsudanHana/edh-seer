@@ -10,7 +10,7 @@ test("a precon page: the commander's links, swaps with both counts, and the list
   const { report, graph } = engineDeck();
   const suggestions = {
     build: {}, answers: {}, synergy: {}, plan: [], routes: [],
-    pairs: Array.from({ length: PRECON_SWAPS + 2 }, (_, i) => ({ cut: `Cut ${i}`, cutConnections: 3, add: add(`Add ${i}`, 20 - i), rule: "no-role" as const, counts: [] })),
+    pairs: Array.from({ length: PRECON_SWAPS + 2 }, (_, i) => ({ cut: `Cut ${i}`, cutConnections: 3, cutStrength: { strength: 1, partners: 3, onTheme: 0, commander: false }, addStrength: { strength: 2, partners: 4, onTheme: 1, commander: false }, add: add(`Add ${i}`, 20 - i), rule: "no-role" as const, counts: [] })),
   } as DeckSuggestions;
   const page = preconPage(meta, { report, graph, missing: [], resolvedCount: 0, totalCount: 0, commanderColorIdentity: ["B"] } as never, suggestions);
   expect(page.commanderLinks).toBeGreaterThan(0);

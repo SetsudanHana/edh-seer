@@ -85,39 +85,39 @@ const cand = (pos: number, name: string, roles: string[], n: number): Candidate 
   ({ card: { pos, name, slug: name, identity: [], isLand: false, mv: 3, roles, answers: [] },
      connections: Array.from({ length: n }, (_, i) => ({ deckCard: `D${i}`, score: 0.1 })), score: 0.1 * n });
 
-test("a surplus-ramp cut is swapped for removal when Interaction is short (owner's example)", () => {
+test("a surplus-ramp cut is swapped for removal when Interaction is short (owner's example)", async () => {
   const pool = new Map([[1, cand(1, "Chaos Warp", ["targetedRemoval"], 4)], [2, cand(2, "Cultivate", ["ramp"], 5)]]);
-  const out = pairReplacements([{ name: "Mind Stone", roles: ["ramp"], connections: 1 }], groups([13, 10], [7, 10]), pool, []);
+  const out = await pairReplacements([{ name: "Mind Stone", roles: ["ramp"], connections: 1 }], groups([13, 10], [7, 10]), pool, []);
   expect(out).toEqual([{ cut: "Mind Stone", add: pool.get(1), rule: "cross-job",
     counts: [{ group: "Ramp", from: 13, to: 12 }, { group: "Interaction", from: 7, to: 8 }] }]);
 });
 
-test("without a surplus the swap stays inside the job", () => {
+test("without a surplus the swap stays inside the job", async () => {
   const pool = new Map([[1, cand(1, "Chaos Warp", ["targetedRemoval"], 4)], [2, cand(2, "Cultivate", ["ramp"], 5)]]);
-  const out = pairReplacements([{ name: "Mind Stone", roles: ["ramp"], connections: 1 }], groups([10, 10], [7, 10]), pool, []);
+  const out = await pairReplacements([{ name: "Mind Stone", roles: ["ramp"], connections: 1 }], groups([10, 10], [7, 10]), pool, []);
   expect(out.map((r) => [r.add.card.name, r.rule])).toEqual([["Cultivate", "same-job"]]);
 });
 
 /** A SAME-JOB SWAP KEEPS THE JOB AND THE SPEED (2026-09-27): the cut's own role, not only its group
  *  (Despark for Spirit Bonds was removal for protection), and at most one more mana. */
-test("a same-job swap shares the cut's own role and costs at most one more mana", () => {
+test("a same-job swap shares the cut's own role and costs at most one more mana", async () => {
   const two = (g: GroupState[]) => g.map((x) => x.name === "Interaction" ? { ...x, leaves: ["targetedRemoval", "protection"] } : x);
   const slow = { ...cand(1, "Slow Removal", ["targetedRemoval"], 9), card: { ...cand(1, "Slow Removal", ["targetedRemoval"], 9).card, mv: 6 } };
   const pool = new Map([[1, slow], [2, cand(2, "Spirit Bonds", ["protection"], 8)], [3, cand(3, "Quick Removal", ["targetedRemoval"], 4)]]);
-  const out = pairReplacements([{ name: "Despark", roles: ["targetedRemoval"], connections: 1, manaValue: 2 }], two(groups([10, 10], [10, 10])), pool, []);
+  const out = await pairReplacements([{ name: "Despark", roles: ["targetedRemoval"], connections: 1, manaValue: 2 }], two(groups([10, 10], [10, 10])), pool, []);
   expect(out.map((r) => [r.add.card.name, r.rule])).toEqual([["Quick Removal", "same-job"]]);
 });
 
-test("an add that does not out-connect the cut is never offered", () => {
+test("an add that does not out-connect the cut is never offered", async () => {
   const pool = new Map([[2, cand(2, "Cultivate", ["ramp"], 1)]]);
-  expect(pairReplacements([{ name: "Mind Stone", roles: ["ramp"], connections: 1 }], groups([10, 10], [10, 10]), pool, [])).toEqual([]);
+  expect(await pairReplacements([{ name: "Mind Stone", roles: ["ramp"], connections: 1 }], groups([10, 10], [10, 10]), pool, [])).toEqual([]);
 });
 
-test("each add is used once, and a role-less cut takes from the plan list", () => {
+test("each add is used once, and a role-less cut takes from the plan list", async () => {
   const warp = cand(1, "Chaos Warp", ["targetedRemoval"], 4);
   const tremors = cand(3, "Impact Tremors", [], 6);
   const pool = new Map([[1, warp], [3, tremors]]);
-  const out = pairReplacements([
+  const out = await pairReplacements([
     { name: "Murder", roles: ["targetedRemoval"], connections: 0 },
     { name: "Shock", roles: ["targetedRemoval"], connections: 0 },
     { name: "Vanilla Bear", roles: [], connections: 0 },
@@ -127,9 +127,9 @@ test("each add is used once, and a role-less cut takes from the plan list", () =
   ]);
 });
 
-test("cross-job stops once the surplus is spent", () => {
+test("cross-job stops once the surplus is spent", async () => {
   const pool = new Map([[1, cand(1, "Chaos Warp", ["targetedRemoval"], 4)], [4, cand(4, "Beast Within", ["targetedRemoval"], 4)]]);
-  const out = pairReplacements([
+  const out = await pairReplacements([
     { name: "Mind Stone", roles: ["ramp"], connections: 0 },
     { name: "Arcane Signet", roles: ["ramp"], connections: 0 },
   ], groups([11, 10], [7, 10]), pool, []);
@@ -137,14 +137,14 @@ test("cross-job stops once the surplus is spent", () => {
   expect(out.map((r) => [r.cut, r.rule])).toEqual([["Mind Stone", "cross-job"]]);
 });
 
-test("cross-job targets the group furthest under by fraction of its target", () => {
+test("cross-job targets the group furthest under by fraction of its target", async () => {
   const gs: GroupState[] = [
     { name: "Ramp", count: 13, target: 10, leaves: ["ramp"], costBand: [2, 3] },
     { name: "Interaction", count: 8, target: 10, leaves: ["targetedRemoval"], costBand: [2, 4] },
     { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"], costBand: [3, 5] },
   ];
   const pool = new Map([[1, cand(1, "Chaos Warp", ["targetedRemoval"], 4)], [2, cand(2, "Blasphemous Act", ["boardWipe"], 4)]]);
-  const out = pairReplacements([{ name: "Mind Stone", roles: ["ramp"], connections: 0 }], gs, pool, []);
+  const out = await pairReplacements([{ name: "Mind Stone", roles: ["ramp"], connections: 0 }], gs, pool, []);
   // Interaction is 20% short, Board wipes 67% short.
   expect(out[0]!.add.card.name).toBe("Blasphemous Act");
 });
@@ -166,4 +166,17 @@ test("stapleList: graded cards filling the leaf, best grade then cheaper, never 
   expect(stapleList(idx, ["draw"], [2, 3], 3, grixis)).toEqual([]);
   const powder = card(8, "Serum Powder", { identity: [], roles: ["ramp", "boardWipe"], mv: 3, grade: 16 });
   expect(stapleList([powder], ["boardWipe"], [3, 5], 3, grixis)).toEqual([]);
+});
+
+test("the add is whatever the pick says beats the cut, and an add taken once is never offered again", async () => {
+  const pool = new Map([[1, cand(1, "Murder", ["targetedRemoval"], 2)], [2, cand(2, "Doom Blade", ["targetedRemoval"], 2)]]);
+  const seen: number[][] = [];
+  const out = await pairReplacements(
+    [{ name: "A", roles: ["targetedRemoval"], connections: 9 }, { name: "B", roles: ["targetedRemoval"], connections: 9 }],
+    groups([10, 10], [10, 10]), pool, [],
+    (_cut, list) => { seen.push(list.map((c) => c.card.pos)); return list[0]; },
+  );
+  // Neither add out-connects a nine-link cut; the pick, not the count, decides.
+  expect(out.map((p) => [p.cut, p.add.card.name])).toEqual([["A", "Doom Blade"], ["B", "Murder"]]);
+  expect(seen[1]).toEqual([1]);
 });
