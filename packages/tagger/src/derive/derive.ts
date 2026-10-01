@@ -319,7 +319,9 @@ import { emblemRecipient } from "../emblem.js";
 // 244: ...and mana, tapping and restrictions (add-mana, tap, untap, cant).
 // 245: ...and the long tail (counter-spell, gain-control, fight, goad, regenerate, transform, attach,
 // copy, keyword actions).
-export const DERIVE_VERSION = 245;
+// 246: ...coverage push: predicate lists, "the same is true for", keyword lines, restrictions in
+// lists, "loses <ability>", the tap a move or a creation carries, counters on several recipients.
+export const DERIVE_VERSION = 246;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
