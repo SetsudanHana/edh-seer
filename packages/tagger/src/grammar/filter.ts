@@ -220,6 +220,7 @@ interface Reading {
   relation?: SubjectRelation;
   sharesAlternatives?: NonNullable<SubjectFilter["shares"]>[];
   relationAlternatives?: Partial<SubjectFilter>[];
+  copyOf?: Partial<SubjectFilter>;
   zoneAlternatives?: string[];
   zoneAlternativesFrom?: boolean;
   keywordAlternatives?: string[];
@@ -1953,8 +1954,14 @@ function post(c: Cursor, r: Reading): boolean | null {
       // class comes from the reference (task 4).
       // "a token that's a copy of it for each token you control ...": the count is the action's.
       { const fe = c.t.findIndex((w, k) => k > c.i && w === "for" && c.t[k + 1] === "each"); if (fe > 0) c.t = c.t.slice(0, fe); }
-      if (!self && (c.eat("it") || ((c.eat("that") || c.eat("the") || c.eat("enchanted") || c.eat("equipped") || c.eat("chosen")) && !c.done && (c.eat("exiled", "card") || c.eat("sacrificed", "creature") || nominalWord(c, reading()) === true)))) {
+      // ...but the noun it names is its class: "a copy of EQUIPPED CREATURE" is a creature, "a copy of
+      // that WIZARD" a Wizard (#896 task 3: Helm of the Host, Inalla).
+      const refNoun = reading();
+      if (!self && (c.eat("it") || ((c.eat("that") || c.eat("the") || c.eat("enchanted") || c.eat("equipped") || c.eat("chosen")) && !c.done && (c.eat("exiled", "card") || c.eat("sacrificed", "creature") || nominalWord(c, refNoun) === true)))) {
         if (!c.done) return null;
+        if (c.t[c.i - 2] === "sacrificed") refNoun.groups[0]!.types.push("creature");
+        const types = refNoun.groups[0]!.types.filter((t) => t !== "card"), subs = refNoun.groups[0]!.subtypes;
+        if (types.length || subs.length) { r.groups = [{ types, subtypes: subs, adj: [] }]; r.copyOf = copiedClass({ ...r, token: null }); }
         return applyException() || null;
       }
       if (self) {
@@ -1988,6 +1995,8 @@ function post(c: Cursor, r: Reading): boolean | null {
         // The name is copiable too.
         named: x.named, notNamed: x.notNamed,
       });
+      // What is copied, before the exceptions say what the copy becomes.
+      r.copyOf = copiedClass({ ...r, token: x.token, control: x.control });
       return applyException() || null;
     }
     return null;
@@ -2051,6 +2060,18 @@ function post(c: Cursor, r: Reading): boolean | null {
     return true;
   }
   return null;
+}
+
+/** The class of the object a copy copies, as a filter: its copiable characteristics and whose it is
+ *  ("target creature you control"), never its quantifier. */
+function copiedClass(r: Reading): Partial<SubjectFilter> | undefined {
+  const f = lower({ ...reading(), groups: r.groups, notTypes: r.notTypes, notSubtypes: r.notSubtypes, colors: r.colors, stats: r.stats,
+    keywords: r.keywords, notKeywords: r.notKeywords, legendary: r.legendary, chosenType: r.chosenType, historic: r.historic,
+    outlaw: r.outlaw, snow: r.snow, basic: r.basic, notColors: r.notColors, colorCount: r.colorCount, named: r.named, notNamed: r.notNamed,
+    token: r.token, ...(r.control ? { control: r.control } : {}) });
+  if (!f) return undefined;
+  const { control, token, ...rest } = f;
+  return { ...rest, ...(control !== "any" ? { control } : {}), ...(token !== null ? { token } : {}) };
 }
 
 /** An object phrase, consuming the cursor to the end; null when anything is left unread. */
@@ -2302,7 +2323,10 @@ function lower(r: Reading): SubjectFilter | null {
   if (r.notStatus.length) out.notStatus = [...r.notStatus];
   if (r.except) out.except = r.except;
   if (r.history.length) out.history = [...r.history];
-  if (r.shares) out.shares = r.shares;
+  // "a spell that shares a creature type with this creature" (Folk Hero) is the `sharesTypeWith`
+  // the matcher already checks; "with your commander" too.
+  if (r.shares?.what === "creature-type" && !r.shares.negated && (r.shares.with === "self" || (typeof r.shares.with === "object" && r.shares.with.commander === true))) out.sharesTypeWith = r.shares.with === "self" ? "self" : "commander";
+  else if (r.shares) out.shares = r.shares;
   if (r.nameRelation) out.nameRelation = r.nameRelation;
   if (r.notNamed) out.notNamed = r.notNamed;
   if (r.abilityOf) out.abilityOf = r.abilityOf;
@@ -2314,6 +2338,7 @@ function lower(r: Reading): SubjectFilter | null {
   if (r.otherThanRef) out.otherThanRef = true;
   if (r.notZone) out.notZone = r.notZone;
   if (r.relation) out.relation = r.relation;
+  if (r.copyOf) out.copyOf = r.copyOf;
   // Alternatives the outer subject cannot hold, each as `anyOf` (and only one such list per subject).
   const alts: Partial<SubjectFilter>[][] = [];
   if (r.ownOrControl) { if (out.control !== "any") return null; alts.push([{ owner: "you" }, { control: "you" }]); }

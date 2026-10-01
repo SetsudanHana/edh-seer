@@ -14,7 +14,9 @@ import { interveningIfOf, conditionCares as conditionCares_ } from "./intervenin
 import { requiresOf } from "./markers.js";
 import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
-import { parseSubject, parseCounter } from "./subject.js";
+import { namesAClass, parseSubject, parseCounter } from "./subject.js";
+import { parse as parseFilter } from "../grammar/filter.js";
+import { selfAsTilde } from "../grammar/self-as-tilde.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
@@ -273,7 +275,15 @@ import { emblemRecipient } from "../emblem.js";
 // 216: #896 task 4 -- a reference to the triggering object is `ref: "trigger"` and takes the zone the
 // event left it in (Mari, the Killing Quill exiles from a graveyard); a trigger subject that names a
 // player or a time is no referent (Galvanoth); "the exiled cards" crosses clauses like the singular (Petradon).
-export const DERIVE_VERSION = 216;
+// 217: #896 task 3 -- trigger subjects, replacement subjects and action objects are read by the filter
+// grammar first, `parseSubject` answering what it refuses.
+// 218: ...and the gates see `anyOf` (namesAClass), a count the grammar reads past keeps parseSubject,
+// a card's owner is its `control`, copies keep the class their reference names, and a card with no
+// rules text carries `noAbilities`.
+// 219: "named ~" is the card's own name.
+// 220: a gate sees through `anyOf` only on a subject the grammar produced.
+// 221: a copy records what it copies (`copyOf`) beside what it becomes.
+export const DERIVE_VERSION = 221;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -605,10 +615,34 @@ function stripCardName(text: string, cardName?: string): string {
   return out.replace(/\s+/g, " ").trim();
 }
 
-/** Both corrections above, at the one place a subject becomes structured. */
+/** Both corrections above, at the one place a subject becomes structured.
+ *
+ *  THE FILTER GRAMMAR FIRST (#896 task 3). It answers only when it read every word, on the shape it
+ *  was measured on -- the card's name written "~", as the phrase census writes it -- and `parseSubject`
+ *  answers whatever it refuses, on the name-stripped text as before. Every phrase where the two
+ *  differ was read and labelled (`packages/tagger/grammar-triage.json`). */
+/** Subjects the filter grammar produced. A gate that asks "does this name a class" sees through `anyOf`
+ *  only for these: the grammar's alternatives are reviewed readings, while an `anyOf` `parseSubject`
+ *  builds out of a clause ("enchanted creature or Vehicle loses all other card types", Swift
+ *  Reconfiguration) is a misread the gates refused before and still refuse. */
+const FROM_GRAMMAR = new WeakSet<object>();
+const namesAClassHere = (s: SubjectFilter): boolean => s.type !== undefined || s.subtype !== undefined || (FROM_GRAMMAR.has(s) && namesAClass(s));
+
 function subjectFrom(text: string, cardName?: string, cardText = ""): ReturnType<typeof parseSubject> {
-  const stripped = stripCardName(boundedByEnchantLine(text, cardText).replace(SELF_DISJUNCT, ""), cardName);
-  const subject = parseSubject(stripped);
+  const bounded = boundedByEnchantLine(text, cardText).replace(SELF_DISJUNCT, "");
+  const read = parseFilter(cardName ? selfAsTilde(bounded.trim(), cardName) : bounded.trim());
+  // A COUNT the grammar reads past leaves no class ("cards equal to the greatest power among creatures
+  // you control"): the amount is scaling's (task 6), and `parseSubject`'s reading of it stays.
+  const grammar = read && !namesAClass(read) && read.token !== true && /\b(?:equal to|for each)\b/i.test(bounded) ? null : read;
+  const subject = grammar ?? parseSubject(stripCardName(bounded, cardName));
+  if (grammar) FROM_GRAMMAR.add(subject);
+  // "named ~" is the card's own name (Gary Clone's "each creature you control named Gary Clone").
+  if (cardName && subject.named === "~") subject.named = cardName.split(" // ")[0]!.toLowerCase();
+  if (cardName && subject.notNamed === "~") subject.notNamed = cardName.split(" // ")[0]!.toLowerCase();
+  // A CARD has an owner and no controller (CR 108.3, CR 108.4): derive and the matcher say whose a card
+  // off the battlefield is with `control`, as `parseSubject` always did ("two cards your opponents
+  // own" -> control opp). The grammar keeps `owner`, and the card's owner is also its `control` here.
+  if (grammar?.owner && grammar.control === "any" && /\bcards?\b/i.test(bounded) && !/\bpermanents?\b/i.test(bounded)) subject.control = grammar.owner;
   // "this creature OR another creature you control" includes the card: once the self half is
   // stripped the remainder reads as `other`, and it is not.
   if (SELF_DISJUNCT.test(text)) delete subject.other;
@@ -1028,7 +1062,8 @@ function effectSubject(
     subject.control = "you";
     subject.scope ??= "all";
     const cmp = STAT_VS_STAT.exec(object);
-    if (cmp) subject.stats = [...(subject.stats ?? []), { metric: cmp[1]!.toLowerCase() as "power" | "toughness", op: "gt", vs: cmp[2]!.toLowerCase() as "power" | "toughness" }];
+    // The filter grammar reads the comparison itself; add it only when the subject lacks it.
+    if (cmp && !subject.stats?.some((p) => p.vs !== undefined)) subject.stats = [...(subject.stats ?? []), { metric: cmp[1]!.toLowerCase() as "power" | "toughness", op: "gt", vs: cmp[2]!.toLowerCase() as "power" | "toughness" }];
   }
   if (kind === "play-from-top") {
     subject.zone = "library";
@@ -1070,7 +1105,7 @@ function effectSubject(
  *  ("this creature") were each meshing a single-target pump into an anthem over every creature. */
 function namesItsTargets(subject: ReturnType<typeof parseSubject>): boolean {
   return (
-    (subject.type !== undefined || subject.subtype !== undefined) &&
+    namesAClassHere(subject) &&
     (subject.scope === "all" || subject.scope === "each")
   );
 }
@@ -1602,7 +1637,7 @@ export function deriveAbilities(
         if (control === "you" && PERMANENT_EVENT_VERBS.has(verb) && text !== ""
           // Only a CLASS flips: a bare name the self test does not know ("Jumblebones", a token)
           // has no type to widen, and `any` on an untyped subject is everyone's board.
-          && (subject.type !== undefined || subject.subtype !== undefined || subject.keyword !== undefined)
+          && (namesAClassHere(subject) || subject.keyword !== undefined)
           && !isSelfSubject(clause.trigger.subject ?? "", cardName)
           && !KEEPS_CLAUSE_CONTROL.test(clause.trigger.subject ?? "")
           && !/\b(?:you|your)\b/i.test(printedTriggerPhrase(text, clause.trigger.subject ?? ""))) subject.control = "any";

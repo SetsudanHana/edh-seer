@@ -26,6 +26,7 @@ const TESTED: Record<string, string> = {
   "205.4g": "grammar/filter.test.ts — snow is a supertype (`snow`, #896)",
   "111.4": "grammar/filter.test.ts — a token's own name is not a card to look for ('Marit Lage, a legendary ... token', 'token ... named Storm Crow') (#896)",
   "707.9b": "grammar/filter.test.ts — a copy's exceptions ('except it isn't legendary', 'except it has haste') are kept (#896)",
+  "108.4": "derive.test.ts — a card off the battlefield has no controller: its owner is the `control` derive reads (Ulamog's Nullifier, #896 task 3)",
   "108.3": "grammar/filter.test.ts — ownership beside control: 'you control but don't own' (#896)",
   "715": "grammar/filter.test.ts — an Adventure is a card's layout, read as a status (#896)",
   "702.22b": "grammar/filter.test.ts — 'bands with other' is a keyword a token can have (Master of the Hunt) (#896)",

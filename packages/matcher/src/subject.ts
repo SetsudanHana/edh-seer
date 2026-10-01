@@ -90,8 +90,10 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // "attacking or blocking" (`in-combat`) is met by a producer stating either state.
   if (consumer.combat !== undefined && producer.combat !== consumer.combat
     && !(consumer.combat === "in-combat" && producer.combat !== undefined)) return false;
-  // A STATUS, the same class: tapped or untapped only where the producer's printed text states it.
-  if (consumer.tapped !== undefined && producer.tapped !== consumer.tapped) return false;
+  // TAPPED IS A STATE EVERY PERMANENT REACHES (#896 task 3): attacking taps a creature, an untap step
+  // untaps it, so "tapped creatures you control get +1/+0" (Sword of the Paruns, Augusta) reaches every
+  // creature, as `combat` does. Required only where the producer states the opposite.
+  if (consumer.tapped !== undefined && producer.tapped !== undefined && producer.tapped !== consumer.tapped) return false;
   // Same shape as historic: a legendary-matters anthem reaches only legendary permanents.
   if (consumer.legendary === true && producer.legendary !== true) return false;
   // ...and the negations, "nonlegendary" and "nonbasic": the printed supertype fails them. A producer

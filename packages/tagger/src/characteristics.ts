@@ -96,6 +96,7 @@ export function extractCharacteristics(card: Card): Characteristics {
     token: false,
     keywords,
     ...(enchants ? { enchants } : {}),
+    ...(card.oracleText === "" ? { noAbilities: true as const } : {}),
   };
 }
 

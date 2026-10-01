@@ -448,9 +448,10 @@ test("a parity demand is met by a known mana value of that parity, and by an UNK
 /** The fields the filter grammar (#896) fills and parseSubject never did. Each is a demand: a
  *  consumer that names one is met only by a producer that states it, and a consumer that does not
  *  name one is unaffected. */
-test("tapped and untapped: a status only a producer that states it supplies", () => {
+test("tapped and untapped: a state every creature reaches; only a producer stating the opposite fails", () => {
   expect(subjectMatches(s({ type: "creature", tapped: true }), s({ type: "creature", tapped: true }), H)).toBe(true);
-  expect(subjectMatches(s({ type: "creature" }), s({ type: "creature", tapped: true }), H)).toBe(false);
+  // Sword of the Paruns' "tapped creatures you control" reaches every creature (#896 task 3).
+  expect(subjectMatches(s({ type: "creature" }), s({ type: "creature", tapped: true }), H)).toBe(true);
   expect(subjectMatches(s({ type: "creature", tapped: true }), s({ type: "creature", tapped: false }), H)).toBe(false);
   expect(subjectMatches(s({ type: "creature", tapped: true }), s({ type: "creature" }), H)).toBe(true);
 });

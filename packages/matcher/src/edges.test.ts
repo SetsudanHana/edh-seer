@@ -2971,6 +2971,18 @@ test("copy: a NONLEGENDARY-restricted copy ability never reaches a legendary con
   expect(directedReasons(p, selfTriggerLegend("Solemn Simulacrum", false), H).some((x) => x.tag === "enters:any")).toBe(true);
 });
 
+// #896 task 3: the grammar reads a copy's exceptions onto what it CREATES ("except it has haste") and
+// records what it COPIES in `copyOf`; the copy pass reads the latter, so a creature without haste is
+// still copied. Without `copyOf` the haste demand blocks the edge -- both directions pinned.
+test("copy: the pass reads what is copied (`copyOf`), not the exceptions the copy gains", () => {
+  const oracle = "Create a token that's a copy of another target nonlegendary creature you control, except it has haste.";
+  const created = { type: "creature", token: true, keyword: ["haste"], legendary: false };
+  const strix = selfTriggerLegend("Baleful Strix", false);
+  expect(directedReasons(copyFixture("Reflection of Kiki-Jiki", oracle, { ...created, copyOf: { type: "creature", legendary: false, control: "you" } }), strix, H)
+    .some((x) => x.tag === "enters:any" && /copies it/.test(x.text))).toBe(true);
+  expect(directedReasons(copyFixture("Reflection of Kiki-Jiki", oracle, created), strix, H).some((x) => /copies it/.test(x.text))).toBe(false);
+});
+
 // PANEL FAMILY E (2026-08-20): a DEBUFF forms no applies-to edge, and an ABILITY discount needs an
 // ability to discount.
 test("a debuff makes no anthem claim, and an ability discount needs an activated ability", () => {
@@ -5950,4 +5962,18 @@ describe("an imprint links to the cards it can imprint", () => {
     ] as CardTags["abilities"]);
     expect(links(jace, card("Dramatic Reversal", ["instant"], 2))).toEqual([]);
   });
+});
+
+// #896 task 3: statuses a producer's printed characteristics supply, so a face-down payoff and a
+// "no abilities" payoff meet the cards they are built for.
+test("a morph or disguise card can be face down; a card with no rules text has no abilities", async () => {
+  const { characteristicsSubject } = await import("./edges.js");
+  const tags = (keywords: string[], noAbilities?: true): CardTags => ({
+    oracleId: "x", abilities: [],
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 3, power: "2", toughness: "2", token: false, keywords, ...(noAbilities ? { noAbilities } : {}) },
+  }) as unknown as CardTags;
+  expect(characteristicsSubject(tags(["Morph"])).status).toEqual(["face-down"]);
+  expect(characteristicsSubject(tags(["disguise"])).status).toEqual(["face-down"]);
+  expect(characteristicsSubject(tags([], true)).status).toEqual(["no-abilities"]);
+  expect(characteristicsSubject(tags(["flying"])).status).toBeUndefined();
 });

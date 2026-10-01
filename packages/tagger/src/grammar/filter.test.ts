@@ -93,8 +93,9 @@ test("CR 303.4a: an Aura's enchant line is the class it can enchant", () => {
 });
 
 test("a copy token has the original's copiable values (CR 707.2), not its controller, target or token-ness", () => {
-  expect(parse("a token that's a copy of target creature you control")).toEqual({ control: "any", token: true, type: "creature" });
-  expect(parse("a token that's a copy of target nontoken creature")).toEqual({ control: "any", token: true, type: "creature" });
+  // ...and `copyOf` says what it copies: any creature you control, any nontoken creature.
+  expect(parse("a token that's a copy of target creature you control")).toEqual({ control: "any", token: true, type: "creature", copyOf: { type: "creature", control: "you" } });
+  expect(parse("a token that's a copy of target nontoken creature")).toEqual({ control: "any", token: true, type: "creature", copyOf: { type: "creature", token: false } });
   // A copy of a reference: the token is all the phrase says (the class comes from the referent, task 4).
   expect(parse("a token that's a copy of it")).toEqual({ control: "any", token: true });
 });
@@ -207,7 +208,9 @@ test("statuses, histories, name relations, shares, exclusions and whose ability"
   expect(parse("target creature that was dealt damage this turn")).toMatchObject({ history: ["dealt-damage"] });
   expect(parse("a spell with the chosen name")).toMatchObject({ nameRelation: "chosen" });
   expect(parse("Other creatures with the same name as this creature are goaded")).toBeNull();
-  expect(parse("a spell that shares a creature type with this creature")).toMatchObject({ shares: { what: "creature-type", with: "self" } });
+  // The relation the matcher already checks (Folk Hero): `sharesTypeWith`, not a refused `shares`.
+  expect(parse("a spell that shares a creature type with this creature")).toMatchObject({ sharesTypeWith: "self" });
+  expect(parse("a spell that shares a creature type with this creature")!.shares).toBeUndefined();
   expect(parse("all creatures except for Merfolk, Krakens, Leviathans, Octopuses, and Serpents")!.except).toHaveLength(5);
   expect(parse("a loyalty ability of a Chandra planeswalker")).toMatchObject({ abilityKind: ["loyalty"], abilityOf: { type: "planeswalker", subtype: "chandra" } });
   expect(parse("a creature you control but don't own")).toMatchObject({ control: "you", owner: "opp" });
@@ -250,7 +253,7 @@ test("a spell or an ability is two branches, and a restriction binds both", () =
 });
 
 test("copy exceptions, conditions on the target, alternatives, destinations", () => {
-  expect(parse("a token that's a copy of target creature you control, except it isn't legendary")).toEqual({ control: "any", token: true, type: "creature", legendary: false });
+  expect(parse("a token that's a copy of target creature you control, except it isn't legendary")).toEqual({ control: "any", token: true, type: "creature", legendary: false, copyOf: { type: "creature", control: "you" } });
   expect(parse("target creature if it's white")).toMatchObject({ type: "creature", colors: ["W"] });
   expect(parse("a Desert card from your hand or library")).toMatchObject({ subtype: "desert", anyOf: [{ fromZone: "hand" }, { fromZone: "library" }] });
   expect(parse("spells with flash or flying from the top of your library")).toMatchObject({ anyOf: [{ keyword: ["flash"] }, { keyword: ["flying"] }] });
@@ -348,8 +351,9 @@ test("conditions on a player or an object's controller (refused by the matcher, 
 });
 
 test("copy exceptions that set characteristics replace what was copied (CR 707.9b)", () => {
+  // The exception says what the token IS; `copyOf` still says what it copies -- a non-Frog creature.
   expect(parse("a token that's a copy of target non-Frog creature, except it's a 1/1 green Frog")).toEqual({ control: "any", token: true, type: "creature", subtype: "frog", colors: ["G"],
-    stats: [{ metric: "power", op: "eq", value: 1 }, { metric: "toughness", op: "eq", value: 1 }] });
+    stats: [{ metric: "power", op: "eq", value: 1 }, { metric: "toughness", op: "eq", value: 1 }], copyOf: { type: "creature", notSubtype: ["frog"] } });
   expect(parse("a token that's a copy of it, except it's a 4/4 black Zombie")).toMatchObject({ subtype: "zombie", colors: ["B"] });
   expect(parse("a token that's a copy of target creature, except it's a legendary Alien named Prisoner Zero")).toMatchObject({ legendary: true, named: "prisoner zero", subtype: "alien" });
   expect(parse("a token that's a copy of this creature, except it has haste and loses soulbond")).toMatchObject({ keyword: ["haste"], notKeyword: ["soulbond"] });

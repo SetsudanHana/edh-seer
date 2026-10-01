@@ -14,6 +14,7 @@
 import { writeFileSync } from "node:fs";
 import { connect, loadConfig } from "@edh-seer/data";
 import { CLAUSES_COLLECTION, type CardClausesDoc } from "../clause-store.js";
+import { selfAsTilde } from "../grammar/self-as-tilde.js";
 
 const PHRASES_PATH = "packages/tagger/phrases.jsonl";
 
@@ -42,19 +43,3 @@ for (const kind of ["subject", "object"] as const) {
 }
 writeFileSync(PHRASES_PATH, lines.join("\n") + "\n");
 console.log(`wrote ${PHRASES_PATH}`);
-
-/** The card's names, longest first, replaced whole-word by "~". CASE-SENSITIVE: Oracle capitalises a
- *  name, and Storm, Force of Nature's "has storm" is the keyword, not the card (review). */
-function selfAsTilde(phrase: string, name: string): string {
-  const names = new Set<string>();
-  for (const face of name.split(" // ")) {
-    names.add(face);
-    const short = face.split(",")[0]!;
-    if (short !== face) names.add(short);
-  }
-  let out = phrase;
-  for (const n of [...names].sort((a, b) => b.length - a.length)) {
-    out = out.replace(new RegExp(`(?<![\\w'])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w'])`, "g"), "~");
-  }
-  return out;
-}
