@@ -327,7 +327,9 @@ import { emblemRecipient } from "../emblem.js";
 // emblems, win/lose the game, phasing, clash, exert, manifest, convert, the benders, blight, behold).
 // 249: ...fragments 1: a back-referenced controller ("that player controls", "they control") and a set
 // the sentence made ("revealed this way") are read; the object stays as stored.
-export const DERIVE_VERSION = 249;
+// 250: ...fragments 2: a leading "Until end of turn, ...", "becomes ... with base power and toughness",
+// "loses ...", "cast this spell only ...", casting modifiers, "enters with" on a class and "and with".
+export const DERIVE_VERSION = 250;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
