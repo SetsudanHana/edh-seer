@@ -13,7 +13,7 @@
  *  an absent field and `null` stay different, because `token: null` is a statement. */
 import type { SubjectFilter } from "@edh-seer/tagger/schema";
 import { counterKindOf } from "@edh-seer/tagger/subject";
-import { KEYWORD_ABILITIES } from "@edh-seer/tagger/subtypes";
+import { KEYWORD_ABILITIES, SUBTYPES } from "@edh-seer/tagger/subtypes";
 
 export interface Phrase { kind: "subject" | "object"; phrase: string; cards: number }
 export type Parser = (text: string) => SubjectFilter | null;
@@ -127,6 +127,19 @@ const TABLE_ROW = /^\d+\s*[—–-]\s*\d+/;
 const GAME_PIECE = /^(?:a|an|one or more|one|two|three|four|five|six|\d+|x)?\s*(?:coins?|d\d+|(?:four|six|twenty)-sided (?:die|dice)|dice|die|(?:name |art |ability )?stickers?|emblems?\b|dungeons?|(?:an )?attractions?|piles?\b|booster packs?)\b/;
 /** A FRAGMENT that names nothing on its own: "your", "any", "each", "both creatures" is a count. */
 const FRAGMENT = /^(?:your|their|its|any|each|one|the rest|all|this|that|both|either)$/;
+/** A BARE CARD NAME ("Acererak", "Arachnus Web", "Xantcha's power"): a specific other card, which a
+ *  filter does not describe. Every word capitalized (lowercase joiners allowed) and none a type or a
+ *  subtype, so "Elves" or "Goblins you control" are never names. Read on the phrase as printed. */
+function isBareName(phrase: string): boolean {
+  const words = phrase.trim().split(/\s+/);
+  if (words.length === 0 || words.length > 6 || !/^[A-Z]/.test(words[0]!)) return false;
+  const joiners = new Set(["of", "the", "and", "to", "a", "in", "for", "power", "toughness"]);
+  return words.every((w) => /^[A-Z][\w'’,-]*$/.test(w) || joiners.has(w))
+    && !words.some((w) => {
+      const l = w.toLowerCase().replace(/[,'’]s?$/, "");
+      return SUBTYPES.has(l) || SUBTYPES.has(l.replace(/s$/, "")) || /^(?:creatures?|artifacts?|enchantments?|lands?|planeswalkers?|spells?|cards?|permanents?|tokens?|instants?|sorcer(?:y|ies)|battles?|you|your|each|all|other|another|target)$/.test(l);
+    });
+}
 /** Energy written as letters: "E E E", "eight {E}". */
 const ENERGY = /^(?:(?:e\s*)+|\w+ \{e\})$/;
 /** A counter as the object: "a counter", "a +1/+1 counter on this creature", "two +1/+1 counters". */
@@ -136,11 +149,11 @@ const ZONE = /^(?:(?:your|their|its owner's|target player's|target opponent's|an
  *  "you PAY {1}", "you HAVE no maximum hand size"). Task 6's actions. A verb inside a relative clause
  *  ("a creature THAT HAS flying") is still a noun phrase, so a relative pronoun before the verb keeps
  *  the phrase in `filter`. "cast"/"casts" are absent on purpose: "spells you cast" is a filter. */
-const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are|deals?|may|would|pays?|attacks|blocks|enters|dies|wins?|draws?|puts?|untaps?|costs?|causes|plays?)\b/;
+const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are|deals?|may|would|pays?|attacks|blocks|enters|dies|wins?|draws?|untaps?|costs?|causes|plays?)\b/;
 const RELATIVE = /\b(?:that|that's|who|which|whose)\b/;
 /** A REFERENCE inside a longer phrase: what was exiled, revealed or chosen earlier, "those", "that
  *  many". Task 4 and #900's population, resolved by `derive/references.ts`, not by a filter. */
-const INNER_REFERENCE = /^chosen\b|\b(?:this way|exiled with|from among|of them|of those|those|they (?:control|own|don't)|that (?:card|creature|player|spell|permanent|ability|many|much|token|land|artifact|opponent))\b/;
+const INNER_REFERENCE = /^chosen\b|\b(?:attached to (?:it|them|that \w+)|blocking (?:it|them)|blocked by it|it's blocking|this way|exiled with|from among|of them|of those|those|they (?:control|own|don't)|that (?:card|creature|player|spell|permanent|ability|many|much|token|land|artifact|opponent))\b/;
 
 export function domainOf(phrase: string): string {
   // "~" is the card's own name: a self-reference, except where it is what a filter names -- after
@@ -149,7 +162,7 @@ export function domainOf(phrase: string): string {
   // a token, whatever its name says.
   const appositionToken = /^[^,]+, an? [^"]*\btokens?\b/i.test(phrase);
   const amountless = phrase.split(/["“]|\bwhere\b|\bequal to\b|\bless than\b|\bgreater than\b/)[0]!;
-  if (!appositionToken && amountless.replace(/\bnamed .*$/, "").replace(/\btargets? .*~/, "").includes("~")) return "reference";
+  if (!appositionToken && amountless.replace(/\bnamed .*$/, "").replace(/\btargets? .*~/, "").replace(/\bby ~/g, "").includes("~")) return "reference";
   const text = phrase.toLowerCase().replace(/’/g, "'").trim();
   if (text.startsWith("(")) return "reminder";
   if (text.startsWith('"') || text.startsWith("“")) return "quoted";
@@ -168,6 +181,10 @@ export function domainOf(phrase: string): string {
   if (TABLE_ROW.test(text)) return "table";
   if (GAME_PIECE.test(text)) return "game-piece";
   if (FRAGMENT.test(text)) return "fragment";
+  // "cards equal to the number of ...": how many, an amount.
+  if (/^(?:\w+ )?cards?(?: from [\w' ]+?)? equal to\b/.test(text)) return "amount";
+  // "cards from the top of your library until you reveal a creature card": a dig, the action's process.
+  if (/\buntil (?:you|they|that player|an opponent|each player|its controller)\b/.test(text)) return "clause";
   if (ENERGY.test(text)) return "mana";
   if (/^after this (?:one|phase|turn|step)\b/.test(text)) return "time";
   if (COUNTER_OBJECT.test(text)) return "counter";
@@ -179,10 +196,11 @@ export function domainOf(phrase: string): string {
   if (PLAYER_CLAUSE.test(text)) return "clause";
   if (!text.includes(" named ") && TIME.test(text)) return "time";
   if (VERB_WORDS.has(w[0]!)) return "verb";
+  if (isBareName(phrase)) return "name";
   // Only the HEAD is read: a verb or a reference inside a granted ability's quotes ('a Rat token with
   // "This token can't block."'), a count ("a card for each counter you have") or a stat's amount ("with
   // mana value less than that creature's") does not make the phrase a clause or a reference.
-  const head = text.split(/["“]|\bfor each\b|\bwhere\b|\bequal to\b|\bthe number of\b|\bless than\b|\bgreater than\b/)[0]!;
+  const head = text.split(/["“]|\bfor each\b|\bwhere\b|\bequal to\b|\bthe number of\b|\bless than\b|\bgreater than\b|\bsame name as\b|\bshares? a\b|\bshares? no\b/)[0]!;
   if (INNER_REFERENCE.test(head)) return "reference";
   const verb = CLAUSE_VERB.exec(head);
   if (verb && !RELATIVE.test(head.slice(0, verb.index))) return "clause";
