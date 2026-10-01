@@ -302,7 +302,8 @@ import { emblemRecipient } from "../emblem.js";
 // 229: ...a back-referenced actor ("that player mills") keeps the stored object.
 // 230: ...wider phrasing: "X cards, where X is ...", "each player who ...", "you and X each".
 // 231: ..."up to X" is the amount X, as the store wrote it (Harvest Season's scaling).
-export const DERIVE_VERSION = 231;
+// 232: ...a cost left inline after an ability word reads (Power-up: "each opponent discards").
+export const DERIVE_VERSION = 232;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the

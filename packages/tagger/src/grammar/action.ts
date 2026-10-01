@@ -149,22 +149,30 @@ function phrases(sentence: string): string[] {
 
 /** Words after an action that say WHEN or ON WHAT CONDITION, kept as its condition: a delayed action,
  *  a replacement, "draw a card if you control an artifact". */
-const WHEN_TAIL = / (at the beginning of the next (?:turn's upkeep|end step|upkeep)|instead|if [^,]+)$/;
+const WHEN_TAILS = [" at the beginning of the next turn's upkeep", " at the beginning of the next end step", " at the beginning of the next upkeep", " instead"];
+/** The trailing condition of a phrase, by index rather than an end-anchored regex (CodeQL
+ *  polynomial-redos): one of WHEN_TAILS, or a last " if ..." with no comma after it. */
+function whenTail(t: string): { at: number; text: string } | undefined {
+  const fixed = WHEN_TAILS.find((w) => t.endsWith(w));
+  if (fixed) return { at: t.length - fixed.length, text: fixed.trim() };
+  const at = t.lastIndexOf(" if ");
+  return at > 0 && !t.includes(",", at) ? { at, text: t.slice(at + 1) } : undefined;
+}
 
 /** One phrase: actor, "may", verb, arguments. `carried` is the actor of the sentence's earlier
  *  phrase: "target player draws two cards and loses 2 life" -- the life is theirs too. */
 function readPhrase(phrase: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
   let t = phrase.trim().replace(/^(?:then|instead|also) /i, "");
   // "draw X cards, where X is the number of ...": X is the amount, the rest says what it counts.
-  const where = /, where X is (.+)$/.exec(t);
-  if (where) t = t.slice(0, where.index);
+  const where = t.indexOf(", where X is ");
+  if (where >= 0) t = t.slice(0, where);
   // "each player who controls a creature with power 4 or greater draws a card": that subset.
   const who = /^(each player|each opponent) who [^,]+? (?=(?:draws?|discards?|mills?|scr(?:y|ies)|surveils?|search(?:es)?|reveals?|may)\b)/i.exec(t);
   if (who) { condition = [condition, t.slice(who[1]!.length + 1, who[0].length - 1)].filter(Boolean).join(", "); t = `${who[1]} ${t.slice(who[0].length)}`; }
   // "each player ... each draw": the second "each" repeats the actor.
   t = t.replace(/^((?:two|any number of) target (?:players|opponents)) each /i, "$1 ");
-  const tail = WHEN_TAIL.exec(t);
-  if (tail) { condition = [condition, tail[1]].filter(Boolean).join(", "); t = t.slice(0, tail.index); }
+  const tail = whenTail(t);
+  if (tail) { condition = [condition, tail.text].filter(Boolean).join(", "); t = t.slice(0, tail.at); }
   let actor: ActionReading["actor"] = carried;
   let optional = false;
   // "you may have target player discard a card": the actor is who is made to.
@@ -207,10 +215,17 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   // A mode's or a result's label is not text the action reads: a Spree mode's added cost ("+ {2} —"),
   // a d20 table row ("10—19 |"), a loyalty cost the segmenter left in ("[−9]").
   // An ability word ("Crescent Fang —", "Date Night —") names the ability and does nothing.
-  effect = effect.replace(/^[A-Z][\w' ,-]{1,40} — /, "").replace(/^\+ (?:\{[^}]+\})+ — /, "").replace(/^\d+(?:[-—–]\d+|\+)? \| /, "").replace(/^\[[+−-]?(?:\d+|X)\]:? /, "");
+  const dash = effect.indexOf(" — ");
+  if (dash > 0 && dash <= 41 && /^[A-Z][\w' ,-]*$/.test(effect.slice(0, dash))) effect = effect.slice(dash + 3);
+  effect = effect.replace(/^\+ (?:\{[^}]+\})+ — /, "").replace(/^\d+(?:[-—–]\d+|\+)? \| /, "").replace(/^\[[+−-]?(?:\d+|X)\]:? /, "");
   // A cost the segmenter left in the text ("{T}, Pay {E}{E}{E}: Draw a card.") is still a cost.
-  const inline = cost === undefined ? /^((?:\{[^}]+\}|[A-Z][^:."]*?)(?:, [^:."]+)*): (?=[A-Z])/.exec(effect) : null;
-  if (inline && /\{|^(?:Pay|Sacrifice|Discard|Exile|Tap|Remove|Return)\b/.test(inline[1]!)) { cost = inline[1]; effect = effect.slice(inline[0].length); }
+  // By index, not a regex over the whole text (CodeQL polynomial-redos).
+  const colon = cost === undefined ? effect.indexOf(": ") : -1;
+  const prefix = colon > 0 ? effect.slice(0, colon) : "";
+  if (prefix !== "" && !/[."]/.test(prefix) && /^[A-Z]/.test(effect.slice(colon + 2))
+    && (prefix.startsWith("{") || /^(?:Pay|Sacrifice|Discard|Exile|Tap|Remove|Return)\b/.test(prefix))) {
+    cost = prefix; effect = effect.slice(colon + 2);
+  }
   for (const part of cost ? cost.split(/, /) : []) {
     const r = readPhrase(part.replace(/^([A-Z])/, (c) => c.toLowerCase()), undefined);
     if (r) out.push(...r);
