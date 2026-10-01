@@ -308,7 +308,9 @@ import { emblemRecipient } from "../emblem.js";
 // back-reference keeps derive's own antecedent.
 // 235: ...a phrase after a subject the grammar cannot name is not read (Bounty Board's opponents gain).
 // 236: ..."you and those players each draw, then discard" is both players' (Zurzoth).
-export const DERIVE_VERSION = 236;
+// 237: ...and counters (add-counter, remove-counter, proliferate): the recipient is written in front
+// of the kind, so a placement's subject is its target, not "a permanent" (#731).
+export const DERIVE_VERSION = 237;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1341,6 +1343,7 @@ function narrowingRepresented(r: TriggerReading, text: string): boolean {
 const ACTION_FAMILY: Record<string, string> = {
   draw: "draw-search", discard: "draw-search", mill: "draw-search", scry: "draw-search", surveil: "draw-search", search: "draw-search", reveal: "draw-search",
   "deal-damage": "damage-life", "gain-life": "damage-life", "lose-life": "damage-life", "set-life": "damage-life",
+  "add-counter": "counters", "remove-counter": "counters", proliferate: "counters",
 };
 const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
@@ -1374,10 +1377,15 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
     // A BACK-REFERENCED actor ("that player mills X cards", Geth) keeps the stored object: derive's
     // antecedent reading of who "that player" is beats the grammar's "any player".
     const named = r.actor?.text !== undefined && r.actor.scope !== "that";
-    // Life verbs carry their player in `text` already ("you" when no one is named).
-    const object = PLAYER_OBJECT_VERBS.has(r.verb) && r.verb !== "gain-life" && r.verb !== "lose-life"
-      ? (named ? r.actor!.text : r.actor ? base.object : r.text ?? base.object)
-      : r.text ?? base.object;
+    // Life verbs carry their player in `text` already ("you" when no one is named). A COUNTER's stored
+    // object is its kind; the recipient goes in front, "target creature, +1/+1" -- the store's own
+    // two-part form, which `counterKindOf` reads the kind back out of (#731). The card itself or a
+    // back-reference keeps the stored object: derive's self logic reads it.
+    const object = r.counter !== undefined
+      ? (r.text !== undefined && r.object?.self !== true ? `${r.text}, ${r.counter}` : base.object)
+      : PLAYER_OBJECT_VERBS.has(r.verb) && r.verb !== "gain-life" && r.verb !== "lose-life"
+        ? (named ? r.actor!.text : r.actor ? base.object : r.text ?? base.object)
+        : r.text ?? base.object;
     out[i] = ({
       ...base,
       ...(object !== undefined ? { object } : {}),

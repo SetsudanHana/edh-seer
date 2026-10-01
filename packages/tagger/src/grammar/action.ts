@@ -11,6 +11,7 @@
  *    field for it.
  *  - VERB FAMILIES are added one per PR, in the owner's order (2026-10-01): draw/search first. */
 import type { Control, SubjectFilter } from "../schema.js";
+import { counterKindOf } from "../derive/subject.js";
 import { parse } from "./filter.js";
 
 export interface ActionReading {
@@ -25,6 +26,8 @@ export interface ActionReading {
   /** The printed object phrase, as derive's string-reading path takes it ("two cards", "a basic land
    *  card"). Absent where the phrase has no object words of its own (scry 2). */
   text?: string;
+  /** A counter action's KIND ("+1/+1", "stun"); its `object` is the permanent or player it goes on. */
+  counter?: string;
 }
 
 const NUMBER: Record<string, string> = {
@@ -71,7 +74,10 @@ const COUNT = /^(?:(up to )?(a|an|one|two|three|four|five|six|seven|eight|nine|t
  *  or a back-reference ("it", "that card", "those cards"), which task 4's resolver owns. */
 function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | null {
   const t = phrase.trim();
-  if (/^(?:this card|~|this)$/i.test(t)) return { object: SELF };
+  if (/^(?:this [a-z]+|~|this|him|her)$/i.test(t)) return { object: SELF };
+  // An Aura's or Equipment's host: its class, as the trigger grammar reads it (the text keeps the rest).
+  const host = /^(?:enchanted|equipped) (creature|permanent|land|artifact|planeswalker)$/i.exec(t);
+  if (host) return { object: parse(`a ${host[1]!.toLowerCase()}`)! };
   if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   const m = COUNT.exec(t);
   // "up to two" is the store's "2", the convention derive's scaling reads ("up to X ... where X is").
@@ -177,10 +183,78 @@ function damageOf(rest: string): Args | null {
 }
 const ANY_TARGET = parse("any target")!;
 
+/** "two +1/+1 counters", "a stun counter", "X charge counters": the count and the kind. */
+function countersOf(phrase: string): { amount?: string; counter: string } | null {
+  const m = /^(?:(a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+|that many|an additional|any number of|up to (?:one|two|three|x|\d+)) )?(.+? counters?)$/i.exec(phrase.trim());
+  const counter = m ? counterKindOf(m[2]!) : undefined;
+  if (!counter) return null;
+  const word = m![1]?.toLowerCase().replace(/^up to /, "");
+  const amount = word ? (word === "an additional" ? "1" : amountOf(word) ?? word) : undefined;
+  return { ...(amount ? { amount } : {}), counter };
+}
+
+/** "two +1/+1 counters and a trample counter", "a +1/+1 counter, a flying counter, and a shield
+ *  counter": each kind its own action, as the store writes them. */
+function counterList(phrase: string): { amount?: string; counter: string }[] | null {
+  const parts = phrase.split(/,? and (?=(?:a|an|one|two|three|four|\d+) )|, (?=(?:a|an|one|two|three|four|\d+) )/);
+  const out = parts.map((p) => countersOf(/counters?$/.test(p) ? p : `${p} counter`));
+  return out.every((c) => c !== null) ? out as { amount?: string; counter: string }[] : null;
+}
+
+const COUNTERS: Record<string, [string, Handler]> = {
+  // "distribute three +1/+1 counters among one, two, or three target creatures you control".
+  distribute: ["add-counter", (rest) => {
+    const m = /^(.+? counters?) among (?:one|one or two|one, two, or three|any number of) (target .+)$/.exec(rest);
+    const c = m ? countersOf(m[1]!) : null;
+    const on = m ? objectOf(m[2]!.replace(/^target ([a-z]+)s\b/, "target $1")) : null;
+    return c && on ? { object: on.object, counter: c.counter, amount: c.amount ?? "1", text: m![2] } : null;
+  }],
+  // "put a +1/+1 counter on target creature you control", "put two +1/+1 counters on each creature you
+  // control", "put a +1/+1 counter on each of up to two target creatures".
+  // "you get an experience counter", "that player gets two poison counters": counters on a player.
+  get: ["add-counter", (rest) => {
+    const c = countersOf(rest);
+    return c ? { object: parse("you")!, counter: c.counter, amount: c.amount ?? "1" } : null;
+  }],
+  put: ["add-counter", (rest) => {
+    const m = /^(.+? counters?) on (.+?)(?: for each (.+))?$/.exec(rest);
+    const cs = m ? counterList(m[1]!) : null;
+    const on = m ? objectOf(m[2]!.replace(/^each of /, "")) : null;
+    if (!cs || !on) return null;
+    return cs.map((c) => ({ object: on.object, counter: c.counter, amount: m![3] ? `${c.amount ?? "1"} for each ${m![3]}` : c.amount ?? "1", text: m![2] }));
+  }],
+  remove: ["remove-counter", (rest) => {
+    const m = /^(all|.+? counters?) from (.+)$/.exec(rest);
+    const c = m ? (/^all .+ counters$/.test(m[1]!) ? { amount: "all", counter: counterKindOf(m[1]!.slice(4)) } : countersOf(m[1]!)) : null;
+    const on = m ? objectOf(m[2]!) : null;
+    if (!c?.counter || !on) return null;
+    return { object: on.object, counter: c.counter, amount: c.amount ?? "1", text: m![2] };
+  }],
+  proliferate: ["proliferate", (rest) => (rest === "" ? {} : null)],
+};
+
+/** "<it> enters with two +1/+1 counters on it": counters the permanent itself arrives with. */
+const ENTERS_WITH = /^(?:~|this [a-z]+|it|that creature|that permanent|each creature) (?:enters(?: the battlefield)?(?: tapped)?|escapes) with /i;
+/** [counters phrase, "for each" tail] of an "enters with ... on it" phrase, cut by index (CodeQL
+ *  polynomial-redos), or null. */
+function entersWithOf(t: string): [string, string | undefined] | null {
+  const head = ENTERS_WITH.exec(t);
+  if (!head) return null;
+  const rest = t.slice(head[0].length);
+  for (const on of [" on it", " on them"]) {
+    const at = rest.indexOf(on);
+    if (at < 0) continue;
+    const after = rest.slice(at + on.length);
+    if (after === "") return [rest.slice(0, at), undefined];
+    if (after.startsWith(" for each ")) return [rest.slice(0, at), after.slice(" for each ".length)];
+  }
+  return null;
+}
+
 /** "your life total becomes 10". */
 const SET_LIFE = /^(?:your|their|each player's) life total becomes (.+)$/i;
 
-const HANDLERS: Record<string, [string, Handler]> = { ...DRAW_SEARCH, ...DAMAGE_LIFE };
+const HANDLERS: Record<string, [string, Handler]> = { ...DRAW_SEARCH, ...DAMAGE_LIFE, ...COUNTERS };
 /** The verb words, with their third-person forms, longest first. */
 const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new RegExp(`^(?:${v}|${v}s|${v.replace(/y$/, "ies")}|${v}es)\\b`, "i"), v]);
 
@@ -249,6 +323,12 @@ function readPhrase(phrase: string, condition: string | undefined, carried?: Act
   if (!haveSource && deals > 0 && deals <= 70 && !t.slice(0, deals).includes(",")) { t = t.slice(deals + 1); actor = undefined; }
   const setLife = SET_LIFE.exec(t);
   if (setLife) return [{ verb: "set-life", amount: setLife[1]!, ...(condition ? { condition } : {}) }];
+  const entersWith = entersWithOf(t);
+  const ew = entersWith ? counterList(entersWith[0]) : null;
+  if (ew) return ew.map((c) => ({ verb: "add-counter", object: SELF, counter: c.counter, amount: entersWith![1] ? `${c.amount ?? "1"} for each ${entersWith![1]}` : c.amount ?? "1", ...(condition ? { condition } : {}) }));
+  // "you get {E}{E}": energy counters on you (CR 107.14).
+  const energy = /^(?:you )?gets? ((?:\{E\})+)(?: \.)?$/i.exec(t);
+  if (energy) return [{ verb: "add-counter", object: parse("you")!, counter: "energy", amount: String(energy[1]!.length / 3), ...(condition ? { condition } : {}) }];
   // "you may have target player discard a card": the actor is who is made to.
   const have = /^you (may )?have (.+)$/i.exec(t);
   const made = have && ACTORS.find(([w]) => have[2]!.toLowerCase().startsWith(w + " "));
