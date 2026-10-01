@@ -317,7 +317,9 @@ import { emblemRecipient } from "../emblem.js";
 // 242: ...and zone moves (destroy, exile, sacrifice, return, put, shuffle); the count stays in the text.
 // 243: ...and pumps and grants (modify-pt, grant-ability): a grant's object is the ability granted.
 // 244: ...and mana, tapping and restrictions (add-mana, tap, untap, cant).
-export const DERIVE_VERSION = 244;
+// 245: ...and the long tail (counter-spell, gain-control, fight, goad, regenerate, transform, attach,
+// copy, keyword actions).
+export const DERIVE_VERSION = 245;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1355,6 +1357,9 @@ const ACTION_FAMILY: Record<string, string> = {
   destroy: "zone", exile: "zone", sacrifice: "zone", return: "zone", put: "zone", shuffle: "zone",
   "modify-pt": "pump", "grant-ability": "pump",
   "add-mana": "mana-tap", tap: "mana-tap", untap: "mana-tap", cant: "mana-tap",
+  ...Object.fromEntries(["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect",
+    "bolster", "adapt", "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn",
+    "monarch", "initiative", "ring-tempts", "explore", "connive", "endure"].map((v) => [v, "tail"])),
 };
 const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
@@ -1409,7 +1414,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
         // The card itself keeps the stored object for the same reason ("sacrifice Endrek Sahr").
         // So does a stored object that is the printed one plus where it came from ("a land card" ->
         // "a land card from among the top four cards of your library", Planar Genesis).
-        : (ACTION_FAMILY[r.verb] === "zone" || ACTION_FAMILY[r.verb] === "pump" || r.verb === "tap" || r.verb === "untap") && (r.object?.self === true || base.object === "~" || /^this\b/i.test(base.object ?? "")
+        : (ACTION_FAMILY[r.verb] === "zone" || ACTION_FAMILY[r.verb] === "pump" || ACTION_FAMILY[r.verb] === "tail" || r.verb === "tap" || r.verb === "untap") && (r.object?.self === true || base.object === "~" || /^this\b/i.test(base.object ?? "")
           || (r.text !== undefined && (base.object ?? "").startsWith(`${r.text} from `))) ? base.object
         : r.text ?? base.object;
     out[i] = ({
