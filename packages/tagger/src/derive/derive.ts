@@ -303,7 +303,12 @@ import { emblemRecipient } from "../emblem.js";
 // 230: ...wider phrasing: "X cards, where X is ...", "each player who ...", "you and X each".
 // 231: ..."up to X" is the amount X, as the store wrote it (Harvest Season's scaling).
 // 232: ...a cost left inline after an ability word reads (Power-up: "each opponent discards").
-export const DERIVE_VERSION = 232;
+// 233: ...and damage and life (deal-damage, gain-life, lose-life, set-life); families align apart.
+// 234: ...the actor carries past an unread phrase; "X, where X is" keeps the counted thing; a
+// back-reference keeps derive's own antecedent.
+// 235: ...a phrase after a subject the grammar cannot name is not read (Bounty Board's opponents gain).
+// 236: ..."you and those players each draw, then discard" is both players' (Zurzoth).
+export const DERIVE_VERSION = 236;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1333,10 +1338,14 @@ function narrowingRepresented(r: TriggerReading, text: string): boolean {
  *  event is taken. CEILING: a compound stored as ONE clause keeps only that event. */
 /** THE VERB FAMILIES THE ACTION GRAMMAR HAS TAKEN OVER (#896 task 6), one per PR in the owner's order
  *  (2026-10-01): draw and search first. */
-const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(["draw", "discard", "mill", "scry", "surveil", "search", "reveal"]);
+const ACTION_FAMILY: Record<string, string> = {
+  draw: "draw-search", discard: "draw-search", mill: "draw-search", scry: "draw-search", surveil: "draw-search", search: "draw-search", reveal: "draw-search",
+  "deal-damage": "damage-life", "gain-life": "damage-life", "lose-life": "damage-life", "set-life": "damage-life",
+};
+const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
  *  cards" -> object "target player"); see `RECIPIENT_VERBS` in emits.ts. */
-const PLAYER_OBJECT_VERBS: ReadonlySet<string> = new Set(["draw", "mill", "discard", "scry", "surveil"]);
+const PLAYER_OBJECT_VERBS: ReadonlySet<string> = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life"]);
 
 /** THE ACTION GRAMMAR WINS (owner, 2026-10-01): a clause's stored actions of a taken-over family are
  *  rewritten from the printed text where the grammar read the phrase completely -- object, amount,
@@ -1350,7 +1359,13 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
     .filter((r) => GRAMMAR_ACTION_VERBS.has(r.verb));
   if (readings.length === 0) return clause;
   const stored = clause.actions;
-  const aligned = new Map(alignVerbs(stored.map((a) => a.verb ?? ""), readings.map((r) => r.verb)).map(([i, j]) => [j, i]));
+  // Aligned family by family, so a life reading cannot take a draw's place in the sequence.
+  const aligned = new Map<number, number>();
+  for (const fam of new Set(readings.map((r) => ACTION_FAMILY[r.verb]))) {
+    const si = stored.flatMap((a, i) => (ACTION_FAMILY[a.verb ?? ""] === fam ? [i] : []));
+    const ri = readings.flatMap((r, j) => (ACTION_FAMILY[r.verb] === fam ? [j] : []));
+    for (const [i, j] of alignVerbs(si.map((i) => stored[i]!.verb ?? ""), ri.map((j) => readings[j]!.verb))) aligned.set(ri[j]!, si[i]!);
+  }
   const out: Action[] = [...stored];
   readings.forEach((r, j) => {
     const i = aligned.get(j);
@@ -1359,7 +1374,10 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
     // A BACK-REFERENCED actor ("that player mills X cards", Geth) keeps the stored object: derive's
     // antecedent reading of who "that player" is beats the grammar's "any player".
     const named = r.actor?.text !== undefined && r.actor.scope !== "that";
-    const object = PLAYER_OBJECT_VERBS.has(r.verb) ? (named ? r.actor!.text : r.actor ? base.object : r.text ?? base.object) : r.text ?? base.object;
+    // Life verbs carry their player in `text` already ("you" when no one is named).
+    const object = PLAYER_OBJECT_VERBS.has(r.verb) && r.verb !== "gain-life" && r.verb !== "lose-life"
+      ? (named ? r.actor!.text : r.actor ? base.object : r.text ?? base.object)
+      : r.text ?? base.object;
     out[i] = ({
       ...base,
       ...(object !== undefined ? { object } : {}),

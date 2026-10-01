@@ -79,7 +79,9 @@ export function diffActions(rows: ActionRow[], candidate: ActionParser, subjectO
   for (const row of rows) {
     const read = candidate(row.effect, row.type, row.cost);
     if (JSON.stringify(read) !== JSON.stringify(candidate(row.effect, row.type, row.cost))) nondeterministic.push(row.effect);
-    const pairs = align(row.actions.map((a) => a.verb), (read ?? []).map((r) => r.verb));
+    // Aligned FAMILY BY FAMILY: one sequence over every verb can trade a draw's match for two life
+    // matches, which is not a disagreement about either.
+    const pairs = alignByFamily(row.actions.map((a) => a.verb), (read ?? []).map((r) => r.verb));
     const matchedRead = new Set(pairs.map(([, j]) => j));
     const readOf = new Map(pairs);
     row.actions.forEach((stored, i) => {
@@ -102,6 +104,17 @@ export function diffActions(rows: ActionRow[], candidate: ActionParser, subjectO
     g.examples = g.examples.slice(0, EXAMPLES);
   }
   return { families, nondeterministic, groups: sorted };
+}
+
+/** `align` within each verb family, the pairs mapped back to the full sequences. */
+export function alignByFamily(stored: string[], read: string[]): [number, number][] {
+  const out: [number, number][] = [];
+  for (const f of FAMILIES) {
+    const si = stored.flatMap((v, i) => (familyOf(v) === f ? [i] : []));
+    const ri = read.flatMap((v, j) => (familyOf(v) === f ? [j] : []));
+    for (const [i, j] of align(si.map((i) => stored[i]!), ri.map((j) => read[j]!))) out.push([si[i]!, ri[j]!]);
+  }
+  return out;
 }
 
 /** Index pairs [stored, read] of a longest common subsequence of two verb sequences. */
