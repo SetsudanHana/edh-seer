@@ -310,7 +310,11 @@ import { emblemRecipient } from "../emblem.js";
 // 236: ..."you and those players each draw, then discard" is both players' (Zurzoth).
 // 237: ...and counters (add-counter, remove-counter, proliferate): the recipient is written in front
 // of the kind, so a placement's subject is its target, not "a permanent" (#731).
-export const DERIVE_VERSION = 237;
+// 238: ...and tokens (create, populate, amass, investigate, incubate); a quoted ability is one atom.
+// 239: ...a token's text is the token alone; an X/X keeps its "where X is"; a copy of "that" keeps the store's.
+// 240: ..."tapped and attacking" is not the token's; a verb read more often than stored stays stored.
+// 241: ...except a search, whose extra readings are its zones (Tower Winder).
+export const DERIVE_VERSION = 241;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1344,6 +1348,7 @@ const ACTION_FAMILY: Record<string, string> = {
   draw: "draw-search", discard: "draw-search", mill: "draw-search", scry: "draw-search", surveil: "draw-search", search: "draw-search", reveal: "draw-search",
   "deal-damage": "damage-life", "gain-life": "damage-life", "lose-life": "damage-life", "set-life": "damage-life",
   "add-counter": "counters", "remove-counter": "counters", proliferate: "counters",
+  create: "tokens", populate: "tokens", amass: "tokens", investigate: "tokens", incubate: "tokens",
 };
 const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
@@ -1362,7 +1367,13 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
     .filter((r) => GRAMMAR_ACTION_VERBS.has(r.verb));
   if (readings.length === 0) return clause;
   const stored = clause.actions;
-  // Aligned family by family, so a life reading cannot take a draw's place in the sequence.
+  // Aligned family by family, so a life reading cannot take a draw's place in the sequence. A verb the
+  // grammar reads MORE times than the store holds is left as stored: the store wrote a list as one
+  // action ("create a Treasure token and a 2/2 Bird token", Song of Eärendil), and rewriting it with
+  // the first item would drop the rest.
+  // Not a SEARCH: its extra readings are the zones of one search ("your library and/or graveyard"),
+  // and the first is the library, which is what a search emit needs.
+  const more = new Set(readings.map((r) => r.verb).filter((v) => v !== "search" && readings.filter((r) => r.verb === v).length > stored.filter((a) => a.verb === v).length));
   const aligned = new Map<number, number>();
   for (const fam of new Set(readings.map((r) => ACTION_FAMILY[r.verb]))) {
     const si = stored.flatMap((a, i) => (ACTION_FAMILY[a.verb ?? ""] === fam ? [i] : []));
@@ -1372,7 +1383,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
   const out: Action[] = [...stored];
   readings.forEach((r, j) => {
     const i = aligned.get(j);
-    if (i === undefined) return;
+    if (i === undefined || more.has(r.verb)) return;
     const base = stored[i]!;
     // A BACK-REFERENCED actor ("that player mills X cards", Geth) keeps the stored object: derive's
     // antecedent reading of who "that player" is beats the grammar's "any player".
