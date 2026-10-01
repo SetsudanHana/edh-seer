@@ -45,3 +45,13 @@ export function printedPreamble(text: string, cardName: string): string | null {
   const m = PREAMBLE.exec(cardName ? selfAsTilde(text, cardName) : text);
   return m ? (cardName ? shortNameAsTilde(m[1]!.trim(), cardName) : m[1]!.trim()) : null;
 }
+
+/** THE EFFECT a clause prints (#896 task 6): its text with the card's name as "~", after the trigger
+ *  preamble and an intervening "if ...," when it has them. An activated clause's text already
+ *  excludes its cost (`segment()` keeps that apart). */
+export function effectText(text: string, cardName: string): string {
+  const named = cardName ? selfAsTilde(text, cardName) : text;
+  const m = PREAMBLE.exec(named);
+  const rest = m ? named.slice(m[0].length).trim() : named.trim();
+  return m ? rest.replace(/^if [^,.]+, /i, "") : rest;
+}
