@@ -215,6 +215,8 @@ interface Reading {
   combatWith?: SubjectFilter["combatWith"];
   condition?: PlayerCondition;
   printedIn?: string;
+  otherThanRef?: true;
+  sharesAlternatives?: NonNullable<SubjectFilter["shares"]>[];
   zoneAlternatives?: string[];
   zoneAlternativesFrom?: boolean;
   keywordAlternatives?: string[];
@@ -458,7 +460,8 @@ function nominalWord(c: Cursor, r: Reading): boolean | null {
     // "an exiled card": a card in exile.
     case "exiled": r.zone = "exile"; c.i++; return true;
     // CR 110.5, a status.
-    case "tapped": r.tapped = true; g.adj.push(w); c.i++; return true;
+    // "a tapped and attacking token": both states, one alternative.
+    case "tapped": r.tapped = true; g.adj.push(w); c.i++; if (c.peek() === "and" && c.peek(1) === "attacking") { r.combat = "attacking"; c.i += 2; } return true;
     case "untapped": r.tapped = false; g.adj.push(w); c.i++; return true;
     case "multicolored": case "multicoloured": r.colorCount = "multi"; g.adj.push(w); c.i++; return true;
     case "monocolored": case "monocoloured": r.colorCount = "mono"; g.adj.push(w); c.i++; return true;
@@ -527,7 +530,9 @@ function nominalWord(c: Cursor, r: Reading): boolean | null {
   // are English words, which is why SUBTYPES leaves them out.
   // ...or before "card" when it ends a list of subtypes ("an Elf, Warrior, or Tyvar card").
   if ((c.peek(1) === "planeswalker" || c.peek(1) === "planeswalkers"
-    || ((c.peek(1) === "card" || c.peek(1) === "cards") && r.groups.length > 1 && r.groups.slice(0, -1).every((x) => x.subtypes.length && !x.types.length)))
+    || ((c.peek(1) === "card" || c.peek(1) === "cards") && r.groups.length > 1 && r.groups.slice(0, -1).every((x) => x.subtypes.length && !x.types.length))
+    // "a Jace": the planeswalker by its subtype alone, the whole phrase.
+    || (c.i + 1 === c.t.length && r.determined && r.groups.length === 1 && !g.types.length && !g.subtypes.length && !g.adj.length))
     && SUBTYPE_TYPES[w]?.includes("planeswalker")) {
     if (!g.subtypes.includes(w)) g.subtypes.push(w); c.i++; return true;
   }
@@ -540,6 +545,7 @@ function nominalWord(c: Cursor, r: Reading): boolean | null {
  *  when a nominal word follows it, so "creatures you control and ..." is never swallowed. */
 function nominal(c: Cursor, r: Reading): boolean | null {
   let any = false;
+  const prevAll = c.t[c.i - 1] === "all";
   const word = () => {
     const i0 = c.i, adj0 = r.groups.at(-1)!.adj.length;
     const ok = nominalWord(c, r);
@@ -582,7 +588,9 @@ function nominal(c: Cursor, r: Reading): boolean | null {
     const joined = (c.eat(",") && (c.eat("or") || c.eat("and") || c.eat("and/or") || true))
       || c.eat("or") || c.eat("and/or") || c.eat("and");
     if (!joined) return any;
-    // "a" / "an" may restart after a joiner: "an artifact or an enchantment".
+    // "a" / "an" may restart after a joiner: "an artifact or an enchantment". So may "all" before a
+    // colour: "all black and ALL red creature cards" are black or red creature cards.
+    if (prevAll && c.peek() === "all" && COLOR_WORDS[c.peek(1) ?? ""]) c.i++;
     const restart = c.eat("a") || c.eat("an");
     const before = c.i;
     // An article closes the alternative before it: "an artifact or a card" is two noun phrases.
@@ -834,7 +842,8 @@ const CONTROLLERS: ReadonlyArray<readonly [string[], Control]> = [
   [["each", "player", "controls"], "any"], [["each", "player", "owns"], "any"],
   [["the", "target", "opponent", "controls"], "opp"], [["opponent", "controls"], "opp"],
   [["the", "opponent", "to", "your", "left", "controls"], "opp"], [["the", "opponent", "to", "your", "right", "controls"], "opp"],
-  [["the", "active", "player", "controls"], "any"], [["enchanted", "player", "controls"], "any"],
+  [["the", "active", "player", "controls"], "any"], [["that", "target", "player", "casts"], "any"],
+  [["controlled", "by", "the", "next", "player", "in", "the", "chosen", "direction"], "opp"], [["enchanted", "player", "controls"], "any"],
   // Two-Headed Giant's team (CR 810): in Commander, the team is you.
   [["your", "team", "controls"], "you"],
 ];
@@ -859,7 +868,11 @@ function zonePhrase(c: Cursor, r: Reading): boolean {
   // "from the top of your library": the origin is still the library.
   // "from outside the game", "from the command zone".
   if (from && c.eat("outside", "the", "game")) { r.fromZone = "outside"; return true; }
-  if (c.eat("the", "command", "zone")) { if (from) r.fromZone = "command"; else r.zone = "command"; return true; }
+  if (c.eat("the", "command", "zone")) {
+    // "from the command zone and from your graveyard": either.
+    if (from && c.eat("and", "from", "your", "graveyard")) { r.zoneAlternatives = ["command", "graveyard"]; r.zoneAlternativesFrom = true; return true; }
+    if (from) r.fromZone = "command"; else r.zone = "command"; return true;
+  }
   // "from the top of your library", "from the top five cards of your library".
   let top = from && (c.eat("the", "top", "of") || c.eat("the", "bottom", "of"));
   if (from && !top && c.peek() === "the" && c.peek(1) === "top" && isNumber(c.peek(2)) && c.peek(3) === "cards" && c.peek(4) === "of") { c.i += 5; top = true; }
@@ -914,6 +927,42 @@ function relatedObject(c: Cursor): boolean {
 }
 
 function post(c: Cursor, r: Reading): boolean | null {
+  // "an artifact creature until end of turn": what it becomes, for how long -- the action's duration.
+  // Only straight after one noun phrase: "target artifact creature, BLUE until end of turn" is a grant.
+  if (c.peek() === "until" && c.peek(1) === "end" && c.peek(2) === "of" && c.peek(3) === "turn" && c.i + 4 === c.t.length
+    && r.groups.length === 1 && (r.groups[0]!.types.length || r.groups[0]!.subtypes.length) && !c.t.slice(0, c.i).includes(",")) { c.i += 4; return true; }
+  // "target land, 4/4 Elemental creature": what it becomes.
+  if (c.peek() === "," && /^(?:\d+|x)\/(?:\d+|x)$/.test(c.peek(1) ?? "") && parse(c.t.slice(c.i + 1).join(" "))) { c.i = c.t.length; return true; }
+  // "target creature with the triggered ability from clause 2": an ability the sentence grants.
+  if (c.eat("with", "the", "triggered", "ability", "from") || c.eat("with", "the", "ability", "from")) { c.i = c.t.length; return true; }
+  // "a creature that attacks you or a planeswalker you control": the combat relation, as an event.
+  {
+    const save = c.i;
+    if (c.eat("that", "attacks")) {
+      const w = parse(c.t.slice(c.i).join(" "));
+      if (w && c.t[c.i] === "you") { r.combatWith = { role: "attacking", with: w }; c.i = c.t.length; return true; }
+    }
+    c.i = save;
+  }
+  // "a spell that shares a color or mana value with the exiled card": either.
+  {
+    const save = c.i;
+    if (c.eat("that", "shares", "a", "color", "or", "mana", "value", "with") && ["the", "that", "it"].includes(c.peek() ?? "") && c.t.length - c.i <= 3) {
+      c.i = c.t.length; r.sharesAlternatives = [{ what: "color", with: "ref" }, { what: "mana-value", with: "ref" }]; return true;
+    }
+    c.i = save;
+  }
+  // "with a target spell with mana value 2 or less, OR MANA VALUE 4 OR LESS IF THIS SPELL WAS KICKED":
+  // the kicked bound, the looser, is the union.
+  {
+    const save = c.i;
+    const last = r.stats.at(-1);
+    if (last && c.eat(",", "or")) {
+      const x = reading();
+      if (stat(c, x) && x.stats.length === 1 && x.stats[0]!.metric === last.metric && c.eat("if", "this", "spell", "was", "kicked") && c.done) { r.stats[r.stats.length - 1] = x.stats[0]!; return true; }
+    }
+    c.i = save;
+  }
   // "with a name originally printed in the Arabian Nights expansion".
   {
     const save = c.i;
@@ -1029,7 +1078,10 @@ function post(c: Cursor, r: Reading): boolean | null {
       : c.eat("blocking") ? "blocking" : (c.eat("that's", "attacking") || c.eat("attacking")) ? "attacking" : undefined;
     if (role) {
       let w: NonNullable<SubjectFilter["combatWith"]>["with"] | undefined;
-      if (c.eat("~") || (c.eat("this") && nominalWord(c, reading()) === true)) w = "self";
+      // "attacking you or a planeswalker you control": a list, read whole first.
+      const whole = c.peek() === "you" && c.peek(1) === "or" ? parse(c.t.slice(c.i).join(" ")) : null;
+      if (whole) { w = whole; c.i = c.t.length; }
+      else if (c.eat("~") || (c.eat("this") && nominalWord(c, reading()) === true)) w = "self";
       else if (c.eat("you")) w = "you";
       else if (c.eat("one", "of", "your", "opponents") || c.eat("an", "opponent")) w = { control: "opp" };
       else if (c.eat("it") || c.eat("them")) w = "ref";
@@ -1043,6 +1095,12 @@ function post(c: Cursor, r: Reading): boolean | null {
   if (c.eat("other", "than")) {
     if (c.eat("this") && (c.done || nominalWord(c, reading()) === true)) { r.other = true; return true; }
     const rest = c.t.slice(c.i);
+    // "other than enchanted creature": not the object the card names.
+    if ((rest[0] === "enchanted" || rest[0] === "equipped") && rest.length === 2) { r.otherThanRef = true; c.i = c.t.length; return true; }
+    // "other than your first spell each turn", "other than the first spell they cast each turn".
+    if (["your first spell each turn", "your first spell that turn", "the first spell they cast each turn"].includes(rest.join(" "))) {
+      if (!r.history.includes("not-first-spell-this-turn")) r.history.push("not-first-spell-this-turn"); c.i = c.t.length; return true;
+    }
     if (rest[0] === "enchanted" || rest[0] === "equipped" || rest.includes("chosen")) return null;
     const f = parse(rest.join(" "));
     if (!f) return null;
@@ -1059,6 +1117,10 @@ function post(c: Cursor, r: Reading): boolean | null {
   if (c.eat("you", "own", "but", "don't", "control")) { r.owner = "you"; r.control = "opp"; return true; }
   if (c.eat("you", "control", "but", "don't", "own")) { r.control = "you"; r.owner = "opp"; return true; }
   // NAMES: a relation, or a name it does not have.
+  // "all creatures with a name chosen for this enchantment".
+  if (c.eat("with", "a", "name", "chosen", "for", "this", "enchantment")) { r.nameRelation = "chosen"; return true; }
+  // "with the same power and/or same toughness as this creature": either.
+  if (c.eat("with", "the", "same", "power", "and/or", "same", "toughness", "as", "this", "creature")) { r.sharesAlternatives = [{ what: "power", with: "self" }, { what: "toughness", with: "self" }]; return true; }
   if (c.eat("with", "the", "chosen", "name") || c.eat("with", "a", "chosen", "name")) { r.nameRelation = "chosen"; return true; }
   // "with the chosen nonland card name", "with a chosen nonartifact, nonland card name", "with chosen
   // creature card name".
@@ -1099,7 +1161,9 @@ function post(c: Cursor, r: Reading): boolean | null {
   if (c.eat("with", "the", "same", "name", "as") || c.eat("that", "has", "the", "same", "name", "as") || c.eat("that", "have", "the", "same", "name", "as")) {
     // What follows is a reference ("this creature", "that spell", "the exiled card", "~") or a
     // filter phrase; either must end the phrase, or "... as this creature ARE GOADED" would parse.
-    const rest = c.t.slice(c.i);
+    // ", except for basic lands" after it binds the subject: left for the next post.
+    const cut = c.t.findIndex((w, k) => k >= c.i && w === "," && c.t[k + 1] === "except");
+    const rest = c.t.slice(c.i, cut < 0 ? c.t.length : cut);
     const ref = rest.length >= 1 && (rest[0] === "~" ? rest.length === 1
       : ["this", "that", "the"].includes(rest[0]!) && rest.length <= 3 && !rest.some((w) => RHS_VERBS.has(w))
       // "as one of the exiled cards"
@@ -1107,8 +1171,11 @@ function post(c: Cursor, r: Reading): boolean | null {
       // "as a card exiled with this enchantment", "as a card in that player's graveyard", "as a card
       // spliced onto that spell": a card the sentence names.
       || (rest[0] === "a" && rest[1] === "card" && (["exiled", "spliced"].includes(rest[2]!) || rest.includes("that") || rest.includes("player's")) && !rest.some((w) => RHS_VERBS.has(w))));
+    // "as that card FROM YOUR GRAVEYARD": the reference, then the subject's zone.
+    const z = rest.findIndex((w, k) => k >= 1 && k <= 3 && (w === "from" || w === "in"));
+    if (!ref && z > 0 && ["this", "that", "the"].includes(rest[0]!)) { c.i += z; r.nameRelation = "same"; return true; }
     if (!ref && !parse(rest.join(" "))) return null;
-    c.i = c.t.length; r.nameRelation = "same"; return true;
+    c.i = cut < 0 ? c.t.length : cut; r.nameRelation = "same"; return true;
   }
   for (const [ws, ctl] of CONTROLLERS) if (c.eat(...ws)) { r.control = ctl; return true; }
   if (c.eat("you", "own")) { r.owner = "you"; return true; }
@@ -1209,6 +1276,8 @@ function post(c: Cursor, r: Reading): boolean | null {
     }
     return null;
   }
+  // "one or more lands without being played": put onto the battlefield some other way.
+  if (c.eat("without", "being", "played")) { if (!r.history.includes("not-played")) r.history.push("not-played"); return true; }
   if (c.eat("without")) {
     // "without a +1/+1 counter on it": every one but those with that counter.
     {
@@ -1242,13 +1311,25 @@ function post(c: Cursor, r: Reading): boolean | null {
   // "each with mana value 2 or less": the "each" distributes the condition; read past it.
   if (c.peek() === "each" && c.peek(1) === "with") { c.i++; return true; }
   // EXCLUSIONS: "except for Krakens, Leviathans, Octopuses, and Serpents", "except for tokens you control".
+  // "cards in your hand except X cards you choose": which are left, a selection, not a class.
+  {
+    const save = c.i;
+    if (c.eat("except") && (isNumber(c.peek()) && (c.peek(1) === "card" || c.peek(1) === "cards"))) {
+      c.i += 2;
+      if ((c.eat("you", "choose") || c.eat("of", "their", "choice")) && c.done) return true;
+    }
+    c.i = save;
+  }
+  // ", except for basic lands" after a clause that ended at the comma.
+  if (c.peek() === "," && c.peek(1) === "except" && c.peek(2) === "for") c.i++;
   if (c.eat("except", "for")) {
     const items: string[][] = [[]];
     for (const w of c.t.slice(c.i)) {
       if (w === "," || w === "and" || w === "or") { if (items.at(-1)!.length) items.push([]); continue; }
       items.at(-1)!.push(w);
     }
-    const parsed = items.filter((x) => x.length).map((x) => parse(x.join(" ")));
+    // "except for Mageta": one word no class reads, a card's name.
+    const parsed = items.filter((x) => x.length).map((x) => parse(x.join(" ")) ?? (x.length === 1 && /^[a-z]+$/.test(x[0]!) && !SUBTYPES.has(x[0]!) && !TYPE_WORDS.has(x[0]!) ? { control: "any" as const, token: null, named: x[0]! } : null));
     if (parsed.length === 0 || parsed.some((x) => x === null)) return null;
     r.except = parsed.map((x) => {
       const { control, token, scope: _s, ...rest } = x!;
@@ -1276,6 +1357,8 @@ function post(c: Cursor, r: Reading): boolean | null {
         // "with equipped creature", "with the sacrificed creature", "with the top card of your library",
         // "with the chosen card": an object named elsewhere.
         else if (["that", "the", "enchanted", "equipped"].includes(c.peek() ?? "") && !c.t.slice(c.i).some((w) => RHS_VERBS.has(w))) { c.i = c.t.length; withWhom = "ref"; }
+        // "with each creature tapped this way", "with a card exiled with this creature".
+        else if (c.t.slice(c.i).join(" ").endsWith("this way") || (c.peek() === "a" && c.peek(1) === "card" && c.peek(2) === "exiled")) { c.i = c.t.length; withWhom = "ref"; }
         if (withWhom && c.done) { r.shares = { what, with: withWhom, ...(negated ? { negated: true as const } : {}) }; return true; }
         if (!withWhom) { const rest = parse(c.t.slice(c.i).join(" ")); if (rest) { c.i = c.t.length; r.shares = { what, with: rest, ...(negated ? { negated: true as const } : {}) }; return true; } }
       }
@@ -1298,7 +1381,8 @@ function post(c: Cursor, r: Reading): boolean | null {
         if ((by.length === 1 && by[0] === "~") || (by.length === 2 && by[0] === "this")) self = true;
         // "you controlled": past tense of the controller.
         // "enchanted creature", "equipped creature", "it": the object the card names.
-        else if (!(by.length <= 2 && ["enchanted", "equipped", "it", "that"].includes(by[0]!))
+        // "by Zurgo": the card by its short name, an object the sentence names.
+        else if (!(by.length <= 2 && ["enchanted", "equipped", "it", "that"].includes(by[0]!)) && !(by.length === 1 && /^[a-z]+$/.test(by[0]!) && !SUBTYPES.has(by[0]!))
           && !parse(by.join(" ").replace(/ you controlled$/, " you control"))) { c.i = save; return null; }
         c.i = c.t.length;
         const h = `dealt-${combat ? "combat-" : ""}damage-by-${self ? "self" : "ref"}`;
@@ -1315,6 +1399,71 @@ function post(c: Cursor, r: Reading): boolean | null {
     if (!(c.eat("that", "was") || c.eat("that", "were") || c.eat("that"))) { /* a bare participle */ }
     const h = HISTORIES.find(([ws]) => ws.every((x, j) => c.peek(j) === x) && c.peek(ws.length) === "this" && c.peek(ws.length + 1) === "turn");
     if (h) { c.i += h[0].length + 2; if (!r.history.includes(h[1])) r.history.push(h[1]); return true; }
+    c.i = save;
+  }
+  // A HISTORY a relative clause states. Each refused by the matcher, as every history is.
+  for (const [ws, h] of [
+    [["crewed", "by", "~"], "crewed-by-self"], [["crewed", "by", "this", "vehicle"], "crewed-by-self"],
+    [["that", "you", "controlled", "since", "the", "beginning", "of", "the", "turn"], "controlled-since-turn-start"],
+    [["that", "you", "cycled", "or", "discarded", "this", "turn"], "cycled-or-discarded"],
+    [["that", "convoked", "this", "spell"], "convoked-self"],
+    [["that", "wasn't", "put", "there", "this", "combat"], "not-put-into-graveyard-this-combat"],
+    [["that", "was", "discarded", "or", "put", "there", "from", "a", "library", "this", "turn"], "discarded-or-put-into-graveyard-from-library"],
+    [["that's", "the", "second", "spell", "cast", "this", "turn"], "second-spell-this-turn"],
+    [["using", "teamwork"], "cast-using-teamwork"],
+  ] as const) if (c.eat(...ws)) { if (!r.history.includes(h)) r.history.push(h); return true; }
+  // "creature spells from your graveyard using their sneak abilities": cast by that keyword.
+  {
+    const save = c.i;
+    if (c.eat("using", "their")) { const ks = keywordList(c); if (ks?.length === 1 && c.eat("abilities") && c.done) { const h = `cast-using-${ks[0]}`; if (!r.history.includes(h)) r.history.push(h); return true; } }
+    c.i = save;
+  }
+  // "a Room you fully unlock".
+  if (c.eat("you", "fully", "unlock")) { r.control = "you"; if (!r.history.includes("fully-unlocked")) r.history.push("fully-unlocked"); return true; }
+  // "a card you choose from target opponent's hand": which one, a selection.
+  if (c.peek() === "you" && c.peek(1) === "choose" && (c.i + 2 === c.t.length || c.peek(2) === "from")) { c.i += 2; return true; }
+  // "land creatures only".
+  if (c.peek() === "only" && c.i + 1 === c.t.length) { c.i++; return true; }
+  // "all Equipment from target creature": what it is unattached from, dropped as "attached to" is.
+  {
+    const save = c.i;
+    // Not an ability's source ("activated ability FROM an artifact source"): that is `abilityOf`.
+    if (!r.ability && c.eat("from") && ["target", "a", "an", "each"].includes(c.peek() ?? "") && relatedObject(c) && c.done) return true;
+    c.i = save;
+  }
+  // THE ACTION'S CONDITION, not the subject's: "a 1/1 blue Spirit creature token if it's the second
+  // time this ability has resolved this turn", "target creature if this spell was kicked".
+  if (c.eat("if", "it's", "the") || c.eat("if", "this", "is", "the")) {
+    if (["first", "second", "third"].includes(c.peek() ?? "") && c.peek(1) === "time") { c.i = c.t.length; return true; }
+    return null;
+  }
+  if (c.eat("if", "this", "spell", "was", "kicked")) return c.done || null;
+  // A SUPERLATIVE as a condition: "target creature if no other creature has greater power", "if it
+  // has the least power or is tied for least power among creatures on the battlefield".
+  if (c.eat("if", "no", "other", "creature", "has", "greater", "power")) { r.stats.push({ metric: "power", op: "gte", variable: true }); return c.done || null; }
+  if (c.eat("if", "it", "has", "the", "least", "power", "or", "is", "tied", "for", "least", "power", "among", "creatures", "on", "the", "battlefield")) { r.stats.push({ metric: "power", op: "lte", variable: true }); return true; }
+  // "that each have a different mana value X or less": the selection, then the stat.
+  {
+    const save = c.i;
+    if (c.eat("that", "each", "have", "a", "different") && stat(c, r)) return true;
+    c.i = save;
+  }
+  // "that has the same mana value as the discarded card".
+  {
+    const save = c.i;
+    if (c.eat("that", "has", "the", "same", "mana", "value", "as") && ["the", "that", "it"].includes(c.peek() ?? "") && c.t.length - c.i <= 3) { r.shares = { what: "mana-value", with: "ref" }; c.i = c.t.length; return true; }
+    c.i = save;
+  }
+  // "spells you cast that target enchanted creature / enchanted player". CEILING: the target is the
+  // ONE object the Aura enchants; held as an enchanted one, which `targets` refuses anyway.
+  {
+    const save = c.i;
+    if ((c.eat("that", "target", "enchanted") || c.eat("that", "targets", "enchanted")) && c.i + 1 === c.t.length) {
+      const w = c.t[c.i++]!;
+      if (w === "player") { r.targets = { status: ["enchanted"], player: true }; return true; }
+      const t = parse(`a ${w}`);
+      if (t && (t.type !== undefined || t.subtype !== undefined)) { const { control: _c, token: _t, ...x } = t; r.targets = { ...x, status: ["enchanted"] }; return true; }
+    }
     c.i = save;
   }
   // WHEN IT WAS CAST: "spells your opponents cast during your turn".
@@ -1464,8 +1613,13 @@ function post(c: Cursor, r: Reading): boolean | null {
     if (rest[0] === "your" || parse(rest.join(" ")) || rest.some((w) => /^(?:\d+|x)\/(?:\d+|x)$/.test(w))) { c.i = c.t.length; return true; }
     return null;
   }
+  // "... to the battlefield with a finality counter on it": the destination, then the rest.
+  if (c.eat("to", "the", "battlefield")) return true;
   if (c.peek() === "into" || c.peek() === "to") {
-    const rest = c.t.slice(c.i + 1);
+    let rest = c.t.slice(c.i + 1);
+    // "into a Frog with base power and toughness 3/3 until end of turn": the duration is the action's.
+    const u = rest.indexOf("until");
+    if (u > 0) rest = rest.slice(0, u);
     if (rest[0] === "its" || rest[0] === "their" || rest[0] === "your") { c.i = c.t.length; return true; }
     // "an Equipment you control to it", "to ~", "a Curse attached to you to one of your opponents".
     if ((rest.length === 1 && ["it", "them", "~"].includes(rest[0]!)) || (rest[0] === "one" && rest[1] === "of")) { c.i = c.t.length; return true; }
@@ -1483,6 +1637,7 @@ function post(c: Cursor, r: Reading): boolean | null {
   // "of the creature type of your choice" is the chosen type, chosen as it resolves.
   if (c.eat("of", "the", "creature", "type", "of", "your", "choice")) { r.chosenType = true; return true; }
   if (c.eat("of", "the", "chosen")) {
+    if (c.eat("color", "and", "type")) { r.chosenType = true; return true; }
     if (c.eat("type") || c.eat("color") || c.eat("colour") || c.eat("creature", "type")) { r.chosenType = true; return true; }
     return null;
   }
@@ -1593,7 +1748,11 @@ function post(c: Cursor, r: Reading): boolean | null {
           const carried = e.i > 0 && e.t[e.i - 1] === "and" && ["has", "loses", "isn't"].includes(e.peek() ?? "");
           if (!carried && !(e.eat("it") || e.eat("the", "token"))) return null;
           if (e.eat("isn't", "legendary") || e.eat("is", "not", "legendary")) exception.legendary = false;
-          else if (e.eat("has")) { const ks = keywordList(e); if (!ks) return null; exception.keywords.push(...ks); }
+          else if (e.eat("has")) {
+            const ks = keywordList(e); if (!ks) return null; exception.keywords.push(...ks);
+            // "except it has haste and the ability from clause 3": an ability the sentence states.
+            if (e.eat("and", "the", "ability", "from")) e.i = e.t.length;
+          }
           else if (e.eat("loses")) { const ks = keywordList(e); if (!ks) return null; exception.notKeywords.push(...ks); }
           // "except it enters with an additional +1/+1 counter on it".
           else if (e.eat("enters", "with")) { if (!e.eat("an", "additional")) e.eat("additional"); const x3 = reading(); if (!counterPhrase(e, x3) || !x3.counter) return null; exception.counter = x3.counter; }
@@ -1624,11 +1783,17 @@ function post(c: Cursor, r: Reading): boolean | null {
         r.keywords.push(...set.keywords);
         return true;
       };
+      // "a copy of the card Armadillo Cloak": a card by name.
+      if (c.eat("the", "card") && !c.done) { r.named = c.t.slice(c.i).join(" "); c.i = c.t.length; return applyException() || null; }
+      // "a copy of chosen artifact token or creature token": the chosen one's class.
+      c.eat("chosen");
       const self = c.eat("this");
       const x = reading();
       // A copy of an object named elsewhere ("it", "that creature", "the exiled card") has that
       // object's class, which this phrase does not say: the token is all that is known. CEILING: the
       // class comes from the reference (task 4).
+      // "a token that's a copy of it for each token you control ...": the count is the action's.
+      { const fe = c.t.findIndex((w, k) => k > c.i && w === "for" && c.t[k + 1] === "each"); if (fe > 0) c.t = c.t.slice(0, fe); }
       if (!self && (c.eat("it") || ((c.eat("that") || c.eat("the") || c.eat("enchanted") || c.eat("equipped") || c.eat("chosen")) && !c.done && (c.eat("exiled", "card") || c.eat("sacrificed", "creature") || nominalWord(c, reading()) === true)))) {
         if (!c.done) return null;
         return applyException() || null;
@@ -1656,6 +1821,8 @@ function post(c: Cursor, r: Reading): boolean | null {
     // A relative clause after the source ("... that target this creature") is the ABILITY's, which the
     // schema cannot say; and "enchanted creature" bare is a reference.
     if (rest.some((w) => w === "that" || w === "which") || rest[0] === "enchanted" || rest[0] === "equipped") return null;
+    // "of the top card of your library": a card, where it is.
+    if (rest.join(" ") === "the top card of your library") { c.i = c.t.length; r.abilityOf = { zone: "library" }; return true; }
     const src = rest.at(-1) === "source" ? rest.slice(0, -1) : rest;
     const f = parse((src.length && !["a", "an", "target", "another"].includes(src[0]!) ? ["a", ...src] : src).join(" ").replace(/^(a|an) (a|an) /, "$1 "));
     if (!f) return null;
@@ -1744,8 +1911,8 @@ function lowerTypes(found: string[], notTypes: string[]) {
  *  blocking creature". The subject has one field for each, so each alternative is read on its own
  *  into an `anyOf` branch, and the rest of the phrase -- quantifier, controller, what follows -- is
  *  read once with the alternatives' adjectives taken out. An alternative with no noun takes the next
- *  one's ("tapped" + "creature"); one with two adjectives and no noun is refused, because the first
- *  may bind the whole list ("a goaded attacking or blocking creature"). */
+ *  one's ("tapped" + "creature"). In a first alternative with two adjectives and no noun, the first
+ *  binds the whole list ("a goaded attacking or blocking creature"). */
 function perAlternative(r: Reading): SubjectFilter | null {
   const toks = r.toks;
   if (!toks || r.restarted || r.ability || r.groups.some((g) => g.from === undefined || g.to === undefined)) return null;
@@ -1758,13 +1925,17 @@ function perAlternative(r: Reading): SubjectFilter | null {
     if (nounOf(g).length === 0) {
       const next = r.groups[i + 1];
       const head = r.groups.slice(i + 1).map(nounOf).find((n) => n.length > 0);
-      if (!next || !head || words.length > 1) return null;
+      // Two adjectives before the first "or": the first binds the whole list ("a GOADED attacking or
+      // blocking creature" is goaded either way), and stays in the outer reading.
+      let shared = 0;
+      if (words.length > 1) { if (i !== 0 || words.length > 2) return null; shared = 1; }
+      if (!next || !head) return null;
       // Two states joined by "and" are both: "a tapped AND attacking token" is one token, tapped and
       // attacking. ("snow and Zombie creatures" joins a state to a class: two alternatives.)
       if (toks.slice(g.to, next.from).includes("and") && next.adjAt?.includes(next.from!)) return null;
       // Only the head noun: "snow and Zombie creatures" is snow creatures or Zombie creatures.
-      words = [...words, head.at(-1)!];
-      for (let k = g.from!; k < next.from!; k++) drop.add(k);
+      words = [...words.slice(shared), head.at(-1)!];
+      for (let k = g.from! + shared; k < next.from!; k++) drop.add(k);
     } else for (const k of g.adjAt ?? []) drop.add(k);
     const f = parse(words.join(" "));
     if (!f) return null;
@@ -1953,6 +2124,7 @@ function lower(r: Reading): SubjectFilter | null {
   if (r.combatWith) out.combatWith = r.combatWith;
   if (r.condition) out.condition = r.condition;
   if (r.printedIn) out.printedIn = r.printedIn;
+  if (r.otherThanRef) out.otherThanRef = true;
   // Alternatives the outer subject cannot hold, each as `anyOf` (and only one such list per subject).
   const alts: Partial<SubjectFilter>[][] = [];
   if (r.ownOrControl) { if (out.control !== "any") return null; alts.push([{ owner: "you" }, { control: "you" }]); }
@@ -1963,6 +2135,10 @@ function lower(r: Reading): SubjectFilter | null {
   if (r.statusAlternatives) {
     if (out.anyOf) return null;
     out.anyOf = r.statusAlternatives.map((x) => ({ status: [x] }));
+  }
+  if (r.sharesAlternatives) {
+    if (out.anyOf) return null;
+    out.anyOf = r.sharesAlternatives.map((x) => ({ shares: x }));
   }
   if (r.historic) out.historic = true;
   if (r.outlaw) out.outlaw = true;
@@ -1987,6 +2163,11 @@ export function parse(text: string): SubjectFilter | null {
     const m = /^a number of (.+?) equal to\b/i.exec(text.trim());
     if (m) return parse(m[1]!);
   }
+  // "a land's ability": an ability, of an object of that class.
+  {
+    const m = /^an? (\w+)'s ability$/i.exec(text.trim());
+    if (m) { const of = parse(`a ${m[1]}`); if (of && (of.type !== undefined || of.subtype !== undefined)) { const { token: _t, scope: _s, ...o } = of; return { control: "any", token: null, abilityOf: o }; } }
+  }
   // A DESTINATION'S OBJECT with its preposition ("on target creature you control", "to legendary
   // creature"): the noun phrase after it is the filter.
   {
@@ -1998,17 +2179,29 @@ export function parse(text: string): SubjectFilter | null {
   // (CR 111.4: the token's own name is never a card to look for).
   {
     const m = /^((?:an?|two|three|X|\d+) (?:tapped )?)((?:[A-Z][\w'-]* )+)(tokens?\b.*)$/.exec(text.trim());
-    if (m && m[2]!.trim().split(" ").every((w) => {
-      const l = w.toLowerCase();
-      return !SUBTYPES.has(l) && !SUBTYPES.has(l.replace(/s$/, "")) && !TYPE_WORDS.has(l) && !COLOR_WORDS[l] && !ROLE_NAMES.some((r) => r.includes(l));
-    })) text = m[1]! + m[3]!;
+    const plain = (w: string) => { const l = w.toLowerCase(); return !SUBTYPES.has(l) && !SUBTYPES.has(l.replace(/s$/, "")) && !TYPE_WORDS.has(l) && !COLOR_WORDS[l] && !ROLE_NAMES.some((r) => r.includes(l)); };
+    if (m) {
+      // The name is the leading words that are no class: "a Spellgorger WEIRD token" keeps Weird.
+      const ws = m[2]!.trim().split(" ");
+      const n = ws.findIndex((w) => !plain(w));
+      const name = n < 0 ? ws : ws.slice(0, n);
+      if (name.length && ws.slice(name.length).every((w) => !plain(w))) text = m[1]! + ws.slice(name.length).map((w) => w + " ").join("") + m[3]!;
+    }
   }
   // A TOKEN'S QUOTED ABILITY ("a 1/1 Rat creature token with \"This token can't block.\"") is
   // rules text the token has, not a class it belongs to. Read past, after "with" or "and".
   // CEILING: the ability is not kept; a demand on a granted ability would need it.
   // ", \"Equipped creature gets +5/+5 ...,\" and equip {0}": a quoted ability inside a keyword list too.
   // "and that ability" / "and this ability" names one the sentence quoted.
-  if (/\btokens?\b/i.test(text)) text = text.replace(/ with "[^"]*" and /g, " with ").replace(/,? and "[^"]*"/g, "").replace(/ (?:and|with) "[^"]*"/g, "").replace(/, "[^"]*"/g, "").replace(/ and (?:that|this) ability$/, "");
+  if (/\btokens?\b/i.test(text)) text = text.replace(/ with "[^"]*" and /g, " with ").replace(/,? and "[^"]*"/g, "").replace(/ (?:and|with) "[^"]*"/g, "").replace(/, "[^"]*"/g, "").replace(/,? and (?:that|this) ability$/, "").replace(/ with (?:that|this) ability$/, "");
+  // A GRANTED ABILITY after the recipient ("Planeswalkers you control, \"[-4]: ...\"", "... and the
+  // ability: Whenever this token enters, ..."), and a copy's exception that only grants one: the
+  // ability is the action's, as above.
+  text = text.replace(/, "[^"]*"\.?$/, "").replace(/,? and the ability: .*$/, "").replace(/, except it has "[^"]*"\.?$/, "");
+  // A TOKEN'S UNQUOTED ABILITY: "Eldrazi Spawn creature tokens with Sacrifice this token: Add {C}".
+  if (/\btokens?\b/i.test(text)) text = text.replace(/ with [A-Z][^:"]*: .*$/, "");
+  // "which have the same name": "which" is "that".
+  text = text.replace(/\bwhich\b/g, "that");
   const toks = lex(text);
   if (!toks || toks.length === 0) return null;
   // "Enchant creature you control": the keyword line names the class the Aura can enchant
@@ -2056,6 +2249,13 @@ function grantRecipient(toks: string[]): SubjectFilter | null {
     let rest = rest0;
     const w = rest.findIndex((x, k) => x === "," && rest[k + 1] === "where");
     if (w >= 0) rest = rest.slice(0, w);
+    // "+1/+0 for each time counter on this artifact", "shroud for as long as this creature remains
+    // tapped", "+2/+2 until end of turn if it is a Snake": a count, a duration, or a condition on it.
+    const tail = rest.findIndex((x, k) => (x === "for" && (rest[k + 1] === "each" || rest[k + 1] === "as")) || (x === "if" && rest[k + 1] === "it" || x === "if" && rest[k + 1] === "it's"));
+    if (tail > 0) rest = rest.slice(0, tail);
+    if (rest.at(-1) === ",") rest = rest.slice(0, -1);
+    // "the ability from this effect": an ability the sentence grants.
+    if (rest[0] === "the" && rest[1] === "ability" && rest[2] === "from") return true;
     for (const tail of [["until", "end", "of", "turn"], ["until", "your", "next", "turn"]]) {
       if (rest.length > tail.length && tail.every((x, j) => rest[rest.length - tail.length + j] === x)) rest = rest.slice(0, -tail.length);
     }
@@ -2071,7 +2271,7 @@ function grantRecipient(toks: string[]): SubjectFilter | null {
     const head = sep ? toks.slice(0, k - 1) : toks.slice(0, k);
     if (head.length === 0 || !isGrant(toks.slice(k))) continue;
     const f = parse(head.join(" "));
-    if (f && (f.type !== undefined || f.subtype !== undefined || f.anyOf !== undefined)) return f;
+    if (f && (f.type !== undefined || f.subtype !== undefined || f.anyOf !== undefined || f.token === true)) return f;
   }
   return null;
 }
@@ -2111,16 +2311,28 @@ function nounPhraseList(toks: string[]): SubjectFilter | null {
     && !["control", "controls", "own", "owns", "cast", "casts", "don't"].includes(toks[k + 1] ?? "")
     && (w !== "you" || k === 0 || [",", "or", "and", "and/or"].includes(toks[k - 1]!)));
   for (let k = 1; k < stop - 1; k++) {
-    const joiner = toks[k] === "and" || toks[k] === "or" || toks[k] === "and/or";
-    const comma = toks[k] === "," && !["and", "or", "and/or"].includes(toks[k + 1]!) && (withPlayer || NP_START.has(toks[k + 1]!));
+    // "tokens plus a Mutagen token": one more, joined like "and".
+    const joiner = toks[k] === "and" || toks[k] === "or" || toks[k] === "and/or" || toks[k] === "plus";
+    // A comma list that ends ", or X" splits at every comma: "target Spirit, creature with disturb, or
+    // enchantment" (only reached when the one-noun-phrase reading failed).
+    // The first item is one bare noun, so no leading adjective is left behind ("target ATTACKING
+    // Cleric, Rogue, ..." shares "attacking" with every item).
+    const q = toks.findIndex((w) => !QUANTIFIER_WORDS.has(w));
+    const commaList = toks[q + 1] === "," && toks.slice(0, stop).some((w, j) => w === "," && (toks[j + 1] === "or" || toks[j + 1] === "and"));
+    const comma = toks[k] === "," && !["and", "or", "and/or"].includes(toks[k + 1]!) && (withPlayer || NP_START.has(toks[k + 1]!) || commaList);
     // A colour after "or" starts a new noun phrase once the one before has its noun: "a Swamp or black
     // permanent", "target black creature or black planeswalker".
     const colourStart = joiner && /^(?:non-?)?(?:white|blue|black|red|green|colorless)$/.test(toks[k + 1]!) && k > 0 && !/^(?:non-?)?(?:white|blue|black|red|green)$/.test(toks[k - 1]!);
     // A joiner after a finished noun phrase ("creatures you CONTROL and/or creature cards in your graveyard",
     // "target creature on the BATTLEFIELD or creature card in a graveyard") starts the next one.
-    const closed = joiner && ["control", "controls", "own", "owns", "battlefield"].includes(toks[k - 1]!)
-      && !["control", "controls", "own", "owns"].includes(toks[k + 1]!);
-    if (!comma && (!joiner || !(NP_START.has(toks[k + 1]!) || withPlayer || colourStart || closed))) continue;
+    // ...but "from your hand OR GRAVEYARD" is one zone list.
+    const closed = joiner && ["control", "controls", "own", "owns", "battlefield", "graveyard", "hand", "library", "exile"].includes(toks[k - 1]!)
+      && !["control", "controls", "own", "owns", "your", "their", "the", "from"].includes(toks[k + 1]!) && !ZONES.has(toks[k + 1]!);
+    // "... or its controller": the player who controls the item before.
+    const itsController = joiner && toks[k + 1] === "its" && toks[k + 2] === "controller";
+    // "two lands and THIS ARTIFACT": the card itself as the last item.
+    const thisItem = joiner && toks[k + 1] === "this" && k + 3 === toks.length;
+    if (!comma && (!joiner || !(NP_START.has(toks[k + 1]!) || withPlayer || colourStart || closed || itsController || thisItem || (commaList && toks[k - 1] === ",")))) continue;
     const end = toks[k - 1] === "," ? k - 1 : k;
     parts.push(toks.slice(from, end));
     from = k + 1;
@@ -2130,12 +2342,21 @@ function nounPhraseList(toks: string[]): SubjectFilter | null {
   // A bare item takes the first item's quantifier: "target player or planeswalker" is a target too.
   const lead: string[] = [];
   for (const w of parts[0]!) { if (QUANTIFIER_WORDS.has(w)) lead.push(w); else break; }
-  const items = parts.map((p, i) => (i > 0 && !QUANTIFIER_WORDS.has(p[0]!) && p[0] !== "you" ? [...lead, ...p] : p));
-  const parsed = items.map((p) => {
+  const items = parts.map((p, i) => (i > 0 && !QUANTIFIER_WORDS.has(p[0]!) && p[0] !== "you" && p[0] !== "this" ? [...lead, ...p] : p));
+  const parsed = items.map((p, i) => {
+    // "up to one target creature or ITS CONTROLLER": the player who controls the other item.
+    if (p.join(" ") === "its controller" || p.join(" ") === "target its controller" || p.join(" ") === "up to one target its controller") return { control: "any" as const, token: null, player: true as const };
+    // "two lands and THIS ARTIFACT": the card itself, of its type. Never FIRST: "this creature or
+    // another Ally you control" is the self-or-class twin derive builds (#295, task 4).
+    if (p[0] === "this" && p.length === 2 && i > 0) { const t = parse(`a ${p[1]}`); return t && (t.type !== undefined || t.subtype !== undefined) ? { ...t, self: true } : null; }
     const f = parse(p.join(" "));
     // A player item is a branch of its own (`player`), never a wildcard.
     return f && isPlayerPhrase(p) ? { ...f, player: true as const } : f;
   });
+  // "you and any target": a player and any target -- the union is any target, or you.
+  if (items.length === 2 && parsed[0]?.player && parsed[0].control === "you" && items[1]!.join(" ") === "any target") {
+    return { control: "any", token: null, anyOf: [{ player: true, control: "you" }, { scope: "target" }] };
+  }
   // An item must name SOMETHING beyond the quantifier ("a white card", "a card with mana value 4 or
   // greater", "a card from your graveyard"); "another card" alone adds nothing and is still an item.
   // Each item needs its own noun, too: "all BLACK and all red creature cards" is one noun shared, not
@@ -2143,7 +2364,11 @@ function nounPhraseList(toks: string[]): SubjectFilter | null {
   const NOUNS = /^(?:cards?|tokens?|spells?|permanents?|abilit(?:y|ies)|players?|opponents?|you|targets?)$/;
   if (parsed.some((f, i) => !f || (Object.keys(f).every((k) => k === "control" || k === "token" || k === "scope") && f.control === "any" && f.token === null)
     || (f.type === undefined && f.subtype === undefined && f.anyOf === undefined && !items[i]!.some((w) => NOUNS.test(w))))) return null;
-  if (parsed.every((f) => f!.player === true)) return null;
+  // Only players ("you and target opponent"): each its own player branch.
+  if (parsed.every((f) => f!.player === true)) {
+    const bs: Partial<SubjectFilter>[] = parsed.map((f) => { const { control, token: _t, scope: _s, player: _p, ...rest } = f!; return { player: true as const, ...(control !== "any" ? { control } : {}), ...rest } as Partial<SubjectFilter>; });
+    return { control: "any", token: null, anyOf: bs };
+  }
   const fs = parsed as SubjectFilter[];
   // A POST-MODIFIER AFTER THE LAST ITEM binds them all ("Black spells and green spells YOU CAST",
   // "artifact spells and colorless spells FROM THE TOP OF YOUR LIBRARY") when the items before it have

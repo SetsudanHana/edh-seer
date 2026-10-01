@@ -358,7 +358,7 @@ export interface SubjectFilter {
    *  creature", "a creature that doesn't share a color with ...". `with` is "self", "ref" (an object
    *  named elsewhere in the sentence) or a filter. CEILING: `eventMatches` refuses a consumer carrying
    *  it. Set by the filter grammar (#896). */
-  shares?: { what: "creature-type" | "color" | "card-type" | "name" | "mana-value" | "type" | "controller"; with: "self" | "ref" | Partial<SubjectFilter>; negated?: true };
+  shares?: { what: "creature-type" | "color" | "card-type" | "name" | "mana-value" | "type" | "controller" | "power" | "toughness"; with: "self" | "ref" | Partial<SubjectFilter>; negated?: true };
   /** WHAT HAPPENED TO IT THIS TURN: "a creature that was dealt damage this turn", "all creatures that
    *  attacked this turn", "a creature card put into your graveyard from the battlefield this turn".
    *  Closed vocabulary. CEILING: `eventMatches` refuses a consumer carrying it. Set by the filter
@@ -398,6 +398,10 @@ export interface SubjectFilter {
    *  Nights expansion", lowercased. CEILING: no producer states it; refused by the matcher. Set by the
    *  filter grammar (#896). */
   printedIn?: string;
+  /** NOT THE OBJECT THE CARD NAMES: "target creature other than enchanted creature". CEILING: the
+   *  matcher abstains (the one object excluded is not known here), as it does for a variable rhs.
+   *  Set by the filter grammar (#896). */
+  otherThanRef?: true;
   /** Which phase or step an `extra-phase` effect grants, over a closed CR vocabulary: `untap`,
    *  `upkeep`, `draw`, `main`, `combat`, `beginning`, `end`. Same shape as `counter` above, and for
    *  the same reason: a coarse `extra-phase` conflated units the game itself keeps apart -- an

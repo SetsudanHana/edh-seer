@@ -147,9 +147,8 @@ test("an adjective in only some alternatives is that alternative's own branch", 
   expect(parse("other snow and Zombie creatures you control")).toMatchObject({ type: "creature", other: true, anyOf: [{ snow: true }, { subtype: "zombie" }] });
   expect(parse("a Swamp, Mountain, black permanent, or red permanent")!.anyOf).toEqual(
     [{ subtype: "swamp" }, { subtype: "mountain" }, { type: "permanent", colors: ["B"] }, { type: "permanent", colors: ["R"] }]);
-  // Two states joined by "and" are both, and two adjectives before "or" may share the first: refused.
-  expect(parse("a tapped and attacking token that's a copy of it")).toBeNull();
-  expect(parse("a goaded attacking or blocking creature")).toBeNull();
+  // Two states joined by "and" are both: one token, tapped and attacking.
+  expect(parse("a tapped and attacking token that's a copy of it")).toEqual({ control: "any", token: true, tapped: true, combat: "attacking" });
   // "attacking, blocking, or tapped" is a list; "nonartifact, nonblack" is still both.
   expect(parse("target nonartifact, nonblack creature")).toMatchObject({ type: "creature", notColors: ["B"] });
   // A negated colour that starts a new noun phrase is that phrase's own: two branches.
@@ -285,8 +284,6 @@ test("lists whose items each carry their own colour, and a post-modifier after t
  *  the schema cannot hold (dropping it would WIDEN the claim), a reference, or not a filter at all. */
 test("refusals", () => {
   for (const p of [
-    // A zone that belongs to one alternative.
-    "target spell, nonland permanent, or card in a graveyard",
     // References (task 4) and non-filters (tasks 5, 6).
     "this creature", "that card", "Flying", "{C}", "chapter II",
   ]) expect(parse(p), p).toBeNull();
@@ -377,8 +374,10 @@ test("list items with their own zones, totals, printings, and smaller forms", ()
   expect(parse("an artifact or a card in your hand")!.anyOf).toEqual([{ control: "any", type: "artifact" }, { control: "you", zone: "hand" }]);
   // ...but one noun said twice shares it.
   expect(parse("artifact spells and colorless spells from the top of your library")).toMatchObject({ fromZone: "library" });
-  // An item needs its own noun: "all black and all red creature cards" is not two items.
-  expect(parse("all black and all red creature cards from their graveyard")).toBeNull();
+  // "all black and all red creature cards": one noun, two colours -- not two items.
+  expect(parse("all black and all red creature cards from their graveyard")).toMatchObject({ type: "creature", colors: ["B", "R"], fromZone: "graveyard" });
+  // A zone binds the item it follows.
+  expect(parse("target spell, nonland permanent, or card in a graveyard")!.anyOf).toHaveLength(3);
   expect(parse("creatures with total power 12 or greater")!.stats).toEqual([{ metric: "power", op: "gte", value: 12, total: true }]);
   expect(parse("each nontoken permanent with a name originally printed in the Antiquities expansion")).toMatchObject({ printedIn: "antiquities", token: false });
   expect(parse("all cards from all opponents' hands and graveyards")).toMatchObject({ control: "opp", anyOf: [{ fromZone: "hand" }, { fromZone: "graveyard" }] });
@@ -389,5 +388,37 @@ test("list items with their own zones, totals, printings, and smaller forms", ()
   expect(parse("target spell that wasn't cast from its owner's hand")).toMatchObject({ notFromZone: "hand" });
   expect(parse("a creature paired with it")).toMatchObject({ type: "creature", status: ["paired"] });
   expect(parse("Aura spells with enchant creature")).toMatchObject({ subtype: "aura", keyword: ["enchant"] });
+});
+
+test("the last single-card forms: grants with tails, selections, conditions of the action", () => {
+  expect(parse("tokens you control, indestructible until your next turn")).toMatchObject({ control: "you", token: true });
+  expect(parse("target creature +2/+2 until end of turn if it is a Snake")).toEqual({ control: "any", token: null, type: "creature", scope: "target" });
+  expect(parse("target land, 4/4 Elemental creature")).toMatchObject({ type: "land", scope: "target" });
+  expect(parse("a Spellgorger Weird token")).toEqual({ control: "any", token: true, subtype: "weird" });
+  expect(parse("a tapped and attacking token that's a copy of it")).toMatchObject({ tapped: true, combat: "attacking" });
+  // Two adjectives before the first "or": the first binds the whole list.
+  expect(parse("a goaded attacking or blocking creature")).toMatchObject({ status: ["goaded"], anyOf: [{ combat: "attacking" }, { combat: "blocking" }] });
+  expect(parse("target creature you control other than enchanted creature")).toMatchObject({ control: "you", otherThanRef: true });
+  expect(parse("a spell other than your first spell each turn")).toMatchObject({ history: ["not-first-spell-this-turn"] });
+  expect(parse("cards in your hand except X cards you choose")).toEqual({ control: "you", token: null, zone: "hand" });
+  expect(parse("each permanent with the same name as another permanent, except for basic lands")).toMatchObject({ nameRelation: "same", except: [{ type: "land", basic: true }] });
+  expect(parse("all commanders you own from the command zone and from your graveyard")).toMatchObject({ owner: "you", anyOf: [{ fromZone: "command" }, { fromZone: "graveyard" }] });
+  // The kicked bound, the looser, is the union.
+  expect(parse("target spell with mana value 2 or less, or mana value 4 or less if this spell was kicked")!.stats).toEqual([{ metric: "mana-value", op: "lte", value: 4 }]);
+  expect(parse("target creature if no other creature has greater power")!.stats).toEqual([{ metric: "power", op: "gte", variable: true }]);
+  expect(parse("a spell that shares a color or mana value with the exiled card")!.anyOf).toEqual([{ shares: { what: "color", with: "ref" } }, { shares: { what: "mana-value", with: "ref" } }]);
+  expect(parse("target Spirit, creature with disturb, or enchantment")!.anyOf).toEqual([{ subtype: "spirit" }, { type: "creature", keyword: ["disturb"] }, { type: "enchantment" }]);
+  expect(parse("up to one target creature or its controller")!.anyOf).toEqual([{ type: "creature", scope: "target" }, { player: true }]);
+  expect(parse("you and target opponent")!.anyOf).toEqual([{ player: true, control: "you" }, { player: true, control: "opp" }]);
+  expect(parse("all creatures except for Mageta")).toMatchObject({ except: [{ named: "mageta" }] });
+  expect(parse("Spells you cast that target enchanted player")).toMatchObject({ control: "you", targets: { player: true, status: ["enchanted"] } });
+  // A comma list whose first item has a leading adjective keeps it for every item.
+  expect(parse("target attacking Cleric, Rogue, Warrior, or Wizard; protection from creatures until end of turn")).toMatchObject({ combat: "attacking", subtype: ["cleric", "rogue", "warrior", "wizard"] });
+});
+
+test("the card itself is an item only after another: 'this creature or another Ally' stays derive's twin (#295)", () => {
+  expect(parse("two lands and this artifact")!.anyOf).toEqual([{ type: "land", scope: "all" }, { type: "artifact", self: true }]);
+  expect(parse("this creature or another Ally you control")).toBeNull();
+  expect(parse("this creature and another target creature")).toBeNull();
 });
 
