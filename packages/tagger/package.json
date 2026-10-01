@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./schema": "./src/schema.ts",
     "./subject": "./src/derive/subject.ts",
+    "./self-reference": "./src/derive/self-reference.ts",
     "./grammar": "./src/grammar/filter.ts",
     "./subtypes": "./src/derive/subtypes.ts",
     "./emblem": "./src/emblem.ts",

@@ -1,31 +1,31 @@
 {"preamble":"When this creature enters","condition":null,"event":"enters","subject":"this creature","control":"you","cards":2465}
-{"preamble":"At the beginning of your upkeep","condition":null,"event":"upkeep","subject":"you","control":"you","cards":648}
+{"preamble":"At the beginning of your upkeep","condition":null,"event":"upkeep","subject":"you","control":"you","cards":647}
 {"preamble":"Whenever this creature attacks","condition":null,"event":"attacks","subject":"this creature","control":"you","cards":553}
 {"preamble":"When this creature dies","condition":null,"event":"dies","subject":"this creature","control":"you","cards":499}
-{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"~","control":"you","cards":314}
+{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"~","control":"you","cards":321}
 {"preamble":"Whenever this creature deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"this creature","control":"you","cards":290}
-{"preamble":"Whenever ~ attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":248}
+{"preamble":"Whenever ~ attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":260}
 {"preamble":"When this enchantment enters","condition":null,"event":"enters","subject":"this enchantment","control":"you","cards":228}
 {"preamble":"At the beginning of your end step","condition":null,"event":"end-step","subject":"you","control":"you","cards":221}
+{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"this","control":"you","cards":186}
 {"preamble":"Whenever a land you control enters","condition":null,"event":"enters","subject":"a land you control","control":"you","cards":177}
-{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"this","control":"you","cards":172}
 {"preamble":"At the beginning of combat on your turn","condition":null,"event":"begin-combat","subject":"you","control":"you","cards":164}
-{"preamble":"Whenever you cast a noncreature spell","condition":null,"event":"cast","subject":"a noncreature spell","control":"you","cards":128}
-{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"~","control":"you","cards":115}
+{"preamble":"Whenever you cast a noncreature spell","condition":null,"event":"cast","subject":"a noncreature spell","control":"you","cards":127}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"~","control":"you","cards":116}
 {"preamble":"When this Aura enters","condition":null,"event":"enters","subject":"this","control":"you","cards":103}
 {"preamble":"Whenever you cast an instant or sorcery spell","condition":null,"event":"cast","subject":"an instant or sorcery spell","control":"you","cards":101}
 {"preamble":"When this Aura enters","condition":null,"event":"enters","subject":"this Aura","control":"you","cards":91}
 {"preamble":"When this creature is turned face up","condition":null,"event":"turned-face-up","subject":"this creature","control":"you","cards":88}
 {"preamble":"Whenever you attack","condition":null,"event":"attacks","subject":"you","control":"you","cards":86}
-{"preamble":"Whenever you gain life","condition":null,"event":"life-gained","subject":"you","control":"you","cards":84}
 {"preamble":"When this creature leaves the battlefield","condition":null,"event":"leaves","subject":"this creature","control":"you","cards":83}
+{"preamble":"Whenever you gain life","condition":null,"event":"life-gained","subject":"you","control":"you","cards":83}
 {"preamble":"Whenever another creature you control enters","condition":null,"event":"enters","subject":"another creature you control","control":"you","cards":77}
 {"preamble":"When this artifact enters","condition":null,"event":"enters","subject":"this artifact","control":"you","cards":75}
 {"preamble":"When this land enters","condition":null,"event":"enters","subject":"this land","control":"you","cards":74}
 {"preamble":"When you cast this spell","condition":null,"event":"cast","subject":"this spell","control":"you","cards":73}
 {"preamble":"When this Equipment enters","condition":null,"event":"enters","subject":"this","control":"you","cards":69}
 {"preamble":"At the beginning of combat on your turn","condition":null,"event":"begin-combat","subject":"your turn","control":"you","cards":68}
-{"preamble":"Whenever ~ enters or attacks","condition":null,"event":"enters","subject":"~","control":"you","cards":63}
+{"preamble":"Whenever ~ enters or attacks","condition":null,"event":"enters","subject":"~","control":"you","cards":65}
 {"preamble":"When this artifact enters","condition":null,"event":"enters","subject":"this","control":"you","cards":61}
 {"preamble":"Whenever this creature enters or attacks","condition":null,"event":"enters","subject":"this creature","control":"you","cards":58}
 {"preamble":"When ~ dies","condition":null,"event":"dies","subject":"~","control":"you","cards":56}
@@ -60,9 +60,9 @@
 {"preamble":"Whenever you cast or copy an instant or sorcery spell","condition":null,"event":"cast","subject":"an instant or sorcery spell","control":"you","cards":30}
 {"preamble":"At the beginning of the end step","condition":null,"event":"end-step","subject":"you","control":"you","cards":29}
 {"preamble":"Whenever a creature you control dies","condition":null,"event":"dies","subject":"a creature you control","control":"you","cards":29}
-{"preamble":"Whenever another creature dies","condition":null,"event":"dies","subject":"another creature","control":"any","cards":28}
 {"preamble":"When this creature enters","condition":null,"event":"enters","subject":"this","control":"you","cards":27}
 {"preamble":"Whenever an artifact you control enters","condition":null,"event":"enters","subject":"an artifact you control","control":"you","cards":27}
+{"preamble":"Whenever another creature dies","condition":null,"event":"dies","subject":"another creature","control":"any","cards":27}
 {"preamble":"Whenever you cast your second spell each turn","condition":null,"event":"cast","subject":"your second spell","control":"you","cards":26}
 {"preamble":"When this enchantment leaves the battlefield","condition":null,"event":"leaves","subject":"this enchantment","control":"you","cards":25}
 {"preamble":"Whenever a creature dies","condition":null,"event":"dies","subject":"a creature","control":"any","cards":25}
@@ -103,6 +103,7 @@
 {"preamble":"Whenever this creature deals damage","condition":null,"event":"damage-dealt","subject":"this creature","control":"you","cards":17}
 {"preamble":"Whenever you cast a multicolored spell","condition":null,"event":"cast","subject":"a multicolored spell","control":"you","cards":17}
 {"preamble":"Whenever you commit a crime","condition":null,"event":"crime","subject":"you","control":"you","cards":17}
+{"preamble":"Whenever ~ attacks","condition":null,"event":"attacks","subject":"this","control":"you","cards":17}
 {"preamble":"At the beginning of each upkeep","condition":null,"event":"upkeep","subject":"you","control":"you","cards":16}
 {"preamble":"Whenever a nontoken creature you control dies","condition":null,"event":"dies","subject":"a nontoken creature you control","control":"you","cards":16}
 {"preamble":"Whenever one or more cards leave your graveyard","condition":null,"event":"leaves","subject":"one or more cards","control":"you","cards":16}
@@ -111,7 +112,6 @@
 {"preamble":"Whenever an enchantment you control enters and whenever you fully unlock a Room","condition":null,"event":"enters","subject":"an enchantment you control","control":"you","cards":15}
 {"preamble":"Whenever this creature or another enchantment you control enters","condition":null,"event":"enters","subject":"this creature or another enchantment you control","control":"you","cards":15}
 {"preamble":"Whenever you cast a spell from anywhere other than your hand","condition":null,"event":"cast","subject":"a spell from anywhere other than your hand","control":"you","cards":15}
-{"preamble":"Whenever ~ attacks","condition":null,"event":"attacks","subject":"this","control":"you","cards":15}
 {"preamble":"At the beginning of each opponent's upkeep","condition":null,"event":"upkeep","subject":"each opponent","control":"opponent","cards":14}
 {"preamble":"When enchanted creature dies","condition":null,"event":"dies","subject":"enchanted creature","control":"any","cards":14}
 {"preamble":"Whenever a creature you control attacks","condition":null,"event":"attacks","subject":"a creature you control","control":"you","cards":14}
@@ -151,11 +151,13 @@
 {"preamble":"Whenever you cycle or discard a card","condition":null,"event":"cycled","subject":"a card","control":"you","cards":11}
 {"preamble":"Whenever you sacrifice a Clue","condition":null,"event":"sacrificed","subject":"a Clue","control":"you","cards":11}
 {"preamble":"Whenever ~ becomes tapped","condition":null,"event":"taps","subject":"~","control":"you","cards":11}
+{"preamble":"Whenever ~ enters or attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":11}
 {"preamble":"At the beginning of the upkeep of enchanted creature's controller","condition":null,"event":"upkeep","subject":"enchanted creature's controller","control":"any","cards":10}
 {"preamble":"At the beginning of your end step","condition":"a creature died this turn","event":"end-step","subject":"you","control":"you","cards":10}
 {"preamble":"At the beginning of your end step","condition":"you attacked this turn","event":"end-step","subject":"you","control":"you","cards":10}
 {"preamble":"At the beginning of your end step","condition":"you descended this turn","event":"end-step","subject":"you","control":"you","cards":10}
 {"preamble":"When this creature becomes monstrous","condition":null,"event":"becomes-monstrous","subject":"this creature","control":"you","cards":10}
+{"preamble":"When ~ dies","condition":null,"event":"dies","subject":"this","control":"you","cards":10}
 {"preamble":"Whenever a Samurai or Warrior you control attacks alone","condition":null,"event":"attacks","subject":"a Samurai or Warrior you control","control":"you","cards":10}
 {"preamble":"Whenever an opponent draws a card","condition":null,"event":"draw","subject":"a card","control":"opponent","cards":10}
 {"preamble":"Whenever another nontoken creature you control enters","condition":null,"event":"enters","subject":"another nontoken creature you control","control":"you","cards":10}
@@ -166,7 +168,6 @@
 {"preamble":"Whenever you cast a colorless spell","condition":null,"event":"cast","subject":"a colorless spell","control":"you","cards":10}
 {"preamble":"Whenever you cast a spell during an opponent's turn","condition":null,"event":"cast","subject":"a spell","control":"you","cards":10}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"combat damage to a player","control":"you","cards":10}
-{"preamble":"Whenever ~ enters or attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":10}
 {"preamble":"At the beginning of each player's end step","condition":null,"event":"end-step","subject":"each player","control":"any","cards":9}
 {"preamble":"At the beginning of each upkeep","condition":"a player cast two or more spells last turn","event":"upkeep","subject":"each upkeep","control":"any","cards":9}
 {"preamble":"At the beginning of enchanted player's upkeep","condition":null,"event":"upkeep","subject":"enchanted player","control":"opponent","cards":9}
@@ -175,7 +176,6 @@
 {"preamble":"When this creature deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"this creature","control":"you","cards":9}
 {"preamble":"When this creature enters","condition":"an opponent controls more lands than you","event":"enters","subject":"this creature","control":"you","cards":9}
 {"preamble":"When you do","condition":null,"event":"other","subject":"you do","control":"you","cards":9}
-{"preamble":"When ~ dies","condition":null,"event":"dies","subject":"this","control":"you","cards":9}
 {"preamble":"Whenever this creature becomes blocked by a creature","condition":null,"event":"becomes-blocked","subject":"a creature","control":"any","cards":9}
 {"preamble":"Whenever this creature becomes the target of a spell or ability you control for the first time each turn","condition":null,"event":"becomes-target","subject":"this creature","control":"you","cards":9}
 {"preamble":"Whenever this creature enters or transforms into ~","condition":null,"event":"enters","subject":"this creature","control":"you","cards":9}
@@ -273,7 +273,7 @@
 {"preamble":"Whenever you cast a spell from exile","condition":null,"event":"cast","subject":"a spell from exile","control":"you","cards":6}
 {"preamble":"Whenever you cast a spell that targets ~","condition":null,"event":"cast","subject":"a spell that targets ~","control":"you","cards":6}
 {"preamble":"Whenever you cast an instant or sorcery spell from your hand","condition":null,"event":"cast","subject":"an instant or sorcery spell from your hand","control":"you","cards":6}
-{"preamble":"Whenever you cast an instant","condition":null,"event":"cast","subject":"an instant, sorcery, or Wizard spell","control":"you","cards":6}
+{"preamble":"Whenever you cast an instant, sorcery, or Wizard spell","condition":null,"event":"cast","subject":"an instant, sorcery, or Wizard spell","control":"you","cards":6}
 {"preamble":"Whenever you discard one or more cards","condition":null,"event":"discarded","subject":"one or more cards","control":"you","cards":6}
 {"preamble":"Whenever you expend 4","condition":null,"event":"expend","subject":"4","control":"you","cards":6}
 {"preamble":"Whenever you lose life","condition":null,"event":"life-lost","subject":"you","control":"you","cards":6}
@@ -326,6 +326,7 @@
 {"preamble":"Whenever you surveil","condition":null,"event":"surveil","subject":"you","control":"you","cards":5}
 {"preamble":"Whenever you tap a land for mana","condition":null,"event":"tapped-for-mana","subject":"a land","control":"you","cards":5}
 {"preamble":"Whenever ~ attacks alone","condition":null,"event":"attacks","subject":"~","control":"you","cards":5}
+{"preamble":"Whenever ~ enters or attacks","condition":null,"event":"enters","subject":"this","control":"you","cards":5}
 {"preamble":"Whenever ~ or another creature you control enters","condition":null,"event":"enters","subject":"~ or another creature you control","control":"you","cards":5}
 {"preamble":"At the beginning of combat on your turn","condition":"you have a full party","event":"begin-combat","subject":"you","control":"you","cards":4}
 {"preamble":"At the beginning of each end step","condition":"a creature died this turn","event":"end-step","subject":"a creature","control":"any","cards":4}
@@ -401,7 +402,6 @@
 {"preamble":"Whenever ~ attack","condition":null,"event":"attacks","subject":"~","control":"you","cards":4}
 {"preamble":"Whenever ~ blocks","condition":null,"event":"blocks","subject":"~","control":"you","cards":4}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"~, combat damage to a player","control":"you","cards":4}
-{"preamble":"Whenever ~ enters or attacks","condition":null,"event":"enters","subject":"this","control":"you","cards":4}
 {"preamble":"At the beginning of combat on each opponent's turn","condition":null,"event":"begin-combat","subject":"each opponent","control":"opponent","cards":3}
 {"preamble":"At the beginning of combat on your turn","condition":"two or more nonland permanents entered the battlefield under your control this turn","event":"begin-combat","subject":"you","control":"you","cards":3}
 {"preamble":"At the beginning of each end step","condition":"a creature died this turn","event":"end-step","subject":"you","control":"you","cards":3}
@@ -451,9 +451,9 @@
 {"preamble":"When you spend this mana to cast a Dragon creature spell","condition":null,"event":"cast","subject":"a Dragon creature spell","control":"you","cards":3}
 {"preamble":"When ~ enter","condition":null,"event":"enters","subject":"this","control":"you","cards":3}
 {"preamble":"When ~ enters or dies","condition":null,"event":"enters","subject":"~","control":"you","cards":3}
+{"preamble":"When ~ enters","condition":"it was kicked","event":"enters","subject":"this","control":"you","cards":3}
 {"preamble":"When ~ enters","condition":"you cast it","event":"enters","subject":"this","control":"you","cards":3}
 {"preamble":"When ~ is put into a graveyard from anywhere","condition":null,"event":"dies","subject":"~","control":"you","cards":3}
-{"preamble":"When ~","condition":null,"event":"enters","subject":"~","control":"you","cards":3}
 {"preamble":"Whenever a Forest you control enters","condition":null,"event":"enters","subject":"a Forest you control","control":"you","cards":3}
 {"preamble":"Whenever a Gate you control enters","condition":null,"event":"enters","subject":"a Gate you control","control":"you","cards":3}
 {"preamble":"Whenever a creature attacks you or a planeswalker you control","condition":null,"event":"attacks","subject":"a creature","control":"any","cards":3}
@@ -517,7 +517,6 @@
 {"preamble":"Whenever this creature or equipped creature attacks","condition":null,"event":"attacks","subject":"this creature or equipped creature","control":"you","cards":3}
 {"preamble":"Whenever this creature or equipped creature deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"this creature or equipped creature","control":"you","cards":3}
 {"preamble":"Whenever this creature phases in","condition":null,"event":"phases-in","subject":"this creature","control":"you","cards":3}
-{"preamble":"Whenever this creature transforms into ~","condition":null,"event":"transform","subject":"this creature into ~","control":"you","cards":3}
 {"preamble":"Whenever this land attacks","condition":null,"event":"attacks","subject":"this","control":"you","cards":3}
 {"preamble":"Whenever this permanent enters or attacks","condition":null,"event":"enters","subject":"this","control":"you","cards":3}
 {"preamble":"Whenever you attack with two or more creatures","condition":null,"event":"attacks","subject":"you","control":"you","cards":3}
@@ -660,7 +659,6 @@
 {"preamble":"When you sacrifice a Clue","condition":null,"event":"sacrificed","subject":"a Clue","control":"you","cards":2}
 {"preamble":"When you sacrifice this creature","condition":null,"event":"sacrificed","subject":"this creature","control":"you","cards":2}
 {"preamble":"When ~ enters and at the beginning of your upkeep","condition":null,"event":"enters","subject":"~","control":"you","cards":2}
-{"preamble":"When ~ enters","condition":"it was kicked","event":"enters","subject":"this","control":"you","cards":2}
 {"preamble":"When ~ enters","condition":"it was kicked","event":"enters","subject":"~","control":"you","cards":2}
 {"preamble":"Whenever a +1/+1 counter is put on this creature","condition":null,"event":"counter-added","subject":"a +1/+1 counter","control":"you","cards":2}
 {"preamble":"Whenever a Beast enters","condition":null,"event":"enters","subject":"a Beast","control":"any","cards":2}
@@ -852,6 +850,7 @@
 {"preamble":"Whenever this creature or another nontoken creature you control enters","condition":null,"event":"enters","subject":"this creature or another nontoken creature you control","control":"you","cards":2}
 {"preamble":"Whenever this creature or enchanted creature attacks","condition":null,"event":"attacks","subject":"this creature or enchanted creature","control":"you","cards":2}
 {"preamble":"Whenever this creature saddles a Mount or crews a Vehicle during your main phase","condition":null,"event":"other","subject":"this creature saddles a Mount or crews a Vehicle during your main phase","control":"you","cards":2}
+{"preamble":"Whenever this creature transforms into ~","condition":null,"event":"transform","subject":"this creature into ~","control":"you","cards":2}
 {"preamble":"Whenever this creature transforms into ~","condition":null,"event":"transform","subject":"this creature","control":"you","cards":2}
 {"preamble":"Whenever this enchantment or another enchantment you control enters","condition":null,"event":"enters","subject":"this enchantment or another enchantment","control":"you","cards":2}
 {"preamble":"Whenever this permanent enters or attacks","condition":null,"event":"enters","subject":"this permanent","control":"you","cards":2}
@@ -877,7 +876,7 @@
 {"preamble":"Whenever you cast a planeswalker spell","condition":null,"event":"cast","subject":"a planeswalker spell","control":"you","cards":2}
 {"preamble":"Whenever you cast a spell that has convoke","condition":null,"event":"cast","subject":"a spell that has convoke","control":"you","cards":2}
 {"preamble":"Whenever you cast a spell that targets one or more permanents","condition":null,"event":"cast","subject":"a spell that targets one or more permanents","control":"you","cards":2}
-{"preamble":"Whenever you cast a spell that's white","condition":null,"event":"cast","subject":"a spell that's white, blue, black, or red","control":"you","cards":2}
+{"preamble":"Whenever you cast a spell that's white, blue, black, or red","condition":null,"event":"cast","subject":"a spell that's white, blue, black, or red","control":"you","cards":2}
 {"preamble":"Whenever you cast a spell with cascade","condition":null,"event":"cast","subject":"a spell with cascade","control":"you","cards":2}
 {"preamble":"Whenever you cast a spell","condition":"that spell was kicked","event":"cast","subject":"a spell","control":"you","cards":2}
 {"preamble":"Whenever you cast an Aura or Equipment spell","condition":null,"event":"cast","subject":"an Aura or Equipment spell","control":"you","cards":2}
@@ -892,7 +891,7 @@
 {"preamble":"Whenever you complete a dungeon","condition":null,"event":"dungeon-completed","subject":"a dungeon","control":"you","cards":2}
 {"preamble":"Whenever you complete a dungeon","condition":null,"event":"dungeon-completed","subject":"you","control":"you","cards":2}
 {"preamble":"Whenever you copy a spell","condition":null,"event":"copy","subject":"a spell","control":"you","cards":2}
-{"preamble":"Whenever you discard a noncreature","condition":null,"event":"discarded","subject":"a noncreature, nonland card","control":"you","cards":2}
+{"preamble":"Whenever you discard a noncreature, nonland card","condition":null,"event":"discarded","subject":"a noncreature, nonland card","control":"you","cards":2}
 {"preamble":"Whenever you discard a nonland card","condition":null,"event":"discarded","subject":"a nonland card","control":"you","cards":2}
 {"preamble":"Whenever you discard one or more artifact cards","condition":null,"event":"discarded","subject":"one or more artifact cards","control":"you","cards":2}
 {"preamble":"Whenever you draw your second card each turn","condition":null,"event":"draw","subject":"you","control":"you","cards":2}
@@ -931,7 +930,6 @@
 {"preamble":"Whenever ~ or another Human you control enters","condition":null,"event":"enters","subject":"~ or another Human you control","control":"you","cards":2}
 {"preamble":"Whenever ~ or another legendary creature you control enters","condition":null,"event":"enters","subject":"~ or another legendary creature you control","control":"you","cards":2}
 {"preamble":"Whenever ~ or another nontoken creature you control leaves the battlefield","condition":null,"event":"leaves","subject":"~ or another nontoken creature you control","control":"you","cards":2}
-{"preamble":"Whenever ~","condition":null,"event":"attacks","subject":"~","control":"you","cards":2}
 {"preamble":"At end of combat","condition":"Kytheon and at least two other creatures attacked this combat","event":"end-of-combat","subject":"you","control":"you","cards":1}
 {"preamble":"At end of combat","condition":"this Vehicle attacked or blocked this combat","event":"end-of-combat","subject":"you","control":"you","cards":1}
 {"preamble":"At end of combat","condition":"this creature attacked or blocked this combat","event":"end-of-combat","subject":"this creature attacked or blocked this combat","control":"you","cards":1}
@@ -1344,39 +1342,10 @@
 {"preamble":"At the beginning of your upkeep","condition":"your devotion to white and black is seven or greater","event":"upkeep","subject":"you","control":"you","cards":1}
 {"preamble":"At the beginning of your upkeep","condition":"your opponents control no creatures","event":"upkeep","subject":"you","control":"you","cards":1}
 {"preamble":"At the beginning of your upkeep","condition":"your opponents control no permanents with bounty counters on them","event":"upkeep","subject":"you","control":"you","cards":1}
-{"preamble":"When Acererak enters","condition":"you haven't completed Tomb of Annihilation","event":"enters","subject":"Acererak","control":"you","cards":1}
-{"preamble":"When Barrowin enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"When Batroc enters","condition":null,"event":"enters","subject":"Batroc","control":"you","cards":1}
-{"preamble":"When Bladewing enters","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
-{"preamble":"When Bolg enters","condition":null,"event":"enters","subject":"Bolg","control":"you","cards":1}
-{"preamble":"When Drizzt enters","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
-{"preamble":"When Dáin enters","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
-{"preamble":"When Elanor enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"When Elrond enters","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
-{"preamble":"When Gollum enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"When Hazezon enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"When Hazezon leaves the battlefield","condition":null,"event":"leaves","subject":"this","control":"you","cards":1}
-{"preamble":"When Hraesvelgr enters and whenever you cast a noncreature spell","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
-{"preamble":"When Hythonia becomes monstrous","condition":null,"event":"becomes-monstrous","subject":"~","control":"you","cards":1}
-{"preamble":"When Imskir enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"When Iwamori enters","condition":null,"event":"enters","subject":"Iwamori","control":"you","cards":1}
+{"preamble":"At the beginning of your upkeep, choose flying, first strike, trample","condition":null,"event":"upkeep","subject":"you","control":"you","cards":1}
 {"preamble":"When Jumblebones leaves the battlefield","condition":null,"event":"leaves","subject":"Jumblebones","control":"you","cards":1}
-{"preamble":"When Ka-Zar enters","condition":null,"event":"enters","subject":"Ka-Zar","control":"you","cards":1}
-{"preamble":"When Kiora enters","condition":null,"event":"enters","subject":"Kiora","control":"you","cards":1}
-{"preamble":"When Lavinia enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"When Lobelia enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"When Loran enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"When Niv-Mizzet enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"When Phage enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
 {"preamble":"When Rosie Cotton enters","condition":null,"event":"enters","subject":"Rosie Cotton","control":"you","cards":1}
-{"preamble":"When Runo enters","condition":null,"event":"enters","subject":"Runo","control":"you","cards":1}
-{"preamble":"When Samwise enters","condition":null,"event":"enters","subject":"Samwise","control":"you","cards":1}
-{"preamble":"When Sharae enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"When Sharuum enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
 {"preamble":"When Smaug dies","condition":null,"event":"dies","subject":"Smaug","control":"you","cards":1}
-{"preamble":"When Tivadar enters","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"When Trostani enters","condition":null,"event":"enters","subject":"Trostani","control":"you","cards":1}
-{"preamble":"When Verdeloth enters","condition":"it was kicked","event":"enters","subject":"this","control":"you","cards":1}
 {"preamble":"When a Dragon enters","condition":null,"event":"enters","subject":"a Dragon","control":"you","cards":1}
 {"preamble":"When a Faerie is championed with this creature","condition":null,"event":"other","subject":"a Faerie is championed with this creature","control":"you","cards":1}
 {"preamble":"When a Ninja you control enters","condition":null,"event":"enters","subject":"a Ninja you control","control":"you","cards":1}
@@ -1940,13 +1909,15 @@
 {"preamble":"When your commander deals combat damage to a player","condition":"there is no monarch","event":"damage-dealt","subject":"your commander","control":"you","cards":1}
 {"preamble":"When ~ attacks or blocks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ becomes monstrous","condition":null,"event":"becomes-monstrous","subject":"this","control":"you","cards":1}
+{"preamble":"When ~ becomes monstrous","condition":null,"event":"becomes-monstrous","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ becomes the target of a spell","condition":null,"event":"becomes-target","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ becomes untapped or leaves the battlefield","condition":null,"event":"untaps","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"~","control":"you","cards":1}
+{"preamble":"When ~ die","condition":"they were a creature","event":"dies","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ dies or is put into exile while its power is 4 or greater","condition":null,"event":"dies","subject":"~ with power 4 or greater","control":"you","cards":1}
 {"preamble":"When ~ dies","condition":"he wasn't a Spirit","event":"dies","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ dies","condition":"she was a nonland creature","event":"dies","subject":"~","control":"you","cards":1}
-{"preamble":"When ~ enter and whenever you cast a spell with power","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
+{"preamble":"When ~ enter and whenever you cast a spell with power, toughness, or mana value 4","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ enter","condition":"they're not a token","event":"enters","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ enter","condition":"you cast them and there are three or more Dragon and/or Lesson cards in your graveyard","event":"enters","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ enter","condition":null,"event":"enters","subject":"The Sacksville-Bagginses","control":"you","cards":1}
@@ -1955,6 +1926,7 @@
 {"preamble":"When ~ enters and whenever a creature you control deals combat damage to a player","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ enters and whenever it deals combat damage to a player","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ enters and whenever one or more Assassins you control deal combat damage to a player","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
+{"preamble":"When ~ enters and whenever you cast a noncreature spell","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ enters and whenever you cast a spell with mana value 6 or greater","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ enters and whenever you gain life","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ enters and whenever you play a card with two or more card types","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
@@ -1974,6 +1946,15 @@
 {"preamble":"When ~ enters","condition":"you control another creature with a +1/+1 counter on it","event":"enters","subject":"this","control":"you","cards":1}
 {"preamble":"When ~ enters","condition":"you control six or more lands","event":"enters","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ enters","condition":"you have fewer than four cards in hand","event":"enters","subject":"~","control":"you","cards":1}
+{"preamble":"When ~ enters","condition":"you haven't completed Tomb of Annihilation","event":"enters","subject":"Acererak","control":"you","cards":1}
+{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Batroc","control":"you","cards":1}
+{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Bolg","control":"you","cards":1}
+{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Iwamori","control":"you","cards":1}
+{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Ka-Zar","control":"you","cards":1}
+{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Kiora","control":"you","cards":1}
+{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Runo","control":"you","cards":1}
+{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Samwise","control":"you","cards":1}
+{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Trostani","control":"you","cards":1}
 {"preamble":"When ~ exploits a creature","condition":null,"event":"expend","subject":"a creature","control":"you","cards":1}
 {"preamble":"When ~ has no ice counters on it","condition":null,"event":"state","subject":"this has no ice counters on it","control":"you","cards":1}
 {"preamble":"When ~ has two or fewer loyalty counters on him","condition":null,"event":"other","subject":"~ has two or fewer loyalty counters on him","control":"you","cards":1}
@@ -1984,61 +1965,12 @@
 {"preamble":"When ~ is put into your graveyard from your library","condition":null,"event":"put-into-graveyard","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ leaves the battlefield or becomes untapped","condition":null,"event":"leaves","subject":"~","control":"you","cards":1}
 {"preamble":"When ~ leaves the battlefield","condition":null,"event":"leaves","subject":"this creature","control":"you","cards":1}
-{"preamble":"When ~","condition":"they were a creature","event":"dies","subject":"~","control":"you","cards":1}
-{"preamble":"When ~","condition":null,"event":"dies","subject":"this","control":"you","cards":1}
-{"preamble":"When ~","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"Whenever Acererak attacks","condition":null,"event":"attacks","subject":"Acererak","control":"you","cards":1}
-{"preamble":"Whenever Aisha deals combat damage","condition":null,"event":"damage-dealt","subject":"Aisha","control":"you","cards":1}
-{"preamble":"Whenever Altaïr attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Ashcoat attacks or blocks","condition":null,"event":"attacks","subject":"Ashcoat","control":"you","cards":1}
-{"preamble":"Whenever Barrowin attacks","condition":null,"event":"attacks","subject":"this","control":"you","cards":1}
-{"preamble":"Whenever Beregond or another Human you control enters","condition":null,"event":"enters","subject":"Beregond or another Human you control","control":"you","cards":1}
-{"preamble":"Whenever Braulios attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Carth enters or a planeswalker you control dies","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Catti-brie attacks","condition":null,"event":"attacks","subject":"this","control":"you","cards":1}
-{"preamble":"Whenever Círdan enters or attacks","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Daxos deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Daxos","control":"you","cards":1}
-{"preamble":"Whenever Durnan attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Dáin attacks","condition":null,"event":"attacks","subject":"Dáin","control":"you","cards":1}
-{"preamble":"Whenever Dáin attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Edgar attacks","condition":null,"event":"attacks","subject":"Edgar","control":"you","cards":1}
-{"preamble":"Whenever Ellivere enters or attacks","condition":null,"event":"enters","subject":"this","control":"you","cards":1}
-{"preamble":"Whenever Ezio deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Ezio","control":"you","cards":1}
-{"preamble":"Whenever Fíli or another nontoken Dwarf you control enters","condition":null,"event":"enters","subject":"Fíli or another nontoken Dwarf you control","control":"you","cards":1}
+{"preamble":"When ~ leaves the battlefield","condition":null,"event":"leaves","subject":"this","control":"you","cards":1}
 {"preamble":"Whenever Galactus attacks","condition":null,"event":"attacks","subject":"Galactus","control":"you","cards":1}
 {"preamble":"Whenever General Kudro or another Human you control enters","condition":null,"event":"enters","subject":"General Kudro or another Human you control","control":"you","cards":1}
-{"preamble":"Whenever Gimli deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Gimli","control":"you","cards":1}
-{"preamble":"Whenever Hakbal attacks","condition":null,"event":"attacks","subject":"Hakbal","control":"you","cards":1}
-{"preamble":"Whenever Hurska attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Isareth attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Isperia deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Isperia","control":"you","cards":1}
 {"preamble":"Whenever Jedit Ojanen attacks or blocks","condition":null,"event":"attacks","subject":"Jedit Ojanen","control":"you","cards":1}
-{"preamble":"Whenever Kaalia attacks an opponent","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Krond attacks","condition":"it's enchanted","event":"attacks","subject":"Krond","control":"you","cards":1}
-{"preamble":"Whenever Krydle deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Krydle","control":"you","cards":1}
-{"preamble":"Whenever Legolas deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Legolas","control":"you","cards":1}
-{"preamble":"Whenever Medomai deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Medomai","control":"you","cards":1}
-{"preamble":"Whenever Mirri deals combat damage to a creature","condition":null,"event":"damage-dealt","subject":"Mirri","control":"you","cards":1}
-{"preamble":"Whenever Phage deals combat damage to a creature","condition":null,"event":"damage-dealt","subject":"this","control":"you","cards":1}
-{"preamble":"Whenever Phage deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"this","control":"you","cards":1}
-{"preamble":"Whenever Radagast or another nontoken creature you control enters","condition":null,"event":"enters","subject":"Radagast or another nontoken creature you control","control":"you","cards":1}
-{"preamble":"Whenever Rakdos attacks","condition":null,"event":"attacks","subject":"Rakdos","control":"you","cards":1}
-{"preamble":"Whenever Rakdos deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Rakdos","control":"you","cards":1}
-{"preamble":"Whenever Rashka blocks one or more black creatures","condition":null,"event":"blocks","subject":"one or more black creatures","control":"any","cards":1}
 {"preamble":"Whenever Redwing attacks","condition":null,"event":"attacks","subject":"Redwing","control":"you","cards":1}
-{"preamble":"Whenever Rhys attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Ryan attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever Sidar Jabari deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Sidar Jabari","control":"you","cards":1}
-{"preamble":"Whenever Smaug attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Smaug is dealt noncombat damage","condition":null,"event":"damage-dealt","subject":"~","control":"any","cards":1}
-{"preamble":"Whenever Svyelun attacks","condition":null,"event":"attacks","subject":"Svyelun","control":"you","cards":1}
-{"preamble":"Whenever Thrakkus attacks","condition":null,"event":"attacks","subject":"Thrakkus","control":"you","cards":1}
-{"preamble":"Whenever Ultron enters or attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Ultron enters or attacks","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever Ureni enters or attacks","condition":null,"event":"enters","subject":"Ureni","control":"you","cards":1}
-{"preamble":"Whenever Vela or another creature you control leaves the battlefield","condition":null,"event":"leaves","subject":"Vela or another creature you control","control":"you","cards":1}
-{"preamble":"Whenever Virtus deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Virtus","control":"you","cards":1}
-{"preamble":"Whenever Zur attacks","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever a +1/+1 counter is removed from this creature","condition":null,"event":"counter-removed","subject":"a +1/+1 counter","control":"you","cards":1}
 {"preamble":"Whenever a -1/-1 counter is put on a creature","condition":null,"event":"counter-added","subject":"a -1/-1 counter","control":"any","cards":1}
 {"preamble":"Whenever a 1/1 creature you control enters","condition":null,"event":"enters","subject":"a 1/1 creature you control","control":"you","cards":1}
@@ -2078,7 +2010,7 @@
 {"preamble":"Whenever a Goblin you control enters","condition":null,"event":"enters","subject":"a Goblin you control","control":"you","cards":1}
 {"preamble":"Whenever a Goblin you control is put into a graveyard from the battlefield","condition":null,"event":"dies","subject":"a Goblin you control","control":"you","cards":1}
 {"preamble":"Whenever a Griffin you control deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"a Griffin you control","control":"you","cards":1}
-{"preamble":"Whenever a Hamster","condition":null,"event":"enters","subject":"a Hamster, Mouse, Rat, or Squirrel you control","control":"you","cards":1}
+{"preamble":"Whenever a Hamster, Mouse, Rat, or Squirrel you control enters","condition":null,"event":"enters","subject":"a Hamster, Mouse, Rat, or Squirrel you control","control":"you","cards":1}
 {"preamble":"Whenever a Hero you control becomes blocked","condition":null,"event":"becomes-blocked","subject":"a Hero you control","control":"you","cards":1}
 {"preamble":"Whenever a Hero you control enters","condition":null,"event":"enters","subject":"a Hero you control","control":"you","cards":1}
 {"preamble":"Whenever a Horror you control deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"a Horror you control","control":"you","cards":1}
@@ -2088,7 +2020,7 @@
 {"preamble":"Whenever a Knight you control attacks","condition":null,"event":"attacks","subject":"a Knight you control","control":"you","cards":1}
 {"preamble":"Whenever a Knight you control deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"a Knight you control","control":"you","cards":1}
 {"preamble":"Whenever a Knight you control enters","condition":null,"event":"enters","subject":"a Knight you control","control":"you","cards":1}
-{"preamble":"Whenever a Kraken","condition":null,"event":"damage-dealt","subject":"a Kraken, Leviathan, Octopus, or Serpent you control","control":"you","cards":1}
+{"preamble":"Whenever a Kraken, Leviathan, Octopus, or Serpent you control deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"a Kraken, Leviathan, Octopus, or Serpent you control","control":"you","cards":1}
 {"preamble":"Whenever a Lhurgoyf permanent card is put into your graveyard from anywhere other than the battlefield","condition":null,"event":"put-into-graveyard","subject":"a Lhurgoyf permanent card from anywhere other than the battlefield","control":"you","cards":1}
 {"preamble":"Whenever a Merfolk you control becomes tapped","condition":null,"event":"taps","subject":"a Merfolk you control","control":"you","cards":1}
 {"preamble":"Whenever a Merfolk you control deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"a Merfolk you control","control":"you","cards":1}
@@ -2100,7 +2032,7 @@
 {"preamble":"Whenever a Mountain you control enters","condition":"you control at least five other Mountains","event":"enters","subject":"a Mountain you control","control":"you","cards":1}
 {"preamble":"Whenever a Mutant you control attacks","condition":null,"event":"attacks","subject":"a Mutant you control","control":"you","cards":1}
 {"preamble":"Whenever a Mutant you control dies during your turn","condition":null,"event":"dies","subject":"a Mutant you control","control":"you","cards":1}
-{"preamble":"Whenever a Mutant","condition":null,"event":"enters","subject":"a Mutant, Ninja, or Turtle you control","control":"you","cards":1}
+{"preamble":"Whenever a Mutant, Ninja, or Turtle you control enters","condition":null,"event":"enters","subject":"a Mutant, Ninja, or Turtle you control","control":"you","cards":1}
 {"preamble":"Whenever a Ninja you control enters","condition":null,"event":"enters","subject":"a Ninja you control","control":"you","cards":1}
 {"preamble":"Whenever a Phyrexian you control dies","condition":null,"event":"dies","subject":"a Phyrexian you control","control":"you","cards":1}
 {"preamble":"Whenever a Pirate you control attacks","condition":null,"event":"attacks","subject":"a Pirate you control","control":"you","cards":1}
@@ -2122,7 +2054,7 @@
 {"preamble":"Whenever a Soldier creature enters","condition":null,"event":"enters","subject":"a Soldier creature","control":"you","cards":1}
 {"preamble":"Whenever a Spider you control enters","condition":null,"event":"enters","subject":"a Spider you control","control":"you","cards":1}
 {"preamble":"Whenever a Spirit you control enters","condition":null,"event":"enters","subject":"a Spirit you control","control":"you","cards":1}
-{"preamble":"Whenever a Swamp","condition":null,"event":"taps","subject":"a Swamp, Mountain, black permanent, or red permanent","control":"any","cards":1}
+{"preamble":"Whenever a Swamp, Mountain, black permanent, or red permanent becomes tapped","condition":null,"event":"taps","subject":"a Swamp, Mountain, black permanent, or red permanent","control":"any","cards":1}
 {"preamble":"Whenever a Tentacle you control dies","condition":null,"event":"dies","subject":"a Tentacle you control","control":"you","cards":1}
 {"preamble":"Whenever a Vampire you control attacks","condition":null,"event":"attacks","subject":"a Vampire you control","control":"you","cards":1}
 {"preamble":"Whenever a Vampire you control dies","condition":null,"event":"dies","subject":"a Vampire you control","control":"you","cards":1}
@@ -2195,10 +2127,10 @@
 {"preamble":"Whenever a creature deals damage to enchanted planeswalker","condition":null,"event":"damage-dealt","subject":"a creature","control":"any","cards":1}
 {"preamble":"Whenever a creature deals damage to this creature","condition":null,"event":"damaged","subject":"this creature","control":"any","cards":1}
 {"preamble":"Whenever a creature deals damage to you","condition":null,"event":"damage-dealt","subject":"a creature","control":"any","cards":1}
-{"preamble":"Whenever a creature dealt damage by Zurgo this turn dies","condition":null,"event":"dies","subject":"a creature dealt damage by Zurgo this turn","control":"any","cards":1}
 {"preamble":"Whenever a creature dealt damage by enchanted creature this turn dies","condition":null,"event":"dies","subject":"a creature dealt damage by enchanted creature this turn","control":"any","cards":1}
 {"preamble":"Whenever a creature dealt damage by that creature dies this turn","condition":null,"event":"dies","subject":"a creature dealt damage by that creature","control":"any","cards":1}
 {"preamble":"Whenever a creature dealt damage by this creature this turn dies","condition":null,"event":"dies","subject":"a creature dealt damage by this creature this turn","control":"you","cards":1}
+{"preamble":"Whenever a creature dealt damage by ~ this turn dies","condition":null,"event":"dies","subject":"a creature dealt damage by Zurgo this turn","control":"any","cards":1}
 {"preamble":"Whenever a creature dealt damage this way dies this turn","condition":null,"event":"dies","subject":"a creature dealt damage this way","control":"any","cards":1}
 {"preamble":"Whenever a creature dies or a creature card is put into a graveyard from a library","condition":null,"event":"dies","subject":"a creature","control":"any","cards":1}
 {"preamble":"Whenever a creature dies","condition":"an Aura you controlled was attached to it","event":"dies","subject":"a creature","control":"any","cards":1}
@@ -2467,7 +2399,7 @@
 {"preamble":"Whenever a player casts a spell","condition":"no mana was spent to cast it","event":"cast","subject":"a spell","control":"any","cards":1}
 {"preamble":"Whenever a player casts a spell","condition":"no mana was spent to cast that spell","event":"cast","subject":"a spell","control":"any","cards":1}
 {"preamble":"Whenever a player casts a spell","condition":"the amount of mana spent to cast it was less than its mana value","event":"cast","subject":"a spell","control":"any","cards":1}
-{"preamble":"Whenever a player casts an artifact","condition":null,"event":"cast","subject":"an artifact, instant, or sorcery spell","control":"any","cards":1}
+{"preamble":"Whenever a player casts an artifact, instant, or sorcery spell","condition":null,"event":"cast","subject":"an artifact, instant, or sorcery spell","control":"any","cards":1}
 {"preamble":"Whenever a player casts an enchantment spell","condition":null,"event":"cast","subject":"an enchantment spell","control":"any","cards":1}
 {"preamble":"Whenever a player casts an instant or sorcery card","condition":null,"event":"cast","subject":"an instant or sorcery card","control":"any","cards":1}
 {"preamble":"Whenever a player casts an instant or sorcery spell from their hand","condition":null,"event":"cast","subject":"an instant or sorcery spell from their hand","control":"any","cards":1}
@@ -2502,7 +2434,7 @@
 {"preamble":"Whenever a player sacrifices a nontoken creature","condition":null,"event":"sacrificed","subject":"a nontoken creature","control":"any","cards":1}
 {"preamble":"Whenever a player sacrifices another creature","condition":null,"event":"sacrificed","subject":"another creature","control":"any","cards":1}
 {"preamble":"Whenever a player sacrifices another permanent","condition":null,"event":"sacrificed","subject":"another permanent","control":"any","cards":1}
-{"preamble":"Whenever a player taps a Mountain","condition":null,"event":"tapped-for-mana","subject":"a Mountain, Forest, or Plains","control":"any","cards":1}
+{"preamble":"Whenever a player taps a Mountain, Forest, or Plains for mana","condition":null,"event":"tapped-for-mana","subject":"a Mountain, Forest, or Plains","control":"any","cards":1}
 {"preamble":"Whenever a player taps a basic land for mana","condition":null,"event":"tapped-for-mana","subject":"a basic land","control":"any","cards":1}
 {"preamble":"Whenever a player taps a land for mana","condition":"it's not that player's turn","event":"tapped-for-mana","subject":"a land","control":"any","cards":1}
 {"preamble":"Whenever a player taps a land for mana","condition":"this creature is tapped","event":"tapped-for-mana","subject":"a land","control":"any","cards":1}
@@ -2569,7 +2501,7 @@
 {"preamble":"Whenever an Elemental you control dies","condition":null,"event":"dies","subject":"an Elemental you control","control":"you","cards":1}
 {"preamble":"Whenever an Elf you control attacks this turn","condition":null,"event":"chapter","subject":"chapter III","control":"you","cards":1}
 {"preamble":"Whenever an Illusion you control dies","condition":null,"event":"dies","subject":"an Illusion you control","control":"you","cards":1}
-{"preamble":"Whenever an Insect","condition":null,"event":"attacks","subject":"an Insect, Leech, Slug, or Worm you control","control":"you","cards":1}
+{"preamble":"Whenever an Insect, Leech, Slug, or Worm you control attacks","condition":null,"event":"attacks","subject":"an Insect, Leech, Slug, or Worm you control","control":"you","cards":1}
 {"preamble":"Whenever an Island an opponent controls becomes tapped","condition":null,"event":"taps","subject":"an Island an opponent controls","control":"opponent","cards":1}
 {"preamble":"Whenever an Island is tapped for mana","condition":null,"event":"tapped-for-mana","subject":"an Island","control":"any","cards":1}
 {"preamble":"Whenever an ability of equipped creature is activated","condition":"it isn't a mana ability","event":"activate","subject":"an ability of equipped creature","control":"any","cards":1}
@@ -2587,7 +2519,7 @@
 {"preamble":"Whenever an artifact you control becomes tapped","condition":null,"event":"taps","subject":"an artifact you control","control":"you","cards":1}
 {"preamble":"Whenever an artifact you control is put into a graveyard from the battlefield","condition":"it had counters on it","event":"dies","subject":"an artifact you control","control":"you","cards":1}
 {"preamble":"Whenever an artifact you control is put into a graveyard from the battlefield","condition":"it wasn't sacrificed","event":"dies","subject":"an artifact you control","control":"you","cards":1}
-{"preamble":"Whenever an artifact","condition":null,"event":"enters","subject":"an artifact, creature, or enchantment","control":"any","cards":1}
+{"preamble":"Whenever an artifact, creature, or enchantment enters","condition":null,"event":"enters","subject":"an artifact, creature, or enchantment","control":"any","cards":1}
 {"preamble":"Whenever an attacking Kithkin or Elf is put into your graveyard from the battlefield","condition":null,"event":"dies","subject":"an attacking Kithkin or Elf","control":"you","cards":1}
 {"preamble":"Whenever an attacking creature dies","condition":null,"event":"dies","subject":"an attacking creature","control":"opponent","cards":1}
 {"preamble":"Whenever an attacking creature you control or a blocking creature an opponent controls dies","condition":null,"event":"dies","subject":"an attacking creature you control or a blocking creature an opponent controls","control":"any","cards":1}
@@ -2608,8 +2540,8 @@
 {"preamble":"Whenever an opponent activates an ability of a creature or land that isn't a mana ability","condition":null,"event":"activate","subject":"an ability of a creature or land that isn't a mana ability","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent activates an ability of a permanent that isn't a mana ability","condition":null,"event":"activate","subject":"an ability of a permanent that isn't a mana ability","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent activates an ability of an artifact they control","condition":null,"event":"activate","subject":"an ability of an artifact they control","control":"opponent","cards":1}
-{"preamble":"Whenever an opponent activates an ability of an artifact","condition":"it isn't a mana ability","event":"activate","subject":"an ability of an artifact, creature, or land on the battlefield that isn't a mana ability","control":"opponent","cards":1}
-{"preamble":"Whenever an opponent activates an ability of an artifact","condition":null,"event":"activate","subject":"an ability of an artifact, creature, or land that isn't a mana ability","control":"opponent","cards":1}
+{"preamble":"Whenever an opponent activates an ability of an artifact, creature, or land on the battlefield","condition":"it isn't a mana ability","event":"activate","subject":"an ability of an artifact, creature, or land on the battlefield that isn't a mana ability","control":"opponent","cards":1}
+{"preamble":"Whenever an opponent activates an ability of an artifact, creature, or land that isn't a mana ability","condition":null,"event":"activate","subject":"an ability of an artifact, creature, or land that isn't a mana ability","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent activates an ability that isn't a mana ability","condition":null,"event":"activate","subject":"an ability that isn't a mana ability","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent attacks a planeswalker you control with one or more creatures","condition":null,"event":"attacks","subject":"a planeswalker you control","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent attacks another one of your opponents","condition":null,"event":"attacks","subject":"an opponent","control":"opponent","cards":1}
@@ -2644,12 +2576,12 @@
 {"preamble":"Whenever an opponent casts a spell with mana value 2 or less","condition":null,"event":"cast","subject":"a spell with mana value 2 or less","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent casts a spell with mana value 3 or less","condition":null,"event":"cast","subject":"a spell with mana value 3 or less","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent casts a spell with mana value of the chosen quality","condition":null,"event":"cast","subject":"a spell with mana value of the chosen quality","control":"opponent","cards":1}
-{"preamble":"Whenever an opponent casts a spell with mana value","condition":null,"event":"cast","subject":"a spell with mana value, power, or toughness equal to the chosen number","control":"opponent","cards":1}
+{"preamble":"Whenever an opponent casts a spell with mana value, power, or toughness equal to the chosen number","condition":null,"event":"cast","subject":"a spell with mana value, power, or toughness equal to the chosen number","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent casts a spell with the chosen name","condition":null,"event":"cast","subject":"a spell with the chosen name","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent casts a spell","condition":"it has a single target","event":"cast","subject":"a spell","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent casts a spell","condition":"it's not their turn","event":"cast","subject":"a spell","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent casts a white or blue instant or sorcery spell","condition":null,"event":"cast","subject":"a white or blue instant or sorcery spell","control":"opponent","cards":1}
-{"preamble":"Whenever an opponent casts an artifact","condition":null,"event":"cast","subject":"an artifact, instant, or sorcery spell","control":"opponent","cards":1}
+{"preamble":"Whenever an opponent casts an artifact, instant, or sorcery spell","condition":null,"event":"cast","subject":"an artifact, instant, or sorcery spell","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent casts an instant spell other than the first instant spell that player casts each turn","condition":null,"event":"cast","subject":"an instant spell other than the first instant spell that player casts each turn","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent casts or copies an instant or sorcery spell","condition":null,"event":"cast","subject":"an instant or sorcery spell","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent casts their first noncreature spell each turn","condition":null,"event":"cast","subject":"a noncreature spell","control":"opponent","cards":1}
@@ -2657,7 +2589,7 @@
 {"preamble":"Whenever an opponent commits a crime","condition":null,"event":"crime","subject":"an opponent","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent discards a card or mills one or more cards","condition":null,"event":"discarded","subject":"a card","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent discards a creature card","condition":null,"event":"discarded","subject":"a creature card","control":"opponent","cards":1}
-{"preamble":"Whenever an opponent discards a noncreature","condition":null,"event":"discarded","subject":"a noncreature, nonland card","control":"opponent","cards":1}
+{"preamble":"Whenever an opponent discards a noncreature, nonland card","condition":null,"event":"discarded","subject":"a noncreature, nonland card","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent draws a card","condition":"it isn't that player's turn","event":"draw","subject":"a card","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent draws a card","condition":"you control a red permanent","event":"draw","subject":"a card","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent draws their first card each turn","condition":"it's not their turn","event":"draw","subject":"their first card","control":"opponent","cards":1}
@@ -2681,7 +2613,7 @@
 {"preamble":"Whenever an opponent sacrifices a noncreature token","condition":null,"event":"sacrificed","subject":"a noncreature token","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent sacrifices a nontoken permanent or discards a permanent card","condition":null,"event":"sacrificed","subject":"a nontoken permanent","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent sacrifices an artifact","condition":null,"event":"sacrificed","subject":"an artifact","control":"opponent","cards":1}
-{"preamble":"Whenever an opponent scries","condition":null,"event":"other","subject":"an opponent scries, surveils, or searches their library","control":"opponent","cards":1}
+{"preamble":"Whenever an opponent scries, surveils, or searches their library","condition":null,"event":"other","subject":"an opponent scries, surveils, or searches their library","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent shuffles their library","condition":null,"event":"shuffled","subject":"an opponent's library","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent shuffles their library","condition":null,"event":"shuffled","subject":"their library","control":"opponent","cards":1}
 {"preamble":"Whenever an opponent taps a Mountain for mana","condition":null,"event":"tapped-for-mana","subject":"a Mountain","control":"opponent","cards":1}
@@ -2703,11 +2635,11 @@
 {"preamble":"Whenever another Elf enters","condition":null,"event":"enters","subject":"another Elf","control":"you","cards":1}
 {"preamble":"Whenever another Faerie you control dies","condition":null,"event":"dies","subject":"another Faerie you control","control":"you","cards":1}
 {"preamble":"Whenever another Faerie you control enters","condition":null,"event":"enters","subject":"another Faerie you control","control":"you","cards":1}
-{"preamble":"Whenever another Frog","condition":null,"event":"enters","subject":"another Frog, Rabbit, Raccoon, or Squirrel you control","control":"you","cards":1}
+{"preamble":"Whenever another Frog, Rabbit, Raccoon, or Squirrel you control enters","condition":null,"event":"enters","subject":"another Frog, Rabbit, Raccoon, or Squirrel you control","control":"you","cards":1}
 {"preamble":"Whenever another Goblin you control becomes blocked","condition":null,"event":"becomes-blocked","subject":"another Goblin you control","control":"you","cards":1}
 {"preamble":"Whenever another Goblin you control dies","condition":null,"event":"dies","subject":"another Goblin you control","control":"you","cards":1}
 {"preamble":"Whenever another Goblin you control is put into a graveyard from the battlefield","condition":null,"event":"dies","subject":"another Goblin you control","control":"you","cards":1}
-{"preamble":"Whenever another Goblin","condition":null,"event":"dies","subject":"another Goblin, Orc, or Army you control","control":"you","cards":1}
+{"preamble":"Whenever another Goblin, Orc, or Army you control dies","condition":null,"event":"dies","subject":"another Goblin, Orc, or Army you control","control":"you","cards":1}
 {"preamble":"Whenever another Hero you control enters","condition":null,"event":"enters","subject":"another Hero you control","control":"you","cards":1}
 {"preamble":"Whenever another Human creature dies","condition":null,"event":"dies","subject":"another Human creature","control":"any","cards":1}
 {"preamble":"Whenever another Kavu enters","condition":null,"event":"enters","subject":"another Kavu","control":"you","cards":1}
@@ -2742,6 +2674,7 @@
 {"preamble":"Whenever another creature dealt damage this turn by a Spider you controlled dies","condition":null,"event":"dies","subject":"another creature dealt damage this turn by a Spider you controlled","control":"you","cards":1}
 {"preamble":"Whenever another creature dies during your turn","condition":null,"event":"dies","subject":"another creature","control":"you","cards":1}
 {"preamble":"Whenever another creature dies","condition":"it was attacking or blocking alone","event":"dies","subject":"another creature","control":"any","cards":1}
+{"preamble":"Whenever another creature dies, or a creature card is put into a graveyard from anywhere other than the battlefield, or a creature card leaves your graveyard","condition":null,"event":"dies","subject":"another creature","control":"any","cards":1}
 {"preamble":"Whenever another creature is put into your graveyard from the battlefield","condition":null,"event":"dies","subject":"another creature","control":"you","cards":1}
 {"preamble":"Whenever another creature leaves the battlefield","condition":null,"event":"leaves","subject":"another creature","control":"any","cards":1}
 {"preamble":"Whenever another creature or Vehicle you control enters","condition":null,"event":"enters","subject":"another creature or Vehicle you control","control":"you","cards":1}
@@ -2913,14 +2846,14 @@
 {"preamble":"Whenever one or more Halflings you control attack a player","condition":null,"event":"attacks","subject":"one or more Halflings you control","control":"you","cards":1}
 {"preamble":"Whenever one or more Heroes you control deal damage to a player","condition":null,"event":"damage-dealt","subject":"one or more Heroes you control","control":"you","cards":1}
 {"preamble":"Whenever one or more Merfolk you control attack a player","condition":null,"event":"attacks","subject":"one or more Merfolk you control","control":"you","cards":1}
-{"preamble":"Whenever one or more Mutants","condition":null,"event":"damage-dealt","subject":"one or more Mutants, Ninjas, and/or Turtles you control","control":"you","cards":1}
+{"preamble":"Whenever one or more Mutants, Ninjas, and/or Turtles you control deal combat damage to a player","condition":null,"event":"damage-dealt","subject":"one or more Mutants, Ninjas, and/or Turtles you control","control":"you","cards":1}
 {"preamble":"Whenever one or more Ninja or Rogue creatures you control deal combat damage to a player","condition":null,"event":"damage-dealt","subject":"one or more Ninja or Rogue creatures you control","control":"you","cards":1}
 {"preamble":"Whenever one or more Phyrexians you control attack","condition":null,"event":"attacks","subject":"one or more Phyrexians you control","control":"you","cards":1}
 {"preamble":"Whenever one or more Pirates you control deal combat damage to a player","condition":null,"event":"damage-dealt","subject":"one or more Pirates you control","control":"you","cards":1}
 {"preamble":"Whenever one or more Pirates you control deal damage to a player","condition":null,"event":"damage-dealt","subject":"one or more Pirates you control","control":"you","cards":1}
 {"preamble":"Whenever one or more Rogues you control attack","condition":null,"event":"attacks","subject":"one or more Rogues you control","control":"you","cards":1}
 {"preamble":"Whenever one or more Rogues you control deal combat damage to a player","condition":null,"event":"damage-dealt","subject":"one or more Rogues you control","control":"you","cards":1}
-{"preamble":"Whenever one or more Scouts","condition":null,"event":"damage-dealt","subject":"one or more Scouts, Pirates, and/or Rogues you control","control":"you","cards":1}
+{"preamble":"Whenever one or more Scouts, Pirates, and/or Rogues you control deal combat damage to a player","condition":null,"event":"damage-dealt","subject":"one or more Scouts, Pirates, and/or Rogues you control","control":"you","cards":1}
 {"preamble":"Whenever one or more Sphinxes you control attack","condition":null,"event":"attacks","subject":"one or more Sphinxes you control","control":"you","cards":1}
 {"preamble":"Whenever one or more Squirrels you control deal combat damage to a player","condition":null,"event":"damage-dealt","subject":"one or more Squirrels you control","control":"you","cards":1}
 {"preamble":"Whenever one or more Treefolk you control attack","condition":null,"event":"attacks","subject":"one or more Treefolk you control","control":"you","cards":1}
@@ -3004,7 +2937,7 @@
 {"preamble":"Whenever one or more non-Human creatures you control deal combat damage to a player","condition":null,"event":"damage-dealt","subject":"one or more non-Human creatures you control","control":"you","cards":1}
 {"preamble":"Whenever one or more non-Toy creatures you control attack a player","condition":null,"event":"attacks","subject":"one or more non-Toy creatures you control","control":"you","cards":1}
 {"preamble":"Whenever one or more noncreature permanents are returned to hand","condition":null,"event":"returned-to-hand","subject":"one or more noncreature permanents","control":"you","cards":1}
-{"preamble":"Whenever one or more noncreature","condition":null,"event":"enters","subject":"one or more noncreature, nonland permanents you control","control":"you","cards":1}
+{"preamble":"Whenever one or more noncreature, nonland permanents you control enter","condition":null,"event":"enters","subject":"one or more noncreature, nonland permanents you control","control":"you","cards":1}
 {"preamble":"Whenever one or more nonland cards are milled","condition":null,"event":"milled","subject":"one or more nonland cards","control":"any","cards":1}
 {"preamble":"Whenever one or more nontoken Merfolk you control become tapped","condition":null,"event":"taps","subject":"one or more nontoken Merfolk you control","control":"you","cards":1}
 {"preamble":"Whenever one or more nontoken Vampires you control attack","condition":null,"event":"attacks","subject":"one or more nontoken Vampires you control","control":"you","cards":1}
@@ -3018,7 +2951,7 @@
 {"preamble":"Whenever one or more opponents lose life","condition":null,"event":"life-lost","subject":"one or more opponents","control":"opponent","cards":1}
 {"preamble":"Whenever one or more other Cats you control die","condition":null,"event":"dies","subject":"one or more other Cats you control","control":"you","cards":1}
 {"preamble":"Whenever one or more other Elves you control enter","condition":null,"event":"enters","subject":"one or more other Elves you control","control":"you","cards":1}
-{"preamble":"Whenever one or more other Rabbits","condition":null,"event":"enters","subject":"one or more other Rabbits, Bats, Birds, and/or Mice you control","control":"you","cards":1}
+{"preamble":"Whenever one or more other Rabbits, Bats, Birds, and/or Mice you control enter","condition":null,"event":"enters","subject":"one or more other Rabbits, Bats, Birds, and/or Mice you control","control":"you","cards":1}
 {"preamble":"Whenever one or more other attacking legendary creatures you control die","condition":null,"event":"dies","subject":"one or more other attacking legendary creatures you control","control":"you","cards":1}
 {"preamble":"Whenever one or more other creatures and/or artifacts you control die","condition":null,"event":"dies","subject":"one or more other creatures and/or artifacts you control","control":"you","cards":1}
 {"preamble":"Whenever one or more other creatures die","condition":null,"event":"dies","subject":"one or more other creatures","control":"you","cards":1}
@@ -3139,7 +3072,7 @@
 {"preamble":"Whenever this creature attacks","condition":"you've completed a dungeon","event":"attacks","subject":"this creature","control":"you","cards":1}
 {"preamble":"Whenever this creature attacks","condition":null,"event":"attacks","subject":"equipped creature","control":"you","cards":1}
 {"preamble":"Whenever this creature attacks","condition":null,"event":"attacks","subject":"this creature","control":"any","cards":1}
-{"preamble":"Whenever this creature attacks","condition":null,"event":"other","subject":"this creature attacks, blocks, or becomes the target of a spell","control":"you","cards":1}
+{"preamble":"Whenever this creature attacks, blocks, or becomes the target of a spell","condition":null,"event":"other","subject":"this creature attacks, blocks, or becomes the target of a spell","control":"you","cards":1}
 {"preamble":"Whenever this creature becomes blocked by a Wall","condition":null,"event":"becomes-blocked","subject":"a Wall","control":"any","cards":1}
 {"preamble":"Whenever this creature becomes blocked by a creature of that color this turn","condition":null,"event":"becomes-blocked","subject":"a creature of that color","control":"any","cards":1}
 {"preamble":"Whenever this creature becomes blocked by a creature","condition":null,"event":"becomes-blocked","subject":"a creature","control":"you","cards":1}
@@ -3283,6 +3216,7 @@
 {"preamble":"Whenever this creature or equipped creature becomes blocked","condition":null,"event":"becomes-blocked","subject":"this creature or equipped creature","control":"you","cards":1}
 {"preamble":"Whenever this creature phases out","condition":null,"event":"phases-out","subject":"this creature","control":"you","cards":1}
 {"preamble":"Whenever this creature trains","condition":null,"event":"other","subject":"this creature trains","control":"you","cards":1}
+{"preamble":"Whenever this creature transforms into ~ and at the beginning of your first main phase","condition":null,"event":"transform","subject":"this creature into ~","control":"you","cards":1}
 {"preamble":"Whenever this creature transforms into ~","condition":null,"event":"transform","subject":"this creature transforming into ~","control":"you","cards":1}
 {"preamble":"Whenever this creature's cumulative upkeep is paid","condition":null,"event":"other","subject":"this creature's cumulative upkeep is paid","control":"you","cards":1}
 {"preamble":"Whenever this enchantment becomes the target of a spell","condition":null,"event":"becomes-target","subject":"this enchantment","control":"you","cards":1}
@@ -3331,7 +3265,7 @@
 {"preamble":"Whenever you attack this turn","condition":null,"event":"chapter","subject":"chapter IV","control":"you","cards":1}
 {"preamble":"Whenever you attack while you control a creature with power 4 or greater","condition":null,"event":"attacks","subject":"you","control":"you","cards":1}
 {"preamble":"Whenever you attack with a creature an opponent owns","condition":null,"event":"attacks","subject":"a creature an opponent owns","control":"you","cards":1}
-{"preamble":"Whenever you attack with at least two creatures that have first strike","condition":null,"event":"attacks","subject":"at least two creatures that have first strike, double strike, vigilance, and/or haste","control":"you","cards":1}
+{"preamble":"Whenever you attack with at least two creatures that have first strike, double strike, vigilance, and/or haste","condition":null,"event":"attacks","subject":"at least two creatures that have first strike, double strike, vigilance, and/or haste","control":"you","cards":1}
 {"preamble":"Whenever you attack with creatures with total power 12 or greater for the first time each turn","condition":null,"event":"attacks","subject":"creatures with total power 12 or greater","control":"you","cards":1}
 {"preamble":"Whenever you attack with creatures with total power 6 or greater","condition":null,"event":"attacks","subject":"creatures with total power 6 or greater","control":"you","cards":1}
 {"preamble":"Whenever you attack with eight or more creatures","condition":null,"event":"attacks","subject":"eight or more creatures","control":"you","cards":1}
@@ -3374,7 +3308,7 @@
 {"preamble":"Whenever you cast a Beast or Bird creature spell","condition":null,"event":"cast","subject":"a Beast or Bird creature spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a Bolas planeswalker spell","condition":null,"event":"cast","subject":"a Bolas planeswalker spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a Cat spell","condition":null,"event":"cast","subject":"a Cat spell","control":"you","cards":1}
-{"preamble":"Whenever you cast a Cat","condition":null,"event":"cast","subject":"a Cat, Dog, or Hero spell","control":"you","cards":1}
+{"preamble":"Whenever you cast a Cat, Dog, or Hero spell","condition":null,"event":"cast","subject":"a Cat, Dog, or Hero spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a Doctor spell or creature spell with doctor's companion","condition":null,"event":"cast","subject":"a Doctor spell or creature spell with doctor's companion","control":"you","cards":1}
 {"preamble":"Whenever you cast a Dog spell","condition":null,"event":"cast","subject":"a Dog spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a Dragon creature spell from your graveyard","condition":null,"event":"cast","subject":"a Dragon creature spell from your graveyard","control":"you","cards":1}
@@ -3385,12 +3319,12 @@
 {"preamble":"Whenever you cast a Human spell","condition":null,"event":"cast","subject":"a Human spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a Knight spell","condition":null,"event":"cast","subject":"a Knight spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a Kobold spell","condition":null,"event":"cast","subject":"a Kobold spell","control":"you","cards":1}
-{"preamble":"Whenever you cast a Kraken","condition":null,"event":"cast","subject":"a Kraken, Leviathan, Octopus, or Serpent spell from your hand","control":"you","cards":1}
+{"preamble":"Whenever you cast a Kraken, Leviathan, Octopus, or Serpent spell from your hand","condition":null,"event":"cast","subject":"a Kraken, Leviathan, Octopus, or Serpent spell from your hand","control":"you","cards":1}
 {"preamble":"Whenever you cast a Lesson spell","condition":null,"event":"cast","subject":"a Lesson spell","control":"you","cards":1}
-{"preamble":"Whenever you cast a Lesson","condition":null,"event":"cast","subject":"a Lesson, Saga, or Shrine spell","control":"you","cards":1}
+{"preamble":"Whenever you cast a Lesson, Saga, or Shrine spell","condition":null,"event":"cast","subject":"a Lesson, Saga, or Shrine spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a Lizard spell","condition":null,"event":"cast","subject":"a Lizard spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a Myr spell","condition":null,"event":"cast","subject":"a Myr spell","control":"you","cards":1}
-{"preamble":"Whenever you cast a Pegasus","condition":null,"event":"cast","subject":"a Pegasus, Unicorn, or Horse creature spell","control":"you","cards":1}
+{"preamble":"Whenever you cast a Pegasus, Unicorn, or Horse creature spell","condition":null,"event":"cast","subject":"a Pegasus, Unicorn, or Horse creature spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a Phyrexian creature or artifact creature spell","condition":null,"event":"cast","subject":"a Phyrexian creature or artifact creature spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a Pirate spell","condition":null,"event":"cast","subject":"a Pirate spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a Turtle spell","condition":null,"event":"cast","subject":"a Turtle spell","control":"you","cards":1}
@@ -3405,7 +3339,7 @@
 {"preamble":"Whenever you cast a blue permanent spell","condition":null,"event":"cast","subject":"a blue permanent spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a blue spell or an Island you control enters","condition":null,"event":"cast","subject":"a blue spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a blue spell","condition":"Hydro-Man is a creature","event":"cast","subject":"a blue spell","control":"you","cards":1}
-{"preamble":"Whenever you cast a blue","condition":null,"event":"cast","subject":"a blue, black, or red spell","control":"you","cards":1}
+{"preamble":"Whenever you cast a blue, black, or red spell","condition":null,"event":"cast","subject":"a blue, black, or red spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a colorless creature spell","condition":null,"event":"cast","subject":"a colorless creature spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a creature spell during an opponent's turn","condition":null,"event":"cast","subject":"a creature spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a creature spell of the chosen type","condition":null,"event":"cast","subject":"a creature spell of the chosen type","control":"you","cards":1}
@@ -3414,10 +3348,10 @@
 {"preamble":"Whenever you cast a creature spell with infect","condition":null,"event":"cast","subject":"a creature spell with infect","control":"you","cards":1}
 {"preamble":"Whenever you cast a creature spell with mana value 3 or less","condition":null,"event":"cast","subject":"a creature spell with mana value 3 or less","control":"you","cards":1}
 {"preamble":"Whenever you cast a creature spell with mana value 4 or greater","condition":null,"event":"cast","subject":"a creature spell with mana value 4 or greater","control":"you","cards":1}
-{"preamble":"Whenever you cast a creature spell with mana value 4","condition":null,"event":"cast","subject":"a creature spell with mana value 4, 5, or 6","control":"you","cards":1}
+{"preamble":"Whenever you cast a creature spell with mana value 4, 5, or 6","condition":null,"event":"cast","subject":"a creature spell with mana value 4, 5, or 6","control":"you","cards":1}
 {"preamble":"Whenever you cast a creature spell with mana value 6 or greater","condition":null,"event":"cast","subject":"a creature spell with mana value 6 or greater","control":"you","cards":1}
 {"preamble":"Whenever you cast a creature spell with mana value equal to Jackal's power","condition":null,"event":"cast","subject":"a creature spell with mana value equal to Jackal's power","control":"you","cards":1}
-{"preamble":"Whenever you cast a creature spell with power 4","condition":null,"event":"cast","subject":"a creature spell with power 4, 5, or 6","control":"you","cards":1}
+{"preamble":"Whenever you cast a creature spell with power 4, 5, or 6","condition":null,"event":"cast","subject":"a creature spell with power 4, 5, or 6","control":"you","cards":1}
 {"preamble":"Whenever you cast a creature spell with power 7 or greater","condition":null,"event":"cast","subject":"a creature spell with power 7 or greater","control":"you","cards":1}
 {"preamble":"Whenever you cast a creature spell","condition":"it has mutate","event":"cast","subject":"a creature spell with mutate","control":"you","cards":1}
 {"preamble":"Whenever you cast a creature spell","condition":"three or more mana from creatures was spent to cast it","event":"cast","subject":"a creature spell","control":"you","cards":1}
@@ -3438,6 +3372,7 @@
 {"preamble":"Whenever you cast a noncreature spell with one or more blue mana symbols in its mana cost","condition":null,"event":"cast","subject":"a noncreature spell with one or more blue mana symbols in its mana cost","control":"you","cards":1}
 {"preamble":"Whenever you cast a noncreature spell you don't own","condition":null,"event":"cast","subject":"a noncreature spell you don't own","control":"you","cards":1}
 {"preamble":"Whenever you cast a noncreature spell","condition":"at least eight mana was spent to cast it","event":"cast","subject":"a noncreature spell","control":"you","cards":1}
+{"preamble":"Whenever you cast a noncreature spell, Birds, Frogs, Otters","condition":null,"event":"cast","subject":"a noncreature spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a nonlegendary creature spell with flying","condition":null,"event":"cast","subject":"a nonlegendary creature spell with flying","control":"you","cards":1}
 {"preamble":"Whenever you cast a nonlegendary creature spell","condition":null,"event":"cast","subject":"a nonlegendary creature spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a nonred spell","condition":null,"event":"cast","subject":"a nonred spell","control":"you","cards":1}
@@ -3499,7 +3434,7 @@
 {"preamble":"Whenever you cast an Aura spell that targets a modified permanent you control","condition":null,"event":"cast","subject":"an Aura spell that targets a modified permanent you control","control":"you","cards":1}
 {"preamble":"Whenever you cast an Aura spell that targets this creature","condition":null,"event":"cast","subject":"an Aura spell that targets this creature","control":"you","cards":1}
 {"preamble":"Whenever you cast an Aura spell","condition":null,"event":"cast","subject":"an Aura spell","control":"you","cards":1}
-{"preamble":"Whenever you cast an Aura","condition":null,"event":"cast","subject":"an Aura, Equipment, or Vehicle spell","control":"you","cards":1}
+{"preamble":"Whenever you cast an Aura, Equipment, or Vehicle spell","condition":null,"event":"cast","subject":"an Aura, Equipment, or Vehicle spell","control":"you","cards":1}
 {"preamble":"Whenever you cast an Eldrazi spell","condition":null,"event":"cast","subject":"an Eldrazi spell","control":"you","cards":1}
 {"preamble":"Whenever you cast an Equipment spell or a spell that targets a creature you control","condition":null,"event":"cast","subject":"an Equipment spell or a spell that targets a creature you control","control":"you","cards":1}
 {"preamble":"Whenever you cast an artifact creature spell","condition":null,"event":"cast","subject":"an artifact creature spell","control":"you","cards":1}
@@ -3508,7 +3443,7 @@
 {"preamble":"Whenever you cast an artifact or creature spell","condition":null,"event":"cast","subject":"an artifact or creature spell","control":"you","cards":1}
 {"preamble":"Whenever you cast an artifact or enchantment spell","condition":null,"event":"cast","subject":"an artifact or enchantment spell","control":"you","cards":1}
 {"preamble":"Whenever you cast an artifact spell with mana value 6 or greater","condition":null,"event":"cast","subject":"an artifact spell with mana value 6 or greater","control":"you","cards":1}
-{"preamble":"Whenever you cast an artifact","condition":null,"event":"cast","subject":"an artifact, instant, or sorcery spell","control":"you","cards":1}
+{"preamble":"Whenever you cast an artifact, instant, or sorcery spell","condition":null,"event":"cast","subject":"an artifact, instant, or sorcery spell","control":"you","cards":1}
 {"preamble":"Whenever you cast an instant or sorcery spell during your turn","condition":null,"event":"cast","subject":"an instant or sorcery spell","control":"you","cards":1}
 {"preamble":"Whenever you cast an instant or sorcery spell from your hand during an opponent's turn","condition":null,"event":"cast","subject":"an instant or sorcery spell from your hand","control":"you","cards":1}
 {"preamble":"Whenever you cast an instant or sorcery spell from your hand","condition":"Taigam attacked this turn","event":"cast","subject":"an instant or sorcery spell from your hand","control":"you","cards":1}
@@ -3542,7 +3477,7 @@
 {"preamble":"Whenever you cast your first instant or sorcery spell each turn","condition":null,"event":"cast","subject":"your first instant or sorcery spell","control":"you","cards":1}
 {"preamble":"Whenever you cast your first instant or sorcery spell from your graveyard each turn","condition":null,"event":"cast","subject":"your first instant or sorcery spell from your graveyard each turn","control":"you","cards":1}
 {"preamble":"Whenever you cast your first instant spell each turn","condition":"Kalamax is tapped","event":"cast","subject":"your first instant spell each turn","control":"you","cards":1}
-{"preamble":"Whenever you cast your first instant","condition":null,"event":"cast","subject":"your first instant, sorcery, or Villain spell each turn","control":"you","cards":1}
+{"preamble":"Whenever you cast your first instant, sorcery, or Villain spell each turn","condition":null,"event":"cast","subject":"your first instant, sorcery, or Villain spell each turn","control":"you","cards":1}
 {"preamble":"Whenever you cast your first outlaw spell each turn","condition":null,"event":"cast","subject":"your first outlaw spell each turn","control":"you","cards":1}
 {"preamble":"Whenever you cast your first spell during each of your turns","condition":null,"event":"cast","subject":"your first spell","control":"you","cards":1}
 {"preamble":"Whenever you cast your first spell each turn","condition":null,"event":"cast","subject":"your first spell","control":"you","cards":1}
@@ -3568,7 +3503,7 @@
 {"preamble":"Whenever you cycle this card or cycle another card while this enchantment is on the battlefield","condition":null,"event":"cycled","subject":"this card","control":"you","cards":1}
 {"preamble":"Whenever you discard a Spirit card or a card with disturb","condition":null,"event":"discarded","subject":"a Spirit card or a card with disturb","control":"you","cards":1}
 {"preamble":"Whenever you discard a card","condition":"it has madness","event":"discarded","subject":"a card","control":"you","cards":1}
-{"preamble":"Whenever you discard an Island","condition":null,"event":"discarded","subject":"an Island, Pirate, or Vehicle card","control":"you","cards":1}
+{"preamble":"Whenever you discard an Island, Pirate, or Vehicle card","condition":null,"event":"discarded","subject":"an Island, Pirate, or Vehicle card","control":"you","cards":1}
 {"preamble":"Whenever you discard one or more cards for the first time each turn","condition":null,"event":"discarded","subject":"one or more cards","control":"you","cards":1}
 {"preamble":"Whenever you discard one or more land cards","condition":null,"event":"discarded","subject":"one or more land cards","control":"you","cards":1}
 {"preamble":"Whenever you discard one or more nonland cards for the first time each turn","condition":null,"event":"discarded","subject":"one or more nonland cards","control":"you","cards":1}
@@ -3592,6 +3527,7 @@
 {"preamble":"Whenever you gain life for the first time during each of your turns","condition":null,"event":"life-gained","subject":"you","control":"you","cards":1}
 {"preamble":"Whenever you gain life for the first time each turn","condition":null,"event":"life-gained","subject":"you for the first time each turn","control":"you","cards":1}
 {"preamble":"Whenever you gain life this turn","condition":null,"event":"life-gained","subject":"you","control":"you","cards":1}
+{"preamble":"Whenever you gain life, each Advisor, Artificer, and Monk you control gains vigilance and gets +X/+0 until end of turn","condition":null,"event":"life-gained","subject":"you","control":"you","cards":1}
 {"preamble":"Whenever you get one or more {E} during your turn","condition":null,"event":"other","subject":"you get one or more energy counters during your turn","control":"you","cards":1}
 {"preamble":"Whenever you get one or more {E}","condition":null,"event":"counter-added","subject":"energy","control":"you","cards":1}
 {"preamble":"Whenever you give a gift","condition":null,"event":"give-gift","subject":"you","control":"you","cards":1}
@@ -3631,7 +3567,7 @@
 {"preamble":"Whenever you put one or more -1/-1 counters on a creature","condition":null,"event":"counter-added","subject":"a creature with -1/-1 counters","control":"you","cards":1}
 {"preamble":"Whenever you put one or more -1/-1 counters on a creature","condition":null,"event":"counter-added","subject":"a creature","control":"you","cards":1}
 {"preamble":"Whenever you put one or more -1/-1 counters on this creature","condition":null,"event":"counter-added","subject":"this creature","control":"you","cards":1}
-{"preamble":"Whenever you put one or more counters on a Goblin","condition":null,"event":"counter-added","subject":"a Goblin, Orc, or Army you control","control":"you","cards":1}
+{"preamble":"Whenever you put one or more counters on a Goblin, Orc, or Army you control","condition":null,"event":"counter-added","subject":"a Goblin, Orc, or Army you control","control":"you","cards":1}
 {"preamble":"Whenever you put one or more counters on a creature","condition":null,"event":"counter-added","subject":"a creature","control":"you","cards":1}
 {"preamble":"Whenever you put one or more counters on a permanent or player","condition":null,"event":"counter-added","subject":"a permanent or player","control":"you","cards":1}
 {"preamble":"Whenever you put one or more counters on another creature","condition":"it's not a Kree","event":"counter-added","subject":"another creature","control":"you","cards":1}
@@ -3695,7 +3631,7 @@
 {"preamble":"Whenever you turn a permanent face up","condition":null,"event":"turned-face-up","subject":"a permanent","control":"you","cards":1}
 {"preamble":"Whenever you untap one or more permanents during your untap step","condition":null,"event":"untap-step","subject":"one or more permanents","control":"you","cards":1}
 {"preamble":"Whenever you visit an Attraction","condition":null,"event":"other","subject":"you visit an Attraction","control":"you","cards":1}
-{"preamble":"Whenever you waterbend","condition":null,"event":"other","subject":"you waterbend, earthbend, firebend, or airbend","control":"you","cards":1}
+{"preamble":"Whenever you waterbend, earthbend, firebend, or airbend","condition":null,"event":"other","subject":"you waterbend, earthbend, firebend, or airbend","control":"you","cards":1}
 {"preamble":"Whenever you win a clash","condition":null,"event":"clash","subject":"you","control":"you","cards":1}
 {"preamble":"Whenever you're dealt combat damage","condition":null,"event":"damage-dealt","subject":"you","control":"opponent","cards":1}
 {"preamble":"Whenever your commander attacks","condition":null,"event":"attacks","subject":"your commander","control":"you","cards":1}
@@ -3712,6 +3648,8 @@
 {"preamble":"Whenever ~ attack","condition":"it's the first combat phase of the turn","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks a player who has more life than you","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks a player","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks an opponent","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks or blocks","condition":null,"event":"attacks","subject":"Ashcoat","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks or blocks","condition":null,"event":"blocks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks or dies","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks while saddled","condition":null,"event":"attacks","subject":"this","control":"you","cards":1}
@@ -3721,18 +3659,27 @@
 {"preamble":"Whenever ~ attacks","condition":"an Assassin crewed it this turn","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"an artifact entered the battlefield under your control this turn","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"he's equipped","event":"attacks","subject":"this","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks","condition":"it's enchanted","event":"attacks","subject":"Krond","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"it's equipped","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"it's modified","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"there are seven or more cards in your graveyard","event":"attacks","subject":"this","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"there are seven or more cards in your graveyard","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"two or more nonland permanents entered the battlefield under your control this turn","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"you attacked with creatures with total power 6 or greater this combat","event":"attacks","subject":"~","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks","condition":"you control a creature with the greatest power among creatures on the battlefield","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"you control another artifact creature","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"you control three or more Dragons","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"you control three or more creatures with different powers","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"you gained 3 or more life this turn","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"you have the initiative","event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":"you've cast a spell with mana value 4 or greater this turn","event":"attacks","subject":"~","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks","condition":null,"event":"attacks","subject":"Acererak","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks","condition":null,"event":"attacks","subject":"Dáin","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks","condition":null,"event":"attacks","subject":"Edgar","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks","condition":null,"event":"attacks","subject":"Hakbal","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks","condition":null,"event":"attacks","subject":"Rakdos","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks","condition":null,"event":"attacks","subject":"Svyelun","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks","condition":null,"event":"attacks","subject":"Thrakkus","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks","condition":null,"event":"exiled","subject":"one or more other cards from anywhere","control":"any","cards":1}
 {"preamble":"Whenever ~ become tapped","condition":null,"event":"taps","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ become untapped","condition":null,"event":"untaps","subject":"~","control":"you","cards":1}
@@ -3742,16 +3689,30 @@
 {"preamble":"Whenever ~ becomes untapped during your untap step","condition":null,"event":"untaps","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ becomes untapped","condition":null,"event":"untaps","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ blocks a creature","condition":null,"event":"blocks","subject":"~","control":"you","cards":1}
+{"preamble":"Whenever ~ blocks one or more black creatures","condition":null,"event":"blocks","subject":"one or more black creatures","control":"any","cards":1}
 {"preamble":"Whenever ~ blocks or becomes blocked","condition":null,"event":"blocks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ deals 4 or more damage","condition":null,"event":"damage-dealt","subject":"~","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a creature","condition":null,"event":"damage-dealt","subject":"Mirri","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a creature","condition":null,"event":"damage-dealt","subject":"this","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player for the first time each turn","condition":null,"event":"damage-dealt","subject":"combat damage to a player","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":"a source would deal damage to that player or a permanent that player controls","event":"damage-dealt","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":"it doesn't have an indestructible counter on it","event":"damage-dealt","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":"that player attacked you during their last turn","event":"damage-dealt","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":"there is no monarch","event":"damage-dealt","subject":"~","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Daxos","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Ezio","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Gimli","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Isperia","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Krydle","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Legolas","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Medomai","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Rakdos","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Virtus","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"this","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"~ deals combat damage to a player","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"leaves","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to an opponent","condition":null,"event":"damage-dealt","subject":"combat damage dealt by ~ to an opponent","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage","condition":null,"event":"damage-dealt","subject":"Aisha","control":"you","cards":1}
 {"preamble":"Whenever ~ deals damage to a Spider","condition":null,"event":"damage-dealt","subject":"a Spider","control":"you","cards":1}
 {"preamble":"Whenever ~ deals damage to a creature","condition":"that creature was dealt excess damage this turn","event":"damage-dealt","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ deals damage to a creature","condition":null,"event":"damage-dealt","subject":"~","control":"you","cards":1}
@@ -3759,11 +3720,15 @@
 {"preamble":"Whenever ~ deals damage","condition":"you have seven or more cards in hand","event":"damage-dealt","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ deals damage","condition":null,"event":"damage-dealt","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ enter or attack","condition":null,"event":"other","subject":"~ enters or attacks","control":"you","cards":1}
+{"preamble":"Whenever ~ enters or a planeswalker you control dies","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ enters or another nontoken Human you control dies","condition":null,"event":"dies","subject":"another nontoken Human you control","control":"you","cards":1}
 {"preamble":"Whenever ~ enters or another nontoken Human you control dies","condition":null,"event":"enters","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ enters or attacks","condition":"you control an artifact and an enchantment","event":"enters","subject":"~","control":"you","cards":1}
+{"preamble":"Whenever ~ enters or attacks","condition":null,"event":"enters","subject":"Ureni","control":"you","cards":1}
+{"preamble":"Whenever ~ enters or attacks","condition":null,"event":"other","subject":"~ enters or attacks","control":"you","cards":1}
 {"preamble":"Whenever ~ is dealt damage for the first time each turn","condition":null,"event":"damage-dealt","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ is dealt damage","condition":null,"event":"damaged","subject":"~","control":"any","cards":1}
+{"preamble":"Whenever ~ is dealt noncombat damage","condition":null,"event":"damage-dealt","subject":"~","control":"any","cards":1}
 {"preamble":"Whenever ~ or a creature it's paired with is dealt damage","condition":null,"event":"damage-dealt","subject":"~ or a creature it's paired with","control":"any","cards":1}
 {"preamble":"Whenever ~ or an enchanted creature you control deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"~ or an enchanted creature you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or an instant or sorcery spell you control deals damage to a player","condition":null,"event":"damage-dealt","subject":"~ or an instant or sorcery spell you control","control":"you","cards":1}
@@ -3779,6 +3744,7 @@
 {"preamble":"Whenever ~ or another Elf you control enters","condition":null,"event":"enters","subject":"~ or another Elf you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another Equipment you control enters","condition":null,"event":"enters","subject":"~ or another Equipment you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another Goblin you control dies","condition":null,"event":"dies","subject":"~ or another Goblin you control","control":"you","cards":1}
+{"preamble":"Whenever ~ or another Human you control enters","condition":null,"event":"enters","subject":"Beregond or another Human you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another Mutant you control enters","condition":null,"event":"enters","subject":"~ or another Mutant you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another Nightmare or Horror you control enters","condition":null,"event":"enters","subject":"~ or another Nightmare or Horror you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another Rat you control enters","condition":null,"event":"enters","subject":"~ or another Rat you control","control":"you","cards":1}
@@ -3798,6 +3764,7 @@
 {"preamble":"Whenever ~ or another creature you control dies","condition":null,"event":"dies","subject":"~ or another creature you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another creature you control enters","condition":"it entered from your graveyard or you cast it from your graveyard","event":"enters","subject":"~ or another creature you control from your graveyard or cast from your graveyard","control":"you","cards":1}
 {"preamble":"Whenever ~ or another creature you control enters","condition":"you cast it from anywhere other than your hand","event":"enters","subject":"~ or another creature you control from anywhere other than your hand","control":"you","cards":1}
+{"preamble":"Whenever ~ or another creature you control leaves the battlefield","condition":null,"event":"leaves","subject":"Vela or another creature you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another creature you control with flash or haste dies","condition":null,"event":"dies","subject":"~ or another creature you control with flash or haste","control":"you","cards":1}
 {"preamble":"Whenever ~ or another creature you control with power 3 or less enters","condition":null,"event":"enters","subject":"~ or another creature you control with power 3 or less","control":"you","cards":1}
 {"preamble":"Whenever ~ or another double-faced artifact you control enters","condition":null,"event":"enters","subject":"~ or another double-faced artifact","control":"you","cards":1}
@@ -3805,16 +3772,15 @@
 {"preamble":"Whenever ~ or another legendary creature you control dies","condition":null,"event":"dies","subject":"~ or another legendary creature you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another legendary creature you control enters","condition":null,"event":"enters","subject":"~ or another legendary creature","control":"you","cards":1}
 {"preamble":"Whenever ~ or another nontoken Cat you control enters","condition":null,"event":"enters","subject":"~ or another nontoken Cat","control":"you","cards":1}
+{"preamble":"Whenever ~ or another nontoken Dwarf you control enters","condition":null,"event":"enters","subject":"Fíli or another nontoken Dwarf you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another nontoken Hydra you control dies","condition":null,"event":"dies","subject":"~ or another nontoken Hydra you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another nontoken Minotaur you control enters","condition":null,"event":"enters","subject":"~ or another nontoken Minotaur you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another nontoken Shrine you control enters","condition":null,"event":"enters","subject":"~ or another nontoken Shrine you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another nontoken Spirit you control dies or deals combat damage to a player","condition":null,"event":"dies","subject":"~ or another nontoken Spirit you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another nontoken Zombie or Mutant you control dies","condition":null,"event":"dies","subject":"~ or another nontoken Zombie or Mutant you control","control":"you","cards":1}
+{"preamble":"Whenever ~ or another nontoken creature dies","condition":null,"event":"dies","subject":"~ or another nontoken creature","control":"you","cards":1}
+{"preamble":"Whenever ~ or another nontoken creature you control enters","condition":null,"event":"enters","subject":"Radagast or another nontoken creature you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another nontoken creature you control enters","condition":null,"event":"enters","subject":"~ or another nontoken creature you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another nontoken creature you control with power 2 or less enters","condition":null,"event":"enters","subject":"~ or another nontoken creature you control with power 2 or less","control":"you","cards":1}
 {"preamble":"Whenever ~ or another nontoken historic permanent you control enters","condition":null,"event":"enters","subject":"~ or another nontoken historic permanent you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another snow permanent you control enters","condition":null,"event":"enters","subject":"~ or another snow permanent","control":"you","cards":1}
-{"preamble":"Whenever ~","condition":null,"event":"damage-dealt","subject":"~","control":"you","cards":1}
-{"preamble":"Whenever ~","condition":null,"event":"dies","subject":"~ or another nontoken creature","control":"you","cards":1}
-{"preamble":"Whenever ~","condition":null,"event":"other","subject":"~ enters or attacks","control":"you","cards":1}
-{"preamble":"Whenever Éomer attacks","condition":"you control a creature with the greatest power among creatures on the battlefield","event":"attacks","subject":"~","control":"you","cards":1}

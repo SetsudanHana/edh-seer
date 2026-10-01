@@ -17,6 +17,8 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
+  "509.1a": "grammar/trigger.test.ts — only a creature blocks, so 'becomes blocked by a creature' narrows nothing (#896 task 5)",
+  "702.6a": "grammar/trigger.test.ts — equip attaches to a creature you control, so an Equipment's host is yours (#896 task 5)",
   "110.2": "scaling.test.ts — a permanent's owner and controller differ: Zedruu counts permanents you own that your opponents control",
   "105.2a": "grammar/filter.test.ts — 'monocolored' is exactly one colour (`colorCount: mono`, #896)",
   "105.2b": "grammar/filter.test.ts — 'multicolored' is two or more colours (`colorCount: multi`, #896)",
