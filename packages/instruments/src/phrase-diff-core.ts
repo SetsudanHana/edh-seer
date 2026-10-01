@@ -124,7 +124,7 @@ const EFFECT_OBJECT = /\bin addition to (?:its|their) other\b|(?<!chosen )\b(?:c
 /** A row of a die-roll table: "10—19", "1—9 | ...". */
 const TABLE_ROW = /^\d+\s*[—–-]\s*\d+/;
 /** Game pieces a verb acts on, not cards: "flip a coin", "roll a d20", "put a sticker on it". */
-const GAME_PIECE = /^(?:a|an|one or more|one|two|three|four|five|six|\d+|x)?\s*(?:coins?|d\d+|(?:four|six|twenty)-sided (?:die|dice)|dice|die|(?:name |art |ability )?stickers?|emblems?\b|dungeons?|(?:an )?attractions?|piles?\b|booster packs?)\b/;
+const GAME_PIECE = /^(?:a|an|one or more|one|two|three|four|five|six|\d+|x|up to \w+)?\s*(?:coins?|d\d+|(?:four|six|twenty)-sided (?:die|dice)|dice|die|(?:name |art |ability )?stickers?|emblems?\b|dungeons?|(?:an )?attractions?|piles?\b|booster packs?)\b/;
 /** A FRAGMENT that names nothing on its own: "your", "any", "each", "both creatures" is a count. */
 const FRAGMENT = /^(?:your|their|its|any|each|one|the rest|all|this|that|both|either)$/;
 /** A BARE CARD NAME ("Acererak", "Arachnus Web", "Xantcha's power"): a specific other card, which a
@@ -190,6 +190,12 @@ export function domainOf(phrase: string): string {
   // "each kind of counter", "a third of their life".
   if (/^each (?:kind of )?counter\b|^each kind of counter\b/.test(text)) return "counter";
   if (/^(?:a third|half|a quarter) of\b/.test(text)) return "amount";
+  // A count or an arithmetic amount: "for each land you control", "X plus 3", "any amount".
+  if (/^for each\b|^x (?:plus|minus|of|if|\{)|^any amount\b|^one energy\b/.test(text)) return "amount";
+  // Objects chosen or named earlier: "both creatures", "each of the chosen creatures".
+  if (/^both (?:creatures|cards)\b|^each of (?:the chosen|its controller's)\b/.test(text)) return "reference";
+  if (/^your starting deck\b|^each time vote\b|^for a player\b/.test(text)) return "clause";
+  if (/^each (?:\w+ )?counter on\b|^any number of counters\b/.test(text)) return "counter";
   // A stat of a named object: "target creature's power and toughness" -- an amount.
   if (/'s (?:power|toughness|mana value|loyalty)(?: and toughness)?$/.test(text) && !/\b(?:with|where|than|equal|to)\b/.test(text)) return "amount";
   // Objects named by an earlier action: "searched cards", "revealed cards", "the copies".

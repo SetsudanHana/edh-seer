@@ -391,6 +391,12 @@ function nominalWord(c: Cursor, r: Reading): boolean | null {
     if (neg) { if (!r.notTypes.includes(neg)) r.notTypes.push(neg); if (rest !== neg) r.plural = true; c.i++; return true; }
     const sub = singulars(rest).find((s) => SUBTYPES.has(s));
     if (sub) { if (!r.notSubtypes.includes(sub)) r.notSubtypes.push(sub); c.i++; return true; }
+    // "each non-Bolas planeswalker": a negated planeswalker subtype, before "planeswalker".
+    if (SUBTYPE_TYPES[rest]?.includes("planeswalker") && (c.peek(1) === "planeswalker" || c.peek(1) === "planeswalkers")) {
+      if (!r.notSubtypes.includes(rest)) r.notSubtypes.push(rest); c.i++; return true;
+    }
+    // "each noncommander creature": every one but the commanders.
+    if (rest === "commander") { (r.except ??= []).push({ commander: true }); c.i++; return true; }
     if (COLOR_WORDS[rest]) { if (!r.notColors.includes(COLOR_WORDS[rest]!)) r.notColors.push(COLOR_WORDS[rest]!); g.adj.push(w); c.i++; return true; }
     if (rest === "basic") { r.basic = false; g.adj.push(w); c.i++; return true; }
     if (rest === "legendary") { r.legendary = false; g.adj.push(w); c.i++; return true; }
@@ -1083,11 +1089,12 @@ function post(c: Cursor, r: Reading): boolean | null {
       // Read off the end first, so the original is parsed without them. An exception that sets new
       // characteristics ("except it's a 1/1 green Frog") is refused.
       const ex = c.t.findIndex((w, k) => k >= c.i && w === "," && c.t[k + 1] === "except");
-      let exception: { legendary?: false; keywords: string[] } | undefined;
+      let exception: { legendary?: boolean; keywords: string[] } | undefined;
       if (ex >= 0) {
         const e = new Cursor(c.t.slice(ex + 2), c.spellNoun);
         exception = { keywords: [] };
         do {
+          if (e.eat("it's", "legendary")) { exception.legendary = true; continue; }
           if (!(e.eat("it") || e.eat("the", "token"))) return null;
           if (e.eat("isn't", "legendary") || e.eat("is", "not", "legendary")) exception.legendary = false;
           else if (e.eat("has")) { const ks = keywordList(e); if (!ks) return null; exception.keywords.push(...ks); }
@@ -1117,7 +1124,7 @@ function post(c: Cursor, r: Reading): boolean | null {
         // The name is copiable too.
         named: x.named, notNamed: x.notNamed,
       });
-      if (exception?.legendary === false) r.legendary = false;
+      if (exception?.legendary !== undefined) r.legendary = exception.legendary;
       if (exception) r.keywords.push(...exception.keywords);
       return true;
     }
@@ -1423,7 +1430,7 @@ export function parse(text: string): SubjectFilter | null {
     const last = toks.at(-1);
     if ((last === "controller" || last === "owner") && toks.length >= 3 && /'s$/.test(toks.at(-2)!)) {
       const obj = [...toks.slice(0, -2), toks.at(-2)!.replace(/'s$/, "")];
-      if (obj[0] === "target" && parse(obj.join(" "))) return { control: "any", token: null };
+      if ((obj[0] === "target" || obj[0] === "each") && parse(obj.join(" "))) return { control: "any", token: null, ...(obj[0] === "each" ? { scope: "each" as const } : {}) };
     }
   }
   // "Marit Lage, a legendary 20/20 black Avatar creature token with flying": the token's own name, then

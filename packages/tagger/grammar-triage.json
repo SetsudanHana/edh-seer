@@ -1,6 +1,6 @@
 {
   "_what": "H3 for the filter grammar (#896 task 2): every group of phrases on which packages/tagger/src/grammar/filter.ts and parseSubject disagree, grouped by the SubjectFilter fields that differ, over packages/tagger/phrases.jsonl. Each group is labelled after reading EVERY member, not a sample. 'grammar right' cites the rule or the printed text; 'grammar wrong' must be fixed before task 3 switches derive over; 'both wrong' says what neither reads. phrase-diff-triage.test.ts fails when a group appears, disappears or changes size, and when the parsed count moves, so a change to either parser is re-triaged and banked here.",
-  "parsed": 6228,
+  "parsed": 6233,
   "groups": {
     "control": {
       "distinct": 79,
@@ -63,7 +63,7 @@
       "why": "'all creatures and Vehicles', 'an Aura, creature, or planeswalker card', 'target Spirit, instant, or sorcery card': a type on one side and a subtype on the other is an OR across slots. parseSubject's crossSlotOr splits on 'or' only, so 'and' lists and comma lists whose first piece holds both a type and a subtype were read as type AND subtype -- a Vehicle that must also be a creature."
     },
     "type": {
-      "distinct": 25,
+      "distinct": 26,
       "label": "grammar right",
       "rule": "printed text",
       "why": "'an instant or sorcery spell that targets only this creature': the type is the spell's; 'creature' is what it targets. Refused (restricted) either way, so no claim moves."
@@ -123,7 +123,7 @@
       "why": "'target spell that targets only a single permanent or player': the target is a spell. Refused (restricted) either way."
     },
     "control,scope": {
-      "distinct": 40,
+      "distinct": 41,
       "label": "grammar right",
       "rule": "CR 707.2, CR 111.2",
       "why": "'a token that's a copy of target creature you control': control and target belong to the ORIGINAL. The token copies only copiable values (CR 707.2) and is its creator's (CR 111.2); parseSubject read 'you control' and 'target' as the token's. The copiable values the original states (a chosen type, a keyword) are kept, so 'each creature you control of the chosen type' and '... with haste' land here too."
@@ -573,7 +573,7 @@
       "why": "Every member read. notColors: negated colours; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did."
     },
     "notSubtype": {
-      "distinct": 1,
+      "distinct": 2,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. notSubtype: a negated subtype inside a token's quoted ability is not the token's."
@@ -1417,6 +1417,12 @@
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. notKeyword: 'without flying' binds its own noun phrase."
+    },
+    "except": {
+      "distinct": 2,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "Every member read. except: 'except for Merfolk, Krakens ...', 'except for tokens you control'."
     }
   }
 }
