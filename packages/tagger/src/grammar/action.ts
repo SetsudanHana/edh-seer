@@ -218,6 +218,13 @@ const COUNTERS: Record<string, [string, Handler]> = {
     return c ? { object: parse("you")!, counter: c.counter, amount: c.amount ?? "1" } : null;
   }],
   put: ["add-counter", (rest) => {
+    // "a +1/+1 counter on target creature, two +1/+1 counters on another target creature, and three
+    // +1/+1 counters on a third target creature": one placement per recipient.
+    const parts = rest.split(/,? and (?=(?:a|an|one|two|three|four|five|\d+) [^,]*?counters? on )|, (?=(?:a|an|one|two|three|four|five|\d+) [^,]*?counters? on )/);
+    if (parts.length > 1 && parts.every((p) => / on /.test(p))) {
+      const each = parts.map((p) => COUNTERS.put![1](p));
+      return each.every((e) => e) ? each.flatMap((e) => [e!].flat()) : null;
+    }
     const m = /^(.+? counters?) on (.+?)(?: for each (.+))?$/.exec(rest);
     const cs = m ? counterList(m[1]!) : null;
     const on = m ? objectOf(m[2]!.replace(/^each of /, "")) : null;
@@ -286,7 +293,11 @@ function timesOf(rest: string): string | null {
 }
 
 const TOKENS: Record<string, [string, Handler]> = {
-  create: ["create", tokenList],
+  create: ["create", (rest) => {
+    const r = tokenList(rest);
+    // "create a tapped Powerstone token": the tap on what was made.
+    return r && /^(?:a|an|two|three|x|that many|\w+) tapped /i.test(rest) ? [...[r].flat(), TAPPED] : r;
+  }],
   investigate: ["investigate", (rest) => (timesOf(rest) ? { amount: timesOf(rest)! } : null)],
   populate: ["populate", (rest) => (rest === "" ? {} : null)],
   // "incubate 2", "amass Orcs 2": the number is the amount, an amass's type the object (as stored).
@@ -359,10 +370,12 @@ function destinationOf(words: string): string | undefined {
 
 /** "exile it with three time counters on it": the move, then the counters on what moved. */
 function withCounters(rest: string, move: (rest: string) => Args | Args[] | null): Args[] | Args | null {
-  const at = rest.search(/ with (?:a|an|one|two|three|four|five|x|\d+) [^ ]+ counters? on (?:it|them)$/);
-  if (at < 0) return move(rest);
+  // "with an additional +1/+1 counter on it", "with a hexproof counter and an indestructible counter
+  // on it": cut by index (CodeQL polynomial-redos).
+  const at = rest.search(/ with (?:a|an|one|two|three|four|five|x|\d+) /);
+  if (at < 0 || !/ counters? on (?:it|them)$/.test(rest)) return move(rest);
   const r = move(rest.slice(0, at));
-  const c = counterList(rest.slice(at + " with ".length).replace(/ on (?:it|them)$/, ""));
+  const c = counterList(rest.slice(at + " with ".length).replace(/ on (?:it|them)$/, "").replace(/\b(an?|one|two|three) additional /g, "$1 "));
   return r && c ? [...[r].flat(), ...c.map((k) => ({ verb: "add-counter", object: { control: "any" as const, token: null, ref: "sentence" as const }, counter: k.counter, amount: k.amount ?? "1" }))] : null;
 }
 
@@ -383,7 +396,8 @@ const ZONE: Record<string, [string, Handler]> = {
     if (at < 0) return null;
     const to = destinationOf(rest.slice(at + 1));
     const r = moveObject(rest.slice(0, at), true);
-    return r && to ? { ...r, toZone: to } : null;
+    // "onto the battlefield tapped": the store writes the tapping as its own action on what moved.
+    return r && to ? (/ tapped\b/.test(rest.slice(at)) ? [{ ...r, toZone: to }, TAPPED] : { ...r, toZone: to }) : null;
   })],
   put: ["put", (all): Args | Args[] | null => withCounters(all, (rest) => {
     // "put them back in any order", "put one of those cards back on top of your library".
@@ -400,7 +414,8 @@ const ZONE: Record<string, [string, Handler]> = {
     if (at < 0) return null;
     const to = destinationOf(rest.slice(at + 1));
     const r = moveObject(rest.slice(0, at), true);
-    return r && to ? { ...r, toZone: to } : null;
+    // "onto the battlefield tapped": the store writes the tapping as its own action on what moved.
+    return r && to ? (/ tapped\b/.test(rest.slice(at)) ? [{ ...r, toZone: to }, TAPPED] : { ...r, toZone: to }) : null;
   })],
   shuffle: ["shuffle", (rest) => {
     if (rest === "" || /^(?:your|their) library$/.test(rest)) return { object: parse("you")!, text: rest === "" ? "your library" : rest };
@@ -424,6 +439,11 @@ const MANA_TAP: Record<string, [string, Handler]> = {
     if (!MANA.test(mana)) return null;
     return { object: { control: "any", token: null }, text: mana, ...(each >= 0 ? { amount: rest.slice(each + 1) } : {}) };
   }],
+  // "tap or untap target permanent": either, so both.
+  "tap or untap": ["tap", (rest) => {
+    const r = thing(rest);
+    return r && [r, { ...r, verb: "untap" }];
+  }],
   tap: ["tap", (rest) => {
     const r = objectOf(rest);
     return r && { object: r.object, ...(r.object.ref || r.object.self ? {} : { text: rest }) };
@@ -433,6 +453,10 @@ const MANA_TAP: Record<string, [string, Handler]> = {
     return r && { object: r.object, ...(r.object.ref || r.object.self ? {} : { text: rest }) };
   }],
 };
+
+/** The tap a move or a creation carries ("onto the battlefield tapped", "a tapped Treasure token"),
+ *  on a back-reference so it keeps the stored object. */
+const TAPPED: Args = { verb: "tap", object: { control: "any", token: null, ref: "sentence" } };
 
 /** A thing-object verb's object: a class, the card itself, or a back-reference (kept as stored). */
 function thing(rest: string): Args | null {
@@ -495,19 +519,45 @@ function subjectAction(t: string): ActionReading[] | null {
   return [{ verb, object: who.object, ...self, ...(kw[3] ? { amount: kw[3] } : {}), ...opt }];
 }
 
+const THEY = /^(?:they|it|he|she|that creature|those creatures|that permanent)$/i;
+const REF: SubjectFilter = { control: "any", token: null, ref: "sentence" };
+
 /** "<subject> enters tapped [unless ...]": tapped as it arrives, the store's `tap` on the card.
  *  "<subject> can't block", "doesn't untap during ...", "attacks each combat if able": a
  *  restriction, the store's `cant` with the restricted thing as its object. */
 function restrictionOf(t: string): ActionReading[] | null {
-  const tapped = /^(.+?) enters(?: the battlefield)? tapped(?: (unless .+|if .+))?$/i.exec(t);
+  const tapped = /^(.+?) enters?(?: the battlefield)? tapped(?: (unless .+|if .+))?$/i.exec(t);
   if (tapped) {
     const who = objectOf(tapped[1]!);
-    return who ? [{ verb: "tap", object: who.object, ...(tapped[2] ? { condition: tapped[2] } : {}) }] : null;
+    return who ? [{ verb: "tap", object: who.object, ...(who.object.self || who.object.ref ? {} : { text: tapped[1]! }), ...(tapped[2] ? { condition: tapped[2] } : {}) }] : null;
+  }
+  // "~ isn't a creature": the store's "be a creature".
+  const isnt = /^(.+?) isn't a creature$/i.exec(t);
+  if (isnt && objectOf(isnt[1]!)) return [{ verb: "cant", object: objectOf(isnt[1]!)!.object, text: "be a creature" }];
+  // "<subject> loses flying", "loses hexproof and indestructible", "loses all abilities": the store's
+  // `cant` per ability lost, "have abilities" for all of them.
+  const loses = /^(.+?) loses? (.+?)$/i.exec(t.replace(DURATION, ""));
+  if (loses && !/\blife\b|\bgame\b/i.test(loses[2]!)) {
+    const who = objectOf(loses[1]!) ?? (THEY.test(loses[1]!) ? { object: REF } : null);
+    if (who) {
+      if (/^all abilities$/i.test(loses[2]!)) return [{ verb: "cant", object: who.object, text: "have abilities" }];
+      const lost = abilitiesOf(loses[2]!);
+      if (lost) return lost.map((a) => ({ verb: "cant", object: who.object, text: a }));
+    }
   }
   const m = /^(.+?) (can't|cannot|doesn't|don't|attacks each combat if able|attack each combat if able|blocks each combat if able|can block only) ?(.*)$/i.exec(t);
   if (!m) return null;
-  const who = objectOf(m[1]!) ?? (/^(?:you|your opponents|each opponent|players)$/i.test(m[1]!) ? { object: parse(m[1]!.toLowerCase().startsWith("you") ? "you" : "an opponent") ?? { control: "any" as const, token: null } } : null);
+  const who = objectOf(m[1]!) ?? (THEY.test(m[1]!) ? { object: REF } : null) ?? (/^(?:you|your opponents|each opponent|players)$/i.test(m[1]!) ? { object: parse(m[1]!.toLowerCase().startsWith("you") ? "you" : "an opponent") ?? { control: "any" as const, token: null } } : null);
   if (!who) return null;
+  // "can't block and can't be blocked", "can't attack or block, and its activated abilities can't be
+  // activated": one restriction each.
+  if (/^can't$/i.test(m[2]!)) {
+    const parts = m[3]!.split(/,? and (?:can't |(?=its activated abilities can't be activated))/i);
+    if (parts.length > 1) {
+      const texts = parts.map((p) => (/^its activated abilities can't be activated$/i.test(p) ? "activate activated abilities" : p));
+      if (texts.every((x) => x !== "" && !/can't/.test(x))) return texts.map((x) => ({ verb: "cant", object: who.object, text: x }));
+    }
+  }
   const word = m[2]!.toLowerCase();
   const what = /each combat if able/.test(word) ? `not ${word.replace(/s each/, " each")}${m[3] ? ` ${m[3]}` : ""}`
     : word === "can block only" ? `block ${m[3]!.replace(/^creatures with /, "creatures without ")}`
@@ -543,7 +593,7 @@ const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new Reg
 
 /** Every verb word a phrase can open with, for splitting -- wider than the handled ones, so a joint
  *  before an unhandled verb ("..., then shuffle") still splits. */
-const ANY_VERB = /^(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture)\b/i;
+const ANY_VERB = /^(?:(?:it|that creature|those creatures|they) (?:doesn't|don't|can't) |(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture))\b/i;
 
 /** Split a sentence into phrases on ", then ", " and then ", ", and ", " and ", ", " -- only where a
  *  verb follows, so "a creature and a land" stays whole. */
@@ -616,12 +666,15 @@ function pumpOrGrant(t: string): ActionReading[] | null {
   if (lead) { if (!/^until end of turn/i.test(lead[0])) condition = lead[0].slice(0, -2); body = body.slice(lead[0].length); }
   const trail = body.search(/ (?:as long as|for as long as|if) /i);
   if (trail > 0) { condition = [condition, body.slice(trail + 1)].filter(Boolean).join(", "); body = body.slice(0, trail).replace(DURATION, ""); }
+  // "you may have target creature get -1/-1": made to, and optional.
+  const have = /^you (may )?have (?=.+ (?:get|gain|have|become) )/i.exec(body);
+  if (have) body = body.slice(have[0].length);
   let subject: string | undefined, verb: string | undefined, rest = "";
-  const m = /^(gets?|gains?|has|have) /i.exec(body);
+  const m = /^(gets?|gains?|has|have|becomes?) /i.exec(body);
   if (m && lastSubject !== undefined) { subject = lastSubject; verb = m[1]!.toLowerCase(); rest = body.slice(m[0].length); }
   else {
-    for (const v of body.matchAll(/ (gets?|gains?|has|have) /gi)) {
-      const who = body.slice(0, v.index);
+    for (const v of body.matchAll(/ (gets?|gains?|has|have|is|are|becomes?) /gi)) {
+      const who = body.slice(0, v.index).replace(/ each$/i, "");
       if (who.length > 80 || !(who === "you" || objectOf(who) || /^(?:they|they each|he|she|that token|those tokens|those creatures|each of those creatures)$/i.test(who))) continue;
       subject = who; verb = v[1]!.toLowerCase(); rest = body.slice(v.index + v[0].length); break;
     }
@@ -633,22 +686,53 @@ function pumpOrGrant(t: string): ActionReading[] | null {
   const isRef = who.object.ref === "sentence";
   const target = { object: who.object, ...(isRef ? {} : { text: subject }) };
   const out: ActionReading[] = [];
-  let grants = rest;
-  if (/^gets?$/.test(verb)) {
-    const and = rest.search(/ and (?:gains?|has) /);
-    const pt = (and >= 0 ? rest.slice(0, and) : rest).replace(DURATION, "");
+  // A PREDICATE LIST: "gets +2/+2, has trample and haste, and is a Samurai in addition to its other
+  // types". Every predicate must read, or the phrase is not read.
+  for (const pred of `${verb} ${rest}`.split(/,? and (?=(?:gets?|has|have|gains?|is|are|can't|attacks|becomes?) )|, (?=(?:gets?|has|have|gains?|is|are|can't|attacks|becomes?) )/i)) {
+    const r = predicateOf(pred.replace(DURATION, "").trim(), who.object, target);
+    if (!r) return null;
+    out.push(...r);
+  }
+  lastSubject = subject;
+  return withCondition(have?.[1] ? out.map((a) => ({ ...a, optional: true as const })) : out, condition);
+}
+
+/** One predicate of a pump or grant: a P/T change, a set base P/T, abilities, a type or a goad. */
+function predicateOf(pred: string, object: SubjectFilter, target: { object: SubjectFilter; text?: string }): ActionReading[] | null {
+  const get = /^gets? (.+)$/i.exec(pred);
+  if (get) {
+    const pt = get[1]!;
     const each = pt.indexOf(" for each ");
     const n = PT.exec(each >= 0 ? pt.slice(0, each) : pt);
-    if (!n) return null;
-    out.push({ verb: "modify-pt", ...target, amount: `${n[1]}/${n[2]}${each >= 0 ? pt.slice(each) : ""}` });
-    if (and < 0) { lastSubject = subject; return withCondition(out, condition); }
-    grants = rest.slice(and).replace(/^ and (?:gains?|has) /, "");
+    return n ? [{ verb: "modify-pt", ...target, amount: `${n[1]}/${n[2]}${each >= 0 ? pt.slice(each) : ""}` }] : null;
   }
-  const abilities = abilitiesOf(grants.replace(DURATION, ""));
-  if (!abilities) return null;
-  for (const a of abilities) out.push({ verb: "grant-ability", object: who.object, text: a });
-  lastSubject = subject;
-  return withCondition(out, condition);
+  // "has base power and toughness 9/9": the store's modify-pt with the set value as its amount.
+  const base = /^(?:has|have) base power and toughness (\d+\/\d+)$/i.exec(pred);
+  if (base) return [{ verb: "modify-pt", ...target, amount: base[1]! }];
+  if (/^is goaded$/i.test(pred)) return [{ verb: "goad", ...target }];
+  // "can't block", "can't be blocked this turn", "attacks each combat if able": a restriction.
+  const cant = /^can't (.+)$/i.exec(pred);
+  if (cant) return [{ verb: "cant", object, text: cant[1]! }];
+  if (/^attacks each combat if able$/i.test(pred)) return [{ verb: "cant", object, text: "not attack each combat if able" }];
+  // "becomes a 1/1 Elemental creature with vigilance and haste", "becomes a Dragon": animated or
+  // retyped, and the abilities after "with" are grants.
+  const becomes = /^becomes? (?:an? )?((?:\d+\/\d+ )?[\w -]+?)(?: with (.+))?$/i.exec(pred);
+  // "becomes prepared" is a prepare, which derive reads off the clause (Codie): not read here.
+  if (becomes && !/^prepared$/i.test(becomes[1]!)) {
+    const withs = becomes[2] ? abilitiesOf(becomes[2]) : [];
+    return withs && [{ verb: "animate", ...target, amount: becomes[1]! }, ...withs.map((a) => ({ verb: "grant-ability", object, text: a }))];
+  }
+  // "is an Angel in addition to its other types", "is legendary": a type granted (derive's
+  // `type-grant` reads "in addition to its other types").
+  const is = /^(?:is|are) ((?:an? )?[\w -]+ in addition to (?:its|their) other (?:creature )?types|every creature type|legendary|snow|colorless|white|blue|black|red|green)$/i.exec(pred);
+  // No text: the stored object stays. Derive finds a grant's recipient by "has"/"gains", never by
+  // "is", and a store object that names the recipient is what keeps it (The Flesh Is Weak).
+  if (is) return [{ verb: "grant-ability", object }];
+  const has = /^(?:has|have|gains?) (.+)$/i.exec(pred);
+  if (!has) return null;
+  // "gains your choice of flying, vigilance, deathtouch, or haste": one grant per choice.
+  const abilities = abilitiesOf(has[1]!.replace(/^your choice of /i, "").replace(/,? or (?=[^,]+$)/, ", "));
+  return abilities && abilities.map((a) => ({ verb: "grant-ability", object, text: a }));
 }
 
 const withCondition = (out: ActionReading[], condition: string | undefined) => (condition ? out.map((a) => ({ ...a, condition })) : out);
@@ -698,7 +782,11 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   if (setLife) return [{ verb: "set-life", amount: setLife[1]!, ...(condition ? { condition } : {}) }];
   const entersWith = entersWithOf(t);
   const ew = entersWith ? counterList(entersWith[0]) : null;
-  if (ew) return ew.map((c) => ({ verb: "add-counter", object: SELF, counter: c.counter, amount: entersWith![1] ? `${c.amount ?? "1"} for each ${entersWith![1]}` : c.amount ?? "1", ...(condition ? { condition } : {}) }));
+  if (ew) {
+    const counters: ActionReading[] = ew.map((c) => ({ verb: "add-counter", object: SELF, counter: c.counter, amount: entersWith![1] ? `${c.amount ?? "1"} for each ${entersWith![1]}` : c.amount ?? "1", ...(condition ? { condition } : {}) }));
+    // "This land enters tapped with two charge counters on it": the tap first, as the store writes it.
+    return /^\S.*? enters(?: the battlefield)? tapped with /i.test(t) ? [{ verb: "tap", object: SELF, ...(condition ? { condition } : {}) }, ...counters] : counters;
+  }
   // "you get {E}{E}": energy counters on you (CR 107.14).
   const energy = /^(?:you )?gets? ((?:\{E\})+)(?: \.)?$/i.exec(t);
   if (energy) return [{ verb: "add-counter", object: parse("you")!, counter: "energy", amount: String(energy[1]!.length / 3), ...(condition ? { condition } : {}) }];
@@ -773,7 +861,7 @@ function actorOf(phrase: string): ActionReading["actor"] | undefined {
 }
 
 /** A sentence's opener: "If you do, ...", "If ..., ...", "Otherwise, ...". */
-const OPENER = /^(if you do|if you don't|if [^,]+|otherwise|then|as an additional cost to cast this spell), /i;
+const OPENER = /^(if you do|if you don't|if [^,]+|otherwise|then|as an additional cost to cast this spell|as long as [^,]+|during your turn|during each opponent's turn), /i;
 
 /** The actions a clause's printed text states that this grammar reads completely, in printed order:
  *  the cost's first (as the store writes them), then the effect's. */
@@ -816,6 +904,17 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     if (open && !/^then$/i.test(open[1]!)) { condition = open[1]!.toLowerCase(); s = s.slice(open[0].length); }
     else if (open) s = s.slice(open[0].length);
     s = s.replace(/^([A-Z])/, (c) => c.toLowerCase());
+    // "The same is true for first strike, double strike, ...": the grant before it, once per ability.
+    const same = /^(?:the same is true for|do the same for|repeat this process for) (.+)$/i.exec(s);
+    const last = out[out.length - 1];
+    if (same && (last?.verb === "grant-ability" || last?.verb === "add-counter")) {
+      const more = abilitiesOf(same[1]!);
+      if (more) { out.push(...more.map((a) => (last.verb === "grant-ability" ? { ...last, text: a } : { ...last, counter: a.toLowerCase() }))); continue; }
+    }
+    // A KEYWORD LINE ("Flying, vigilance, haste", "Vigilance; horsemanship", a level's "8+ | Flying"):
+    // the card's own abilities, one grant each.
+    const line = out.length === 0 && unquoted.split(/(?<=\.)\s+/).length === 1 ? abilitiesOf(s.replace(/; /g, ", ")) : null;
+    if (line && line.every((a) => !/^(?:that|this|those) abilit/i.test(a))) { out.push(...line.map((a) => ({ verb: "grant-ability", object: SELF, text: a }))); continue; }
     // "you and target opponent each draw three cards": one action per player.
     const both = /^you and (another target player|target opponent|target player|that player|those players|each opponent|each other player|defending player|the attacking player|the controller of [^,]{1,40}) each (.+)$/i.exec(s);
     if (both) {

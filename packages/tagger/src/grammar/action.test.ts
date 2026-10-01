@@ -105,7 +105,7 @@ test("zone moves: the zones, the count kept in the text, a back-reference kept a
   ]);
   // A permanent returned with no "from" leaves the battlefield; a pronoun keeps the stored object.
   expect(read("Return target nonland permanent to its owner's hand.")).toMatchObject([{ fromZone: "battlefield", toZone: "hand" }]);
-  expect(read("return it to the battlefield tapped under its owner's control.")).toMatchObject([{ verb: "return", toZone: "battlefield" }]);
+  expect(read("return it to the battlefield tapped under its owner's control.")).toMatchObject([{ verb: "return", toZone: "battlefield" }, { verb: "tap" }]);
   expect(read("return it to the battlefield tapped under its owner's control.")[0]?.text).toBeUndefined();
   // No amount: a zone move's count is in its text, as the store writes it.
   expect(read("each opponent sacrifices two creatures of their choice.")).toMatchObject([{ verb: "sacrifice", text: "two creatures of their choice", actor: { control: "opp" } }]);
@@ -168,6 +168,21 @@ test("the long tail: counterspells, control, fights, keyword actions", () => {
   expect(read("venture into the dungeon.")).toMatchObject([{ verb: "venture-into-the-dungeon" }]);
 });
 
+test("coverage push: predicate lists, repeated grants, keyword lines, restrictions, carried taps", () => {
+  expect(read("Equipped creature gets +2/+2, has trample and haste, and is a Samurai in addition to its other types.").map((r) => r.verb))
+    .toEqual(["modify-pt", "grant-ability", "grant-ability", "grant-ability"]);
+  expect(read("Enchanted creature has base power and toughness 9/9 and has flying.")).toMatchObject([{ verb: "modify-pt", amount: "9/9" }, { verb: "grant-ability", text: "flying" }]);
+  expect(read("this creature gets -1/-1 and gains your choice of flying, vigilance, deathtouch, or haste.").filter((r) => r.verb === "grant-ability")).toHaveLength(4);
+  expect(read("As long as a creature card with flying is in a graveyard, this creature has flying. The same is true for fear and trample.").map((r) => r.text))
+    .toEqual(["flying", "fear", "trample"]);
+  expect(read("Flying, vigilance, haste").map((r) => r.text)).toEqual(["flying", "vigilance", "haste"]);
+  expect(read("This creature can't block and can't be blocked.").map((r) => r.text)).toEqual(["block", "be blocked"]);
+  expect(read("Permanents your opponents control lose hexproof and indestructible until end of turn.").map((r) => [r.verb, r.text])).toEqual([["cant", "hexproof"], ["cant", "indestructible"]]);
+  expect(read("Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.").map((r) => r.verb)).toEqual(["search", "put", "tap", "shuffle"]);
+  expect(read("you may tap or untap target permanent.").map((r) => r.verb)).toEqual(["tap", "untap"]);
+  expect(read("Put a +1/+1 counter on target creature and two +1/+1 counters on another target creature.").map((r) => r.amount)).toEqual(["1", "2"]);
+});
+
 test("a cost's actions come first, the cost's own words read the same way", () => {
   expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }, { verb: "create" }]);
   // A cost the segmenter left in the text is still a cost; ability words and table rows are labels.
@@ -183,11 +198,11 @@ test("readings align to stored actions by verb, in order", () => {
 test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.945],
   ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.895],
-  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.775],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.809],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.9],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.88],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.795],
-  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.735],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.881],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.853],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.841],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
     "explore", "connive", "endure"], 0.74],
