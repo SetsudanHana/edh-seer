@@ -234,7 +234,22 @@ const COUNTERS: Record<string, [string, Handler]> = {
 };
 
 /** "<it> enters with two +1/+1 counters on it": counters the permanent itself arrives with. */
-const ENTERS_WITH = /^(?:~|this [a-z]+|it|that creature|that permanent|each creature) (?:enters(?: the battlefield)?(?: tapped)?|escapes) with (.+? counters?) on (?:it|them)(?: for each (.+))?$/i;
+const ENTERS_WITH = /^(?:~|this [a-z]+|it|that creature|that permanent|each creature) (?:enters(?: the battlefield)?(?: tapped)?|escapes) with /i;
+/** [counters phrase, "for each" tail] of an "enters with ... on it" phrase, cut by index (CodeQL
+ *  polynomial-redos), or null. */
+function entersWithOf(t: string): [string, string | undefined] | null {
+  const head = ENTERS_WITH.exec(t);
+  if (!head) return null;
+  const rest = t.slice(head[0].length);
+  for (const on of [" on it", " on them"]) {
+    const at = rest.indexOf(on);
+    if (at < 0) continue;
+    const after = rest.slice(at + on.length);
+    if (after === "") return [rest.slice(0, at), undefined];
+    if (after.startsWith(" for each ")) return [rest.slice(0, at), after.slice(" for each ".length)];
+  }
+  return null;
+}
 
 /** "your life total becomes 10". */
 const SET_LIFE = /^(?:your|their|each player's) life total becomes (.+)$/i;
@@ -308,9 +323,9 @@ function readPhrase(phrase: string, condition: string | undefined, carried?: Act
   if (!haveSource && deals > 0 && deals <= 70 && !t.slice(0, deals).includes(",")) { t = t.slice(deals + 1); actor = undefined; }
   const setLife = SET_LIFE.exec(t);
   if (setLife) return [{ verb: "set-life", amount: setLife[1]!, ...(condition ? { condition } : {}) }];
-  const entersWith = ENTERS_WITH.exec(t);
-  const ew = entersWith ? counterList(entersWith[1]!) : null;
-  if (ew) return ew.map((c) => ({ verb: "add-counter", object: SELF, counter: c.counter, amount: entersWith![2] ? `${c.amount ?? "1"} for each ${entersWith![2]}` : c.amount ?? "1", ...(condition ? { condition } : {}) }));
+  const entersWith = entersWithOf(t);
+  const ew = entersWith ? counterList(entersWith[0]) : null;
+  if (ew) return ew.map((c) => ({ verb: "add-counter", object: SELF, counter: c.counter, amount: entersWith![1] ? `${c.amount ?? "1"} for each ${entersWith![1]}` : c.amount ?? "1", ...(condition ? { condition } : {}) }));
   // "you get {E}{E}": energy counters on you (CR 107.14).
   const energy = /^(?:you )?gets? ((?:\{E\})+)(?: \.)?$/i.exec(t);
   if (energy) return [{ verb: "add-counter", object: parse("you")!, counter: "energy", amount: String(energy[1]!.length / 3), ...(condition ? { condition } : {}) }];
