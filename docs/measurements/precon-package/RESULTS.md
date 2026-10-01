@@ -145,8 +145,8 @@ package:
   every time, and a failing precon rebuilt on its own passed.
 
 With the fill retried, the nine were rebuilt and every measure passed. The owner's build reads a
-complete `static-out` and never fills on demand. Build time grew with the package: about 3.5 hours
-for all 197 on this machine.
+complete `static-out` and never fills on demand. Build time grew with the package: about 3 hours
+for all 197 on this machine, up from 91 minutes.
 
 ## The persona
 
