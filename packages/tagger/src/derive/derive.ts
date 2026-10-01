@@ -314,7 +314,8 @@ import { emblemRecipient } from "../emblem.js";
 // 239: ...a token's text is the token alone; an X/X keeps its "where X is"; a copy of "that" keeps the store's.
 // 240: ..."tapped and attacking" is not the token's; a verb read more often than stored stays stored.
 // 241: ...except a search, whose extra readings are its zones (Tower Winder).
-export const DERIVE_VERSION = 241;
+// 242: ...and zone moves (destroy, exile, sacrifice, return, put, shuffle); the count stays in the text.
+export const DERIVE_VERSION = 242;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1349,6 +1350,7 @@ const ACTION_FAMILY: Record<string, string> = {
   "deal-damage": "damage-life", "gain-life": "damage-life", "lose-life": "damage-life", "set-life": "damage-life",
   "add-counter": "counters", "remove-counter": "counters", proliferate: "counters",
   create: "tokens", populate: "tokens", amass: "tokens", investigate: "tokens", incubate: "tokens",
+  destroy: "zone", exile: "zone", sacrifice: "zone", return: "zone", put: "zone", shuffle: "zone",
 };
 const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
@@ -1373,7 +1375,11 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
   // the first item would drop the rest.
   // Not a SEARCH: its extra readings are the zones of one search ("your library and/or graveyard"),
   // and the first is the library, which is what a search emit needs.
-  const more = new Set(readings.map((r) => r.verb).filter((v) => v !== "search" && readings.filter((r) => r.verb === v).length > stored.filter((a) => a.verb === v).length));
+  // A ZONE verb takes the grammar only where both hold the same number of it: the store writes a
+  // "look at the top X" as a put of its own (Belisarius Cawl), and aligning two readings to three
+  // stored puts by verb alone hands one put's destination to its neighbour.
+  const count = (v: string) => [readings.filter((r) => r.verb === v).length, stored.filter((a) => a.verb === v).length] as const;
+  const more = new Set(readings.map((r) => r.verb).filter((v) => v !== "search" && (ACTION_FAMILY[v] === "zone" ? count(v)[0] !== count(v)[1] : count(v)[0] > count(v)[1])));
   const aligned = new Map<number, number>();
   for (const fam of new Set(readings.map((r) => ACTION_FAMILY[r.verb]))) {
     const si = stored.flatMap((a, i) => (ACTION_FAMILY[a.verb ?? ""] === fam ? [i] : []));
@@ -1396,6 +1402,11 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
       ? (r.text !== undefined && r.object?.self !== true ? `${r.text}, ${r.counter}` : base.object)
       : PLAYER_OBJECT_VERBS.has(r.verb) && r.verb !== "gain-life" && r.verb !== "lose-life"
         ? (named ? r.actor!.text : r.actor ? base.object : r.text ?? base.object)
+        // The card itself keeps the stored object for the same reason ("sacrifice Endrek Sahr").
+        // So does a stored object that is the printed one plus where it came from ("a land card" ->
+        // "a land card from among the top four cards of your library", Planar Genesis).
+        : ACTION_FAMILY[r.verb] === "zone" && (r.object?.self === true || base.object === "~" || /^this\b/i.test(base.object ?? "")
+          || (r.text !== undefined && (base.object ?? "").startsWith(`${r.text} from `))) ? base.object
         : r.text ?? base.object;
     out[i] = ({
       ...base,
@@ -1655,7 +1666,7 @@ export function deriveAbilities(
     const acts = clause.actions ?? [];
     // ONE return only (review): with two, nothing says which one the words describe.
     if (acts.some((a) => a.verb === "exile") && acts.filter((a) => a.verb === "return").length === 1 && RETURN_TO_BATTLEFIELD.test(clauseText)) {
-      clause = { ...clause, actions: acts.map((a) => a.verb === "return" && !a.toZone && !a.fromZone ? { ...a, fromZone: "exile", toZone: "battlefield" } : a) };
+      clause = { ...clause, actions: acts.map((a) => a.verb === "return" && !a.fromZone && (!a.toZone || a.toZone === "battlefield") ? { ...a, fromZone: "exile", toZone: "battlefield" } : a) };
     }
     // THE ZONE THE OBJECT NAMES WHEN THE MODEL GAVE NONE (#716): Emry, Lurker of the Loch's "cast
     // target artifact card IN YOUR GRAVEYARD" came back with `fromZone: null`, so the cast from a

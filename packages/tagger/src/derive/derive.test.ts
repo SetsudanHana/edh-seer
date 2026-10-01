@@ -3867,3 +3867,25 @@ test("a counter placement targets what the text targets", () => {
   expect(abilities[0]?.effect).toMatchObject({ kind: "counter-placement", subject: { type: "creature", scope: "target" } });
   expect(abilities[0]?.emits?.[0]).toMatchObject({ verb: "counter-added", subject: { type: "creature", counter: "+1/+1" } });
 });
+
+// #896 task 6: the action grammar takes zone moves. The store filed Lurking Predators' "put that card
+// on the bottom of your library" as a put into the GRAVEYARD, a mill that fed every graveyard payoff;
+// the printed destination is the library. A stored "look at the top X" put the grammar has no
+// reading for leaves every put as stored (Belisarius Cawl): two readings never align to three.
+test("a zone move takes the printed destination; unequal counts of a zone verb stay as stored", () => {
+  const predators = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell", control: "opp" },
+      actions: [{ verb: "put", object: "it", fromZone: "library", toZone: "battlefield" }, { verb: "put", object: "that card", fromZone: "library", toZone: "graveyard", optional: true }] }],
+    "Lurking Predators",
+    { 1: "Whenever an opponent casts a spell, reveal the top card of your library. If it's a creature card, put it onto the battlefield. Otherwise, you may put that card on the bottom of your library." },
+  ).abilities;
+  expect(predators.flatMap((a) => a.emits ?? []).some((e) => e.verb === "mill")).toBe(false);
+
+  const cawl = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "put", object: "the top X cards of your library", fromZone: "library" },
+      { verb: "put", object: "an artifact card", fromZone: "library", toZone: "hand", optional: true }, { verb: "put", object: "the rest", fromZone: "library", toZone: "library" }] }],
+    "Belisarius Cawl",
+    { 1: "Look at the top X cards of your library. You may reveal an artifact card from among them and put it into your hand. Put the rest on the bottom of your library in a random order." },
+  ).abilities;
+  expect(cawl.find((a) => a.effect.kind === "search")?.effect.subject?.type).toBe("artifact");
+});

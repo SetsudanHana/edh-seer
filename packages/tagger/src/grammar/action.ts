@@ -61,7 +61,7 @@ const ACTORS: [string, ActionReading["actor"]][] = ([
 
 /** A verb phrase's handler: its arguments read into a reading, or null. Keyed by the verb's base
  *  word; a third-person form ("draws", "searches") reads the same. */
-type Args = Omit<ActionReading, "verb" | "optional" | "actor" | "condition">;
+type Args = Omit<ActionReading, "verb" | "optional" | "actor" | "condition"> & { verb?: string };
 type Handler = (rest: string) => Args | Args[] | null;
 
 const CARD = parse("a card")!;
@@ -299,6 +299,116 @@ const TOKENS: Record<string, [string, Handler]> = {
   }],
 };
 
+/** Where a card goes or comes from, as the store names the zone. */
+function zoneOf(words: string): string | undefined {
+  if (/^hands?$/.test(words)) return "hand";
+  if (/^graveyards?$/.test(words)) return "graveyard";
+  if (/^librar(?:y|ies)$/.test(words)) return "library";
+  if (/^(?:the )?battlefield$/.test(words)) return "battlefield";
+  if (/^exile$/.test(words)) return "exile";
+  return undefined;
+}
+
+/** "from your graveyard", "from exile", "from among them" stripped off an object, with its zone. */
+function fromOf(phrase: string): { rest: string; from?: string } {
+  const at = phrase.search(/ from (?:your|their|its owner's|a|an opponent's|target player's|each player's|each opponent's|all) (?:graveyards?|hands?|librar(?:y|ies))$| from exile$| from the battlefield$/);
+  if (at < 0) return { rest: phrase };
+  return { rest: phrase.slice(0, at), from: zoneOf(phrase.slice(at + " from ".length).replace(/^(?:your|their|its owner's|a|an opponent's|target player's|each player's|each opponent's|all|the) /, "")) };
+}
+
+const MOVE_REF = /^(?:(?:one|two|three|up to (?:one|two|three)|any number) of (?:them|those cards)|the rest|the other|one|that [a-z]+(?: card)?|those [a-z]+(?: cards)?|(?:one|that) pile|all (?:[a-z]+ )*cards revealed this way|the (?:exiled|chosen|revealed|milled) cards?|the cards? exiled (?:this way|with (?:it|~))|all cards exiled with (?:it|~)|her|his)$/;
+
+/** A zone move's object: a class, the card itself, or a back-reference (kept as stored). The COUNT
+ *  stays in the text, as the store writes a zone move ("two creatures", no amount): derive's counts
+ *  read it there. `onField`: a permanent moved with no "from" leaves the battlefield. */
+function moveObject(phrase: string, onField = false): Args | null {
+  const t = phrase.replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards)$/, "");
+  // "target player's graveyard", "all graveyards": a whole graveyard.
+  if (/^(?:target player's|target opponent's|each opponent's|your|their|all|each player's|all opponents'|any number of target players'|target players') graveyards?$/.test(t)) return { object: { control: "any", token: null }, fromZone: "graveyard", text: phrase };
+  // "one of them", "the rest", "the exiled card", "those tokens": back-references, kept as stored.
+  if (MOVE_REF.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  const { rest, from } = fromOf(t);
+  if (/^the top (?:card|(?:\w+|\d+) cards) of (?:your|their|target player's|each player's|its owner's|that player's|each opponent's|target opponent's) library$/.test(rest)) {
+    // "their library": whose is the actor's, a back-reference ("target opponent exiles the top four
+    // cards of their library", Oblivion Sower), so the stored object, which names them, stays.
+    return / of their library$/.test(rest) ? { object: { ...CARD, ref: "sentence" }, fromZone: "library" } : { object: CARD, fromZone: "library", text: phrase };
+  }
+  const r = objectOf(rest);
+  if (!r) return null;
+  // "from their graveyard": whose is a back-reference ("target opponent mills three cards. Put a land
+  // card from their graveyard ...", Realmbreaker), so the stored object, which names them, stays.
+  if (/ from their /.test(t)) return { object: { ...r.object, ref: "sentence" }, ...(from ? { fromZone: from } : {}) };
+  const field = onField && !from && r.object.ref === undefined && r.object.self !== true && !/\bcards?\b/.test(rest);
+  return { object: r.object, ...(from ? { fromZone: from } : field ? { fromZone: "battlefield" } : {}), text: phrase.replace(/ from among (?:them|those cards)$/, "") };
+}
+
+/** "to its owner's hand", "to the battlefield tapped under your control", "on top of its owner's
+ *  library", "into your graveyard", "onto the battlefield": the destination zone. */
+function destinationOf(words: string): string | undefined {
+  let t = words;
+  for (let prev = ""; prev !== t;) {
+    prev = t;
+    t = t.replace(/ (?:tapped|transformed|face down|attacking|and|in any order|in a random order|second from the top|third from the top)$| attached to (?:it|that creature|a creature you control|target creature)$/, "")
+      .replace(/ under (?:your|its owner's|their owners'|its controller's|their owner's|her owner's|his owner's) control$/, "");
+  }
+  t = t.replace(/^on their choice of the top or bottom of /, "on top of ");
+  const m = /^(?:to|into|onto|on top of|on the bottom of|in) (?:the |its owner's |their owners' |their owner's |her owner's |his owner's |your |their |a player's |an opponent's |a )?(.+)$/.exec(t);
+  return m ? zoneOf(m[1]!) : undefined;
+}
+
+/** "exile it with three time counters on it": the move, then the counters on what moved. */
+function withCounters(rest: string, move: (rest: string) => Args | Args[] | null): Args[] | Args | null {
+  const at = rest.search(/ with (?:a|an|one|two|three|four|five|x|\d+) [^ ]+ counters? on (?:it|them)$/);
+  if (at < 0) return move(rest);
+  const r = move(rest.slice(0, at));
+  const c = counterList(rest.slice(at + " with ".length).replace(/ on (?:it|them)$/, ""));
+  return r && c ? [...[r].flat(), ...c.map((k) => ({ verb: "add-counter", object: { control: "any" as const, token: null, ref: "sentence" as const }, counter: k.counter, amount: k.amount ?? "1" }))] : null;
+}
+
+const ZONE: Record<string, [string, Handler]> = {
+  destroy: ["destroy", (rest) => moveObject(rest)],
+  sacrifice: ["sacrifice", (rest) => moveObject(rest)],
+  exile: ["exile", (rest) => withCounters(rest.replace(/ face down$/, ""), (rest) => {
+    rest = rest.replace(/ instead of putting it into its owner's graveyard$/, "");
+    const until = rest.search(/ until /);
+    // "exile cards from the top of your library until you exile a nonland card": the until is WHICH
+    // card, not how long.
+    if (/^cards from the top of /.test(rest)) return null;
+    const r = moveObject(until > 0 ? rest.slice(0, until) : rest);
+    return r && { ...r, toZone: "exile" };
+  })],
+  return: ["return", (all) => withCounters(all, (rest) => {
+    const at = rest.search(/ (?:to|on top of|on the bottom of) (?=the battlefield|its owner's|their owners'|their owner's|your|its controller's)/);
+    if (at < 0) return null;
+    const to = destinationOf(rest.slice(at + 1));
+    const r = moveObject(rest.slice(0, at), true);
+    return r && to ? { ...r, toZone: to } : null;
+  })],
+  put: ["put", (all): Args | Args[] | null => withCounters(all, (rest) => {
+    // "put them back in any order", "put one of those cards back on top of your library".
+    const back = /^(.+?) back (?:on top of (?:your|their|its owner's|that player's|target player's) library|in any order)$/.exec(rest);
+    if (back) { const r = moveObject(back[1]!); return r && { ...r, toZone: "library" }; }
+    // "one of them into your hand and the rest on the bottom of your library": two moves.
+    // "a land card from among them onto the battlefield tapped and an Elf card from among them into
+    // your hand" (Bounty of Skemfar): the same, each with its own object.
+    for (const pair of rest.matchAll(/ and (?=(?:the (?:rest|other)|a|an|one|two|all) )/g)) {
+      const a = ZONE.put![1](rest.slice(0, pair.index)), b = ZONE.put![1](rest.slice(pair.index + pair[0].length));
+      if (a && b) return [a, b].flat();
+    }
+    const at = rest.search(/ (?:onto|into|on top of|on the bottom of) (?=the battlefield|its owner's|their owners'|your|a graveyard|exile|their)/);
+    if (at < 0) return null;
+    const to = destinationOf(rest.slice(at + 1));
+    const r = moveObject(rest.slice(0, at), true);
+    return r && to ? { ...r, toZone: to } : null;
+  })],
+  shuffle: ["shuffle", (rest) => {
+    if (rest === "" || /^(?:your|their) library$/.test(rest)) return { object: parse("you")!, text: rest === "" ? "your library" : rest };
+    const m = /^(.+?) into (?:its owner's|their owners'|your|their) librar(?:y|ies)$/.exec(rest);
+    const r = m ? moveObject(m[1]!) : null;
+    return r && { ...r, toZone: "library" };
+  }],
+};
+
 /** "<it> enters with two +1/+1 counters on it": counters the permanent itself arrives with. */
 const ENTERS_WITH = /^(?:~|this [a-z]+|it|that creature|that permanent|each creature) (?:enters(?: the battlefield)?(?: tapped)?|escapes) with /i;
 /** [counters phrase, "for each" tail] of an "enters with ... on it" phrase, cut by index (CodeQL
@@ -320,7 +430,7 @@ function entersWithOf(t: string): [string, string | undefined] | null {
 /** "your life total becomes 10". */
 const SET_LIFE = /^(?:your|their|each player's) life total becomes (.+)$/i;
 
-const HANDLERS: Record<string, [string, Handler]> = { ...DRAW_SEARCH, ...DAMAGE_LIFE, ...COUNTERS, ...TOKENS };
+const HANDLERS: Record<string, [string, Handler]> = { ...ZONE, ...DRAW_SEARCH, ...DAMAGE_LIFE, ...COUNTERS, ...TOKENS };
 /** The verb words, with their third-person forms, longest first. */
 const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new RegExp(`^(?:${v}|${v}s|${v.replace(/y$/, "ies")}|${v}es)\\b`, "i"), v]);
 
@@ -348,7 +458,7 @@ function phrases(sentence: string): string[] {
 
 /** Words after an action that say WHEN or ON WHAT CONDITION, kept as its condition: a delayed action,
  *  a replacement, "draw a card if you control an artifact". */
-const WHEN_TAILS = [" at the beginning of the next turn's upkeep", " at the beginning of the next end step", " at the beginning of the next upkeep", " instead"];
+const WHEN_TAILS = [" at the beginning of the next turn's upkeep", " at the beginning of the next end step", " at the beginning of the next upkeep", " instead", " at end of combat", " at the beginning of your next upkeep", " at the beginning of the end step", " at the beginning of the next cleanup step", " at the beginning of your next end step", " rather than pay this spell's mana cost"];
 /** The trailing condition of a phrase, by index rather than an end-anchored regex (CodeQL
  *  polynomial-redos): one of WHEN_TAILS, or a last " if ..." with no comma after it. */
 function whenTail(t: string): { at: number; text: string } | undefined {
@@ -413,10 +523,14 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   for (const [re, base] of VERB_FORMS) {
     const m = re.exec(t);
     if (!m) continue;
-    const [verb, handler] = HANDLERS[base]!;
+    let [verb, handler] = HANDLERS[base]!;
     const rest = t.slice(m[0].length).trim();
-    const args = handler(rest);
+    let args = handler(rest);
+    // "put" is a counter's verb first ("put a +1/+1 counter on ..."), else a zone move.
+    if (!args && base === "put") { [verb, handler] = ZONE.put!; args = handler(rest); }
     if (!args) return null;
+    // "destroy up to one target artifact": a zone move of up to N may move none (the store's optional).
+    if (ZONE[base] && /^up to /i.test(rest)) optional = true;
     const all: Args[] = [args].flat().map((a) => (counted && a.amount !== undefined && /\bX\b/.test(a.amount) ? { ...a, amount: counted } : a))
       // "an X/X ... token, where X is the number of land cards in your graveyard": the X is in the
       // TEXT, so its definition stays with it (Formless Genesis's scaling reads it there).
@@ -484,7 +598,8 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     && (prefix.startsWith("{") || /^(?:Pay|Sacrifice|Discard|Exile|Tap|Remove|Return)\b/.test(prefix))) {
     cost = prefix; effect = effect.slice(colon + 2);
   }
-  for (const part of cost ? cost.split(/, /) : []) {
+  // Split where a new cost item starts, so "Sacrifice an artifact, creature, or land" stays one.
+  for (const part of cost ? cost.split(/, (?=\{|[A-Z]|[−+]?\d)/) : []) {
     const r = readPhrase(part.replace(/^([A-Z])/, (c) => c.toLowerCase()), undefined);
     if (r) out.push(...r);
   }
@@ -532,7 +647,8 @@ export function parseActions(effect: string, _type: string | null, cost?: string
         // sacrifices a creature, discards a card, and loses 3 life" -- all three are theirs.
         carried = r?.[0]?.actor ?? actorOf(alt) ?? (r === null && playerSubject(alt.trim()) ? UNKNOWN_ACTOR : carried);
       }
-      const pay = payment ? readPhrase(payment, "unless") : null;
+      // The payment is the player's choice: optional, as the store writes it.
+      const pay = payment ? readPhrase(payment, "unless")?.map((a) => ({ ...a, optional: true as const })) ?? null : null;
       if (pay) out.push(...pay);
     }
     if (ifYouDoAfterMay) for (let i = at; i < out.length; i++) out[i] = { ...out[i]!, optional: true };
