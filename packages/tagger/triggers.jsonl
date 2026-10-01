@@ -10,7 +10,7 @@
 {"preamble":"When ~ enters","condition":null,"event":"enters","subject":"this","control":"you","cards":186}
 {"preamble":"Whenever a land you control enters","condition":null,"event":"enters","subject":"a land you control","control":"you","cards":177}
 {"preamble":"At the beginning of combat on your turn","condition":null,"event":"begin-combat","subject":"you","control":"you","cards":164}
-{"preamble":"Whenever you cast a noncreature spell","condition":null,"event":"cast","subject":"a noncreature spell","control":"you","cards":127}
+{"preamble":"Whenever you cast a noncreature spell","condition":null,"event":"cast","subject":"a noncreature spell","control":"you","cards":128}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"~","control":"you","cards":116}
 {"preamble":"When this Aura enters","condition":null,"event":"enters","subject":"this","control":"you","cards":103}
 {"preamble":"Whenever you cast an instant or sorcery spell","condition":null,"event":"cast","subject":"an instant or sorcery spell","control":"you","cards":101}
@@ -1343,7 +1343,6 @@
 {"preamble":"At the beginning of your upkeep","condition":"your opponents control no creatures","event":"upkeep","subject":"you","control":"you","cards":1}
 {"preamble":"At the beginning of your upkeep","condition":"your opponents control no permanents with bounty counters on them","event":"upkeep","subject":"you","control":"you","cards":1}
 {"preamble":"When Jumblebones leaves the battlefield","condition":null,"event":"leaves","subject":"Jumblebones","control":"you","cards":1}
-{"preamble":"When Rosie Cotton enters","condition":null,"event":"enters","subject":"Rosie Cotton","control":"you","cards":1}
 {"preamble":"When Smaug dies","condition":null,"event":"dies","subject":"Smaug","control":"you","cards":1}
 {"preamble":"When a Dragon enters","condition":null,"event":"enters","subject":"a Dragon","control":"you","cards":1}
 {"preamble":"When a Faerie is championed with this creature","condition":null,"event":"other","subject":"a Faerie is championed with this creature","control":"you","cards":1}
@@ -1951,6 +1950,7 @@
 {"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Iwamori","control":"you","cards":1}
 {"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Ka-Zar","control":"you","cards":1}
 {"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Kiora","control":"you","cards":1}
+{"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Rosie Cotton","control":"you","cards":1}
 {"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Runo","control":"you","cards":1}
 {"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Samwise","control":"you","cards":1}
 {"preamble":"When ~ enters","condition":null,"event":"enters","subject":"Trostani","control":"you","cards":1}
@@ -1966,10 +1966,7 @@
 {"preamble":"When ~ leaves the battlefield","condition":null,"event":"leaves","subject":"this creature","control":"you","cards":1}
 {"preamble":"When ~ leaves the battlefield","condition":null,"event":"leaves","subject":"this","control":"you","cards":1}
 {"preamble":"Whenever Galactus attacks","condition":null,"event":"attacks","subject":"Galactus","control":"you","cards":1}
-{"preamble":"Whenever General Kudro or another Human you control enters","condition":null,"event":"enters","subject":"General Kudro or another Human you control","control":"you","cards":1}
-{"preamble":"Whenever Jedit Ojanen attacks or blocks","condition":null,"event":"attacks","subject":"Jedit Ojanen","control":"you","cards":1}
 {"preamble":"Whenever Redwing attacks","condition":null,"event":"attacks","subject":"Redwing","control":"you","cards":1}
-{"preamble":"Whenever Sidar Jabari deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Sidar Jabari","control":"you","cards":1}
 {"preamble":"Whenever a +1/+1 counter is removed from this creature","condition":null,"event":"counter-removed","subject":"a +1/+1 counter","control":"you","cards":1}
 {"preamble":"Whenever a -1/-1 counter is put on a creature","condition":null,"event":"counter-added","subject":"a -1/-1 counter","control":"any","cards":1}
 {"preamble":"Whenever a 1/1 creature you control enters","condition":null,"event":"enters","subject":"a 1/1 creature you control","control":"you","cards":1}
@@ -3371,7 +3368,6 @@
 {"preamble":"Whenever you cast a noncreature spell with one or more blue mana symbols in its mana cost","condition":null,"event":"cast","subject":"a noncreature spell with one or more blue mana symbols in its mana cost","control":"you","cards":1}
 {"preamble":"Whenever you cast a noncreature spell you don't own","condition":null,"event":"cast","subject":"a noncreature spell you don't own","control":"you","cards":1}
 {"preamble":"Whenever you cast a noncreature spell","condition":"at least eight mana was spent to cast it","event":"cast","subject":"a noncreature spell","control":"you","cards":1}
-{"preamble":"Whenever you cast a noncreature spell, Birds, Frogs, Otters","condition":null,"event":"cast","subject":"a noncreature spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a nonlegendary creature spell with flying","condition":null,"event":"cast","subject":"a nonlegendary creature spell with flying","control":"you","cards":1}
 {"preamble":"Whenever you cast a nonlegendary creature spell","condition":null,"event":"cast","subject":"a nonlegendary creature spell","control":"you","cards":1}
 {"preamble":"Whenever you cast a nonred spell","condition":null,"event":"cast","subject":"a nonred spell","control":"you","cards":1}
@@ -3648,6 +3644,7 @@
 {"preamble":"Whenever ~ attacks a player","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks an opponent","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks or blocks","condition":null,"event":"attacks","subject":"Ashcoat","control":"you","cards":1}
+{"preamble":"Whenever ~ attacks or blocks","condition":null,"event":"attacks","subject":"Jedit Ojanen","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks or blocks","condition":null,"event":"blocks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks or dies","condition":null,"event":"attacks","subject":"~","control":"you","cards":1}
 {"preamble":"Whenever ~ attacks while saddled","condition":null,"event":"attacks","subject":"this","control":"you","cards":1}
@@ -3705,6 +3702,7 @@
 {"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Legolas","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Medomai","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Rakdos","control":"you","cards":1}
+{"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Sidar Jabari","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"Virtus","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"this","control":"you","cards":1}
 {"preamble":"Whenever ~ deals combat damage to a player","condition":null,"event":"damage-dealt","subject":"~ deals combat damage to a player","control":"you","cards":1}
@@ -3743,6 +3741,7 @@
 {"preamble":"Whenever ~ or another Equipment you control enters","condition":null,"event":"enters","subject":"~ or another Equipment you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another Goblin you control dies","condition":null,"event":"dies","subject":"~ or another Goblin you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another Human you control enters","condition":null,"event":"enters","subject":"Beregond or another Human you control","control":"you","cards":1}
+{"preamble":"Whenever ~ or another Human you control enters","condition":null,"event":"enters","subject":"General Kudro or another Human you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another Mutant you control enters","condition":null,"event":"enters","subject":"~ or another Mutant you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another Nightmare or Horror you control enters","condition":null,"event":"enters","subject":"~ or another Nightmare or Horror you control","control":"you","cards":1}
 {"preamble":"Whenever ~ or another Rat you control enters","condition":null,"event":"enters","subject":"~ or another Rat you control","control":"you","cards":1}

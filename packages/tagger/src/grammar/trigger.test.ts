@@ -142,6 +142,15 @@ test("delayed triggers name the object before them; a name the census kept is `n
   expect(one("When Jumblebones leaves the battlefield")).toMatchObject({ event: "leaves", subject: { named: "jumblebones" } });
 });
 
+test("CR 400.3: a card goes to its owner's graveyard, so whose graveyard is whose card", () => {
+  expect(one("Whenever a card is put into an opponent's graveyard from anywhere")).toMatchObject({ event: "put-into-graveyard", control: "opp" });
+  expect(one("Whenever a Lhurgoyf permanent card is put into your graveyard from anywhere other than the battlefield").subject).toMatchObject({ control: "you", notFromZone: "battlefield" });
+});
+
+test("this creature or its host (reconfigure) is the card itself; the host half has no field", () => {
+  expect(one("Whenever this creature or equipped creature attacks").subject).toMatchObject({ self: true });
+});
+
 test("self or a class it need not belong to is two readings", () => {
   expect(parseTrigger("Whenever this creature or a Dragon you control dies", null)).toMatchObject([{ subject: { self: true } }, { subject: { subtype: "dragon" } }]);
 });

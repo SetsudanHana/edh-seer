@@ -1,19 +1,19 @@
 {
-  "deriveVersion": 223,
+  "deriveVersion": 226,
   "rulesVersion": 16,
   "roles": {
     "ramp": {
       "weights": {
-        "manaValue": -0.15813199454666035,
-        "frequency": 0.4396769034652478,
-        "timing": 0.09795077297874578,
-        "extraValue": 0.27463734007799834,
-        "restriction": -0.030832325018337013,
-        "rateFloor": 0.27225927977857434,
-        "rateCeiling": 0.1262680450133459
+        "manaValue": -0.1622516982087838,
+        "frequency": 0.35491037247066504,
+        "timing": 0.10032648477338062,
+        "extraValue": 0.28389275238732775,
+        "restriction": -0.031038034085121603,
+        "rateFloor": 0.2729690434525383,
+        "rateCeiling": 0.13281430929808338
       },
       "pairs": 432,
-      "heldOutAccuracy": 0.6932445347570765,
+      "heldOutAccuracy": 0.6666987370812016,
       "baselineAccuracy": 0.6046422372184616,
       "fallbackAccuracy": 0.5312009325985348,
       "fallback": false
@@ -26,9 +26,9 @@
         "timing": 0.5
       },
       "pairs": 1164,
-      "heldOutAccuracy": 0.45812435636794663,
+      "heldOutAccuracy": 0.500048923048903,
       "baselineAccuracy": 0.575896431782283,
-      "fallbackAccuracy": 0.6244307708455444,
+      "fallbackAccuracy": 0.6740048972342272,
       "fallback": true
     },
     "cardSelection": {
