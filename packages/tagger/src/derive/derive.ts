@@ -283,7 +283,10 @@ import { emblemRecipient } from "../emblem.js";
 // 219: "named ~" is the card's own name.
 // 220: a gate sees through `anyOf` only on a subject the grammar produced.
 // 221: a copy records what it copies (`copyOf`) beside what it becomes.
-export const DERIVE_VERSION = 221;
+// 222: #900 -- a pronoun after a reveal or a look means the revealed card, typed by the clause's own
+// condition ("if it's a land card"); with none stated it is unresolved, never the trigger.
+// 223: ...and "a spell" / "a card" alone states no class.
+export const DERIVE_VERSION = 223;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1508,7 +1511,7 @@ export function deriveAbilities(
       continue;
     }
     // WHAT A REFERENCE OBJECT POINTS AT: see `references.ts`.
-    const sourceOf = (idx: number) => antecedentSource(clause.actions ?? [], idx, clause.trigger?.subject, cardName);
+    const sourceOf = (idx: number) => antecedentSource(clause.actions ?? [], idx, clause.trigger?.subject, cardName, text);
     const antecedentFor = (idx: number): string | undefined =>
       antecedentText(clause.actions ?? [], sourceOf(idx), clause.trigger?.subject, enchantText);
     const antecedentIsSelf = (idx: number): boolean => selfAntecedent(clause.actions ?? [], idx, cardName);

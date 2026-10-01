@@ -60,7 +60,33 @@ export const ZONE_OBJECT = /^(?:your|their|its owner's|that player's|each player
 
 /** Where a reference's thing is: an earlier action of the same clause, the clause's trigger subject,
  *  or nowhere. */
-export type Source = { to: "action"; action: number } | { to: "trigger" } | { to: "none" };
+export type Source = { to: "action"; action: number } | { to: "trigger" } | { to: "revealed"; text: string } | { to: "none" };
+
+/** "Reveal the top card of your library", "look at the top three cards of target player's library":
+ *  cards a clause REVEALS or LOOKS AT, which the clause layer records no action for (#900). */
+const REVEALED_FROM = /\b(?:reveals?|looks? at)\s+(?:the top (?:card|(?:\w+|x) cards)|cards from the top) of (your|their|its owner's|target (?:player|opponent)'s|that player's|each player's|each opponent's) library\b/i;
+/** The class a pronoun's own condition gives the revealed card: "if it's a land card", "if it's a
+ *  permanent card with mana value 3 or less", "if it's a creature or Wizard card". */
+const REVEALED_CLASS = /\bif (?:it's|it is|that card is) (an? [^,.;]+?\b(?:card|spell)(?: with mana value \d+ or (?:less|greater))?)\b/i;
+/** "...until you reveal a creature card": the class a reveal-until dig stops at (#715). */
+const REVEALED_UNTIL = /\buntil (?:you|they|that player) reveals? (an? [^,.;]+?\bcard)\b/i;
+
+/** THE REVEALED CARD AS THE ANTECEDENT (#900): "When this creature dies, reveal the top card of your
+ *  library. You may put IT onto the battlefield if it's a permanent card with mana value 3 or less"
+ *  (Matter Reshaper) puts the revealed card, never the card itself. The text names it as a card from
+ *  that library, of the class the clause's own condition states; with none stated it stays unresolved
+ *  rather than falling back to the trigger, which claimed the creature itself. */
+export function revealedAntecedent(clauseText: string | undefined): string | undefined {
+  const m = REVEALED_FROM.exec(clauseText ?? "");
+  if (!m) return undefined;
+  const after = (clauseText ?? "").slice(m.index);
+  // NO CLASS STATED, NO READING: "a card" names no type, and an untyped emit is a wildcard every
+  // consumer filter accepts -- unresolved is silent, which is right (see `namesAThing`).
+  const cls = REVEALED_UNTIL.exec(after)?.[1] ?? REVEALED_CLASS.exec(after)?.[1];
+  // "if it's a spell with lesser mana value" (Rashmi) states no class either.
+  if (!cls || /^an? (?:card|spell)$/i.test(cls.trim())) return undefined;
+  return `${cls.replace(/ spell$/i, " card")} from ${m[1]!.toLowerCase()} library`;
+}
 
 /** The walk for a reference object at `actions[idx]`. See `antecedentText`.
  *
@@ -72,7 +98,7 @@ export type Source = { to: "action"; action: number } | { to: "trigger" } | { to
  *  Generalised past the fetch: "exile target creature you control, then return IT to the
  *  battlefield" is the same shape, and a flicker whose emit is untyped is the same wildcard.
  *  The antecedent is the nearest EARLIER action in the clause that names a thing of its own. */
-export function antecedentSource(actions: readonly Action[], idx: number, triggerSubject: string | undefined, cardName?: string): Source {
+export function antecedentSource(actions: readonly Action[], idx: number, triggerSubject: string | undefined, cardName?: string, clauseText?: string): Source {
   // A REFERENCE THAT NAMES ITS VERB takes that verb's object (#860): "cast THE COPY" means what the
   // earlier `copy` copied, and "copy THE EXILED CARD" what the earlier `exile` exiled -- not the
   // nearest thing named. Surge to Victory's "creatures you control get +X/+0" sits between its
@@ -83,7 +109,7 @@ export function antecedentSource(actions: readonly Action[], idx: number, trigge
     for (let i = idx - 1; i >= 0; i--) {
       const a = actions[i]!;
       if (a.verb !== verb) continue;
-      return PRONOUN_OBJECT.test((a.object ?? "").trim()) ? antecedentSource(actions, i, triggerSubject, cardName) : { to: "action", action: i };
+      return PRONOUN_OBJECT.test((a.object ?? "").trim()) ? antecedentSource(actions, i, triggerSubject, cardName, clauseText) : { to: "action", action: i };
     }
     if (verb === "copy") return { to: "none" };
   }
@@ -95,6 +121,12 @@ export function antecedentSource(actions: readonly Action[], idx: number, trigge
     if (o === "" || PRONOUN_OBJECT.test(o) || SELF_REFERENCE.test(o) || ZONE_OBJECT.test(o)) continue;
     return { to: "action", action: i };
   }
+  // A REVEALED OR LOOKED-AT CARD outranks the trigger: it is the nearer thing the sentence names.
+  // ...and a reveal whose class the text does not state still means the revealed card, never the
+  // trigger's: unresolved.
+  const revealed = revealedAntecedent(clauseText);
+  if (revealed) return { to: "revealed", text: revealed };
+  if (REVEALED_FROM.test(clauseText ?? "")) return { to: "none" };
   // Kaya's Ghostform: "When ENCHANTED PERMANENT dies, return THAT CARD to the battlefield." The
   // antecedent is the trigger's subject, not an earlier action -- there is no earlier action.
   const t = (triggerSubject ?? "").trim();
@@ -129,6 +161,7 @@ export function zoneAfterEvent(event: string | undefined): "graveyard" | "exile"
 export function antecedentText(actions: readonly Action[], source: Source, triggerSubject: string | undefined, enchantText: string): string | undefined {
   if (source.to === "action") return boundedByEnchantLine((actions[source.action]!.object ?? "").trim().replace(PRONOUN_SOURCE, ""), enchantText);
   if (source.to === "trigger") return boundedByEnchantLine((triggerSubject ?? "").trim(), enchantText);
+  if (source.to === "revealed") return source.text;
   return undefined;
 }
 
