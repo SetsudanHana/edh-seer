@@ -98,7 +98,7 @@ function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | 
   // An Aura's or Equipment's host: its class, as the trigger grammar reads it (the text keeps the rest).
   const host = /^(?:enchanted|equipped) (creature|permanent|land|artifact|planeswalker)$/i.exec(t);
   if (host) return { object: parse(`a ${host[1]!.toLowerCase()}`)! };
-  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   const m = COUNT.exec(t);
   // "up to two" is the store's "2", the convention derive's scaling reads ("up to X ... where X is").
   const amount = m ? (m[2] ? amountOf(m[2]) : m[3]!.toLowerCase().replace(/^all the$/, "all")) : undefined;
@@ -528,7 +528,7 @@ const TAIL: Record<string, [string, Handler]> = {
     const to = rest.indexOf(" to ");
     return to > 0 && objectOf(rest.slice(to + 4)) ? thing(rest.slice(0, to)) : null;
   }],
-  cast: ["cast", (rest) => castOrPlay(rest, /\bspells?\b|^(?:it|that card|them|those cards|the copy|~|this card|cards?\b)/i)],
+  cast: ["cast", (rest) => castOrPlay(rest, /\bspells?\b|\bcards?\b|\bcop(?:y|ies)\b|^(?:it|them|~)$/i)],
   play: ["play", (rest) => castOrPlay(rest, /\blands?\b|\bcards?\b|^(?:it|them)$/i)],
   // "prevent all combat damage that would be dealt this turn": the store keeps the whole phrase.
   prevent: ["prevent", (rest) => (/\bdamage\b/.test(rest) ? { object: { control: "any", token: null }, text: rest } : null)],
@@ -573,7 +573,9 @@ function castOrPlay(rest: string, what: RegExp): Args | null {
   let t = rest;
   for (let prev = ""; prev !== t;) {
     prev = t;
-    t = t.replace(/ (?:as though (?:it|they) had flash|without paying (?:its|their) mana costs?|this turn|until end of turn|until (?:the )?end of your next turn|on each of your turns|for as long as it remains exiled|for as long as (?:they|it) remain exiled)$/i, "");
+    t = t.replace(/ (?:as though (?:it|they) had flash|without paying (?:its|their) mana costs?|this turn|until end of turn|until (?:the )?end of your next turn|on each of your turns|for as long as it remains exiled|for as long as (?:they|it) remain exiled|using its [\w-]+ ability|by paying (?:\{[^}]+\})+ rather than paying (?:its|their) mana costs?)$/i, "")
+      // "..., and you may spend mana as though it were mana of any color to cast that spell".
+      .replace(/,? and (?:you may spend mana as though it were mana of any (?:color|type)|mana of any type can be spent) to cast (?:that spell|it|them|those spells)$/i, "");
   }
   if (!what.test(t)) return null;
   const from = / from (?:the top of (?:your|their) library|your graveyard|your hand|exile|among them|among (?:the )?cards? exiled [\w ]+)$/i.exec(t);
@@ -589,6 +591,10 @@ function castOrPlay(rest: string, what: RegExp): Args | null {
 /** "<subject> explores", "<subject> connives", "<subject> fights <other>", "<subject> is goaded",
  *  "you become the monarch", "the Ring tempts you": actions whose subject stands first. */
 function subjectAction(t: string): ActionReading[] | null {
+  // "Cast this spell only during combat [and only if ...]": a timing restriction per "only", the
+  // store's `cant` on casting it.
+  const only = /^cast this spell only (.+)$/i.exec(t);
+  if (only) return only[1]!.split(/ and only /i).map((part) => ({ verb: "cant", object: SELF, text: `cast this spell only ${part}` }));
   // "Instant and sorcery spells you cast cost {1} less to cast": the store's cost-modify, the
   // spells its object and the change its amount.
   const cost = /^(.+?) costs? \{(\d+|x)\} (less|more) to cast( for each .+)?$/i.exec(t);
@@ -685,18 +691,30 @@ function restrictionOf(t: string): ActionReading[] | null {
 
 /** "<it> enters with two +1/+1 counters on it": counters the permanent itself arrives with. */
 const ENTERS_WITH = /^(?:~|this [a-z]+|it|that creature|that permanent|each creature) (?:enters(?: the battlefield)?(?: tapped)?|escapes) with /i;
-/** [counters phrase, "for each" tail] of an "enters with ... on it" phrase, cut by index (CodeQL
- *  polynomial-redos), or null. */
-function entersWithOf(t: string): [string, string | undefined] | null {
-  const head = ENTERS_WITH.exec(t);
+/** "each other Beast creature you control enters with ..." (a class) as well as the card itself. */
+const ENTERS_WITH_ANY = / (?:enters?(?: the battlefield)?(?: tapped)?|escapes?) with /i;
+/** [counters phrase, "for each" tail, the subject when it is a class, abilities it enters with] of
+ *  an "enters with ... on it" phrase, cut by index (CodeQL polynomial-redos), or null. */
+function entersWithOf(t: string): [string, string | undefined, string | undefined, string[]] | null {
+  const head = ENTERS_WITH.exec(t) ?? ENTERS_WITH_ANY.exec(t);
   if (!head) return null;
-  const rest = t.slice(head[0].length);
-  for (const on of [" on it", " on them"]) {
+  const subject = head.index > 0 ? t.slice(0, head.index) : undefined;
+  if (subject !== undefined && !objectOf(subject)) return null;
+  let rest = t.slice(head.index + head[0].length).replace(/\b(an?|one|two|three|four|five|x) additional /gi, "$1 ").replace(/^your choice of /i, "");
+  // "... on it and with trample", "... on it and with haste": the abilities it enters with.
+  let withs: string[] = [];
+  const and = rest.search(/ on (?:it|them|him|her) and with /);
+  if (and > 0) {
+    const a = abilitiesOf(rest.slice(rest.indexOf(" and with ", and) + " and with ".length));
+    if (!a) return null;
+    withs = a; rest = rest.slice(0, rest.indexOf(" and with ", and));
+  }
+  for (const on of [" on it", " on them", " on him", " on her"]) {
     const at = rest.indexOf(on);
     if (at < 0) continue;
     const after = rest.slice(at + on.length);
-    if (after === "") return [rest.slice(0, at), undefined];
-    if (after.startsWith(" for each ")) return [rest.slice(0, at), after.slice(" for each ".length)];
+    if (after === "") return [rest.slice(0, at), undefined, subject, withs];
+    if (after.startsWith(" for each ")) return [rest.slice(0, at), after.slice(" for each ".length), subject, withs];
   }
   return null;
 }
@@ -738,8 +756,9 @@ const WHEN_TAILS = [" at the beginning of the next turn's upkeep", " at the begi
 function whenTail(t: string): { at: number; text: string } | undefined {
   const fixed = WHEN_TAILS.find((w) => t.endsWith(w));
   if (fixed) return { at: t.length - fixed.length, text: fixed.trim() };
-  // "attacks each combat if able" is the restriction itself, not a condition on it.
-  if (t.endsWith(" if able")) return undefined;
+  // "attacks each combat if able" is the restriction itself, not a condition on it; so is "cast this
+  // spell only if ...".
+  if (t.endsWith(" if able") || /^cast this spell only /i.test(t)) return undefined;
   const at = t.lastIndexOf(" if ");
   return at > 0 && !t.includes(",", at) ? { at, text: t.slice(at + 1) } : undefined;
 }
@@ -787,10 +806,10 @@ function pumpOrGrant(t: string): ActionReading[] | null {
   const have = /^you (may )?have (?=.+ (?:get|gain|have|become) )/i.exec(body);
   if (have) body = body.slice(have[0].length);
   let subject: string | undefined, verb: string | undefined, rest = "";
-  const m = /^(gets?|gains?|has|have|becomes?) /i.exec(body);
+  const m = /^(gets?|gains?|has|have|becomes?|loses?) /i.exec(body);
   if (m && lastSubject !== undefined) { subject = lastSubject; verb = m[1]!.toLowerCase(); rest = body.slice(m[0].length); }
   else {
-    for (const v of body.matchAll(/ (gets?|gains?|has|have|is|are|becomes?) /gi)) {
+    for (const v of body.matchAll(/ (gets?|gains?|has|have|is|are|becomes?|loses?) /gi)) {
       const who = body.slice(0, v.index).replace(/ each$/i, "");
       if (who.length > 80 || !(who === "you" || objectOf(who) || /^(?:they|they each|he|she|that token|those tokens|those creatures|each of those creatures)$/i.test(who))) continue;
       subject = who; verb = v[1]!.toLowerCase(); rest = body.slice(v.index + v[0].length); break;
@@ -805,7 +824,7 @@ function pumpOrGrant(t: string): ActionReading[] | null {
   const out: ActionReading[] = [];
   // A PREDICATE LIST: "gets +2/+2, has trample and haste, and is a Samurai in addition to its other
   // types". Every predicate must read, or the phrase is not read.
-  for (const pred of `${verb} ${rest}`.split(/,? and (?=(?:gets?|has|have|gains?|is|are|can't|attacks|becomes?) )|, (?=(?:gets?|has|have|gains?|is|are|can't|attacks|becomes?) )/i)) {
+  for (const pred of `${verb} ${rest}`.split(/,? and (?=(?:gets?|has|have|gains?|is|are|can't|attacks|becomes?|loses?) )|, (?=(?:gets?|has|have|gains?|is|are|can't|attacks|becomes?|loses?) )/i)) {
     const r = predicateOf(pred.replace(DURATION, "").trim(), who.object, target);
     if (!r) return null;
     out.push(...r);
@@ -833,11 +852,20 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   if (/^attacks each combat if able$/i.test(pred)) return [{ verb: "cant", object, text: "not attack each combat if able" }];
   // "becomes a 1/1 Elemental creature with vigilance and haste", "becomes a Dragon": animated or
   // retyped, and the abilities after "with" are grants.
-  const becomes = /^becomes? (?:an? )?((?:\d+\/\d+ )?[\w -]+?)(?: with (.+))?$/i.exec(pred);
+  // "loses all abilities", "loses flying": the store's `cant`.
+  const loses = /^loses? (.+)$/i.exec(pred);
+  if (loses) {
+    if (/^all abilities$/i.test(loses[1]!)) return [{ verb: "cant", object, text: "have abilities" }];
+    const lost = abilitiesOf(loses[1]!);
+    return lost && lost.map((a) => ({ verb: "cant", object, text: a }));
+  }
+  const becomes = /^becomes? (?:an? )?((?:\d+\/\d+ )?[\w -]+?)(?: with (.+))?$/i.exec(pred.replace(/ that's still an? (?:land|planeswalker|artifact|enchantment)$/i, ""));
   // "becomes prepared" is a prepare, which derive reads off the clause (Codie): not read here.
   if (becomes && !/^prepared$/i.test(becomes[1]!)) {
-    const withs = becomes[2] ? abilitiesOf(becomes[2]) : [];
-    return withs && [{ verb: "animate", ...target }, ...withs.map((a) => ({ verb: "grant-ability", object, text: a }))];
+    // "with base power and toughness 4/4 [and flying]": the set P/T, as the store's modify-pt.
+    const base = becomes[2] ? /^base power and toughness (\d+\/\d+)(?:,? and (.+))?$/i.exec(becomes[2]) : null;
+    const withs = base ? (base[2] ? abilitiesOf(base[2]) : []) : becomes[2] ? abilitiesOf(becomes[2]) : [];
+    return withs && [{ verb: "animate", ...target }, ...(base ? [{ verb: "modify-pt", ...target, amount: base[1]! }] : []), ...withs.map((a) => ({ verb: "grant-ability", object, text: a }))];
   }
   // "is an Angel in addition to its other types", "is legendary": a type granted (derive's
   // `type-grant` reads "in addition to its other types").
@@ -907,9 +935,15 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   const setLife = SET_LIFE.exec(t);
   if (setLife) return [{ verb: "set-life", amount: setLife[1]!, ...(condition ? { condition } : {}) }];
   const entersWith = entersWithOf(t);
-  const ew = entersWith ? counterList(entersWith[0]) : null;
+  const ew = entersWith ? counterList(entersWith[0].replace(/,? or (?=(?:a|an) [^,]*counter)/g, " and ")) : null;
   if (ew) {
-    const counters: ActionReading[] = ew.map((c) => ({ verb: "add-counter", object: SELF, counter: c.counter, amount: entersWith![1] ? `${c.amount ?? "1"} for each ${entersWith![1]}` : c.amount ?? "1", ...(condition ? { condition } : {}) }));
+    // The card itself, or a class ("each other Beast creature you control"), which the recipient names.
+    const who = entersWith![2] !== undefined ? objectOf(entersWith![2])! : { object: SELF };
+    const on = { object: who.object, ...(entersWith![2] !== undefined && !who.object.self && !who.object.ref ? { text: entersWith![2] } : {}) };
+    const counters: ActionReading[] = [
+      ...ew.map((c) => ({ verb: "add-counter", ...on, counter: c.counter, amount: entersWith![1] ? `${c.amount ?? "1"} for each ${entersWith![1]}` : c.amount ?? "1", ...(condition ? { condition } : {}) })),
+      ...entersWith![3].map((a) => ({ verb: "grant-ability", object: who.object, text: a, ...(condition ? { condition } : {}) })),
+    ];
     // "This land enters tapped with two charge counters on it": the tap first, as the store writes it.
     return /^\S.*? enters(?: the battlefield)? tapped with /i.test(t) ? [{ verb: "tap", object: SELF, ...(condition ? { condition } : {}) }, ...counters] : counters;
   }
@@ -1014,7 +1048,7 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   const colon = cost === undefined ? effect.indexOf(": ") : -1;
   const prefix = colon > 0 ? effect.slice(0, colon) : "";
   if (prefix !== "" && !/[."]/.test(prefix) && /^[A-Z]/.test(effect.slice(colon + 2))
-    && (prefix.startsWith("{") || /^(?:Pay|Sacrifice|Discard|Exile|Tap|Remove|Return)\b/.test(prefix))) {
+    && (prefix.startsWith("{") || /^(?:Pay|Sacrifice|Discard|Exile|Tap|Remove|Return|Put)\b/.test(prefix))) {
     cost = prefix; effect = effect.slice(colon + 2);
   }
   // Split where a new cost item starts, so "Sacrifice an artifact, creature, or land" stays one.
@@ -1037,6 +1071,8 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     const ifYouDoAfterMay = mayBefore && /^if you do, /i.test(s);
     mayBefore = /\byou may\b/i.test(s);
     let condition: string | undefined;
+    // "Until end of turn, target creature becomes ...": a duration at the front, not a condition.
+    s = s.replace(/^(?:until end of turn|until your next turn|until the end of your next turn|this turn|for as long as [^,]+), /i, "");
     const open = OPENER.exec(s);
     if (open && !/^then$/i.test(open[1]!)) { condition = open[1]!.toLowerCase(); s = s.slice(open[0].length); }
     else if (open) s = s.slice(open[0].length);

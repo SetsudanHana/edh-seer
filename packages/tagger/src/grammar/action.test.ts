@@ -224,6 +224,21 @@ test("fragments 1: a back-referenced controller and a set made 'this way' are re
   expect(read("Destroy each creature that attacked this turn.")[0]?.object?.ref).toBeUndefined();
 });
 
+test("fragments 2: a leading duration, set P/T on becoming, losing abilities, casting restrictions, entering with counters", () => {
+  expect(read("Until end of turn, target creature becomes a white Rabbit with base power and toughness 0/1.").map((r) => [r.verb, r.amount]))
+    .toEqual([["animate", undefined], ["modify-pt", "0/1"]]);
+  expect(read("Until end of turn, target creature loses all abilities and becomes a blue Frog with base power and toughness 1/1.")[0])
+    .toMatchObject({ verb: "cant", text: "have abilities" });
+  expect(read("Cast this spell only during the declare attackers step and only if you've been attacked this step.").map((r) => r.text))
+    .toEqual(["cast this spell only during the declare attackers step", "cast this spell only if you've been attacked this step"]);
+  expect(read("You may cast the exiled card without paying its mana cost.")).toMatchObject([{ verb: "cast", object: { ref: "sentence" } }]);
+  // A class that enters with counters names its recipient; the card itself keeps the stored object.
+  expect(read("Each other non-Human creature you control enters with an additional +1/+1 counter on it.")[0])
+    .toMatchObject({ verb: "add-counter", counter: "+1/+1", amount: "1", text: "each other non-Human creature you control" });
+  expect(read("it enters with two +1/+1 counters on it and with trample.").map((r) => r.verb)).toEqual(["add-counter", "grant-ability"]);
+  expect(read("this creature enters with your choice of a deathtouch counter or a lifelink counter on it.").map((r) => r.counter)).toEqual(["deathtouch", "lifelink"]);
+});
+
 test("a cost's actions come first, the cost's own words read the same way", () => {
   expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }, { verb: "create" }]);
   // A cost the segmenter left in the text is still a cost; ability words and table rows are labels.
