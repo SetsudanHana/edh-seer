@@ -81,8 +81,26 @@ test("counters: the kind is `counter`, the recipient the object (#731)", () => {
   expect(read("Proliferate.")).toMatchObject([{ verb: "proliferate" }]);
 });
 
+test("tokens: the printed phrase, its count, a quoted ability kept whole", () => {
+  expect(read('create a 0/1 colorless Eldrazi Spawn creature token with "Sacrifice this token: Add {C}."')).toMatchObject([
+    { verb: "create", amount: "1", text: 'a 0/1 colorless Eldrazi Spawn creature token with "Sacrifice this token: Add {C}."', object: { token: true, subtype: ["eldrazi", "spawn"] } },
+  ]);
+  expect(read("create two Treasure tokens.")).toMatchObject([{ verb: "create", amount: "2", object: { subtype: "treasure" } }]);
+  expect(read("create a Clue token, a Food token, and a Treasure token.").map((r) => r.object?.subtype)).toEqual(["clue", "food", "treasure"]);
+  expect(read("you may sacrifice another creature you control. If you do, create a number of Treasure tokens equal to that creature's power."))
+    .toMatchObject([{ verb: "create", amount: "that creature's power", text: "Treasure tokens" }]);
+  expect(read("Create an X/X colorless Shapeshifter creature token with changeling and deathtouch, where X is the number of land cards in your graveyard.")[0]?.text)
+    .toMatch(/, where X is the number of land cards in your graveyard$/);
+  // A copy of a back-reference keeps the stored object.
+  expect(read("For each token you control, create a token that's a copy of that permanent.")[0]?.text).toBeUndefined();
+  expect(read("amass Orcs 2.")).toMatchObject([{ verb: "amass", amount: "2", text: "Orcs" }]);
+  expect(read("Investigate twice.")).toMatchObject([{ verb: "investigate", amount: "2" }]);
+  // Quoted text is the granted ability's, never this clause's actions.
+  expect(read('Creatures you control have "Whenever this creature attacks, draw a card."')).toEqual([]);
+});
+
 test("a cost's actions come first, the cost's own words read the same way", () => {
-  expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }]);
+  expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }, { verb: "create" }]);
   // A cost the segmenter left in the text is still a cost; ability words and table rows are labels.
   expect(read("Crescent Fang — Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.")[0]?.verb).toBe("search");
 });
@@ -96,6 +114,7 @@ test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.945],
   ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.895],
   ["counters", ["add-counter", "remove-counter", "proliferate"], 0.775],
+  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.9],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")

@@ -233,6 +233,72 @@ const COUNTERS: Record<string, [string, Handler]> = {
   proliferate: ["proliferate", (rest) => (rest === "" ? {} : null)],
 };
 
+/** "a Treasure token", "two 1/1 white Soldier creature tokens with flying", "X 2/2 black Zombie creature
+ *  tokens", "a token that's a copy of target creature you control", "a number of 1/1 Saproling tokens
+ *  equal to its power". The object text is the whole printed phrase, as the store writes it; the
+ *  filter grammar reads its characteristics. */
+function tokenOf(phrase: string): Args | null {
+  // "that's tapped and attacking" is how the token ENTERS, not what it is: kept out of the text, or the
+  // token's own node (a Soldier) would no longer join the card that makes it.
+  let t = phrase.trim().replace(/ that(?:'s| are) tapped and attacking$/, "");
+  let amount: string | undefined;
+  // The text derive reads is the token phrase alone: "equal to that creature's power" is the amount,
+  // and left in the text it made Ruthless Technomancer's Treasures creatures.
+  let text = t;
+  const eq = /^a number of (.+?) equal to (.+)$/.exec(t);
+  if (eq) { t = `a ${eq[1]!.replace(/tokens\b/, "token")}`; amount = eq[2]!; text = eq[1]!; }
+  const each = / for each (.+)$/.exec(t);
+  if (each) t = t.slice(0, each.index);
+  if (!/\btokens?\b/.test(t)) return null;
+  const count = /^(a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+|that many) /i.exec(t);
+  const n = count ? amountOf(count[1]!) ?? count[1]!.toLowerCase() : undefined;
+  // The filter grammar reads the characteristics; a count it has no word for ("that many") and a
+  // quoted ability it cannot read are not characteristics, so a reading without them stands in.
+  const bare = count && !amountOf(count[1]!) ? `a ${t.slice(count[0].length).replace(/tokens\b/, "token")}` : t;
+  const object = parse(bare) ?? parse(bare.replace(/ with "[^"]*"$/, ""));
+  if (!object || object.token !== true) return null;
+  // A COPY OF A BACK-REFERENCE ("a token that's a copy of that permanent", Second Harvest) keeps the
+  // stored object: the filter grammar reads "that permanent" as the class permanent, which would let
+  // every copied token feed landfall and enchantress.
+  const copiesRef = /\bcop(?:y|ies) of (?:that|it|those|them|the exiled|the sacrificed|this)\b/.test(t);
+  return { object: copiesRef ? { ...object, ref: "sentence" } : object, amount: amount ?? (each ? `${n ?? "1"} for each ${each[1]}` : n ?? "1"), ...(copiesRef ? {} : { text }) };
+}
+
+/** "a Clue token, a Food token, and a Treasure token": one creation per token, as the store writes them. */
+function tokenList(rest: string): Args | Args[] | null {
+  // The list first: the filter grammar would read "a Clue token, a Food token, and a Treasure token"
+  // as ONE token of three types.
+  const parts = rest.split(/,? and (?=(?:a|an|one|two|three) )|, (?=(?:a|an|one|two|three) )/);
+  if (parts.length >= 2) {
+    const out = parts.map(tokenOf);
+    if (out.every((x) => x !== null)) return out as Args[];
+  }
+  return tokenOf(rest);
+}
+
+/** "twice", "five times", "X times", "that many times". */
+function timesOf(rest: string): string | null {
+  if (rest === "") return "1";
+  if (rest === "twice") return "2";
+  const m = /^(\w+|that many) times$/.exec(rest);
+  return m ? amountOf(m[1]!) ?? m[1]! : null;
+}
+
+const TOKENS: Record<string, [string, Handler]> = {
+  create: ["create", tokenList],
+  investigate: ["investigate", (rest) => (timesOf(rest) ? { amount: timesOf(rest)! } : null)],
+  populate: ["populate", (rest) => (rest === "" ? {} : null)],
+  // "incubate 2", "amass Orcs 2": the number is the amount, an amass's type the object (as stored).
+  incubate: ["incubate", (rest) => {
+    const m = /^(\w+)(?: (twice|\w+ times))?$/.exec(rest);
+    return m && amountOf(m[1]!) ? { amount: amountOf(m[1]!)! } : null;
+  }],
+  amass: ["amass", (rest) => {
+    const m = /^(?:([A-Z][a-z]+) )?(\w+)$/.exec(rest);
+    return m && amountOf(m[2]!) ? { amount: amountOf(m[2]!)!, ...(m[1] ? { text: m[1] } : {}) } : null;
+  }],
+};
+
 /** "<it> enters with two +1/+1 counters on it": counters the permanent itself arrives with. */
 const ENTERS_WITH = /^(?:~|this [a-z]+|it|that creature|that permanent|each creature) (?:enters(?: the battlefield)?(?: tapped)?|escapes) with /i;
 /** [counters phrase, "for each" tail] of an "enters with ... on it" phrase, cut by index (CodeQL
@@ -254,7 +320,7 @@ function entersWithOf(t: string): [string, string | undefined] | null {
 /** "your life total becomes 10". */
 const SET_LIFE = /^(?:your|their|each player's) life total becomes (.+)$/i;
 
-const HANDLERS: Record<string, [string, Handler]> = { ...DRAW_SEARCH, ...DAMAGE_LIFE, ...COUNTERS };
+const HANDLERS: Record<string, [string, Handler]> = { ...DRAW_SEARCH, ...DAMAGE_LIFE, ...COUNTERS, ...TOKENS };
 /** The verb words, with their third-person forms, longest first. */
 const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new RegExp(`^(?:${v}|${v}s|${v.replace(/y$/, "ies")}|${v}es)\\b`, "i"), v]);
 
@@ -294,7 +360,11 @@ function whenTail(t: string): { at: number; text: string } | undefined {
 
 /** One phrase: actor, "may", verb, arguments. `carried` is the actor of the sentence's earlier
  *  phrase: "target player draws two cards and loses 2 life" -- the life is theirs too. */
-function readPhrase(phrase: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
+/** The quoted abilities of the clause being read, restored into a phrase as it is read. */
+let quotes: string[] = [];
+
+function readPhrase(quoted: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
+  const phrase = quoted.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!);
   let t = phrase.trim().replace(/^(?:then|instead|also) /i, "");
   // "draw X cards, where X is the number of ...": X is the amount, the rest says what it counts.
   const where = t.indexOf(", where X is ");
@@ -347,7 +417,10 @@ function readPhrase(phrase: string, condition: string | undefined, carried?: Act
     const rest = t.slice(m[0].length).trim();
     const args = handler(rest);
     if (!args) return null;
-    const all: Args[] = [args].flat().map((a) => (counted && a.amount !== undefined && /\bX\b/.test(a.amount) ? { ...a, amount: counted } : a));
+    const all: Args[] = [args].flat().map((a) => (counted && a.amount !== undefined && /\bX\b/.test(a.amount) ? { ...a, amount: counted } : a))
+      // "an X/X ... token, where X is the number of land cards in your graveyard": the X is in the
+      // TEXT, so its definition stays with it (Formless Genesis's scaling reads it there).
+      .map((a) => (counted && a.text !== undefined && /\bX\b/.test(a.text) ? { ...a, text: `${a.text}, where X is ${counted}` } : a));
     // A BACK-REFERENCE ("itself", "that player") keeps the stored object: derive resolves it, so it
     // gets no printed text to overwrite that with.
     const isRef = (a: Args) => a.object?.ref === "sentence";
@@ -416,11 +489,14 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     if (r) out.push(...r);
   }
   // Quoted ability text belongs to what is granted, not to this clause's own actions.
-  const unquoted = effect.replace(/"[^"]*"/g, "\u0000");
+  // A QUOTED ability is one atom: never split, never read as this clause's own actions, and kept in
+  // the object it belongs to ('create a 1/1 Spawn token with "Sacrifice this token: Add {C}."').
+  quotes = [];
+  const unquoted = effect.replace(/"[^"]*"/g, (q) => `\uE000${quotes.push(q) - 1}\uE001`);
   let mayBefore = false;
   for (const raw of unquoted.split(/(?<=\.)\s+/)) {
     let s = raw.trim().replace(/\.$/, "");
-    if (s === "" || s.includes("\u0000")) continue;
+    if (s === "") continue;
     // "You may pay {2}. If you do, draw a card": the draw is as optional as the payment (the store's
     // reading, and the rules': nothing happens unless you choose to pay).
     const ifYouDoAfterMay = mayBefore && /^if you do, /i.test(s);
