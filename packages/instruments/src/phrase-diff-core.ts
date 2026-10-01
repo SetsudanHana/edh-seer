@@ -12,6 +12,8 @@
  *  (`type: "creature"` vs `["creature"]`), and an OR-list in another order. Nothing else is folded:
  *  an absent field and `null` stay different, because `token: null` is a statement. */
 import type { SubjectFilter } from "@edh-seer/tagger/schema";
+import { counterKindOf } from "@edh-seer/tagger/subject";
+import { KEYWORD_ABILITIES } from "@edh-seer/tagger/subtypes";
 
 export interface Phrase { kind: "subject" | "object"; phrase: string; cards: number }
 export type Parser = (text: string) => SubjectFilter | null;
@@ -20,6 +22,8 @@ export interface Group { fields: string[]; distinct: number; cards: number; exam
 export interface Tally { distinct: number; cards: number }
 export interface PhraseDiff {
   total: Tally;
+  /** Total and parsed per `domainOf` bucket: S1 over the filter language is the `filter` row. */
+  byDomain: Record<string, { total: Tally; parsed: Tally }>;
   /** Phrases the candidate parsed completely (S1). */
   parsed: Tally;
   /** ...of which it agrees with the baseline on every field. */
@@ -53,6 +57,7 @@ export function differingFields(a: object, b: object): string[] {
 }
 
 export function diffParsers(phrases: Phrase[], candidate: Parser, baseline: Parser): PhraseDiff {
+  const byDomain: PhraseDiff["byDomain"] = {};
   const total = { distinct: 0, cards: 0 }, parsed = { distinct: 0, cards: 0 }, agree = { distinct: 0, cards: 0 };
   const nondeterministic: string[] = [];
   const groups = new Map<string, Group>();
@@ -60,7 +65,10 @@ export function diffParsers(phrases: Phrase[], candidate: Parser, baseline: Pars
     total.distinct++; total.cards += p.cards;
     const cand = candidate(p.phrase);
     if (JSON.stringify(cand) !== JSON.stringify(candidate(p.phrase))) nondeterministic.push(p.phrase);
+    const dom = byDomain[domainOf(p.phrase)] ??= { total: { distinct: 0, cards: 0 }, parsed: { distinct: 0, cards: 0 } };
+    dom.total.distinct++; dom.total.cards += p.cards;
     if (cand === null) continue;
+    dom.parsed.distinct++; dom.parsed.cards += p.cards;
     parsed.distinct++; parsed.cards += p.cards;
     const base = baseline(p.phrase) ?? {} as SubjectFilter;
     const fields = differingFields(base, cand);
@@ -75,9 +83,43 @@ export function diffParsers(phrases: Phrase[], candidate: Parser, baseline: Pars
     g.examples.sort((a, b) => b.cards - a.cards || a.phrase.localeCompare(b.phrase));
     g.examples = g.examples.slice(0, EXAMPLES);
   }
-  return { total, parsed, agree, nondeterministic, groups: sorted };
+  return { total, byDomain, parsed, agree, nondeterministic, groups: sorted };
 }
 
 export function readPhrases(jsonl: string): Phrase[] {
   return jsonl.split("\n").filter((l) => l.trim() !== "").map((l) => JSON.parse(l) as Phrase);
+}
+
+/** WHICH LANGUAGE A PHRASE IS IN, so coverage of the FILTER language is measured over filter
+ *  phrases. The census holds every trigger subject and action object, and most of it is not a noun
+ *  phrase for a filter at all: "Flying" (a keyword granted), "+1/+1" (a counter kind), "{C}" (mana),
+ *  "this creature" (a reference, task 4), "chapter II" (a time, task 5), "be blocked" (a verb).
+ *
+ *  Decided HERE, by a few explicit rules on the first words, and never by the parser under test: a
+ *  grammar that marked what it cannot read as out of its domain would grade itself. Everything no
+ *  rule claims is `filter`, so a rule too narrow LOWERS the measured coverage rather than raising it. */
+const KEYWORD_LISTS = KEYWORD_ABILITIES.map((k) => k.split(" "));
+const REFERENCE_WORDS = new Set(["this", "that", "those", "these", "it", "its", "them", "they", "itself", "enchanted", "equipped", "the", "he", "she", "him", "her"]);
+const VERB_WORDS = new Set(["be", "block", "attack", "untap", "not", "pay", "sacrifice", "exert", "discard", "exile", "draw", "deal", "deals", "tap", "gain", "lose", "return", "put", "cast", "create", "destroy", "transform", "search", "reveal", "look", "mill", "scry", "copy", "choose", "do", "remove", "counter", "become", "becomes", "play", "attacks", "blocks", "dies", "enters", "leaves"]);
+const TIME = /\b(?:chapter|turn|upkeep|end step|main phase|combat|draw step|untap step|day|night|beginning)\b|^(?:i|ii|iii|iv|v|vi)(?:,|$)/;
+const ZONE = /^(?:(?:your|their|its owner's|target player's|target opponent's|an opponent's|each player's|that player's|a player's|all|each)\s+)?(?:library|libraries|hand|hands|graveyard|graveyards|life total)\b/;
+
+export function domainOf(phrase: string): string {
+  if (phrase.includes("~")) return "reference";
+  const text = phrase.toLowerCase().replace(/’/g, "'").trim();
+  if (text.startsWith("(")) return "reminder";
+  const w = text.split(/[\s,]+/).filter((x) => x !== "");
+  if (w.length === 0) return "empty";
+  if (REFERENCE_WORDS.has(w[0]!) || (w[0] === "one" && w[1] === "of")) return "reference";
+  // "Enchant creature you control" names a CLASS after the keyword: a filter phrase, and one the
+  // grammar does not read yet. Counting it as a keyword would hide 1,239 card-occurrences of misses
+  // (review). Every other keyword line is a grant or a cost.
+  if (w[0] !== "enchant" && KEYWORD_LISTS.some((ws) => ws.every((x, j) => w[j] === x))) return "keyword";
+  if (/^[+-]\d/.test(w[0]!) || counterKindOf(text)) return "counter";
+  if (w.length === 1 && /^(?:\d+|x)$/.test(w[0]!)) return "number";
+  if (w[0]!.startsWith("{") || /\bmana\b(?! value| cost)/.test(text)) return "mana";
+  if (ZONE.test(text)) return "zone";
+  if (!text.includes(" named ") && TIME.test(text)) return "time";
+  if (VERB_WORDS.has(w[0]!)) return "verb";
+  return "filter";
 }

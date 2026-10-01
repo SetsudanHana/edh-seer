@@ -18,6 +18,7 @@ import { emblemRecipient } from "../emblem.js";
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
   "110.2": "scaling.test.ts — a permanent's owner and controller differ: Zedruu counts permanents you own that your opponents control",
+  "112.2": "grammar/filter.test.ts — a spell's controller is the player who cast it: 'spells you cast' reads control you (#896 task 2)",
   "110.2a": "derive.test.ts — what you put onto the battlefield enters under your control (Misty Rainforest)",
   "118.12a": "derive.test.ts / clause-store.test.ts — an action's unless-payment rides onto the ability, and a doc that dropped one is re-asked",
   "602.1a": "payment.test.ts — an activation cost is read part by part into payment, an unread part kept verbatim",
