@@ -148,6 +148,53 @@ With the fill retried, the nine were rebuilt and every measure passed. The owner
 complete `static-out` and never fills on demand. Build time grew with the package: about 3 hours
 for all 197 on this machine, up from 91 minutes.
 
+## Run 5: swaps weighed as the report weighs cards (2026-10-01)
+
+The owner, after run 4: swaps took "into account the amount of links not their magnitude".
+
+A synergy swap's add had to have more distinct partners than its cut. Now both cards are read the
+same way, against the deck without the cut, and weighed by the report's own per-card formula
+(`card-strength.ts`, shared with `analyze.ts`):
+
+- a link counts its reasons times the deck's theme boost, so a link on the theme counts up to 2.5
+  times;
+- a link with the commander counts 3 times;
+- what a card supplies to others counts at a quarter share, square-root damped.
+
+Each cut asks its first six candidates and keeps the strongest add that beats it, and pairs are
+listed biggest gain first. Edge magnitude (firings per use) is still display data. Choosing a
+weighting for it is step 2, to be measured first.
+
+| Measure | Run 4 (counts) | Run 5 (weighted) |
+|---|---|---|
+| H1-H5 | all pass | **all pass** |
+| S1, 5+ swaps at every target | 94.4% | **97.0%** |
+| S2, synergy kept at target 3 | 19 of 20 | **18 of 20** (the floor) |
+
+| Bracket 3 packages | Run 4 | Run 5 |
+|---|---|---|
+| Median swaps | 12 | 12 |
+| Packages with 10+ swaps | 157 | 157 of 196 |
+| Synergy swaps | 1,521 | 1,501 |
+| Synergy pairs the same as run 4 | | 237 of 1,501 |
+| Deck synergy after the swaps, against run 4 | | higher in 85, the same in 68, lower in 43; mean +0.06 |
+
+- **Most picks changed.** Only about one pair in six stayed the same: adds are now chosen for links
+  on the deck's theme and with its commander.
+- **Party Time.** Jazal Goldmane gives way to Elas il-Kor ("works with 16 cards in this deck, 1 of
+  them on its theme; Elas il-Kor, Sadistic Pilgrim works with 53 cards, 52 of them on it"). Ayara,
+  First of Locthwain and Diviner's Wand are new adds.
+- **The two S2 misses.**
+  - Arcane Maelstrom (4.2 → 4.1) was the miss in run 4 too.
+  - Elven Empire is new: 4.2 → 4.1, where the counted picks gave 4.3.
+  - The swap compares two cards' strength; the deck's synergy score is a deck-wide figure rated
+    against the deck's best card, so a stronger add can lower it. Across the sample the new picks
+    raise it more often than they lower it: Power Hungry 3.7 → 4.1, Miracle Worker 4.1 → 4.4.
+- **The local data moved between runs.** The dev server had filled more of `static-out` from
+  production since run 4: Party Time's own mana base reads 1.29 now, where run 4 read 1.19, on
+  unchanged code. The measures compare each package with its precon in the same run, so they hold.
+  The run 4 to run 5 comparison mixes the change with the data.
+
 ## The persona
 
 - **Seat:** `mtg-precon-upgrader`.
