@@ -140,6 +140,20 @@ test("pumps and grants: the pump's object is who gets it, each grant's text the 
   expect(read("You gain 3 life.").map((r) => r.verb)).toEqual(["gain-life"]);
 });
 
+test("mana, tapping and restrictions: the mana as printed, the restricted thing as the text", () => {
+  expect(read("Add {R} or {G}.")).toMatchObject([{ verb: "add-mana", text: "{R} or {G}" }]);
+  expect(read("Add {G} for each creature you control.")).toMatchObject([{ verb: "add-mana", text: "{G}", amount: "for each creature you control" }]);
+  expect(read("Add an amount of {G} equal to this creature's power.")).toMatchObject([{ text: "{G}", amount: "this creature's power" }]);
+  expect(read("This land enters tapped unless you control two or fewer other lands.")).toMatchObject([{ verb: "tap", object: { self: true }, condition: "unless you control two or fewer other lands" }]);
+  expect(read("Tap up to two target creatures.")).toMatchObject([{ verb: "tap", text: "up to two target creatures", optional: true }]);
+  expect(read("This creature can't block.")).toMatchObject([{ verb: "cant", text: "block" }]);
+  expect(read("This creature attacks each combat if able.")).toMatchObject([{ verb: "cant", text: "not attack each combat if able" }]);
+  expect(read("This creature can block only creatures with flying.")).toMatchObject([{ verb: "cant", text: "block creatures without flying" }]);
+  // A restriction's "unless" stays in it: the tax derive reads.
+  expect(read("Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you.")[0]?.text)
+    .toBe("attack you unless their controller pays {2} for each creature they control that's attacking you");
+});
+
 test("a cost's actions come first, the cost's own words read the same way", () => {
   expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }, { verb: "create" }]);
   // A cost the segmenter left in the text is still a cost; ability words and table rows are labels.
@@ -159,6 +173,7 @@ test.each([
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.9],
   ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.88],
   ["pump/grant", ["modify-pt", "grant-ability"], 0.795],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.735],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")

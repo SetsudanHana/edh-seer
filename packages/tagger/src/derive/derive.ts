@@ -316,7 +316,8 @@ import { emblemRecipient } from "../emblem.js";
 // 241: ...except a search, whose extra readings are its zones (Tower Winder).
 // 242: ...and zone moves (destroy, exile, sacrifice, return, put, shuffle); the count stays in the text.
 // 243: ...and pumps and grants (modify-pt, grant-ability): a grant's object is the ability granted.
-export const DERIVE_VERSION = 243;
+// 244: ...and mana, tapping and restrictions (add-mana, tap, untap, cant).
+export const DERIVE_VERSION = 244;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1353,6 +1354,7 @@ const ACTION_FAMILY: Record<string, string> = {
   create: "tokens", populate: "tokens", amass: "tokens", investigate: "tokens", incubate: "tokens",
   destroy: "zone", exile: "zone", sacrifice: "zone", return: "zone", put: "zone", shuffle: "zone",
   "modify-pt": "pump", "grant-ability": "pump",
+  "add-mana": "mana-tap", tap: "mana-tap", untap: "mana-tap", cant: "mana-tap",
 };
 const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
@@ -1407,7 +1409,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
         // The card itself keeps the stored object for the same reason ("sacrifice Endrek Sahr").
         // So does a stored object that is the printed one plus where it came from ("a land card" ->
         // "a land card from among the top four cards of your library", Planar Genesis).
-        : (ACTION_FAMILY[r.verb] === "zone" || ACTION_FAMILY[r.verb] === "pump") && (r.object?.self === true || base.object === "~" || /^this\b/i.test(base.object ?? "")
+        : (ACTION_FAMILY[r.verb] === "zone" || ACTION_FAMILY[r.verb] === "pump" || r.verb === "tap" || r.verb === "untap") && (r.object?.self === true || base.object === "~" || /^this\b/i.test(base.object ?? "")
           || (r.text !== undefined && (base.object ?? "").startsWith(`${r.text} from `))) ? base.object
         : r.text ?? base.object;
     out[i] = ({
