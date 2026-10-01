@@ -3786,3 +3786,16 @@ test("a board-wide keyword grant keeps its recipient and names the keyword (Mika
   expect(riot.grants).toEqual(["riot"]);
   expect(riot.effect.subject?.type).toBeUndefined();
 });
+
+// #900: the pronoun after a reveal is the revealed card -- not the dying creature itself.
+test("Matter Reshaper puts the revealed permanent onto the battlefield, never itself", () => {
+  const reshaper = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "this creature", control: "you" },
+      actions: [{ verb: "put", object: "it", toZone: "battlefield", optional: true }] }],
+    "Matter Reshaper",
+    { 1: "When this creature dies, reveal the top card of your library. You may put it onto the battlefield if it's a permanent card with mana value 3 or less. Otherwise, put that card into your hand." },
+  ).abilities;
+  const enters = reshaper.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
+  expect(enters?.subject).toMatchObject({ type: "permanent", fromZone: "library" });
+  expect(enters?.subject.self).toBeUndefined();
+});

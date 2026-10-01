@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Action, ClauseRecord } from "../canonicalize.js";
-import { antecedentIsSelf, antecedentSource, antecedentText, exiledAcrossClauses, zoneAfterEvent } from "./references.js";
+import { antecedentIsSelf, antecedentSource, antecedentText, exiledAcrossClauses, revealedAntecedent, zoneAfterEvent } from "./references.js";
 
 const acts = (...xs: [string, string][]) => xs.map(([verb, object]) => ({ verb, object }) as Action);
 
@@ -53,3 +53,28 @@ test("where the triggering object is when the ability resolves", () => {
   expect(zoneAfterEvent("exiled")).toBe("exile");
   expect(zoneAfterEvent("attacks")).toBeUndefined();
 });
+
+// #900: a pronoun after a reveal or a look means the revealed card, which the clause layer records no
+// action for. Typed by the clause's own condition; with none stated, unresolved -- never the trigger.
+test("a revealed or looked-at card is the antecedent, typed by its condition (#900)", () => {
+  // Matter Reshaper, Coiling Oracle, Galvanoth -- each read from the printed text.
+  expect(revealedAntecedent("reveal the top card of your library. You may put it onto the battlefield if it's a permanent card with mana value 3 or less"))
+    .toBe("a permanent card with mana value 3 or less from your library");
+  expect(revealedAntecedent("reveal the top card of your library. If it's a land card, put it onto the battlefield")).toBe("a land card from your library");
+  expect(revealedAntecedent("look at the top card of your library. You may cast it without paying its mana cost if it's an instant or sorcery spell"))
+    .toBe("an instant or sorcery card from your library");
+  expect(revealedAntecedent("reveal cards from the top of your library until you reveal a creature card. Put that card onto the battlefield")).toBe("a creature card from your library");
+  expect(revealedAntecedent("draw a card")).toBeUndefined();
+  // Rashmi: "a spell with lesser mana value" names no class.
+  expect(revealedAntecedent("reveal the top card of your library. You may cast it without paying its mana cost if it's a spell with lesser mana value")).toBeUndefined();
+  const put = [{ verb: "put", object: "it", toZone: "battlefield" }] as Action[];
+  // The revealed card outranks the trigger's subject ("this creature" for Matter Reshaper)...
+  expect(antecedentSource(put, 0, "this creature", "Matter Reshaper", "reveal the top card of your library. If it's a land card, put it onto the battlefield"))
+    .toEqual({ to: "revealed", text: "a land card from your library" });
+  // ...and a reveal that states no class leaves the pronoun unresolved, not the creature.
+  expect(antecedentSource(put, 0, "this creature", "Matter Reshaper", "reveal the top card of your library. You may put it into your hand")).toEqual({ to: "none" });
+  // An earlier action still comes first.
+  const fetch = [{ verb: "search", object: "your library for a creature card" }, { verb: "put", object: "that card" }] as Action[];
+  expect(antecedentSource(fetch, 1, undefined, undefined, "look at the top card of your library. search your library for a creature card, put that card")).toEqual({ to: "action", action: 0 });
+});
+

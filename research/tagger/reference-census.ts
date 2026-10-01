@@ -9,14 +9,19 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { connect, loadConfig } from "@edh-seer/data";
 import { antecedentIsSelf, antecedentSource, antecedentText, exiledAcrossClauses, PRONOUN_OBJECT } from "../../packages/tagger/src/derive/references.js";
 import { isSelfSubject, SELF_REFERENCE } from "../../packages/tagger/src/derive/self-reference.js";
+import { clauseTexts } from "../../packages/tagger/src/derive-input.js";
 
 const label = process.argv[2] ?? "current";
 const TYPED = /^(?:that|those) (?:creature|permanent|spell|token|land|artifact|enchantment|planeswalker|card|player|opponent)s?$/i;
 const s = await connect(loadConfig());
 const rows: string[] = [];
 const by: Record<string, number> = {}, events: Record<string, [number, string[]]> = {};
-for await (const d of s.db.collection("cardClauses").find({ isToken: { $ne: true } }, { projection: { name: 1, canonical: 1 } }) as any) {
+for await (const d of s.db.collection("cardClauses").find({ isToken: { $ne: true } }, { projection: { name: 1, canonical: 1, oracleId: 1 } }) as any) {
   let lastExiled: string | undefined;
+  // The clause's own printed text, as derive reads it: a reveal or a look the clause layer records no
+  // action for (#900) is only visible there.
+  const card = await s.cards.findOne({ _id: d.oracleId } as never);
+  const texts: Record<number, string> = card ? clauseTexts(card as never) : {};
   for (const raw of d.canonical ?? []) {
     const r = exiledAcrossClauses(raw, lastExiled, d.name);
     lastExiled = r.lastExiled;
@@ -27,7 +32,7 @@ for await (const d of s.db.collection("cardClauses").find({ isToken: { $ne: true
       let kind: string, text: string | undefined;
       if (o !== printed) { kind = "earlier clause"; text = o; }
       else if (PRONOUN_OBJECT.test(o)) {
-        const src = antecedentSource(actions, i, r.clause.trigger?.subject, d.name as string);
+        const src = antecedentSource(actions, i, r.clause.trigger?.subject, d.name as string, texts[raw.id]);
         const t = (r.clause.trigger?.subject ?? "").trim();
         const selfTrigger = SELF_REFERENCE.test(t) || isSelfSubject(t, d.name);
         kind = antecedentIsSelf(actions, i, d.name) ? "self (action)" : src.to === "trigger" && selfTrigger ? "self (trigger)" : src.to === "action" ? "this clause" : src.to;
