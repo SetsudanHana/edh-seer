@@ -37,10 +37,10 @@ import { KEYWORD_ABILITIES, SPELL_SUBTYPES, SUBTYPES } from "../derive/subtypes.
 // Lexer
 
 /** A mana symbol, a printed size or counter ("1/1", "+1/+1"), a number, a word (with its
- *  apostrophes and hyphens: "opponent's", "non-dragon", "assembly-worker"), or a comma. Anything
- *  else — a period, a colon, a parenthesis, the "~" of a self-reference — fails the lex, and a
- *  phrase that does not lex does not parse. */
-const TOKEN = /\{[^}\s]{1,8}\}|[+-]?(?:\d{1,3}|x|\*)\/[+-]?(?:\d{1,3}|x|\*)|\d{1,3}|and\/or|[a-z][a-z'-]*|,/y;
+ *  apostrophes and hyphens: "opponent's", "non-dragon", "assembly-worker"), a comma, or "~", the
+ *  card's own name, which only a "that targets" clause reads. Anything else — a period, a colon, a
+ *  parenthesis — fails the lex, and a phrase that does not lex does not parse. */
+const TOKEN = /\{[^}\s]{1,8}\}|[+-]?(?:\d{1,3}|x|\*)\/[+-]?(?:\d{1,3}|x|\*)|\d{1,3}|and\/or|[a-z][a-z'-]*|,|~/y;
 
 export function lex(text: string): string[] | null {
   const t = text.toLowerCase().replace(/’/g, "'").trim();
@@ -96,6 +96,10 @@ function subtypeOf(w: string, spellNoun: boolean): { subtype: string; plural: bo
 /** One OR-alternative of the nominal: its words are ANDed ("artifact creature" is both). */
 interface Group {
   types: string[]; subtypes: string[];
+  /** The one-value adjectives this alternative carries ("tapped", "nonblack", "snow", "nonbasic",
+   *  "multicolored"): the subject has one field for each, so it must say the same in every
+   *  alternative or the phrase is refused. */
+  adj: string[];
   /** The head noun this alternative names itself ("card", "spell", "permanent"), or that its own
    *  article makes its last type word ("an artifact or a card": "artifact"). Unset when it shares the
    *  head of the alternative after it ("an instant or sorcery CARD"). */
@@ -127,9 +131,18 @@ interface Reading {
   keywords: string[];
   notKeywords: string[];
   counter?: string;
-  combat?: "attacking" | "blocking";
-  legendary: boolean;
-  basic: boolean;
+  combat?: "attacking" | "blocking" | "in-combat";
+  tapped?: boolean;
+  /** `false` is the negation ("nonlegendary", "nonbasic"); undefined says nothing. */
+  legendary?: boolean;
+  basic?: boolean;
+  snow: boolean;
+  notColors: string[];
+  colorCount?: "multi" | "mono";
+  hasCounter: boolean;
+  targets?: Partial<SubjectFilter>;
+  /** An article restarted the nominal ("an Equipment spell OR A spell that ..."): two noun phrases. */
+  restarted: boolean;
   historic: boolean;
   outlaw: boolean;
   modified: boolean;
@@ -145,9 +158,9 @@ interface Reading {
 }
 
 const reading = (): Reading => ({
-  token: null, groups: [{ types: [], subtypes: [] }], plural: false, target: false, each: false,
+  token: null, groups: [{ types: [], subtypes: [], adj: [] }], plural: false, target: false, each: false,
   all: false, other: false, otherWord: false, notTypes: [], notSubtypes: [], colors: new Set(), colorAfterHead: false, stats: [], ability: false, abilityKinds: [],
-  keywords: [], notKeywords: [], legendary: false, basic: false, historic: false, outlaw: false,
+  keywords: [], notKeywords: [], snow: false, notColors: [], hasCounter: false, restarted: false, historic: false, outlaw: false,
   modified: false, prepared: false, commander: false, chosenType: false, restricted: false,
   tokenHead: false,
 });
@@ -255,9 +268,16 @@ function nominalWord(c: Cursor, r: Reading): boolean | null {
       c.i++; return true;
     case "legendary": r.legendary = true; c.i++; return true;
     case "basic": r.basic = true; c.i++; return true;
+    case "snow": r.snow = true; g.adj.push(w); c.i++; return true;
+    // CR 110.5, a status.
+    case "tapped": r.tapped = true; g.adj.push(w); c.i++; return true;
+    case "untapped": r.tapped = false; g.adj.push(w); c.i++; return true;
+    case "multicolored": case "multicoloured": r.colorCount = "multi"; g.adj.push(w); c.i++; return true;
+    case "monocolored": case "monocoloured": r.colorCount = "mono"; g.adj.push(w); c.i++; return true;
     // "attacking or blocking" is either, and `combat` holds one: refused, not narrowed to one half.
-    case "attacking": if (r.combat === "blocking") return null; r.combat = "attacking"; c.i++; return true;
-    case "blocking": if (r.combat === "attacking") return null; r.combat = "blocking"; c.i++; return true;
+    // "attacking or blocking" is `in-combat` (CR 506.4), the state either way.
+    case "attacking": r.combat = r.combat === "blocking" || r.combat === "in-combat" ? "in-combat" : "attacking"; c.i++; return true;
+    case "blocking": r.combat = r.combat === "attacking" || r.combat === "in-combat" ? "in-combat" : "blocking"; c.i++; return true;
     case "historic": r.historic = true; c.i++; return true;
     case "modified": r.modified = true; c.i++; return true;
     case "outlaw": case "outlaws": r.outlaw = true; c.i++; return true;
@@ -270,8 +290,11 @@ function nominalWord(c: Cursor, r: Reading): boolean | null {
     if (neg) { if (!r.notTypes.includes(neg)) r.notTypes.push(neg); if (rest !== neg) r.plural = true; c.i++; return true; }
     const sub = singulars(rest).find((s) => SUBTYPES.has(s));
     if (sub) { if (!r.notSubtypes.includes(sub)) r.notSubtypes.push(sub); c.i++; return true; }
-    // nonbasic, nonlegendary, nonhistoric, non-outlaw, nonattacking...: an inverse the schema
-    // cannot say. `parseSubject` drops these, which widens the claim.
+    if (COLOR_WORDS[rest]) { if (!r.notColors.includes(COLOR_WORDS[rest]!)) r.notColors.push(COLOR_WORDS[rest]!); g.adj.push(w); c.i++; return true; }
+    if (rest === "basic") { r.basic = false; g.adj.push(w); c.i++; return true; }
+    if (rest === "legendary") { r.legendary = false; g.adj.push(w); c.i++; return true; }
+    // nonhistoric, non-outlaw, nonattacking, nonsnow...: an inverse the schema cannot say.
+    // `parseSubject` drops these, which widens the claim.
     return null;
   }
   if (w === "time" && (c.peek(1) === "lord" || c.peek(1) === "lords")) {
@@ -291,6 +314,19 @@ function nominal(c: Cursor, r: Reading): boolean | null {
     if (ok === null) return null;
     if (ok) { any = true; continue; }
     const save = c.i;
+    // A BARE COMMA AFTER AN ADJECTIVE IS AN AND: "target nonartifact, nonblack creature" is one
+    // creature with both, not two alternatives. A comma after a noun ("a Swamp, Mountain, ...") or
+    // with "or"/"and" after it is a list.
+    const cur = r.groups[r.groups.length - 1]!;
+    if (c.peek() === "," && !["or", "and", "and/or"].includes(c.peek(1) ?? "")
+      && cur.types.length === 0 && cur.subtypes.length === 0 && any) {
+      c.i++;
+      const ok2 = nominalWord(c, r);
+      if (ok2 === null) return null;
+      if (ok2) continue;
+      c.i = save;
+      return any;
+    }
     const joined = (c.eat(",") && (c.eat("or") || c.eat("and") || c.eat("and/or") || true))
       || c.eat("or") || c.eat("and/or") || c.eat("and");
     if (!joined) return any;
@@ -300,7 +336,8 @@ function nominal(c: Cursor, r: Reading): boolean | null {
     // An article closes the alternative before it: "an artifact or a card" is two noun phrases.
     const prev = r.groups[r.groups.length - 1]!;
     if (restart && !prev.head) prev.head = prev.types.at(-1) ?? prev.subtypes.at(-1) ?? "object";
-    r.groups.push({ types: [], subtypes: [] });
+    if (restart) r.restarted = true;
+    r.groups.push({ types: [], subtypes: [], adj: [] });
     const next = nominalWord(c, r);
     if (next === null) return null;
     if (!next) { r.groups.pop(); c.i = save; return any; }
@@ -347,10 +384,12 @@ function counterPhrase(c: Cursor, r: Reading): boolean {
   if (!c.eat("a") && !c.eat("an")) c.eat("one", "or", "more");
   const start = c.i;
   while (!c.done && c.peek() !== "counter" && c.peek() !== "counters") c.i++;
-  const kind = counterKindOf(c.t.slice(start, c.i).join(" "));
-  if (kind && (c.eat("counter") || c.eat("counters"))) {
+  // No words before "counter" is no kind: "with a counter on it" (`hasCounter`).
+  const kind = c.i === start ? "" : counterKindOf(c.t.slice(start, c.i).join(" "));
+  if (kind !== undefined && (c.eat("counter") || c.eat("counters"))) {
     if (!c.eat("on", "it")) c.eat("on", "them");
-    r.counter = kind; return true;
+    if (kind) r.counter = kind; else r.hasCounter = true;
+    return true;
   }
   c.i = save;
   return false;
@@ -370,18 +409,22 @@ const CONTROLLERS: ReadonlyArray<readonly [string[], Control]> = [
 const ZONE_OWNERS: ReadonlyArray<readonly [string[], Control | undefined]> = [
   [["your"], "you"], [["an", "opponent's"], "opp"], [["target", "opponent's"], "opp"],
   [["each", "opponent's"], "opp"], [["defending", "player's"], "opp"], [["their"], undefined],
-  [["target", "player's"], undefined], [["a"], undefined], [["the"], undefined],
+  [["target", "player's"], undefined], [["a", "single"], undefined], [["a"], undefined], [["the"], undefined],
 ];
-const ZONES = new Set(["graveyard", "exile", "library", "hand"]);
+const ZONES = new Map([
+  ["graveyard", "graveyard"], ["graveyards", "graveyard"], ["exile", "exile"], ["library", "library"], ["hand", "hand"],
+]);
 
 function zonePhrase(c: Cursor, r: Reading): boolean {
   const save = c.i;
   const from = c.eat("from");
   if (!from && !c.eat("in")) return false;
+  // "from the top of your library": the origin is still the library.
+  const top = from && c.eat("the", "top", "of");
   let owner: Control | undefined;
-  for (const [ws, ctl] of ZONE_OWNERS) if (c.eat(...ws)) { owner = ctl; break; }
-  const z = c.peek();
-  if (z === undefined || !ZONES.has(z)) { c.i = save; return false; }
+  if (!c.eat("all")) for (const [ws, ctl] of ZONE_OWNERS) if (c.eat(...ws)) { owner = ctl; break; }
+  const z = ZONES.get(c.peek() ?? "");
+  if (z === undefined || (top && z !== "library")) { c.i = save; return false; }
   c.i++;
   if (from) r.fromZone = z; else r.zone = z;
   if (owner) r.control = owner;
@@ -400,7 +443,10 @@ function post(c: Cursor, r: Reading): boolean | null {
   if (c.eat("an", "opponent", "casts") || c.eat("your", "opponents", "cast") || c.eat("opponents", "cast")) { r.control = "opp"; return true; }
   // Words that do not narrow the class: whose choice it is, chance, and the default zone.
   if (c.eat("of", "their", "choice") || c.eat("of", "your", "choice") || c.eat("of", "an", "opponent's", "choice")
-    || c.eat("at", "random") || c.eat("on", "the", "battlefield") || c.eat("from", "anywhere")) return true;
+    || c.eat("at", "random") || c.eat("on", "the", "battlefield") || c.eat("from", "anywhere")
+    // "from the battlefield" is the `dies` event's own origin, and `fromZone` deliberately never holds
+    // it (see ORIGIN_ZONE in derive/subject.ts).
+    || c.eat("from", "the", "battlefield")) return true;
   if (c.eat("with")) {
     if (stat(c, r) || counterPhrase(c, r)) return true;
     const ks = keywordList(c);
@@ -423,12 +469,75 @@ function post(c: Cursor, r: Reading): boolean | null {
     if (c.eat("type") || c.eat("color") || c.eat("colour") || c.eat("creature", "type")) { r.chosenType = true; return true; }
     return null;
   }
+  // "a creature other than this creature": the same fact as "another" (`other`).
+  if (c.eat("other", "than", "this")) {
+    if (nominalWord(c, reading()) !== true) return null;
+    r.other = true; return true;
+  }
+  // Relative clauses the schema can hold: a keyword the subject has, and its combat state.
+  if (c.eat("that", "has") || c.eat("that", "have")) {
+    const ks = keywordList(c);
+    if (ks) { r.keywords.push(...ks); return true; }
+    return null;
+  }
+  if (c.eat("that's") || c.eat("that", "is") || c.eat("that", "are")) {
+    const s = c.eat("attacking") ? "attacking" : c.eat("blocking") ? "blocking" : undefined;
+    if (s) { if (r.combat && r.combat !== s) return null; r.combat = s; return true; }
+    // "a spell that's white, blue, black, or red": its colours, joined as the nominal joins them.
+    if (COLOR_WORDS[c.peek() ?? ""] && r.colors.size === 0) {
+      do {
+        if (!COLOR_WORDS[c.peek() ?? ""]) return null;
+        r.colors.add(COLOR_WORDS[c.peek()!]!); c.i++;
+      } while (c.eat(",") ? (c.eat("or") || c.eat("and") || true) : (c.eat("or") || c.eat("and/or")));
+      return true;
+    }
+    // "a token that's a copy of X": the copy has X's COPIABLE values (CR 707.2) -- types, subtypes,
+    // colour, keywords, size, a chosen type -- and nothing about whose X is, whether it is targeted,
+    // attacking or a token.
+    if (r.tokenHead && c.eat("a", "copy", "of")) {
+      const self = c.eat("this");
+      const x = reading();
+      if (self) { while (!c.done && nominalWord(c, x) === true); if (!c.done) return null; }
+      else { const o = object(c); if (!o) return null; Object.assign(x, o); }
+      if (!x.groups.some((g) => g.types.length || g.subtypes.length)) return null;
+      Object.assign(r, {
+        groups: x.groups, notTypes: x.notTypes, notSubtypes: x.notSubtypes, colors: x.colors, stats: x.stats,
+        keywords: x.keywords, notKeywords: x.notKeywords, legendary: x.legendary, chosenType: x.chosenType,
+        historic: x.historic, outlaw: x.outlaw, snow: x.snow, basic: x.basic, notColors: x.notColors, colorCount: x.colorCount,
+      });
+      return true;
+    }
+    return null;
+  }
   // What follows "attached to" is what the subject is attached TO; it must parse, and it is dropped.
   if (c.eat("attached", "to")) return object(c) !== null;
   // A count is a magnitude, not a class: "a Treasure token for each opponent".
   if (c.eat("for", "each")) { const rest = c.t.slice(c.i).join(" "); c.i = c.t.length; return parse(rest) !== null || parse(`a ${rest}`) !== null; }
   // A targeting restriction nothing models: refuse the subject outright (`SubjectFilter.restricted`).
   if (c.eat("that", "targets", "only") || c.eat("that", "target", "only")) { r.restricted = true; c.i = c.t.length; return true; }
+  // WHAT THE SPELL TARGETS (CR 115.1; owner 2026-10-01): "a spell that targets this creature" is
+  // the "becomes the target of a spell" condition, carried as `targets`. "this <noun>" and "~" are
+  // the card itself; anything else is a filter phrase of its own, and must parse completely.
+  if (c.eat("that", "targets") || c.eat("that", "target")) {
+    // After a second noun phrase the clause binds only the last one.
+    if (r.restarted) return null;
+    if (c.eat("~")) r.targets = { self: true };
+    else if (c.eat("this")) {
+      const x = reading();
+      while (!c.done && nominalWord(c, x) === true);
+      if (!c.done) return null;
+      const t = lower(x);
+      if (!t || t.type === undefined && t.subtype === undefined) return null;
+      r.targets = { self: true, ...(t.type !== undefined ? { type: t.type } : {}), ...(t.subtype !== undefined ? { subtype: t.subtype } : {}) };
+    } else {
+      const rest = c.t.slice(c.i).join(" ");
+      const t = parse(rest);
+      if (!t) return null;
+      c.i = c.t.length;
+      r.targets = t;
+    }
+    return true;
+  }
   return null;
 }
 
@@ -473,6 +582,12 @@ function lower(r: Reading): SubjectFilter | null {
   // have to be black or red. Refused. Colours BEFORE the first noun are shared adjectives ("a white
   // or blue instant or sorcery spell") and fine.
   if (r.colorAfterHead && r.groups.filter((g) => g.types.length > 0 || g.subtypes.length > 0).length > 1) return null;
+  // A ONE-VALUE ADJECTIVE IN ONE ALTERNATIVE ONLY. "target artifact or TAPPED creature", "target
+  // tapped or blocking creature", "other snow and Zombie creatures": `tapped`, `snow` and the rest
+  // bind the whole subject, so an adjective one alternative carries and another does not cannot be
+  // said. Refused; "a multicolored creature or multicolored enchantment" says it in both and is fine.
+  if (r.groups.length > 1 && r.groups.some((g) => g.adj.length)
+    && new Set(r.groups.map((g) => [...g.adj].sort().join())).size > 1) return null;
   // A ZONE BINDS THE NOUN BEFORE IT, NOT EVERY ALTERNATIVE. "target spell, nonland permanent, or card
   // in a graveyard" puts only the card in a graveyard; one `zone` on the subject would put the spell
   // and the permanent there too. Refused when the alternatives' heads differ. An alternative with no
@@ -541,8 +656,14 @@ function lower(r: Reading): SubjectFilter | null {
   if (r.notKeywords.length) out.notKeyword = [...new Set(r.notKeywords)].sort();
   if (r.counter) out.counter = r.counter;
   if (r.combat) out.combat = r.combat;
-  if (r.legendary) out.legendary = true;
-  if (r.basic) out.basic = true;
+  if (r.legendary !== undefined) out.legendary = r.legendary;
+  if (r.basic !== undefined) out.basic = r.basic;
+  if (r.snow) out.snow = true;
+  if (r.tapped !== undefined) out.tapped = r.tapped;
+  if (r.notColors.length) out.notColors = WUBRG.filter((x) => r.notColors.includes(x));
+  if (r.colorCount) out.colorCount = r.colorCount;
+  if (r.hasCounter) out.hasCounter = true;
+  if (r.targets) out.targets = r.targets;
   if (r.historic) out.historic = true;
   if (r.outlaw) out.outlaw = true;
   if (r.modified) out.modified = true;
@@ -563,6 +684,9 @@ function lower(r: Reading): SubjectFilter | null {
 export function parse(text: string): SubjectFilter | null {
   const toks = lex(text);
   if (!toks || toks.length === 0) return null;
+  // "Enchant creature you control": the keyword line names the class the Aura can enchant
+  // (CR 303.4a), and that class is a filter phrase like any other.
+  if (toks[0] === "enchant" && toks.length > 1) return parse(toks.slice(1).join(" "));
   const spellNoun = toks.some((w) => /^(?:spells?|instants?|sorcery|sorceries|cards?)$/.test(w));
   const asPlayer = player(new Cursor(toks, spellNoun));
   if (asPlayer) return asPlayer;

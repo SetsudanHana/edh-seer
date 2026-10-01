@@ -1,18 +1,18 @@
 {
   "_what": "H3 for the filter grammar (#896 task 2): every group of phrases on which packages/tagger/src/grammar/filter.ts and parseSubject disagree, grouped by the SubjectFilter fields that differ, over packages/tagger/phrases.jsonl. Each group is labelled after reading EVERY member, not a sample. 'grammar right' cites the rule or the printed text; 'grammar wrong' must be fixed before task 3 switches derive over; 'both wrong' says what neither reads. phrase-diff-triage.test.ts fails when a group appears, disappears or changes size, and when the parsed count moves, so a change to either parser is re-triaged and banked here.",
-  "parsed": 4227,
+  "parsed": 4702,
   "groups": {
     "control": {
-      "distinct": 73,
+      "distinct": 76,
       "label": "grammar right",
       "rule": "CR 112.2",
-      "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way."
+      "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2)."
     },
     "scope": {
-      "distinct": 36,
+      "distinct": 44,
       "label": "grammar right",
       "rule": "CR 115.1",
-      "why": "(1) 'creatures target player controls', 'a creature target opponent controls': the player is the target, the creatures are not -- parseSubject's scope reads 'target' anywhere in the string. (2) 'any number of targets', 'one or two targets': parseSubject's \\btarget\\b misses the plural. (3) 'a creature each opponent controls': the quantifier binds the opponent. (4) Two token names ('Kobolds of Kher Keep', 'Llanowar Elves'): a plural in a NAME is not a mass subject."
+      "why": "(1) 'creatures target player controls', 'a creature target opponent controls': the player is the target, the creatures are not -- parseSubject's scope reads 'target' anywhere in the string. (2) 'any number of targets', 'one or two targets': parseSubject's \\btarget\\b misses the plural. (3) 'a creature each opponent controls': the quantifier binds the opponent. (4) Two token names ('Kobolds of Kher Keep', 'Llanowar Elves'): a plural in a NAME is not a mass subject. (5) 'a token that's a copy of target creature': the original is targeted, the token is created, not targeted. Copy tokens of a target ('a token that's a copy of target artifact') are not themselves targeted."
     },
     "fromZone,scope": {
       "distinct": 50,
@@ -21,22 +21,22 @@
       "why": "'a nonland card from target opponent's hand' (Thoughtseize family): the target is the opponent, not the card, and the card comes from a hand. parseSubject's ORIGIN_ZONE allows only a|an|your|their|the before the zone, so a possessive player ('target opponent's', 'each opponent's') drops the zone, and its scope reads the player's 'target'."
     },
     "other": {
-      "distinct": 38,
+      "distinct": 42,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "'up to one other target creature', 'one or more other creatures', 'any number of other permanents': 'other' after a count. parseSubject's `other` regex accepts at most one word before it."
+      "why": "'up to one other target creature', 'one or more other creatures', 'any number of other permanents': 'other' after a count. parseSubject's `other` regex accepts at most one word before it. Also 'target creature other than this creature', 'all creatures other than this creature': the same fact as 'another' written out."
     },
     "fromZone": {
-      "distinct": 22,
+      "distinct": 76,
       "label": "grammar right",
       "rule": "CR 400.1",
-      "why": "'target card from an opponent's graveyard', '... from defending player's graveyard': the same ORIGIN_ZONE possessive gap as the fromZone,scope group, where the possessive carries no 'target'."
+      "why": "'target card from an opponent's graveyard', '... from defending player's graveyard': the same ORIGIN_ZONE possessive gap as the fromZone,scope group, where the possessive carries no 'target'. Also 'lands from the top of your library' and 'creature spells from the top of your library' (Courser/Future Sight family: the origin is the library), and 'up to two target cards from a single graveyard' / 'from graveyards' / 'from all graveyards' (the cards come from a graveyard; 'single' constrains how many graveyards, not the class). parseSubject's ORIGIN_ZONE reads none of these."
     },
     "zone": {
-      "distinct": 23,
+      "distinct": 28,
       "label": "grammar right",
       "rule": "CR 400.1",
-      "why": "'target creature card in your graveyard', 'all cards in your hand': `zone` is where the subject lives and absent means the battlefield (schema), so parseSubject's reading puts every one of these on the battlefield. TASK 3 CAUTION: on a producer, zone graveyard is read as a graveyard FILL by graveyardFillMatches; the switch must check each consumer of `zone` before trusting this field from the grammar. The two OR-lists whose alternatives have different heads ('target spell, nonland permanent, or card in a graveyard', 'an artifact or a card in your hand') are refused, not zoned."
+      "why": "'target creature card in your graveyard', 'all cards in your hand': `zone` is where the subject lives and absent means the battlefield (schema), so parseSubject's reading puts every one of these on the battlefield. TASK 3 CAUTION: on a producer, zone graveyard is read as a graveyard FILL by graveyardFillMatches; the switch must check each consumer of `zone` before trusting this field from the grammar. The two OR-lists whose alternatives have different heads ('target spell, nonland permanent, or card in a graveyard', 'an artifact or a card in your hand') are refused, not zoned. Also 'Enchant creature card in a graveyard' (Animate Dead's enchant line, CR 303.4a) and 'cards in graveyards' (plural)."
     },
     "owner": {
       "distinct": 16,
@@ -93,10 +93,10 @@
       "why": "'Artifact creatures and Heroes you control': an artifact creature OR a Hero; parseSubject demanded an artifact creature Hero."
     },
     "combat": {
-      "distinct": 1,
+      "distinct": 14,
       "label": "grammar right",
       "rule": "CR 506.2",
-      "why": "'attacking player' is a player, not an attacking creature."
+      "why": "'attacking player' is a player, not an attacking creature. 'target attacking or blocking creature' (13 phrases, 87 card uses) is `in-combat` (CR 506.4): parseSubject read only 'attacking'."
     },
     "named,subtype": {
       "distinct": 1,
@@ -121,6 +121,240 @@
       "label": "grammar right",
       "rule": "printed text",
       "why": "'target spell that targets only a single permanent or player': the target is a spell. Refused (restricted) either way."
+    },
+    "control,scope": {
+      "distinct": 20,
+      "label": "grammar right",
+      "rule": "CR 707.2, CR 111.2",
+      "why": "'a token that's a copy of target creature you control': control and target belong to the ORIGINAL. The token copies only copiable values (CR 707.2) and is its creator's (CR 111.2); parseSubject read 'you control' and 'target' as the token's. The copiable values the original states (a chosen type, a keyword) are kept, so 'each creature you control of the chosen type' and '... with haste' land here too."
+    },
+    "other,scope": {
+      "distinct": 3,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "'a creature other than this creature': singular, so no mass scope; parseSubject's scope reads the word 'other' as a class-minus-this. The grammar says `other`, which is what the words mean."
+    },
+    "keyword": {
+      "distinct": 3,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "'a spell that has convoke', 'another spell that has flash': the keyword the spell has, the same demand as 'a spell with convoke'. parseSubject reads keywords only after 'with'."
+    },
+    "other,scope,type": {
+      "distinct": 3,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "'a permanent other than this enchantment': the subject is a permanent; 'enchantment' names THIS card. parseSubject took the type from the exclusion."
+    },
+    "combat,scope": {
+      "distinct": 2,
+      "label": "grammar right",
+      "rule": "CR 707.2",
+      "why": "'a token that's a copy of another target attacking creature': attacking is not a copiable value; the token is not attacking and not targeted."
+    },
+    "notType,other,type": {
+      "distinct": 2,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "'target nonland permanent other than this creature': a nonland permanent, not this one; parseSubject took 'creature' from the exclusion and dropped the negation."
+    },
+    "other,subtype": {
+      "distinct": 2,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "'all permanents other than this Equipment': the subtype names this card, not the class."
+    },
+    "other,type": {
+      "distinct": 2,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "'Dinosaurs you control other than this creature', 'target permanent other than this creature': the type names this card, not the class."
+    },
+    "scope,token": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 707.2",
+      "why": "'a token that's a copy of target nontoken creature': the copy IS a token; 'nontoken' describes the original. parseSubject read the token as nontoken."
+    },
+    "tapped": {
+      "distinct": 108,
+      "label": "grammar right",
+      "rule": "CR 110.5",
+      "why": "'target tapped creature', 'an untapped creature you control', 'a tapped Treasure token': a status the schema now holds (`tapped`); parseSubject dropped the word, so the filter claimed every creature. An OR whose alternatives disagree on it ('target artifact or tapped creature') is refused."
+    },
+    "notColors": {
+      "distinct": 30,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "'target nonblack creature' (Doom Blade family), 'target nonwhite, nonblack creature': negated colours (`notColors`); parseSubject dropped them. 'nonartifact, nonblack' keeps only the colour, as parseSubject keeps no negation that removes nothing from 'creature'."
+    },
+    "targets,type": {
+      "distinct": 8,
+      "label": "grammar right",
+      "rule": "CR 115.1",
+      "why": "'a spell that targets this creature' (owner 2026-10-01: the trigger condition is being targeted by a spell): the subject is the SPELL and `targets` holds what it targets. parseSubject made the subject the targeted creature. eventMatches refuses `targets` until a producer can state it."
+    },
+    "colorCount": {
+      "distinct": 21,
+      "label": "grammar right",
+      "rule": "CR 105.2a, CR 105.2b",
+      "why": "'a multicolored spell', 'target monocolored creature' (`colorCount`); parseSubject dropped the word."
+    },
+    "basic": {
+      "distinct": 14,
+      "label": "grammar right",
+      "rule": "CR 205.4c",
+      "why": "'target nonbasic land' (`basic: false`); parseSubject dropped it, so the filter claimed basics too."
+    },
+    "snow": {
+      "distinct": 17,
+      "label": "grammar right",
+      "rule": "CR 205.4g",
+      "why": "'a snow land', 'Snow creatures you control' (`snow`); parseSubject had no field."
+    },
+    "legendary": {
+      "distinct": 13,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "'target nonlegendary creature' (`legendary: false`); parseSubject dropped the negation."
+    },
+    "hasCounter": {
+      "distinct": 10,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "'a creature you control with a counter on it' (`hasCounter`): some counter, kind unstated; parseSubject read nothing."
+    },
+    "targets": {
+      "distinct": 4,
+      "label": "grammar right",
+      "rule": "CR 115.1",
+      "why": "'a spell that targets ~', 'target spell that targets you': `targets` holds the card itself or a player."
+    },
+    "control,targets,type": {
+      "distinct": 5,
+      "label": "grammar right",
+      "rule": "CR 115.1",
+      "why": "'a spell that targets a creature you control': 'you control' belongs to the target, not the spell."
+    },
+    "scope,targets,type": {
+      "distinct": 3,
+      "label": "grammar right",
+      "rule": "CR 115.1",
+      "why": "'Spells your opponents cast that target this creature', 'a spell that targets one or more creatures': the targeted class sits in `targets`; the spells are the mass subject."
+    },
+    "scope,tapped": {
+      "distinct": 4,
+      "label": "grammar right",
+      "rule": "CR 110.5, CR 707.2",
+      "why": "'each tapped creature target player controls': the player is the target; 'a tapped and attacking token that's a copy of ...': the token is created tapped, the original is targeted."
+    },
+    "control,scope,targets,type": {
+      "distinct": 3,
+      "label": "grammar right",
+      "rule": "CR 115.1, CR 112.2",
+      "why": "'Spells you cast that target a creature': the caster controls the spell; the creature is its target."
+    },
+    "control,targets,type,umbrella": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1",
+      "why": "'target spell that targets a permanent you control': the permanent is the target."
+    },
+    "control,targets": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1",
+      "why": "'target instant or Aura spell that targets a permanent you control': the permanent is the target."
+    },
+    "fromZone,snow": {
+      "distinct": 2,
+      "label": "grammar right",
+      "rule": "CR 205.4g, CR 400.1",
+      "why": "'snow lands from the top of your library': snow, from the library."
+    },
+    "notColors,tapped": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 110.5",
+      "why": "'target tapped nonblack creature': both narrowings, both held."
+    },
+    "scope,targets,type,umbrella": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1",
+      "why": "'a spell that targets one or more permanents': the count and the umbrella belong to the targets."
+    },
+    "commander,scope,targets": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1",
+      "why": "'Spells your opponents cast that target one or more commanders you control': the commander is the target."
+    },
+    "control,legendary": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 707.2, CR 111.2",
+      "why": "'a token that's a copy of a nonlegendary enchantment you control': nonlegendary is copiable and kept; control is the original's."
+    },
+    "control,legendary,scope": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 707.2, CR 111.2",
+      "why": "the same, with 'target'."
+    },
+    "control,modified,targets,type,umbrella": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1",
+      "why": "'an Aura spell that targets a modified permanent you control': the modified permanent is the target."
+    },
+    "control,scope,tapped": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 707.2, CR 111.2",
+      "why": "'a tapped and attacking token that's a copy of target creature you control': control and target are the original's."
+    },
+    "control,scope,tapped,token": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 707.2",
+      "why": "copy of 'up to one other target nontoken creature': the copy is a token, tapped."
+    },
+    "counter,scope,tapped": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 707.2",
+      "why": "'a tapped and attacking token that's a copy of each creature card you own in exile with a memory counter on it': the counter and 'each' describe the originals."
+    },
+    "fromZone,legendary,scope": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1, CR 400.1",
+      "why": "'a nonlegendary, nonland card from target opponent's hand': comma-joined adjectives are one card's; the opponent is the target."
+    },
+    "legendary,zone": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 400.1",
+      "why": "'a nonlegendary creature card in your graveyard': both held."
+    },
+    "scope,subtype,targets": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1",
+      "why": "'Spells your opponents cast that target a Merfolk you control': the Merfolk is the target."
+    },
+    "scope,targets": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1",
+      "why": "'Spells your opponents cast that target ~': the card itself is the target."
+    },
+    "scope,type": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "'a spell that targets only a single creature other than ~': restricted either way; the subject is a spell."
     }
   }
 }

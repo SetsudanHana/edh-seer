@@ -102,10 +102,21 @@ const KEYWORD_LISTS = KEYWORD_ABILITIES.map((k) => k.split(" "));
 const REFERENCE_WORDS = new Set(["this", "that", "those", "these", "it", "its", "them", "they", "itself", "enchanted", "equipped", "the", "he", "she", "him", "her"]);
 const VERB_WORDS = new Set(["be", "block", "attack", "untap", "not", "pay", "sacrifice", "exert", "discard", "exile", "draw", "deal", "deals", "tap", "gain", "lose", "return", "put", "cast", "create", "destroy", "transform", "search", "reveal", "look", "mill", "scry", "copy", "choose", "do", "remove", "counter", "become", "becomes", "play", "attacks", "blocks", "dies", "enters", "leaves"]);
 const TIME = /\b(?:chapter|turn|upkeep|end step|main phase|combat|draw step|untap step|day|night|beginning)\b|^(?:i|ii|iii|iv|v|vi)(?:,|$)/;
-const ZONE = /^(?:(?:your|their|its owner's|target player's|target opponent's|an opponent's|each player's|that player's|a player's|all|each)\s+)?(?:library|libraries|hand|hands|graveyard|graveyards|life total)\b/;
+const ZONE = /^(?:(?:your|their|its owner's|target player's|target opponent's|an opponent's|each opponent's|all opponents'|each player's|that player's|a player's|all|each)\s+)?(?:library|libraries|hand|hands|graveyard|graveyards|life total)\b/;
+/** A CLAUSE, not a noun phrase: a finite verb the subject does ("target creature GAINS trample",
+ *  "you PAY {1}", "you HAVE no maximum hand size"). Task 6's actions. A verb inside a relative clause
+ *  ("a creature THAT HAS flying") is still a noun phrase, so a relative pronoun before the verb keeps
+ *  the phrase in `filter`. "cast"/"casts" are absent on purpose: "spells you cast" is a filter. */
+const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are|deals?|may|would|pays?|attacks|blocks|enters|dies|wins?|draws?|puts?|untaps?)\b/;
+const RELATIVE = /\b(?:that|that's|who|which|whose)\b/;
+/** A REFERENCE inside a longer phrase: what was exiled, revealed or chosen earlier, "those", "that
+ *  many". Task 4 and #900's population, resolved by `derive/references.ts`, not by a filter. */
+const INNER_REFERENCE = /\b(?:this way|exiled with|from among|of them|of those|those|they (?:control|own|don't)|that (?:card|creature|player|spell|permanent|ability|many|much|token|land|artifact|opponent))\b/;
 
 export function domainOf(phrase: string): string {
-  if (phrase.includes("~")) return "reference";
+  // "~" is the card's own name: a self-reference, except after "named", where it is a filter on a
+  // name ("a card named ~", "any number of cards named ~").
+  if (phrase.replace(/\bnamed ~/g, "").includes("~")) return "reference";
   const text = phrase.toLowerCase().replace(/’/g, "'").trim();
   if (text.startsWith("(")) return "reminder";
   const w = text.split(/[\s,]+/).filter((x) => x !== "");
@@ -115,11 +126,17 @@ export function domainOf(phrase: string): string {
   // grammar does not read yet. Counting it as a keyword would hide 1,239 card-occurrences of misses
   // (review). Every other keyword line is a grant or a cost.
   if (w[0] !== "enchant" && KEYWORD_LISTS.some((ws) => ws.every((x, j) => w[j] === x))) return "keyword";
-  if (/^[+-]\d/.test(w[0]!) || counterKindOf(text)) return "counter";
+  if (/^[+-]\d/.test(w[0]!) || counterKindOf(text) || (/\bcounters?$/.test(text) && counterKindOf(text.replace(/^(?:a|an|one or more|one|two|three|x|\d+|all)\s+/, "")))) return "counter";
   if (w.length === 1 && /^(?:\d+|x)$/.test(w[0]!)) return "number";
   if (w[0]!.startsWith("{") || /\bmana\b(?! value| cost)/.test(text)) return "mana";
   if (ZONE.test(text)) return "zone";
   if (!text.includes(" named ") && TIME.test(text)) return "time";
   if (VERB_WORDS.has(w[0]!)) return "verb";
+  if (INNER_REFERENCE.test(text)) return "reference";
+  // Only the HEAD is read: a verb inside a granted ability's quotes ('a Rat token with "This token
+  // can't block."') or a count ("a card for each counter you have") does not make a clause.
+  const head = text.split(/["“]|\bfor each\b|\bwhere\b|\bequal to\b|\bthe number of\b/)[0]!;
+  const verb = CLAUSE_VERB.exec(head);
+  if (verb && !RELATIVE.test(head.slice(0, verb.index))) return "clause";
   return "filter";
 }

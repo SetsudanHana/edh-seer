@@ -87,13 +87,62 @@ test("a zone: where the subject lives, or where it came from", () => {
   expect(parse("a creature card from an opponent's graveyard")).toMatchObject({ fromZone: "graveyard", control: "opp" });
 });
 
+test("CR 303.4a: an Aura's enchant line is the class it can enchant", () => {
+  expect(parse("Enchant creature you control")).toEqual({ control: "you", token: null, type: "creature" });
+  expect(parse("Enchant creature card in a graveyard")).toMatchObject({ type: "creature", zone: "graveyard" });
+});
+
+test("a copy token has the original's copiable values (CR 707.2), not its controller, target or token-ness", () => {
+  expect(parse("a token that's a copy of target creature you control")).toEqual({ control: "any", token: true, type: "creature" });
+  expect(parse("a token that's a copy of target nontoken creature")).toEqual({ control: "any", token: true, type: "creature" });
+  expect(parse("a token that's a copy of it")).toBeNull();
+});
+
+test("relative clauses the schema holds, and 'other than this'", () => {
+  expect(parse("a spell that has convoke")).toMatchObject({ type: "spell", keyword: ["convoke"] });
+  expect(parse("a 1/1 white Cat Soldier creature token with vigilance that's attacking")).toMatchObject({ combat: "attacking", token: true });
+  expect(parse("a spell that's white, blue, black, or red")).toMatchObject({ colors: ["W", "U", "B", "R"] });
+  expect(parse("a creature other than this creature")).toEqual({ control: "any", token: null, type: "creature", other: true });
+});
+
+test("origins: the top of a library, a single graveyard, all graveyards; the battlefield is no origin", () => {
+  expect(parse("lands from the top of your library")).toMatchObject({ type: "land", fromZone: "library", control: "you" });
+  expect(parse("up to two target cards from a single graveyard")).toMatchObject({ fromZone: "graveyard", scope: "target" });
+  expect(parse("all creature cards from all graveyards")).toMatchObject({ type: "creature", fromZone: "graveyard" });
+  expect(parse("an artifact from the battlefield")).toEqual({ control: "any", token: null, type: "artifact" });
+});
+
+test("fields the schema gained for the grammar: tapped, negated colours, colour count, nonbasic, nonlegendary, snow, any counter, in-combat", () => {
+  expect(parse("target tapped creature")).toMatchObject({ tapped: true });
+  expect(parse("an untapped creature you control")).toMatchObject({ tapped: false, control: "you" });
+  expect(parse("target nonblack creature")).toMatchObject({ notColors: ["B"], type: "creature" });
+  expect(parse("target nonwhite, nonblack creature")).toMatchObject({ notColors: ["W", "B"] });
+  expect(parse("a multicolored spell")).toMatchObject({ colorCount: "multi" });
+  expect(parse("target monocolored creature")).toMatchObject({ colorCount: "mono" });
+  expect(parse("target nonbasic land")).toMatchObject({ basic: false, type: "land" });
+  expect(parse("target nonlegendary creature")).toMatchObject({ legendary: false });
+  expect(parse("a snow land")).toMatchObject({ snow: true });
+  expect(parse("a creature you control with a counter on it")).toMatchObject({ hasCounter: true });
+  expect(parse("target attacking or blocking creature")).toMatchObject({ combat: "in-combat" });
+});
+
+test("CR 115.1: what a spell targets is its own field (owner 2026-10-01, the heroic condition)", () => {
+  expect(parse("a spell that targets this creature")).toEqual({ control: "any", token: null, type: "spell", targets: { self: true, type: "creature" } });
+  expect(parse("a spell that targets ~")).toMatchObject({ type: "spell", targets: { self: true } });
+  expect(parse("a spell that targets a creature you control")).toMatchObject({ control: "any", targets: { control: "you", type: "creature" } });
+  // After a second noun phrase the clause binds only that one.
+  expect(parse("an Equipment spell or a spell that targets a creature you control")).toBeNull();
+});
+
+test("a one-value adjective in only some alternatives is refused", () => {
+  for (const p of ["target artifact or tapped creature", "target tapped or blocking creature", "target land or nonblack creature"]) expect(parse(p), p).toBeNull();
+  expect(parse("target multicolored creature or multicolored enchantment")).toMatchObject({ colorCount: "multi" });
+});
+
 /** REFUSED: the grammar answers null, and derive keeps `parseSubject`'s answer. Each is a narrowing
  *  the schema cannot hold (dropping it would WIDEN the claim), a reference, or not a filter at all. */
 test("refusals", () => {
   for (const p of [
-    "target tapped creature", "target nonbasic land", "a multicolored spell",
-    // `combat` holds one state; "attacking or blocking" is either.
-    "target attacking or blocking creature",
     // A colour that belongs to one alternative, and a zone that belongs to one alternative.
     "a Swamp, Mountain, black permanent, or red permanent",
     "target spell, nonland permanent, or card in a graveyard",
@@ -104,9 +153,11 @@ test("refusals", () => {
   ]) expect(parse(p), p).toBeNull();
 });
 
-test("the lexer: one token per word, size, mana symbol and comma; '~' and sentence punctuation fail", () => {
+test("the lexer: one token per word, size, mana symbol, comma and '~'; sentence punctuation fails", () => {
   expect(lex("a 2/2 black Zombie, or {C}")).toEqual(["a", "2/2", "black", "zombie", ",", "or", "{c}"]);
   expect(lex("one or more Goblins and/or Orcs")).toEqual(["one", "or", "more", "goblins", "and/or", "orcs"]);
-  expect(lex("~")).toBeNull();
+  // "~" lexes so a clause can name the card itself ("a spell that targets ~"); alone it parses as nothing.
+  expect(lex("~")).toEqual(["~"]);
+  expect(parse("~")).toBeNull();
   expect(lex("a creature.")).toBeNull();
 });

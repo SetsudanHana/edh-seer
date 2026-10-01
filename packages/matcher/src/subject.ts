@@ -67,9 +67,18 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // A COMBAT STATE, the same class: only a producer whose printed text names an attacking or a
   // blocking creature can supply one. "Whenever an attacking creature dies" (Kardur) is false about
   // a creature that died to a sorcery-speed edict, and under-claiming to 0 is the right answer.
-  if (consumer.combat !== undefined && producer.combat !== consumer.combat) return false;
+  // "attacking or blocking" (`in-combat`) is met by a producer stating either state.
+  if (consumer.combat !== undefined && producer.combat !== consumer.combat
+    && !(consumer.combat === "in-combat" && producer.combat !== undefined)) return false;
+  // A STATUS, the same class: tapped or untapped only where the producer's printed text states it.
+  if (consumer.tapped !== undefined && producer.tapped !== consumer.tapped) return false;
   // Same shape as historic: a legendary-matters anthem reaches only legendary permanents.
   if (consumer.legendary === true && producer.legendary !== true) return false;
+  // ...and the negations, "nonlegendary" and "nonbasic": the printed supertype fails them. A producer
+  // that states neither is taken as without, as an absent keyword list is.
+  if (consumer.legendary === false && producer.legendary === true) return false;
+  if (consumer.basic === false && producer.basic === true) return false;
+  if (consumer.snow === true && producer.snow !== true) return false;
   // A DECK fact, not a printed one — see commander.ts. Same asymmetry as the two supertypes above:
   // a consumer that does not ask is unaffected, one that does is satisfied only by a designated
   // commander. Kediss, Emberclaw Familiar is why: its "a commander you control" derived untyped and
@@ -121,6 +130,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   }
   // counter / zone: if the consumer names one, the producer must equal it.
   if (consumer.counter !== undefined && consumer.counter !== producer.counter) return false;
+  if (consumer.hasCounter === true && producer.counter === undefined && producer.hasCounter !== true) return false;
   if (consumer.zone !== undefined && consumer.zone !== producer.zone) return false;
   // colours: an INTERSECTION, not an equality, because both sides are OR-lists — a Dimir card
   // satisfies "blue spells", and a filter naming two colours accepts a card in either. Unset on
@@ -139,6 +149,15 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     const satisfied = (wanted.includes("C") && (has.size === 0 || has.has("C")))
       || wanted.some((c) => c !== "C" && has.has(c));
     if (!satisfied) return false;
+  }
+  // NEGATED colours ("nonblack"): a producer with any of them fails. No recorded colours abstains,
+  // the `notKeyword` rule, because a parsed producer ("target creature") never states them.
+  if (consumer.notColors?.length && producer.colors?.some((c) => consumer.notColors!.includes(c))) return false;
+  // Multicolored / monocolored count the five colours; an unrecorded producer fails, since the
+  // demand is positive and a guess would be a wrong answer.
+  if (consumer.colorCount !== undefined) {
+    const n = (producer.colors ?? []).filter((c) => c !== "C").length;
+    if (producer.colors === undefined || (consumer.colorCount === "multi" ? n < 2 : n !== 1)) return false;
   }
   // type: expand both sides' type tokens (concrete, pseudo, or subtype-implied) to concrete
   // card-type sets and require they intersect. Reduces to exact/subtype-implied matching for

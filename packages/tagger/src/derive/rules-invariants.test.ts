@@ -18,6 +18,13 @@ import { emblemRecipient } from "../emblem.js";
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
   "110.2": "scaling.test.ts — a permanent's owner and controller differ: Zedruu counts permanents you own that your opponents control",
+  "105.2a": "grammar/filter.test.ts — 'monocolored' is exactly one colour (`colorCount: mono`, #896)",
+  "105.2b": "grammar/filter.test.ts — 'multicolored' is two or more colours (`colorCount: multi`, #896)",
+  "110.5": "grammar/filter.test.ts — tapped/untapped is a status (`tapped`, #896)",
+  "115.1": "grammar/filter.test.ts — what a spell targets is `targets` (#896)",
+  "205.4c": "grammar/filter.test.ts — nonbasic is `basic: false` (#896)",
+  "205.4g": "grammar/filter.test.ts — snow is a supertype (`snow`, #896)",
+  "303.4a": "grammar/filter.test.ts — an Aura's enchant line names the class it can enchant ('Enchant creature you control') (#896 task 2)",
   "112.2": "grammar/filter.test.ts — a spell's controller is the player who cast it: 'spells you cast' reads control you (#896 task 2)",
   "110.2a": "derive.test.ts — what you put onto the battlefield enters under your control (Misty Rainforest)",
   "118.12a": "derive.test.ts / clause-store.test.ts — an action's unless-payment rides onto the ability, and a doc that dropped one is re-asked",

@@ -186,8 +186,27 @@ export interface SubjectFilter {
    *  `dies:creature` and Blasphemous Edict at sorcery speed fed it (owner, 2026-09-05).
    *
    *  Dropped on an `attacks` trigger, where the state IS the event. Corpus: 12 trigger subjects
-   *  name an attacking creature, 1 a blocking one; 272 action objects attacking, 34 blocking. */
-  combat?: "attacking" | "blocking";
+   *  name an attacking creature, 1 a blocking one; 272 action objects attacking, 34 blocking.
+   *
+   *  `in-combat` is "attacking or blocking" (CR 506.4 calls both "in combat"): 13 corpus phrases,
+   *  about 90 card uses ("target attacking or blocking creature"). A producer that states either
+   *  state, or this one, satisfies it. Set by the filter grammar (#896). */
+  combat?: "attacking" | "blocking" | "in-combat";
+  /** A STATUS, CR 110.5: true is "target TAPPED creature", false "an UNTAPPED creature you control".
+   *  A board state like `combat` and `modified`, so only a producer whose printed text states it
+   *  satisfies a demand. 145 corpus phrases, about 320 card uses. Set by the filter grammar (#896). */
+  tapped?: boolean;
+  /** COLOURS THE TEXT NEGATED: "target nonblack creature", "a nonwhite, nonblue creature". A producer
+   *  that has none of them satisfies it; one that records no colours abstains, as `notKeyword` does.
+   *  Set by the filter grammar (#896). */
+  notColors?: string[];
+  /** "a MULTICOLORED spell" (two or more colours, CR 105.2b), "a MONOCOLORED creature" (exactly
+   *  one, CR 105.2a). Counted over the five colours, so colourless is neither. Set by the filter
+   *  grammar (#896). */
+  colorCount?: "multi" | "mono";
+  /** The SNOW supertype, CR 205.4g: "target snow land". Shaped like `legendary`. Set by the filter
+   *  grammar (#896). */
+  snow?: true;
   /** A `leaves` demand that REFUSES a death. "Whenever one or more other creatures you control leave
    *  the battlefield without dying" (Dour Port-Mage) and Taeko's "if it didn't die" are `leaves`
    *  minus `dies` (CR 700.4). Demand only -- read by `eventMatches`, never stamped on a producer, so
@@ -196,14 +215,20 @@ export interface SubjectFilter {
   /** The subject demands the LEGENDARY supertype. "Legendary creatures you control get +2/+2"
    *  (Serah Farron) and Jodah's +X/+X derived a subject of EVERY creature without it, which were the
    *  two widest meshes in the derived population at x53 and x51. Shaped exactly like `historic`:
-   *  matched against the card's printed characteristics, which already carry supertypes. */
-  legendary?: true;
+   *  matched against the card's printed characteristics, which already carry supertypes.
+   *
+   *  `false` is the NEGATION, "target nonlegendary creature": a legendary producer fails it. Set by
+   *  the filter grammar (#896); parseSubject drops the word. */
+  legendary?: boolean;
   /** The subject demands the BASIC supertype. "Search your library for a basic land card" emitted
    *  `{type: land}` and nothing else, so at the authored-emit identity check — the one place an emit
    *  sits on the FILTER side — every NONBASIC land satisfied it, which was about half the false
    *  edges the 2026-08-13 board fixtures showed on self-ETB lands. 65 actions across 50 corpus docs.
-   *  Same shape as `legendary`, and set on BOTH sides for the reason 09ce98d records. */
-  basic?: true;
+   *  Same shape as `legendary`, and set on BOTH sides for the reason 09ce98d records.
+   *
+   *  `false` is NONBASIC (CR 205.4c), the Blood Moon family: a basic producer fails it. Set by the
+   *  filter grammar (#896). */
+  basic?: boolean;
   /** Printed KEYWORD ABILITIES the subject demands, ALL of them — "creatures you control with
    *  flying", "a creature with defender", "spells with flash you cast".
    *
@@ -286,6 +311,15 @@ export interface SubjectFilter {
   abilityKind?: AbilityObjectKind[];
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
+  /** "a creature you control with A COUNTER on it": some counter, of no stated kind. A producer that
+   *  names a kind, or states this, satisfies it. Set by the filter grammar (#896). */
+  hasCounter?: true;
+  /** WHAT A SPELL TARGETS, CR 115.1 (#896, owner 2026-10-01): "a spell that targets this creature"
+   *  is `{ type: spell, targets: { self: true, type: creature } }`, the heroic / "becomes the target
+   *  of a spell" condition. CEILING: nothing on the producer side states what a spell targets yet,
+   *  so `eventMatches` refuses a consumer carrying it, as it refuses `restricted` -- a demand nothing
+   *  can check claims no cards rather than every spell. Set by the filter grammar. */
+  targets?: Partial<SubjectFilter>;
   /** Which phase or step an `extra-phase` effect grants, over a closed CR vocabulary: `untap`,
    *  `upkeep`, `draw`, `main`, `combat`, `beginning`, `end`. Same shape as `counter` above, and for
    *  the same reason: a coarse `extra-phase` conflated units the game itself keeps apart -- an
