@@ -547,7 +547,9 @@ test("a named actor is ignored when the clause has two actions of that verb", ()
     undefined,
     { 1: "Target opponent draws a card. You draw two cards." },
   );
-  expect(abilities.map((a) => a.emits?.[0].subject.control)).toEqual(["any", "any"]);
+  // Since #896 task 6 the action grammar reads each phrase's OWN actor, so the printed text answers
+  // what the cue could not: the first draw is the opponent's, the second yours.
+  expect(abilities.map((a) => a.emits?.[0].subject.control)).toEqual(["opp", "you"]);
 
   // One action of that verb is unambiguous, so the actor IS applied.
   const one = deriveAbilities(

@@ -4,7 +4,9 @@
  *  tracked fixture `packages/tagger/actions.jsonl.gz`. `packages/instruments/src/action-diff.ts` runs a
  *  candidate action grammar against the stored actions over it.
  *
- *  One line per distinct (effect, abilityType, actions), sorted by cards descending then by the line
+ *  An activated clause's COST rides beside it (`cost`): the store writes its actions too.
+ *
+ *  One line per distinct (effect, abilityType, cost, actions), sorted by cards descending then by the line
  *  itself, so a re-run is byte-identical and a diff shows only what moved. Clauses with no action
  *  (keywords, `none`) are left out.
  *
@@ -13,7 +15,7 @@ import { writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { connect, loadConfig } from "@edh-seer/data";
 import { CLAUSES_COLLECTION, type CardClausesDoc } from "../clause-store.js";
-import { clauseTexts } from "../derive-input.js";
+import { clauseCosts, clauseTexts } from "../derive-input.js";
 import { effectText } from "../grammar/preamble.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
 
@@ -29,6 +31,9 @@ for await (const d of docs) {
   const card = await store.cards.findOne({ _id: d.oracleId } as never);
   if (!card) continue;
   const texts = clauseTexts(card as never);
+  // The store writes a COST's actions too ("Sacrifice this artifact: Draw a card." is sacrifice +
+  // draw), and `segment()` keeps the cost out of the clause text, so the row carries it.
+  const costs = clauseCosts(card as never);
   for (const c of d.canonical ?? []) {
     const acts = (c.actions ?? []).filter((a) => a.verb && a.verb !== "none");
     if (acts.length === 0) continue;
@@ -36,6 +41,7 @@ for await (const d of docs) {
     const row = JSON.stringify({
       effect: effectText(texts[c.id] ?? "", d.name),
       type: c.abilityType ?? null,
+      ...(costs[c.id] ? { cost: selfAsTilde(costs[c.id]!, d.name) } : {}),
       actions: acts.map((a) => ({
         verb: a.verb,
         object: selfAsTilde((a.object ?? "").trim(), d.name),

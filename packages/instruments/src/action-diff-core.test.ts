@@ -3,7 +3,7 @@ import { gunzipSync } from "node:zlib";
 import { expect, test } from "vitest";
 import { parse } from "@edh-seer/tagger/grammar";
 import { parseSubject } from "@edh-seer/tagger/subject";
-import { actionDiff, diffActions, familyOf, readActions, type ActionReading, type ActionRow, type StoredAction } from "./action-diff-core.js";
+import { actionDiff, align, diffActions, familyOf, readActions, type ActionReading, type ActionRow, type StoredAction } from "./action-diff-core.js";
 
 const subjectOf = (t: string) => parse(t) ?? parseSubject(t);
 const row = (effect: string, actions: StoredAction[], cards = 1): ActionRow => ({ effect, type: "spell", actions, cards });
@@ -25,7 +25,12 @@ test("a field the reading changes is a difference; the object's fields are prefi
   expect(actionDiff({ verb: "destroy", object: "target creature" }, { verb: "destroy", object: { ...subjectOf("target creature"), control: "opp" } }, subjectOf)).toEqual(["object.control"]);
 });
 
-test("coverage per action, weighted by cards; a null phrase keeps today's path; a count mismatch is one group", () => {
+test("readings align to stored actions by verb, in order", () => {
+  expect(align(["search", "put", "tap", "shuffle"], ["search", "put", "shuffle"])).toEqual([[0, 0], [1, 1], [3, 2]]);
+  expect(align(["sacrifice", "draw"], ["draw"])).toEqual([[1, 0]]);
+});
+
+test("coverage per action, weighted by cards; an unread action keeps today's path; an unaligned reading is `extra`", () => {
   const rows = [
     row("Draw two cards.", [{ verb: "draw", object: "two cards", amount: "2" }], 10),
     row("Destroy target creature. You gain 3 life.", [{ verb: "destroy", object: "target creature" }, { verb: "gain-life", object: "you", amount: "3" }], 4),
@@ -33,13 +38,13 @@ test("coverage per action, weighted by cards; a null phrase keeps today's path; 
   ];
   const d = diffActions(rows, (effect) => {
     if (effect.startsWith("Draw")) return [{ verb: "draw", object: subjectOf("two cards"), amount: "2" }];
-    if (effect.startsWith("Destroy")) return [null, { verb: "gain-life", object: subjectOf("you"), amount: "4" }];
-    return [{ verb: "exile", object: subjectOf("target card") }, { verb: "draw" }];
+    if (effect.startsWith("Destroy")) return [{ verb: "gain-life", object: subjectOf("you"), amount: "4" }];
+    return [{ verb: "draw" }];
   }, subjectOf);
   expect(d.families["draw-search"]).toEqual({ total: { actions: 1, cards: 10 }, parsed: { actions: 1, cards: 10 }, agree: { actions: 1, cards: 10 } });
   expect(d.families.zone.total).toEqual({ actions: 2, cards: 6 });
-  expect(d.families.zone.parsed).toEqual({ actions: 1, cards: 2 });
-  expect(d.groups.map((g) => [g.family, g.fields.join(",")])).toEqual([["damage-life", "amount"], ["zone", "count"]]);
+  expect(d.families.zone.parsed).toEqual({ actions: 0, cards: 0 });
+  expect(d.groups.map((g) => [g.family, g.fields.join(",")])).toEqual([["damage-life", "amount"], ["draw-search", "extra:draw"]]);
   expect(d.nondeterministic).toEqual([]);
 });
 
