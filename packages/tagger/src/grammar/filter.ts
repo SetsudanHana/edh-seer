@@ -2197,9 +2197,13 @@ export function parse(text: string): SubjectFilter | null {
   // A GRANTED ABILITY after the recipient ("Planeswalkers you control, \"[-4]: ...\"", "... and the
   // ability: Whenever this token enters, ..."), and a copy's exception that only grants one: the
   // ability is the action's, as above.
-  text = text.replace(/, "[^"]*"\.?$/, "").replace(/,? and the ability: .*$/, "").replace(/, except it has "[^"]*"\.?$/, "");
+  text = text.replace(/, "[^"]*"\.?$/, "").replace(/, except it has "[^"]*"\.?$/, "");
+  { const k = text.indexOf(" and the ability: "); if (k >= 0) text = text.slice(0, k).replace(/,$/, ""); }
   // A TOKEN'S UNQUOTED ABILITY: "Eldrazi Spawn creature tokens with Sacrifice this token: Add {C}".
-  if (/\btokens?\b/i.test(text)) text = text.replace(/ with [A-Z][^:"]*: .*$/, "");
+  if (/\btokens?\b/i.test(text)) {
+    const w = text.search(/ with [A-Z]/), colon = w < 0 ? -1 : text.indexOf(": ", w);
+    if (colon > 0 && !text.slice(w, colon).includes('"')) text = text.slice(0, w);
+  }
   // "which have the same name": "which" is "that".
   text = text.replace(/\bwhich\b/g, "that");
   const toks = lex(text);
