@@ -448,11 +448,11 @@ function restrictionOf(t: string): ActionReading[] | null {
   const who = objectOf(m[1]!) ?? (/^(?:you|your opponents|each opponent|players)$/i.test(m[1]!) ? { object: parse(m[1]!.toLowerCase().startsWith("you") ? "you" : "an opponent") ?? { control: "any" as const, token: null } } : null);
   if (!who) return null;
   const word = m[2]!.toLowerCase();
-  const what = /each combat if able/.test(word) ? `not ${word.replace(/s each/, " each").replace(/^attack each/, "attack each")}${m[3] ? ` ${m[3]}` : ""}`
+  const what = /each combat if able/.test(word) ? `not ${word.replace(/s each/, " each")}${m[3] ? ` ${m[3]}` : ""}`
     : word === "can block only" ? `block ${m[3]!.replace(/^creatures with /, "creatures without ")}`
     : m[3]!;
   if (!what) return null;
-  return [{ verb: "cant", object: who.object, text: what.replace(/^not blocks each/, "not block each") }];
+  return [{ verb: "cant", object: who.object, text: what }];
 }
 
 /** "<it> enters with two +1/+1 counters on it": counters the permanent itself arrives with. */
