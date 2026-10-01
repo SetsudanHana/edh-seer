@@ -117,7 +117,7 @@ const AMOUNT = /^(?:(?:\d+|x|one|two|three|half|twice)\s+(?:damage|life|times)\b
 /** "your second spell", "their first card": the Nth event of a turn, a trigger condition (task 5). */
 const ORDINAL = /^(?:your|their|an opponent's|each player's)\s+(?:first|second|third|fourth|fifth)\b/;
 /** A player doing something: "you discard a card", "you cast a noncreature spell" -- a clause. */
-const PLAYER_CLAUSE = /^(?:you|players?|an opponent|each player|each opponent|target player|target opponent|a player)\s+(?:cast|discard|exile|sacrifice|search|reveal|note|choose|lose|gain|draw|mill|create|attack|block|roll|flip|play|activate|control|don't|do|have|has)\b/;
+const PLAYER_CLAUSE = /^(?:you|players?|an opponent|each player|each opponent|target player|target opponent|a player)\s+(?:gained|lost|skip|place|fully|expend|decide|cycled|chose|cast|discard|exile|sacrifice|search|reveal|note|choose|lose|gain|draw|mill|create|attack|block|roll|flip|play|activate|control|don't|do|have|has)\b/;
 /** A type-setting or rules-bending effect's object: "a Vampire in addition to its other types",
  *  "Angel creature type", "creature spells as though they had flash". */
 const EFFECT_OBJECT = /\bin addition to (?:its|their) other\b|(?<!chosen )\b(?:creature )?type$|\bas though\b/;
@@ -149,7 +149,7 @@ const ZONE = /^(?:(?:your|their|its owner's|target player's|target opponent's|an
  *  "you PAY {1}", "you HAVE no maximum hand size"). Task 6's actions. A verb inside a relative clause
  *  ("a creature THAT HAS flying") is still a noun phrase, so a relative pronoun before the verb keeps
  *  the phrase in `filter`. "cast"/"casts" are absent on purpose: "spells you cast" is a filter. */
-const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are|deals?|may|would|pays?|attacks|blocks|enters|dies|wins?|draws?|untaps?|costs?|causes?|plays?|attack|block|assigns?|chooses|commits|claim|attach)\b/;
+const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are|deals?|may|would|pays?|attacks|blocks|enters|dies|wins?|draws?|untaps?|costs?|causes?|plays?|attack|block|assigns?|chooses|commits|claim|attach|be|gained|lost|fights)\b/;
 const RELATIVE = /\b(?:that|that's|who|which|whose)\b/;
 /** A REFERENCE inside a longer phrase: what was exiled, revealed or chosen earlier, "those", "that
  *  many". Task 4 and #900's population, resolved by `derive/references.ts`, not by a filter. */
@@ -161,7 +161,7 @@ export function domainOf(phrase: string): string {
   // A NAMED TOKEN ("The Blackjack, a legendary 3/3 ... token", "~ Twin, a legendary ... token") is
   // a token, whatever its name says.
   const appositionToken = /^[^,]+, an? [^"]*\btokens?\b/i.test(phrase);
-  const amountless = phrase.split(/["“]|\bwhere\b|\bequal to\b|\bless than\b|\bgreater than\b/)[0]!;
+  const amountless = phrase.split(/["“]|\bwhere\b|\bequal to\b|\bless than\b|\bgreater than\b|\bfor each\b/)[0]!;
   if (!appositionToken && amountless.replace(/\bnamed .*$/, "").replace(/\btargets? .*~/, "").replace(/\bby ~/g, "").includes("~")) return "reference";
   const text = phrase.toLowerCase().replace(/’/g, "'").trim();
   if (text.startsWith("(")) return "reminder";
@@ -190,6 +190,13 @@ export function domainOf(phrase: string): string {
   // "each kind of counter", "a third of their life".
   if (/^each (?:kind of )?counter\b|^each kind of counter\b/.test(text)) return "counter";
   if (/^(?:a third|half|a quarter) of\b/.test(text)) return "amount";
+  // A stat of a named object: "target creature's power and toughness" -- an amount.
+  if (/'s (?:power|toughness|mana value|loyalty)(?: and toughness)?$/.test(text) && !/\b(?:with|where|than|equal|to)\b/.test(text)) return "amount";
+  // Objects named by an earlier action: "searched cards", "revealed cards", "the copies".
+  if (/^(?:searched|revealed|remaining|found|chosen|exiled|discarded|milled) cards?$|\bthe copies\b|^one onto\b|\bcards? found\b|\bcreated with (?:it|this \w+|~)\b/.test(text)) return "reference";
+  // "... cost {2} more to cast": a cost change, a clause even after a relative clause.
+  if (/\bcosts? (?:\{\w+\}|an additional|\d+)\b.*\b(?:more|less|to cast|to activate)\b/.test(text)) return "clause";
+  if (/^(?:each player|players?) (?:hides|finish|passes)\b/.test(text)) return "clause";
   if (GAME_PIECE.test(text)) return "game-piece";
   if (FRAGMENT.test(text)) return "fragment";
   // "cards equal to the number of ...": how many, an amount.
