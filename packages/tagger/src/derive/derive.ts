@@ -323,7 +323,9 @@ import { emblemRecipient } from "../emblem.js";
 // lists, "loses <ability>", the tap a move or a creation carries, counters on several recipients.
 // 247: ...push 2: object and recipient lists, "you control enchanted X", clones; cast, play, prevent,
 // cost-modify, double, animate.
-export const DERIVE_VERSION = 247;
+// 248: ...push 3: the rest of the keyword and game actions (dice, coins, extra turns and phases,
+// emblems, win/lose the game, phasing, clash, exert, manifest, convert, the benders, blight, behold).
+export const DERIVE_VERSION = 248;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1363,7 +1365,9 @@ const ACTION_FAMILY: Record<string, string> = {
   "add-mana": "mana-tap", tap: "mana-tap", untap: "mana-tap", cant: "mana-tap",
   ...Object.fromEntries(["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect",
     "bolster", "adapt", "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn",
-    "monarch", "initiative", "ring-tempts", "explore", "connive", "endure", "cast", "play", "prevent", "cost-modify", "double", "animate"].map((v) => [v, "tail"])),
+    "monarch", "initiative", "ring-tempts", "explore", "connive", "endure", "cast", "play", "prevent", "cost-modify", "double", "animate",
+    "roll-dice", "flip-coin", "extra-turn", "emblem", "exchange", "win-game", "lose-game", "clash", "exert", "manifest", "convert", "earthbend",
+    "airbend", "waterbend", "blight", "behold", "extra-combat", "extra-phase", "trigger-again", "phase-out"].map((v) => [v, "tail"])),
 };
 const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
