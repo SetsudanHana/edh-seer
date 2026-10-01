@@ -33,6 +33,7 @@ export interface ActionReading {
   actor?: unknown;
   condition?: string;
   counter?: string;
+  text?: string;
 }
 export type ActionParser = (effect: string, type: string | null, cost?: string) => ActionReading[] | null;
 
@@ -70,6 +71,12 @@ export function actionDiff(stored: StoredAction, read: ActionReading, subjectOf:
   // A COUNTER action's stored object is the counter KIND ("+1/+1"); the reading carries the kind as
   // `counter` and the recipient as its object, which the store has no slot for (#731).
   if (stored.verb === "proliferate") return out.sort();
+  // A GRANT's stored object is the ability ("flying"); the reading's object is who gets it, and its
+  // text the ability.
+  if (stored.verb === "grant-ability") {
+    if (stored.object.toLowerCase() !== (read.text ?? "").toLowerCase()) out.push("ability");
+    return out.sort();
+  }
   if (stored.verb === "add-counter" || stored.verb === "remove-counter") {
     if (storedCounter(stored.object) !== (read.counter ?? "")) out.push("counter");
     return out.sort();

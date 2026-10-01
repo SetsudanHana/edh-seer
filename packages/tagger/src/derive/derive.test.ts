@@ -3889,3 +3889,15 @@ test("a zone move takes the printed destination; unequal counts of a zone verb s
   ).abilities;
   expect(cawl.find((a) => a.effect.kind === "search")?.effect.subject?.type).toBe("artifact");
 });
+
+// A grant's object is the ability, never a thing a pronoun can mean: "That creature gains haste until
+// end of turn. Sacrifice it" (Incandescent Soulstoke) sacrifices the Elemental the put brought in.
+test("a pronoun's antecedent skips a grant", () => {
+  const soulstoke = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "put", object: "an Elemental creature card from your hand", fromZone: "hand", toZone: "battlefield", optional: true },
+      { verb: "grant-ability", object: "haste" }, { verb: "sacrifice", object: "it" }] }],
+    "Incandescent Soulstoke",
+    { 1: "You may put an Elemental creature card from your hand onto the battlefield. That creature gains haste until end of turn. Sacrifice it at the beginning of the next end step." },
+  ).abilities;
+  expect(soulstoke.flatMap((a) => a.emits ?? []).find((e) => e.verb === "sacrifice")?.subject.subtype).toBe("elemental");
+});

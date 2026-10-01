@@ -12,6 +12,7 @@
  *  - VERB FAMILIES are added one per PR, in the owner's order (2026-10-01): draw/search first. */
 import type { Control, SubjectFilter } from "../schema.js";
 import { counterKindOf } from "../derive/subject.js";
+import { KEYWORD_ABILITIES } from "../derive/subtypes.js";
 import { parse } from "./filter.js";
 
 export interface ActionReading {
@@ -472,6 +473,77 @@ function whenTail(t: string): { at: number; text: string } | undefined {
  *  phrase: "target player draws two cards and loses 2 life" -- the life is theirs too. */
 /** The quoted abilities of the clause being read, restored into a phrase as it is read. */
 let quotes: string[] = [];
+/** The subject of the last pump or grant read in this sentence: "Target creature gets +2/+2 and gains
+ *  flying" -- the "gains flying" phrase is the same creature's. */
+let lastSubject: string | undefined;
+
+const PT = /^([+-](?:\d+|x))\/([+-](?:\d+|x))$/i;
+const DURATION = / until (?:end of turn|your next turn|the end of your next turn|end of combat)$/i;
+
+/** "flying", "flying and haste", "deathtouch, lifelink, and haste", a quoted ability, "protection
+ *  from red": one grant per ability, as the store writes them. */
+function abilitiesOf(text: string): string[] | null {
+  const parts = text.split(/,? and (?!from )|, (?!and )/).map((p) => p.trim()).filter(Boolean);
+  return parts.length > 0 && parts.every(isAbility) ? parts : null;
+}
+
+const KEYWORDS = [...KEYWORD_ABILITIES].map((k) => k.toLowerCase());
+/** A keyword, with its parameter if any ("ward {2}", "protection from red", "toxic 1"), a quoted
+ *  ability, or "that ability" (a back-reference derive resolves). */
+function isAbility(part: string): boolean {
+  const p = part.toLowerCase();
+  if (/^"[^"]*"$/.test(part) || /^(?:that|this|those) abilit(?:y|ies)$/.test(p)) return true;
+  return KEYWORDS.some((k) => p === k || (p.startsWith(`${k} `) && p.length - k.length <= 40 && !/\blife\b/.test(p)));
+}
+
+/** "<subject> gets +2/+2 [for each ...] [and gains flying] [until end of turn]", "<subject> has
+ *  flying", "<subject> gains hexproof": a pump and its grants, the subject the pump's object and
+ *  each grant's object the ability (derive reads the grant's recipient off the clause). */
+function pumpOrGrant(t: string): ActionReading[] | null {
+  let body = t.replace(/ until end of turn(?= for each )/i, "").replace(DURATION, "");
+  // "As long as you control a Swamp, ...", "... as long as you control a Swamp", "... if you control
+  // a creature with flying": the condition, kept (owner, 2026-10-01).
+  let condition: string | undefined;
+  const lead = /^(?:during your turn|until end of turn|as long as [^,]+|if [^,]+), /i.exec(body);
+  if (lead) { if (!/^until end of turn/i.test(lead[0])) condition = lead[0].slice(0, -2); body = body.slice(lead[0].length); }
+  const trail = body.search(/ (?:as long as|for as long as|if) /i);
+  if (trail > 0) { condition = [condition, body.slice(trail + 1)].filter(Boolean).join(", "); body = body.slice(0, trail).replace(DURATION, ""); }
+  let subject: string | undefined, verb: string | undefined, rest = "";
+  const m = /^(gets?|gains?|has|have) /i.exec(body);
+  if (m && lastSubject !== undefined) { subject = lastSubject; verb = m[1]!.toLowerCase(); rest = body.slice(m[0].length); }
+  else {
+    for (const v of body.matchAll(/ (gets?|gains?|has|have) /gi)) {
+      const who = body.slice(0, v.index);
+      if (who.length > 80 || !(who === "you" || objectOf(who) || /^(?:they|they each|he|she|that token|those tokens|those creatures|each of those creatures)$/i.test(who))) continue;
+      subject = who; verb = v[1]!.toLowerCase(); rest = body.slice(v.index + v[0].length); break;
+    }
+  }
+  if (subject === undefined || verb === undefined) return null;
+  const who = /^(?:they|they each|he|she|that token|those tokens|those creatures|each of those creatures)$/i.test(subject)
+    ? { object: { control: "any" as const, token: null, ref: "sentence" as const } }
+    : objectOf(subject) ?? { object: parse("you")! };
+  const isRef = who.object.ref === "sentence";
+  const target = { object: who.object, ...(isRef ? {} : { text: subject }) };
+  const out: ActionReading[] = [];
+  let grants = rest;
+  if (/^gets?$/.test(verb)) {
+    const and = rest.search(/ and (?:gains?|has) /);
+    const pt = (and >= 0 ? rest.slice(0, and) : rest).replace(DURATION, "");
+    const each = pt.indexOf(" for each ");
+    const n = PT.exec(each >= 0 ? pt.slice(0, each) : pt);
+    if (!n) return null;
+    out.push({ verb: "modify-pt", ...target, amount: `${n[1]}/${n[2]}${each >= 0 ? pt.slice(each) : ""}` });
+    if (and < 0) { lastSubject = subject; return withCondition(out, condition); }
+    grants = rest.slice(and).replace(/^ and (?:gains?|has) /, "");
+  }
+  const abilities = abilitiesOf(grants.replace(DURATION, ""));
+  if (!abilities) return null;
+  for (const a of abilities) out.push({ verb: "grant-ability", object: who.object, text: a });
+  lastSubject = subject;
+  return withCondition(out, condition);
+}
+
+const withCondition = (out: ActionReading[], condition: string | undefined) => (condition ? out.map((a) => ({ ...a, condition })) : out);
 
 function readPhrase(quoted: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
   const phrase = quoted.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!);
@@ -492,6 +564,9 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   let actor: ActionReading["actor"] = carried;
   let optional = false;
   if (carried === UNKNOWN_ACTOR && !actorOf(t) && !/^you /i.test(t)) return null;
+  const pg = pumpOrGrant(t);
+  // "-X/-0, where X is the number of cards in your graveyard": the store keeps the X's definition.
+  if (pg) return pg.map((a) => ({ ...a, ...(counted && a.amount && /X/.test(a.amount) ? { amount: `${a.amount}, where X is ${counted}` } : {}), ...(condition || a.condition ? { condition: [condition, a.condition].filter(Boolean).join(", ") } : {}) }));
   // A DAMAGE SOURCE ("~ deals", "this creature deals", "it deals", "enchanted creature deals"): the
   // dealer, which derive reads off the card, not the actor.
   // "you may have it deal 1 damage to any target": the same, optional.
@@ -635,6 +710,7 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     // as yours alone.
     if (/^you and /i.test(s)) continue;
     let carried: ActionReading["actor"];
+    lastSubject = undefined;
     const at = out.length;
     for (const p of phrases(s)) {
       // "sacrifice this creature unless you discard a card": the payment is an action too.

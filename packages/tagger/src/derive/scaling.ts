@@ -86,7 +86,9 @@ const isBareX = (action: Action): boolean => /^x$/i.test((action.amount ?? "").t
  *  a single create: 71 corpus lines print it before a create. */
 const PREAMBLE_COUNT = /(?:^|[,.]\s*)for each ([^,.]{1,70}),\s*create\b/i;
 const countedText = (action: Action, clauseText?: string): string => {
-  const own = `${action.amount ?? ""} ${action.object ?? ""}`;
+  // The amount and the object kept apart: "+1/+1 for each nonland card revealed this way" followed by
+  // "creatures you control" read the object into the count (Phabine).
+  const own = `${action.amount ?? ""}; ${action.object ?? ""}`;
   if (COUNTED.test(own)) return own;
   // ONE create per clause, or the preamble cannot say which create it counts for.
   const preamble = action.verb === "create" && clauseText && (clauseText.match(/\bcreate\b/gi) ?? []).length === 1
