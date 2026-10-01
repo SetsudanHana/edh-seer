@@ -50,7 +50,9 @@ export function printedPreamble(text: string, cardName: string): string | null {
  *  preamble and an intervening "if ...," when it has them. An activated clause's text already
  *  excludes its cost (`segment()` keeps that apart). */
 export function effectText(text: string, cardName: string): string {
-  const named = cardName ? selfAsTilde(text, cardName) : text;
+  // A TOKEN's name is its type ("Rat"): "for each other Rat you control" is the class, never the card.
+  const typeName = cardName.split(" ").every((w) => SUBTYPES.has(w.toLowerCase()));
+  const named = cardName && !typeName ? selfAsTilde(text, cardName) : text;
   const m = PREAMBLE.exec(named);
   const rest = m ? named.slice(m[0].length).trim() : named.trim();
   return m ? rest.replace(/^if [^,.]+, /i, "") : rest;

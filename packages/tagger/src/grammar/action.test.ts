@@ -124,6 +124,22 @@ test("zone moves: the zones, the count kept in the text, a back-reference kept a
   expect(read("Then shuffle.")).toMatchObject([{ verb: "shuffle", text: "your library" }]);
 });
 
+test("pumps and grants: the pump's object is who gets it, each grant's text the ability", () => {
+  expect(read("Target creature gets +3/+3 and gains trample until end of turn.")).toMatchObject([
+    { verb: "modify-pt", text: "target creature", amount: "+3/+3" }, { verb: "grant-ability", text: "trample", object: { type: "creature", scope: "target" } },
+  ]);
+  expect(read("Target creature gains deathtouch and indestructible until end of turn.").map((r) => r.text)).toEqual(["deathtouch", "indestructible"]);
+  expect(read("Equipped creature gets +1/+1 for each creature you control.")).toMatchObject([{ amount: "+1/+1 for each creature you control" }]);
+  expect(read("Enchanted creature gets -X/-0, where X is the number of cards in your graveyard.")).toMatchObject([{ amount: "-X/-0, where X is the number of cards in your graveyard" }]);
+  // A condition is kept; a back-reference keeps the stored object.
+  expect(read("This creature gets +1/+1 as long as you control a Swamp.")).toMatchObject([{ verb: "modify-pt", condition: "as long as you control a Swamp" }]);
+  expect(read("it gets +2/+0 until end of turn.")[0]?.text).toBeUndefined();
+  // The next phrase's "gains" is the same creature's.
+  expect(read("Target creature gets +2/+2 until end of turn. It gains flying until end of turn.").map((r) => r.verb)).toEqual(["modify-pt", "grant-ability"]);
+  // Only an ability is granted: "you gain 3 life", "gain control of" are not grants.
+  expect(read("You gain 3 life.").map((r) => r.verb)).toEqual(["gain-life"]);
+});
+
 test("a cost's actions come first, the cost's own words read the same way", () => {
   expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }, { verb: "create" }]);
   // A cost the segmenter left in the text is still a cost; ability words and table rows are labels.
@@ -142,6 +158,7 @@ test.each([
   ["counters", ["add-counter", "remove-counter", "proliferate"], 0.775],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.9],
   ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.88],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.795],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")

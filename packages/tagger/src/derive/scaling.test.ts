@@ -149,3 +149,11 @@ test("a count of permanents you own under an opponent's control is a board count
   // "an opponent controls" without ownership stays what it was: counting opponents' boards is not ours.
   expect(actionScaling({ verb: "draw", amount: "for each opponent" })).toBe("per-opponent");
 });
+
+// #896 task 6: the amount and the object are read apart. "Each creature you control gets +1/+0 for
+// each time it has attacked this turn" (Moraug) counts attacks; with the object run into the count,
+// "you control" made it a creature count and 70 false scale edges.
+test("a count never reads into the object after it", () => {
+  expect(scalingSubject({ verb: "modify-pt", object: "each creature you control", amount: "+1/+0 for each time it has attacked this turn" })).toBeUndefined();
+  expect(scalingSubject({ verb: "modify-pt", object: "this creature", amount: "+1/+1 for each other Rat you control" })).toMatchObject({ subtype: "rat", control: "you" });
+});

@@ -119,6 +119,9 @@ export function antecedentSource(actions: readonly Action[], idx: number, trigge
     // Doctors' "put those cards onto the battlefield" found the shuffle's "your library" and
     // entered untyped, which is how it "fed" Gallifrey Stands' own ETB.
     if (o === "" || PRONOUN_OBJECT.test(o) || SELF_REFERENCE.test(o) || ZONE_OBJECT.test(o)) continue;
+    // A GRANT's object is the ability granted ("haste"), never a thing (#896 task 6): "That creature
+    // gains haste. Sacrifice it" (Incandescent Soulstoke) means the creature put before the grant.
+    if (actions[i]?.verb === "grant-ability") continue;
     return { to: "action", action: i };
   }
   // A REVEALED OR LOOKED-AT CARD outranks the trigger: it is the nearer thing the sentence names.
