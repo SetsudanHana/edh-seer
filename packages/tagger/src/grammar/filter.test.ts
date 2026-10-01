@@ -130,13 +130,56 @@ test("CR 115.1: what a spell targets is its own field (owner 2026-10-01, the her
   expect(parse("a spell that targets this creature")).toEqual({ control: "any", token: null, type: "spell", targets: { self: true, type: "creature" } });
   expect(parse("a spell that targets ~")).toMatchObject({ type: "spell", targets: { self: true } });
   expect(parse("a spell that targets a creature you control")).toMatchObject({ control: "any", targets: { control: "you", type: "creature" } });
-  // After a second noun phrase the clause binds only that one.
-  expect(parse("an Equipment spell or a spell that targets a creature you control")).toBeNull();
+  // After a second noun phrase the clause binds only that one: two phrases, their union.
+  expect(parse("an Equipment spell or a spell that targets a creature you control")).toEqual({
+    control: "any", token: null, type: "spell",
+    anyOf: [{ subtype: "equipment" }, { targets: { control: "you", token: null, type: "creature" } }] });
 });
 
 test("a one-value adjective in only some alternatives is refused", () => {
   for (const p of ["target artifact or tapped creature", "target tapped or blocking creature", "target land or nonblack creature"]) expect(parse(p), p).toBeNull();
   expect(parse("target multicolored creature or multicolored enchantment")).toMatchObject({ colorCount: "multi" });
+});
+
+test("stat comparisons: a bare value, a run, the subject's own stat, and a variable rhs", () => {
+  expect(parse("a creature card with mana value X or less")!.stats).toEqual([{ metric: "mana-value", op: "lte", variable: true }]);
+  expect(parse("a creature you control with power equal to its toughness")!.stats).toEqual([{ metric: "power", op: "eq", vs: "toughness" }]);
+  expect(parse("a creature spell with mana value 4, 5, or 6")!.stats).toEqual([
+    { metric: "mana-value", op: "gte", value: 4 }, { metric: "mana-value", op: "lte", value: 6 }]);
+  expect(parse("a creature an opponent controls with power or toughness 1 or less")!.anyOf).toEqual([
+    { stats: [{ metric: "power", op: "lte", value: 1 }] }, { stats: [{ metric: "toughness", op: "lte", value: 1 }] }]);
+  // The count's zone is the count's: the creature is not in a hand.
+  expect(parse("each creature with power greater than the number of cards in your hand")).not.toHaveProperty("zone");
+  // A variable rhs is an amount, never a clause.
+  expect(parse("Creatures with power less than this creature's power can't block creatures you control")).toBeNull();
+});
+
+test("lists of whole noun phrases are their union", () => {
+  expect(parse("target creature you control and target creature you don't control")).toEqual({
+    control: "any", token: null, type: "creature", scope: "target", anyOf: [{ control: "you" }, { control: "opp" }] });
+  expect(parse("another creature you control or a land you control")).toMatchObject({ control: "you", anyOf: [{ type: "creature", other: true }, { type: "land" }] });
+  expect(parse("each creature and each planeswalker")).toMatchObject({ type: ["creature", "planeswalker"] });
+  // Not inside a relative clause: the spell targets a player or a creature, which the schema cannot say.
+  expect(parse("a spell that targets an opponent or a creature an opponent controls")).toBeNull();
+  // A list, not a named token.
+  expect(parse("a Blood token, a Clue token, or a Food token")).toMatchObject({ subtype: ["blood", "clue", "food"] });
+});
+
+test("token names, Roles, keyword lists, long card names, irregular plurals", () => {
+  expect(parse("Marit Lage, a legendary 20/20 black Avatar creature token with flying and indestructible")).toMatchObject({
+    token: true, subtype: "avatar", legendary: true, keyword: ["flying", "indestructible"] });
+  expect(parse("a Young Hero Role token")).toEqual({ control: "any", token: true, subtype: "role" });
+  expect(parse("a 2/2 black Knight creature token with flanking, protection from white, and haste")).toMatchObject({
+    colors: ["B"], keyword: ["flanking", "haste", "protection"] });
+  expect(parse("a card named Ajani, Valiant Protector")).toMatchObject({ named: "ajani, valiant protector" });
+  expect(parse("Other Rabbits, Bats, Birds, and Mice you control")).toMatchObject({ subtype: ["rabbit", "bat", "bird", "mouse"] });
+  expect(parse("creatures of the creature type of your choice")).toMatchObject({ chosenType: true, control: "any" });
+});
+
+test("more origins and quantifiers", () => {
+  expect(parse("a creature card from the top five cards of your library")).toMatchObject({ fromZone: "library", control: "you" });
+  expect(parse("each of up to three targets")).toMatchObject({ scope: "target" });
+  expect(parse("an additional land")).toEqual({ control: "any", token: null, type: "land" });
 });
 
 /** REFUSED: the grammar answers null, and derive keeps `parseSubject`'s answer. Each is a narrowing

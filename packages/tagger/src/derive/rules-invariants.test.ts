@@ -24,6 +24,7 @@ const TESTED: Record<string, string> = {
   "115.1": "grammar/filter.test.ts — what a spell targets is `targets` (#896)",
   "205.4c": "grammar/filter.test.ts — nonbasic is `basic: false` (#896)",
   "205.4g": "grammar/filter.test.ts — snow is a supertype (`snow`, #896)",
+  "111.4": "grammar/filter.test.ts — a token's own name is not a card to look for ('Marit Lage, a legendary ... token', 'token ... named Storm Crow') (#896)",
   "303.4a": "grammar/filter.test.ts — an Aura's enchant line names the class it can enchant ('Enchant creature you control') (#896 task 2)",
   "112.2": "grammar/filter.test.ts — a spell's controller is the player who cast it: 'spells you cast' reads control you (#896 task 2)",
   "110.2a": "derive.test.ts — what you put onto the battlefield enters under your control (Misty Rainforest)",

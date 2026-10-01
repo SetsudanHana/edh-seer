@@ -13,6 +13,8 @@ export function evalStatPredicate(
   pred: StatPredicate,
   s: { power: number; toughness: number; manaValue: number },
 ): boolean {
+  // A variable rhs ("X or less", "less than the result") is not known here: abstain (see schema).
+  if (pred.variable === true) return true;
   const lhs = pred.metric === "power" ? s.power : pred.metric === "toughness" ? s.toughness : s.manaValue;
   const rhs = pred.value !== undefined ? pred.value : pred.vs === "power" ? s.power : s.toughness;
   switch (pred.op) {

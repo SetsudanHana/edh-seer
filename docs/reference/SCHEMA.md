@@ -173,6 +173,7 @@ Defined in [`StatPredicate`](../../packages/tagger/src/schema.ts).
 | `op` | `StatOp` | **required** |  |
 | `value` | `number` | optional |  |
 | `vs` | `"power" \| "toughness"` | optional |  |
+| `variable` | `true` | optional | THE RHS IS NOT A CONSTANT THE TEXT STATES: "mana value X or less", "power less than this creature's power", "mana value less than the result". Set by the filter grammar (#896) in place of `value`. CEILING: the matcher abstains (the predicate holds), which is what dropping the words did before; X is chosen as the spell resolves, and the other rhs need a value from outside the subject. |
 
 ### GameEvent
 

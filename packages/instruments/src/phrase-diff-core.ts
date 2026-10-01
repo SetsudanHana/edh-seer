@@ -100,42 +100,74 @@ export function readPhrases(jsonl: string): Phrase[] {
  *  rule claims is `filter`, so a rule too narrow LOWERS the measured coverage rather than raising it. */
 const KEYWORD_LISTS = KEYWORD_ABILITIES.map((k) => k.split(" "));
 const REFERENCE_WORDS = new Set(["this", "that", "those", "these", "it", "its", "them", "they", "itself", "enchanted", "equipped", "the", "he", "she", "him", "her"]);
-const VERB_WORDS = new Set(["be", "block", "attack", "untap", "not", "pay", "sacrifice", "exert", "discard", "exile", "draw", "deal", "deals", "tap", "gain", "lose", "return", "put", "cast", "create", "destroy", "transform", "search", "reveal", "look", "mill", "scry", "copy", "choose", "do", "remove", "counter", "become", "becomes", "play", "attacks", "blocks", "dies", "enters", "leaves"]);
-const TIME = /\b(?:chapter|turn|upkeep|end step|main phase|combat|draw step|untap step|day|night|beginning)\b|^(?:i|ii|iii|iv|v|vi)(?:,|$)/;
+const VERB_WORDS = new Set(["be", "block", "attack", "untap", "not", "pay", "sacrifice", "exert", "discard", "exile", "draw", "deal", "deals", "tap", "gain", "lose", "return", "put", "cast", "create", "destroy", "transform", "search", "reveal", "look", "mill", "scry", "copy", "choose", "do", "remove", "counter", "become", "becomes", "play", "attacks", "blocks", "dies", "enters", "leaves", "change", "control"]);
+const TIME = /\b(?:chapter|turns?|upkeeps?|end steps?|main phases?|combat|draw steps?|untap steps?|day|night|beginning)\b|^(?:i|ii|iii|iv|v|vi)(?:,|$)/;
+/** AN AMOUNT, not a class: "1 damage", "X times", "half your life", "equal to its power", "life".
+ *  Task 6's magnitudes. */
+const AMOUNT = /^(?:(?:\d+|x|one|two|three|half|twice)\s+(?:damage|life|times)\b|(?:damage|life|half|twice|equal to)\b|x,?\s+where\b|all (?:(?:non)?combat )?damage\b|all but \d|(?:non)?combat damage\b|\d+ for each\b)/;
+/** "your second spell", "their first card": the Nth event of a turn, a trigger condition (task 5). */
+const ORDINAL = /^(?:your|their|an opponent's|each player's)\s+(?:first|second|third|fourth|fifth)\b/;
+/** A player doing something: "you discard a card", "you cast a noncreature spell" -- a clause. */
+const PLAYER_CLAUSE = /^(?:you|players?|an opponent|each player|each opponent)\s+(?:cast|discard|exile|sacrifice|search|reveal|note|choose|lose|gain|draw|mill|create|attack|block|roll|flip|play|activate|control|don't|do|have|has)\b/;
+/** A type-setting or rules-bending effect's object: "a Vampire in addition to its other types",
+ *  "Angel creature type", "creature spells as though they had flash". */
+const EFFECT_OBJECT = /\bin addition to (?:its|their) other\b|(?<!chosen )\b(?:creature )?type$|\bas though\b/;
+/** A row of a die-roll table: "10—19", "1—9 | ...". */
+const TABLE_ROW = /^\d+\s*[—–-]\s*\d+/;
+/** Game pieces a verb acts on, not cards: "flip a coin", "roll a d20", "put a sticker on it". */
+const GAME_PIECE = /^(?:a|an|one or more|two|\d+|x)?\s*(?:coins?|d\d+|six-sided dice?|dice|die|(?:name |art |ability )?stickers?)\b/;
+/** A counter as the object: "a counter", "a +1/+1 counter on this creature", "two +1/+1 counters". */
+const COUNTER_OBJECT = /^(?:a|an|one or more|one|two|three|four|five|x|\d+|all|up to \w+)\s+(?:[+-]\S+\s+|[a-z]+\s+)?counters?\b/;
 const ZONE = /^(?:(?:your|their|its owner's|target player's|target opponent's|an opponent's|each opponent's|all opponents'|each player's|that player's|a player's|all|each)\s+)?(?:library|libraries|hand|hands|graveyard|graveyards|life total)\b/;
 /** A CLAUSE, not a noun phrase: a finite verb the subject does ("target creature GAINS trample",
  *  "you PAY {1}", "you HAVE no maximum hand size"). Task 6's actions. A verb inside a relative clause
  *  ("a creature THAT HAS flying") is still a noun phrase, so a relative pronoun before the verb keeps
  *  the phrase in `filter`. "cast"/"casts" are absent on purpose: "spells you cast" is a filter. */
-const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are|deals?|may|would|pays?|attacks|blocks|enters|dies|wins?|draws?|puts?|untaps?)\b/;
+const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are|deals?|may|would|pays?|attacks|blocks|enters|dies|wins?|draws?|puts?|untaps?|costs?|causes|plays?)\b/;
 const RELATIVE = /\b(?:that|that's|who|which|whose)\b/;
 /** A REFERENCE inside a longer phrase: what was exiled, revealed or chosen earlier, "those", "that
  *  many". Task 4 and #900's population, resolved by `derive/references.ts`, not by a filter. */
-const INNER_REFERENCE = /\b(?:this way|exiled with|from among|of them|of those|those|they (?:control|own|don't)|that (?:card|creature|player|spell|permanent|ability|many|much|token|land|artifact|opponent))\b/;
+const INNER_REFERENCE = /^chosen\b|\b(?:this way|exiled with|from among|of them|of those|those|they (?:control|own|don't)|that (?:card|creature|player|spell|permanent|ability|many|much|token|land|artifact|opponent))\b/;
 
 export function domainOf(phrase: string): string {
-  // "~" is the card's own name: a self-reference, except after "named", where it is a filter on a
-  // name ("a card named ~", "any number of cards named ~").
-  if (phrase.replace(/\bnamed ~/g, "").includes("~")) return "reference";
+  // "~" is the card's own name: a self-reference, except where it is what a filter names -- after
+  // "named" ("a card named ~") or as what a spell targets ("a spell that targets ~").
+  // A NAMED TOKEN ("The Blackjack, a legendary 3/3 ... token", "~ Twin, a legendary ... token") is
+  // a token, whatever its name says.
+  const appositionToken = /^[^,]+, an? [^"]*\btokens?\b/i.test(phrase);
+  const amountless = phrase.split(/["“]|\bwhere\b|\bequal to\b|\bless than\b|\bgreater than\b/)[0]!;
+  if (!appositionToken && amountless.replace(/\bnamed .*$/, "").replace(/\btargets? .*~/, "").includes("~")) return "reference";
   const text = phrase.toLowerCase().replace(/’/g, "'").trim();
   if (text.startsWith("(")) return "reminder";
-  const w = text.split(/[\s,]+/).filter((x) => x !== "");
+  if (text.startsWith('"') || text.startsWith("“")) return "quoted";
+  // Split on the dash a keyword's cost hangs off ("Ward—Discard a card.") and on ";" too.
+  const w = text.split(/[\s,—–;:]+/).filter((x) => x !== "");
   if (w.length === 0) return "empty";
-  if (REFERENCE_WORDS.has(w[0]!) || (w[0] === "one" && w[1] === "of")) return "reference";
+  if (!appositionToken && (REFERENCE_WORDS.has(w[0]!) || (w[0] === "one" && w[1] === "of"))) return "reference";
   // "Enchant creature you control" names a CLASS after the keyword: a filter phrase, and one the
   // grammar does not read yet. Counting it as a keyword would hide 1,239 card-occurrences of misses
   // (review). Every other keyword line is a grant or a cost.
   if (w[0] !== "enchant" && KEYWORD_LISTS.some((ws) => ws.every((x, j) => w[j] === x))) return "keyword";
-  if (/^[+-]\d/.test(w[0]!) || counterKindOf(text) || (/\bcounters?$/.test(text) && counterKindOf(text.replace(/^(?:a|an|one or more|one|two|three|x|\d+|all)\s+/, "")))) return "counter";
+  // counterKindOf splits a comma list and takes its one kind, so a token "with flying, vigilance, and
+  // indestructible" would read as an indestructible counter: only a comma-free phrase is asked.
+  if (/^[+-]\d/.test(w[0]!) || (!text.includes(",") && counterKindOf(text)) || (/\bcounters?$/.test(text) && counterKindOf(text.replace(/^(?:a|an|one or more|one|two|three|x|\d+|all)\s+/, "")))) return "counter";
   if (w.length === 1 && /^(?:\d+|x)$/.test(w[0]!)) return "number";
+  if (TABLE_ROW.test(text)) return "table";
+  if (GAME_PIECE.test(text)) return "game-piece";
+  if (COUNTER_OBJECT.test(text)) return "counter";
+  if (AMOUNT.test(text)) return "amount";
+  if (EFFECT_OBJECT.test(text.split(/["“]/)[0]!)) return "clause";
   if (w[0]!.startsWith("{") || /\bmana\b(?! value| cost)/.test(text)) return "mana";
-  if (ZONE.test(text)) return "zone";
+  if (ZONE.test(text) || /^(?:the )?top (?:\w+ )?cards? of\b/.test(text)) return "zone";
+  if (ORDINAL.test(text)) return "ordinal";
+  if (PLAYER_CLAUSE.test(text)) return "clause";
   if (!text.includes(" named ") && TIME.test(text)) return "time";
   if (VERB_WORDS.has(w[0]!)) return "verb";
-  if (INNER_REFERENCE.test(text)) return "reference";
-  // Only the HEAD is read: a verb inside a granted ability's quotes ('a Rat token with "This token
-  // can't block."') or a count ("a card for each counter you have") does not make a clause.
-  const head = text.split(/["“]|\bfor each\b|\bwhere\b|\bequal to\b|\bthe number of\b/)[0]!;
+  // Only the HEAD is read: a verb or a reference inside a granted ability's quotes ('a Rat token with
+  // "This token can't block."'), a count ("a card for each counter you have") or a stat's amount ("with
+  // mana value less than that creature's") does not make the phrase a clause or a reference.
+  const head = text.split(/["“]|\bfor each\b|\bwhere\b|\bequal to\b|\bthe number of\b|\bless than\b|\bgreater than\b/)[0]!;
+  if (INNER_REFERENCE.test(head)) return "reference";
   const verb = CLAUSE_VERB.exec(head);
   if (verb && !RELATIVE.test(head.slice(0, verb.index))) return "clause";
   return "filter";

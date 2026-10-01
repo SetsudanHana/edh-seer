@@ -490,3 +490,9 @@ test("'with a counter on it' is met by any counter kind", () => {
   expect(subjectMatches(s({ type: "creature", counter: "+1/+1" }), s({ type: "creature", hasCounter: true }), H)).toBe(true);
   expect(subjectMatches(s({ type: "creature" }), s({ type: "creature", hasCounter: true }), H)).toBe(false);
 });
+
+test("a variable stat rhs ('mana value X or less') abstains: the matcher cannot know X", () => {
+  const want = s({ type: "creature", stats: [{ metric: "mana-value", op: "lte", variable: true }] });
+  expect(subjectMatches(s({ type: "creature", manaValue: 9 }), want, H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature", manaValue: 9 }), s({ type: "creature", stats: [{ metric: "mana-value", op: "lte", value: 3 }] }), H)).toBe(false);
+});
