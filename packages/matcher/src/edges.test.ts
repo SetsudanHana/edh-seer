@@ -1417,6 +1417,15 @@ test("a restriction on the PRODUCER's emit is ignored -- it can only ever be a d
   expect(pairReasons(producer, watcher, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
 });
 
+test("a spell that targets this creature claims no producer until a producer can say what it targets (#896)", () => {
+  // `targets` is a demand nothing states yet; ignoring it would read the heroic condition as
+  // "whenever you cast a spell".
+  const spell = { verb: "cast" as const, subject: { type: "instant", control: "you" as const, token: null } };
+  const heroic = { verb: "cast" as const, subject: { type: "spell", control: "you" as const, token: null, targets: { self: true as const, type: "creature" } } };
+  expect(eventMatches(spell, heroic, H)).toBe(false);
+  expect(eventMatches(spell, { ...heroic, subject: { type: "spell", control: "you" as const, token: null } }, H)).toBe(true);
+});
+
 test("a trigger with no origin is still satisfied by an event that has one", () => {
   // The constraint is opt-in in ONE direction only. An unset trigger `fromZone` means "any origin",
   // so stamping origins onto producer emits must not cost a single edge that exists today.

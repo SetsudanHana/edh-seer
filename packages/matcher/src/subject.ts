@@ -50,6 +50,23 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     const { anyOf, ...shared } = producer;
     return anyOf.some((b) => subjectMatches({ ...shared, ...b }, consumer, h));
   }
+  // RELATIONS NO PRODUCER STATES (#896): what a spell targets, whose ability it is, what it shares
+  // with another object, what happened to it this turn, a name relation. A demand nothing can check
+  // claims nothing -- here, so a branch of an `anyOf` carrying one is refused too.
+  if (consumer.targets !== undefined || consumer.abilityOf !== undefined || consumer.shares !== undefined
+    || consumer.history?.length || consumer.nameRelation !== undefined || consumer.combatWith !== undefined) return false;
+  // "from anywhere other than your hand": an unstated origin is the hand (a card's own cast).
+  if (consumer.notFromZone !== undefined && (producer.fromZone ?? "hand") === consumer.notFromZone) return false;
+  // A PLAYER BRANCH ("target player or planeswalker"): met by a player-shaped producer, one that
+  // names no type and no subtype.
+  if (consumer.player === true && (producer.type !== undefined || producer.subtype !== undefined || producer.anyOf !== undefined)) return false;
+  // EXCLUSIONS ("all creatures except for Merfolk"): a producer that matches one fails.
+  if (consumer.except?.some((x) => subjectMatches(producer, { control: "any", token: null, ...x }, h))) return false;
+  // STATUSES and designations (face-down, enchanted, goaded, kicked ...): only a producer whose text
+  // states them supplies them, as with `modified`; a negated one fails a producer that states it.
+  if (consumer.status?.length && !consumer.status.every((x) => producer.status?.includes(x))) return false;
+  if (consumer.notStatus?.some((x) => producer.status?.includes(x) || producer.combat === x)) return false;
+  if (consumer.notNamed !== undefined && consumer.notNamed.toLowerCase() === (producer.named ?? "").toLowerCase()) return false;
   // "Historic" is artifact, legendary or Saga -- a printed fact the matcher stamps on the producer
   // from its type line. Opt-in like every other field: a consumer that does not ask is unaffected,
   // and a consumer that DOES ask is satisfied only by a card that is one.
@@ -67,9 +84,19 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // A COMBAT STATE, the same class: only a producer whose printed text names an attacking or a
   // blocking creature can supply one. "Whenever an attacking creature dies" (Kardur) is false about
   // a creature that died to a sorcery-speed edict, and under-claiming to 0 is the right answer.
-  if (consumer.combat !== undefined && producer.combat !== consumer.combat) return false;
+  // "attacking or blocking" (`in-combat`) is met by a producer stating either state.
+  if (consumer.combat !== undefined && producer.combat !== consumer.combat
+    && !(consumer.combat === "in-combat" && producer.combat !== undefined)) return false;
+  // A STATUS, the same class: tapped or untapped only where the producer's printed text states it.
+  if (consumer.tapped !== undefined && producer.tapped !== consumer.tapped) return false;
   // Same shape as historic: a legendary-matters anthem reaches only legendary permanents.
   if (consumer.legendary === true && producer.legendary !== true) return false;
+  // ...and the negations, "nonlegendary" and "nonbasic": the printed supertype fails them. A producer
+  // that states neither is taken as without, as an absent keyword list is.
+  if (consumer.legendary === false && producer.legendary === true) return false;
+  if (consumer.basic === false && producer.basic === true) return false;
+  if (consumer.snow === true && producer.snow !== true) return false;
+  if (consumer.snow === false && producer.snow === true) return false;
   // A DECK fact, not a printed one — see commander.ts. Same asymmetry as the two supertypes above:
   // a consumer that does not ask is unaffected, one that does is satisfied only by a designated
   // commander. Kediss, Emberclaw Familiar is why: its "a commander you control" derived untyped and
@@ -121,6 +148,8 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   }
   // counter / zone: if the consumer names one, the producer must equal it.
   if (consumer.counter !== undefined && consumer.counter !== producer.counter) return false;
+  if (consumer.hasCounter === true && producer.counter === undefined && producer.hasCounter !== true) return false;
+  if (consumer.hasCounter === false && (producer.counter !== undefined || producer.hasCounter === true)) return false;
   if (consumer.zone !== undefined && consumer.zone !== producer.zone) return false;
   // colours: an INTERSECTION, not an equality, because both sides are OR-lists — a Dimir card
   // satisfies "blue spells", and a filter naming two colours accepts a card in either. Unset on
@@ -140,6 +169,17 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
       || wanted.some((c) => c !== "C" && has.has(c));
     if (!satisfied) return false;
   }
+  // NEGATED colours ("nonblack"): a producer with any of them fails. No recorded colours abstains,
+  // the `notKeyword` rule, because a parsed producer ("target creature") never states them.
+  if (consumer.notColors?.length && producer.colors?.some((c) => consumer.notColors!.includes(c))) return false;
+  // Multicolored / monocolored count the five colours; an unrecorded producer fails, since the
+  // demand is positive and a guess would be a wrong answer.
+  if (consumer.colorCount !== undefined) {
+    const n = (producer.colors ?? []).filter((c) => c !== "C").length;
+    const ok = { multi: n >= 2, mono: n === 1, all: n === 5, "exactly-two": n === 2, colored: n >= 1 }[consumer.colorCount];
+    if (producer.colors === undefined || !ok) return false;
+  }
+  if (consumer.allColors?.length && !consumer.allColors.every((x) => producer.colors?.includes(x))) return false;
   // type: expand both sides' type tokens (concrete, pseudo, or subtype-implied) to concrete
   // card-type sets and require they intersect. Reduces to exact/subtype-implied matching for
   // concrete types; lets pseudo-types (permanent/spell/noncreature/nonland) match their members.

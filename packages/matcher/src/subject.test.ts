@@ -444,3 +444,80 @@ test("a parity demand is met by a known mana value of that parity, and by an UNK
   // All Is Dust's sacrificed permanents: a class holding both parities, not a 0.
   expect(subjectMatches(s({ type: "permanent" }), odd, H)).toBe(true);
 });
+
+/** The fields the filter grammar (#896) fills and parseSubject never did. Each is a demand: a
+ *  consumer that names one is met only by a producer that states it, and a consumer that does not
+ *  name one is unaffected. */
+test("tapped and untapped: a status only a producer that states it supplies", () => {
+  expect(subjectMatches(s({ type: "creature", tapped: true }), s({ type: "creature", tapped: true }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature" }), s({ type: "creature", tapped: true }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "creature", tapped: true }), s({ type: "creature", tapped: false }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "creature", tapped: true }), s({ type: "creature" }), H)).toBe(true);
+});
+
+test("in-combat is met by attacking or blocking", () => {
+  const want = s({ type: "creature", combat: "in-combat" });
+  expect(subjectMatches(s({ type: "creature", combat: "attacking" }), want, H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature", combat: "blocking" }), want, H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature" }), want, H)).toBe(false);
+  expect(subjectMatches(s({ type: "creature", combat: "in-combat" }), s({ type: "creature", combat: "attacking" }), H)).toBe(false);
+});
+
+test("nonblack refuses a black producer; an unrecorded colour abstains", () => {
+  const want = s({ type: "creature", notColors: ["B"] });
+  expect(subjectMatches(s({ type: "creature", colors: ["B", "G"] }), want, H)).toBe(false);
+  expect(subjectMatches(s({ type: "creature", colors: ["G"] }), want, H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature" }), want, H)).toBe(true);
+});
+
+test("multicolored and monocolored count the five colours", () => {
+  expect(subjectMatches(s({ type: "creature", colors: ["W", "U"] }), s({ colorCount: "multi" }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature", colors: ["W"] }), s({ colorCount: "multi" }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "creature", colors: ["W"] }), s({ colorCount: "mono" }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "artifact", colors: [] }), s({ colorCount: "mono" }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "creature" }), s({ colorCount: "multi" }), H)).toBe(false);
+});
+
+test("nonbasic and nonlegendary refuse the supertype; snow demands it", () => {
+  expect(subjectMatches(s({ type: "land", basic: true }), s({ type: "land", basic: false }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "land" }), s({ type: "land", basic: false }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature", legendary: true }), s({ type: "creature", legendary: false }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "land", snow: true }), s({ type: "land", snow: true }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "land" }), s({ type: "land", snow: true }), H)).toBe(false);
+});
+
+test("'with a counter on it' is met by any counter kind", () => {
+  expect(subjectMatches(s({ type: "creature", counter: "+1/+1" }), s({ type: "creature", hasCounter: true }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature" }), s({ type: "creature", hasCounter: true }), H)).toBe(false);
+});
+
+test("a variable stat rhs ('mana value X or less') abstains: the matcher cannot know X", () => {
+  const want = s({ type: "creature", stats: [{ metric: "mana-value", op: "lte", variable: true }] });
+  expect(subjectMatches(s({ type: "creature", manaValue: 9 }), want, H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature", manaValue: 9 }), s({ type: "creature", stats: [{ metric: "mana-value", op: "lte", value: 3 }] }), H)).toBe(false);
+});
+
+test("relations no producer states are refused, also inside an anyOf branch", () => {
+  const spell = s({ type: "instant" });
+  expect(subjectMatches(spell, s({ type: "spell", combatWith: { role: "blocking", with: "self" } }), H)).toBe(false);
+  expect(subjectMatches(spell, s({ anyOf: [{ type: "spell", targets: { self: true } }] }), H)).toBe(false);
+});
+
+test("from anywhere other than your hand: an unstated origin is the hand", () => {
+  const want = s({ type: "spell", notFromZone: "hand" });
+  expect(subjectMatches(s({ type: "instant" }), want, H)).toBe(false);
+  expect(subjectMatches(s({ type: "instant", fromZone: "graveyard" }), want, H)).toBe(true);
+});
+
+test("a player branch is met by a player-shaped producer only", () => {
+  const want = s({ control: "any", anyOf: [{ player: true }, { type: "planeswalker" }] });
+  expect(subjectMatches(s({ control: "opp" }), want, H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature" }), want, H)).toBe(false);
+  expect(subjectMatches(s({ type: "planeswalker" }), want, H)).toBe(true);
+});
+
+test("exclusions: a producer matching one fails", () => {
+  const want = s({ type: "creature", except: [{ subtype: "merfolk" }] });
+  expect(subjectMatches(s({ type: "creature", subtype: "merfolk" }), want, H)).toBe(false);
+  expect(subjectMatches(s({ type: "creature", subtype: "bear" }), want, H)).toBe(true);
+});

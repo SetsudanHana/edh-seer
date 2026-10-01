@@ -30,6 +30,9 @@ if (!modulePath) {
   const d = diffParsers(phrases, parse, parseSubject);
   writeFileSync(`${OUT}/phrase-diff.json`, JSON.stringify(d, null, 1) + "\n");
   console.log(`parsed completely: ${d.parsed.distinct}/${d.total.distinct} distinct (${pct(d.parsed.distinct, d.total.distinct)}), ${pct(d.parsed.cards, d.total.cards)} of card-occurrences`);
+  for (const [dom, t] of Object.entries(d.byDomain).sort((a, b) => b[1].total.cards - a[1].total.cards)) {
+    console.log(`  ${dom.padEnd(10)} ${String(t.parsed.distinct).padStart(5)}/${String(t.total.distinct).padEnd(5)} distinct (${pct(t.parsed.distinct, t.total.distinct)}), ${pct(t.parsed.cards, t.total.cards)} of ${t.total.cards} card-occurrences`);
+  }
   console.log(`agree with parseSubject: ${d.agree.distinct} distinct, ${pct(d.agree.cards, d.parsed.cards || 1)} of parsed card-occurrences`);
   console.log(`nondeterministic: ${d.nondeterministic.length}`);
   console.log(`disagreement groups: ${d.groups.length}`);

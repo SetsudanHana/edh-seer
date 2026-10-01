@@ -336,6 +336,7 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
     // legendary demand cannot be expressed there. Lifted to its own flag, as historic is.
     ...(types.includes("legendary") ? { legendary: true as const } : {}),
     ...(types.includes("basic") ? { basic: true as const } : {}),
+    ...(types.includes("snow") ? { snow: true as const } : {}),
     // Printed keywords, for the static pass — this is the side a "creatures you control with flying"
     // anthem is matched AGAINST, so without it every such anthem either reaches everything (before
     // the filter existed) or nothing (after, if only one side were done).
@@ -916,6 +917,14 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolea
  *  would report holes the engine does not actually have. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
   if (!verbSatisfies(producer, consumer)) return false;
+  // WHAT A SPELL TARGETS (`SubjectFilter.targets`, #896): no producer states it, so the demand claims
+  // nothing, exactly as `restricted` below. Ignoring it would read "a spell that targets this
+  // creature" as every spell in the deck.
+  if (consumer.subject.targets !== undefined) return false;
+  // The same for the other relations no producer states (#896): whose ability it is, a
+  // characteristic shared with another object, what happened to it this turn, and a name relation.
+  const cs = consumer.subject;
+  if (cs.abilityOf !== undefined || cs.shares !== undefined || cs.history?.length || cs.nameRelation !== undefined || cs.combatWith !== undefined) return false;
   // THE EVENT'S SIZE (2026-09-25): a trigger that requires one meets only a producer that states a
   // size satisfying it. An unknown size ("X", or none recorded) is refused -- a missing edge, never
   // a wrong one. Measured on the corpus: seven cards print such a trigger; Ghyrson Starn had been

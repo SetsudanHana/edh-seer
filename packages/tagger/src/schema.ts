@@ -15,6 +15,12 @@ export interface StatPredicate {
   op: StatOp;
   value?: number;
   vs?: "power" | "toughness";
+  /** THE RHS IS NOT A CONSTANT THE TEXT STATES: "mana value X or less", "power less than this
+   *  creature's power", "mana value less than the result". Set by the filter grammar (#896) in place
+   *  of `value`. CEILING: the matcher abstains (the predicate holds), which is what dropping the
+   *  words did before; X is chosen as the spell resolves, and the other rhs need a value from
+   *  outside the subject. */
+  variable?: true;
 }
 
 /** A characteristic filter: what a trigger cares about, or what an effect targets/produces. */
@@ -131,7 +137,7 @@ export interface SubjectFilter {
   /** WHO OWNS IT, when the text says so and it differs from who controls it (CR 110.2): Zedruu's
    *  "permanents you OWN that your opponents CONTROL" (#681). Absent means the text named no owner,
    *  which is every other subject. */
-  owner?: "you";
+  owner?: "you" | "opp";
   /** false = nontoken only, true = token only, null = any. */
   token: boolean | null;
   /** Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. */
@@ -186,8 +192,29 @@ export interface SubjectFilter {
    *  `dies:creature` and Blasphemous Edict at sorcery speed fed it (owner, 2026-09-05).
    *
    *  Dropped on an `attacks` trigger, where the state IS the event. Corpus: 12 trigger subjects
-   *  name an attacking creature, 1 a blocking one; 272 action objects attacking, 34 blocking. */
-  combat?: "attacking" | "blocking";
+   *  name an attacking creature, 1 a blocking one; 272 action objects attacking, 34 blocking.
+   *
+   *  `in-combat` is "attacking or blocking" (CR 506.4 calls both "in combat"): 13 corpus phrases,
+   *  about 90 card uses ("target attacking or blocking creature"). A producer that states either
+   *  state, or this one, satisfies it. Set by the filter grammar (#896). */
+  combat?: "attacking" | "blocking" | "in-combat";
+  /** A STATUS, CR 110.5: true is "target TAPPED creature", false "an UNTAPPED creature you control".
+   *  A board state like `combat` and `modified`, so only a producer whose printed text states it
+   *  satisfies a demand. 145 corpus phrases, about 320 card uses. Set by the filter grammar (#896). */
+  tapped?: boolean;
+  /** COLOURS THE TEXT NEGATED: "target nonblack creature", "a nonwhite, nonblue creature". A producer
+   *  that has none of them satisfies it; one that records no colours abstains, as `notKeyword` does.
+   *  Set by the filter grammar (#896). */
+  notColors?: string[];
+  /** "a MULTICOLORED spell" (two or more colours, CR 105.2b), "a MONOCOLORED creature" (exactly
+   *  one, CR 105.2a). Counted over the five colours, so colourless is neither. Also `all` ("that's all
+   *  colors"), `exactly-two`, and `colored` ("one or more colors"). Set by the filter grammar (#896). */
+  colorCount?: "multi" | "mono" | "all" | "exactly-two" | "colored";
+  /** EVERY colour listed, not any: "a spell that's both black and green". `colors` is an OR-list. */
+  allColors?: string[];
+  /** The SNOW supertype, CR 205.4g: "target snow land". Shaped like `legendary`; `false` is "nonsnow".
+   *  Set by the filter grammar (#896). */
+  snow?: boolean;
   /** A `leaves` demand that REFUSES a death. "Whenever one or more other creatures you control leave
    *  the battlefield without dying" (Dour Port-Mage) and Taeko's "if it didn't die" are `leaves`
    *  minus `dies` (CR 700.4). Demand only -- read by `eventMatches`, never stamped on a producer, so
@@ -196,14 +223,20 @@ export interface SubjectFilter {
   /** The subject demands the LEGENDARY supertype. "Legendary creatures you control get +2/+2"
    *  (Serah Farron) and Jodah's +X/+X derived a subject of EVERY creature without it, which were the
    *  two widest meshes in the derived population at x53 and x51. Shaped exactly like `historic`:
-   *  matched against the card's printed characteristics, which already carry supertypes. */
-  legendary?: true;
+   *  matched against the card's printed characteristics, which already carry supertypes.
+   *
+   *  `false` is the NEGATION, "target nonlegendary creature": a legendary producer fails it. Set by
+   *  the filter grammar (#896); parseSubject drops the word. */
+  legendary?: boolean;
   /** The subject demands the BASIC supertype. "Search your library for a basic land card" emitted
    *  `{type: land}` and nothing else, so at the authored-emit identity check — the one place an emit
    *  sits on the FILTER side — every NONBASIC land satisfied it, which was about half the false
    *  edges the 2026-08-13 board fixtures showed on self-ETB lands. 65 actions across 50 corpus docs.
-   *  Same shape as `legendary`, and set on BOTH sides for the reason 09ce98d records. */
-  basic?: true;
+   *  Same shape as `legendary`, and set on BOTH sides for the reason 09ce98d records.
+   *
+   *  `false` is NONBASIC (CR 205.4c), the Blood Moon family: a basic producer fails it. Set by the
+   *  filter grammar (#896). */
+  basic?: boolean;
   /** Printed KEYWORD ABILITIES the subject demands, ALL of them — "creatures you control with
    *  flying", "a creature with defender", "spells with flash you cast".
    *
@@ -286,6 +319,60 @@ export interface SubjectFilter {
   abilityKind?: AbilityObjectKind[];
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
+  /** "a creature you control with A COUNTER on it": some counter, of no stated kind. A producer that
+   *  names a kind, or states this, satisfies it. `false` is "with no counters on it": a producer that
+   *  states a counter fails. Set by the filter grammar (#896). */
+  hasCounter?: boolean;
+  /** A STATUS OR DESIGNATION the object has (CR 110.5; goad CR 701.15, suspect CR 701.60, kicker CR 702.33
+   *  ...): "a face-down creature you control", "an enchanted creature", "a goaded creature", "a kicked
+   *  spell", "target blocked creature". ALL must hold. Closed vocabulary (`STATUSES` in the filter
+   *  grammar). Like `modified`, only a producer whose printed text states one supplies it. Set by the
+   *  filter grammar (#896). */
+  status?: string[];
+  /** A status the text NEGATES: "target nonattacking creature" (`attacking`), "nonblocking". */
+  notStatus?: string[];
+  /** THE SUBJECT IS A PLAYER. Only inside an `anyOf` branch, where a phrase names a player beside an
+   *  object ("target player or planeswalker", "you or a permanent you control"): a bare player phrase
+   *  keeps its old control-only shape. A producer with no type and no subtype is player-shaped and
+   *  meets it. Set by the filter grammar (#896). */
+  player?: true;
+  /** WHOSE ABILITY: "a loyalty ability of a Chandra planeswalker", "target activated ability from
+   *  an artifact source". CEILING: no producer states the source of an ability it activates, so
+   *  `eventMatches` refuses a consumer carrying it. Set by the filter grammar (#896). */
+  abilityOf?: Partial<SubjectFilter>;
+  /** A CHARACTERISTIC SHARED WITH ANOTHER OBJECT: "a spell that shares a creature type with this
+   *  creature", "a creature that doesn't share a color with ...". `with` is "self", "ref" (an object
+   *  named elsewhere in the sentence) or a filter. CEILING: `eventMatches` refuses a consumer carrying
+   *  it. Set by the filter grammar (#896). */
+  shares?: { what: "creature-type" | "color" | "card-type" | "name" | "mana-value" | "type"; with: "self" | "ref" | Partial<SubjectFilter>; negated?: true };
+  /** WHAT HAPPENED TO IT THIS TURN: "a creature that was dealt damage this turn", "all creatures that
+   *  attacked this turn", "a creature card put into your graveyard from the battlefield this turn".
+   *  Closed vocabulary. CEILING: `eventMatches` refuses a consumer carrying it. Set by the filter
+   *  grammar (#896). */
+  history?: string[];
+  /** A NAME RELATION instead of a printed name: "with the chosen name" (`chosen`), "with the same
+   *  name as ..." (`same`), "with different names" (`different`). CEILING: refused by `eventMatches`.
+   *  Set by the filter grammar (#896). */
+  nameRelation?: "chosen" | "same" | "different";
+  /** A NAME THE SUBJECT DOES NOT HAVE: "target permanent not named ~". Lowercased, "~" for the card. */
+  notNamed?: string;
+  /** AN ORIGIN THE SUBJECT DID NOT COME FROM: "a spell from anywhere other than your hand". A producer
+   *  that states no origin was cast from hand (a card's own cast), so it fails a `hand` exclusion.
+   *  Set by the filter grammar (#896). */
+  notFromZone?: string;
+  /** A COMBAT RELATION to another object: "a creature blocking this creature" (`blocking`, self),
+   *  "target creature blocking or blocked by ~", "target creature that's attacking you". CEILING:
+   *  refused by the matcher, as the other relations no producer states. Set by the filter grammar. */
+  combatWith?: { role: "blocking" | "blocked-by" | "blocking-or-blocked-by" | "attacking"; with: "self" | "ref" | "you" | Partial<SubjectFilter> };
+  /** EXCLUSIONS: "all creatures except for Merfolk, Krakens ...", "each creature except for tokens
+   *  you control". A producer matching any of them fails. Set by the filter grammar (#896). */
+  except?: Partial<SubjectFilter>[];
+  /** WHAT A SPELL TARGETS, CR 115.1 (#896, owner 2026-10-01): "a spell that targets this creature"
+   *  is `{ type: spell, targets: { self: true, type: creature } }`, the heroic / "becomes the target
+   *  of a spell" condition. CEILING: nothing on the producer side states what a spell targets yet,
+   *  so `eventMatches` refuses a consumer carrying it, as it refuses `restricted` -- a demand nothing
+   *  can check claims no cards rather than every spell. Set by the filter grammar. */
+  targets?: Partial<SubjectFilter>;
   /** Which phase or step an `extra-phase` effect grants, over a closed CR vocabulary: `untap`,
    *  `upkeep`, `draw`, `main`, `combat`, `beginning`, `end`. Same shape as `counter` above, and for
    *  the same reason: a coarse `extra-phase` conflated units the game itself keeps apart -- an

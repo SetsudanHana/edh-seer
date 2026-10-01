@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import { parseSubject } from "@edh-seer/tagger/subject";
 import type { SubjectFilter } from "@edh-seer/tagger/schema";
-import { diffParsers, differingFields, readPhrases, type Phrase } from "./phrase-diff-core.js";
+import { diffParsers, differingFields, domainOf, readPhrases, type Phrase } from "./phrase-diff-core.js";
 
 const f = (x: object) => x as SubjectFilter;
 
@@ -47,4 +47,32 @@ test("parseSubject against itself over the checked-in census agrees on every phr
   const d = diffParsers(phrases, parseSubject, parseSubject);
   expect(d.agree).toEqual(d.total);
   expect(d.nondeterministic).toEqual([]);
+});
+
+/** The classifier decides what S1 is measured over, so it is pinned BOTH ways: a phrase that is no
+ *  filter leaves the denominator, and one that is a filter must stay in it -- a rule too broad would
+ *  raise coverage by hiding the phrases the grammar cannot read. Every example is from the census. */
+test("domainOf: what is not a filter phrase, and what stays one", () => {
+  const cases: [string, string][] = [
+    ["carnage or homage", "fragment"], ["loot", "fragment"], ["impostor counter", "counter"],
+    ["loyalty counters on a planeswalker", "counter"], ["six +1/+1 counters", "counter"],
+    ["Planeswalkers you control [0]: Proliferate", "ability-text"], ["lands you control; {T}: add {G} or {W}", "ability-text"],
+    ["Spells your opponents cast that target this creature cost {2} more to cast", "clause"],
+    ["Creatures with power less than this creature's power can't block creatures you control", "clause"],
+    ["you tap two untapped creatures you control", "clause"], ["a card left your graveyard this turn", "clause"],
+    ["blocked by fewer than two creatures each combat", "clause"], ["two cards unless you discard a creature card", "clause"],
+    ["Aetherwing's power equal to the number of artifacts you control", "amount"], ["excess damage", "amount"],
+    ["when you do", "time"], ["II or III", "time"], ["after this main phase", "time"],
+    ["revealed creature or land card", "reference"], ["creatures not chosen by their controller", "reference"],
+    ["all activated abilities of the exiled card", "reference"], ["Beregond or another Human you control", "reference"],
+    ["a creature card you drafted that isn't in your deck", "draft"], ["planar die", "game-piece"], ["Dáin", "name"],
+    // ...and filters, however close they sit to a rule above.
+    ["Angel", "filter"], ["attacking", "filter"], ["10/10", "filter"], ["snow", "filter"],
+    ["target creature card with a sticker on it", "filter"], ["target creature you control into a 1/1 Citizen", "filter"],
+    ["target spell if it was kicked", "filter"], ["a token that's a copy of the exiled card", "filter"],
+    ["target creature you control and target creature the opponent to your left controls", "filter"],
+    ["up to X target creatures divided as you choose", "filter"], ["an instant or sorcery spell with mana value greater than the number of experience counters you have", "filter"],
+    ["a green Ooze creature token with \"This token's power is equal to the number of card types among cards in your graveyard.\"", "filter"],
+  ];
+  for (const [phrase, domain] of cases) expect(domainOf(phrase), phrase).toBe(domain);
 });

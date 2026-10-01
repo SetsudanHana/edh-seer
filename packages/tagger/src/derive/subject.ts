@@ -6,7 +6,7 @@ import type { Control, StatPredicate, SubjectFilter } from "../schema.js";
 import { KEYWORD_ABILITIES, SPELL_SUBTYPES, SUBTYPES } from "./subtypes.js";
 
 /** Card types the engine reasons about, plus the pseudo-types the matcher expands set-wise. */
-const TYPES = [
+export const TYPES = [
   "creature", "artifact", "enchantment", "land", "instant", "sorcery", "planeswalker",
   "battle", "permanent", "spell", "token", "card",
 ] as const;
@@ -119,7 +119,7 @@ function compoundTypes(t: string): string[] | undefined {
  *  Resolved to concrete types for exactly the reason the negation path resolves to them: the tokens
  *  are ORed downstream, so the intersection has to be computed here or not at all. Undefined when no
  *  umbrella is present; a SINGLE umbrella is left to the caller, which keeps the word itself. */
-function umbrellaIntersection(found: string[]): string[] | undefined {
+function umbrellaIntersection(found: readonly string[]): string[] | undefined {
   const [first, ...rest] = found.filter((f) => UMBRELLA_TYPES[f]);
   if (first === undefined) return undefined;
   // Filtered from the FIRST umbrella's own list rather than from CARD_TYPES, so a single umbrella
@@ -141,6 +141,20 @@ function parseTypes(
     else if (new RegExp(`\\b${ty}\\b`).test(t)) found.push(ty);
   }
 
+  const { negated, plural: negPlural } = negatedTypes(t);
+  const { negationApplied, ...r } = resolveTypes(found, negated);
+  if (negationApplied) return { ...r, plural: plural || negPlural };
+  if (r.type === undefined) return { plural: /\bopponents\b|\bplayers\b/.test(t) };
+  return { ...r, plural };
+}
+
+/** THE TYPE WORDS A SUBJECT NAMED, RESOLVED TO WHAT THE MATCHER TESTS. `found` is in `TYPES` order,
+ *  `negated` in `CARD_TYPES` order. Shared with the filter grammar (#896 task 2), which finds the
+ *  words by parsing rather than by sweeping the string, so the two cannot drift on what the words
+ *  MEAN. `negationApplied` says the negation branch answered, which decides the plural rule above. */
+export function resolveTypes(
+  found: readonly string[], negated: readonly string[],
+): { type?: string | string[]; notType?: string[]; umbrella?: string; negationApplied: boolean } {
   // A negation is resolved to the concrete types it LEAVES, rather than emitted as a `noncreature`
   // token, because matcher's `expandTypes` UNIONS a subject's type tokens: ["permanent","nonland"]
   // would union to every card type and read wider than either word alone. Subtraction here gives the
@@ -149,7 +163,6 @@ function parseTypes(
   // Without it "noncreature spell" collapsed to the bare umbrella `spell`, which expands to every
   // nonland type INCLUDING creature -- so Mystic Remora and Saruman drew an edge from every creature
   // spell in the deck, the exact opposite of what they say. 197 mentions across 185 corpus cards.
-  const { negated, plural: negPlural } = negatedTypes(t);
   if (negated.length > 0) {
     const concrete = found.filter((f) => !UMBRELLA_TYPES[f]);
     // Every umbrella present narrows the base, not just the first one found: "nonland permanent
@@ -167,13 +180,13 @@ function parseTypes(
       const narrowed = kept.length !== base.length;
       return {
         type: kept.length === 1 ? kept[0] : kept,
-        ...(narrowed ? { notType: negated } : {}),
-        plural: plural || negPlural,
+        ...(narrowed ? { notType: [...negated] } : {}),
+        negationApplied: true,
       };
     }
   }
 
-  if (found.length === 0) return { plural: /\bopponents\b|\bplayers\b/.test(t) };
+  if (found.length === 0) return { negationApplied: false };
   // "spell" and "permanent" are umbrella nouns, not constraints -- matcher's PSEUDO_TYPE_SETS
   // expands "spell" to every non-land type, so "instant or sorcery spell" collecting all three
   // words made every nonland card match. Drop the umbrella word once a concrete type narrows it,
@@ -185,18 +198,18 @@ function parseTypes(
     // instead of reading as one arbitrary member of the resolved list.
     const kept = umbrellaIntersection(found);
     if (kept && kept.length > 0) {
-      return { type: kept.length === 1 ? kept[0] : kept, umbrella: found.find((f) => UMBRELLA_TYPES[f]), plural };
+      return { type: kept.length === 1 ? kept[0] : kept, umbrella: found.find((f) => UMBRELLA_TYPES[f]), negationApplied: false };
     }
   }
   // A lone umbrella stands for itself: "target spell" really is every nonland type.
   const kept = concrete.length > 0 ? concrete : found;
-  return { type: kept.length === 1 ? kept[0] : kept, plural };
+  return { type: kept.length === 1 ? kept[0] : [...kept], negationApplied: false };
 }
 
 /** The singular forms to try for a word as written. The vocabulary is closed, so the first hit is
  *  the answer and no ambiguity survives: "elves" reaches "elf" only via the -ves rule, "zombies"
  *  reaches "zombie" by dropping the s before -ies is ever tried, and "merfolk" is its own plural. */
-function singulars(w: string): string[] {
+export function singulars(w: string): string[] {
   const out = [w];
   if (w.endsWith("s")) out.push(w.slice(0, -1));
   if (w.endsWith("ies")) out.push(`${w.slice(0, -3)}y`);
