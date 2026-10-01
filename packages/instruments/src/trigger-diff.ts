@@ -10,6 +10,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parse } from "@edh-seer/tagger/grammar";
+import { isSelfSubject } from "@edh-seer/tagger/self-reference";
 import { parseSubject } from "@edh-seer/tagger/subject";
 import { diffTriggers, readTriggers, type TriggerParser } from "./trigger-diff-core.js";
 
@@ -19,6 +20,7 @@ mkdirSync(OUT, { recursive: true });
 const pct = (n: number, d: number) => `${(100 * n / d).toFixed(1)}%`;
 // Derive's own subject reader since #896 task 3: the filter grammar first, parseSubject after.
 const subjectOf = (text: string) => parse(text) ?? parseSubject(text);
+const isSelf = (text: string) => text.trim() === "~" || isSelfSubject(text);
 
 const modulePath = process.argv[2];
 if (!modulePath) {
@@ -35,12 +37,12 @@ if (!modulePath) {
   console.log(`controls: ${tally((r) => r.control ?? "none").map(([k, v]) => `${k} ${v}`).join(" · ")}`);
 } else {
   const parseTrigger = (await import(pathToFileURL(resolve(modulePath)).href)).parseTrigger as TriggerParser;
-  const d = diffTriggers(rows, parseTrigger, subjectOf);
+  const d = diffTriggers(rows, parseTrigger, subjectOf, isSelf);
   writeFileSync(`${OUT}/trigger-diff.json`, JSON.stringify(d, null, 1) + "\n");
   console.log(`parsed completely: ${d.parsed.distinct}/${d.total.distinct} distinct (${pct(d.parsed.distinct, d.total.distinct)}), ${pct(d.parsed.cards, d.total.cards)} of card-uses`);
   console.log(`agree with the stored trigger: ${d.agree.distinct} distinct, ${pct(d.agree.cards, d.parsed.cards || 1)} of parsed card-uses`);
   console.log(`nondeterministic: ${d.nondeterministic.length}`);
   console.log(`disagreement groups: ${d.groups.length}`);
-  for (const g of d.groups.slice(0, 20)) console.log(`  ${g.fields.join(",").padEnd(36)} ${String(g.distinct).padStart(6)} rows ${String(g.cards).padStart(7)} cards  e.g. "${g.examples[0]!.row.preamble}"`);
+  for (const g of d.groups.slice(0, Number(process.env.GROUPS ?? 20))) console.log(`  ${g.fields.join(",").padEnd(36)} ${String(g.distinct).padStart(6)} rows ${String(g.cards).padStart(7)} cards  e.g. "${g.examples[0]!.row.preamble}"`);
   console.log(`-> ${OUT}/trigger-diff.json`);
 }

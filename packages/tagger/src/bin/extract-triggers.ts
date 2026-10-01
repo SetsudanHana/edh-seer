@@ -20,10 +20,33 @@ import { CLAUSES_COLLECTION, type CardClausesDoc } from "../clause-store.js";
 import { clauseTexts } from "../derive-input.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
+import { withoutArticle } from "../derive/self-reference.js";
+import { SUBTYPES } from "../derive/subtypes.js";
 
 const TRIGGERS_PATH = "packages/tagger/triggers.jsonl";
-/** The printed trigger condition: a trigger word, then everything up to the first comma. */
-const PREAMBLE = /^\s*((?:whenever|when|at the beginning of|at end of)\b[^,]*),/i;
+/** The printed trigger condition: a trigger word, then everything up to the comma that ends it. A
+ *  comma inside a short list ("whenever you cast an instant, sorcery, or Wizard spell,") does not end
+ *  it: one followed by list items of one or two words and then ", or" / ", and", one that is itself
+ *  ", or" / ", and" before a short item, or one between two "non-" adjectives ("a noncreature,
+ *  nonland card"). CEILING: an EFFECT that is itself such a list joins the preamble ("at the beginning
+ *  of your upkeep, choose flying, first strike, trample, or ..."; 2 rows); the grammar reads no
+ *  template there and answers null, so that clause keeps the stored trigger. */
+const PREAMBLE = /^\s*((?:whenever|when|at the beginning of|at end of)\b(?:[^,]|, (?=(?:[^, ]+(?: [^, ]+)?, )+(?:or|and|and\/or) )|, (?:or|and|and\/or) (?=[^,]+,)|, (?=non[a-z]+ [a-z]+))*),/i;
+
+/** A card with no comma in its name still shortens itself to its first word ("When Imskir enters",
+ *  Imskir Iron-Eater) -- the rule `isSelfSubject` already reads, never for a creature type or an
+ *  article ("Whenever a Goblin enters" on Goblin Bombardment is the class). */
+function shortNameAsTilde(preamble: string, name: string): string {
+  let out = preamble;
+  for (const face of name.split(" // ")) {
+    const first = withoutArticle(face.trim()).split(/[\s,]+/)[0] ?? "";
+    if (first.length < 3 || SUBTYPES.has(first.toLowerCase()) || !/^\p{Lu}/u.test(first)) continue;
+    // Only where a subject stands (after the trigger word, "or", "and", "by") and a lower-case word
+    // follows: "Rosie Cotton" is not "~ Cotton", and "named Labyrinth of Skophos" is not the card.
+    out = out.replace(new RegExp(`(?<=(?:^(?:When|Whenever)| or| and| by) )${first.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?= [a-z])`, "gu"), "~");
+  }
+  return out;
+}
 
 const store = await connect(loadConfig());
 const rows = new Map<string, Set<string>>();
@@ -37,10 +60,12 @@ for await (const d of docs) {
     if (!c.trigger) continue;
     triggered++;
     const text = texts[c.id] ?? "";
-    const m = PREAMBLE.exec(text);
+    // The name is "~" BEFORE the cut: a name with a comma in it ("Gisela, the Broken Blade") would
+    // otherwise end the preamble.
+    const m = PREAMBLE.exec(selfAsTilde(text, d.name));
     if (!m) { unprinted++; continue; }
     const row = JSON.stringify({
-      preamble: selfAsTilde(m[1]!.trim(), d.name),
+      preamble: shortNameAsTilde(m[1]!.trim(), d.name),
       condition: interveningIfOf(text),
       event: c.trigger.event ?? null,
       subject: selfAsTilde((c.trigger.subject ?? "").trim(), d.name),
