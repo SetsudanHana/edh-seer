@@ -211,6 +211,19 @@ test("coverage push 3: game and keyword actions read by verb, the stored object 
   expect(read("Target creature's owner puts it on their choice of the top or bottom of their library.")).toMatchObject([{ verb: "put", toZone: "library" }]);
 });
 
+test("fragments 1: a back-referenced controller and a set made 'this way' are read, the stored object kept", () => {
+  const destroy = read("destroy target artifact or enchantment that player controls.");
+  expect(destroy).toMatchObject([{ verb: "destroy", object: { type: ["artifact", "enchantment"], ref: "sentence" } }]);
+  expect(destroy[0]?.text).toBeUndefined();
+  expect(read("goad each creature that player controls.")).toMatchObject([{ verb: "goad", object: { ref: "sentence" } }]);
+  expect(read("Target opponent exiles a creature or planeswalker they control with the greatest mana value among creatures and planeswalkers they control.")[0])
+    .toMatchObject({ verb: "exile", object: { type: ["creature", "planeswalker"], ref: "sentence" } });
+  expect(read("Put all Elf cards revealed this way into your hand and the rest on the bottom of your library in any order.")[0])
+    .toMatchObject({ verb: "put", object: { subtype: "elf", ref: "sentence" }, toZone: "hand" });
+  // "this turn" is a history, not a back-reference.
+  expect(read("Destroy each creature that attacked this turn.")[0]?.object?.ref).toBeUndefined();
+});
+
 test("a cost's actions come first, the cost's own words read the same way", () => {
   expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }, { verb: "create" }]);
   // A cost the segmenter left in the text is still a cost; ability words and table rows are labels.

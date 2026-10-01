@@ -325,7 +325,9 @@ import { emblemRecipient } from "../emblem.js";
 // cost-modify, double, animate.
 // 248: ...push 3: the rest of the keyword and game actions (dice, coins, extra turns and phases,
 // emblems, win/lose the game, phasing, clash, exert, manifest, convert, the benders, blight, behold).
-export const DERIVE_VERSION = 248;
+// 249: ...fragments 1: a back-referenced controller ("that player controls", "they control") and a set
+// the sentence made ("revealed this way") are read; the object stays as stored.
+export const DERIVE_VERSION = 249;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
