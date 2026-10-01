@@ -108,6 +108,46 @@ Tabulated from the 197 run 3 pages:
 - **Role sections are thin next to lands and synergy.** "Strictly better at the same job" is a high
   bar by design (owner, 2026-09-30).
 
+## Run 4: ten swaps per section (2026-10-01)
+
+The owner, after run 3: "5 seems to be low". Each section now keeps up to 10 swaps (`SECTION_MAX`),
+and the page still shows 3 per section, with the rest behind "Show N more". The synergy section had
+been full at 5 in 156 of 196 bracket 3 packages, with up to 10 loose cuts waiting behind it.
+
+| Measure | Run 3 (cap 5) | Run 4 (cap 10) |
+|---|---|---|
+| H1-H5 | all pass | **all pass** |
+| S1, 5+ swaps at every target | 92.9% | **94.4%** |
+| S2, synergy kept at target 3 | 19 of 20 | **19 of 20** |
+
+| Bracket 3 packages | Cap 5 | Cap 10 |
+|---|---|---|
+| Median swaps | 9 | **12** |
+| Packages with 10+ swaps | 81 | **157** of 196 |
+| Most swaps | 16 | 21 |
+| Swaps in total | 1,737 | **2,383** |
+| Synergy / lands | 908 / 434 | 1,521 / 467 |
+| Ramp, consistency, interaction, wipes | 54, 119, 146, 69 | 54, 121, 145, 68 |
+
+- **Where the growth is:** synergy swaps and lands. The role sections stay where "strictly better
+  at the same job" leaves them.
+- **Party Time:** 9 swaps become 12. After the swaps it still fits bracket 1-2, its synergy score
+  is 3.4 (3.3 before) and its mana base is 1.18 (1.19 before).
+
+**First scoring of run 4:** H5 failed on 9 precons, by 0.01 to 0.06. The cause was local, not the
+package:
+
+- The dev server fills `static-out` from production on first request and served a dropped fill as a
+  404.
+- `StaticLookup` reads a 404 as "no such card", so a few mid-build readings lacked a card's data.
+  The keeper accepted packages against those readings.
+- Two checks showed the reading itself is sound: the same list read six times gave the same total
+  every time, and a failing precon rebuilt on its own passed.
+
+With the fill retried, the nine were rebuilt and every measure passed. The owner's build reads a
+complete `static-out` and never fills on demand. Build time grew with the package: about 3.5 hours
+for all 197 on this machine.
+
 ## The persona
 
 - **Seat:** `mtg-precon-upgrader`.
