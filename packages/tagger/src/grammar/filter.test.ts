@@ -95,7 +95,8 @@ test("CR 303.4a: an Aura's enchant line is the class it can enchant", () => {
 test("a copy token has the original's copiable values (CR 707.2), not its controller, target or token-ness", () => {
   expect(parse("a token that's a copy of target creature you control")).toEqual({ control: "any", token: true, type: "creature" });
   expect(parse("a token that's a copy of target nontoken creature")).toEqual({ control: "any", token: true, type: "creature" });
-  expect(parse("a token that's a copy of it")).toBeNull();
+  // A copy of a reference: the token is all the phrase says (the class comes from the referent, task 4).
+  expect(parse("a token that's a copy of it")).toEqual({ control: "any", token: true });
 });
 
 test("relative clauses the schema holds, and 'other than this'", () => {
@@ -159,8 +160,9 @@ test("lists of whole noun phrases are their union", () => {
     control: "any", token: null, type: "creature", scope: "target", anyOf: [{ control: "you" }, { control: "opp" }] });
   expect(parse("another creature you control or a land you control")).toMatchObject({ control: "you", anyOf: [{ type: "creature", other: true }, { type: "land" }] });
   expect(parse("each creature and each planeswalker")).toMatchObject({ type: ["creature", "planeswalker"] });
-  // Not inside a relative clause: the spell targets a player or a creature, which the schema cannot say.
-  expect(parse("a spell that targets an opponent or a creature an opponent controls")).toBeNull();
+  // Not split inside a relative clause: the list is what the spell targets, a player or a creature.
+  expect(parse("a spell that targets an opponent or a creature an opponent controls")).toMatchObject({
+    type: "spell", targets: { control: "opp", anyOf: [{ player: true }, { type: "creature" }] } });
   // A list, not a named token.
   expect(parse("a Blood token, a Clue token, or a Food token")).toMatchObject({ subtype: ["blood", "clue", "food"] });
 });
@@ -180,6 +182,41 @@ test("more origins and quantifiers", () => {
   expect(parse("a creature card from the top five cards of your library")).toMatchObject({ fromZone: "library", control: "you" });
   expect(parse("each of up to three targets")).toMatchObject({ scope: "target" });
   expect(parse("an additional land")).toEqual({ control: "any", token: null, type: "land" });
+});
+
+test("statuses, histories, name relations, shares, exclusions and whose ability", () => {
+  expect(parse("a face-down creature you control")).toMatchObject({ status: ["face-down"], control: "you" });
+  expect(parse("an enchanted creature you control")).toMatchObject({ status: ["enchanted"] });
+  // Bare, "enchanted creature" is the object an Aura is attached to: a reference, not a class.
+  expect(parse("enchanted creature")).toBeNull();
+  expect(parse("target nonattacking creature")).toMatchObject({ notStatus: ["attacking"] });
+  expect(parse("target creature that was dealt damage this turn")).toMatchObject({ history: ["dealt-damage"] });
+  expect(parse("a spell with the chosen name")).toMatchObject({ nameRelation: "chosen" });
+  expect(parse("Other creatures with the same name as this creature are goaded")).toBeNull();
+  expect(parse("a spell that shares a creature type with this creature")).toMatchObject({ shares: { what: "creature-type", with: "self" } });
+  expect(parse("all creatures except for Merfolk, Krakens, Leviathans, Octopuses, and Serpents")!.except).toHaveLength(5);
+  expect(parse("a loyalty ability of a Chandra planeswalker")).toMatchObject({ abilityKind: ["loyalty"], abilityOf: { type: "planeswalker", subtype: "chandra" } });
+  expect(parse("a creature you control but don't own")).toMatchObject({ control: "you", owner: "opp" });
+  expect(parse("a card you own from outside the game")).toMatchObject({ owner: "you", fromZone: "outside" });
+});
+
+test("a player beside an object is a branch of its own", () => {
+  expect(parse("target player or planeswalker")).toEqual({ control: "any", token: null, scope: "target", anyOf: [{ player: true }, { type: "planeswalker" }] });
+  expect(parse("you or a permanent you control")).toMatchObject({ control: "you", anyOf: [{ player: true }, { type: "permanent" }] });
+  // "you control" inside an item names no player item.
+  expect(parse("Skeletons and Zombies you control; menace")).toMatchObject({ subtype: ["skeleton", "zombie"], control: "you" });
+});
+
+test("alternatives with types of their own, and a leading subtype that all of them share", () => {
+  expect(parse("a creature card or Garruk planeswalker card")!.anyOf).toEqual([{ type: "creature" }, { type: "planeswalker", subtype: "garruk" }]);
+  expect(parse("an Adventure instant or sorcery spell")).toMatchObject({ type: ["instant", "sorcery"], subtype: "adventure" });
+  // After a noun, only another noun: "blocking enchanted creature" is a participle with an object.
+  expect(parse("all non-Wall creatures blocking enchanted creature")).toBeNull();
+});
+
+test("grant objects: the recipient is the filter", () => {
+  expect(parse("target creature, trample")).toEqual({ control: "any", token: null, type: "creature", scope: "target" });
+  expect(parse("target creature +2/+0")).toMatchObject({ type: "creature", scope: "target" });
 });
 
 /** REFUSED: the grammar answers null, and derive keeps `parseSubject`'s answer. Each is a narrowing

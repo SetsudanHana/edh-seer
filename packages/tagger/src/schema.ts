@@ -137,7 +137,7 @@ export interface SubjectFilter {
   /** WHO OWNS IT, when the text says so and it differs from who controls it (CR 110.2): Zedruu's
    *  "permanents you OWN that your opponents CONTROL" (#681). Absent means the text named no owner,
    *  which is every other subject. */
-  owner?: "you";
+  owner?: "you" | "opp";
   /** false = nontoken only, true = token only, null = any. */
   token: boolean | null;
   /** Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. */
@@ -207,9 +207,11 @@ export interface SubjectFilter {
    *  Set by the filter grammar (#896). */
   notColors?: string[];
   /** "a MULTICOLORED spell" (two or more colours, CR 105.2b), "a MONOCOLORED creature" (exactly
-   *  one, CR 105.2a). Counted over the five colours, so colourless is neither. Set by the filter
-   *  grammar (#896). */
-  colorCount?: "multi" | "mono";
+   *  one, CR 105.2a). Counted over the five colours, so colourless is neither. Also `all` ("that's all
+   *  colors"), `exactly-two`, and `colored` ("one or more colors"). Set by the filter grammar (#896). */
+  colorCount?: "multi" | "mono" | "all" | "exactly-two" | "colored";
+  /** EVERY colour listed, not any: "a spell that's both black and green". `colors` is an OR-list. */
+  allColors?: string[];
   /** The SNOW supertype, CR 205.4g: "target snow land". Shaped like `legendary`. Set by the filter
    *  grammar (#896). */
   snow?: true;
@@ -318,8 +320,45 @@ export interface SubjectFilter {
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
   /** "a creature you control with A COUNTER on it": some counter, of no stated kind. A producer that
-   *  names a kind, or states this, satisfies it. Set by the filter grammar (#896). */
-  hasCounter?: true;
+   *  names a kind, or states this, satisfies it. `false` is "with no counters on it": a producer that
+   *  states a counter fails. Set by the filter grammar (#896). */
+  hasCounter?: boolean;
+  /** A STATUS OR DESIGNATION the object has (CR 110.5; goad CR 701.15, suspect CR 701.60, kicker CR 702.33
+   *  ...): "a face-down creature you control", "an enchanted creature", "a goaded creature", "a kicked
+   *  spell", "target blocked creature". ALL must hold. Closed vocabulary (`STATUSES` in the filter
+   *  grammar). Like `modified`, only a producer whose printed text states one supplies it. Set by the
+   *  filter grammar (#896). */
+  status?: string[];
+  /** A status the text NEGATES: "target nonattacking creature" (`attacking`), "nonblocking". */
+  notStatus?: string[];
+  /** THE SUBJECT IS A PLAYER. Only inside an `anyOf` branch, where a phrase names a player beside an
+   *  object ("target player or planeswalker", "you or a permanent you control"): a bare player phrase
+   *  keeps its old control-only shape. A producer with no type and no subtype is player-shaped and
+   *  meets it. Set by the filter grammar (#896). */
+  player?: true;
+  /** WHOSE ABILITY: "a loyalty ability of a Chandra planeswalker", "target activated ability from
+   *  an artifact source". CEILING: no producer states the source of an ability it activates, so
+   *  `eventMatches` refuses a consumer carrying it. Set by the filter grammar (#896). */
+  abilityOf?: Partial<SubjectFilter>;
+  /** A CHARACTERISTIC SHARED WITH ANOTHER OBJECT: "a spell that shares a creature type with this
+   *  creature", "a creature that doesn't share a color with ...". `with` is "self", "ref" (an object
+   *  named elsewhere in the sentence) or a filter. CEILING: `eventMatches` refuses a consumer carrying
+   *  it. Set by the filter grammar (#896). */
+  shares?: { what: "creature-type" | "color" | "card-type" | "name" | "mana-value" | "type"; with: "self" | "ref" | Partial<SubjectFilter>; negated?: true };
+  /** WHAT HAPPENED TO IT THIS TURN: "a creature that was dealt damage this turn", "all creatures that
+   *  attacked this turn", "a creature card put into your graveyard from the battlefield this turn".
+   *  Closed vocabulary. CEILING: `eventMatches` refuses a consumer carrying it. Set by the filter
+   *  grammar (#896). */
+  history?: string[];
+  /** A NAME RELATION instead of a printed name: "with the chosen name" (`chosen`), "with the same
+   *  name as ..." (`same`), "with different names" (`different`). CEILING: refused by `eventMatches`.
+   *  Set by the filter grammar (#896). */
+  nameRelation?: "chosen" | "same" | "different";
+  /** A NAME THE SUBJECT DOES NOT HAVE: "target permanent not named ~". Lowercased, "~" for the card. */
+  notNamed?: string;
+  /** EXCLUSIONS: "all creatures except for Merfolk, Krakens ...", "each creature except for tokens
+   *  you control". A producer matching any of them fails. Set by the filter grammar (#896). */
+  except?: Partial<SubjectFilter>[];
   /** WHAT A SPELL TARGETS, CR 115.1 (#896, owner 2026-10-01): "a spell that targets this creature"
    *  is `{ type: spell, targets: { self: true, type: creature } }`, the heroic / "becomes the target
    *  of a spell" condition. CEILING: nothing on the producer side states what a spell targets yet,

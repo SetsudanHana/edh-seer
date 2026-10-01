@@ -100,8 +100,17 @@ export function readPhrases(jsonl: string): Phrase[] {
  *  rule claims is `filter`, so a rule too narrow LOWERS the measured coverage rather than raising it. */
 const KEYWORD_LISTS = KEYWORD_ABILITIES.map((k) => k.split(" "));
 const REFERENCE_WORDS = new Set(["this", "that", "those", "these", "it", "its", "them", "they", "itself", "enchanted", "equipped", "the", "he", "she", "him", "her"]);
-const VERB_WORDS = new Set(["be", "block", "attack", "untap", "not", "pay", "sacrifice", "exert", "discard", "exile", "draw", "deal", "deals", "tap", "gain", "lose", "return", "put", "cast", "create", "destroy", "transform", "search", "reveal", "look", "mill", "scry", "copy", "choose", "do", "remove", "counter", "become", "becomes", "play", "attacks", "blocks", "dies", "enters", "leaves", "change", "control"]);
-const TIME = /\b(?:chapter|turns?|upkeeps?|end steps?|main phases?|combat|draw steps?|untap steps?|day|night|beginning)\b|^(?:i|ii|iii|iv|v|vi)(?:,|$)/;
+const VERB_WORDS = new Set(["be", "block", "attack", "untap", "not", "pay", "sacrifice", "exert", "discard", "exile", "draw", "deal", "deals", "tap", "gain", "lose", "return", "put", "cast", "create", "destroy", "transform", "search", "reveal", "look", "mill", "scry", "copy", "choose", "do", "remove", "counter", "become", "becomes", "play", "attacks", "blocks", "dies", "enters", "leaves", "change", "control", "assign", "assigns", "skip", "investigate", "open", "regenerate", "end", "activate",
+  "venture", "draft", "note", "prevent", "planeswalk", "explore", "earthbend", "cycle", "collect", "avoid", "add", "unlock", "lock",
+  "repeat", "reselect", "ignore", "secretly", "begin", "phase", "distribute", "circle", "attach", "fly", "flies", "doesn't", "don't",
+  "cause", "enter", "visit", "bands", "proliferate", "populate", "connive", "surveil", "manifest", "amass", "adapt", "bolster",
+  "support", "fateseal", "incubate", "discover", "forage", "suspect", "goad", "detain", "exert", "monstrosity", "learn", "seek",
+  "conjure", "perpetually", "roll", "flip", "vote", "shuffle", "win", "lose", "double", "triple", "switch", "exchange", "reveal"]);
+/** A TIME: the phrase IS a turn, phase, step, chapter, day or night ("your upkeep", "the next end
+ *  step", "an additional combat phase", "chapter II"). Anchored at the start: a filter that merely
+ *  mentions a turn ("a creature that entered THIS TURN") is a filter, and a clause that ends "until
+ *  end of turn" is caught as a clause by its verb. */
+const TIME = /^(?:chapter\b|(?:i|ii|iii|iv|v|vi)(?:,|$)|day\b|night\b|(?:(?:your|each|the|their|that player's|an opponent's|each opponent's|each player's|target opponent's|target player's|this|that)\s+)?(?:(?:next|first|second|last|extra|additional|precombat|postcombat)\s+)*(?:turns?|upkeeps?|end steps?|main phases?|combat(?: phases?| steps?| damage steps?)?|draw steps?|untap steps?|beginning(?: phases?)?|cleanup steps?)\b|(?:an?|one|two|x)\s+(?:(?:extra|additional|precombat|postcombat)\s+)*(?:turns?|upkeeps?|end steps?|main phases?|combat(?: phases?)?|beginning phases?)\b)/;
 /** AN AMOUNT, not a class: "1 damage", "X times", "half your life", "equal to its power", "life".
  *  Task 6's magnitudes. */
 const AMOUNT = /^(?:(?:\d+|x|one|two|three|half|twice)\s+(?:damage|life|times)\b|(?:damage|life|half|twice|equal to)\b|x,?\s+where\b|all (?:(?:non)?combat )?damage\b|all but \d|(?:non)?combat damage\b|\d+ for each\b)/;
@@ -115,7 +124,11 @@ const EFFECT_OBJECT = /\bin addition to (?:its|their) other\b|(?<!chosen )\b(?:c
 /** A row of a die-roll table: "10—19", "1—9 | ...". */
 const TABLE_ROW = /^\d+\s*[—–-]\s*\d+/;
 /** Game pieces a verb acts on, not cards: "flip a coin", "roll a d20", "put a sticker on it". */
-const GAME_PIECE = /^(?:a|an|one or more|two|\d+|x)?\s*(?:coins?|d\d+|six-sided dice?|dice|die|(?:name |art |ability )?stickers?)\b/;
+const GAME_PIECE = /^(?:a|an|one or more|one|two|three|four|five|six|\d+|x)?\s*(?:coins?|d\d+|(?:four|six|twenty)-sided (?:die|dice)|dice|die|(?:name |art |ability )?stickers?|emblems?\b|dungeons?|(?:an )?attractions?|piles?\b|booster packs?)\b/;
+/** A FRAGMENT that names nothing on its own: "your", "any", "each", "both creatures" is a count. */
+const FRAGMENT = /^(?:your|their|its|any|each|one|the rest|all|this|that|both|either)$/;
+/** Energy written as letters: "E E E", "eight {E}". */
+const ENERGY = /^(?:(?:e\s*)+|\w+ \{e\})$/;
 /** A counter as the object: "a counter", "a +1/+1 counter on this creature", "two +1/+1 counters". */
 const COUNTER_OBJECT = /^(?:a|an|one or more|one|two|three|four|five|x|\d+|all|up to \w+)\s+(?:[+-]\S+\s+|[a-z]+\s+)?counters?\b/;
 const ZONE = /^(?:(?:your|their|its owner's|target player's|target opponent's|an opponent's|each opponent's|all opponents'|each player's|that player's|a player's|all|each)\s+)?(?:library|libraries|hand|hands|graveyard|graveyards|life total)\b/;
@@ -150,14 +163,17 @@ export function domainOf(phrase: string): string {
   if (w[0] !== "enchant" && KEYWORD_LISTS.some((ws) => ws.every((x, j) => w[j] === x))) return "keyword";
   // counterKindOf splits a comma list and takes its one kind, so a token "with flying, vigilance, and
   // indestructible" would read as an indestructible counter: only a comma-free phrase is asked.
-  if (/^[+-]\d/.test(w[0]!) || (!text.includes(",") && counterKindOf(text)) || (/\bcounters?$/.test(text) && counterKindOf(text.replace(/^(?:a|an|one or more|one|two|three|x|\d+|all)\s+/, "")))) return "counter";
+  if (/^[+-](?:\d|x)/.test(w[0]!) || (!text.includes(",") && counterKindOf(text)) || (/\bcounters?$/.test(text) && counterKindOf(text.replace(/^(?:a|an|one or more|one|two|three|x|\d+|all)\s+/, "")))) return "counter";
   if (w.length === 1 && /^(?:\d+|x)$/.test(w[0]!)) return "number";
   if (TABLE_ROW.test(text)) return "table";
   if (GAME_PIECE.test(text)) return "game-piece";
+  if (FRAGMENT.test(text)) return "fragment";
+  if (ENERGY.test(text)) return "mana";
+  if (/^after this (?:one|phase|turn|step)\b/.test(text)) return "time";
   if (COUNTER_OBJECT.test(text)) return "counter";
   if (AMOUNT.test(text)) return "amount";
   if (EFFECT_OBJECT.test(text.split(/["“]/)[0]!)) return "clause";
-  if (w[0]!.startsWith("{") || /\bmana\b(?! value| cost)/.test(text)) return "mana";
+  if (w[0]!.startsWith("{") || /\bmana\b(?! value| cost)/.test(amountless.toLowerCase())) return "mana";
   if (ZONE.test(text) || /^(?:the )?top (?:\w+ )?cards? of\b/.test(text)) return "zone";
   if (ORDINAL.test(text)) return "ordinal";
   if (PLAYER_CLAUSE.test(text)) return "clause";

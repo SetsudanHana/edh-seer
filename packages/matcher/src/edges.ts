@@ -921,6 +921,10 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // nothing, exactly as `restricted` below. Ignoring it would read "a spell that targets this
   // creature" as every spell in the deck.
   if (consumer.subject.targets !== undefined) return false;
+  // The same for the other relations no producer states (#896): whose ability it is, a
+  // characteristic shared with another object, what happened to it this turn, and a name relation.
+  const cs = consumer.subject;
+  if (cs.abilityOf !== undefined || cs.shares !== undefined || cs.history?.length || cs.nameRelation !== undefined) return false;
   // THE EVENT'S SIZE (2026-09-25): a trigger that requires one meets only a producer that states a
   // size satisfying it. An unknown size ("X", or none recorded) is refused -- a missing edge, never
   // a wrong one. Measured on the corpus: seven cards print such a trigger; Ghyrson Starn had been
