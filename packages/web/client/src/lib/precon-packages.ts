@@ -91,7 +91,7 @@ export async function preconPackages(input: {
   // THE COMBOS THE ADDS BRING: fetched with them, so a combo an add completes is seen by the guard.
   const combos = await lookup.allCombos();
   const synergy = (input.suggestions?.pairs ?? []).map((p) => {
-    const r = synergyReasons({ name: p.cut, connections: p.cutConnections }, { name: p.add.name, connections: p.add.connections.length, reason: p.add.reasons[0]?.text ?? `${p.add.name} works with more of this deck's cards` });
+    const r = synergyReasons({ name: p.cut, ...p.cutStrength }, { name: p.add.name, ...p.addStrength, reason: p.add.reasons[0]?.text ?? `${p.add.name} does more for this deck's theme` });
     return { out: p.cut, in: p.add.name, outReason: r.out, inReason: r.in };
   });
 

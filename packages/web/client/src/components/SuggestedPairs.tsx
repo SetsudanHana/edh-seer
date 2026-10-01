@@ -32,8 +32,10 @@ function Move({ from, to }: { from: number; to: number }) {
 /** THE CARD THAT COULD TAKE A CUT'S SLOT, on the cut's own card (baseline round 2026-09-26: "cuts
  *  and adds are not one plan"). A pair used to be its own list, under the findings for a cross-job
  *  swap and under the cuts for the rest, so a reader matched each add to its cut by name. Now the
- *  add sits on the cut it replaces, with the one claim a pair makes: the add connects to more of the
- *  deck than the cut (spec §3), and a cross-job swap moves two groups' counts. */
+ *  add sits on the cut it replaces, with the one claim a pair makes: the add does more for the deck
+ *  than the cut, by the report's own measure, where links on the deck's theme and with the commander
+ *  count for more (owner, 2026-10-01; `card-strength.ts`). A cross-job swap also moves two groups'
+ *  counts. */
 export function SwapLine({ p }: { p: SuggestedPair }) {
   const peek = usePeek();
   const drawer = useCardDrawer();
@@ -55,7 +57,9 @@ export function SwapLine({ p }: { p: SuggestedPair }) {
           *  working with only 4 other cards": the 13 counts every link and the 4 only the repeating ones,
           *  so the pair read as the page disagreeing with itself (Party Time at 390px, 2026-09-27). */}
         <p className="text-xs text-(--muted)">
-          works with <span className="tabular-nums">{p.add.connections.length}</span> of your cards
+          works with <span className="tabular-nums">{p.addStrength.partners}</span> of your cards
+          {p.addStrength.partners > 0 ? <>, <span className="tabular-nums">{p.addStrength.onTheme}</span> on your deck's theme</> : null}
+          {p.addStrength.commander && !p.cutStrength.commander ? ", and with your commander" : null}
           {p.counts.length > 0 ? (
             <>
               {" · "}

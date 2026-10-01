@@ -153,7 +153,7 @@ test("a failed suggestion run leaves the findings as they were", () => {
 /** A CROSS-JOB SWAP SITS WITH THE FINDINGS, under "where to find the slots"; a same-job swap is the
  *  cut list's, one movement down (spec §3). */
 test("swaps are not repeated in the findings; they sit on the cuts they replace", () => {
-  const pairs = [{ cut: "Mind Stone", add: chaosWarp, rule: "cross-job" as const, cutConnections: 1, counts: [{ group: "Ramp", from: 11, to: 10 }] }];
+  const pairs = [{ cut: "Mind Stone", add: chaosWarp, rule: "cross-job" as const, cutConnections: 1, cutStrength: { strength: 1, partners: 1, onTheme: 0, commander: false }, addStrength: { strength: 2, partners: 4, onTheme: 1, commander: false }, counts: [{ group: "Ramp", from: 11, to: 10 }] }];
   render(<MemoryRouter><Findings report={report} suggestions={{ state: "ready", value: { ...noCards, pairs } }} /></MemoryRouter>);
   expect(screen.queryByRole("link", { name: "Chaos Warp" })).toBeNull();
 });

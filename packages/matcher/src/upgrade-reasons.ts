@@ -93,10 +93,26 @@ export function landReasons(o: LandOption): { out: string; in: string } {
   return { out: fit(`${o.cut.name} `, outBits), in: fit(`${o.add} `, inBits) };
 }
 
-/** A synergy pair: the cut's link count against the add's, and the engine's own sentence for the add. */
-export function synergyReasons(cut: { name: string; connections: number }, add: { name: string; connections: number; reason: string }): { out: string; in: string } {
-  const out = `${cut.name} works with ${plural(cut.connections, "card")} in this deck; ${add.name} works with ${add.connections}.`;
-  return { out: out.length <= REASON_MAX ? out : `${cut.name} works with ${plural(cut.connections, "card")} in this deck.`, in: add.reason.length <= REASON_MAX ? add.reason : fit(`${add.name} `, [`works with ${plural(add.connections, "card")} in this deck`]) };
+/** One side of a synergy pair, as the comparison weighed it (`card-strength.ts`). */
+export interface PairSide { name: string; partners: number; onTheme: number; commander: boolean }
+
+/** ", 2 of them on its theme": how many of a card's links are on the deck's theme. */
+const onTheme = (n: number, k: number, it: string) => (n === 0 ? "" : `, ${k === 0 ? "none" : k === n && n > 1 ? "all" : k} of ${n === 1 ? "it" : "them"} on ${it}`);
+const works = (n: number) => (n === 0 ? "no other card" : plural(n, "card"));
+
+/** A SYNERGY PAIR, SAID AS IT WAS WEIGHED (owner, 2026-10-01): the add is chosen because it does more
+ *  for the deck by the report's own measure, where a link on the deck's theme counts up to 2.5
+ *  times and a link with the commander 3 times. So the cut's side names those, for both cards: a
+ *  bare link count could read 13 against 9 for a swap the theme says is right. The add's side is
+ *  the engine's own sentence for it. */
+export function synergyReasons(cut: PairSide, add: PairSide & { reason: string }): { out: string; in: string } {
+  const commander = add.commander && !cut.commander ? ", and with your commander" : "";
+  const head = `${cut.name} works with ${works(cut.partners)} in this deck${onTheme(cut.partners, cut.onTheme, "its theme")}`;
+  const out = `${head}; ${add.name} works with ${works(add.partners)}${onTheme(add.partners, add.onTheme, "it")}${commander}.`;
+  return {
+    out: out.length <= REASON_MAX ? out : `${head}.`,
+    in: add.reason.length <= REASON_MAX ? add.reason : fit(`${add.name} `, [`works with ${works(add.partners)} in this deck${onTheme(add.partners, add.onTheme, "its theme")}`]),
+  };
 }
 
 /** Why a card goes to bring the deck down, in the bracket's own terms, with "Game Changer" said as

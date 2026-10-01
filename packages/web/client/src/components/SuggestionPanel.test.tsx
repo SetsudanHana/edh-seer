@@ -44,7 +44,7 @@ test("a click with a modifier still follows the link to the card's page", () => 
 });
 
 test("a swap's card names the slot it can take, never the cut's own count", async () => {
-  const pair: SuggestedPair = { cut: "Stick Together", cutConnections: 4, add: card, rule: "no-role", counts: [] };
+  const pair: SuggestedPair = { cut: "Stick Together", cutConnections: 4, cutStrength: { strength: 1, partners: 4, onTheme: 0, commander: false }, addStrength: { strength: 2, partners: 4, onTheme: 1, commander: false }, add: card, rule: "no-role", counts: [] };
   page(<SwapLine p={pair} />);
   await userEvent.click(screen.getByRole("link", { name: "Pious Evangel" }));
   const drawer = screen.getByTestId("suggestion-drawer");
