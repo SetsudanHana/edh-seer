@@ -7,7 +7,7 @@ import { actionDiff, align, diffActions, familyOf, readActions, storedCounter, t
 
 const subjectOf = (t: string) => parse(t) ?? parseSubject(t);
 const row = (effect: string, actions: StoredAction[], cards = 1): ActionRow => ({ effect, type: "spell", actions, cards });
-const asRead = (a: StoredAction): ActionReading => ({ verb: a.verb, object: subjectOf(a.object), ...(a.verb === "grant-ability" ? { text: a.object } : {}),
+const asRead = (a: StoredAction): ActionReading => ({ verb: a.verb, object: subjectOf(a.object), ...(a.verb === "grant-ability" || a.verb === "cant" || a.verb === "add-mana" ? { text: a.object } : {}),
   ...(a.verb === "add-counter" || a.verb === "remove-counter" ? { counter: storedCounter(a.object) } : {}), ...(a.amount ? { amount: a.amount } : {}), ...(a.fromZone ? { fromZone: a.fromZone } : {}), ...(a.toZone ? { toZone: a.toZone } : {}), ...(a.optional ? { optional: true } : {}) });
 
 test("families follow the owner's order; an unlisted verb is `other`", () => {

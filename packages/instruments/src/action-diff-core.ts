@@ -73,8 +73,9 @@ export function actionDiff(stored: StoredAction, read: ActionReading, subjectOf:
   if (stored.verb === "proliferate") return out.sort();
   // A GRANT's stored object is the ability ("flying"); the reading's object is who gets it, and its
   // text the ability.
-  if (stored.verb === "grant-ability") {
-    if (stored.object.toLowerCase() !== (read.text ?? "").toLowerCase()) out.push("ability");
+  // So is a restriction's ("block") and a mana ability's ("{R} or {G}").
+  if (stored.verb === "grant-ability" || stored.verb === "cant" || stored.verb === "add-mana") {
+    if (stored.object.toLowerCase() !== (read.text ?? "").toLowerCase()) out.push(stored.verb === "grant-ability" ? "ability" : "text");
     return out.sort();
   }
   if (stored.verb === "add-counter" || stored.verb === "remove-counter") {

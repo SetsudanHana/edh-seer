@@ -410,6 +410,51 @@ const ZONE: Record<string, [string, Handler]> = {
   }],
 };
 
+/** Mana as printed: "{C}", "{R} or {G}", "{G}{G}", "one mana of any color", "two mana in any
+ *  combination of colors", "X mana of any one color". */
+const MANA = /^(?:(?:\{[WUBRGCSX0-9/]+\})+(?:,? (?:or|and) (?:\{[WUBRGCSX0-9/]+\})+|, (?:\{[WUBRGCSX0-9/]+\})+)*|(?:one|two|three|four|five|x|that much|that many|an additional) (?:additional )?mana (?:of any (?:one )?(?:color|type)|in any combination of colors|of the chosen color|of any color that a land an opponent controls could produce|of any of the exiled card's colors)?)$/i;
+
+const MANA_TAP: Record<string, [string, Handler]> = {
+  add: ["add-mana", (rest) => {
+    // "an amount of {G} equal to this creature's power": the amount is what it equals.
+    const eq = /^an amount of ((?:\{[WUBRGC]\})+) equal to (.+)$/i.exec(rest);
+    if (eq) return { object: { control: "any", token: null }, text: eq[1]!, amount: eq[2]! };
+    const each = rest.indexOf(" for each ");
+    const mana = each >= 0 ? rest.slice(0, each) : rest;
+    if (!MANA.test(mana)) return null;
+    return { object: { control: "any", token: null }, text: mana, ...(each >= 0 ? { amount: rest.slice(each + 1) } : {}) };
+  }],
+  tap: ["tap", (rest) => {
+    const r = objectOf(rest);
+    return r && { object: r.object, ...(r.object.ref || r.object.self ? {} : { text: rest }) };
+  }],
+  untap: ["untap", (rest) => {
+    const r = objectOf(rest);
+    return r && { object: r.object, ...(r.object.ref || r.object.self ? {} : { text: rest }) };
+  }],
+};
+
+/** "<subject> enters tapped [unless ...]": tapped as it arrives, the store's `tap` on the card.
+ *  "<subject> can't block", "doesn't untap during ...", "attacks each combat if able": a
+ *  restriction, the store's `cant` with the restricted thing as its object. */
+function restrictionOf(t: string): ActionReading[] | null {
+  const tapped = /^(.+?) enters(?: the battlefield)? tapped(?: (unless .+|if .+))?$/i.exec(t);
+  if (tapped) {
+    const who = objectOf(tapped[1]!);
+    return who ? [{ verb: "tap", object: who.object, ...(tapped[2] ? { condition: tapped[2] } : {}) }] : null;
+  }
+  const m = /^(.+?) (can't|cannot|doesn't|don't|attacks each combat if able|attack each combat if able|blocks each combat if able|can block only) ?(.*)$/i.exec(t);
+  if (!m) return null;
+  const who = objectOf(m[1]!) ?? (/^(?:you|your opponents|each opponent|players)$/i.test(m[1]!) ? { object: parse(m[1]!.toLowerCase().startsWith("you") ? "you" : "an opponent") ?? { control: "any" as const, token: null } } : null);
+  if (!who) return null;
+  const word = m[2]!.toLowerCase();
+  const what = /each combat if able/.test(word) ? `not ${word.replace(/s each/, " each").replace(/^attack each/, "attack each")}${m[3] ? ` ${m[3]}` : ""}`
+    : word === "can block only" ? `block ${m[3]!.replace(/^creatures with /, "creatures without ")}`
+    : m[3]!;
+  if (!what) return null;
+  return [{ verb: "cant", object: who.object, text: what.replace(/^not blocks each/, "not block each") }];
+}
+
 /** "<it> enters with two +1/+1 counters on it": counters the permanent itself arrives with. */
 const ENTERS_WITH = /^(?:~|this [a-z]+|it|that creature|that permanent|each creature) (?:enters(?: the battlefield)?(?: tapped)?|escapes) with /i;
 /** [counters phrase, "for each" tail] of an "enters with ... on it" phrase, cut by index (CodeQL
@@ -431,7 +476,7 @@ function entersWithOf(t: string): [string, string | undefined] | null {
 /** "your life total becomes 10". */
 const SET_LIFE = /^(?:your|their|each player's) life total becomes (.+)$/i;
 
-const HANDLERS: Record<string, [string, Handler]> = { ...ZONE, ...DRAW_SEARCH, ...DAMAGE_LIFE, ...COUNTERS, ...TOKENS };
+const HANDLERS: Record<string, [string, Handler]> = { ...ZONE, ...MANA_TAP, ...DRAW_SEARCH, ...DAMAGE_LIFE, ...COUNTERS, ...TOKENS };
 /** The verb words, with their third-person forms, longest first. */
 const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new RegExp(`^(?:${v}|${v}s|${v.replace(/y$/, "ies")}|${v}es)\\b`, "i"), v]);
 
@@ -465,6 +510,8 @@ const WHEN_TAILS = [" at the beginning of the next turn's upkeep", " at the begi
 function whenTail(t: string): { at: number; text: string } | undefined {
   const fixed = WHEN_TAILS.find((w) => t.endsWith(w));
   if (fixed) return { at: t.length - fixed.length, text: fixed.trim() };
+  // "attacks each combat if able" is the restriction itself, not a condition on it.
+  if (t.endsWith(" if able")) return undefined;
   const at = t.lastIndexOf(" if ");
   return at > 0 && !t.includes(",", at) ? { at, text: t.slice(at + 1) } : undefined;
 }
@@ -564,6 +611,14 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   let actor: ActionReading["actor"] = carried;
   let optional = false;
   if (carried === UNKNOWN_ACTOR && !actorOf(t) && !/^you /i.test(t)) return null;
+  const rs = restrictionOf(t);
+  // A restriction's "unless" is part of it: "can't attack you unless their controller pays {2}" is a
+  // tax, which derive reads off the restriction's own words.
+  if (rs) return rs.map((a) => {
+    const unless = a.verb === "cant" && condition?.startsWith("unless ") ? condition : undefined;
+    const cond = [unless ? undefined : condition, a.condition].filter(Boolean).join(", ");
+    return { ...a, ...(unless ? { text: `${a.text} ${unless}` } : {}), ...(cond ? { condition: cond } : {}) };
+  });
   const pg = pumpOrGrant(t);
   // "-X/-0, where X is the number of cards in your graveyard": the store keeps the X's definition.
   if (pg) return pg.map((a) => ({ ...a, ...(counted && a.amount && /X/.test(a.amount) ? { amount: `${a.amount}, where X is ${counted}` } : {}), ...(condition || a.condition ? { condition: [condition, a.condition].filter(Boolean).join(", ") } : {}) }));
@@ -605,7 +660,7 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
     if (!args && base === "put") { [verb, handler] = ZONE.put!; args = handler(rest); }
     if (!args) return null;
     // "destroy up to one target artifact": a zone move of up to N may move none (the store's optional).
-    if (ZONE[base] && /^up to /i.test(rest)) optional = true;
+    if ((ZONE[base] || base === "tap" || base === "untap") && /^(?:up to |any number of )/i.test(rest)) optional = true;
     const all: Args[] = [args].flat().map((a) => (counted && a.amount !== undefined && /\bX\b/.test(a.amount) ? { ...a, amount: counted } : a))
       // "an X/X ... token, where X is the number of land cards in your graveyard": the X is in the
       // TEXT, so its definition stays with it (Formless Genesis's scaling reads it there).
@@ -715,16 +770,18 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     for (const p of phrases(s)) {
       // "sacrifice this creature unless you discard a card": the payment is an action too.
       const [main, payment] = p.split(/ unless /);
+      // The payment is the player's choice: optional, as the store writes it. An "unless" that is no
+      // payment ("enters tapped unless you control two or fewer other lands") is the main's condition.
+      const pay = payment ? readPhrase(payment, "unless")?.map((a) => ({ ...a, optional: true as const })) ?? null : null;
+      const mainCondition = payment && !pay ? [condition, `unless ${payment}`].filter(Boolean).join(", ") : condition;
       // "discard a card or pay {2}", "sacrifice a creature or discard a card": either is an action.
       for (const alt of main!.split(/ or (?=(?:pay|sacrifice|discard|draw|mill|exile|lose|reveal|search)\b)/)) {
-        const r = readPhrase(alt, condition, carried);
+        const r = readPhrase(alt, mainCondition, carried);
         if (r) out.push(...r);
         // The actor carries even past a phrase this grammar does not read yet: "target opponent
         // sacrifices a creature, discards a card, and loses 3 life" -- all three are theirs.
         carried = r?.[0]?.actor ?? actorOf(alt) ?? (r === null && playerSubject(alt.trim()) ? UNKNOWN_ACTOR : carried);
       }
-      // The payment is the player's choice: optional, as the store writes it.
-      const pay = payment ? readPhrase(payment, "unless")?.map((a) => ({ ...a, optional: true as const })) ?? null : null;
       if (pay) out.push(...pay);
     }
     if (ifYouDoAfterMay) for (let i = at; i < out.length; i++) out[i] = { ...out[i]!, optional: true };
