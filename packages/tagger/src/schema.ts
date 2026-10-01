@@ -335,6 +335,13 @@ export interface SubjectFilter {
    *  Colony". No other slot can hold it: a name is not a type, a subtype or a supertype. Mostly a
    *  singleton pointer in EDH, but 13 corpus cards say "a deck can have any number of cards named
    *  ..." and all 13 count their own name, which is an archetype the engine could not see at all. */
+  /** "IT DOESN'T HAVE THE SAME NAME as another creature you control or a creature card in your
+   *  graveyard" (Guardian Project): a name the deck holds ONCE. In a Commander deck every nontoken
+   *  card but basics and the `multiples` family is singleton (CR 903.5b; owner, 2026-10-01), so the
+   *  condition holds for those and fails for a token (generic tokens repeat) or a `multiples` card. */
+  uniqueName?: true;
+  /** On a PRODUCER: the card is one a deck may hold several of (`Characteristics.anyNumber`). */
+  multiples?: true;
   named?: string;
   /** AN ABILITY AS AN OBJECT (roadmap AC12, owner's note 2026-09-08: "hard time recognizing
    *  trigger vs activated abilities, and cards like Gogo that can copy those"). CR 113.3 names the
@@ -1264,6 +1271,10 @@ export interface Characteristics {
    *  with no abilities" (Ruxa, Patient Professor) names. Absent on tokens, whose rows carry no text
    *  (CEILING: a vanilla token is not stamped). */
   noAbilities?: true;
+  /** A CARD A DECK MAY HOLD MORE THAN ONE OF despite CR 903.5b: "a deck can have any number of cards
+   *  named ~" (Relentless Rats), "up to seven cards named ~" (Seven Dwarves). Absent on every other
+   *  printed card. Read by `selfSubject`, which carries it onto the card's own events as `multiples`. */
+  anyNumber?: true;
   /** THE ONE DECK FACT ON AN OTHERWISE PRINTED RECORD. Set per deck by `markCommander`
    *  (matcher/commander.ts), never by extraction — CR 903.3 says the commander designation "is not a
    *  characteristic of the object represented by the card". It lives here anyway because a card's

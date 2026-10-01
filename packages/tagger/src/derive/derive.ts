@@ -295,7 +295,8 @@ import { emblemRecipient } from "../emblem.js";
 // graveyard named is the card's owner (CR 400.3); "this creature or equipped creature" is the card.
 // 226: ...a condition on where the SOURCE is (Inalla's eminence) and Bowmasters' "except the first
 // one they draw in each of their draw steps" narrow no event a card supplies, so they claim.
-export const DERIVE_VERSION = 226;
+// 227: Guardian Project's "doesn't have the same name" is `uniqueName` (CR 903.5b, owner 2026-10-01).
+export const DERIVE_VERSION = 227;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1298,8 +1299,12 @@ const TEMPORAL = /\b(?:next|this turn|this combat|each turn)\b/g;
  *  the condition narrows no event a producer supplies. */
 const SOURCE_ZONE = /^(?:~|this \w+|it) is (?:in|on) (?:the command zone|the battlefield|your graveyard|exile|your hand)(?: or (?:in|on) (?:the command zone|the battlefield|your graveyard|exile|your hand))?$/i;
 
+/** Guardian Project's "if it doesn't have the same name as another creature you control or a creature
+ *  card in your graveyard": `uniqueName` (CR 903.5b; owner, 2026-10-01). */
+const SAME_NAME = /^it doesn't have the same name as /i;
+
 function conditionRepresented(condition: string, text: string): boolean {
-  return thresholdFor(text) !== undefined || ARRIVED_WITHOUT_CASTING.test(condition) || WITHOUT_DYING.test(condition)
+  return thresholdFor(text) !== undefined || SAME_NAME.test(condition) || ARRIVED_WITHOUT_CASTING.test(condition) || WITHOUT_DYING.test(condition)
     || /\bthe first \w+ spell\b/i.test(condition) || SOURCE_ZONE.test(condition);
 }
 function narrowingRepresented(r: TriggerReading, text: string): boolean {
@@ -1355,6 +1360,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   if (r.condition && !conditionRepresented(r.condition.text, text)) return { refused: `if:${r.event}`, subject };
   if (r.narrowing && !narrowingRepresented(r, text)) return { refused: `narrowing:${r.event}`, subject };
   if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
+  if (r.condition && SAME_NAME.test(r.condition.text)) subject.uniqueName = true;
   // "An enchanted / equipped creature" is CR 700.9's `modified`, the field producers state.
   if (subject.status?.some((x) => x === "enchanted" || x === "equipped")) {
     const rest = subject.status.filter((x) => x !== "enchanted" && x !== "equipped");

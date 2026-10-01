@@ -3848,3 +3848,12 @@ test("the printed event and whose it is win over the stored ones", () => {
   }], "Some Card", { 1: "Whenever a creature dies, draw a card." });
   expect(abilities[0]?.trigger).toMatchObject({ verbs: ["dies"], subject: { type: "creature", control: "any" } });
 });
+
+test("CR 903.5b: Guardian Project's 'doesn't have the same name' claims, as a name the deck holds once", () => {
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "a nontoken creature you control", control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }], "Guardian Project", { 1: "Whenever a nontoken creature you control enters, if it doesn't have the same name as another creature you control or a creature card in your graveyard, draw a card." });
+  expect(unknownTriggers).toEqual([]);
+  expect(abilities[0]?.trigger?.subject).toMatchObject({ type: "creature", token: false, uniqueName: true });
+});

@@ -17,6 +17,7 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
+  "903.5b": "derive.test.ts — Guardian Project's 'doesn't have the same name' is uniqueName: a singleton printed card, never a token or an any-number card (#896 task 5)",
   "504.1": "derive.test.ts — Bowmasters' 'except the first one they draw in each of their draw steps' leaves out only the turn-based draw: still claimed (#896 task 5)",
   "400.3": "grammar/trigger.test.ts — a card goes to its owner's graveyard: \"put into an opponent's graveyard\" is an opponent's card (#896 task 5)",
   "509.1a": "grammar/trigger.test.ts — only a creature blocks, so 'becomes blocked by a creature' narrows nothing (#896 task 5)",

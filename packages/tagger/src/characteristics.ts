@@ -97,6 +97,7 @@ export function extractCharacteristics(card: Card): Characteristics {
     keywords,
     ...(enchants ? { enchants } : {}),
     ...(card.oracleText === "" ? { noAbilities: true as const } : {}),
+    ...(/\ba deck can have (?:any number of|up to \w+) cards named\b/i.test(card.oracleText) ? { anyNumber: true as const } : {}),
   };
 }
 
