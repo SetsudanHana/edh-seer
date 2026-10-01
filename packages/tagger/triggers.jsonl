@@ -1,5 +1,5 @@
 {"preamble":"When this creature enters","condition":null,"event":"enters","subject":"this creature","control":"you","cards":2465}
-{"preamble":"At the beginning of your upkeep","condition":null,"event":"upkeep","subject":"you","control":"you","cards":647}
+{"preamble":"At the beginning of your upkeep","condition":null,"event":"upkeep","subject":"you","control":"you","cards":648}
 {"preamble":"Whenever this creature attacks","condition":null,"event":"attacks","subject":"this creature","control":"you","cards":553}
 {"preamble":"When this creature dies","condition":null,"event":"dies","subject":"this creature","control":"you","cards":499}
 {"preamble":"When ~ enters","condition":null,"event":"enters","subject":"~","control":"you","cards":321}
@@ -17,8 +17,8 @@
 {"preamble":"When this Aura enters","condition":null,"event":"enters","subject":"this Aura","control":"you","cards":91}
 {"preamble":"When this creature is turned face up","condition":null,"event":"turned-face-up","subject":"this creature","control":"you","cards":88}
 {"preamble":"Whenever you attack","condition":null,"event":"attacks","subject":"you","control":"you","cards":86}
+{"preamble":"Whenever you gain life","condition":null,"event":"life-gained","subject":"you","control":"you","cards":84}
 {"preamble":"When this creature leaves the battlefield","condition":null,"event":"leaves","subject":"this creature","control":"you","cards":83}
-{"preamble":"Whenever you gain life","condition":null,"event":"life-gained","subject":"you","control":"you","cards":83}
 {"preamble":"Whenever another creature you control enters","condition":null,"event":"enters","subject":"another creature you control","control":"you","cards":77}
 {"preamble":"When this artifact enters","condition":null,"event":"enters","subject":"this artifact","control":"you","cards":75}
 {"preamble":"When this land enters","condition":null,"event":"enters","subject":"this land","control":"you","cards":74}
@@ -1342,7 +1342,6 @@
 {"preamble":"At the beginning of your upkeep","condition":"your devotion to white and black is seven or greater","event":"upkeep","subject":"you","control":"you","cards":1}
 {"preamble":"At the beginning of your upkeep","condition":"your opponents control no creatures","event":"upkeep","subject":"you","control":"you","cards":1}
 {"preamble":"At the beginning of your upkeep","condition":"your opponents control no permanents with bounty counters on them","event":"upkeep","subject":"you","control":"you","cards":1}
-{"preamble":"At the beginning of your upkeep, choose flying, first strike, trample","condition":null,"event":"upkeep","subject":"you","control":"you","cards":1}
 {"preamble":"When Jumblebones leaves the battlefield","condition":null,"event":"leaves","subject":"Jumblebones","control":"you","cards":1}
 {"preamble":"When Rosie Cotton enters","condition":null,"event":"enters","subject":"Rosie Cotton","control":"you","cards":1}
 {"preamble":"When Smaug dies","condition":null,"event":"dies","subject":"Smaug","control":"you","cards":1}
@@ -1459,7 +1458,7 @@
 {"preamble":"When the seventh plan counter is put on this enchantment","condition":null,"event":"counter-added","subject":"the seventh plan counter on this enchantment","control":"you","cards":1}
 {"preamble":"When the sixth plan counter is put on this enchantment","condition":null,"event":"counter-added","subject":"a plan counter on this enchantment","control":"you","cards":1}
 {"preamble":"When the targeted creature leaves the battlefield this turn","condition":null,"event":"leaves","subject":"the targeted creature","control":"any","cards":1}
-{"preamble":"When the tenth +1/+1 counter is put on Shang-Chi","condition":null,"event":"counter-added","subject":"the tenth +1/+1 counter on Shang-Chi","control":"you","cards":1}
+{"preamble":"When the tenth +1/+1 counter is put on ~","condition":null,"event":"counter-added","subject":"the tenth +1/+1 counter on Shang-Chi","control":"you","cards":1}
 {"preamble":"When the third plan counter is put on this enchantment","condition":null,"event":"counter-added","subject":"a plan counter on this enchantment","control":"you","cards":1}
 {"preamble":"When the token leaves the battlefield","condition":null,"event":"leaves","subject":"the token","control":"you","cards":1}
 {"preamble":"When the twelfth hour counter is put on this artifact","condition":null,"event":"counter-added","subject":"the twelfth hour counter on this artifact","control":"you","cards":1}
@@ -2346,7 +2345,7 @@
 {"preamble":"Whenever a nontoken modified creature you control dies","condition":null,"event":"dies","subject":"a nontoken modified creature you control","control":"you","cards":1}
 {"preamble":"Whenever a nontoken permanent is put into a player's graveyard from the battlefield","condition":null,"event":"dies","subject":"a nontoken permanent","control":"any","cards":1}
 {"preamble":"Whenever a nontoken permanent is put into your graveyard from the battlefield","condition":null,"event":"dies","subject":"a nontoken permanent","control":"you","cards":1}
-{"preamble":"Whenever a nontoken","condition":null,"event":"dies","subject":"a nontoken, non-Angel creature you control","control":"you","cards":1}
+{"preamble":"Whenever a nontoken, non-Angel creature you control dies","condition":null,"event":"dies","subject":"a nontoken, non-Angel creature you control","control":"you","cards":1}
 {"preamble":"Whenever a permanent an opponent controls is put into a graveyard from the battlefield","condition":null,"event":"dies","subject":"a permanent an opponent controls","control":"opponent","cards":1}
 {"preamble":"Whenever a permanent an opponent controls is put into a graveyard","condition":null,"event":"put-into-graveyard","subject":"a permanent an opponent controls","control":"opponent","cards":1}
 {"preamble":"Whenever a permanent an opponent controls with a bounty counter on it dies","condition":null,"event":"dies","subject":"a permanent an opponent controls with a bounty counter on it","control":"opponent","cards":1}
@@ -3078,7 +3077,7 @@
 {"preamble":"Whenever this creature becomes blocked by a creature","condition":null,"event":"becomes-blocked","subject":"a creature","control":"you","cards":1}
 {"preamble":"Whenever this creature becomes blocked by a green creature","condition":null,"event":"becomes-blocked","subject":"this creature","control":"any","cards":1}
 {"preamble":"Whenever this creature becomes blocked by a non-Wall creature","condition":null,"event":"becomes-blocked","subject":"a non-Wall creature","control":"any","cards":1}
-{"preamble":"Whenever this creature becomes blocked by a nonartifact","condition":null,"event":"becomes-blocked","subject":"this creature","control":"you","cards":1}
+{"preamble":"Whenever this creature becomes blocked by a nonartifact, non-Dragon creature","condition":null,"event":"becomes-blocked","subject":"this creature","control":"you","cards":1}
 {"preamble":"Whenever this creature becomes blocked by a white creature","condition":null,"event":"becomes-blocked","subject":"a white creature","control":"any","cards":1}
 {"preamble":"Whenever this creature becomes saddled for the first time each turn","condition":null,"event":"becomes-saddled","subject":"this creature","control":"you","cards":1}
 {"preamble":"Whenever this creature becomes tapped for the first time during each of your turns","condition":null,"event":"tapped-for-mana","subject":"this creature","control":"you","cards":1}
@@ -3527,7 +3526,6 @@
 {"preamble":"Whenever you gain life for the first time during each of your turns","condition":null,"event":"life-gained","subject":"you","control":"you","cards":1}
 {"preamble":"Whenever you gain life for the first time each turn","condition":null,"event":"life-gained","subject":"you for the first time each turn","control":"you","cards":1}
 {"preamble":"Whenever you gain life this turn","condition":null,"event":"life-gained","subject":"you","control":"you","cards":1}
-{"preamble":"Whenever you gain life, each Advisor, Artificer, and Monk you control gains vigilance and gets +X/+0 until end of turn","condition":null,"event":"life-gained","subject":"you","control":"you","cards":1}
 {"preamble":"Whenever you get one or more {E} during your turn","condition":null,"event":"other","subject":"you get one or more energy counters during your turn","control":"you","cards":1}
 {"preamble":"Whenever you get one or more {E}","condition":null,"event":"counter-added","subject":"energy","control":"you","cards":1}
 {"preamble":"Whenever you give a gift","condition":null,"event":"give-gift","subject":"you","control":"you","cards":1}

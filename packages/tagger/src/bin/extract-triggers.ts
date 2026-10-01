@@ -31,7 +31,7 @@ const TRIGGERS_PATH = "packages/tagger/triggers.jsonl";
  *  nonland card"). CEILING: an EFFECT that is itself such a list joins the preamble ("at the beginning
  *  of your upkeep, choose flying, first strike, trample, or ..."; 2 rows); the grammar reads no
  *  template there and answers null, so that clause keeps the stored trigger. */
-const PREAMBLE = /^\s*((?:whenever|when|at the beginning of|at end of)\b(?:[^,]|, (?=(?:[^, ]+(?: [^, ]+)?, )+(?:or|and|and\/or) )|, (?:or|and|and\/or) (?=[^,]+,)|, (?=non[a-z]+ [a-z]+))*),/i;
+const PREAMBLE = /^\s*((?:whenever|when|at the beginning of|at end of)\b(?:[^,]|, (?!(?:each|choose|you|target|draw|create|put|return|exile|it|that|this|up to) )(?=(?:[^, ]+(?: [^, ]+)?, )+(?:or|and|and\/or) )|, (?:or|and|and\/or) (?=[^,]+,)|, (?=non-?[a-z]+ [a-z]+))*),/i;
 
 /** A card with no comma in its name still shortens itself to its first word ("When Imskir enters",
  *  Imskir Iron-Eater) -- the rule `isSelfSubject` already reads, never for a creature type or an
@@ -43,7 +43,7 @@ function shortNameAsTilde(preamble: string, name: string): string {
     if (first.length < 3 || SUBTYPES.has(first.toLowerCase()) || !/^\p{Lu}/u.test(first)) continue;
     // Only where a subject stands (after the trigger word, "or", "and", "by") and a lower-case word
     // follows: "Rosie Cotton" is not "~ Cotton", and "named Labyrinth of Skophos" is not the card.
-    out = out.replace(new RegExp(`(?<=(?:^(?:When|Whenever)| or| and| by) )${first.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?= [a-z])`, "gu"), "~");
+    out = out.replace(new RegExp(`(?<=(?:^(?:When|Whenever)| or| and| by| on) )${first.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?= [a-z]|$)`, "gu"), "~");
   }
   return out;
 }
