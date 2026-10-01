@@ -70,6 +70,9 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   if (consumer.status?.length && !consumer.status.every((x) => producer.status?.includes(x))) return false;
   if (consumer.notStatus?.some((x) => producer.status?.includes(x) || producer.combat === x)) return false;
   if (consumer.notNamed !== undefined && consumer.notNamed.toLowerCase() === (producer.named ?? "").toLowerCase()) return false;
+  // A NAME THE DECK HOLDS ONCE (CR 903.5b): a printed card, not a token and not one of the
+  // any-number family.
+  if (consumer.uniqueName === true && (producer.token !== false || producer.multiples === true)) return false;
   // "Historic" is artifact, legendary or Saga -- a printed fact the matcher stamps on the producer
   // from its type line. Opt-in like every other field: a consumer that does not ask is unaffected,
   // and a consumer that DOES ask is satisfied only by a card that is one.

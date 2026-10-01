@@ -43,6 +43,7 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   if (subtype !== undefined) out.subtype = subtype;
   if (isHistoric(types, subtypes)) out.historic = true;
   if (isOutlaw(subtypes)) out.outlaw = true;
+  if (chars.anyNumber === true) out.multiples = true;
   // NO `modified` STAMP, and the reason is measured rather than architectural. CR 700.9 has exactly
   // one printed case — a permanent that ENTERS WITH COUNTERS on itself is modified on arrival — but
   // that fact lives in the card's ABILITIES (the `enters-with-counters` effect kind) and this

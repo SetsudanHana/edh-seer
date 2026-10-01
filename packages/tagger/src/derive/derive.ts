@@ -17,6 +17,8 @@ import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
 import { parse as parseFilter } from "../grammar/filter.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
+import { printedPreamble } from "../grammar/preamble.js";
+import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
@@ -286,7 +288,15 @@ import { emblemRecipient } from "../emblem.js";
 // 222: #900 -- a pronoun after a reveal or a look means the revealed card, typed by the clause's own
 // condition ("if it's a land card"); with none stated it is unresolved, never the trigger.
 // 223: ...and "a spell" / "a card" alone states no class.
-export const DERIVE_VERSION = 223;
+// 224: #896 task 5 -- the trigger grammar reads the printed preamble and WINS for event, subject and
+// control; an intervening if or a narrowing derive cannot represent REFUSES the claim (owner
+// 2026-10-01). The stored path stays for clauses with no printed trigger word and "when you do".
+// 225: ...a compound kept as ONE stored clause claims every reading (Bilbo's "enters or leaves"); the
+// graveyard named is the card's owner (CR 400.3); "this creature or equipped creature" is the card.
+// 226: ...a condition on where the SOURCE is (Inalla's eminence) and Bowmasters' "except the first
+// one they draw in each of their draw steps" narrow no event a card supplies, so they claim.
+// 227: Guardian Project's "doesn't have the same name" is `uniqueName` (CR 903.5b, owner 2026-10-01).
+export const DERIVE_VERSION = 227;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1275,6 +1285,98 @@ const LOYALTY_COST = /^[+\u2212-]?(?:\d+|X)$/;
 const ARRIVED_WITHOUT_CASTING =
   /\b(?:wasn't|weren't) cast\b|\bnone of them were cast\b|\bno mana was spent\b|\bwithout being played\b/i;
 
+/** WORDS ABOUT WHEN, NOT WHICH: "your NEXT upkeep", "dies THIS TURN", "this combat". A delayed or
+ *  windowed trigger fires on the same class of event, as `oncePerTurn` does; `delayedBy` and
+ *  `repeats` say how often. Only the words left after these are a narrowing. */
+const TEMPORAL = /\b(?:next|this turn|this combat|each turn)\b/g;
+
+/** Whether derive represents a trigger's intervening if (CR 603.4) or narrowing, so it may claim:
+ *  a count (`threshold`), an entry that was no cast (`notCast`), "the first instant spell" (the
+ *  class inside the if, #178), "enters tapped" (`entersTapped`), an event amount ("5 or more
+ *  damage", `amount`). Anything else refuses the claim (owner, 2026-10-01). */
+/** WHERE THE SOURCE IS, not which event: Inalla's eminence "if Inalla is in the command zone or on the
+ *  battlefield", "if this card is in your graveyard". The ability only exists where it functions, so
+ *  the condition narrows no event a producer supplies. */
+const SOURCE_ZONE = /^(?:~|this \w+|it) is (?:in|on) (?:the command zone|the battlefield|your graveyard|exile|your hand)(?: or (?:in|on) (?:the command zone|the battlefield|your graveyard|exile|your hand))?$/i;
+
+/** Guardian Project's "if it doesn't have the same name as another creature you control or a creature
+ *  card in your graveyard": `uniqueName` (CR 903.5b; owner, 2026-10-01). */
+const SAME_NAME = /^it doesn't have the same name as /i;
+
+function conditionRepresented(condition: string, text: string): boolean {
+  return thresholdFor(text) !== undefined || SAME_NAME.test(condition) || ARRIVED_WITHOUT_CASTING.test(condition) || WITHOUT_DYING.test(condition)
+    || /\bthe first \w+ spell\b/i.test(condition) || SOURCE_ZONE.test(condition);
+}
+function narrowingRepresented(r: TriggerReading, text: string): boolean {
+  const left = (r.narrowing ?? "").replace(TEMPORAL, "").replace(/\s+/g, " ").trim();
+  if (left === "") return true;
+  if (left === "tapped" && r.event === "enters") return true;
+  if (left === "without being played" && r.event === "enters") return true;
+  // Orcish Bowmasters: "EXCEPT THE FIRST ONE THEY DRAW IN EACH OF THEIR DRAW STEPS" leaves out the
+  // turn-based draw (CR 504.1), which no card supplies: every draw a producer makes still counts.
+  if (r.event === "draw" && /^except the first one (?:they|you) draws? in each of (?:their|your) draw steps$/.test(left)) return true;
+  return eventAmountFor(text) !== undefined && /^(?:exactly )?\d+(?: or (?:more|greater))?(?: damage)?(?: to (?:a player|an opponent|a permanent or player|any target))?$/.test(left);
+}
+
+/** THE TRIGGER GRAMMAR'S READING OF A CLAUSE (#896 task 5, DERIVE 224): the printed preamble read by
+ *  `grammar/trigger.ts`, which WINS over the stored event, subject and control when it reads every
+ *  word (owner, 2026-10-01). Null keeps the stored path: no printed trigger word, an unread
+ *  preamble, or a reflexive "when you do", which the stored path already handles. A compound
+ *  ("enters or attacks") is one stored clause per event, so the reading naming the clause's own
+ *  event is taken. CEILING: a compound stored as ONE clause keeps only that event. */
+type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter } | { refused: string; subject?: SubjectFilter };
+
+function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean): GrammarTrigger[] | null {
+  // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
+  const preamble = printedPreamble(boundedByEnchantLine(text, enchantText), cardName ?? "");
+  if (!preamble) return null;
+  // The condition with the card's name as "~", as the preamble: "if INALLA is on the battlefield".
+  const read = parseTrigger(preamble, interveningIfOf(cardName ? selfAsTilde(text, cardName) : text));
+  if (!read) return null;
+  const readings = [read].flat();
+  // A compound the store SPLIT into one clause per event (Inferno Titan: two clauses, one text) takes
+  // the readings of this clause's own event, of which there can be several ("this creature dies OR
+  // another artifact you control is put into a graveyard from the battlefield", Scrap Trawler). One
+  // the store kept as ONE clause takes every reading: Bilbo's "enters or leaves the battlefield" was
+  // a single `enters` clause, and its leave was lost.
+  const mine = readings.filter((x) => x.event === storedEvent);
+  const chosen = !split ? readings : mine.length > 0 ? mine : [readings[0]!];
+  if (chosen.some((r) => r.event === "reflexive")) return null;
+  return chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText));
+}
+
+function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, cardName: string | undefined, cardText: string): GrammarTrigger {
+  const subject: SubjectFilter = { ...(r.subject ?? { control: r.control ?? "any", token: null }) };
+  FROM_GRAMMAR.add(subject);
+  // A refused EVENT is named before any condition: the event is the first thing the claim lacks.
+  const verb = r.event === "damage-dealt"
+    ? (r.damage === "combat" || (r.damage === undefined && COMBAT_DAMAGE.test(preamble)) ? "combat-damage" : "non-combat-damage") as Verb
+    : r.event === "play" && subject.type === "land" ? "land-play" as Verb
+    : r.event === "tapped-for-mana" ? null
+    : normalizeTriggerVerb(r.event);
+  if (!verb) return { refused: r.event === "tapped-for-mana" ? "taps-for-mana" : r.event };
+  // Entering TRANSFORMED keeps the name the stored path gave it.
+  if (verb === "enters" && /\btransformed\b/.test(r.narrowing ?? "")) return { refused: "enters-transformed", subject };
+  if (r.condition && !conditionRepresented(r.condition.text, text)) return { refused: `if:${r.event}`, subject };
+  if (r.narrowing && !narrowingRepresented(r, text)) return { refused: `narrowing:${r.event}`, subject };
+  if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
+  if (r.condition && SAME_NAME.test(r.condition.text)) subject.uniqueName = true;
+  // "An enchanted / equipped creature" is CR 700.9's `modified`, the field producers state.
+  if (subject.status?.some((x) => x === "enchanted" || x === "equipped")) {
+    const rest = subject.status.filter((x) => x !== "enchanted" && x !== "equipped");
+    if (rest.length > 0) subject.status = rest; else delete subject.status;
+    subject.modified = true;
+  }
+  // The filter grammar's own post-steps, as `subjectFrom` applies them: "named ~" is the card, and a
+  // CARD's owner is its `control` (CR 108.3).
+  if (cardName && subject.named === "~") subject.named = cardName.split(" // ")[0]!.toLowerCase();
+  if (subject.owner && subject.control === "any" && /\bcards?\b/i.test(preamble) && !/\bpermanents?\b/i.test(preamble)) subject.control = subject.owner;
+  // On an attack the state is the event (see the stored path).
+  if (verb === "attacks" && subject.combat === "attacking") delete subject.combat;
+  if (subject.sharesTypeWith === "self" && GRANTED_TO_COMMANDER.test(cardText)) subject.sharesTypeWith = "commander";
+  return { verbs: [verb], subject };
+}
+
 const ARRIVES_TAPPED = /\b(?:battlefield|enters?|play)\b[^.]{0,30}?\btapped\b|\btapped\b[^.]{0,20}?\bunder\b/i;
 
 /** "Whenever you tap a permanent for {C}" (Forsaken Monument), "whenever enchanted land is tapped for
@@ -1521,6 +1623,8 @@ export function deriveAbilities(
      *  replacement sentence a clause of its own, including Rankle and Torbran's fifth mode. */
     const replacement = replacementOf(text);
     let trigger: Ability["trigger"];
+    let grammarExtra: { verbs: Verb[]; subject: SubjectFilter }[] = [];
+    let grammarRead = false;
     /** Does this clause fire on the card's own LEAVING? See the sacrifice filter below. */
     let selfLeavesTrigger = false;
     /** Who a granted clause belongs to, when the grant sentence names them. A self emit inside the
@@ -1550,7 +1654,25 @@ export function deriveAbilities(
       subject.control = r.control === "any" && /\byou control\b/i.test(recipient) ? "you" : r.control;
       grantedTo = { control: subject.control, token: null, type: subject.type, ...(subject.subtype ? { subtype: subject.subtype } : {}) };
     };
-    if (clause.trigger?.event) {
+    const grammarAll = clause.trigger?.event && text ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
+      clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText)) : null;
+    const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
+    /** The clause's further readings of its own event, each a twin of the first (pushed below). */
+    grammarExtra = claimed.slice(1);
+    if (grammarAll) {
+      grammarRead = true;
+      for (const g of grammarAll) if ("refused" in g) unknownTriggers.push(g.refused);
+      for (const g of claimed) adoptGrantedRecipient(g.subject);
+      // A refused GRANTED trigger still hands its self emits to the recipient ("sacrifice this
+      // permanent" is THEIR permanent): the recipient is read either way.
+      if (claimed.length === 0) for (const g of grammarAll) if ("refused" in g && g.subject) adoptGrantedRecipient({ ...g.subject });
+      if (claimed[0]) {
+        selfLeavesTrigger = claimed[0].subject.self === true && claimed[0].verbs.includes("leaves");
+        trigger = claimed[0];
+      }
+    } else if (clause.trigger?.event) {
+      // THE STORED PATH, for a clause the grammar does not read: no printed trigger word (the
+      // model's trigger is then the phantom guard's business), or a reflexive "when you do".
       const mapped = normalizeTriggerVerb(clause.trigger.event);
       // READ BACK INTO THE EVENT THE CARD MEANS (AC11 batch 1, 2026-09-09). Two near-misses this
       // branch used to REFUSE now have an engine verb of their own, so a doc that banked them is
@@ -2119,8 +2241,10 @@ export function deriveAbilities(
       // card leaves your graveyard" was stored as its first limb only, and every mill card lost its
       // link. Each extra limb derives a twin with the same effect, in the shape a single-limb card of
       // that event derives (Skola Grovedancer, Desecrated Tomb). 2 corpus cards print the shape.
+      for (const extra of grammarExtra) abilities.push({ ...ability, trigger: extra });
       const limbCombat = ability.trigger?.subject.combat ? { combat: ability.trigger.subject.combat } : {};
-      if (trigger) for (const limb of orLimbTriggers(text)) abilities.push({ ...ability, trigger: { ...trigger, verbs: limb.verbs, subject: { ...limb.subject, ...limbCombat } } });
+      // The grammar reads every limb itself (above); these twins are the stored path's.
+      if (trigger && !grammarRead) for (const limb of orLimbTriggers(text)) abilities.push({ ...ability, trigger: { ...trigger, verbs: limb.verbs, subject: { ...limb.subject, ...limbCombat } } });
     }
 
     // A RESTRICTION THE ENGINE CANNOT CHECK MAKES THE STATIC LABEL-ONLY TOO, not just the trigger
@@ -2223,7 +2347,9 @@ export function deriveAbilities(
       if (repeats) abilities[i] = { ...abilities[i], repeats };
       if (delayed && abilities[i].trigger) abilities[i] = { ...abilities[i], delayedBy: delayed.delayedBy };
       if (threshold) abilities[i] = { ...abilities[i], threshold, ...(thresholdSubject ? { thresholdSubject } : {}) };
-      if (conditionCares.length > 0 && abilities[i].trigger) {
+      // A REFUSED trigger still says what the card needs around it (owner 2026-08-20): the cares
+      // tags ride on every ability of a triggered clause, claimed or not.
+      if (conditionCares.length > 0 && (abilities[i].trigger || clause.trigger?.event)) {
         abilities[i] = { ...abilities[i], conditionCares };
       }
       // THE MULTIPLIER'S OWN TRIGGER, the one synthesized from the "would ... instead" frame -- see

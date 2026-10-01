@@ -1304,7 +1304,8 @@ test("a counter put on this card is a self emit; one put on another permanent is
     [{ id: 1, abilityType: "triggered", trigger: { event: "counter-removed", subject, control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }] }], name, { 1: text },
   ).abilities[0]?.trigger?.subject;
   expect(rem("Whenever one or more loyalty counters are removed from Chandra, she deals that much damage to target opponent.", "a loyalty counter", "Chandra, Fire Artisan")).toMatchObject({ self: true, counter: "loyalty" });
-  expect(rem("When the last time counter is removed from this card while it's exiled, create a 2/2 black Knight creature token.", "a time counter", "Riftmarked Knight")).toMatchObject({ self: true, counter: "time" });
+  // "The LAST time counter ... WHILE IT'S EXILED" narrows the event past any field: refused (#896 task 5).
+  expect(rem("When the last time counter is removed from this card while it's exiled, create a 2/2 black Knight creature token.", "a time counter", "Riftmarked Knight")).toBeUndefined();
   expect(rem("Whenever a counter is removed from a permanent you control, draw a card.", "a counter", "Watcher")?.self).toBeUndefined();
   // The EMIT side: counters removed from the card itself, named in the activation COST, are self;
   // removed from a target are not.
@@ -1382,7 +1383,9 @@ test("a bare name the self test does not know keeps the clause's you", () => {
     trigger: { event: "leaves", subject: "Jumblebones", control: "you" },
     actions: [{ verb: "draw", object: "a card", amount: "1" }],
   }], "Ozox, the Clattering King", { 1: "When Jumblebones leaves the battlefield, draw a card." });
-  expect(abilities[0].trigger!.subject.control).toBe("you");
+  // Since #896 task 5 the name is held: `named`, which only a Jumblebones matches -- not a class.
+  expect(abilities[0].trigger!.subject).toMatchObject({ named: "jumblebones" });
+  expect(abilities[0].trigger!.subject.type).toBeUndefined();
 });
 
 // LAZOTEP QUARRY (recall v6 #172): "exile target creature card with mana value X from your
@@ -1515,10 +1518,12 @@ test("a life-lost trigger on a loses-the-game clause is read as loses-game (AC11
     { 1: "When the chosen player loses the game, you win the game." },
   );
   expect(abilities).toHaveLength(1);
-  // Refused into unknownTriggers until 2026-09-09; `loses-game` is an engine verb since AC11 batch 1.
-  expect(abilities[0].trigger?.verbs).toEqual(["loses-game"]);
+  // The printed event is `loses-game` (an engine verb since AC11 batch 1), but since #896 task 5 the
+  // trigger grammar reads "THE CHOSEN player": one player the matcher cannot pick out, a narrowing,
+  // which refuses the claim (owner, 2026-10-01). The win effect survives.
+  expect(abilities[0].trigger).toBeUndefined();
+  expect(unknownTriggers).toContain("narrowing:loses-game");
   expect(abilities[0].effect.kind).toBe("win-game");
-  expect(unknownTriggers).not.toContain("loses-the-game");
 });
 
 // A real life-loss trigger on a card that ALSO mentions winning the game must survive.
@@ -1803,8 +1808,12 @@ test("a trigger the card's own text never names is REFUSED, not derived", () => 
   }];
   const text = "Whenever you or a permanent you control becomes the target of a spell or ability an opponent controls, counter that spell or ability unless that player pays 4 life.\nWhenever you copy a spell, up to one target opponent may also copy that spell.";
   const out = deriveAbilities(clauses, "Parnesse, the Subtle Brush", { 1: text }, undefined, text);
-  expect(out.unknownTriggers).toContain("phantom:enters");
+  // Since #896 task 5 the printed preamble is read: the event is BECOMES-TARGET, which the engine
+  // refuses by name. The stored path's phantom guard still answers for an unprinted trigger.
+  expect(out.unknownTriggers).toContain("becomes-target");
   expect(out.abilities.some((a) => a.trigger !== undefined)).toBe(false);
+  const unprinted = deriveAbilities(clauses, "Parnesse, the Subtle Brush", { 1: "Counter that spell or ability unless that player pays 4 life." }, undefined, "Counter that spell or ability unless that player pays 4 life.");
+  expect(unprinted.unknownTriggers).toContain("phantom:enters");
 });
 
 test("the guard is CARD-scoped, so a modal clause keeps its trigger", () => {
@@ -1900,7 +1909,8 @@ test("a damage trigger on a card that never mentions damage is refused", () => {
   const out = deriveAbilities(clauses, "Path of Ancestry", { 1: text }, undefined,
     `{T}: Add one mana of any color in your commander's color identity. ${text}`);
   expect(out.abilities.find((a) => a.trigger)?.trigger).toBeUndefined();
-  expect(out.unknownTriggers).toContain("phantom:non-combat-damage");
+  // Since #896 task 5 the printed event is read: mana spent, which the engine refuses by name.
+  expect(out.unknownTriggers).toContain("mana-spent");
 });
 
 // CR 701.7 `create` IS A TRIGGER EVENT (2026-08-21). `create-token` was always a legal VERB as an
@@ -2209,9 +2219,11 @@ test("a leaves trigger whose text names the graveyard derives zone graveyard; a 
     clauseTexts: { 1: "Whenever a creature you control leaves the battlefield, if it had counters on it, put those counters on The Ozolith." },
     characteristics: MINIMAL_CHARACTERISTICS,
   });
-  const ozTrigger = ozolith.abilities.find((a) => a.trigger?.verbs.includes("leaves"))!.trigger!;
-  expect(ozTrigger.subject.zone).toBeUndefined();
-  expect(ozTrigger.subject.withoutDying).toBeUndefined();
+  // "if it had counters on it" is an intervening if derive cannot check: refused since #896 task 5
+  // (owner, 2026-10-01). Its demand on the deck survives as a cares tag.
+  expect(ozolith.abilities.find((a) => a.trigger?.verbs.includes("leaves"))).toBeUndefined();
+  expect(ozolith.unknownTriggers).toContain("if:leaves");
+  expect(ozolith.abilities.some((a) => a.conditionCares?.includes("counter-added:any"))).toBe(true);
 });
 
 test("a leaves trigger that says without dying, or if it didn't die, derives withoutDying", () => {
@@ -2558,8 +2570,18 @@ test("an invented scry trigger is refused as phantom when the card never says sc
        actions: [{ verb: "draw", object: "a card" }] }],
     "Invented Scryer", { 1: text }, undefined, text,
   );
-  expect(out.abilities[0]?.trigger).toBeUndefined();
-  expect(out.unknownTriggers).toContain("phantom:scry");
+  // Since #896 task 5 the PRINTED trigger wins: the card triggers on entering, whatever the store said.
+  expect(out.abilities[0]?.trigger).toMatchObject({ verbs: ["enters"], subject: { self: true } });
+  // With no printed trigger word the stored path answers, and its phantom guard refuses.
+  const bare = "Draw a card.";
+  const unprinted = deriveAbilities(
+    [{ id: 1, abilityType: "triggered" as const,
+       trigger: { event: "scry", subject: "you", control: "you" },
+       actions: [{ verb: "draw", object: "a card" }] }],
+    "Invented Scryer", { 1: bare }, undefined, bare,
+  );
+  expect(unprinted.abilities[0]?.trigger).toBeUndefined();
+  expect(unprinted.unknownTriggers).toContain("phantom:scry");
 });
 
 /** The mirror, so the guard cannot be tightened into deleting the real ones: Matoya prints the word
@@ -2790,9 +2812,10 @@ test("a granted trigger on opponents' permanents makes THEIR permanent die, not 
     { id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "this permanent", control: "any" },
       actions: [{ verb: "lose-life", object: "you", amount: "2" }, { verb: "sacrifice", object: "this permanent" }] },
   ], "Hellish Rebuke", { 1: card.split(" gain ")[0]!, 2: granted }, undefined, card);
-  const t = abilities.find((a) => a.trigger)?.trigger;
-  expect(t?.subject).toMatchObject({ type: "permanent", control: "opp" });
-  expect(t?.subject.self).toBeUndefined();
+  // The trigger itself is narrowed to damage dealt TO THE PLAYER WHO CAST Hellish Rebuke, which no
+  // field holds: refused since #896 task 5 (owner, 2026-10-01). The grant still lands on THEIR
+  // permanent, which the emits below show.
+  expect(abilities.find((a) => a.trigger)).toBeUndefined();
   const dies = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies");
   expect(dies?.subject).toMatchObject({ type: "permanent", control: "opp" });
   expect(dies?.subject.self).toBeUndefined();
@@ -3798,4 +3821,39 @@ test("Matter Reshaper puts the revealed permanent onto the battlefield, never it
   const enters = reshaper.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
   expect(enters?.subject).toMatchObject({ type: "permanent", fromZone: "library" });
   expect(enters?.subject.self).toBeUndefined();
+});
+
+// #896 TASK 5: THE TRIGGER GRAMMAR WINS, AND WHAT DERIVE CANNOT CHECK REFUSES (owner, 2026-10-01).
+test("an intervening if or a narrowing derive cannot represent refuses the claim; one it can is claimed", () => {
+  const trig = (text: string, event: string, name = "Some Card") => deriveAbilities([{
+    id: 1, abilityType: "triggered", trigger: { event, subject: "x", control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }], name, { 1: text });
+  // Refused: "if it was kicked" and "attacks alone" are checked by nothing.
+  const kicked = trig("When this creature enters, if it was kicked, draw a card.", "enters");
+  expect(kicked.abilities.some((a) => a.trigger)).toBe(false);
+  expect(kicked.unknownTriggers).toContain("if:enters");
+  expect(trig("Whenever a creature you control attacks alone, draw a card.", "attacks").unknownTriggers).toContain("narrowing:attacks");
+  // Claimed: a SOURCE-zone condition narrows no event (Inalla's eminence), CR 504.1's draw is the only
+  // one Bowmasters leaves out, and a window ("this turn") is when, not which.
+  expect(trig("Whenever another nontoken Wizard you control enters, if Inalla is in the command zone or on the battlefield, draw a card.", "enters", "Inalla, Archmage Ritualist").abilities[0]?.trigger?.verbs).toEqual(["enters"]);
+  expect(trig("Whenever an opponent draws a card except the first one they draw in each of their draw steps, draw a card.", "draw").abilities[0]?.trigger).toMatchObject({ verbs: ["draw"], subject: { control: "opp" } });
+});
+
+test("the printed event and whose it is win over the stored ones", () => {
+  // Stored as the model wrote it: event `other`, control `you`. Printed: any creature's death.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered", trigger: { event: "other", subject: "a creature", control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }], "Some Card", { 1: "Whenever a creature dies, draw a card." });
+  expect(abilities[0]?.trigger).toMatchObject({ verbs: ["dies"], subject: { type: "creature", control: "any" } });
+});
+
+test("CR 903.5b: Guardian Project's 'doesn't have the same name' claims, as a name the deck holds once", () => {
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "a nontoken creature you control", control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }], "Guardian Project", { 1: "Whenever a nontoken creature you control enters, if it doesn't have the same name as another creature you control or a creature card in your graveyard, draw a card." });
+  expect(unknownTriggers).toEqual([]);
+  expect(abilities[0]?.trigger?.subject).toMatchObject({ type: "creature", token: false, uniqueName: true });
 });

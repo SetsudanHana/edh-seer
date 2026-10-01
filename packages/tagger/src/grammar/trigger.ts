@@ -39,7 +39,7 @@ export interface TriggerReading {
  *  player the matcher cannot ("the chosen player", "enchanted player" -- an Aura's host, see HOST). */
 const ACTOR: Record<string, [Control, string?]> = {
   "you": ["you"], "a player": ["any"], "each player": ["any"], "an opponent": ["opp"], "each opponent": ["opp"],
-  "your opponents": ["opp"], "one or more opponents": ["opp"], "another player": ["any"], "that player": ["any", "that player"],
+  "your opponents": ["opp"], "one or more opponents": ["opp"], "another player": ["opp"], "that player": ["any", "that player"],
   "target opponent": ["opp", "target opponent"], "target player": ["any", "target player"], "one or more players": ["any"],
   "enchanted player": ["any", "enchanted player"], "enchanted opponent": ["opp", "enchanted opponent"],
   "the chosen player": ["any", "chosen player"], "they": ["any", "that player"], "its controller": ["any", "its controller"],
@@ -102,6 +102,9 @@ const BACK_REF_WIDE = /^(?:the|that|those|either of those|target)\b.*?\b(creatur
 /** The subject phrase as a filter, or null when the filter grammar cannot read it. */
 function subjectOf(phrase: string): SubjectFilter | null {
   const t = phrase.trim();
+  // "THIS CREATURE OR EQUIPPED CREATURE" (reconfigure): the card itself; the host half has no field
+  // and its class would read every creature, so it is dropped. CEILING: the host's events are missed.
+  if (/^(?:~|this [a-z]+) or (?:enchanted|equipped) /.test(t) && HOST.test(t)) return { control: "you", token: null, self: true };
   const host = HOST.exec(t);
   if (host) {
     const read = parse(`a ${host[2]}`) ?? parse(`an ${host[2]}`);
@@ -161,7 +164,15 @@ interface Loose { subject: SubjectFilter; narrowing?: string }
  *  enters or attacks" read as an attack by "a creature you control" narrowed by "of the chosen type
  *  enters or". */
 let loosePass = false;
+/** "A creature ENCHANTED PLAYER CONTROLS": one player's, which the filter grammar reads as anyone's. */
+const ONE_PLAYERS = /^(.+?) (enchanted player|enchanted opponent|the chosen player) controls(.*)$/;
+
 function looseSubject(phrase: string): Loose | null {
+  const onePlayer = ONE_PLAYERS.exec(phrase);
+  if (onePlayer) {
+    const read = subjectOf(`${onePlayer[1]} a player controls${onePlayer[3]}`) ?? subjectOf(`${onePlayer[1]}${onePlayer[3]}`);
+    return read && { subject: { ...read, control: onePlayer[2] === "enchanted opponent" ? "opp" : "any" }, narrowing: onePlayer[2]! };
+  }
   const whole = subjectOf(phrase);
   if (whole) return { subject: whole };
   if (!loosePass) return null;
@@ -183,7 +194,7 @@ function looseSubject(phrase: string): Loose | null {
 /** Object verbs: "{S} <verb>", the subject's own controller. Plural and singular both print. A
  *  compound ("enters or attacks", "blocks or becomes blocked") is read part by part. */
 /** What a template adds beyond its event. A named group `n` in the template is a narrowing. */
-interface VerbPatch { zone?: string; fromZone?: string; damage?: "combat" | "noncombat"; withoutDying?: true; control?: Control }
+interface VerbPatch { zone?: string; fromZone?: string; notFromZone?: string; damage?: "combat" | "noncombat"; withoutDying?: true; control?: Control }
 const OBJECT_VERBS: [RegExp, string, VerbPatch?][] = [
   [/^(?:enters?|enter the battlefield|enters the battlefield)$/, "enters"],
   [/^enters? from (?:a|your) graveyard$/, "enters", { fromZone: "graveyard" }],
@@ -204,7 +215,8 @@ const OBJECT_VERBS: [RegExp, string, VerbPatch?][] = [
   [/^(?:is|are) put into (?:a|your|an opponent's|a player's|its owner's) graveyard$/, "dies"],
   [/^(?:is|are) put into graveyards from anywhere$/, "put-into-graveyard"],
   [/^(?:is|are) put into (?:a|your) graveyard from (?<n>anywhere other than the battlefield|your hand or library)$/, "put-into-graveyard"],
-  [/^(?:leaves?|leave) (?:an opponent's|a) graveyard$/, "leaves", { zone: "graveyard" }],
+  [/^(?:leaves?|leave) an opponent's graveyard$/, "leaves", { zone: "graveyard", control: "opp" }],
+  [/^(?:leaves?|leave) a graveyard$/, "leaves", { zone: "graveyard" }],
   [/^destroyed$/, "other"],
   [/^becomes? attached to (?<n>.+)$/, "attached"],
   [/^become attached to (?<n>.+)$/, "attached"],
@@ -213,6 +225,7 @@ const OBJECT_VERBS: [RegExp, string, VerbPatch?][] = [
   [/^deals? (?<n>(?:exactly \d+|excess) damage.*)$/, "damage-dealt"],
   [/^(?:echo cost|cumulative upkeep) is paid$/, "other"],
   [/^(?:is|are) put into (?:a|your) library from anywhere$/, "put-into-library"],
+  [/^(?:is|are) put into exile from anywhere$/, "exiled"],
   [/^(?:is|are) put into exile (?<n>from .+)$/, "exiled"],
   [/^(?:is|are) exiled$/, "exiled"],
   [/^(?:is|are) put into your hand from your graveyard$/, "returned-to-hand", { fromZone: "graveyard" }],
@@ -252,7 +265,7 @@ const OBJECT_VERBS: [RegExp, string, VerbPatch?][] = [
   [/^deals? damage(?: to (?:a player|an opponent|a player or planeswalker))?$/, "damage-dealt"],
   [/^(?:is|are) dealt damage$/, "damaged"],
   [/^(?:is|are) dealt combat damage$/, "damaged", { damage: "combat" }],
-  [/^(?:leaves?|leave) your graveyard$/, "leaves", { zone: "graveyard" }],
+  [/^(?:leaves?|leave) your graveyard$/, "leaves", { zone: "graveyard", control: "you" }],
   [/^(?:is|are) milled$/, "milled"],
   [/^(?:is|are) dealt noncombat damage$/, "damaged", { damage: "noncombat" }],
   [/^(?:is|are) put into exile$/, "exiled"],
@@ -283,9 +296,20 @@ const OBJECT_VERBS: [RegExp, string, VerbPatch?][] = [
   [/^phases? out$/, "phases-out"],
   // CR 700.4: "dies" means "is put into a graveyard from the battlefield", whatever the card type.
   // "From anywhere" is never a leaves-the-battlefield trigger (CR 603.6c), so it keeps its own name.
-  [/^(?:is|are) put into (?:a|your|an opponent's|a player's|its owner's|their owners'|their owner's) graveyard from the battlefield$/, "dies"],
-  [/^(?:is|are) put into (?:a|your|an opponent's|its owner's) graveyard from anywhere$/, "put-into-graveyard"],
-  [/^(?:is|are) put into (?:a|your|an opponent's|its owner's) graveyard from (?:your|their|a) library$/, "put-into-graveyard", { fromZone: "library" }],
+  [/^(?:is|are) put into your graveyard from the battlefield$/, "dies", { control: "you" }],
+  [/^(?:is|are) put into an opponent's graveyard from the battlefield$/, "dies", { control: "opp" }],
+  [/^(?:is|are) put into (?:a|a player's|its owner's|their owners'|their owner's) graveyard from the battlefield$/, "dies"],
+  // Whose graveyard is whose card (CR 400.3: a card goes to its OWNER's graveyard), and a card's owner
+  // is its `control` here, as for every card off the battlefield.
+  [/^(?:is|are) put into your graveyard from anywhere$/, "put-into-graveyard", { control: "you" }],
+  [/^(?:is|are) put into an opponent's graveyard from anywhere$/, "put-into-graveyard", { control: "opp" }],
+  [/^(?:is|are) put into (?:a|its owner's) graveyard from anywhere$/, "put-into-graveyard"],
+  [/^(?:is|are) put into your graveyard from anywhere other than the battlefield$/, "put-into-graveyard", { control: "you", notFromZone: "battlefield" }],
+  [/^(?:is|are) put into an opponent's graveyard from anywhere other than the battlefield$/, "put-into-graveyard", { control: "opp", notFromZone: "battlefield" }],
+  [/^(?:is|are) put into (?:a|its owner's) graveyard from anywhere other than the battlefield$/, "put-into-graveyard", { notFromZone: "battlefield" }],
+  [/^(?:is|are) put into your graveyard from your library$/, "put-into-graveyard", { fromZone: "library", control: "you" }],
+  [/^(?:is|are) put into an opponent's graveyard from their library$/, "put-into-graveyard", { fromZone: "library", control: "opp" }],
+  [/^(?:is|are) put into (?:a|its owner's) graveyard from (?:their|a) library$/, "put-into-graveyard", { fromZone: "library" }],
   [/^(?:is|are) put into exile from the battlefield$/, "exiled"],
   // Last, so a recipient the plain templates read is never a narrowing.
   [/^deals? (?<n>\d+ or more) (?:combat )?damage(?: to (?:a player|an opponent))?$/, "damage-dealt"],
@@ -457,7 +481,7 @@ function objectReading(rest: string): TriggerReading | TriggerReading[] | null {
         const narrowing = [subjectNarrowing, h!.narrowing ?? shared].filter(Boolean).join(" ");
         const { event, patch } = h!;
         const control = subject.self ? "you" : patch?.control ?? subject.control;
-        const patched = { ...subject, ...(patch?.zone ? { zone: patch.zone } : {}), ...(patch?.fromZone ? { fromZone: patch.fromZone } : {}), ...(patch?.withoutDying ? { withoutDying: true as const } : {}) };
+        const patched = { ...subject, ...(patch?.zone ? { zone: patch.zone } : {}), ...(patch?.fromZone ? { fromZone: patch.fromZone } : {}), ...(patch?.notFromZone ? { notFromZone: patch.notFromZone } : {}), ...(patch?.withoutDying ? { withoutDying: true as const } : {}) };
         const r = reading(event, patched, control);
         return { ...r, ...(patch?.damage ? { damage: patch.damage } : {}), ...(narrowing ? { narrowing } : {}) };
       });
@@ -789,7 +813,7 @@ const AND_TRIGGER = / (?:and|or) (?=(?:when|whenever|at the beginning of) )/;
  *  intervening if's text (`interveningIfOf`), carried onto every reading. */
 /** A COUNT of objects ("you attack with THREE OR MORE creatures"): the filter grammar reads the class
  *  and drops the number, so it rides as a narrowing rather than reading every attack. */
-const COUNT = /\b(?:two|three|four|five|six|seven|eight|nine|ten|\d+) or more [a-z]+/i;
+const COUNT = /\b(?:two|three|four|five|six|seven|eight|nine|ten|\d+) or more (?!damage\b|life\b|mana\b)[a-z]+/i;
 
 function withCount(read: TriggerReading, text: string): TriggerReading {
   const count = COUNT.exec(text)?.[0];

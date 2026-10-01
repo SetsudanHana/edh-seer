@@ -35,6 +35,14 @@ const ozolith = card("The Ozolith", ["artifact"], [{
   actions: [{ verb: "add-counter", object: "those counters" }],
 }], { 1: "Whenever a creature you control leaves the battlefield, if it had counters on it, put those counters on The Ozolith." });
 
+// The plain leaves payoff. The Ozolith was the witness until #896 task 5: its "if it had counters on
+// it" is an intervening if derive cannot check, so it refuses the claim (owner, 2026-10-01).
+const ninjaTeen = card("Ninja Teen", ["enchantment"], [{
+  id: 2, abilityType: "triggered",
+  trigger: { event: "leaves", subject: "a creature you control", control: "you" },
+  actions: [{ verb: "lose-life", object: "each opponent", amount: "1" }],
+}], { 2: "Whenever a creature you control leaves the battlefield, each opponent loses 1 life." });
+
 const bloodArtist = card("Blood Artist", ["creature"], [{
   id: 1, abilityType: "triggered",
   trigger: { event: "dies", subject: "this creature or another creature", control: "any" },
@@ -83,7 +91,9 @@ const eternalWitness = card("Eternal Witness", ["creature"], [{
 const tags = (a: DeckCard, b: DeckCard): string[] => pairReasons(a, b, H).map((r) => r.tag).sort();
 
 test("a flicker feeds a leaves payoff on the leaves tag", () => {
-  expect(tags(ephemerate, ozolith)).toContain("leaves:creature");
+  expect(tags(ephemerate, ninjaTeen)).toContain("leaves:creature");
+  // The Ozolith's unchecked intervening if refuses its claim.
+  expect(tags(ephemerate, ozolith)).toEqual([]);
 });
 
 test("a flicker feeds a without-dying payoff", () => {
@@ -96,7 +106,7 @@ test("a flicker feeds no death payoff and fills no graveyard", () => {
 });
 
 test("a death still feeds a leaves payoff, on the tag the panel was judged against", () => {
-  expect(tags(edict, ozolith)).toContain("leaves:creature");
+  expect(tags(edict, ninjaTeen)).toContain("leaves:creature");
 });
 
 test("a death feeds neither a without-dying payoff nor a graveyard-leave payoff", () => {
