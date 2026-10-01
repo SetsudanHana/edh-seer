@@ -157,7 +157,7 @@ interface Group {
 /** What the words said, before it is lowered to a `SubjectFilter`. */
 interface Reading {
   /** The tokens the groups' positions index. */
-  toks?: string[];
+  toks?: readonly string[];
   control?: Control;
   owner?: "you" | "opp";
   token: boolean | null;
@@ -1491,7 +1491,7 @@ function perAlternative(r: Reading): SubjectFilter | null {
   for (const k of Object.keys(branches[0]!) as (keyof SubjectFilter)[]) {
     const v = stableJson(branches[0]![k]);
     if (branches.every((b) => k in b && stableJson(b[k]) === v)) {
-      (outer as Record<string, unknown>)[k] = branches[0]![k];
+      (outer as unknown as Record<string, unknown>)[k] = branches[0]![k];
       for (const b of branches) delete b[k];
     }
   }
