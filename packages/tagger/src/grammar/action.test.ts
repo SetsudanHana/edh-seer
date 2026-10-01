@@ -200,6 +200,17 @@ test("coverage push 2: object lists, recipient lists, control magic, clones, cas
   expect(read("You may cast spells that have a cycling ability from your graveyard.")).toEqual([]);
 });
 
+test("coverage push 3: game and keyword actions read by verb, the stored object kept", () => {
+  for (const [text, verb] of [["roll a d20.", "roll-dice"], ["flip a coin.", "flip-coin"], ["Take an extra turn after this one.", "extra-turn"],
+    ["you win the game.", "win-game"], ["that player loses the game.", "lose-game"], ["After this phase, there is an additional combat phase.", "extra-combat"],
+    ["This creature phases out.", "phase-out"], ["clash with an opponent.", "clash"], ["manifest the top card of your library.", "manifest"],
+    ["Switch target creature's power and toughness until end of turn.", "exchange"], ["earthbend 2.", "earthbend"]] as const) {
+    expect(read(text).map((r) => r.verb)).toEqual([verb]);
+  }
+  expect(read("You may choose not to untap this creature during your untap step.")).toMatchObject([{ verb: "untap", optional: true }]);
+  expect(read("Target creature's owner puts it on their choice of the top or bottom of their library.")).toMatchObject([{ verb: "put", toZone: "library" }]);
+});
+
 test("a cost's actions come first, the cost's own words read the same way", () => {
   expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }, { verb: "create" }]);
   // A cost the segmenter left in the text is still a cost; ability words and table rows are labels.

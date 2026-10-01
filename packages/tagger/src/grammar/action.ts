@@ -424,6 +424,9 @@ const ZONE: Record<string, [string, Handler]> = {
     return r && to ? [...[r].flat().map((x) => ({ ...x, toZone: to })), ...(/ tapped\b/.test(rest.slice(at)) ? [TAPPED] : [])] : null;
   })],
   put: ["put", (all): Args | Args[] | null => withCounters(all, (rest) => {
+    // "shuffle and put that card on top": the library just shuffled.
+    const top = /^(.+?) on top$/.exec(rest);
+    if (top) { const r = moveObject(top[1]!); return r && { ...r, toZone: "library" }; }
     // "put them back in any order", "put one of those cards back on top of your library".
     const back = /^(.+?) back (?:on top of (?:your|their|its owner's|that player's|target player's) library|in any order)$/.exec(rest);
     if (back) { const r = moveObject(back[1]!); return r && { ...r, toZone: "library" }; }
@@ -522,6 +525,27 @@ const TAIL: Record<string, [string, Handler]> = {
   "venture into the dungeon": ["venture-into-the-dungeon", (rest) => (rest === "" ? {} : null)],
   "manifest dread": ["manifest-dread", (rest) => (rest === "" ? {} : null)],
   learn: ["learn", (rest) => (rest === "" ? {} : null)],
+  // The rest of the keyword actions and game actions: the verb is read, the stored object stays.
+  roll: ["roll-dice", (rest) => (/^(?:a|an|one|two|three) (?:d\d+|(?:four|six|eight|ten|twelve|twenty)-sided (?:die|dice)|dice|die)(?: \w+ times?)?$/i.test(rest) ? {} : null)],
+  flip: ["flip-coin", (rest) => (/^(?:a coin|two coins|a coin until you lose a flip)$/i.test(rest) ? {} : null)],
+  take: ["extra-turn", (rest) => (/^(?:an|two) extra turns? after this one$/i.test(rest) ? {} : null)],
+  "get an emblem": ["emblem", (rest) => (/^with /i.test(rest) || rest === "" ? {} : null)],
+  switch: ["exchange", (all) => {
+    const rest = all.replace(DURATION, "");
+    return /'s power and toughness$/i.test(rest) && objectOf(rest.replace(/'s power and toughness$/i, "")) ? {} : null;
+  }],
+  "exchange control of": ["exchange", (rest) => (rest !== "" ? {} : null)],
+  "win the game": ["win-game", (rest) => (rest === "" ? {} : null)],
+  "lose the game": ["lose-game", (rest) => (rest === "" ? {} : null)],
+  clash: ["clash", (rest) => (/^with an opponent$/i.test(rest) ? {} : null)],
+  exert: ["exert", (rest) => (/ as (?:it|he|she|they) attacks?$/i.test(rest) && objectOf(rest.replace(/ as (?:it|he|she|they) attacks?$/i, "")) ? {} : null)],
+  manifest: ["manifest", (rest) => (/^the top (?:card|two cards) of (?:your|their) library$/i.test(rest) ? {} : null)],
+  convert: ["convert", thing],
+  earthbend: ["earthbend", numbered],
+  airbend: ["airbend", (rest) => (rest !== "" ? {} : null)],
+  waterbend: ["waterbend", numbered],
+  blight: ["blight", numbered],
+  behold: ["behold", (rest) => (/^(?:a|an) [\w -]+$/i.test(rest) ? {} : null)],
 };
 
 /** "you may cast it without paying its mana cost", "play lands from your graveyard", "play an
@@ -558,6 +582,19 @@ function subjectAction(t: string): ActionReading[] | null {
     return [{ verb: "cost-modify", object: objectOf(spells)!.object, text: spells, amount: `${sign}${cost[2]!.toUpperCase()}${cost[4] ?? ""}` }];
   }
   if (/^you become the monarch$/i.test(t)) return [{ verb: "monarch" }];
+  // "You may choose not to untap this creature during your untap step": the store's optional untap.
+  const notUntap = /^you may choose not to untap (.+) during your untap step$/i.exec(t);
+  if (notUntap && objectOf(notUntap[1]!)) return [{ verb: "untap", object: objectOf(notUntap[1]!)!.object, optional: true }];
+  // "Target creature's owner puts it on their choice of the top or bottom of their library".
+  const owner = /^(?:the owner of .+|.+'s owner) puts (?:it|that card) on their choice of the top or bottom of their library$/i.exec(t);
+  if (owner) return [{ verb: "put", object: REF, toZone: "library" }];
+  if (/^(?:after this (?:main )?phase, )?there (?:is|are) an additional combat phase(?: after this (?:main )?phase)?(?: followed by an additional main phase)?$/i.test(t)) return [{ verb: "extra-combat" }];
+  if (/^(?:after this (?:main )?phase, )?there is an additional (?:main|beginning) phase(?: after this (?:main )?phase)?$/i.test(t)) return [{ verb: "extra-phase" }];
+  // "that ability triggers an additional time": a trigger doubled.
+  if (/^(?:that ability|it) triggers an additional time$/i.test(t)) return [{ verb: "trigger-again" }];
+  if (/^(?:that player|target player|each opponent|you) (?:wins?|loses?) the game$/i.test(t)) return [{ verb: /wins? the game$/i.test(t) ? "win-game" : "lose-game" }];
+  const phases = /^(.+?) phases? out$/i.exec(t);
+  if (phases && (objectOf(phases[1]!) || THEY.test(phases[1]!))) return [{ verb: "phase-out" }];
   if (/^you take the initiative$/i.test(t)) return [{ verb: "initiative" }];
   if (/^the ring tempts you$/i.test(t)) return [{ verb: "ring-tempts" }];
   const have = /^you (may )?have (.+)$/i.exec(t);
