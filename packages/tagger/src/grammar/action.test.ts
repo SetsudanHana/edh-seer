@@ -183,6 +183,23 @@ test("coverage push: predicate lists, repeated grants, keyword lines, restrictio
   expect(read("Put a +1/+1 counter on target creature and two +1/+1 counters on another target creature.").map((r) => r.amount)).toEqual(["1", "2"]);
 });
 
+test("coverage push 2: object lists, recipient lists, control magic, clones, casting and costs", () => {
+  expect(read("Destroy target artifact, target creature, target enchantment, and target land.").map((r) => r.text))
+    .toEqual(["target artifact", "target creature", "target enchantment", "target land"]);
+  expect(read("Exile all artifacts, creatures, and lands.")).toHaveLength(1);
+  expect(read("Return up to one target artifact card and up to one target sorcery card from your graveyard to your hand.").map((r) => [r.fromZone, r.toZone]))
+    .toEqual([["graveyard", "hand"], ["graveyard", "hand"]]);
+  expect(read("~ deals 3 damage to each creature and each player.").map((r) => r.text)).toEqual(["each creature", "each player"]);
+  expect(read("You control enchanted creature.")).toMatchObject([{ verb: "gain-control", text: "enchanted creature" }]);
+  expect(read("You may have this creature enter as a copy of any creature on the battlefield.")).toMatchObject([{ verb: "copy", optional: true }]);
+  expect(read("You may cast creature spells from the top of your library.")).toMatchObject([{ verb: "cast", fromZone: "library" }]);
+  expect(read("You may play an additional land on each of your turns.")).toMatchObject([{ verb: "play", text: "an additional land" }]);
+  expect(read("Instant and sorcery spells you cast cost {1} less to cast.")).toMatchObject([{ verb: "cost-modify", amount: "-1" }]);
+  expect(read("Prevent all combat damage that would be dealt this turn.")).toMatchObject([{ verb: "prevent" }]);
+  // A narrowing the filter can drop is not read: the stored action stands.
+  expect(read("You may cast spells that have a cycling ability from your graveyard.")).toEqual([]);
+});
+
 test("a cost's actions come first, the cost's own words read the same way", () => {
   expect(read("Create a Treasure token.", "{U/R}{U/R}, Discard this card")).toMatchObject([{ verb: "discard", object: { self: true } }, { verb: "create" }]);
   // A cost the segmenter left in the text is still a cost; ability words and table rows are labels.
@@ -197,15 +214,16 @@ test("readings align to stored actions by verb, in order", () => {
 
 test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.945],
-  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.895],
+  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.905],
   ["counters", ["add-counter", "remove-counter", "proliferate"], 0.809],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.9],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.881],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.888],
   ["pump/grant", ["modify-pt", "grant-ability"], 0.853],
   ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.841],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
-    "explore", "connive", "endure"], 0.74],
+    "explore", "connive", "endure"], 0.775],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.605],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")
