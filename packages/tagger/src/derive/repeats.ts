@@ -7,6 +7,7 @@
  *  and "once each turn" is once per TURN, so taking the text rule first would overstate it by the
  *  size of the pod. */
 import type { Ability, Repeats } from "../schema.js";
+import { namesAClass } from "./subject.js";
 
 /** Rules 1-2 read `cost`, not `clauseText`. `segment.ts`'s `classify()` already split an activated
  *  ability's cost out of the body -- Gogo, Master of Mimicry's clause is `text="Copy target
@@ -196,7 +197,7 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?
     // 8: the card's OWN arrival happens once. "When this creature enters" against "whenever a
     // creature you control enters" -- same verb, opposite buckets, and only `self` separates them.
     if (trigger.subject.self === true && verbs.some((v) => SELF_EVENTS.has(v))) return "once";
-    const typed = trigger.subject.type !== undefined || trigger.subject.subtype !== undefined;
+    const typed = namesAClass(trigger.subject);
     // 8b: COMBAT HAPPENS ONCE A TURN. "Whenever this creature deals combat damage to a player",
     // "whenever you attack", "whenever enchanted player is attacked" (Curse of Verbosity) each fire
     // at most once per combat, on whose turn `control` says -- the same split as a phase trigger.

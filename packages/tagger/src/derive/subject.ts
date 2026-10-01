@@ -614,6 +614,14 @@ const TARGETS_ONLY = /\btargets? only\b/i;
  *  33 of the 61 carry a type word in the tail that the head does not. */
 const ATTACHED_TO = /\battached to\b/i;
 
+/** Does the subject name a CLASS -- a type or a subtype, itself or in every one of its alternatives
+ *  ("artifact spells and colorless spells" is `anyOf` [artifact, colorless spell] since the filter
+ *  grammar, #896)? The gates that ask "is this a class or the whole board" must see through `anyOf`. */
+export function namesAClass(s: Partial<SubjectFilter>): boolean {
+  if (s.type !== undefined || s.subtype !== undefined) return true;
+  return (s.anyOf?.length ?? 0) > 0 && s.anyOf!.every((b) => b.type !== undefined || b.subtype !== undefined || namesAClass(b));
+}
+
 export function parseSubject(text: string): SubjectFilter {
   const whole = text.toLowerCase().trim().split(ATTACHED_TO)[0].trim();
   // A COUNT IS A MAGNITUDE, NOT A CLASS (recall v6 #77, 2026-09-10). "a Treasure token for each

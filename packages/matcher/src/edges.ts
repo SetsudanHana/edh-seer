@@ -45,8 +45,9 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   // A DISJUNCTION holds its type/subtype in the branches, so a subject with `anyOf` has neither on
   // the outside and would key as "any" — turning Prowl's `enters:creature` into `enters:any` and
   // regrouping it with every untyped trigger. The first branch is the one the text names first.
+  // ...but a branch that names no class ("from your hand or graveyard") keys as the subject outside it.
   const first = s.anyOf?.[0];
-  if (first !== undefined) return themeSubjectKey(first);
+  if (first !== undefined) { const k = themeSubjectKey(first); if (k !== "any") return k; }
   // An UMBRELLA outranks the list it resolves to, for the same reason a negation does: "permanent
   // spell" resolves to five concrete types, and taking the first keyed Hylda's Crown of Winter --
   // an Artifact -- as `cast:creature`, a wrong tag naming a class the card is not. It ranks BELOW
@@ -313,6 +314,9 @@ export function cardCaresTags(tags: CardTags): Set<string> {
 }
 
 /** The card's characteristics expressed as a concrete subject, for static-edge matching. */
+const FACE_DOWN_KEYWORDS = new Set(["morph", "megamorph", "disguise"]);
+const faceDownable = (keywords: readonly string[] | undefined): boolean => (keywords ?? []).some((k) => FACE_DOWN_KEYWORDS.has(k.toLowerCase()));
+
 export function characteristicsSubject(tags: CardTags, name?: string): SubjectFilter {
   const c = tags.characteristics;
   const types = c.types.map((t) => t.toLowerCase());
@@ -337,6 +341,11 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
     ...(types.includes("legendary") ? { legendary: true as const } : {}),
     ...(types.includes("basic") ? { basic: true as const } : {}),
     ...(types.includes("snow") ? { snow: true as const } : {}),
+    // PRINTED STATUSES a consumer can ask for (#896 task 3): a card with morph, megamorph or disguise
+    // can be cast face down (CR 702.37, CR 702.168), and a card with no rules text has no abilities.
+    // Without these, "a face-down creature you control" and "creatures you control with no abilities"
+    // were met by nothing once the filter grammar stopped reading them as every creature.
+    ...(faceDownable(c.keywords) || c.noAbilities ? { status: [...(faceDownable(c.keywords) ? ["face-down"] : []), ...(c.noAbilities ? ["no-abilities"] : [])] } : {}),
     // Printed keywords, for the static pass — this is the side a "creatures you control with flying"
     // anthem is matched AGAINST, so without it every such anthem either reaches everything (before
     // the filter existed) or nothing (after, if only one side were done).
@@ -432,10 +441,28 @@ function combatConsumerNarrows(subject: SubjectFilter): boolean {
  *  plus a legendary supertype (Lara Croft), a conjunction of types, and a lone type outside the
  *  whole board (`loneTypeNarrows`). */
 function recursionClassNarrows(s: SubjectFilter): boolean {
+  // ALTERNATIVES NARROW WHEN EACH DOES (#896 task 3): "artifact spells and colorless spells" (Mystic
+  // Forge) is an artifact OR a colourless spell, and each picks out cards; a colour counts inside a
+  // branch, where it is the whole of what that alternative says.
+  // A subtype in any alternative still narrows, as it always did ("target Plant, Treefolk, or land card").
   const subs = [...list(s.subtype), ...(s.anyOf ?? []).flatMap((b) => list(b.subtype))];
-  if (subs.length > 0 || (s.stats?.length ?? 0) > 0 || s.legendary === true) return true;
+  if (subs.length > 0) return true;
+  if (s.anyOf?.length) {
+    const { anyOf, ...shared } = s;
+    if (recursionClassNarrowsOne(shared)) return true;
+    return anyOf.every((b) => recursionClassNarrowsOne({ ...shared, ...b } as SubjectFilter) || (b.colors?.length ?? 0) > 0);
+  }
+  return recursionClassNarrowsOne(s);
+}
+
+function recursionClassNarrowsOne(s: SubjectFilter): boolean {
+  if (list(s.subtype).length > 0 || constantStats(s) || s.legendary === true) return true;
   return (s.allTypes?.length ?? 0) >= 2 || loneTypeNarrows(s);
 }
+
+/** A stat that NAMES a class: a constant bound. "Mana value X or less" (Profane Command) and a sum
+ *  over several cards name none -- X is chosen as it resolves (#896 task 3). */
+const constantStats = (s: Partial<SubjectFilter>): boolean => (s.stats ?? []).some((p) => p.variable !== true && p.total !== true);
 
 /** A LONE TYPE OUTSIDE THE WHOLE BOARD NARROWS (owner ruling 2026-09-16, asked three times on
  *  Buried Ruin -> Scrap Trawler): "an artifact card", "an instant or sorcery card" pick out the
@@ -510,7 +537,7 @@ export function combatNarrowsByType(subject: SubjectFilter): boolean {
  *  `selfSubject` stamps `token: false` on every implied event, such a consumer correctly ends up with
  *  zero implied supply and surfaces in the census as a real hole -- we do not model a token attacking. */
 function combatNarrowsOffType(subject: SubjectFilter): boolean {
-  if ((subject.stats?.length ?? 0) > 0) return true;
+  if (constantStats(subject)) return true;
   // A COMMANDER IS ONE OR TWO CARDS, so a combat consumer naming one is the narrowest shape there
   // is — the opposite of the deck-level state condition this gate exists to refuse. Without it
   // Kediss, Emberclaw Familiar's "whenever a commander you control deals combat damage" read as
@@ -1304,8 +1331,9 @@ function copySubject(
   const hasClass = (s?: Partial<SubjectFilter>) => s?.type !== undefined || s?.subtype !== undefined;
   const typed = [
     ...abilities
-      .filter((a) => (a.effect.kind === "clone" || a.effect.kind === "token-generation") && hasClass(a.effect.subject))
-      .map((a) => a.effect.subject as Partial<SubjectFilter>),
+      .filter((a) => (a.effect.kind === "clone" || a.effect.kind === "token-generation") && hasClass(a.effect.subject?.copyOf ?? a.effect.subject))
+      // What a copy COPIES, where the grammar recorded it apart from what the copy becomes (#896 task 3).
+      .map((a) => (a.effect.subject?.copyOf ?? a.effect.subject) as Partial<SubjectFilter>),
     // A CLONE STATIC CARRIES WHAT IT COPIES ON ITS `copy` EMIT, not its effect subject (#712):
     // Estrid's Invocation's "enter as a copy of an enchantment you control" derived the enchantment
     // there, and the creature fallback below made it claim creatures instead.
@@ -3026,7 +3054,7 @@ function tutorEdges({ p, c, h, reasons }: PairScope): void {
     // A NAME narrows harder than any subtype: it picks out one card. The First Doctor searches for
     // "a card named TARDIS" and derived a bare `search` the gate refused as unnarrowed, so
     // the most specific tutor in the corpus was the one that formed nothing.
-    const narrows = subs.length > 0 || (a.effect.subject.stats?.length ?? 0) > 0
+    const narrows = subs.length > 0 || constantStats(a.effect.subject)
       || a.effect.subject.named !== undefined || loneTypeNarrows(a.effect.subject);
     // A LAND FINDER IS ITS OWN RELATION, and it is the one the ramp diagnostic is built on (owner's
     // ruling, 2026-08-15, reversing the blanket land exclusion above). Farseek relates to the Plains,
@@ -3077,7 +3105,7 @@ function tutorEdges({ p, c, h, reasons }: PairScope): void {
     const { anyOf, ...shared } = a.effect.subject;
     const matched = anyOf?.find((b) => subjectMatches(found, { ...shared, ...b }, h));
     reasons.push({
-      tag: `tutor:${themeSubjectKey(matched ?? keyedOn(a.effect.subject, found))}`,
+      tag: `tutor:${themeSubjectKey(matched ? { ...shared, ...matched } : keyedOn(a.effect.subject, found))}`,
       text: tutorSentence(p.card.name, c.card.name, digsRatherThanSearches(p.card.oracleText)),
       effectKind: a.effect.kind,
       repeatability:
@@ -3118,7 +3146,8 @@ function typedRecursionEdges({ p, c, h, reasons }: PairScope): void {
     const matched = anyOf?.find((b) => subjectMatches(found, { ...shared, ...b }, h));
     if (anyOf?.length ? !matched : !subjectMatches(found, shared, h)) continue;
     reasons.push({
-      tag: `recursion-target:${themeSubjectKey(matched ?? keyedOn(shared, found))}`,
+      // Key on the subject WITH the matched alternative: a zone alternative alone names no class.
+      tag: `recursion-target:${themeSubjectKey(matched ? { ...shared, ...matched } : keyedOn(shared, found))}`,
       text: recursionTargetSentence(p.card.name, c.card.name),
       effectKind: a.effect.kind,
       repeatability:
@@ -3157,7 +3186,7 @@ function playFromTopEdges({ p, c, h, reasons }: PairScope): void {
     const matched = anyOf?.find((b) => subjectMatches(found, { ...shared, ...b }, h));
     if (anyOf?.length ? !matched : !subjectMatches(found, shared, h)) continue;
     reasons.push({
-      tag: `play-from-top:${themeSubjectKey(matched ?? keyedOn(shared, found))}`,
+      tag: `play-from-top:${themeSubjectKey(matched ? { ...shared, ...matched } : keyedOn(shared, found))}`,
       text: playFromTopSentence(p.card.name, c.card.name, isLandOnly(c.tags)),
       effectKind: a.effect.kind,
       repeatability: "static",

@@ -426,6 +426,12 @@ export interface SubjectFilter {
    *  protects a battle (Joyful Stormsculptor), how many card types (Rendmaw). CEILING: refused by the
    *  matcher, as the other relations -- a demand nothing can check claims no cards. */
   relation?: SubjectRelation;
+  /** WHAT A COPY COPIES, beside what it is (#896 task 3). "A token that's a copy of target creature
+   *  you control, except it has haste" CREATES a creature with haste and COPIES any creature you
+   *  control: the subject says the first, `copyOf` the second, and the matcher's copy pass reads
+   *  `copyOf` -- a Baleful Strix has no haste, and Kiki-Jiki still copies it. Set by the filter
+   *  grammar on copies whose original names a class. */
+  copyOf?: Partial<SubjectFilter>;
   /** Which phase or step an `extra-phase` effect grants, over a closed CR vocabulary: `untap`,
    *  `upkeep`, `draw`, `main`, `combat`, `beginning`, `end`. Same shape as `counter` above, and for
    *  the same reason: a coarse `extra-phase` conflated units the game itself keeps apart -- an
@@ -1254,6 +1260,10 @@ export interface Characteristics {
    *  card (no `cast`), and NOT a token: `token` stays false on it, so "whenever a token enters"
    *  never matches one. */
   emblem?: true;
+  /** A CARD WITH NO RULES TEXT -- an empty oracle text (Grizzly Bears, Memnite): what "a creature card
+   *  with no abilities" (Ruxa, Patient Professor) names. Absent on tokens, whose rows carry no text
+   *  (CEILING: a vanilla token is not stamped). */
+  noAbilities?: true;
   /** THE ONE DECK FACT ON AN OTHERWISE PRINTED RECORD. Set per deck by `markCommander`
    *  (matcher/commander.ts), never by extraction — CR 903.3 says the commander designation "is not a
    *  characteristic of the object represented by the card". It lives here anyway because a card's

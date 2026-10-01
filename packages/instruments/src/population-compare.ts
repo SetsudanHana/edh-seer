@@ -51,6 +51,9 @@ for (const [i, label] of [[0, "flat"], [1, "derived"]] as const) {
 console.log(`  decks where derived finds FEWER reasons: ${lostReasons.length}/${rows.length}`);
 console.log(`  decks whose top theme CHANGED: ${flips.length}/${rows.length}`);
 for (const f of flips.slice(0, 15)) console.log(`      ${f.deck.padEnd(38)} ${f.theme[0]} -> ${f.theme[1]}`);
+// `--themes`: every deck's derived top theme, one per line, so two derives can be diffed by deck
+// rather than compared by a count (#896 task 3: a theme that moved is the loudest signal there is).
+if (process.argv.includes("--themes")) for (const r of rows) console.log(`theme\t${r.deck}\t${r.theme[1]}`);
 
 if (VERBOSE) {
   console.log(`\nper deck (reasons flat -> derived):`);
