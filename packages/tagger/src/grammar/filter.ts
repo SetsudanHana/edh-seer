@@ -90,6 +90,13 @@ const HISTORIES: ReadonlyArray<readonly [string[], string]> = [
   [["was", "put", "there"], "put-into-graveyard"], [["put", "there"], "put-into-graveyard"],
 ];
 
+/** What a player did this turn ("who lost life this turn"). */
+const PLAYER_HISTORIES: ReadonlyArray<readonly [string[], string]> = [
+  [["lost", "life"], "lost-life"], [["gained", "life"], "gained-life"], [["attacked"], "attacked"],
+  [["was", "dealt", "combat", "damage"], "dealt-combat-damage"], [["was", "dealt", "damage"], "dealt-damage"],
+  [["cast", "a", "spell"], "cast"], [["cast", "one", "or", "more", "sorcery", "spells"], "cast-sorcery"],
+];
+
 const ROLE_NAMES = [["young", "hero"], ["monster"], ["wicked"], ["sorcerer"], ["royal"], ["cursed"], ["virtuous"]];
 
 const COLOR_WORDS: Record<string, string> = {
@@ -247,8 +254,16 @@ function player(c: Cursor): SubjectFilter | null {
   else if (c.eat("player")) control = r.control ?? "any";
   else if (c.eat("players")) { control = r.control ?? "any"; r.plural = true; }
   else return null;
+  // "each opponent who lost life this turn", "target player who attacked this turn": a player with a
+  // history this turn.
+  let history: string | undefined;
+  if (c.eat("who")) {
+    const h = PLAYER_HISTORIES.find(([ws]) => ws.every((x, j) => c.peek(j) === x) && c.peek(ws.length) === "this" && c.peek(ws.length + 1) === "turn");
+    if (!h) return null;
+    c.i += h[0].length + 2; history = h[1];
+  }
   if (!c.done) return null;
-  const out: SubjectFilter = { control, token: null };
+  const out: SubjectFilter = { control, token: null, ...(history ? { history: [history] } : {}) };
   const scope = scopeOf(r);
   if (scope) out.scope = scope;
   if (r.other) out.other = true;
@@ -287,6 +302,8 @@ function quantifierWords(c: Cursor, r: Reading): void {
       continue;
     }
     if (c.eat("any")) continue;
+    // "a second target creature you control", "a third target": which one in order, not which kind.
+    if (c.eat("second") || c.eat("third")) continue;
     // "an additional land", "two additional cards": how many more, not which.
     if (c.eat("additional")) continue;
     return;
@@ -911,6 +928,13 @@ function post(c: Cursor, r: Reading): boolean | null {
   // A DESTINATION is the action's: "target creature into their library", "target Equipment you control
   // to target creature", "up to two Forest cards onto the battlefield tapped".
   if (c.eat("onto", "the", "battlefield")) { c.eat("tapped"); return c.done || null; }
+  // "target land you control as a 4/4 Elemental creature", "a creature as your Ring-bearer": what it
+  // becomes or is chosen as -- the action's, like a destination.
+  if (c.peek() === "as" && c.i + 1 < c.t.length) {
+    const rest = c.t.slice(c.i + 1);
+    if (rest[0] === "your" || parse(rest.join(" ")) || rest.some((w) => /^(?:\d+|x)\/(?:\d+|x)$/.test(w))) { c.i = c.t.length; return true; }
+    return null;
+  }
   if (c.peek() === "into" || c.peek() === "to") {
     const rest = c.t.slice(c.i + 1);
     if (rest[0] === "its" || rest[0] === "their" || rest[0] === "your") { c.i = c.t.length; return true; }
@@ -1320,6 +1344,21 @@ function lower(r: Reading): SubjectFilter | null {
 
 /** The filter a subject phrase denotes, or `null` when the grammar did not understand all of it. */
 export function parse(text: string): SubjectFilter | null {
+  // "a number of 1/1 red Warrior creature tokens equal to the number of ...": the count is the action's.
+  {
+    const m = /^a number of (.+?) equal to\b/i.exec(text.trim());
+    if (m) return parse(m[1]!);
+  }
+  // A TOKEN NAMED AFTER A CARD ("a Tarmogoyf token", "a Walker token", "a Spellgorger Weird token"): the
+  // capitalised words before "token" that are no type, subtype or colour are its name, read past
+  // (CR 111.4: the token's own name is never a card to look for).
+  {
+    const m = /^((?:an?|two|three|X|\d+) )((?:[A-Z][\w'-]* )+)(tokens?\b.*)$/.exec(text.trim());
+    if (m && m[2]!.trim().split(" ").every((w) => {
+      const l = w.toLowerCase();
+      return !SUBTYPES.has(l) && !SUBTYPES.has(l.replace(/s$/, "")) && !TYPE_WORDS.has(l) && !COLOR_WORDS[l] && !ROLE_NAMES.some((r) => r.includes(l));
+    })) text = m[1]! + m[3]!;
+  }
   // A TOKEN'S QUOTED ABILITY ("a 1/1 Rat creature token with \"This token can't block.\"") is
   // rules text the token has, not a class it belongs to. Read past, after "with" or "and".
   // CEILING: the ability is not kept; a demand on a granted ability would need it.

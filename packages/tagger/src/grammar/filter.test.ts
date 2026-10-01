@@ -249,6 +249,14 @@ test("copy exceptions, conditions on the target, alternatives, destinations", ()
   expect(parse("target artifact or legendary creature")).toBeNull();
 });
 
+test("players with a history, counted creations, ordinals, tokens named after a card", () => {
+  expect(parse("each opponent who lost life this turn")).toMatchObject({ control: "opp", history: ["lost-life"] });
+  expect(parse("a number of 1/1 red Warrior creature tokens equal to the number of creatures target player controls")).toMatchObject({ token: true, subtype: "warrior" });
+  expect(parse("a second target creature you control")).toMatchObject({ type: "creature", scope: "target", control: "you" });
+  expect(parse("a Tarmogoyf token")).toEqual({ control: "any", token: true });
+  expect(parse("target land you control as a 4/4 Elemental creature")).toMatchObject({ type: "land", control: "you" });
+});
+
 /** REFUSED: the grammar answers null, and derive keeps `parseSubject`'s answer. Each is a narrowing
  *  the schema cannot hold (dropping it would WIDEN the claim), a reference, or not a filter at all. */
 test("refusals", () => {

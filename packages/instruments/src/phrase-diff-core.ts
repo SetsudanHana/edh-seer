@@ -117,7 +117,7 @@ const AMOUNT = /^(?:(?:\d+|x|one|two|three|half|twice)\s+(?:damage|life|times)\b
 /** "your second spell", "their first card": the Nth event of a turn, a trigger condition (task 5). */
 const ORDINAL = /^(?:your|their|an opponent's|each player's)\s+(?:first|second|third|fourth|fifth)\b/;
 /** A player doing something: "you discard a card", "you cast a noncreature spell" -- a clause. */
-const PLAYER_CLAUSE = /^(?:you|players?|an opponent|each player|each opponent)\s+(?:cast|discard|exile|sacrifice|search|reveal|note|choose|lose|gain|draw|mill|create|attack|block|roll|flip|play|activate|control|don't|do|have|has)\b/;
+const PLAYER_CLAUSE = /^(?:you|players?|an opponent|each player|each opponent|target player|target opponent|a player)\s+(?:cast|discard|exile|sacrifice|search|reveal|note|choose|lose|gain|draw|mill|create|attack|block|roll|flip|play|activate|control|don't|do|have|has)\b/;
 /** A type-setting or rules-bending effect's object: "a Vampire in addition to its other types",
  *  "Angel creature type", "creature spells as though they had flash". */
 const EFFECT_OBJECT = /\bin addition to (?:its|their) other\b|(?<!chosen )\b(?:creature )?type$|\bas though\b/;
@@ -149,7 +149,7 @@ const ZONE = /^(?:(?:your|their|its owner's|target player's|target opponent's|an
  *  "you PAY {1}", "you HAVE no maximum hand size"). Task 6's actions. A verb inside a relative clause
  *  ("a creature THAT HAS flying") is still a noun phrase, so a relative pronoun before the verb keeps
  *  the phrase in `filter`. "cast"/"casts" are absent on purpose: "spells you cast" is a filter. */
-const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are|deals?|may|would|pays?|attacks|blocks|enters|dies|wins?|draws?|untaps?|costs?|causes|plays?)\b/;
+const CLAUSE_VERB = /\b(?:gains?|gets?|loses?|can't|can|becomes?|has|have|is|are|deals?|may|would|pays?|attacks|blocks|enters|dies|wins?|draws?|untaps?|costs?|causes?|plays?|attack|block|assigns?|chooses|commits|claim|attach)\b/;
 const RELATIVE = /\b(?:that|that's|who|which|whose)\b/;
 /** A REFERENCE inside a longer phrase: what was exiled, revealed or chosen earlier, "those", "that
  *  many". Task 4 and #900's population, resolved by `derive/references.ts`, not by a filter. */
@@ -166,6 +166,10 @@ export function domainOf(phrase: string): string {
   const text = phrase.toLowerCase().replace(/’/g, "'").trim();
   if (text.startsWith("(")) return "reminder";
   if (text.startsWith('"') || text.startsWith("“")) return "quoted";
+  // Ability text: a loyalty ability ("[+1]: ...") or "activated ability: ...".
+  if (/^\[[^\]]*\]:|^(?:an? )?(?:activated|triggered) ability:|^activated ability\b/.test(text)) return "ability-text";
+  // A parenthesised note or a "Name — {1} — 5/2" row is no filter phrase.
+  if (/[()]/.test(text) || /\s[—–]\s\{/.test(text)) return "reminder";
   // Split on the dash a keyword's cost hangs off ("Ward—Discard a card.") and on ";" too.
   const w = text.split(/[\s,—–;:]+/).filter((x) => x !== "");
   if (w.length === 0) return "empty";
@@ -179,6 +183,13 @@ export function domainOf(phrase: string): string {
   if (/^[+-](?:\d|x)/.test(w[0]!) || (!text.includes(",") && counterKindOf(text)) || (/\bcounters?$/.test(text) && counterKindOf(text.replace(/^(?:a|an|one or more|one|two|three|x|\d+|all)\s+/, "")))) return "counter";
   if (w.length === 1 && /^(?:\d+|x)$/.test(w[0]!)) return "number";
   if (TABLE_ROW.test(text)) return "table";
+  // A die result: "a 3 or higher", "a natural 20", "a 6".
+  if (/^an? (?:natural )?\d+(?: or (?:higher|lower|more|less))?$/.test(text)) return "game-piece";
+  // A colour choice: "a color of your choice", "any color", "any one color", "any combination of colors".
+  if (/^(?:a color|any (?:one )?colou?r|any combination of colou?rs|a colou?r of your choice)\b/.test(text)) return "mana";
+  // "each kind of counter", "a third of their life".
+  if (/^each (?:kind of )?counter\b|^each kind of counter\b/.test(text)) return "counter";
+  if (/^(?:a third|half|a quarter) of\b/.test(text)) return "amount";
   if (GAME_PIECE.test(text)) return "game-piece";
   if (FRAGMENT.test(text)) return "fragment";
   // "cards equal to the number of ...": how many, an amount.
@@ -191,7 +202,7 @@ export function domainOf(phrase: string): string {
   if (AMOUNT.test(text)) return "amount";
   if (EFFECT_OBJECT.test(text.split(/["“]/)[0]!)) return "clause";
   if (w[0]!.startsWith("{") || /\bmana\b(?! value| cost)/.test(amountless.toLowerCase())) return "mana";
-  if (ZONE.test(text) || /^(?:the )?top (?:\w+ )?cards? of\b/.test(text)) return "zone";
+  if (ZONE.test(text) || /^(?:(?:any number|each|one|two|three|up to \w+) of )?(?:the )?top (?:\w+ )?cards? of\b/.test(text)) return "zone";
   if (ORDINAL.test(text)) return "ordinal";
   if (PLAYER_CLAUSE.test(text)) return "clause";
   if (!text.includes(" named ") && TIME.test(text)) return "time";

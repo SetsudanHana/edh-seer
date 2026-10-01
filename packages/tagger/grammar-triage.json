@@ -1,9 +1,9 @@
 {
   "_what": "H3 for the filter grammar (#896 task 2): every group of phrases on which packages/tagger/src/grammar/filter.ts and parseSubject disagree, grouped by the SubjectFilter fields that differ, over packages/tagger/phrases.jsonl. Each group is labelled after reading EVERY member, not a sample. 'grammar right' cites the rule or the printed text; 'grammar wrong' must be fixed before task 3 switches derive over; 'both wrong' says what neither reads. phrase-diff-triage.test.ts fails when a group appears, disappears or changes size, and when the parsed count moves, so a change to either parser is re-triaged and banked here.",
-  "parsed": 6125,
+  "parsed": 6159,
   "groups": {
     "control": {
-      "distinct": 77,
+      "distinct": 78,
       "label": "grammar right",
       "rule": "CR 112.2",
       "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2)."
@@ -27,7 +27,7 @@
       "why": "'up to one other target creature', 'one or more other creatures', 'any number of other permanents': 'other' after a count. parseSubject's `other` regex accepts at most one word before it. Also 'target creature other than this creature', 'all creatures other than this creature': the same fact as 'another' written out."
     },
     "fromZone": {
-      "distinct": 104,
+      "distinct": 107,
       "label": "grammar right",
       "rule": "CR 400.1",
       "why": "'target card from an opponent's graveyard', '... from defending player's graveyard': the same ORIGIN_ZONE possessive gap as the fromZone,scope group, where the possessive carries no 'target'. Also 'lands from the top of your library' and 'creature spells from the top of your library' (Courser/Future Sight family: the origin is the library), and 'up to two target cards from a single graveyard' / 'from graveyards' / 'from all graveyards' (the cards come from a graveyard; 'single' constrains how many graveyards, not the class). parseSubject's ORIGIN_ZONE reads none of these."
@@ -423,7 +423,7 @@
       "why": "Every member read. scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; 'each of up to three targets' is targeted; a quantifier inside a token's quoted ability is not the token's; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did."
     },
     "stats,type": {
-      "distinct": 2,
+      "distinct": 3,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
@@ -603,7 +603,7 @@
       "why": "Every member read. owner: 'you own'; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did."
     },
     "history": {
-      "distinct": 45,
+      "distinct": 47,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. history: what happened to it this turn: dealt damage (by whom), attacked, blocked, entered, died, put into a graveyard (from where), milled, crewed/saddled it."
@@ -1327,6 +1327,48 @@
       "label": "grammar right",
       "rule": "CR 108.3, CR 112.2, CR 115.1, printed text",
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; stats: stat comparisons parseSubject does not read (a bare value, a run, `vs`, a superlative 'the greatest power among ...', base power and toughness, and a `variable` rhs: X, a count, a named object's stat)."
+    },
+    "keyword,stats,subtype,type": {
+      "distinct": 3,
+      "label": "grammar right",
+      "rule": "CR 111.4, CR 715, printed text",
+      "why": "Every member read. keyword: keyword lists with commas and 'protection from X', 'that has convoke', 'with a cycling ability'; stats: stat comparisons parseSubject does not read (a bare value, a run, `vs`, a superlative 'the greatest power among ...', base power and toughness, and a `variable` rhs: X, a count, a named object's stat); subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not a subtype; Adventure is a card's layout (`status`), not its subtype; a planeswalker subtype counts before 'planeswalker'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+    },
+    "stats,subtype,type": {
+      "distinct": 2,
+      "label": "grammar right",
+      "rule": "CR 111.4, CR 715, printed text",
+      "why": "Every member read. stats: stat comparisons parseSubject does not read (a bare value, a run, `vs`, a superlative 'the greatest power among ...', base power and toughness, and a `variable` rhs: X, a count, a named object's stat); subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not a subtype; Adventure is a card's layout (`status`), not its subtype; a planeswalker subtype counts before 'planeswalker'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+    },
+    "allTypes,stats": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "Every member read. allTypes: compound types bind their own alternative; stats: stat comparisons parseSubject does not read (a bare value, a run, `vs`, a superlative 'the greatest power among ...', base power and toughness, and a `variable` rhs: X, a count, a named object's stat)."
+    },
+    "allTypes,stats,subtype,type": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 111.4, CR 715, printed text",
+      "why": "Every member read. allTypes: compound types bind their own alternative; stats: stat comparisons parseSubject does not read (a bare value, a run, `vs`, a superlative 'the greatest power among ...', base power and toughness, and a `variable` rhs: X, a count, a named object's stat); subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not a subtype; Adventure is a card's layout (`status`), not its subtype; a planeswalker subtype counts before 'planeswalker'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+    },
+    "control,scope,type": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 108.3, CR 112.2, CR 115.1, printed text",
+      "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+    },
+    "history,type": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "Every member read. history: what happened to it this turn: dealt damage (by whom), attacked, blocked, entered, died, put into a graveyard (from where), milled, crewed/saddled it; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+    },
+    "snow,stats,type": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 205.4g, printed text",
+      "why": "Every member read. snow: snow; stats: stat comparisons parseSubject does not read (a bare value, a run, `vs`, a superlative 'the greatest power among ...', base power and toughness, and a `variable` rhs: X, a count, a named object's stat); type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     }
   }
 }
