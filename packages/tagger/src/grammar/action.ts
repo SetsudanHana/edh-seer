@@ -232,11 +232,11 @@ const ANY_TARGET = parse("any target")!;
 
 /** "two +1/+1 counters", "a stun counter", "X charge counters": the count and the kind. */
 function countersOf(phrase: string): { amount?: string; counter: string } | null {
-  const m = /^(?:(a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+|that many|twice that many|twice x|an additional|any number of|up to (?:one|two|three|x|\d+)) )?(.+? counters?)$/i.exec(phrase.trim());
+  const m = /^(?:(a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+|that many|twice that many|twice x|an additional|another|any number of|up to (?:one|two|three|x|\d+)) )?(.+? counters?)$/i.exec(phrase.trim());
   const counter = m ? counterKindOf(m[2]!) : undefined;
   if (!counter) return null;
   const word = m![1]?.toLowerCase().replace(/^up to /, "");
-  const amount = word ? (word === "an additional" ? "1" : amountOf(word) ?? word) : undefined;
+  const amount = word ? (word === "an additional" || word === "another" ? "1" : amountOf(word) ?? word) : undefined;
   return { ...(amount ? { amount } : {}), counter };
 }
 
@@ -712,9 +712,9 @@ function subjectAction(t: string): ActionReading[] | null {
   // The whole phrase is the text: derive reads the abilities' holder ("artifacts you control") off it.
   if (act) return [{ verb: "cost-modify", object: { control: "any", token: null }, text: t, amount: `${act[3]!.toLowerCase() === "less" ? "-" : "+"}${act[2]!}` }];
   // "Cleric spells you cast cost {W}{B} less to cast": coloured mana, the symbols the amount.
-  const pips = /^(.+?) costs? ((?:\{[^}]+\}){1,6}) (less|more) to cast$/i.exec(t);
+  const pips = /^(.+?) costs? ((?:\{[^}]+\}){1,6}) (less|more) to cast( for each .+)?$/i.exec(t);
   if (pips && !/^\{(?:\d+|x)\}$/i.test(pips[2]!) && objectOf(pips[1]!) && !/^the (?:first|second|third|next)\b|\beach turn\b/i.test(pips[1]!)) {
-    return [{ verb: "cost-modify", object: objectOf(pips[1]!.replace(/^each /i, ""))!.object, text: pips[1]!.replace(/^each /i, ""), amount: `${pips[3]!.toLowerCase() === "less" ? "-" : "+"}${pips[2]!}` }];
+    return [{ verb: "cost-modify", object: objectOf(pips[1]!.replace(/^each /i, ""))!.object, text: pips[1]!.replace(/^each /i, ""), amount: `${pips[3]!.toLowerCase() === "less" ? "-" : "+"}${pips[2]!}${pips[4] ?? ""}` }];
   }
   const cost = /^(.+?) costs? \{(\d+|x)\} (less|more) to cast( for each .+)?$/i.exec(t);
   // "The first instant or sorcery spell you cast each turn": an ordinal no filter field holds, so the
@@ -1061,9 +1061,11 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   // `type-grant` reads "in addition to its other types").
   // "is a 2/2 blue Elemental creature with flying", "is a Swamp": an Aura's host animated or retyped,
   // the store's animate (and a grant per "with" ability). Not "in addition to": that is a type grant.
-  const animated = /^(?:is|are) an? ((?:\d+\/\d+ )?[\w -]+?)(?: with (.+))?$/i.exec(pred.replace(/ with base power and toughness (\d+\/\d+)$/i, ""));
+  // "... with base power and toughness 4/4, flying, and that ability": the set P/T, then grants.
+  const basePt = / with base power and toughness (\d+\/\d+)(?:,? (?:and )?(.+))?$/i.exec(pred);
+  const animated = /^(?:is|are) an? ((?:\d+\/\d+ )?[\w -]+?)(?: with (.+))?$/i.exec(basePt ? `${pred.slice(0, basePt.index)}${basePt[2] ? ` with ${basePt[2]}` : ""}` : pred);
   if (animated && !/in addition to|\bthe\b/i.test(pred)) {
-    const pt = / with base power and toughness (\d+\/\d+)$/i.exec(pred);
+    const pt = basePt;
     const withs = animated[2] ? abilitiesOf(animated[2]) : [];
     if (withs) return [{ verb: "animate", ...target }, ...(pt ? [{ verb: "modify-pt", ...target, amount: pt[1]! }] : []), ...withs.map((a) => ({ verb: "grant-ability", object, text: a }))];
   }
@@ -1235,7 +1237,7 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
     t = have[2]!;
   }
   // "target artifact creature's controller sacrifices it": a target's controller.
-  const owner = /^(target [a-z -]{1,40}?'s (?:controller|owner)) (?=\S)/i.exec(t);
+  const owner = /^(target [a-z -]{1,40}?'s (?:controller|owner)|the controller of target [a-z -]{1,40}?) (?=sacrifices|discards|draws|loses|gains|returns|puts|creates|mills|exiles|shuffles)/i.exec(t);
   if (owner && !actor) { actor = { control: "any", scope: "that", text: owner[1]! }; t = t.slice(owner[0].length); }
   else for (const [word, who] of ACTORS) {
     if (t.toLowerCase().startsWith(word + " ")) { actor = { ...who!, text: t.slice(0, word.length) }; t = t.slice(word.length + 1); break; }

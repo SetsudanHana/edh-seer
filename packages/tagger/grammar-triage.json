@@ -33,7 +33,7 @@
       "why": "'target card from an opponent's graveyard', '... from defending player's graveyard': the same ORIGIN_ZONE possessive gap as the fromZone,scope group, where the possessive carries no 'target'. Also 'lands from the top of your library' and 'creature spells from the top of your library' (Courser/Future Sight family: the origin is the library), and 'up to two target cards from a single graveyard' / 'from graveyards' / 'from all graveyards' (the cards come from a graveyard; 'single' constrains how many graveyards, not the class). parseSubject's ORIGIN_ZONE reads none of these."
     },
     "zone": {
-      "distinct": 38,
+      "distinct": 39,
       "label": "grammar right",
       "rule": "CR 400.1",
       "why": "'target creature card in your graveyard', 'all cards in your hand': `zone` is where the subject lives and absent means the battlefield (schema), so parseSubject's reading puts every one of these on the battlefield. TASK 3 CAUTION: on a producer, zone graveyard is read as a graveyard FILL by graveyardFillMatches; the switch must check each consumer of `zone` before trusting this field from the grammar. The two OR-lists whose alternatives have different heads ('target spell, nonland permanent, or card in a graveyard', 'an artifact or a card in your hand') are refused, not zoned. Also 'Enchant creature card in a graveyard' (Animate Dead's enchant line, CR 303.4a) and 'cards in graveyards' (plural)."
@@ -105,7 +105,7 @@
       "why": "'a 3/1 colorless Wall artifact creature token with defender named Stone Boulder': the token's own name, and 'stone' is not a subtype of it."
     },
     "owner,zone": {
-      "distinct": 3,
+      "distinct": 4,
       "label": "grammar right",
       "rule": "CR 108.3, CR 400.1",
       "why": "'a card you own in exile with a study counter on it': owned by you, in exile."
@@ -770,12 +770,6 @@
       "rule": "CR 108.3, CR 110.5, CR 112.2, CR 115.1, CR 701.15, CR 701.60, CR 702.33",
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; status: a status or designation: face-down/up, enchanted/equipped after a determiner, blocked/unblocked, goaded, suspected, kicked, renowned, double-faced, modal, suspended, fortified, Adventure, no abilities."
     },
-    "counter": {
-      "distinct": 2,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "Every member read. counter: a counter named in the phrase, including kinds outside the dictionary ('an impostor counter'); none from a stat's rhs."
-    },
     "except,subtype": {
       "distinct": 2,
       "label": "grammar right",
@@ -1009,18 +1003,6 @@
       "label": "grammar right",
       "rule": "CR 108.3, CR 112.2, CR 115.1, CR 400.1",
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; zone: where the subject lives ('in your graveyard', 'an exiled card')."
-    },
-    "counter,owner,zone": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "CR 108.3, CR 400.1, printed text",
-      "why": "Every member read. counter: a counter named in the phrase, including kinds outside the dictionary ('an impostor counter'); none from a stat's rhs; owner: 'you own', 'an opponent owns', 'you control but don't own'; zone: where the subject lives ('in your graveyard', 'an exiled card')."
-    },
-    "counter,zone": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "CR 400.1, printed text",
-      "why": "Every member read. counter: a counter named in the phrase, including kinds outside the dictionary ('an impostor counter'); none from a stat's rhs; zone: where the subject lives ('in your graveyard', 'an exiled card')."
     },
     "except,token,type": {
       "distinct": 1,

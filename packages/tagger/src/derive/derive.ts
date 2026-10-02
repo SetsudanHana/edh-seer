@@ -347,7 +347,9 @@ import { emblemRecipient } from "../emblem.js";
 // exiled with the card, "fight each other", a predicate with no subject of its own as a back-reference.
 // 258: fragments 9: inner triggers as openers, a player's life total set, toughness CDAs, counted
 // entries, "twice that many", ordinal and next-spell subjects kept as stored, graveyard sets.
-export const DERIVE_VERSION = 258;
+// 259: fragments 10: 31 named counter kinds the vocabulary lacked (loot, tower, arrow, necrodermis,
+// ...), "another" counter, a coloured cost per count, base P/T with a list of abilities.
+export const DERIVE_VERSION = 259;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
