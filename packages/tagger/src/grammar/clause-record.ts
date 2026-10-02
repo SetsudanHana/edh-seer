@@ -29,6 +29,9 @@ const PLAYER = /^(?:you|a player|an opponent|each player|each opponent|target op
  *  card", "an opponent casts a spell") the OBJECT, which is what derive's self and antecedent readings
  *  key on. */
 export function triggerSubjectText(preamble: string): string {
+  // A PHASE TRIGGER names whose phase: "your upkeep" is yours, "each upkeep" / "the end step" anyone's.
+  const phase = /^at the beginning of (your|each|the|each player's|each opponent's|that player's)\b/i.exec(preamble);
+  if (phase) return /^your$/i.test(phase[1]!) ? "you" : /opponent/i.test(phase[1]!) ? "each opponent" : "each player";
   const rest = preamble.replace(/^(?:when|whenever|at)\s+/i, "");
   const v = EVENT_VERB.exec(rest);
   const head = (v ? rest.slice(0, v.index) : rest).trim();
@@ -41,7 +44,7 @@ export function triggerSubjectText(preamble: string): string {
 
 const SELF_SUBJECT = /^(?:~|this [a-z]+)$/i;
 /** Verbs the player does with nothing after them, whose stored object is "you". */
-const NO_OBJECT_YOU = new Set(["monarch", "initiative", "ring-tempts", "learn", "venture-into-the-dungeon", "manifest-dread", "proliferate", "investigate", "populate"]);
+const NO_OBJECT_YOU = new Set(["monarch", "initiative", "ring-tempts", "learn", "venture-into-the-dungeon", "manifest-dread", "proliferate", "investigate", "populate", "win-game", "lose-game"]);
 /** Verbs whose stored object can be the PLAYER it happens to ("target player mills two cards" ->
  *  "target player"), the convention derive's `PLAYER_OBJECT_VERBS` reads. */
 const PLAYER_VERBS = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life"]);
@@ -92,10 +95,17 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined): 
     // mostly leaves it (Beast Within; defaulting it to the battlefield moved 2,348 cards).
     const ref = BACK_REFERENCE.test(object);
     const before = [...out].reverse().find((a) => a.verb === "search" || a.verb === "exile");
-    const from = r.fromZone ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
+    // "Until end of turn, you may cast THAT CARD" after an exile: from exile, as the store writes it.
+    const castRef = (r.verb === "cast" || r.verb === "play") && ref && before?.verb === "exile" ? "exile" : null;
+    // "return this enchantment to its owner's hand": the card itself leaves the battlefield.
+    const selfBounce = (r.verb === "return" || r.verb === "put") && r.object?.self === true && (r.toZone === "hand" || r.toZone === "library") ? "battlefield" : null;
+    const from = r.fromZone ?? castRef ?? selfBounce ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
       : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? "exile" : null)
       // "that many cards from the bottom of your library": the library the words name.
-      : /\b(?:top|bottom) of (?:your|their|its owner's|that player's|target player's) library\b/i.test(r.phrase ?? r.text ?? "") ? "library" : null);
+      : /\b(?:top|bottom) of (?:your|their|its owner's|that player's|target player's) library\b/i.test(r.phrase ?? r.text ?? "") ? "library"
+      // An EXILE of a permanent named outright leaves the battlefield, the zone the store writes for an
+      // exile (Baleful Mastery, Thassa); a destroy or sacrifice it leaves unstated, so they are not.
+      : r.verb === "exile" && r.object && !r.object.ref && !r.object.self && !/\bcards?\b|\bspells?\b/i.test(object) && r.object.zone === undefined ? "battlefield" : null);
     // "put one onto the battlefield TAPPED": the tap is on what just moved, written as the store does.
     const tapped = r.verb === "tap" && !object && out.length > 0 ? out[out.length - 1]!.object ?? "" : "";
     out.push({
@@ -143,7 +153,11 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] });
       continue;
     }
-    record.actions = actionsOf(readings, SELF_SUBJECT.test(record.trigger?.subject ?? "") ? record.trigger!.subject! : undefined);
+    // The card itself as "it": in a self trigger, and in a replacement about the card ("If this creature
+    // would enter and it wasn't cast ..., exile it instead", Primeval Spawn).
+    const selfNoun = SELF_SUBJECT.test(record.trigger?.subject ?? "") ? record.trigger!.subject!
+      : /^if (~|this [a-z]+) would\b/i.exec(effect)?.[1];
+    record.actions = actionsOf(readings, selfNoun);
     if (record.actions.length === 0 && type !== "static") record.actions = [{ verb: "none", object: "" } as Action];
     records.push(record);
     for (const o of overflow) if (o.actions!.length === 0 && o.trigger) o.actions = record.actions;
