@@ -9,7 +9,7 @@
     "@edh-seer/data": "*",
     "@edh-seer/engine": "*",
     "@edh-seer/tagger": "*",
-    "mongodb": "^7.6.0"
+    "mongodb": "^7.7.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
