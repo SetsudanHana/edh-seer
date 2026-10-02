@@ -33,10 +33,6 @@
       "label": "grammar right",
       "why": "What the store recorded as nothing: Snuff Out's 4 life paid, Ashling's evoke grant, Whirler Rogue's tapped artifacts as a cost."
     },
-    "repeats": {
-      "label": "grammar right",
-      "why": "'At the beginning of EACH upkeep / combat / the end step' is any player's phase, every turn (per-cycle); the store wrote control 'you' (Ophiomancer, Unnatural Growth, Dress Down)."
-    },
     "emits.subject(+type)": {
       "label": "grammar right",
       "why": "The card itself with its type: 'sacrifice this land', 'untap this artifact' where the store wrote 'this' (Evolving Wilds, Bender's Waterskin)."

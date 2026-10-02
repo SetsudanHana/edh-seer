@@ -369,7 +369,9 @@ import { emblemRecipient } from "../emblem.js";
 // 268: task 7 step 2: "phases out" names what phases; "spend this mana only ..." is the store's other.
 // 269: task 7 step 3: "becomes a 3/1 ... creature" carries its P/T, a card's own cost reduction keeps its
 // whole phrase, "you may pay 4 life rather than pay this spell's mana cost" is a life payment too.
-export const DERIVE_VERSION = 269;
+// 270: #896 task 7, the card-by-card switch: a card the grammar reads completely derives from its
+// printed text alone when that matches the stored answer or a "grammar right" group (derive-corpus).
+export const DERIVE_VERSION = 270;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

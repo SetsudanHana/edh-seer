@@ -1,7 +1,7 @@
-/** G3 FOR #896 TASK 7: does a card derive the same abilities from its grammar-only clause records as from
+/** G3 FOR #896 TASK 7 (moved from instruments: `derive-corpus` reads it for the per-card switch): does a card derive the same abilities from its grammar-only clause records as from
  *  the stored model answer? A difference is grouped by WHICH ability fields differ -- the H3 grouping
  *  of task 2 -- so a group is labelled once and its members spot-checked, not judged one by one. */
-import type { Ability } from "@edh-seer/tagger";
+import type { Ability } from "../schema.js";
 
 /** Key order is not a difference: two derives that build the same subject in a different order agree. */
 // ...nor an amount's comma before its "where X is" ("+X/+X, where X is ..." reads as "+X/+X where X is ...").
@@ -69,4 +69,18 @@ export function deriveDiff(stored: readonly Ability[], grammar: readonly Ability
     x.forEach((ab, i) => { for (const f of fieldsOf(ab, y[i]!)) keys.add(f); });
   }
   return keys.size ? [...keys].sort().join(",") : null;
+}
+
+/** What the stored derive CLAIMS -- each effect kind and each emitted event verb -- that the grammar-only
+ *  derive does not. A labelled group is labelled on three cards; this guards the rest of it: a card the
+ *  grammar would make claim LESS than its stored answer keeps the stored answer (G4: Perpetual
+ *  Timepiece's recursion, Szarekh's milled-card return and Glint Raker's dig were lost inside groups
+ *  labelled "grammar right" on other cards). */
+export function lostClaims(stored: readonly Ability[], grammar: readonly Ability[]): string[] {
+  const claims = (abs: readonly Ability[]) => new Set(abs.flatMap((a) => [
+    ...(a.effect?.kind ? [`kind:${a.effect.kind}`] : []),
+    ...(a.emits ?? []).map((e) => `emit:${e.verb}`),
+  ]));
+  const g = claims(grammar);
+  return [...claims(stored)].filter((c) => !g.has(c)).sort();
 }

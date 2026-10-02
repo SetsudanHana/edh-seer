@@ -33,3 +33,17 @@ test("a phase trigger's subject is whose phase", () => {
   expect(triggerSubjectText("At the beginning of your upkeep")).toBe("you");
   expect(triggerSubjectText("At the beginning of each upkeep")).toBe("each player");
 });
+
+test("a proliferate chooses any permanent; support names other creatures; a token list is one create per kind", () => {
+  const tide = grammarClauseRecords({ name: "Inexorable Tide", typeLine: "Enchantment", oracleText: "Whenever you cast a spell, proliferate." });
+  expect(tide.records[0]!.actions![0]).toMatchObject({ verb: "proliferate", object: "any" });
+  const patron = grammarClauseRecords({ name: "Generous Patron", typeLine: "Creature — Elf Advisor", oracleText: "When this creature enters, support 2." });
+  expect(patron.records[0]!.actions![0]).toMatchObject({ verb: "support", object: "other target creatures", amount: "2" });
+  const cotton = grammarClauseRecords({ name: "Farmer Cotton", typeLine: "Legendary Creature — Halfling Peasant", oracleText: "When this creature enters, create X 1/1 white Halfling creature tokens and X Food tokens." });
+  expect(cotton.records[0]!.actions!.map((a) => a.object)).toEqual(["X 1/1 white Halfling creature tokens", "X Food tokens"]);
+});
+
+test("spells given affinity are a cost reduction, the store's form", () => {
+  const pearl = grammarClauseRecords({ name: "Pearl-Ear, Imperial Advisor", typeLine: "Legendary Creature — Fox Advisor", oracleText: "Enchantment spells you cast have affinity for Auras." });
+  expect(pearl.records[0]!.actions![0]).toMatchObject({ verb: "cost-modify" });
+});
