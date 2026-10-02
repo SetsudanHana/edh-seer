@@ -101,7 +101,12 @@ function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | 
   // An Aura's or Equipment's host: its class, as the trigger grammar reads it (the text keeps the rest).
   const host = /^(?:enchanted|equipped) (creature|permanent|land|artifact|planeswalker)$/i.exec(t);
   if (host) return { object: parse(`a ${host[1]!.toLowerCase()}`)! };
-  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  // "enchanted Forest", "enchanted Plains": a host of a land type, its class as the filter reads it.
+  const typed = /^enchanted ([A-Z][a-z]+)$/.exec(t);
+  if (typed && parse(`a ${typed[1]}`)) return { object: parse(`a ${typed[1]}`)! };
+  // "that land", "that artifact": a back-reference to an object the sentence named.
+  if (/^that (?:land|artifact|enchantment|planeswalker|aura|equipment|vehicle|dragon)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:spell|ability|creature|permanent|card|token)|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   // "one or two target creatures": at most two, the store's "up to two".
   if (/^one or two /i.test(t)) return objectOf(t.replace(/^one or two /i, "up to two "));
   const m = COUNT.exec(t);
@@ -178,7 +183,7 @@ const DAMAGE_LIFE: Record<string, [string, Handler]> = {
   gain: ["gain-life", lifeOf],
   lose: ["lose-life", (rest) => (/^half (?:their|your) life(?:, rounded (?:up|down))?$/.test(rest) ? { amount: "half" } : lifeOf(rest))],
   // Paying life is losing it (CR 118.3b's reading the store already uses: "pay X life" is lose-life).
-  pay: ["lose-life", (rest) => (/ life$/.test(rest) ? lifeOf(rest) : null)],
+  pay: ["lose-life", (rest) => (/^half your life, rounded (?:up|down)$/.test(rest) ? { amount: "half" } : / life$/.test(rest) ? lifeOf(rest) : null)],
   deal: ["deal-damage", (rest) => {
     // "2 damage to any target and 3 damage to you": one action per recipient, as the store writes it.
     const parts = rest.split(/,? and (?=(?:\w+|half X|that much) damage\b)|, (?=(?:\w+|half X) damage\b)/);
@@ -286,7 +291,7 @@ const COUNTERS: Record<string, [string, Handler]> = {
     if (!c?.counter || !on) return null;
     return { object: on.object, counter: c.counter, amount: c.amount ?? "1", text: m![2] };
   }],
-  proliferate: ["proliferate", (rest) => (rest === "" ? {} : null)],
+  proliferate: ["proliferate", (rest) => (rest === "" ? {} : timesOf(rest) ? { amount: timesOf(rest)! } : null)],
 };
 
 /** "a Treasure token", "two 1/1 white Soldier creature tokens with flying", "X 2/2 black Zombie creature
@@ -344,7 +349,7 @@ function tokenList(rest: string): Args | Args[] | null {
 
 /** "twice", "five times", "X times", "that many times". */
 function timesOf(rest: string): string | null {
-  if (rest === "") return "1";
+  if (rest === "" || rest === "an additional time") return "1";
   if (rest === "twice") return "2";
   const m = /^(\w+|that many) times$/.exec(rest);
   return m ? amountOf(m[1]!) ?? m[1]! : null;
@@ -392,7 +397,7 @@ const MOVE_REF = /^(?:(?:one|two|three|up to (?:one|two|three)|any number) of (?
  *  stays in the text, as the store writes a zone move ("two creatures", no amount): derive's counts
  *  read it there. `onField`: a permanent moved with no "from" leaves the battlefield. */
 function moveObject(phrase: string, onField = false): Args | null {
-  const t = phrase.replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards)$/, "");
+  const t = phrase.replace(/ at random$/, "").replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards)$/, "");
   // "target player's graveyard", "all graveyards": a whole graveyard.
   if (/^(?:target player's|target opponent's|each opponent's|your|their|all|each player's|all opponents'|any number of target players'|target players') graveyards?$/.test(t)) return { object: { control: "any", token: null }, fromZone: "graveyard", text: phrase };
   // "one of them", "the rest", "the exiled card", "those tokens": back-references, kept as stored.
@@ -534,6 +539,12 @@ const MANA_TAP: Record<string, [string, Handler]> = {
     return r && [r, { ...r, verb: "untap" }];
   }],
   tap: ["tap", (rest) => {
+    // "tap it and up to one target creature an opponent controls": one tap each.
+    const parts = rest.split(OBJECT_JOINT);
+    if (parts.length > 1) {
+      const each = parts.map((p) => objectOf(p));
+      return each.every((e) => e) ? each.map((e, i) => ({ object: e!.object, ...(e!.object.ref || e!.object.self ? {} : { text: parts[i]! }) })) : null;
+    }
     const r = objectOf(rest);
     return r && { object: r.object, ...(r.object.ref || r.object.self ? {} : { text: rest }) };
   }],
@@ -563,6 +574,12 @@ const TAIL: Record<string, [string, Handler]> = {
   detain: ["detain", thing],
   suspect: ["suspect", thing],
   copy: ["copy", (rest) => {
+    // "copy it twice", "copy that card three times": the copies are the amount.
+    const times = / (twice|\w+ times)$/.exec(rest);
+    if (times && timesOf(times[1]!)) { const r = thing(rest.slice(0, times.index)); return r && { ...r, amount: timesOf(times[1]!)! }; }
+    // "copy it, except the copy isn't legendary".
+    const exc = rest.indexOf(", except ");
+    if (exc > 0) { const r = thing(rest.slice(0, exc)); const e = exceptOf(rest.slice(exc + ", except ".length), { control: "any", token: null }); return r && e ? [r, ...e] : null; }
     const each = rest.indexOf(" for each ");
     const r = thing(each >= 0 ? rest.slice(0, each) : rest);
     return r && { ...r, ...(each >= 0 ? { amount: rest.slice(each + 1) } : {}) };
@@ -624,7 +641,7 @@ function castOrPlay(rest: string, what: RegExp): Args | null {
   let t = rest;
   for (let prev = ""; prev !== t;) {
     prev = t;
-    t = t.replace(/ (?:as though (?:it|they) had flash|without paying (?:its|their) mana costs?|this turn|until end of turn|until (?:the )?end of your next turn|on each of your turns|for as long as it remains exiled|for as long as (?:they|it) remain exiled|using its [\w-]+ ability|by paying (?:\{[^}]+\})+ rather than paying (?:its|their) mana costs?)$/i, "")
+    t = t.replace(/ (?:as though (?:it|they) had flash|without paying (?:its|their) mana costs?|this turn|until end of turn|until (?:the )?end of your next turn|on each of (?:your|their) turns|for as long as it remains exiled|for as long as (?:they|it) remain exiled|using its [\w-]+ ability|by paying (?:\{[^}]+\})+ rather than paying (?:its|their) mana costs?)$/i, "")
       // "..., and you may spend mana as though it were mana of any color to cast that spell".
       .replace(/,? and (?:you may spend mana as though it were mana of any (?:color|type)|mana of any type can be spent) to cast (?:that spell|it|them|those spells)$/i, "");
   }
@@ -651,6 +668,16 @@ function subjectAction(t: string): ActionReading[] | null {
   // STRIVE, an ability word: "This spell costs {1}{G} more to cast for each
   // target beyond the first" -- the store's cost-modify, the whole phrase its text.
   if (/^this spell costs (?:\{[^}]+\})+ more to cast for each target beyond the first$/i.test(t)) return [{ verb: "cost-modify", object: SELF, text: t }];
+  // "Activated abilities of artifact tokens you control cost {1} less to activate", "Cycling abilities
+  // you activate cost {2} less to activate": abilities, which no filter names.
+  const act = /^((?:[\w ]+ )?abilities [^,]{0,80}?) costs? ((?:\{[^}]+\})+) (less|more) to activate$/i.exec(t);
+  // The whole phrase is the text: derive reads the abilities' holder ("artifacts you control") off it.
+  if (act) return [{ verb: "cost-modify", object: { control: "any", token: null }, text: t, amount: `${act[3]!.toLowerCase() === "less" ? "-" : "+"}${act[2]!}` }];
+  // "Cleric spells you cast cost {W}{B} less to cast": coloured mana, the symbols the amount.
+  const pips = /^(.+?) costs? ((?:\{[^}]+\}){1,6}) (less|more) to cast$/i.exec(t);
+  if (pips && !/^\{(?:\d+|x)\}$/i.test(pips[2]!) && objectOf(pips[1]!) && !/^the (?:first|second|third|next)\b|\beach turn\b/i.test(pips[1]!)) {
+    return [{ verb: "cost-modify", object: objectOf(pips[1]!.replace(/^each /i, ""))!.object, text: pips[1]!.replace(/^each /i, ""), amount: `${pips[3]!.toLowerCase() === "less" ? "-" : "+"}${pips[2]!}` }];
+  }
   const cost = /^(.+?) costs? \{(\d+|x)\} (less|more) to cast( for each .+)?$/i.exec(t);
   // "The first instant or sorcery spell you cast each turn": an ordinal no filter field holds, so the
   // stored action stands rather than a widened subject (Baral).
@@ -716,6 +743,9 @@ function restrictionOf(t: string): ActionReading[] | null {
     const who = objectOf(req[1]!) ?? (THEY.test(req[1]!) ? { object: REF } : null);
     if (who) { lastSubject = req[1]!; return [{ verb: "cant", object: who.object, text: blocked ? `be unblocked${blocked[2] ?? ""}` : "not block this turn if able" }]; }
   }
+  // "you may have this land enter tapped": optional.
+  const mayTapped = /^you may have (~|this [a-z]+) enter tapped$/i.exec(t);
+  if (mayTapped) return [{ verb: "tap", object: SELF, optional: true }];
   const tapped = /^(.+?) enters?(?: the battlefield)? tapped(?: (unless .+|if .+))?$/i.exec(t);
   if (tapped) {
     const who = objectOf(tapped[1]!);
@@ -811,7 +841,8 @@ function phrases(sentence: string): string[] {
     let cut = -1, len = 0;
     for (let m; (m = re.exec(rest));) {
       const tail = rest.slice(m.index + m[0].length).replace(/^then /, "");
-      if (m.index > 0 && (m[0].includes(",") || /\b(?:and|then)\b/.test(m[0])) && ANY_VERB.test(tail)) { cut = m.index; len = m[0].length; break; }
+      // ", then " is a joint whatever follows: "create a Robot token, then creatures you control get +1/+0".
+      if (m.index > 0 && ((m[0].includes(",") || /\b(?:and|then)\b/.test(m[0])) && ANY_VERB.test(tail) || /^, then $/.test(m[0]))) { cut = m.index; len = m[0].length; break; }
     }
     if (cut < 0) { out.push(rest); return out; }
     out.push(rest.slice(0, cut));
@@ -909,7 +940,7 @@ function pumpOrGrant(t: string): ActionReading[] | null {
 function predicateOf(pred: string, object: SubjectFilter, target: { object: SubjectFilter; text?: string }): ActionReading[] | null {
   const get = /^gets? (.+)$/i.exec(pred);
   if (get) {
-    const pt = get[1]!;
+    const pt = get[1]!.replace(/^an additional /i, "");
     const each = pt.indexOf(" for each ");
     const n = PT.exec(each >= 0 ? pt.slice(0, each) : pt);
     return n ? [{ verb: "modify-pt", ...target, amount: `${n[1]}/${n[2]}${each >= 0 ? pt.slice(each) : ""}` }] : null;
@@ -970,9 +1001,9 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
  *  `cant` "be legendary". Null when any part is not one of these. */
 function exceptOf(text: string, object: SubjectFilter): ActionReading[] | null {
   const out: ActionReading[] = [];
-  for (const raw of text.split(/,? and (?=(?:it|its|is|isn't|has|the token)\b)|, (?=(?:it|its|is|isn't|has|the token)\b)/i)) {
+  for (const raw of text.split(/,? and (?=(?:it|its|is|isn't|has|the token|the copy)\b)|, (?=(?:it|its|is|isn't|has|the token|the copy)\b)/i)) {
     const full = raw.trim();
-    if (/^(?:(?:it|the token) (?:isn't|is not)|it's not|isn't) legendary$/i.test(full)) { out.push({ verb: "cant", object, text: "be legendary" }); continue; }
+    if (/^(?:(?:it|the token|the copy) (?:isn't|is not)|it's not|isn't) legendary$/i.test(full)) { out.push({ verb: "cant", object, text: "be legendary" }); continue; }
     const has = /^(?:(?:it|the token) )?(?:also )?(?:has|have) (.+)$/i.exec(full);
     if (has) { const a = abilitiesOf(has[1]!); if (!a) return null; out.push(...a.map((x) => ({ verb: "grant-ability", object, text: x }))); continue; }
     // "it's a 0/2 Thopter artifact creature with flying in addition to its other types", "it's legendary".
@@ -990,7 +1021,20 @@ function exceptOf(text: string, object: SubjectFilter): ActionReading[] | null {
 
 const withCondition = (out: ActionReading[], condition: string | undefined) => (condition ? out.map((a) => ({ ...a, condition })) : out);
 
+/** A trailing duration says how long, not what happens: "you may play that card for as long as you
+ *  control ~", "spells with the chosen name cost {1} less to cast this turn". Tried only when the
+ *  phrase does not read with it. */
+const TRAILING_DURATION = / (?:this turn|for as long as [^,]+|until (?:end of turn|your next turn|the end of your next turn))$/i;
+
 function readPhrase(quoted: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
+  const r = readPhraseOnce(quoted, condition, carried);
+  if (r) return r;
+  const phrase = quoted.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!).trim();
+  const at = phrase.search(TRAILING_DURATION);
+  return at > 0 ? readPhraseOnce(phrase.slice(0, at), condition, carried) : null;
+}
+
+function readPhraseOnce(quoted: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
   const phrase = quoted.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!);
   let t = phrase.trim().replace(/^(?:then|instead|also) /i, "");
   // "draw X cards, where X is the number of ...": X is the amount, the rest says what it counts.
@@ -1026,15 +1070,19 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   if (host) return [{ verb: "gain-control", object: objectOf(host[1]!)!.object, text: host[1]!.toLowerCase(), ...(condition ? { condition } : {}) }];
   // "You may have this creature enter as a copy of any creature on the battlefield" (a clone).
   // "..., except it has haste" (CR 707.9b) and "become a copy of" (until end of turn) read the same.
-  const clone = /^you (may )?have (?:~|this [a-z]+|it|that creature) (?:enter as|become) a copy of (.+)$/i.exec(t.replace(DURATION, ""));
-  if (clone) {
-    const at = clone[2]!.search(/, except /);
-    const what = (at > 0 ? clone[2]!.slice(0, at) : clone[2]!).replace(DURATION, "");
+  const cloneText = t.replace(DURATION, "");
+  const haveClone = /^you (may )?have (?:~|this [a-z]+|it|that creature) (?:enter as|become) a copy of (.+)$/i.exec(cloneText);
+  // "~ becomes a copy of target creature, except it has this ability": the same, not optional.
+  const cloneOf = haveClone?.[2] ?? /^(?:~|this [a-z]+) becomes a copy of (.+)$/i.exec(cloneText)?.[1];
+  if (cloneOf !== undefined) {
+    const at = cloneOf.search(/, except /);
+    const what = (at > 0 ? cloneOf.slice(0, at) : cloneOf).replace(DURATION, "");
     const r = objectOf(what);
-    const except = at > 0 ? exceptOf(clone[2]!.slice(at + ", except ".length), SELF) : [];
-    const opt = clone[1] ? { optional: true as const } : {};
+    const except = at > 0 ? exceptOf(cloneOf.slice(at + ", except ".length), SELF) : [];
+    const opt = haveClone?.[1] ? { optional: true as const } : {};
     if (r && except) return [{ verb: "copy", object: r.object, text: what, ...opt }, ...except.map((a) => ({ ...a, ...opt }))].map((a) => ({ ...a, ...(condition ? { condition } : {}) }));
   }
+
   // "The next time a black source of your choice would deal damage to you this turn, prevent that
   // damage": a prevention shield, its text the source and the damage.
   const shield = /^(the next time .+? would deal damage(?: to .+?)? this turn), prevent that damage$/i.exec(t);
@@ -1060,7 +1108,8 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   // Whatever stands before "deals" is the dealer: "~", "this creature", "target creature you control",
   // "each Wolf tapped this way", "they each".
   const deals = t.search(/(?:^| )deals? (?=\S)/);
-  if (!haveSource && deals > 0 && deals <= 70 && !t.slice(0, deals).includes(",")) { t = t.slice(deals + 1); actor = undefined; }
+  // Not "would deal": "prevent all damage a source of your choice would deal this turn" has no dealer.
+  if (!haveSource && deals > 0 && deals <= 70 && !t.slice(0, deals).includes(",") && !/\b(?:would|can't|could)$/i.test(t.slice(0, deals))) { t = t.slice(deals + 1); actor = undefined; }
   // "that many plus one +1/+1 counters are put on it instead" (Hardened Scales): the improved count.
   const more = /^(that many plus (?:one|two|\d+)|twice that many|three times that many) (.+? counters?) (?:are|is) put on (?:it|that creature|that permanent|them|each of them)$/i.exec(t);
   if (more && countersOf(more[2]!)) return [{ verb: "add-counter", object: REF, counter: countersOf(more[2]!)!.counter, amount: more[1]!.toLowerCase(), ...(condition ? { condition } : {}) }];
@@ -1156,7 +1205,7 @@ function actorOf(phrase: string): ActionReading["actor"] | undefined {
 }
 
 /** A sentence's opener: "If you do, ...", "If ..., ...", "Otherwise, ...". */
-const OPENER = /^(if you do|if you don't|if [^,]+|otherwise|then|as an additional cost to cast this spell|as long as [^,]+|during your turn|during each opponent's turn), /i;
+const OPENER = /^(if you do|if you don't|if [^,]+|otherwise|then|as an additional cost to cast this spell|as long as [^,]+|during [^,]+), /i;
 
 /** The actions a clause's printed text states that this grammar reads completely, in printed order:
  *  the cost's first (as the store writes them), then the effect's. */
@@ -1212,9 +1261,11 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     let condition: string | undefined;
     // "Until end of turn, target creature becomes ...": a duration at the front, not a condition.
     s = s.replace(/^(?:until end of turn|until your next turn|until the end of your next turn|this turn|for as long as [^,]+), /i, "");
-    const open = OPENER.exec(s);
-    if (open && !/^then$/i.test(open[1]!)) { condition = open[1]!.toLowerCase(); s = s.slice(open[0].length); }
-    else if (open) s = s.slice(open[0].length);
+    // Openers stack: "As long as ~ is equipped, if a triggered ability ... triggers, ...".
+    for (let open = OPENER.exec(s), k = 0; open && k < 2; open = OPENER.exec(s), k++) {
+      if (!/^then$/i.test(open[1]!)) condition = [condition, open[1]!.toLowerCase()].filter(Boolean).join(", ");
+      s = s.slice(open[0].length);
+    }
     s = s.replace(/^([A-Z])/, (c) => c.toLowerCase());
     // "The same is true for first strike, double strike, ...": the grant before it, once per ability.
     const same = /^(?:the same is true for|do the same for|repeat this process for) (.+)$/i.exec(s);

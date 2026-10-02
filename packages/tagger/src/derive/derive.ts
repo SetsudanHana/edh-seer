@@ -334,7 +334,9 @@ import { emblemRecipient } from "../emblem.js";
 // alternative cost and strive, mana by shape, a prevention shield, "a number of" counters, "then double".
 // 253: fragments 4: damage redirections, block requirements, an Aura's host animated, counters moved
 // or improved, a target's controller, quoted abilities ending a sentence, cost items after "and".
-export const DERIVE_VERSION = 253;
+// 254: fragments 5: ", then" before any subject, coloured and ability cost changes, copies N times,
+// "~ becomes a copy of", animated lands, stacked openers, "would deal" is no dealer.
+export const DERIVE_VERSION = 254;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

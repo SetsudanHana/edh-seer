@@ -302,18 +302,38 @@ test("fragments 4: redirections, requirements, animated hosts, moved counters", 
     .toMatchObject({ verb: "create", text: 'a 1/1 blue Fish creature token with "This token can\'t be blocked."' });
 });
 
+// Fragments 5 (#896): ", then" before any subject, coloured and ability cost changes, copies N times and
+// their exceptions, "~ becomes a copy of", animated lands, openers that stack, "would deal" is no dealer.
+test("fragments 5: then-joints, coloured costs, copies, animated lands, stacked openers", () => {
+  const verbs = (t: string, type = "triggered") => parseActions(t, type).map((a) => a.verb);
+  expect(verbs("Create a 2/2 colorless Robot artifact creature token, then creatures you control get +1/+0 and gain haste until end of turn."))
+    .toEqual(["create", "modify-pt", "grant-ability"]);
+  expect(parseActions("Cleric spells you cast cost {W}{B} less to cast.", "static")[0]).toMatchObject({ verb: "cost-modify", amount: "-{W}{B}" });
+  expect(parseActions("Cycling abilities you activate cost {2} less to activate.", "static")[0]).toMatchObject({ verb: "cost-modify", amount: "-{2}" });
+  expect(parseActions("copy it twice.", "triggered")[0]).toMatchObject({ verb: "copy", amount: "2" });
+  expect(verbs("copy it, except the copy isn't legendary.")).toEqual(["copy", "cant"]);
+  expect(verbs("this creature becomes a copy of that card, except it has this ability.")).toEqual(["copy", "grant-ability"]);
+  expect(verbs("that land becomes a 0/0 Elemental creature with haste that's still a land.")).toEqual(["animate", "grant-ability"]);
+  expect(verbs("Enchanted Forest becomes a 4/4 green Spirit creature until end of turn.", "static")).toEqual(["animate"]);
+  expect(parseActions("During turns other than yours, creatures you control get -0/-2.", "static")[0]).toMatchObject({ verb: "modify-pt", condition: "during turns other than yours" });
+  expect(parseActions("Prevent all damage a source of your choice would deal this turn.", "spell")[0]).toMatchObject({ verb: "prevent" });
+  expect(verbs("Pay half your life, rounded up.", "spell")).toEqual(["lose-life"]);
+  expect(verbs("tap it and up to one target creature an opponent controls.")).toEqual(["tap", "tap"]);
+  expect(parseActions("you may have this land enter tapped.", "static")[0]).toMatchObject({ verb: "tap", optional: true });
+});
+
 test.each([
-  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.947],
-  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.923],
-  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.863],
-  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.921],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.91],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.872],
-  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.897],
+  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.949],
+  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.926],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.869],
+  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.924],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.912],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.878],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.901],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
-    "explore", "connive", "endure"], 0.813],
-  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.739],
+    "explore", "connive", "endure"], 0.836],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.774],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")
