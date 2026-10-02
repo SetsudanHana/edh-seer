@@ -44,6 +44,7 @@
     "colouredMana": "\\{[WUBRG]\\}|any colou?r|chosen colou?r|any combination of colou?rs|color identity",
     "manaToken": "create\\b[\\s\\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?",
     "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?",
+    "digToHand": "\\b(?:reveal|look at) the top \\w+ cards? of your library\\.(?: [^.]*\\.){0,2} put (?:one pile|(?:two|three|four|five|six|seven|x) of (?:them|those cards))\\b[^.]*\\binto your hand",
     "impulseDraw": "exile the top (?:\\w+ )?cards? of your library[\\s\\S]*?you may play",
     "neutraliseAura": "(?:^|\\n)enchant (?<class>[^\\n]+)(?=[\\s\\S]*?enchanted (?:creature|permanent)[^.]*?(?:loses all (?:other card types and )?abilities|is a colou?rless land))",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
@@ -139,6 +140,13 @@
         { "op": "effectKind", "in": ["draw-card"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] }
       ],
       "why": "A draw `repeats.ts` REFUSED to label, on a card with no labelled engine draw beside it. Shown, not hidden: unlabelled beats mislabelled, and a reader who sees 3 unlabelled knows the engine count is a floor."
+    },
+    {
+      "id": "draw.dig",
+      "category": "draw",
+      "match": [{ "op": "oracle", "pattern": "digToHand" }],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "CARDS TO HAND OFF THE TOP, two or a pile (owner, 2026-10-02: \"fact or fiction has a role, it is a draw spell\"). Its derived tags hold only the mill half, so no draw-card effect reaches draw.effect. One card to hand (Impulse) stays card selection."
     },
     {
       "id": "ramp.engine.source",

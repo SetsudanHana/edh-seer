@@ -103,6 +103,13 @@ const PLAN_LIMIT = 8;
  *  speed and accuracy (A-vs-B 2026-09-24).
  *  CEILING: an on-plan card the hint misses and connection count ranks low is never asked about. */
 const SHORTLIST = 6;
+/** A role card at the top of its role is worth this much swap strength on its own (quality 100);
+ *  about what a mid-table synergy add brings. Tunable, measured on the precons (#767 RESULTS run 6). */
+const STANDALONE_WEIGHT = 4;
+/** How much more an add must bring than its cut before the swap is offered: a quarter more, and at
+ *  least this much. Tunable. */
+const SWAP_MARGIN = 0.5;
+const SWAP_RATIO = 1.25;
 /** A card the engine could not read does nothing measurable for the deck. */
 const NO_STRENGTH: Strength = { strength: 0, partners: 0, onTheme: 0, commander: false };
 /** A deck card in the shape `verify` asks about: only its name is read. */
@@ -550,14 +557,28 @@ export async function suggestForDeck(input: {
     if (!p) cutReads.set(name, p = verify(deckIndexCard(name), without(name), false).then((v) => v?.strength ?? NO_STRENGTH));
     return p;
   };
+  // A CARD'S OWN WORTH, beside what it does for the deck: its best quality percentile in a role (the
+  // name index's `q`), as strength. A synergy count alone let any payoff beat Fact or Fiction or a
+  // deck's one board wipe (owner, 2026-10-02: "we are still ignoring cards impact").
+  const qualityOf = new Map(index.map((c) => [c.name, Math.max(0, ...Object.values(c.quality ?? {}))] as const));
+  const standalone = (name: string) => STANDALONE_WEIGHT * (qualityOf.get(name) ?? 0) / 100;
+  // THE LAST CARD DOING ITS JOB IS NOT CUT FOR ANOTHER JOB: a cross-job swap moves a slot out of a
+  // group over its target, but a deck can be over on Interaction with one board wipe in it (Sunfall,
+  // Multiverse Reforged). Same job by `same-job.ts`, the seed of redundancy groups.
+  const lastOfItsJob = async (name: string): Promise<boolean> => {
+    const cutDc = await dc(name);
+    if (!cutDc) return false;
+    return rolesOfCard(cutDc).some((r) => !deckDcs.some((d) => d.card.name !== name && rolesOfCard(d).includes(r) && sameJob(cutDc, d, r)));
+  };
   const chosen = new Map<string, Verified>();
   const pairsRanked = await pairReplacements(cuts, groups, pool, planRanked, async (cut, list, rule) => {
-    const before = (await cutStrength(cut.name)).strength;
+    if (rule === "cross-job" && await lastOfItsJob(cut.name)) return undefined;
+    const before = (await cutStrength(cut.name)).strength + standalone(cut.name);
     // "BETTER CARDS FOR THE SAME JOB" MEANS THE SAME JOB: the precon package's rule (`same-job.ts`),
     // not a shared role label (Chaos Warp for Gossip's Talent, persona round 2026-10-02).
     const cutDc = rule === "same-job" ? await dc(cut.name) : null;
     const cutRoles = cutDc ? rolesOfCard(cutDc) : [];
-    let best: { c: Candidate; v: Verified } | undefined;
+    let best: { c: Candidate; v: Verified; total: number } | undefined;
     for (const c of list.slice(0, SHORTLIST)) {
       if (await harmsDeck(c.card.name)) continue;
       if (rule === "same-job") {
@@ -566,7 +587,9 @@ export async function suggestForDeck(input: {
       }
       const v = await verify(c.card, without(cut.name), false);
       if (!v) { console.warn("[suggest] stale pair: the engine draws nothing for", c.card.name); continue; }
-      if (v.strength.strength > before && (!best || v.strength.strength > best.v.strength.strength)) best = { c, v };
+      // BY A MARGIN: a swap costs the player a card and a trade; a near tie is not worth one.
+      const total = v.strength.strength + standalone(c.card.name);
+      if (total >= Math.max(before * SWAP_RATIO, before + SWAP_MARGIN) && (!best || total > best.total)) best = { c, v, total };
     }
     if (best) chosen.set(cut.name, best.v);
     return best?.c;
@@ -618,7 +641,7 @@ export async function suggestForDeck(input: {
     out.pairs.push({ cut: p.cut, add: { ...add.card }, rule: p.rule, counts: p.counts, cutConnections: cutS.partners, cutStrength: cutS, addStrength: add.strength });
   }
   // THE BIGGEST GAIN FIRST: the precon package takes its synergy swaps in this order.
-  const gain = (p: SuggestedPair) => p.addStrength.strength - p.cutStrength.strength;
+  const gain = (p: SuggestedPair) => p.addStrength.strength + standalone(p.add.name) - p.cutStrength.strength - standalone(p.cut);
   out.pairs.sort((a, b) => gain(b) - gain(a));
 
   // ONE CARD, ONE PLACE: a card a finding already names leaves the plan list and says so there.
