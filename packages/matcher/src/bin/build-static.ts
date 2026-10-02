@@ -15,7 +15,7 @@ import { totalmem } from "node:os";
 import { getHeapStatistics } from "node:v8";
 import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, docToCard, loadConfig } from "@edh-seer/data";
+import { connect, docToCard, isStickerCard, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, type StaticCombo } from "./build-static-core.js";
@@ -67,7 +67,9 @@ const store = await connect(loadConfig());
 // missing one. Measured 2026-08-30, re-verified against the live corpus (not just quoted): 35,713
 // distinct searchNames across all 34,433 cards against 33,164 among the 31,829 commander-legal
 // ones alone, so shipping every card costs 2,549 files (7.7%).
-const cards = await store.cards.find({}).toArray();
+// ...EXCEPT STICKER CARDS, which are outside the engine (owner 2026-10-02, `isStickerCard`): no page,
+// no shard entry, so a paste naming one reads as an unknown card.
+const cards = (await store.cards.find({}).toArray()).filter((c) => !isStickerCard(c));
 const derivedRows = await store.db.collection<CardTags>(DERIVED_COLLECTION).find({}).toArray();
 const tagsByOracle = new Map(derivedRows.map((r) => [r.oracleId, r]));
 const combos = await store.combos.find().toArray();

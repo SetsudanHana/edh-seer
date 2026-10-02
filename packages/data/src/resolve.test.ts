@@ -51,3 +51,11 @@ test("returns only combos whose whole card set is present", async () => {
   const result = await resolveNames(["A", "B", "C"], lookup);
   expect(result.combos).toEqual([{ cards: ["A", "B"], result: "Win" }]);
 });
+
+// Owner 2026-10-02: sticker cards are outside the engine -- a paste naming one reads as unknown.
+test("a sticker card resolves as missing, like a name nobody has", async () => {
+  const sticker = { ...doc("Sticker Card", ["sticker card"]), oracleText: "When this creature enters, you may put a name sticker on it." };
+  const result = await resolveNames(["Sol Ring", "Sticker Card"], fakeLookup([doc("Sol Ring", ["sol ring"]), sticker], []));
+  expect(result.cards.map((c) => c.name)).toEqual(["Sol Ring"]);
+  expect(result.missing).toEqual(["Sticker Card"]);
+});

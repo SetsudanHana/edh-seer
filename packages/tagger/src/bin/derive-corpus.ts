@@ -5,7 +5,7 @@
  *  token. If this ever needs the network, the layering has been broken.
  *
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
-import { connect, loadConfig } from "@edh-seer/data";
+import { connect, isStickerCard, loadConfig } from "@edh-seer/data";
 import { charsFrom, clauseCosts, clauseFaces, clauseRequires, clauseTexts, grantedTokenClauses } from "../derive-input.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
@@ -27,7 +27,14 @@ const clauseDocs = await clausesCol.find({}).toArray();
 console.log(`clause docs: ${clauseDocs.length} | DERIVE_VERSION ${DERIVE_VERSION}`);
 
 let written = 0, skipped = 0, empty = 0, tokenWritten = 0;
+// A STICKER CARD IS OUTSIDE THE ENGINE (owner 2026-10-02, `isStickerCard`): no tags, and any row an
+// earlier derive wrote is removed so nothing downstream reads it.
+const stickers = new Set((await store.cards.find({ oracleText: /sticker/i } as never, { projection: { _id: 1, oracleText: 1, faces: 1 } }).toArray())
+  .filter((c) => isStickerCard(c as never)).map((c) => c._id as string));
+const removed = (await derivedCol.deleteMany({ oracleId: { $in: [...stickers] } })).deletedCount;
+console.log(`sticker cards excluded: ${stickers.size} (${removed} derived row(s) removed)`);
 for (const doc of clauseDocs) {
+  if (stickers.has(doc.oracleId)) continue;
   const existing = await derivedCol.findOne({ oracleId: doc.oracleId });
   if (!FORCE && !needsDerive(existing, doc, DERIVE_VERSION)) { skipped++; continue; }
 
