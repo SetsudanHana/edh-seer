@@ -353,7 +353,9 @@ import { emblemRecipient } from "../emblem.js";
 // "all activated abilities of", either P/T, base P/T X/X, "~ and other X", protection by choice).
 // 261: fragments 12: attack and block requirements, activated abilities that can't be activated,
 // "that Hero" / "either of them", moved counters, puts of several objects, "the player puts".
-export const DERIVE_VERSION = 261;
+// 262: fragments 13: an opponent's dig until a card, "from it", face-down piles, "the top card" in a
+// list, returns to their hand, X/X and plural animations, "it deals 4 damage instead".
+export const DERIVE_VERSION = 262;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

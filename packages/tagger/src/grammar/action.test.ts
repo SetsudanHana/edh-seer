@@ -117,8 +117,9 @@ test("zone moves: the zones, the count kept in the text, a back-reference kept a
   expect(read("Exile ~ with three time counters on it.")).toMatchObject([{ verb: "exile" }, { verb: "add-counter", counter: "time", amount: "3" }]);
   // A destination is the zone named, not the last word: "instead of into that player's graveyard".
   expect(read("put it on the bottom of its owner's library instead of into that player's graveyard.")).toEqual([]);
-  // "until they exile a nonland card" says which card, not how long.
-  expect(read("that player exiles cards from the top of their library until they exile a nonland card.")).toEqual([]);
+  // "until they exile a nonland card" says which card, not how long; "their library" is the actor's,
+  // so the stored object, which names them, stays.
+  expect(read("that player exiles cards from the top of their library until they exile a nonland card.")[0]).toMatchObject({ verb: "exile", object: { ref: "sentence" } });
   // "from their graveyard": whose is a back-reference, so the stored object stays.
   expect(read("Put a land card from their graveyard onto the battlefield tapped under your control.")[0]?.text).toBeUndefined();
   expect(read("Then shuffle.")).toMatchObject([{ verb: "shuffle", text: "your library" }]);
@@ -446,18 +447,36 @@ test("fragments 12: requirements, shut-off abilities, several puts", () => {
   expect(parseActions("put this creature and target creature on top of their owners' libraries.", "activated").map((a) => a.toZone)).toEqual(["library", "library"]);
 });
 
+// Fragments 13 (#896): an opponent's dig, "from it", face-down piles, lists with "the top card",
+// returns to their hand, X/X and plural animations, a replacement's new damage.
+test("fragments 13: opponent digs, piles, returns to their hand, animations", () => {
+  const verbs = (t: string, type = "triggered") => parseActions(t, type).map((a) => a.verb);
+  expect(parseActions("target opponent exiles cards from the top of their library until they exile a nonland card.", "spell")[0])
+    .toMatchObject({ verb: "exile", fromZone: "library", object: { ref: "sentence" } });
+  expect(verbs("that player exiles a card from it.")).toEqual(["exile"]);
+  expect(verbs("exile them in a face-down pile.")).toEqual(["exile"]);
+  expect(verbs("exile target nonland permanent and the top card of your library.", "spell")).toEqual(["exile", "exile"]);
+  expect(parseActions("target player returns a creature card from their graveyard to their hand.", "spell")[0]).toMatchObject({ verb: "return", toZone: "hand" });
+  expect(verbs("~ becomes a legendary 4/4 red Dragon creature with flying, indestructible, and haste.", "activated")).toEqual(["animate", "grant-ability", "grant-ability", "grant-ability"]);
+  expect(verbs("lands you control are 2/2 creatures with first strike.", "static")).toEqual(["animate", "grant-ability"]);
+  // An X the sentence defines keeps the stored animation, which derive's scaling reads.
+  expect(parseActions("Until end of turn, target land you control becomes an X/X Citizen creature with haste in addition to its other types, where X is twice the number of Gates you control.", "activated")[0])
+    .toMatchObject({ verb: "animate", object: { ref: "sentence" } });
+  expect(parseActions("it deals 4 damage instead.", "static")[0]).toMatchObject({ verb: "deal-damage", amount: "4" });
+});
+
 test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.953],
-  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.936],
+  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.938],
   ["counters", ["add-counter", "remove-counter", "proliferate"], 0.89],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.935],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.929],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.927],
-  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.912],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.933],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.928],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.913],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
     "explore", "connive", "endure"], 0.851],
-  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.802],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.813],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")
