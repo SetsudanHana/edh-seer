@@ -28,3 +28,8 @@ test("a self trigger's first 'it' is the card itself, and a player verb names it
   const barrier = grammarClauseRecords({ name: "Barrier of Bones", typeLine: "Creature — Skeleton Wall", oracleText: "When this creature enters, surveil 1." });
   expect(barrier.records[0]!.actions![0]).toMatchObject({ verb: "surveil", amount: "1" });
 });
+
+test("a phase trigger's subject is whose phase", () => {
+  expect(triggerSubjectText("At the beginning of your upkeep")).toBe("you");
+  expect(triggerSubjectText("At the beginning of each upkeep")).toBe("each player");
+});
