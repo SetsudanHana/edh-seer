@@ -45,8 +45,10 @@ const pct = (n: number, d: number) => `${(100 * n / (d || 1)).toFixed(1)}%`;
 console.log(`cards ${total}; complete ${complete} (${pct(complete, total)}); derive identical ${same} (${pct(same, complete)} of complete)`);
 console.log(`blocked: ${Object.entries(blockers).map(([k, v]) => `${k} ${v}`).join(", ")}`);
 const n = (xs: [string, string[]][]) => xs.reduce((t, [, v]) => t + v.length, 0);
-const guardedLabelled = guarded.filter((g) => labelled.some(([k]) => g.includes(`[${k}]`)));
-console.log(`THE SWITCH: ${same + n(labelled) - guardedLabelled.length} cards derive from the printed text alone (${same} identical, ${n(labelled) - guardedLabelled.length} labelled "grammar right"; ${guardedLabelled.length} labelled but kept on the stored answer because the grammar would claim less)`);
+// Only a "grammar right" label switches a card; "grammar wrong" and "both wrong" keep the stored answer.
+const right = labelled.filter(([k]) => triage.groups[k]!.label === "grammar right");
+const guardedLabelled = guarded.filter((g) => right.some(([k]) => g.includes(`[${k}]`)));
+console.log(`THE SWITCH: ${same + n(right) - guardedLabelled.length} cards derive from the printed text alone (${same} identical, ${n(right) - guardedLabelled.length} labelled "grammar right"; ${guardedLabelled.length} labelled but kept on the stored answer because the grammar would claim less)`);
 for (const g of guardedLabelled.slice(0, Number(process.env.GUARDED ?? 0))) console.log(`   kept: ${g}`);
 console.log(`labelled groups ${labelled.length} of ${sorted.length} (${n(labelled)} cards; not "grammar right": ${n(wrong)}); unlabelled ${n(sorted) - n(labelled)} cards`);
 for (const [k, v] of sorted.filter(([k]) => !triage.groups[k]).slice(0, 25)) console.log(`${String(v.length).padStart(6)}  ${k}  e.g. ${v.slice(0, 3).join("; ")}`);
