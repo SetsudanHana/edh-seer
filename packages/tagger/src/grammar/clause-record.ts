@@ -8,7 +8,7 @@
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
 import { segment } from "../segment.js";
-import { parseActions, unreadPhrases, type ActionReading } from "./action.js";
+import { amountOf, parseActions, unreadPhrases, type ActionReading } from "./action.js";
 import { effectText, printedPreamble } from "./preamble.js";
 import { selfAsTilde } from "./self-as-tilde.js";
 import { parseTrigger } from "./trigger.js";
@@ -24,6 +24,14 @@ export interface GrammarRecords {
 /** The verbs a trigger opening's event is printed with, to cut its subject off the front. */
 const EVENT_VERB = /\s(?:dies|die|enters|enter|attacks|attack|blocks|block|becomes|become|is|are|deals|deal|casts|cast|gains|gain|loses|lose|draws|draw|discards|discard|sacrifices|sacrifice|leaves|leave|gets|get|puts|put|plays|play|activates|activate|creates|create|mills|mill|explores|explore|taps|tap|untaps|untap|searches|search|cycles|cycle|scries|scry|surveils|surveil|exiles|exile|returns|return|fights|fight|transforms|transform|copies|copy|counters|was|were|has|have|would|can't|connives|proliferates?|expends|commits?|ventures?|completes?|crews?|saddles?|chooses?|reveals?|wins?|pays?|spends?|finishes?|unlocks?|opens?|rolls?|flips?|shuffles?|investigates?|forages?|descends?)\b/;
 const PLAYER = /^(?:you|a player|an opponent|each player|each opponent|target opponent|that player|one or more players|another player)$/i;
+
+/** WHOSE PHASE a phase trigger watches, which derive's repeats labeller reads: your turns only is
+ *  once a round (per-cycle), anyone's ("each upkeep", "each combat", "the end step") once a turn. */
+export function phaseControl(preamble: string): "you" | "opp" | "any" {
+  if (/^at the beginning of (?:your|each of your)\b|\bon your turns?\b/i.test(preamble)) return "you";
+  if (/^at the beginning of (?:each opponent's|each of your opponents')|\bon each opponent's turn\b|\bon an opponent's turn\b/i.test(preamble)) return "opp";
+  return "any";
+}
 
 /** The store's `trigger.subject`: what the event happens to, and for an ACTOR trigger ("you discard a
  *  card", "an opponent casts a spell") the OBJECT, which is what derive's self and antecedent readings
@@ -81,21 +89,39 @@ function unlessOf(condition: string | undefined): Action["unless"] | undefined {
   return m ? { cost: m[2]!, payer: /^you$/i.test(m[1]!) ? "you" : "controller" } : undefined;
 }
 
+/** The count an object's words state when the reading carries none, as the store writes it: "the top
+ *  two cards of your library" 2, "the next 2 damage" 2, "X mana of any one color" X, "an additional
+ *  land" 1. */
+function wordsAmount(verb: string, object: string): string | undefined {
+  const top = /^the (?:top|bottom) (\w+) cards?\b/i.exec(object) ?? /^the next (\w+) damage\b/i.exec(object);
+  if (top) return amountOf(top[1]!) ?? (/^x$/i.test(top[1]!) ? "X" : undefined);
+  if (verb === "add-mana" && /^x mana\b/i.test(object)) return "X";
+  if (verb === "play" && /^an additional land$/i.test(object)) return "1";
+  return undefined;
+}
+
 /** One clause's readings as `Action`s. A back-referenced object moved after a search comes from the
  *  library, the zone the store writes for it (Farseek, Entomb, every fetchland). */
-function actionsOf(readings: ActionReading[], selfTrigger: string | undefined): Action[] {
+function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, type?: string, selfWord = "this"): Action[] {
   const out: Action[] = [];
+  // "Reveal a card IN YOUR HAND, then put that card onto the battlefield": the reveal is dropped, its
+  // zone is the antecedent's (Retraced Image).
+  let revealedFrom: string | null = null;
   for (const r of readings) {
     // "Reveal it" is bookkeeping the store drops (canonicalize's DROPPED_VERBS).
-    if (r.verb === "reveal") continue;
+    if (r.verb === "reveal") { revealedFrom = /\b(?:in|from) your hand\b/i.test(r.phrase ?? r.text ?? "") ? "hand" : null; continue; }
     // "When this creature blocks, return IT": with nothing before it, "it" is the card itself, written
     // as the trigger names it ("this creature"), which derive's self and type readings key on.
     // As derive's grammar switch writes a player verb's object: a named actor ("target player mills")
     // is the object, a back-referenced one ("that player") or none leaves the printed words.
-    const object = PLAYER_VERBS.has(r.verb) ? (r.actor?.text !== undefined && r.actor.scope !== "that" ? r.actor.text : objectWords(r) || "you")
-      : selfTrigger && out.length === 0 && /^(?:it|itself)$/i.test(objectWords(r)) ? selfTrigger
+    const words = objectWords(r) === "~" ? "this" : objectWords(r);
+    const object = PLAYER_VERBS.has(r.verb) ? (r.actor?.text !== undefined && r.actor.scope !== "that" ? r.actor.text : words || "you")
+      : selfTrigger && out.length === 0 && /^(?:it|itself)$/i.test(words) ? selfTrigger
+      // "this creature becomes prepared", "it explores" (Jenny): a subject action of the card itself.
+      : !words && r.object?.self === true ? selfTrigger ?? selfWord
+      : !words && selfTrigger && r.object?.ref && out.length === 0 ? selfTrigger
       // "defending player exiles two permanents THEY control": the actor's, as the store names it.
-      : r.actor?.text && r.actor.control !== "you" ? objectWords(r).replace(/\bthey control$/i, `${r.actor.text} controls`) : objectWords(r);
+      : r.actor?.text && r.actor.control !== "you" ? words.replace(/\bthey control$/i, `${r.actor.text} controls`) : words;
     // WHERE A MOVED THING COMES FROM, when the phrase does not say, as the store writes it: a
     // back-reference after a search comes from the library, after an exile from exile ("exile ...,
     // then return that card", Thassa). A permanent named outright is left unstated, as the store
@@ -105,19 +131,28 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined): 
     // "Until end of turn, you may cast THAT CARD" after an exile: from exile, as the store writes it.
     const castRef = (r.verb === "cast" || r.verb === "play") && ref && before?.verb === "exile" ? "exile" : null;
     // "return this enchantment to its owner's hand": the card itself leaves the battlefield.
-    const selfBounce = (r.verb === "return" || r.verb === "put") && r.object?.self === true && (r.toZone === "hand" || r.toZone === "library") ? "battlefield" : null;
+    const selfBounce = (r.verb === "return" || r.verb === "put") && r.object?.self === true && (r.toZone === "hand" || r.toZone === "library") ? "battlefield"
+      // "Shuffle Beacon of Immortality into its owner's library": a spell shuffles itself from the stack.
+      : r.verb === "shuffle" && r.object?.self === true && type === "spell" ? "stack" : null;
     const from = r.fromZone ?? castRef ?? selfBounce ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
-      : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? "exile" : null)
+      : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? "exile" : before === undefined ? revealedFrom : null)
       // "that many cards from the bottom of your library": the library the words name.
       : /\b(?:top|bottom) of (?:your|their|its owner's|that player's|target player's) library\b/i.test(r.phrase ?? r.text ?? "") ? "library"
       // A set the sentence made: cards milled are in the graveyard, cards revealed in the library
       // (Szarekh's "from among the cards milled this way", Glint Raker's "revealed this way" and "the rest").
       : /\bmilled\b/i.test(object) ? "graveyard"
+      // "return the exiled card" (Champion of the Path): from exile.
+      : /^the exiled cards?$/i.test(object) ? "exile"
       : (/\brevealed this way\b/i.test(object) || (/^the rest$/i.test(object) && before === undefined && out.some((a) => /\brevealed this way\b/i.test(a.object ?? "")))) ? "library"
       // An EXILE of a permanent named outright leaves the battlefield, the zone the store writes for an
       // exile (Baleful Mastery, Thassa); a destroy or sacrifice it leaves unstated, so they are not.
       : r.verb === "exile" && r.object && !r.object.ref && !r.object.self && !/\bcards?\b|\bspells?\b/i.test(object) && r.object.zone === undefined ? "battlefield" : null);
     // "put one onto the battlefield TAPPED": the tap is on what just moved, written as the store does.
+    // "Put two +1/+1 counters on target creature and UNTAP IT", "If that creature is a Snake, IT gets
+    // +2/+2": "it" is the target the clause named before, as the store writes it.
+    const named = out.length > 0 && /^it$/i.test(object) && !ZONE_VERBS.has(r.verb) && !selfTrigger
+      ? [...out].reverse().map((a) => /^((?:up to one )?(?:another )?target [^,]+)/i.exec(a.object ?? "")?.[1]).find(Boolean) : undefined;
+    const itsAntecedent = named ?? "";
     const tapped = r.verb === "tap" && !object && out.length > 0 ? out[out.length - 1]!.object ?? "" : "";
     // "from your hand and/or graveyard": one move from each, as the store writes it (Worldsoul's Rage).
     const both = /^(.+?) from your hand and\/or graveyard$/i.exec(object);
@@ -125,11 +160,19 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined): 
       for (const zone of ["hand", "graveyard"]) out.push({ verb: r.verb, object, fromZone: zone, toZone: r.toZone ?? null, ...(r.amount !== undefined ? { amount: r.amount } : {}), optional: r.optional === true } as Action);
       continue;
     }
+    // "Creatures can't attack you unless their controller pays {2} ..." (Propaganda): the payment is
+    // the action's `unless`, as the store writes it, not part of what can't happen.
+    const cantUnless = r.verb === "cant" && !r.condition ? /^(.+?) (unless .+? pays? .+)$/i.exec(object) : null;
+    if (cantUnless) {
+      out.push({ verb: r.verb, object: cantUnless[1]!, fromZone: null, toZone: null, optional: r.optional === true, unless: unlessOf(cantUnless[2]!) } as Action);
+      continue;
+    }
     out.push({
       // A proliferate chooses any permanents and players (CR 701.34a), not only yours.
-      verb: r.verb, object: object || tapped || (NO_OBJECT_YOU.has(r.verb) ? "you" : r.verb === "proliferate" ? "any" : object),
+      // "Its controller investigates" (Fateful Absence): the named actor, else you.
+      verb: r.verb, object: itsAntecedent || object || tapped || (NO_OBJECT_YOU.has(r.verb) ? r.actor?.text ?? "you" : r.verb === "proliferate" ? "any" : object),
       fromZone: from, toZone: r.toZone ?? null,
-      ...(r.amount !== undefined ? { amount: r.amount } : {}),
+      ...(r.amount !== undefined ? { amount: r.amount } : wordsAmount(r.verb, object) !== undefined ? { amount: wordsAmount(r.verb, object) } : {}),
       optional: r.optional === true,
       ...(unlessOf(r.condition) ? { unless: unlessOf(r.condition) } : {}),
     } as Action);
@@ -156,13 +199,20 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       if (!read) return { records, complete: false, blocker: { clause: c.id, kind: "trigger", ...(preamble ? { phrase: preamble } : {}) } };
       const reads = [read].flat();
       const first = reads[0]!;
-      // A PHASE trigger's control is "you" whosever phase it is, the store's form, which derive's repeats
-      // labeller reads ("At the beginning of each combat" is Unnatural Growth's per-cycle pump).
       const phaseTrigger = /^at the beginning of\b/i.test(preamble!);
-      record.trigger = { event: first.event, subject: triggerSubjectText(preamble!), control: phaseTrigger ? "you" : first.control ?? "any" };
+      record.trigger = { event: first.event, subject: triggerSubjectText(preamble!), control: phaseTrigger ? phaseControl(preamble!) : first.control ?? "any" };
       if (c.multiTrigger) for (const r of reads.slice(1)) if (r.event !== first.event) overflow.push({ id: nextId++, abilityType: type, trigger: { event: r.event, subject: record.trigger.subject, control: r.control ?? "any" }, actions: [] });
     }
     const effect = effectText(c.text, card.name);
+    // A DELAYED TRIGGER that is the whole clause ("{1}{W}{B}: Whenever you gain life this turn, each
+    // opponent loses that much life"): the store records it as the clause's trigger. Not "at the
+    // beginning of the next end step" mid-sentence: that times one action, and a clause trigger would
+    // put the whole clause there (Teferi's Time Twist's exile happens now).
+    const delayed = type !== "triggered" ? /^(whenever [^,]+? this turn)(?=,)/i.exec(c.text) : null;
+    if (delayed) {
+      const read = [parseTrigger(delayed[1]!, null) ?? []].flat()[0];
+      if (read) record.trigger = { event: read.event, subject: triggerSubjectText(delayed[1]!), control: read.control ?? "any" };
+    }
     const cost = c.cost;
     const unread = unreadPhrases(effect, type, cost);
     if (unread.length) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: unread[0]! } };
@@ -178,7 +228,10 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // would enter and it wasn't cast ..., exile it instead", Primeval Spawn).
     const selfNoun = SELF_SUBJECT.test(record.trigger?.subject ?? "") ? record.trigger!.subject!
       : /^if (~|this [a-z]+) would\b/i.exec(effect)?.[1];
-    record.actions = actionsOf(readings, selfNoun);
+    // The card's own name ("~") is written "this", the store's self spelling; a self subject action
+    // with no trigger noun takes the clause's own "this creature".
+    const selfWord = selfNoun && selfNoun !== "~" ? selfNoun : /\bthis (?:creature|artifact|enchantment|land|planeswalker|permanent|vehicle|card|spell|aura|equipment|battle)\b/i.exec(effect)?.[0] ?? "this";
+    record.actions = actionsOf(readings, selfNoun === "~" ? "this" : selfNoun, type, selfWord);
     if (record.actions.length === 0 && type !== "static") record.actions = [{ verb: "none", object: "" } as Action];
     records.push(record);
     for (const o of overflow) if (o.actions!.length === 0 && o.trigger) o.actions = record.actions;

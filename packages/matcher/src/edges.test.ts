@@ -5717,6 +5717,8 @@ test("a per-combat pump over every creature you control reaches each creature, a
   }] as unknown as CardTags["abilities"]);
   const links = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => directedReasons(p, c, H).some((r) => r.producer === p.card.name);
   expect(links(pump("per-cycle", "each"), spellCard("Grizzly Bears", "creature"))).toBe(true);
+  // "At the beginning of EACH combat" fires on every turn (per-turn, #896 task 7): the same anthem.
+  expect(links(pump("per-turn", "each"), spellCard("Grizzly Bears", "creature"))).toBe(true);
   expect(links(pump("per-cycle", "each"), spellCard("Forest", "land"))).toBe(false);
   expect(links(pump("once", "each"), spellCard("Grizzly Bears", "creature"))).toBe(false);
   expect(links(pump("per-cycle", "target"), spellCard("Grizzly Bears", "creature"))).toBe(false);

@@ -39,7 +39,7 @@
     },
     "amount": {
       "label": "grammar right",
-      "why": "A self exile counts one ('Exile Reunion of the House'), where the store left no amount; the store's junk amounts ('trample' on Lorehold Charm's grant) are gone."
+      "why": "The count the words state: the card exiling or sacrificing itself is 1 (Reunion of the House, Temporal Mastery, Piru), 'the top two cards' 2; the store left these amounts off. Lorehold Charm's store grant read 'creatures you control' as the granted ability."
     },
     "effect.subject(~control),emits.subject(~control)": {
       "label": "grammar right",
@@ -48,6 +48,30 @@
     "abilities:1->3": {
       "label": "grammar right",
       "why": "A copy's exceptions read as grants (Machine God's Effigy: 'except it's an artifact and it has {T}: Add {U}'); a grant list split per ability (Swashbuckler's Whip)."
+    },
+    "repeats": {
+      "label": "grammar right",
+      "why": "A phase trigger on ANYONE's step ('each upkeep', 'each combat', 'the end step', 'each player's draw step') fires every turn (per-turn); the store wrote control 'you' and so per-cycle. Unnatural Growth, Howling Mine, Ophiomancer, Sting, The Gaffer, Hermit of the Natterknolls. 'combat on your turn' and 'your upkeep' stay per-cycle (phaseControl)."
+    },
+    "effect.subject(+self +type)": {
+      "label": "grammar right",
+      "why": "A spell's own cost reduction ('This spell costs {1} less to cast if you control a Wizard', Arcane Epiphany, Into the Story, Explosive Singularity) keeps its whole phrase, so derive marks the reduction as the spell's own (self, type spell); the store's '{1} less to cast' left the subject blank."
+    },
+    "amount,count": {
+      "label": "grammar right",
+      "why": "Same as 'amount': 'the top five cards of your library' 5 (Escape to the Wilds), 'an additional land' 1 (Explore, Ghirapur Orrery), 'X mana of any one color' X (Axebane Guardian). The store writes these on some cards and not others (Sword of Forge and Frontier has them)."
+    },
+    "trigger": {
+      "label": "grammar right",
+      "why": "The store hangs a mid-sentence delayed trigger on the whole clause ('Exile ... Return those cards ... at the beginning of the next end step', Eerie Interlude, Ghostway, Blood Frenzy), timing the exile or pump at the end step too; the grammar leaves the clause untimed. Kicker conditions are no trigger (Protect the Negotiators)."
+    },
+    "repeats,trigger": {
+      "label": "grammar right",
+      "why": "'When you do' is a reflexive trigger (Watchful Naga, Bolg of the North, Ruthless Lawbringer, Sorin): the store resolved it to its antecedent's event ('sacrifice', 'exert', 'discard'), which made the card a consumer of every such event in the deck; it fires only on its own optional cost."
+    },
+    "emits.subject(-ref +self)": {
+      "label": "grammar right",
+      "why": "'When this creature becomes the target of a spell or ability, sacrifice it' (Phantasmal Dreadmaw), 'When this land enters, sacrifice it unless you pay {1}' (Gateway Plaza): the 'it' of a self trigger is the card itself; the store left it a back-reference to the trigger."
     }
   }
 }
