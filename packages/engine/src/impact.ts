@@ -150,6 +150,7 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     "per-cast-or-spell": 1.5,
     "x-cost": 1.5,
     "per-opponent": 1.2,
+    "per-life-lost": 1.5,
     unbounded: 2.5,
   },
   damping: 0.5,

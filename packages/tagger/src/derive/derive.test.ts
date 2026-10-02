@@ -3786,6 +3786,14 @@ test("an imprinted card is the antecedent of 'the exiled card' in a later clause
 });
 
 // #857: Mikaeus, the Unhallowed's undying grant lost its recipient AND its keyword. The live clause.
+// Owner 2026-10-02 (Rowan): a life payment the store recorded as no action is added from the grammar,
+// so Toxic Deluge's additional cost feeds a "life you lost this turn" payoff.
+test("a life payment the store left out is added (Toxic Deluge)", () => {
+  const out = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "none" }] }] as never, "Toxic Deluge",
+    { 1: "As an additional cost to cast this spell, pay X life." }).abilities;
+  expect(out.flatMap((a) => a.emits ?? []).some((e) => e.verb === "lose-life" && e.subject.control === "you")).toBe(true);
+});
+
 test("a board-wide keyword grant keeps its recipient and names the keyword (Mikaeus, the Unhallowed)", () => {
   const out = deriveAbilities([{ id: 3, abilityType: "static", actions: [
     { verb: "modify-pt", object: "other non-Human creatures you control", amount: "+1/+1" },

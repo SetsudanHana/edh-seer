@@ -362,7 +362,9 @@ import { emblemRecipient } from "../emblem.js";
 // cost, +X/+Y counters, Torpor Orb, alternative costs for a class, cast from that player's graveyard.
 // 265: a counter-removal outlet on other permanents is read (owner 2026-10-02: "you need counters to
 // remove counters"): "remove a counter from a permanent you control", "... from among creatures".
-export const DERIVE_VERSION = 265;
+// 266: "life you lost this turn" is the `per-life-lost` scaling basis, and a life payment the store
+// left out (Toxic Deluge's additional cost) is added from the grammar (owner 2026-10-02, Rowan).
+export const DERIVE_VERSION = 266;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1479,6 +1481,19 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
       ...(r.condition ? { condition: r.condition } : {}),
     });
   });
+  // A LIFE PAYMENT THE STORE LEFT OUT IS ADDED (owner 2026-10-02, the Rowan ruling): "As an additional
+  // cost to cast this spell, pay X life" (Toxic Deluge) was stored as no action, so the life it
+  // costs fed no life-loss payoff. Only a lose-life reading, only when the clause stores none: it
+  // names no object a later "it" could take as its antecedent, which is the CEILING above.
+  // Only where the store recorded NOTHING for the clause: added beside real actions (Meathook Massacre
+  // II's "they may pay 3 life. If they don't, return ...") it became the clause's claim, "makes each
+  // opponent lose 3 life" -- measured on 71 decks, refused.
+  if (stored.every((a) => a.verb === "none" || a.verb === "other")) {
+    for (const r of readings) {
+      if (r.verb !== "lose-life" || r.amount === undefined || (r.actor && r.actor.control !== "you")) continue;
+      out.push({ verb: "lose-life", object: r.text ?? "you", amount: r.amount, optional: r.optional === true, fromZone: null, toZone: null } as Action);
+    }
+  }
   return { ...clause, actions: out };
 }
 

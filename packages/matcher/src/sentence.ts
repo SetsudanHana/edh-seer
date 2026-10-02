@@ -616,6 +616,16 @@ export function boardCountFeedsScaling(
   return `While you control ${producer}, ${consumer} counts it and ${grows}`;
 }
 
+/** A LIFE-LOSS COUNT FED BY A LIFE PAYMENT OR A DRAIN (owner 2026-10-02): Rowan, Scion of War's
+ *  discount grows with the life you lost this turn, so Toxic Deluge's "pay X life" feeds it. */
+export function lifeLostFeedsScaling(producer: string, consumer: string, effectKind: string | undefined, whose: "you" | "opp"): string {
+  // A discount on OTHER spells (Rowan) is not the card getting cheaper itself.
+  const grows = effectKind === "cost-reduction" ? "discounts more" : (effectKind && COUNT_GROWS[effectKind]) ?? "does more";
+  return whose === "you"
+    ? `${producer} makes you lose life, so ${consumer} ${grows}`
+    : `${producer} makes your opponents lose life, so ${consumer} ${grows}`;
+}
+
 /** kind -> what a continuous STATIC effect gives the class of card its subject reaches. Direction
  *  is the mirror of PHRASES above: there the CONSUMER performs what a triggered effect does; here
  *  the PRODUCER's own static keeps granting it, so the phrase reads "<producer> gives <consumer>

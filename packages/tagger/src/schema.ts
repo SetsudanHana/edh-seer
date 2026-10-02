@@ -942,6 +942,9 @@ export const SCALING_BASES = [
   "per-cast-or-spell",
   "x-cost",
   "per-opponent",
+  // "the amount of life you lost this turn" (Rowan, Scion of War), "for each 1 life your opponents
+  // have lost this turn" (Rakdos, Lord of Riots): fed by whatever makes that player lose life.
+  "per-life-lost",
   "unbounded",
 ] as const;
 

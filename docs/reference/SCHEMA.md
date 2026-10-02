@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **265** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **266** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -85,11 +85,11 @@ What an ability DOES, once its trigger is satisfied. Defined in [`EFFECT_KINDS`]
 |---|---|
 | `debuff` | A NEGATIVE power/toughness modifier. Shaped like `pump` and meaning the opposite: Massacre Wurm, Toxic Deluge and Doomwake Giant are removal, not anthems, and reading them as anthems put a false claim on every creature in the deck. Measured 2026-08-20: **30 of 301 derived pump abilities (10%) carry a negative amount**, 186 corpus cards print "get -N/-N". Its own kind rather than a matcher-side gate because five readers consult this field — `mechanisms.ts` uses `pump` for four archetypes and `wincon.ts` for the go-wide finisher — and every one of them was wrong about these cards. |
 
-### SCALING_BASES — 8 members
+### SCALING_BASES — 9 members
 
 What an amount scales with, when it is not a number. Defined in [`SCALING_BASES`](../../packages/tagger/src/schema.ts).
 
-`fixed`, `per-creature`, `per-permanent`, `per-graveyard`, `per-cast-or-spell`, `x-cost`, `per-opponent`, `unbounded`
+`fixed`, `per-creature`, `per-permanent`, `per-graveyard`, `per-cast-or-spell`, `x-cost`, `per-opponent`, `per-life-lost`, `unbounded`
 
 
 

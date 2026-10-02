@@ -157,3 +157,13 @@ test("a count never reads into the object after it", () => {
   expect(scalingSubject({ verb: "modify-pt", object: "each creature you control", amount: "+1/+0 for each time it has attacked this turn" })).toBeUndefined();
   expect(scalingSubject({ verb: "modify-pt", object: "this creature", amount: "+1/+1 for each other Rat you control" })).toMatchObject({ subtype: "rat", control: "you" });
 });
+
+// Owner 2026-10-02 (Rowan, Scion of War): an amount that grows with a player's life lost this turn.
+test("life lost this turn is per-life-lost, keyed on whose loss", () => {
+  const rowan = { verb: "cost-modify", object: "Spells you cast this turn that are black and/or red", amount: "the amount of life you lost this turn" };
+  expect(actionScaling(rowan as never)).toBe("per-life-lost");
+  expect(scalingSubject(rowan as never)).toEqual({ control: "you", token: null });
+  const rakdos = { verb: "cost-modify", object: "Creature spells you cast", amount: "-1 for each 1 life your opponents have lost this turn" };
+  expect(actionScaling(rakdos as never)).toBe("per-life-lost");
+  expect(scalingSubject(rakdos as never)?.control).toBe("opp");
+});

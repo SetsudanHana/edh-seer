@@ -684,5 +684,23 @@
     "source": "owner ruling 2026-10-02",
     "verified": true,
     "tag": "counter-removed:permanent"
+  },
+  {
+    "a": "Toxic Deluge",
+    "b": "Rowan, Scion of War",
+    "category": "life-lost",
+    "note": "Owner ruling 2026-10-02: paying life feeds a payoff that grows with the life you lost this turn. Toxic Deluge's additional cost (pay X life) makes Rowan's discount bigger.",
+    "source": "owner ruling 2026-10-02",
+    "verified": true,
+    "tag": "scales:life-lost"
+  },
+  {
+    "a": "Gray Merchant of Asphodel",
+    "b": "Rakdos, Lord of Riots",
+    "category": "life-lost",
+    "note": "Owner ruling 2026-10-02, the opponents' side: Gray Merchant drains each opponent, and Rakdos's creature spells cost {1} less for each 1 life your opponents have lost this turn.",
+    "source": "owner ruling 2026-10-02",
+    "verified": true,
+    "tag": "scales:life-lost"
   }
 ]

@@ -14,6 +14,7 @@ import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
   enterAsCopySentence, entersAsCopyOfSentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, creatureConditionSentence,
   boardCountFeedsScaling,
+  lifeLostFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   staticGrantSentence, typeGrantNoun, recursionTargetSentence, playFromTopSentence, extraLoyaltySentence, imprintSentence, tutorSentence, digsRatherThanSearches, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
@@ -1733,6 +1734,7 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
   exileProcessingEdges(s);
   graveyardScalingEdges(s);
   boardCountEdges(s);
+  lifeLostEdges(s);
   donatedCountEdges(s);
   countGateEdges(s);
   staticEdges(s);
@@ -2296,6 +2298,31 @@ function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
         producer: p.card.name,
       });
     }
+  }
+}
+
+// LIFE-LOST EDGE (owner 2026-10-02: "paying life is actually synergistic with ... Rowan, which then
+// makes things cheaper by how much you have lost during this turn"). A payoff whose amount grows with
+// a player's life loss this turn (`per-life-lost`) is fed by every card that makes THAT player lose
+// life: a life payment or a drain of you for Rowan, Scion of War and Greven; a drain of the opponents
+// for Rakdos, Lord of Riots and Neheb. Same gate as the other scaling channels.
+function lifeLostEdges({ p, c, pEvents, reasons }: PairScope): void {
+  for (const a of c.tags.abilities) {
+    if (a.effect.scaling !== "per-life-lost" || !a.effect.scalingSubject) continue;
+    if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
+    const whose = a.effect.scalingSubject.control === "you" ? "you" : "opp";
+    const feeds = pEvents.some((e) => e.verb === "lose-life" && (whose === "you" ? e.subject.control === "you" : e.subject.control === "opp"));
+    if (!feeds) continue;
+    reasons.push({
+      tag: `scales:life-lost`,
+      text: lifeLostFeedsScaling(p.card.name, c.card.name, a.effect.kind, whose),
+      effectKind: a.effect.kind,
+      repeatability: a.kind === "on-cast" ? "oneshot" : a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
+      scaling: a.effect.scaling,
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+    return;
   }
 }
 

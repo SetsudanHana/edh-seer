@@ -875,8 +875,10 @@ test("a static permission to cast or play from the top of your library is play-f
   // The model left Bolas's Citadel's clause empty; the printed sentence still says it.
   const citadel = deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "none" }] }], "Bolas's Citadel",
     { 2: "You may play lands and cast spells from the top of your library. If you cast a spell this way, pay life equal to its mana value rather than pay its mana cost." }).abilities;
-  expect(citadel.map((a) => a.effect.kind)).toEqual(["play-from-top"]);
-  expect(citadel[0]!.effect.subject?.zone).toBe("library");
+  // ...and the life each spell costs is lost (owner 2026-10-02, the Rowan ruling): a lose-life emit beside it.
+  const top = citadel.find((a) => a.effect.kind === "play-from-top");
+  expect(top?.effect.subject?.zone).toBe("library");
+  expect(citadel.flatMap((a) => a.emits ?? []).some((e) => e.verb === "lose-life")).toBe(true);
   // A cascade, or a cast trigger that reveals from the top, is not a permission.
   expect(playsFromTop("When you cast this spell, exile cards from the top of your library until you exile a nonland card that costs less.")).toBe(false);
   expect(playsFromTop("When you cast this spell, reveal cards from the top of your library until you reveal X creature cards.")).toBe(false);
@@ -917,4 +919,11 @@ test("an extra loyalty activation is extra-loyalty, for your planeswalkers or fo
   // A cost INCREASE on loyalty abilities is not one (Carth the Lion).
   expect(deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "cost-modify" }] }], "Carth the Lion",
     { 2: "Planeswalkers' loyalty abilities you activate cost an additional [+1] to activate." }).abilities.some((a) => a.effect.kind === "extra-loyalty")).toBe(false);
+});
+
+// "Opponents" in a COUNT is not who pays (Rakdos, Lord of Riots: "Creature spells you cast cost {1}
+// less to cast for each 1 life your opponents have lost this turn"): a discount, not a tax.
+test("a discount counted off the opponents' life loss is a cost reduction", () => {
+  const text = "Creature spells you cast cost {1} less to cast for each 1 life your opponents have lost this turn.";
+  expect(actionEffectKind({ verb: "cost-modify", object: "Creature spells you cast" } as never, text)).toBe("cost-reduction");
 });
