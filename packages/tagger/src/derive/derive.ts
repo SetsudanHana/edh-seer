@@ -357,7 +357,10 @@ import { emblemRecipient } from "../emblem.js";
 // list, returns to their hand, X/X and plural animations, "it deals 4 damage instead".
 // 263: fragments 14: "and" before "this creature gets" / blight / convert, labels with "~", "those
 // permanents", delayed spell copies, named copies' pronouns, "the next spell ... has convoke".
-export const DERIVE_VERSION = 263;
+// 264: fragments 15: equipped creatures you control (kept as stored), "this card's other abilities",
+// plays from the top, combat-damage shields, exchanged life totals, a card's own counters removed as a
+// cost, +X/+Y counters, Torpor Orb, alternative costs for a class, cast from that player's graveyard.
+export const DERIVE_VERSION = 264;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

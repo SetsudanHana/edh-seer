@@ -483,18 +483,40 @@ test("fragments 14: joints, delayed copies, named copies, cost back-references",
   expect(defiler?.text).toBeUndefined();
 });
 
+// Fragments 15 (#896): the last stretch to 95% -- statuses kept as stored, choice animations and
+// counters, quote-safe predicates, own counters as a cost, alternative costs, set P/T, small verbs.
+test("fragments 15: statuses, choices, quote-safe predicates, set P/T", () => {
+  const verbs = (t: string, type = "triggered") => parseActions(t, type).map((a) => a.verb);
+  // "equipped creatures you control": the status no filter holds, so the stored object stands.
+  expect(parseActions("equipped creatures you control have double strike and haste.", "static")[0]).toMatchObject({ verb: "grant-ability", object: { ref: "sentence" } });
+  expect(verbs("As this creature enters, it becomes your choice of a 3/3 creature with flying, a 2/5 creature with vigilance, or a 0/12 creature with defender.", "static"))
+    .toEqual(["animate", "animate", "animate"]);
+  expect(verbs("Put your choice of a reach counter, a vigilance counter, or a trample counter on it.")).toEqual(["add-counter"]);
+  expect(verbs('Enchanted creature has lifelink and "Other commanders you control get +2/+2 and have lifelink," and is a Performer in addition to its other types.', "static"))
+    .toEqual(["grant-ability", "grant-ability", "grant-ability"]);
+  expect(verbs("Enchanted creature has flying, lifelink, and protection from Vampires, and it gets +X/+X, where X is the number of Vampires you control.", "static"))
+    .toEqual(["grant-ability", "grant-ability", "grant-ability", "modify-pt"]);
+  expect(verbs("enchanted artifact is a Golem creature with base power and toughness 5/4 in addition to its other types.", "static")).toEqual(["animate", "modify-pt"]);
+  expect(parseActions("Remove two counters from this creature.", "activated")[0]).toMatchObject({ verb: "remove-counter", object: { self: true }, amount: "2" });
+  expect(parseActions("You may pay {0} rather than pay the mana cost for Zombie creature spells you cast.", "static")[0]).toMatchObject({ verb: "cost-modify", amount: "{0}" });
+  expect(parseActions("you may have that creature's base power and toughness become 4/3 until end of turn.", "triggered")[0]).toMatchObject({ verb: "modify-pt", amount: "4/3", optional: true });
+  expect(verbs("you lose 1 life and this creature endures 1.")).toEqual(["lose-life", "endure"]);
+  expect(verbs("Creatures entering don't cause abilities to trigger.", "static")).toEqual(["cant"]);
+  expect(parseActions("put a +1/+2 counter on target creature.", "spell")[0]).toMatchObject({ counter: "+1/+2" });
+});
+
 test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.955],
   ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.942],
-  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.891],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.904],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.935],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.933],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.929],
-  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.915],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.936],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.934],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.917],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
-    "explore", "connive", "endure"], 0.858],
-  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.815],
+    "explore", "connive", "endure"], 0.861],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.835],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")
