@@ -3959,3 +3959,17 @@ test("a pronoun's antecedent skips a grant", () => {
   ).abilities;
   expect(soulstoke.flatMap((a) => a.emits ?? []).find((e) => e.verb === "sacrifice")?.subject.subtype).toBe("elemental");
 });
+
+/** CR 110.2a: AN OBJECT PUT ONTO THE BATTLEFIELD ENTERS UNDER THE CONTROL OF WHOEVER PUT IT (#963).
+ *  Nissa, Leyline Tamer's stored clause has two puts -- the creature to the battlefield, the rest to
+ *  the library -- so the single-actor cue refused and the creature read `any`. No player is named, so
+ *  you put it. A named putter ("the player puts", Proteus Staff) is not this rule's. */
+test("a put onto the battlefield with no player named enters under your control", () => {
+  const text = "Draw a card. Then if this is the first time this ability has resolved this turn, reveal cards from the top of your library until you reveal a creature card. Put that card onto the battlefield and the rest on the bottom of your library in a random order.";
+  const { abilities } = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "a land you control", control: "you" }, actions: [
+    { verb: "draw", object: "a card", fromZone: null, toZone: null, amount: "1", optional: false },
+    { verb: "put", object: "that creature card", fromZone: "library", toZone: "battlefield", amount: null, optional: false },
+    { verb: "put", object: "the rest", fromZone: "library", toZone: "library", amount: null, optional: false },
+  ] }], "Nissa, Leyline Tamer", { 2: text }, {}, `Deathtouch, vigilance\nLandfall — Whenever a land you control enters, ${text.charAt(0).toLowerCase()}${text.slice(1)}`);
+  expect(abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters")?.subject.control).toBe("you");
+});
