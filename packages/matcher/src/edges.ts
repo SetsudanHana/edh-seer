@@ -2953,7 +2953,7 @@ function flashTimingEdges({ p, c, reasons }: PairScope): void {
 }
 
 /** The mana value at or above which a creature is what a polymorph is played to hit (#964). */
-const POLYMORPH_HIT_MV = 6;
+export const POLYMORPH_HIT_MV = 6;
 // Polymorph destroys (`dies`), Proteus Staff tucks (`leaves`), Mass Polymorph exiles (#962).
 const REMOVES_OWN = new Set(["exiled", "sacrifice", "dies", "leaves"]);
 
@@ -2962,7 +2962,7 @@ const REMOVES_OWN = new Set(["exiled", "sacrifice", "dies", "leaves"]);
  *  -3, Fireflux Squad. Card-wide, since Synthetic Destiny returns them from a delayed trigger. A
  *  printed SEARCH makes it a tutor (Natural Order, Birthing Pod): the card is chosen, not revealed.
  *  CEILING: a mana-value bound on the reveal (Lukka's "greater mana value") is not read. */
-function isPolymorph(t: TaggedCard): boolean {
+export function isPolymorph(t: { card: { oracleText?: string }; tags?: CardTags | null }): boolean {
   if (/\bsearch/i.test(t.card.oracleText ?? "")) return false;
   const emits = (t.tags?.abilities ?? []).flatMap((a) => a.emits ?? []);
   const creature = (e: (typeof emits)[number]) => e.subject.self !== true && e.subject.control === "you" && list(e.subject.type).includes("creature");

@@ -16,7 +16,7 @@ import { extendRoutes, findRoutes, indexRoutes, type RouteHop } from "./routes.j
 import { docToCard } from "@edh-seer/data/docs";
 import { normalizeName } from "@edh-seer/data/names";
 import { StaticLookup } from "./static-lookup.js";
-import { directedReasons, sizeMeets, type ReasonOptions } from "./edges.js";
+import { directedReasons, POLYMORPH_HIT_MV, sizeMeets, type ReasonOptions } from "./edges.js";
 import { faceDeckCards } from "./faces.js";
 import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { commanderSubtypes, markCommander, resolveSharedTypes } from "./commander.js";
@@ -215,7 +215,7 @@ type Verify = (candidate: IndexCard, against: readonly string[], producerOnly: b
  *  for an unmet demand the candidate must SUPPLY -- and keep the deck cards it draws a reason with. */
 function verifier(
   dc: (name: string) => Promise<DeckCard | null>, landTypes: ReasonOptions["landTypes"], axis: Map<string, number>,
-  commanders: ReadonlySet<string>, weights: ImpactWeights,
+  commanders: ReadonlySet<string>, weights: ImpactWeights, refuses: (d: DeckCard) => boolean = () => false,
 ): Verify {
   const h = loadHierarchy();
   // NO TOKEN NODE EXISTS HERE, exactly as on a card page: the report drops a maker's direct "a token
@@ -237,7 +237,7 @@ function verifier(
     // whole result and the reader would see nothing at all.
     try {
       const y = await dc(candidate.name);
-      if (!y) return null;
+      if (!y || refuses(y)) return null;
       // FACE BY FACE, as the report matches (`faceDeckCards`): the reason names the face that does
       // the work, and one face's abilities are never read as live on the other.
       const yFaces = faceDeckCards(y);
@@ -349,6 +349,7 @@ export async function suggestForDeck(input: {
   cuts?: readonly string[];
 }): Promise<DeckSuggestions> {
   const { report } = input;
+  const polymorphDeck = (report.strategies ?? []).some((s) => s.name === "polymorph");
   const lookup = new StaticLookup(input.baseUrl, input.fetchImpl);
   // PHYSICAL NAMES: a two-faced card rates one row per face, and both faces are one card in the deck.
   const physical = unique(report.cards.filter((c) => !c.isCompanion).map((c) => c.cardName ?? c.name));
@@ -472,7 +473,14 @@ export async function suggestForDeck(input: {
   const interactionBand = BUILD_PARENTS.find((p) => p.key === "interaction")?.costBand ?? ANY_BAND;
   // A HINTED CARD HAS NO `pi` CONNECTION to count yet; the two-connection rule is applied to what
   // the engine finds (`verified`, `minConnections`).
-  const planRanked = shortlist([...pool.values()].filter((c) => c.connections.length >= 2 || (c.hint ?? 0) > 0), PLAN_LIMIT * SHORTLIST);
+  const planShort = shortlist([...pool.values()].filter((c) => c.connections.length >= 2 || (c.hint ?? 0) > 0), PLAN_LIMIT * SHORTLIST);
+  // THE DETECTED PLAN'S OWN PIECES GET A SEAT (#965). The hint sums axis weight over links, so it
+  // rewards breadth: Confusion in the Ranks, triggering on everything that enters, out-hinted
+  // Transmogrify 36 to 21 and Transmogrify was never verified -- where it scores 10.3 against 11.3.
+  // A candidate whose pool links carry a polymorph relation is verified; the engine still ranks it.
+  const planCodes = new Set(polymorphDeck ? ["cheat:creature", "fodder:creature"].map((t) => pairTags.indexOf(t)).filter((i) => i >= 0) : []);
+  const planRanked = [...planShort, ...[...pool.values()].filter((c) => !planShort.includes(c)
+    && c.connections.some((x) => (x.tags ?? []).some((t) => planCodes.has(t))))];
 
   const buildRanked = groups
     .filter((g) => g.target > 0 && g.count < g.target)
@@ -515,10 +523,16 @@ export async function suggestForDeck(input: {
     ...synergyRanked.flatMap(([, l]) => l),
   ].map((c) => c.card.name).concat(buildRanked.flatMap(([, , , , st]) => st.map((c) => c.name))));
   await lookup.prefetch(shown.map(normalizeName));
-  const verify = verifier(dc, deckLandTypes(deckDcs), axis, commanderNames, loadImpactWeights());
+  // A POLYMORPH DECK REFUSES A SMALL CREATURE (owner ruling 2026-10-02, #965): every creature below the
+  // hit line is a reveal that misses, so it dilutes the deck's whole plan however well it links.
+  const dilutesReveal = (d: DeckCard | null | undefined): boolean => {
+    const ch = d?.tags?.characteristics;
+    return polymorphDeck && !!ch && ch.token !== true && ch.types.some((t) => t.toLowerCase() === "creature") && ch.cmc < POLYMORPH_HIT_MV;
+  };
+  const verify = verifier(dc, deckLandTypes(deckDcs), axis, commanderNames, loadImpactWeights(), dilutesReveal);
   const nonland = physical.filter((n) => !atName.get(n)?.isLand);
   // AN UNREADABLE CARD IS LEFT TO `verify`, which drops it and says so.
-  const harmsDeck = (name: string): Promise<boolean> => dc(name).then((d) => killsOwnCreatures(d?.tags, d?.card.oracleText), () => false);
+  const harmsDeck = (name: string): Promise<boolean> => dc(name).then((d) => killsOwnCreatures(d?.tags, d?.card.oracleText) || dilutesReveal(d), () => false);
 
   // A SWAP'S ADD MUST DO MORE FOR THIS DECK THAN ITS CUT, BY THE REPORT'S OWN MEASURE (owner,
   // 2026-10-01): both are read the same way, against the deck without the cut, and weighed by the

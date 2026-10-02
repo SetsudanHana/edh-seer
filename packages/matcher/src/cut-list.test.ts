@@ -318,3 +318,12 @@ test("trimOrder merges a card's two faces into one ranked row", () => {
   expect(rows[0]!.name).toBe("Fell the Profane // Fell Mire");
   expect(rows[0]!.partners).toBe(1);
 });
+
+// OWNER RULING 2026-10-02 (#965): a polymorph deck must not cut the big creatures it is played to hit.
+// Akroma, Angel of Fury had 0 connections on the Multiverse Reforged page and led its cut list.
+test("a piece of the detected plan is never a cut, in either list", () => {
+  const akroma = card({ name: "Akroma, Angel of Fury", partnerCount: 0, manaValue: 8, isPlanPiece: true });
+  const dud = card({ name: "Dud", partnerCount: 0 });
+  expect(cutCandidates([akroma, dud]).map((c) => c.name)).toEqual(["Dud"]);
+  expect(trimOrder([akroma, dud]).map((r) => r.name)).toEqual(["Dud"]);
+});

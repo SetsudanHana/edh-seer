@@ -394,3 +394,16 @@ test("archetypesOf: a card that makes only Treasure is not a Tokens card", () =>
   const treasure = { name: "T", themeTags: ["create-token:treasure"], caresTags: [], effectKinds: ["token-generation"], tokenKinds: ["treasure"], subtypes: [] };
   expect(archetypesOf(treasure).supplies).not.toContain("tokens");
 });
+
+/** POLYMORPH IS DETECTED FROM ITS ENGINES AND ITS HITS (owner ruling 2026-10-02, #965). A polymorph
+ *  card counts full; a creature of mana value 6 or more -- what it is played to hit -- counts at the
+ *  supply share. No engine, no archetype: twelve big creatures alone are a deck of big creatures. The
+ *  Multiverse Reforged shape: four engines and eighteen hits in sixty-one nonland cards. */
+test("polymorph is its engines plus its big creatures, and needs an engine", () => {
+  const card = (name: string, extra: Partial<CardSignal>): CardSignal => ({ name, themeTags: [], effectKinds: [], subtypes: [], ...extra });
+  const engines = ["Jace, Multiverse Architect", "Mass Polymorph", "Synthetic Destiny", "Proteus Staff"].map((n) => card(n, { polymorph: true }));
+  const hits = Array.from({ length: 18 }, (_, i) => card(`Hit ${i}`, { polymorphHit: true }));
+  const found = detectArchetypes([...engines, ...hits], [], 61).find((r) => r.name === "polymorph");
+  expect(found?.confidence).toBeCloseTo((4 + 0.35 * 18) / 61, 5);
+  expect(detectArchetypes(hits, [], 61).some((r) => r.name === "polymorph")).toBe(false);
+});
