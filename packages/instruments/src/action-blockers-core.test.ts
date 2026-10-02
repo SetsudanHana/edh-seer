@@ -29,6 +29,9 @@ test("causes come first: a verb the parser never produces, a verb the text never
   ], toy, toyUnread, [DURATION, COND]);
   expect(b.total).toEqual({ actions: 3, uses: 9 });
   expect(b.causes).toEqual({ "no-grammar": 4, "not-in-text": 2, count: 0, phrase: 3 });
+  // The printed-verb domain: the read draw (5) and destroy (2), the phrase (3) and the scry (4); not
+  // the draw the text never prints, nor the row with no text.
+  expect(b.domain).toEqual({ uses: 14, read: 7 });
   expect(b.shapes.map((s) => [s.shape, s.uses])).toEqual([["draw :: draw a CLASS, then draw a CLASS", 3]]);
 });
 

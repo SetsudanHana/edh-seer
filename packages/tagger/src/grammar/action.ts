@@ -185,6 +185,9 @@ const DAMAGE_LIFE: Record<string, [string, Handler]> = {
   // Paying life is losing it (CR 118.3b's reading the store already uses: "pay X life" is lose-life).
   pay: ["lose-life", (rest) => (/^half your life, rounded (?:up|down)$/.test(rest) ? { amount: "half" } : / life$/.test(rest) ? lifeOf(rest) : null)],
   deal: ["deal-damage", (rest) => {
+    // "it deals double that damage [to that permanent or player] instead": a doubler (CR 614), the
+    // store's double, its object kept as stored.
+    if (/^double that damage(?: to .+)?$/.test(rest)) return { verb: "double", object: { control: "any", token: null, ref: "sentence" } };
     // "2 damage to any target and 3 damage to you": one action per recipient, as the store writes it.
     const parts = rest.split(/,? and (?=(?:\w+|half X|that much) damage\b)|, (?=(?:\w+|half X) damage\b)/);
     const out: Args[] = [];
@@ -397,7 +400,7 @@ const MOVE_REF = /^(?:(?:one|two|three|up to (?:one|two|three)|any number) of (?
  *  stays in the text, as the store writes a zone move ("two creatures", no amount): derive's counts
  *  read it there. `onField`: a permanent moved with no "from" leaves the battlefield. */
 function moveObject(phrase: string, onField = false): Args | null {
-  const t = phrase.replace(/ at random$/, "").replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards)$/, "");
+  const t = phrase.replace(/ at random$/, "").replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards|the (?:cards )?milled (?:this way|cards)|the cards milled this way)$/, "");
   // "target player's graveyard", "all graveyards": a whole graveyard.
   if (/^(?:target player's|target opponent's|each opponent's|your|their|all|each player's|all opponents'|any number of target players'|target players') graveyards?$/.test(t)) return { object: { control: "any", token: null }, fromZone: "graveyard", text: phrase };
   // "one of them", "the rest", "the exiled card", "those tokens": back-references, kept as stored.
@@ -427,7 +430,7 @@ function destinationOf(words: string): string | undefined {
       .replace(/ under (?:your|its owner's|their owners'|its controller's|their owner's|her owner's|his owner's) control$/, "");
   }
   t = t.replace(/^on their choice of the top or bottom of /, "on top of ");
-  const m = /^(?:to|into|onto|on top of|on the bottom of|in) (?:the |its owner's |their owners' |their owner's |her owner's |his owner's |your |their |a player's |an opponent's |a )?(.+)$/.exec(t);
+  const m = /^(?:to|into|onto|on top of|on the bottom of|in) (?:the |its owner's |their owners' |their owner's |her owner's |his owner's |your |their |a player's |an opponent's |that player's |a )?(.+)$/.exec(t);
   return m ? zoneOf(m[1]!) : undefined;
 }
 
@@ -487,7 +490,7 @@ const ZONE: Record<string, [string, Handler]> = {
   })],
   put: ["put", (all): Args | Args[] | null => withCounters(all, (rest) => {
     // "shuffle and put that card on top": the library just shuffled.
-    const top = /^(.+?) on top$/.exec(rest);
+    const top = /^(.+?) on top(?: in any order)?$/.exec(rest);
     if (top) { const r = moveObject(top[1]!); return r && { ...r, toZone: "library" }; }
     // "put them back in any order", "put one of those cards back on top of your library".
     const back = /^(.+?) back (?:on top of (?:your|their|its owner's|that player's|target player's) library|in any order)$/.exec(rest);
@@ -499,7 +502,8 @@ const ZONE: Record<string, [string, Handler]> = {
       const a = ZONE.put![1](rest.slice(0, pair.index)), b = ZONE.put![1](rest.slice(pair.index + pair[0].length));
       if (a && b) return [a, b].flat();
     }
-    const at = rest.search(/ (?:onto|into|on top of|on the bottom of) (?=the battlefield|its owner's|their owners'|your|a graveyard|exile|their)/);
+    rest = rest.replace(/ instead of putting (?:it|that card) into (?:your|its owner's|a) graveyard$/, "");
+    const at = rest.search(/ (?:onto|into|on top of|on the bottom of) (?=the battlefield|its owner's|their owners'|your|a graveyard|exile|their|that player's)/);
     if (at < 0) return null;
     const to = destinationOf(rest.slice(at + 1));
     const r = moveObject(rest.slice(0, at), true);
@@ -630,7 +634,18 @@ const TAIL: Record<string, [string, Handler]> = {
   convert: ["convert", thing],
   earthbend: ["earthbend", numbered],
   airbend: ["airbend", (rest) => (rest !== "" ? {} : null)],
-  waterbend: ["waterbend", numbered],
+  waterbend: ["waterbend", (rest) => numbered(rest.replace(/^\{(\d+|x)\}$/i, "$1"))],
+  // More keyword actions (CR 701): the verb is read, the stored object stays.
+  "empower jace": ["empower-jace", numbered],
+  recruit: ["recruit", (rest) => (rest === "" ? {} : null)],
+  "time travel": ["time-travel", (rest) => (rest === "" || /^(?:twice|\w+ times)$/i.test(rest) ? {} : null)],
+  cloak: ["cloak", (rest) => (/^(?:a card from your hand|the top (?:card|two cards) of your library)$/i.test(rest) ? {} : null)],
+  forage: ["forage", (rest) => (rest === "" ? {} : null)],
+  harness: ["harness", thing],
+  unattach: ["unattach", (rest) => (/^(?:all )?(?:equipment|auras?)\b/i.test(rest) || rest !== "" ? {} : null)],
+  meld: ["meld", (rest) => (/^(?:them|it and .+) into .+$/i.test(rest) ? {} : null)],
+  vote: ["vote", (rest) => (/^for /i.test(rest) ? {} : null)],
+  turn: ["turn-face-up", (rest) => (/ face up$/i.test(rest) && objectOf(rest.replace(/ face up$/i, "")) ? thing(rest.replace(/ face up$/i, "")) : null)],
   blight: ["blight", numbered],
   behold: ["behold", (rest) => (/^(?:a|an) [\w -]+$/i.test(rest) ? {} : null)],
 };
@@ -688,6 +703,14 @@ function subjectAction(t: string): ActionReading[] | null {
     return [{ verb: "cost-modify", object: objectOf(spells)!.object, text: spells, amount: `${sign}${cost[2]!.toUpperCase()}${cost[4] ?? ""}` }];
   }
   if (/^you become the monarch$/i.test(t)) return [{ verb: "monarch" }];
+  // "This creature enters prepared", "it becomes prepared", "target creature becomes unprepared".
+  const prepared = /^(.+?) (?:enters|becomes) (un)?prepared$/i.exec(t);
+  if (prepared && (objectOf(prepared[1]!) || THEY.test(prepared[1]!))) {
+    const who = objectOf(prepared[1]!)?.object ?? REF;
+    return [{ verb: prepared[2] ? "unprepare" : "prepare", object: who }];
+  }
+  // "that creature's controller faces a villainous choice — ...": the choice, its options unread here.
+  if (/^.{1,60}? faces? a villainous choice(?: — .*)?$/i.test(t)) return [{ verb: "face-a-villainous-choice" }];
   // "You may choose not to untap this creature during your untap step": the store's optional untap.
   const notUntap = /^you may choose not to untap (.+) during your untap step$/i.exec(t);
   if (notUntap && objectOf(notUntap[1]!)) return [{ verb: "untap", object: objectOf(notUntap[1]!)!.object, optional: true }];
@@ -829,7 +852,7 @@ const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new Reg
 
 /** Every verb word a phrase can open with, for splitting -- wider than the handled ones, so a joint
  *  before an unhandled verb ("..., then shuffle") still splits. */
-const ANY_VERB = /^(?:(?:it|that creature|those creatures|they) (?:doesn't|don't|can't) |(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|double (?=the|its|that|target|each)))\b/i;
+const ANY_VERB = /^(?:(?:it|that creature|those creatures|they) (?:doesn't|don't|can't|gains?|gets?) |(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|double (?=the|its|that|target|each)))\b/i;
 
 /** Split a sentence into phrases on ", then ", " and then ", ", and ", " and ", ", " -- only where a
  *  verb follows, so "a creature and a land" stays whole. */
@@ -1008,6 +1031,16 @@ function exceptOf(text: string, object: SubjectFilter): ActionReading[] | null {
     if (has) { const a = abilitiesOf(has[1]!); if (!a) return null; out.push(...a.map((x) => ({ verb: "grant-ability", object, text: x }))); continue; }
     // "it's a 0/2 Thopter artifact creature with flying in addition to its other types", "it's legendary".
     const is = /^(?:it's|it is|is) (?:an? )?(?:\d+\/\d+ )?([\w -]+?)(?: with (.+?))? in addition to its other (?:colors and )?types$|^(?:it's|it is|is) (legendary|an artifact|snow|legendary and snow)$/i.exec(full);
+    // "it's 1/1", "it's a 4/4 black Zombie": base P/T and characteristics the copy takes instead.
+    const pt = /^(?:it's|it is) (\d+\/\d+)$/i.exec(full);
+    if (pt) { out.push({ verb: "modify-pt", object, amount: pt[1]! }); continue; }
+    const becomes = /^(?:it's|it is) an? (\d+\/\d+ )?[\w -]+?(?: with (.+))?$/i.exec(full);
+    if (becomes && !is) {
+      const withs = becomes[2] ? abilitiesOf(becomes[2]) : [];
+      if (!withs) return null;
+      out.push({ verb: "grant-ability", object }, ...(becomes[1] ? [{ verb: "modify-pt", object, amount: becomes[1].trim() }] : []), ...withs.map((x) => ({ verb: "grant-ability", object, text: x })));
+      continue;
+    }
     if (is) {
       const withs = is[2] ? abilitiesOf(is[2]) : [];
       if (!withs) return null;
@@ -1205,7 +1238,7 @@ function actorOf(phrase: string): ActionReading["actor"] | undefined {
 }
 
 /** A sentence's opener: "If you do, ...", "If ..., ...", "Otherwise, ...". */
-const OPENER = /^(if you do|if you don't|if [^,]+|otherwise|then|as an additional cost to cast this spell|as long as [^,]+|during [^,]+), /i;
+const OPENER = /^(if you do|if you don't|if [^,]+|otherwise|then|as an additional cost to cast this spell|as long as [^,]+|during [^,]+|starting with you), /i;
 
 /** The actions a clause's printed text states that this grammar reads completely, in printed order:
  *  the cost's first (as the store writes them), then the effect's. */
@@ -1240,7 +1273,8 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   for (const part of cost ? cost.split(/, (?=\{|[A-Z]|[−+]?\d)| and (?=(?:sacrifice|exile|discard|pay|remove|tap|untap|return|put) )/) : []) {
     const r = readPhrase(part.replace(/^([A-Z])/, (c) => c.toLowerCase()), undefined);
     if (r) out.push(...r);
-    else unread?.push(part);
+    // A mana or tap cost does nothing a stored action records: not an unread phrase.
+    else if (!/^(?:\{[^}]+\})+$/.test(part.trim())) unread?.push(part);
   }
   // Quoted ability text belongs to what is granted, not to this clause's own actions.
   // A QUOTED ability is one atom: never split, never read as this clause's own actions, and kept in
@@ -1317,17 +1351,15 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   return out;
 }
 
-/** Index pairs [stored, read] of a longest common subsequence of two verb sequences: how a clause's
- *  stored actions line up with what the grammar read, by verb and in order. */
+/** Index pairs [stored, read]: how a clause's stored actions line up with what the grammar read, by
+ *  verb, the k-th of a verb with the k-th. */
 export function alignVerbs(stored: string[], read: string[]): [number, number][] {
-  const n = stored.length, m = read.length;
-  const L = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
-  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) {
-    L[i]![j] = stored[i] === read[j] ? L[i + 1]![j + 1]! + 1 : Math.max(L[i + 1]![j]!, L[i]![j + 1]!);
-  }
+  // The k-th stored action of a verb pairs with the k-th reading of that verb, wherever each sits: the
+  // store and the text may list a pair in either order ("each opponent loses 2 life and you gain 2
+  // life" is stored gain, lose), and an order-keeping alignment then reads only one of the two.
+  const seen = new Map<string, number[]>();
+  read.forEach((v, j) => seen.set(v, [...(seen.get(v) ?? []), j]));
   const out: [number, number][] = [];
-  for (let i = 0, j = 0; i < n && j < m;) {
-    if (stored[i] === read[j]) { out.push([i, j]); i++; j++; } else if (L[i + 1]![j]! >= L[i]![j + 1]!) i++; else j++;
-  }
+  stored.forEach((v, i) => { const j = seen.get(v)?.shift(); if (j !== undefined) out.push([i, j]); });
   return out;
 }

@@ -248,6 +248,8 @@ test("a cost's actions come first, the cost's own words read the same way", () =
 
 test("readings align to stored actions by verb, in order", () => {
   expect(alignVerbs(["sacrifice", "draw"], ["draw"])).toEqual([[1, 0]]);
+  // Either order: "each opponent loses 2 life and you gain 2 life" is stored gain, lose.
+  expect(alignVerbs(["gain-life", "lose-life"], ["lose-life", "gain-life"])).toEqual([[0, 1], [1, 0]]);
   expect(alignVerbs(["search", "search", "search", "exile", "shuffle"], ["search", "search", "search"])).toEqual([[0, 0], [1, 1], [2, 2]]);
 });
 
@@ -322,18 +324,34 @@ test("fragments 5: then-joints, coloured costs, copies, animated lands, stacked 
   expect(parseActions("you may have this land enter tapped.", "static")[0]).toMatchObject({ verb: "tap", optional: true });
 });
 
+// Fragments 6 (#896): keyword actions the grammar never produced, openers and doublers, "those creatures
+// gain", copies that change P/T, destinations named for a player, milled sets.
+test("fragments 6: keyword actions, doublers, copies that change P/T, player destinations", () => {
+  const verbs = (t: string, type = "triggered") => parseActions(t, type).map((a) => a.verb);
+  expect(verbs("This creature enters prepared.", "static")).toEqual(["prepare"]);
+  expect(parseActions("empower Jace 5.", "triggered")[0]).toMatchObject({ verb: "empower-jace", amount: "5" });
+  for (const [t, v] of [["recruit.", "recruit"], ["Time travel.", "time-travel"], ["Cloak a card from your hand.", "cloak"], ["turn it face up.", "turn-face-up"]]) expect(verbs(t!)).toEqual([v]);
+  expect(verbs("Starting with you, each player votes for planeswalk or chaos.", "spell")).toEqual(["vote"]);
+  expect(verbs("that creature's controller faces a villainous choice — They lose 2 life, or you draw a card.")).toEqual(["face-a-villainous-choice"]);
+  expect(verbs("If a source you control would deal damage to a permanent or player, it deals double that damage to that permanent or player instead.", "static")).toEqual(["double"]);
+  expect(verbs("put a +1/+1 counter on each creature you control and those creatures gain deathtouch until end of turn.")).toEqual(["add-counter", "grant-ability"]);
+  expect(verbs("create a token that's a copy of that creature, except it's 1/1.")).toEqual(["create"]);
+  expect(parseActions("you may put a card an opponent owns from exile into that player's graveyard.", "triggered")[0]).toMatchObject({ verb: "put", toZone: "graveyard", fromZone: "exile" });
+  expect(parseActions("put it onto the battlefield instead of putting it into your graveyard.", "triggered")[0]).toMatchObject({ verb: "put", toZone: "battlefield" });
+});
+
 test.each([
-  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.949],
-  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.926],
-  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.869],
-  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.924],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.912],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.878],
-  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.901],
+  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.95],
+  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.929],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.872],
+  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.929],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.916],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.882],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.903],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
-    "explore", "connive", "endure"], 0.836],
-  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.774],
+    "explore", "connive", "endure"], 0.839],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.782],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")
