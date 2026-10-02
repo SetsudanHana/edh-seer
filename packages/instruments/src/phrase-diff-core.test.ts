@@ -54,7 +54,7 @@ test("parseSubject against itself over the checked-in census agrees on every phr
  *  raise coverage by hiding the phrases the grammar cannot read. Every example is from the census. */
 test("domainOf: what is not a filter phrase, and what stays one", () => {
   const cases: [string, string][] = [
-    ["carnage or homage", "fragment"], ["loot", "fragment"], ["impostor counter", "counter"],
+    ["carnage or homage", "fragment"], ["loot", "counter"], ["impostor counter", "counter"],
     ["loyalty counters on a planeswalker", "counter"], ["six +1/+1 counters", "counter"],
     ["Planeswalkers you control [0]: Proliferate", "ability-text"], ["lands you control; {T}: add {G} or {W}", "ability-text"],
     ["Spells your opponents cast that target this creature cost {2} more to cast", "clause"],

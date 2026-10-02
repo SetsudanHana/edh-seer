@@ -471,6 +471,12 @@ const COUNTER_KINDS = [
   "rev", "release", "midway", "traffic", "croak", "aegis", "foreshadow", "carrion", "fetch", "day",
   "ember", "globe", "blessing", "influence", "brain", "bribery", "invasion", "exposure", "resonance",
   "unlock",
+  // ...and the commander-legal kinds a second census found missing (2026-10-02, #896: the action
+  // grammar reads "put a loot counter on this artifact" only for a kind it knows).
+  "ghostform", "petrification", "necrodermis", "rejection", "loot", "crystal", "winch", "fellowship",
+  "contested", "currency", "conqueror", "bloodline", "tower", "awakening", "bloodstain", "kick", "arrow",
+  "bore", "duty", "palliation", "feeding", "hatching", "cell", "possession", "harmony", "skewer",
+  "takeover", "reprieve", "saurian", "impostor", "enlightened",
   // KEYWORD counters, verbatim from Comprehensive Rules 122.1b — "flying, first strike, double
   // strike, deathtouch, decayed, exalted, haste, hexproof, indestructible, lifelink, menace, reach,
   // shadow, trample, and vigilance". The hand-written version of this list invented a `ward` counter,
