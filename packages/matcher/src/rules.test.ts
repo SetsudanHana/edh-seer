@@ -567,6 +567,7 @@ test("a board wipe is a mass effect on the battlefield, in any of its printed sh
     ["Chandra Nalaar", "−8: Chandra Nalaar deals 10 damage to target player or planeswalker and each creature that player or that planeswalker's controller controls."],
     ["Desynchronization", "Return each nonland permanent that's not historic to its owner's hand."],
     ["Calamity of the Titans", "Exile each creature and planeswalker with mana value less than the revealed card's mana value."],
+    ["Plague Wind", "Destroy all creatures you don't control. They can't be regenerated."],
   ];
   const notWipes: [string, string][] = [
     ["Fleshbag Marauder", "When this creature enters, each player sacrifices a creature of their choice."],
@@ -580,6 +581,9 @@ test("a board wipe is a mass effect on the battlefield, in any of its printed sh
     // PERSONA ROUND 2026-09-25, oracle text from Scryfall. A token-copier cleaning up ITS OWN tokens
     // wipes nothing, and burn to each opponent and their planeswalkers touches no creature.
     ["Arcane Artisan", "{2}{U}, {T}: Target player draws a card, then exiles a card from their hand. If a creature card is exiled this way, that player creates a token that's a copy of that card.\nWhen this creature leaves the battlefield, exile all tokens created with it at the beginning of the next end step."],
+    // #961: a polymorph exiles ONLY its caster's creatures, to replace them from the library.
+    ["Mass Polymorph", "Exile all creatures you control, then reveal cards from the top of your library until you reveal that many creature cards. Put all creature cards revealed this way onto the battlefield, then shuffle the rest of the revealed cards into your library."],
+    ["Synthetic Destiny", "Exile all creatures you control. At the beginning of the next end step, reveal cards from the top of your library until you reveal that many creature cards, put all creature cards revealed this way onto the battlefield, then shuffle the rest of the revealed cards into your library."],
     ["Cavalier of Flame", "{1}{R}: Creatures you control get +1/+0 and gain haste until end of turn.\nWhen this creature enters, discard any number of cards, then draw that many cards.\nWhen this creature dies, it deals X damage to each opponent and each planeswalker they control, where X is the number of land cards in your graveyard."],
   ];
   const m = detectBuildCategories([...wipes, ...notWipes].map(([n, t]) => mk(n, t, "Sorcery")));
