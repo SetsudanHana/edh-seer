@@ -349,7 +349,9 @@ import { emblemRecipient } from "../emblem.js";
 // entries, "twice that many", ordinal and next-spell subjects kept as stored, graveyard sets.
 // 259: fragments 10: 31 named counter kinds the vocabulary lacked (loot, tower, arrow, necrodermis,
 // ...), "another" counter, a coloured cost per count, base P/T with a list of abilities.
-export const DERIVE_VERSION = 259;
+// 260: fragments 11: pump and grant predicates (toughness as combat damage, attacking past defender,
+// "all activated abilities of", either P/T, base P/T X/X, "~ and other X", protection by choice).
+export const DERIVE_VERSION = 260;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

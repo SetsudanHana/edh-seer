@@ -415,13 +415,30 @@ test("fragments 10: named counters, another counter, coloured cost per count, ba
     .toEqual(["animate", "modify-pt", "grant-ability", "grant-ability"]);
 });
 
+// Fragments 11 (#896): pump and grant predicates -- toughness as combat damage, attacking past defender,
+// "all activated abilities of", either P/T change, base P/T X/X, "~ and other X", protection by choice.
+test("fragments 11: pump and grant predicates", () => {
+  const verbs = (t: string, type = "static") => parseActions(t, type).map((a) => a.verb);
+  expect(parseActions("each creature you control assigns combat damage equal to its toughness rather than its power.", "static")[0]).toMatchObject({ verb: "modify-pt", object: { ref: "sentence" } });
+  expect(verbs("this creature gets +3/-1 until end of turn and can attack this turn as though it didn't have defender.", "activated")).toEqual(["modify-pt", "grant-ability"]);
+  expect(parseActions("this creature gets +2/-2 or -2/+2 until end of turn.", "activated")[0]).toMatchObject({ amount: "+2/-2 or -2/+2" });
+  expect(parseActions("this creature has all activated abilities of all creature cards exiled with it.", "static")[0])
+    .toMatchObject({ verb: "grant-ability", text: "all activated abilities of all creature cards exiled with it" });
+  expect(parseActions("creatures you control have base power and toughness X/X until end of turn.", "spell")[0]).toMatchObject({ verb: "modify-pt", amount: "X/X" });
+  const knights = parseActions("~ and other Knights you control have flying.", "static");
+  expect(knights.map((a) => [a.verb, a.object?.self === true])).toEqual([["grant-ability", true], ["grant-ability", false]]);
+  expect(parseActions("target creature gains protection from the color of its controller's choice until end of turn.", "spell")[0]?.text)
+    .toBe("protection from the color of its controller's choice");
+  expect(verbs("has flying, and is a white Angel in addition to its other colors and types.")).toEqual(["grant-ability", "grant-ability"]);
+});
+
 test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.952],
   ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.936],
   ["counters", ["add-counter", "remove-counter", "proliferate"], 0.887],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.934],
   ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.927],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.915],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.927],
   ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.909],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
