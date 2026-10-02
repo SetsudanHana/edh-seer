@@ -212,9 +212,71 @@ corpus `v-f07b58a42386`, which is older than production, so treat them as indica
 
 ## Design review (ui-designer)
 
-_Pending; added when the designer seat returns._
+**Verdicts.**
+- **Precon page: not done.** The swaps are fine card by card, but the package leaves empty bands at
+  every wide width.
+- **Deck reports: nearly.**
+- **Cards page: nearly. Combos page: done.**
+
+**The space gate's 3840 failure on Inalla is real, not an artefact.** The section at 20% used / 17%
+filled is the strip under the Glance map: "63 nonland cards · 37 lands" and "✓ Deck rules checked:
+nothing breaks them", alone in a full-width row. Do not allowlist it. Fold it into one footer row of
+the Glance chapter: counts left, rules receipt right, and the receipt's detail in a popover or the
+rail. The designer also noted the converse: the gate measures sections, not the rows inside them.
+The precon "upgrades" section reads 0.98 / 0.98 at every width while containing a band half the
+screen wide.
+
+**Must fix:**
+
+1. **Precon @1920/2560: "Cards that work together" beside "Also worth knowing"** (b2-desktop/s02,
+   upgrades-desktop-p1, precon-wide-p2).
+   - With 10 swaps open the left column is about 1,300px tall; the right cell is one sentence.
+   - About 48% of the width is blank for a screen. The same happens, smaller, under "Removal and
+     protection" (1 swap beside the 3 in Lands). This is new with #902's ten swaps.
+   - Fix: stop pairing whole role sections. A long section spans the row with its swaps in 2-3
+     columns, or the swaps flow in CSS columns.
+2. **Precon, every wide width: the bracket intro is capped prose with nothing beside it.** About 55%
+   blank at 1920 and 73% at 3840; at 3840 "Also worth knowing" falls to its own row at 27%. Fix: one
+   row from about 1600px, with the tabs and bracket text left and "Also worth knowing" right.
+3. **Precon, forced colours: the Bracket 2/3/4 tabs lose their selected state** (three identical
+   outlined pills, precon-forced-colors.png). They are also pills where DESIGN.md asks for an
+   underline. Fix: the system tab, with a 2px underline and `aria-selected`.
+4. **Report @2560/3840: "Scores and bracket".** "Which table this is for" is capped at about 590px;
+   the Build column holds only a centred link. Mari @3840 is about 75% blank for 350px; on Inalla the
+   combo diagram sits about 1,500px from its steps. Fix: a 2×2 grid (gauges; Focus/Key card | bracket
+   strip), then the combo steps with the diagram beside them.
+5. **Graph labels did not get "a quarter bigger from 3200px"** (#863). "Bloodline Necromancer" is
+   132px at 1920 and at 3840, and "Malakir Blood-Priest" 115px at both, while node art doubled (105
+   → 226px). Everything else measured scaled ×1.25 (report text, Cards, Combos, precon prose).
+
+**Should fix:**
+
+- Roles @3840: one chip row up to 2,800px long per role, and one-chip rows 90% blank. Put
+  Consistency and Interaction side by side from 2560.
+- Improve @3840: two cut cards fill half the row. Put cuts and "Better cards" in one auto-fill grid.
+- Precon "What's in the box": a short group beside "Creatures · 44" leaves a 900×200px hole. Make it
+  one CSS-columns flow.
+- Precon hero: text centred against the map leaves 170px (1920) and 450px (3840) above the
+  breadcrumb, and the zoom buttons float.
+- Kicker labels above headings ("UPGRADE IT", "THE DECKLIST", "SAME SET", "COMMANDER PRECON · … ·
+  2022"). The capture's `p.eyebrow` selector counts 0, so the check cannot see them.
+- Cards page: a 680px gap between reason and ROLES at 1920; reasons cut off at 3840 while role
+  cells are mostly empty.
+- Precon @390: the "→" takes its own 40px row in every stacked swap.
+- axe: two contrast failures, the accent `text-xs` on the selected Turn 3 tile and the active "ALL"
+  chip on Cards.
+- Combos: a partial hairline under the panel.
+
+**Fine as is:**
+- precon role sections in 3 columns at 3840, the decklist growing to 6 columns, the swap-card rhythm,
+  and the precon page at 390 (no overflow);
+- the Glance verdict in the heading row, and "Cards that carry it", Manabase, "Can you deal with
+  theirs" and the 3840 Cards table buying columns;
+- the phone chapter picker.
 
 ## Unique findings per seat
+
+The ui-designer seat is not counted here: its findings are layout, not reading.
 
 - **first-cuts: 3.** "Weakest first" isn't ordered by any number shown; Treasure Nabber is both the
   table's heads-up and a cut; "22 × Goblin Chieftain gives Howlsquad Heavy …" as a most-common link.
