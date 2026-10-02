@@ -1,5 +1,5 @@
 {
-  "deriveVersion": 273,
+  "deriveVersion": 274,
   "rulesVersion": 16,
   "roles": {
     "ramp": {
@@ -89,7 +89,7 @@
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 20,
+      "pairs": 19,
       "heldOutAccuracy": 0,
       "baselineAccuracy": 0,
       "fallbackAccuracy": 0,
