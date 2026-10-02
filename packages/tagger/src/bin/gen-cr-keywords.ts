@@ -43,6 +43,13 @@ const out = {
   version: file.replace(/\D/g, ""),
   actions: headings("701"),
   abilities: headings("702"),
+  // "Multiple instances of flying on the same creature are redundant" (702.9c): a keyword a second
+  // copy adds nothing to. Granting one to a card that already prints it is no edge (owner
+  // 2026-10-02: "flying flying gives you nothing additional, but dethrone dethrone works"). The
+  // parameterised ones (landwalk kind, protection quality) are left out: a bare keyword cannot say
+  // whether two instances are the same one.
+  redundant: [...cr.matchAll(/^702\.\d+[a-z] Multiple instances of (?:the same )?([a-z ]+?)(?: ability)? on the same (?:object|creature|permanent|spell)(?: or player)? are redundant\./gm)]
+    .map((m) => m[1]!).filter((k) => !/\b(?:kind of|from the same)\b/.test(k)),
   subtypes: { artifact: typeList("205.3g"), enchantment: typeList("205.3h"), land: typeList("205.3i") },
   // EVERY CR section, all nine bands — not just the 700s. The 700s are where the per-mechanic rules
   // live (Saga 714, Adventure 715, Omen 720), but 800 is multiplayer and 903 is COMMANDER, and an

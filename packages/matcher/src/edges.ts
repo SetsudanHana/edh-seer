@@ -1,6 +1,7 @@
 import type { Reason } from "@edh-seer/engine";
 import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
+import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -29,6 +30,8 @@ const list = (v: string | string[] | undefined): string[] =>
 
 /** The four creature types a party is made of (CR 700.8). */
 const PARTY = ["cleric", "rogue", "warrior", "wizard"];
+/** Keywords whose second instance on one object adds nothing (CR 702, generated: `cr-keywords.json`). */
+const REDUNDANT_KEYWORDS: ReadonlySet<string> = new Set(crKeywords.redundant);
 
 /** A short human/grouping key for a subject: its subtype, else its type, else "any". */
 export function themeSubjectKey(s: Partial<SubjectFilter>): string {
@@ -2573,6 +2576,17 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     // counter-presence pass below is what supplies that state.
     const { counter: _stateOnly, ...printedMatchable } = a.effect.subject;
     if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) return undefined;
+    // A KEYWORD THE CARD ALREADY PRINTS IS NOT GIVEN TO IT AGAIN when a second instance is redundant
+    // (CR 702.9c and its siblings). Owner 2026-10-02: "flying flying gives you nothing additional,
+    // but dethrone dethrone works". The claim keeps only the keywords that are new to the card, and
+    // goes when none are -- Archetype of Imagination gives Serra Angel nothing.
+    // `speed-increase` carries no `grants`: it is haste, or flash for a cast-as-flash static.
+    // CEILING: read off the producer's text, so a card printing both reads as flash.
+    const granted = a.grants ?? (a.effect.kind === "speed-increase"
+      ? [/as though (?:it|they) had flash/i.test(p.card.oracleText ?? "") ? "flash" : "haste"] : undefined);
+    const has = c.tags.characteristics.keywords;
+    const grants = granted?.filter((k) => !(REDUNDANT_KEYWORDS.has(k) && has.includes(k)));
+    if (granted?.length && !grants?.length) return undefined;
     if (a.effect.kind === "cost-reduction") {
       // A SELF REDUCTION'S SUBJECT IS WHAT MEASURES IT, NOT WHAT IT DISCOUNTS — see `reducesItself`.
       if (reducesItself(p.card.oracleText)) return undefined;
@@ -2635,7 +2649,7 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
       text: a.effect.kind === "cost-reduction"
         ? costReductionSentence(p.card.name, c.card.name)
         : staticGrantSentence(p.card.name, c.card.name, a.effect.kind,
-          typeGrantNoun(a.effect.subject?.type, c.tags.characteristics.types), a.grants),
+          typeGrantNoun(a.effect.subject?.type, c.tags.characteristics.types), a.grants && grants),
       effectKind: a.effect.kind,
       repeatability:
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",

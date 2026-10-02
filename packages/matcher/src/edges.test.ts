@@ -4835,6 +4835,26 @@ test("static edge: a grant to artifact creatures reaches an artifact creature an
   expect(pairReasons(cybermen, signet, H).some((r) => r.tag === "static:keyword-grant")).toBe(false);
 });
 
+// Owner 2026-10-02: "flying flying gives you nothing additional, but dethrone dethrone works". A
+// keyword the card already prints is dropped from the grant when a second instance is redundant
+// (CR 702.9c), and the claim goes when nothing new is left; a stacking keyword (702.105b) stays.
+test("static grant: a redundant keyword the card already has is not given again", () => {
+  const withKeywords = (card: ReturnType<typeof base>, keywords: string[]) =>
+    ({ ...card, tags: { ...card.tags, characteristics: { ...card.tags.characteristics, keywords } } });
+  const grant = (name: string, grants: string[]) => base(name, [{
+    kind: "static", grants,
+    effect: { kind: "keyword-grant", subject: { control: "you", token: null, type: "creature", scope: "all" } },
+  }]);
+  const angel = withKeywords(base("Serra Angel", [], ["angel"]), ["flying", "vigilance"]);
+  const tag = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) =>
+    pairReasons(p, c, H).find((r) => r.tag === "static:keyword-grant");
+  expect(tag(grant("Archetype of Imagination", ["flying"]), angel)).toBeUndefined();
+  expect(tag(grant("Archetype of Imagination", ["flying"]), base("Grizzly Bears", [], ["bear"]))).toBeDefined();
+  expect(tag(grant("Akroma's Memorial", ["flying", "haste", "vigilance"]), angel)?.text).toBe("Akroma's Memorial gives Serra Angel haste");
+  const emissary = withKeywords(base("Marchesa's Emissary", [], ["human", "rogue"]), ["dethrone", "hexproof"]);
+  expect(tag(grant("Marchesa, the Black Rose", ["dethrone"]), emissary)).toBeDefined();
+});
+
 // RECALL v5 #140 / #166 (2026-09-10): a TYPED recursion joins the CARDS of its class in the deck,
 // the way a typed tutor does (owner ruling 2026-09-10, extending the 2026-09-07 tutor ruling).
 // Bloodline Necromancer returns "target Vampire or Wizard creature card"; Lara Croft replays "a

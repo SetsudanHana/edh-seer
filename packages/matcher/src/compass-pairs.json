@@ -648,5 +648,23 @@
     "note": "a card's own entry links once",
     "source": "#560 fix (compass backfill 2026-09-28: a badge or wording no tag shows)",
     "verified": true
+  },
+  {
+    "a": "Grumgully, the Generous",
+    "b": "Llanowar Elves",
+    "category": "class-grant",
+    "note": "Owner ruling 2026-10-02: a grant to a creature CLASS links to each member of the class (each other non-Human creature enters with an extra +1/+1 counter; Llanowar Elves is an Elf). A weak link, so a magnitude below a one-card grant when relation magnitude exists (#905).",
+    "source": "owner ruling 2026-10-02",
+    "verified": true,
+    "tag": "static:enters-with-counters"
+  },
+  {
+    "a": "Marchesa, the Black Rose",
+    "b": "Marchesa's Emissary",
+    "category": "keyword-grant",
+    "note": "Owner ruling 2026-10-02: \"dethrone dethrone works\". Dethrone stacks (CR 702.105b, each instance triggers separately), so granting it to a card that already prints it is still a real grant.",
+    "source": "owner ruling 2026-10-02",
+    "verified": true,
+    "tag": "static:keyword-grant"
   }
 ]

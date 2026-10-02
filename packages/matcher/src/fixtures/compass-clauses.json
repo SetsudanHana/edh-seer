@@ -2726,6 +2726,59 @@
   "typeLine": "Instant"
  },
  {
+  "name": "Grumgully, the Generous",
+  "oracleId": "fa4afcf7-9cf7-4f67-95b9-1f7fe66bf332",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature"
+   ],
+   "subtypes": [
+    "goblin",
+    "shaman"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G",
+    "R"
+   ],
+   "identity": [
+    "G",
+    "R"
+   ],
+   "cmc": 3,
+   "power": "3",
+   "toughness": "3",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Each other non-Human creature you control enters with an additional +1/+1 counter on it."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Each other non-Human creature you control enters with an additional +1/+1 counter on it.",
+  "typeLine": "Legendary Creature — Goblin Shaman"
+ },
+ {
   "name": "Guttersnipe",
   "oracleId": "c6bdaf76-6a03-4695-9c4b-f040e73435af",
   "clauses": [
@@ -3549,6 +3602,58 @@
   "typeLine": "Instant"
  },
  {
+  "name": "Llanowar Elves",
+  "oracleId": "68954295-54e3-4303-a6bc-fc4547a4e3a3",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "elf",
+    "druid"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 1,
+   "power": "1",
+   "toughness": "1",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Add {G}."
+  },
+  "clauseCosts": {
+   "1": "{T}"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "{T}: Add {G}.",
+  "typeLine": "Creature — Elf Druid"
+ },
+ {
   "name": "Lotus Cobra",
   "oracleId": "8ad91f64-ccab-4edc-bd54-b2ee9267d614",
   "clauses": [
@@ -3890,6 +3995,160 @@
   "grantedToken": [],
   "oracleText": "Add two mana in any combination of colors.\nDraw a card.",
   "typeLine": "Instant"
+ },
+ {
+  "name": "Marchesa's Emissary",
+  "oracleId": "7a67cb39-6b53-4f2b-a52c-3861119eba12",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Hexproof",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Dethrone",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "human",
+    "rogue"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 4,
+   "power": "2",
+   "toughness": "2",
+   "token": false,
+   "keywords": [
+    "hexproof",
+    "dethrone"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Hexproof",
+   "2": "Dethrone"
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Hexproof (This creature can't be the target of spells or abilities your opponents control.)\nDethrone (Whenever this creature attacks the player with the most life or tied for most life, put a +1/+1 counter on it.)",
+  "typeLine": "Creature — Human Rogue"
+ },
+ {
+  "name": "Marchesa, the Black Rose",
+  "oracleId": "17a59d3d-9e01-48cd-bb4a-3eaaa077751c",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Dethrone",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "dethrone",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a creature you control with a +1/+1 counter on it",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "that card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature"
+   ],
+   "subtypes": [
+    "human",
+    "wizard"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B",
+    "R",
+    "U"
+   ],
+   "identity": [
+    "B",
+    "R",
+    "U"
+   ],
+   "cmc": 4,
+   "power": "3",
+   "toughness": "3",
+   "token": false,
+   "keywords": [
+    "dethrone"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Dethrone",
+   "2": "Other creatures you control have dethrone.",
+   "3": "Whenever a creature you control with a +1/+1 counter on it dies, return that card to the battlefield under your control at the beginning of the next end step."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Dethrone (Whenever this creature attacks the player with the most life or tied for most life, put a +1/+1 counter on it.)\nOther creatures you control have dethrone.\nWhenever a creature you control with a +1/+1 counter on it dies, return that card to the battlefield under your control at the beginning of the next end step.",
+  "typeLine": "Legendary Creature — Human Wizard"
  },
  {
   "name": "Massive Raid",

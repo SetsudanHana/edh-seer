@@ -12,7 +12,8 @@
     "./grammar": "./src/grammar/filter.ts",
     "./subtypes": "./src/derive/subtypes.ts",
     "./emblem": "./src/emblem.ts",
-    "./segment": "./src/segment.ts"
+    "./segment": "./src/segment.ts",
+    "./cr-keywords": "./src/derive/cr-keywords.json"
   },
   "scripts": {
     "test": "vitest run",
