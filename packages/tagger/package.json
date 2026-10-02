@@ -24,7 +24,7 @@
   "dependencies": {
     "@edh-seer/data": "*",
     "@edh-seer/engine": "*",
-    "mongodb": "^7.6.0"
+    "mongodb": "^7.7.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
