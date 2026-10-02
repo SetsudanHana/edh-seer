@@ -740,7 +740,7 @@ export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, ArchetypeSignature>>
  *  a subject the theme key drops, i.e. not a matcher patch; recorded here so the next vocabulary
  *  run buys the right words. Census 2026-09-06.
  *
- *  - theft, donate, life-exchange, polymorph: no `gain-control` / `exchange` verb reaches the derived
+ *  - theft, donate, life-exchange: no `gain-control` / `exchange` verb reaches the derived
  *    corpus (Control Magic derives `enters:aura` and nothing else).
  *  - big-mana, x-spells: no `x-cost` or mana-doubling kind is derived; `mana-generation` is ramp.
  *  - group-hug, group-slug, self-damage, pingers: the theme key keeps the verb and the subject's
@@ -762,4 +762,5 @@ export const DETECTABLE: ReadonlySet<Archetype> = new Set<Archetype>([
   ...(Object.keys(ARCHETYPE_SIGNATURE) as Archetype[]),
   "combo",   // detected from the combo finder, not a signature
   "kindred", // detected by `detectKindred`
+  "polymorph", // detected by `detectPolymorph` (#965)
 ]);

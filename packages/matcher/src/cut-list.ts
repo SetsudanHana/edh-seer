@@ -67,6 +67,10 @@ export interface CutInput {
   isLand: boolean;
   isCommander: boolean;
   isComboPiece: boolean;
+  /** THE DECK'S DETECTED PLAN NEEDS IT (owner ruling 2026-10-02, #965): a polymorph engine, or a
+   *  creature it is played to hit. Never a cut, the way a commander is not: "must not cut the big
+   *  creatures" -- their few links are the point, since a polymorph hit needs nothing else to work. */
+  isPlanPiece?: boolean;
   /** The card turns one of the deck's known loops into a win (`combo-payoffs.ts`): cutting it
    *  leaves the loop running with nothing to show for it. */
   isComboPayoff?: boolean;
@@ -208,7 +212,7 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
   const median = medianPartnerCount(merged);
   const out: CutCandidate[] = [];
   for (const c of merged) {
-    if (c.isLand || c.isCommander || c.isComboPiece || c.isComboPayoff) continue;
+    if (c.isLand || c.isCommander || c.isComboPiece || c.isComboPayoff || c.isPlanPiece) continue;
     // A functional role protects the card outright -- see the header. This is the gate that keeps
     // Sol Ring off the list.
     if (c.roles.length > 0) continue;
@@ -334,7 +338,7 @@ export function trimOrder(
   const median = medianPartnerCount(merged);
   const rows: TrimRow[] = [];
   for (const c of merged) {
-    if (c.isLand || c.isCommander) continue;
+    if (c.isLand || c.isCommander || c.isPlanPiece) continue;
     const reasons: string[] = [];
     const protections: string[] = [];
 
