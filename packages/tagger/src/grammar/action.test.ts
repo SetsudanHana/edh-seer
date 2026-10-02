@@ -532,7 +532,8 @@ test.each([
   ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.942],
   ["counters", ["add-counter", "remove-counter", "proliferate"], 0.91],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.935],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.937],
+  // zone 0.937 -> 0.936: "with the same name as" now refused (it read Maelstrom Pulse as a mesh, task 7).
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.936],
   ["pump/grant", ["modify-pt", "grant-ability"], 0.935],
   ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.917],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",

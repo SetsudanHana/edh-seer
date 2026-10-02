@@ -41,6 +41,8 @@ const TESTED: Record<string, string> = {
   "702.22b": "grammar/filter.test.ts — 'bands with other' is a keyword a token can have (Master of the Hunt) (#896)",
   "702.95": "grammar/filter.test.ts — a soulbond pair is a status the filter can demand ('a creature paired with it') (#896)",
   "810": "grammar/filter.test.ts — a Two-Headed Giant team's permanents ('creatures your team controls') are yours (#896)",
+  "701.34a": "grammar/clause-record.test.ts — a proliferate's object is any permanent or player, not only yours (task 7, #896)",
+  "701.41a": "grammar/clause-record.test.ts — support's object is other target creatures (task 7, #896)",
   "701.15": "grammar/filter.test.ts — goaded is a status the filter can demand (#896)",
   "701.60": "grammar/filter.test.ts — suspected is a status the filter can demand (#896)",
   "702.33": "grammar/filter.test.ts — a kicked spell is a status the filter can demand (#896)",

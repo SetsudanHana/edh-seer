@@ -238,7 +238,8 @@ function damageOf(rest: string): Args | Args[] | null {
   const many = m && amount && /^to /.test(rest.slice(m[1]!.length + " damage ".length)) ? m[2]!.split(/ and (?=(?:each|target|up to one) )/) : [];
   if (many.length > 1) {
     const each = many.map((p) => objectOf(p));
-    if (each.every((e) => e)) return each.map((e, i) => ({ object: e!.object, amount: amount!, text: many[i]! }));
+    // A back-referenced recipient ("each creature that player controls") keeps its words as the phrase.
+    if (each.every((e) => e)) return each.map((e, i) => ({ object: e!.object, amount: amount!, text: many[i]!, ...(e!.object.ref ? { phrase: many[i]! } : {}) }));
   }
   // "divided as you choose among one, two, or three targets": any targets, however many.
   const r = m && amount ? objectOf(m[2]!) ?? (/^(?:one|one or two|one, two, or three|any number of|up to \w+) (?:other )?targets$/.test(m[2]!) ? { object: ANY_TARGET } : null) : null;
@@ -396,7 +397,7 @@ function tokenList(rest: string): Args | Args[] | null {
   if (more) return { object: { control: "any", token: true, ref: "sentence" }, amount: amountOf(more[1]!) ?? more[1]! };
   // The list first: the filter grammar would read "a Clue token, a Food token, and a Treasure token"
   // as ONE token of three types.
-  const parts = rest.split(/,? and (?=(?:a|an|one|two|three) )|, (?=(?:a|an|one|two|three) )/);
+  const parts = rest.split(/,? and (?=(?:a|an|one|two|three|x|that many) )|, (?=(?:a|an|one|two|three|x|that many) )/i);
   if (parts.length >= 2) {
     const out = parts.map(tokenOf);
     if (out.every((x) => x !== null)) return out as Args[];
@@ -454,6 +455,9 @@ const MOVE_REF = /^(?:(?:one|two|three|up to (?:one|two|three)|any number) of (?
  *  stays in the text, as the store writes a zone move ("two creatures", no amount): derive's counts
  *  read it there. `onField`: a permanent moved with no "from" leaves the battlefield. */
 function moveObject(phrase: string, onField = false): Args | null {
+  // "all other permanents with the same name as that permanent" (Maelstrom Pulse): a relation the
+  // filter grammar cannot hold -- it read "all other permanents" and dropped the rest. Unread.
+  if (/\bwith the same name as\b/i.test(phrase)) return null;
   const t = phrase.replace(/ in a face-(?:down|up) pile$/, "").replace(/ at random$/, "").replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards|the (?:cards )?milled (?:this way|cards)|the cards milled this way)$/, "");
   // "target player's graveyard", "all graveyards": a whole graveyard.
   if (/^(?:target player's|target opponent's|each opponent's|your|their|all|each player's|all opponents'|any number of target players'|target players') graveyards?$/.test(t)) return { object: { control: "any", token: null }, fromZone: "graveyard", text: phrase };
@@ -687,7 +691,8 @@ const TAIL: Record<string, [string, Handler]> = {
   bolster: ["bolster", numbered],
   adapt: ["adapt", numbered],
   monstrosity: ["monstrosity", numbered],
-  support: ["support", numbered],
+  // "support 2": "+1/+1 counter on each of up to two other target creatures" (CR 701.41a).
+  support: ["support", (rest) => { const n = numbered(rest); return n && { ...n, text: "other target creatures" }; }],
   discover: ["discover", numbered],
   "collect evidence": ["collect-evidence", numbered],
   "venture into the dungeon": ["venture-into-the-dungeon", (rest) => (rest === "" ? {} : null)],
@@ -749,7 +754,9 @@ function castOrPlay(rest: string, what: RegExp): Args | null {
   // A relative clause ("spells that have a cycling ability") is a narrowing the filter can drop: not
   // read, so the stored action stands (Abandoned Sarcophagus).
   if (/ that (?!damage\b|much\b|many\b|player's\b)/.test(t)) return null;
-  return { object: r.object, ...(r.object.ref ? {} : { text: t }), ...(zone ? { fromZone: zone } : {}) };
+  // "spells from among cards exiled with this enchantment": the card named there is not what is cast.
+  const text = from && /^ from among (?:the )?cards? exiled /i.test(from[0]) ? t.slice(0, from.index) : t;
+  return { object: r.object, ...(r.object.ref ? {} : { text }), ...(zone ? { fromZone: zone } : {}) };
 }
 
 /** "<subject> explores", "<subject> connives", "<subject> fights <other>", "<subject> is goaded",
@@ -764,6 +771,10 @@ function subjectAction(t: string): ActionReading[] | null {
   // STRIVE, an ability word: "This spell costs {1}{G} more to cast for each
   // target beyond the first" -- the store's cost-modify, the whole phrase its text.
   if (/^this spell costs (?:\{[^}]+\})+ more to cast for each target beyond the first$/i.test(t)) return [{ verb: "cost-modify", object: SELF, text: t }];
+  // "Enchantment spells you cast have affinity for Auras" (Pearl-Ear): a cost reduction, the store's
+  // cost-modify with the whole phrase -- as a keyword grant it linked every enchantment, any controller.
+  const affinity = /^((?:[\w ]+ )?spells you cast) have affinity for [\w ]+$/i.exec(t);
+  if (affinity && objectOf(affinity[1]!)) return [{ verb: "cost-modify", object: objectOf(affinity[1]!)!.object, text: t }];
   // "Activated abilities of artifact tokens you control cost {1} less to activate", "Cycling abilities
   // you activate cost {2} less to activate": abilities, which no filter names.
   const act = /^((?:[\w ]+ )?abilities [^,]{0,80}?) costs? ((?:\{[^}]+\})+) (less|more) to activate$/i.exec(t);

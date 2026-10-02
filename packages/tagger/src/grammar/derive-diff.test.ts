@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import type { Ability } from "@edh-seer/tagger";
-import { deriveDiff } from "./grammar-only-core.js";
+import type { Ability } from "../schema.js";
+import { deriveDiff, lostClaims } from "./derive-diff.js";
 
 const ab = (over: Partial<Ability>): Ability => ({ kind: "static", effect: { kind: "" }, clause: 1, ...over } as Ability);
 
@@ -19,4 +19,10 @@ test("a difference is keyed on the fields that differ, one level into effect and
     .toBe("effect.subject(~control +type)");
   expect(deriveDiff([ab({ amount: "1" })], [ab({})])).toBe("amount");
   expect(deriveDiff([ab({}), ab({ amount: "1" })], [ab({})])).toBe("abilities:2->1");
+});
+
+test("a grammar-only derive that drops a claim the stored one makes says which", () => {
+  const recursion = ab({ effect: { kind: "graveyard-recursion" }, emits: [{ verb: "leaves", subject: { control: "you", token: null } }] } as never);
+  expect(lostClaims([recursion], [ab({ effect: { kind: "" } })])).toEqual(["emit:leaves", "kind:graveyard-recursion"]);
+  expect(lostClaims([ab({})], [recursion])).toEqual([]);
 });
