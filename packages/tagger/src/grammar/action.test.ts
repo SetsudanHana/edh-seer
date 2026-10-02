@@ -364,18 +364,36 @@ test("fragments 7: CDAs, quoted grants, several pumped targets, self-copies", ()
     .toMatchObject({ verb: "cast", fromZone: "graveyard", condition: "as long as you control a Zombie" });
 });
 
+// Fragments 8 (#896): two subjects in one pump sentence, improved life, library puts by position, sets
+// exiled with the card, fights between the pair, a predicate with no subject of its own.
+test("fragments 8: two-subject pumps, library positions, exiled-with sets, subjectless grants", () => {
+  const verbs = (t: string, type = "triggered") => parseActions(t, type).map((a) => a.verb);
+  const two = parseActions("creatures you control get +1/+1 and creatures your opponents control get -1/-1.", "static");
+  expect(two.map((a) => [a.verb, a.text, a.amount])).toEqual([["modify-pt", "creatures you control", "+1/+1"], ["modify-pt", "creatures your opponents control", "-1/-1"]]);
+  expect(verbs("~ gets +2/+1 and creatures you control gain haste until end of turn.")).toEqual(["modify-pt", "grant-ability"]);
+  expect(parseActions("you gain that much life plus 1 instead.", "static")[0]).toMatchObject({ verb: "gain-life", amount: "that much plus 1" });
+  expect(parseActions("put that card on top of your library and the rest on the bottom in any order.", "triggered").map((a) => a.toZone)).toEqual(["library", "library"]);
+  expect(parseActions("return a creature card exiled with this land to the battlefield under your control.", "activated")[0]).toMatchObject({ verb: "return", object: { ref: "sentence" } });
+  expect(verbs("then those creatures fight each other.")).toEqual(["fight"]);
+  expect(verbs("each player shuffles their hand and graveyard into their library.", "spell")).toEqual(["shuffle"]);
+  expect(verbs("add seven {R}.", "spell")).toEqual(["add-mana"]);
+  expect(verbs("enchanted player can't gain life.", "static")).toEqual(["cant"]);
+  // No subject of its own: the earlier object's, kept as stored.
+  expect(parseActions("gains flying until end of turn.", "triggered")[0]).toMatchObject({ verb: "grant-ability", text: "flying", object: { ref: "sentence" } });
+});
+
 test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.951],
-  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.931],
-  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.872],
+  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.934],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.873],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.932],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.919],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.907],
-  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.903],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.925],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.913],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.907],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
-    "explore", "connive", "endure"], 0.839],
-  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.789],
+    "explore", "connive", "endure"], 0.849],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.792],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")

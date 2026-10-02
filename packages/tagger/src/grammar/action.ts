@@ -36,7 +36,7 @@ const NUMBER: Record<string, string> = {
   eight: "8", nine: "9", ten: "10", eleven: "11", twelve: "12", thirteen: "13", fourteen: "14",
   fifteen: "15", twenty: "20", x: "X",
 };
-const BACKREF_TAIL = / (?:(?:that player|that opponent|they|he or she|its controller|that creature's controller|that permanent's controller|the chosen player|those players|that player or that planeswalker's controller) (?:controls?|owns?)|(?:\w+ed|dealt damage|put into (?:a|your|their) graveyards?|exiled with [\w~ ]+|returned to [\w ]+|chosen|revealed|discarded|milled|drawn|sacrificed|destroyed|tapped|untapped|blocking|attacking) this way)$/i;
+const BACKREF_TAIL = / (?:exiled with (?:~|this [a-z]+|it|him|her)|(?:that player|that opponent|they|he or she|its controller|that creature's controller|that permanent's controller|the chosen player|those players|that player or that planeswalker's controller) (?:controls?|owns?)|(?:\w+ed|dealt damage|put into (?:a|your|their) graveyards?|exiled with [\w~ ]+|returned to [\w ]+|chosen|revealed|discarded|milled|drawn|sacrificed|destroyed|tapped|untapped|blocking|attacking) this way)$/i;
 
 /** "two", "X", "3", "that many": the amount as the store spells it. */
 function amountOf(word: string): string | undefined {
@@ -106,7 +106,7 @@ function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | 
   if (typed && parse(`a ${typed[1]}`)) return { object: parse(`a ${typed[1]}`)! };
   // "that land", "that artifact": a back-reference to an object the sentence named.
   if (/^that (?:land|artifact|enchantment|planeswalker|aura|equipment|vehicle|dragon)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
-  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:spell|ability|creature|permanent|card|token)|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:spell|ability|creature|permanent|card|token)|the chosen [a-z]+|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   // "one or two target creatures": at most two, the store's "up to two".
   if (/^one or two /i.test(t)) return objectOf(t.replace(/^one or two /i, "up to two "));
   const m = COUNT.exec(t);
@@ -163,7 +163,7 @@ const DRAW_SEARCH: Record<string, [string, Handler]> = {
 function lifeAmount(words: string): string | null {
   const w = words.trim();
   if (amountOf(w)) return amountOf(w)!;
-  if (/^(?:that much|twice that much|that many|half that much|half their life|half your life|that much plus (?:one|two|\d+))$/i.test(w)) return w.toLowerCase();
+  if (/^(?:that much|twice that much|that many|half that much|half their life|half your life|that much plus (?:one|two|\d+)|twice x)$/i.test(w)) return w.toLowerCase().replace(/\bx$/, "X");
   return null;
 }
 
@@ -172,6 +172,9 @@ function lifeOf(rest: string): Args | null {
   // The store writes the counted thing alone ("its power", not "equal to its power").
   const eq = /^life equal to (.+)$/.exec(rest);
   if (eq) return { amount: eq[1]! };
+  // "that much life plus 1" (a replacement's improved amount).
+  const plus = /^that much life (plus|minus) (\d+|one|two)$/.exec(rest);
+  if (plus) return { amount: `that much plus ${amountOf(plus[2]!) ?? plus[2]}`.replace("plus", plus[1]!) };
   const each = /^(\w+) life for each (.+)$/.exec(rest);
   if (each && amountOf(each[1]!)) return { amount: `${amountOf(each[1]!)} for each ${each[2]}` };
   const m = /^(.+?) life(?:, rounded (?:up|down))?$/.exec(rest);
@@ -496,9 +499,12 @@ const ZONE: Record<string, [string, Handler]> = {
   put: ["put", (all): Args | Args[] | null => withCounters(all, (rest) => {
     // "shuffle and put that card on top": the library just shuffled.
     const top = /^(.+?) on top(?: in any order)?$/.exec(rest);
+    // "the rest on the bottom in any order": the library the sentence already named.
+    const bottom = /^(.+?) on the bottom(?: in (?:any|a random) order)?$/.exec(rest);
+    if (bottom && !bottom[1]!.includes(" and ")) { const r = moveObject(bottom[1]!); return r && { ...r, toZone: "library" }; }
     if (top) { const r = moveObject(top[1]!); return r && { ...r, toZone: "library" }; }
     // "put them back in any order", "put one of those cards back on top of your library".
-    const back = /^(.+?) back (?:on top of (?:your|their|its owner's|that player's|target player's) library|in any order)$/.exec(rest);
+    const back = /^(.+?) back (?:on top of (?:your|their|its owner's|that player's|target player's) library(?: in any order)?|in any order)$/.exec(rest);
     if (back) { const r = moveObject(back[1]!); return r && { ...r, toZone: "library" }; }
     // "one of them into your hand and the rest on the bottom of your library": two moves.
     // "a land card from among them onto the battlefield tapped and an Elf card from among them into
@@ -517,6 +523,7 @@ const ZONE: Record<string, [string, Handler]> = {
   })],
   shuffle: ["shuffle", (rest) => {
     if (rest === "" || /^(?:your|their) library$/.test(rest)) return { object: parse("you")!, text: rest === "" ? "your library" : rest };
+    if (/^(?:their|your) hand and graveyard into (?:their|your) library$/.test(rest)) return { object: { control: "any", token: null }, toZone: "library", text: rest };
     const m = /^(.+?) into (?:its owner's|their owners'|your|their) librar(?:y|ies)$/.exec(rest);
     const r = m ? moveObject(m[1]!) : null;
     return r && { ...r, toZone: "library" };
@@ -529,7 +536,7 @@ const MANA = /^(?:(?:\{[WUBRGCSX0-9/]+\})+(?:,? (?:or|and) (?:\{[WUBRGCSX0-9/]+\
 /** One more mana item, read by its shape rather than a list: "an additional {G}", "that much {C}",
  *  "an additional one mana of any color", "one mana of any type that land produced", "two mana of
  *  different colors", "X mana in any combination of {B} and/or {R}". The text keeps what it makes. */
-const MANA_ITEM = /^(?:an additional |that much )?(?:\{[WUBRGCSX0-9/]+\})+$|^(?:an additional )?(?:one|two|three|four|five|six|seven|eight|nine|ten|x|that much|that many)(?: additional)? mana (?:of|in) [^,]+$/i;
+const MANA_ITEM = /^(?:an additional |that much |(?:two|three|four|five|six|seven|eight|nine|ten|x) )?(?:\{[WUBRGCSX0-9/]+\})+$|^(?:an additional )?(?:one|two|three|four|five|six|seven|eight|nine|ten|x|that much|that many)(?: additional)? mana (?:of|in) [^,]+$/i;
 const manaOf = (t: string): boolean => MANA.test(t) || t.split(/,? or (?=\{|an? |one |two |three |x )/i).every((p) => MANA_ITEM.test(p.trim()));
 
 const MANA_TAP: Record<string, [string, Handler]> = {
@@ -576,7 +583,7 @@ function thing(rest: string): Args | null {
 const numbered = (rest: string): Args | null => (/^(?:\d+|x)$/i.test(rest) ? { amount: rest.toUpperCase() === "X" ? "X" : rest } : null);
 
 const TAIL: Record<string, [string, Handler]> = {
-  counter: ["counter-spell", (rest) => (/\bspells?\b|^(?:it|that spell|them)$|abilit/i.test(rest) ? thing(rest) : null)],
+  counter: ["counter-spell", (rest) => (/\bspells?\b|^(?:it|that spell|them|~)$|abilit/i.test(rest) ? thing(rest) : null)],
   regenerate: ["regenerate", thing],
   transform: ["transform", thing],
   goad: ["goad", thing],
@@ -745,11 +752,13 @@ function subjectAction(t: string): ActionReading[] | null {
   const opt = have?.[1] ? { optional: true as const } : {};
   const kw = /^(.+?) (explores|connives|endures (\d+|x)|is goaded|fights?) ?(.*)$/i.exec(body);
   if (!kw) return null;
-  const who = objectOf(kw[1]!);
+  const who = objectOf(kw[1]!) ?? (THEY.test(kw[1]!) ? { object: REF } : null);
   if (!who) return null;
   const word = kw[2]!.toLowerCase();
   const self = who.object.ref || who.object.self ? {} : { text: kw[1]! };
   if (word.startsWith("fight")) {
+    // "those creatures fight each other": the pair the sentence named.
+    if (/^each other$/i.test(kw[4]!)) return [{ verb: "fight", object: REF, ...opt }];
     // The store writes the pair, "A and B", or B alone when A is the card or a back-reference.
     const other = objectOf(kw[4]!);
     if (!other) return null;
@@ -807,7 +816,7 @@ function restrictionOf(t: string): ActionReading[] | null {
   }
   const m = /^(.+?) (can't|cannot|doesn't|don't|attacks each combat if able|attack each combat if able|blocks each combat if able|can block only) ?(.*)$/i.exec(t);
   if (!m) return null;
-  const who = objectOf(m[1]!) ?? (THEY.test(m[1]!) ? { object: REF } : null) ?? (/^(?:you|your opponents|each opponent|players)$/i.test(m[1]!) ? { object: parse(m[1]!.toLowerCase().startsWith("you") ? "you" : "an opponent") ?? { control: "any" as const, token: null } } : null);
+  const who = objectOf(m[1]!) ?? (THEY.test(m[1]!) ? { object: REF } : null) ?? (/^enchanted player$/i.test(m[1]!) ? { object: { control: "any" as const, token: null } } : null) ?? (/^(?:you|your opponents|each opponent|players)$/i.test(m[1]!) ? { object: parse(m[1]!.toLowerCase().startsWith("you") ? "you" : "an opponent") ?? { control: "any" as const, token: null } } : null);
   if (!who) return null;
   // "can't block and can't be blocked", "can't attack or block, and its activated abilities can't be
   // activated": one restriction each.
@@ -889,7 +898,7 @@ function phrases(sentence: string): string[] {
 
 /** Words after an action that say WHEN or ON WHAT CONDITION, kept as its condition: a delayed action,
  *  a replacement, "draw a card if you control an artifact". */
-const WHEN_TAILS = [" at the beginning of the next turn's upkeep", " at the beginning of the next end step", " at the beginning of the next upkeep", " instead", " at end of combat", " at the beginning of your next upkeep", " at the beginning of the end step", " at the beginning of the next cleanup step", " at the beginning of your next end step", " rather than pay this spell's mana cost"];
+const WHEN_TAILS = [" during each other player's untap step", " at the beginning of the next turn's upkeep", " at the beginning of the next end step", " at the beginning of the next upkeep", " instead", " at end of combat", " at the beginning of your next upkeep", " at the beginning of the end step", " at the beginning of the next cleanup step", " at the beginning of your next end step", " rather than pay this spell's mana cost"];
 /** The trailing condition of a phrase, by index rather than an end-anchored regex (CodeQL
  *  polynomial-redos): one of WHEN_TAILS, or a last " if ..." with no comma after it. */
 function whenTail(t: string): { at: number; text: string } | undefined {
@@ -936,6 +945,20 @@ function isAbility(part: string): boolean {
  *  flying", "<subject> gains hexproof": a pump and its grants, the subject the pump's object and
  *  each grant's object the ability (derive reads the grant's recipient off the clause). */
 function pumpOrGrant(t: string): ActionReading[] | null {
+  // TWO SUBJECTS: "~ gets +2/+1 and creatures you control gain haste until end of turn", "creatures you
+  // control get +1/+1 and creatures your opponents control get -1/-1": each side is its own pump.
+  for (const m of t.matchAll(/ and (?=[a-z~])/gi)) {
+    const right = t.slice(m.index + m[0].length);
+    if (!/^(?:~|[a-z]+(?: [a-z]+){0,5}) (?:gets?|gains?|has|have) /i.test(right) || /^(?:gets?|gains?|has|have) /i.test(right)) continue;
+    const r = pumpOrGrantOne(right);
+    if (!r || r[0]?.object?.ref) continue;
+    const l = pumpOrGrantOne(t.slice(0, m.index));
+    if (l) return [...l, ...r];
+  }
+  return pumpOrGrantOne(t);
+}
+
+function pumpOrGrantOne(t: string): ActionReading[] | null {
   // "it also gains lifelink", "creatures you control also get +1/+0": "also" says nothing new.
   let body = t.replace(/ until end of turn(?= for each )/i, "").replace(DURATION, "").replace(/ also (?=(?:gets?|gains?|has|have) )/i, " ");
   // "As long as you control a Swamp, ...", "... as long as you control a Swamp", "... if you control
@@ -953,6 +976,9 @@ function pumpOrGrant(t: string): ActionReading[] | null {
   let subject: string | undefined, verb: string | undefined, rest = "";
   const m = /^(gets?|gains?|has|have|becomes?|loses?) /i.exec(body);
   if (m && lastSubject !== undefined) { subject = lastSubject; verb = m[1]!.toLowerCase(); rest = body.slice(m[0].length); }
+  // "... becomes a 2/2 artifact creature and gains flying": a predicate with no subject of its own is
+  // the earlier object's, a back-reference the stored object names.
+  else if (m && /^(?:gains?|has|have) /i.test(body)) { subject = "it"; verb = m[1]!.toLowerCase(); rest = body.slice(m[0].length); }
   else {
     for (const v of body.matchAll(/ (gets?|gains?|has|have|is|are|becomes?|loses?) /gi)) {
       const who = body.slice(0, v.index).replace(/ each$/i, "");
@@ -1099,7 +1125,7 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   const counted = where >= 0 ? t.slice(where + ", where X is ".length) : undefined;
   if (where >= 0) t = t.slice(0, where);
   // "each player who controls a creature with power 4 or greater draws a card": that subset.
-  const who = /^(each player|each opponent) who [^,]+? (?=(?:draws?|discards?|mills?|scr(?:y|ies)|surveils?|search(?:es)?|reveals?|may)\b)/i.exec(t);
+  const who = /^(each player|each opponent) who [^,]+? (?=(?:draws?|discards?|mills?|scr(?:y|ies)|surveils?|search(?:es)?|reveals?|shuffles?|may)\b)/i.exec(t);
   if (who) { condition = [condition, t.slice(who[1]!.length + 1, who[0].length - 1)].filter(Boolean).join(", "); t = `${who[1]} ${t.slice(who[0].length)}`; }
   // "each player ... each draw": the second "each" repeats the actor.
   t = t.replace(/^((?:two|any number of) target (?:players|opponents)) each /i, "$1 ");

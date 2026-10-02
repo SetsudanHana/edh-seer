@@ -13,7 +13,7 @@
  *  CEILING: the rewrite proves the grammar would READ the action, not that it would read it RIGHT.
  *  It ranks work; it does not license a switch. Each fix is still measured on the decks. */
 import { KEYWORD_ABILITIES, SUBTYPES } from "@edh-seer/tagger/subtypes";
-import { alignByFamily, type ActionParser, type ActionRow } from "./action-diff-core.js";
+import { alignByFamily, storedVerb, type ActionParser, type ActionRow } from "./action-diff-core.js";
 
 /** The grammar's own report of the phrases it did not read (`unreadPhrases` in grammar/action.ts). */
 export type UnreadOf = (effect: string, type: string | null, cost?: string) => string[];
@@ -106,7 +106,7 @@ const EXAMPLES = 12;
 /** The stored action indexes the candidate reads (aligned by family, as the switch aligns). */
 function readIndexes(row: ActionRow, candidate: ActionParser, effect = row.effect): Set<number> {
   const read = candidate(effect, row.type, row.cost) ?? [];
-  return new Set(alignByFamily(row.actions.map((a) => a.verb), read.map((r) => r.verb)).map(([i]) => i));
+  return new Set(alignByFamily(row.actions.map(storedVerb), read.map((r) => r.verb)).map(([i]) => i));
 }
 
 export function attribute(row: ActionRow, index: number, candidate: ActionParser, catalogue = CONSTRUCTIONS): Attribution {
