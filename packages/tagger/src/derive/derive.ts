@@ -377,7 +377,9 @@ import { emblemRecipient } from "../emblem.js";
 // graveyards split, transformed returns, and six more groups labelled.
 // 273: #896 task 7, labelling round 3: every difference group of ten or more cards labelled; zones,
 // players and self references the sentence implies.
-export const DERIVE_VERSION = 273;
+// 274: #962, the polymorph family (a creature traded for one its controller reveals) reads as played
+// on your own creature; Proteus Staff's tuck states the creature it trades away.
+export const DERIVE_VERSION = 274;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -511,9 +513,18 @@ const FROM_THEIR_LIBRARY =
   /their librar(?:y|ies)[^.]{0,120}?\.?[^.]{0,120}?puts? (?:it|them|that card|those cards) onto the battlefield/i;
 
 export function entersUnderAnotherPlayer(cardText: string): boolean {
-  if (!ANTECEDENT_CONTROLLER.test(cardText) || !FROM_THEIR_LIBRARY.test(cardText)) return false;
+  if (!ANTECEDENT_CONTROLLER.test(cardText) || !FROM_THEIR_LIBRARY.test(cardText) || POLYMORPH_REVEAL.test(cardText)) return false;
   return !/under your control/i.test(cardText) && !/your librar(?:y|ies)/i.test(cardText);
 }
+
+/** THE POLYMORPH FAMILY IS READ AS PLAYED (owner ruling 2026-10-02, #962): "you would primarily use
+ *  it for that". A target creature traded for a creature its controller REVEALS (Polymorph,
+ *  Transmogrify, Proteus Staff, Chaos Mutation, Divergent Transformations) is played on your own
+ *  creature, so the creature removed and the creature put down are both yours. Removal-first shapes
+ *  print something else and stay refused above: Chaos Warp reveals ONE card of any permanent type,
+ *  Path to Exile hands over a basic land, Blessed Reincarnation names "an opponent controls".
+ *  CEILING: the opponent use is real and dropped, the way Path to Exile's self-ramp is. */
+const POLYMORPH_REVEAL = /\b(?:its|that creature's) controller reveals cards from the top of their library until they reveal a creature card\b/i;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -2630,8 +2641,25 @@ export function deriveAbilities(
     if (!(a.emits ?? []).some((e) => e.verb === "prepared" && e.subject.self === true)) continue;
     abilities[i] = { ...a, kind: "triggered", repeats: "once", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } } };
   }
+  if (POLYMORPH_REVEAL.test(cardText)) {
+    // A TUCK HAS NO EMIT OF ITS OWN (Proteus Staff puts the creature on the bottom of the library), so
+    // the creature traded away is stated here, on the ability that puts the new one down.
+    for (const a of abilities) {
+      const clause = clauses.find((c) => c.id === a.clause);
+      const tucks = (clause?.actions ?? []).some((x) => x.verb === "put" && x.fromZone === "battlefield" && x.toZone === "library");
+      const removes = (a.emits ?? []).some((e) => e.verb !== "enters" && POLYMORPH_VERBS.has(e.verb));
+      if (tucks && !removes && (a.emits ?? []).some((e) => e.verb === "enters" && e.subject.fromZone === "library")) {
+        a.emits = [...(a.emits ?? []), { verb: "leaves", subject: { control: "you", token: null, type: "creature", scope: "target" } }];
+      }
+    }
+    for (const e of abilities.flatMap((a) => a.emits ?? [])) {
+      const types = Array.isArray(e.subject.type) ? e.subject.type : [e.subject.type];
+      if (POLYMORPH_VERBS.has(e.verb) && e.subject.self !== true && types.includes("creature")) e.subject.control = "you";
+    }
+  }
   return { abilities, unclaimed, unknownTriggers };
 }
+const POLYMORPH_VERBS: ReadonlySet<string> = new Set(["dies", "exiled", "leaves", "enters"]);
 
 /** "If a card ... would be put into an opponent's graveyard from anywhere, exile it instead." */
 const OPP_GRAVEYARD_TAKER = /\bwould be put into an opponent's graveyard\b[^.]*\bexile\b/i;
