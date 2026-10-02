@@ -952,7 +952,7 @@ const KEYWORDS = [...KEYWORD_ABILITIES].map((k) => k.toLowerCase());
 function isAbility(part: string): boolean {
   const p = part.toLowerCase();
   if (/^"[^"]*"$/.test(part) || /^(?:that|this|those) abilit(?:y|ies)$/.test(p)) return true;
-  return KEYWORDS.some((k) => p === k || (p.startsWith(`${k} `) && p.length - k.length <= 40 && !/\blife\b/.test(p)));
+  return KEYWORDS.some((k) => p === k || (p.startsWith(`${k} `) && p.length - k.length <= (k === "protection" ? 70 : 40) && !/\blife\b/.test(p)));
 }
 
 /** "<subject> gets +2/+2 [for each ...] [and gains flying] [until end of turn]", "<subject> has
@@ -973,6 +973,16 @@ function pumpOrGrant(t: string): ActionReading[] | null {
 }
 
 function pumpOrGrantOne(t: string): ActionReading[] | null {
+  // "~ and other Knights you control have flying", "it and other creatures you control that share a
+  // creature type with it each get +2/+0": the card, and the class, each a reading.
+  const pair = /^(~|this creature|it) and ((?:other |another )?[a-z][\w ]{0,60}?) (?:each )?(gets?|gains?|has|have|get) (.+)$/i.exec(t);
+  // Not a counted pump: its amount is the store's, which derive's scaling reads whole (Eidolon of
+  // Countless Battles' "+1/+1 for each creature you control and +1/+1 for each Aura you control").
+  if (pair && objectOf(pair[2]!) && !/ for each /i.test(pair[4]!)) {
+    const a = pumpOrGrantOne(`${pair[1]} ${pair[3]!.replace(/^(?:get|have)$/i, (v) => (v.toLowerCase() === "get" ? "gets" : "has"))} ${pair[4]}`);
+    const b = pumpOrGrantOne(`${pair[2]} ${pair[3]} ${pair[4]}`);
+    if (a && b) return [...a, ...b];
+  }
   // "it also gains lifelink", "creatures you control also get +1/+0": "also" says nothing new.
   let body = t.replace(/ until end of turn(?= for each )/i, "").replace(DURATION, "").replace(/ also (?=(?:gets?|gains?|has|have) )/i, " ");
   // "As long as you control a Swamp, ...", "... as long as you control a Swamp", "... if you control
@@ -988,13 +998,13 @@ function pumpOrGrantOne(t: string): ActionReading[] | null {
   const have = /^you (may )?have (?=.+ (?:get|gain|have|become) )/i.exec(body);
   if (have) body = body.slice(have[0].length);
   let subject: string | undefined, verb: string | undefined, rest = "";
-  const m = /^(gets?|gains?|has|have|becomes?|loses?) /i.exec(body);
+  const m = /^(gets?|gains?|has|have|becomes?|loses?|assigns?|can) /i.exec(body);
   if (m && lastSubject !== undefined) { subject = lastSubject; verb = m[1]!.toLowerCase(); rest = body.slice(m[0].length); }
   // "... becomes a 2/2 artifact creature and gains flying": a predicate with no subject of its own is
   // the earlier object's, a back-reference the stored object names.
   else if (m && /^(?:gains?|has|have) /i.test(body)) { subject = "it"; verb = m[1]!.toLowerCase(); rest = body.slice(m[0].length); }
   else {
-    for (const v of body.matchAll(/ (gets?|gains?|has|have|is|are|becomes?|loses?) /gi)) {
+    for (const v of body.matchAll(/ (gets?|gains?|has|have|is|are|becomes?|loses?|assigns?|can) /gi)) {
       const who = body.slice(0, v.index).replace(/ each$/i, "");
       if (who.length > 80 || !(who === "you" || objectOf(who) || THEY.test(who) || /^(?:they|they each|he|she|that token|those tokens|those creatures|each of those creatures|both creatures)$/i.test(who))) continue;
       subject = who; verb = v[1]!.toLowerCase(); rest = body.slice(v.index + v[0].length); break;
@@ -1009,7 +1019,7 @@ function pumpOrGrantOne(t: string): ActionReading[] | null {
   const out: ActionReading[] = [];
   // A PREDICATE LIST: "gets +2/+2, has trample and haste, and is a Samurai in addition to its other
   // types". Every predicate must read, or the phrase is not read.
-  for (const pred of `${verb} ${rest}`.split(/,? and (?=(?:gets?|has|have|gains?|is|are|can't|doesn't|don't|attacks|becomes?|loses?|must) )|, (?=(?:gets?|has|have|gains?|is|are|can't|doesn't|don't|attacks|becomes?|loses?|must) )/i)) {
+  for (const pred of `${verb} ${rest}`.split(/,? and (?=(?:gets?|has|have|gains?|is|are|can't|can|doesn't|don't|attacks|becomes?|loses?|must|assigns?) )|, (?=(?:gets?|has|have|gains?|is|are|can't|can|doesn't|don't|attacks|becomes?|loses?|must|assigns?) )/i)) {
     const r = predicateOf(pred.replace(DURATION, "").trim(), who.object, target);
     if (!r) return null;
     out.push(...r);
@@ -1020,15 +1030,31 @@ function pumpOrGrantOne(t: string): ActionReading[] | null {
 
 /** One predicate of a pump or grant: a P/T change, a set base P/T, abilities, a type or a goad. */
 function predicateOf(pred: string, object: SubjectFilter, target: { object: SubjectFilter; text?: string }): ActionReading[] | null {
+  // "assigns combat damage equal to its toughness rather than its power" (CR 510.1a): the store's
+  // modify-pt, the rule its amount.
+  // The stored object and amount stand: derive reads this rule as a damage multiplier off them, and a
+  // P/T reading would claim a pump the card does not make (Bedrock Tortoise).
+  if (/^assigns? combat damage equal to its toughness rather than its power$/i.test(pred)) return [{ verb: "modify-pt", object: REF }];
+  // "can attack [this turn] as though it didn't have defender", "can block an additional creature each
+  // combat", "can block creatures with shadow as though they didn't have shadow": an ability granted.
+  if (/^can (?:attack(?: this turn)? as though (?:it|they) didn't have defender|block (?:an additional (?:creature|\w+ creatures) each combat|creatures with \w+ as though they didn't have \w+))$/i.test(pred)) return [{ verb: "grant-ability", object, text: pred.toLowerCase() }];
+  // "has all activated abilities of all creature cards exiled with it": a grant, the whole phrase.
+  if (/^(?:has|have|gains?) all (?:activated |triggered |activated and triggered )?abilities of .+$/i.test(pred)) return [{ verb: "grant-ability", object, text: pred.replace(/^(?:has|have|gains?) /i, "") }];
+  // "has base power and base toughness each equal to its mana value".
+  const baseEq = /^(?:has|have) base power and (?:base )?toughness each equal to (.+)$/i.exec(pred);
+  if (baseEq) return [{ verb: "modify-pt", ...target, amount: baseEq[1]! }];
   const get = /^gets? (.+)$/i.exec(pred);
   if (get) {
     const pt = get[1]!.replace(/^an additional /i, "");
     const each = pt.indexOf(" for each ");
     const n = PT.exec(each >= 0 ? pt.slice(0, each) : pt);
+    // "+2/-2 or -2/+2": either, the controller's choice.
+    const or = /^([+-](?:\d+|x)\/[+-](?:\d+|x)) or ([+-](?:\d+|x)\/[+-](?:\d+|x))$/i.exec(pt);
+    if (or) return [{ verb: "modify-pt", ...target, amount: `${or[1]} or ${or[2]}` }];
     return n ? [{ verb: "modify-pt", ...target, amount: `${n[1]}/${n[2]}${each >= 0 ? pt.slice(each) : ""}` }] : null;
   }
   // "has base power and toughness 9/9": the store's modify-pt with the set value as its amount.
-  const base = /^(?:has|have) base power and toughness (\d+\/\d+)$/i.exec(pred);
+  const base = /^(?:has|have) base power and toughness ((?:\d+|x)\/(?:\d+|x))$/i.exec(pred);
   if (base) return [{ verb: "modify-pt", ...target, amount: base[1]! }];
   if (/^is goaded$/i.test(pred)) return [{ verb: "goad", ...target }];
   // "can't block", "can't be blocked this turn", "attacks each combat if able": a restriction.
@@ -1069,7 +1095,7 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
     const withs = animated[2] ? abilitiesOf(animated[2]) : [];
     if (withs) return [{ verb: "animate", ...target }, ...(pt ? [{ verb: "modify-pt", ...target, amount: pt[1]! }] : []), ...withs.map((a) => ({ verb: "grant-ability", object, text: a }))];
   }
-  const is = /^(?:is|are) ((?:an? )?[\w -]+ in addition to (?:its|their) other (?:creature )?types|every creature type|legendary|snow|colorless|white|blue|black|red|green)$/i.exec(pred);
+  const is = /^(?:is|are) ((?:an? )?[\w -]+ in addition to (?:its|their) other (?:creature |colors and )?types|every creature type|legendary|snow|colorless|white|blue|black|red|green)$/i.exec(pred);
   // No text: the stored object stays. Derive finds a grant's recipient by "has"/"gains", never by
   // "is", and a store object that names the recipient is what keeps it (The Flesh Is Weak).
   if (is) return [{ verb: "grant-ability", object }];

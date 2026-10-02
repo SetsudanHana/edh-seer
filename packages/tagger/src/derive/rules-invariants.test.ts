@@ -30,6 +30,7 @@ const TESTED: Record<string, string> = {
   "205.4c": "grammar/filter.test.ts — nonbasic is `basic: false` (#896)",
   "205.4g": "grammar/filter.test.ts — snow is a supertype (`snow`, #896)",
   "111.4": "grammar/filter.test.ts — a token's own name is not a card to look for ('Marit Lage, a legendary ... token', 'token ... named Storm Crow') (#896)",
+  "510.1a": "grammar/action.test.ts — 'assigns combat damage equal to its toughness rather than its power' keeps the stored reading (#896 fragments 11)",
   "509.1c": "grammar/action.test.ts — a block requirement ('must be blocked if able', 'blocks this creature this turn if able') is the store's cant (#896 fragments 4)",
   "604.3": "grammar/action.test.ts — a characteristic-defining ability ('Titania's power and toughness are each equal to ...') is the card's own modify-pt (#896 fragments 7)",
   "707.9b": "grammar/filter.test.ts — a copy's exceptions ('except it isn't legendary', 'except it has haste') are kept (#896)",
