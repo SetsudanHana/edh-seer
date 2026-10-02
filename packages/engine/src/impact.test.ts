@@ -99,10 +99,10 @@ test("missing/unknown scaling → fixed multiplier (1.0)", () => {
   expect(unknown).toBeCloseTo(1.0);
 });
 
-test("seed + committed config carry one scaling entry per SCALING_BASES member (8)", () => {
+test("seed + committed config carry one scaling entry per SCALING_BASES member (9)", () => {
   expect(Object.keys(SEED_IMPACT_WEIGHTS.scaling).sort()).toEqual(
-    ["fixed", "per-cast-or-spell", "per-creature", "per-graveyard", "per-opponent", "per-permanent", "unbounded", "x-cost"]);
-  expect(Object.keys(loadImpactWeights().scaling).length).toBe(8);
+    ["fixed", "per-cast-or-spell", "per-creature", "per-graveyard", "per-life-lost", "per-opponent", "per-permanent", "unbounded", "x-cost"]);
+  expect(Object.keys(loadImpactWeights().scaling).length).toBe(9);
 });
 
 test("impactEdgeWeight scales each tag's contribution by an optional per-tag multiplier", () => {

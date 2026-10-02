@@ -67,10 +67,10 @@ test("schema version starts at 1", () => {
   expect(SCHEMA_VERSION).toBe(1);
 });
 
-test("SCALING_BASES is the 8-member closed vocab with fixed first", () => {
+test("SCALING_BASES is the 9-member closed vocab with fixed first", () => {
   expect(SCALING_BASES).toEqual([
     "fixed", "per-creature", "per-permanent", "per-graveyard",
-    "per-cast-or-spell", "x-cost", "per-opponent", "unbounded",
+    "per-cast-or-spell", "x-cost", "per-opponent", "per-life-lost", "unbounded",
   ]);
 });
 

@@ -258,7 +258,9 @@ function costDirection(object: string, clauseText = ""): EffectKind | null {
     const more = /\bmore\b/.test(t);
     const less = /\bless\b/.test(t);
     if (more && less) return null;
-    if (more || /\bopponents?\b/.test(t)) return "tax";
+    // "Opponents" in the COUNT is not who pays: Rakdos, Lord of Riots' creature spells cost less "for
+    // each 1 life your opponents have lost this turn", a discount for you, not a tax on them.
+    if (more || /\bopponents?\b/.test(t.split(/\bfor each\b|\bwhere x is\b/)[0]!)) return "tax";
     if (less || /\bcosts? \{?\d/.test(t)) return "cost-reduction";
     return null;
   };
@@ -417,7 +419,7 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // own exiled creature, and Oblivion Sower's "land cards that player owns from exile" from a
   // plain put onto the battlefield. 22 corpus cards, every one an owner phrase. Checked before the
   // zone rules, which would file the battlefield-bound ones as `flicker`.
-  if (PROCESSES_EXILE.has(verb) && (action.fromZone === "exile" || /from exile/i.test(action.object ?? ""))
+  if (PROCESSES_EXILE.has(verb) && (action.fromZone === "exile" || /\bfrom exile\b/i.test(action.object ?? ""))
     && OPPONENT_OWNS.test(action.object ?? "")) return "exile-processing";
   if (verb === "extra-turn" || verb === "extra-phase") {
     return extraUnitKind(String(action.object ?? ""), clauseText);

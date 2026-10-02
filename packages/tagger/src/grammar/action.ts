@@ -1285,7 +1285,8 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   const altFor = /^you may pay ((?:\{[^}]+\})+) rather than pay the mana cost for (.+)$/i.exec(t);
   if (altFor && objectOf(altFor[2]!)) return [{ verb: "cost-modify", object: objectOf(altFor[2]!)!.object, text: altFor[2]!, amount: altFor[1]!, optional: true, ...(condition ? { condition } : {}) }];
   // "pay life equal to its mana value rather than pay its mana cost": the whole phrase, as stored.
-  if (/^pay life equal to its mana value rather than pay its mana cost$/i.test(t)) return [{ verb: "cost-modify", object: REF, text: t, ...(condition ? { condition } : {}) }];
+  // ...and the life it costs is lost (Bolas's Citadel feeds Rowan, Scion of War).
+  if (/^pay life equal to its mana value rather than pay its mana cost$/i.test(t)) return [{ verb: "cost-modify", object: REF, text: t, ...(condition ? { condition } : {}) }, { verb: "lose-life", object: parse("you")!, text: "you", amount: "its mana value" }];
   const tail = whenTail(t);
   if (tail) { condition = [condition, tail.text].filter(Boolean).join(", "); t = t.slice(0, tail.at); }
   // A REDIRECTION (CR 615): "All damage that would be dealt to you is dealt to enchanted creature

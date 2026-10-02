@@ -117,6 +117,9 @@ const PARTY_TYPES = ["cleric", "rogue", "warrior", "wizard"];
  *  anyone's, and "their graveyard" is the OPPONENT's — Riverchurn Monument mills each target player
  *  for the size of THEIR yard, which your own fillers do not feed. */
 export function scalingSubject(action: Action, clauseText?: string): SubjectFilter | undefined {
+  // LIFE LOST THIS TURN counts a player's losses, not a board: whose losses is the subject.
+  const lost = lifeLostOf(action, clauseText);
+  if (lost) return { control: lost, token: null };
   const text = countedText(action, clauseText);
   const counted = COUNTED.exec(text);
   if (!counted) return undefined;
@@ -157,7 +160,22 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
   return subject;
 }
 
+/** "THE AMOUNT OF LIFE YOU LOST THIS TURN" (Rowan, Scion of War), "for each 1 life your opponents
+ *  have lost this turn" (Rakdos, Lord of Riots): an amount that grows with a player's life loss, so
+ *  every life payment or drain of that player feeds it (owner 2026-10-02: "paying life is actually
+ *  synergistic with ... Rowan"). Read off the action's own amount, or the clause's "where X is". Whose
+ *  loss: "you" or the opponents. CEILING: "that player" (Archfiend of Despair, each opponent in turn)
+ *  reads as the opponents, which is who it names in every corpus card. */
+const LIFE_LOST = /\blife (you|your opponents|each opponent|an opponent|that player|target opponent)(?: have| has|'ve)? lost this turn\b/i;
+function lifeLostOf(action: Action, clauseText?: string): "you" | "opp" | undefined {
+  const own = `${action.amount ?? ""} ${action.object ?? ""}`;
+  const where = /\bx\b/i.test(action.amount ?? "") && clauseText ? /\bwhere x is ([^.;]{1,80})/i.exec(clauseText)?.[1] ?? "" : "";
+  const m = LIFE_LOST.exec(own) ?? LIFE_LOST.exec(where);
+  return m ? (m[1]!.toLowerCase() === "you" ? "you" : "opp") : undefined;
+}
+
 export function actionScaling(action: Action, clauseText?: string): ScalingBasis | undefined {
+  if (lifeLostOf(action, clauseText)) return "per-life-lost";
   const text = countedText(action, clauseText);
   // A bare X the clause never defines is the cost the player chose, whatever noun follows it.
   if (isBareX(action) && !COUNTED.test(text)) return "x-cost";

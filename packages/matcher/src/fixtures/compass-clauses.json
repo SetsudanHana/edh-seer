@@ -5026,6 +5026,89 @@
   "typeLine": "Legendary Enchantment Creature — God"
  },
  {
+  "name": "Rakdos, Lord of Riots",
+  "oracleId": "143a269a-b9ee-48ba-bd7b-4aa46eb36778",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "cast Rakdos unless an opponent lost life this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "creature spells you cast cost {1} less to cast for each 1 life your opponents have lost this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature"
+   ],
+   "subtypes": [
+    "demon"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B",
+    "R"
+   ],
+   "identity": [
+    "B",
+    "R"
+   ],
+   "cmc": 4,
+   "power": "6",
+   "toughness": "6",
+   "token": false,
+   "keywords": [
+    "flying",
+    "trample"
+   ]
+  },
+  "clauseTexts": {
+   "1": "You can't cast Rakdos unless an opponent lost life this turn.",
+   "2": "Flying, trample",
+   "3": "Creature spells you cast cost {1} less to cast for each 1 life your opponents have lost this turn."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "You can't cast Rakdos unless an opponent lost life this turn.\nFlying, trample\nCreature spells you cast cost {1} less to cast for each 1 life your opponents have lost this turn.",
+  "typeLine": "Legendary Creature — Demon"
+ },
+ {
   "name": "Redoubled Stormsinger",
   "oracleId": "792c4d38-41e6-49eb-bd4e-de0a5ac8330f",
   "clauses": [
@@ -5166,6 +5249,76 @@
   "grantedToken": [],
   "oracleText": "Whenever a creature is dealt damage, this enchantment deals that much damage to that creature's controller.",
   "typeLine": "Enchantment"
+ },
+ {
+  "name": "Rowan, Scion of War",
+  "oracleId": "333c15c6-c8fd-4cdd-89d2-06b921edeb8b",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "Spells you cast this turn that are black and/or red",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X is the amount of life you lost this turn",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature"
+   ],
+   "subtypes": [
+    "human",
+    "wizard"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B",
+    "R"
+   ],
+   "identity": [
+    "B",
+    "R"
+   ],
+   "cmc": 3,
+   "power": "4",
+   "toughness": "2",
+   "token": false,
+   "keywords": [
+    "menace"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Menace",
+   "2": "Spells you cast this turn that are black and/or red cost {X} less to cast, where X is the amount of life you lost this turn. Activate only as a sorcery."
+  },
+  "clauseCosts": {
+   "2": "{T}"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Menace\n{T}: Spells you cast this turn that are black and/or red cost {X} less to cast, where X is the amount of life you lost this turn. Activate only as a sorcery.",
+  "typeLine": "Legendary Creature — Human Wizard"
  },
  {
   "name": "Ruin Crab",
@@ -7195,6 +7348,63 @@
   "clauseFaces": {},
   "grantedToken": [],
   "oracleText": "This spell costs {1} less to cast for each creature in your party. (Your party consists of up to one each of Cleric, Rogue, Warrior, and Wizard.)\nReturn target creature card and up to one target Cleric, Rogue, Warrior, or Wizard creature card from your graveyard to the battlefield.",
+  "typeLine": "Sorcery"
+ },
+ {
+  "name": "Toxic Deluge",
+  "oracleId": "afaef788-34d1-460b-b884-9d7ae6ddeb18",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "all creatures",
+      "amount": "-X/-X",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "sorcery"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "As an additional cost to cast this spell, pay X life.",
+   "2": "All creatures get -X/-X until end of turn."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "As an additional cost to cast this spell, pay X life.\nAll creatures get -X/-X until end of turn.",
   "typeLine": "Sorcery"
  },
  {
