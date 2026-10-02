@@ -345,7 +345,9 @@ import { emblemRecipient } from "../emblem.js";
 // damage ("that much damage plus 2"), a trailing "as long as" kept as the condition.
 // 257: fragments 8: two subjects in one pump sentence, improved life, library puts by position, sets
 // exiled with the card, "fight each other", a predicate with no subject of its own as a back-reference.
-export const DERIVE_VERSION = 257;
+// 258: fragments 9: inner triggers as openers, a player's life total set, toughness CDAs, counted
+// entries, "twice that many", ordinal and next-spell subjects kept as stored, graveyard sets.
+export const DERIVE_VERSION = 258;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

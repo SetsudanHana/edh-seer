@@ -382,18 +382,39 @@ test("fragments 8: two-subject pumps, library positions, exiled-with sets, subje
   expect(parseActions("gains flying until end of turn.", "triggered")[0]).toMatchObject({ verb: "grant-ability", text: "flying", object: { ref: "sentence" } });
 });
 
+// Fragments 9 (#896): inner triggers as openers, set life for a player, toughness CDAs, counted entries,
+// "twice that many", ordinal and next-spell subjects kept as stored, sets from a graveyard.
+test("fragments 9: inner triggers, counted entries, ordinal subjects, graveyard sets", () => {
+  const verbs = (t: string, type = "triggered") => parseActions(t, type).map((a) => a.verb);
+  expect(parseActions("whenever one or more creatures attack one of your opponents, those creatures get +2/+2.", "static")[0])
+    .toMatchObject({ verb: "modify-pt", condition: "whenever one or more creatures attack one of your opponents" });
+  expect(verbs("target player's life total becomes 1.", "spell")).toEqual(["set-life"]);
+  expect(parseActions("~ enters with a number of +1/+1 counters on it equal to the amount of mana spent to cast it.", "static")[0])
+    .toMatchObject({ verb: "add-counter", counter: "+1/+1", amount: "the amount of mana spent to cast it" });
+  expect(parseActions("it enters with twice that many +1/+1 counters on it.", "static")[0]).toMatchObject({ verb: "add-counter", amount: "twice that many" });
+  expect(verbs("it deals twice that much damage instead.", "static")).toEqual(["double"]);
+  expect(parseActions("the second spell you cast each turn costs {1} less to cast.", "static")[0]).toMatchObject({ verb: "cost-modify", object: { ref: "sentence" }, amount: "-1" });
+  expect(parseActions("the next creature spell you cast this turn has cascade.", "triggered")[0]).toMatchObject({ verb: "grant-ability", object: { ref: "sentence" } });
+  expect(parseActions("you may exile one of them from your graveyard.", "triggered")[0]).toMatchObject({ verb: "exile", fromZone: "graveyard" });
+  expect(verbs("discards half the cards in their hand.")).toEqual(["discard"]);
+  expect(verbs("untap target attacking creature an opponent controls and remove it from combat.")).toEqual(["untap"]);
+  expect(parseActions("The next instant or sorcery spell you cast this turn costs {X} less to cast, where X is the number of Wizards you control as this ability resolves.", "activated")[0])
+    .toMatchObject({ verb: "cost-modify", amount: "the number of Wizards you control as this ability resolves" });
+  expect(parseActions("create two of those tokens.", "triggered")[0]).toMatchObject({ verb: "create", amount: "2" });
+});
+
 test.each([
-  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.951],
-  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.934],
-  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.873],
-  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.932],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.925],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.913],
-  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.907],
+  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.952],
+  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.936],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.88],
+  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.934],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.927],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.915],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.909],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
-    "explore", "connive", "endure"], 0.849],
-  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.792],
+    "explore", "connive", "endure"], 0.851],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.801],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")
