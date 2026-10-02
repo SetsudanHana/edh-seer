@@ -373,7 +373,9 @@ import { emblemRecipient } from "../emblem.js";
 // printed text alone when that matches the stored answer or a "grammar right" group (derive-corpus).
 // 271: #896 task 7, labelling round 1: grammar records read phase control by whose turn, keep self
 // subject actions, payments of a "can't ... unless", stated counts, and six more groups are labelled.
-export const DERIVE_VERSION = 271;
+// 272: #896 task 7, labelling round 2: pronoun antecedents, "on top" back-references, hands and
+// graveyards split, transformed returns, and six more groups labelled.
+export const DERIVE_VERSION = 272;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

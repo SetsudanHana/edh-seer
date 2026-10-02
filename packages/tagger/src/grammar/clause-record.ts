@@ -60,7 +60,8 @@ const NO_OBJECT_YOU = new Set(["monarch", "initiative", "ring-tempts", "learn", 
  *  "target player"), the convention derive's `PLAYER_OBJECT_VERBS` reads. */
 const PLAYER_VERBS = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life"]);
 const ZONE_VERBS = new Set(["destroy", "exile", "sacrifice", "return", "put", "shuffle"]);
-const BACK_REFERENCE = /^(?:it|them|that card|those cards|that creature|that permanent|the card|the cards|one|the other|the rest|one of them|those)$/i;
+// "put that card ON TOP" (Cruel Tutor): where it goes is no part of which card it is.
+const BACK_REFERENCE = /^(?:it|them|him|her|that card|those cards|that creature|that permanent|the card|the cards|one|the other|the rest|one of them|those)(?: on (?:top|the bottom)(?: of (?:your|their|its owner's) library)?)?$/i;
 
 /** A reading's object as the store writes it: the printed object words, without a zone move's
  *  destination ("that card into your graveyard" -> "that card"). */
@@ -76,7 +77,8 @@ function objectWords(r: ActionReading): string {
   // "this creature" too: derive would type the self ("creature") and lose an artifact creature's
   // artifact side (Coretapper's sacrifice feeding artifact recursion).
   if (r.text !== undefined) return r.text === "~" ? "this" : r.text;
-  const p = (r.phrase ?? "").replace(/ until end of turn$/i, "");
+  // "cast that card WITHOUT PAYING ITS MANA COST" (Sunforger): the tail is how, not which card.
+  const p = (r.phrase ?? "").replace(/ until end of turn$/i, "").replace(/ without paying (?:its|their) mana costs?$/i, "");
   if (!ZONE_VERBS.has(r.verb)) return p;
   const at = p.search(/ (?:onto|into|to|on top of|on the bottom of|from) /);
   return (at > 0 ? p.slice(0, at) : p).replace(/ (?:tapped|face down)$/, "");
@@ -102,7 +104,7 @@ function wordsAmount(verb: string, object: string): string | undefined {
 
 /** One clause's readings as `Action`s. A back-referenced object moved after a search comes from the
  *  library, the zone the store writes for it (Farseek, Entomb, every fetchland). */
-function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, type?: string, selfWord = "this"): Action[] {
+function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, type?: string, selfWord = "this", triggerSubject?: string): Action[] {
   const out: Action[] = [];
   // "Reveal a card IN YOUR HAND, then put that card onto the battlefield": the reveal is dropped, its
   // zone is the antecedent's (Retraced Image).
@@ -150,16 +152,24 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     // "put one onto the battlefield TAPPED": the tap is on what just moved, written as the store does.
     // "Put two +1/+1 counters on target creature and UNTAP IT", "If that creature is a Snake, IT gets
     // +2/+2": "it" is the target the clause named before, as the store writes it.
-    const named = out.length > 0 && /^it$/i.test(object) && !ZONE_VERBS.has(r.verb) && !selfTrigger
-      ? [...out].reverse().map((a) => /^((?:up to one )?(?:another )?target [^,]+)/i.exec(a.object ?? "")?.[1]).find(Boolean) : undefined;
+    // "Goad THEM", "gain control OF IT", and "it" after the first action of a self trigger (Slimy Piper)
+    // or an Aura's trigger on its host (Bestial Fury) too.
+    const pronoun = /^(?:it|them|control of (?:it|them))$/i.test(object) && !ZONE_VERBS.has(r.verb);
+    const target = pronoun && out.length > 0 ? [...out].reverse().map((a) => /^((?:up to (?:one|two|three) )?(?:another )?targets? [^,]+)/i.exec(a.object ?? "")?.[1]).find(Boolean) : undefined;
+    const named = target ?? (!pronoun ? undefined : out.length > 0 && selfTrigger ? selfTrigger
+      : /^(?:enchanted|equipped) [a-z]+$/i.test(triggerSubject ?? "") ? triggerSubject : undefined);
     const itsAntecedent = named ?? "";
     const tapped = r.verb === "tap" && !object && out.length > 0 ? out[out.length - 1]!.object ?? "" : "";
     // "from your hand and/or graveyard": one move from each, as the store writes it (Worldsoul's Rage).
-    const both = /^(.+?) from your hand and\/or graveyard$/i.exec(object);
+    // "all cards from all hands and graveyards" (Worldfire) too: one exile from each.
+    const both = /^(.+?) from your hand and\/or graveyard$/i.exec(object) ?? /^(.+?) from all hands and graveyards$/i.exec(object);
     if (both && !r.fromZone) {
-      for (const zone of ["hand", "graveyard"]) out.push({ verb: r.verb, object, fromZone: zone, toZone: r.toZone ?? null, ...(r.amount !== undefined ? { amount: r.amount } : {}), optional: r.optional === true } as Action);
+      const all = /all hands/i.test(object);
+      for (const zone of ["hand", "graveyard"]) out.push({ verb: r.verb, object: all ? `${both[1]} from all ${zone === "hand" ? "hands" : "graveyards"}` : object, fromZone: zone, toZone: r.toZone ?? null, ...(r.amount !== undefined ? { amount: r.amount } : {}), optional: r.optional === true } as Action);
       continue;
     }
+    // "return her to the battlefield TRANSFORMED" (Liliana, Heretical Healer): the store's transform too.
+    const transformed = (r.verb === "return" || r.verb === "put") && /\bto the battlefield (?:under [\w' ]+ control )?transformed\b/i.test(r.phrase ?? "");
     // "Creatures can't attack you unless their controller pays {2} ..." (Propaganda): the payment is
     // the action's `unless`, as the store writes it, not part of what can't happen.
     const cantUnless = r.verb === "cant" && !r.condition ? /^(.+?) (unless .+? pays? .+)$/i.exec(object) : null;
@@ -176,6 +186,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
       optional: r.optional === true,
       ...(unlessOf(r.condition) ? { unless: unlessOf(r.condition) } : {}),
     } as Action);
+    if (transformed) out.push({ verb: "transform", object, fromZone: null, toZone: null, optional: false } as Action);
   }
   return out;
 }
@@ -231,7 +242,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // The card's own name ("~") is written "this", the store's self spelling; a self subject action
     // with no trigger noun takes the clause's own "this creature".
     const selfWord = selfNoun && selfNoun !== "~" ? selfNoun : /\bthis (?:creature|artifact|enchantment|land|planeswalker|permanent|vehicle|card|spell|aura|equipment|battle)\b/i.exec(effect)?.[0] ?? "this";
-    record.actions = actionsOf(readings, selfNoun === "~" ? "this" : selfNoun, type, selfWord);
+    record.actions = actionsOf(readings, selfNoun === "~" ? "this" : selfNoun, type, selfWord, record.trigger?.subject);
     if (record.actions.length === 0 && type !== "static") record.actions = [{ verb: "none", object: "" } as Action];
     records.push(record);
     for (const o of overflow) if (o.actions!.length === 0 && o.trigger) o.actions = record.actions;
