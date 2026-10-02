@@ -2547,9 +2547,9 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
       || (a.effect.kind === "keyword-grant" && grantsToSpellsYouCast(a.effect.subject))
       // A PUMP OVER YOUR CREATURES EVERY COMBAT IS AN ANTHEM THAT BLINKS (owner ruling 2026-09-28,
       // #711): Unnatural Growth doubles each creature you control at the beginning of each combat,
-      // and links to each of them as a static anthem would. Per-cycle only -- a one-shot Overrun is
+      // and links to each of them as a static anthem would. Per-cycle or per-turn -- a one-shot Overrun is
       // not -- and over a class, never a target.
-      || (a.kind === "triggered" && a.repeats === "per-cycle" && a.effect.kind === "pump"
+      || (a.kind === "triggered" && (a.repeats === "per-cycle" || a.repeats === "per-turn") && a.effect.kind === "pump"
         && a.effect.subject?.control === "you" && (a.effect.subject.scope === "each" || a.effect.subject.scope === "all"));
     if (!appliesTo || !a.effect.subject) return undefined;
     // DECK ROLES ARE NOT PAIRWISE SYNERGIES (user rulings, 2026-08-06) — WITH `cost-reduction`

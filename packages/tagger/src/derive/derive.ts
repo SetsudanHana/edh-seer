@@ -371,7 +371,9 @@ import { emblemRecipient } from "../emblem.js";
 // whole phrase, "you may pay 4 life rather than pay this spell's mana cost" is a life payment too.
 // 270: #896 task 7, the card-by-card switch: a card the grammar reads completely derives from its
 // printed text alone when that matches the stored answer or a "grammar right" group (derive-corpus).
-export const DERIVE_VERSION = 270;
+// 271: #896 task 7, labelling round 1: grammar records read phase control by whose turn, keep self
+// subject actions, payments of a "can't ... unless", stated counts, and six more groups are labelled.
+export const DERIVE_VERSION = 271;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

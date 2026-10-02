@@ -43,7 +43,7 @@ const NUMBER: Record<string, string> = {
 const BACKREF_TAIL = / (?:exiled with (?:~|this [a-z]+|it|him|her)|attached to (?:it|that creature|that permanent|enchanted creature)|(?:that player|that opponent|they|he or she|its controller|that creature's controller|that permanent's controller|the chosen player|those players|that player or that planeswalker's controller) (?:controls?|owns?)|(?:\w+ed|dealt damage|put into (?:a|your|their) graveyards?|exiled with [\w~ ]+|returned to [\w ]+|chosen|revealed|discarded|milled|drawn|sacrificed|destroyed|tapped|untapped|blocking|attacking) this way)$/i;
 
 /** "two", "X", "3", "that many": the amount as the store spells it. */
-function amountOf(word: string): string | undefined {
+export function amountOf(word: string): string | undefined {
   const w = word.toLowerCase();
   if (NUMBER[w]) return NUMBER[w];
   if (/^\d+$/.test(w)) return w;
@@ -786,7 +786,8 @@ function subjectAction(t: string): ActionReading[] | null {
     // "Those spells cost {B} less": a back-reference keeps the stored object (Defiler of Flesh's black
     // permanent spells; as text, "those spells" read as every spell, 37 false links).
     const spells = objectOf(pips[1]!.replace(/^each /i, ""))!.object;
-    return [{ verb: "cost-modify", object: spells, ...(spells.ref ? {} : { text: pips[1]!.replace(/^each /i, "") }), amount: `${pips[3]!.toLowerCase() === "less" ? "-" : "+"}${pips[2]!}${pips[4] ?? ""}` }];
+    // The card's own cost keeps the whole phrase, as the generic-mana reading below does.
+    return [{ verb: "cost-modify", object: spells, ...(spells.ref ? {} : { text: spells.self ? t : pips[1]!.replace(/^each /i, "") }), amount: `${pips[3]!.toLowerCase() === "less" ? "-" : "+"}${pips[2]!}${pips[4] ?? ""}` }];
   }
   const cost = /^(.+?) costs? \{(\d+|x)\} (less|more) to cast( for each .+)?$/i.exec(t);
   // "The first instant or sorcery spell you cast each turn": an ordinal no filter field holds, so the
@@ -1067,7 +1068,7 @@ function isAbility(part: string): boolean {
   const p = part.toLowerCase();
   // "all creature types" (a changeling's reach) is granted like a keyword.
   if (/^"[^"]*"$/.test(part) || /^(?:that|this|those) abilit(?:y|ies)$/.test(p) || p === "all creature types") return true;
-  return KEYWORDS.some((k) => p === k || (p.startsWith(`${k} `) && p.length - k.length <= (k === "protection" ? 70 : 40) && !/\blife\b/.test(p)));
+  return KEYWORDS.some((k) => p === k || (p.startsWith(`${k} `) && p.length - k.length <= (k === "protection" ? 70 : 40) && !/\blife\b|\bcosts?\b/.test(p)));
 }
 
 /** "<subject> gets +2/+2 [for each ...] [and gains flying] [until end of turn]", "<subject> has
@@ -1231,7 +1232,9 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   // "is", and a store object that names the recipient is what keeps it (The Flesh Is Weak).
   // `phrase` for a record built from the grammar alone (task 7): derive reads "in addition to its other
   // types" off the grant's words to call it a type grant.
-  if (is) return [{ verb: "grant-ability", object, phrase: pred }];
+  // The subject in front ("Lands you control are every basic land type ..."): the store's object named
+  // the recipient, which derive reads off these words (Prismatic Omen).
+  if (is) return [{ verb: "grant-ability", object, phrase: target.text ? `${target.text} ${pred}` : pred }];
   const has = /^(?:has|have|gains?) (.+)$/i.exec(pred);
   if (!has) return null;
   // "gains your choice of flying, vigilance, deathtouch, or haste": one grant per choice.
@@ -1268,7 +1271,9 @@ function exceptOf(text: string, object: SubjectFilter): ActionReading[] | null {
     if (is) {
       const withs = is[2] ? abilitiesOf(is[2]) : [];
       if (!withs) return null;
-      out.push({ verb: "grant-ability", object }, ...withs.map((x) => ({ verb: "grant-ability", object, text: x })));
+      // The type's words as the phrase ("Shapeshifter Rogue in addition to its other types"): derive
+      // reads a type grant off "in addition to its other types".
+      out.push({ verb: "grant-ability", object, phrase: full.replace(/^(?:it's|it is|is) (?:an? )?/i, "").replace(/ with .+? (?=in addition)/i, " ") }, ...withs.map((x) => ({ verb: "grant-ability", object, text: x })));
       continue;
     }
     return null;
@@ -1564,9 +1569,12 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       for (let k = 0; k < 2; k++) for (const p of phrases(both[2]!)) { const r = readPhrase(p, condition, pair); if (r) out.push(...r); }
       continue;
     }
+    // "You and Humans you control have hexproof" (Sigarda): the class's grant is read; the player's
+    // hexproof is no object's.
+    s = s.replace(/^you and (?=[\w ,-]+ you control (?:have|gain) )/i, "");
     // "You and <someone this grammar cannot name> ...": the actions are both players', so none is read
-    // as yours alone.
-    if (/^you and /i.test(s)) continue;
+    // as yours alone -- and the card is not complete without them (task 7 reads it as unread).
+    if (/^you and /i.test(s)) { unread?.push(s); continue; }
     let carried: ActionReading["actor"];
     lastSubject = undefined;
     const at = out.length;
