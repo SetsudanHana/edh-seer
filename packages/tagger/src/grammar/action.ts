@@ -327,7 +327,13 @@ const COUNTERS: Record<string, [string, Handler]> = {
     // permanents wait on a ruling; a card's own are its cost).
     const own = /^(a|two|three|x) counters? from (this [a-z]+|~)$/i.exec(rest);
     if (own) return { object: SELF, amount: amountOf(own[1]!) ?? "1" };
-    const m = /^(all|.+? counters?) from (.+)$/.exec(rest);
+    // "a counter from a permanent you control": any kind, from another permanent -- a counter-removal
+    // outlet, fed by whatever puts counters there (owner 2026-10-02: "you need counters to remove
+    // counters"). The store's whole phrase is the object.
+    const any = /^(a|two|three|x) counters? from (.+)$/i.exec(rest);
+    if (any) { const on = objectOf(any[2]!); if (on) return { object: on.object, amount: amountOf(any[1]!) ?? "1", text: rest }; }
+    // "X +1/+1 counters from among creatures you control": the same outlet, one kind.
+    const m = /^(all|.+? counters?) from (?:among )?(.+)$/.exec(rest);
     const c = m ? (/^all .+ counters$/.test(m[1]!) ? { amount: "all", counter: counterKindOf(m[1]!.slice(4)) } : countersOf(m[1]!)) : null;
     const on = m ? objectOf(m[2]!) : null;
     if (!c?.counter || !on) return null;

@@ -4782,6 +4782,81 @@
   "typeLine": "Sorcery"
  },
  {
+  "name": "Power Conduit",
+  "oracleId": "2e358f7e-c282-4b92-8255-1436c99cda49",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "a counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1 counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "artifact"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [],
+   "identity": [],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Choose one —",
+   "2": "Put a charge counter on target artifact.",
+   "3": "Put a +1/+1 counter on target creature."
+  },
+  "clauseCosts": {
+   "1": "{T}, Remove a counter from a permanent you control"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "{T}, Remove a counter from a permanent you control: Choose one —\n• Put a charge counter on target artifact.\n• Put a +1/+1 counter on target creature.",
+  "typeLine": "Artifact"
+ },
+ {
   "name": "Psychosis Crawler",
   "oracleId": "2876e74f-a242-4995-9702-0b737a1ab67a",
   "clauses": [
@@ -7371,6 +7446,93 @@
   "grantedToken": [],
   "oracleText": "Whenever you gain life, target opponent loses that much life.\n{3}{B}{B}: Creatures you control gain lifelink until end of turn.",
   "typeLine": "Legendary Creature — Vampire Cleric"
+ },
+ {
+  "name": "Walking Ballista",
+  "oracleId": "4b515bb0-f275-4400-8032-3173b799ab40",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "artifact",
+    "creature"
+   ],
+   "subtypes": [
+    "construct"
+   ],
+   "layout": "normal",
+   "colors": [],
+   "identity": [],
+   "cmc": 0,
+   "power": "0",
+   "toughness": "0",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "This creature enters with X +1/+1 counters on it.",
+   "2": "Put a +1/+1 counter on this creature.",
+   "3": "It deals 1 damage to any target."
+  },
+  "clauseCosts": {
+   "2": "{4}",
+   "3": "Remove a +1/+1 counter from this creature"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "This creature enters with X +1/+1 counters on it.\n{4}: Put a +1/+1 counter on this creature.\nRemove a +1/+1 counter from this creature: It deals 1 damage to any target.",
+  "typeLine": "Artifact Creature — Construct"
  },
  {
   "name": "Wall of Omens",

@@ -360,7 +360,9 @@ import { emblemRecipient } from "../emblem.js";
 // 264: fragments 15: equipped creatures you control (kept as stored), "this card's other abilities",
 // plays from the top, combat-damage shields, exchanged life totals, a card's own counters removed as a
 // cost, +X/+Y counters, Torpor Orb, alternative costs for a class, cast from that player's graveyard.
-export const DERIVE_VERSION = 264;
+// 265: a counter-removal outlet on other permanents is read (owner 2026-10-02: "you need counters to
+// remove counters"): "remove a counter from a permanent you control", "... from among creatures".
+export const DERIVE_VERSION = 265;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
