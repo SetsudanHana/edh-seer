@@ -251,18 +251,43 @@ test("readings align to stored actions by verb, in order", () => {
   expect(alignVerbs(["search", "search", "search", "exile", "shuffle"], ["search", "search", "search"])).toEqual([[0, 0], [1, 1], [2, 2]]);
 });
 
+// Fragments 3 (#896): a copy's exceptions, alternative costs and strive, mana by shape, prevention
+// shields, "a number of" counters, and a "then double" phrase of its own.
+test("fragments 3: copies with exceptions, alternative costs, mana, shields, counted counters", () => {
+  const verbs = (t: string) => parseActions(t, "triggered").map((a) => a.verb);
+  expect(verbs("You may have this creature enter as a copy of a creature an opponent controls, except it's a Faerie Shapeshifter in addition to its other types and it has flying."))
+    .toEqual(["copy", "grant-ability", "grant-ability"]);
+  const become = parseActions("you may have this creature become a copy of another target creature until end of turn, except it has haste.", "triggered");
+  expect(become[0]).toMatchObject({ verb: "copy", text: "another target creature", optional: true });
+  expect(become[1]).toMatchObject({ verb: "grant-ability", text: "haste" });
+  // An exception this grammar cannot read leaves the whole phrase unread.
+  expect(parseActions("You may have this creature enter as a copy of any creature on the battlefield, except its name is Bob.", "static")).toEqual([]);
+  expect(parseActions("Create a token that's a copy of target creature you control, except it isn't legendary.", "spell")[0])
+    .toMatchObject({ verb: "create", text: "a token that's a copy of target creature you control, except it isn't legendary" });
+  expect(parseActions("If an opponent cast a blue spell this turn, you may pay {R} rather than pay this spell's mana cost.", "static")[0])
+    .toMatchObject({ verb: "cost-modify", optional: true, condition: "if an opponent cast a blue spell this turn" });
+  expect(verbs("This spell costs {1}{G} more to cast for each target beyond the first.")).toEqual(["cost-modify"]);
+  for (const t of ["add one mana of any type that land produced.", "Add two mana of different colors.", "add {B} or one mana of the chosen color.",
+    "its controller adds an additional one mana of any color.", "Add X mana in any combination of {B} and/or {R}."]) expect(verbs(t)).toEqual(["add-mana"]);
+  expect(parseActions("The next time a black source of your choice would deal damage to you this turn, prevent that damage.", "spell")[0])
+    .toMatchObject({ verb: "prevent", text: "the next time a black source of your choice would deal damage to you this turn" });
+  expect(parseActions("put a number of +1/+1 counters equal to its power on up to one target creature.", "triggered")[0])
+    .toMatchObject({ verb: "add-counter", counter: "+1/+1", amount: "its power", text: "up to one target creature" });
+  expect(verbs("put a +1/+1 counter on target creature, then double the number of +1/+1 counters on it.")).toEqual(["add-counter", "double"]);
+});
+
 test.each([
-  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.945],
-  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.905],
-  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.809],
-  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.9],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.888],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.853],
-  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.841],
+  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.947],
+  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.919],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.847],
+  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.914],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.904],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.861],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.884],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
-    "explore", "connive", "endure"], 0.775],
-  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.605],
+    "explore", "connive", "endure"], 0.801],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.707],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")
