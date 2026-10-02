@@ -102,7 +102,7 @@ export function diffActions(rows: ActionRow[], candidate: ActionParser, subjectO
     if (JSON.stringify(read) !== JSON.stringify(candidate(row.effect, row.type, row.cost))) nondeterministic.push(row.effect);
     // Aligned FAMILY BY FAMILY: one sequence over every verb can trade a draw's match for two life
     // matches, which is not a disagreement about either.
-    const pairs = alignByFamily(row.actions.map((a) => a.verb), (read ?? []).map((r) => r.verb));
+    const pairs = alignByFamily(row.actions.map(storedVerb), (read ?? []).map((r) => r.verb));
     const matchedRead = new Set(pairs.map(([, j]) => j));
     const readOf = new Map(pairs);
     row.actions.forEach((stored, i) => {
@@ -126,6 +126,11 @@ export function diffActions(rows: ActionRow[], candidate: ActionParser, subjectO
   }
   return { families, nondeterministic, groups: sorted };
 }
+
+/** A stored action's verb for alignment: the store files "becomes prepared" as a grant of "prepared",
+ *  which is a prepare (derive aligns it the same way). */
+export const storedVerb = (a: { verb: string; object?: string }): string =>
+  (a.verb === "grant-ability" && /^prepared$/i.test((a.object ?? "").trim()) ? "prepare" : a.verb);
 
 /** `align` within each verb family, the pairs mapped back to the full sequences. */
 export function alignByFamily(stored: string[], read: string[]): [number, number][] {

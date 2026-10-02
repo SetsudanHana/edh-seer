@@ -343,7 +343,9 @@ import { emblemRecipient } from "../emblem.js";
 // 256: fragments 7: characteristic-defining abilities ("Titania's power and toughness are each equal
 // to ..."), quoted grants kept whole, several targets pumped in one sentence, self-copies, improved
 // damage ("that much damage plus 2"), a trailing "as long as" kept as the condition.
-export const DERIVE_VERSION = 256;
+// 257: fragments 8: two subjects in one pump sentence, improved life, library puts by position, sets
+// exiled with the card, "fight each other", a predicate with no subject of its own as a back-reference.
+export const DERIVE_VERSION = 257;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1408,6 +1410,9 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
     .filter((r) => GRAMMAR_ACTION_VERBS.has(r.verb));
   if (readings.length === 0) return clause;
   const stored = clause.actions;
+  // The store files "becomes prepared" as a grant of "prepared" (Codie): a prepare, not a grant, so it
+  // takes no grant's reading ("becomes prepared and gains hexproof" would hand it "hexproof").
+  const verbOf = (a: Action): string => (a.verb === "grant-ability" && /^prepared$/i.test((a.object ?? "").trim()) ? "prepare" : a.verb ?? "");
   // Aligned family by family, so a life reading cannot take a draw's place in the sequence. A verb the
   // grammar reads MORE times than the store holds is left as stored: the store wrote a list as one
   // action ("create a Treasure token and a 2/2 Bird token", Song of Eärendil), and rewriting it with
@@ -1417,13 +1422,13 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
   // A ZONE verb takes the grammar only where both hold the same number of it: the store writes a
   // "look at the top X" as a put of its own (Belisarius Cawl), and aligning two readings to three
   // stored puts by verb alone hands one put's destination to its neighbour.
-  const count = (v: string) => [readings.filter((r) => r.verb === v).length, stored.filter((a) => a.verb === v).length] as const;
+  const count = (v: string) => [readings.filter((r) => r.verb === v).length, stored.filter((a) => verbOf(a) === v).length] as const;
   const more = new Set(readings.map((r) => r.verb).filter((v) => v !== "search" && (ACTION_FAMILY[v] === "zone" ? count(v)[0] !== count(v)[1] : count(v)[0] > count(v)[1])));
   const aligned = new Map<number, number>();
   for (const fam of new Set(readings.map((r) => ACTION_FAMILY[r.verb]))) {
-    const si = stored.flatMap((a, i) => (ACTION_FAMILY[a.verb ?? ""] === fam ? [i] : []));
+    const si = stored.flatMap((a, i) => (ACTION_FAMILY[verbOf(a)] === fam ? [i] : []));
     const ri = readings.flatMap((r, j) => (ACTION_FAMILY[r.verb] === fam ? [j] : []));
-    for (const [i, j] of alignVerbs(si.map((i) => stored[i]!.verb ?? ""), ri.map((j) => readings[j]!.verb))) aligned.set(ri[j]!, si[i]!);
+    for (const [i, j] of alignVerbs(si.map((i) => verbOf(stored[i]!)), ri.map((j) => readings[j]!.verb))) aligned.set(ri[j]!, si[i]!);
   }
   const out: Action[] = [...stored];
   readings.forEach((r, j) => {
