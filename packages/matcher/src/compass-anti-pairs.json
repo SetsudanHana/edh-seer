@@ -170,6 +170,33 @@
       "source": "owner verdict 2026-09-28 (#716)",
       "verified": true,
       "tag": "graveyard-recursion:artifact"
+    },
+    {
+      "a": "Grumgully, the Generous",
+      "b": "Thalia's Lieutenant",
+      "tag": "static:enters-with-counters",
+      "class": "subject-mismatch",
+      "why": "Owner ruling 2026-10-02: the class grant reaches its class only. Grumgully counts non-Human creatures, and Thalia's Lieutenant is a Human.",
+      "source": "owner ruling 2026-10-02",
+      "verified": true
+    },
+    {
+      "a": "Archetype of Imagination",
+      "b": "Serra Angel",
+      "tag": "static:keyword-grant",
+      "class": "false-emit",
+      "why": "Owner ruling 2026-10-02: \"flying flying gives you nothing additional\". Multiple instances of flying are redundant (CR 702.9c), and Serra Angel prints flying, so the grant gives it nothing.",
+      "source": "owner ruling 2026-10-02",
+      "verified": true
+    },
+    {
+      "a": "Anger",
+      "b": "Goblin Guide",
+      "tag": "static:speed-increase",
+      "class": "false-emit",
+      "why": "Owner ruling 2026-10-02, redundant keywords: haste on a creature that already has haste adds nothing (CR 702.10d).",
+      "source": "owner ruling 2026-10-02",
+      "verified": true
     }
   ],
   "knownDefects": [],
