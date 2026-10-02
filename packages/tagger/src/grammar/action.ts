@@ -833,7 +833,10 @@ function subjectAction(t: string): ActionReading[] | null {
   if (/^(?:that ability|it) triggers an additional time$/i.test(t)) return [{ verb: "trigger-again" }];
   if (/^(?:that player|target player|each opponent|you) (?:wins?|loses?) the game$/i.test(t)) return [{ verb: /wins? the game$/i.test(t) ? "win-game" : "lose-game" }];
   const phases = /^(.+?) phases? out$/i.exec(t);
-  if (phases && (objectOf(phases[1]!) || THEY.test(phases[1]!))) return [{ verb: "phase-out" }];
+  if (phases && (objectOf(phases[1]!) || THEY.test(phases[1]!))) {
+    const who = objectOf(phases[1]!)?.object ?? REF;
+    return [{ verb: "phase-out", object: who, ...(who.ref ? { phrase: phases[1]! } : { text: phases[1]! }) }];
+  }
   if (/^you take the initiative$/i.test(t)) return [{ verb: "initiative" }];
   if (/^the ring tempts you$/i.test(t)) return [{ verb: "ring-tempts" }];
   const have = /^you (may )?have (.+)$/i.exec(t);
@@ -882,7 +885,9 @@ function restrictionOf(t: string): ActionReading[] | null {
   // "Creatures entering don't cause abilities to trigger" (Torpor Orb).
   if (/^creatures entering don't cause abilities to trigger$/i.test(t)) return [{ verb: "cant", object: parse("creatures")!, text: "creatures entering from causing abilities to trigger" }];
   // "Spend this mana only to cast creature spells": a restriction on the mana just made.
-  if (/^spend this mana only (?:to cast|on) .+$/i.test(t)) return [{ verb: "cant", object: { control: "any", token: null, ref: "sentence" }, text: t }];
+  // The store's `other`: a restriction on mana is no permanent's "can't" (as `cant` derive read it as
+  // an ability loss, task 7's first measurement).
+  if (/^spend this mana only (?:to cast|on) .+$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t }];
   // "Skip your draw step": the store's cant on drawing then.
   if (/^skip your draw step$/i.test(t)) return [{ verb: "cant", object: parse("you")!, text: "draw during your draw step" }];
   // "Damage can't be prevented [this turn]": no object, the store's cant on preventing it.

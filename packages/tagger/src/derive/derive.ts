@@ -366,7 +366,8 @@ import { emblemRecipient } from "../emblem.js";
 // left out (Toxic Deluge's additional cost) is added from the grammar (owner 2026-10-02, Rowan).
 // 267: fragments 16: "triple", plays and casts of "one of them", casts paid by a sacrifice, lists with
 // "those", entering tapped and with counters.
-export const DERIVE_VERSION = 267;
+// 268: task 7 step 2: "phases out" names what phases; "spend this mana only ..." is the store's other.
+export const DERIVE_VERSION = 268;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

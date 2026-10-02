@@ -3,7 +3,10 @@
  *  of task 2 -- so a group is labelled once and its members spot-checked, not judged one by one. */
 import type { Ability } from "@edh-seer/tagger";
 
-const json = (v: unknown): string => JSON.stringify(v ?? null);
+/** Key order is not a difference: two derives that build the same subject in a different order agree. */
+const canonical = (v: unknown): unknown => Array.isArray(v) ? v.map(canonical)
+  : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canonical((v as Record<string, unknown>)[k])])) : v;
+const json = (v: unknown): string => JSON.stringify(canonical(v ?? null));
 
 /** The abilities of one clause, as comparable strings, in a stable order. */
 function byClause(abilities: readonly Ability[]): Map<number, Ability[]> {
@@ -16,7 +19,20 @@ function byClause(abilities: readonly Ability[]): Map<number, Ability[]> {
   return out;
 }
 
-/** The fields two abilities differ in, one level into `effect` and `trigger`. */
+/** How a SUBJECT moved, which is what a label needs: "+type" the grammar added a field (usually a
+ *  narrower, truer reading), "-self" it lost one, "~control" it changed one. */
+function subjectMove(x: unknown, y: unknown): string {
+  const a = (x ?? {}) as Record<string, unknown>, b = (y ?? {}) as Record<string, unknown>;
+  const out: string[] = [];
+  for (const k of [...new Set([...Object.keys(a), ...Object.keys(b)])].sort()) {
+    if (json(a[k]) === json(b[k])) continue;
+    out.push(`${!(k in a) ? "+" : !(k in b) ? "-" : "~"}${k}`);
+  }
+  return out.join(" ");
+}
+
+/** The fields two abilities differ in, one level into `effect` and `trigger`; a subject (the effect's,
+ *  the trigger's, an emit's) says how it moved. */
 function fieldsOf(a: Ability, b: Ability): string[] {
   const out = new Set<string>();
   for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
@@ -24,8 +40,17 @@ function fieldsOf(a: Ability, b: Ability): string[] {
     if (json(x) === json(y)) continue;
     if ((k === "effect" || k === "trigger") && x && y && typeof x === "object" && typeof y === "object") {
       for (const kk of new Set([...Object.keys(x), ...Object.keys(y)])) {
-        if (json((x as Record<string, unknown>)[kk]) !== json((y as Record<string, unknown>)[kk])) out.add(`${k}.${kk}`);
+        const xx = (x as Record<string, unknown>)[kk], yy = (y as Record<string, unknown>)[kk];
+        if (json(xx) === json(yy)) continue;
+        out.add(kk === "subject" ? `${k}.subject(${subjectMove(xx, yy)})` : `${k}.${kk}`);
       }
+    } else if (k === "emits" && Array.isArray(x) && Array.isArray(y) && x.length === y.length) {
+      x.forEach((e, i) => {
+        const f = y[i] as { verb?: string; subject?: unknown };
+        const ee = e as { verb?: string; subject?: unknown };
+        if (json(e) === json(f)) return;
+        out.add(ee.verb !== f.verb ? "emits.verb" : `emits.subject(${subjectMove(ee.subject, f.subject)})`);
+      });
     } else out.add(k);
   }
   return [...out];

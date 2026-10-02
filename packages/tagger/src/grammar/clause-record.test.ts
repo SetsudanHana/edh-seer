@@ -21,3 +21,10 @@ test("a trigger's subject is what the event happens to, and an actor trigger's o
   expect(triggerSubjectText("Whenever this creature or another creature dies")).toBe("this creature or another creature");
   expect(triggerSubjectText("Whenever you discard a card")).toBe("a card");
 });
+
+test("a self trigger's first 'it' is the card itself, and a player verb names its player", () => {
+  const junk = grammarClauseRecords({ name: "Wall of Junk", typeLine: "Artifact Creature — Wall", oracleText: "When this creature blocks, return it to its owner's hand at end of combat." });
+  expect(junk.records[0]!.actions![0]).toMatchObject({ verb: "return", object: "this" });
+  const barrier = grammarClauseRecords({ name: "Barrier of Bones", typeLine: "Creature — Skeleton Wall", oracleText: "When this creature enters, surveil 1." });
+  expect(barrier.records[0]!.actions![0]).toMatchObject({ verb: "surveil", object: "you", amount: "1" });
+});
