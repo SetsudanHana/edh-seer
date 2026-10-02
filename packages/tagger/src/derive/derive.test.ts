@@ -2040,6 +2040,34 @@ test("a counter trigger whose subject says the counters were removed is read as 
   expect(added.abilities.some((a) => a.trigger?.verbs?.includes("counter-added"))).toBe(true);
 });
 
+// Oracle text from the corpus (static-out v-fe4412373506).
+const POLYMORPH_TEXT = "Destroy target creature. It can't be regenerated. Its controller reveals cards from the top of their library until they reveal a creature card. The player puts that card onto the battlefield, then shuffles all other cards revealed this way into their library.";
+const PROTEUS_STAFF_TEXT = "{2}{U}, {T}: Put target creature on the bottom of its owner's library. That creature's controller reveals cards from the top of their library until they reveal a creature card. The player puts that card onto the battlefield and the rest on the bottom of their library in any order. Activate only as a sorcery.";
+
+/** THE POLYMORPH FAMILY READS AS PLAYED (owner ruling 2026-10-02, #962): on your own creature, so the
+ *  creature it removes and the one it puts down are both yours. Polymorph's stored clause. */
+test("Polymorph removes your creature and puts a creature from your library onto the battlefield", () => {
+  const { abilities } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [
+    { verb: "destroy", object: "target creature", fromZone: null, toZone: null, amount: null, optional: false },
+    { verb: "cant", object: "be regenerated", fromZone: null, toZone: null, amount: null, optional: false },
+    { verb: "put", object: "that creature card", fromZone: "library", toZone: "battlefield", amount: null, optional: false },
+  ] }], "Polymorph", { 1: POLYMORPH_TEXT }, undefined, POLYMORPH_TEXT);
+  const emits = abilities.flatMap((a) => a.emits ?? []);
+  expect(emits.find((e) => e.verb === "dies")?.subject.control).toBe("you");
+  expect(emits.find((e) => e.verb === "enters")?.subject).toMatchObject({ control: "you", type: "creature", fromZone: "library" });
+});
+
+test("Proteus Staff's tuck is the creature it trades away", () => {
+  const { abilities } = deriveAbilities([{ id: 1, abilityType: "activated", actions: [
+    { verb: "put", object: "target creature", fromZone: "battlefield", toZone: "library", amount: null, optional: false },
+    { verb: "put", object: "a creature card", fromZone: "library", toZone: "battlefield", amount: null, optional: false },
+    { verb: "put", object: "the rest", fromZone: "library", toZone: "library", amount: null, optional: false },
+  ] }], "Proteus Staff", { 1: PROTEUS_STAFF_TEXT.slice(PROTEUS_STAFF_TEXT.indexOf(": ") + 2) }, { 1: "{2}{U}, {T}" }, PROTEUS_STAFF_TEXT);
+  const emits = abilities.flatMap((a) => a.emits ?? []);
+  expect(emits.find((e) => e.verb === "leaves")?.subject).toMatchObject({ control: "you", type: "creature" });
+  expect(emits.find((e) => e.verb === "enters")?.subject).toMatchObject({ control: "you", type: "creature", fromZone: "library" });
+});
+
 /** ROADMAP I7. A permanent entering under a controller the schema cannot name claims nothing. */
 describe("entersUnderAnotherPlayer", () => {
   it("fires on Chaos Warp — the owner of the target gets the random top card", () => {
@@ -2081,6 +2109,14 @@ describe("entersUnderAnotherPlayer", () => {
       "Destroy target nonbasic land an opponent controls. Each player searches their library for a "
       + "basic land card, puts it onto the battlefield, then shuffles.",
     )).toBe(false);
+  });
+
+  // OWNER RULING 2026-10-02 (#962): a target-any card is read by its PRIMARY use. A creature that
+  // reveals its controller a creature card in exchange is the polymorph family, played on your own
+  // creature; Chaos Warp and Path to Exile are removal first and stay refused.
+  it("does not fire on the polymorph family, which is played on your own creature", () => {
+    expect(entersUnderAnotherPlayer(POLYMORPH_TEXT)).toBe(false);
+    expect(entersUnderAnotherPlayer(PROTEUS_STAFF_TEXT)).toBe(false);
   });
 
   it("does not fire on a search of your OWN library", () => {
