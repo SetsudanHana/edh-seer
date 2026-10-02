@@ -505,10 +505,19 @@ test("fragments 15: statuses, choices, quote-safe predicates, set P/T", () => {
   expect(parseActions("put a +1/+2 counter on target creature.", "spell")[0]).toMatchObject({ counter: "+1/+2" });
 });
 
+// Owner 2026-10-02: "you need counters to remove counters" -- a counter-removal outlet on your other
+// permanents is read, so derive links it to what puts counters there (Power Conduit, Hexavus).
+test("a counter-removal outlet on other permanents is read", () => {
+  expect(parseActions("Remove a counter from a permanent you control.", "activated")[0])
+    .toMatchObject({ verb: "remove-counter", amount: "1", text: "a counter from a permanent you control" });
+  expect(parseActions("Remove X +1/+1 counters from among creatures you control.", "activated")[0])
+    .toMatchObject({ verb: "remove-counter", counter: "+1/+1", amount: "X", text: "creatures you control" });
+});
+
 test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.955],
   ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.942],
-  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.904],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.91],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.935],
   ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.936],
   ["pump/grant", ["modify-pt", "grant-ability"], 0.934],

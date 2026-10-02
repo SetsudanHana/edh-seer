@@ -675,5 +675,14 @@
     "source": "owner ruling 2026-10-02",
     "verified": true,
     "tag": "attacks:creature"
+  },
+  {
+    "a": "Walking Ballista",
+    "b": "Power Conduit",
+    "category": "counter-removal",
+    "note": "Owner ruling 2026-10-02: \"you need counters to remove counters\". Power Conduit removes a counter from a permanent you control; Walking Ballista carries +1/+1 counters to remove.",
+    "source": "owner ruling 2026-10-02",
+    "verified": true,
+    "tag": "counter-removed:permanent"
   }
 ]
