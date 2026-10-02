@@ -3812,6 +3812,20 @@ test("a board-wide keyword grant keeps its recipient and names the keyword (Mika
   expect(riot.effect.subject?.type).toBeUndefined();
 });
 
+// Owner 2026-10-02 (redundant keywords): a grant to the TRIGGERING object says so, so the matcher can
+// see the attacker already has the keyword. A target, or the card itself, is not the trigger's object.
+test("a keyword grant to the triggering object is ref: trigger (Stonehoof Chieftain)", () => {
+  const grant = (name: string, subject: string, text: string) => deriveAbilities([{ id: 1, abilityType: "triggered",
+    trigger: { event: "attacks", subject, control: "you" }, actions: [{ verb: "grant-ability", object: "trample" }] }],
+    name, { 1: text }).abilities.find((a) => a.effect.kind === "keyword-grant")!;
+  expect(grant("Stonehoof Chieftain", "another creature you control",
+    "Whenever another creature you control attacks, it gains trample and indestructible until end of turn.").effect.subject?.ref).toBe("trigger");
+  expect(grant("Stensian Sanguinist", "you",
+    "Whenever you attack, target creature gains trample until end of turn.").effect.subject?.ref).toBeUndefined();
+  expect(grant("Witch-Maw Nephilim", "this creature",
+    "Whenever this creature attacks, it gains trample until end of turn.").effect.subject?.ref).toBeUndefined();
+});
+
 // #900: the pronoun after a reveal is the revealed card -- not the dying creature itself.
 test("Matter Reshaper puts the revealed permanent onto the battlefield, never itself", () => {
   const reshaper = deriveAbilities(

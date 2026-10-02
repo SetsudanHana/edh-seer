@@ -2025,6 +2025,72 @@
   "typeLine": "Creature — Human Cleric"
  },
  {
+  "name": "Ghalta, Primal Hunger",
+  "oracleId": "b0b6be0c-41cf-4757-9f0e-87227b6ba6b3",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "This spell costs {X} less to cast, where X is the total power of creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature"
+   ],
+   "subtypes": [
+    "elder",
+    "dinosaur"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 12,
+   "power": "12",
+   "toughness": "12",
+   "token": false,
+   "keywords": [
+    "trample"
+   ]
+  },
+  "clauseTexts": {
+   "1": "This spell costs {X} less to cast, where X is the total power of creatures you control.",
+   "2": "Trample"
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "This spell costs {X} less to cast, where X is the total power of creatures you control.\nTrample (This creature can deal excess combat damage to the player or planeswalker it's attacking.)",
+  "typeLine": "Legendary Creature — Elder Dinosaur"
+ },
+ {
   "name": "Ghostly Flicker",
   "oracleId": "ad0070db-6454-41cb-861f-8f5b8fc2a3b8",
   "clauses": [
@@ -6014,6 +6080,83 @@
   "grantedToken": [],
   "oracleText": "{T}, Pay 1 life: Destroy target permanent you own.\n{T}, Pay 2 life: Add one mana of any color.\n{T}, Pay 3 life: Proliferate.\n{T}, Pay 4 life: Draw a card.\n{5}: Untap this artifact.",
   "typeLine": "Artifact"
+ },
+ {
+  "name": "Stonehoof Chieftain",
+  "oracleId": "241d00bf-3301-4385-b559-d50565603dcc",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample, indestructible",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "another creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "trample",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "indestructible",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "centaur",
+    "warrior"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 8,
+   "power": "8",
+   "toughness": "8",
+   "token": false,
+   "keywords": [
+    "indestructible",
+    "trample"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Trample, indestructible",
+   "2": "Whenever another creature you control attacks, it gains trample and indestructible until end of turn."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Trample, indestructible\nWhenever another creature you control attacks, it gains trample and indestructible until end of turn.",
+  "typeLine": "Creature — Centaur Warrior"
  },
  {
   "name": "Storm-Kiln Artist",

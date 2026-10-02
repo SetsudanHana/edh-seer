@@ -666,5 +666,14 @@
     "source": "owner ruling 2026-10-02",
     "verified": true,
     "tag": "static:keyword-grant"
+  },
+  {
+    "a": "Ghalta, Primal Hunger",
+    "b": "Stonehoof Chieftain",
+    "category": "keyword-grant",
+    "note": "Owner ruling 2026-10-02, redundant keywords: Stonehoof's attack trigger gives the attacker trample and indestructible. Ghalta already has trample, so only indestructible is new, and that still links.",
+    "source": "owner ruling 2026-10-02",
+    "verified": true,
+    "tag": "attacks:creature"
   }
 ]
