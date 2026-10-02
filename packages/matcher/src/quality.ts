@@ -112,6 +112,10 @@ const YIELD: Partial<Record<Role, readonly RateFamily[]>> = {
 /** The same rate read at its ceiling: a trigger's floor is 0 by the interval ruling, its ceiling is what it can do. */
 const ceilingSpan = (s: RateSpan): RateSpan => [s[2] ?? s[0], s[3], s[2] ?? s[0], s[3]];
 
+/** THE VICTIM PUTS A PERMANENT ONTO THE BATTLEFIELD (Wild Magic Surge, Chaos Warp): a gift no derived
+ *  event carries, since the opponent's own move is not the card's effect (owner, 2026-10-02: Wild Magic
+ *  Surge offered as giving "the opponent nothing back"). Read off the printed text, in one sentence. */
+const GIVES_A_PERMANENT = /\b(?:its (?:controller|owner)|that player|they)\b[^.]*\bputs? (?:it|that card|them|those cards)\b[^.]*\bonto the battlefield/i;
 /** A GIFT TO THE OPPONENT or a cost to you: the victim's token (Beast Within), life (Swords), land
  *  (Path), or your own life. */
 function isDrawback(e: { verb: string; subject: { control?: string } }): boolean {
@@ -153,7 +157,7 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
     if (ceilings.length > 0) out.rateCeiling = Math.round(100 * Math.max(...ceilings));
   }
   const all = d.tags?.abilities ?? [];
-  out.drawback = all.some((a) => (a.emits ?? []).some(isDrawback)) ? 1 : 0;
+  out.drawback = all.some((a) => (a.emits ?? []).some(isDrawback)) || GIVES_A_PERMANENT.test(d.card.oracleText ?? "") ? 1 : 0;
   // A SECOND ABILITY WITH ITS OWN EFFECT, not a gift to the opponent (Swords' lifegain is the victim's).
   const others = all.filter((a) => !abilities.includes(a) && a.effect.kind !== ""
     && !(a.emits ?? []).some((e) => e.subject.control === "opp"));
