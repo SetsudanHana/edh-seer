@@ -206,6 +206,15 @@
       "why": "Owner ruling 2026-10-02, redundant keywords: Ondu Rising's \"whenever a creature attacks this turn, it gains lifelink\" gives Vampire Nighthawk nothing, because it already has lifelink (CR 702.15f).",
       "source": "owner ruling 2026-10-02",
       "verified": true
+    },
+    {
+      "a": "Mass Polymorph",
+      "b": "Grizzly Bears",
+      "class": "subject-mismatch",
+      "why": "Owner ruling 2026-10-02 (#964): a polymorph links only to creatures of mana value 6 or more, the hits it is played for; a 2-drop dilutes the reveal.",
+      "source": "owner ruling 2026-10-02 (#964)",
+      "verified": true,
+      "tag": "cheat:creature"
     }
   ],
   "knownDefects": [],
