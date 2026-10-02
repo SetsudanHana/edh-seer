@@ -68,12 +68,12 @@ const PI: Record<string, [number, number][]> = {
   "Goblin Maker": [[0, 0.2], [3, 0.1], [4, 0.1]],
 };
 
-function files(specs: Spec[] = SPECS): Record<string, unknown> {
+function files(specs: Spec[] = SPECS, pis: Record<string, [number, number][]> = PI): Record<string, unknown> {
   const out: Record<string, Record<string, unknown>> = {};
   for (const s of specs) {
     const key = normalizeName(s.name);
     const path = `/static/${VERSION}/cards/${shardOf(key)}.json`;
-    out[path] = { ...(out[path] ?? {}), [key]: entry(s, PI[s.name]) };
+    out[path] = { ...(out[path] ?? {}), [key]: entry(s, pis[s.name]) };
   }
   return {
     "/static/manifest.json": { version: VERSION },
@@ -471,4 +471,20 @@ test("an exile held until the permanent leaves counts as killing your creatures;
   expect(killsOwnCreatures(portcullis, "When this creature enters, you may exile target creature you control. Return it to the battlefield when this creature leaves the battlefield.")).toBe(false);
   // An exile of the OPPONENTS' creatures held the same way (Oblivion Ring on their card) is not yours.
   expect(killsOwnCreatures(tags([{ kind: "triggered", repeats: "repeatable", emits: [exiled({ control: "opp" })] }]), text)).toBe(false);
+});
+
+/** A POLYMORPH DECK IS OFFERED NO SMALL CREATURE (owner ruling 2026-10-02, #965): every creature below
+ *  mana value 6 is a reveal that misses. The same candidate, joined the same way, is offered to a deck
+ *  whose detected plan is not polymorph. */
+test("a polymorph deck refuses a small creature that every other deck is offered", async () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const specs: Spec[] = [...SPECS, { name: "Goblin Watcher", identity: ["R"], types: ["creature"], abilities: tremorsAbilities }]; // 7
+  const pis = { "Krenko, Mob Boss": [...PI["Krenko, Mob Boss"]!, [7, 0.3]] as [number, number][], "Goblin Maker": [...PI["Goblin Maker"]!, [7, 0.3]] as [number, number][] };
+  const ask = (strategies: unknown[]) => suggestForDeck({ report: { ...report, strategies } as unknown as DeckReport,
+    commanderColorIdentity: ["B", "R"], baseUrl: "/static", fetchImpl: fetchOf(files(specs, pis)) });
+  expect((await ask([])).plan.map((c) => c.name)).toContain("Goblin Watcher");
+  const poly = await ask([{ name: "polymorph", label: "Polymorph", confidence: 0.17 }]);
+  expect(poly.plan.map((c) => c.name)).not.toContain("Goblin Watcher");
+  expect(poly.plan.map((c) => c.name)).toContain("Impact Tremors");
+  warn.mockRestore();
 });

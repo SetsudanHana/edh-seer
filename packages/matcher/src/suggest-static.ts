@@ -16,7 +16,8 @@ import { extendRoutes, findRoutes, indexRoutes, type RouteHop } from "./routes.j
 import { docToCard } from "@edh-seer/data/docs";
 import { normalizeName } from "@edh-seer/data/names";
 import { StaticLookup } from "./static-lookup.js";
-import { directedReasons, POLYMORPH_HIT_MV, sizeMeets, type ReasonOptions } from "./edges.js";
+import { directedReasons, isPolymorph, POLYMORPH_HIT_MV, sizeMeets, type ReasonOptions } from "./edges.js";
+import { detectPolymorph, type CardSignal } from "./archetypes.js";
 import { faceDeckCards } from "./faces.js";
 import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { commanderSubtypes, markCommander, resolveSharedTypes } from "./commander.js";
@@ -529,10 +530,23 @@ export async function suggestForDeck(input: {
     const ch = d?.tags?.characteristics;
     return polymorphDeck && !!ch && ch.token !== true && ch.types.some((t) => t.toLowerCase() === "creature") && ch.cmc < POLYMORPH_HIT_MV;
   };
-  const verify = verifier(dc, deckLandTypes(deckDcs), axis, commanderNames, loadImpactWeights(), dilutesReveal);
+  // A POLYMORPH IS OFFERED ONLY WHERE IT IS A PLAN (owner ruling 2026-10-02: a card is read by its
+  // primary use). Polymorph in a spellslinger deck was offered for "when it is cast, Thunderclap Drake
+  // ...", and in Ezuri's for "a creature enters": true links, but nobody plays Polymorph for them. It
+  // is offered where the deck is a polymorph deck, or where adding it would make one.
+  const planSignal = (d: DeckCard): CardSignal => {
+    const ch = d.tags?.characteristics;
+    return { name: d.card.name, themeTags: [], effectKinds: [], subtypes: [], polymorph: isPolymorph(d),
+      polymorphHit: !!ch && ch.token !== true && ch.types.some((t) => t.toLowerCase() === "creature") && ch.cmc >= POLYMORPH_HIT_MV };
+  };
+  const deckPlanSignals = deckDcs.filter((d) => !d.tags?.characteristics.types.some((t) => t.toLowerCase() === "land")).map(planSignal);
+  const offPlanPolymorph = (d: DeckCard | null | undefined): boolean => !!d && !polymorphDeck && isPolymorph(d)
+    && !detectPolymorph([...deckPlanSignals, planSignal(d)], deckPlanSignals.length + 1);
+  const refused = (d: DeckCard | null | undefined): boolean => dilutesReveal(d) || offPlanPolymorph(d);
+  const verify = verifier(dc, deckLandTypes(deckDcs), axis, commanderNames, loadImpactWeights(), refused);
   const nonland = physical.filter((n) => !atName.get(n)?.isLand);
   // AN UNREADABLE CARD IS LEFT TO `verify`, which drops it and says so.
-  const harmsDeck = (name: string): Promise<boolean> => dc(name).then((d) => killsOwnCreatures(d?.tags, d?.card.oracleText) || dilutesReveal(d), () => false);
+  const harmsDeck = (name: string): Promise<boolean> => dc(name).then((d) => killsOwnCreatures(d?.tags, d?.card.oracleText) || refused(d), () => false);
 
   // A SWAP'S ADD MUST DO MORE FOR THIS DECK THAN ITS CUT, BY THE REPORT'S OWN MEASURE (owner,
   // 2026-10-01): both are read the same way, against the deck without the cut, and weighed by the
