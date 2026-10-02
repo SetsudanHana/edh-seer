@@ -6,7 +6,7 @@
  *
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
 import { connect, isStickerCard, loadConfig } from "@edh-seer/data";
-import { charsFrom, clauseCosts, clauseFaces, clauseRequires, clauseTexts, grantedTokenClauses } from "../derive-input.js";
+import { charsFrom, deriveInputOf } from "../derive-input.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
 import {
@@ -51,18 +51,7 @@ for (const doc of clauseDocs) {
   // Always re-read printed characteristics from the card/token document. Reusing the existing
   // derived doc's copy would carry stale colours or a stale type line forward through every
   // re-derive, which is the opposite of what a free rebuild is for.
-  const tags = deriveCardTags({
-    oracleId: doc.oracleId,
-    name: doc.name,
-    clauses: doc.canonical,
-    characteristics: isToken ? tokenCharsFrom(source as never) : charsFrom(source as never),
-    clauseTexts: clauseTexts(source as never),
-    clauseRequires: clauseRequires(source as never),
-    clauseCosts: clauseCosts(source as never),
-    clauseFaces: clauseFaces(source as never),
-    oracleText: (source as { oracleText?: string }).oracleText,
-    grantedToken: grantedTokenClauses(source as never),
-  });
+  const tags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, doc.canonical, isToken ? tokenCharsFrom(source as never) : undefined));
   // A card with real rules text deriving zero abilities is the Bitterblossom shape -- worth
   // counting out loud rather than silently writing a doc that reads as a vanilla bear.
   if (tags.abilities.length === 0 && (doc.canonical.length > 0)) empty++;

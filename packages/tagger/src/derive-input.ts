@@ -9,6 +9,8 @@ import type { Requirement } from "./schema.js";
 import { grantedToOwnEmblem, grantedToOwnToken, segment } from "./segment.js";
 import { hasEmblemPart } from "./emblem.js";
 import type { DerivedTagsDoc } from "./clause-store.js";
+import type { ClauseRecord } from "./canonicalize.js";
+import type { DeriveInput } from "./derive/derive.js";
 
 /** Clause id -> clause text, recomputed rather than stored. `segment()` is deterministic over the
  *  same three inputs the clause doc was built from, so this reproduces exactly the clauses the model
@@ -91,4 +93,24 @@ export function charsFrom(doc: {
     toughness: doc.toughness ?? null,
     keywords: doc.keywords ?? [],
   } as never) as DerivedTagsDoc["characteristics"];
+}
+
+type CardDocLike = Parameters<typeof charsFrom>[0] & { oracleText?: string; keywords?: string[]; typeLine?: string; allParts?: { component?: string; typeLine?: string }[] };
+
+/** EVERYTHING DERIVE READS BESIDE THE CLAUSES, from the card document: the one construction
+ *  `derive-corpus` and the grammar-only measurement (#896 task 7) share, so the two derive the same
+ *  way. `characteristics` is passed for a token, whose come from the token document. */
+export function deriveInputOf(card: CardDocLike, oracleId: string, name: string, clauses: ClauseRecord[], characteristics?: DerivedTagsDoc["characteristics"]): DeriveInput {
+  return {
+    oracleId,
+    name,
+    clauses,
+    characteristics: characteristics ?? charsFrom(card),
+    clauseTexts: clauseTexts(card),
+    clauseRequires: clauseRequires(card),
+    clauseCosts: clauseCosts(card),
+    clauseFaces: clauseFaces(card),
+    oracleText: card.oracleText,
+    grantedToken: grantedTokenClauses(card),
+  };
 }

@@ -29,6 +29,10 @@ export interface ActionReading {
   text?: string;
   /** A counter action's KIND ("+1/+1", "stun"); its `object` is the permanent or player it goes on. */
   counter?: string;
+  /** THE WORDS AFTER THE VERB, as printed, even for a back-reference ("it", "that card") whose `text`
+   *  is withheld so derive keeps the stored object. A clause record built from the grammar alone
+   *  (task 7) has no stored object, and derive's antecedent resolver reads exactly these words. */
+  phrase?: string;
 }
 
 const NUMBER: Record<string, string> = {
@@ -1416,7 +1420,7 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
       return all.map((a) => ({ verb, ...a, ...(who !== undefined ? { object: parse(who) ?? { control: "any" as const, token: null, ref: "sentence" as const }, text: who } : {}),
         ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
     }
-    return all.map((a) => ({ verb, ...(isRef(a) ? (({ text: _t, ...rest }: Args) => rest)(a) : a), ...(a.object && !isRef(a) && a.text === undefined && /\S/.test(rest) && !/^(?:\d+|x)$/i.test(rest) ? { text: objectPhrase(verb, rest) } : {}), ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
+    return all.map((a, i) => ({ verb, ...(isRef(a) ? (({ text: _t, ...rest }: Args) => rest)(a) : a), ...(a.object && !isRef(a) && a.text === undefined && /\S/.test(rest) && !/^(?:\d+|x)$/i.test(rest) ? { text: objectPhrase(verb, rest) } : {}), ...(/\S/.test(rest) && i === 0 && (a.verb === undefined || a.verb === verb) ? { phrase: objectPhrase(verb, rest) } : {}), ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
   }
   return null;
 }
