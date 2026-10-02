@@ -556,3 +556,11 @@ test.each([
   // verb in their clause text at all (an empty text, or an action filed under the wrong clause).
   expect(got / total).toBeGreaterThanOrEqual(floor as number);
 }, 120000);
+
+// #896 task 7: a clause record built from the grammar alone carries the printed object words, even for
+// a back-reference whose `text` is withheld (derive's antecedent resolver reads them).
+test("a reading keeps the printed object words as `phrase`", () => {
+  const [, put] = parseActions("Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", "spell");
+  expect(put).toMatchObject({ verb: "put", phrase: "it onto the battlefield tapped" });
+  expect(put?.text).toBeUndefined();
+});
