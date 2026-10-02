@@ -2841,9 +2841,12 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
 // creature in the deck -- that is the whole board, and waits for magnitude like the creature
 // board count). The type-count ruling of the same day is the precedent.
 function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
+  // A POLYMORPH'S EXILE EATS LIKE A SACRIFICE (#964); any other exile of your own creature is a
+  // flicker and wants nothing.
+  const polymorph = isPolymorph(c);
   for (const a of c.tags?.abilities ?? []) {
     if (p === c) break;
-    const eats = (a.emits ?? []).find((e) => e.verb === "sacrifice" && e.subject.self !== true
+    const eats = (a.emits ?? []).find((e) => (e.verb === "sacrifice" || (e.verb === "exiled" && polymorph)) && e.subject.self !== true
       && (e.subject.control === "you" || (e.subject.control === "any" && EACH_PLAYER_SACRIFICES.test(c.card.oracleText ?? ""))));
     if (!eats) continue;
     const { zone: _z, scope: _s, ...wanted } = eats.subject;
@@ -2878,7 +2881,8 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     // (Daretti) still does not make it fodder -- the property is the card's own.
     // CEILING: the two keywords only; a printed "return this card to the battlefield" (Reassembling
     // Skeleton) is not read yet.
-    const comesBack = (p.tags.characteristics.keywords ?? []).find((k) => /^(?:undying|persist)$/i.test(k))?.toLowerCase();
+    // Undying and persist return it from the graveyard; a polymorph EXILES, so it does not come back.
+    const comesBack = eats.verb === "exiled" ? undefined : (p.tags.characteristics.keywords ?? []).find((k) => /^(?:undying|persist)$/i.test(k))?.toLowerCase();
     const expendable = isToken || comesBack !== undefined || (p.card.manaValue <= EXPENDABLE_MV
       && !p.tags.characteristics.types.some((t) => t.toLowerCase() === "legendary"));
     const is = expendable && (isToken || comesBack !== undefined || subtype !== undefined || narrowType)
@@ -2944,6 +2948,23 @@ function flashTimingEdges({ p, c, reasons }: PairScope): void {
   }
 }
 
+/** The mana value at or above which a creature is what a polymorph is played to hit (#964). */
+const POLYMORPH_HIT_MV = 6;
+const REMOVES_OWN = new Set(["exiled", "sacrifice"]);
+
+/** A POLYMORPH (owner ruling 2026-10-02, #964): it removes a creature of yours and puts a creature
+ *  from your library onto the battlefield in its place -- Mass Polymorph, Jace, Multiverse Architect's
+ *  -3, Fireflux Squad. Card-wide, since Synthetic Destiny returns them from a delayed trigger. A
+ *  printed SEARCH makes it a tutor (Natural Order, Birthing Pod): the card is chosen, not revealed.
+ *  CEILING: a mana-value bound on the reveal (Lukka's "greater mana value") is not read. */
+function isPolymorph(t: TaggedCard): boolean {
+  if (/\bsearch/i.test(t.card.oracleText ?? "")) return false;
+  const emits = (t.tags?.abilities ?? []).flatMap((a) => a.emits ?? []);
+  const creature = (e: (typeof emits)[number]) => e.subject.self !== true && e.subject.control === "you" && list(e.subject.type).includes("creature");
+  return emits.some((e) => e.verb === "enters" && e.subject.fromZone === "library" && creature(e))
+    && emits.some((e) => REMOVES_OWN.has(e.verb) && creature(e));
+}
+
 /** "If that card is an enchantment card, it enters tapped and attacking" (Summoner's Grimoire): the
  *  type a cheat rewards beyond putting the card down. String search, no regex over the text. */
 function cheatBonusType(oracle: string | undefined): string | undefined {
@@ -2961,10 +2982,15 @@ function cheatBonusType(oracle: string | undefined): string | undefined {
 // creature card from your hand onto the battlefield (Sneak Attack, Quicksilver Amulet, Kaalia) joins
 // each creature card its subject admits; a printed bonus for a type is a second reason, which is what
 // "stronger" means to the score. A token is never in a hand.
+//
+// A POLYMORPH CHEATS FROM THE LIBRARY (owner ruling 2026-10-02, #964): "with polymorph you want to cheat
+// out big things into play". The card it reveals is random, so it links only to the deck's big
+// creatures -- mana value 6 or more, the owner's line -- which are what it is played to hit.
 function cheatEdges({ p, c, h, reasons }: PairScope): void {
-  if (p === c || c.isToken || !c.tags.characteristics.types.includes("creature")) return;
+  if (p === c || c.isToken || c.tags.characteristics.token === true || !c.tags.characteristics.types.includes("creature")) return;
+  const fromLibrary = c.card.manaValue >= POLYMORPH_HIT_MV && isPolymorph(p);
   for (const a of p.tags.abilities) {
-    const put = (a.emits ?? []).find((e) => e.verb === "enters" && e.subject.fromZone === "hand" && e.subject.self !== true
+    const put = (a.emits ?? []).find((e) => e.verb === "enters" && (e.subject.fromZone === "hand" || (fromLibrary && e.subject.fromZone === "library")) && e.subject.self !== true
       && (list(e.subject.type).includes("creature") || (list(e.subject.type).length === 0 && list(e.subject.subtype).length > 0)));
     if (!put) continue;
     const { zone: _z, fromZone: _f, scope: _s, entersTapped: _t, ...wanted } = put.subject;
@@ -2972,7 +2998,7 @@ function cheatEdges({ p, c, h, reasons }: PairScope): void {
     const repeatability = a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered";
     reasons.push({
       tag: `cheat:${themeSubjectKey({ ...wanted, type: "creature" })}`,
-      text: `${p.card.name} can put ${c.card.name} onto the battlefield from your hand`,
+      text: `${p.card.name} can put ${c.card.name} onto the battlefield from your ${put.subject.fromZone}`,
       effectKind: a.effect.kind || "cheat",
       repeatability,
       consumer: c.card.name,

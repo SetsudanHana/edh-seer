@@ -6018,3 +6018,54 @@ test("a morph or disguise card can be face down; a card with no rules text has n
   expect(characteristicsSubject(tags([], true)).status).toEqual(["no-abilities"]);
   expect(characteristicsSubject(tags(["flying"])).status).toBeUndefined();
 });
+
+/** A POLYMORPH TRADES TOKENS FOR BIG CREATURES (owner ruling 2026-10-02, #964). Mass Polymorph's live
+ *  shape, static-out v-fe4412373506: an exile of your own creatures and a creature entering from the
+ *  library. Its tokens are fodder (a token is always expendable; a real creature is the whole board),
+ *  and it cheats the deck's creatures of mana value 6 or more onto the battlefield. A flicker of your
+ *  own creature eats nothing, and a SEARCH that puts a creature down is a tutor, not a polymorph. */
+describe("polymorph", () => {
+  const polyText = "Exile all creatures you control, then reveal cards from the top of your library until you reveal that many creature cards. Put all creature cards revealed this way onto the battlefield, then shuffle the rest of the revealed cards into your library.";
+  const polymorph = (name: string, text: string) => {
+    const c = base(name, [
+      { kind: "on-cast", effect: { kind: "" }, emits: [
+        { verb: "exiled", subject: { control: "you", token: null, type: "creature", scope: "all" } },
+        { verb: "leaves", subject: { control: "you", token: null, type: "creature", scope: "all" } }] },
+      { kind: "on-cast", effect: { kind: "" }, emits: [
+        { verb: "enters", subject: { control: "you", token: null, type: "creature", scope: "all", fromZone: "library" } }] },
+    ] as CardTags["abilities"]);
+    c.tags.characteristics.types = ["sorcery"];
+    (c.card as { oracleText: string }).oracleText = text;
+    return c;
+  };
+  const mass = polymorph("Mass Polymorph", polyText);
+  const creature = (name: string, mv: number, token = false) => {
+    const c = base(name, []);
+    (c.card as { manaValue: number }).manaValue = mv;
+    c.tags.characteristics.cmc = mv;
+    c.tags.characteristics.token = token;
+    return c;
+  };
+  const tags = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => directedReasons(p, c, H).map((r) => r.text);
+
+  test("a token is fodder for it; a real creature is not", () => {
+    expect(tags(creature("Spirit", 0, true), mass)).toContain("Spirit is fodder for Mass Polymorph");
+    expect(tags(creature("Grizzly Bears", 2), mass).filter((t) => t.includes("fodder"))).toEqual([]);
+    // Undying returns it from the graveyard; an exile never puts it there.
+    const undying = creature("Gleeful Arsonist", 3);
+    undying.tags.characteristics.keywords = ["Undying"];
+    expect(tags(undying, mass).filter((t) => t.includes("fodder"))).toEqual([]);
+  });
+
+  test("it links to a creature of mana value 6 or more, not to a smaller one or a token", () => {
+    expect(tags(mass, creature("Archon of Cruelty", 8))).toContain("Mass Polymorph can put Archon of Cruelty onto the battlefield from your library");
+    expect(tags(mass, creature("Serra Angel", 5)).filter((t) => t.includes("from your library"))).toEqual([]);
+    expect(tags(mass, creature("Angel", 6, true)).filter((t) => t.includes("from your library"))).toEqual([]);
+  });
+
+  test("a search that puts a creature down is a tutor, not a polymorph", () => {
+    const pod = polymorph("Natural Order", "As an additional cost to cast this spell, sacrifice a green creature.\nSearch your library for a green creature card, put it onto the battlefield, then shuffle.");
+    expect(tags(creature("Spirit", 0, true), pod).filter((t) => t.includes("fodder"))).toEqual([]);
+    expect(tags(pod, creature("Archon of Cruelty", 8)).filter((t) => t.includes("from your library"))).toEqual([]);
+  });
+});

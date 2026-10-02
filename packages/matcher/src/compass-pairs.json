@@ -702,5 +702,14 @@
     "source": "owner ruling 2026-10-02",
     "verified": true,
     "tag": "scales:life-lost"
+  },
+  {
+    "a": "Mass Polymorph",
+    "b": "Archon of Cruelty",
+    "category": "polymorph",
+    "tag": "cheat:creature",
+    "note": "Owner ruling 2026-10-02: with polymorph you want to cheat big things into play; a creature of mana value 6 or more is a hit.",
+    "source": "owner ruling 2026-10-02 (#964)",
+    "verified": true
   }
 ]

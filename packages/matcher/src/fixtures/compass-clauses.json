@@ -465,6 +465,158 @@
   "typeLine": "Creature — Human Wizard"
  },
  {
+  "name": "Archon of Cruelty",
+  "oracleId": "aa1a6646-c1e6-4bff-9092-43ee3e137914",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "a creature or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "a creature or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "archon"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 8,
+   "power": "6",
+   "toughness": "6",
+   "token": false,
+   "keywords": [
+    "flying"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Flying",
+   "2": "Whenever this creature enters or attacks, target opponent sacrifices a creature or planeswalker of their choice, discards a card, and loses 3 life. You draw a card and gain 3 life."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Flying\nWhenever this creature enters or attacks, target opponent sacrifices a creature or planeswalker of their choice, discards a card, and loses 3 life. You draw a card and gain 3 life.",
+  "typeLine": "Creature — Archon"
+ },
+ {
   "name": "Archpriest of Iona",
   "oracleId": "a8730922-3f47-4c07-bdd5-4a0f557a3d3d",
   "clauses": [
@@ -4215,6 +4367,69 @@
   "grantedToken": [],
   "oracleText": "Dethrone (Whenever this creature attacks the player with the most life or tied for most life, put a +1/+1 counter on it.)\nOther creatures you control have dethrone.\nWhenever a creature you control with a +1/+1 counter on it dies, return that card to the battlefield under your control at the beginning of the next end step.",
   "typeLine": "Legendary Creature — Human Wizard"
+ },
+ {
+  "name": "Mass Polymorph",
+  "oracleId": "b133129d-1ffb-4b78-9f5b-852d163cc9b7",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "all creature cards revealed this way",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "the rest of the revealed cards into your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "sorcery"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 6,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Exile all creatures you control, then reveal cards from the top of your library until you reveal that many creature cards. Put all creature cards revealed this way onto the battlefield, then shuffle the rest of the revealed cards into your library."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Exile all creatures you control, then reveal cards from the top of your library until you reveal that many creature cards. Put all creature cards revealed this way onto the battlefield, then shuffle the rest of the revealed cards into your library.",
+  "typeLine": "Sorcery"
  },
  {
   "name": "Massive Raid",
