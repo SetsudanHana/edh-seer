@@ -465,18 +465,36 @@ test("fragments 13: opponent digs, piles, returns to their hand, animations", ()
   expect(parseActions("it deals 4 damage instead.", "static")[0]).toMatchObject({ verb: "deal-damage", amount: "4" });
 });
 
+// Fragments 14 (#896): "and" before another subject or a keyword action, labels with "~", those
+// permanents, delayed spell copies, named copies, the next spell's grant, cost back-references.
+test("fragments 14: joints, delayed copies, named copies, cost back-references", () => {
+  const verbs = (t: string, type = "triggered") => parseActions(t, type).map((a) => a.verb);
+  expect(verbs("draw a card and this creature gets +2/+0 until end of turn.")).toEqual(["draw", "modify-pt"]);
+  expect(verbs("draw a card and blight 1.")).toEqual(["draw", "blight"]);
+  expect(verbs("~ Beam — Each opponent discards a card.", "activated")).toEqual(["discard"]);
+  expect(verbs("untap those permanents.")).toEqual(["untap"]);
+  expect(verbs("copy the next instant or sorcery spell you cast this turn when you cast it.", "spell")).toEqual(["copy"]);
+  expect(verbs("~ becomes a copy of up to one other target creature until end of turn, except his name is ~, he's 4/4, and he has flying.", "activated"))
+    .toEqual(["copy", "modify-pt", "grant-ability"]);
+  // A back-reference subject keeps the stored object: "those spells" is Defiler of Flesh's black
+  // permanent spells, never every spell.
+  const defiler = parseActions("Those spells cost {B} less to cast if you paid life this way.", "static")[0];
+  expect(defiler).toMatchObject({ verb: "cost-modify", object: { ref: "sentence" }, amount: "-{B}" });
+  expect(defiler?.text).toBeUndefined();
+});
+
 test.each([
-  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.953],
-  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.938],
-  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.89],
+  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.955],
+  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.942],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.891],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.935],
   ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.933],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.928],
-  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.913],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.929],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.915],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
-    "explore", "connive", "endure"], 0.851],
-  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.813],
+    "explore", "connive", "endure"], 0.858],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.815],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")

@@ -355,7 +355,9 @@ import { emblemRecipient } from "../emblem.js";
 // "that Hero" / "either of them", moved counters, puts of several objects, "the player puts".
 // 262: fragments 13: an opponent's dig until a card, "from it", face-down piles, "the top card" in a
 // list, returns to their hand, X/X and plural animations, "it deals 4 damage instead".
-export const DERIVE_VERSION = 262;
+// 263: fragments 14: "and" before "this creature gets" / blight / convert, labels with "~", "those
+// permanents", delayed spell copies, named copies' pronouns, "the next spell ... has convoke".
+export const DERIVE_VERSION = 263;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
