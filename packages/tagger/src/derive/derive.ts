@@ -351,7 +351,9 @@ import { emblemRecipient } from "../emblem.js";
 // ...), "another" counter, a coloured cost per count, base P/T with a list of abilities.
 // 260: fragments 11: pump and grant predicates (toughness as combat damage, attacking past defender,
 // "all activated abilities of", either P/T, base P/T X/X, "~ and other X", protection by choice).
-export const DERIVE_VERSION = 260;
+// 261: fragments 12: attack and block requirements, activated abilities that can't be activated,
+// "that Hero" / "either of them", moved counters, puts of several objects, "the player puts".
+export const DERIVE_VERSION = 261;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

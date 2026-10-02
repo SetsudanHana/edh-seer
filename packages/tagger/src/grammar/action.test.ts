@@ -432,14 +432,28 @@ test("fragments 11: pump and grant predicates", () => {
   expect(verbs("has flying, and is a white Angel in addition to its other colors and types.")).toEqual(["grant-ability", "grant-ability"]);
 });
 
+// Fragments 12 (#896): attack and block requirements, activated abilities shut off, "that Hero",
+// "either of them", counters moved off a card, puts of several objects, "the player puts".
+test("fragments 12: requirements, shut-off abilities, several puts", () => {
+  const verbs = (t: string, type = "triggered") => parseActions(t, type).map((a) => a.verb);
+  expect(parseActions("target creature attacks this turn if able.", "spell")[0]).toMatchObject({ verb: "cant", text: "not attack this turn if able" });
+  expect(parseActions("~ attacks or blocks each combat if able.", "static")[0]).toMatchObject({ verb: "cant", text: "not attack or block each combat if able" });
+  expect(parseActions("its activated abilities can't be activated this turn.", "spell")[0]).toMatchObject({ verb: "cant", text: "activate activated abilities" });
+  expect(verbs("put a +1/+1 counter on that Hero and a +1/+1 counter on ~.")).toEqual(["add-counter", "add-counter"]);
+  expect(parseActions("put those counters on target creature you control.", "triggered")[0]).toMatchObject({ verb: "add-counter", text: "target creature you control" });
+  expect(verbs("put a deathtouch counter on either of them.")).toEqual(["add-counter"]);
+  expect(verbs("the player puts that card onto the battlefield.")).toEqual(["put"]);
+  expect(parseActions("put this creature and target creature on top of their owners' libraries.", "activated").map((a) => a.toZone)).toEqual(["library", "library"]);
+});
+
 test.each([
-  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.952],
+  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.953],
   ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.936],
-  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.887],
-  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.934],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.927],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.89],
+  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.935],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.929],
   ["pump/grant", ["modify-pt", "grant-ability"], 0.927],
-  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.909],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.912],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
     "explore", "connive", "endure"], 0.851],

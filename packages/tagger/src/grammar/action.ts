@@ -60,7 +60,7 @@ const ACTORS: [string, ActionReading["actor"]][] = ([
   ["any number of target opponents", { control: "opp", scope: "target" }], ["players", { control: "any", scope: "each" }],
   ["those players", { control: "any", scope: "that" }],
   ["they", { control: "any", scope: "that" }],
-  ["any player", { control: "any" }], ["any opponent", { control: "opp" }],
+  ["any player", { control: "any" }], ["any opponent", { control: "opp" }], ["the player", { control: "any", scope: "that" }],
   ["this creature's owner", { control: "any", scope: "that" }], ["~'s owner", { control: "any", scope: "that" }],
   ["the controller of the permanent it becomes", { control: "any", scope: "that" }],
   ["enchanted creature's controller", { control: "any", scope: "that" }], ["equipped creature's controller", { control: "any", scope: "that" }],
@@ -106,8 +106,8 @@ function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | 
   const typed = /^enchanted ([A-Z][a-z]+)$/.exec(t);
   if (typed && parse(`a ${typed[1]}`)) return { object: parse(`a ${typed[1]}`)! };
   // "that land", "that artifact": a back-reference to an object the sentence named.
-  if (/^that (?:land|artifact|enchantment|planeswalker|aura|equipment|vehicle|dragon)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
-  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:spell|ability|creature|permanent|card|token)|the chosen [a-z]+|(?:one|two) of them|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  if (/^that (?:land|artifact|enchantment|planeswalker|aura|equipment|vehicle|dragon)$/i.test(t) || /^that [A-Z][a-z]+$/.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:spell|ability|creature|permanent|card|token)|the chosen [a-z]+|(?:one|two|either) of them|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   // "one or two target creatures": at most two, the store's "up to two".
   if (/^one or two /i.test(t)) return objectOf(t.replace(/^one or two /i, "up to two "));
   const m = COUNT.exec(t);
@@ -272,7 +272,7 @@ const COUNTERS: Record<string, [string, Handler]> = {
       return each.every((e) => e) ? each.flatMap((e) => [e!].flat()) : null;
     }
     // "its counters on target creature you control": every counter it had, of whatever kind.
-    const its = /^its counters on (.+)$/.exec(rest);
+    const its = /^(?:its|those|these|all its) counters on (.+)$/.exec(rest);
     if (its) { const on = objectOf(its[1]!); return on && { object: on.object, text: its[1]! }; }
     // "a number of +1/+1 counters on it equal to its power", "... equal to its power on each creature".
     const num = /^a number of (.+? counters?) (?:on (.+?) equal to (.+)|equal to (.+?) on (.+))$/.exec(rest);
@@ -401,9 +401,9 @@ function zoneOf(words: string): string | undefined {
 
 /** "from your graveyard", "from exile", "from among them" stripped off an object, with its zone. */
 function fromOf(phrase: string): { rest: string; from?: string } {
-  const at = phrase.search(/ from (?:your|their|its owner's|a|an opponent's|target player's|each player's|each opponent's|all) (?:graveyards?|hands?|librar(?:y|ies))(?: or from exile)?$| from exile$| from the battlefield$/);
+  const at = phrase.search(/ from (?:your|their|its owner's|a|an opponent's|target player's|that player's|each player's|each opponent's|all) (?:graveyards?|hands?|librar(?:y|ies))(?: or from exile)?$| from exile$| from the battlefield$/);
   if (at < 0) return { rest: phrase };
-  return { rest: phrase.slice(0, at), from: zoneOf(phrase.slice(at + " from ".length).replace(/ or from exile$/, "").replace(/^(?:your|their|its owner's|a|an opponent's|target player's|each player's|each opponent's|all|the) /, "")) };
+  return { rest: phrase.slice(0, at), from: zoneOf(phrase.slice(at + " from ".length).replace(/ or from exile$/, "").replace(/^(?:your|their|its owner's|a|an opponent's|target player's|that player's|each player's|each opponent's|all|the) /, "")) };
 }
 
 const MOVE_REF = /^(?:(?:one|two|three|up to (?:one|two|three)|any number) of (?:them|those cards)|the rest|the other|the tokens?|the (?:chosen |blocking |blocked |attacking |other )?creatures?|the rest of (?:the|those) (?:[a-z]+ )*cards|both creatures|the creatures? you chose|one|that [a-z]+(?: card)?|those [a-z]+(?: cards)?|(?:one|that) pile|all (?:[a-z]+ )*cards revealed this way|the (?:exiled|chosen|revealed|milled) cards?|the cards? exiled (?:this way|with (?:it|~))|all cards exiled with (?:it|~)|her|his)$/;
@@ -524,9 +524,12 @@ const ZONE: Record<string, [string, Handler]> = {
     const at = rest.search(/ (?:onto|into|on top of|on the bottom of) (?=the battlefield|its owner's|their owners'|your|a graveyard|exile|their|that player's)/);
     if (at < 0) return null;
     const to = destinationOf(rest.slice(at + 1));
-    const r = moveObject(rest.slice(0, at), true);
+    // "this creature and target creature on top of their owners' libraries": a move each.
+    const r = moveList(rest.slice(0, at), true);
+    if (!r || !to) return null;
+    const moved = [r].flat().map((x) => ({ ...x, toZone: to }));
     // "onto the battlefield tapped": the store writes the tapping as its own action on what moved.
-    return r && to ? (/ tapped\b/.test(rest.slice(at)) ? [{ ...r, toZone: to }, TAPPED] : { ...r, toZone: to }) : null;
+    return / tapped\b/.test(rest.slice(at)) ? [...moved, TAPPED] : moved.length === 1 ? moved[0]! : moved;
   })],
   shuffle: ["shuffle", (rest) => {
     if (rest === "" || /^(?:your|their) library$/.test(rest)) return { object: parse("you")!, text: rest === "" ? "your library" : rest };
@@ -748,7 +751,7 @@ function subjectAction(t: string): ActionReading[] | null {
   const notUntap = /^you may choose not to untap (.+) during your untap step$/i.exec(t);
   if (notUntap && objectOf(notUntap[1]!)) return [{ verb: "untap", object: objectOf(notUntap[1]!)!.object, optional: true }];
   // "Target creature's owner puts it on their choice of the top or bottom of their library".
-  const owner = /^(?:the owner of .+|.+'s owner) puts (?:it|that card) on their choice of the top or bottom of their library$/i.exec(t);
+  const owner = /^(?:the owner of .+|.+'s owner|its owner) puts (?:it|that card) on their choice of the top or bottom of their library$/i.exec(t);
   if (owner) return [{ verb: "put", object: REF, toZone: "library" }];
   if (/^(?:after this (?:main )?phase, )?there (?:is|are) an additional combat phase(?: after this (?:main )?phase)?(?: followed by an additional main phase)?$/i.test(t)) return [{ verb: "extra-combat" }];
   if (/^(?:after this (?:main )?phase, )?there is an additional (?:main|beginning) phase(?: after this (?:main )?phase)?$/i.test(t)) return [{ verb: "extra-phase" }];
@@ -788,6 +791,20 @@ const REF: SubjectFilter = { control: "any", token: null, ref: "sentence" };
  *  "<subject> can't block", "doesn't untap during ...", "attacks each combat if able": a
  *  restriction, the store's `cant` with the restricted thing as its object. */
 function restrictionOf(t: string): ActionReading[] | null {
+  // "target creature attacks this turn if able", "~ attacks or blocks each combat if able", "all
+  // creatures block each combat if able": requirements, the store's cant on the opposite.
+  const req2 = /^(.+?) (attacks?(?: or blocks?)?|blocks?) (this turn|each combat) if able$/i.exec(t);
+  if (req2) {
+    const who = objectOf(req2[1]!) ?? (THEY.test(req2[1]!) ? { object: REF } : null);
+    if (who) { lastSubject = req2[1]!; return [{ verb: "cant", object: who.object, text: `not ${req2[2]!.toLowerCase().replace(/s\b/g, "")} ${req2[3]!.toLowerCase()} if able` }]; }
+  }
+  // "its activated abilities can't be activated [this turn]", "enchanted creature's activated abilities
+  // can't be activated": the store's cant on activating them.
+  const acts = /^(its|.+?'s) activated abilities can't be activated(?: this turn)?$/i.exec(t);
+  if (acts) {
+    const who = /^its$/i.test(acts[1]!) ? { object: REF } : objectOf(acts[1]!.replace(/'s$/, ""));
+    if (who) return [{ verb: "cant", object: who.object, text: "activate activated abilities" }];
+  }
   // "Skip your draw step": the store's cant on drawing then.
   if (/^skip your draw step$/i.test(t)) return [{ verb: "cant", object: parse("you")!, text: "draw during your draw step" }];
   // "Damage can't be prevented [this turn]": no object, the store's cant on preventing it.
