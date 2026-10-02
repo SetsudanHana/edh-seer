@@ -1,0 +1,11 @@
+{
+  "about": "G3 for #896 task 7: every group of cards whose grammar-only derive differs from the stored derive, labelled. Keys are instruments/src/grammar-only.ts's group keys. Labels: grammar right / grammar wrong / both wrong. The switch waits until every group is labelled and no 'grammar wrong' group is left.",
+  "groups": {
+    "abilities:1->2": { "label": "grammar right", "why": "The grammar reads what the store folded or left out: a copy's 'except it has this ability' (Thespian's Stage), '~ and Drakes you control each get' as the card and the class (Alandra, Sky Dreamer), a self cost reduction (March of Swirling Mist)." },
+    "abilities:2->3": { "label": "grammar right", "why": "One grant per keyword where the store wrote the whole sentence as one unread grant (Lorehold Command: indestructible and haste)." },
+    "abilities:2->1": { "label": "grammar right", "why": "The store's phantom action: an intervening 'if you cast it' recorded as a cast (Sunderflock, The Sibsig Ceremony)." },
+    "abilities:3->2": { "label": "grammar right", "why": "The store's phantom actions again (The Sibsig Ceremony's cast, Quick Draw's pump of the opponent's creatures, which the card does not print)." },
+    "emits.subject(~control)": { "label": "grammar right", "why": "A player action with no object is yours: investigate's Clue, manifest dread's creature, a returned Reassembling Skeleton (the store's 'any')." },
+    "effect.subject(+counter)": { "label": "grammar right", "why": "The counter's kind reaches the effect subject ('oil counter' on Mindsplice Apparatus); the store wrote the bare kind on some cards and 'charge counter' on others." }
+  }
+}

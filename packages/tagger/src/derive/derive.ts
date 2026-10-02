@@ -367,7 +367,9 @@ import { emblemRecipient } from "../emblem.js";
 // 267: fragments 16: "triple", plays and casts of "one of them", casts paid by a sacrifice, lists with
 // "those", entering tapped and with counters.
 // 268: task 7 step 2: "phases out" names what phases; "spend this mana only ..." is the store's other.
-export const DERIVE_VERSION = 268;
+// 269: task 7 step 3: "becomes a 3/1 ... creature" carries its P/T, a card's own cost reduction keeps its
+// whole phrase, "you may pay 4 life rather than pay this spell's mana cost" is a life payment too.
+export const DERIVE_VERSION = 269;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

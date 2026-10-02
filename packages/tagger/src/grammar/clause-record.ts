@@ -40,38 +40,70 @@ export function triggerSubjectText(preamble: string): string {
 }
 
 const SELF_SUBJECT = /^(?:~|this [a-z]+)$/i;
-/** Verbs whose stored object is the PLAYER it happens to ("target player mills two cards" -> "target
- *  player"), the convention derive's `PLAYER_OBJECT_VERBS` reads. */
+/** Verbs the player does with nothing after them, whose stored object is "you". */
+const NO_OBJECT_YOU = new Set(["monarch", "initiative", "ring-tempts", "learn", "venture-into-the-dungeon", "manifest-dread", "proliferate", "investigate", "populate"]);
+/** Verbs whose stored object can be the PLAYER it happens to ("target player mills two cards" ->
+ *  "target player"), the convention derive's `PLAYER_OBJECT_VERBS` reads. */
 const PLAYER_VERBS = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life"]);
 const ZONE_VERBS = new Set(["destroy", "exile", "sacrifice", "return", "put", "shuffle"]);
-const BACK_REFERENCE = /^(?:it|them|that card|those cards|that creature|that permanent|the card|the cards)$/i;
+const BACK_REFERENCE = /^(?:it|them|that card|those cards|that creature|that permanent|the card|the cards|one|the other|the rest|one of them|those)$/i;
 
 /** A reading's object as the store writes it: the printed object words, without a zone move's
  *  destination ("that card into your graveyard" -> "that card"). */
 function objectWords(r: ActionReading): string {
-  if (r.text !== undefined) return r.text;
-  if (r.counter !== undefined && r.phrase === undefined) return r.counter;
-  const p = r.phrase ?? "";
+  // A COUNTER's object is its kind, the recipient in front when it is named and not the card itself
+  // ("target creature, +1/+1") -- exactly the form derive's grammar switch writes for a stored one.
+  if (r.counter !== undefined) {
+    // The store writes a named kind as "charge counter" and a P/T kind bare ("+1/+1").
+    const kind = /^[+-]/.test(r.counter) ? r.counter : `${r.counter} counter`;
+    return r.text !== undefined && r.object?.self !== true ? `${r.text}, ${r.counter}` : kind;
+  }
+  // The card itself: "~" is the census's spelling, "this" the store's, which derive's self reading keys on.
+  if (r.text !== undefined) return r.text === "~" ? "this" : r.text;
+  const p = (r.phrase ?? "").replace(/ until end of turn$/i, "");
   if (!ZONE_VERBS.has(r.verb)) return p;
   const at = p.search(/ (?:onto|into|to|on top of|on the bottom of|from) /);
   return (at > 0 ? p.slice(0, at) : p).replace(/ (?:tapped|face down)$/, "");
 }
 
+/** "unless that player pays {X}", "unless you pay {W}": the store's `unless` (CR 118.12a), its payer
+ *  "you" or the other player ("controller"). */
+function unlessOf(condition: string | undefined): Action["unless"] | undefined {
+  const m = condition ? /(?:^|, )unless (.+?) (?:pays?) (.+)$/i.exec(condition) : null;
+  return m ? { cost: m[2]!, payer: /^you$/i.test(m[1]!) ? "you" : "controller" } : undefined;
+}
+
 /** One clause's readings as `Action`s. A back-referenced object moved after a search comes from the
  *  library, the zone the store writes for it (Farseek, Entomb, every fetchland). */
-function actionsOf(readings: ActionReading[], selfTrigger: boolean): Action[] {
+function actionsOf(readings: ActionReading[], selfTrigger: string | undefined): Action[] {
   const out: Action[] = [];
   for (const r of readings) {
-    // "When this creature blocks, return IT": with nothing before it, "it" is the card itself, which
-    // the store writes "this" (derive's self reading keys on it).
-    const object = PLAYER_VERBS.has(r.verb) ? (r.actor?.text ?? (r.verb === "gain-life" || r.verb === "lose-life" ? r.text ?? "you" : "you"))
-      : selfTrigger && out.length === 0 && /^(?:it|itself)$/i.test(objectWords(r)) ? "this" : objectWords(r);
-    const searched = !r.fromZone && (r.verb === "put" || r.verb === "return") && BACK_REFERENCE.test(object) && out.some((a) => a.verb === "search");
+    // "Reveal it" is bookkeeping the store drops (canonicalize's DROPPED_VERBS).
+    if (r.verb === "reveal") continue;
+    // "When this creature blocks, return IT": with nothing before it, "it" is the card itself, written
+    // as the trigger names it ("this creature"), which derive's self and type readings key on.
+    // As derive's grammar switch writes a player verb's object: a named actor ("target player mills")
+    // is the object, a back-referenced one ("that player") or none leaves the printed words.
+    const object = PLAYER_VERBS.has(r.verb) ? (r.actor?.text !== undefined && r.actor.scope !== "that" ? r.actor.text : objectWords(r) || "you")
+      : selfTrigger && out.length === 0 && /^(?:it|itself)$/i.test(objectWords(r)) ? selfTrigger : objectWords(r);
+    // WHERE A MOVED THING COMES FROM, when the phrase does not say, as the store writes it: a
+    // back-reference after a search comes from the library, after an exile from exile ("exile ...,
+    // then return that card", Thassa). A permanent named outright is left unstated, as the store
+    // mostly leaves it (Beast Within; defaulting it to the battlefield moved 2,348 cards).
+    const ref = BACK_REFERENCE.test(object);
+    const before = [...out].reverse().find((a) => a.verb === "search" || a.verb === "exile");
+    const from = r.fromZone ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
+      : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? "exile" : null)
+      // "that many cards from the bottom of your library": the library the words name.
+      : /\b(?:top|bottom) of (?:your|their|its owner's|that player's|target player's) library\b/i.test(r.phrase ?? r.text ?? "") ? "library" : null);
+    // "put one onto the battlefield TAPPED": the tap is on what just moved, written as the store does.
+    const tapped = r.verb === "tap" && !object && out.length > 0 ? out[out.length - 1]!.object ?? "" : "";
     out.push({
-      verb: r.verb, object,
-      fromZone: r.fromZone ?? (searched ? "library" : null), toZone: r.toZone ?? null,
+      verb: r.verb, object: object || tapped || (NO_OBJECT_YOU.has(r.verb) ? "you" : object),
+      fromZone: from, toZone: r.toZone ?? null,
       ...(r.amount !== undefined ? { amount: r.amount } : {}),
       optional: r.optional === true,
+      ...(unlessOf(r.condition) ? { unless: unlessOf(r.condition) } : {}),
     } as Action);
   }
   return out;
@@ -80,6 +112,11 @@ function actionsOf(readings: ActionReading[], selfTrigger: boolean): Action[] {
 export function grammarClauseRecords(card: CardText): GrammarRecords {
   const records: ClauseRecord[] = [];
   const clauses = segment(card.oracleText ?? "", card.keywords ?? [], card.typeLine ?? "");
+  // A TWO-EVENT TRIGGER ("enters or leaves the battlefield", "attacks or blocks") is two records, the
+  // second numbered after the card's last clause -- the store's convention (`validate-clauses.ts`),
+  // which derive reads back to the parent's text.
+  const overflow: ClauseRecord[] = [];
+  let nextId = Math.max(0, ...clauses.map((c) => c.id)) + 1;
   for (const c of clauses) {
     if (c.kind === "reminder") continue;
     if (c.kind === "keyword") { records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] }); continue; }
@@ -89,16 +126,27 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       const preamble = printedPreamble(c.text, card.name);
       const read = preamble ? parseTrigger(preamble, interveningIfOf(selfAsTilde(c.text, card.name))) : null;
       if (!read) return { records, complete: false, blocker: { clause: c.id, kind: "trigger", ...(preamble ? { phrase: preamble } : {}) } };
-      const first = [read].flat()[0]!;
+      const reads = [read].flat();
+      const first = reads[0]!;
       record.trigger = { event: first.event, subject: triggerSubjectText(preamble!), control: first.control ?? "any" };
+      if (c.multiTrigger) for (const r of reads.slice(1)) if (r.event !== first.event) overflow.push({ id: nextId++, abilityType: type, trigger: { event: r.event, subject: record.trigger.subject, control: r.control ?? "any" }, actions: [] });
     }
     const effect = effectText(c.text, card.name);
     const cost = c.cost;
     const unread = unreadPhrases(effect, type, cost);
     if (unread.length) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: unread[0]! } };
-    record.actions = actionsOf(parseActions(effect, type, cost), SELF_SUBJECT.test(record.trigger?.subject ?? ""));
+    const readings = parseActions(effect, type, cost);
+    // A KEYWORD LINE the segmenter left as an ability ("Suspend 4—{U}", its reminder stripped): the
+    // card's own keywords, which the store records as no action, as it does a keyword clause.
+    if (type !== "triggered" && !cost && readings.length > 0 && !/\b(?:has|have|gains?|gets?|is|are|becomes?)\b|^equip\b/i.test(effect)
+      && readings.every((r) => r.verb === "grant-ability" && r.object?.self === true)) {
+      records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] });
+      continue;
+    }
+    record.actions = actionsOf(readings, SELF_SUBJECT.test(record.trigger?.subject ?? "") ? record.trigger!.subject! : undefined);
     if (record.actions.length === 0 && type !== "static") record.actions = [{ verb: "none", object: "" } as Action];
     records.push(record);
+    for (const o of overflow) if (o.actions!.length === 0 && o.trigger) o.actions = record.actions;
   }
-  return { records, complete: true };
+  return { records: [...records, ...overflow], complete: true };
 }

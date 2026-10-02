@@ -6,7 +6,7 @@
  *    npx tsx packages/instruments/src/grammar-only.ts            # the summary and the largest groups
  *
  *  Reads Mongo (the clause store); writes docs/measurements/card-grammar/grammar-only.json. */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { connect, isStickerCard, loadConfig } from "@edh-seer/data";
 import { deriveCardTags, deriveInputOf, grammarClauseRecords } from "@edh-seer/tagger";
 import { deriveDiff } from "./grammar-only-core.js";
@@ -32,9 +32,15 @@ for (const doc of docs as unknown as { oracleId: string; name: string; canonical
 }
 await store.close();
 const sorted = [...groups].sort((a, b) => b[1].length - a[1].length);
+// THE LABELS (G3): every group, labelled in packages/tagger/grammar-only-triage.json.
+const triage = JSON.parse(readFileSync("packages/tagger/grammar-only-triage.json", "utf8")) as { groups: Record<string, { label: string }> };
+const labelled = sorted.filter(([k]) => triage.groups[k]);
+const wrong = labelled.filter(([k]) => triage.groups[k]!.label !== "grammar right");
 mkdirSync(OUT, { recursive: true });
 writeFileSync(`${OUT}/grammar-only.json`, JSON.stringify({ total, complete, same, blockers, groups: Object.fromEntries(sorted.map(([k, v]) => [k, { cards: v.length, examples: v.slice(0, 12) }])) }, null, 1) + "\n");
 const pct = (n: number, d: number) => `${(100 * n / (d || 1)).toFixed(1)}%`;
 console.log(`cards ${total}; complete ${complete} (${pct(complete, total)}); derive identical ${same} (${pct(same, complete)} of complete)`);
 console.log(`blocked: ${Object.entries(blockers).map(([k, v]) => `${k} ${v}`).join(", ")}`);
-for (const [k, v] of sorted.slice(0, 25)) console.log(`${String(v.length).padStart(6)}  ${k}  e.g. ${v.slice(0, 3).join("; ")}`);
+const n = (xs: [string, string[]][]) => xs.reduce((t, [, v]) => t + v.length, 0);
+console.log(`labelled groups ${labelled.length} of ${sorted.length} (${n(labelled)} cards; not "grammar right": ${n(wrong)}); unlabelled ${n(sorted) - n(labelled)} cards`);
+for (const [k, v] of sorted.filter(([k]) => !triage.groups[k]).slice(0, 25)) console.log(`${String(v.length).padStart(6)}  ${k}  e.g. ${v.slice(0, 3).join("; ")}`);

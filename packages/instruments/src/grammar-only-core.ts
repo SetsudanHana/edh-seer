@@ -4,7 +4,8 @@
 import type { Ability } from "@edh-seer/tagger";
 
 /** Key order is not a difference: two derives that build the same subject in a different order agree. */
-const canonical = (v: unknown): unknown => Array.isArray(v) ? v.map(canonical)
+// ...nor an amount's comma before its "where X is" ("+X/+X, where X is ..." reads as "+X/+X where X is ...").
+const canonical = (v: unknown): unknown => typeof v === "string" ? v.replace(/, where x is /i, " where X is ") : Array.isArray(v) ? v.map(canonical)
   : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canonical((v as Record<string, unknown>)[k])])) : v;
 const json = (v: unknown): string => JSON.stringify(canonical(v ?? null));
 

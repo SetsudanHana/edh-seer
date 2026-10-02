@@ -457,13 +457,14 @@ function moveObject(phrase: string, onField = false): Args | null {
   const t = phrase.replace(/ in a face-(?:down|up) pile$/, "").replace(/ at random$/, "").replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards|the (?:cards )?milled (?:this way|cards)|the cards milled this way)$/, "");
   // "target player's graveyard", "all graveyards": a whole graveyard.
   if (/^(?:target player's|target opponent's|each opponent's|your|their|all|each player's|all opponents'|any number of target players'|target players') graveyards?$/.test(t)) return { object: { control: "any", token: null }, fromZone: "graveyard", text: phrase };
-  // "one of them", "the rest", "the exiled card", "those tokens": back-references, kept as stored.
-  if (MOVE_REF.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  // "one of them", "the rest", "the exiled card", "those tokens": back-references, kept as stored (the
+  // words ride as `phrase` for a record built from the grammar alone, task 7).
+  if (MOVE_REF.test(t)) return { object: { control: "any", token: null, ref: "sentence" }, phrase: t };
   // "a nonland card from it": from a zone the sentence named, so the stored object names it.
   if (/ from it$/.test(t)) { const r = objectOf(t.slice(0, -" from it".length)); return r && { object: { ...r.object, ref: "sentence" } }; }
   const { rest, from } = fromOf(t);
   // "one of them from your graveyard": the same, from where it is.
-  if (from && MOVE_REF.test(rest)) return { object: { control: "any", token: null, ref: "sentence" }, fromZone: from };
+  if (from && MOVE_REF.test(rest)) return { object: { control: "any", token: null, ref: "sentence" }, fromZone: from, phrase: rest };
   if (/^the top (?:creature )?card of your graveyard$/.test(rest)) return { object: CARD, fromZone: "graveyard", text: phrase };
   if (/^the top (?:card|(?:\w+|\d+) cards) of (?:your|their|target player's|each player's|its owner's|that player's|each opponent's|target opponent's) library$/.test(rest)) {
     // "their library": whose is the actor's, a back-reference ("target opponent exiles the top four
@@ -789,7 +790,9 @@ function subjectAction(t: string): ActionReading[] | null {
     // "Each creature spell you cast ...": the class, as the store writes it, without the "each".
     const spells = cost[1]!.replace(/^each /i, "");
     const what = objectOf(spells)!.object;
-    return [{ verb: "cost-modify", object: what, ...(what.ref ? {} : { text: spells }), amount: `${sign}${cost[2]!.toUpperCase()}${cost[4] ?? ""}` }];
+    // The card's own cost ("this spell costs {1} less to cast") keeps the whole phrase, the store's form,
+    // which derive's self-reduction reads.
+    return [{ verb: "cost-modify", object: what, ...(what.ref ? {} : { text: what.self ? t : spells }), amount: `${sign}${cost[2]!.toUpperCase()}${cost[4] ?? ""}` }];
   }
   if (/^you become the monarch$/i.test(t)) return [{ verb: "monarch" }];
   // "you may have that creature's base power and toughness become 4/3", "this creature's base power
@@ -1118,7 +1121,7 @@ function pumpOrGrantOne(t: string): ActionReading[] | null {
     ? { object: { control: "any" as const, token: null, ref: "sentence" as const } }
     : objectOf(subject) ?? { object: parse("you")! };
   const isRef = who.object.ref === "sentence";
-  const target = { object: who.object, ...(isRef ? {} : { text: subject }) };
+  const target = { object: who.object, ...(isRef ? { phrase: subject } : { text: subject }) };
   const out: ActionReading[] = [];
   // A PREDICATE LIST: "gets +2/+2, has trample and haste, and is a Samurai in addition to its other
   // types". Every predicate must read, or the phrase is not read.
@@ -1193,8 +1196,9 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
     const withs = base ? (base[2] ? abilitiesOf(base[2]) : []) : becomes[2] ? abilitiesOf(becomes[2]) : [];
     // "becomes an X/X Citizen creature ..., where X is twice the number of Gates": the X/X is the
     // store's modify-pt, its X defined by the sentence (Sage of the Maze's scaling).
-    const xx = /^(x\/x) /i.exec(becomes[1]!);
-    return withs && [{ verb: "animate", ...target }, ...(base ? [{ verb: "modify-pt", ...target, amount: base[1]! }] : xx ? [{ verb: "modify-pt", ...target, amount: "X/X" }] : []), ...withs.map((a) => ({ verb: "grant-ability", object, text: a }))];
+    // "becomes a 3/1 Construct artifact creature": the printed P/T is the store's modify-pt too.
+    const xx = /^((?:\d+|x)\/(?:\d+|x)) /i.exec(becomes[1]!);
+    return withs && [{ verb: "animate", ...target }, ...(base ? [{ verb: "modify-pt", ...target, amount: base[1]! }] : xx ? [{ verb: "modify-pt", ...target, amount: xx[1]!.toUpperCase() }] : []), ...withs.map((a) => ({ verb: "grant-ability", object, text: a }))];
   }
   // "is an Angel in addition to its other types", "is legendary": a type granted (derive's
   // `type-grant` reads "in addition to its other types").
@@ -1214,7 +1218,9 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   const is = /^(?:is|are) ((?:an? )?[\w -]+ in addition to (?:its|their) other (?:creature |colors and )?types|every creature type|legendary|snow|colorless|white|blue|black|red|green)$/i.exec(pred);
   // No text: the stored object stays. Derive finds a grant's recipient by "has"/"gains", never by
   // "is", and a store object that names the recipient is what keeps it (The Flesh Is Weak).
-  if (is) return [{ verb: "grant-ability", object }];
+  // `phrase` for a record built from the grammar alone (task 7): derive reads "in addition to its other
+  // types" off the grant's words to call it a type grant.
+  if (is) return [{ verb: "grant-ability", object, phrase: pred }];
   const has = /^(?:has|have|gains?) (.+)$/i.exec(pred);
   if (!has) return null;
   // "gains your choice of flying, vigilance, deathtouch, or haste": one grant per choice.
@@ -1294,6 +1300,10 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   // "you may pay {G} rather than pay this spell's mana cost": an alternative cost, the store's
   // cost-modify, the whole phrase its text. Read before the tail below strips "rather than pay".
   if (/^you may pay (?:\{[^}]+\})+ rather than pay this spell's mana cost$/i.test(t)) return [{ verb: "cost-modify", object: SELF, text: t, optional: true, ...(condition ? { condition } : {}) }];
+  // "you may pay 4 life rather than pay this spell's mana cost" (Snuff Out): the alternative cost, and
+  // the life it costs, which a life-lost payoff hears (owner 2026-10-02, the Rowan ruling).
+  const lifeAlt = /^you may pay (\d+|x) life rather than pay this spell's mana cost$/i.exec(t);
+  if (lifeAlt) return [{ verb: "cost-modify", object: SELF, text: t, optional: true, ...(condition ? { condition } : {}) }, { verb: "lose-life", object: parse("you")!, text: "you", amount: amountOf(lifeAlt[1]!) ?? lifeAlt[1]!.toUpperCase(), optional: true }];
   // "you may pay {0} rather than pay the mana cost for Zombie creature spells you cast": the spells.
   const altFor = /^you may pay ((?:\{[^}]+\})+) rather than pay the mana cost for (.+)$/i.exec(t);
   if (altFor && objectOf(altFor[2]!)) return [{ verb: "cost-modify", object: objectOf(altFor[2]!)!.object, text: altFor[2]!, amount: altFor[1]!, optional: true, ...(condition ? { condition } : {}) }];
