@@ -243,7 +243,8 @@ function damageOf(rest: string): Args | Args[] | null {
   }
   // "divided as you choose among one, two, or three targets": any targets, however many.
   const r = m && amount ? objectOf(m[2]!) ?? (/^(?:one|one or two|one, two, or three|any number of|up to \w+) (?:other )?targets$/.test(m[2]!) ? { object: ANY_TARGET } : null) : null;
-  return r && amount ? { object: r.object, amount, text: m![2] } : null;
+  // A back-referenced recipient ("1 damage to each creature that player controls") keeps its words.
+  return r && amount ? { object: r.object, amount, text: m![2], ...(r.object.ref ? { phrase: m![2]! } : {}) } : null;
 }
 const ANY_TARGET = parse("any target")!;
 
@@ -795,7 +796,7 @@ function subjectAction(t: string): ActionReading[] | null {
   // "The second spell you cast each turn costs {1} less": an ordinal no filter field holds, so the
   // stored object stands (Baral), and the change is read.
   if (cost && /^the (?:first|second|third|next) [\w ]+? you cast (?:each|this) turn$/i.test(cost[1]!)) {
-    return [{ verb: "cost-modify", object: REF, amount: `${cost[3]!.toLowerCase() === "less" ? "-" : "+"}${cost[2]!.toUpperCase()}` }];
+    return [{ verb: "cost-modify", object: REF, phrase: cost[1]!, amount: `${cost[3]!.toLowerCase() === "less" ? "-" : "+"}${cost[2]!.toUpperCase()}` }];
   }
   if (cost && objectOf(cost[1]!) && !/^the (?:first|second|third)\b|\beach turn\b/i.test(cost[1]!)) {
     const sign = cost[3]!.toLowerCase() === "less" ? "-" : "+";
@@ -996,7 +997,7 @@ function entersWithOf(t: string): [string, string | undefined, string | undefine
 }
 
 /** "your life total becomes 10". */
-const SET_LIFE = /^(?:at the beginning of the first upkeep, )?(?:your|their|each player's|target player's|that player's|target opponent's) life total becomes (.+)$/i;
+const SET_LIFE = /^(?:at the beginning of the first upkeep, )?(your|their|each player's|target player's|that player's|target opponent's) life total becomes (.+)$/i;
 
 const HANDLERS: Record<string, [string, Handler]> = { ...ZONE, ...MANA_TAP, ...TAIL, ...DRAW_SEARCH, ...DAMAGE_LIFE, ...COUNTERS, ...TOKENS };
 /** The verb words, with their third-person forms, longest first. */
@@ -1156,7 +1157,7 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   // modify-pt, the rule its amount.
   // The stored object and amount stand: derive reads this rule as a damage multiplier off them, and a
   // P/T reading would claim a pump the card does not make (Bedrock Tortoise).
-  if (/^assigns? combat damage equal to its toughness rather than its power$/i.test(pred)) return [{ verb: "modify-pt", object: REF }];
+  if (/^assigns? combat damage equal to its toughness rather than its power$/i.test(pred)) return [{ verb: "modify-pt", object: REF, ...(target.text ? { phrase: `${target.text} ${pred}` } : {}) }];
   // "can attack [this turn] as though it didn't have defender", "can block an additional creature each
   // combat", "can block creatures with shadow as though they didn't have shadow": an ability granted.
   if (/^can (?:attack(?: this turn)? as though (?:it|they) didn't have defender|block (?:an additional (?:creature|\w+ creatures) each combat|creatures with \w+ as though they didn't have \w+))$/i.test(pred)) return [{ verb: "grant-ability", object, text: pred.toLowerCase() }];
@@ -1392,7 +1393,11 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   const more = /^(that many plus (?:one|two|\d+)|twice that many|three times that many) (.+? counters?) (?:are|is) put on (?:it|that creature|that permanent|them|each of them)$/i.exec(t);
   if (more && countersOf(more[2]!)) return [{ verb: "add-counter", object: REF, counter: countersOf(more[2]!)!.counter, amount: more[1]!.toLowerCase(), ...(condition ? { condition } : {}) }];
   const setLife = SET_LIFE.exec(t);
-  if (setLife) return [{ verb: "set-life", amount: setLife[1]!, ...(condition ? { condition } : {}) }];
+  // Whose life total: the player, as the store names it ("target player", Magister Sphinx).
+  if (setLife) {
+    const whose = setLife[1]!.toLowerCase() === "your" ? "you" : setLife[1]!.replace(/'s$/, "");
+    return [{ verb: "set-life", ...(/^their$/i.test(whose) ? {} : { text: whose }), amount: setLife[2]!, ...(condition ? { condition } : {}) }];
+  }
   const entersWith = entersWithOf(t);
   const ew = entersWith ? counterList(entersWith[0].replace(/,? or (?=(?:a|an) [^,]*counter)/g, " and ")) : null;
   if (ew) {

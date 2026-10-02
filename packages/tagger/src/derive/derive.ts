@@ -375,7 +375,9 @@ import { emblemRecipient } from "../emblem.js";
 // subject actions, payments of a "can't ... unless", stated counts, and six more groups are labelled.
 // 272: #896 task 7, labelling round 2: pronoun antecedents, "on top" back-references, hands and
 // graveyards split, transformed returns, and six more groups labelled.
-export const DERIVE_VERSION = 272;
+// 273: #896 task 7, labelling round 3: every difference group of ten or more cards labelled; zones,
+// players and self references the sentence implies.
+export const DERIVE_VERSION = 273;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

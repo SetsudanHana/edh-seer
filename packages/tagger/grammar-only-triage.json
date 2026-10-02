@@ -96,6 +96,118 @@
     "abilities:2->4": {
       "label": "grammar right",
       "why": "One action per recipient ('2 damage to each opponent and each creature they control', Delayed Blast Fireball), an animation's P/T and keywords apart from the animation (Gideon, Martial Paragon; Ebony Fly), a pile exiled from two zones (Triumph of Saint Katherine)."
+    },
+    "abilities:1->0": {
+      "label": "grammar wrong",
+      "why": "The grammar drops an ability the store keeps: a Station level's '7+ | Flying' and keyword lines as no grant, 'loses all creature types' read as a can't (Amoeboid Changeling), the zone of a card copied from a graveyard (Superior Spider-Man). Fixed in this round: Cactuar's 'return it'. A flash grant to spells (Alchemist's Refuge) was tried and dropped: the reading reached the stored path too and stripped Quicksilver's recipient."
+    },
+    "emits.subject(-fromZone)": {
+      "label": "grammar wrong",
+      "why": "Where the moved card comes from, which the grammar does not infer yet: 'exile it' of a target creature (Gossip's Talent), a creature card put from a revealed hand (Treacherous Urge), 'return that creature' after a delayed trigger. 30 of the 49 were fixed in this round ('the exiled card', a self exile, 'target creature that player controls', a revealed top card)."
+    },
+    "effect.subject(~control)": {
+      "label": "grammar right",
+      "why": "The library scried or surveilled is yours either way (the store's 'your library' and the grammar's '1' give the same emit), and a tutor's 'put that card on top' is on top of YOUR library, which the grammar now writes (Enlightened Tutor, Mystical Tutor)."
+    },
+    "abilities:0->1,abilities:1->0": {
+      "label": "grammar right",
+      "why": "Only the clause id of an or-trigger's second event differs: the store numbered it 2.1, 100, 1000 or a duplicate 3 (Vengeful Ancestor, Sedgemoor Witch, Veyran, Warped Tusker); the grammar numbers it after the last clause, the store's usual form. Sub-ids were measured and refused (-175 identical)."
+    },
+    "effect.kind": {
+      "label": "both wrong",
+      "why": "A colour or land-type change ('becomes blue', 'are Mountains', 'are snow') is read as an animation by the grammar and as a pump or grant by the store; neither is right (measured a third reading, refused, round 2). The copy-exception type grants in this group are grammar right."
+    },
+    "unless": {
+      "label": "grammar right",
+      "why": "The grammar keeps the whole payment ('{2} for each creature they control that's attacking you', Windborn Muse), keeps a payment the store dropped (Awesome Presence), and names the payer: 'that player' is the opponent (Rhystic Study), 'you' is you (The Tabernacle's granted upkeep)."
+    },
+    "emits": {
+      "label": "both wrong",
+      "why": "Mixed: the grammar is right on Talon Gates' phase-out (the store wrote put) and Divine Gambit's zone, wrong on 'sacrifice it' after a cost on this enchantment (Quest for the Holy Relic), Immortal Coil's 'for each' tail, Toshiro's exiled spell. Kept on the store until split."
+    },
+    "amount,count,effect.scaling": {
+      "label": "grammar right",
+      "why": "An X the sentence defines ('X mana of any one color, where X is this creature's power', Heronblade Elite, Kami of Whispered Hopes, Selvala) is no X paid; the store's amount X made derive read it as an X spell (x-cost scaling). A paid X ('Exile the top X cards', Zenith Festival) keeps it."
+    },
+    "emits.subject(-type)": {
+      "label": "both wrong",
+      "why": "Adapt and monstrosity put counters on the card itself: the grammar's untyped self is the #956 direction and right; but bolster's counter-added loses 'creature' (Dromoka's Gift), and a revealed land card (Galadriel) and a doubled combat damage (Inquisitor's Flail) lose their words. Kept on the store until split; 'creature' for bolster was measured and refused (-13 identical)."
+    },
+    "effect.subject(-counter)": {
+      "label": "grammar wrong",
+      "why": "A self counter written bare ('+1/+1', the store's majority form) gives derive no counter on the effect subject, where the store's '+1/+1 counter' on these cards did (Ob Nixilis, the Fallen; Geralf; Korvold). Writing every kind as 'X counter' was measured and refused (-717 identical)."
+    },
+    "abilities:0->1,abilities:4->2": {
+      "label": "grammar right",
+      "why": "An 'enters or attacks' trigger's second event: the store gave both records the SAME id (2 and 2, 3 and 3: Threefold Thunderhulk, Ultron, Kroxa and Kunoros), so one branch's actions were lost to the id; the grammar numbers the second event after the last clause and keeps both."
+    },
+    "abilities:2->0": {
+      "label": "grammar right",
+      "why": "A keyword line ('Trample; rampage 2', Gorilla Berserkers) and a Station level ('8+ | Flying, trample', Atmospheric Greenhouse) are the card's own keywords, which the store records as no action on every other keyword line; here it wrote grants to the card itself."
+    },
+    "effect.subject(-scope)": {
+      "label": "grammar wrong",
+      "why": "'that creature' after a target (Vayne's Treachery, Candy Grapple) stays a back-reference where the store wrote 'target creature'; resolving it was measured and refused (-48 identical, the store keeps 'that creature' elsewhere). Set-life and extra-turn players were fixed in this round."
+    },
+    "abilities:4->3": {
+      "label": "both wrong",
+      "why": "Mixed: the grammar is right to read 'other creatures you control gain vigilance and menace' as two grants (Pyrewood Gearhulk) and the copy's 'isn't legendary' (Auton Soldier); wrong to fold 'a Zombie card and a Swamp card' into one search (Corpse Harvester) and Dyadrine's two counter removals into one."
+    },
+    "effect.subject(-scope -type),emits.subject(-scope -type)": {
+      "label": "grammar wrong",
+      "why": "'Each creature deals damage to itself equal to its power' (Solar Blaze, Justice Strike, Wisecrack): the recipient is the dealer, which the grammar leaves as 'itself' and the store names."
+    },
+    "emits.subject(-scope)": {
+      "label": "grammar wrong",
+      "why": "A player named through a back-reference ('Its controller may draw', Arcane Denial; 'two target players exchange life totals', Soul Conduit) loses its target scope; 'its controller' as the object was measured and refused (-83 identical)."
+    },
+    "emits.subject(~control -scope)": {
+      "label": "grammar wrong",
+      "why": "A target player's hand, graveyard or library as 'their' (fixed this round: 'target player exiles a card from their graveyard' now names the player); left: a connive or grant whose target is named only in the clause before (Doctor Doom's 'target Villain you control')."
+    },
+    "effect.scaling": {
+      "label": "grammar wrong",
+      "why": "An X paid in a cost ('Exile X artifact cards from your graveyard', Winter, Cursed Rider; 'Sacrifice X Goats', Springjack Pasture) is the ability's X; the grammar's records leave derive no x-cost scaling where the store's did."
+    },
+    "effect.subject(-scope),emits.subject(-scope)": {
+      "label": "grammar wrong",
+      "why": "'Untap that creature' after 'Target creature gets +3/+3' (Seedcradle Witch) and 'deals 10 damage to that player' after a target player in a condition (Hidetsugu's Second Rite) stay back-references; resolving 'that creature' / 'that player' was measured and refused (-48 identical)."
+    },
+    "emits.subject(-self)": {
+      "label": "grammar wrong",
+      "why": "'sacrifice it' after a cost that names this land (Sandstone Needle, Peat Bog) and 'blight 1' (Sinister Gnarlbark) lose the card itself; the store wrote 'this'."
+    },
+    "emits.subject(~control -ref +scope +type)": {
+      "label": "grammar right",
+      "why": "'attach it to target creature you control' (Bladed Battle-Fan, Cliffhaven Kitesail, Hookblade): the grammar keeps the target the Equipment is attached to; the store wrote only 'it'."
+    },
+    "emits.subject(-scope -type)": {
+      "label": "grammar wrong",
+      "why": "'Goad them' after 'Up to three target creatures can't block' (Coronation of Chaos) and 'shuffle it' after a target (Ice Magic): the target is the subject of an earlier can't, which the records do not carry."
+    },
+    "effect.subject(-type)": {
+      "label": "grammar wrong",
+      "why": "'its controller mills three cards' (Chronic Flooding), 'Its controller draws two cards' (Ob Nixilis, the Hate-Twisted): a player named by 'its' keeps the printed count as the object, so derive loses whose; 'its controller' as the object was measured and refused (-83 identical)."
+    },
+    "abilities:1->4": {
+      "label": "grammar right",
+      "why": "One action per part: 'destroy up to one target artifact, up to one target creature, up to one target enchantment, and up to one target planeswalker' (Urgent Necropsy), an animation's keywords (Sarkhan, the Dragonspeaker; Hive of the Eye Tyrant), a token's keywords (Rite of the Raging Storm)."
+    },
+    "effect.kind,effect.subject(+control +zone)": {
+      "label": "grammar right",
+      "why": "'Whenever another nontoken creature you control dies, exile it' (Nightmare Shepherd, Hofri Ghostforge), 'Whenever another card is put into a graveyard, exile that card' (Planar Void): from the graveyard; the store left the zone off or wrote the battlefield."
+    },
+    "amount,count,effect.kind,effect.subject(+control),effect.subject(-control),emits.verb": {
+      "label": "grammar right",
+      "why": "As 'amount,count': 'an additional land' 1 (Kiora, Urban Evolution), 'the next 3 damage' 3 (Healing Grace, Candles' Glow)."
+    },
+    "emits.subject(+scope)": {
+      "label": "grammar right",
+      "why": "The object names its scope: 'Each player puts a creature card from their graveyard' is from EACH player's graveyard (Exhume, Show and Tell), 'exile it instead' after 'deals 2 damage to each creature' is each such creature (Crush the Weak, Gallifrey Falls), 'that creature' after a target is that target (Debt of Loyalty)."
+    },
+    "effect.kind,effect.subject(+subtype ~zone),emits.subject(-fromZone -ref +self -zone)": {
+      "label": "grammar wrong",
+      "why": "'When this Aura is put into a graveyard from the battlefield, return it to its owner's hand' (Rancor, Despondency, Fortitude): the grammar names the card but not the graveyard it returns from. Writing the graveyard was measured and refused: it also made a dies-trigger 'put it on the bottom of its owner's library' (Murderous Rider) a recursion, and linked discard outlets to a return that only fires from the battlefield (Spine of Ish Sah)."
     }
   }
 }
