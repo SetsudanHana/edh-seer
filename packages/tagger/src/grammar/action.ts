@@ -107,7 +107,7 @@ function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | 
   if (typed && parse(`a ${typed[1]}`)) return { object: parse(`a ${typed[1]}`)! };
   // "that land", "that artifact": a back-reference to an object the sentence named.
   if (/^that (?:land|artifact|enchantment|planeswalker|aura|equipment|vehicle|dragon)$/i.test(t) || /^that [A-Z][a-z]+$/.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
-  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:spell|ability|creature|permanent|card|token)|the chosen [a-z]+|(?:one|two|either) of them|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:spell|ability|creature|permanent|card|token)|the chosen [a-z]+|(?:one|two|either) of them|each of (?:those|them|these)(?: [a-z]+)?|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   // "one or two target creatures": at most two, the store's "up to two".
   if (/^one or two /i.test(t)) return objectOf(t.replace(/^one or two /i, "up to two "));
   const m = COUNT.exec(t);
@@ -193,6 +193,9 @@ const DAMAGE_LIFE: Record<string, [string, Handler]> = {
     // "it deals double that damage [to that permanent or player] instead": a doubler (CR 614), the
     // store's double, its object kept as stored.
     if (/^(?:double|twice) that (?:much )?damage(?: to .+)?$/.test(rest)) return { verb: "double", object: { control: "any", token: null, ref: "sentence" } };
+    // "it deals 4 damage instead": a replacement's new amount, the recipient as stored.
+    const only = /^(\d+|x) damage$/i.exec(rest);
+    if (only) return { object: { control: "any", token: null, ref: "sentence" }, amount: amountOf(only[1]!) ?? only[1]! };
     // "it deals that much damage plus 2 [to that permanent or player] instead": the improved amount.
     const plus = /^that much damage (plus|minus) (\d+|one|two|three)(?: to (?:that permanent or player|that player|that creature|it))?$/.exec(rest);
     if (plus) return { object: { control: "any", token: null, ref: "sentence" }, amount: `that much damage ${plus[1]} ${amountOf(plus[2]!) ?? plus[2]}` };
@@ -412,11 +415,13 @@ const MOVE_REF = /^(?:(?:one|two|three|up to (?:one|two|three)|any number) of (?
  *  stays in the text, as the store writes a zone move ("two creatures", no amount): derive's counts
  *  read it there. `onField`: a permanent moved with no "from" leaves the battlefield. */
 function moveObject(phrase: string, onField = false): Args | null {
-  const t = phrase.replace(/ at random$/, "").replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards|the (?:cards )?milled (?:this way|cards)|the cards milled this way)$/, "");
+  const t = phrase.replace(/ in a face-(?:down|up) pile$/, "").replace(/ at random$/, "").replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards|the (?:cards )?milled (?:this way|cards)|the cards milled this way)$/, "");
   // "target player's graveyard", "all graveyards": a whole graveyard.
   if (/^(?:target player's|target opponent's|each opponent's|your|their|all|each player's|all opponents'|any number of target players'|target players') graveyards?$/.test(t)) return { object: { control: "any", token: null }, fromZone: "graveyard", text: phrase };
   // "one of them", "the rest", "the exiled card", "those tokens": back-references, kept as stored.
   if (MOVE_REF.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  // "a nonland card from it": from a zone the sentence named, so the stored object names it.
+  if (/ from it$/.test(t)) { const r = objectOf(t.slice(0, -" from it".length)); return r && { object: { ...r.object, ref: "sentence" } }; }
   const { rest, from } = fromOf(t);
   // "one of them from your graveyard": the same, from where it is.
   if (from && MOVE_REF.test(rest)) return { object: { control: "any", token: null, ref: "sentence" }, fromZone: from };
@@ -463,7 +468,7 @@ function withCounters(rest: string, move: (rest: string) => Args | Args[] | null
 /** Where a list of objects splits: before each new determiner ("target artifact, target creature,
  *  and target land", "up to one target artifact card, up to one target enchantment card").
  *  "all artifacts, creatures, and lands" is one object and does not split. */
-const OBJECT_JOINT = /,? and (?=(?:target|another target|up to one|each|all|this|a|an) )|, (?=(?:target|another target|up to one|each|all|this|a|an) )/;
+const OBJECT_JOINT = /,? and (?=(?:target|another target|up to one|each|all|this|a|an|the top) )|, (?=(?:target|another target|up to one|each|all|this|a|an|the top) )/;
 
 /** A list of distinct objects, one move each, as the store writes them; a "from <zone>" closing the
  *  list belongs to every item ("... and up to one target sorcery card from your graveyard"). */
@@ -489,14 +494,16 @@ const ZONE: Record<string, [string, Handler]> = {
     // Read whole, the until clause in its text, as the store writes it (a class-restricted dig). Only
     // YOUR library: "their library" is the actor's, a back-reference the stored object names.
     if (/^cards from the top of /.test(rest)) {
-      return /^cards from the top of your library until you exile (?:an? |two )[\w ,-]+? cards?(?: with (?:lesser|greater) mana value)?$/.test(rest)
-        ? { object: CARD, fromZone: "library", toZone: "exile", text: rest } : null;
+      if (/^cards from the top of your library until you exile (?:an? |two )[\w ,-]+? cards?(?: with (?:lesser|greater) mana value)?$/.test(rest)) return { object: CARD, fromZone: "library", toZone: "exile", text: rest };
+      // "their library until they exile ...": the actor's library, so the stored object names it.
+      return /^cards from the top of their library until they exile (?:an? )[\w ,-]+? cards?$/.test(rest)
+        ? { object: { ...CARD, ref: "sentence" }, fromZone: "library", toZone: "exile" } : null;
     }
     const r = moveList(until > 0 ? rest.slice(0, until) : rest);
     return r && [r].flat().map((x) => ({ ...x, toZone: "exile" }));
   })],
   return: ["return", (all) => withCounters(all, (rest) => {
-    const at = rest.search(/ (?:to|on top of|on the bottom of) (?=the battlefield|its owner's|their owners'|their owner's|your|its controller's)/);
+    const at = rest.search(/ (?:to|on top of|on the bottom of) (?=the battlefield|its owner's|their owners'|their owner's|your|its controller's|their hand)/);
     if (at < 0) return null;
     const to = destinationOf(rest.slice(at + 1));
     const r = moveList(rest.slice(0, at), true);
@@ -1000,6 +1007,8 @@ function pumpOrGrantOne(t: string): ActionReading[] | null {
     const b = pumpOrGrantOne(`${pair[2]} ${pair[3]} ${pair[4]}`);
     if (a && b) return [...a, ...b];
   }
+  // "it's a creature in addition to its other types": "it is".
+  t = t.replace(/^it's /i, "it is ");
   // "it also gains lifelink", "creatures you control also get +1/+0": "also" says nothing new.
   let body = t.replace(/ until end of turn(?= for each )/i, "").replace(DURATION, "").replace(/ also (?=(?:gets?|gains?|has|have) )/i, " ");
   // "As long as you control a Swamp, ...", "... as long as you control a Swamp", "... if you control
@@ -1092,13 +1101,16 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
     const lost = abilitiesOf(loses[1]!);
     return lost && lost.map((a) => ({ verb: "cant", object, text: a }));
   }
-  const becomes = /^becomes? (?:an? )?((?:\d+\/\d+ )?[\w -]+?)(?: with (.+))?$/i.exec(pred.replace(/ that's still an? (?:land|planeswalker|artifact|enchantment)$/i, ""));
+  const becomes = /^becomes? (?:an? )?((?:(?:\d+|x)\/(?:\d+|x) )?[\w /-]+?)(?: with (.+))?$/i.exec(pred.replace(/ that's still an? (?:land|planeswalker|artifact|enchantment)$/i, ""));
   // "becomes prepared" is a prepare, which derive reads off the clause (Codie): not read here.
   if (becomes && !/^prepared$/i.test(becomes[1]!)) {
     // "with base power and toughness 4/4 [and flying]": the set P/T, as the store's modify-pt.
     const base = becomes[2] ? /^base power and toughness (\d+\/\d+)(?:,? and (.+))?$/i.exec(becomes[2]) : null;
     const withs = base ? (base[2] ? abilitiesOf(base[2]) : []) : becomes[2] ? abilitiesOf(becomes[2]) : [];
-    return withs && [{ verb: "animate", ...target }, ...(base ? [{ verb: "modify-pt", ...target, amount: base[1]! }] : []), ...withs.map((a) => ({ verb: "grant-ability", object, text: a }))];
+    // "becomes an X/X Citizen creature ..., where X is twice the number of Gates": the X/X is the
+    // store's modify-pt, its X defined by the sentence (Sage of the Maze's scaling).
+    const xx = /^(x\/x) /i.exec(becomes[1]!);
+    return withs && [{ verb: "animate", ...target }, ...(base ? [{ verb: "modify-pt", ...target, amount: base[1]! }] : xx ? [{ verb: "modify-pt", ...target, amount: "X/X" }] : []), ...withs.map((a) => ({ verb: "grant-ability", object, text: a }))];
   }
   // "is an Angel in addition to its other types", "is legendary": a type granted (derive's
   // `type-grant` reads "in addition to its other types").
@@ -1106,7 +1118,7 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   // the store's animate (and a grant per "with" ability). Not "in addition to": that is a type grant.
   // "... with base power and toughness 4/4, flying, and that ability": the set P/T, then grants.
   const basePt = / with base power and toughness (\d+\/\d+)(?:,? (?:and )?(.+))?$/i.exec(pred);
-  const animated = /^(?:is|are) an? ((?:\d+\/\d+ )?[\w -]+?)(?: with (.+))?$/i.exec(basePt ? `${pred.slice(0, basePt.index)}${basePt[2] ? ` with ${basePt[2]}` : ""}` : pred);
+  const animated = /^(?:is an?|are(?: an?)?) ((?:(?:\d+|x)\/(?:\d+|x) )?[\w /-]+?)(?: with (.+))?$/i.exec((basePt ? `${pred.slice(0, basePt.index)}${basePt[2] ? ` with ${basePt[2]}` : ""}` : pred).replace(/ that are still lands$/i, ""));
   if (animated && !/in addition to|\bthe\b/i.test(pred)) {
     const pt = basePt;
     const withs = animated[2] ? abilitiesOf(animated[2]) : [];
@@ -1240,7 +1252,9 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   });
   const pg = pumpOrGrant(t);
   // "-X/-0, where X is the number of cards in your graveyard": the store keeps the X's definition.
-  if (pg) return pg.map((a) => ({ ...a, ...(counted && a.amount && /X/.test(a.amount) ? { amount: `${a.amount}, where X is ${counted}` } : {}), ...(condition || a.condition ? { condition: [condition, a.condition].filter(Boolean).join(", ") } : {}) }));
+  // An animation whose X the sentence defines keeps the stored object, which carries the definition
+  // derive's scaling reads (Sage of the Maze: "..., where X is twice the number of Gates you control").
+  if (pg) return pg.map((a) => (counted && a.verb === "animate" ? (({ text: _t, ...rest }) => ({ ...rest, object: REF }))(a) : a)).map((a) => ({ ...a, ...(counted && a.amount && /X/.test(a.amount) ? { amount: `${a.amount}, where X is ${counted}` } : {}), ...(condition || a.condition ? { condition: [condition, a.condition].filter(Boolean).join(", ") } : {}) }));
   // A DAMAGE SOURCE ("~ deals", "this creature deals", "it deals", "enchanted creature deals"): the
   // dealer, which derive reads off the card, not the actor.
   // "you may have it deal 1 damage to any target": the same, optional.
