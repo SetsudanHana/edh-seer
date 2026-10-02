@@ -4855,6 +4855,25 @@ test("static grant: a redundant keyword the card already has is not given again"
   expect(tag(grant("Marchesa, the Black Rose", ["dethrone"]), emissary)).toBeDefined();
 });
 
+// ...and a triggered grant to the triggering object (Stonehoof Chieftain's "it gains trample") gives
+// the attacker only what it lacks; a grant to a target is not the producer's to judge.
+test("triggered grant: a redundant keyword the triggering creature already has is not given again", () => {
+  const withKeywords = (card: ReturnType<typeof base>, keywords: string[]) =>
+    ({ ...card, tags: { ...card.tags, characteristics: { ...card.tags.characteristics, keywords } } });
+  const chieftain = (grants: string[], ref?: "trigger") => base("Stonehoof Chieftain", [{
+    kind: "triggered", grants,
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null, type: "creature", other: true } },
+    effect: { kind: "keyword-grant", subject: { control: "any", token: null, ...(ref ? { ref } : {}) } },
+  }]);
+  const trampler = withKeywords(base("Ghalta, Primal Hunger", [], ["elder", "dinosaur"]), ["trample"]);
+  const attack = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) =>
+    pairReasons(p, c, H).find((r) => r.tag === "attacks:creature");
+  expect(attack(trampler, chieftain(["trample"], "trigger"))).toBeUndefined();
+  expect(attack(trampler, chieftain(["indestructible", "trample"], "trigger"))?.text).toContain("grants indestructible");
+  expect(attack(trampler, chieftain(["indestructible", "trample"], "trigger"))?.text).not.toContain("trample");
+  expect(attack(trampler, chieftain(["trample"]))).toBeDefined();
+});
+
 // RECALL v5 #140 / #166 (2026-09-10): a TYPED recursion joins the CARDS of its class in the deck,
 // the way a typed tutor does (owner ruling 2026-09-10, extending the 2026-09-07 tutor ruling).
 // Bloodline Necromancer returns "target Vampire or Wizard creature card"; Lara Croft replays "a

@@ -329,7 +329,12 @@ import { emblemRecipient } from "../emblem.js";
 // the sentence made ("revealed this way") are read; the object stays as stored.
 // 250: ...fragments 2: a leading "Until end of turn, ...", "becomes ... with base power and toughness",
 // "loses ...", "cast this spell only ...", casting modifiers, "enters with" on a class and "and with".
-export const DERIVE_VERSION = 250;
+// 251: a keyword grant to the triggering object marks its subject `ref: "trigger"`.
+export const DERIVE_VERSION = 251;
+
+/** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
+ *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
+const GRANT_TO_TRIGGER = /\b(?:whenever|when)\b[^.]*?,\s*(?:until end of turn,\s*)?(?:it|they)\s+(?:each\s+)?gains?\b/i;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -2069,6 +2074,14 @@ export function deriveAbilities(
       const subject = effectKind
         ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
+      // A GRANT TO THE TRIGGERING OBJECT says so (Stonehoof Chieftain: "whenever another creature you
+      // control attacks, IT gains trample"), so the matcher can see a keyword that object already
+      // has is no gift (owner 2026-10-02: "flying flying gives you nothing additional").
+      // The clause records only the keyword as the object, so the recipient is read off the text: "it"
+      // or "they" after the trigger, with no target in the sentence and a trigger that is not the card.
+      if (subject && effectKind === "keyword-grant" && clause.trigger?.subject
+        && !isSelfSubject(clause.trigger.subject, cardName) && !/\btarget\b/i.test(text)
+        && GRANT_TO_TRIGGER.test(text)) subject.ref = "trigger";
       // See THAT_TYPED. Read BEFORE the actor, which is a stronger statement and overrides it.
       const objectText = (action.object ?? "").trim();
       if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText)) {

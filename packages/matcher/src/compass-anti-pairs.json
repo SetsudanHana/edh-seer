@@ -197,6 +197,15 @@
       "why": "Owner ruling 2026-10-02, redundant keywords: haste on a creature that already has haste adds nothing (CR 702.10d).",
       "source": "owner ruling 2026-10-02",
       "verified": true
+    },
+    {
+      "a": "Vampire Nighthawk",
+      "b": "Ondu Rising",
+      "tag": "attacks:creature",
+      "class": "false-emit",
+      "why": "Owner ruling 2026-10-02, redundant keywords: Ondu Rising's \"whenever a creature attacks this turn, it gains lifelink\" gives Vampire Nighthawk nothing, because it already has lifelink (CR 702.15f).",
+      "source": "owner ruling 2026-10-02",
+      "verified": true
     }
   ],
   "knownDefects": [],

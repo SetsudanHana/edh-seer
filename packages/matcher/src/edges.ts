@@ -1982,6 +1982,15 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
         // demand exists to state. See `enterAsCopySentence`.
         const clonesOnEntry = a.effect.kind === "clone" && t.verb === "enters" && t.subject.self === true;
         const origin = origins.get(JSON.stringify(e0));
+        // A GRANT TO THE TRIGGERING OBJECT GIVES THE PRODUCER NOTHING IT ALREADY HAS (owner
+        // 2026-10-02, the static rule in `staticEdges`): Stonehoof Chieftain's "it gains trample" on a
+        // trampler's own attack. Only when the object IS the producer -- its own event, implied or
+        // self-marked; a token it makes is its own node.
+        const toProducer = a.effect.kind === "keyword-grant" && a.effect.subject?.ref === "trigger"
+          && (origin === undefined || e.subject.self === true);
+        const has = p.tags?.characteristics.keywords ?? [];
+        const keywords = toProducer ? a.grants?.filter((k) => !(REDUNDANT_KEYWORDS.has(k) && has.includes(k))) : a.grants;
+        if (a.grants?.length && !keywords?.length) continue;
         reasons.push({
           tag: eventReasonTag(key, t.verb, a),
           ...(origin !== undefined ? { producerAbility: origin } : {}),
@@ -1991,7 +2000,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
             : clonesOnEntry ? enterAsCopySentence(p.card.name, c.card.name)
             : reasonSentence({
             producer: enteringFaceName(p, e0) ?? p.card.name, consumer: c.card.name, eventKey: key,
-            effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true, keywords: a.grants,
+            effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true, keywords,
             ...(t.subject.self !== true && sacrificedTo(p, origin, e0) ? { sacrificedTo: sacrificedTo(p, origin, e0) } : {}),
             // A BLANK EFFECT IS READ OFF ITS EMITS (#647 item 5), its clause siblings' too: Displacer
             // Kitten's return is its own ability, and without it the flicker read as an exile.
