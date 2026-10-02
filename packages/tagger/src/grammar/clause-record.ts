@@ -39,6 +39,10 @@ export function triggerSubjectText(preamble: string): string {
   return head;
 }
 
+const SELF_SUBJECT = /^(?:~|this [a-z]+)$/i;
+/** Verbs whose stored object is the PLAYER it happens to ("target player mills two cards" -> "target
+ *  player"), the convention derive's `PLAYER_OBJECT_VERBS` reads. */
+const PLAYER_VERBS = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life"]);
 const ZONE_VERBS = new Set(["destroy", "exile", "sacrifice", "return", "put", "shuffle"]);
 const BACK_REFERENCE = /^(?:it|them|that card|those cards|that creature|that permanent|the card|the cards)$/i;
 
@@ -55,10 +59,13 @@ function objectWords(r: ActionReading): string {
 
 /** One clause's readings as `Action`s. A back-referenced object moved after a search comes from the
  *  library, the zone the store writes for it (Farseek, Entomb, every fetchland). */
-function actionsOf(readings: ActionReading[]): Action[] {
+function actionsOf(readings: ActionReading[], selfTrigger: boolean): Action[] {
   const out: Action[] = [];
   for (const r of readings) {
-    const object = objectWords(r);
+    // "When this creature blocks, return IT": with nothing before it, "it" is the card itself, which
+    // the store writes "this" (derive's self reading keys on it).
+    const object = PLAYER_VERBS.has(r.verb) ? (r.actor?.text ?? (r.verb === "gain-life" || r.verb === "lose-life" ? r.text ?? "you" : "you"))
+      : selfTrigger && out.length === 0 && /^(?:it|itself)$/i.test(objectWords(r)) ? "this" : objectWords(r);
     const searched = !r.fromZone && (r.verb === "put" || r.verb === "return") && BACK_REFERENCE.test(object) && out.some((a) => a.verb === "search");
     out.push({
       verb: r.verb, object,
@@ -89,7 +96,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     const cost = c.cost;
     const unread = unreadPhrases(effect, type, cost);
     if (unread.length) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: unread[0]! } };
-    record.actions = actionsOf(parseActions(effect, type, cost));
+    record.actions = actionsOf(parseActions(effect, type, cost), SELF_SUBJECT.test(record.trigger?.subject ?? ""));
     if (record.actions.length === 0 && type !== "static") record.actions = [{ verb: "none", object: "" } as Action];
     records.push(record);
   }
