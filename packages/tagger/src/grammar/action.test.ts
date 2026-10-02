@@ -276,18 +276,44 @@ test("fragments 3: copies with exceptions, alternative costs, mana, shields, cou
   expect(verbs("put a +1/+1 counter on target creature, then double the number of +1/+1 counters on it.")).toEqual(["add-counter", "double"]);
 });
 
+// Fragments 4 (#896): redirections, requirements, a host animated, counters moved or improved, a
+// target's controller, quoted abilities that end a sentence, and the rest of a cost after "and".
+test("fragments 4: redirections, requirements, animated hosts, moved counters", () => {
+  const verbs = (t: string, type = "triggered", cost?: string) => parseActions(t, type, cost).map((a) => a.verb);
+  expect(verbs("All damage that would be dealt to you is dealt to enchanted creature instead.", "static")).toEqual(["prevent", "deal-damage"]);
+  expect(parseActions("The next 1 damage that would be dealt to this creature this turn is dealt to target creature you control instead.", "activated")[1])
+    .toMatchObject({ verb: "deal-damage", amount: "1", text: "target creature you control" });
+  expect(parseActions("This creature must be blocked if able.", "static")[0]).toMatchObject({ verb: "cant", text: "be unblocked" });
+  expect(verbs("Target creature blocks this creature this turn if able.")).toEqual(["cant"]);
+  expect(verbs("Skip your draw step.", "static")).toEqual(["cant"]);
+  expect(verbs("Enchanted land is a 2/2 blue Elemental creature with flying.", "static")).toEqual(["animate", "grant-ability"]);
+  expect(verbs("Enchanted creature loses all abilities and has base power and toughness 1/1.", "static")).toEqual(["cant", "modify-pt"]);
+  expect(verbs("enchanted creature gets +1/-1 and attacks each combat if able.", "static")).toEqual(["modify-pt", "cant"]);
+  expect(verbs("Move a +1/+1 counter from target creature onto a second target creature.")).toEqual(["remove-counter", "add-counter"]);
+  expect(parseActions("If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.", "static")[0])
+    .toMatchObject({ verb: "add-counter", counter: "+1/+1", amount: "that many plus one" });
+  expect(parseActions("target artifact creature's controller sacrifices it.", "triggered")[0]?.actor?.text).toBe("target artifact creature's controller");
+  expect(verbs("Exile cards from the top of your library until you exile a nonland card.")).toEqual(["exile"]);
+  expect(verbs("You may cast this card from your graveyard by discarding two cards in addition to paying its other costs.", "static")).toEqual(["cast", "discard"]);
+  expect(verbs("Create a 5/5 black Zombie Giant creature token.", "activated", "Remove three quest counters from this enchantment and sacrifice it"))
+    .toEqual(["remove-counter", "sacrifice", "create"]);
+  // A quoted ability that ends in a period ends the sentence: the token is read, the next sentence is its own.
+  expect(parseActions('Create a 1/1 blue Fish creature token with "This token can\'t be blocked." Activate only as a sorcery.', "activated")[0])
+    .toMatchObject({ verb: "create", text: 'a 1/1 blue Fish creature token with "This token can\'t be blocked."' });
+});
+
 test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.947],
-  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.919],
-  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.847],
-  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.914],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.904],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.861],
-  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.884],
+  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.923],
+  ["counters", ["add-counter", "remove-counter", "proliferate"], 0.863],
+  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.921],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.91],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.872],
+  ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.897],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
-    "explore", "connive", "endure"], 0.801],
-  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.707],
+    "explore", "connive", "endure"], 0.813],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.739],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")

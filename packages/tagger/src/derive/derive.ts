@@ -332,7 +332,9 @@ import { emblemRecipient } from "../emblem.js";
 // 251: a keyword grant to the triggering object marks its subject `ref: "trigger"`.
 // 252: #896 fragments 3: a copy's exceptions ("enter as" / "become a copy of ..., except ..."), an
 // alternative cost and strive, mana by shape, a prevention shield, "a number of" counters, "then double".
-export const DERIVE_VERSION = 252;
+// 253: fragments 4: damage redirections, block requirements, an Aura's host animated, counters moved
+// or improved, a target's controller, quoted abilities ending a sentence, cost items after "and".
+export const DERIVE_VERSION = 253;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
