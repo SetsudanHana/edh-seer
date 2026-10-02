@@ -250,6 +250,13 @@ const COUNTERS: Record<string, [string, Handler]> = {
       const each = parts.map((p) => COUNTERS.put![1](p));
       return each.every((e) => e) ? each.flatMap((e) => [e!].flat()) : null;
     }
+    // "a number of +1/+1 counters on it equal to its power", "... equal to its power on each creature".
+    const num = /^a number of (.+? counters?) (?:on (.+?) equal to (.+)|equal to (.+?) on (.+))$/.exec(rest);
+    if (num) {
+      const k = countersOf(num[1]!);
+      const on = objectOf((num[2] ?? num[5]!).replace(/^each of /, ""));
+      return k && on ? { object: on.object, counter: k.counter, amount: num[3] ?? num[4]!, text: num[2] ?? num[5]! } : null;
+    }
     const m = /^(.+? counters?) on (.+?)(?: for each (.+))?$/.exec(rest);
     const cs = m ? counterList(m[1]!) : null;
     const on = m ? objectOf(m[2]!.replace(/^each of /, "")) : null;
@@ -274,6 +281,14 @@ function tokenOf(phrase: string): Args | null {
   // "that's tapped and attacking" is how the token ENTERS, not what it is: kept out of the text, or the
   // token's own node (a Soldier) would no longer join the card that makes it.
   let t = phrase.trim().replace(/ that(?:'s| are) tapped and attacking$/, "");
+  // "a token that's a copy of it, except it isn't legendary": the exception changes the copy, and is
+  // read so nothing is skipped; the text keeps it, as the store writes it.
+  const except = t.search(/, except /);
+  if (except > 0 && /\bcopy of\b/.test(t)) {
+    if (!exceptOf(t.slice(except + ", except ".length), SELF)) return null;
+    const r = tokenOf(t.slice(0, except));
+    return r && { ...r, ...(r.text !== undefined ? { text: phrase.trim() } : {}) };
+  }
   let amount: string | undefined;
   // The text derive reads is the token phrase alone: "equal to that creature's power" is the amount,
   // and left in the text it made Ruthless Technomancer's Treasures creatures.
@@ -474,6 +489,11 @@ const ZONE: Record<string, [string, Handler]> = {
 /** Mana as printed: "{C}", "{R} or {G}", "{G}{G}", "one mana of any color", "two mana in any
  *  combination of colors", "X mana of any one color". */
 const MANA = /^(?:(?:\{[WUBRGCSX0-9/]+\})+(?:,? (?:or|and) (?:\{[WUBRGCSX0-9/]+\})+|, (?:\{[WUBRGCSX0-9/]+\})+)*|(?:one|two|three|four|five|x|that much|that many|an additional) (?:additional )?mana (?:of any (?:one )?(?:color|type)|in any combination of colors|of the chosen color|of any color that a land an opponent controls could produce|of any of the exiled card's colors)?)$/i;
+/** One more mana item, read by its shape rather than a list: "an additional {G}", "that much {C}",
+ *  "an additional one mana of any color", "one mana of any type that land produced", "two mana of
+ *  different colors", "X mana in any combination of {B} and/or {R}". The text keeps what it makes. */
+const MANA_ITEM = /^(?:an additional |that much )?(?:\{[WUBRGCSX0-9/]+\})+$|^(?:an additional )?(?:one|two|three|four|five|six|seven|eight|nine|ten|x|that much|that many)(?: additional)? mana (?:of|in) [^,]+$/i;
+const manaOf = (t: string): boolean => MANA.test(t) || t.split(/,? or (?=\{|an? |one |two |three |x )/i).every((p) => MANA_ITEM.test(p.trim()));
 
 const MANA_TAP: Record<string, [string, Handler]> = {
   add: ["add-mana", (rest) => {
@@ -482,7 +502,7 @@ const MANA_TAP: Record<string, [string, Handler]> = {
     if (eq) return { object: { control: "any", token: null }, text: eq[1]!, amount: eq[2]! };
     const each = rest.indexOf(" for each ");
     const mana = each >= 0 ? rest.slice(0, each) : rest;
-    if (!MANA.test(mana)) return null;
+    if (!manaOf(mana)) return null;
     return { object: { control: "any", token: null }, text: mana, ...(each >= 0 ? { amount: rest.slice(each + 1) } : {}) };
   }],
   // "tap or untap target permanent": either, so both.
@@ -597,6 +617,9 @@ function subjectAction(t: string): ActionReading[] | null {
   if (only) return only[1]!.split(/ and only /i).map((part) => ({ verb: "cant", object: SELF, text: `cast this spell only ${part}` }));
   // "Instant and sorcery spells you cast cost {1} less to cast": the store's cost-modify, the
   // spells its object and the change its amount.
+  // STRIVE, an ability word: "This spell costs {1}{G} more to cast for each
+  // target beyond the first" -- the store's cost-modify, the whole phrase its text.
+  if (/^this spell costs (?:\{[^}]+\})+ more to cast for each target beyond the first$/i.test(t)) return [{ verb: "cost-modify", object: SELF, text: t }];
   const cost = /^(.+?) costs? \{(\d+|x)\} (less|more) to cast( for each .+)?$/i.exec(t);
   // "The first instant or sorcery spell you cast each turn": an ordinal no filter field holds, so the
   // stored action stands rather than a widened subject (Baral).
@@ -728,7 +751,7 @@ const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new Reg
 
 /** Every verb word a phrase can open with, for splitting -- wider than the handled ones, so a joint
  *  before an unhandled verb ("..., then shuffle") still splits. */
-const ANY_VERB = /^(?:(?:it|that creature|those creatures|they) (?:doesn't|don't|can't) |(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture))\b/i;
+const ANY_VERB = /^(?:(?:it|that creature|those creatures|they) (?:doesn't|don't|can't) |(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|double (?=the|its|that|target|each)))\b/i;
 
 /** Split a sentence into phrases on ", then ", " and then ", ", and ", " and ", ", " -- only where a
  *  verb follows, so "a creature and a land" stays whole. */
@@ -880,6 +903,29 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   return abilities && abilities.map((a) => ({ verb: "grant-ability", object, text: a }));
 }
 
+/** A copy's EXCEPTIONS (CR 707.9b): "it has haste and that ability", "it's a Spirit in addition to its
+ *  other types", "it isn't legendary". A grant per ability or type, and "isn't legendary" the store's
+ *  `cant` "be legendary". Null when any part is not one of these. */
+function exceptOf(text: string, object: SubjectFilter): ActionReading[] | null {
+  const out: ActionReading[] = [];
+  for (const raw of text.split(/,? and (?=(?:it|its|is|isn't|has|the token)\b)|, (?=(?:it|its|is|isn't|has|the token)\b)/i)) {
+    const full = raw.trim();
+    if (/^(?:(?:it|the token) (?:isn't|is not)|it's not|isn't) legendary$/i.test(full)) { out.push({ verb: "cant", object, text: "be legendary" }); continue; }
+    const has = /^(?:(?:it|the token) )?(?:also )?(?:has|have) (.+)$/i.exec(full);
+    if (has) { const a = abilitiesOf(has[1]!); if (!a) return null; out.push(...a.map((x) => ({ verb: "grant-ability", object, text: x }))); continue; }
+    // "it's a 0/2 Thopter artifact creature with flying in addition to its other types", "it's legendary".
+    const is = /^(?:it's|it is|is) (?:an? )?(?:\d+\/\d+ )?([\w -]+?)(?: with (.+?))? in addition to its other (?:colors and )?types$|^(?:it's|it is|is) (legendary|an artifact|snow|legendary and snow)$/i.exec(full);
+    if (is) {
+      const withs = is[2] ? abilitiesOf(is[2]) : [];
+      if (!withs) return null;
+      out.push({ verb: "grant-ability", object }, ...withs.map((x) => ({ verb: "grant-ability", object, text: x })));
+      continue;
+    }
+    return null;
+  }
+  return out;
+}
+
 const withCondition = (out: ActionReading[], condition: string | undefined) => (condition ? out.map((a) => ({ ...a, condition })) : out);
 
 function readPhrase(quoted: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
@@ -896,6 +942,9 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   if (who) { condition = [condition, t.slice(who[1]!.length + 1, who[0].length - 1)].filter(Boolean).join(", "); t = `${who[1]} ${t.slice(who[0].length)}`; }
   // "each player ... each draw": the second "each" repeats the actor.
   t = t.replace(/^((?:two|any number of) target (?:players|opponents)) each /i, "$1 ");
+  // "you may pay {G} rather than pay this spell's mana cost": an alternative cost, the store's
+  // cost-modify, the whole phrase its text. Read before the tail below strips "rather than pay".
+  if (/^you may pay (?:\{[^}]+\})+ rather than pay this spell's mana cost$/i.test(t)) return [{ verb: "cost-modify", object: SELF, text: t, optional: true, ...(condition ? { condition } : {}) }];
   const tail = whenTail(t);
   if (tail) { condition = [condition, tail.text].filter(Boolean).join(", "); t = t.slice(0, tail.at); }
   let actor: ActionReading["actor"] = carried;
@@ -905,11 +954,20 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   const host = /^you control (enchanted (?:creature|permanent|land|artifact|planeswalker))$/i.exec(t);
   if (host) return [{ verb: "gain-control", object: objectOf(host[1]!)!.object, text: host[1]!.toLowerCase(), ...(condition ? { condition } : {}) }];
   // "You may have this creature enter as a copy of any creature on the battlefield" (a clone).
-  const clone = /^you (may )?have (?:~|this [a-z]+) enter as a copy of (.+)$/i.exec(t);
+  // "..., except it has haste" (CR 707.9b) and "become a copy of" (until end of turn) read the same.
+  const clone = /^you (may )?have (?:~|this [a-z]+|it|that creature) (?:enter as|become) a copy of (.+)$/i.exec(t.replace(DURATION, ""));
   if (clone) {
-    const r = objectOf(clone[2]!);
-    if (r) return [{ verb: "copy", object: r.object, text: clone[2]!, ...(clone[1] ? { optional: true as const } : {}), ...(condition ? { condition } : {}) }];
+    const at = clone[2]!.search(/, except /);
+    const what = (at > 0 ? clone[2]!.slice(0, at) : clone[2]!).replace(DURATION, "");
+    const r = objectOf(what);
+    const except = at > 0 ? exceptOf(clone[2]!.slice(at + ", except ".length), SELF) : [];
+    const opt = clone[1] ? { optional: true as const } : {};
+    if (r && except) return [{ verb: "copy", object: r.object, text: what, ...opt }, ...except.map((a) => ({ ...a, ...opt }))].map((a) => ({ ...a, ...(condition ? { condition } : {}) }));
   }
+  // "The next time a black source of your choice would deal damage to you this turn, prevent that
+  // damage": a prevention shield, its text the source and the damage.
+  const shield = /^(the next time .+? would deal damage(?: to .+?)? this turn), prevent that damage$/i.exec(t);
+  if (shield) return [{ verb: "prevent", object: { control: "any", token: null }, text: shield[1]!, ...(condition ? { condition } : {}) }];
   const sa = subjectAction(t);
   if (sa) return sa.map((a) => ({ ...a, ...(condition ? { condition } : {}) }));
   const rs = restrictionOf(t);
