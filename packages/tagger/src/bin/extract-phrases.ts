@@ -12,7 +12,7 @@
  *
  *  Usage: npx tsx packages/tagger/src/bin/extract-phrases.ts */
 import { writeFileSync } from "node:fs";
-import { connect, loadConfig } from "@edh-seer/data";
+import { connect, isStickerCard, loadConfig } from "@edh-seer/data";
 import { CLAUSES_COLLECTION, type CardClausesDoc } from "../clause-store.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
 
@@ -26,7 +26,11 @@ const add = (kind: keyof typeof seen, phrase: string | undefined | null, name: s
   (seen[kind].get(p) ?? seen[kind].set(p, new Set()).get(p)!).add(id);
 };
 const docs = store.db.collection<CardClausesDoc>(CLAUSES_COLLECTION).find({ isToken: { $ne: true } } as never, { projection: { oracleId: 1, name: 1, canonical: 1 } });
+// Sticker cards are outside the engine (owner 2026-10-02): not in the census either.
+const stickers = new Set((await store.cards.find({ oracleText: /sticker/i } as never, { projection: { _id: 1, oracleText: 1, faces: 1 } }).toArray())
+  .filter((c) => isStickerCard(c as never)).map((c) => c._id));
 for await (const d of docs) {
+  if (stickers.has(d.oracleId)) continue;
   for (const c of d.canonical ?? []) {
     add("subject", c.trigger?.subject, d.name, d.oracleId);
     for (const a of c.actions ?? []) add("object", a.object, d.name, d.oracleId);

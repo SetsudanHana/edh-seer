@@ -13,7 +13,7 @@
  *  Usage: npx tsx packages/tagger/src/bin/extract-actions.ts */
 import { writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
-import { connect, loadConfig } from "@edh-seer/data";
+import { connect, isStickerCard, loadConfig } from "@edh-seer/data";
 import { CLAUSES_COLLECTION, type CardClausesDoc } from "../clause-store.js";
 import { clauseCosts, clauseTexts } from "../derive-input.js";
 import { effectText } from "../grammar/preamble.js";
@@ -29,7 +29,8 @@ let clauses = 0, actions = 0;
 const docs = store.db.collection<CardClausesDoc>(CLAUSES_COLLECTION).find({ isToken: { $ne: true } } as never, { projection: { oracleId: 1, name: 1, canonical: 1 } });
 for await (const d of docs) {
   const card = await store.cards.findOne({ _id: d.oracleId } as never);
-  if (!card) continue;
+  // Sticker cards are outside the engine (owner 2026-10-02): not in the census either.
+  if (!card || isStickerCard(card as never)) continue;
   const texts = clauseTexts(card as never);
   // The store writes a COST's actions too ("Sacrifice this artifact: Draw a card." is sacrifice +
   // draw), and `segment()` keeps the cost out of the clause text, so the row carries it.

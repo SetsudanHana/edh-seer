@@ -1,6 +1,6 @@
 {
   "_what": "H3 for the filter grammar (#896 task 2): every group of phrases on which packages/tagger/src/grammar/filter.ts and parseSubject disagree, grouped by the SubjectFilter fields that differ, over packages/tagger/phrases.jsonl. Each group is labelled after reading EVERY member, not a sample. 'grammar right' cites the rule or the printed text; 'grammar wrong' must be fixed before task 3 switches derive over; 'both wrong' says what neither reads. phrase-diff-triage.test.ts fails when a group appears, disappears or changes size, and when the parsed count moves, so a change to either parser is re-triaged and banked here.",
-  "parsed": 6824,
+  "parsed": 6821,
   "groups": {
     "control": {
       "distinct": 83,
@@ -579,7 +579,7 @@
       "why": "Every member read. history: what happened to it this turn: dealt damage (by whom), attacked, blocked, entered, died, put into a graveyard (from where), milled, crewed/saddled it."
     },
     "status": {
-      "distinct": 55,
+      "distinct": 53,
       "label": "grammar right",
       "rule": "CR 110.5, CR 701.15, CR 701.60, CR 702.33",
       "why": "Every member read. status: a status or designation: face-down/up, enchanted/equipped after a determiner, blocked/unblocked, goaded, suspected, kicked, renowned, double-faced, modal, suspended, fortified, Adventure, no abilities."

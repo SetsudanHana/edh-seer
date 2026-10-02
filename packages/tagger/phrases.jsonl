@@ -1,8 +1,8 @@
-{"kind":"subject","phrase":"this creature","cards":5033}
-{"kind":"subject","phrase":"you","cards":1945}
-{"kind":"subject","phrase":"~","cards":974}
-{"kind":"subject","phrase":"this","cards":731}
-{"kind":"subject","phrase":"this enchantment","cards":267}
+{"kind":"subject","phrase":"this creature","cards":5023}
+{"kind":"subject","phrase":"you","cards":1943}
+{"kind":"subject","phrase":"~","cards":962}
+{"kind":"subject","phrase":"this","cards":727}
+{"kind":"subject","phrase":"this enchantment","cards":264}
 {"kind":"subject","phrase":"a creature","cards":217}
 {"kind":"subject","phrase":"a creature you control","cards":207}
 {"kind":"subject","phrase":"a land you control","cards":186}
@@ -11,7 +11,7 @@
 {"kind":"subject","phrase":"a noncreature spell","cards":155}
 {"kind":"subject","phrase":"enchanted creature","cards":151}
 {"kind":"subject","phrase":"a card","cards":147}
-{"kind":"subject","phrase":"this Aura","cards":142}
+{"kind":"subject","phrase":"this Aura","cards":141}
 {"kind":"subject","phrase":"equipped creature","cards":137}
 {"kind":"subject","phrase":"another creature you control","cards":125}
 {"kind":"subject","phrase":"chapter III","cards":114}
@@ -425,7 +425,6 @@
 {"kind":"subject","phrase":"another Shrine you control","cards":2}
 {"kind":"subject","phrase":"another Spirit you control","cards":2}
 {"kind":"subject","phrase":"another black creature you control","cards":2}
-{"kind":"subject","phrase":"another creature you own","cards":2}
 {"kind":"subject","phrase":"another green creature you control","cards":2}
 {"kind":"subject","phrase":"another nontoken Dragon you control","cards":2}
 {"kind":"subject","phrase":"another nontoken Elf","cards":2}
@@ -469,7 +468,6 @@
 {"kind":"subject","phrase":"one or more permanents from the battlefield","cards":2}
 {"kind":"subject","phrase":"one or more tokens","cards":2}
 {"kind":"subject","phrase":"pay {2}","cards":2}
-{"kind":"subject","phrase":"put a name sticker on it","cards":2}
 {"kind":"subject","phrase":"sacrifice ~","cards":2}
 {"kind":"subject","phrase":"that Equipment","cards":2}
 {"kind":"subject","phrase":"that opponent","cards":2}
@@ -505,8 +503,6 @@
 {"kind":"subject","phrase":"you have 5 or less life","cards":2}
 {"kind":"subject","phrase":"you pay {E}{E}{E}","cards":2}
 {"kind":"subject","phrase":"you pay {R}{G}{W}{U}","cards":2}
-{"kind":"subject","phrase":"you place a sticker","cards":2}
-{"kind":"subject","phrase":"you put a sticker on this enchantment","cards":2}
 {"kind":"subject","phrase":"your first enchantment spell each turn","cards":2}
 {"kind":"subject","phrase":"your first noncreature spell each turn","cards":2}
 {"kind":"subject","phrase":"your first spell each turn","cards":2}
@@ -1079,6 +1075,7 @@
 {"kind":"subject","phrase":"another creature you control with power 4 or greater","cards":1}
 {"kind":"subject","phrase":"another creature you control with power 5 or greater","cards":1}
 {"kind":"subject","phrase":"another creature you control with toxic","cards":1}
+{"kind":"subject","phrase":"another creature you own","cards":1}
 {"kind":"subject","phrase":"another enchantment you control","cards":1}
 {"kind":"subject","phrase":"another land","cards":1}
 {"kind":"subject","phrase":"another legendary Elf you control","cards":1}
@@ -1557,9 +1554,6 @@
 {"kind":"subject","phrase":"you pay {W}{B} and 2 life","cards":1}
 {"kind":"subject","phrase":"you pay {X}{X}","cards":1}
 {"kind":"subject","phrase":"you play a card from exile","cards":1}
-{"kind":"subject","phrase":"you put a name sticker on a creature","cards":1}
-{"kind":"subject","phrase":"you put an ability sticker on a creature","cards":1}
-{"kind":"subject","phrase":"you put an art sticker on a creature","cards":1}
 {"kind":"subject","phrase":"you put one or more Equipment onto the battlefield this way","cards":1}
 {"kind":"subject","phrase":"you remove a counter from ~","cards":1}
 {"kind":"subject","phrase":"you remove a deathtouch counter from this creature","cards":1}
@@ -1669,52 +1663,52 @@
 {"kind":"subject","phrase":"~ with +1/+1 counters","cards":1}
 {"kind":"subject","phrase":"~ with power 4 or greater","cards":1}
 {"kind":"object","phrase":"a card","cards":2922}
-{"kind":"object","phrase":"Flying","cards":2538}
-{"kind":"object","phrase":"this creature","cards":2482}
-{"kind":"object","phrase":"you","cards":2337}
-{"kind":"object","phrase":"+1/+1","cards":2262}
-{"kind":"object","phrase":"target creature","cards":1881}
-{"kind":"object","phrase":"this","cards":1375}
-{"kind":"object","phrase":"it","cards":1297}
+{"kind":"object","phrase":"Flying","cards":2532}
+{"kind":"object","phrase":"this creature","cards":2480}
+{"kind":"object","phrase":"you","cards":2336}
+{"kind":"object","phrase":"+1/+1","cards":2258}
+{"kind":"object","phrase":"target creature","cards":1880}
+{"kind":"object","phrase":"this","cards":1374}
+{"kind":"object","phrase":"it","cards":1296}
 {"kind":"object","phrase":"your library","cards":928}
 {"kind":"object","phrase":"Enchant creature","cards":892}
-{"kind":"object","phrase":"any target","cards":741}
-{"kind":"object","phrase":"Trample","cards":677}
-{"kind":"object","phrase":"enchanted creature","cards":624}
-{"kind":"object","phrase":"~","cards":609}
-{"kind":"object","phrase":"Flash","cards":607}
+{"kind":"object","phrase":"any target","cards":740}
+{"kind":"object","phrase":"Trample","cards":676}
+{"kind":"object","phrase":"enchanted creature","cards":623}
+{"kind":"object","phrase":"~","cards":608}
+{"kind":"object","phrase":"Flash","cards":606}
 {"kind":"object","phrase":"that card","cards":574}
 {"kind":"object","phrase":"each opponent","cards":542}
 {"kind":"object","phrase":"{C}","cards":484}
 {"kind":"object","phrase":"target player","cards":432}
-{"kind":"object","phrase":"this card","cards":422}
+{"kind":"object","phrase":"this card","cards":420}
 {"kind":"object","phrase":"Vigilance","cards":414}
-{"kind":"object","phrase":"equipped creature","cards":383}
 {"kind":"object","phrase":"the rest","cards":383}
 {"kind":"object","phrase":"1","cards":382}
+{"kind":"object","phrase":"equipped creature","cards":382}
 {"kind":"object","phrase":"one mana of any color","cards":367}
-{"kind":"object","phrase":"Haste","cards":360}
+{"kind":"object","phrase":"Haste","cards":359}
 {"kind":"object","phrase":"that creature","cards":348}
-{"kind":"object","phrase":"flying","cards":342}
+{"kind":"object","phrase":"flying","cards":341}
 {"kind":"object","phrase":"this artifact","cards":336}
 {"kind":"object","phrase":"Menace","cards":319}
-{"kind":"object","phrase":"Reach","cards":312}
-{"kind":"object","phrase":"haste","cards":297}
+{"kind":"object","phrase":"Reach","cards":311}
+{"kind":"object","phrase":"haste","cards":296}
 {"kind":"object","phrase":"creatures you control","cards":282}
 {"kind":"object","phrase":"a creature","cards":280}
 {"kind":"object","phrase":"target creature an opponent controls","cards":272}
 {"kind":"object","phrase":"target creature you control","cards":269}
-{"kind":"object","phrase":"Defender","cards":266}
+{"kind":"object","phrase":"Defender","cards":265}
 {"kind":"object","phrase":"target opponent","cards":257}
 {"kind":"object","phrase":"that player","cards":254}
 {"kind":"object","phrase":"2","cards":249}
 {"kind":"object","phrase":"target spell","cards":245}
 {"kind":"object","phrase":"card","cards":242}
-{"kind":"object","phrase":"a Treasure token","cards":241}
-{"kind":"object","phrase":"Deathtouch","cards":240}
 {"kind":"object","phrase":"First strike","cards":240}
+{"kind":"object","phrase":"a Treasure token","cards":240}
+{"kind":"object","phrase":"Deathtouch","cards":239}
 {"kind":"object","phrase":"two cards","cards":231}
-{"kind":"object","phrase":"Equip {2}","cards":227}
+{"kind":"object","phrase":"Equip {2}","cards":226}
 {"kind":"object","phrase":"this enchantment","cards":215}
 {"kind":"object","phrase":"Lifelink","cards":204}
 {"kind":"object","phrase":"that ability","cards":204}
@@ -1742,9 +1736,9 @@
 {"kind":"object","phrase":"all creatures","cards":134}
 {"kind":"object","phrase":"target permanent","cards":133}
 {"kind":"object","phrase":"Devoid","cards":132}
-{"kind":"object","phrase":"Flying, vigilance","cards":131}
-{"kind":"object","phrase":"{R}","cards":131}
+{"kind":"object","phrase":"Flying, vigilance","cards":130}
 {"kind":"object","phrase":"deathtouch","cards":130}
+{"kind":"object","phrase":"{R}","cards":130}
 {"kind":"object","phrase":"-1/-1","cards":127}
 {"kind":"object","phrase":"target artifact or enchantment","cards":126}
 {"kind":"object","phrase":"be regenerated","cards":125}
@@ -1761,7 +1755,7 @@
 {"kind":"object","phrase":"Equip {1}","cards":106}
 {"kind":"object","phrase":"Convoke","cards":102}
 {"kind":"object","phrase":"a creature of their choice","cards":102}
-{"kind":"object","phrase":"be blocked this turn","cards":98}
+{"kind":"object","phrase":"be blocked this turn","cards":97}
 {"kind":"object","phrase":"{B}","cards":97}
 {"kind":"object","phrase":"Flying, haste","cards":95}
 {"kind":"object","phrase":"target enchantment","cards":95}
@@ -1771,12 +1765,12 @@
 {"kind":"object","phrase":"{U}","cards":90}
 {"kind":"object","phrase":"block this turn","cards":89}
 {"kind":"object","phrase":"target attacking creature","cards":88}
-{"kind":"object","phrase":"this Aura","cards":88}
+{"kind":"object","phrase":"this Aura","cards":87}
 {"kind":"object","phrase":"Flying, trample","cards":86}
 {"kind":"object","phrase":"Creatures you control","cards":85}
 {"kind":"object","phrase":"Prowess","cards":85}
-{"kind":"object","phrase":"a creature card","cards":83}
 {"kind":"object","phrase":"Enchant land","cards":82}
+{"kind":"object","phrase":"a creature card","cards":82}
 {"kind":"object","phrase":"double strike","cards":82}
 {"kind":"object","phrase":"indestructible until end of turn","cards":82}
 {"kind":"object","phrase":"up to one target creature","cards":82}
@@ -1788,9 +1782,9 @@
 {"kind":"object","phrase":"target attacking or blocking creature","cards":76}
 {"kind":"object","phrase":"target card from a graveyard","cards":76}
 {"kind":"object","phrase":"{W}","cards":76}
-{"kind":"object","phrase":"up to two target creatures","cards":74}
 {"kind":"object","phrase":"a basic land card","cards":73}
-{"kind":"object","phrase":"Crew 2","cards":71}
+{"kind":"object","phrase":"up to two target creatures","cards":73}
+{"kind":"object","phrase":"Crew 2","cards":70}
 {"kind":"object","phrase":"stun","cards":70}
 {"kind":"object","phrase":"target creature with flying","cards":70}
 {"kind":"object","phrase":"your hand","cards":69}
@@ -1798,7 +1792,7 @@
 {"kind":"object","phrase":"haste until end of turn","cards":66}
 {"kind":"object","phrase":"other creatures you control","cards":66}
 {"kind":"object","phrase":"its controller","cards":65}
-{"kind":"object","phrase":"Ward {2}","cards":64}
+{"kind":"object","phrase":"Ward {2}","cards":63}
 {"kind":"object","phrase":"a 2/2 black Zombie creature token","cards":63}
 {"kind":"object","phrase":"untap during its controller's next untap step","cards":63}
 {"kind":"object","phrase":"Changeling","cards":62}
@@ -1808,19 +1802,18 @@
 {"kind":"object","phrase":"3","cards":58}
 {"kind":"object","phrase":"Flying, lifelink","cards":58}
 {"kind":"object","phrase":"Partner","cards":58}
-{"kind":"object","phrase":"energy","cards":58}
 {"kind":"object","phrase":"target creature card from your graveyard","cards":58}
 {"kind":"object","phrase":"charge counter","cards":57}
 {"kind":"object","phrase":"another target creature","cards":56}
 {"kind":"object","phrase":"attack or block","cards":56}
-{"kind":"object","phrase":"Enchant creature you control","cards":55}
 {"kind":"object","phrase":"a card at random","cards":55}
 {"kind":"object","phrase":"another target creature you control","cards":55}
 {"kind":"object","phrase":"untap during its controller's untap step","cards":55}
+{"kind":"object","phrase":"Enchant creature you control","cards":54}
 {"kind":"object","phrase":"charge","cards":54}
 {"kind":"object","phrase":"not attack each combat if able","cards":54}
-{"kind":"object","phrase":"target creature you don't control","cards":54}
 {"kind":"object","phrase":"a land card","cards":53}
+{"kind":"object","phrase":"target creature you don't control","cards":53}
 {"kind":"object","phrase":"untap during your untap step","cards":53}
 {"kind":"object","phrase":"flying until end of turn","cards":52}
 {"kind":"object","phrase":"Crew 1","cards":51}
@@ -1829,6 +1822,7 @@
 {"kind":"object","phrase":"a creature card from your graveyard","cards":48}
 {"kind":"object","phrase":"Enchant player","cards":46}
 {"kind":"object","phrase":"Equip {4}","cards":46}
+{"kind":"object","phrase":"energy","cards":46}
 {"kind":"object","phrase":"{R} or {G}","cards":46}
 {"kind":"object","phrase":"a 1/1 white Spirit creature token with flying","cards":45}
 {"kind":"object","phrase":"target artifact or creature","cards":45}
@@ -2043,7 +2037,6 @@
 {"kind":"object","phrase":"target creature you control and target creature an opponent controls","cards":19}
 {"kind":"object","phrase":"target opponent's library","cards":19}
 {"kind":"object","phrase":"the rest on the bottom of your library in a random order","cards":19}
-{"kind":"object","phrase":"two Treasure tokens","cards":19}
 {"kind":"object","phrase":"up to two target creature cards","cards":19}
 {"kind":"object","phrase":"you have no maximum hand size","cards":19}
 {"kind":"object","phrase":"Defender, flying","cards":18}
@@ -2062,6 +2055,7 @@
 {"kind":"object","phrase":"that creature card","cards":18}
 {"kind":"object","phrase":"that land","cards":18}
 {"kind":"object","phrase":"their library for a basic land card","cards":18}
+{"kind":"object","phrase":"two Treasure tokens","cards":18}
 {"kind":"object","phrase":"your graveyard","cards":18}
 {"kind":"object","phrase":"1/1 green Saproling creature token","cards":17}
 {"kind":"object","phrase":"Buyback {3}","cards":17}
@@ -2305,7 +2299,6 @@
 {"kind":"object","phrase":"a creature dealt damage this way","cards":10}
 {"kind":"object","phrase":"a nonland permanent of their choice","cards":10}
 {"kind":"object","phrase":"a permanent you control","cards":10}
-{"kind":"object","phrase":"a sticker","cards":10}
 {"kind":"object","phrase":"all creatures target opponent controls","cards":10}
 {"kind":"object","phrase":"an enchantment","cards":10}
 {"kind":"object","phrase":"another target permanent you control","cards":10}
@@ -2327,7 +2320,6 @@
 {"kind":"object","phrase":"target creature with mana value 3 or less","cards":10}
 {"kind":"object","phrase":"that permanent's controller","cards":10}
 {"kind":"object","phrase":"the rest of the revealed cards","cards":10}
-{"kind":"object","phrase":"the rest on the bottom of your library in any order","cards":10}
 {"kind":"object","phrase":"this creature gains trample until end of turn","cards":10}
 {"kind":"object","phrase":"two 1/1 white Spirit creature tokens with flying","cards":10}
 {"kind":"object","phrase":"two cards from your hand","cards":10}
@@ -2354,7 +2346,6 @@
 {"kind":"object","phrase":"a Mountain","cards":9}
 {"kind":"object","phrase":"a Swamp","cards":9}
 {"kind":"object","phrase":"a creature or planeswalker of their choice","cards":9}
-{"kind":"object","phrase":"a name sticker on it","cards":9}
 {"kind":"object","phrase":"a nontoken creature of their choice","cards":9}
 {"kind":"object","phrase":"a permanent card from among them","cards":9}
 {"kind":"object","phrase":"a triggered ability of a permanent you control","cards":9}
@@ -2387,6 +2378,7 @@
 {"kind":"object","phrase":"target creature's power and toughness","cards":9}
 {"kind":"object","phrase":"target green creature","cards":9}
 {"kind":"object","phrase":"that creature gains haste","cards":9}
+{"kind":"object","phrase":"the rest on the bottom of your library in any order","cards":9}
 {"kind":"object","phrase":"the top card of their library","cards":9}
 {"kind":"object","phrase":"the top six cards of your library","cards":9}
 {"kind":"object","phrase":"their hand and graveyard into their library","cards":9}
@@ -2603,7 +2595,6 @@
 {"kind":"object","phrase":"this to target creature","cards":7}
 {"kind":"object","phrase":"three 1/1 white Soldier creature tokens","cards":7}
 {"kind":"object","phrase":"three cards from your graveyard","cards":7}
-{"kind":"object","phrase":"ticket","cards":7}
 {"kind":"object","phrase":"two 1/1 white Human Soldier creature tokens","cards":7}
 {"kind":"object","phrase":"two Mountains","cards":7}
 {"kind":"object","phrase":"two artifacts","cards":7}
@@ -2724,7 +2715,6 @@
 {"kind":"object","phrase":"other creatures you control with flying","cards":6}
 {"kind":"object","phrase":"other green creatures you control","cards":6}
 {"kind":"object","phrase":"prowess","cards":6}
-{"kind":"object","phrase":"put a sticker on a nonland permanent you own","cards":6}
 {"kind":"object","phrase":"skip your next turn","cards":6}
 {"kind":"object","phrase":"spells from among those cards","cards":6}
 {"kind":"object","phrase":"spells you cast","cards":6}
@@ -2764,7 +2754,6 @@
 {"kind":"object","phrase":"two 0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"","cards":6}
 {"kind":"object","phrase":"two cards at random","cards":6}
 {"kind":"object","phrase":"two creatures of their choice","cards":6}
-{"kind":"object","phrase":"up to X target creatures","cards":6}
 {"kind":"object","phrase":"up to three target cards from a single graveyard","cards":6}
 {"kind":"object","phrase":"up to two creature cards","cards":6}
 {"kind":"object","phrase":"up to two target creatures you control","cards":6}
@@ -3009,6 +2998,7 @@
 {"kind":"object","phrase":"two target artifacts","cards":5}
 {"kind":"object","phrase":"untap during their controllers' next untap steps","cards":5}
 {"kind":"object","phrase":"untap during your untap step if it has a depletion counter on it","cards":5}
+{"kind":"object","phrase":"up to X target creatures","cards":5}
 {"kind":"object","phrase":"up to one other target permanent you control","cards":5}
 {"kind":"object","phrase":"up to one target Equipment you control","cards":5}
 {"kind":"object","phrase":"up to one target artifact or creature","cards":5}
@@ -3527,7 +3517,6 @@
 {"kind":"object","phrase":"Morph {G}","cards":3}
 {"kind":"object","phrase":"Multikicker {2}","cards":3}
 {"kind":"object","phrase":"Ninjutsu {2}{U}","cards":3}
-{"kind":"object","phrase":"Open an Attraction","cards":3}
 {"kind":"object","phrase":"Other Dinosaurs you control","cards":3}
 {"kind":"object","phrase":"Other Dwarves you control","cards":3}
 {"kind":"object","phrase":"Other Elf creatures you control","cards":3}
@@ -4304,6 +4293,7 @@
 {"kind":"object","phrase":"Noncreature spells","cards":2}
 {"kind":"object","phrase":"Offspring {1}","cards":2}
 {"kind":"object","phrase":"Offspring {3}","cards":2}
+{"kind":"object","phrase":"Open an Attraction","cards":2}
 {"kind":"object","phrase":"Other Elves you control","cards":2}
 {"kind":"object","phrase":"Other Humans you control","cards":2}
 {"kind":"object","phrase":"Other Knights you control","cards":2}
@@ -4570,7 +4560,6 @@
 {"kind":"object","phrase":"a land from your graveyard","cards":2}
 {"kind":"object","phrase":"a legendary card","cards":2}
 {"kind":"object","phrase":"a legendary creature","cards":2}
-{"kind":"object","phrase":"a name sticker","cards":2}
 {"kind":"object","phrase":"a non-Demon creature","cards":2}
 {"kind":"object","phrase":"a noncreature artifact","cards":2}
 {"kind":"object","phrase":"a noncreature card","cards":2}
@@ -4597,7 +4586,6 @@
 {"kind":"object","phrase":"a spell with mana value 3 or less from your hand","cards":2}
 {"kind":"object","phrase":"a spell with mana value 4 or less from your hand","cards":2}
 {"kind":"object","phrase":"a spell with mana value X or less from your hand","cards":2}
-{"kind":"object","phrase":"a sticker on a nonland permanent you own","cards":2}
 {"kind":"object","phrase":"a tapped 1/1 white Spirit creature token with flying","cards":2}
 {"kind":"object","phrase":"a tapped 2/1 black Villain creature token with menace","cards":2}
 {"kind":"object","phrase":"a tapped 3/2 red and white Spirit creature token","cards":2}
@@ -4963,7 +4951,6 @@
 {"kind":"object","phrase":"eight cards from your graveyard","cards":2}
 {"kind":"object","phrase":"enchanted creature +2/+0","cards":2}
 {"kind":"object","phrase":"enchanted creature and up to one target creature an opponent controls","cards":2}
-{"kind":"object","phrase":"enchanted creature and up to one target creature you don't control","cards":2}
 {"kind":"object","phrase":"enchanted creature assigns combat damage equal to its toughness rather than its power","cards":2}
 {"kind":"object","phrase":"enchanted creature can't attack","cards":2}
 {"kind":"object","phrase":"enchanted creature can't be blocked","cards":2}
@@ -5399,7 +5386,6 @@
 {"kind":"object","phrase":"three lands you control","cards":2}
 {"kind":"object","phrase":"three mana in any combination of colors","cards":2}
 {"kind":"object","phrase":"tide","cards":2}
-{"kind":"object","phrase":"to visit your Attractions","cards":2}
 {"kind":"object","phrase":"top three cards of your library","cards":2}
 {"kind":"object","phrase":"toxic 1","cards":2}
 {"kind":"object","phrase":"training","cards":2}
@@ -6153,7 +6139,6 @@
 {"kind":"object","phrase":"Creature spells you cast cost {2} less to cast","cards":1}
 {"kind":"object","phrase":"Creature spells you cast cost {X} less to cast, where X is the amount of life you gained this turn","cards":1}
 {"kind":"object","phrase":"Creature spells you cast have convoke","cards":1}
-{"kind":"object","phrase":"Creature spells you cast have sticker kicker {1}","cards":1}
 {"kind":"object","phrase":"Creature spells you cast that share a creature type with this creature","cards":1}
 {"kind":"object","phrase":"Creature spells you cast with mana value 6 or greater","cards":1}
 {"kind":"object","phrase":"Creature spells you cast with power 4 or greater","cards":1}
@@ -9394,7 +9379,6 @@
 {"kind":"object","phrase":"a spell with suspend from your hand","cards":1}
 {"kind":"object","phrase":"a spell you cast from exile","cards":1}
 {"kind":"object","phrase":"a spell you control","cards":1}
-{"kind":"object","phrase":"a sticker on a creature you own that entered this turn","cards":1}
 {"kind":"object","phrase":"a story counter from this artifact","cards":1}
 {"kind":"object","phrase":"a suspected creature","cards":1}
 {"kind":"object","phrase":"a suspended card you own","cards":1}
@@ -9701,7 +9685,6 @@
 {"kind":"object","phrase":"all Zombie creature cards returned this way","cards":1}
 {"kind":"object","phrase":"all Zombies","cards":1}
 {"kind":"object","phrase":"all abilities except mana abilities","cards":1}
-{"kind":"object","phrase":"all abilities of ability stickers on other permanents you own and cards in your graveyard","cards":1}
 {"kind":"object","phrase":"all activated abilities of all Elf cards in your graveyard","cards":1}
 {"kind":"object","phrase":"all activated abilities of all artifact cards in your graveyard","cards":1}
 {"kind":"object","phrase":"all activated abilities of all cards exiled with it","cards":1}
@@ -10322,7 +10305,6 @@
 {"kind":"object","phrase":"an X/X white Spirit creature token","cards":1}
 {"kind":"object","phrase":"an X/X white Spirit creature token, where X is the greatest toughness among creatures you control","cards":1}
 {"kind":"object","phrase":"an ability of a planeswalker of the chosen type","cards":1}
-{"kind":"object","phrase":"an ability sticker with ticket cost X or less","cards":1}
 {"kind":"object","phrase":"an activated ability","cards":1}
 {"kind":"object","phrase":"an activated ability that costs {2} and tap, create a 0/0 colorless Construct artifact creature token with 'This token gets +1/+1 for each artifact you control.'","cards":1}
 {"kind":"object","phrase":"an activated ability that taps this Saga for {C}","cards":1}
@@ -10551,7 +10533,6 @@
 {"kind":"object","phrase":"another target creature or artifact you control","cards":1}
 {"kind":"object","phrase":"another target creature or land you control","cards":1}
 {"kind":"object","phrase":"another target creature or planeswalker you control gains hexproof until end of turn","cards":1}
-{"kind":"object","phrase":"another target creature with an art sticker on it","cards":1}
 {"kind":"object","phrase":"another target creature with shadow","cards":1}
 {"kind":"object","phrase":"another target creature you control and up to one target creature an opponent controls","cards":1}
 {"kind":"object","phrase":"another target creature you control gains deathtouch","cards":1}
@@ -11803,7 +11784,6 @@
 {"kind":"object","phrase":"descent counter","cards":1}
 {"kind":"object","phrase":"despair","cards":1}
 {"kind":"object","phrase":"discovery","cards":1}
-{"kind":"object","phrase":"distribute up to two art stickers among one or two nonland permanents you own","cards":1}
 {"kind":"object","phrase":"do anything other than block this creature or enchanted creature","cards":1}
 {"kind":"object","phrase":"does not attack each combat if able","cards":1}
 {"kind":"object","phrase":"doesn't attack","cards":1}
@@ -12246,6 +12226,7 @@
 {"kind":"object","phrase":"enchanted creature and other creatures that share a creature type with it have flying until end of turn","cards":1}
 {"kind":"object","phrase":"enchanted creature and other creatures that share a creature type with it, first strike until end of turn","cards":1}
 {"kind":"object","phrase":"enchanted creature and target creature an opponent controls","cards":1}
+{"kind":"object","phrase":"enchanted creature and up to one target creature you don't control","cards":1}
 {"kind":"object","phrase":"enchanted creature as an Insect artifact creature with base power and toughness 0/1","cards":1}
 {"kind":"object","phrase":"enchanted creature becomes a Citizen with base power and toughness 1/1","cards":1}
 {"kind":"object","phrase":"enchanted creature becomes a Dragon in addition to its other types","cards":1}
@@ -12285,7 +12266,6 @@
 {"kind":"object","phrase":"enchanted creature gains shroud until end of turn","cards":1}
 {"kind":"object","phrase":"enchanted creature gains that ability","cards":1}
 {"kind":"object","phrase":"enchanted creature gains vigilance","cards":1}
-{"kind":"object","phrase":"enchanted creature gets +0/+2 for each name sticker on this Aura with eight or more letters","cards":1}
 {"kind":"object","phrase":"enchanted creature gets +1/+1","cards":1}
 {"kind":"object","phrase":"enchanted creature gets +1/-1 or -1/+1 until end of turn","cards":1}
 {"kind":"object","phrase":"enchanted creature gets +2/+2 and has haste","cards":1}
@@ -12451,7 +12431,6 @@
 {"kind":"object","phrase":"equipped creature can't refrain from attacking each combat if able","cards":1}
 {"kind":"object","phrase":"equipped creature gains \"Whenever this creature attacks, you may sacrifice ~.\"","cards":1}
 {"kind":"object","phrase":"equipped creature gains Wizard type in addition to its other types","cards":1}
-{"kind":"object","phrase":"equipped creature gains all abilities of ability stickers on this Equipment","cards":1}
 {"kind":"object","phrase":"equipped creature gains deathtouch until end of turn","cards":1}
 {"kind":"object","phrase":"equipped creature gains double strike","cards":1}
 {"kind":"object","phrase":"equipped creature gains flying","cards":1}
@@ -13164,7 +13143,6 @@
 {"kind":"object","phrase":"one of them onto the battlefield tapped under an opponent's control","cards":1}
 {"kind":"object","phrase":"one of those Dragons","cards":1}
 {"kind":"object","phrase":"one of those cards chosen by an opponent","cards":1}
-{"kind":"object","phrase":"one of those cards into your hand","cards":1}
 {"kind":"object","phrase":"one of those cards with mana value 4 or less","cards":1}
 {"kind":"object","phrase":"one of those cards with that name","cards":1}
 {"kind":"object","phrase":"one of those creatures","cards":1}
@@ -13372,7 +13350,6 @@
 {"kind":"object","phrase":"poisonous 3","cards":1}
 {"kind":"object","phrase":"polyp","cards":1}
 {"kind":"object","phrase":"possession counter","cards":1}
-{"kind":"object","phrase":"power and toughness sticker","cards":1}
 {"kind":"object","phrase":"power-up abilities can't be activated","cards":1}
 {"kind":"object","phrase":"prevent all damage that would be dealt to this creature","cards":1}
 {"kind":"object","phrase":"prevented from attacking as though it has defender","cards":1}
@@ -13412,7 +13389,6 @@
 {"kind":"object","phrase":"provoke","cards":1}
 {"kind":"object","phrase":"prowl {2}{R}","cards":1}
 {"kind":"object","phrase":"pupa","cards":1}
-{"kind":"object","phrase":"put an art sticker on a nonland permanent you own","cards":1}
 {"kind":"object","phrase":"put counters on artifacts, creatures, enchantments, or lands","cards":1}
 {"kind":"object","phrase":"rad counters","cards":1}
 {"kind":"object","phrase":"rally","cards":1}
@@ -13984,7 +13960,6 @@
 {"kind":"object","phrase":"target creature card in your graveyard with mana value 4 or less","cards":1}
 {"kind":"object","phrase":"target creature card of an opponent's choice from your graveyard","cards":1}
 {"kind":"object","phrase":"target creature card of the chosen type","cards":1}
-{"kind":"object","phrase":"target creature card with a sticker on it","cards":1}
 {"kind":"object","phrase":"target creature card with infect","cards":1}
 {"kind":"object","phrase":"target creature card with lesser mana value from your graveyard","cards":1}
 {"kind":"object","phrase":"target creature card with lesser power from your graveyard","cards":1}
@@ -14264,7 +14239,6 @@
 {"kind":"object","phrase":"target creature you control; haste","cards":1}
 {"kind":"object","phrase":"target creature you control; it gains +X/+X and trample until end of turn, where X is the number of basic land types among lands you control","cards":1}
 {"kind":"object","phrase":"target creature you control; menace","cards":1}
-{"kind":"object","phrase":"target creature you don't control blocks target creature you control with a power and toughness sticker on it other than ~ this turn if able","cards":1}
 {"kind":"object","phrase":"target creature you don't control doesn't block this turn if able is a restriction, but the clause states it must block — this is a game rule modification","cards":1}
 {"kind":"object","phrase":"target creature you don't control that was dealt damage this turn","cards":1}
 {"kind":"object","phrase":"target creature you don't control: gains haste until end of turn","cards":1}
@@ -15832,11 +15806,13 @@
 {"kind":"object","phrase":"three untapped creatures you control","cards":1}
 {"kind":"object","phrase":"three untapped white creatures you control","cards":1}
 {"kind":"object","phrase":"three white creatures","cards":1}
+{"kind":"object","phrase":"ticket","cards":1}
 {"kind":"object","phrase":"time counters on ~","cards":1}
 {"kind":"object","phrase":"time or knowledge","cards":1}
 {"kind":"object","phrase":"time-travel","cards":1}
 {"kind":"object","phrase":"to legendary creature","cards":1}
 {"kind":"object","phrase":"to that creature","cards":1}
+{"kind":"object","phrase":"to visit your Attractions","cards":1}
 {"kind":"object","phrase":"token copies of target permanent an opponent controls with haste","cards":1}
 {"kind":"object","phrase":"tokens created","cards":1}
 {"kind":"object","phrase":"tokens plus a Mutagen token","cards":1}
@@ -16171,7 +16147,6 @@
 {"kind":"object","phrase":"up to X target creatures, haste","cards":1}
 {"kind":"object","phrase":"up to X target creatures, intimidate","cards":1}
 {"kind":"object","phrase":"up to X target creatures, where X is the number of times this creature has mutated","cards":1}
-{"kind":"object","phrase":"up to X target creatures, where X is the number of u's in name stickers on this enchantment","cards":1}
 {"kind":"object","phrase":"up to X target instant and/or sorcery cards","cards":1}
 {"kind":"object","phrase":"up to X target instant cards from your graveyard, where X is the number of times ~ was kicked","cards":1}
 {"kind":"object","phrase":"up to X target lands, where X is the number of verse counters on this enchantment","cards":1}
@@ -16460,7 +16435,6 @@
 {"kind":"object","phrase":"up to two land cards from your hand","cards":1}
 {"kind":"object","phrase":"up to two land cards that each have a basic land type","cards":1}
 {"kind":"object","phrase":"up to two lands you control","cards":1}
-{"kind":"object","phrase":"up to two name stickers","cards":1}
 {"kind":"object","phrase":"up to two non-Saga permanent cards","cards":1}
 {"kind":"object","phrase":"up to two noncreature artifact cards with total mana value less than or equal to the sacrificed artifact's mana value from among them","cards":1}
 {"kind":"object","phrase":"up to two noncreature, nonland permanent cards with mana value 3 or less","cards":1}
@@ -16951,7 +16925,6 @@
 {"kind":"object","phrase":"{R}{R}{R}{R}{R}{R}{R}{R}","cards":1}
 {"kind":"object","phrase":"{R}{W} for each target beyond the first","cards":1}
 {"kind":"object","phrase":"{R}{W}{B}","cards":1}
-{"kind":"object","phrase":"{TK}{TK}","cards":1}
 {"kind":"object","phrase":"{U} for each Clue you control","cards":1}
 {"kind":"object","phrase":"{U} for each artifact you control","cards":1}
 {"kind":"object","phrase":"{U} for each card you've drawn this turn","cards":1}

@@ -1,6 +1,6 @@
 import { ComboIndex, type Card, type Combo } from "@edh-seer/engine";
 import { normalizeName } from "./names.js";
-import { docToCard, type CardDoc, type ComboDoc } from "./docs.js";
+import { docToCard, isStickerCard, type CardDoc, type ComboDoc } from "./docs.js";
 
 export interface CardLookup {
   findByName(normalized: string): Promise<CardDoc | null>;
@@ -23,7 +23,8 @@ export async function resolveNames(
 
   for (const name of names) {
     const doc = await lookup.findByName(normalizeName(name));
-    if (!doc) {
+    // A sticker card is outside the engine (see `isStickerCard`): unknown, like a name nobody has.
+    if (!doc || isStickerCard(doc)) {
       missing.push(name);
       continue;
     }

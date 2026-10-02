@@ -15,7 +15,7 @@
  *
  *  Usage: npx tsx packages/tagger/src/bin/extract-triggers.ts */
 import { writeFileSync } from "node:fs";
-import { connect, loadConfig } from "@edh-seer/data";
+import { connect, isStickerCard, loadConfig } from "@edh-seer/data";
 import { CLAUSES_COLLECTION, type CardClausesDoc } from "../clause-store.js";
 import { clauseTexts } from "../derive-input.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
@@ -30,7 +30,8 @@ let triggered = 0, unprinted = 0;
 const docs = store.db.collection<CardClausesDoc>(CLAUSES_COLLECTION).find({ isToken: { $ne: true } } as never, { projection: { oracleId: 1, name: 1, canonical: 1 } });
 for await (const d of docs) {
   const card = await store.cards.findOne({ _id: d.oracleId } as never);
-  if (!card) continue;
+  // Sticker cards are outside the engine (owner 2026-10-02): not in the census either.
+  if (!card || isStickerCard(card as never)) continue;
   const texts = clauseTexts(card as never);
   for (const c of d.canonical ?? []) {
     if (!c.trigger) continue;

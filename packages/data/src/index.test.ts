@@ -16,6 +16,7 @@ test("exposes the public API surface", () => {
     "fetchArchidektDeck",
     "archidektDeckToSections",
     "normalizeName",
+    "isStickerCard",
     "fetchFlavorNames",
     "ingestFlavorNames",
   ]) {

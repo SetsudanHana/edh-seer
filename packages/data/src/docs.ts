@@ -34,6 +34,13 @@ export interface CardDoc {
   meldParts?: string[];
 }
 
+/** A STICKER CARD (Unfinity, CR 123): its text puts, uses or counts stickers. Excluded from the whole
+ *  engine (owner, 2026-10-02): a decklist naming one reads it as an unknown card, it derives no tags,
+ *  forms no links and gets no page. The sticker sheets themselves are never in an EDH list. */
+export function isStickerCard(d: { oracleText?: string; faces?: { oracleText?: string }[] }): boolean {
+  return [d.oracleText ?? "", ...(d.faces ?? []).map((f) => f.oracleText ?? "")].some((t) => /\bstickers?\b/i.test(t));
+}
+
 export interface ComboDoc {
   _id: string;
   cards: string[];
