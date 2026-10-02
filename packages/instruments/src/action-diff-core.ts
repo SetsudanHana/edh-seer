@@ -138,17 +138,15 @@ export function alignByFamily(stored: string[], read: string[]): [number, number
   return out;
 }
 
-/** Index pairs [stored, read] of a longest common subsequence of two verb sequences. */
+/** Index pairs [stored, read]: each stored action with a reading of its verb. */
 export function align(stored: string[], read: string[]): [number, number][] {
-  const n = stored.length, m = read.length;
-  const L = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
-  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) {
-    L[i]![j] = stored[i] === read[j] ? L[i + 1]![j + 1]! + 1 : Math.max(L[i + 1]![j]!, L[i]![j + 1]!);
-  }
+  // The k-th stored action of a verb pairs with the k-th reading of that verb, wherever each sits: the
+  // store and the text may list a pair in either order ("each opponent loses 2 life and you gain 2
+  // life" is stored gain, lose), and an order-keeping alignment then reads only one of the two.
+  const seen = new Map<string, number[]>();
+  read.forEach((v, j) => seen.set(v, [...(seen.get(v) ?? []), j]));
   const out: [number, number][] = [];
-  for (let i = 0, j = 0; i < n && j < m;) {
-    if (stored[i] === read[j]) { out.push([i, j]); i++; j++; } else if (L[i + 1]![j]! >= L[i]![j + 1]!) i++; else j++;
-  }
+  stored.forEach((v, i) => { const j = seen.get(v)?.shift(); if (j !== undefined) out.push([i, j]); });
   return out;
 }
 

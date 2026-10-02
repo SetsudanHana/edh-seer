@@ -336,7 +336,11 @@ import { emblemRecipient } from "../emblem.js";
 // or improved, a target's controller, quoted abilities ending a sentence, cost items after "and".
 // 254: fragments 5: ", then" before any subject, coloured and ability cost changes, copies N times,
 // "~ becomes a copy of", animated lands, stacked openers, "would deal" is no dealer.
-export const DERIVE_VERSION = 254;
+// 255: fragments 6: readings align by verb in either order (stored gain, lose; printed lose, gain);
+// "it deals double that damage" is a double; "those creatures gain" is a joint; copies that change P/T;
+// "into that player's graveyard"; milled sets. Keyword actions the derive switch does not take over
+// (prepare, empower, recruit, cloak, vote, ...) are read for the census only.
+export const DERIVE_VERSION = 255;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

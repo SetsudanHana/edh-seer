@@ -78,6 +78,10 @@ export type Cause = "no-grammar" | "not-in-text" | "count" | "phrase";
 export interface BlockerRow { row: ActionRow; index: number; attribution: Attribution }
 export interface Blockers {
   total: { actions: number; uses: number };
+  /** THE PRINTED-VERB DOMAIN (owner, 2026-10-02): every stored action with printed text whose verb
+   *  is not the catch-all `other` and is printed in the clause (not "not-in-text"), and how many of
+   *  them the candidate reads. The 95% target is `read / uses` here: over all uses it caps near 95%. */
+  domain: { uses: number; read: number };
   /** no-grammar: the parser never produces the verb. not-in-text: the clause prints no word of it
    *  (a store error). count: the grammar reads the verb in this clause, but fewer times than the
    *  store holds it (the store split one phrase, or invented one). phrase: the phrase is unread --
@@ -119,7 +123,7 @@ export function attribute(row: ActionRow, index: number, candidate: ActionParser
 /** Over the census: every stored action the candidate leaves unread, except the store's catch-all
  *  `other` (free text, no action to read) and rows with no printed text. */
 export function blockers(rows: ActionRow[], candidate: ActionParser, unreadOf?: UnreadOf, catalogue = CONSTRUCTIONS): Blockers {
-  const out: Blockers = { total: { actions: 0, uses: 0 }, causes: { "no-grammar": 0, "not-in-text": 0, count: 0, phrase: 0 }, single: {}, first: {}, combination: 0, unknown: 0, examples: {}, shapes: [], heads: [] };
+  const out: Blockers = { total: { actions: 0, uses: 0 }, domain: { uses: 0, read: 0 }, causes: { "no-grammar": 0, "not-in-text": 0, count: 0, phrase: 0 }, single: {}, first: {}, combination: 0, unknown: 0, examples: {}, shapes: [], heads: [] };
   const shapes = new Map<string, { uses: number; texts: Set<string>; examples: string[] }>();
   const produced = new Set<string>();
   for (const row of rows) for (const r of candidate(row.effect, row.type, row.cost) ?? []) produced.add(r.verb);
@@ -129,13 +133,15 @@ export function blockers(rows: ActionRow[], candidate: ActionParser, unreadOf?: 
     const got = readIndexes(row, candidate);
     const readVerbs = (candidate(row.effect, row.type, row.cost) ?? []).map((r) => r.verb);
     row.actions.forEach((a, i) => {
-      if (got.has(i) || a.verb === "other") return;
+      if (a.verb === "other") return;
+      if (got.has(i)) { out.domain.uses += row.cards; out.domain.read += row.cards; return; }
       out.total.actions++; out.total.uses += row.cards;
       const words = VERB_WORDS[a.verb];
       const cause: Cause = !produced.has(a.verb) ? "no-grammar"
         : words && !words.test(`${row.cost ?? ""} ${row.effect}`) ? "not-in-text"
         : readVerbs.includes(a.verb) ? "count" : "phrase";
       out.causes[cause] += row.cards;
+      if (cause !== "not-in-text") out.domain.uses += row.cards;
       if (cause !== "phrase") { example(cause, row); return; }
       if (unreadOf) {
         // The unread phrase that prints this verb, else the first unread phrase.

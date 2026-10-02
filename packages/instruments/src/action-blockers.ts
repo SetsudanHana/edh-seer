@@ -21,6 +21,7 @@ const b = blockers(rows, mod.parseActions as ActionParser, mod.unreadPhrases as 
 mkdirSync(OUT, { recursive: true });
 writeFileSync(`${OUT}/action-blockers.json`, JSON.stringify(b, null, 1) + "\n");
 const pct = (n: number) => `${(100 * n / (b.total.uses || 1)).toFixed(1)}%`.padStart(6);
+console.log(`PRINTED-VERB COVERAGE (the 95% target, owner 2026-10-02): ${(100 * b.domain.read / (b.domain.uses || 1)).toFixed(1)}% (${b.domain.read} of ${b.domain.uses} uses)`);
 console.log(`unread actions with printed text (not "other"): ${b.total.actions} distinct, ${b.total.uses} uses`);
 for (const [k, v] of Object.entries(b.causes)) console.log(`${String(v).padStart(6)} ${pct(v)}  cause: ${k}`);
 console.log(`\n  first  alone   construction  (first = attributed once, in catalogue order; alone = unblocked by this rewrite by itself)`);
