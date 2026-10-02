@@ -316,8 +316,8 @@ test("fragments 5: then-joints, coloured costs, copies, animated lands, stacked 
   expect(parseActions("copy it twice.", "triggered")[0]).toMatchObject({ verb: "copy", amount: "2" });
   expect(verbs("copy it, except the copy isn't legendary.")).toEqual(["copy", "cant"]);
   expect(verbs("this creature becomes a copy of that card, except it has this ability.")).toEqual(["copy", "grant-ability"]);
-  expect(verbs("that land becomes a 0/0 Elemental creature with haste that's still a land.")).toEqual(["animate", "grant-ability"]);
-  expect(verbs("Enchanted Forest becomes a 4/4 green Spirit creature until end of turn.", "static")).toEqual(["animate"]);
+  expect(verbs("that land becomes a 0/0 Elemental creature with haste that's still a land.")).toEqual(["animate", "modify-pt", "grant-ability"]);
+  expect(verbs("Enchanted Forest becomes a 4/4 green Spirit creature until end of turn.", "static")).toEqual(["animate", "modify-pt"]);
   expect(parseActions("During turns other than yours, creatures you control get -0/-2.", "static")[0]).toMatchObject({ verb: "modify-pt", condition: "during turns other than yours" });
   expect(parseActions("Prevent all damage a source of your choice would deal this turn.", "spell")[0]).toMatchObject({ verb: "prevent" });
   expect(verbs("Pay half your life, rounded up.", "spell")).toEqual(["lose-life"]);
@@ -533,7 +533,7 @@ test.each([
   ["counters", ["add-counter", "remove-counter", "proliferate"], 0.91],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.935],
   ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.937],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.934],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.935],
   ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.917],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
