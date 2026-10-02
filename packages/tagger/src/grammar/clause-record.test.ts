@@ -75,3 +75,20 @@ test("labelling round 1: payments, antecedents, amounts and delayed triggers as 
   // "You and Humans you control have hexproof": the class's grant.
   expect(one("Sigarda, Heron's Grace", "Legendary Creature — Angel", "You and Humans you control have hexproof.")[0]!.actions![0]).toMatchObject({ verb: "grant-ability", object: "hexproof" });
 });
+
+test("labelling round 2: pronouns name their antecedent, and a move says where it goes and how", () => {
+  const one = (name: string, typeLine: string, oracleText: string) => grammarClauseRecords({ name, typeLine, oracleText }).records;
+  // An Aura's trigger on its host: "it" is the enchanted creature.
+  expect(one("Bestial Fury", "Enchantment — Aura", "Whenever enchanted creature becomes blocked, it gets +4/+0 and gains trample until end of turn.")[0]!.actions![0])
+    .toMatchObject({ verb: "modify-pt", object: "enchanted creature" });
+  // "put that card on top" after a search comes from the library; a cast "without paying its mana cost" is still "that card".
+  expect(one("Cruel Tutor", "Sorcery", "Search your library for a card, then shuffle and put that card on top. You lose 2 life.")[0]!.actions!.find((a) => a.verb === "put"))
+    .toMatchObject({ fromZone: "library" });
+  expect(one("Sunforger", "Artifact — Equipment", "{R}{W}, Unattach this Equipment: Search your library for a red or white instant card with mana value 4 or less and cast that card without paying its mana cost. Then shuffle.")[0]!.actions!.find((a) => a.verb === "cast"))
+    .toMatchObject({ object: "that card" });
+  // "from all hands and graveyards": one exile from each; "return her ... transformed" transforms too.
+  expect(one("Worldfire", "Sorcery", "Exile all permanents. Exile all cards from all hands and graveyards. Each player's life total becomes 1.")[0]!.actions!.filter((a) => a.verb === "exile").map((a) => a.fromZone))
+    .toEqual(["battlefield", "hand", "graveyard"]);
+  expect(one("Liliana, Heretical Healer", "Legendary Creature — Human Cleric", "Whenever another nontoken creature you control dies, exile Liliana, Heretical Healer, then return her to the battlefield transformed under her owner's control.")[0]!.actions!.map((a) => a.verb))
+    .toContain("transform");
+});

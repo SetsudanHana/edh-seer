@@ -72,6 +72,30 @@
     "emits.subject(-ref +self)": {
       "label": "grammar right",
       "why": "'When this creature becomes the target of a spell or ability, sacrifice it' (Phantasmal Dreadmaw), 'When this land enters, sacrifice it unless you pay {1}' (Gateway Plaza): the 'it' of a self trigger is the card itself; the store left it a back-reference to the trigger."
+    },
+    "count,emits.subject(+fromZone)": {
+      "label": "grammar right",
+      "why": "As 'emits.subject(+fromZone)': an exile of permanents named outright ('Exile all creatures', Farewell; 'exile all other permanents you control', Worldgorger Dragon; 'exile all attacking creatures', Angel of the Dire Hour) leaves the battlefield."
+    },
+    "trigger.batched": {
+      "label": "grammar right",
+      "why": "'Whenever one or more creature cards leave your graveyard' (Soul Enervation), 'one or more counters are put on' (Danny Pink), 'one or more artifact cards leave' (Imotekh): a batched trigger, once per event however many objects; the store left it unbatched."
+    },
+    "emits.subject(~control +scope)": {
+      "label": "grammar right",
+      "why": "The object is the target the sentence named: Lava Coil's and Fanged Flames' 'exile it instead' is the targeted creature (an opponent's, as derive reads a removal target), Archon of Cruelty's discard is the target opponent's; the store wrote the player or 'that creature' with no scope."
+    },
+    "grants": {
+      "label": "grammar right",
+      "why": "The grant names its keywords ('this creature gets +1/+1 and has flying and trample', Dragonloft Idol; 'has first strike', Prickleboar; 'has trample', Wayward Angel); the store wrote the recipient as the object and lost which keyword."
+    },
+    "abilities:3->4": {
+      "label": "grammar right",
+      "why": "The grammar reads a step the store folded: a search's put as its own move (Urza's Cave, Magda), a pump's keyword as its own grant (Invasion of Mercadia), Necromancy's quoted enchant grant. lostClaims keeps any card where the split would drop a kind or emit."
+    },
+    "abilities:2->4": {
+      "label": "grammar right",
+      "why": "One action per recipient ('2 damage to each opponent and each creature they control', Delayed Blast Fireball), an animation's P/T and keywords apart from the animation (Gideon, Martial Paragon; Ebony Fly), a pile exiled from two zones (Triumph of Saint Katherine)."
     }
   }
 }
