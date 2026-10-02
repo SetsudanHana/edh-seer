@@ -74,7 +74,7 @@ const CARD = parse("a card")!;
 const SELF: SubjectFilter = { control: "you", token: null, self: true };
 
 /** A COUNT before a noun phrase, as the store spells the amount: "two cards" 2, "up to two cards" 2, "any number of cards", "X cards", "that many cards", "an additional card" 1. */
-const COUNT = /^(?:(up to )?(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|twenty|x|\d+)|(any number of|that many|all the|all|half)) (?:additional )?/i;
+const COUNT = /^(?:(up to )?(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|twenty|x|\d+)|(any number of|(?:up to )?that many|all the|all|half)) (?:additional )?/i;
 
 /** The object of an action: a counted class ("two basic land cards"), the card itself ("this card"),
  *  or a back-reference ("it", "that card", "those cards"), which task 4's resolver owns. */
@@ -111,7 +111,7 @@ function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | 
   if (/^one or two /i.test(t)) return objectOf(t.replace(/^one or two /i, "up to two "));
   const m = COUNT.exec(t);
   // "up to two" is the store's "2", the convention derive's scaling reads ("up to X ... where X is").
-  const amount = m ? (m[2] ? amountOf(m[2]) : m[3]!.toLowerCase().replace(/^all the$/, "all")) : undefined;
+  const amount = m ? (m[2] ? amountOf(m[2]) : m[3]!.toLowerCase().replace(/^all the$/, "all").replace(/^up to /, "")) : undefined;
   const rest = m ? t.slice(m[0].length) : t;
   const object = parse(m && !/^(?:a|an)$/i.test(m[2] ?? "") ? `a ${rest.replace(/cards\b/, "card")}` : rest) ?? parse(rest);
   return object ? { ...(amount ? { amount } : {}), object } : null;
@@ -188,6 +188,9 @@ const DAMAGE_LIFE: Record<string, [string, Handler]> = {
     // "it deals double that damage [to that permanent or player] instead": a doubler (CR 614), the
     // store's double, its object kept as stored.
     if (/^double that damage(?: to .+)?$/.test(rest)) return { verb: "double", object: { control: "any", token: null, ref: "sentence" } };
+    // "it deals that much damage plus 2 [to that permanent or player] instead": the improved amount.
+    const plus = /^that much damage (plus|minus) (\d+|one|two|three)(?: to (?:that permanent or player|that player|that creature|it))?$/.exec(rest);
+    if (plus) return { object: { control: "any", token: null, ref: "sentence" }, amount: `that much damage ${plus[1]} ${amountOf(plus[2]!) ?? plus[2]}` };
     // "2 damage to any target and 3 damage to you": one action per recipient, as the store writes it.
     const parts = rest.split(/,? and (?=(?:\w+|half X|that much) damage\b)|, (?=(?:\w+|half X) damage\b)/);
     const out: Args[] = [];
@@ -304,7 +307,7 @@ const COUNTERS: Record<string, [string, Handler]> = {
 function tokenOf(phrase: string): Args | null {
   // "that's tapped and attacking" is how the token ENTERS, not what it is: kept out of the text, or the
   // token's own node (a Soldier) would no longer join the card that makes it.
-  let t = phrase.trim().replace(/ that(?:'s| are) tapped and attacking(?: (?:that player|that opponent|the defending player|that player or a planeswalker they control))?$/, "");
+  let t = phrase.trim().replace(/ (?:that(?:'s| are) )?tapped and attacking(?: (?:that player|that opponent|the defending player|that player or a planeswalker they control))?(?=$|, except )/, "");
   // "a token that's a copy of it, except it isn't legendary": the exception changes the copy, and is
   // read so nothing is skipped; the text keeps it, as the store writes it.
   const except = t.search(/, except /);
@@ -329,12 +332,13 @@ function tokenOf(phrase: string): Args | null {
   // The filter grammar reads the characteristics; a count it has no word for ("that many") and a
   // quoted ability it cannot read are not characteristics, so a reading without them stands in.
   const bare = count && !amountOf(count[1]!) ? `a ${t.slice(count[0].length).replace(/tokens\b/, "token")}` : t;
-  const object = parse(bare) ?? parse(bare.replace(/ with "[^"]*"$/, ""));
+  const copiesRef = /\bcop(?:y|ies) of (?:that|it|those|them|the exiled|the sacrificed|this\b|~)/.test(t);
+  // A copy of a back-reference or of the card itself is a token whatever the filter makes of it.
+  const object = parse(bare) ?? parse(bare.replace(/ with "[^"]*"$/, "")) ?? (copiesRef && /^an? token that's a copy of /.test(bare) ? { control: "any" as const, token: true } : null);
   if (!object || object.token !== true) return null;
   // A COPY OF A BACK-REFERENCE ("a token that's a copy of that permanent", Second Harvest) keeps the
   // stored object: the filter grammar reads "that permanent" as the class permanent, which would let
   // every copied token feed landfall and enchantress.
-  const copiesRef = /\bcop(?:y|ies) of (?:that|it|those|them|the exiled|the sacrificed|this)\b/.test(t);
   return { object: copiesRef ? { ...object, ref: "sentence" } : object, amount: amount ?? (each ? `${n ?? "1"} for each ${each[1]}` : n ?? "1"), ...(copiesRef ? {} : { text }) };
 }
 
@@ -394,7 +398,7 @@ function fromOf(phrase: string): { rest: string; from?: string } {
   return { rest: phrase.slice(0, at), from: zoneOf(phrase.slice(at + " from ".length).replace(/^(?:your|their|its owner's|a|an opponent's|target player's|each player's|each opponent's|all|the) /, "")) };
 }
 
-const MOVE_REF = /^(?:(?:one|two|three|up to (?:one|two|three)|any number) of (?:them|those cards)|the rest|the other|the tokens?|the (?:chosen )?creature|one|that [a-z]+(?: card)?|those [a-z]+(?: cards)?|(?:one|that) pile|all (?:[a-z]+ )*cards revealed this way|the (?:exiled|chosen|revealed|milled) cards?|the cards? exiled (?:this way|with (?:it|~))|all cards exiled with (?:it|~)|her|his)$/;
+const MOVE_REF = /^(?:(?:one|two|three|up to (?:one|two|three)|any number) of (?:them|those cards)|the rest|the other|the tokens?|the (?:chosen )?creatures?|both creatures|the creatures? you chose|one|that [a-z]+(?: card)?|those [a-z]+(?: cards)?|(?:one|that) pile|all (?:[a-z]+ )*cards revealed this way|the (?:exiled|chosen|revealed|milled) cards?|the cards? exiled (?:this way|with (?:it|~))|all cards exiled with (?:it|~)|her|his)$/;
 
 /** A zone move's object: a class, the card itself, or a back-reference (kept as stored). The COUNT
  *  stays in the text, as the store writes a zone move ("two creatures", no amount): derive's counts
@@ -406,6 +410,7 @@ function moveObject(phrase: string, onField = false): Args | null {
   // "one of them", "the rest", "the exiled card", "those tokens": back-references, kept as stored.
   if (MOVE_REF.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   const { rest, from } = fromOf(t);
+  if (/^the top (?:creature )?card of your graveyard$/.test(rest)) return { object: CARD, fromZone: "graveyard", text: phrase };
   if (/^the top (?:card|(?:\w+|\d+) cards) of (?:your|their|target player's|each player's|its owner's|that player's|each opponent's|target opponent's) library$/.test(rest)) {
     // "their library": whose is the actor's, a back-reference ("target opponent exiles the top four
     // cards of their library", Oblivion Sower), so the stored object, which names them, stays.
@@ -467,7 +472,7 @@ const ZONE: Record<string, [string, Handler]> = {
   destroy: ["destroy", (rest) => moveList(rest)],
   sacrifice: ["sacrifice", (rest) => moveList(rest)],
   exile: ["exile", (rest) => withCounters(rest.replace(/ face down$/, ""), (rest) => {
-    rest = rest.replace(/ instead of putting it into its owner's graveyard$/, "");
+    rest = rest.replace(/ instead of putting (?:it|that card|that spell) (?:anywhere else|into (?:its owner's|a|your) graveyard)(?: as it resolves)?$/, "");
     const until = rest.search(/ until /);
     // "exile cards from the top of your library until you exile a nonland card": the until is WHICH
     // card, not how long.
@@ -660,14 +665,18 @@ function castOrPlay(rest: string, what: RegExp): Args | null {
       // "..., and you may spend mana as though it were mana of any color to cast that spell".
       .replace(/,? and (?:you may spend mana as though it were mana of any (?:color|type)|mana of any type can be spent) to cast (?:that spell|it|them|those spells)$/i, "");
   }
-  if (!what.test(t)) return null;
+  t = t.replace(/ as an Adventure$/i, "").replace(/ by paying (?:\d+|one|two|three) life in addition to paying (?:its|their) other costs$/i, "");
+  // "a spell from your hand with mana value 3 or less": the zone mid-phrase, moved to the end.
+  const mid = / from (your hand|your graveyard|exile)(?= with )/i.exec(t);
+  if (mid) t = `${t.slice(0, mid.index)}${t.slice(mid.index + mid[0].length)} from ${mid[1]}`;
   const from = / from (?:the top of (?:your|their) library|your graveyard(?: or from exile)?|your hand|exile|among them|among those (?:exiled )?cards|among (?:the )?cards? exiled [\w ]+)$/i.exec(t);
+  if (!what.test(from ? t.slice(0, from.index) : t)) return null;
   const zone = from ? (/library/.test(from[0]) ? "library" : /graveyard/.test(from[0]) ? "graveyard" : /hand/.test(from[0]) ? "hand" : /exile/.test(from[0]) ? "exile" : undefined) : undefined;
   const r = objectOf(from ? t.slice(0, from.index) : t) ?? (/^(?:a|an|one|two) additional lands?$/i.test(t) ? { object: parse("a land")! } : null);
   if (!r) return null;
   // A relative clause ("spells that have a cycling ability") is a narrowing the filter can drop: not
   // read, so the stored action stands (Abandoned Sarcophagus).
-  if (/ that /.test(t)) return null;
+  if (/ that (?!damage\b|much\b|many\b)/.test(t)) return null;
   return { object: r.object, ...(r.object.ref ? {} : { text: t }), ...(zone ? { fromZone: zone } : {}) };
 }
 
@@ -703,6 +712,11 @@ function subjectAction(t: string): ActionReading[] | null {
     return [{ verb: "cost-modify", object: objectOf(spells)!.object, text: spells, amount: `${sign}${cost[2]!.toUpperCase()}${cost[4] ?? ""}` }];
   }
   if (/^you become the monarch$/i.test(t)) return [{ verb: "monarch" }];
+  // A CHARACTERISTIC-DEFINING ABILITY (CR 604.3): "Titania's power and toughness are each equal to the
+  // number of lands you control", "~'s power is equal to ...". The card's own name, short or full, so
+  // a few capitalised words; the store's modify-pt on the card, the count its amount.
+  const cda = /^((?:~|this [a-z]+|[a-z][\w-]*(?: [A-Za-z][\w-]*){0,3}))'s power(?: and toughness)? (?:is|are)(?: each)? equal to (.+)$/i.exec(t);
+  if (cda && !/\b(?:target|each|enchanted|equipped|that|another)\b/i.test(cda[1]!)) return [{ verb: "modify-pt", object: SELF, amount: cda[2]! }];
   // "This creature enters prepared", "it becomes prepared", "target creature becomes unprepared".
   const prepared = /^(.+?) (?:enters|becomes) (un)?prepared$/i.exec(t);
   if (prepared && (objectOf(prepared[1]!) || THEY.test(prepared[1]!))) {
@@ -852,7 +866,7 @@ const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new Reg
 
 /** Every verb word a phrase can open with, for splitting -- wider than the handled ones, so a joint
  *  before an unhandled verb ("..., then shuffle") still splits. */
-const ANY_VERB = /^(?:(?:it|that creature|those creatures|they) (?:doesn't|don't|can't|gains?|gets?) |(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|double (?=the|its|that|target|each)))\b/i;
+const ANY_VERB = /^(?:(?:it|that creature|those creatures|they) (?:doesn't|don't|can't|gains?|gets?) |(?:up to one )?(?:other |another )?target [a-z]+(?: [a-z]+)? gets?(?= )|(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|double (?=the|its|that|target|each)))\b/i;
 
 /** Split a sentence into phrases on ", then ", " and then ", ", and ", " and ", ", " -- only where a
  *  verb follows, so "a creature and a land" stays whole. */
@@ -902,7 +916,10 @@ const DURATION = / until (?:end of turn|your next turn|the end of your next turn
 /** "flying", "flying and haste", "deathtouch, lifelink, and haste", a quoted ability, "protection
  *  from red": one grant per ability, as the store writes them. */
 function abilitiesOf(text: string): string[] | null {
-  const parts = text.split(/,? and (?!from )|, (?!and )/).map((p) => p.trim()).filter(Boolean);
+  // A quoted ability is one atom: its own commas and "and"s are not this list's.
+  const q: string[] = [];
+  const held = text.replace(/"[^"]*"/g, (m) => `\uE002${q.push(m) - 1}\uE003`);
+  const parts = held.split(/,? and (?!from )|, (?!and )/).map((p) => p.trim().replace(/\uE002(\d+)\uE003/g, (_m, i: string) => q[Number(i)]!)).filter(Boolean);
   return parts.length > 0 && parts.every(isAbility) ? parts : null;
 }
 
@@ -926,7 +943,9 @@ function pumpOrGrant(t: string): ActionReading[] | null {
   let condition: string | undefined;
   const lead = /^(?:during your turn|until end of turn|as long as [^,]+|if [^,]+), /i.exec(body);
   if (lead) { if (!/^until end of turn/i.test(lead[0])) condition = lead[0].slice(0, -2); body = body.slice(lead[0].length); }
-  const trail = body.search(/ (?:as long as|for as long as|if(?! able$)) /i);
+  // Not inside a quoted ability: 'it gains "If this permanent would leave the battlefield, ..."'.
+  const quoted = body.indexOf('"');
+  const trail = (quoted >= 0 ? body.slice(0, quoted) : body).search(/ (?:as long as|for as long as|if(?! able$)) /i);
   if (trail > 0) { condition = [condition, body.slice(trail + 1)].filter(Boolean).join(", "); body = body.slice(0, trail).replace(DURATION, ""); }
   // "you may have target creature get -1/-1": made to, and optional.
   const have = /^you (may )?have (?=.+ (?:get|gain|have|become) )/i.exec(body);
@@ -1064,7 +1083,10 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   if (r) return r;
   const phrase = quoted.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!).trim();
   const at = phrase.search(TRAILING_DURATION);
-  return at > 0 ? readPhraseOnce(phrase.slice(0, at), condition, carried) : null;
+  if (at > 0) return readPhraseOnce(phrase.slice(0, at), condition, carried);
+  // "you may cast this card from your graveyard as long as you control a Zombie": the condition, kept.
+  const cond = phrase.search(/ as long as [^,]+$/i);
+  return cond > 0 ? readPhraseOnce(phrase.slice(0, cond), [condition, phrase.slice(cond + 1)].filter(Boolean).join(", "), carried) : null;
 }
 
 function readPhraseOnce(quoted: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
@@ -1259,7 +1281,7 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   // An ability word ("Crescent Fang —", "Date Night —") names the ability and does nothing.
   const dash = effect.indexOf(" — ");
   if (dash > 0 && dash <= 41 && /^[A-Z][\w' ,-]*$/.test(effect.slice(0, dash))) effect = effect.slice(dash + 3);
-  effect = effect.replace(/^\+ (?:\{[^}]+\})+ — /, "").replace(/^\d+(?:[-—–]\d+|\+)? \| /, "").replace(/^\[[+−-]?(?:\d+|X)\]:? /, "");
+  effect = effect.replace(/^\+ (?:\{[^}]+\})+ — /, "").replace(/^(?:\{[^}]+\})+ — /, "").replace(/^\d+(?:[-—–]\d+|\+)? \| /, "").replace(/^\[[+−-]?(?:\d+|X)\]:? /, "");
   // A cost the segmenter left in the text ("{T}, Pay {E}{E}{E}: Draw a card.") is still a cost.
   // By index, not a regex over the whole text (CodeQL polynomial-redos).
   const colon = cost === undefined ? effect.indexOf(": ") : -1;

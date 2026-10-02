@@ -340,7 +340,10 @@ import { emblemRecipient } from "../emblem.js";
 // "it deals double that damage" is a double; "those creatures gain" is a joint; copies that change P/T;
 // "into that player's graveyard"; milled sets. Keyword actions the derive switch does not take over
 // (prepare, empower, recruit, cloak, vote, ...) are read for the census only.
-export const DERIVE_VERSION = 255;
+// 256: fragments 7: characteristic-defining abilities ("Titania's power and toughness are each equal
+// to ..."), quoted grants kept whole, several targets pumped in one sentence, self-copies, improved
+// damage ("that much damage plus 2"), a trailing "as long as" kept as the condition.
+export const DERIVE_VERSION = 256;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

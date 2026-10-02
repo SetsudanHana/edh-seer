@@ -95,8 +95,8 @@ test("tokens: the printed phrase, its count, a quoted ability kept whole", () =>
   expect(read("For each token you control, create a token that's a copy of that permanent.")[0]?.text).toBeUndefined();
   expect(read("amass Orcs 2.")).toMatchObject([{ verb: "amass", amount: "2", text: "Orcs" }]);
   expect(read("Investigate twice.")).toMatchObject([{ verb: "investigate", amount: "2" }]);
-  // Quoted text is the granted ability's, never this clause's actions.
-  expect(read('Creatures you control have "Whenever this creature attacks, draw a card."')).toEqual([]);
+  // Quoted text is the granted ability's, never this clause's actions: the grant is read, whole.
+  expect(read('Creatures you control have "Whenever this creature attacks, draw a card."')).toMatchObject([{ verb: "grant-ability", text: '"Whenever this creature attacks, draw a card."' }]);
 });
 
 test("zone moves: the zones, the count kept in the text, a back-reference kept as stored", () => {
@@ -340,18 +340,42 @@ test("fragments 6: keyword actions, doublers, copies that change P/T, player des
   expect(parseActions("put it onto the battlefield instead of putting it into your graveyard.", "triggered")[0]).toMatchObject({ verb: "put", toZone: "battlefield" });
 });
 
+// Fragments 7 (#896): characteristic-defining abilities, quoted grants whole, several targets pumped in
+// one sentence, self-copies, improved damage, a trailing "as long as".
+test("fragments 7: CDAs, quoted grants, several pumped targets, self-copies", () => {
+  const verbs = (t: string, type = "triggered") => parseActions(t, type).map((a) => a.verb);
+  expect(parseActions("Titania's power and toughness are each equal to the number of lands you control.", "static")[0])
+    .toMatchObject({ verb: "modify-pt", object: { self: true }, amount: "the number of lands you control" });
+  // Not someone else's power: a target's is no CDA.
+  expect(verbs("target creature's power is equal to the number of lands you control.", "static")).toEqual([]);
+  expect(parseActions('it gains "If this permanent would leave the battlefield, exile it instead of putting it anywhere else."', "triggered")[0]?.text)
+    .toBe('"If this permanent would leave the battlefield, exile it instead of putting it anywhere else."');
+  expect(verbs("Target creature gets +3/+3, up to one other target creature gets +2/+2, and up to one other target creature gets +1/+1 until end of turn.", "spell"))
+    .toEqual(["modify-pt", "modify-pt", "modify-pt"]);
+  expect(verbs("create a token that's a copy of ~ tapped and attacking that player, except it isn't legendary.")).toEqual(["create"]);
+  expect(parseActions("it deals that much damage plus 2 to that permanent or player instead.", "static")[0]).toMatchObject({ verb: "deal-damage", amount: "that much damage plus 2" });
+  expect(verbs("destroy the chosen creatures.")).toEqual(["destroy"]);
+  expect(parseActions("Exile the top card of your graveyard.", "activated")[0]).toMatchObject({ verb: "exile", fromZone: "graveyard" });
+  expect(parseActions("exile it instead of putting it anywhere else.", "static")[0]).toMatchObject({ verb: "exile", toZone: "exile" });
+  expect(parseActions("search your library for up to that many basic land cards.", "triggered")[0]).toMatchObject({ verb: "search", amount: "that many" });
+  expect(parseActions("you may cast a spell from your hand with mana value less than or equal to that damage without paying its mana cost.", "triggered")[0])
+    .toMatchObject({ verb: "cast", fromZone: "hand" });
+  expect(parseActions("you may cast this card from your graveyard as long as you control a Zombie.", "static")[0])
+    .toMatchObject({ verb: "cast", fromZone: "graveyard", condition: "as long as you control a Zombie" });
+});
+
 test.each([
-  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.95],
-  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.929],
+  ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.951],
+  ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.931],
   ["counters", ["add-counter", "remove-counter", "proliferate"], 0.872],
-  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.929],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.916],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.882],
+  ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.932],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.919],
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.907],
   ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.903],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
     "explore", "connive", "endure"], 0.839],
-  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.782],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.789],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")
