@@ -364,7 +364,9 @@ import { emblemRecipient } from "../emblem.js";
 // remove counters"): "remove a counter from a permanent you control", "... from among creatures".
 // 266: "life you lost this turn" is the `per-life-lost` scaling basis, and a life payment the store
 // left out (Toxic Deluge's additional cost) is added from the grammar (owner 2026-10-02, Rowan).
-export const DERIVE_VERSION = 266;
+// 267: fragments 16: "triple", plays and casts of "one of them", casts paid by a sacrifice, lists with
+// "those", entering tapped and with counters.
+export const DERIVE_VERSION = 267;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

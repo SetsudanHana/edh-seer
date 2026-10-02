@@ -514,18 +514,31 @@ test("a counter-removal outlet on other permanents is read", () => {
     .toMatchObject({ verb: "remove-counter", counter: "+1/+1", amount: "X", text: "creatures you control" });
 });
 
+// Fragments 16 (#896): "triple", plays and casts of "one of them", casts paid by a sacrifice, lists with
+// "those", entering tapped and with counters.
+test("fragments 16: triple, one of them, casts paid by a sacrifice", () => {
+  const verbs = (x: string, type = "triggered") => parseActions(x, type).map((a) => a.verb);
+  expect(verbs("Triple target creature's power and toughness until end of turn.", "spell")).toEqual(["triple"]);
+  expect(verbs("it deals triple that damage instead.", "static")).toEqual(["triple"]);
+  expect(verbs("you may play one of them without paying its mana cost.")).toEqual(["play"]);
+  expect(verbs("exile this artifact and those creature cards.")).toEqual(["exile", "exile"]);
+  expect(verbs("this artifact enters tapped and with three coin counters on it.", "static")).toEqual(["tap", "add-counter"]);
+  expect(verbs("you may cast an instant or sorcery spell from your graveyard by sacrificing a creature in addition to paying its other costs.", "static"))
+    .toEqual(["cast", "sacrifice"]);
+});
+
 test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.955],
   ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.942],
   ["counters", ["add-counter", "remove-counter", "proliferate"], 0.91],
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.935],
-  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.936],
+  ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.937],
   ["pump/grant", ["modify-pt", "grant-ability"], 0.934],
   ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.917],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",
     "explore", "connive", "endure"], 0.861],
-  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.835],
+  ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.836],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
   const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")

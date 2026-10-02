@@ -115,7 +115,7 @@ function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | 
   if (typed && parse(`a ${typed[1]}`)) return { object: parse(`a ${typed[1]}`)! };
   // "that land", "that artifact": a back-reference to an object the sentence named.
   if (/^that (?:land|artifact|enchantment|planeswalker|aura|equipment|vehicle|dragon)$/i.test(t) || /^that [A-Z][a-z]+$/.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
-  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+(?: or [a-z]+)?'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:spell|ability|creature|permanent|card|token)|the creature you control|the chosen [a-z]+|(?:one|two|either) of (?:them|those cards)|each of (?:those|them|these)(?: [a-z]+)?|those (?:permanents|lands|artifacts|tokens|spells)|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+(?: or [a-z]+)?'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:spell|ability|creature|permanent|card|token)|the creature you control|the chosen [a-z]+|(?:one|two|either|any number) of (?:them|those cards)|each of (?:those|them|these)(?: [a-z]+)?|those (?:permanents|lands|artifacts|tokens|spells)|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   // "one or two target creatures": at most two, the store's "up to two".
   if (/^one or two /i.test(t)) return objectOf(t.replace(/^one or two /i, "up to two "));
   const m = COUNT.exec(t);
@@ -201,6 +201,7 @@ const DAMAGE_LIFE: Record<string, [string, Handler]> = {
     // "it deals double that damage [to that permanent or player] instead": a doubler (CR 614), the
     // store's double, its object kept as stored.
     if (/^(?:double|twice) that (?:much )?damage(?: to .+)?$/.test(rest)) return { verb: "double", object: { control: "any", token: null, ref: "sentence" } };
+    if (/^triple that damage(?: to .+)?$/.test(rest)) return { verb: "triple", object: { control: "any", token: null, ref: "sentence" } };
     // "it deals 4 damage instead": a replacement's new amount, the recipient as stored.
     const only = /^(\d+|x) damage$/i.exec(rest);
     if (only) return { object: { control: "any", token: null, ref: "sentence" }, amount: amountOf(only[1]!) ?? only[1]! };
@@ -502,7 +503,7 @@ function withCounters(rest: string, move: (rest: string) => Args | Args[] | null
 /** Where a list of objects splits: before each new determiner ("target artifact, target creature,
  *  and target land", "up to one target artifact card, up to one target enchantment card").
  *  "all artifacts, creatures, and lands" is one object and does not split. */
-const OBJECT_JOINT = /,? and (?=(?:target|another target|up to one|each|all|this|a|an|the top) )|, (?=(?:target|another target|up to one|each|all|this|a|an|the top) )/;
+const OBJECT_JOINT = /,? and (?=(?:target|another target|up to one|each|all|this|a|an|the top|those) )|, (?=(?:target|another target|up to one|each|all|this|a|an|the top|those) )/;
 
 /** A list of distinct objects, one move each, as the store writes them; a "from <zone>" closing the
  *  list belongs to every item ("... and up to one target sorcery card from your graveyard"). */
@@ -663,18 +664,21 @@ const TAIL: Record<string, [string, Handler]> = {
   cast: ["cast", (rest) => {
     // "this card from your graveyard by discarding two cards in addition to paying its other costs":
     // the cast and the discard it costs, as the store writes them.
-    const by = / by discarding (.+?) in addition to paying its other costs$/i.exec(rest);
-    const cast = castOrPlay(by ? rest.slice(0, by.index) : rest, /\bspells?\b|\bcards?\b|\bcop(?:y|ies)\b|^(?:it|them|~)$/i);
+    // ...or "by sacrificing a creature": the cast and the sacrifice.
+    const by = / by (discarding|sacrificing) (.+?) in addition to paying its other costs$/i.exec(rest);
+    const cast = castOrPlay(by ? rest.slice(0, by.index) : rest, /\bspells?\b|\bcards?\b|\bcop(?:y|ies)\b|^(?:it|them|~)$|\bof them$/i);
     if (!by) return cast;
-    const d = DRAW_SEARCH.discard![1](by[1]!);
-    return cast && d && !Array.isArray(d) ? [cast, { ...d, verb: "discard", text: by[1]! }] : null;
+    const d = by[1]!.toLowerCase() === "discarding" ? DRAW_SEARCH.discard![1](by[2]!) : moveObject(by[2]!, true);
+    return cast && d && !Array.isArray(d) ? [cast, { ...d, verb: by[1]!.toLowerCase() === "discarding" ? "discard" : "sacrifice", text: by[2]! }] : null;
   }],
-  play: ["play", (rest) => castOrPlay(rest, /\blands?\b|\bcards?\b|^(?:it|them)$/i)],
+  play: ["play", (rest) => castOrPlay(rest, /\blands?\b|\bcards?\b|^(?:it|them)$|\bof them$/i)],
   // "prevent all combat damage that would be dealt this turn": the store keeps the whole phrase.
   prevent: ["prevent", (rest) => (/\bdamage\b/.test(rest) ? { object: { control: "any", token: null }, text: rest } : null)],
   // "double its power", "double the number of +1/+1 counters on it": the verb is read, the doubled
   // thing keeps the stored object (it names the counters' holder, which "it" / "each of them" hides).
   double: ["double", (rest) => (rest !== "" ? { object: { control: "any", token: null, ref: "sentence" } } : null)],
+  // "Triple target creature's power and toughness": the same, three times.
+  triple: ["triple", (rest) => (rest !== "" ? { object: { control: "any", token: null, ref: "sentence" } } : null)],
   bolster: ["bolster", numbered],
   adapt: ["adapt", numbered],
   monstrosity: ["monstrosity", numbered],
@@ -936,7 +940,7 @@ function restrictionOf(t: string): ActionReading[] | null {
 }
 
 /** "<it> enters with two +1/+1 counters on it": counters the permanent itself arrives with. */
-const ENTERS_WITH = /^(?:~|this [a-z]+|it|that creature|that permanent|each creature) (?:enters(?: the battlefield)?(?: tapped)?|escapes) with /i;
+const ENTERS_WITH = /^(?:~|this [a-z]+|it|that creature|that permanent|each creature) (?:enters(?: the battlefield)?(?: tapped(?: and)?)?|escapes) with /i;
 /** "each other Beast creature you control enters with ..." (a class) as well as the card itself. */
 const ENTERS_WITH_ANY = / (?:enters?(?: the battlefield)?(?: tapped)?|escapes?) with /i;
 /** [counters phrase, "for each" tail, the subject when it is a class, abilities it enters with] of
@@ -1365,7 +1369,7 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
       ...entersWith![3].map((a) => ({ verb: "grant-ability", object: who.object, text: a, ...(condition ? { condition } : {}) })),
     ];
     // "This land enters tapped with two charge counters on it": the tap first, as the store writes it.
-    return /^\S.*? enters(?: the battlefield)? tapped with /i.test(t) ? [{ verb: "tap", object: SELF, ...(condition ? { condition } : {}) }, ...counters] : counters;
+    return /^\S.*? enters(?: the battlefield)? tapped(?: and)? with /i.test(t) ? [{ verb: "tap", object: SELF, ...(condition ? { condition } : {}) }, ...counters] : counters;
   }
   // "you get {E}{E}": energy counters on you (CR 107.14).
   const energy = /^(?:you )?gets? ((?:\{E\})+)(?: \.)?$/i.exec(t);
