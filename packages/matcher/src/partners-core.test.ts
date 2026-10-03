@@ -6,7 +6,7 @@ import { expect, test, vi } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import {
-  KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, PI_KEEP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive,
+  KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, PI_KEEP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive, impliedKeysOf, VERIFY_LIMIT,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyBuckets, totalOf, browseLetterOf, browseSlices,
   supplyForms, supplyKeysOf, boardCountsOf, themesOf, inIdentityOf, identityMask, splitKey, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf, effectOrder,
 } from "./partners-core.js";
@@ -167,11 +167,16 @@ const krenko = base("Krenko, Mob Boss", [{
   ],
 }] as unknown as CardTags["abilities"], ["goblin"]);
 
-const impactTremors = base("Impact Tremors", [{
-  kind: "triggered",
-  trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
-  effect: { kind: "deal-damage" },
-}] as unknown as CardTags["abilities"]);
+// AN ENCHANTMENT, AS PRINTED (#1014): `base` makes a creature, and since every card supplies its
+// own cast and entry, a creature Impact Tremors would feed itself's kind of payoff.
+const impactTremors = (() => {
+  const d = base("Impact Tremors", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "deal-damage" },
+  }] as unknown as CardTags["abilities"]);
+  return { ...d, tags: { ...d.tags, characteristics: { ...d.tags.characteristics, types: ["enchantment"] } } as CardTags };
+})();
 
 /** A card that DEMANDS NOTHING KRENKO SUPPLIES. It shares no event key, so it never reaches the
  *  verification phase at all. */
@@ -275,15 +280,20 @@ test("a partner shard name is stable and inside the count", () => {
  *  page, and what the sitemap promises. A card with abilities but neither an emit nor a trigger is
  *  NOT substantive -- it forms no edge -- and an earlier draft of the spec enumerated the excluded
  *  groups instead of defining them and silently left that one out. */
-test("substantive means at least one emit, one trigger, or a stated rate, nothing else", () => {
+/** EVERY CARD THE ENGINE READ IS SUBSTANTIVE SINCE #1014 (owner, 2026-10-03: "the implied events
+ *  have to stop being implied"): a vanilla creature is cast and enters, and the deck report has
+ *  always joined that to the payoffs that watch for it. Only a card with no reading has no page. */
+test("substantive means the card supplies or asks for something, its own cast and entry included", () => {
   expect(isSubstantive(krenko)).toBe(true);
   expect(isSubstantive(impactTremors)).toBe(true);
   const vanilla = base("Grizzly Bears", [] as unknown as CardTags["abilities"]);
-  expect(isSubstantive(vanilla)).toBe(false);
+  expect(isSubstantive(vanilla)).toBe(true);
+  expect(impliedKeysOf(vanilla)).toEqual(expect.arrayContaining(["cast|creature|-|n", "enters|creature|-|n"]));
   const staticOnly = base("Static Only", [{
     kind: "static", effect: { kind: "pump" },
   }] as unknown as CardTags["abilities"]);
-  expect(isSubstantive(staticOnly)).toBe(false);
+  expect(isSubstantive(staticOnly)).toBe(true);
+  expect(isSubstantive({ ...vanilla, tags: null } as unknown as typeof vanilla)).toBe(false);
   // A CARD THAT STATES A RATE IS SUBSTANTIVE (roadmap X2, 2026-09-17): Sol Ring emits nothing the
   // edge layer reads, and without this it had no page for "adds mana" to sort.
   const solRing = base("Sol Ring", [{
@@ -347,10 +357,12 @@ test("a single-faced card keeps its own art", () => {
 
 test("the artifact shards every substantive card and skips the rest", () => {
   const vanilla = base("Grizzly Bears", [] as unknown as CardTags["abilities"]);
-  const { shards, index } = buildPartnerArtifact([krenko, impactTremors, vanilla], H);
+  const unread = { ...base("Never Read", [] as unknown as CardTags["abilities"]), tags: null } as unknown as typeof vanilla;
+  const { shards, index } = buildPartnerArtifact([krenko, impactTremors, vanilla, unread], H);
   const all = [...shards.values()].flatMap((s) => Object.keys(s));
-  expect(all.sort()).toEqual(["impact-tremors", "krenko-mob-boss"]);
-  expect(index.map((e) => e.slug).sort()).toEqual(["impact-tremors", "krenko-mob-boss"]);
+  // A vanilla creature has a page since #1014; a card the engine never read still has none.
+  expect(all.sort()).toEqual(["grizzly-bears", "impact-tremors", "krenko-mob-boss"]);
+  expect(index.map((e) => e.slug).sort()).toEqual(["grizzly-bears", "impact-tremors", "krenko-mob-boss"]);
 });
 
 /** THE INDEX CARRIES EACH CARD'S PARTNER COUNT AND IS SORTED BY IT (owner 2026-09-17). The header
@@ -364,12 +376,15 @@ test("the index carries a partner count and lists the best-connected card first"
   const bySlug = Object.fromEntries(index.map((e) => [e.slug, e.partners]));
   // SYMMETRIC (2026-09-17): the Krenko-Tremors pair counts once for each end, so a payoff whose
   // only relations are the cards that feed it counts them. Equal counts order by name.
+  // Since #1014 Grizzly Bears supplies its own entry, so Impact Tremors counts it beside Krenko.
   expect(bySlug["krenko-mob-boss"]).toBe(1);
-  expect(bySlug["impact-tremors"]).toBe(1);
-  expect(index.map((e) => e.slug)).toEqual(["impact-tremors", "krenko-mob-boss"]);
+  expect(bySlug["grizzly-bears"]).toBe(1);
+  expect(bySlug["impact-tremors"]).toBe(2);
+  expect(index.map((e) => e.slug)).toEqual(["impact-tremors", "grizzly-bears", "krenko-mob-boss"]);
   const lonely = base("Lonely Card", [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "draw-card" } }] as unknown as CardTags["abilities"]);
   const { index: three } = buildPartnerArtifact([lonely, impactTremors, krenko], H);
-  expect(three.map((e) => [e.slug, e.partners])).toEqual([["krenko-mob-boss", 2], ["impact-tremors", 1], ["lonely-card", 1]]);
+  // Lonely Card is a creature too, so it feeds Impact Tremors as well as asking Krenko: all three tie.
+  expect(three.map((e) => [e.slug, e.partners])).toEqual([["impact-tremors", 2], ["krenko-mob-boss", 2], ["lonely-card", 2]]);
 });
 
 /** THE RECORD CARRIES THE CLAUSES NOW (spec D2a option 2, taken 2026-09-18). This test read "never
@@ -713,8 +728,10 @@ test("a commander's rarity counts only the causes its deck could legally contain
   expect(rec.commanderPartners!.map((p) => p.name).sort())
     .toEqual(["Colourless Maker", "Red Maker"]);
 
-  expect(rec.rarity["enters|creature|-|-"]).toBe(3);
-  expect(rec.commanderRarity!["enters|creature|-|-"]).toBe(2);
+  // The asker is a creature, so since #1014 its own entry is one of the causes: 3 makers + itself,
+  // and in red, the red and colourless makers + itself.
+  expect(rec.rarity["enters|creature|-|-"]).toBe(4);
+  expect(rec.commanderRarity!["enters|creature|-|-"]).toBe(3);
   // The ranking basis is untouched: both rows are priced on the corpus figure, not the scoped one.
   expect(rec.commanderPartners![0]!.score).toBe(rec.partners.find((p) => p.name === "Red Maker")!.score);
 });
@@ -830,8 +847,10 @@ test("printed subtypes are a supply key but never a printed emit", () => {
   expect(emitKeysOf(goblinBody())).toEqual([]);
   const { shards } = buildPartnerArtifact([goblinBody(), krenkoCounting()], H);
   const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Goblin Assassin");
-  // A card that only IS something, with no emit and no trigger, is still not substantive.
-  expect(rec).toBeUndefined();
+  // A card that only IS something has a page since #1014 (it is cast and enters), and its record
+  // still prints no emit for its type line.
+  expect(rec).toBeDefined();
+  expect(rec!.emits).toEqual([]);
 });
 
 /** HOW THE ENGINE READ THE CARD, one row per ability -- the page's real argument, and the half that
@@ -977,7 +996,8 @@ test("a static's reach is a demand key, and a role or a self-reference is not", 
   ] as unknown as CardTags["abilities"]);
   expect(staticKeysOf(lurrus)).toEqual([]);
   expect(isSubstantive(samut())).toBe(true);
-  expect(isSubstantive(propaganda)).toBe(false);
+  // No static key, but substantive since #1014: Propaganda is cast and enters like any card.
+  expect(isSubstantive(propaganda)).toBe(true);
 });
 
 test("a static reaches the cards it applies to, each verified by the engine's own sentence", () => {
@@ -1685,9 +1705,10 @@ test("a damage causer's sizes are read per verb", () => {
     { kind: "activated", cost: "{T}", effect: { kind: "damage" }, amount: "3",
       emits: [{ verb: "combat-damage", subject: { control: "opp", token: null }, dealer: { control: "you", token: null } }] },
   ] as unknown as CardTags["abilities"]);
-  const asks = (verb: string) => base(`Asks ${verb}`, [{
+  // ENCHANTMENTS (#1014): a creature asker would supply combat damage of its own by attacking.
+  const asks = (verb: string) => withTypes(base(`Asks ${verb}`, [{
     kind: "triggered", trigger: { verbs: [verb], subject: { control: "you", token: null } }, effect: { kind: "draw-card" },
-  }] as unknown as CardTags["abilities"]);
+  }] as unknown as CardTags["abilities"]), ["enchantment"]);
   const { events } = buildPartnerArtifact([both, asks("non-combat-damage"), asks("combat-damage")], H);
   expect(events.get("non-combat-damage|-|-|-")?.pd).toEqual([[1]]);
   expect(events.get("combat-damage|-|-|-")?.pd).toEqual([[3]]);
@@ -1724,11 +1745,7 @@ test("the frequency ships split by colour identity, and the split sums to the co
     effect: { kind: "token-generation", subject: { control: "any", token: true, type: "creature" } },
     emits: [{ verb: "enters", subject: { control: "you", token: true, type: "creature" } }],
   }] as unknown as CardTags["abilities"]), identity);
-  const asker = base("Impact Tremors", [{
-    kind: "triggered",
-    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
-    effect: { kind: "deal-damage" },
-  }] as unknown as CardTags["abilities"]);
+  const asker = impactTremors;
 
   const { freq, freqByIdentity } = buildPartnerArtifact(
     [emitter("Red Maker", ["R"]), emitter("Blue Maker", ["U"]), emitter("Grey Maker", []), asker], H);
@@ -1947,10 +1964,10 @@ test("a pi entry carries the reason tags the engine wrote for the pair", () => {
 });
 
 /** A CARD SUPPLIES ITS OWN ENTRY (the engine's `producerEvents`), which no authored emit says: a
- *  plain enchantment is what a constellation payoff wants. The page's candidate index reads authored
- *  emits only, so the pair reaches `pi` through the pool pass -- and the page does not change
- *  (A-vs-B 2026-09-24: Doomwake Giant sat in one of forty Braids enchantments' lists). */
-test("partnerIds carries a pair joined by a card's implied entry, and the page stays as it was", () => {
+ *  plain enchantment is what a constellation payoff wants. It reached `pi` through the pool pass
+ *  first (A-vs-B 2026-09-24: Doomwake Giant sat in one of forty Braids enchantments' lists); since
+ *  #1014 the page's own candidate index reads it too, so the pair is on the page. */
+test("a pair joined by a card's implied entry is on the page and in partnerIds", () => {
   const asEnchantment = (d: ReturnType<typeof base>) =>
     ({ ...d, tags: { ...d.tags, characteristics: { ...d.tags.characteristics, types: ["enchantment"] } } }) as typeof d;
   const plain = asEnchantment(base("Plain Aura", [{
@@ -1967,7 +1984,7 @@ test("partnerIds carries a pair joined by a card's implied entry, and the page s
   const names = (card: string) => (partnerIds.get(card) ?? []).map(([pos]) => index[pos]!.name);
   expect(names("Plain Aura")).toContain("Constellation Payoff");
   expect(names("Constellation Payoff")).toContain("Plain Aura");
-  expect(rec["plain-aura"]!.partners.map((r) => r.name)).not.toContain("Constellation Payoff");
+  expect(rec["plain-aura"]!.partners.map((r) => r.name)).toContain("Constellation Payoff");
 });
 
 /** THE POOL IS NOT THE PAGE (A-vs-B 2026-09-24: B's on-plan picks were mostly absent from a pool of
@@ -1984,7 +2001,9 @@ test("partnerIds carries the verified partners the page's per-event cap hides, b
   const rec = Object.fromEntries([...shards.values()].flatMap((s) => Object.entries(s)));
   const names = (card: string) => partnerIds.get(card)!.map(([pos]) => index[pos]!.name);
   // Producers mirrored onto a payoff: the page stops at the cap, the pool does not.
-  expect(rec["impact-tremors"]!.partners.length).toBeLessThanOrEqual(PER_EVENT_CAP);
+  const perEvent = new Map<string, number>();
+  for (const r of rec["impact-tremors"]!.partners) perEvent.set(r.event, (perEvent.get(r.event) ?? 0) + 1);
+  expect(Math.max(...perEvent.values())).toBeLessThanOrEqual(PER_EVENT_CAP);
   expect(names("Impact Tremors")).toEqual(expect.arrayContaining(makers.map((m) => m.card.name)));
   // A producer's own forward rows: same.
   expect(names("Maker 0")).toEqual(expect.arrayContaining(payoffs.map((p) => p.card.name)));
@@ -2082,4 +2101,40 @@ test("a polymorph demands fodder and hits; a creature of mana value 6 or more su
   expect(supplyKeysOf(body("Archon of Cruelty", 8))).toContain("hits|-|creature|-");
   expect(supplyKeysOf(body("Serra Angel", 5))).not.toContain("hits|-|creature|-");
   expect(supplyKeysOf(body("Angel", 6, true))).not.toContain("hits|-|creature|-");
+});
+
+/** NARROWEST FIRST, AND A SECOND EVENT IS STILL ASKED ABOUT (owner, 2026-10-03, #1014). Sol Ring
+ *  supplies an artifact cast and an artifact entering by being played. "An artifact spell" and "a
+ *  noncreature spell" both reach `cast|artifact` at one price, and the artifact payoff is the closer
+ *  pair; and the thousands of cast payoffs must not use up every check before an enters payoff is
+ *  asked about. */
+const solRing = () => withTypes(base("Sol Ring", [{
+  kind: "activated", cost: "{T}", effect: { kind: "mana-generation", subject: { control: "you", token: null } }, amount: "2", repeats: "per-cycle",
+}] as unknown as CardTags["abilities"]), ["artifact"], "{1}");
+const castPayoff = (name: string, type: string | string[]) => base(name, [{
+  kind: "triggered", trigger: { verbs: ["cast"], subject: { type, control: "you", token: null } }, effect: { kind: "draw-card" },
+}] as unknown as CardTags["abilities"]);
+
+test("a payoff for exactly this card's kind ranks before one for any of six kinds", () => {
+  const noncreature = castPayoff("Noncreature Payoff", ["artifact", "enchantment", "instant", "sorcery", "planeswalker", "battle"]);
+  const artifact = castPayoff("Artifact Payoff", "artifact");
+  // The broad payoff is listed first and is better connected (it also pairs with the enchantment),
+  // so only the width can put the artifact payoff ahead.
+  const charm = withTypes(base("Some Enchantment", []), ["enchantment"]);
+  const { shards } = buildPartnerArtifact([noncreature, solRing(), charm, artifact], H);
+  const rec = Object.fromEntries([...shards.values()].flatMap((s) => Object.entries(s)));
+  const names = rec["sol-ring"]!.partners.filter((p) => p.event.startsWith("cast|")).map((p) => p.name);
+  expect(names).toEqual(["Artifact Payoff", "Noncreature Payoff"]);
+});
+
+test("past the first VERIFY_LIMIT checks, an event the page has room for is still asked about", () => {
+  const casts = Array.from({ length: VERIFY_LIMIT + 5 }, (_, i) => castPayoff(`Cast Payoff ${String(i).padStart(3, "0")}`, "artifact"));
+  const enters = base("Enters Payoff", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "artifact", control: "you", token: null } }, effect: { kind: "deal-damage" },
+  }] as unknown as CardTags["abilities"]);
+  const { shards } = buildPartnerArtifact([solRing(), ...casts, enters], H);
+  const rec = Object.fromEntries([...shards.values()].flatMap((s) => Object.entries(s)));
+  const rows = rec["sol-ring"]!.partners;
+  expect(rows.filter((p) => p.event.startsWith("cast|")).length).toBe(PER_EVENT_CAP);
+  expect(rows.map((p) => p.name)).toContain("Enters Payoff");
 });

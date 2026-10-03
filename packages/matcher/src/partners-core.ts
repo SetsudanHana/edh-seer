@@ -531,8 +531,9 @@ const tileOf = (d: DeckCard): Pick<PartnerRow, "art" | "identity"> => {
  *  ranked by the cheap score first and only the top `VERIFY_LIMIT` are verified.
  *
  *  CEILING: a genuinely specific partner sitting below rank 200 on a very common event is lost.
- *  Upgrade path: raise the limit, or bucket candidates by event key and verify per bucket so a rare
- *  key cannot be crowded out by a common one. */
+ *  Half-taken since #1014: past the first `VERIFY_LIMIT`, a second budget of the same size checks
+ *  only candidates whose event the page still has room for, so a second event is not crowded out
+ *  by a first. The rest of the upgrade path is per-bucket verification. */
 export const VERIFY_LIMIT = 200;
 
 /** How many rows a page shows. 24 until 2026-09-16, "a readability choice, not a measured one";
@@ -559,9 +560,10 @@ export interface PoolRow { name: string; score: number; event: string; tags?: re
  *  suggestions; A-vs-B the same day). Two things the page's ranking cannot see:
  *
  *  - WHAT A CARD SUPPLIES BY BEING WHAT IT IS. The engine's producer side is `producerEvents`:
- *    authored emits plus the card's own implied cast and enter. `supplyKeysOf` reads authored emits
+ *    authored emits plus the card's own implied cast and enter. `supplyKeysOf` read authored emits
  *    only, so a plain enchantment was never a candidate for a constellation payoff the engine joins
- *    it to -- Doomwake Giant sat in one of forty Braids enchantments' lists.
+ *    it to -- Doomwake Giant sat in one of forty Braids enchantments' lists. It reads both since
+ *    #1014 (`impliedKeysOf`), so the page sees what this pass saw first.
  *  - A COMMON EVENT'S ASKERS. `VERIFY_LIMIT` takes the rarest events first, so an event thousands of
  *    cards ask for is crowded out of every list. Here each supplied key gets its own
  *    `POOL_PER_EVENT` slots, best-connected first (`ranked` holds each key's askers in that order).
@@ -571,8 +573,7 @@ export function poolPartnersFor(
   subject: DeckCard, ranked: ReadonlyMap<string, readonly DeckCard[]>, freq: EventFrequency, h: Hierarchy,
   skip: ReadonlySet<string>, code: (tags: readonly { tag: string }[]) => number[] = () => [],
 ): PoolRow[] {
-  const implied = subject.tags ? producerEvents(subject.tags).flatMap((e) => splitKey(eventKey(e))) : [];
-  const keys = [...new Set([...supplyKeysOf(subject), ...implied].flatMap(supplyForms))];
+  const keys = [...new Set(supplyKeysOf(subject).flatMap(supplyForms))];
   const seen = new Set<string>([subject.card.name, ...skip]);
   const out: PoolRow[] = [];
   for (const key of keys) {
@@ -692,13 +693,17 @@ export function partnersFor(
       // EVERY EVENT THE PAIR COULD CONNECT THROUGH, not just the best one. The best RANKS the
       // candidate; which one PRICES the row is decided after the engine has spoken, because a pair
       // usually shares several demand keys and the engine confirms some and refuses others.
-      const events = new Map<string, { score: number; tags: Set<string> }>();
+      // `width`: HOW MANY TYPES THE DEMAND ACCEPTS (owner, 2026-10-03, #1014: "narrowest first").
+      // "Whenever you cast a noncreature spell" splits into six keys and "an artifact spell" into
+      // one, so both reach `cast|artifact` at the same price; the narrower one is the closer pair.
+      const events = new Map<string, { score: number; tags: Set<string>; width: number }>();
       for (const a of abilitiesOf(c)) {
         for (const verb of a.trigger?.verbs ?? []) {
           // ONE EVENT PER TYPE (roadmap AK5): a trigger naming two types proposes two, and the
           // candidate keeps whichever scores best -- so a partner is still listed once, under the
           // half that is actually rare.
-          for (const key of splitKey(eventKey({ verb, subject: a.trigger!.subject } as GameEvent))) {
+          const split = splitKey(eventKey({ verb, subject: a.trigger!.subject } as GameEvent));
+          for (const key of split) {
           // THE DEMAND ONLY SPLITS, IT NEVER WIDENS -- the same asymmetry `supplyCounts` relies on.
           // Widening it here would admit every permanent as a candidate for a goblin demand, and the
           // score is taken on the demand's own key, so a widened match would also be mispriced.
@@ -711,8 +716,9 @@ export function partnersFor(
           // `enters:creature`, so a generic sentence would be priced at the rare demand's rate.
           const t = normalizeZoneEvent({ verb, subject: a.trigger!.subject } as GameEvent);
           const tag = eventReasonTag(zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject)), t.verb, a);
-          const e = events.get(key) ?? { score: specificity(key, freq), tags: new Set<string>() };
+          const e = events.get(key) ?? { score: specificity(key, freq), tags: new Set<string>(), width: split.length };
           e.tags.add(tag);
+          e.width = Math.min(e.width, split.length);
           events.set(key, e);
           }
         }
@@ -722,25 +728,27 @@ export function partnersFor(
       // it and Animate Dead's page listed no mill (measured 2026-09-16). Same gate, same shape.
       for (const { key, tags } of fillDemandsOf(c)) {
         if (events.has(key) || !demandForms(key).some((f) => subjectEmits.has(f))) continue;
-        events.set(key, { score: specificity(key, freq), tags: new Set(tags) });
+        events.set(key, { score: specificity(key, freq), tags: new Set(tags), width: 1 });
       }
       // A POLYMORPH THAT WOULD HIT THIS CARD (#965): the candidate demands what the subject IS, and
       // the engine's sentence runs candidate -> subject, verified below in that direction.
       // PRICED ON THE POLYMORPHS, NOT THE HITS: three thousand big creatures make `hits` look common,
       // and it is the dozen cards that cheat them out that make the pair rare (`POLYMORPH_FREQ_KEY`).
       for (const { key, tag } of hitDemandsOf(c)) {
-        if (subjectEmits.has(key)) events.set(key, { score: specificity(POLYMORPH_FREQ_KEY, freq), tags: new Set([tag]) });
+        if (subjectEmits.has(key)) events.set(key, { score: specificity(POLYMORPH_FREQ_KEY, freq), tags: new Set([tag]), width: 1 });
       }
-      const byScore = [...events].sort((a, b) => b[1].score - a[1].score);
+      const byScore = [...events].sort((a, b) => b[1].score - a[1].score || a[1].width - b[1].width);
       // The count is read ONCE here, not in the comparator: two map lookups per comparison over
       // a 25,000-card candidate list took the build from 80 s to 388 s (measured 2026-09-17).
-      return { card: c, events: byScore, score: byScore[0]?.[1].score ?? 0, deg: deg(c) };
+      return { card: c, events: byScore, score: byScore[0]?.[1].score ?? 0, width: byScore[0]?.[1].width ?? 1, deg: deg(c) };
     })
     .filter((r) => r.score > 0)
     // EQUAL SCORES BREAK ON PARTNER COUNT (see `specificity`), and the tie-break has to sit HERE
     // and not only at the cut: `VERIFY_LIMIT` takes the top of this order, so a well-connected card
     // below rank 200 in corpus order was never even asked about.
-    .sort((a, b) => b.score - a.score || b.deg - a.deg);
+    // NARROWEST FIRST, THEN PARTNER COUNT (#1014): a payoff for exactly this card's kind before a
+    // payoff for any of six kinds, at the same price.
+    .sort((a, b) => b.score - a.score || a.width - b.width || b.deg - a.deg);
 
   // COUNTED BEFORE THE CUT, so the page can say how many it is not showing. Counted over EVERY
   // event a candidate matched rather than only its best, because any of them can end up pricing a
@@ -751,7 +759,18 @@ export function partnersFor(
   const rows: PartnerRow[] = [];
   const verified: PartnerRow[] = [];
   const shown: Record<string, number> = {};
-  for (const r of ranked.slice(0, VERIFY_LIMIT)) {
+  // A SECOND BUDGET FOR AN EVENT THE FIRST NEVER REACHED (#1014; the CEILING on `VERIFY_LIMIT`).
+  // Once every card supplies its own cast and entry, Sol Ring's thousands of `cast|artifact`
+  // askers filled all 200 checks and no `enters|artifact` payoff was ever asked about. The first
+  // `VERIFY_LIMIT` are checked as they always were; past them, only a candidate with an event the
+  // page still has room for, up to `VERIFY_LIMIT` more.
+  let extra = 0;
+  for (const [i, r] of ranked.entries()) {
+    if (i >= VERIFY_LIMIT) {
+      if (extra >= VERIFY_LIMIT) break;
+      if (!r.events.some(([k]) => (shown[k] ?? 0) < PER_EVENT_CAP)) continue;
+      extra++;
+    }
     // NO TOKEN NODE EXISTS ON A CARD PAGE, so the engine's token suppression would trade this
     // card's real supply for a second hop that is never built. See `ReasonOptions.tokensMediate`.
     const reasons = [
@@ -1078,6 +1097,14 @@ export const abilitiesOf = perCard((d: DeckCard): CardTags["abilities"] =>
   d.tags ? [...d.tags.abilities, ...keywordAbilities(d.tags.characteristics)] : []);
 export const emitKeysOf = perCard((d: DeckCard): string[] =>
   abilitiesOf(d).flatMap((a) => (a.emits ?? []).flatMap((e) => splitKey(eventKey(e)))));
+/** WHAT A CARD SUPPLIES BY BEING PLAYED (owner, 2026-10-03, #1014: "the implied events have to stop
+ *  being implied, so cards like Sol Ring which are generically good still produce the event of
+ *  artifact being cast or artifact entering"). The engine's own producer side, `producerEvents`,
+ *  which the deck report has always joined on: casting the card, the permanent entering, and what
+ *  its keywords and characteristics imply. Read on the corpus side too, so the page, the pool and
+ *  the report ask one question; it used to be the suggestion pool alone. */
+export const impliedKeysOf = perCard((d: DeckCard): string[] =>
+  d.tags ? producerEvents(d.tags).flatMap((e) => splitKey(eventKey(e))) : []);
 /** A `conditionCares` theme tag ("gain-life:any", "cast:-creature", "dies:creature") as event keys.
  *  A leading "-" is a negated class ("-creature": a noncreature spell), read the way prowess reads
  *  it; "any" names no class. */
@@ -1256,6 +1283,7 @@ export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
  *  15,350 records. */
 export const supplyKeysOf = perCard((d: DeckCard): string[] => [
   ...emitKeysOf(d),
+  ...impliedKeysOf(d),
   ...(d.tags?.characteristics.subtypes ?? [])
     .filter((t) => !BASIC_LAND_TYPE_SET.has(t))
     .map((t) => `counts|-|${t}|-`),
@@ -1386,7 +1414,7 @@ function compareDoing(a: Doing, b: Doing): number {
  *  trigger -- a static, a keyword-only body -- forms no edge, so its page makes no promise to a
  *  crawler even though it still renders. */
 export const isSubstantive = (d: DeckCard): boolean =>
-  emitKeysOf(d).length > 0 || demandKeysOf(d).length > 0 || staticKeysOf(d).length > 0
+  emitKeysOf(d).length > 0 || impliedKeysOf(d).length > 0 || demandKeysOf(d).length > 0 || staticKeysOf(d).length > 0
   || meldKeysOf(d).length > 0
   // EVERY LEGAL COMMANDER, ABILITIES OR NOT. Clara Oswald derives one trigger-doubler with no
   // subject, so no key above ever admitted her and a Doctor's page offered a companion with
