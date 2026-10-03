@@ -236,7 +236,19 @@ with tighter rhythm than the category default.
 
 ### Hierarchy
 
-- **Heading** — 700, `-0.01em`, `text-xl` to `text-2xl` by context.
+- **Heading** — 700, one of four steps (owner, 2026-10-03: "be consistent throughout the
+  design"). A step is chosen by what the heading IS, never by the page it sits on:
+
+  | class | for | size |
+  |---|---|---|
+  | `.t-title` | the page's one `h1` | 36px (30 on a phone) |
+  | `.t-chapter` | a report chapter, and the report's Cards / Combos | 30px (24 on a phone) |
+  | `.t-section` | a section of a page | 24px |
+  | `.t-subsection` | a group inside a section | 18px |
+
+  No page gets its own size: a card page's title is 36px like a search page's. The only
+  headings off the scale are the landing hero, a not-found query, a suggestion's headline
+  sentence and a card's name inside a panel. `heading-scale.test.ts` fails on an `h1` off it.
 - **Body** — 400, base size.
 - **Label** — mono, 500, `0.6875rem`, `0.1em` tracking, uppercase (the `.eyebrow` class).
 - **Data** — mono, `tabular-nums` where numeric.
@@ -525,6 +537,24 @@ Both hold; they address different objects.
 Header row in label typography, left-aligned except numeric columns; bottom border in
 `--border`, heavier than the `--separator` row rules. Rank columns zero-padded and tabular.
 Name columns truncate rather than wrap.
+
+### One component per job (owner, 2026-10-03)
+
+The designer crawl of 2026-10-03 (#994) found the same job drawn differently from page to
+page. Each job has one component, and a page never draws its own:
+
+- **Actions** are pills: `.btn-primary` for the one main action, `.btn-secondary` for the rest,
+  44px. **Toggles** are `.chip` (square corners, accent border and text when pressed). Tabs
+  are underlined (below).
+- **Chips that name a card or tag a thing** sit on `--radius`; card chips are 14px with the
+  art on the left. The pill is for pips, bar fills and actions only.
+- **Icons** come from `components/icons.tsx` (`Arrow`, `Chevron`, `External`), never a
+  Unicode glyph. The diagonal arrow means a new tab off this site, nothing else.
+- **The way back up** is `Breadcrumb` on every detail page.
+- **A map's colour key** is `MapKey`, with a count under each colour, wherever the map is.
+- **A precon tile** is `PreconTileBody` in a `PRECON_TILE` box, on the index and on home.
+- **The header** keeps its height on every page; a slot it does not use there is hidden, not
+  removed.
 
 ### Filter chips
 
