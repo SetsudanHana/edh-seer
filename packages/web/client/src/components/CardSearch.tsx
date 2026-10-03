@@ -563,7 +563,7 @@ export function CardSearch({
       * bound a grid to three tiles; the header and the prose keep their own 65ch. */}
     {/* THE RAIL EXISTS ONLY WHILE A CARD IS PEEKED. Reserving its 20rem always left the landing
       * page a 650px column with the right two thirds of a 1920 screen empty (UX review, 2026-09-17). */}
-    <div className={peek.stack.length > 0 ? "lg:grid lg:grid-cols-[minmax(0,1fr)_var(--rail-w)] lg:gap-x-10 lg:items-start" : undefined}>
+    <div className={peek.stack.length > 0 ? "lg:pr-(--rail-w)" : undefined}>
     <section className="flex flex-col gap-6">
       {/* ONLY `/cards` EVER CARRIED A SHARE LINK. `/commanders` is a new path, so there is no
         * stale link to catch and nothing to redirect. */}
@@ -880,7 +880,7 @@ export function CardSearch({
       <PageFoot />
     </section>
     {/* The peek is the fixed card panel (#1003): on the right under the header from `lg`, where the
-      * grid above keeps the list clear of it while a card is open; a bottom sheet below. */}
+      * padding above keeps the list clear of it while a card is open; a bottom sheet below. */}
     <CardPeek load={peekLoad} surface={commanderMode ? "commander" : "card"} />
     </div>
     </PeekContext.Provider>
