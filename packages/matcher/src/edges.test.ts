@@ -6141,3 +6141,16 @@ describe("spell targeting", () => {
     expect(joins(instant as ReturnType<typeof spell>, heroic)).toBe(false);
   });
 });
+
+/** A CARD'S OWN CAST IS FROM YOUR HAND (#931): Ojer Pakpatiq's "an instant spell from your hand" is
+ *  met by every instant's implied cast, which states no origin; an authored cast from exile is not. */
+test("an implied cast meets a 'from your hand' demand; a cast that states another zone does not", () => {
+  const ojer = base("Ojer", [{ kind: "triggered", trigger: { verbs: ["cast"], subject: { control: "you", token: null, type: "instant", fromZone: "hand" } }, effect: { kind: "keyword-grant" } }] as unknown as CardTags["abilities"]);
+  const brainstorm = (() => { const d = base("Brainstorm", [{ kind: "on-cast", effect: { kind: "draw-card" } }] as unknown as CardTags["abilities"]); return { ...d, tags: { ...d.tags, characteristics: { ...d.tags.characteristics, types: ["instant"] } } as CardTags }; })();
+  expect(directedReasons(brainstorm, ojer, H).some((r) => r.tag === "cast:instant")).toBe(true);
+  const fromExile = { verb: "cast", subject: { control: "you", token: null, type: "instant", fromZone: "exile" } } as never;
+  const wants = { verb: "cast", subject: ojer.tags.abilities[0]!.trigger!.subject } as never;
+  const fromHand = { verb: "cast", subject: { control: "you", token: false, type: "instant" }, implied: true } as never;
+  expect(eventMatches(fromHand, wants, H)).toBe(true);
+  expect(eventMatches(fromExile, wants, H)).toBe(false);
+});
