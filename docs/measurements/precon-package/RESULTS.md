@@ -195,6 +195,68 @@ weighting for it is step 2, to be measured first.
   unchanged code. The measures compare each package with its precon in the same run, so they hold.
   The run 4 to run 5 comparison mixes the change with the data.
 
+## Run 6: what a link is worth, and the last card doing a job (2026-10-03)
+
+The owner, reading precon swaps by hand: "we suggest confusion in the ranks for every red deck which
+is commical", and Teferi's Reproach → Blossoming Calm "suggests those cards do the same thing which
+they not". Then: "I think we are still ignoring cards impact … or we should go back to thinks like
+diminishing returns". Rulings: swaps first, the report's own rating after; the same-job fix folds
+into this change.
+
+- **What a link is worth.** Each link counts its payoff's effect value (the calibrated priors: kind
+  × repeatability × scaling), times the theme and commander boosts. Gaining 1 life counts 0.2-0.3 of
+  drawing a card.
+- **Diminishing returns per trigger.** Links through one reason tag add up under a square root:
+  thirteen creatures entering into one "whenever a creature enters" are one synergy grown, not
+  thirteen.
+- **Entering or being cast is not a link.** Reasons that only say a card enters or is cast no longer
+  count.
+- **A card's own worth.** Both sides add the card's best role quality, so a strong removal spell is
+  not cut for a weak payoff. An add must beat its cut by a quarter, and by at least 0.5.
+- **The last card doing a job stays.** A cross-job swap never takes a card no other deck card can
+  stand in for.
+- **Same job means the same effect.** For non-answer roles the add must do every effect the cut does
+  (Teferi's Reproach removes; Blossoming Calm protects). Protection reads its recipient from the
+  printed text: you, or your permanents.
+- **Fact or Fiction is draw.** A new role rule reads "reveal the top N … put … into your hand". A card
+  that gives the opponent a permanent (Wild Magic Surge, Chaos Warp) counts the drawback.
+- **A failed card request is not a missing card.** Squirreled Away failed H1 in the full build and
+  passed alone: one 5xx cached its shard as "no such card" for every precon after it, so the guard
+  missed a combo. Only a 404 now means missing.
+
+Data `v-d9d8dd538301` for both columns: production deployed it mid-run and pruned the old files, so
+all 197 pages were rebuilt on it (2 pages with unresolved cards, as before). The baseline is main
+built on the same data.
+
+| Measure | This run |
+|---|---|
+| H1-H5 | **all pass** |
+| S1, 5+ swaps at every target | **95.9%** (floor 90%) |
+| S2, synergy kept at target 3 | **20 of 20** (floor 18) |
+
+| Bracket 3 packages | Main | This run |
+|---|---|---|
+| Swaps | 3,015 | 2,311 |
+| Median swaps | 15 | 12 |
+| Packages with 10+ swaps | 180 | 135 of 196 |
+| Synergy swaps | 1,566 | 1,043 |
+| Confusion in the Ranks added | 10 | 0 |
+| Most-added synergy card | Prowl (41) | Blasting Station (26) |
+
+- **Fewer, and fewer repeated, swaps.** Main's top adds (Prowl, Haliya, Spirit Bonds, Decoction
+  Module, Underhanded Designs) each landed in 26-41 packages; the most any add lands in now is 26.
+  The drop in swaps is the margin and the kept last-of-a-job cards; S1 still clears its floor.
+- **Seven precons read by hand** (Blame Game, Merciless Rage, Exit from Exile, Rebellion Rising,
+  Draconic Domination, Party Time, Multiverse Reforged). Confusion in the Ranks is in no swap.
+  Sunfall and the burn wipes are no longer cut. Still odd:
+  - Fact or Fiction → Underhanded Designs, cross-job: its draw role's quality reaches the index
+    only with the next static build;
+  - Brainstorm → Spirit Bonds and Commander's Sphere → Adric;
+  - angels still lose to small payoffs in Multiverse Reforged.
+- **Not changed here.** The report's own synergy rating and its suggestion list still weigh links
+  as before ("swaps first"); Confusion in the Ranks still shows in Jace's plan list. Redundancy
+  groups and brackets as power within a group are the next plan issue.
+
 ## The persona
 
 - **Seat:** `mtg-precon-upgrader`.
