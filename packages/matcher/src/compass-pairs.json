@@ -711,5 +711,14 @@
     "note": "Owner ruling 2026-10-02: with polymorph you want to cheat big things into play; a creature of mana value 6 or more is a hit.",
     "source": "owner ruling 2026-10-02 (#964)",
     "verified": true
+  },
+  {
+    "a": "Brainstorm",
+    "b": "Ojer Pakpatiq, Deepest Epoch // Temple of Cyclical Time",
+    "category": "cast-trigger",
+    "tag": "cast:instant",
+    "note": "#931: Ojer Pakpatiq's \"whenever you cast an instant spell from your hand, it gains rebound\" is met by every instant you cast from hand; a card's own cast is from your hand.",
+    "source": "#931 (2026-10-02, owner issue)",
+    "verified": true
   }
 ]

@@ -215,6 +215,15 @@
       "source": "owner ruling 2026-10-02 (#964)",
       "verified": true,
       "tag": "cheat:creature"
+    },
+    {
+      "a": "Ephemerate",
+      "b": "Ojer Pakpatiq, Deepest Epoch // Temple of Cyclical Time",
+      "tag": "cast:instant",
+      "class": "false-emit",
+      "why": "#931 / owner ruling 2026-10-02 (#929/#930), redundant keywords: Ephemerate already has rebound, so Ojer Pakpatiq's rebound grant gives it nothing (CR 702.88c).",
+      "source": "#931",
+      "verified": true
     }
   ],
   "knownDefects": [],

@@ -908,6 +908,61 @@
   "typeLine": "Creature — Vampire"
  },
  {
+  "name": "Brainstorm",
+  "oracleId": "36cd2364-d113-47d1-b2c4-b088d9eb88dd",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "three cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "two cards from your hand",
+      "fromZone": "hand",
+      "toZone": "library",
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Draw three cards, then put two cards from your hand on top of your library in any order."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Draw three cards, then put two cards from your hand on top of your library in any order.",
+  "typeLine": "Instant"
+ },
+ {
   "name": "Brash Taunter",
   "oracleId": "3e41648f-c5a9-4b26-b97e-8176fe5e9c85",
   "clauses": [
@@ -4844,6 +4899,191 @@
   "grantedToken": [],
   "oracleText": "{T}, Remove a counter from a nonland permanent you control: Draw a card.",
   "typeLine": "Legendary Creature — Human Citizen"
+ },
+ {
+  "name": "Ojer Pakpatiq, Deepest Epoch // Temple of Cyclical Time",
+  "oracleId": "34ef174e-1b3d-43d5-9f72-3d35befbdd7f",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant spell from your hand",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "rebound",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "Ojer Pakpatiq",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "this",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "transform",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "time",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "(Transforms from Ojer Pakpatiq, Deepest Epoch.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{U}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "remove-counter",
+      "object": "time",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 6,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature",
+    "land"
+   ],
+   "subtypes": [
+    "god"
+   ],
+   "faces": [
+    {
+     "types": [
+      "legendary",
+      "creature"
+     ],
+     "subtypes": [
+      "god"
+     ]
+    }
+   ],
+   "layout": "transform",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "flying",
+    "transform"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Flying",
+   "2": "Whenever you cast an instant spell from your hand, it gains rebound.",
+   "3": "When Ojer Pakpatiq dies, return it to the battlefield tapped and transformed under its owner's control with three time counters on it.",
+   "4": "(Transforms from Ojer Pakpatiq, Deepest Epoch.)",
+   "5": "Add {U}. Remove a time counter from this land.",
+   "6": "Transform this land. Activate only if it has no time counters on it and only as a sorcery."
+  },
+  "clauseCosts": {
+   "5": "{T}",
+   "6": "{2}{U}, {T}"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {
+   "4": 1,
+   "5": 1,
+   "6": 1
+  },
+  "grantedToken": [],
+  "oracleText": "Flying\nWhenever you cast an instant spell from your hand, it gains rebound. (Exile it as it resolves. At the beginning of your next upkeep, you may cast it from exile without paying its mana cost.)\nWhen Ojer Pakpatiq dies, return it to the battlefield tapped and transformed under its owner's control with three time counters on it.\n//\n(Transforms from Ojer Pakpatiq, Deepest Epoch.)\n{T}: Add {U}. Remove a time counter from this land.\n{2}{U}, {T}: Transform this land. Activate only if it has no time counters on it and only as a sorcery.",
+  "typeLine": "Legendary Creature — God // Land"
  },
  {
   "name": "Planar Genesis",

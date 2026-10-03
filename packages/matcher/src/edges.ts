@@ -1044,7 +1044,14 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
     const { combat: _c, ...rest } = consumer.subject;
     consumer = { ...consumer, subject: rest };
   }
-  if (!originMatches(producer.subject, consumer.subject)) return false;
+  // A CARD'S OWN CAST IS FROM YOUR HAND (#931): the implied cast states no origin, and "an instant
+  // spell from your hand" (Ojer Pakpatiq, Jodah, Kiora, Gale; 26 corpus cast triggers) met none of
+  // them. `subjectMatches` already reads an unstated origin as the hand for "from anywhere other
+  // than your hand"; this is the same reading for the positive demand. An AUTHORED cast states its
+  // own zone (Bolas's Citadel's library, an impulse draw's exile) and keeps it.
+  const castFrom = producer.implied === true && producer.verb === "cast" && producer.subject.fromZone === undefined
+    ? { ...producer.subject, fromZone: "hand" as const } : producer.subject;
+  if (!originMatches(castFrom, consumer.subject)) return false;
   if (combatSelfSupplied(producer, consumer)) return false;
   if (castSelfSupplied(producer, asked)) return false;
   if (selfEtbSelfSupplied(producer, consumer)) return false;
