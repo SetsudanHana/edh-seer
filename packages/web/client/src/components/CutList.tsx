@@ -9,6 +9,7 @@ import { CardFace } from "./engine-parts.js";
 import type { SuggestedPair } from "@edh-seer/matcher/suggest-static";
 import { SwapLine } from "./SuggestedPairs.js";
 
+import { Arrow } from "./icons.js";
 /** THE CUT LIST — "which cards is the deck not using?" — and the deck-level slack beside it.
  *
  *  Every row states its own argument, because the engine's three failure directions all point the
@@ -191,7 +192,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
                 >
                   <b>{BUILD_CATEGORY_LABEL[g.name] ?? g.name}</b>
                   <span className="tabular-nums text-(--muted)">{g.count} against {g.target}: up to {g.over} can go</span>
-                  <span aria-hidden="true" className="text-(--accent)">&darr;</span>
+                  <span className="text-(--accent)"><Arrow dir="down" /></span>
                 </button>
               </li>
             ))}

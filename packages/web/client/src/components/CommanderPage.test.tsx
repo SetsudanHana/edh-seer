@@ -245,7 +245,7 @@ test("a second tap on a commander page's map walks to the card on the map, and B
   // THE CARD WALKED TO IS THE ONE BESIDE THE LIST (owner, 2026-09-27): the preview stays open on it,
   // where it used to close and leave the commander's text.
   expect(screen.getByRole("dialog")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" }));
+  fireEvent.click(screen.getByRole("button", { name: "Back to Krenko, Mob Boss" }));
   expect(await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ })).toBeInTheDocument();
   // Back on the commander, the page's own card is the one beside the list again.
   expect(screen.queryByRole("dialog")).toBeNull();

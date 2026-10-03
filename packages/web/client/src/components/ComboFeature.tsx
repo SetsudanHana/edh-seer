@@ -83,8 +83,8 @@ export function ComboFeature({ parts, result, manaValue, cheap }: {
       <div className="flex flex-col gap-3 text-sm">
         <ol className="flex flex-col gap-2">
           {sides.map((l, i) => l ? (
-            <li key={i} className="flex items-start gap-2.5">
-              <span aria-hidden="true" className="stat-num mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed border-(--accent) text-[11px]">{i + 1}</span>
+            <li key={i} className="flex items-center gap-2.5">
+              <span aria-hidden="true" className="pip shrink-0">{i + 1}</span>
               <span><ReasonText text={l.text} /></span>
             </li>
           ) : null)}

@@ -570,8 +570,8 @@ function DeckMathRows({
                     *  figure; the sentence stays in the row's label for a screen reader. */}
                   {!none && !a.fromCommandZone ? (
                     <span className="inline-flex items-center gap-2" aria-hidden="true">
-                      <span className="h-1.5 w-20 rounded-full bg-(--surface-secondary) sm:w-28">
-                        <span className="block h-full rounded-full bg-(--accent)" style={{ width: `${Math.round(a.available * 100)}%` }} />
+                      <span className="h-1.5 w-20 rounded-full bg-(--separator) sm:w-28">
+                        <span className="block h-full rounded-full bg-(--fill)" style={{ width: `${Math.round(a.available * 100)}%` }} />
                       </span>
                       <span className="stat-num text-xs text-(--muted)">{pct(a.available)}</span>
                     </span>

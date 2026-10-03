@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { useCardDrawer } from "./card-drawer.js";
 
+import { External } from "./icons.js";
 /** ONE MENU FOR A CARD, WHEREVER THE CARD IS LISTED (owner, 2026-09-27: the map's right-click menu,
  *  then "add the ⋯ menu to the other card lists too"). A list row is plain page, where taking over
  *  the browser's own right-click would get in the way, so a list offers the same lines behind a
@@ -105,7 +106,7 @@ export function PopMenu({ x, y, title, items, align = "start", onClose }: {
       <p aria-hidden="true" className="truncate px-3 pb-1 pt-1.5 text-xs font-semibold text-(--muted)">{title}</p>
       {items.map((it) => it.href ? (
         <a key={it.label} role="menuitem" href={it.href} target="_blank" rel="noopener" className={cls} onClick={() => onClose(false)}>
-          {it.label}<span aria-hidden="true" className="ml-auto pl-3 text-(--muted)">↗</span>
+          {it.label}<span className="ml-auto pl-3 text-(--muted)"><External /></span>
         </a>
       ) : (
         <button key={it.label} type="button" role="menuitem" className={cls} onClick={() => { onClose(true); it.run?.(); }}>{it.label}</button>
