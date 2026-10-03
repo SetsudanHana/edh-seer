@@ -14,6 +14,7 @@ import { ComboList } from "./ComboList.js";
 import { CardDrawerProvider } from "./card-drawer.js";
 import type { RunDiff } from "../lib/run-diff.js";
 
+import { Arrow } from "./icons.js";
 /** THE REPORT'S SHELL: the sticky header, the scroll, and the reference surfaces that are NOT part
  *  of it.
  *
@@ -172,7 +173,7 @@ function Reference({ children, comboCount }: { children: React.ReactNode; comboC
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <nav aria-label="Report surfaces" className="flex gap-4 items-center">
         <SurfaceLink to="/" className="eyebrow text-(--accent)">
-          &larr; Report
+          <Arrow dir="left" /> Report
         </SurfaceLink>
         {/* The current surface always gets its tab, even Combos on a deck without any. */}
         {(pathname === "/analysis/combos" ? REFERENCE_SURFACES : surfacesFor(comboCount)).map((s) => (

@@ -14,6 +14,7 @@ import { RunDiffLine, signed } from "./RunDiffLine.js";
 import { useDeckActions } from "../lib/deck-actions.js";
 import type { ScoreKind } from "../lib/score-band.js";
 
+import { Arrow } from "./icons.js";
 /** THE REPORT'S SUMMARY, ON EVERY SURFACE — sticky above the chapters AND above the graph, the
  *  (NOT ON A PHONE: below `sm` it is `static`. Measured at 390 on 2026-09-08, the pinned stack was
  *  the site header 92px, this bar 73px and the chapter rail 53px, 26% of an 844px screen, on the
@@ -149,7 +150,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
              * 24px WCAG 2.5.8 floor, and the horizontal padding gives it real width. */
             className="eyebrow text-(--accent) whitespace-nowrap min-h-[32px] px-2 -mx-1"
           >
-            {findingCount} {findingCount === 1 ? "suggestion" : "suggestions"} &darr;
+            {findingCount} {findingCount === 1 ? "suggestion" : "suggestions"} <Arrow dir="down" />
           </button>
         ) : null}
         {coverage ? (

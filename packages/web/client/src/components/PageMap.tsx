@@ -9,6 +9,7 @@ import { useNarrow } from "./engine-parts.js";
 import { usePaused, useReducedMotion } from "./OrbitView.js";
 import { usePeek } from "./peek.js";
 
+import { Arrow } from "./icons.js";
 /** THE MAP ON A CARD PAGE (owner, 2026-09-27: "including graph on /cards and /commander pages", so
  *  the map becomes the site's identity rather than one chapter's picture). The page's card in the
  *  middle, its partners around it in their group's colour, ticks running from the card that makes
@@ -129,7 +130,7 @@ export function PageMap({ page: ownPage, slug: ownSlug, rows: ownRows, base, pai
     <figure className="m-0 flex flex-col gap-2">
       {prev ? (
         <button type="button" className="min-h-11 self-start rounded-(--radius) border border-(--separator) px-3 text-sm hover:border-(--foreground)" onClick={() => go(prev.id)}>
-          ← Back to {prev.name}
+          <Arrow dir="left" /> Back to {prev.name}
         </button>
       ) : null}
       <div className="max-w-[min(100%,calc((100svh-12rem)*1.2222))]">

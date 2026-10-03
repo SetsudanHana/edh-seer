@@ -300,7 +300,9 @@ export function DeckActions({
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 1500);
   }
-  const small = "min-h-9 px-3 text-sm";
+  // THE FAMILY'S 44px (control families, 2026-09-08; designer crawl #994): this was `min-h-9`, so the
+  // report bar's Re-analyse was the one 36px pill on the site, under the floor for a main action.
+  const small = "";
   const item = "block w-full text-left px-3 py-2 text-sm rounded-(--radius) hover:bg-(--surface-secondary) min-h-9";
   const link = shareLink ? (linkCopied ? "Link copied" : "Copy link") : null;
   return (

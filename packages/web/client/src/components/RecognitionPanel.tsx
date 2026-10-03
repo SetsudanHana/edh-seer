@@ -7,6 +7,7 @@ import { ManaSymbols } from "./ManaSymbols.js";
 import { verdict } from "../lib/verdict.js";
 import { findings } from "../lib/findings.js";
 
+import { Arrow } from "./icons.js";
 /** DID IT READ THE DECK I BUILT?
  *
  *  The report's first question, and until now the page answered it last. The August brief set the
@@ -149,8 +150,8 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inli
         {said ? <p data-testid="recognition-verdict" className="max-w-[60ch] text-base sm:text-lg">{said}</p> : null}
         {suggestions > 0 ? (
           <button type="button" onClick={toSuggestions}
-            className="min-h-11 rounded-(--radius) border border-(--accent) px-4 text-sm font-medium text-(--accent) hover:bg-(--accent) hover:text-(--background)">
-            See the {suggestions === 1 ? "suggestion" : `${suggestions} suggestions`} &darr;
+            className="btn-secondary gap-1.5">
+            See the {suggestions === 1 ? "suggestion" : `${suggestions} suggestions`} <Arrow dir="down" />
           </button>
         ) : null}
       </div>
@@ -175,8 +176,8 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inli
           {suggestions > 0 && !verdictAbove ? (
             <p>
               <button type="button" onClick={toSuggestions}
-                className="min-h-11 rounded-(--radius) border border-(--accent) px-4 text-sm font-medium text-(--accent) hover:bg-(--accent) hover:text-(--background)">
-                See the {suggestions === 1 ? "suggestion" : `${suggestions} suggestions`} &darr;
+                className="btn-secondary gap-1.5">
+                See the {suggestions === 1 ? "suggestion" : `${suggestions} suggestions`} <Arrow dir="down" />
               </button>
             </p>
           ) : null}

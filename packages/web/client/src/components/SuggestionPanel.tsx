@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
 import { cardImageUrl } from "./card-node.js";
 
+import { Arrow } from "./icons.js";
 /** Reasons shown before the rest fold away. */
 const REASONS = 3;
 
@@ -57,7 +58,7 @@ export function SuggestionPanel({ card, replaces, onClose }: {
         </details>
       ) : null}
       <Link to={`/cards/${card.slug}`} className="min-h-9 rounded-(--radius) border border-(--separator) px-3 text-center leading-9 hover:border-(--accent) hover:text-(--accent)">
-        Open its card page ↗
+        Open its card page <Arrow dir="right" />
       </Link>
     </div>
   );

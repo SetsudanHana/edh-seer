@@ -18,6 +18,7 @@ import { ManaSymbols } from "./ManaSymbols.js";
 import { UpgradePackages } from "./UpgradePackages.js";
 import { defaultTarget, swapsOf } from "../lib/precon-upgrades.js";
 
+import { Arrow, Chevron } from "./icons.js";
 /** `/precons/:slug` (Precon mockup, 2026-09-27): the precon's theme and scores beside its
  *  commander's map, then its upgrade packages by bracket (#767), then the list. The page
  *  is the file `build-precons` wrote; only the map is drawn live, from the list, once the page is up. */
@@ -54,7 +55,7 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
         *  the screen's height so the swaps still start on the first screen. */}
       <section className="grid items-center gap-8 lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)]">
         <div className="flex flex-col gap-3">
-          <nav aria-label="Breadcrumb" className="text-sm text-(--muted)"><Link to="/precons" className="hover:text-(--foreground)">Precons</Link> › {p.setName}</nav>
+          <nav aria-label="Breadcrumb" className="text-sm text-(--muted)"><Link to="/precons" className="hover:text-(--foreground)">Precons</Link> <Chevron dir="right" /> {p.setName}</nav>
           <span className="eyebrow text-(--muted)">Commander precon · {p.setName}{p.releaseDate ? ` · ${year(p.releaseDate)}` : ""}</span>
           <h1 className="text-4xl font-bold leading-tight tracking-[-0.02em]">{p.name}</h1>
           <p className="text-(--muted)">
@@ -74,8 +75,8 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
             {upgrades ? ` ${spell(upgrades)} swaps below upgrade it, at the bracket you play at.` : ""}
           </p>
           <div className="flex flex-wrap gap-2">
-            {upgrades ? <a href="#upgrades" className="inline-flex min-h-11 items-center rounded-full bg-(--accent) px-5 font-medium text-(--accent-foreground)">See the upgrades ↓</a> : null}
-            {p.report ? <a href={p.report} className="inline-flex min-h-11 items-center rounded-full border border-(--separator) px-5 font-medium hover:border-(--foreground)">Open the full report</a> : null}
+            {upgrades ? <a href="#upgrades" className="btn-primary gap-1.5">See the upgrades <Arrow dir="down" /></a> : null}
+            {p.report ? <a href={p.report} className="btn-secondary">Open the full report</a> : null}
           </div>
         </div>
         <div className="min-w-0 w-full justify-self-center lg:max-w-[calc(55svh*1.2222)] min-[100rem]:max-w-[calc(55svh*1.7778)]">

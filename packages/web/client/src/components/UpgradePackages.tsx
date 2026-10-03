@@ -28,7 +28,7 @@ export function UpgradePackages({ page, children }: { page: PreconPage; children
         <div role="group" aria-label="Bracket" className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
           {targets.map((t) => (
             <button key={t} type="button" aria-pressed={t === target} onClick={() => setTarget(t)}
-              className="inline-flex min-h-11 items-center justify-center rounded-full border px-3 sm:px-5 font-medium aria-pressed:border-(--accent) aria-pressed:bg-(--accent) aria-pressed:text-(--accent-foreground) border-(--separator) hover:border-(--foreground)">
+              className="chip justify-center">
               Bracket {t}
             </button>
           ))}

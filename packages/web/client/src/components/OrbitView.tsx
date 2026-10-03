@@ -11,6 +11,7 @@ import { ReasonText, useCardDrawer } from "./card-drawer.js";
 import { allPartners, Constellation, type MenuItem } from "./Constellation.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
 
+import { Arrow, Chevron } from "./icons.js";
 /** THE ONE-CARD VIEW AS AN ORBIT (graph evaluation 2026-09-25, design B; replaces `EgoView`).
  *
  *  The focus sits in the middle of a map (`Constellation`), the cards it works with around it in
@@ -197,7 +198,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
             return c ? (
               <Fragment key={id}>
                 <button type="button" className="min-h-9 text-[#D4A63A] hover:underline" onClick={() => back(i)}>{firstPart(c)}</button>
-                <span aria-hidden="true" className="text-(--muted)">›</span>
+                <span className="text-(--muted)"><Chevron dir="right" /></span>
               </Fragment>
             ) : null;
           })}
@@ -206,7 +207,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
       ) : null}
       {prev && !selected && !openSector ? (
         <button type="button" className="min-h-11 self-start rounded-(--radius) border border-(--separator) px-3 hover:border-(--foreground)" onClick={() => back(trail.length - 1)}>
-          ← Back to {displayName(prev)}
+          <Arrow dir="left" /> Back to {displayName(prev)}
         </button>
       ) : null}
       {selected
@@ -509,7 +510,7 @@ function PartnerPanel({ focus, p, back, still, same, onSame, combo, onCentre, on
     <>
       <div className="flex items-center gap-2">
         {back ? (
-          <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-3 hover:border-(--foreground)" onClick={back.run}>← {back.label}</button>
+          <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-3 hover:border-(--foreground)" onClick={back.run}><Arrow dir="left" /> {back.label}</button>
         ) : null}
         <button type="button" aria-label="Close" className="ml-auto flex min-h-11 min-w-11 items-center justify-center rounded-(--radius) border border-(--separator) text-lg" onClick={onClose}>✕</button>
       </div>
