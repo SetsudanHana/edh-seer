@@ -183,6 +183,11 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
       const res = await this.fetchCached(`/cards/${shard}.json`);
       // A 404 IS "no such card" for every name in this shard — the same answer the missing file
       // used to give one name at a time.
+      // ONLY A 404 MEANS "NO SUCH CARD". A failed request (a 5xx, a dropped fill) cached its names as
+      // missing for the life of the lookup, and one lookup serves a whole precon build: a combo piece
+      // read as absent once was absent for every precon after it, so the bracket guard saw no combo
+      // (Squirreled Away at bracket 2, 2026-10-03). Left unread, a later prefetch asks again.
+      if (!res.ok && res.status !== 404) return;
       const file = res.ok ? await res.json() as ShardFile : {};
       for (const n of shardNames) {
         const entry = file[n];

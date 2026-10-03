@@ -1,0 +1,605 @@
+{
+ "Teferi's Reproach": {
+  "card": {
+   "name": "Teferi's Reproach",
+   "typeLine": "Instant",
+   "manaValue": 3,
+   "oracleText": "Choose target opponent. Until that player's next turn, they gain protection from everything and their life total can't change. All nonland permanents they control phase out. (While they're phased out, they're treated as though they don't exist. They phase in before that player untaps during their next untap step.)\nExile Teferi's Reproach.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "layout": "normal",
+   "manaCost": "{2}{W}"
+  },
+  "tags": {
+   "_id": "6ab95537b245637cc06f402b",
+   "oracleId": "9381b4a5-a8e0-412d-bc7f-ae15afa0f135",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "phases-out",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": [
+         "creature",
+         "artifact",
+         "enchantment",
+         "planeswalker",
+         "battle"
+        ],
+        "notType": [
+         "land"
+        ],
+        "scope": "target"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "exiled",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "fromZone": "stack",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 273,
+   "model": "derived",
+   "normalizeVersion": 22,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "39f1aa65196d024a7f15fcfd5dfd672456c26deebe9b2eca1b950e8b2d9ca419",
+   "clauseSource": "model"
+  }
+ },
+ "Blossoming Calm": {
+  "card": {
+   "name": "Blossoming Calm",
+   "typeLine": "Instant",
+   "manaValue": 1,
+   "oracleText": "You gain hexproof until your next turn. You gain 2 life.\nRebound (If you cast this spell from your hand, exile it as it resolves. At the beginning of your next upkeep, you may cast this card from exile without paying its mana cost.)",
+   "keywords": [
+    "Rebound"
+   ],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "layout": "normal",
+   "manaCost": "{W}"
+  },
+  "tags": {
+   "_id": "6a932a5cf6eb344af19452da",
+   "oracleId": "489a60f1-83f8-465b-918f-7d63d4f76d14",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "keyword-grant",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "clause": 1,
+     "repeats": "once",
+     "grants": [
+      "hexproof"
+     ]
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "rebound"
+    ]
+   },
+   "deriveVersion": 273,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "abc560ad56a073b3896370ba183fb3c243b1963e5e64e5852c28a73ace691bfd",
+   "clauseSource": "grammar"
+  }
+ },
+ "Wild Magic Surge": {
+  "card": {
+   "name": "Wild Magic Surge",
+   "typeLine": "Instant",
+   "manaValue": 2,
+   "oracleText": "Destroy target permanent an opponent controls. Its controller reveals cards from the top of their library until they reveal a permanent card that shares a card type with that permanent. They put that card onto the battlefield and the rest on the bottom of their library in a random order.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "layout": "normal",
+   "manaCost": "{R}{R}"
+  },
+  "tags": {
+   "_id": "6a932a5af6eb344af19434d6",
+   "oracleId": "41d16975-d6c0-4343-bea2-4f360ead9a1c",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "permanent",
+        "scope": "target"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 273,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "eae08686f497cdf56aa184356d0e0951dae1060cb535ddeabce10815697efed3",
+   "clauseSource": "model"
+  }
+ },
+ "Stroke of Midnight": {
+  "card": {
+   "name": "Stroke of Midnight",
+   "typeLine": "Instant",
+   "manaValue": 3,
+   "oracleText": "Destroy target nonland permanent. Its controller creates a 1/1 white Human creature token.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "layout": "normal",
+   "manaCost": "{2}{W}"
+  },
+  "tags": {
+   "_id": "6a736ac8f6eb344af1221d0e",
+   "oracleId": "9a107e48-3d50-4941-95b1-10f2b29a4245",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": [
+         "creature",
+         "artifact",
+         "enchantment",
+         "planeswalker",
+         "battle"
+        ],
+        "notType": [
+         "land"
+        ],
+        "scope": "target"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "token-generation",
+      "subject": {
+       "control": "opp",
+       "token": true,
+       "type": "creature",
+       "subtype": "human",
+       "colors": [
+        "W"
+       ],
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "create-token",
+       "subject": {
+        "control": "opp",
+        "token": true,
+        "colors": [
+         "W"
+        ],
+        "type": "creature",
+        "subtype": "human",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "opp",
+        "token": true,
+        "colors": [
+         "W"
+        ],
+        "type": "creature",
+        "subtype": "human",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 273,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "a0e402cf7692ee9afc08c600c13c42920f3cb072ba55d5585e86111134335dff",
+   "clauseSource": "grammar"
+  }
+ },
+ "Heroic Intervention": {
+  "card": {
+   "name": "Heroic Intervention",
+   "typeLine": "Instant",
+   "manaValue": 2,
+   "oracleText": "Permanents you control gain hexproof and indestructible until end of turn.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "layout": "normal",
+   "manaCost": "{1}{G}"
+  },
+  "tags": {
+   "_id": "6a736ac8f6eb344af1221c3a",
+   "oracleId": "24882fa2-3fe9-4c1b-aa3d-0e6488b9db27",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "keyword-grant",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "clause": 1,
+     "repeats": "once",
+     "grants": [
+      "hexproof",
+      "indestructible"
+     ]
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "keyword-grant",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "clause": 1,
+     "repeats": "once",
+     "grants": [
+      "hexproof",
+      "indestructible"
+     ]
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 273,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "0761abf338761d89f14c0ac8e41e933569ebcdfcb638c9a25bed85bb34473bb4",
+   "clauseSource": "grammar"
+  }
+ },
+ "Flawless Maneuver": {
+  "card": {
+   "name": "Flawless Maneuver",
+   "typeLine": "Instant",
+   "manaValue": 3,
+   "oracleText": "If you control a commander, you may cast this spell without paying its mana cost.\nCreatures you control gain indestructible until end of turn.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "layout": "normal",
+   "manaCost": "{2}{W}"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af12227eb",
+   "oracleId": "4e183439-17d2-47ff-9d99-5e22821d91e3",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "cast",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "spell",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "keyword-grant",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "clause": 2,
+     "repeats": "once",
+     "grants": [
+      "indestructible"
+     ]
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 273,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "79cfa5f081a480c1806593000286fdcf5dd08d0b675edfab5e5fc76399c6dd5e",
+   "clauseSource": "grammar"
+  }
+ }
+}

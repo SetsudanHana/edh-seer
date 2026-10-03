@@ -1,16 +1,12 @@
-/** A CARD'S SYNERGY STRENGTH IN A DECK, by the report's own per-card formula (`analyze.ts`), so a
- *  swap and the report cannot disagree about which card does more for the deck. Swaps used to
- *  compare distinct-partner counts (owner, 2026-10-01: "we are only taking into account the amount
- *  of links not their magnitude"), so a cut with thirteen off-theme links outranked an add with nine
- *  links on the deck's theme.
+/** A CARD'S SYNERGY STRENGTH IN A DECK, for swaps, and the edge weight the report shares with them.
  *
- *  THE WEIGHT IS THE REPORT'S, NOTHING NEW. Under the shipped `strategy` edge model (ruling
- *  2026-09-10: "edge weight is the deck's strategy, and nothing else") a link weighs its distinct
- *  reason tags times the deck's axis boost, times `COMMANDER_BOOST` when the other card is the
- *  commander. A card's strength is the square root of what it is fed plus `roleBlend` times the
- *  square root of a quarter of what it feeds. Edge magnitude (firings per use) is not in it: it is
- *  display data until a measured weighting is chosen (step 2). */
-import { COMMANDER_BOOST, impactEdgeWeight, type ImpactWeights, type Reason } from "@edh-seer/engine";
+ *  `edgeWeight` is the report's (`analyze.ts`): under the shipped `strategy` edge model (ruling
+ *  2026-09-10) a link weighs its distinct reason tags times the deck's axis boost. `cardStrength`
+ *  starts from it and adds what the report does not yet weigh: each link's effect value and
+ *  diminishing returns per trigger (owner, 2026-10-02). Swaps used to count partners (2026-10-01),
+ *  then to weigh every link alike, so a card that triggers on everything for 1 life won every swap.
+ *  Edge magnitude (firings per use) is still display data (#905, parked). */
+import { COMMANDER_BOOST, impactEdgeWeight, impactWeightOf, type ImpactWeights, type Reason } from "@edh-seer/engine";
 import { axisFactor, maxAxisWeight } from "./axis.js";
 
 /** A fully on-axis edge counts 2.5 times an off-axis one. Tunable. */
@@ -31,7 +27,7 @@ export function edgeWeight(reasons: Reason[], w: ImpactWeights, axis: Map<string
 export interface CardLink { feeds: Reason[]; fedBy: Reason[]; commander: boolean }
 
 export interface Strength {
-  /** The report's per-card score before the rate factor: √support + roleBlend · √feederSum. */
+  /** What the card does for the deck, as a swap weighs it (`cardStrength`). */
   strength: number;
   /** Deck cards it has a reason with. */
   partners: number;
@@ -41,20 +37,44 @@ export interface Strength {
   commander: boolean;
 }
 
+/** A SWAP'S STRENGTH: the report's weights, plus what each link is worth and diminishing returns per
+ *  trigger (owner, 2026-10-02: "it is not an issue that you have a card that 'synergizes' with
+ *  everything, but typically their impact is very small"). Swaps first; the report's own rating
+ *  follows once these read right.
+ *
+ *  - WHAT A LINK IS WORTH: the payoff's effect value, the calibrated prior the `strategy` edge model
+ *    set aside (`impactWeightOf` under `priors`: kind x repeatability x scaling). Gaining 1 life or
+ *    pinging for 1 counts 0.2-0.3 of drawing a card or making tokens.
+ *  - TIMES the deck's theme boost and the commander boost, as the report weighs a link.
+ *  - DIMINISHING RETURNS PER TRIGGER: links through one reason tag add up under a square root, links
+ *    through different tags add in full. Thirteen creatures entering into one "whenever a creature
+ *    enters" trigger are one synergy grown thirteen times, not thirteen synergies.
+ *  - What a card feeds counts a `FEEDER_SHARE` of what it is fed, as in the report. */
 export function cardStrength(links: readonly CardLink[], w: ImpactWeights, axis: Map<string, number>): Strength {
-  let support = 0;
-  let feederSum = 0;
+  const priors: ImpactWeights = { ...w, edgeModel: "priors" };
+  const fed = new Map<string, number>();
+  const fedTo = new Map<string, number>();
   let partners = 0;
   let onTheme = 0;
   let commander = false;
+  /** One link's reasons into per-tag totals: its best reason per tag, so a link counts once a tag. */
+  const add = (into: Map<string, number>, reasons: readonly Reason[], boost: number) => {
+    const best = new Map<string, number>();
+    for (const r of reasons) {
+      const v = impactWeightOf(r, priors) * axisFactor([r], axis, AXIS_BOOST) * boost;
+      if (v > (best.get(r.tag) ?? 0)) best.set(r.tag, v);
+    }
+    for (const [tag, v] of best) into.set(tag, (into.get(tag) ?? 0) + v);
+  };
   for (const l of links) {
     if (l.feeds.length === 0 && l.fedBy.length === 0) continue;
     partners++;
     if (l.commander) commander = true;
     const boost = l.commander ? COMMANDER_BOOST : 1;
-    if (l.fedBy.length > 0) support += edgeWeight(l.fedBy, w, axis) * boost;
-    if (l.feeds.length > 0) feederSum += FEEDER_SHARE * edgeWeight(l.feeds, w, axis) * boost;
+    add(fed, l.fedBy, boost);
+    add(fedTo, l.feeds, boost);
     if (maxAxisWeight([...l.feeds, ...l.fedBy], axis) >= AXIS_ON_THRESHOLD) onTheme++;
   }
-  return { strength: Math.sqrt(support) + (w.roleBlend ?? 1) * Math.sqrt(feederSum), partners, onTheme, commander };
+  const perTrigger = (m: Map<string, number>, share = 1) => [...m.values()].reduce((s, v) => s + Math.sqrt(share * v), 0);
+  return { strength: perTrigger(fed) + (w.roleBlend ?? 1) * perTrigger(fedTo, FEEDER_SHARE), partners, onTheme, commander };
 }

@@ -183,7 +183,7 @@ export interface Replacement {
  *  per-card strength (`suggest-static`, `card-strength.ts`); without one, the add must out-connect
  *  the cut. Each add is used once, and the running counts move with every cross-job pair, so the
  *  surplus that justified the first swap is not spent twice. */
-export type PickAdd = (cut: CutSide, list: readonly Candidate[]) => Candidate | undefined | Promise<Candidate | undefined>;
+export type PickAdd = (cut: CutSide, list: readonly Candidate[], rule: Replacement["rule"]) => Candidate | undefined | Promise<Candidate | undefined>;
 /** The add that out-connects the cut, first in the list's order. */
 export const outConnects: PickAdd = (cut, list) => list.find((c) => c.connections.length > cut.connections);
 export async function pairReplacements(
@@ -193,7 +193,7 @@ export async function pairReplacements(
   const count = new Map(groups.map((g) => [g.name, g.count] as const));
   const shortBy = (g: GroupState): number => (g.target - count.get(g.name)!) / g.target;
   const used = new Set<number>();
-  const firstBetter = (list: readonly Candidate[], cut: CutSide) => pick(cut, list.filter((c) => !used.has(c.card.pos)));
+  const firstBetter = (list: readonly Candidate[], cut: CutSide, rule: Replacement["rule"]) => pick(cut, list.filter((c) => !used.has(c.card.pos)), rule);
   const out: Replacement[] = [];
   for (const cut of cuts) {
     // A CUT FILLING TWO GROUPS' LEAVES takes the first in `buildParents` order (Consistency, Ramp,
@@ -205,7 +205,7 @@ export async function pairReplacements(
       const short = groups
         .filter((u) => u !== g && u.target > 0 && count.get(u.name)! < u.target)
         .sort((a, b) => shortBy(b) - shortBy(a))[0];
-      const add = short && await firstBetter(gapList(pool, short.leaves, short.costBand, Infinity), cut);
+      const add = short && await firstBetter(gapList(pool, short.leaves, short.costBand, Infinity), cut, "cross-job");
       if (short && add) {
         const gFrom = count.get(g.name)!;
         const uFrom = count.get(short.name)!;
@@ -220,11 +220,11 @@ export async function pairReplacements(
       // THE CUT'S OWN ROLE, NOT ONLY ITS GROUP: Despark (removal) for Spirit Bonds (protection) is
       // "Interaction for Interaction" and a different job (Party Time, 2026-09-27).
       const own = g.leaves.filter((l) => cut.roles.includes(l));
-      const add = await firstBetter(gapList(pool, own, g.costBand, Infinity).filter((c) => c.card.mv <= cap), cut);
+      const add = await firstBetter(gapList(pool, own, g.costBand, Infinity).filter((c) => c.card.mv <= cap), cut, "same-job");
       if (add) pick = { cut: cut.name, add, rule: "same-job", counts: [] };
     }
     if (!pick && !g) {
-      const add = await firstBetter(plan, cut);
+      const add = await firstBetter(plan, cut, "no-role");
       if (add) pick = { cut: cut.name, add, rule: "no-role", counts: [] };
     }
     if (pick) {

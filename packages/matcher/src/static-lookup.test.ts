@@ -44,6 +44,21 @@ test("a prefetched card resolves, and an absent one is null rather than an error
   expect(await l.findByName("not a card")).toBeNull();
 });
 
+test("a failed request is not a missing card: the next prefetch asks again", async () => {
+  const ok = fetchOf(shardsOf({ krenko: CARD }));
+  let fail = true;
+  const flaky = (async (u: string) => (String(u).includes("/cards/") && fail
+    ? ({ ok: false, status: 503, json: async () => ({}) } as Response)
+    : ok(u as never))) as unknown as typeof fetch;
+  const l = new StaticLookup("/static", flaky);
+  await l.prefetch(["krenko"]);
+  expect(await l.findByName("krenko")).toBeNull();
+  fail = false;
+  await l.prefetch(["krenko"]);
+  expect((await l.findByName("krenko"))?.name).toBe("Krenko");
+  expect(await l.allCombos()).toHaveLength(1);
+});
+
 /** A 404 IS `findByName` RETURNING NULL, which `resolveNames` already turns into `missing`. That is
  *  why there is no name -> id index: it measured 996 KB gz to avoid exactly this. */
 test("tags come from the same file as the card, so no second request is made", async () => {

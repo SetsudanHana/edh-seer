@@ -90,7 +90,10 @@ export async function preconPackages(input: {
   }
   // THE COMBOS THE ADDS BRING: fetched with them, so a combo an add completes is seen by the guard.
   const combos = await lookup.allCombos();
-  const synergy = (input.suggestions?.pairs ?? []).map((p) => {
+  // ONLY A CUT THAT DOES NO JOB: a removal or protection card is the role sections' to replace, by
+  // their strict rule (persona round 2026-10-02: Sunfall for Underhanded Designs, Path to Exile for
+  // Syr Vondam, under "Cards that work together").
+  const synergy = (input.suggestions?.pairs ?? []).filter((p) => p.rule === "no-role").map((p) => {
     const r = synergyReasons({ name: p.cut, ...p.cutStrength }, { name: p.add.name, ...p.addStrength, reason: p.add.reasons[0]?.text ?? `${p.add.name} does more for this deck's theme` });
     return { out: p.cut, in: p.add.name, outReason: r.out, inReason: r.in };
   });
