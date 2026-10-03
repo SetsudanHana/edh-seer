@@ -601,5 +601,1869 @@
    "segmentHash": "79cfa5f081a480c1806593000286fdcf5dd08d0b675edfab5e5fc76399c6dd5e",
    "clauseSource": "grammar"
   }
+ },
+ "Arcane Signet": {
+  "card": {
+   "_id": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
+   "name": "Arcane Signet",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add one mana of any color in your commander's color identity.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "arcane signet",
+    "heart of the mountain",
+    "earths mightiest emblem"
+   ],
+   "edhrecRank": 3,
+   "manaCost": "{2}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "legal",
+    "paupercommander": "legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2026-10-02",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/c/6/c6b6117c-faab-4bbb-b851-07bd8061ef03.jpg?1789644435",
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac8f6eb344af1221e16",
+   "oracleId": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "commander": true
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 275,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "a5bdbd76c92bbec716e23f708265d7f4410962e10435c0d27b9b8d241cc8df4a",
+   "clauseSource": "grammar"
+  }
+ },
+ "Mana Vault": {
+  "card": {
+   "_id": "736892cb-a34b-4bb9-b56c-e26e3db207a2",
+   "name": "Mana Vault",
+   "typeLine": "Artifact",
+   "oracleText": "This artifact doesn't untap during your untap step.\nAt the beginning of your upkeep, you may pay {4}. If you do, untap this artifact.\nAt the beginning of your draw step, if this artifact is tapped, it deals 1 damage to you.\n{T}: Add {C}{C}{C}.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "mana vault"
+   ],
+   "edhrecRank": 149,
+   "manaCost": "{1}",
+   "producedMana": [
+    "C"
+   ],
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "banned",
+    "pauper": "not_legal",
+    "vintage": "restricted",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "banned",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "banned",
+    "oldschool": "not_legal",
+    "premodern": "banned",
+    "predh": "legal",
+    "tlr": "banned"
+   },
+   "releasedAt": "2022-07-08",
+   "gameChanger": true,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/c/1/c1a31d52-a407-4ded-bfca-cc812f11afa0.jpg?1783921790",
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a51f6eb344af1938f70",
+   "oracleId": "736892cb-a34b-4bb9-b56c-e26e3db207a2",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "untap",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "upkeep"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "untaps",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "damage",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "non-combat-damage",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "dealer": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 3,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "3",
+     "clause": 4,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 3,
+      "ceiling": 3
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 275,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "77f16a7fdab30d52c8c9c4aa828b1227f024cfd46333f39b5db30d10d6c064e4",
+   "unknownTriggers": [
+    "draw-step"
+   ],
+   "clauseSource": "model"
+  }
+ },
+ "Mox Diamond": {
+  "card": {
+   "_id": "f3c5978a-70fa-431f-933b-b954bd0db0ea",
+   "name": "Mox Diamond",
+   "typeLine": "Artifact",
+   "oracleText": "If this artifact would enter, you may discard a land card instead. If you do, put this artifact onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add one mana of any color.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "mox diamond"
+   ],
+   "edhrecRank": 246,
+   "manaCost": "{0}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "banned",
+    "oldschool": "not_legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "banned"
+   },
+   "releasedAt": "2015-05-06",
+   "gameChanger": true,
+   "reserved": true,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/b/f/bf9fecfd-d122-422f-bd0a-5bf69b434dfe.jpg?1783938445",
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a57f6eb344af193f8ee",
+   "oracleId": "f3c5978a-70fa-431f-933b-b954bd0db0ea",
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "discard",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "continuous",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "static",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "continuous",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "static",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters-graveyard",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "self": true
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "continuous",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 275,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "f3c115a1fd8f1d42798445af28f6d39d4b5a6ec40df2e856215a2ebc561833b1",
+   "clauseSource": "grammar"
+  }
+ },
+ "Painful Truths": {
+  "card": {
+   "_id": "58a2d15f-1b4b-4303-b524-8cc0d1b3e7d2",
+   "name": "Painful Truths",
+   "typeLine": "Sorcery",
+   "oracleText": "Converge — You draw X cards and lose X life, where X is the number of colors of mana spent to cast this spell.",
+   "keywords": [
+    "Converge"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "card-draw",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "painful truths"
+   ],
+   "edhrecRank": 1720,
+   "manaCost": "{2}{B}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2026-01-23",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/f/a/faa82f09-0693-4cc6-8770-8c6a35aa627b.jpg?1783904558",
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a58f6eb344af19410d2",
+   "oracleId": "58a2d15f-1b4b-4303-b524-8cc0d1b3e7d2",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "X",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": "mana"
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "the number of colors of mana spent to cast this spell",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "any",
+       "token": null,
+       "type": "spell"
+      }
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "converge"
+    ]
+   },
+   "deriveVersion": 275,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "8a83003caa9bffdd0336f52dbb9b889c29091c8411ea14d684312e5ce3f14f5b",
+   "clauseSource": "grammar"
+  }
+ },
+ "Rhystic Study": {
+  "card": {
+   "_id": "53236dd7-845a-444c-96d5-f41ed7325d8f",
+   "name": "Rhystic Study",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "card-draw",
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "rhystic study",
+    "stay with me",
+    "unstable harmonics"
+   ],
+   "edhrecRank": 45,
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "banned",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2022-12-02",
+   "gameChanger": true,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Archival Whorl",
+     "typeLine": "Sorcery",
+     "printingId": "76fca761-fc3a-41a1-a5f9-c2a35f3eacf1"
+    }
+   ],
+   "artCrop": "https://cards.scryfall.io/art_crop/front/9/f/9f37c5b6-a59c-45cd-9a99-e9357fe9ea1b.jpg?1783919146",
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736acaf6eb344af1223ade",
+   "oracleId": "53236dd7-845a-444c-96d5-f41ed7325d8f",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "spell"
+      }
+     },
+     "amount": "1",
+     "unless": {
+      "cost": "{1}",
+      "payer": "opponent"
+     },
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 275,
+   "model": "derived",
+   "normalizeVersion": 21,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "338084681cfa80007bf1d00c9f9349200b71d06732b63786d1d66378afb9e4fa",
+   "clauseSource": "grammar"
+  }
+ },
+ "Skullclamp": {
+  "card": {
+   "_id": "65986c1b-8e51-4604-b685-d82fa7d1263a",
+   "name": "Skullclamp",
+   "typeLine": "Artifact — Equipment",
+   "oracleText": "Equipped creature gets +1/-1.\nWhenever equipped creature dies, draw two cards.\nEquip {1}",
+   "keywords": [
+    "Equip"
+   ],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "card-draw",
+     "equipment"
+    ],
+    "cares": [
+     "creature-death",
+     "sacrifice-event",
+     "equipment"
+    ]
+   },
+   "searchNames": [
+    "skullclamp"
+   ],
+   "edhrecRank": 41,
+   "manaCost": "{1}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "banned",
+    "legacy": "banned",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "legal",
+    "tlr": "banned"
+   },
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/1/d/1d8b007b-3169-4ee3-80c7-781fc096fc7a.jpg?1783903215",
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af122316f",
+   "oracleId": "65986c1b-8e51-4604-b685-d82fa7d1263a",
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "pump"
+     },
+     "amount": "+1/-1",
+     "clause": 1,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [
+     "equipment"
+    ],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "equip"
+    ]
+   },
+   "deriveVersion": 275,
+   "model": "derived",
+   "normalizeVersion": 13,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "b63490d8538c1f1f29e6f45cc51ddc26dd885c57b03d084e312a964c771c1689",
+   "clauseSource": "grammar"
+  }
+ },
+ "The One Ring": {
+  "card": {
+   "_id": "3aa83ed2-f48b-4ce6-a614-2c54ddf50538",
+   "name": "The One Ring",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "Indestructible\nWhen The One Ring enters, if you cast it, you gain protection from everything until your next turn.\nAt the beginning of your upkeep, you lose 1 life for each burden counter on The One Ring.\n{T}: Put a burden counter on The One Ring, then draw a card for each burden counter on The One Ring.",
+   "keywords": [
+    "Indestructible"
+   ],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "card-draw"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "the one ring"
+   ],
+   "edhrecRank": 95,
+   "manaCost": "{4}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "banned",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "not_legal",
+    "modern": "banned",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "banned",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "not_legal"
+   },
+   "releasedAt": "2023-06-23",
+   "gameChanger": true,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/d/5/d5806e68-1054-458e-866d-1f2470f682b2.jpg?1790212038",
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736acaf6eb344af1223b26",
+   "oracleId": "3aa83ed2-f48b-4ce6-a614-2c54ddf50538",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "cast",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "ref": "trigger"
+       }
+      }
+     ],
+     "clause": 2
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "trigger": {
+      "verbs": [
+       "upkeep"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "1 for each burden counter on ~",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 3,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "any",
+       "token": null,
+       "counter": "burden"
+      }
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "counter-placement",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "counter": "burden",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 4,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "for each burden counter on ~",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 4,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "any",
+       "token": null,
+       "counter": "burden"
+      }
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "legendary",
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 4,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "indestructible"
+    ]
+   },
+   "deriveVersion": 275,
+   "model": "derived",
+   "normalizeVersion": 13,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "34a6bcdc05906410f46deec2ea83041730dd3c0ad14f63a3d675ffcd70ea9873",
+   "unknownTriggers": [
+    "if:enters"
+   ],
+   "clauseSource": "model"
+  }
+ },
+ "Lion's Eye Diamond": {
+  "card": {
+   "_id": "ee6099b0-fb1f-42f1-b862-7708c6e36d05",
+   "name": "Lion's Eye Diamond",
+   "typeLine": "Artifact",
+   "oracleText": "Discard your hand, Sacrifice this artifact: Add three mana of any one color. Activate only as an instant.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "graveyard",
+     "mana"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "lions eye diamond"
+   ],
+   "edhrecRank": 737,
+   "manaCost": "{0}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "not_legal",
+    "timeless": "not_legal",
+    "gladiator": "not_legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "restricted",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "banned",
+    "standardbrawl": "not_legal",
+    "brawl": "not_legal",
+    "competitivebrawl": "not_legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "banned",
+    "oldschool": "not_legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "banned"
+   },
+   "releasedAt": "2014-06-16",
+   "gameChanger": true,
+   "reserved": true,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/7/5/758f95f8-bcb0-43ae-b474-56ebd855951e.jpg?1783939234",
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a51f6eb344af19393e0",
+   "oracleId": "ee6099b0-fb1f-42f1-b862-7708c6e36d05",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "Discard your hand, Sacrifice this artifact",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "discard": [
+       {
+        "amount": "all",
+        "subject": {
+         "control": "you",
+         "token": null
+        }
+       }
+      ],
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "Discard your hand, Sacrifice this artifact",
+     "amount": "all",
+     "emits": [
+      {
+       "verb": "discard",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "payment": {
+      "discard": [
+       {
+        "amount": "all",
+        "subject": {
+         "control": "you",
+         "token": null
+        }
+       }
+      ],
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "Discard your hand, Sacrifice this artifact",
+     "amount": "3",
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 3,
+      "ceiling": 3
+     },
+     "payment": {
+      "discard": [
+       {
+        "amount": "all",
+        "subject": {
+         "control": "you",
+         "token": null
+        }
+       }
+      ],
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 275,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "63c096b7edf250836f323aebcb1c8b2679be5ec487bd36ae39f8282a3dd78cde",
+   "clauseSource": "model"
+  }
+ },
+ "Jeska's Will": {
+  "card": {
+   "_id": "0fd114c4-092b-4e28-b0dc-ef529f3bc73e",
+   "name": "Jeska's Will",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n• Add {R} for each card in target opponent's hand.\n• Exile the top three cards of your library. You may play them this turn.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "jeskas will",
+    "storms will"
+   ],
+   "edhrecRank": 104,
+   "manaCost": "{2}{R}",
+   "producedMana": [
+    "R"
+   ],
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "not_legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "not_legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "not_legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2024-02-09",
+   "gameChanger": true,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/9/9/99e0c371-1024-4432-9fd9-3bc29c8d38e4.jpg?1783912996",
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af122211a",
+   "oracleId": "0fd114c4-092b-4e28-b0dc-ef529f3bc73e",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "scaling": "per-opponent"
+     },
+     "amount": "for each card in target opponent's hand",
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "opp",
+       "token": null,
+       "scope": "target"
+      }
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "exiled",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "fromZone": "library"
+       }
+      }
+     ],
+     "clause": 3,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 275,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "a9af93c59de9df5f7f21b8ae895ec5b49cf154ef9cae19abb595b1073c96c930",
+   "clauseSource": "model"
+  }
+ },
+ "Crop Rotation": {
+  "card": {
+   "_id": "28b46183-c62f-47b1-9fee-3ba148202cab",
+   "name": "Crop Rotation",
+   "typeLine": "Instant",
+   "oracleText": "As an additional cost to cast this spell, sacrifice a land.\nSearch your library for a land card, put that card onto the battlefield, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "ramp",
+     "land-etb",
+     "mana",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "crop rotation"
+   ],
+   "edhrecRank": 213,
+   "manaCost": "{G}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "banned",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "not_legal",
+    "modern": "not_legal",
+    "legacy": "legal",
+    "pauper": "legal",
+    "vintage": "legal",
+    "penny": "not_legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "legal",
+    "predh": "legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2023-01-13",
+   "gameChanger": true,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/5/2/523414cb-f8db-407a-808a-01454e03d8b9.jpg?1783918448",
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a58f6eb344af19412e6",
+   "oracleId": "28b46183-c62f-47b1-9fee-3ba148202cab",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "land"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "land"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "land",
+        "fromZone": "library"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "land",
+        "fromZone": "library"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 275,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "03da36c7911690170a6fdcbc5d839ffea720e3f063bb9ac7f68d267ce44c2773",
+   "clauseSource": "grammar"
+  }
+ },
+ "Cultivate": {
+  "card": {
+   "_id": "8b755881-a72d-4e21-a369-d2924eb4585a",
+   "name": "Cultivate",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "ramp",
+     "land-etb",
+     "mana",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "searchNames": [
+    "cultivate"
+   ],
+   "edhrecRank": 20,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "legalities": {
+    "standard": "not_legal",
+    "future": "not_legal",
+    "historic": "legal",
+    "timeless": "legal",
+    "gladiator": "legal",
+    "pioneer": "legal",
+    "modern": "legal",
+    "legacy": "legal",
+    "pauper": "legal",
+    "vintage": "legal",
+    "penny": "legal",
+    "commander": "legal",
+    "oathbreaker": "legal",
+    "standardbrawl": "not_legal",
+    "brawl": "legal",
+    "competitivebrawl": "legal",
+    "alchemy": "not_legal",
+    "paupercommander": "legal",
+    "duel": "legal",
+    "oldschool": "not_legal",
+    "premodern": "not_legal",
+    "predh": "legal",
+    "tlr": "legal"
+   },
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false,
+   "artCrop": "https://cards.scryfall.io/art_crop/front/e/6/e60deb92-f7dd-4f4e-9036-e47dd586f985.jpg?1783903229",
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af1222172",
+   "oracleId": "8b755881-a72d-4e21-a369-d2924eb4585a",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "basic": true
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "fromZone": "library"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "entersTapped": true,
+        "fromZone": "library"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 275,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c",
+   "clauseSource": "grammar"
+  }
  }
 }

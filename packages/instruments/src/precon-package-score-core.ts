@@ -13,12 +13,22 @@
  *    H5  the mana base total after the package is not worse than before.
  *  Soft, recorded, and a miss blocks shipping until the owner rules:
  *    S1  at least 90% of precons have 5 or more swaps at every target;
- *    S2  the target-3 package keeps the synergy score in at least 18 of the 20 sampled precons. */
+ *    S2  the target-3 package keeps the synergy score in at least 18 of the 20 sampled precons.
+ *
+ *  Game Changer upgrades (PRE-REGISTERED 2026-10-03 in `docs/plans/2026-10-03-game-changer-upgrades.md`,
+ *  before the first build of the rule). H4 reads `role` swaps only, as it always did. Hard:
+ *    G1  a `game-changer` swap's add is a Game Changer and fills every build role the cut fills, and
+ *        the cut is not a commander or a creature;
+ *    G2  no `game-changer` swap in a target-2 package.
+ *  Soft:
+ *    B1  of the precons with a target-2 and a target-4 package, at least 60% have different swaps at 4;
+ *    R1  a hand read of 10 `game-changer` swaps finds at least 8 a player would make (recorded in
+ *        RESULTS; the runner lists them). */
 import type { Ingredient, Ingredients } from "@edh-seer/matcher/quality";
 import { bandFits, type BracketTarget, type UpgradePackage, type UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 
 export type Band = "1-2" | "3" | "4-5";
-export type HardMeasure = "H1" | "H2" | "H3" | "H4" | "H5";
+export type HardMeasure = "H1" | "H2" | "H3" | "H4" | "H5" | "G1" | "G2";
 export interface Violation { measure: HardMeasure; target: BracketTarget; detail: string }
 
 export const REASON_MAX = 160;
@@ -27,6 +37,8 @@ export const S1_SWAPS = 5;
 export const S2_SAMPLE = 20;
 export const S2_EVERY = 9;
 export const S2_KEPT = 18;
+export const B1_FLOOR = 0.6;
+export const R1_SAMPLE = 10;
 
 /** THE DIRECTION OF EACH MEASURE `quality.ts` reads: lower is better for these, higher for the rest. */
 const LOWER_IS_BETTER: ReadonlySet<Ingredient> = new Set(["manaValue", "drawback", "restriction"]);
@@ -64,6 +76,9 @@ export interface PackageFacts {
   manaAfter: number;
   /** For each role swap: the build roles of each side, and their ingredients in the swap's role. */
   role: (swap: UpgradeSwap) => { cutRoles: readonly string[]; addRoles: readonly string[]; cut: Ingredients; add: Ingredients } | null;
+  /** For each Game Changer upgrade: the two sides' build roles, the add's Game Changer flag, and
+   *  whether the cut is a creature. Absent before the kind existed. */
+  gameChanger?: (swap: UpgradeSwap) => { cutRoles: readonly string[]; addRoles: readonly string[]; isGameChanger: boolean; cutIsCreature: boolean } | null;
 }
 
 export function hardViolations(pkg: UpgradePackage, f: PackageFacts): Violation[] {
@@ -93,6 +108,16 @@ export function hardViolations(pkg: UpgradePackage, f: PackageFacts): Violation[
       if (lost.length) v("H4", `${s.out.name} -> ${s.in.name}: loses ${lost.join(", ")}`);
       if (!strictlyBetter(r.cut, r.add).ok) v("H4", `${s.out.name} -> ${s.in.name}: not strictly better as ${s.role}`);
     }
+    if (s.kind === "game-changer") {
+      if (pkg.target === 2) v("G2", `${s.out.name} -> ${s.in.name} at bracket 2`);
+      const g = f.gameChanger?.(s) ?? null;
+      if (!g) { v("G1", `${s.out.name} -> ${s.in.name}: unreadable`); continue; }
+      if (!g.isGameChanger) v("G1", `${s.in.name} is not a Game Changer`);
+      const lost = g.cutRoles.filter((x) => !g.addRoles.includes(x));
+      if (lost.length) v("G1", `${s.out.name} -> ${s.in.name}: loses ${lost.join(", ")}`);
+      if (g.cutIsCreature) v("G1", `${s.out.name} is a creature`);
+      if (f.commanders.includes(s.out.name)) v("G1", `cuts the commander ${s.out.name}`);
+    }
   }
   if (f.manaAfter > f.manaBefore) v("H5", `mana base ${f.manaBefore} -> ${f.manaAfter}`);
   return out;
@@ -114,4 +139,25 @@ export function s2Sample<T>(precons: readonly T[]): T[] {
 /** S2: how many sampled precons kept (or raised) their synergy score with the target-3 package. */
 export function s2Kept(rows: readonly { before: number; after: number }[]): number {
   return rows.filter((r) => r.after >= r.before).length;
+}
+
+/** B1: of the precons with a target-2 and a target-4 package, the share whose target-4 swaps differ. */
+export function b1Share(pages: readonly { packages?: readonly UpgradePackage[] }[]): { differ: number; of: number } {
+  const key = (p: UpgradePackage) => swapsOf(p).map((s) => `${s.out.name}>${s.in.name}`).sort().join("|");
+  let differ = 0;
+  let of = 0;
+  for (const page of pages) {
+    const two = page.packages?.find((p) => p.target === 2);
+    const four = page.packages?.find((p) => p.target === 4);
+    if (!two || !four) continue;
+    of++;
+    if (key(two) !== key(four)) differ++;
+  }
+  return { differ, of };
+}
+
+/** R1's sample: every Nth Game Changer upgrade across the build, `R1_SAMPLE` of them. */
+export function r1Sample<T>(swaps: readonly T[]): T[] {
+  const step = Math.max(1, Math.floor(swaps.length / R1_SAMPLE));
+  return swaps.filter((_, i) => i % step === 0).slice(0, R1_SAMPLE);
 }

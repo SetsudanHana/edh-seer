@@ -1,7 +1,9 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { landFacts } from "./land-score.js";
-import { answerCovers, landOptions, newConditions, sameJob, strictlyBetter } from "./upgrade-sections.js";
+import fixtures from "./same-job.fixtures.json" with { type: "json" };
+import { rolesOfCard } from "./quality.js";
+import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, sameJob, strictlyBetter } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
 
 /** Cards as printed (oracle text read 2026-09-30); the text rules read nothing else. */
@@ -125,4 +127,33 @@ test("a land whose mana comes on a condition is never cut: Exotic Orchard is not
   const orchard = land("Exotic Orchard", "Land", "{T}: Add one mana of any color that a land an opponent controls could produce.", ["W", "U", "B", "R", "G"]);
   expect(orchard.facts.utility).toContain("conditional-mana");
   expect(landOptions([orchard], [chapel], 0)).toEqual([]);
+});
+
+/** Cards as the corpus derives them (tags read 2026-10-03), for the Game Changer upgrade. */
+const real = (name: keyof typeof fixtures) => fixtures[name] as unknown as DeckCard;
+const candidate = (d: DeckCard) => ({ dc: d, roles: rolesOfCard(d), links: 0 });
+const rated = (q: Record<string, number>) => (name: string) => q[name] ?? -1;
+
+test("a Game Changer upgrade: the same group, rated higher, and only a Game Changer", () => {
+  const signet = real("Arcane Signet");
+  const quality = rated({ "Arcane Signet": 92, "Mana Vault": 98, "Mox Diamond": 98, "Painful Truths": 80 });
+  const vault = gameChangerOption("ramp", signet, candidate(real("Mana Vault")), quality);
+  expect(vault).toMatchObject({ add: "Mana Vault", role: "ramp", gameChanger: true, upgrade: "game-changer", gained: [] });
+  // Rated lower than the cut: Sol Ring is not traded for anything.
+  expect(gameChangerOption("ramp", signet, candidate(real("Mana Vault")), rated({ "Arcane Signet": 99, "Mana Vault": 98 }))).toBeNull();
+  // Not a Game Changer: the strict rule's to judge.
+  expect(gameChangerOption("ramp", signet, candidate(real("Arcane Signet")), quality)).toBeNull();
+  // Once is not every turn: Lion's Eye Diamond and Jeska's Will never replace a Signet.
+  for (const once of ["Lion's Eye Diamond", "Jeska's Will"] as const) {
+    expect(gameChangerOption("ramp", signet, candidate(real(once)), rated({ "Arcane Signet": 92, [once]: 99 }))).toBeNull();
+  }
+  // Not the section's job.
+  expect(gameChangerOption("consistency", signet, candidate(real("Mana Vault")), quality)).toBeNull();
+});
+
+test("a cut's Game Changer upgrades come before its strict options, strongest first", () => {
+  const quality = rated({ "Arcane Signet": 92, "Mana Vault": 97, "Mox Diamond": 98 });
+  const [only] = roleOptions("ramp", [real("Arcane Signet")], [], { pool: [candidate(real("Mana Vault")), candidate(real("Mox Diamond"))], quality });
+  expect(only!.options.map((o) => o.add)).toEqual(["Mox Diamond", "Mana Vault"]);
+  expect(roleOptions("ramp", [real("Arcane Signet")], [])).toEqual([]);
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { UpgradePackage, UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
-import { hardViolations, s1Share, s2Kept, s2Sample, strictlyBetter, type PackageFacts } from "./precon-package-score-core.js";
+import { b1Share, hardViolations, r1Sample, s1Share, s2Kept, s2Sample, strictlyBetter, type PackageFacts } from "./precon-package-score-core.js";
 
 describe("strictlyBetter", () => {
   it("takes the cheaper card that loses nothing: Night's Whisper over Divination", () => {
@@ -103,5 +103,32 @@ describe("soft measures", () => {
 
   it("S2 counts a precon kept when its synergy does not drop", () => {
     expect(s2Kept([{ before: 3, after: 3 }, { before: 3, after: 3.2 }, { before: 3, after: 2.9 }])).toBe(2);
+  });
+});
+
+describe("Game Changer upgrades (pre-registered 2026-10-03)", () => {
+  const gc = (out: string, add: string): UpgradeSwap => ({ kind: "game-changer", role: "ramp", out: { name: out, reason: "r" }, in: { name: add, reason: "r" } });
+  const ok = { cutRoles: ["ramp"], addRoles: ["ramp", "stax"], isGameChanger: true, cutIsCreature: false };
+  it("G1 holds for a Game Changer in every role the cut fills, and H4 does not read it", () => {
+    expect(hardViolations(pkg([gc("Arcane Signet", "Mana Vault")], 4), facts({ gameChanger: () => ok }))).toEqual([]);
+  });
+  it("G1 fails a card off the list, a lost role, a creature cut, or facts it cannot read", () => {
+    const g1 = (over: Partial<typeof ok> | null) => hardViolations(pkg([gc("Arcane Signet", "Mana Vault")], 4), facts({ gameChanger: () => (over ? { ...ok, ...over } : null) })).map((v) => v.measure);
+    expect(g1({ isGameChanger: false })).toEqual(["G1"]);
+    expect(g1({ addRoles: ["stax"] })).toEqual(["G1"]);
+    expect(g1({ cutIsCreature: true })).toEqual(["G1"]);
+    expect(g1(null)).toEqual(["G1"]);
+  });
+  it("G2 fails a Game Changer upgrade at bracket 2", () => {
+    expect(hardViolations(pkg([gc("Arcane Signet", "Mana Vault")], 2), facts({ gameChanger: () => ok })).map((v) => v.measure)).toEqual(["G2"]);
+  });
+  it("B1 counts precons whose bracket-4 swaps differ from bracket 2's", () => {
+    const same = { packages: [pkg([swap("Divination", "Night's Whisper")], 2), pkg([swap("Divination", "Night's Whisper")], 4)] };
+    const differ = { packages: [pkg([swap("Divination", "Night's Whisper")], 2), pkg([gc("Arcane Signet", "Mana Vault")], 4)] };
+    expect(b1Share([same, differ, { packages: [pkg([], 3)] }])).toEqual({ differ: 1, of: 2 });
+  });
+  it("R1 samples evenly across the build", () => {
+    expect(r1Sample(Array.from({ length: 25 }, (_, i) => i))).toEqual([0, 2, 4, 6, 8, 10, 12, 14, 16, 18]);
+    expect(r1Sample([1, 2])).toEqual([1, 2]);
   });
 });

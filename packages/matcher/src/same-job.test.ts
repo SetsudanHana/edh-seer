@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import { ingredients, rolesOfCard } from "./quality.js";
-import { effectsOf, sameJob } from "./same-job.js";
+import { effectsOf, sameGroup, sameJob } from "./same-job.js";
 import type { DeckCard } from "./types.js";
 
 /** Cards as the corpus derives them (tags read 2026-10-02). */
@@ -28,4 +28,24 @@ test("protecting you is not protecting your permanents, though both read as a ba
 test("a removal spell whose victim puts a permanent onto the battlefield gives the opponent something back", () => {
   expect(ingredients(card("Wild Magic Surge"), "targetedRemoval").drawback).toBe(1);
   expect(ingredients(card("Stroke of Midnight"), "targetedRemoval").drawback).toBe(1);
+});
+
+test("a Game Changer is in a rock's group though not its job: Mana Vault does not untap, Mox Diamond costs a land", () => {
+  const signet = card("Arcane Signet");
+  for (const gc of [card("Mana Vault"), card("Mox Diamond")]) {
+    expect(sameJob(signet, gc, "ramp")).toBe(false);
+    expect(sameGroup(signet, gc, "ramp")).toBe(true);
+  }
+  expect(sameJob(card("Painful Truths"), card("Rhystic Study"), "draw")).toBe(false);
+  expect(sameGroup(card("Painful Truths"), card("Rhystic Study"), "draw")).toBe(true);
+});
+
+test("the group still keeps the kind of job: taking an opponent out is not giving yourself hexproof, and removal is not ramp", () => {
+  expect(sameGroup(card("Teferi's Reproach"), card("Blossoming Calm"), "protection")).toBe(false);
+  expect(sameGroup(card("Stroke of Midnight"), card("Mana Vault"), "ramp")).toBe(false);
+});
+
+test("trading a land for a land is not ramp: Crop Rotation is not in Cultivate's group", () => {
+  expect(rolesOfCard(card("Crop Rotation"))).toContain("ramp");
+  expect(sameGroup(card("Cultivate"), card("Crop Rotation"), "ramp")).toBe(false);
 });
