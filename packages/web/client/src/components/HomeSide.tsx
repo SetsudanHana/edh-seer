@@ -7,6 +7,7 @@ import { deckSourceOf } from "@edh-seer/data/deck-url";
 import { StaticLookup } from "@edh-seer/matcher/static-lookup";
 import { loadPrecon, loadPreconIndex, preconDecklist } from "../lib/precons.js";
 import type { PreconIndexEntry } from "../lib/precon-html.js";
+import { PRECON_TILE, PreconTileBody } from "./PreconIndex.js";
 
 /** THE HOME PAGE'S THIRD COLUMN (owner, 2026-09-30, #770: mockup A of "Home page at 2K/4K").
  *
@@ -72,9 +73,8 @@ function StartFrom({ onPick }: { onPick: (commanders: string, decklist: string) 
           {shown.map((p) => (
             <li key={p.slug}>
               <button type="button" disabled={busy !== null} aria-busy={busy === p.slug} onClick={() => void pick(p.slug)}
-                className="flex w-full min-h-11 flex-col gap-0.5 rounded-(--radius) border border-(--separator) bg-(--surface) px-3 py-2.5 text-left hover:border-(--accent) disabled:opacity-60">
-                <span className="text-sm font-semibold">{p.name}</span>
-                <span className="text-xs text-(--muted)">{p.commanders.join(" and ")}{p.theme ? ` · ${p.theme}` : ""}</span>
+                className={`${PRECON_TILE} hover:border-(--foreground) disabled:opacity-60`}>
+                <PreconTileBody d={p} />
               </button>
             </li>
           ))}
