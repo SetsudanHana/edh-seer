@@ -22,7 +22,6 @@ export function UpgradePackages({ page, children }: { page: PreconPage; children
   const cards = page.packageCards ?? {};
   return (
     <section id="upgrades" className="flex scroll-mt-24 flex-col gap-4" aria-labelledby="upgrades-title">
-      <span className="eyebrow text-(--muted)">Upgrade it</span>
       <h2 id="upgrades-title" className="t-section">Upgrades for the bracket you play at</h2>
       <div className="flex flex-col gap-2">
         {/* THREE ACROSS ON A PHONE: as a wrapping row, "Bracket 4" fell to a line of its own at 390px. */}

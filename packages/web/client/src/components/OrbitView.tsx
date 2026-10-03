@@ -98,6 +98,14 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   const drawer = useCardDrawer();
   const [askBack, setAskBack] = useState<PairAsk["back"]>(undefined);
   useEffect(() => { setSel(null); setPair(null); setSector(null); setHover(null); setAskBack(undefined); }, [focusId]);
+  // ESC CLOSES ANY PANEL (#1003): the pair and the group panels closed by their buttons only, while
+  // every card panel closes on Escape.
+  useEffect(() => {
+    if (pair === null && sector === null) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setSel(null); setPair(null); setSector(null); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pair, sector]);
   // AFTER THE RESET ABOVE: an ask usually moves the middle too, and both run in the same commit.
   useEffect(() => {
     if (!ask) return;

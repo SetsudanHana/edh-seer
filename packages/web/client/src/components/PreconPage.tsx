@@ -75,10 +75,12 @@ function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord[
         *  picture in the top-right corner of a 2560 screen with ~1,500px of nothing between it and
         *  the header. The header keeps its measure; the map has the rest, 16:9 from 1600px, held to
         *  the screen's height so the swaps still start on the first screen. */}
-      <section className="grid items-center gap-8 lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)]">
+      {/* TOP-ALIGNED (designer review 2026-10-03, #988): centred against the map, the page opened on
+        *  170-230px of nothing above the breadcrumb. */}
+      <section className="grid items-start gap-8 lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)]">
         <div className="flex flex-col gap-3">
-          <Breadcrumb steps={[{ label: "Precons", to: "/precons" }, { label: p.setName }]} />
-          <span className="eyebrow text-(--muted)">Commander precon · {p.setName}{p.releaseDate ? ` · ${year(p.releaseDate)}` : ""}</span>
+          {/* THE SET AND ITS YEAR LIVE IN THE TRAIL, not in a kicker over the title (No-Kicker rule, #1003). */}
+          <Breadcrumb steps={[{ label: "Precons", to: "/precons" }, { label: `${p.setName}${p.releaseDate ? ` · ${year(p.releaseDate)}` : ""}` }]} />
           <h1 className="t-title">{p.name}</h1>
           <p className="text-(--muted)">
             {p.commanders.map((c, i) => <span key={c}>{i > 0 ? " and " : ""}<Link className="hover:text-(--foreground)" to={`/commanders/${slugOfName(c)}`}>{c}</Link></span>)}
@@ -126,7 +128,6 @@ function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord[
       </UpgradePackages>
 
       <section className="flex flex-col gap-1" aria-labelledby="list-title">
-        <span className="eyebrow text-(--muted)">The decklist</span>
         <h2 id="list-title" className="mb-2 t-section">What&rsquo;s in the box</h2>
         {/* THE TYPES SIDE BY SIDE AND THE NAMES IN COLUMNS (designer review 2026-09-30, #770): each
           *  type was one running line of names, 3,600px long at 3840. */}
@@ -142,7 +143,6 @@ function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord[
 
       {siblings.length ? (
         <section className="flex flex-col gap-2">
-          <span className="eyebrow text-(--muted)">Same set</span>
           <h2 className="t-section">Other {p.setName} precons</h2>
           <div className="flex flex-wrap gap-2">
             {siblings.map((s) => <Link key={s.slug} to={`/precons/${s.slug}`} className="inline-flex min-h-11 items-center rounded-full border border-(--separator) px-4 text-sm hover:border-(--foreground)">{s.name}</Link>)}
