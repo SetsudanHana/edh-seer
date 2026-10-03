@@ -79,10 +79,12 @@ test("ComboList shows the combo result", () => {
   expect(screen.getByText(/Phyrexian Altar/)).toBeInTheDocument();
 });
 
-test("ComboList section title uses the eyebrow convention, not a bold heading", () => {
-  const { container } = render(<ComboList combos={[{ cards: ["A", "B"], result: "X" }]} />);
-  const title = [...container.querySelectorAll("*")].find((el) => el.textContent === "Combos");
-  expect(title?.className).toContain("eyebrow");
+/** WAS "the eyebrow convention, not a bold heading" (2026-08-01), when Combos was one tab among the
+ *  report's sections. It is its own page now (`/analysis/combos`), and an 11px eyebrow repeating the
+ *  tab strip read as no heading at all (designer crawl 2026-10-03, #992): it opens on a chapter h2. */
+test("ComboList opens on a page heading at the chapter scale", () => {
+  render(<ComboList combos={[{ cards: ["A", "B"], result: "X" }]} />);
+  expect(screen.getByRole("heading", { level: 2, name: "Combos" }).className).toContain("text-2xl");
 });
 
 test("MissingCards lists unresolved names", () => {
