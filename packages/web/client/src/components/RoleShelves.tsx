@@ -59,13 +59,13 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
                 *  2,400px; a chip carries the art and the name, and opens the card. */}
               <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5 pb-1" aria-label={`${label}: ${cards.length} card${cards.length === 1 ? "" : "s"}`}>
                 {cards.map((c) => (
-                  <li key={c.id} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-(--separator) py-0.5 pl-0.5 pr-2.5">
+                  <li key={c.id} className="inline-flex min-h-9 items-center gap-1.5 rounded-(--radius) border border-(--separator) py-0.5 pl-0.5 pr-2.5">
                     <Art card={c} size={24} />
                     <CardName name={c.name} />
                   </li>
                 ))}
                 {tokens.map(({ card: t, madeBy }) => (
-                  <li key={`token:${t.id}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-dashed border-(--separator) py-0.5 pl-0.5 pr-2.5 text-(--muted)">
+                  <li key={`token:${t.id}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-(--radius) border border-dashed border-(--separator) py-0.5 pl-0.5 pr-2.5 text-(--muted)">
                     <Art card={t} size={24} />
                     {t.name} token{madeBy.length ? ` from ${madeBy.join(", ")}` : ""}
                   </li>

@@ -93,7 +93,7 @@ export function ComboFeature({ parts, result, manaValue, cheap }: {
           <div className="flex flex-col gap-1.5">
             <span className="eyebrow text-(--muted)">What it repeats (Commander Spellbook)</span>
             <span className="flex flex-wrap gap-1">
-              {results.map((x) => <span key={x} className="rounded-full border border-(--separator) px-2 py-0.5 text-xs">{x}</span>)}
+              {results.map((x) => <span key={x} className="rounded-(--radius) border border-(--separator) px-2 py-0.5 text-xs">{x}</span>)}
             </span>
           </div>
         ) : null}

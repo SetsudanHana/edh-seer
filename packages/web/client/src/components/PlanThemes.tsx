@@ -139,7 +139,7 @@ function Theme({ g, m, onOpenCard, main, top, also = [] }: { g: EngineGroup; m: 
               const n = k.hubs.length;
               return (
                 <button key={k.tag} type="button" aria-expanded={kid === k.tag} onClick={() => setKid(kid === k.tag ? null : k.tag)}
-                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2.5 ${kid === k.tag ? "border-(--accent)" : "border-(--separator)"} hover:border-(--accent)`}>
+                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-(--radius) border py-0.5 pl-0.5 pr-2.5 ${kid === k.tag ? "border-(--accent)" : "border-(--separator)"} hover:border-(--accent)`}>
                   {lead ? <Art card={lead} size={24} /> : <span aria-hidden="true" className="ml-1.5 h-2.5 w-2.5 rounded-full" style={{ background: k.hue }} />}
                   {k.name.toLowerCase()}
                   <span className="text-(--muted)">· {n} {k.hubsConsume ? (n === 1 ? "payoff" : "payoffs") : (n === 1 ? "enabler" : "enablers")}</span>
@@ -169,7 +169,7 @@ function ThemeCards({ g, m, name, onOpenCard }: { g: EngineGroup; m: EngineModel
       <div className="flex flex-wrap gap-1.5" aria-label={`${name}: its cards`}>
         {cardsShown.map((c) => (
           <button key={c.id} type="button" onClick={() => onOpenCard?.(c.id)} disabled={!onOpenCard}
-            className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2.5 text-sm ${hubSet.has(c.id) ? "border-(--foreground)" : g.onceOnly.has(c.id) ? "border-dashed text-(--muted)" : "border-(--separator)"} enabled:hover:border-(--accent)`}>
+            className={`inline-flex min-h-9 items-center gap-1.5 rounded-(--radius) border py-0.5 pl-0.5 pr-2.5 text-sm ${hubSet.has(c.id) ? "border-(--foreground)" : g.onceOnly.has(c.id) ? "border-dashed text-(--muted)" : "border-(--separator)"} enabled:hover:border-(--accent)`}>
             <Art card={c} size={24} />
             {c.name.split(" // ")[0]}{c.isToken ? <span className="font-normal text-(--muted)"> {tokenLabel(c)}</span> : null}
           </button>

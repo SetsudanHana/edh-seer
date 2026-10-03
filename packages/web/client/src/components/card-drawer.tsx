@@ -388,7 +388,7 @@ function DrawerSummary({ extras, id, name }: { extras: DrawerExtras; id: string;
       {o.sectors.length ? (
         <span className="flex flex-wrap gap-1">
           {o.sectors.map((x) => (
-            <span key={x.key} className="inline-flex items-center gap-1.5 rounded-full border border-(--separator) px-2 py-0.5 text-xs">
+            <span key={x.key} className="inline-flex items-center gap-1.5 rounded-(--radius) border border-(--separator) px-2 py-0.5 text-xs">
               <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: x.hue }} />
               {extras.groupName?.(x.key, x.name) ?? x.name} · {x.partners.length}
             </span>
