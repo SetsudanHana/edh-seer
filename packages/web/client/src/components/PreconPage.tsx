@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router";
 import { slugOf as slugOfName } from "@edh-seer/matcher/slug";
 import { analyzeDeckStatic } from "../api.static.js";
 import { buildEngineModel } from "../lib/engine-model.js";
-import { buildOrbit } from "../lib/orbit-model.js";
+import { buildOrbit, countText } from "../lib/orbit-model.js";
 import { identityLabel } from "../lib/color-identity.js";
 import { year } from "../lib/precon-html.js";
 import { loadPrecon, preconDecklist, type PreconRecord } from "../lib/precons.js";
@@ -15,6 +15,7 @@ import { allPartners, Constellation } from "./Constellation.js";
 import { useNarrow } from "./engine-parts.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+import { MapKey } from "./MapKey.js";
 import { UpgradePackages } from "./UpgradePackages.js";
 import { defaultTarget, swapsOf } from "../lib/precon-upgrades.js";
 
@@ -174,9 +175,17 @@ function MapOf({ data, commanders }: { data: AnalyzeResponse; commanders: string
   const id = data.graph!.nodes.find((n) => !n.face && !n.isToken && (wanted.has(n.cardName ?? n.label) || wanted.has(n.label)))?.id;
   const orbit = useMemo(() => (id ? buildOrbit(model, id) : null), [model, id]);
   if (!orbit) return null;
+  const first = commanders[0]!.split(",")[0]!.split(" // ")[0]!;
   return (
-    <Constellation model={model} orbit={orbit} trail={[]} lit={lit} still={false} narrow={narrow} broad={broad} pick={allPartners}
-      onTap={(t) => { const c = model.cards.get(t); if (c && !c.isToken) drawer.open(drawer.known.has(c.name) ? c.name : c.physical); setLit(t); }}
-      onHover={setLit} onBlank={() => setLit(null)} />
+    <div className="flex flex-col gap-2">
+      <Constellation model={model} orbit={orbit} trail={[]} lit={lit} still={false} narrow={narrow} broad={broad} pick={allPartners}
+        onTap={(t) => { const c = model.cards.get(t); if (c && !c.isToken) drawer.open(drawer.known.has(c.name) ? c.name : c.physical); setLit(t); }}
+        onHover={setLit} onBlank={() => setLit(null)} />
+      {/* THE KEY THE REPORT'S MAP HAS (#890, #993): the same map drawn here had no key at all. */}
+      <MapKey columns rows={orbit.sectors.map((x) => ({
+        key: x.name, name: x.name, hue: x.hue,
+        count: countText(x.partners.length, x.partners.filter((p) => p.once).length, first),
+      }))} />
+    </div>
   );
 }

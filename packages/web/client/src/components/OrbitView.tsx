@@ -10,6 +10,7 @@ import { isInfiniteCombo } from "@edh-seer/matcher/brackets";
 import { ReasonText, useCardDrawer } from "./card-drawer.js";
 import { allPartners, Constellation, type MenuItem } from "./Constellation.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
+import { MapKey } from "./MapKey.js";
 
 /** THE ONE-CARD VIEW AS AN ORBIT (graph evaluation 2026-09-25, design B; replaces `EgoView`).
  *
@@ -372,22 +373,10 @@ function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; pa
         // work with THIS card, split by what links them.
         <>
         <p className="text-xs text-(--muted)">Those cards, by what links them to {first}:</p>
-        <ul className="flex flex-col gap-1">
-          {o.sectors.map((s) => (
-            <li key={s.name}>
-              {/* THE COUNT UNDER ITS NAME (designer review 2026-09-29): beside it, a long group name
-                *  wrapped to two lines and "Other links" squeezed the count; said against the
-                *  commander, the count needs the row's width. */}
-              <button type="button" className="flex min-h-11 w-full items-start gap-2 rounded-(--radius) px-1 py-1 text-left hover:bg-(--surface-secondary)" onClick={() => onSector(s)}>
-                <span aria-hidden="true" className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={{ background: s.hue }} />
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span>{s.name}</span>
-                  <span className="text-xs text-(--muted)">{countText(s.partners.length, s.partners.filter((p) => p.once).length, first)}</span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <MapKey label={`What links them to ${first}`} rows={o.sectors.map((s) => ({
+          key: s.name, name: s.name, hue: s.hue, onPick: () => onSector(s),
+          count: countText(s.partners.length, s.partners.filter((p) => p.once).length, first),
+        }))} />
         </>
       ) : null}
       <p className="text-xs text-(--muted)">
