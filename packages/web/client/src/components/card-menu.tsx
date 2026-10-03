@@ -42,7 +42,7 @@ export function CardMenuButton({ name, extra, className = "" }: { name: string; 
   return (
     <>
       <button ref={button} type="button" aria-haspopup="menu" aria-expanded={at !== null} aria-label={`More for ${name}`}
-        className={`inline-flex min-h-8 min-w-8 shrink-0 items-center justify-center rounded-(--radius) text-base leading-none text-(--muted) hover:bg-(--surface-secondary) hover:text-(--foreground) ${className}`}
+        className={`inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-(--radius) text-base leading-none text-(--muted) hover:bg-(--surface-secondary) hover:text-(--foreground) ${className}`}
         onClick={(e) => { e.stopPropagation(); if (at) setAt(null); else openMenu(); }}>
         <span aria-hidden="true">⋯</span>
       </button>
@@ -76,16 +76,24 @@ export function PopMenu({ x, y, title, items, align = "start", onClose }: {
     let top = y + h > H - 8 ? y - h - (align === "end" ? 40 : 0) : y;
     left = Math.max(8, Math.min(left, W - w - 8)); top = Math.max(8, top);
     setPos({ left, top });
-    el.querySelector<HTMLElement>("[role=menuitem]")?.focus();
   }, [x, y, align]);
+  // FOCUS ONCE IT IS SHOWN (#1003 review): focused in the measuring pass above, the menu was still
+  // `visibility: hidden`, the browser refused the focus, and Escape had nothing to land on.
   useEffect(() => {
+    if (pos) box.current?.querySelector<HTMLElement>("[role=menuitem]")?.focus();
+  }, [pos]);
+  useEffect(() => {
+    // Escape closes from the document, so it works wherever focus happens to be.
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close.current(true); } };
     const away = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) close.current(false); };
     const gone = () => close.current(false);
     document.addEventListener("pointerdown", away, true);
+    document.addEventListener("keydown", esc, true);
     window.addEventListener("scroll", gone, true);
     window.addEventListener("resize", gone);
     return () => {
       document.removeEventListener("pointerdown", away, true);
+      document.removeEventListener("keydown", esc, true);
       window.removeEventListener("scroll", gone, true);
       window.removeEventListener("resize", gone);
     };
@@ -98,13 +106,13 @@ export function PopMenu({ x, y, title, items, align = "start", onClose }: {
     else if (e.key === "ArrowUp") go(i - 1);
     else if (e.key === "Home") go(0);
     else if (e.key === "End") go(all.length - 1);
-    else if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); onClose(true); }
+    else if (e.key === "Tab") { e.preventDefault(); onClose(true); }
   };
   const routed = useInRouterContext();
-  const cls = "flex min-h-10 w-full items-center rounded-[calc(var(--radius)-2px)] px-3 text-left text-sm text-(--foreground) no-underline hover:bg-(--surface-secondary) focus-visible:bg-(--surface-secondary) outline-none";
+  const cls = "flex min-h-11 w-full items-center rounded-[calc(var(--radius)-2px)] px-3 text-left text-sm text-(--foreground) no-underline hover:bg-(--surface-secondary) focus-visible:bg-(--surface-secondary) outline-none";
   return createPortal(
     <div ref={box} role="menu" aria-label={title} onKeyDown={key} onContextMenu={(e) => e.preventDefault()}
-      className="fixed z-[60] flex min-w-56 max-w-[calc(100vw-16px)] flex-col rounded-(--radius) border border-(--separator) bg-(--surface) p-1 shadow-lg"
+      className="fixed z-[60] flex min-w-56 max-w-[calc(100vw-16px)] flex-col rounded-(--radius) border border-(--separator) bg-(--surface) p-1"
       style={{ left: pos?.left ?? x, top: pos?.top ?? y, visibility: pos ? "visible" : "hidden" }}>
       <p aria-hidden="true" className="truncate px-3 pb-1 pt-1.5 text-xs font-semibold text-(--muted)">{title}</p>
       {items.map((it) => it.href ? (

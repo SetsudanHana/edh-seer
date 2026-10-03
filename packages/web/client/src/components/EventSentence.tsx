@@ -136,7 +136,7 @@ export function EventSentence({ terms, colours, noun, makes, pays, narrowings = 
   };
   const modeMenu = (t: EventTerm) => (
     <div ref={menuRef} role="menu" aria-label={`How "${termWords(t)}" joins the search`}
-      className="absolute left-0 top-full z-30 mt-1 w-72 max-w-[85vw] overflow-hidden rounded-(--field-radius) border border-(--field-border) bg-(--field-background) text-sm shadow-lg">
+      className="absolute left-0 top-full z-30 mt-1 w-72 max-w-[85vw] overflow-hidden rounded-(--field-radius) border border-(--field-border) bg-(--field-background) text-sm">
       {MODES.map(([op, word, meaning]) => (
         <button key={op} type="button" role="menuitemradio" aria-checked={t.op === op} onClick={() => setOp(t, op)}
           className={`flex w-full items-baseline gap-3 border-t border-(--separator) first:border-t-0 px-3 py-2.5 text-left hover:bg-(--surface-secondary) ${t.op === op ? "bg-(--surface-secondary)" : ""}`}>

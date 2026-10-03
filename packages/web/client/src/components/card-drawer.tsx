@@ -95,7 +95,7 @@ const RAIL_QUERY = "(min-width: 100rem)";
  *  under the site header from `lg` -- the box `.peek` takes on the site's pages, so a card opens in
  *  the same place whichever page it is clicked on. It used to start at the top of the viewport and
  *  cover the header's own navigation on the Cards tab and the precon page. */
-const PANEL_BOX = "fixed inset-x-0 bottom-0 z-30 h-[70svh] lg:inset-x-auto lg:right-0 lg:top-(--site-header-h) lg:h-auto lg:w-(--rail-w)";
+const PANEL_BOX = "fixed inset-x-0 bottom-0 z-30 h-[60svh] lg:inset-x-auto lg:right-0 lg:top-(--site-header-h) lg:h-auto lg:w-(--rail-w)";
 function useRailWidth(): boolean {
   const [wide, setWide] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.(RAIL_QUERY).matches);
   useEffect(() => {
@@ -159,24 +159,36 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   const opened = useRef(false);
   // THE WAY BACK NAMES WHERE THE CARD WAS OPENED FROM (persona round 2026-09-29). It read the
   // surface's label live, so scrolling the page under an open card renamed the button: a card
-  // opened from Game plan offered "Back to manabase", a chapter the reader never left. Taken once,
-  // when a card opens over nothing; a card opened from inside another keeps the first answer.
+  // opened from Game plan offered "Back to manabase", a chapter the reader never left. Taken at
+  // each open, not once (#1003 review): a second card opened from Manabase while the first was
+  // still showing kept "Back to game plan".
   const railBackNow = useRef(railBack);
   railBackNow.current = railBack;
   const shownNow = useRef(shown);
   shownNow.current = shown;
   const [backTo, setBackTo] = useState<string | null>(null);
+  // FOCUS GOES BACK TO THE CARD THAT OPENED IT on Close or Escape (#1003 review), as the peek's
+  // does (`usePeekState`); it fell to <body> and a keyboard reader started the page over.
+  const opener = useRef<Element | null>(null);
+  const closeBack = useCallback(() => {
+    setOpenId(null);
+    const el = opener.current;
+    opener.current = null;
+    if (el instanceof HTMLElement && el.isConnected) el.focus({ preventScroll: true });
+  }, [setOpenId]);
   const open = useCallback(
     (name: string) => {
       const id = byName.get(name);
       if (id) {
-        if (!shownNow.current) setBackTo(railBackNow.current);
+        if (!shownNow.current) opener.current = document.activeElement;
+        setBackTo(railBackNow.current);
         setOpenId(id); opened.current = true;
       }
     },
     [byName, setOpenId],
   );
   const openSuggestion = useCallback((card: SuggestedCard, replaces?: string) => {
+    if (!shownNow.current) opener.current = document.activeElement;
     setOpenIdRaw(null); setSuggestion({ card, replaces }); opened.current = true;
   }, []);
   /** WHICH CARD MAKES EACH TOKEN, read off the graph's own create edges (`The Rani creates Mark of
@@ -254,10 +266,10 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   // ~3,000px report and the button can be off screen after the reader scrolls.
   useEffect(() => {
     if (shown === null) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpenId(null); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented) closeBack(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [shown, setOpenId]);
+  }, [shown, closeBack]);
 
   /** A CLICK AWAY FROM THE DRAWER CLOSES IT (owner, 2026-09-27: "with overlay … if we click outside
    *  the overlay closes"). Below 1600px it lies over the page, and at every width it closes the same
@@ -348,7 +360,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
                 docked={railShown}
                 node={node}
                 edges={edges}
-                onClose={() => setOpenId(null)}
+                onClose={closeBack}
                 closeLabel={railShown && backTo ? backTo : undefined}
                 nameOf={nameOf}
                 pairOf={extras?.pair ? (partner) => pairOf(node.id, partner) : undefined}
@@ -373,7 +385,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
         : suggestion
           ? createPortal(
               <div ref={panel} className={PANEL_BOX}>
-                <SuggestionPanel key={suggestion.card.name} card={suggestion.card} replaces={suggestion.replaces} onClose={() => setOpenId(null)} />
+                <SuggestionPanel key={suggestion.card.name} card={suggestion.card} replaces={suggestion.replaces} onClose={closeBack} />
               </div>,
               document.body,
             )

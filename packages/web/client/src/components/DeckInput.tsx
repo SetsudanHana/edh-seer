@@ -327,7 +327,7 @@ export function DeckActions({
       {open ? (
         <div
           id="deck-actions-more"
-          className="absolute right-0 top-full mt-1 z-30 min-w-48 flex flex-col gap-0.5 p-1 rounded-(--radius) border border-(--separator) bg-(--surface) shadow-lg"
+          className="absolute right-0 top-full mt-1 z-30 min-w-48 flex flex-col gap-0.5 p-1 rounded-(--radius) border border-(--separator) bg-(--surface)"
         >
           {link && narrow ? (
             <button type="button" className={item} onClick={() => void copyLink()}>{link}</button>

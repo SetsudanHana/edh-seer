@@ -59,11 +59,12 @@ test("a partner inside the panel peeks further, Back returns, Close returns focu
   expect(document.documentElement.classList.contains("peek-open")).toBe(false);
 });
 
-test("Escape closes", async () => {
+test("Escape closes, wherever focus is (#1003 review: a map walk takes focus out of the panel)", async () => {
   mount();
   fireEvent.click(screen.getByRole("button", { name: "opener" }));
-  const dialog = await screen.findByRole("dialog", { name: "Skullclamp" });
-  fireEvent.keyDown(dialog, { key: "Escape" });
+  await screen.findByRole("dialog", { name: "Skullclamp" });
+  (document.activeElement as HTMLElement | null)?.blur();
+  fireEvent.keyDown(document.body, { key: "Escape" });
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 });
 
