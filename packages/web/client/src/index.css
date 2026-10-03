@@ -1335,10 +1335,20 @@ a.brand:hover .brand-edh { color: var(--foreground); }
    panel ran to 1,268px inside a sticky rail on a 1,080px viewport (measured 2026-09-08), so the
    Open control at its foot could not be reached. Half width, and the panel scrolls on its own. */
 .peek-art { max-inline-size: 11rem; }
+/* ONE PLACE FOR A CARD (#1003): from `lg` the peek is the right-hand panel under the site header,
+   the box the report's drawer and the suggestion panel open in. It sat in the card page's LEFT
+   column, over the page's own card, and on the right on /cards -- so it jumped sides between
+   sibling pages. */
 @media (min-width: 64rem) {
   .peek {
-    max-block-size: calc(100svh - var(--site-header-h, 0px) - 3rem);
+    position: fixed;
+    inset-block: var(--site-header-h, 0px) 0;
+    inset-inline-end: 0;
+    inline-size: var(--rail-w);
+    z-index: 30;
     overflow-y: auto;
+    border-width: 0 0 0 1px;
+    border-radius: 0;
   }
 }
 @media (max-width: 63.99rem) {

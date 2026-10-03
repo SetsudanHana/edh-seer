@@ -34,7 +34,7 @@ test("a suggested card opens in the drawer and the report stays", async () => {
   expect(drawer).toHaveTextContent("Not in your deck");
   expect(drawer).toHaveTextContent("Works with 3 of your cards.");
   expect(drawer).toHaveTextContent("(and 1 more of your cards)");
-  expect(within(drawer).getByRole("link", { name: /Open its card page/ })).toHaveAttribute("href", "/cards/pious-evangel");
+  expect(within(drawer).getByRole("link", { name: "Open Pious Evangel" })).toHaveAttribute("href", "/cards/pious-evangel");
 });
 
 test("a click with a modifier still follows the link to the card's page", () => {
@@ -50,7 +50,7 @@ test("a swap's card names the slot it can take, never the cut's own count", asyn
   const drawer = screen.getByTestId("suggestion-drawer");
   expect(drawer).toHaveTextContent("Can take Stick Together’s slot.");
   // The close control and a click away both close it.
-  await userEvent.click(within(drawer).getByRole("button", { name: "close" }));
+  await userEvent.click(within(drawer).getByRole("button", { name: "Close" }));
   expect(screen.queryByTestId("suggestion-drawer")).toBeNull();
 });
 

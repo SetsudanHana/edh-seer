@@ -428,6 +428,18 @@ test("Cards and Combos open on a chapter heading, and the current tab is marked"
   }
 });
 
+/** ONE CARD PANEL (#1003): a card opened on the Cards tab is the same panel as in the chapters, on
+ *  the shared bar (Open card, Close). (The fixture's graph has no links, so no summary is drawn on
+ *  either surface; the summary's own guard is the chapters' `totalLinks`.) */
+test("a card opened on the Cards tab opens the shared panel", async () => {
+  render(<MemoryRouter initialEntries={["/analysis/cards"]}><ReportShell data={SAMPLE} /></MemoryRouter>);
+  await userEvent.click(screen.getAllByRole("button", { name: "Impact Tremors" })[0]!);
+  const panel = screen.getByTestId("card-inspector");
+  expect(within(panel).getByTestId("panel-bar")).toBeInTheDocument();
+  expect(within(panel).getByRole("link", { name: "Open Impact Tremors" })).toHaveAttribute("href", "/cards/impact-tremors");
+  expect(within(panel).getByRole("button", { name: "Close" })).toBeInTheDocument();
+});
+
 /** ...AND A NEW DECK GOES HOME WITH THE DECK AND THE STATE STILL IN THE URL, while the same deck
  *  re-run (a game state change) stays where the reader is. Read through the router, so a
  *  MemoryRouter can see it. */
