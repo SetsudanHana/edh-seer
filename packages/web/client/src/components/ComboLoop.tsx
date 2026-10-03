@@ -35,7 +35,7 @@ export function ComboLoop({ cards, result, manaValue, cheap, artOf }: {
         {cards.map((name, i) => {
           const p = at[i]!, art = artOf?.(name);
           return (
-            <g key={name} className={known.has(name) ? "cursor-pointer" : undefined} onClick={known.has(name) ? () => open(name) : undefined}>
+            <g key={name} className={known.has(name) ? "cursor-pointer" : undefined} data-card={known.has(name) ? name : undefined} onClick={known.has(name) ? () => open(name) : undefined}>
               <clipPath id={`${clip}-${i}`}><circle cx={p.x} cy={p.y} r={r} /></clipPath>
               <circle cx={p.x} cy={p.y} r={r} fill="var(--surface-secondary)" />
               {art ? <image href={art} x={p.x - r} y={p.y - r} width={r * 2} height={r * 2} preserveAspectRatio="xMidYMid slice" clipPath={`url(#${clip}-${i})`} /> : null}

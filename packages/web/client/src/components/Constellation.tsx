@@ -464,6 +464,16 @@ class Sky {
 
 export type { MenuItem };
 
+/** THE TAPPED NODE STAYS ABOVE THE SHEET (#1003 review). Below `lg` the card panel is a bottom
+ *  sheet over the lower 60% of the screen (`60svh`, `index.css` and `card-drawer.tsx`); a node it
+ *  covered took the second tap on the sheet's art, so the walk the map rule promises never came. */
+function aboveSheet(el: Element | undefined) {
+  if (!el || window.innerWidth >= 1024) return;
+  const top = window.innerHeight * 0.4;
+  const r = el.getBoundingClientRect();
+  if (r.bottom > top - 8) window.scrollBy({ top: r.bottom - top + 16 });
+}
+
 export function Constellation({ model, orbit, trail, lit, still, narrow, broad = false, onTap, onHover, onBlank, menuFor, isAdded, pick = mapPartners, label }: {
   /** Every card the map may draw, by id: a deck's engine model, or the cards a card page names. */
   model: Pick<EngineModel, "cards">; orbit: OrbitModel;
@@ -500,7 +510,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, broad =
   useEffect(() => {
     const L = layers.current;
     // THE LAYERS AS THEY ARE NOW, not the ref object React empties on unmount.
-    const s = new Sky(svg.current!, { ...L } as Sky["layers"], (id) => model.cards.get(id), (id) => handlers.current.onTap(id), (id) => handlers.current.onHover(id),
+    const s = new Sky(svg.current!, { ...L } as Sky["layers"], (id) => model.cards.get(id), (id) => { handlers.current.onTap(id); aboveSheet(s.nodes.get(id)?.g); }, (id) => handlers.current.onHover(id),
       (id, x, y) => setMenu({ id, x, y }));
     s.added = (id) => handlers.current.isAdded?.(id) ?? false;
     s.blank = () => handlers.current.onBlank?.();

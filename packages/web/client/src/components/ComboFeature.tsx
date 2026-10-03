@@ -1,4 +1,5 @@
-import { useId } from "react";
+import { useId, useState } from "react";
+import { menuExtras } from "./pop-menu.js";
 import type { EngineCard, EngineModel, Link } from "../lib/engine-model.js";
 import { displayName } from "../lib/engine-model.js";
 import { ReasonText, useCardDrawer } from "./card-drawer.js";
@@ -54,7 +55,10 @@ export function comboParts(cards: readonly string[], m: EngineModel, winners: re
 export function ComboFeature({ parts, result, manaValue, cheap }: {
   parts: ComboParts; result: string; manaValue: number; cheap: boolean;
 }) {
-  const { open, known } = useCardDrawer();
+  const { open, known, walkFrom } = useCardDrawer();
+  // THE MAP RULE (#1003; owner, 2026-10-03): the first click on a piece opens the card, the second
+  // walks the commander's map from it.
+  const [sel, setSel] = useState<string | null>(null);
   const clip = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const { pieces, sides, payoffs } = parts;
   const W = 460, H = payoffs.length ? 400 : 290, cx = W / 2, cy = 140, R = 110, r = 34, pr = 20;
@@ -68,14 +72,17 @@ export function ComboFeature({ parts, result, manaValue, cheap }: {
   const openable = (c: EngineCard) => (known.has(c.name) ? c.name : known.has(c.physical) ? c.physical : null);
   const disc = (c: EngineCard, x: number, y: number, rad: number, key: string, ring: string) => {
     const name = openable(c);
+    const walk = walkFrom(c.id);
+    const tap = () => { if (sel === c.id && walk) walk(); else { setSel(c.id); open(name!); } };
     return (
       // A NODE IS A BUTTON, AS ON THE ORBIT (#1003): it opened the card on a mouse click only, and a
       // keyboard or screen reader could not reach it.
       <g key={key} className={name ? "cursor-pointer outline-none focus-visible:[&>circle:last-of-type]:stroke-(--focus)" : undefined}
         {...(name ? {
-          role: "button", tabIndex: 0, "aria-label": `Read ${displayName(c)}`,
-          onClick: () => open(name),
-          onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(name); } },
+          role: "button", tabIndex: 0, "aria-label": `Read ${displayName(c)}`, "data-card": name,
+          ref: (el: SVGGElement | null) => { if (el && walk) menuExtras.set(el, () => [{ label: "Walk the map from here", run: walk }]); },
+          onClick: tap,
+          onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tap(); } },
         } : {})}>
         <clipPath id={`${clip}-${key}`}><circle cx={x} cy={y} r={rad} /></clipPath>
         <circle cx={x} cy={y} r={rad} fill="var(--surface-secondary)" />
