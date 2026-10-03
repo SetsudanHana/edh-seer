@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router";
 import { expect, test } from "vitest";
 import { CardPage } from "./CardPage.js";
 import type { CardPageData } from "../lib/partners.js";
@@ -331,4 +331,32 @@ test("a tap on the map's empty space clears the picked card", async () => {
   await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).toHaveAttribute("aria-pressed", "true"), { timeout: 3000 });
   fireEvent.click(map);
   await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).toHaveAttribute("aria-pressed", "false"), { timeout: 3000 });
+});
+
+/** THE PAGE AND ITS SLUG CHANGE TOGETHER (owner report 2026-10-03). Leaving a card page for a card
+ *  not on its map, by URL (the header search), moved the route a render before the new card loaded,
+ *  and the map drew the new slug with the old card's name: Sol Ring's middle read "Pollywog Prodigy",
+ *  beside Pollywog Prodigy itself on the route. A drawn node is never relabelled. */
+test("arriving at a card by URL never draws it with the card you left", async () => {
+  const rowsOf = (names: string[], event: string) => names.map((slug) => ({ name: slug, slug, score: 0.1, event, reason: `${slug} does it` }));
+  let arrive!: (p: CardPageData) => void;
+  const later = new Promise<CardPageData>((r) => { arrive = r; });
+  const pages: Record<string, () => Promise<CardPageData | null>> = {
+    "krenko-mob-boss": async () => ({ ...KRENKO, partners: rowsOf(["skullclamp", "impact-tremors", "purphoros"], "enters|creature|-|-") }),
+    "sol-ring": () => later,
+  };
+  function Go() { const nav = useNavigate(); return <button type="button" onClick={() => void nav("/cards/sol-ring")}>search</button>; }
+  render(
+    <MemoryRouter initialEntries={["/cards/krenko-mob-boss"]}>
+      <Go />
+      <Routes><Route path="/cards/:slug" element={<CardPage load={(s) => pages[s]?.() ?? Promise.resolve(null)} />} /></Routes>
+    </MemoryRouter>,
+  );
+  const map = await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ });
+  await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).not.toBeNull(), { timeout: 3000 });
+  fireEvent.click(screen.getByRole("button", { name: "search" }));
+  arrive({ ...KRENKO, name: "Sol Ring", partners: rowsOf(["mendicant-core", "sai-master-thopterist", "ravenous-robots"], "cast|artifact|-|-") });
+  expect(await screen.findByRole("group", { name: /^Sol Ring and 3 of the cards/ }, { timeout: 3000 })).toBeInTheDocument();
+  await waitFor(() => expect(document.querySelector("[data-id='sol-ring']")).not.toBeNull(), { timeout: 3000 });
+  expect(document.querySelector("[data-id='sol-ring']")).toHaveAttribute("aria-label", "Sol Ring");
 });
