@@ -148,13 +148,13 @@ function ReadBack({ commanders, decklist }: { commanders: string; decklist: stri
       {read.missing.length ? (
         <ul className="flex list-none flex-wrap gap-2 p-0 m-0" aria-label="Lines not found">
           {read.missing.map((m) => (
-            <li key={m} className="rounded-full border border-dashed border-(--accent) px-3 py-1 text-sm">{m}</li>
+            <li key={m} className="rounded-(--radius) border border-dashed border-(--accent) px-3 py-1 text-sm">{m}</li>
           ))}
         </ul>
       ) : null}
       <ul className="grid list-none gap-1.5 p-0 m-0 [grid-template-columns:repeat(auto-fill,minmax(12rem,1fr))]" aria-label="Cards found">
         {unique.map((n) => (
-          <li key={n} className="truncate rounded-full border border-(--separator) bg-(--surface) px-3 py-1 text-xs" title={n}>{n}</li>
+          <li key={n} className="truncate rounded-(--radius) border border-(--separator) bg-(--surface) px-3 py-1 text-xs" title={n}>{n}</li>
         ))}
       </ul>
     </div>

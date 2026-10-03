@@ -103,7 +103,7 @@ function Job({ label, cards }: { label: string; cards: string[] }) {
       <span className="eyebrow text-(--muted)">{label} · {cards.length}</span>
       <span className="flex flex-wrap gap-1">
         {shown.map((n) => (
-          <span key={n} className="rounded-full border border-(--separator) px-2 py-0.5 text-xs"><CardName name={n} /></span>
+          <span key={n} className="rounded-(--radius) border border-(--separator) px-2 py-0.5 text-xs"><CardName name={n} /></span>
         ))}
         {cards.length > NAMED ? (
           <button type="button" className="rounded-full px-2 py-0.5 text-xs text-(--accent) underline underline-offset-2" onClick={() => setAll(!all)}>

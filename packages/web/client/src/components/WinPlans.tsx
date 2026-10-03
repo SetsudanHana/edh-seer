@@ -140,7 +140,7 @@ function Names({ lead, names, art }: { lead?: string; names: string[]; art: Map<
         {shown.map((n) => {
           const c = art.get(n);
           return (
-            <span key={n} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border border-(--separator) py-0.5 text-xs ${c ? "pl-0.5 pr-2.5" : "px-2.5"}`}>
+            <span key={n} className={`inline-flex min-h-9 items-center gap-1.5 rounded-(--radius) border border-(--separator) py-0.5 text-sm ${c ? "pl-0.5 pr-2.5" : "px-2.5"}`}>
               {c ? <Art card={c} size={24} /> : null}
               <CardName name={n} />
             </span>

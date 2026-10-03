@@ -131,7 +131,7 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf, model }: {
         <div className="flex flex-col gap-1.5">
           <span className="eyebrow text-(--muted)">{plural(bracket.gameChangers.length, "Game Changer")} · on Wizards&rsquo; list</span>
           <span className="flex flex-wrap gap-1">
-            {bracket.gameChangers.map((n) => <span key={n} className="rounded-full border border-(--separator) px-2 py-0.5 text-xs"><CardName name={n} /></span>)}
+            {bracket.gameChangers.map((n) => <span key={n} className="rounded-(--radius) border border-(--separator) px-2 py-0.5 text-xs"><CardName name={n} /></span>)}
           </span>
         </div>
       )}

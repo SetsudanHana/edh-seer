@@ -255,7 +255,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
           </p>
           <ul className="flex flex-wrap gap-2">
             {slack!.map((s) => (
-              <li key={s.category} className="text-sm rounded-full border border-(--separator) px-3 py-1 text-(--muted)">
+              <li key={s.category} className="text-sm rounded-(--radius) border border-(--separator) px-3 py-1 text-(--muted)">
                 {BUILD_CATEGORY_LABEL[s.category] ?? s.category}{" "}
                 <span className="stat-num">{s.count}/{s.target} (+{s.over})</span>
               </li>
