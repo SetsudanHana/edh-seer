@@ -22,6 +22,10 @@ export function cardLines(name: string, read?: () => void, slug = slugOf(name)):
   ];
 }
 
+/** WHAT A SURFACE ALONE CAN DO WITH ITS CARD, first in the menu (a combo's piece walks the map).
+ *  Keyed by the `data-card` element, set from its ref; a removed element drops out on its own. */
+export const menuExtras = new WeakMap<Element, () => MenuItem[]>();
+
 /** RIGHT-CLICK OR LONG-PRESS ON ANY CARD (owner, 2026-10-03). Mounted once, under the router. A
  *  surface opts in by putting `data-card="<name>"` (and `data-card-slug` where the slug is not
  *  the name's) on the element whose plain click opens the card panel, so "Read the card" IS that
@@ -72,7 +76,7 @@ export function CardContextMenu() {
   const name = el.dataset.card!;
   return (
     <PopMenu x={menu.x} y={menu.y} title={name}
-      items={cardLines(name, () => { if (el.isConnected) el.click(); }, el.dataset.cardSlug || undefined)}
+      items={[...(menuExtras.get(el)?.() ?? []), ...cardLines(name, () => { if (el.isConnected) el.click(); }, el.dataset.cardSlug || undefined)]}
       onClose={(back) => { setMenu(null); if (back && el.isConnected) el.focus({ preventScroll: true }); }} />
   );
 }

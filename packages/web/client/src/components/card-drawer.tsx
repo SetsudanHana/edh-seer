@@ -78,12 +78,15 @@ interface CardDrawerApi {
    *  or null where there is no map or the two do not work together -- so a caller renders no
    *  button that would do nothing. */
   pairOf: (a: string, b: string) => (() => void) | null;
+  /** THE WALK FROM A CARD BY ITS ID: centre the commander's map on it and close the drawer, or null
+   *  where the page has no map (a second click on a combo's piece, #1003). */
+  walkFrom: (id: string) => (() => void) | null;
 }
 
 const CardDrawerContext = createContext<CardDrawerApi>({
   open: () => {}, close: () => {}, openSuggestion: () => {}, live: false, known: new Set(), tokens: new Map(),
   added: new Set(), isAdded: () => false, setExtras: () => {},
-  setRailOn: () => {}, railHost: null, setRailBack: () => {}, pairOf: () => null,
+  setRailOn: () => {}, railHost: null, setRailBack: () => {}, pairOf: () => null, walkFrom: () => null,
 });
 
 /** From 1600px (`100rem`), where the page has the width to keep a rail beside it; the same
@@ -256,12 +259,16 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
     return () => { setOpenId(null); show(x, y); };
   }, [extras, byName, setOpenId]);
 
+  const walkFrom = useCallback((id: string) => {
+    const walk = extras?.walk;
+    return walk && extras.model.cards.has(id) ? () => { walk(id); setOpenId(null); } : null;
+  }, [extras, setOpenId]);
   const api = useMemo<CardDrawerApi>(
     () => ({
       open, close: () => setOpenId(null), openSuggestion, live: true, known: new Set(byName.keys()), tokens, added, isAdded, setExtras,
-      setRailOn, railHost: railShown ? railEl : null, setRailBack, pairOf,
+      setRailOn, railHost: railShown ? railEl : null, setRailBack, pairOf, walkFrom,
     }),
-    [open, openSuggestion, setOpenId, byName, tokens, added, isAdded, railShown, railEl, pairOf],
+    [open, openSuggestion, setOpenId, byName, tokens, added, isAdded, railShown, railEl, pairOf, walkFrom],
   );
 
   // Escape closes it. The panel has a close button of its own, but this drawer floats over a
