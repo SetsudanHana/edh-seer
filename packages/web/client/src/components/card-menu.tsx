@@ -3,13 +3,15 @@ import { createPortal } from "react-dom";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { useCardDrawer } from "./card-drawer.js";
 
-import { External } from "./icons.js";
+import { Arrow } from "./icons.js";
+import { Link, useInRouterContext } from "react-router";
 /** ONE MENU FOR A CARD, WHEREVER THE CARD IS LISTED (owner, 2026-09-27: the map's right-click menu,
  *  then "add the ⋯ menu to the other card lists too"). A list row is plain page, where taking over
  *  the browser's own right-click would get in the way, so a list offers the same lines behind a
  *  small "⋯" button: read the card (its links drawn in the drawer), pin it, open its page, copy its name. */
 
-/** One line of a menu: an action, or a link that opens in a new tab. */
+/** One line of a menu: an action, or a link to a page on this site. It opens in the same tab, as
+ *  every "open card" does (#1003); a middle or modifier click still opens a new one. */
 export interface MenuItem { label: string; run?: () => void; href?: string }
 
 
@@ -98,6 +100,7 @@ export function PopMenu({ x, y, title, items, align = "start", onClose }: {
     else if (e.key === "End") go(all.length - 1);
     else if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); onClose(true); }
   };
+  const routed = useInRouterContext();
   const cls = "flex min-h-10 w-full items-center rounded-[calc(var(--radius)-2px)] px-3 text-left text-sm text-(--foreground) no-underline hover:bg-(--surface-secondary) focus-visible:bg-(--surface-secondary) outline-none";
   return createPortal(
     <div ref={box} role="menu" aria-label={title} onKeyDown={key} onContextMenu={(e) => e.preventDefault()}
@@ -105,9 +108,9 @@ export function PopMenu({ x, y, title, items, align = "start", onClose }: {
       style={{ left: pos?.left ?? x, top: pos?.top ?? y, visibility: pos ? "visible" : "hidden" }}>
       <p aria-hidden="true" className="truncate px-3 pb-1 pt-1.5 text-xs font-semibold text-(--muted)">{title}</p>
       {items.map((it) => it.href ? (
-        <a key={it.label} role="menuitem" href={it.href} target="_blank" rel="noopener" className={cls} onClick={() => onClose(false)}>
-          {it.label}<span className="ml-auto pl-3 text-(--muted)"><External /></span>
-        </a>
+        routed
+          ? <Link key={it.label} role="menuitem" to={it.href} className={cls} onClick={() => onClose(false)}>{it.label}<span className="ml-auto pl-3 text-(--muted)"><Arrow dir="right" /></span></Link>
+          : <a key={it.label} role="menuitem" href={it.href} className={cls} onClick={() => onClose(false)}>{it.label}<span className="ml-auto pl-3 text-(--muted)"><Arrow dir="right" /></span></a>
       ) : (
         <button key={it.label} type="button" role="menuitem" className={cls} onClick={() => { onClose(true); it.run?.(); }}>{it.label}</button>
       ))}

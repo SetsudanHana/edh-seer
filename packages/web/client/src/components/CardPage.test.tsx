@@ -245,8 +245,9 @@ test("a split card is not offered a flip either, despite the // in its name", as
   expect(screen.queryByRole("button", { name: /flip/i })).toBeNull();
 });
 
-/** THE MAP ON A CARD PAGE (owner, 2026-09-27): drawn from the same rows as the list, which stays. */
-test("with enough partners the page draws them as a map above the list; a second tap goes to the card's page", async () => {
+/** THE MAP ON A CARD PAGE (owner, 2026-09-27): drawn from the same rows as the list, which stays.
+ *  A SECOND TAP WALKS IN PLACE (#1003), as on the commander page: it went to the card's page. */
+test("with enough partners the page draws them as a map above the list; a second tap walks in place", async () => {
   const rows = ["impact-tremors", "goblin-bombardment", "skullclamp", "purphoros"].map((slug, i) => ({
     name: slug, slug, score: 0.1, event: i % 2 ? "dies|creature|-|-" : "enters|creature|-|-", reason: `${slug} does it`,
   }));
@@ -257,7 +258,8 @@ test("with enough partners the page draws them as a map above the list; a second
   const node = map.querySelector("[data-id='skullclamp']")!;
   fireEvent.click(node);
   fireEvent.click(node);
-  expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument();
+  // The page is still Krenko's: the map walked, the page did not change.
+  expect(await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ })).toBeInTheDocument();
   // The list is still there, every row of it.
   expect(screen.getAllByRole("link", { name: /impact-tremors/ }).length).toBeGreaterThan(0);
 });

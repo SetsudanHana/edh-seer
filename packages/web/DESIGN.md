@@ -548,8 +548,13 @@ page. Each job has one component, and a page never draws its own:
   are underlined (below).
 - **Chips that name a card or tag a thing** sit on `--radius`; card chips are 14px with the
   art on the left. The pill is for pips, bar fills and actions only.
-- **Icons** come from `components/icons.tsx` (`Arrow`, `Chevron`, `External`), never a
-  Unicode glyph. The diagonal arrow means a new tab off this site, nothing else.
+- **Icons** come from `components/icons.tsx` (`Arrow`, `Chevron`), never a Unicode glyph.
+- **Clicking a card** (#1003): a plain click opens the one card panel (`PanelBar`: Back / Open
+  card / Close), docked right under the header from `lg`, a bottom sheet below; a modifier or
+  middle click follows the link; right-click, long-press or ⋯ opens the one card menu (Read the
+  card / Open its card page / Copy the name, plus a map's own lines). "Open" stays in the tab.
+- **Clicking a map node**: the first click opens the same panel, the second walks the map in place
+  with "Back to …"; the page never changes.
 - **The way back up** is `Breadcrumb` on every detail page.
 - **A map's colour key** is `MapKey`, with a count under each colour, wherever the map is.
 - **A precon tile** is `PreconTileBody` in a `PRECON_TILE` box, on the index and on home.

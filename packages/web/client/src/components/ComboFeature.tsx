@@ -69,7 +69,14 @@ export function ComboFeature({ parts, result, manaValue, cheap }: {
   const disc = (c: EngineCard, x: number, y: number, rad: number, key: string, ring: string) => {
     const name = openable(c);
     return (
-      <g key={key} className={name ? "cursor-pointer" : undefined} onClick={name ? () => open(name) : undefined}>
+      // A NODE IS A BUTTON, AS ON THE ORBIT (#1003): it opened the card on a mouse click only, and a
+      // keyboard or screen reader could not reach it.
+      <g key={key} className={name ? "cursor-pointer outline-none focus-visible:[&>circle:last-of-type]:stroke-(--focus)" : undefined}
+        {...(name ? {
+          role: "button", tabIndex: 0, "aria-label": `Read ${displayName(c)}`,
+          onClick: () => open(name),
+          onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(name); } },
+        } : {})}>
         <clipPath id={`${clip}-${key}`}><circle cx={x} cy={y} r={rad} /></clipPath>
         <circle cx={x} cy={y} r={rad} fill="var(--surface-secondary)" />
         {c.art ? <image href={c.art} x={x - rad} y={y - rad} width={rad * 2} height={rad * 2} preserveAspectRatio="xMidYMid slice" clipPath={`url(#${clip}-${key})`} /> : null}
@@ -105,7 +112,7 @@ export function ComboFeature({ parts, result, manaValue, cheap }: {
           {cheap ? <span className="text-(--accent)">early enough to rule out bracket 3</span> : null}
         </span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full max-w-[28rem]" role="img"
+      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full max-w-[28rem]" role="group"
         aria-label={`${pieces.map(displayName).join(" + ")}, a loop${payoffs.length ? `; outside it, ${payoffs.map((p) => displayName(p.card)).join(", ")}` : ""}`}>
         {payoffs.map((p, i) => pieces.map((c, j) => (
           p.with.includes(c.id) ? <line key={`${i}-${j}`} x1={payAt[i]!.x} y1={payAt[i]!.y} x2={at[j]!.x} y2={at[j]!.y} stroke="var(--edge)" strokeWidth={1} opacity={0.6} /> : null

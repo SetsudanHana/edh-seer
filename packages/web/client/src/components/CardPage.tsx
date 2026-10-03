@@ -21,6 +21,8 @@ import { PartnerList } from "./PartnerList.js";
  *
  *  `load` is injected so the test needs no fetch and no artifact on disk; production passes nothing
  *  and gets the real loader. */
+const loadFromStatic = (slug: string) => loadCardPage(slug, "/static");
+
 export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageData | null> }) {
   const { slug = "" } = useParams();
   const [page, setPage] = useState<CardPageData | null | undefined>(undefined);
@@ -86,7 +88,9 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
             fill a gap beside a bigger one. Pick a card, on the map or in the list, to preview it here.
           </p>
         </div>
-        <PageMap page={page} slug={slug} base="/cards" />
+        {/* WALKS IN PLACE (#1003), as the commander page's map does: a second tap loads that card's
+          *  partners here instead of leaving for its page; "Open its card page" in its menu leaves. */}
+        <PageMap page={page} slug={slug} base="/cards" loadPage={load ?? loadFromStatic} />
         <PartnerList
           subject={page.name}
           rows={page.partners}

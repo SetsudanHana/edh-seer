@@ -1,4 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import type { CardGraph } from "../types.js";
+import { CardDrawerProvider } from "./card-drawer.js";
 import { expect, test } from "vitest";
 import type { EngineCard, EngineModel, Link, Pair } from "../lib/engine-model.js";
 import { ComboFeature, comboParts } from "./ComboFeature.js";
@@ -52,6 +54,17 @@ test("the loop is drawn with its steps numbered and the repeats named", () => {
   render(<ComboFeature parts={comboParts(["A", "B", "C"], m)!} result="Infinite mana, Infinite tokens" manaValue={9} cheap={false} />);
   expect(screen.getByTestId("combo-feature")).toHaveTextContent("When C enters thanks to B");
   expect(screen.getByText("Infinite tokens")).toBeInTheDocument();
-  expect(screen.getByRole("img", { name: /^A \+ B \+ C, a loop; outside it, Pay$/ })).toBeInTheDocument();
+  expect(screen.getByRole("group", { name: /^A \+ B \+ C, a loop; outside it, Pay$/ })).toBeInTheDocument();
   expect(screen.getByText("works with 2 of 3")).toBeInTheDocument();
+});
+
+/** THE LOOP'S NODES ARE BUTTONS (#1003): a node opened its card on a mouse click only; the keyboard
+ *  reaches it now, and Enter reads the card in the same drawer. */
+test("a node of the loop is a button, and Enter opens its card", () => {
+  const graph = { nodes: ["A", "B", "C"].map((n) => ({ id: n, label: n, copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 1 })), edges: [] } as unknown as CardGraph;
+  render(<CardDrawerProvider graph={graph}><ComboFeature parts={comboParts(["A", "B", "C"], m)!} result="Infinite mana" manaValue={9} cheap={false} /></CardDrawerProvider>);
+  const node = screen.getByRole("button", { name: "Read B" });
+  expect(node).toHaveAttribute("tabindex", "0");
+  fireEvent.keyDown(node, { key: "Enter" });
+  expect(screen.getByTestId("card-inspector")).toBeInTheDocument();
 });

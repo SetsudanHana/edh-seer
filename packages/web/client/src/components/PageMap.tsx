@@ -84,8 +84,10 @@ export function PageMap({ page: ownPage, slug: ownSlug, rows: ownRows, base, pai
   const leave = (id: string) => { peek?.close(); void navigate(href(id)); };
   const pending = useRef<string | null>(null);
   const go = (id: string) => {
-    // A card whose page is on this surface (a commander's pair) is still gone to.
-    if (!loadPage || !hrefOf || href(id).startsWith(`${base}/`)) return leave(id);
+    // A SECOND TAP WALKS IN PLACE ON EVERY MAP (#1003): the card page navigated here while the
+    // commander page walked, so one gesture had two results. A commander's pair, whose page is this
+    // surface's own, is still gone to.
+    if (!loadPage || (hrefOf && href(id).startsWith(`${base}/`))) return leave(id);
     peek?.close();
     if (id === ownSlug) { pending.current = null; setAway(null); return; }
     pending.current = id;
@@ -115,10 +117,11 @@ export function PageMap({ page: ownPage, slug: ownSlug, rows: ownRows, base, pai
     if (id === null) return still ? [] : [{ label: paused ? "Play the motion" : "Pause the motion", run: () => setPaused(!paused) }];
     const c = map.cards.get(id);
     if (!c) return [];
+    // THE ONE CARD MENU (#1003): the orbit's lines, in its words, on every map.
     return [
-      ...(id !== slug && peek ? [{ label: "Show it beside the list", run: () => { setSel(id); peek.push(id); } }] : []),
-      ...(id !== slug && loadPage && hrefOf && !href(id).startsWith(`${base}/`) ? [{ label: "Walk to it on the map", run: () => go(id) }] : []),
-      ...(id !== slug || away ? [{ label: "Go to its page", run: () => leave(id) }] : []),
+      ...(id !== slug && loadPage && !(hrefOf && href(id).startsWith(`${base}/`)) ? [{ label: `Put ${c.name.split(",")[0]} in the middle`, run: () => go(id) }] : []),
+      ...(peek ? [{ label: "Read the card", run: () => { setSel(id); peek.push(id); } }] : []),
+      { label: "Open its card page", href: href(id) },
       { label: "Copy the name", run: () => { void navigator.clipboard?.writeText(c.name).catch(() => {}); } },
     ];
   };
