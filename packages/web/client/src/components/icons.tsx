@@ -28,8 +28,3 @@ export function Arrow({ dir }: { dir: Dir }) {
 export function Chevron({ dir }: { dir: Dir }) {
   return <Svg dir={dir}><path d="M4.5 2.5 8 6l-3.5 3.5" /></Svg>;
 }
-
-/** Opens somewhere OFF this site, in a new tab: the only place the diagonal arrow belongs. */
-export function External() {
-  return <Svg dir="right"><path d="M5 2.5h4.5V7M9.5 2.5l-7 7" /></Svg>;
-}
