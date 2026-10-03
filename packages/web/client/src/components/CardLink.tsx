@@ -1,3 +1,4 @@
+import { createContext, useContext } from "react";
 import { Link } from "react-router";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { peekOnPlainClick, usePeek } from "./peek.js";
@@ -10,6 +11,7 @@ export function CardLink({ name, slug = slugOf(name), className, children, label
   name: string; slug?: string; className?: string; children: React.ReactNode; label?: string;
 }) {
   const peek = usePeek();
+  if (useContext(Unpaged).has(name)) return <span className={className} aria-label={label}>{children}</span>;
   return (
     <Link to={`/cards/${slug}`} className={className} aria-label={label} data-card={name} data-card-slug={slug}
       onClick={(ev) => { peekOnPlainClick(peek, slug, ev); }}>
@@ -17,3 +19,7 @@ export function CardLink({ name, slug = slugOf(name), className, children, label
     </Link>
   );
 }
+
+/** THE NAMES ON THIS PAGE THAT HAVE NO CARD PAGE (`PreconPage.unpaged`, #1003 review): a card link
+ *  there renders its name as text, never a link to a 404. */
+export const Unpaged = createContext<ReadonlySet<string>>(new Set());

@@ -54,7 +54,8 @@ export function preconPageHtml(p: PreconPage, siblings: readonly PreconIndexEntr
       lines.push(`    <ol>`);
       for (const w of g.swaps) {
         const slug = p.packageCards?.[w.in.name]?.slug ?? slugOf(w.in.name);
-        lines.push(`      <li>Take out ${esc(w.out.name)}: ${esc(w.out.reason)} Put in <a href="/cards/${esc(slug)}">${esc(w.in.name)}</a>: ${esc(w.in.reason)}</li>`);
+        const put = p.unpaged?.includes(w.in.name) ? esc(w.in.name) : `<a href="/cards/${esc(slug)}">${esc(w.in.name)}</a>`;
+        lines.push(`      <li>Take out ${esc(w.out.name)}: ${esc(w.out.reason)} Put in ${put}: ${esc(w.in.reason)}</li>`);
       }
       lines.push(`    </ol>`);
     }

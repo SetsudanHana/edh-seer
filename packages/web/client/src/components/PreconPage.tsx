@@ -21,7 +21,7 @@ import { defaultTarget, swapsOf } from "../lib/precon-upgrades.js";
 
 import { Arrow } from "./icons.js";
 import { Breadcrumb } from "./Breadcrumb.js";
-import { CardLink } from "./CardLink.js";
+import { CardLink, Unpaged } from "./CardLink.js";
 import { CardPeek } from "./CardPeek.js";
 import { PeekContext, usePeek, usePeekState } from "./peek.js";
 import type { MenuItem } from "./card-menu.js";
@@ -63,7 +63,8 @@ function PreconPeek({ children }: { children: React.ReactNode }) {
 }
 
 function PreconView(props: { page: Page; siblings: PreconRecord["siblings"] }) {
-  return <PreconPeek><PreconBody {...props} /></PreconPeek>;
+  const unpaged = useMemo(() => new Set(props.page.unpaged ?? []), [props.page.unpaged]);
+  return <Unpaged.Provider value={unpaged}><PreconPeek><PreconBody {...props} /></PreconPeek></Unpaged.Provider>;
 }
 
 function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord["siblings"] }) {
