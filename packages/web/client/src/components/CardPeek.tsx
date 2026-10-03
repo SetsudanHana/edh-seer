@@ -58,6 +58,15 @@ export function CardPeek({ load, surface = "card" }: {
     return () => document.removeEventListener("click", away);
   }, [slug, peek]);
 
+  // ESCAPE FROM ANYWHERE (#1003 review), as the report's drawer listens: on the section it only
+  // worked while focus was inside, and a map walk or a click on the page takes focus out of it.
+  useEffect(() => {
+    if (!slug || !peek) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented) peek.close(); };
+    document.addEventListener("keydown", esc);
+    return () => document.removeEventListener("keydown", esc);
+  }, [slug, peek]);
+
   useEffect(() => {
     if (!slug) return;
     document.documentElement.classList.add("peek-open");
@@ -76,7 +85,6 @@ export function CardPeek({ load, surface = "card" }: {
       aria-modal="false"
       aria-labelledby="peek-title"
       className="peek"
-      onKeyDown={(ev) => { if (ev.key === "Escape") { ev.stopPropagation(); peek.close(); } }}
     >
       {/* THE BAR CARRIES EVERY WAY OUT, including the way IN to the full page. "Open" sat at the
         *  foot of the panel first, under a body that scrolls with no visible cue; the phone

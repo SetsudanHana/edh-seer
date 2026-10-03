@@ -138,6 +138,9 @@ test("the rail's way back keeps the chapter the card was opened from", async () 
     rerender(<CardDrawerProvider graph={graph}><RailBack label="Back to manabase" /><Opener id="Sol Ring" /></CardDrawerProvider>);
     expect(screen.getByRole("button", { name: "Back to game plan" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Back to manabase" })).not.toBeInTheDocument();
+    // A card opened from the new chapter while the first still shows names the new chapter.
+    await userEvent.click(screen.getByText("open it"));
+    expect(screen.getByRole("button", { name: "Back to manabase" })).toBeInTheDocument();
   } finally {
     vi.unstubAllGlobals();
   }
@@ -268,4 +271,19 @@ test("a click away closes the drawer, a click on another card switches it, a cli
   // A card name opens it again, and the same click does not close what it opened.
   await user.click(screen.getByRole("button", { name: "Sol Ring" }));
   expect(screen.getByTestId("card-inspector")).toBeInTheDocument();
+});
+
+test("Close and Escape give focus back to the card that opened it (#1003 review)", async () => {
+  render(<CardDrawerProvider graph={graph}><Opener id="Sol Ring" /></CardDrawerProvider>);
+  const user = userEvent.setup();
+  const opener = screen.getByText("open it");
+  await user.click(opener);
+  await user.click(within(screen.getByTestId("card-inspector")).getByRole("button", { name: "Close" }));
+  expect(screen.queryByTestId("card-inspector")).toBeNull();
+  expect(opener).toHaveFocus();
+  await user.click(opener);
+  (document.activeElement as HTMLElement).blur();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByTestId("card-inspector")).toBeNull();
+  expect(opener).toHaveFocus();
 });

@@ -45,6 +45,16 @@ test("Escape closes the menu and gives focus back to its button", async () => {
   expect(button).toHaveFocus();
 });
 
+test("Escape closes the menu even when focus is not in it (#1003 review)", async () => {
+  list("Payoff B");
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: "More for Payoff B" }));
+  expect(screen.getByRole("menuitem", { name: "Read the card" })).toHaveFocus();
+  (document.activeElement as HTMLElement).blur();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("menu")).toBeNull();
+});
+
 test("a card the report does not carry gets only its page and its name", async () => {
   list("Swap In");
   await userEvent.setup().click(screen.getByRole("button", { name: "More for Swap In" }));
