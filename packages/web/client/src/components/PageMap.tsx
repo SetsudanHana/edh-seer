@@ -8,6 +8,8 @@ import { Constellation, mapCap } from "./Constellation.js";
 import { useNarrow } from "./engine-parts.js";
 import { usePaused, useReducedMotion } from "./OrbitView.js";
 import { usePeek } from "./peek.js";
+import { MapKey } from "./MapKey.js";
+import { countText } from "../lib/orbit-model.js";
 
 /** THE MAP ON A CARD PAGE (owner, 2026-09-27: "including graph on /cards and /commander pages", so
  *  the map becomes the site's identity rather than one chapter's picture). The page's card in the
@@ -139,14 +141,10 @@ export function PageMap({ page: ownPage, slug: ownSlug, rows: ownRows, base, pai
       </div>
       {/* THE COLOURS' KEY, WHERE THE MAP IS (persona round, 2026-09-27: "each colour is one of the
         *  groups below" pointed at groups a screen away). Each chip is a group drawn on the map. */}
-      <ul className="flex flex-wrap gap-1.5" aria-label="What the colours are">
-        {map.groups.filter((g) => drawnGroups.has(g.event)).map((g) => (
-          <li key={g.event} className="flex min-h-8 items-center gap-1.5 rounded-full border border-(--separator) px-2.5 text-xs">
-            <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: g.hue }} />
-            {g.name}
-          </li>
-        ))}
-      </ul>
+      <MapKey columns rows={map.groups.filter((g) => drawnGroups.has(g.event)).map((g) => {
+        const sector = map.orbit.sectors.find((x) => x.key === g.event);
+        return { key: g.event, name: g.name, hue: g.hue, count: sector ? countText(sector.partners.length, sector.partners.filter((p) => p.once).length) : undefined };
+      })} />
       <figcaption className="max-w-[65ch] text-sm text-(--muted)">
         {pair ? <>{pair.name} is in pink. </> : null}Each colour is a group, named just above{away ? "" : " and again in the list below"}, and {shown === map.orbit.direct ? "every card in them is here" : `the map shows ${shown} of their ${map.orbit.direct} cards${countNote && !away ? ` ${countNote}` : ""}, a few from each`}.
         {" "}{still || paused ? "Arrows point" : "Moving dashes run along each line"} from the card that makes it happen to the card that uses it. {loadPage && hrefOf
