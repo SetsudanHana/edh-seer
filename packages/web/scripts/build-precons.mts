@@ -45,6 +45,9 @@ mkdirSync(outDir, { recursive: true });
 // each card shard is read once for the whole build.
 const packageLookup = new StaticLookup(baseUrl, fetchImpl);
 const precons = (JSON.parse(readFileSync(preconsPath, "utf8")) as Precon[]).filter((p) => !onlyIdx || p.name === onlyIdx);
+const pagedIndex = await packageLookup.nameIndex();
+const paged = { names: new Set(pagedIndex.map((e) => e.name)), slugs: new Set(pagedIndex.map((e) => e.slug)) };
+if (paged.names.size === 0) throw new Error("name-index.json is empty: every card would read as having no page");
 const taken = new Set<string>();
 const index: Pick<PreconPage, "slug" | "name" | "setCode" | "setName" | "releaseDate" | "commanders" | "identity" | "theme">[] = [];
 let failed = 0;
@@ -75,6 +78,12 @@ for (const p of precons) {
     page.packages = pk.packages;
     if (pk.unreachable.length) page.unreachable = pk.unreachable;
     page.packageCards = pk.cards;
+    // NO LINK TO A PAGE THAT DOES NOT EXIST (#1003 review): only a substantive card has one, so a
+    // basic, a shock land or Command Tower is named as text. Checked by name and by slug, as a
+    // double-faced card is indexed by its whole name.
+    const named = [...p.cards.map((c) => c.name), ...Object.keys(pk.cards), ...page.swaps.flatMap((w) => [w.out.name, w.in.name]), ...(page.route ? [page.route.name] : [])];
+    const unpaged = [...new Set(named)].filter((n) => !paged.names.has(n) && !paged.slugs.has(pk.cards[n]?.slug ?? slugOf(n))).sort();
+    if (unpaged.length) page.unpaged = unpaged;
     // THE FULL REPORT IS ONE LINK AWAY, the same link "Copy link" makes, so it opens the list ready to edit.
     const payload = await encodeShare({ commanders: p.commanders.join("\n"), decklist: p.cards.map((c) => `${c.count} ${c.name}`).join("\n") });
     if (payload) page.report = shareUrl("", "/", payload);

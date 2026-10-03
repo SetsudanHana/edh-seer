@@ -37,6 +37,10 @@ export interface PreconPage {
   gaps: { group: string; have: number; target: number }[];
   /** The list by type, lands last: names only. */
   decklist: { group: string; cards: { name: string; count: number }[] }[];
+  /** CARDS THE PAGE NAMES THAT HAVE NO CARD PAGE (#1003 review: Godless Shrine, Plains, Command
+   *  Tower 404'd). A card page exists only for a substantive card (`isSubstantive`), so a shock land
+   *  or a basic is named here as text, never as a link to a 404. Written by `build-precons.mts`. */
+  unpaged?: string[];
   /** The report's own link for this list (`/#deck=…`), when the list fits in one. */
   report?: string;
   /** THE UPGRADE PACKAGE FOR EACH BRACKET TARGET (#767): bring-down cuts first when the precon starts
