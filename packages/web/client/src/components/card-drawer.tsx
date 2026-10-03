@@ -12,7 +12,10 @@ import { SuggestionPanel } from "./SuggestionPanel.js";
 /** WHAT A REPORT ADDS TO THE DRAWER: the deck's links, to know which cards are on the commander's
  *  map, and a way to walk that map from the card. The report registers them; the drawer sits above it. */
 export interface DrawerExtras {
-  model: EngineModel; walk: (id: string) => void;
+  model: EngineModel;
+  /** Walk the commander's map from the card. Absent where there is no map on the page (the Cards
+   *  and Combos tabs), which still get the summary: the drawer is the same everywhere (#1003). */
+  walk?: (id: string) => void;
   /** Where the report already names this card ("on the cut list"), by the card's physical name. */
   where?: (name: string) => string[];
   /** A link group's name as the report says it (the main theme by its name on Glance). */
@@ -88,6 +91,11 @@ const CardDrawerContext = createContext<CardDrawerApi>({
  *  left edge jumped 20px on every open. Both start under the site header, which runs over them. */
 const RAIL_BOX = "fixed top-(--site-header-h) bottom-0 right-0 w-(--rail-w) overflow-y-auto border-l border-(--separator) bg-(--background)";
 const RAIL_QUERY = "(min-width: 100rem)";
+/** THE CARD PANEL'S BOX WHERE THERE IS NO RAIL (#1003): a bottom sheet on a phone, a right-hand panel
+ *  under the site header from `lg` -- the box `.peek` takes on the site's pages, so a card opens in
+ *  the same place whichever page it is clicked on. It used to start at the top of the viewport and
+ *  cover the header's own navigation on the Cards tab and the precon page. */
+const PANEL_BOX = "fixed inset-x-0 bottom-0 z-30 h-[70svh] lg:inset-x-auto lg:right-0 lg:top-(--site-header-h) lg:h-auto lg:w-(--rail-w)";
 function useRailWidth(): boolean {
   const [wide, setWide] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.(RAIL_QUERY).matches);
   useEffect(() => {
@@ -335,7 +343,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
         // avoid. Nothing in jsdom sees this; only the browser did.
         ? createPortal(
             // The inspector positions itself `absolute inset-y-2 right-2` against this element.
-            <div ref={panel} className={railShown ? `${RAIL_BOX} z-30` : "fixed inset-y-0 right-0 z-30 w-full sm:w-80 sm:max-w-[90vw]"}>
+            <div ref={panel} className={railShown ? `${RAIL_BOX} z-30` : PANEL_BOX}>
               <CardInspector
                 docked={railShown}
                 node={node}
@@ -350,10 +358,12 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
                   // players it will be completely useless"); the links are listed below.
                   <div className="flex flex-col gap-2 border-t border-(--separator) pt-2">
                     <DrawerSummary extras={extras} id={node.id} name={node.cardName ?? node.label} />
-                    <button type="button" onClick={() => { extras.walk(node.id); setOpenId(null); }}
-                      className="min-h-9 self-stretch rounded-(--radius) border border-(--separator) px-3 text-sm hover:border-(--accent) hover:text-(--accent)">
-                      Walk the map from here
-                    </button>
+                    {extras.walk ? (
+                      <button type="button" onClick={() => { extras.walk!(node.id); setOpenId(null); }}
+                        className="btn-secondary self-stretch">
+                        Walk the map from here
+                      </button>
+                    ) : null}
                   </div>
                 ) : undefined}
               />
@@ -362,7 +372,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
           )
         : suggestion
           ? createPortal(
-              <div ref={panel} className="fixed inset-y-0 right-0 z-30 w-full sm:w-80 sm:max-w-[90vw]">
+              <div ref={panel} className={PANEL_BOX}>
                 <SuggestionPanel key={suggestion.card.name} card={suggestion.card} replaces={suggestion.replaces} onClose={() => setOpenId(null)} />
               </div>,
               document.body,
@@ -388,7 +398,7 @@ function DrawerSummary({ extras, id, name }: { extras: DrawerExtras; id: string;
       {o.sectors.length ? (
         <span className="flex flex-wrap gap-1">
           {o.sectors.map((x) => (
-            <span key={x.key} className="inline-flex items-center gap-1.5 rounded-full border border-(--separator) px-2 py-0.5 text-xs">
+            <span key={x.key} className="inline-flex items-center gap-1.5 rounded-(--radius) border border-(--separator) px-2 py-0.5 text-xs">
               <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: x.hue }} />
               {extras.groupName?.(x.key, x.name) ?? x.name} · {x.partners.length}
             </span>

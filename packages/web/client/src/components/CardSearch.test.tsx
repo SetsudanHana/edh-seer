@@ -577,7 +577,7 @@ test("the event counts are read when the sentence's add list opens, not before",
   atUrl("/cards", { frequency: freq });
   await screen.findByRole("searchbox");
   expect(freq).not.toHaveBeenCalled();
-  await userEvent.click(screen.getByRole("button", { name: "+ add" }));
+  await userEvent.click(screen.getByRole("button", { name: "add" }));
   await waitFor(() => expect(freq).toHaveBeenCalled());
 });
 
@@ -735,7 +735,7 @@ test("a must and a never combine", async () => {
 
 test("adding an event from the list puts it in the sentence and the link, and closes the list", async () => {
   const spy = atUrl("/cards");
-  await userEvent.click(await screen.findByRole("button", { name: "+ add" }));
+  await userEvent.click(await screen.findByRole("button", { name: "add" }));
   await userEvent.click(await screen.findByRole("button", { name: /^Cards that make it happen: .*milled/ }));
   await waitFor(() => expect(new URLSearchParams(spy.search).getAll("produce")).toEqual([MILL]));
   expect(screen.queryByRole("group", { name: "Events" })).toBeNull();
@@ -767,7 +767,7 @@ test("the first term opens the same menu, and Escape closes it without a change"
 
 test("a broad word shows every group, the matched letters in bold", async () => {
   atUrl("/cards");
-  await userEvent.click(await screen.findByRole("button", { name: "+ add" }));
+  await userEvent.click(await screen.findByRole("button", { name: "add" }));
   await userEvent.type(screen.getByLabelText("Find an event"), "mill");
   const list = await screen.findByRole("group", { name: "Events" });
   expect(within(list).getAllByText("mill", { selector: "b" }).length).toBeGreaterThan(0);
@@ -776,7 +776,7 @@ test("a broad word shows every group, the matched letters in bold", async () => 
 /** #730: six things a card does are no event, and typing one says so, even beside other matches. */
 test("typing an effect no event can ask says so in the picker", async () => {
   atUrl("/cards");
-  await userEvent.click(await screen.findByRole("button", { name: "+ add" }));
+  await userEvent.click(await screen.findByRole("button", { name: "add" }));
   await userEvent.type(screen.getByLabelText("Find an event"), "ramp");
   expect(await screen.findByTestId("unaskable-note")).toHaveTextContent(/Making mana \(ramp\) can't be searched here yet/);
   // The generic "no event matches" line does not repeat it.
@@ -930,7 +930,7 @@ const patternProps = { frequency: async () => PATTERN_FREQ, members: async (_b: 
 
 test("an index with patterns lists each event once, not once per type", async () => {
   atUrl("/cards", patternProps);
-  await userEvent.click(await screen.findByRole("button", { name: "+ add" }));
+  await userEvent.click(await screen.findByRole("button", { name: "add" }));
   await userEvent.type(screen.getByLabelText("Find an event"), "graveyard");
   const list = await screen.findByRole("group", { name: "Events" });
   // One death row; the creature and artifact keys are not rows of their own.

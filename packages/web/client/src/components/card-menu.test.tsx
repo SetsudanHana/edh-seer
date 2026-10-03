@@ -22,7 +22,7 @@ test("the ⋯ beside a card in a list offers what a player can do with it", asyn
   // ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27): "See how it connects" opened a second,
   // full-screen map; the card's links are now drawn in the drawer "Read the card" opens.
   expect(within(menu).getAllByRole("menuitem").map((b) => b.textContent)).toEqual([
-    "Read the card", "Open its card page↗", "Copy the name",
+    "Read the card", "Open its card page", "Copy the name",
   ]);
   await user.click(within(menu).getByRole("menuitem", { name: "Read the card" }));
   expect(screen.getByTestId("card-inspector")).toBeInTheDocument();
@@ -48,6 +48,6 @@ test("Escape closes the menu and gives focus back to its button", async () => {
 test("a card the report does not carry gets only its page and its name", async () => {
   list("Swap In");
   await userEvent.setup().click(screen.getByRole("button", { name: "More for Swap In" }));
-  expect(screen.getAllByRole("menuitem").map((b) => b.textContent)).toEqual(["Open its card page↗", "Copy the name"]);
+  expect(screen.getAllByRole("menuitem").map((b) => b.textContent)).toEqual(["Open its card page", "Copy the name"]);
   expect(screen.getByRole("menuitem", { name: /Open its card page/ })).toHaveAttribute("href", "/cards/swap-in");
 });

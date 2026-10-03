@@ -4,6 +4,7 @@ import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 import { REFERENCE_SURFACES, surfacesFor, SurfaceLink } from "./ReportShell.js";
 
+import { Arrow } from "./icons.js";
 /** THE TABLE OF CONTENTS, NOT A SECOND TAB BAR — and the difference is that every chapter is on the
  *  page at once, so a link here moves the reader rather than swapping what exists.
  *
@@ -108,7 +109,7 @@ export function ChapterRail({ current, comboCount }: { current: ChapterId | null
       to={s.path}
       className="eyebrow block whitespace-nowrap py-3 text-(--muted) lg:py-2 lg:pl-3"
     >
-      {s.label} <span aria-hidden="true">&#8599;</span>
+      {s.label} <Arrow dir="right" />
     </SurfaceLink>
   ));
   return (

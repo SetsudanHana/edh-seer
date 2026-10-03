@@ -7,6 +7,8 @@ import { demandSentence } from "../lib/demand-sentence.js";
 import { subcategoryLabel } from "./presets.js";
 import { CardSymbol } from "./CardSymbol.js";
 import { TypeLine } from "./TypeLine.js";
+import { PanelBar } from "./PanelBar.js";
+import { slugOf } from "@edh-seer/matcher/slug";
 
 type Edge = CardGraph["edges"][number];
 
@@ -217,19 +219,15 @@ export function CardInspector({
   return (
     <div
       data-testid="card-inspector"
-      className={`${docked ? "px-4 py-6" : `absolute right-2 left-2 ${
-        phone === "half" ? "bottom-2 top-auto max-h-[50%] sm:top-2 sm:max-h-none" : "inset-y-2"
-      } sm:left-auto sm:w-72 sm:max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3`} text-sm flex flex-col gap-3`}
+      // ONE PANEL SHAPE (#1003): it fills the box the drawer gives it -- the rail from 1600px, a
+      // right-hand panel under the site header from `lg`, a bottom sheet below -- the same box the
+      // suggestion panel and the peek use.
+      className={`${docked ? "px-4 py-6" : "absolute inset-0 overflow-y-auto border-t border-(--separator) bg-(--surface) px-4 py-4 lg:border-t-0 lg:border-l"} text-sm flex flex-col gap-3`}
     >
-      <button type="button" onClick={onClose} className={closeLabel ? "self-start inline-flex items-center gap-2 rounded-(--radius) border border-(--separator) px-3 min-h-9 text-sm hover:border-(--accent) hover:text-(--accent)" : "eyebrow self-end text-(--muted)"}>
-        {/* A DRAWN ARROW, not a "←" glyph: DESIGN.md keeps Unicode out of the icon set. */}
-        {closeLabel ? (
-          <svg aria-hidden="true" viewBox="0 0 16 16" className="size-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M13 8H3M7 4 3 8l4 4" />
-          </svg>
-        ) : null}
-        {closeLabel ?? "close"}
-      </button>
+      <PanelBar
+        back={closeLabel ? { label: closeLabel, run: onClose, closes: true } : undefined}
+        open={node.isToken || node.isEmblem ? undefined : { to: `/cards/${slugOf(node.cardName ?? node.label)}`, label: "Open card", name: node.cardName ?? node.label, onGo: onClose }}
+        onClose={onClose} />
 
       {/* BOUNDED, BECAUSE THE IMAGE WAS EATING THE WHOLE PANEL AND THE RELATIONSHIPS ARE THE PRODUCT.
         *  MEASURED on the review deck: the panel is 500px tall with 1,415px of content, and FEEDS

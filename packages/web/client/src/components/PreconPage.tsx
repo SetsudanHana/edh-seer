@@ -3,21 +3,28 @@ import { Link, useParams } from "react-router";
 import { slugOf as slugOfName } from "@edh-seer/matcher/slug";
 import { analyzeDeckStatic } from "../api.static.js";
 import { buildEngineModel } from "../lib/engine-model.js";
-import { buildOrbit } from "../lib/orbit-model.js";
+import { buildOrbit, countText } from "../lib/orbit-model.js";
 import { identityLabel } from "../lib/color-identity.js";
 import { year } from "../lib/precon-html.js";
 import { loadPrecon, preconDecklist, type PreconRecord } from "../lib/precons.js";
 import type { PreconPage as Page } from "../lib/precon-page.js";
 import type { AnalyzeResponse } from "../types.js";
 import { cardImageUrl } from "./card-node.js";
-import { CardDrawerProvider, useCardDrawer } from "./card-drawer.js";
+import { CardDrawerProvider } from "./card-drawer.js";
 import { allPartners, Constellation } from "./Constellation.js";
 import { useNarrow } from "./engine-parts.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+import { MapKey } from "./MapKey.js";
 import { UpgradePackages } from "./UpgradePackages.js";
 import { defaultTarget, swapsOf } from "../lib/precon-upgrades.js";
 
+import { Arrow } from "./icons.js";
+import { Breadcrumb } from "./Breadcrumb.js";
+import { CardLink } from "./CardLink.js";
+import { CardPeek } from "./CardPeek.js";
+import { PeekContext, usePeek, usePeekState } from "./peek.js";
+import type { MenuItem } from "./card-menu.js";
 /** `/precons/:slug` (Precon mockup, 2026-09-27): the precon's theme and scores beside its
  *  commander's map, then its upgrade packages by bracket (#767), then the list. The page
  *  is the file `build-precons` wrote; only the map is drawn live, from the list, once the page is up. */
@@ -34,7 +41,7 @@ export function PreconPage() {
   if (rec === null) {
     return (
       <div className="flex flex-col gap-3 py-10">
-        <h1 className="text-2xl font-bold">No precon page here</h1>
+        <h1 className="t-title">No precon page here</h1>
         <p className="text-(--muted)">No Commander precon goes by that name. <Link className="text-(--accent) underline" to="/precons">Every precon we read</Link>.</p>
       </div>
     );
@@ -42,7 +49,24 @@ export function PreconPage() {
   return <PreconView page={rec.page} siblings={rec.siblings} />;
 }
 
-function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord["siblings"] }) {
+/** ONE CARD PANEL ON THIS PAGE (#1003): a swap, a card in the box and a node on the map all open the
+ *  peek, as every card does on the card and commander pages. The swaps and the box navigated away,
+ *  so a reader comparing swaps lost the page on every click, and the map opened the report's drawer. */
+function PreconPeek({ children }: { children: React.ReactNode }) {
+  const peek = usePeekState();
+  return (
+    <PeekContext.Provider value={peek}>
+      {children}
+      <CardPeek />
+    </PeekContext.Provider>
+  );
+}
+
+function PreconView(props: { page: Page; siblings: PreconRecord["siblings"] }) {
+  return <PreconPeek><PreconBody {...props} /></PreconPeek>;
+}
+
+function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord["siblings"] }) {
   const opening = defaultTarget(p);
   const upgrades = opening ? swapsOf(p.packages!.find((k) => k.target === opening)!).length : 0;
   const pip = p.identity.map((c) => `{${c}}`).join("");
@@ -52,11 +76,13 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
         *  picture in the top-right corner of a 2560 screen with ~1,500px of nothing between it and
         *  the header. The header keeps its measure; the map has the rest, 16:9 from 1600px, held to
         *  the screen's height so the swaps still start on the first screen. */}
-      <section className="grid items-center gap-8 lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)]">
+      {/* TOP-ALIGNED (designer review 2026-10-03, #988): centred against the map, the page opened on
+        *  170-230px of nothing above the breadcrumb. */}
+      <section className="grid items-start gap-8 lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)]">
         <div className="flex flex-col gap-3">
-          <nav aria-label="Breadcrumb" className="text-sm text-(--muted)"><Link to="/precons" className="hover:text-(--foreground)">Precons</Link> › {p.setName}</nav>
-          <span className="eyebrow text-(--muted)">Commander precon · {p.setName}{p.releaseDate ? ` · ${year(p.releaseDate)}` : ""}</span>
-          <h1 className="text-4xl font-bold leading-tight tracking-[-0.02em]">{p.name}</h1>
+          {/* THE SET AND ITS YEAR LIVE IN THE TRAIL, not in a kicker over the title (No-Kicker rule, #1003). */}
+          <Breadcrumb steps={[{ label: "Precons", to: "/precons" }, { label: `${p.setName}${p.releaseDate ? ` · ${year(p.releaseDate)}` : ""}` }]} />
+          <h1 className="t-title">{p.name}</h1>
           <p className="text-(--muted)">
             {p.commanders.map((c, i) => <span key={c}>{i > 0 ? " and " : ""}<Link className="hover:text-(--foreground)" to={`/commanders/${slugOfName(c)}`}>{c}</Link></span>)}
             {pip ? <> · <span aria-hidden="true" className="inline-flex align-[-0.15em]"><ManaSymbols cost={pip} /></span> {identityLabel(p.identity)}</> : null}
@@ -74,8 +100,8 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
             {upgrades ? ` ${spell(upgrades)} swaps below upgrade it, at the bracket you play at.` : ""}
           </p>
           <div className="flex flex-wrap gap-2">
-            {upgrades ? <a href="#upgrades" className="inline-flex min-h-11 items-center rounded-full bg-(--accent) px-5 font-medium text-(--accent-foreground)">See the upgrades ↓</a> : null}
-            {p.report ? <a href={p.report} className="inline-flex min-h-11 items-center rounded-full border border-(--separator) px-5 font-medium hover:border-(--foreground)">Open the full report</a> : null}
+            {upgrades ? <a href="#upgrades" className="btn-primary gap-1.5">See the upgrades <Arrow dir="down" /></a> : null}
+            {p.report ? <a href={p.report} className="btn-secondary">Open the full report</a> : null}
           </div>
         </div>
         <div className="min-w-0 w-full justify-self-center lg:max-w-[calc(55svh*1.2222)] min-[100rem]:max-w-[calc(55svh*1.7778)]">
@@ -89,7 +115,7 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
             {p.route ? (
               <div className="flex items-center gap-3 rounded-(--radius) border border-dashed border-(--accent) p-3">
                 {p.route.art ? <img src={cardImageUrl(p.route.art) ?? undefined} alt="" width={488} height={680} loading="lazy" className="w-14 shrink-0 rounded-[4.5%/3.3%]" /> : null}
-                <div className="flex flex-col"><span className="eyebrow text-(--accent)">Opens a route</span><Link to={`/cards/${p.route.slug}`} className="font-bold hover:text-(--accent)">{p.route.name}</Link><span className="text-sm text-(--muted)">{p.route.reach} of its cards reach {p.route.to} through it.</span></div>
+                <div className="flex flex-col"><span className="eyebrow text-(--accent)">Opens a route</span><CardLink slug={p.route.slug} className="font-bold hover:text-(--accent)">{p.route.name}</CardLink><span className="text-sm text-(--muted)">{p.route.reach} of its cards reach {p.route.to} through it.</span></div>
               </div>
             ) : null}
             {p.gaps.length ? (
@@ -103,15 +129,14 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
       </UpgradePackages>
 
       <section className="flex flex-col gap-1" aria-labelledby="list-title">
-        <span className="eyebrow text-(--muted)">The decklist</span>
-        <h2 id="list-title" className="mb-2 text-2xl font-bold">What&rsquo;s in the box</h2>
+        <h2 id="list-title" className="mb-2 t-section">What&rsquo;s in the box</h2>
         {/* THE TYPES SIDE BY SIDE AND THE NAMES IN COLUMNS (designer review 2026-09-30, #770): each
           *  type was one running line of names, 3,600px long at 3840. */}
         <div className="grid items-start gap-x-8 min-[100rem]:grid-cols-2 min-[200rem]:grid-cols-4">
         {p.decklist.map((g) => (
           <div key={g.group} className="flex flex-col gap-2 border-t border-(--separator) py-3">
             <h3 className="text-sm font-semibold">{g.group} · {g.cards.reduce((t, c) => t + c.count, 0)}</h3>
-            <ul className="columns-2 sm:columns-[11rem] gap-x-6 text-sm">{g.cards.map((c) => <li key={c.name} className="break-inside-avoid py-0.5">{c.count > 1 ? `${c.count} ` : ""}<Link to={`/cards/${slugOfName(c.name)}`} className="hover:text-(--accent)">{c.name}</Link></li>)}</ul>
+            <ul className="columns-2 sm:columns-[11rem] gap-x-6 text-sm">{g.cards.map((c) => <li key={c.name} className="break-inside-avoid py-0.5">{c.count > 1 ? `${c.count} ` : ""}<CardLink slug={slugOfName(c.name)} className="hover:text-(--accent)">{c.name}</CardLink></li>)}</ul>
           </div>
         ))}
         </div>
@@ -119,8 +144,7 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
 
       {siblings.length ? (
         <section className="flex flex-col gap-2">
-          <span className="eyebrow text-(--muted)">Same set</span>
-          <h2 className="text-xl font-bold">Other {p.setName} precons</h2>
+          <h2 className="t-section">Other {p.setName} precons</h2>
           <div className="flex flex-wrap gap-2">
             {siblings.map((s) => <Link key={s.slug} to={`/precons/${s.slug}`} className="inline-flex min-h-11 items-center rounded-full border border-(--separator) px-4 text-sm hover:border-(--foreground)">{s.name}</Link>)}
           </div>
@@ -165,18 +189,53 @@ function PreconMap({ page }: { page: Page }) {
 }
 
 function MapOf({ data, commanders }: { data: AnalyzeResponse; commanders: string[] }) {
-  const drawer = useCardDrawer();
+  const peek = usePeek();
   const narrow = useNarrow();
   const broad = !useIsNarrow(1599);
   const [lit, setLit] = useState<string | null>(null);
+  // THE WALK, AS ON EVERY OTHER MAP (#1003): a second tap on a card puts it in the middle, the page
+  // stays, and Back walks the route backwards. Here a second tap did nothing and there was no menu.
+  const [path, setPath] = useState<string[]>([]);
+  // THE PICK, apart from the hover: a second tap is on the card already picked, as on the orbit.
+  const [sel, setSel] = useState<string | null>(null);
   const model = useMemo(() => buildEngineModel(data.report, data.graph!), [data]);
   const wanted = new Set(commanders.flatMap((c) => [c, c.split(" // ")[0]!]));
   const id = data.graph!.nodes.find((n) => !n.face && !n.isToken && (wanted.has(n.cardName ?? n.label) || wanted.has(n.label)))?.id;
-  const orbit = useMemo(() => (id ? buildOrbit(model, id) : null), [model, id]);
-  if (!orbit) return null;
+  const centre = path.at(-1) ?? id;
+  const orbit = useMemo(() => (centre ? buildOrbit(model, centre) : null), [model, centre]);
+  if (!orbit || !id) return null;
+  const short = (c: { name: string }) => c.name.split(",")[0]!.split(" // ")[0]!;
+  const first = short(orbit.focus);
+  const read = (t: string) => { const c = model.cards.get(t); if (c && !c.isToken) peek?.push(slugOfName(c.physical)); };
+  const walk = (t: string) => { setPath((p) => [...p, t]); setSel(null); setLit(null); };
+  const prev = path.length ? model.cards.get(path.length > 1 ? path.at(-2)! : id) : undefined;
+  const menuFor = (t: string | null): MenuItem[] => {
+    const c = t === null ? undefined : model.cards.get(t);
+    if (!c || t === null) return [];
+    return [
+      ...(t !== centre ? [{ label: `Put ${short(c)} in the middle`, run: () => walk(t) }] : []),
+      ...(c.isToken ? [] : [
+        { label: "Read the card", run: () => { setSel(t); read(t); } },
+        { label: "Open its card page", href: `/cards/${slugOfName(c.physical)}` },
+      ]),
+      { label: "Copy the name", run: () => { void navigator.clipboard?.writeText(c.isToken ? c.name : c.physical).catch(() => {}); } },
+    ];
+  };
   return (
-    <Constellation model={model} orbit={orbit} trail={[]} lit={lit} still={false} narrow={narrow} broad={broad} pick={allPartners}
-      onTap={(t) => { const c = model.cards.get(t); if (c && !c.isToken) drawer.open(drawer.known.has(c.name) ? c.name : c.physical); setLit(t); }}
-      onHover={setLit} onBlank={() => setLit(null)} />
+    <div className="flex flex-col gap-2">
+      {prev ? (
+        <button type="button" className="btn-secondary gap-1.5 self-start" onClick={() => { setPath((p) => p.slice(0, -1)); setSel(null); }}>
+          <Arrow dir="left" /> Back to {short(prev)}
+        </button>
+      ) : null}
+      <Constellation model={model} orbit={orbit} trail={path.length ? [id, ...path.slice(0, -1)] : []} lit={sel ?? lit} still={false} narrow={narrow} broad={broad} pick={allPartners}
+        onTap={(t) => { if (t === sel && t !== centre) walk(t); else { read(t); setSel(t); } }}
+        onHover={setLit} onBlank={() => { setSel(null); setLit(null); }} menuFor={menuFor} />
+      {/* THE KEY THE REPORT'S MAP HAS (#890, #993): the same map drawn here had no key at all. */}
+      <MapKey columns rows={orbit.sectors.map((x) => ({
+        key: x.name, name: x.name, hue: x.hue,
+        count: countText(x.partners.length, x.partners.filter((p) => p.once).length, first),
+      }))} />
+    </div>
   );
 }

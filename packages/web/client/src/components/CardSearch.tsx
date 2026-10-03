@@ -563,7 +563,7 @@ export function CardSearch({
       * bound a grid to three tiles; the header and the prose keep their own 65ch. */}
     {/* THE RAIL EXISTS ONLY WHILE A CARD IS PEEKED. Reserving its 20rem always left the landing
       * page a 650px column with the right two thirds of a 1920 screen empty (UX review, 2026-09-17). */}
-    <div className={peek.stack.length > 0 ? "lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start" : undefined}>
+    <div className={peek.stack.length > 0 ? "lg:pr-(--rail-w)" : undefined}>
     <section className="flex flex-col gap-6">
       {/* ONLY `/cards` EVER CARRIED A SHARE LINK. `/commanders` is a new path, so there is no
         * stale link to catch and nothing to redirect. */}
@@ -581,7 +581,7 @@ export function CardSearch({
         {/* THE LABEL IS NOT THE PAGE. "Cards" at 48px was the largest thing on a screen whose real
           * lead is the box you type in -- a generic noun out-ranking the only control that does
           * anything. */}
-        <h1 className="text-2xl font-bold tracking-[-0.01em]">
+        <h1 className="t-title">
           {commanderMode ? "Commanders" : "Cards"}
         </h1>
         <p className="text-(--muted) max-w-[65ch]">
@@ -715,7 +715,9 @@ export function CardSearch({
         ? <div className="flex flex-col gap-2 pt-6">
             {/* THE COUNT AND THE EXAMPLES SHARE A ROW FROM 1600px (#770), so the grid starts higher. */}
             <div className="flex flex-col gap-2 min-[100rem]:flex-row min-[100rem]:items-end min-[100rem]:gap-16">
-            <div className="flex flex-col gap-2">
+            {/* ONE WIDTH ON BOTH PAGES (designer crawl 2026-10-03, #994 item 6): sized by its own
+              * sentence, the block put "or ask" at x 438 on /cards and 651 on /commanders. */}
+            <div className="flex flex-col gap-2 min-[100rem]:w-[55ch] min-[100rem]:shrink-0">
             {/* ON A PHONE THE COUNT JOINS ITS SENTENCE (designer review 2026-09-30, #770): as a 30px
               * figure on its own line it pushed the first tiles below a 390px screen on /commanders. */}
             <p className="hidden sm:block text-3xl font-bold tracking-[-0.01em] tabular-nums">
@@ -877,14 +879,9 @@ export function CardSearch({
         )}
       <PageFoot />
     </section>
-    {/* The peek beside the list on a wide viewport; below `lg` `.peek` is a fixed bottom sheet, so
-      * the aside's position does not matter there. Rendered only while a card is being looked at,
-      * so the list keeps its measure the rest of the time. */}
-    {peek.stack.length > 0 && (
-      <aside className="lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)]">
-        <CardPeek load={peekLoad} surface={commanderMode ? "commander" : "card"} />
-      </aside>
-    )}
+    {/* The peek is the fixed card panel (#1003): on the right under the header from `lg`, where the
+      * padding above keeps the list clear of it while a card is open; a bottom sheet below. */}
+    <CardPeek load={peekLoad} surface={commanderMode ? "commander" : "card"} />
     </div>
     </PeekContext.Provider>
   );

@@ -22,7 +22,7 @@ export function PreconIndex() {
   return (
     <div className="flex flex-col gap-8 py-6" data-testid="precon-index">
       <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-bold tracking-[-0.02em]">Commander precons</h1>
+        <h1 className="t-title">Commander precons</h1>
         <p className="max-w-[65ch] text-(--muted)">Every Commander precon, read card by card: its theme, how well its cards work together, and the swaps that make them work together more.</p>
       </div>
       {list && list.length > 0 ? (
@@ -42,20 +42,31 @@ export function PreconIndex() {
         // the first column. A phone keeps the one column it had.
         : <div className="sm:columns-[22rem] sm:gap-8">{sets.map((s) => (
           <section key={s.setCode} className="flex flex-col gap-2 break-inside-avoid mb-8" aria-labelledby={`set-${s.setCode}`}>
-            <h2 id={`set-${s.setCode}`} className="text-lg font-bold">{s.setName}{s.releaseDate ? <span className="font-normal text-(--muted)"> · {year(s.releaseDate)}</span> : null}</h2>
+            <h2 id={`set-${s.setCode}`} className="t-subsection">{s.setName}{s.releaseDate ? <span className="font-normal text-(--muted)"> · {year(s.releaseDate)}</span> : null}</h2>
             <ul className="grid gap-2">
               {s.decks.map((d) => (
                 <li key={d.slug}>
-                  <Link to={`/precons/${d.slug}`} className="flex min-h-11 flex-col rounded-(--radius) border border-(--separator) bg-(--surface) px-3 py-2 hover:border-(--foreground)">
-                    <span className="flex items-center gap-2 font-semibold">{d.name}
-                      {d.identity.length ? <span aria-hidden="true" className="inline-flex"><ManaSymbols cost={d.identity.map((c) => `{${c}}`).join("")} /></span> : null}</span>
-                    <span className="text-sm text-(--muted)">{d.commanders.join(" and ")}{d.theme ? ` · ${d.theme}` : ""}</span>
-                  </Link>
+                  <Link to={`/precons/${d.slug}`} className={`${PRECON_TILE} hover:border-(--foreground)`}><PreconTileBody d={d} /></Link>
                 </li>
               ))}
             </ul>
           </section>
         ))}</div>}
     </div>
+  );
+}
+
+/** ONE PRECON TILE, ON THE INDEX AND ON HOME (designer crawl 2026-10-03, #994 item 8): home drew its
+ *  own without the colour identity and with other padding. The wrapper differs -- a link here, a
+ *  button that fills the box on home -- so the box's class and the body are what is shared. */
+export const PRECON_TILE = "flex w-full min-h-11 flex-col rounded-(--radius) border border-(--separator) bg-(--surface) px-3 py-2 text-left";
+
+export function PreconTileBody({ d }: { d: Pick<PreconIndexEntry, "name" | "identity" | "commanders" | "theme"> }) {
+  return (
+    <>
+      <span className="flex items-center gap-2 font-semibold">{d.name}
+        {d.identity.length ? <span aria-hidden="true" className="inline-flex"><ManaSymbols cost={d.identity.map((c) => `{${c}}`).join("")} /></span> : null}</span>
+      <span className="text-sm text-(--muted)">{d.commanders.join(" and ")}{d.theme ? ` · ${d.theme}` : ""}</span>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { DeckReport } from "../types.js";
-import { CardName, useCardDrawer, useAdded } from "./card-drawer.js";
+import { CardName, ReasonText, useCardDrawer, useAdded } from "./card-drawer.js";
 import { CardMenuButton } from "./card-menu.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { Explain } from "./Explain.js";
@@ -299,7 +299,7 @@ export function CardList({ cards, artByName, coverage }: {
     // the left."* The blank the cap bounded is named in the table's own comment below -- it is a
     // known cost, not an oversight.
     <div className="flex flex-col gap-3">
-      <h3 className="eyebrow">Cards</h3>
+      <h2 className="t-chapter">Cards</h2>
       <p className="text-xs text-(--muted) max-w-[65ch]">{SCALE_NOTE}</p>
       {/* THE COST COLUMN'S OWN SCALE. "49% – 69% by T5" was explained in a footnote on a different
         *  tab, so on this one it was two unlabelled numbers. */}
@@ -497,13 +497,18 @@ export function CardList({ cards, artByName, coverage }: {
                   <td className="py-2 pr-2 stat-num text-(--muted) hidden sm:table-cell">{String(i + 1).padStart(2, "0")}</td>
                   <td className="py-2 pr-2 min-w-0">
                     <span className="flex items-center gap-3 min-w-0">
-                      <Thumb art={artByName?.get(c.name)} alt="" />
+                      {/* THE ROW'S ART OPENS THE CARD, like its name (#1003); the name is the keyboard's way in. */}
+                      <button type="button" tabIndex={-1} aria-hidden="true" className="shrink-0 cursor-pointer" onClick={() => openCard(c.name)}>
+                        <Thumb art={artByName?.get(c.name)} alt="" />
+                      </button>
                       <span className="flex flex-col min-w-0">
                         <CardName name={c.name} className="block truncate max-w-full" />
                         {/* A MARK IS NEVER THE ONLY CARRIER: a ring says nothing to a screen
                           *  reader, and this table is the surface the header's count travels to. */}
                         {isAdded(c.cardName ?? c.name) ? <span className="eyebrow text-(--accent)">new</span> : null}
-                        {reason ? <span className="block text-xs text-(--muted) truncate">{reason}</span> : null}
+                        {/* THE NAMES IN A REASON OPEN THEIR CARDS, as the same sentence does in "Cards that
+                          *  carry it" (#1003): here it was plain text. */}
+                        {reason ? <ReasonText text={reason} className="block text-xs text-(--muted) truncate" /> : null}
                         {/* WHERE THE COLUMN IS NOT (R2). Each of these appears exactly where its own
                           *  `<td>` does not: the cost below `sm`, the roles below `lg`. */}
                         <Cost card={c} cell="cost-inline" className="sm:hidden flex items-center gap-2 mt-0.5" />
@@ -539,7 +544,7 @@ export function CardList({ cards, artByName, coverage }: {
       {unread.length > 0 ? (
         <section className="flex flex-col gap-3 mt-6 pt-6 border-t border-(--separator)">
           <div className="flex items-baseline gap-3 flex-wrap">
-            <h3 className="text-base font-bold tracking-[-0.01em]">Not read yet</h3>
+            <h3 className="t-subsection">Not read yet</h3>
             <span className="text-xs text-(--muted) stat-num">{unreadCards.length} cards</span>
           </div>
           <p className="text-sm text-(--muted) max-w-[65ch]">

@@ -41,7 +41,12 @@ export function SwapLine({ p }: { p: SuggestedPair }) {
   const drawer = useCardDrawer();
   return (
     <div className="relative flex items-start gap-3 border-t border-(--separator) pt-2 min-w-0" data-testid="swap">
-      <Face name={p.add.name} art={p.add.art} className="w-12 sm:w-14" />
+      {/* THE ART OPENS THE CARD, as the cut's art above it does (#1003). The name beside it is the
+        *  keyboard's way in; this is the same act for a pointer, so it stays out of the tab order. */}
+      <Link to={`/cards/${p.add.slug}`} tabIndex={-1} aria-hidden="true" className="shrink-0"
+        onClick={(ev) => { openSuggestedCard(drawer, (e) => peekOnPlainClick(peek, p.add.slug, e), p.add, ev, p.cut); }}>
+        <Face name={p.add.name} art={p.add.art} className="w-12 sm:w-14" />
+      </Link>
       <div className="flex min-w-0 flex-col gap-0.5">
         <p className="flex flex-wrap items-center gap-x-1.5">
           <span className="text-(--muted)">Swap it for</span>{" "}

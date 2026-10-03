@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
 import { loadCardPage, type CardPageData } from "../lib/partners.js";
 import { AbilityTable } from "./AbilityTable.js";
 import { CardArt } from "./CardArt.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+import { PanelBar } from "./PanelBar.js";
 import { usePeek } from "./peek.js";
 import { TypeLine } from "./TypeLine.js";
 
@@ -42,6 +42,22 @@ export function CardPeek({ load, surface = "card" }: {
     return () => { live = false; };
   }, [slug, load]);
 
+  // A CLICK ON THE PAGE BEHIND CLOSES IT (#1003), as the report's drawer does where it lies over the
+  // page: from `lg` the peek is a panel over the right of the content. A click on anything that
+  // does something -- a card link, a map node, a button -- is left to it: it may open another card.
+  const box = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!slug || !peek) return;
+    const away = (e: MouseEvent) => {
+      const t = e.target as Element | null;
+      if (!t || box.current?.contains(t) || e.defaultPrevented) return;
+      if (t.closest("a, button, input, select, textarea, summary, label, [role=button], [role=menu], svg")) return;
+      peek.close();
+    };
+    document.addEventListener("click", away);
+    return () => document.removeEventListener("click", away);
+  }, [slug, peek]);
+
   useEffect(() => {
     if (!slug) return;
     document.documentElement.classList.add("peek-open");
@@ -55,6 +71,7 @@ export function CardPeek({ load, surface = "card" }: {
 
   return (
     <section
+      ref={box}
       role="dialog"
       aria-modal="false"
       aria-labelledby="peek-title"
@@ -64,20 +81,10 @@ export function CardPeek({ load, surface = "card" }: {
       {/* THE BAR CARRIES EVERY WAY OUT, including the way IN to the full page. "Open" sat at the
         *  foot of the panel first, under a body that scrolls with no visible cue; the phone
         *  reviewer (2026-09-08) never found it and took Close for the only control. */}
-      <div className="peek-bar">
-        {deeper && <button type="button" className="btn-secondary" onClick={() => peek.back()}>Back</button>}
-        {page && (
-          <Link
-            className="btn-primary peek-open-link"
-            to={`${asCommander ? "/commanders" : "/cards"}/${slug}`}
-            aria-label={`Open ${page.name}`}
-            onClick={() => peek.close()}
-          >
-            {asCommander ? "Open commander" : "Open card"}
-          </Link>
-        )}
-        <button ref={closeButton} type="button" className="btn-secondary ml-auto" onClick={() => peek.close()}>Close</button>
-      </div>
+      <PanelBar ref={closeButton}
+        back={deeper ? { label: "Back", run: () => peek.back() } : undefined}
+        open={page ? { to: `${asCommander ? "/commanders" : "/cards"}/${slug}`, label: asCommander ? "Open commander" : "Open card", name: page.name, onGo: () => peek.close() } : undefined}
+        onClose={() => peek.close()} />
       {page === undefined && <p id="peek-title" className="eyebrow text-(--muted)">loading the card</p>}
       {page === null && (
         <p id="peek-title" className="text-(--muted)">We have not read this card yet.</p>

@@ -1,8 +1,8 @@
 import type { MouseEvent } from "react";
-import { Link } from "react-router";
 import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
 import { cardImageUrl } from "./card-node.js";
 
+import { PanelBar } from "./PanelBar.js";
 /** Reasons shown before the rest fold away. */
 const REASONS = 3;
 
@@ -25,8 +25,8 @@ export function SuggestionPanel({ card, replaces, onClose }: {
     : card.answers?.length ? `Answers ${card.answers.map((x) => `${x}s`).join(" and ")}` : null;
   return (
     <div data-testid="suggestion-drawer"
-      className="absolute inset-y-2 right-2 left-2 sm:left-auto sm:w-72 sm:max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm flex flex-col gap-3">
-      <button type="button" onClick={onClose} className="eyebrow self-end text-(--muted)">close</button>
+      className="absolute inset-0 overflow-y-auto border-t border-(--separator) bg-(--surface) px-4 py-4 text-sm flex flex-col gap-3 lg:border-t-0 lg:border-l">
+      <PanelBar open={{ to: `/cards/${card.slug}`, label: "Open card", name: card.name }} onClose={onClose} />
       {src ? <img src={src} alt="" width={488} height={680} className="block aspect-[488/680] h-auto w-full max-w-60 self-center rounded-[4.5%/3.3%] shadow-md shadow-black/40" /> : null}
       <div>
         <h3 className="text-base font-medium">{card.name}</h3>
@@ -56,9 +56,6 @@ export function SuggestionPanel({ card, replaces, onClose }: {
           <p className="mt-1 whitespace-pre-line text-(--muted) text-xs">{card.oracle}</p>
         </details>
       ) : null}
-      <Link to={`/cards/${card.slug}`} className="min-h-9 rounded-(--radius) border border-(--separator) px-3 text-center leading-9 hover:border-(--accent) hover:text-(--accent)">
-        Open its card page ↗
-      </Link>
     </div>
   );
 }

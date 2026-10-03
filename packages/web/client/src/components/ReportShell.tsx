@@ -11,9 +11,11 @@ import { StateControls, stateLabel } from "./StateControls.js";
 import { CardList } from "./CardList.js";
 import { MissingCards } from "./MissingCards.js";
 import { ComboList } from "./ComboList.js";
-import { CardDrawerProvider } from "./card-drawer.js";
+import { CardDrawerProvider, useCardDrawer } from "./card-drawer.js";
+import { buildEngineModel } from "../lib/engine-model.js";
 import type { RunDiff } from "../lib/run-diff.js";
 
+import { Arrow } from "./icons.js";
 /** THE REPORT'S SHELL: the sticky header, the scroll, and the reference surfaces that are NOT part
  *  of it.
  *
@@ -143,12 +145,12 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
             <Route
               path="cards"
               element={
-                <Reference comboCount={comboCount}>
+                <Reference comboCount={comboCount} data={data}>
                   <CardList cards={data.report.cards} artByName={artByName} coverage={data.report.coverage} />
                 </Reference>
               }
             />
-            <Route path="combos" element={<Reference comboCount={comboCount}><ComboList combos={data.report.combos} /></Reference>} />
+            <Route path="combos" element={<Reference comboCount={comboCount} data={data}><ComboList combos={data.report.combos} /></Reference>} />
             {/* A path this app does not have is the REPORT, not an error page: the deck is in the
               *  hash and the chapters are what it is for. */}
             <Route path="*" element={<ReportChapters data={data} diff={diff} assumptions={stateControls} assumptionsSet={state ? stateLabel(state) || undefined : undefined} />} />
@@ -165,21 +167,34 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
  *  The browser's own back button is the primary route home — that is why these are routes at all —
  *  but a reader who arrived by pressing `Cards` in the rail can be several surfaces deep, and a
  *  visible way back costs one line. */
-function Reference({ children, comboCount }: { children: React.ReactNode; comboCount: number }) {
+function Reference({ children, comboCount, data }: { children: React.ReactNode; comboCount: number; data?: AnalyzeResponse }) {
   const { pathname } = useLocation();
+  // THE DRAWER HERE IS THE DRAWER IN THE CHAPTERS (#1003): it carried no "works with" summary on
+  // these tabs because only the chapters registered the deck's links. There is no map to walk here,
+  // so the walk is left out and the rest is the same.
+  const { setExtras } = useCardDrawer();
+  const model = useMemo(() => (data?.graph ? buildEngineModel(data.report, data.graph) : null), [data]);
+  useEffect(() => {
+    if (!model?.totalLinks) return;
+    setExtras({ model });
+    return () => setExtras(null);
+  }, [model, setExtras]);
   return (
     <div className="flex flex-col gap-2 pt-2">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-      <nav aria-label="Report surfaces" className="flex gap-4 items-baseline">
+      <nav aria-label="Report surfaces" className="flex gap-4 items-center">
         <SurfaceLink to="/" className="eyebrow text-(--accent)">
-          &larr; Report
+          <Arrow dir="left" /> Report
         </SurfaceLink>
         {/* The current surface always gets its tab, even Combos on a deck without any. */}
         {(pathname === "/analysis/combos" ? REFERENCE_SURFACES : surfacesFor(comboCount)).map((s) => (
           <SurfaceLink
             key={s.path}
             to={s.path}
-            className={`eyebrow ${pathname === s.path ? "text-(--foreground)" : "text-(--muted)"}`}
+            // TABS ARE UNDERLINED (DESIGN.md, Tabs; #992): colour alone was the only mark of the
+            // current surface. `aria-current` drives the 2px accent border, as on the card page.
+            current={pathname === s.path}
+            className="eyebrow inline-flex items-center min-h-11 border-b-2 border-transparent text-(--muted) hover:text-(--foreground) aria-[current=page]:border-(--accent) aria-[current=page]:text-(--foreground)"
           >
             {s.label}
           </SurfaceLink>
@@ -202,8 +217,8 @@ function Reference({ children, comboCount }: { children: React.ReactNode; comboC
  *  A real `<a href>` rather than a router `Link`, so middle-click and open-in-new-tab still work
  *  and still carry the deck; the click handler reads the hash FRESH at click time, because `App`
  *  writes it with `history.replaceState` and this component never re-renders when it changes. */
-export function SurfaceLink({ to, className, children }: {
-  to: string; className: string; children: React.ReactNode;
+export function SurfaceLink({ to, className, children, current }: {
+  to: string; className: string; children: React.ReactNode; current?: boolean;
 }) {
   const navigate = useNavigate();
   return (
@@ -211,6 +226,7 @@ export function SurfaceLink({ to, className, children }: {
       // THE STATE RIDES IN THE QUERY and the deck in the hash; a surface link keeps both (W18).
       href={`${to}${typeof window === "undefined" ? "" : window.location.search + window.location.hash}`}
       className={className}
+      aria-current={current ? "page" : undefined}
       onClick={(e) => {
         // Let the browser handle every gesture that means "somewhere else": a new tab, a new
         // window, a download. Only a plain left click is ours to intercept.

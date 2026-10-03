@@ -8,6 +8,9 @@ import { CardDrawerProvider } from "./card-drawer.js";
 import { allPartners, MAP_CAP, mapPartners } from "./Constellation.js";
 import { OrbitView, countText } from "./OrbitView.js";
 
+
+/** The walk's steps in order: the separators between them are drawn icons, not text. */
+const stepsOf = (nav: HTMLElement) => [...nav.querySelectorAll("button, b")].map((e) => e.textContent ?? "");
 function view(focusId = "Payoff A") {
   const { report, graph } = engineDeck();
   const onFocus = vi.fn();
@@ -79,9 +82,9 @@ test("after centring a card, the way back is a button and the path is drawn abov
   await user.click(screen.getByRole("button", { name: "Payoff B" }));
   await user.click(screen.getByRole("button", { name: "Payoff B" }));
   rerender(<OrbitView report={report} graph={graph} focusId="Payoff B" onFocus={() => {}} />);
-  expect(screen.getByRole("button", { name: "← Back to Payoff A" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Back to Payoff A" })).toBeInTheDocument();
   const path = screen.getByRole("navigation", { name: "Your path" });
-  expect(path.textContent).toBe("Payoff A›Payoff B");
+  expect(stepsOf(path)).toEqual(["Payoff A", "Payoff B"]);
 });
 
 test("a middle set from outside the map, as the drawer's walk does, still draws the path", () => {
@@ -89,7 +92,7 @@ test("a middle set from outside the map, as the drawer's walk does, still draws 
   const { rerender } = render(<OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} />);
   rerender(<OrbitView report={report} graph={graph} focusId="Payoff B" onFocus={() => {}} />);
   rerender(<OrbitView report={report} graph={graph} focusId="Cleric 1" onFocus={() => {}} />);
-  expect(screen.getByRole("navigation", { name: "Your path" }).textContent).toBe("Payoff A›Payoff B›Cleric 1");
+  expect(stepsOf(screen.getByRole("navigation", { name: "Your path" }))).toEqual(["Payoff A", "Payoff B", "Cleric 1"]);
   // Back to a card on the path shortens it to there.
   rerender(<OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} />);
   expect(screen.queryByRole("navigation", { name: "Your path" })).toBeNull();
@@ -104,7 +107,7 @@ test("walking to a card the middle doesn't work with routes along real links", a
   expect(m.partners.get("Payoff A")?.has("Reducer")).toBe(false);
   const { container, rerender } = render(<OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} />);
   rerender(<OrbitView report={report} graph={graph} focusId="Reducer" onFocus={() => {}} />);
-  const steps = screen.getByRole("navigation", { name: "Your path" }).textContent!.split("›");
+  const steps = stepsOf(screen.getByRole("navigation", { name: "Your path" }));
   expect(steps[0]).toBe("Payoff A");
   expect(steps.at(-1)).toBe("Reducer");
   expect(steps.length).toBe(3);
@@ -222,7 +225,7 @@ test("a right click on a card opens its menu: read how, walk to it, and Escape c
   const menu = screen.getByRole("menu", { name: "Payoff B" });
   expect(within(menu).getAllByRole("menuitem").map((b) => b.textContent)).toEqual([
     // No "Read the card" here: outside a report there is no card drawer to open it in.
-    "How it works with Payoff A", "Put Payoff B in the middle", "Open its card page↗", "Copy the name",
+    "How it works with Payoff A", "Put Payoff B in the middle", "Open its card page", "Copy the name",
   ]);
   expect(within(menu).getByRole("menuitem", { name: /Open its card page/ })).toHaveAttribute("href", "/cards/payoff-b");
   // The first line takes focus, so the keyboard can go straight on.
@@ -289,7 +292,7 @@ test("a pair asked from outside the map opens with both faces, how common it is,
   // A generic link says it is one of many, and shows them.
   expect(screen.getByText(/One of \d+ cards that work with Payoff A this way/)).toBeInTheDocument();
   const user = userEvent.setup();
-  await user.click(screen.getByRole("button", { name: "← Back to game plan" }));
+  await user.click(screen.getByRole("button", { name: "Back to game plan" }));
   expect(run).toHaveBeenCalled();
   await user.click(screen.getByRole("button", { name: "Show them" }));
   expect(screen.getByText("While you control one of these, Payoff A counts it")).toBeInTheDocument();
@@ -303,7 +306,7 @@ test("a pair asked with a new middle opens on that middle, not reset by the move
   rerender(<OrbitView report={report} graph={graph} focusId="Payoff B" onFocus={() => {}} ask={{ partner: partner.id }} />);
   expect(screen.getByRole("heading", { name: `Payoff B and ${partner.name}` })).toBeInTheDocument();
   // Asked from the map itself, there is nowhere to go back to.
-  expect(screen.queryByRole("button", { name: /^← Back to/ })).toBeNull();
+  expect(screen.queryByRole("button", { name: /^Back to/ })).toBeNull();
 });
 
 test("two pieces of one infinite combo say so, and the way to the combo", () => {

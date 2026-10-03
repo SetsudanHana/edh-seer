@@ -21,6 +21,8 @@ import { PartnerList } from "./PartnerList.js";
  *
  *  `load` is injected so the test needs no fetch and no artifact on disk; production passes nothing
  *  and gets the real loader. */
+const loadFromStatic = (slug: string) => loadCardPage(slug, "/static");
+
 export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageData | null> }) {
   const { slug = "" } = useParams();
   const [page, setPage] = useState<CardPageData | null | undefined>(undefined);
@@ -57,7 +59,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         *  page's chips carry. */}
       <details className="lg:hidden group/reads flex flex-col gap-3">
         <summary className="cursor-pointer list-none flex items-center gap-2 w-fit">
-          <h2 className="text-2xl font-bold tracking-[-0.01em]">How we read this card</h2>
+          <h2 className="t-section">How we read this card</h2>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className="transition-transform duration-150 ease-out group-open/reads:rotate-180 motion-reduce:transition-none">
             <path d="m6 9 6 6 6-6" />
           </svg>
@@ -70,7 +72,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
 
       {job && (
         <section className="flex flex-col gap-2 max-w-[68ch]">
-          <h2 className="text-2xl font-bold tracking-[-0.01em]">What it does in a deck</h2>
+          <h2 className="t-section">What it does in a deck</h2>
           <p className="text-(--muted) max-w-[65ch]">
             {jobSentence(page.name, job)} <Link to="/" className="text-(--accent) hover:underline">Analyse a deck</Link>
           </p>
@@ -79,14 +81,16 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
 
       {!(job && page.partners.length === 0) && <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
-          <h2 className="text-2xl font-bold tracking-[-0.01em]">Works well with</h2>
+          <h2 className="t-section">Works well with</h2>
           <p className="text-(--muted) max-w-[65ch]">
             Sorted by how specific the link is, not by how good the cards are. A pairing only a few
             cards can make comes before one that hundreds can. Read left to right: a small group can
             fill a gap beside a bigger one. Pick a card, on the map or in the list, to preview it here.
           </p>
         </div>
-        <PageMap page={page} slug={slug} base="/cards" />
+        {/* WALKS IN PLACE (#1003), as the commander page's map does: a second tap loads that card's
+          *  partners here instead of leaving for its page; "Open its card page" in its menu leaves. */}
+        <PageMap page={page} slug={slug} base="/cards" loadPage={load ?? loadFromStatic} />
         <PartnerList
           subject={page.name}
           rows={page.partners}

@@ -13,6 +13,7 @@ import { KeywordRow } from "./KeywordRow.js";
 import { TypeLine } from "./TypeLine.js";
 import { useState } from "react";
 
+import { Breadcrumb } from "./Breadcrumb.js";
 /** ONE PAGE SHAPE, TWO SURFACES (spec 2026-09-08 part 2). `/cards/<slug>` and `/commanders/<slug>`
  *  were two components with different headings, rail widths and intro copy for the same card; a
  *  reader arriving from the other door re-learned the page. Both now render through this: the
@@ -74,8 +75,11 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
     <article className={`flex flex-col gap-10 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-x-10 lg:items-start ${readsBeside ? "min-[120rem]:grid-cols-[20rem_minmax(0,68ch)_minmax(0,32rem)]" : ""}`}>
       <div className="flex flex-col gap-8 min-w-0 lg:col-start-2 lg:row-start-1">
         <header className="flex flex-col gap-3">
+          <Breadcrumb steps={surface === "commander"
+            ? [{ label: "Commanders", to: "/commanders" }, { label: page.name }]
+            : [{ label: "Cards", to: "/cards" }, { label: page.name }]} />
           {/* THE PAGE'S ONE `h1` (owner, 2026-09-17); the wordmark in the shell is a link. */}
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 className="t-title flex flex-wrap items-center gap-x-4 gap-y-2">
             {page.name}
             {page.manaCost && <span className="text-2xl sm:text-3xl"><ManaSymbols cost={page.manaCost} /></span>}
           </h1>
@@ -105,9 +109,10 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
         * "sticky" mean what it looks like. `overscroll-contain` so reaching the rail's bottom does
         * not hand the wheel back to the page mid-read. */}
       <aside className="order-first lg:col-start-1 lg:row-start-1 lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)] lg:max-h-[calc(100dvh-var(--site-header-h,0px)-3rem)] lg:overflow-y-auto lg:overscroll-contain flex flex-col gap-6">
-        {peek.stack.length > 0
-          ? <CardPeek load={peekLoad} />
-          : (<>
+        {/* THE PEEK OPENS WHERE EVERY CARD PANEL DOES (#1003): on the right under the header, or as a
+          *  bottom sheet. It replaced this column's own card, so the page lost its picture while a
+          *  partner was open, and the panel sat on the opposite side from /cards. */}
+        {(<>
             <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} back={back} onFlip={() => { setBack((b) => !b); }} />
             {railExtra}
             <div className={`hidden lg:flex lg:flex-col gap-3 ${readsBeside ? "min-[120rem]:hidden" : ""}`}>
@@ -121,7 +126,8 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
             </div>
           </>)}
       </aside>
-      {readsBeside && peek.stack.length === 0 ? (
+      <CardPeek load={peekLoad} />
+      {readsBeside ? (
         <section aria-label="How we read this card" className="hidden min-[120rem]:flex min-[120rem]:col-start-3 min-[120rem]:row-start-1 flex-col gap-3">
           <p className="eyebrow text-(--muted)">how we read this card</p>
           <EngineReading clauses={page.clauses} abilities={page.abilities} rarity={page.rarity}

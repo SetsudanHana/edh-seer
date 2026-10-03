@@ -33,7 +33,7 @@ export function ReportRailSummaries({ current, report, cutCount, readSlot }: {
     <>
       {/* THE CHAPTER'S NAME IS THE HEADING, not a kicker: every summary below opens with rows or
         *  the theme's own label, and a kicker over a kicker is the stack DESIGN.md forbids. */}
-      <h2 className="text-xl font-bold tracking-[-0.01em]">{CHAPTERS.find((c) => c.id === current)!.title}</h2>
+      <h2 className="t-section">{CHAPTERS.find((c) => c.id === current)!.title}</h2>
       <section aria-label="Deck at a glance" hidden={current !== "read"} data-testid="rail-read">
         <div ref={readSlot} />
       </section>

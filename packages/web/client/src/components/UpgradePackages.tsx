@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Link } from "react-router";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { SECTION_MAX, SECTION_SHOWN, type BracketTarget, type UpgradePackage, type UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import type { PreconCard, PreconPage } from "../lib/precon-page.js";
 import { afterLine, defaultTarget, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_MEANING } from "../lib/precon-upgrades.js";
 import { cardImageUrl } from "./card-node.js";
 
+import { CardLink } from "./CardLink.js";
+import { Arrow } from "./icons.js";
 /** THE UPGRADE PACKAGES (#767, task 8): one package per bracket target, switched by the bracket the
  *  owner wants to play at, each in role sections of paired swaps with a reason on both sides.
  *
@@ -21,14 +22,13 @@ export function UpgradePackages({ page, children }: { page: PreconPage; children
   const cards = page.packageCards ?? {};
   return (
     <section id="upgrades" className="flex scroll-mt-24 flex-col gap-4" aria-labelledby="upgrades-title">
-      <span className="eyebrow text-(--muted)">Upgrade it</span>
-      <h2 id="upgrades-title" className="text-2xl font-bold">Upgrades for the bracket you play at</h2>
+      <h2 id="upgrades-title" className="t-section">Upgrades for the bracket you play at</h2>
       <div className="flex flex-col gap-2">
         {/* THREE ACROSS ON A PHONE: as a wrapping row, "Bracket 4" fell to a line of its own at 390px. */}
         <div role="group" aria-label="Bracket" className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
           {targets.map((t) => (
             <button key={t} type="button" aria-pressed={t === target} onClick={() => setTarget(t)}
-              className="inline-flex min-h-11 items-center justify-center rounded-full border px-3 sm:px-5 font-medium aria-pressed:border-(--accent) aria-pressed:bg-(--accent) aria-pressed:text-(--accent-foreground) border-(--separator) hover:border-(--foreground)">
+              className="chip justify-center">
               Bracket {t}
             </button>
           ))}
@@ -63,7 +63,7 @@ function Package({ pkg, all, before, cards, extra }: { pkg: UpgradePackage; all:
         {sections.map((s) => <Section key={s.id} title={s.title} swaps={s.swaps} cards={cards} />)}
         {/* WHAT ELSE THE REPORT FOUND takes a column of the same grid: on a row of its own, a route card
           *  and one line of shortfalls filled a fifth of a 2560 screen (#770 gate, 2026-09-30). */}
-        {extra ? <div className="flex flex-col gap-2.5"><h3 className="text-lg font-semibold">Also worth knowing</h3>{extra}</div> : null}
+        {extra ? <div className="flex flex-col gap-2.5"><h3 className="t-subsection">Also worth knowing</h3>{extra}</div> : null}
       </div>
     </div>
   );
@@ -75,7 +75,7 @@ function Section({ title, swaps, cards }: { title: string; swaps: readonly Upgra
   const more = Math.min(swaps.length, SECTION_MAX) - SECTION_SHOWN;
   return (
     <div className="flex flex-col gap-2.5" data-testid="precon-section">
-      <h3 className="text-lg font-semibold">{title}</h3>
+      <h3 className="t-subsection">{title}</h3>
       <ul className="flex flex-col gap-2.5">
         {shown.map((s) => <Swap key={`${s.out.name}>${s.in.name}`} swap={s} card={cards[s.in.name]} />)}
       </ul>
@@ -93,15 +93,20 @@ function Swap({ swap, card }: { swap: UpgradeSwap; card: PreconCard | undefined 
     <li className="grid gap-x-4 gap-y-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 sm:grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)] sm:items-start">
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="eyebrow text-(--muted)">Take out</span>
-        <Link to={`/cards/${slugOf(swap.out.name)}`} className="font-bold hover:text-(--accent)">{swap.out.name}</Link>
+        <CardLink slug={slugOf(swap.out.name)} className="font-bold hover:text-(--accent)">{swap.out.name}</CardLink>
         <span className="text-sm text-(--muted)">{beside(swap.out.name, swap.out.reason)}</span>
       </div>
-      <span aria-hidden="true" className="text-xl text-(--accent) sm:pt-4">→</span>
+      <span className="text-xl text-(--accent) sm:pt-4"><Arrow dir="right" /></span>
       <div className="flex min-w-0 items-start gap-3">
-        {card?.art ? <img src={cardImageUrl(card.art) ?? undefined} alt="" width={488} height={680} loading="lazy" className="w-14 shrink-0 rounded-[4.5%/3.3%] shadow-md shadow-black/40" /> : null}
+        {/* THE ART OPENS THE CARD, like the name beside it (#1003): it was the one inert picture. */}
+        {card?.art ? (
+          <CardLink slug={card.slug ?? slugOf(swap.in.name)} className="shrink-0" label={swap.in.name}>
+            <img src={cardImageUrl(card.art) ?? undefined} alt="" width={488} height={680} loading="lazy" className="w-14 rounded-[4.5%/3.3%] shadow-md shadow-black/40" />
+          </CardLink>
+        ) : null}
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="eyebrow text-(--accent)">Put in</span>
-          <Link to={`/cards/${card?.slug ?? slugOf(swap.in.name)}`} className="font-bold hover:text-(--accent)">{swap.in.name}</Link>
+          <CardLink slug={card?.slug ?? slugOf(swap.in.name)} className="font-bold hover:text-(--accent)">{swap.in.name}</CardLink>
           <span className="text-sm text-(--muted)">{beside(swap.in.name, swap.in.reason)}</span>
         </div>
       </div>

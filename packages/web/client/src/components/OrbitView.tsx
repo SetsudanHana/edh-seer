@@ -10,7 +10,9 @@ import { isInfiniteCombo } from "@edh-seer/matcher/brackets";
 import { ReasonText, useCardDrawer } from "./card-drawer.js";
 import { allPartners, Constellation, type MenuItem } from "./Constellation.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
+import { MapKey } from "./MapKey.js";
 
+import { Arrow, Chevron } from "./icons.js";
 /** THE ONE-CARD VIEW AS AN ORBIT (graph evaluation 2026-09-25, design B; replaces `EgoView`).
  *
  *  The focus sits in the middle of a map (`Constellation`), the cards it works with around it in
@@ -96,6 +98,14 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   const drawer = useCardDrawer();
   const [askBack, setAskBack] = useState<PairAsk["back"]>(undefined);
   useEffect(() => { setSel(null); setPair(null); setSector(null); setHover(null); setAskBack(undefined); }, [focusId]);
+  // ESC CLOSES ANY PANEL (#1003): the pair and the group panels closed by their buttons only, while
+  // every card panel closes on Escape.
+  useEffect(() => {
+    if (pair === null && sector === null) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setSel(null); setPair(null); setSector(null); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pair, sector]);
   // AFTER THE RESET ABOVE: an ask usually moves the middle too, and both run in the same commit.
   useEffect(() => {
     if (!ask) return;
@@ -197,7 +207,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
             return c ? (
               <Fragment key={id}>
                 <button type="button" className="min-h-9 text-[#D4A63A] hover:underline" onClick={() => back(i)}>{firstPart(c)}</button>
-                <span aria-hidden="true" className="text-(--muted)">›</span>
+                <span className="text-(--muted)"><Chevron dir="right" /></span>
               </Fragment>
             ) : null;
           })}
@@ -206,7 +216,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
       ) : null}
       {prev && !selected && !openSector ? (
         <button type="button" className="min-h-11 self-start rounded-(--radius) border border-(--separator) px-3 hover:border-(--foreground)" onClick={() => back(trail.length - 1)}>
-          ← Back to {displayName(prev)}
+          <Arrow dir="left" /> Back to {displayName(prev)}
         </button>
       ) : null}
       {selected
@@ -372,22 +382,10 @@ function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; pa
         // work with THIS card, split by what links them.
         <>
         <p className="text-xs text-(--muted)">Those cards, by what links them to {first}:</p>
-        <ul className="flex flex-col gap-1">
-          {o.sectors.map((s) => (
-            <li key={s.name}>
-              {/* THE COUNT UNDER ITS NAME (designer review 2026-09-29): beside it, a long group name
-                *  wrapped to two lines and "Other links" squeezed the count; said against the
-                *  commander, the count needs the row's width. */}
-              <button type="button" className="flex min-h-11 w-full items-start gap-2 rounded-(--radius) px-1 py-1 text-left hover:bg-(--surface-secondary)" onClick={() => onSector(s)}>
-                <span aria-hidden="true" className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={{ background: s.hue }} />
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span>{s.name}</span>
-                  <span className="text-xs text-(--muted)">{countText(s.partners.length, s.partners.filter((p) => p.once).length, first)}</span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <MapKey label={`What links them to ${first}`} rows={o.sectors.map((s) => ({
+          key: s.name, name: s.name, hue: s.hue, onPick: () => onSector(s),
+          count: countText(s.partners.length, s.partners.filter((p) => p.once).length, first),
+        }))} />
         </>
       ) : null}
       <p className="text-xs text-(--muted)">
@@ -509,7 +507,7 @@ function PartnerPanel({ focus, p, back, still, same, onSame, combo, onCentre, on
     <>
       <div className="flex items-center gap-2">
         {back ? (
-          <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-3 hover:border-(--foreground)" onClick={back.run}>← {back.label}</button>
+          <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-3 hover:border-(--foreground)" onClick={back.run}><Arrow dir="left" /> {back.label}</button>
         ) : null}
         <button type="button" aria-label="Close" className="ml-auto flex min-h-11 min-w-11 items-center justify-center rounded-(--radius) border border-(--separator) text-lg" onClick={onClose}>✕</button>
       </div>

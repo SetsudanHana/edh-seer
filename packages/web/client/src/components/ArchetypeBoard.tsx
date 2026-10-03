@@ -5,6 +5,7 @@ import { themeMatrix } from "../lib/theme-matrix.js";
 import { CardName } from "./card-drawer.js";
 import { themePct } from "../lib/theme-pct.js";
 
+import { Chevron } from "./icons.js";
 type Group = NonNullable<DeckReport["archetypes"]>[number];
 type Strategy = NonNullable<DeckReport["strategies"]>[number];
 const PAIR_CAP = 8;
@@ -65,7 +66,7 @@ function GroupRow({ group, size }: { group: Group; size?: { earned: number; tota
         *  again inside their own box and one row became three lines. Measured that way first. */}
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-left w-full" aria-expanded={open}>
         <span className="w-40 shrink-0 truncate flex items-center gap-1">
-          <span aria-hidden className="text-(--muted) text-xs">{open ? "▾" : "▸"}</span>
+          <span className="text-(--muted) text-xs"><Chevron dir={open ? "down" : "right"} /></span>
           {group.label}
         </span>
         {/* WHAT THE CARD COUNT MEANT, BESIDE IT. `cards.length` counts a card that joined by being

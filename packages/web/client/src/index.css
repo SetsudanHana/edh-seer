@@ -428,6 +428,25 @@ summary {
     cursor: not-allowed;
   }
 
+  /* THE HEADING SCALE: four steps, the same on every page (designer crawl 2026-10-03, #994 item 7).
+     Page titles were 24px on the search pages, 36px on precons and 48px on card and commander
+     pages; section headings were 30, 24, 20 or 18px; the report alone had six h3 styles. A step is
+     chosen by what the heading IS, never by the page it is on:
+       .t-title       the page's one h1                          36px (30 on a phone)
+       .t-chapter     a report chapter, and the report's tabs     30px (24 on a phone)
+       .t-section     a section of a page                        24px
+       .t-subsection  a group inside a section                   18px, bold
+     Eyebrows stay labels, not a step of this scale. Special headings (the landing hero, a not-found
+     query, a suggestion's headline sentence, a card's name inside a panel) keep their own size. */
+  .t-title { font-size: 1.875rem; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; }
+  .t-chapter { font-size: 1.5rem; line-height: 1.2; font-weight: 700; letter-spacing: -0.02em; }
+  @media (min-width: 40rem) {
+    .t-title { font-size: 2.25rem; }
+    .t-chapter { font-size: 1.875rem; }
+  }
+  .t-section { font-size: 1.5rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; }
+  .t-subsection { font-size: 1.125rem; line-height: 1.35; font-weight: 700; letter-spacing: -0.01em; }
+
   /* THE CHIP: a toggle or a filter, never an action (cohesion sweep 2026-09-08). The site had
      five button families and six control heights; now ACTIONS are pills (`.btn-primary`,
      `.btn-secondary`) and TOGGLES are chips, both 44px. A chip is square-cornered so a row of them
@@ -1316,10 +1335,20 @@ a.brand:hover .brand-edh { color: var(--foreground); }
    panel ran to 1,268px inside a sticky rail on a 1,080px viewport (measured 2026-09-08), so the
    Open control at its foot could not be reached. Half width, and the panel scrolls on its own. */
 .peek-art { max-inline-size: 11rem; }
+/* ONE PLACE FOR A CARD (#1003): from `lg` the peek is the right-hand panel under the site header,
+   the box the report's drawer and the suggestion panel open in. It sat in the card page's LEFT
+   column, over the page's own card, and on the right on /cards -- so it jumped sides between
+   sibling pages. */
 @media (min-width: 64rem) {
   .peek {
-    max-block-size: calc(100svh - var(--site-header-h, 0px) - 3rem);
+    position: fixed;
+    inset-block: var(--site-header-h, 0px) 0;
+    inset-inline-end: 0;
+    inline-size: var(--rail-w);
+    z-index: 30;
     overflow-y: auto;
+    border-width: 0 0 0 1px;
+    border-radius: 0;
   }
 }
 @media (max-width: 63.99rem) {
@@ -1926,8 +1955,12 @@ html[data-app-booted]:not([data-route="browse"]) .prerendered { display: none; }
 html[data-app-booted][data-route="page"] .intro,
 html[data-app-booted][data-route="search"] .intro { display: none; }
 /* THE SEARCH PAGES CARRY THEIR OWN BOX. Beside it the header's was a second "Find a card" with a
-   different label (UX review, 2026-09-17); on a phone the toggle goes with it. */
-html[data-app-booted][data-route="search"] .site-search { display: none; }
+   different label (UX review, 2026-09-17); on a phone the toggle goes with it.
+   HIDDEN, NOT REMOVED (designer crawl 2026-10-03, #994 item 10): `display: none` took the box's
+   44px out of the header, which was 58px here and 69px on every other page, so the page jumped
+   between /cards and a card. `visibility` keeps the slot and still drops the field from the tab
+   order and the accessibility tree. */
+html[data-app-booted][data-route="search"] .site-search { visibility: hidden; }
 
 /* THE BROWSE PAGES. Server-rendered, no JavaScript, and styled here because the markup comes from
    `inject.ts` at the edge rather than from a component -- Tailwind never sees those strings, so

@@ -245,8 +245,9 @@ test("a split card is not offered a flip either, despite the // in its name", as
   expect(screen.queryByRole("button", { name: /flip/i })).toBeNull();
 });
 
-/** THE MAP ON A CARD PAGE (owner, 2026-09-27): drawn from the same rows as the list, which stays. */
-test("with enough partners the page draws them as a map above the list; a second tap goes to the card's page", async () => {
+/** THE MAP ON A CARD PAGE (owner, 2026-09-27): drawn from the same rows as the list, which stays.
+ *  A SECOND TAP WALKS IN PLACE (#1003), as on the commander page: it went to the card's page. */
+test("with enough partners the page draws them as a map above the list; a second tap walks in place", async () => {
   const rows = ["impact-tremors", "goblin-bombardment", "skullclamp", "purphoros"].map((slug, i) => ({
     name: slug, slug, score: 0.1, event: i % 2 ? "dies|creature|-|-" : "enters|creature|-|-", reason: `${slug} does it`,
   }));
@@ -257,7 +258,8 @@ test("with enough partners the page draws them as a map above the list; a second
   const node = map.querySelector("[data-id='skullclamp']")!;
   fireEvent.click(node);
   fireEvent.click(node);
-  expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument();
+  // The page is still Krenko's: the map walked, the page did not change.
+  expect(await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ })).toBeInTheDocument();
   // The list is still there, every row of it.
   expect(screen.getAllByRole("link", { name: /impact-tremors/ }).length).toBeGreaterThan(0);
 });
@@ -288,14 +290,14 @@ test("going to a partner's page keeps the map: the card you came from stays, wit
   await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).toHaveAttribute("aria-pressed", "true"), { timeout: 3000 });
   fireEvent.click(map.querySelector("[data-id='skullclamp']")!);
   expect(await screen.findByRole("group", { name: /^Skullclamp and 3 of the cards/ }, { timeout: 3000 })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Back to Krenko, Mob Boss" })).toBeInTheDocument();
   // The route is drawn by the map's own frame loop, so it is waited for, not assumed.
   await waitFor(() => expect(document.querySelector("[data-testid=constellation-route]")).not.toBeNull(), { timeout: 3000 });
   // The card it came from is still on the map, and so is one of its partners that Skullclamp does not name.
   expect(document.querySelector("[data-id='impact-tremors']")).not.toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" }));
+  fireEvent.click(screen.getByRole("button", { name: "Back to Krenko, Mob Boss" }));
   expect(await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ }, { timeout: 3000 })).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: /← Back to/ })).toBeNull();
+  expect(screen.queryByRole("button", { name: /Back to/ })).toBeNull();
 });
 
 /** TWO CARDS, ONE SHORT NAME (persona round, 2026-09-27): both say their whole name. */
