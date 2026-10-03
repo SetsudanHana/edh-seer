@@ -44,3 +44,8 @@ test("the group still keeps the kind of job: taking an opponent out is not givin
   expect(sameGroup(card("Teferi's Reproach"), card("Blossoming Calm"), "protection")).toBe(false);
   expect(sameGroup(card("Stroke of Midnight"), card("Mana Vault"), "ramp")).toBe(false);
 });
+
+test("trading a land for a land is not ramp: Crop Rotation is not in Cultivate's group", () => {
+  expect(rolesOfCard(card("Crop Rotation"))).toContain("ramp");
+  expect(sameGroup(card("Cultivate"), card("Crop Rotation"), "ramp")).toBe(false);
+});

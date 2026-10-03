@@ -35,6 +35,9 @@ A **Game Changer upgrade** swaps a deck card for a Game Changer when:
    replaces one that works every turn. Added after one single-precon build (Multiverse Reforged
    offered Lion's Eye Diamond and Jeska's Will for Signets), before the full build. The measures
    below are unchanged.
+7. for ramp, it does not sacrifice a land when the cut does not: Crop Rotation trades a land for a
+   land. Added after the first full build, whose R1 read found it offered for Cultivate and Harrow
+   (90 packages); the build was run again with it. The measures are unchanged.
 
 Being a Game Changer is the power signal: the official list names the strongest cards at their jobs.
 The options for a cut list its Game Changer upgrades first, strongest first, then its strict role

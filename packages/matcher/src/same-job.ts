@@ -161,9 +161,12 @@ export function sameJob(cut: DeckCard, add: DeckCard, role: Role): boolean {
  *  "unless that player pays" (2026-10-03: no Game Changer passed `sameJob` for any card in 20
  *  precons). So shape, conditions and amount are left out; the kind of job is kept: the same kind of
  *  ramp, an answer that hits what the cut hits, or every effect the cut has. */
+/** RAMP THAT GIVES A LAND BACK IS NOT RAMP: Crop Rotation sacrifices a land to fetch one, no mana
+ *  gained, and the first full build offered it for Cultivate and Harrow 90 times (2026-10-03). */
+const SACRIFICES_A_LAND = /\bsacrifices? an? (?:untapped )?land\b/;
 export function sameGroup(cut: DeckCard, add: DeckCard, role: Role): boolean {
   if (isCreature(cut) || isCreature(add)) return false;
-  if (role === "ramp") return rampKind(cut) !== "" && rampKind(cut) === rampKind(add);
+  if (role === "ramp") return rampKind(cut) !== "" && rampKind(cut) === rampKind(add) && !(SACRIFICES_A_LAND.test(printed(add)) && !SACRIFICES_A_LAND.test(printed(cut)));
   if (ANSWER_ROLES.has(role)) return answerCovers(subjects(cut, role), subjects(add, role));
   const theirs = effectsOf(add, role);
   return [...effectsOf(cut, role)].every((e) => theirs.has(e));
