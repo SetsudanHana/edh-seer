@@ -143,6 +143,10 @@ test("a Game Changer upgrade: the same group, rated higher, and only a Game Chan
   expect(gameChangerOption("ramp", signet, candidate(real("Mana Vault")), rated({ "Arcane Signet": 99, "Mana Vault": 98 }))).toBeNull();
   // Not a Game Changer: the strict rule's to judge.
   expect(gameChangerOption("ramp", signet, candidate(real("Arcane Signet")), quality)).toBeNull();
+  // Once is not every turn: Lion's Eye Diamond and Jeska's Will never replace a Signet.
+  for (const once of ["Lion's Eye Diamond", "Jeska's Will"] as const) {
+    expect(gameChangerOption("ramp", signet, candidate(real(once)), rated({ "Arcane Signet": 92, [once]: 99 }))).toBeNull();
+  }
   // Not the section's job.
   expect(gameChangerOption("consistency", signet, candidate(real("Mana Vault")), quality)).toBeNull();
 });

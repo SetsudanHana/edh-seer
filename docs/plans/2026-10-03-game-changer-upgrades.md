@@ -30,7 +30,11 @@ A **Game Changer upgrade** swaps a deck card for a Game Changer when:
    every card type the cut hits with no limit the cut lacks, or every effect the cut's role ability
    has. Shape, printed conditions and amount are not compared;
 4. its role quality is higher than the cut's in each of those roles;
-5. it is not a creature.
+5. it is not a creature;
+6. it works at least as often as the cut (the `frequency` measure): a card that works once never
+   replaces one that works every turn. Added after one single-precon build (Multiverse Reforged
+   offered Lion's Eye Diamond and Jeska's Will for Signets), before the full build. The measures
+   below are unchanged.
 
 Being a Game Changer is the power signal: the official list names the strongest cards at their jobs.
 The options for a cut list its Game Changer upgrades first, strongest first, then its strict role

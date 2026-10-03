@@ -113,16 +113,24 @@ export type QualityOf = (name: string, role: Role) => number;
 /** A GAME CHANGER UPGRADE (#976; `docs/plans/2026-10-03-game-changer-upgrades.md`): brackets as power
  *  within a group. Not strictly better -- most Game Changers are strong through a condition `sameJob`
  *  refuses -- so it is its own kind of swap, held to its own measures. The add is a Game Changer, not
- *  a creature, fills every role the cut fills, in the same group (`sameGroup`) and with a higher role
- *  quality in each. The bracket guard decides where one may go: never at bracket 2, up to the cap at 3. */
+ *  a creature, fills every role the cut fills, in the same group (`sameGroup`), with a higher role
+ *  quality in each, and works at least as often (`asOften`). The bracket guard decides where one may go: never at bracket 2, up to the cap at 3. */
 export function gameChangerOption(section: RoleSectionId, cut: DeckCard, add: Candidate, quality: QualityOf): RoleOption | null {
   if (add.dc.card.gameChanger !== true || isCreature(add.dc) || isCreature(cut)) return null;
   const cutRoles = rolesOfCard(cut);
   const role = cutRoles.find((r) => SECTION_ROLES[section].includes(r));
   if (!role) return null;
   const name = add.dc.card.name;
-  if (!cutRoles.every((r) => add.roles.includes(r) && sameGroup(cut, add.dc, r) && quality(name, r) > quality(cut.card.name, r))) return null;
+  if (!cutRoles.every((r) => add.roles.includes(r) && sameGroup(cut, add.dc, r) && quality(name, r) > quality(cut.card.name, r) && asOften(cut, add.dc, r))) return null;
   return { add: name, role, gained: [], cut: ingredients(cut, role), addIngredients: ingredients(add.dc, role), gameChanger: true, links: add.links, upgrade: "game-changer" };
+}
+
+/** AT LEAST AS OFTEN: a card that works once never replaces one that works every turn. The first build
+ *  offered Lion's Eye Diamond and Jeska's Will for Signets (2026-10-03). Unread on either side, no limit. */
+function asOften(cut: DeckCard, add: DeckCard, role: Role): boolean {
+  const c = ingredients(cut, role).frequency;
+  const a = ingredients(add, role).frequency;
+  return c === undefined || a === undefined || a >= c;
 }
 
 /** THE OPTIONS FOR ONE ROLE SECTION, cut by cut. A cut's Game Changer upgrades come first, strongest
