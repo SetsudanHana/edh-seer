@@ -24,6 +24,7 @@ import { Breadcrumb } from "./Breadcrumb.js";
 import { CardLink } from "./CardLink.js";
 import { CardPeek } from "./CardPeek.js";
 import { PeekContext, usePeek, usePeekState } from "./peek.js";
+import type { MenuItem } from "./card-menu.js";
 /** `/precons/:slug` (Precon mockup, 2026-09-27): the precon's theme and scores beside its
  *  commander's map, then its upgrade packages by bracket (#767), then the list. The page
  *  is the file `build-precons` wrote; only the map is drawn live, from the list, once the page is up. */
@@ -192,17 +193,44 @@ function MapOf({ data, commanders }: { data: AnalyzeResponse; commanders: string
   const narrow = useNarrow();
   const broad = !useIsNarrow(1599);
   const [lit, setLit] = useState<string | null>(null);
+  // THE WALK, AS ON EVERY OTHER MAP (#1003): a second tap on a card puts it in the middle, the page
+  // stays, and Back walks the route backwards. Here a second tap did nothing and there was no menu.
+  const [path, setPath] = useState<string[]>([]);
+  // THE PICK, apart from the hover: a second tap is on the card already picked, as on the orbit.
+  const [sel, setSel] = useState<string | null>(null);
   const model = useMemo(() => buildEngineModel(data.report, data.graph!), [data]);
   const wanted = new Set(commanders.flatMap((c) => [c, c.split(" // ")[0]!]));
   const id = data.graph!.nodes.find((n) => !n.face && !n.isToken && (wanted.has(n.cardName ?? n.label) || wanted.has(n.label)))?.id;
-  const orbit = useMemo(() => (id ? buildOrbit(model, id) : null), [model, id]);
-  if (!orbit) return null;
-  const first = commanders[0]!.split(",")[0]!.split(" // ")[0]!;
+  const centre = path.at(-1) ?? id;
+  const orbit = useMemo(() => (centre ? buildOrbit(model, centre) : null), [model, centre]);
+  if (!orbit || !id) return null;
+  const short = (c: { name: string }) => c.name.split(",")[0]!.split(" // ")[0]!;
+  const first = short(orbit.focus);
+  const read = (t: string) => { const c = model.cards.get(t); if (c && !c.isToken) peek?.push(slugOfName(c.physical)); };
+  const walk = (t: string) => { setPath((p) => [...p, t]); setSel(null); setLit(null); };
+  const prev = path.length ? model.cards.get(path.length > 1 ? path.at(-2)! : id) : undefined;
+  const menuFor = (t: string | null): MenuItem[] => {
+    const c = t === null ? undefined : model.cards.get(t);
+    if (!c || t === null) return [];
+    return [
+      ...(t !== centre ? [{ label: `Put ${short(c)} in the middle`, run: () => walk(t) }] : []),
+      ...(c.isToken ? [] : [
+        { label: "Read the card", run: () => { setSel(t); read(t); } },
+        { label: "Open its card page", href: `/cards/${slugOfName(c.physical)}` },
+      ]),
+      { label: "Copy the name", run: () => { void navigator.clipboard?.writeText(c.isToken ? c.name : c.physical).catch(() => {}); } },
+    ];
+  };
   return (
     <div className="flex flex-col gap-2">
-      <Constellation model={model} orbit={orbit} trail={[]} lit={lit} still={false} narrow={narrow} broad={broad} pick={allPartners}
-        onTap={(t) => { const c = model.cards.get(t); if (c && !c.isToken) peek?.push(slugOfName(c.physical)); setLit(t); }}
-        onHover={setLit} onBlank={() => setLit(null)} />
+      {prev ? (
+        <button type="button" className="btn-secondary gap-1.5 self-start" onClick={() => { setPath((p) => p.slice(0, -1)); setSel(null); }}>
+          <Arrow dir="left" /> Back to {short(prev)}
+        </button>
+      ) : null}
+      <Constellation model={model} orbit={orbit} trail={path.length ? [id, ...path.slice(0, -1)] : []} lit={sel ?? lit} still={false} narrow={narrow} broad={broad} pick={allPartners}
+        onTap={(t) => { if (t === sel && t !== centre) walk(t); else { read(t); setSel(t); } }}
+        onHover={setLit} onBlank={() => { setSel(null); setLit(null); }} menuFor={menuFor} />
       {/* THE KEY THE REPORT'S MAP HAS (#890, #993): the same map drawn here had no key at all. */}
       <MapKey columns rows={orbit.sectors.map((x) => ({
         key: x.name, name: x.name, hue: x.hue,
