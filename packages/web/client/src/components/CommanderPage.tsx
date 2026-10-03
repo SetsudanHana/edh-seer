@@ -74,18 +74,25 @@ const COLOURS: { letter: string; word: string }[] = [
  *  companion and three thirty-card colour packs beside a sixty-eight card Izzet core; that deck is
  *  `?with=clara-oswald&color=U`. */
 export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardPageData | null> }) {
-  const { slug = "" } = useParams();
+  // THE PAGE AND ITS SLUG CHANGE TOGETHER (owner report 2026-10-03). The route's slug moved a render
+  // before the card it names had loaded, so the map drew the new slug with the old card's name and
+  // art -- Sol Ring's middle node read "Pollywog Prodigy", beside the real Pollywog Prodigy on the
+  // route -- and a drawn node is never relabelled. Everything below reads the slug the page was
+  // loaded for; the route's own drives the load.
+  const { slug: route = "" } = useParams();
   const [params] = useSearchParams();
   const withSlug = params.get("with") ?? undefined;
   const colorParam = params.get("color") ?? undefined;
   const loader = load ?? ((s: string) => loadCardPage(s, "/static"));
-  const [page, setPage] = useState<CardPageData | null | undefined>(undefined);
+  const [got, setGot] = useState<{ slug: string; page: CardPageData | null } | undefined>(undefined);
+  const page = got?.page;
+  const slug = got?.slug ?? route;
   const [pair, setPair] = useState<CardPageData | null>(null);
   useEffect(() => {
     let live = true;
-    void loader(slug).then((p) => { if (live) setPage(p); });
+    void loader(route).then((p) => { if (live) setGot({ slug: route, page: p }); });
     return () => { live = false; };
-  }, [slug, load]);
+  }, [route, load]);
   // THE PARTNER'S OWN RECORD, only when the URL names one this card may actually lead with. A slug
   // the record does not list is ignored rather than fetched: the page offers pairs, it does not
   // take orders for them.

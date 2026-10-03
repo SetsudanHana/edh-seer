@@ -24,15 +24,22 @@ import { PartnerList } from "./PartnerList.js";
 const loadFromStatic = (slug: string) => loadCardPage(slug, "/static");
 
 export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageData | null> }) {
-  const { slug = "" } = useParams();
-  const [page, setPage] = useState<CardPageData | null | undefined>(undefined);
+  // THE PAGE AND ITS SLUG CHANGE TOGETHER (owner report 2026-10-03). The route's slug moved a render
+  // before the card it names had loaded, so the map drew the new slug with the old card's name and
+  // art -- Sol Ring's middle node read "Pollywog Prodigy", beside the real Pollywog Prodigy on the
+  // route -- and a drawn node is never relabelled. Everything below reads the slug the page was
+  // loaded for; the route's own drives the load.
+  const { slug: route = "" } = useParams();
+  const [got, setGot] = useState<{ slug: string; page: CardPageData | null } | undefined>(undefined);
+  const page = got?.page;
+  const slug = got?.slug ?? route;
   useEffect(() => {
     let live = true;
-    void (load ? load(slug) : loadCardPage(slug, "/static")).then((p) => { if (live) setPage(p); });
+    void (load ? load(route) : loadCardPage(route, "/static")).then((p) => { if (live) setGot({ slug: route, page: p }); });
     // A SLOW SHARD FOR THE CARD YOU LEFT MUST NOT OVERWRITE THE ONE YOU ARRIVED AT. Two clicks
     // through partner links race, and the loser is whichever shard happens to be larger.
     return () => { live = false; };
-  }, [slug, load]);
+  }, [route, load]);
 
   if (page === undefined) return <p className="eyebrow text-(--muted)">loading the card</p>;
   if (page === null) return <NotFound slug={slug} kind="card" />;

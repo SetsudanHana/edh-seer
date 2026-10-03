@@ -187,6 +187,16 @@
    `scroll-mt` for the report header and rail ON TOP of this, which is exactly why the site header is
    not in that calc. */
 html { scroll-padding-top: var(--site-header-h, 0px); }
+/* THE HEADER'S OWN CONTROLS ARE NOT UNDER THE HEADER. The padding above says "the top --site-header-h
+   is covered", and the browser believed it of the search field too: the field sits inside that band,
+   so focusing it and every keystroke scrolled the page up to "reveal" it, never succeeding because
+   the header is sticky (owner report 2026-10-03; measured at 1920 on a card page: y 700 -> 160 on
+   focus, then ~46px a key to 0). TWO RULES, ONE FOR EACH SCROLL, each measured alone: the negative
+   margin cancels the padding for the focus scroll, which runs before `:has` restyles the page; the
+   caret scroll on every key reads only the padding, so it goes while focus is in the header, where
+   there is nothing under the header to protect. */
+.site-header * { scroll-margin-top: calc(-1 * var(--site-header-h, 0px)); }
+html:has(.site-header :focus) { scroll-padding-top: 0; }
 
 /* EVERYTHING A STEP BIGGER ON A 4K SCREEN (owner, 2026-09-30, #770: "I would make everything
    bigger"). At 3840 CSS px the type kept its 1920 size and small print read as specks; a 3840 screen
