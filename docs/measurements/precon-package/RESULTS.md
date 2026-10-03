@@ -257,6 +257,80 @@ built on the same data.
   as before ("swaps first"); Confusion in the Ranks still shows in Jace's plan list. Redundancy
   groups and brackets as power within a group are the next plan issue.
 
+## Run 7: Game Changer upgrades, brackets as power within a group (2026-10-03)
+
+The owner, after run 6 shipped: "b2-4 still does not change on the card suggestion between the
+precons". On the live pages, 142 of 194 precons had the same swaps at brackets 2 and 4. A role swap
+must be strictly better than its cut, and no Game Changer is: Mana Vault does not untap, Mox Diamond
+costs a land. Rulings: brackets are power within a group (2026-10-02), and a Game Changer upgrade is a
+new swap kind with its own pre-registered measures, H4 unchanged (2026-10-03). Rule and measures:
+`docs/plans/2026-10-03-game-changer-upgrades.md`.
+
+A **Game Changer upgrade** swaps one of the report's trim cards for a Game Changer that:
+- fills every role the cut fills;
+- is in the same group: the same kind of ramp, an answer hitting what the cut hits, or the same effects;
+- is rated higher in each role;
+- works at least as often;
+- does not trade a land for a land.
+
+The bracket guard is unchanged: it refuses Game Changers at bracket 2 and stops at 3 for bracket 3.
+
+**Two rule changes made during the runs.** Neither touched a measure.
+- After one single-precon build, rule 6 (works as often) was added. Multiverse Reforged had been
+  offered Lion's Eye Diamond and Jeska's Will for Signets.
+- After the first full build, rule 7 (no land for a land) was added. Its R1 read found Crop
+  Rotation offered for Cultivate and Harrow in 90 packages. That build scored the same on every
+  measure. The figures below are from the build after it.
+
+**The measuring setup.** The local cache that fills `static-out` from production served a failed
+fill as a 404. The cache now answers 503 and fills at most 16 files at once. Before the fix, 40-odd
+Game Changers read as "no such card" under load. So run 6's candidate pools may have lost cards the
+same way: its figures are a lower bound on what the builder could offer.
+
+Data `v-2d372957a7e2` for both columns. The baseline is the live site's pages, built by main on the
+same version.
+
+| Measure | This run |
+|---|---|
+| H1-H5 | **all pass** |
+| G1, every Game Changer upgrade is one, keeps the cut's roles, never cuts a creature or commander | **pass** |
+| G2, no Game Changer upgrade at bracket 2 | **pass** |
+| S1, 5+ swaps at every target | **97.5%** (floor 90%) |
+| S2, synergy kept at target 3 | **19 of 20** (floor 18) |
+| B1, bracket 4 differs from bracket 2 | **178 of 194, 91.8%** (floor 60%; main 52 of 194, 26.8%) |
+| R1, hand read of 10 Game Changer upgrades | **8 of 10** (floor 8) |
+
+| Packages | Main | This run |
+|---|---|---|
+| Swaps at bracket 2 | 2,475 | 2,475 |
+| Swaps at bracket 3 | 2,502 | 2,803, 403 of them Game Changers |
+| Swaps at bracket 4 | 2,506 | 2,956, 633 of them Game Changers |
+
+- **Bracket 2 is unchanged**: all 194 bracket-2 packages are identical to main's, swap for swap. The
+  guard refuses every Game Changer there, and the cut falls back to its strict option.
+- **The Game Changers added most:** Chrome Mox 260, The One Ring 147, Mana Vault 147, Mox Diamond 100,
+  Smothering Tithe 99, Cyclonic Rift 89, Rhystic Study 86.
+- **The most common pairs:** Arcane Signet → Chrome Mox (91) and → Smothering Tithe (53), Fellwar
+  Stone → Chrome Mox (28), Harmonize → The One Ring (21).
+- **R1, the 10 read by hand** (every Nth upgrade across the build):
+
+  | Swap | Bracket | A player would make it? |
+  |---|---|---|
+  | Golgari Signet → Chrome Mox | 3 | yes |
+  | Sylvan Reclamation → Aura Shards | 4 | yes: repeatable artifact and enchantment removal in a creature deck |
+  | Orzhov Signet → Mana Vault | 4 | yes |
+  | Ancient Craving → The One Ring | 4 | yes |
+  | Rowan Kenrith → Cyclonic Rift | 4 | **no**: a wipe that deals damage for one that only bounces |
+  | Negate → Fierce Guardianship | 4 | yes |
+  | Spell Stutter → Force of Will | 4 | yes |
+  | Austere Command → Cyclonic Rift | 4 | **no**: a wipe that destroys for one that only bounces |
+  | Golgari Signet → Mana Vault | 3 | yes |
+  | Hoarder's Greed → The One Ring | 3 | yes |
+
+- **The two misses are one gap.** Cyclonic Rift's wipe reads no permanence measure: it is a wipe only
+  when overloaded. So "only returns to hand" cannot be compared with "destroys". Until it can, Cyclonic
+  Rift can replace a destroy wipe. It is the most common add whose pairs are open to this.
+
 ## The persona
 
 - **Seat:** `mtg-precon-upgrader`.
