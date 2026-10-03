@@ -79,7 +79,7 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
             ? [{ label: "Commanders", to: "/commanders" }, { label: page.name }]
             : [{ label: "Cards", to: "/cards" }, { label: page.name }]} />
           {/* THE PAGE'S ONE `h1` (owner, 2026-09-17); the wordmark in the shell is a link. */}
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 className="t-title flex flex-wrap items-center gap-x-4 gap-y-2">
             {page.name}
             {page.manaCost && <span className="text-2xl sm:text-3xl"><ManaSymbols cost={page.manaCost} /></span>}
           </h1>

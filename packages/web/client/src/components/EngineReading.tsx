@@ -74,7 +74,7 @@ export function EngineReading({ clauses, abilities: allAbilities, rarity, groupe
     <section className="flex flex-col gap-4 max-w-[68ch]">
       {headless !== true && (
         <div className="flex flex-col gap-1">
-          <h2 className="text-2xl font-bold tracking-[-0.01em]">How we read this card</h2>
+          <h2 className="t-section">How we read this card</h2>
           <p className="text-(--muted) text-sm">The card&rsquo;s own lines, and what each one causes or cares about.</p>
         </div>
       )}

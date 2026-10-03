@@ -98,7 +98,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                 * the cards DO this -- "sacrifice a creature" -- and under an asker group they are
                 * waiting for it -- "a creature dies". The direction is already read off the rows
                 * for the withheld line; saying it two ways from one fact is how AJ1 happened. */}
-              <h3 className="flex items-center gap-2 text-lg font-semibold tracking-[-0.01em]">
+              <h3 className="t-subsection flex items-center gap-2">
                 {/* THE MAP'S COLOUR FOR THIS GROUP, so the picture above has its key here. */}
                 <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full" style={{ background: hueOf(gi) }} />
                 {dir === "asks" ? eventKeyClause(group.event) : eventKeyAction(group.event) ?? eventKeyClause(group.event)}

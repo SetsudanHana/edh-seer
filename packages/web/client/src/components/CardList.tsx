@@ -299,7 +299,7 @@ export function CardList({ cards, artByName, coverage }: {
     // the left."* The blank the cap bounded is named in the table's own comment below -- it is a
     // known cost, not an oversight.
     <div className="flex flex-col gap-3">
-      <h2 className="text-2xl sm:text-3xl font-bold tracking-[-0.02em]">Cards</h2>
+      <h2 className="t-chapter">Cards</h2>
       <p className="text-xs text-(--muted) max-w-[65ch]">{SCALE_NOTE}</p>
       {/* THE COST COLUMN'S OWN SCALE. "49% – 69% by T5" was explained in a footnote on a different
         *  tab, so on this one it was two unlabelled numbers. */}
@@ -539,7 +539,7 @@ export function CardList({ cards, artByName, coverage }: {
       {unread.length > 0 ? (
         <section className="flex flex-col gap-3 mt-6 pt-6 border-t border-(--separator)">
           <div className="flex items-baseline gap-3 flex-wrap">
-            <h3 className="text-base font-bold tracking-[-0.01em]">Not read yet</h3>
+            <h3 className="t-subsection">Not read yet</h3>
             <span className="text-xs text-(--muted) stat-num">{unreadCards.length} cards</span>
           </div>
           <p className="text-sm text-(--muted) max-w-[65ch]">

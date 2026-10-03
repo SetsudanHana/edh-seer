@@ -240,7 +240,7 @@ export function Findings({ report, diff, suggestions }: {
         *  -- it is at most two rows, and a fold over two rows is chrome. */}
       {unseen.length > 0 ? (
         <section className="flex flex-col gap-3 pt-2">
-          <h3 className="text-base font-bold tracking-[-0.01em]">Not counted in your Build score</h3>
+          <h3 className="t-subsection">Not counted in your Build score</h3>
           <ul className="grid gap-x-8 border-t border-(--separator) [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(40rem,calc((100%_-_2rem)/2))),1fr))] [&>li:nth-child(odd):last-child]:[grid-column:1/-1]">
             {unseen.map((f, i) => (
               // THE SAME GRID AS THE SCORED ROWS, so the number continues in the same column and,

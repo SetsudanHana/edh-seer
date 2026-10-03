@@ -37,7 +37,7 @@ export function PreconPage() {
   if (rec === null) {
     return (
       <div className="flex flex-col gap-3 py-10">
-        <h1 className="text-2xl font-bold">No precon page here</h1>
+        <h1 className="t-title">No precon page here</h1>
         <p className="text-(--muted)">No Commander precon goes by that name. <Link className="text-(--accent) underline" to="/precons">Every precon we read</Link>.</p>
       </div>
     );
@@ -59,7 +59,7 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
         <div className="flex flex-col gap-3">
           <Breadcrumb steps={[{ label: "Precons", to: "/precons" }, { label: p.setName }]} />
           <span className="eyebrow text-(--muted)">Commander precon · {p.setName}{p.releaseDate ? ` · ${year(p.releaseDate)}` : ""}</span>
-          <h1 className="text-4xl font-bold leading-tight tracking-[-0.02em]">{p.name}</h1>
+          <h1 className="t-title">{p.name}</h1>
           <p className="text-(--muted)">
             {p.commanders.map((c, i) => <span key={c}>{i > 0 ? " and " : ""}<Link className="hover:text-(--foreground)" to={`/commanders/${slugOfName(c)}`}>{c}</Link></span>)}
             {pip ? <> · <span aria-hidden="true" className="inline-flex align-[-0.15em]"><ManaSymbols cost={pip} /></span> {identityLabel(p.identity)}</> : null}
@@ -107,7 +107,7 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
 
       <section className="flex flex-col gap-1" aria-labelledby="list-title">
         <span className="eyebrow text-(--muted)">The decklist</span>
-        <h2 id="list-title" className="mb-2 text-2xl font-bold">What&rsquo;s in the box</h2>
+        <h2 id="list-title" className="mb-2 t-section">What&rsquo;s in the box</h2>
         {/* THE TYPES SIDE BY SIDE AND THE NAMES IN COLUMNS (designer review 2026-09-30, #770): each
           *  type was one running line of names, 3,600px long at 3840. */}
         <div className="grid items-start gap-x-8 min-[100rem]:grid-cols-2 min-[200rem]:grid-cols-4">
@@ -123,7 +123,7 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
       {siblings.length ? (
         <section className="flex flex-col gap-2">
           <span className="eyebrow text-(--muted)">Same set</span>
-          <h2 className="text-xl font-bold">Other {p.setName} precons</h2>
+          <h2 className="t-section">Other {p.setName} precons</h2>
           <div className="flex flex-wrap gap-2">
             {siblings.map((s) => <Link key={s.slug} to={`/precons/${s.slug}`} className="inline-flex min-h-11 items-center rounded-full border border-(--separator) px-4 text-sm hover:border-(--foreground)">{s.name}</Link>)}
           </div>
