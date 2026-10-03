@@ -62,7 +62,7 @@ function Movement({
   return (
     <section className="flex flex-col gap-4">
       {title || count ? <div className="flex items-baseline gap-3 flex-wrap">
-        {title ? <h3 className="text-lg font-bold tracking-[-0.01em]">{title}</h3> : null}
+        {title ? <h3 className="t-subsection">{title}</h3> : null}
         {/* A SENTENCE, NOT A FIGURE — it is where a movement says what its panels are FOR, and on
           *  Mana and Roles that is the link back to the findings they are evidence for. Set in the
           *  body face, never mono: `index.css` rules out the costume use. */}
@@ -96,7 +96,7 @@ function Chapter({ id, title, aside, children }: {
       className="flex flex-col gap-8 scroll-mt-[calc(var(--report-header-h,0px)+var(--report-rail-h,0px)+1rem)]"
     >
       <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-3">
-        <h2 id={`${id}-title`} className="text-2xl sm:text-3xl font-bold tracking-[-0.02em]">
+        <h2 id={`${id}-title`} className="t-chapter">
           {title}
         </h2>
         {aside}

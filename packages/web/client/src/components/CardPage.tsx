@@ -57,7 +57,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         *  page's chips carry. */}
       <details className="lg:hidden group/reads flex flex-col gap-3">
         <summary className="cursor-pointer list-none flex items-center gap-2 w-fit">
-          <h2 className="text-2xl font-bold tracking-[-0.01em]">How we read this card</h2>
+          <h2 className="t-section">How we read this card</h2>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className="transition-transform duration-150 ease-out group-open/reads:rotate-180 motion-reduce:transition-none">
             <path d="m6 9 6 6 6-6" />
           </svg>
@@ -70,7 +70,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
 
       {job && (
         <section className="flex flex-col gap-2 max-w-[68ch]">
-          <h2 className="text-2xl font-bold tracking-[-0.01em]">What it does in a deck</h2>
+          <h2 className="t-section">What it does in a deck</h2>
           <p className="text-(--muted) max-w-[65ch]">
             {jobSentence(page.name, job)} <Link to="/" className="text-(--accent) hover:underline">Analyse a deck</Link>
           </p>
@@ -79,7 +79,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
 
       {!(job && page.partners.length === 0) && <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
-          <h2 className="text-2xl font-bold tracking-[-0.01em]">Works well with</h2>
+          <h2 className="t-section">Works well with</h2>
           <p className="text-(--muted) max-w-[65ch]">
             Sorted by how specific the link is, not by how good the cards are. A pairing only a few
             cards can make comes before one that hundreds can. Read left to right: a small group can

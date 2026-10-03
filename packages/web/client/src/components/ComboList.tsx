@@ -36,7 +36,7 @@ const RESULTS_SHOWN = 3;
 export function ComboList({ combos }: { combos: DeckReport["combos"] }) {
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-2xl sm:text-3xl font-bold tracking-[-0.02em]">Combos</h2>
+      <h2 className="t-chapter">Combos</h2>
       {/* WHERE THESE COME FROM, which also says why the STEPS are not here: the combo database is an
         *  external list of card sets and what they produce, not a derivation this engine performs,
         *  so it can say what a set does and not how. */}

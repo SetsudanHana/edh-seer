@@ -65,7 +65,7 @@ function StartFrom({ onPick }: { onPick: (commanders: string, decklist: string) 
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
         <span className="eyebrow text-(--muted)">No list to hand?</span>
-        <h2 className="text-xl font-semibold">Start from a precon you own</h2>
+        <h2 className="t-section">Start from a precon you own</h2>
         <p className="max-w-[60ch] text-sm text-(--muted)">Pick yours and its list goes in the box, ready to change.</p>
       </div>
       {precons === null ? <p role="status" className="text-sm text-(--muted)">Loading the precons</p> : (
@@ -82,7 +82,7 @@ function StartFrom({ onPick }: { onPick: (commanders: string, decklist: string) 
       )}
       <Link to="/precons" className="self-start text-sm text-(--accent) hover:underline">Every precon →</Link>
       <div className="flex flex-col gap-1.5 border-t border-(--separator) pt-5">
-        <h2 className="text-xl font-semibold">Or build around a commander</h2>
+        <h2 className="t-section">Or build around a commander</h2>
         <p className="max-w-[60ch] text-sm text-(--muted)">What a commander wants, and the cards that work with it most.</p>
         <Link to="/commanders" className="self-start text-sm text-(--accent) hover:underline">Browse commanders →</Link>
       </div>
@@ -126,7 +126,7 @@ function ReadBack({ commanders, decklist }: { commanders: string; decklist: stri
     return (
       <div className="flex flex-col gap-1.5">
         <span className="eyebrow text-(--muted)">What we read</span>
-        <h2 className="text-xl font-semibold">A deck link</h2>
+        <h2 className="t-section">A deck link</h2>
         <p className="max-w-[60ch] text-sm text-(--muted)">Its list is fetched when you analyse the deck.</p>
       </div>
     );
@@ -137,7 +137,7 @@ function ReadBack({ commanders, decklist }: { commanders: string; decklist: stri
     <div className="flex flex-col gap-4" data-testid="read-back">
       <div className="flex flex-col gap-1.5">
         <span className="eyebrow text-(--muted)">What we read</span>
-        <h2 className="text-xl font-semibold" aria-live="polite">
+        <h2 className="t-section" aria-live="polite">
           {read.cards} {read.cards === 1 ? "card" : "cards"} found{read.commanders.length ? ` for ${read.commanders.join(" and ")}` : ""}
           {read.missing.length ? `, ${read.missing.length} ${read.missing.length === 1 ? "line" : "lines"} not` : ""}
         </h2>

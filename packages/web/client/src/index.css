@@ -428,6 +428,25 @@ summary {
     cursor: not-allowed;
   }
 
+  /* THE HEADING SCALE: four steps, the same on every page (designer crawl 2026-10-03, #994 item 7).
+     Page titles were 24px on the search pages, 36px on precons and 48px on card and commander
+     pages; section headings were 30, 24, 20 or 18px; the report alone had six h3 styles. A step is
+     chosen by what the heading IS, never by the page it is on:
+       .t-title       the page's one h1                          36px (30 on a phone)
+       .t-chapter     a report chapter, and the report's tabs     30px (24 on a phone)
+       .t-section     a section of a page                        24px
+       .t-subsection  a group inside a section                   18px, bold
+     Eyebrows stay labels, not a step of this scale. Special headings (the landing hero, a not-found
+     query, a suggestion's headline sentence, a card's name inside a panel) keep their own size. */
+  .t-title { font-size: 1.875rem; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; }
+  .t-chapter { font-size: 1.5rem; line-height: 1.2; font-weight: 700; letter-spacing: -0.02em; }
+  @media (min-width: 40rem) {
+    .t-title { font-size: 2.25rem; }
+    .t-chapter { font-size: 1.875rem; }
+  }
+  .t-section { font-size: 1.5rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; }
+  .t-subsection { font-size: 1.125rem; line-height: 1.35; font-weight: 700; letter-spacing: -0.01em; }
+
   /* THE CHIP: a toggle or a filter, never an action (cohesion sweep 2026-09-08). The site had
      five button families and six control heights; now ACTIONS are pills (`.btn-primary`,
      `.btn-secondary`) and TOGGLES are chips, both 44px. A chip is square-cornered so a row of them

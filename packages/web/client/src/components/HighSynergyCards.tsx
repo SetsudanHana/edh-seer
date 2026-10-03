@@ -25,7 +25,7 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
   const anyAnchor = ranked.some((c) => maxAuthority > 0 && (c.authority ?? 0) >= ANCHOR_SHARE * maxAuthority);
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="text-lg font-semibold">Cards that carry it</h3>
+      <h3 className="t-subsection">Cards that carry it</h3>
       {/* THE GLOSS IS PRINTED, NOT HOVERED (T1). A `title` does not exist on touch at all, and this
         *  badge is guessable-WRONG unglossed: beside the commander at the top of a synergy list,
         *  "anchor" reads as "this is your commander". Shown only when a row actually carries one. */}

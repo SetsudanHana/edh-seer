@@ -22,7 +22,7 @@ export function UpgradePackages({ page, children }: { page: PreconPage; children
   return (
     <section id="upgrades" className="flex scroll-mt-24 flex-col gap-4" aria-labelledby="upgrades-title">
       <span className="eyebrow text-(--muted)">Upgrade it</span>
-      <h2 id="upgrades-title" className="text-2xl font-bold">Upgrades for the bracket you play at</h2>
+      <h2 id="upgrades-title" className="t-section">Upgrades for the bracket you play at</h2>
       <div className="flex flex-col gap-2">
         {/* THREE ACROSS ON A PHONE: as a wrapping row, "Bracket 4" fell to a line of its own at 390px. */}
         <div role="group" aria-label="Bracket" className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
@@ -63,7 +63,7 @@ function Package({ pkg, all, before, cards, extra }: { pkg: UpgradePackage; all:
         {sections.map((s) => <Section key={s.id} title={s.title} swaps={s.swaps} cards={cards} />)}
         {/* WHAT ELSE THE REPORT FOUND takes a column of the same grid: on a row of its own, a route card
           *  and one line of shortfalls filled a fifth of a 2560 screen (#770 gate, 2026-09-30). */}
-        {extra ? <div className="flex flex-col gap-2.5"><h3 className="text-lg font-semibold">Also worth knowing</h3>{extra}</div> : null}
+        {extra ? <div className="flex flex-col gap-2.5"><h3 className="t-subsection">Also worth knowing</h3>{extra}</div> : null}
       </div>
     </div>
   );
@@ -75,7 +75,7 @@ function Section({ title, swaps, cards }: { title: string; swaps: readonly Upgra
   const more = Math.min(swaps.length, SECTION_MAX) - SECTION_SHOWN;
   return (
     <div className="flex flex-col gap-2.5" data-testid="precon-section">
-      <h3 className="text-lg font-semibold">{title}</h3>
+      <h3 className="t-subsection">{title}</h3>
       <ul className="flex flex-col gap-2.5">
         {shown.map((s) => <Swap key={`${s.out.name}>${s.in.name}`} swap={s} card={cards[s.in.name]} />)}
       </ul>

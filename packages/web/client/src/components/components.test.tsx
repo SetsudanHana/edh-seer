@@ -84,7 +84,7 @@ test("ComboList shows the combo result", () => {
  *  tab strip read as no heading at all (designer crawl 2026-10-03, #992): it opens on a chapter h2. */
 test("ComboList opens on a page heading at the chapter scale", () => {
   render(<ComboList combos={[{ cards: ["A", "B"], result: "X" }]} />);
-  expect(screen.getByRole("heading", { level: 2, name: "Combos" }).className).toContain("text-2xl");
+  expect(screen.getByRole("heading", { level: 2, name: "Combos" }).className).toContain("t-chapter");
 });
 
 test("MissingCards lists unresolved names", () => {
