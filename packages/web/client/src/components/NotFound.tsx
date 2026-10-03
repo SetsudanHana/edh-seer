@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 
+import { Arrow } from "./icons.js";
 /** A URL THAT NAMES NO PAGE, AND THE PAGE CANNOT SAY WHICH KIND OF NOTHING IT IS.
  *
  *  The artifact holds the cards that produced at least one event. A slug missing from it is either a
@@ -32,7 +33,7 @@ export function NotFound({ slug, kind }: { slug: string; kind: "card" | "command
           to={`${to}?q=${encodeURIComponent(typed)}`}
         >
           Search for “{typed}”
-          <span aria-hidden="true">→</span>
+          <Arrow dir="right" />
         </Link>
       </p>
       <p className="text-(--muted) text-sm">

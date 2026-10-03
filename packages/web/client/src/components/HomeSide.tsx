@@ -9,6 +9,7 @@ import { loadPrecon, loadPreconIndex, preconDecklist } from "../lib/precons.js";
 import type { PreconIndexEntry } from "../lib/precon-html.js";
 import { PRECON_TILE, PreconTileBody } from "./PreconIndex.js";
 
+import { Arrow } from "./icons.js";
 /** THE HOME PAGE'S THIRD COLUMN (owner, 2026-09-30, #770: mockup A of "Home page at 2K/4K").
  *
  *  From 1600px the home page is pitch | paste box | this. With nothing pasted it offers a place to
@@ -64,7 +65,6 @@ function StartFrom({ onPick }: { onPick: (commanders: string, decklist: string) 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <span className="eyebrow text-(--muted)">No list to hand?</span>
         <h2 className="t-section">Start from a precon you own</h2>
         <p className="max-w-[60ch] text-sm text-(--muted)">Pick yours and its list goes in the box, ready to change.</p>
       </div>
@@ -75,16 +75,19 @@ function StartFrom({ onPick }: { onPick: (commanders: string, decklist: string) 
               <button type="button" disabled={busy !== null} aria-busy={busy === p.slug} onClick={() => void pick(p.slug)}
                 className={`${PRECON_TILE} hover:border-(--foreground) disabled:opacity-60`}>
                 <PreconTileBody d={p} />
+                {/* THE TILE SAYS WHAT IT DOES (#1003): the /precons tile with the same box opens the
+                  *  precon's page; this one puts its list in the box beside it. */}
+                <span className="eyebrow text-(--accent) mt-1">Load its list</span>
               </button>
             </li>
           ))}
         </ul>
       )}
-      <Link to="/precons" className="self-start text-sm text-(--accent) hover:underline">Every precon →</Link>
+      <Link to="/precons" className="self-start text-sm text-(--accent) hover:underline inline-flex items-center gap-1">Every precon <Arrow dir="right" /></Link>
       <div className="flex flex-col gap-1.5 border-t border-(--separator) pt-5">
         <h2 className="t-section">Or build around a commander</h2>
         <p className="max-w-[60ch] text-sm text-(--muted)">What a commander wants, and the cards that work with it most.</p>
-        <Link to="/commanders" className="self-start text-sm text-(--accent) hover:underline">Browse commanders →</Link>
+        <Link to="/commanders" className="self-start text-sm text-(--accent) hover:underline inline-flex items-center gap-1">Browse commanders <Arrow dir="right" /></Link>
       </div>
     </div>
   );
