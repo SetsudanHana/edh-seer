@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Link } from "react-router";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { SECTION_MAX, SECTION_SHOWN, type BracketTarget, type UpgradePackage, type UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import type { PreconCard, PreconPage } from "../lib/precon-page.js";
 import { afterLine, defaultTarget, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_MEANING } from "../lib/precon-upgrades.js";
 import { cardImageUrl } from "./card-node.js";
 
+import { CardLink } from "./CardLink.js";
+import { Arrow } from "./icons.js";
 /** THE UPGRADE PACKAGES (#767, task 8): one package per bracket target, switched by the bracket the
  *  owner wants to play at, each in role sections of paired swaps with a reason on both sides.
  *
@@ -93,15 +94,20 @@ function Swap({ swap, card }: { swap: UpgradeSwap; card: PreconCard | undefined 
     <li className="grid gap-x-4 gap-y-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 sm:grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)] sm:items-start">
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="eyebrow text-(--muted)">Take out</span>
-        <Link to={`/cards/${slugOf(swap.out.name)}`} className="font-bold hover:text-(--accent)">{swap.out.name}</Link>
+        <CardLink slug={slugOf(swap.out.name)} className="font-bold hover:text-(--accent)">{swap.out.name}</CardLink>
         <span className="text-sm text-(--muted)">{beside(swap.out.name, swap.out.reason)}</span>
       </div>
-      <span aria-hidden="true" className="text-xl text-(--accent) sm:pt-4">→</span>
+      <span className="text-xl text-(--accent) sm:pt-4"><Arrow dir="right" /></span>
       <div className="flex min-w-0 items-start gap-3">
-        {card?.art ? <img src={cardImageUrl(card.art) ?? undefined} alt="" width={488} height={680} loading="lazy" className="w-14 shrink-0 rounded-[4.5%/3.3%] shadow-md shadow-black/40" /> : null}
+        {/* THE ART OPENS THE CARD, like the name beside it (#1003): it was the one inert picture. */}
+        {card?.art ? (
+          <CardLink slug={card.slug ?? slugOf(swap.in.name)} className="shrink-0" label={swap.in.name}>
+            <img src={cardImageUrl(card.art) ?? undefined} alt="" width={488} height={680} loading="lazy" className="w-14 rounded-[4.5%/3.3%] shadow-md shadow-black/40" />
+          </CardLink>
+        ) : null}
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="eyebrow text-(--accent)">Put in</span>
-          <Link to={`/cards/${card?.slug ?? slugOf(swap.in.name)}`} className="font-bold hover:text-(--accent)">{swap.in.name}</Link>
+          <CardLink slug={card?.slug ?? slugOf(swap.in.name)} className="font-bold hover:text-(--accent)">{swap.in.name}</CardLink>
           <span className="text-sm text-(--muted)">{beside(swap.in.name, swap.in.reason)}</span>
         </div>
       </div>

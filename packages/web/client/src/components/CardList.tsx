@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { DeckReport } from "../types.js";
-import { CardName, useCardDrawer, useAdded } from "./card-drawer.js";
+import { CardName, ReasonText, useCardDrawer, useAdded } from "./card-drawer.js";
 import { CardMenuButton } from "./card-menu.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { Explain } from "./Explain.js";
@@ -497,13 +497,18 @@ export function CardList({ cards, artByName, coverage }: {
                   <td className="py-2 pr-2 stat-num text-(--muted) hidden sm:table-cell">{String(i + 1).padStart(2, "0")}</td>
                   <td className="py-2 pr-2 min-w-0">
                     <span className="flex items-center gap-3 min-w-0">
-                      <Thumb art={artByName?.get(c.name)} alt="" />
+                      {/* THE ROW'S ART OPENS THE CARD, like its name (#1003); the name is the keyboard's way in. */}
+                      <button type="button" tabIndex={-1} aria-hidden="true" className="shrink-0 cursor-pointer" onClick={() => openCard(c.name)}>
+                        <Thumb art={artByName?.get(c.name)} alt="" />
+                      </button>
                       <span className="flex flex-col min-w-0">
                         <CardName name={c.name} className="block truncate max-w-full" />
                         {/* A MARK IS NEVER THE ONLY CARRIER: a ring says nothing to a screen
                           *  reader, and this table is the surface the header's count travels to. */}
                         {isAdded(c.cardName ?? c.name) ? <span className="eyebrow text-(--accent)">new</span> : null}
-                        {reason ? <span className="block text-xs text-(--muted) truncate">{reason}</span> : null}
+                        {/* THE NAMES IN A REASON OPEN THEIR CARDS, as the same sentence does in "Cards that
+                          *  carry it" (#1003): here it was plain text. */}
+                        {reason ? <ReasonText text={reason} className="block text-xs text-(--muted) truncate" /> : null}
                         {/* WHERE THE COLUMN IS NOT (R2). Each of these appears exactly where its own
                           *  `<td>` does not: the cost below `sm`, the roles below `lg`. */}
                         <Cost card={c} cell="cost-inline" className="sm:hidden flex items-center gap-2 mt-0.5" />
