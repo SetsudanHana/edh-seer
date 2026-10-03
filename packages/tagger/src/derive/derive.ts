@@ -379,7 +379,9 @@ import { emblemRecipient } from "../emblem.js";
 // players and self references the sentence implies.
 // 274: #962, the polymorph family (a creature traded for one its controller reveals) reads as played
 // on your own creature; Proteus Staff's tuck states the creature it trades away.
-export const DERIVE_VERSION = 274;
+// 275: #963, CR 110.2a -- a put onto the battlefield with no player named enters under YOUR control,
+// even beside a second put of the rest to the library (Nissa, Leyline Tamer; Cultivate).
+export const DERIVE_VERSION = 275;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2247,6 +2249,15 @@ export function deriveAbilities(
         // already says you, and "an opponent's creature" (parsed `opp`) is kept.
         for (const e of emits) if (e.subject.control === "any") e.subject.control = "you";
         if (subject && subject.control === "any") subject.control = "you";
+      } else if (action.verb === "put" && action.toZone === "battlefield" && clauseText !== ""
+        && (clause.actions ?? []).filter((a) => a.verb === "put" && a.toZone === "battlefield").length === 1
+        && !sentenceNamesAPlayer(clauseText, "put")) {
+        // CR 110.2a: AN OBJECT PUT ONTO THE BATTLEFIELD ENTERS UNDER THE CONTROL OF THE PLAYER WHO PUT
+        // IT. With no player named the putter is you (#963): Nissa, Leyline Tamer's "Put that card onto
+        // the battlefield and the rest on the bottom of your library" read `any`, because its second
+        // put (the rest, to the library) made `actorFor` refuse, and `any` fed every payoff watching an
+        // OPPONENT's creature enter. Only the enters emit: the subject is whose library it left.
+        for (const e of emits) if (e.verb === "enters" && e.subject.control === "any") e.subject.control = "you";
       } else if (REMOVAL_VERBS.has(action.verb ?? "") || emits.some((e) => e.verb === "leaves" && e.subject.zone !== "graveyard")) {
         // See REMOVAL_VERBS. Only a TARGETED removal with no stated controller. A targeted BOUNCE
         // ("return target creature to its owner's hand") joins the rule for its `leaves` emit: it is

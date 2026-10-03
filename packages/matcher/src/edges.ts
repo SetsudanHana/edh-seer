@@ -1472,6 +1472,10 @@ function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy)
   // "Sacrifice two OTHER creatures": the emit says so itself. Priest of Forgotten Gods is a creature
   // and would otherwise read as the one dying (2026-09-09).
   if (subject.other === true) return false;
+  // A CARD PUT FROM THE LIBRARY OR A HAND IS NOT THE PRODUCER (#963): the producer's ability resolves
+  // with it on the battlefield or the stack. Nissa, Leyline Tamer is a creature and puts one from her
+  // library; the drawer read "When Nissa, Leyline Tamer enters". A self put says `self` and never asks.
+  if (subject.self !== true && (subject.fromZone === "library" || subject.fromZone === "hand")) return false;
   // `prepared` describes how the spell was CAST (CR 722.3d), not what the card is: a prepare face is
   // still its own subject ("When Have a Bite is cast", not "When a sorcery is cast thanks to it").
   const { zone: _z, counter: _c, entersTapped: _t, self: _s, other: _o, prepared: _p, ...printed } = subject;
@@ -2846,7 +2850,7 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
   const polymorph = isPolymorph(c);
   for (const a of c.tags?.abilities ?? []) {
     if (p === c) break;
-    const eats = (a.emits ?? []).find((e) => (e.verb === "sacrifice" || (e.verb === "exiled" && polymorph)) && e.subject.self !== true
+    const eats = (a.emits ?? []).find((e) => (e.verb === "sacrifice" || (polymorph && REMOVES_OWN.has(e.verb))) && e.subject.self !== true
       && (e.subject.control === "you" || (e.subject.control === "any" && EACH_PLAYER_SACRIFICES.test(c.card.oracleText ?? ""))));
     if (!eats) continue;
     const { zone: _z, scope: _s, ...wanted } = eats.subject;
@@ -2881,8 +2885,8 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     // (Daretti) still does not make it fodder -- the property is the card's own.
     // CEILING: the two keywords only; a printed "return this card to the battlefield" (Reassembling
     // Skeleton) is not read yet.
-    // Undying and persist return it from the graveyard; a polymorph EXILES, so it does not come back.
-    const comesBack = eats.verb === "exiled" ? undefined : (p.tags.characteristics.keywords ?? []).find((k) => /^(?:undying|persist)$/i.test(k))?.toLowerCase();
+    // Undying and persist return it from the graveyard; an exile or a tuck never puts it there.
+    const comesBack = eats.verb === "exiled" || eats.verb === "leaves" ? undefined : (p.tags.characteristics.keywords ?? []).find((k) => /^(?:undying|persist)$/i.test(k))?.toLowerCase();
     const expendable = isToken || comesBack !== undefined || (p.card.manaValue <= EXPENDABLE_MV
       && !p.tags.characteristics.types.some((t) => t.toLowerCase() === "legendary"));
     const is = expendable && (isToken || comesBack !== undefined || subtype !== undefined || narrowType)
@@ -2949,15 +2953,16 @@ function flashTimingEdges({ p, c, reasons }: PairScope): void {
 }
 
 /** The mana value at or above which a creature is what a polymorph is played to hit (#964). */
-const POLYMORPH_HIT_MV = 6;
-const REMOVES_OWN = new Set(["exiled", "sacrifice"]);
+export const POLYMORPH_HIT_MV = 6;
+// Polymorph destroys (`dies`), Proteus Staff tucks (`leaves`), Mass Polymorph exiles (#962).
+const REMOVES_OWN = new Set(["exiled", "sacrifice", "dies", "leaves"]);
 
 /** A POLYMORPH (owner ruling 2026-10-02, #964): it removes a creature of yours and puts a creature
  *  from your library onto the battlefield in its place -- Mass Polymorph, Jace, Multiverse Architect's
  *  -3, Fireflux Squad. Card-wide, since Synthetic Destiny returns them from a delayed trigger. A
  *  printed SEARCH makes it a tutor (Natural Order, Birthing Pod): the card is chosen, not revealed.
  *  CEILING: a mana-value bound on the reveal (Lukka's "greater mana value") is not read. */
-function isPolymorph(t: TaggedCard): boolean {
+export function isPolymorph(t: { card: { oracleText?: string }; tags?: CardTags | null }): boolean {
   if (/\bsearch/i.test(t.card.oracleText ?? "")) return false;
   const emits = (t.tags?.abilities ?? []).flatMap((a) => a.emits ?? []);
   const creature = (e: (typeof emits)[number]) => e.subject.self !== true && e.subject.control === "you" && list(e.subject.type).includes("creature");

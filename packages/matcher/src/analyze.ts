@@ -36,7 +36,7 @@ import { AXIS_ON_THRESHOLD, FEEDER_SHARE, edgeWeight } from "./card-strength.js"
 import { makeFold } from "./theme-fold.js";
 import { magnitudeMultipliers } from "./magnitude.js";
 import { buildSupplyDemand } from "./supply-demand.js";
-import { detectArchetypes } from "./archetypes.js";
+import { detectArchetypes, detectPolymorph } from "./archetypes.js";
 import { adjustedParentTargets, computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating, templateBlend } from "./build.js";
 import { tokenQuotes } from "./rules.js";
 import { cutCandidates, deckSlack, trimOrder, unjudgedCandidates } from "./cut-list.js";
@@ -160,6 +160,8 @@ function facesCreating(faces: DeckCard[], ref: TokenRef): DeckCard[] {
  *  off the deck array it is given and drops a reason naming anything else as `offDeckReasons`, so a
  *  server that fed it only real cards would throw away every token edge this function's nodes
  *  earned. One fact, one path -- the caller re-deriving the dedupe is how the two lists drift. */
+const POLYMORPH_AXIS = ["cheat:creature", "fodder:creature"] as const;
+
 export function collectTokenNodes(
   deck: DeckCard[],
   tokenTags: (ref: TokenRef) => CardTags | null,
@@ -475,6 +477,14 @@ export function analyzeDeckStructured(
     }
   }
   const axis = buildAxis(commanderThemeTags, deckFreq, themeStats);
+  // A POLYMORPH DECK'S PLAN IS ITS TWO RELATIONS (#965): the tokens it eats and the big creatures it
+  // cheats out. The axis is built from cards' own theme tags, so a relation tag never reaches it --
+  // and the suggestions weighed Transmogrify, which feeds both, as off-plan. Full weight, only when
+  // the plan is detected; the same signals `detectArchetypes` reads below.
+  // CEILING: every relation channel (an aristocrats deck's `fodder:`, `scales:`, `copies:`) is off
+  // the axis the same way; widening it for all would move every deck's edge weights, so it waits.
+  const earlySignals = resolved.filter((dc) => dc.tags && !isLand(dc)).map((dc) => cardSignalOf(dc.card, dc.tags!));
+  if (detectPolymorph(earlySignals, resolved.filter((dc) => !isLand(dc)).length)) for (const tag of POLYMORPH_AXIS) axis.set(tag, 1);
   // AXIS_BOOST, AXIS_ON_THRESHOLD and FEEDER_SHARE live in `card-strength.ts`, which swaps read too.
   const ROLE_BLEND = impactWeights.roleBlend ?? 1; // config, not a constant: see spec §3.1
 
@@ -954,6 +964,10 @@ export function analyzeDeckStructured(
     .map((dc) => cardSignalOf(dc.card, dc.tags!));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);
+  // WHAT THE DETECTED PLAN CANNOT LOSE (#965): a polymorph deck's engines and the creatures they hit.
+  // Its fodder too: a creature-token maker is what the engines eat (owner ruling 1, 2026-10-02).
+  const planPieces = new Set(strategies.some((s) => s.name === "polymorph")
+    ? cardSignals.filter((s) => s.polymorph === true || s.polymorphHit === true || s.makesCreatureTokens === true).map((s) => s.name) : []);
   // TASK 9: `recommendedLands` (`mana-base.ts`'s `landTarget`) is called ONCE here and threaded to
   // both `computeBuild` (the score) and `computeDeckMath` below (the panel row) -- before this,
   // `computeBuild` never saw this number at all and scored a flat 36 while the panel showed the
@@ -1013,6 +1027,7 @@ export function analyzeDeckStructured(
       isLand: !(nonlandByName.get(physical) ?? true),
       isCommander: c.isCommander,
       isComboPiece: comboCardNames.has(physical),
+      isPlanPiece: planPieces.has(physical),
       isComboPayoff: comboPayoffNames.has(physical) && !comboCardNames.has(physical),
       fillsDeckRole: deckRoleCards.has(physical),
       // Absent from the map means the PHYSICAL card is not in `resolved` at all, which cannot

@@ -10,7 +10,7 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
-import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { POLYMORPH_HIT_MV, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { keywordAbilities } from "./implied.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
@@ -724,6 +724,13 @@ export function partnersFor(
         if (events.has(key) || !demandForms(key).some((f) => subjectEmits.has(f))) continue;
         events.set(key, { score: specificity(key, freq), tags: new Set(tags) });
       }
+      // A POLYMORPH THAT WOULD HIT THIS CARD (#965): the candidate demands what the subject IS, and
+      // the engine's sentence runs candidate -> subject, verified below in that direction.
+      // PRICED ON THE POLYMORPHS, NOT THE HITS: three thousand big creatures make `hits` look common,
+      // and it is the dozen cards that cheat them out that make the pair rare (`POLYMORPH_FREQ_KEY`).
+      for (const { key, tag } of hitDemandsOf(c)) {
+        if (subjectEmits.has(key)) events.set(key, { score: specificity(POLYMORPH_FREQ_KEY, freq), tags: new Set([tag]) });
+      }
       const byScore = [...events].sort((a, b) => b[1].score - a[1].score);
       // The count is read ONCE here, not in the comparator: two map lookups per comparison over
       // a 25,000-card candidate list took the build from 80 s to 388 s (measured 2026-09-17).
@@ -747,7 +754,10 @@ export function partnersFor(
   for (const r of ranked.slice(0, VERIFY_LIMIT)) {
     // NO TOKEN NODE EXISTS ON A CARD PAGE, so the engine's token suppression would trade this
     // card's real supply for a second hop that is never built. See `ReasonOptions.tokensMediate`.
-    const reasons = directedReasons(subject, r.card, h, { tokensMediate: false });
+    const reasons = [
+      ...directedReasons(subject, r.card, h, { tokensMediate: false }),
+      ...(r.events.some(([k]) => k === HIT_KEY) ? directedReasons(r.card, subject, h, { tokensMediate: false }).filter((x) => x.tag === "cheat:creature") : []),
+    ];
     if (reasons.length === 0) continue;
     // THE ROW IS PRICED ON AN EVENT THE ENGINE ACTUALLY CONFIRMED.
     //
@@ -788,7 +798,12 @@ export function partnersFor(
   // ONE LIST, NOT TWO SECTIONS: the engine's own sentence names both cards and says which way it
   // runs ("While Goblin Assassin is on the battlefield, Krenko, Mob Boss counts it and gets
   // bigger"), so the row itself tells a reader the direction.
-  for (const { key, tag, tags } of feederDemandsOf(subject)) {
+  // A POLYMORPH'S FEEDERS ARE RECORDED PAST THE CAP (#965), its fodder and its hits alike: recorded
+  // rows are mirrored onto each feeder's own `pi`, which is how a token maker's suggestions learn
+  // that Transmogrify eats its tokens. Polymorphs only, and UNCAPPED: a cap in partner-count order
+  // stopped before Lingering Souls. ~20 polymorphs x ~5,000 feeders at 0.04 ms a pair is seconds.
+  const recordAll = isPolymorph(subject);
+  for (const { key, tag, tags, reverse } of feederDemandsOf(subject)) {
     if (key in pool) continue;
     const score = specificity(key, freq);
     const accepts = new Set(tags ?? [tag]);
@@ -808,23 +823,29 @@ export function partnersFor(
       .map((f) => ({ f, self: Number(fillsOnlyItself(f)), deg: deg(f) }))
       .sort((a, b) => a.self - b.self || b.deg - a.deg)
       .map((x) => x.f);
+    // Past the cap only a polymorph's rows go on (see `recordAll`): its page is full of creature-ETB
+    // payoffs long before this phase, and the pool (`pi`) reads what is recorded.
     for (const f of usable) {
-      if ((shown[key] ?? 0) >= PER_EVENT_CAP || rows.length >= KEEP) break;
+      const full = (shown[key] ?? 0) >= PER_EVENT_CAP || rows.length >= KEEP;
+      if (full && !recordAll) break;
       const slug = slugs.get(f.card.name)!;
       if (rows.some((r) => r.slug === slug)) continue;
       // VERIFIED THE WAY EVERY OTHER ROW IS, just in the other direction: the engine decides whether
       // the relation exists and writes the sentence.
-      const on = directedReasons(f, subject, h, { tokensMediate: false })
+      const on = (reverse ? directedReasons(subject, f, h, { tokensMediate: false }) : directedReasons(f, subject, h, { tokensMediate: false }))
         .filter((r) => accepts.has(r.tag));
       if (on.length === 0) continue;
       note(f.card.name, on);
-      shown[key] = (shown[key] ?? 0) + 1;
       const chosen = pickReason(on);
-      rows.push({
+      const row: PartnerRow = {
         name: f.card.name, slug, score, event: key, reason: chosen.text,
         ...(chosen.effectKind ? {} : { unread: true as const }),
         ...tileOf(f),
-      });
+      };
+      if (recordAll) verified.push(row);
+      if (full) continue;
+      shown[key] = (shown[key] ?? 0) + 1;
+      rows.push(row);
     }
     // COUNTED BEFORE THE CUT, like every other pool: how many cards in the corpus are one of these.
     pool[key] = usable.length;
@@ -1158,9 +1179,17 @@ export const fillDemandsOf = (d: DeckCard): { key: string; tag: string; tags: st
   return out;
 };
 
-export const feederDemandsOf = (d: DeckCard): { key: string; tag: string; tags?: string[] }[] => [
-  ...boardCountsOf(d), ...copyDemandsOf(d), ...fodderDemandsOf(d), ...fillDemandsOf(d),
+export const feederDemandsOf = (d: DeckCard): { key: string; tag: string; tags?: string[]; reverse?: boolean }[] => [
+  ...boardCountsOf(d), ...copyDemandsOf(d), ...fodderDemandsOf(d), ...fillDemandsOf(d), ...hitDemandsOf(d),
 ];
+/** `hits|-|creature|-`: the big creatures a polymorph is played to put down (#965, owner ruling
+ *  2026-10-02), the engine's `cheatEdges` library branch. The only REVERSE feeder: the engine's
+ *  sentence runs polymorph -> creature, so the row is verified subject -> feeder. */
+const HIT_KEY = "hits|-|creature|-";
+/** How many polymorphs the corpus holds, the price of a hit seen from the creature's side. */
+const POLYMORPH_FREQ_KEY = "polymorph|-|-|-";
+const hitDemandsOf = (d: DeckCard): { key: string; tag: string; reverse: true }[] =>
+  isPolymorph(d) ? [{ key: HIT_KEY, tag: "cheat:creature", reverse: true }] : [];
 export const feederKeysOf = perCard((d: DeckCard): string[] => [...new Set(feederDemandsOf(d).map((b) => b.key))]);
 const ABILITY_OBJECT_KINDS = ["activated", "triggered", "loyalty", "mana"] as const;
 /** `copies|-|<kind>|-`: what a copy-ability card wants the other card to HAVE (CR 113.3). An `opp`
@@ -1170,9 +1199,13 @@ export const copyDemandsOf = (d: DeckCard): { key: string; tag: string }[] =>
     : (a.effect.subject?.abilityKind ?? ["activated", "triggered"]).map((k) => ({ key: `copies|-|${k}|-`, tag: `copies:${k}` })));
 /** `fodder|-|<noun>|-`: what a sacrifice outlet eats -- the emit's subject, subtype first, else its
  *  single type. Edicts (control any) and self-sacrifices demand nothing, as in the engine. */
-export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] =>
-  abilitiesOf(d).flatMap((a) => {
-    const eats = (a.emits ?? []).find((e) => e.verb === "sacrifice" && e.subject.control === "you" && e.subject.self !== true);
+const POLYMORPH_EATS: ReadonlySet<string> = new Set(["exiled", "dies", "leaves"]);
+export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] => {
+  const polymorph = isPolymorph(d);
+  return abilitiesOf(d).flatMap((a) => {
+    // A POLYMORPH'S REMOVAL EATS LIKE A SACRIFICE, as in the engine's fodder pass (#964/#965).
+    const eats = (a.emits ?? []).find((e) => (e.verb === "sacrifice" || (polymorph && POLYMORPH_EATS.has(e.verb)))
+      && e.subject.control === "you" && e.subject.self !== true);
     if (!eats) return [];
     const { zone: _z, scope: _s, ...wanted } = eats.subject;
     const subtype = Array.isArray(wanted.subtype) ? wanted.subtype[0] : wanted.subtype;
@@ -1180,6 +1213,7 @@ export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] =>
     const noun = subtype ?? (types.length === 1 ? types[0] : undefined);
     return noun ? [{ key: `fodder|-|${noun}|-`, tag: `fodder:${themeSubjectKey(wanted)}` }] : [];
   });
+};
 
 /** EVERY SUBTYPE A BOARD COUNT NAMES IS ITS OWN KEY, each carrying the tag the engine writes for
  *  the ability. A party count (CR 700.8) names Cleric, Rogue, Warrior and Wizard; keyed on the
@@ -1236,6 +1270,9 @@ export const supplyKeysOf = perCard((d: DeckCard): string[] => [
   // TOKEN MAKER is fodder by what it makes, creature tokens included -- the engine's maker path
   // under `tokensMediate: false`. A plain creature card never supplies `fodder|-|creature|-`.
   ...fodderSupplyKeysOf(d),
+  // A BIG CREATURE IS WHAT A POLYMORPH HITS (#965): nontoken, mana value 6 or more.
+  ...(d.tags?.characteristics.token !== true && (d.tags?.characteristics.types ?? []).includes("creature")
+    && (d.tags?.characteristics.cmc ?? 0) >= POLYMORPH_HIT_MV ? [HIT_KEY] : []),
   // A DONATION supplies Zedruu's count (#681): the same test the deck edge uses.
   ...(givesAPermanentAway(abilitiesOf(d).flatMap((a) => a.emits ?? []), d.card.oracleText) ? [DONATED_KEY] : []),
 ]);
@@ -1895,7 +1932,7 @@ export function partnerBuilder(all: DeckCard[], h: Hierarchy) {
     const supplies = supplyKeysOf(d);
     // A fill is a FORM of an emit (`supplyForms`), never a raw key: a death supplies `fills|creature|-|-`.
     for (const k of new Set([...supplies, ...supplies.flatMap(supplyForms).filter((f) => f.startsWith("fills|"))])) {
-      if (!k.startsWith("counts|") && !k.startsWith("copies|") && !k.startsWith("fodder|") && !k.startsWith("fills|")) continue;
+      if (!k.startsWith("counts|") && !k.startsWith("copies|") && !k.startsWith("fodder|") && !k.startsWith("fills|") && !k.startsWith("hits|")) continue;
       const b = bySubtype.get(k);
       if (b) b.push(d); else bySubtype.set(k, [d]);
     }
@@ -1943,6 +1980,7 @@ export function partnerBuilder(all: DeckCard[], h: Hierarchy) {
   // on a card name, and one card can cause the relation, so the key is priced as a rarity of one.
   const byName = new Map(substantive.filter(commanderPlayable).map((d) => [d.card.name, d] as const));
   freq["meld|-|-|-"] = 1;
+  freq[POLYMORPH_FREQ_KEY] = substantive.filter(commanderPlayable).filter((d) => isPolymorph(d)).length;
 
   // THE COUNT A PAGE PRINTS BESIDE A GROUP, and the ONLY thing AJ5 scopes. A card page keeps the
   // corpus figure -- there is no deck there, so there are no colours to filter by -- and a

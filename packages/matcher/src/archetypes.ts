@@ -90,6 +90,12 @@ export interface CardSignal {
   /** Every word of the type line, lowercased: types, supertypes, subtypes. The object-class rows
    *  (vehicle, saga, curse ...) read it; `cardTypes` stays the type count. */
   lineWords?: string[];
+  /** A POLYMORPH ENGINE (#965): it trades a creature of yours for one from your library. */
+  polymorph?: boolean;
+  /** The card creates creature tokens: a polymorph deck's fodder (#965). */
+  makesCreatureTokens?: boolean;
+  /** A creature a polymorph is played to hit: nontoken, mana value 6 or more (owner, 2026-10-02). */
+  polymorphHit?: boolean;
   /** The card's creature types when it is a creature; `["*"]` for a changeling. Kindred's supply. */
   creatureTypes?: string[];
   /** Creature types this card's abilities NAME in a subject that is not itself -- a lord's "Elves
@@ -221,6 +227,8 @@ export function detectArchetypes(
 
   const kindred = detectKindred(cardSignals, nonlandCount);
   if (kindred) ranked.push(kindred);
+  const polymorph = detectPolymorph(cardSignals, nonlandCount);
+  if (polymorph) ranked.push(polymorph);
 
   // combo is floor-exempt: a 2+ card combo is real regardless of deck size.
   if (comboCards.length >= 2) {
@@ -233,6 +241,18 @@ export function detectArchetypes(
 
   ranked.sort((a, b) => b.confidence - a.confidence || a.name.localeCompare(b.name));
   return ranked.length > 0 ? ranked : [GOODSTUFF];
+}
+
+/** POLYMORPH (owner ruling 2026-10-02, #965): "with polymorph you want to cheat out big things into
+ *  play". An engine counts full and a hit at `PRODUCER_SHARE`, the shape of kindred's payoff and
+ *  body; with no engine there is no polymorph, only big creatures. Multiverse Reforged: four engines
+ *  and eighteen hits in sixty-one nonland cards, 0.17. */
+export function detectPolymorph(cardSignals: CardSignal[], nonlandCount: number): ArchetypeRanking | undefined {
+  const engines = cardSignals.filter((s) => s.polymorph === true).length;
+  if (engines === 0 || nonlandCount === 0) return undefined;
+  const hits = cardSignals.filter((s) => s.polymorph !== true && s.polymorphHit === true).length;
+  const confidence = (engines + PRODUCER_SHARE * hits) / nonlandCount;
+  return confidence >= ARCHETYPE_FLOOR ? { name: "polymorph", label: ARCHETYPE_LABELS.polymorph, confidence } : undefined;
 }
 
 /** Title case for a creature type as a label prints it: "time lord" -> "Time Lord". */

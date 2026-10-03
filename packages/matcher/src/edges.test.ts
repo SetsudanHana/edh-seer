@@ -6063,9 +6063,47 @@ describe("polymorph", () => {
     expect(tags(mass, creature("Angel", 6, true)).filter((t) => t.includes("from your library"))).toEqual([]);
   });
 
+  // #962: Polymorph DESTROYS your creature and Proteus Staff TUCKS it; both are the same trade.
+  test("a destroy or a tuck of your own creature is a polymorph too", () => {
+    const withRemoval = (name: string, verb: "dies" | "leaves", text: string) => {
+      const c = polymorph(name, text);
+      c.tags.abilities[0]!.emits = [{ verb, subject: { control: "you", token: null, type: "creature", scope: "target" } }];
+      return c;
+    };
+    const poly = withRemoval("Polymorph", "dies", "Destroy target creature. It can't be regenerated. Its controller reveals cards from the top of their library until they reveal a creature card. The player puts that card onto the battlefield, then shuffles all other cards revealed this way into their library.");
+    const staff = withRemoval("Proteus Staff", "leaves", "{2}{U}, {T}: Put target creature on the bottom of its owner's library. That creature's controller reveals cards from the top of their library until they reveal a creature card. The player puts that card onto the battlefield and the rest on the bottom of their library in any order. Activate only as a sorcery.");
+    for (const p of [poly, staff]) {
+      expect(tags(creature("Spirit", 0, true), p)).toContain(`Spirit is fodder for ${p.card.name}`);
+      expect(tags(p, creature("Archon of Cruelty", 8))).toContain(`${p.card.name} can put Archon of Cruelty onto the battlefield from your library`);
+    }
+    // Undying brings a destroyed creature back, so it is fodder for Polymorph; a tuck never reaches the graveyard.
+    const undying = creature("Gleeful Arsonist", 3);
+    undying.tags.characteristics.keywords = ["Undying"];
+    expect(tags(undying, poly).filter((t) => t.includes("fodder"))).toEqual(["Gleeful Arsonist is fodder for Polymorph, and undying brings it back once"]);
+    expect(tags(undying, staff).filter((t) => t.includes("fodder"))).toEqual([]);
+  });
+
   test("a search that puts a creature down is a tutor, not a polymorph", () => {
     const pod = polymorph("Natural Order", "As an additional cost to cast this spell, sacrifice a green creature.\nSearch your library for a green creature card, put it onto the battlefield, then shuffle.");
     expect(tags(creature("Spirit", 0, true), pod).filter((t) => t.includes("fodder"))).toEqual([]);
     expect(tags(pod, creature("Archon of Cruelty", 8)).filter((t) => t.includes("from your library"))).toEqual([]);
   });
+});
+
+/** A CREATURE PUT FROM THE LIBRARY IS NEVER THE PRODUCER ITSELF (#963). Nissa, Leyline Tamer is a
+ *  creature, and her landfall puts a creature card from the library onto the battlefield; the drawer
+ *  read "When Nissa, Leyline Tamer enters, Haliya gains you 1 life" on 7 of the 10 swaps on the
+ *  Multiverse Reforged page. While her ability resolves she is on the battlefield, not in the library. */
+test("a put from the library names the class that enters, not the producer", () => {
+  const nissa = base("Nissa, Leyline Tamer", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" } }, effect: { kind: "" },
+    emits: [{ verb: "enters", subject: { control: "you", token: null, type: "creature", fromZone: "library" } }],
+  }] as CardTags["abilities"]);
+  const haliya = base("Haliya, Guided by Light", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature", other: true } },
+    effect: { kind: "lifegain" }, emits: [{ verb: "gain-life", subject: { control: "you", token: null } }],
+  }] as CardTags["abilities"]);
+  // Her own entry (she is a creature) is a true, generic reason; the PUT is the one about her.
+  const texts = directedReasons(nissa, haliya, H).map((r) => r.text);
+  expect(texts).toContain("When a creature enters thanks to Nissa, Leyline Tamer, Haliya, Guided by Light gains you life");
 });

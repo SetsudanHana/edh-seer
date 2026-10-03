@@ -2067,3 +2067,19 @@ test("a keyword ability takes the clause that prints the keyword", () => {
   samut.tags!.characteristics.keywords = ["Start your engines!", "prowess"];
   expect(abilityRowsOf(samut).filter((r) => r.clause === undefined).map((r) => r.effect)).not.toContain("speed");
 });
+
+// A POLYMORPH ASKS FOR FODDER AND FOR HITS (#965): its removal of your own creature eats like a
+// sacrifice, and it wants the big creatures it cheats out -- the engine's fodder and cheat passes,
+// mirrored so a page and the suggestion pool can propose what the deck report already joins.
+test("a polymorph demands fodder and hits; a creature of mana value 6 or more supplies a hit", () => {
+  const mass = { card: { name: "Mass Polymorph", oracleText: "Exile all creatures you control, then reveal cards from the top of your library until you reveal that many creature cards. Put all creature cards revealed this way onto the battlefield, then shuffle the rest of the revealed cards into your library." },
+    tags: { characteristics: { types: ["sorcery"], subtypes: [] }, abilities: [
+      { kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "exiled", subject: { control: "you", token: null, type: "creature", scope: "all" } }] },
+      { kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "enters", subject: { control: "you", token: null, type: "creature", fromZone: "library" } }] },
+    ] } } as unknown as DeckCard;
+  expect(feederKeysOf(mass)).toEqual(["fodder|-|creature|-", "hits|-|creature|-"]);
+  const body = (name: string, cmc: number, token = false) => ({ card: { name }, tags: { characteristics: { types: ["creature"], subtypes: [], cmc, token }, abilities: [] } }) as unknown as DeckCard;
+  expect(supplyKeysOf(body("Archon of Cruelty", 8))).toContain("hits|-|creature|-");
+  expect(supplyKeysOf(body("Serra Angel", 5))).not.toContain("hits|-|creature|-");
+  expect(supplyKeysOf(body("Angel", 6, true))).not.toContain("hits|-|creature|-");
+});

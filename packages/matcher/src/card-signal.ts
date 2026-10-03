@@ -1,6 +1,6 @@
 import type { CardTags } from "@edh-seer/tagger";
 import type { CardSignal } from "./archetypes.js";
-import { cardCaresTags, cardThemeTags } from "./edges.js";
+import { cardCaresTags, cardThemeTags, isPolymorph, POLYMORPH_HIT_MV } from "./edges.js";
 
 /** THE SIGNAL THE REPORT'S DETECTOR READS, built once for a card (spec 2026-09-08 part 4).
  *
@@ -30,6 +30,12 @@ export function cardSignalOf(card: { name: string; oracleText: string }, tags: C
         ? ["*"]
         : (ch?.subtypes ?? []).map((s) => s.toLowerCase()))
       : [],
+    polymorph: isPolymorph({ card, tags }),
+    // A creature token is fodder, read as `partners-core`'s fodder supply reads it: the emit's type
+    // list (an artifact creature Mite token is one), not `tokenKinds`, which keeps a single type.
+    makesCreatureTokens: tags.abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "create-token" && e.subject.token === true
+      && [e.subject.type].flat().includes("creature"))),
+    polymorphHit: ch.token !== true && (ch.types ?? []).some((t) => t.toLowerCase() === "creature") && ch.cmc >= POLYMORPH_HIT_MV,
     namedTypes: tags.abilities.flatMap((a) =>
       [a.trigger?.subject, a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)]
         .filter((s): s is NonNullable<typeof s> => s !== undefined && s !== null && s.self !== true)
