@@ -11,7 +11,8 @@ import { StateControls, stateLabel } from "./StateControls.js";
 import { CardList } from "./CardList.js";
 import { MissingCards } from "./MissingCards.js";
 import { ComboList } from "./ComboList.js";
-import { CardDrawerProvider } from "./card-drawer.js";
+import { CardDrawerProvider, useCardDrawer } from "./card-drawer.js";
+import { buildEngineModel } from "../lib/engine-model.js";
 import type { RunDiff } from "../lib/run-diff.js";
 
 import { Arrow } from "./icons.js";
@@ -144,12 +145,12 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
             <Route
               path="cards"
               element={
-                <Reference comboCount={comboCount}>
+                <Reference comboCount={comboCount} data={data}>
                   <CardList cards={data.report.cards} artByName={artByName} coverage={data.report.coverage} />
                 </Reference>
               }
             />
-            <Route path="combos" element={<Reference comboCount={comboCount}><ComboList combos={data.report.combos} /></Reference>} />
+            <Route path="combos" element={<Reference comboCount={comboCount} data={data}><ComboList combos={data.report.combos} /></Reference>} />
             {/* A path this app does not have is the REPORT, not an error page: the deck is in the
               *  hash and the chapters are what it is for. */}
             <Route path="*" element={<ReportChapters data={data} diff={diff} assumptions={stateControls} assumptionsSet={state ? stateLabel(state) || undefined : undefined} />} />
@@ -166,8 +167,18 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
  *  The browser's own back button is the primary route home — that is why these are routes at all —
  *  but a reader who arrived by pressing `Cards` in the rail can be several surfaces deep, and a
  *  visible way back costs one line. */
-function Reference({ children, comboCount }: { children: React.ReactNode; comboCount: number }) {
+function Reference({ children, comboCount, data }: { children: React.ReactNode; comboCount: number; data?: AnalyzeResponse }) {
   const { pathname } = useLocation();
+  // THE DRAWER HERE IS THE DRAWER IN THE CHAPTERS (#1003): it carried no "works with" summary on
+  // these tabs because only the chapters registered the deck's links. There is no map to walk here,
+  // so the walk is left out and the rest is the same.
+  const { setExtras } = useCardDrawer();
+  const model = useMemo(() => (data?.graph ? buildEngineModel(data.report, data.graph) : null), [data]);
+  useEffect(() => {
+    if (!model?.totalLinks) return;
+    setExtras({ model });
+    return () => setExtras(null);
+  }, [model, setExtras]);
   return (
     <div className="flex flex-col gap-2 pt-2">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">

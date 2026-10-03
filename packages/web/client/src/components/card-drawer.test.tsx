@@ -162,8 +162,8 @@ test("opening a card never moves the page: the rail holds the space while the re
 /** AND THE RESERVE IS THE RAIL'S OWN WIDTH. One variable, `--rail-w`, sizes the page's reserve, the
  *  rail and the card while it covers the rail; a reserve that disagrees leaves a strip of page under
  *  the rail or a gap beside it, and neither is visible in jsdom. Read off the source so the three
- *  cannot drift apart silently. The overlay (below 100rem, or with no rail) is `sm:w-80`, which is
- *  the variable's base value. */
+ *  cannot drift apart silently. The panel with no rail (below 100rem, or a surface without one) is
+ *  `lg:w-(--rail-w)` too, so a card opens in one box on every page (#1003). */
 test("the reserve, the rail and the card on it are one width, at the breakpoint where there is room", () => {
   const css = readFileSync(join(WEB, "client", "src", "index.css"), "utf8");
   expect(css).toMatch(/@media \(min-width: 100rem\) \{\s*body\.drawer-rail \{ padding-inline-end: var\(--rail-w\); \}/);
@@ -175,9 +175,10 @@ test("the reserve, the rail and the card on it are one width, at the breakpoint 
   // The rail and the card that covers it are the same box, so a card opening on the rail moves nothing.
   expect(source).toContain("${RAIL_BOX} z-20");
   expect(source).toContain("${RAIL_BOX} z-30");
-  // Tailwind's spacing scale is 0.25rem per step, so the overlay's `sm:w-80` is 20rem.
-  const overlay = /fixed inset-y-0 right-0 z-30 w-full sm:w-(\d+)/.exec(source);
-  expect(Number(overlay?.[1])).toBe(Number(base![1]) * 4);
+  // The panel where there is no rail: under the site header from `lg`, the rail's own width.
+  const panel = /const PANEL_BOX = "([^"]+)"/.exec(source)?.[1] ?? "";
+  expect(panel).toContain("lg:w-(--rail-w)");
+  expect(panel).toContain("lg:top-(--site-header-h)");
 });
 
 /** ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27): with the report's extras registered,

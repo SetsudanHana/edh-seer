@@ -109,9 +109,10 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
         * "sticky" mean what it looks like. `overscroll-contain` so reaching the rail's bottom does
         * not hand the wheel back to the page mid-read. */}
       <aside className="order-first lg:col-start-1 lg:row-start-1 lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)] lg:max-h-[calc(100dvh-var(--site-header-h,0px)-3rem)] lg:overflow-y-auto lg:overscroll-contain flex flex-col gap-6">
-        {peek.stack.length > 0
-          ? <CardPeek load={peekLoad} />
-          : (<>
+        {/* THE PEEK OPENS WHERE EVERY CARD PANEL DOES (#1003): on the right under the header, or as a
+          *  bottom sheet. It replaced this column's own card, so the page lost its picture while a
+          *  partner was open, and the panel sat on the opposite side from /cards. */}
+        {(<>
             <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} back={back} onFlip={() => { setBack((b) => !b); }} />
             {railExtra}
             <div className={`hidden lg:flex lg:flex-col gap-3 ${readsBeside ? "min-[120rem]:hidden" : ""}`}>
@@ -125,7 +126,8 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
             </div>
           </>)}
       </aside>
-      {readsBeside && peek.stack.length === 0 ? (
+      <CardPeek load={peekLoad} />
+      {readsBeside ? (
         <section aria-label="How we read this card" className="hidden min-[120rem]:flex min-[120rem]:col-start-3 min-[120rem]:row-start-1 flex-col gap-3">
           <p className="eyebrow text-(--muted)">how we read this card</p>
           <EngineReading clauses={page.clauses} abilities={page.abilities} rarity={page.rarity}
