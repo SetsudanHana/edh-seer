@@ -416,6 +416,18 @@ test("the first report keeps the surface it arrived on", () => {
   expect(screen.getByText(/Infinite loop/)).toBeInTheDocument();
 });
 
+/** A REFERENCE SURFACE OPENS ON A HEADING AND MARKS ITS TAB (#992). Both used to open on an 11px
+ *  eyebrow repeating the tab strip, and the strip marked the current surface by colour alone. */
+test("Cards and Combos open on a chapter heading, and the current tab is marked", () => {
+  for (const s of REFERENCE_SURFACES) {
+    const { unmount } = render(<MemoryRouter initialEntries={[s.path]}><ReportShell data={SAMPLE} /></MemoryRouter>);
+    expect(screen.getByRole("heading", { level: 2, name: s.label })).toBeInTheDocument();
+    const nav = screen.getByRole("navigation", { name: "Report surfaces" });
+    expect(within(nav).getByRole("link", { name: s.label })).toHaveAttribute("aria-current", "page");
+    unmount();
+  }
+});
+
 /** ...AND A NEW DECK GOES HOME WITH THE DECK AND THE STATE STILL IN THE URL, while the same deck
  *  re-run (a game state change) stays where the reader is. Read through the router, so a
  *  MemoryRouter can see it. */

@@ -170,7 +170,7 @@ function Reference({ children, comboCount }: { children: React.ReactNode; comboC
   return (
     <div className="flex flex-col gap-2 pt-2">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-      <nav aria-label="Report surfaces" className="flex gap-4 items-baseline">
+      <nav aria-label="Report surfaces" className="flex gap-4 items-center">
         <SurfaceLink to="/" className="eyebrow text-(--accent)">
           &larr; Report
         </SurfaceLink>
@@ -179,7 +179,10 @@ function Reference({ children, comboCount }: { children: React.ReactNode; comboC
           <SurfaceLink
             key={s.path}
             to={s.path}
-            className={`eyebrow ${pathname === s.path ? "text-(--foreground)" : "text-(--muted)"}`}
+            // TABS ARE UNDERLINED (DESIGN.md, Tabs; #992): colour alone was the only mark of the
+            // current surface. `aria-current` drives the 2px accent border, as on the card page.
+            current={pathname === s.path}
+            className="eyebrow inline-flex items-center min-h-11 border-b-2 border-transparent text-(--muted) hover:text-(--foreground) aria-[current=page]:border-(--accent) aria-[current=page]:text-(--foreground)"
           >
             {s.label}
           </SurfaceLink>
@@ -202,8 +205,8 @@ function Reference({ children, comboCount }: { children: React.ReactNode; comboC
  *  A real `<a href>` rather than a router `Link`, so middle-click and open-in-new-tab still work
  *  and still carry the deck; the click handler reads the hash FRESH at click time, because `App`
  *  writes it with `history.replaceState` and this component never re-renders when it changes. */
-export function SurfaceLink({ to, className, children }: {
-  to: string; className: string; children: React.ReactNode;
+export function SurfaceLink({ to, className, children, current }: {
+  to: string; className: string; children: React.ReactNode; current?: boolean;
 }) {
   const navigate = useNavigate();
   return (
@@ -211,6 +214,7 @@ export function SurfaceLink({ to, className, children }: {
       // THE STATE RIDES IN THE QUERY and the deck in the hash; a surface link keeps both (W18).
       href={`${to}${typeof window === "undefined" ? "" : window.location.search + window.location.hash}`}
       className={className}
+      aria-current={current ? "page" : undefined}
       onClick={(e) => {
         // Let the browser handle every gesture that means "somewhere else": a new tab, a new
         // window, a download. Only a plain left click is ours to intercept.
