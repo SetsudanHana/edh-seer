@@ -50,7 +50,8 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     const { anyOf, ...shared } = producer;
     return anyOf.some((b) => subjectMatches({ ...shared, ...b }, consumer, h));
   }
-  // RELATIONS NO PRODUCER STATES (#896): what a spell targets, whose ability it is, what it shares
+  // RELATIONS NO PRODUCER STATES (#896): what a spell targets (stated on a spell's cast and checked
+  // in `eventMatches` since #713, which removes it before asking here), whose ability it is, what it shares
   // with another object, what happened to it this turn, a name relation. A demand nothing can check
   // claims nothing -- here, so a branch of an `anyOf` carrying one is refused too.
   if (consumer.targets !== undefined || consumer.abilityOf !== undefined || consumer.shares !== undefined

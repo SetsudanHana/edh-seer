@@ -6107,3 +6107,37 @@ test("a put from the library names the class that enters, not the producer", () 
   const texts = directedReasons(nissa, haliya, H).map((r) => r.text);
   expect(texts).toContain("When a creature enters thanks to Nissa, Leyline Tamer, Haliya, Guided by Light gains you life");
 });
+
+/** A SPELL STATES WHAT IT IS AIMED AT (#713; owner 2026-10-03). "A spell that targets only a single
+ *  creature you control" (Leyline of Resonance) and "a spell that targets this creature" (heroic) are
+ *  met by a spell aimed at a creature you control, or at any creature to help it; never by removal. */
+describe("spell targeting", () => {
+  const spell = (name: string, effect: string, control: "you" | "any") => {
+    const d = base(name, [{ kind: "on-cast", effect: { kind: effect, subject: { control, token: null, type: "creature", scope: "target" } } }] as unknown as CardTags["abilities"]);
+    return { ...d, tags: { ...d.tags, characteristics: { ...d.tags.characteristics, types: ["instant"] } } as CardTags };
+  };
+  const watcher = (name: string, subject: SubjectFilter) => base(name, [{
+    kind: "triggered", trigger: { verbs: ["cast"], subject }, effect: { kind: "copy-spell" },
+  }] as unknown as CardTags["abilities"]);
+  const leyline = watcher("Leyline", { control: "you", token: null, type: ["instant", "sorcery"], targets: { control: "you", token: null, type: "creature" } } as SubjectFilter);
+  const heroic = watcher("Heroic", { control: "you", token: null, type: "spell", targets: { self: true, type: "creature" } } as SubjectFilter);
+  const joins = (p: ReturnType<typeof spell>, c: ReturnType<typeof watcher>) => directedReasons(p, c, H).some((r) => r.tag.startsWith("cast:"));
+
+  test("a spell aimed at a creature you control meets both", () => {
+    const origin = spell("Origin", "counter-placement", "you");
+    expect(joins(origin, leyline)).toBe(true);
+    expect(joins(origin, heroic)).toBe(true);
+  });
+  test("a helpful spell aimed at any creature meets both; removal aimed at any creature meets neither", () => {
+    expect(joins(spell("Giant Growth", "pump", "any"), leyline)).toBe(true);
+    expect(joins(spell("Giant Growth", "pump", "any"), heroic)).toBe(true);
+    expect(joins(spell("Bolt", "damage", "any"), leyline)).toBe(false);
+    expect(joins(spell("Bolt", "damage", "any"), heroic)).toBe(false);
+  });
+  test("a spell that states no target still meets nothing", () => {
+    const draw = base("Divination", [{ kind: "on-cast", effect: { kind: "draw-card" } }] as unknown as CardTags["abilities"]);
+    const instant = { ...draw, tags: { ...draw.tags, characteristics: { ...draw.tags.characteristics, types: ["sorcery"] } } as CardTags };
+    expect(joins(instant as ReturnType<typeof spell>, leyline)).toBe(false);
+    expect(joins(instant as ReturnType<typeof spell>, heroic)).toBe(false);
+  });
+});

@@ -1,9 +1,9 @@
 {
   "_what": "H3 for the filter grammar (#896 task 2): every group of phrases on which packages/tagger/src/grammar/filter.ts and parseSubject disagree, grouped by the SubjectFilter fields that differ, over packages/tagger/phrases.jsonl. Each group is labelled after reading EVERY member, not a sample. 'grammar right' cites the rule or the printed text; 'grammar wrong' must be fixed before task 3 switches derive over; 'both wrong' says what neither reads. phrase-diff-triage.test.ts fails when a group appears, disappears or changes size, and when the parsed count moves, so a change to either parser is re-triaged and banked here.",
-  "parsed": 6821,
+  "parsed": 6820,
   "groups": {
     "control": {
-      "distinct": 83,
+      "distinct": 82,
       "label": "grammar right",
       "rule": "CR 112.2",
       "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2)."
@@ -51,7 +51,7 @@
       "why": "'a 1/2 blue Bird creature token with flying named Storm Crow': the name belongs to the token being created (G2b ruling, 2026-08-21). parseSubject's TOKEN_CREATION wants 'token named' adjacent, so a 'with flying' between them made it read a card name to look for."
     },
     "subtype": {
-      "distinct": 34,
+      "distinct": 33,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Words inside a NAME or a COUNTER KIND are not subtypes: 'a card named Forest', 'Scion of Darkness', 'Kobolds of Kher Keep', 'Cloud Sprite', 'a creature with a fungus counter on it', 'a land with a mine counter on it'. parseSubject's subtype sweep reads every word; the grammar reads the name and the counter as what they are. The 'that targets only a single Golem' member is refused (restricted) either way."
@@ -63,13 +63,13 @@
       "why": "'all creatures and Vehicles', 'an Aura, creature, or planeswalker card', 'target Spirit, instant, or sorcery card': a type on one side and a subtype on the other is an OR across slots. parseSubject's crossSlotOr splits on 'or' only, so 'and' lists and comma lists whose first piece holds both a type and a subtype were read as type AND subtype -- a Vehicle that must also be a creature."
     },
     "type": {
-      "distinct": 13,
+      "distinct": 10,
       "label": "grammar right",
       "rule": "printed text",
       "why": "'an instant or sorcery spell that targets only this creature': the type is the spell's; 'creature' is what it targets. Refused (restricted) either way, so no claim moves."
     },
     "control,type": {
-      "distinct": 4,
+      "distinct": 1,
       "label": "grammar right",
       "rule": "printed text",
       "why": "'a spell that targets only a single creature you control': type and control both belong to the target in the relative clause, not to the spell. Refused (restricted) either way."
@@ -115,12 +115,6 @@
       "label": "grammar right",
       "rule": "CR 111.4",
       "why": "'a colorless artifact token named Land Mine': an artifact token; 'Land' and 'Mine' are its name."
-    },
-    "type,umbrella": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "'target spell that targets only a single permanent or player': the target is a spell. Refused (restricted) either way."
     },
     "control,scope": {
       "distinct": 12,
@@ -315,7 +309,7 @@
       "why": "'Spells your opponents cast that target ~': the card itself is the target."
     },
     "scope,type": {
-      "distinct": 12,
+      "distinct": 11,
       "label": "grammar right",
       "rule": "printed text",
       "why": "'a spell that targets only a single creature other than ~': restricted either way; the subject is a spell."
@@ -1221,7 +1215,7 @@
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; fromZone: the origin ('from the top five cards of your library', 'from outside the game'); keyword: keyword lists with commas and 'protection from X', 'that has convoke', 'with a cycling ability'."
     },
     "anyOf,type,umbrella": {
-      "distinct": 2,
+      "distinct": 1,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object; umbrella: the umbrella is the head noun's."
@@ -2029,6 +2023,48 @@
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. sharesTypeWith: 'shares a creature type with this creature', the relation the matcher checks; parseSubject read it as a creature class; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+    },
+    "restricted,targets,type": {
+      "distinct": 3,
+      "label": "grammar right",
+      "rule": "CR 115.1 (#713, owner 2026-10-03)",
+      "why": "\"that targets only (a single) X\" is what the spell is aimed at: the grammar reads X into `targets` and keeps the spell's own class, which the matcher checks against what a cast spell states it targets. parseSubject leaks X's type into the spell and refuses the subject as `restricted`."
+    },
+    "control,restricted,targets,type": {
+      "distinct": 3,
+      "label": "grammar right",
+      "rule": "CR 115.1 (#713, owner 2026-10-03)",
+      "why": "\"that targets only (a single) X\" is what the spell is aimed at: the grammar reads X into `targets` and keeps the spell's own class, which the matcher checks against what a cast spell states it targets. parseSubject leaks X's type into the spell and refuses the subject as `restricted`."
+    },
+    "restricted,targets": {
+      "distinct": 3,
+      "label": "grammar right",
+      "rule": "CR 115.1 (#713, owner 2026-10-03)",
+      "why": "\"that targets only (a single) X\" is what the spell is aimed at: the grammar reads X into `targets` and keeps the spell's own class, which the matcher checks against what a cast spell states it targets. parseSubject leaks X's type into the spell and refuses the subject as `restricted`."
+    },
+    "anyOf,restricted,targets,type,umbrella": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1 (#713, owner 2026-10-03)",
+      "why": "\"that targets only (a single) X\" is what the spell is aimed at: the grammar reads X into `targets` and keeps the spell's own class, which the matcher checks against what a cast spell states it targets. parseSubject leaks X's type into the spell and refuses the subject as `restricted`."
+    },
+    "control,restricted,targets": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1 (#713, owner 2026-10-03)",
+      "why": "\"that targets only (a single) X\" is what the spell is aimed at: the grammar reads X into `targets` and keeps the spell's own class, which the matcher checks against what a cast spell states it targets. parseSubject leaks X's type into the spell and refuses the subject as `restricted`."
+    },
+    "restricted,subtype,targets": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1 (#713, owner 2026-10-03)",
+      "why": "\"that targets only (a single) X\" is what the spell is aimed at: the grammar reads X into `targets` and keeps the spell's own class, which the matcher checks against what a cast spell states it targets. parseSubject leaks X's type into the spell and refuses the subject as `restricted`."
+    },
+    "restricted,targets,type,umbrella": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 115.1 (#713, owner 2026-10-03)",
+      "why": "\"that targets only (a single) X\" is what the spell is aimed at: the grammar reads X into `targets` and keeps the spell's own class, which the matcher checks against what a cast spell states it targets. parseSubject leaks X's type into the spell and refuses the subject as `restricted`."
     }
   }
 }

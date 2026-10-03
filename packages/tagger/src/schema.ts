@@ -405,9 +405,9 @@ export interface SubjectFilter {
   except?: Partial<SubjectFilter>[];
   /** WHAT A SPELL TARGETS, CR 115.1 (#896, owner 2026-10-01): "a spell that targets this creature"
    *  is `{ type: spell, targets: { self: true, type: creature } }`, the heroic / "becomes the target
-   *  of a spell" condition. CEILING: nothing on the producer side states what a spell targets yet,
-   *  so `eventMatches` refuses a consumer carrying it, as it refuses `restricted` -- a demand nothing
-   *  can check claims no cards rather than every spell. Set by the filter grammar. */
+   *  of a spell" condition. Checked against the producer's `GameEvent.targeting` since #713: an
+   *  instant or sorcery's cast states the creatures it is aimed at for its caster. Set by the filter
+   *  grammar. */
   targets?: Partial<SubjectFilter>;
   /** A CONDITION ON A PLAYER, or on an object's CONTROLLER (`of: "controller"`), that no producer
    *  states (#896): "each opponent who doesn't control an Elf" (`controls`, negated), "each player
@@ -748,6 +748,12 @@ export interface GameEvent {
    *  written solely by `packages/matcher/src/implied.ts`. Used to scope `combatSelfSupplied` to
    *  implied combat only, so authored combat emits (goad, Mage Slayer, Saskia) still form edges. */
   implied?: true;
+  /** WHAT A CAST SPELL CAN BE AIMED AT FOR ITS CASTER (#713; owner 2026-10-03): on a spell's implied
+   *  cast only, one entry per targeted effect that names a creature YOU control, or that targets any
+   *  creature to help it (pump, +1/+1 counters, a keyword such as protection, untap). Removal aimed
+   *  at "target creature" is left out: nobody aims it at their own. Read against a consumer's
+   *  `SubjectFilter.targets` -- Leyline of Resonance, heroic. Matcher-only, set in `edges.ts`. */
+  targeting?: Partial<SubjectFilter>[];
   /** A graveyard fill that came from a MILL: the card is random, where a discard is chosen (#716).
    *  Matcher-only, written by `impliedGraveyardEvents`. Read by the recursion pass: a random fill
    *  does not promise a card of a noncreature class (Takenuma -> Emry, owner FALSE 2026-09-28). */

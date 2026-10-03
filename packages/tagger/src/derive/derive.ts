@@ -381,7 +381,10 @@ import { emblemRecipient } from "../emblem.js";
 // on your own creature; Proteus Staff's tuck states the creature it trades away.
 // 275: #963, CR 110.2a -- a put onto the battlefield with no player named enters under YOUR control,
 // even beside a second put of the rest to the library (Nissa, Leyline Tamer; Cultivate).
-export const DERIVE_VERSION = 275;
+// 276: #713, "a spell that targets only a single creature you control" is read as what it targets
+// (`SubjectFilter.targets`), no longer refused wholesale as `restricted`.
+// 277: #713, the same in the filter grammar, which refused "that targets only" ahead of 276's rule.
+export const DERIVE_VERSION = 277;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

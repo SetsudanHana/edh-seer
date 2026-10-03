@@ -2034,14 +2034,16 @@ function post(c: Cursor, r: Reading): boolean | null {
   // A count is a magnitude, not a class: "a Treasure token for each opponent".
   // CEILING: the count's own words are the amount's (scaling.ts), not read here, as ", where X is".
   if (c.eat("for", "each")) { if (c.done) return null; c.i = c.t.length; return true; }
-  // A targeting restriction nothing models: refuse the subject outright (`SubjectFilter.restricted`).
-  if (c.eat("that", "targets", "only") || c.eat("that", "target", "only")) { r.restricted = true; c.i = c.t.length; return true; }
   // WHAT THE SPELL TARGETS (CR 115.1; owner 2026-10-01): "a spell that targets this creature" is
   // the "becomes the target of a spell" condition, carried as `targets`. "this <noun>" and "~" are
   // the card itself; anything else is a filter phrase of its own, and must parse completely.
   if (c.eat("that", "targets") || c.eat("that", "target")) {
     // After a second noun phrase the clause binds only the last one.
     if (r.restarted) return null;
+    // "that targets ONLY A SINGLE creature you control" (Leyline of Resonance, Vesuvan Duplimancy,
+    // Zada's "only Zada"; #713, owner 2026-10-03). The same target, said once: what it is aimed at
+    // is what the matcher checks, against what the cast spell states it targets.
+    if (c.eat("only")) { if (!c.eat("a", "single")) c.eat("one"); }
     if (c.eat("~")) r.targets = { self: true };
     else if (c.eat("this")) {
       const x = reading();
