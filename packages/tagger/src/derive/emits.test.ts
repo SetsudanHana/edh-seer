@@ -28,6 +28,14 @@ test("a keyword that creates a token says the thing entering is a token, even wi
   for (const emit of e) expect(emit.subject.token).toBe(true);
 });
 
+/** THE TOKEN IS A CLUE, AN ARTIFACT (CR 701.16a, #794): Stridehangar Automaton's "if one or more
+ *  artifact tokens would be created" heard nothing from Forensic Gadgeteer's investigate. */
+test("investigate's token is an artifact Clue", () => {
+  for (const emit of actionEmits({ verb: "investigate", object: "" })) {
+    expect(emit.subject).toMatchObject({ token: true, subtype: "clue", type: "artifact" });
+  }
+});
+
 test("a token maker whose object DOES name the token still says token", () => {
   const e = actionEmits({ verb: "create", object: "a 1/1 white Soldier creature token" });
   for (const emit of e) expect(emit.subject.token).toBe(true);

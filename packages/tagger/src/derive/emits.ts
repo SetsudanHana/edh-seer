@@ -473,6 +473,10 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     ? counterRecipient(clauseText ?? "")
     : undefined;
   const subject = parseSubject(recipient ?? action.object ?? "");
+  // INVESTIGATE NAMES ITS TOKEN IN THE RULES, NOT ON THE CARD (CR 701.16a: "Investigate" means "Create
+  // a Clue token", #794). The emit carried no subtype, so `tokenTypeFor` below never filled the type
+  // and an artifact-token payoff (Stridehangar Automaton) heard nothing from Forensic Gadgeteer.
+  if (action.verb === "investigate" && subject.subtype === undefined && subject.type === undefined) { subject.subtype = "clue"; subject.token = true; }
   // EXILE'S DESTINATION IS IN THE VERB (CR 406.2: "exile" means put into the exile zone), and the
   // model writes it out less often than not -- Swords to Plowshares, Path to Exile and Deadly
   // Rollick all record `exile target creature` with `toZone: null`, while Ephemerate happened to
