@@ -715,7 +715,9 @@ export function CardSearch({
         ? <div className="flex flex-col gap-2 pt-6">
             {/* THE COUNT AND THE EXAMPLES SHARE A ROW FROM 1600px (#770), so the grid starts higher. */}
             <div className="flex flex-col gap-2 min-[100rem]:flex-row min-[100rem]:items-end min-[100rem]:gap-16">
-            <div className="flex flex-col gap-2">
+            {/* ONE WIDTH ON BOTH PAGES (designer crawl 2026-10-03, #994 item 6): sized by its own
+              * sentence, the block put "or ask" at x 438 on /cards and 651 on /commanders. */}
+            <div className="flex flex-col gap-2 min-[100rem]:w-[55ch] min-[100rem]:shrink-0">
             {/* ON A PHONE THE COUNT JOINS ITS SENTENCE (designer review 2026-09-30, #770): as a 30px
               * figure on its own line it pushed the first tiles below a 390px screen on /commanders. */}
             <p className="hidden sm:block text-3xl font-bold tracking-[-0.01em] tabular-nums">
