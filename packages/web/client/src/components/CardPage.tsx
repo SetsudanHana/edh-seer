@@ -41,7 +41,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
     return () => { live = false; };
   }, [route, load]);
 
-  if (got === undefined) return <p className="eyebrow text-(--muted)">loading the card</p>;
+  if (page === undefined) return <p className="eyebrow text-(--muted)">loading the card</p>;
   if (page === null) return <NotFound slug={slug} kind="card" />;
 
   // WHICH EVENTS HAVE A GROUP ON THIS PAGE, so a clause's event row links only where the anchor
