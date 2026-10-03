@@ -384,7 +384,11 @@ import { emblemRecipient } from "../emblem.js";
 // 276: #713, "a spell that targets only a single creature you control" is read as what it targets
 // (`SubjectFilter.targets`), no longer refused wholesale as `restricted`.
 // 277: #713, the same in the filter grammar, which refused "that targets only" ahead of 276's rule.
-export const DERIVE_VERSION = 277;
+// 278: #794, "would create a Clue, Food, or Treasure token" reads all three; investigate's token is a
+// Clue (CR 701.16a), so it is an artifact token.
+// 279: #794, investigate's Clue also says it is a token, so its artifact type is filled (278 named the
+// Clue but left `token` for later, and the type fill reads it first).
+export const DERIVE_VERSION = 279;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

@@ -72,8 +72,11 @@ const TEMPLATES: {
   },
   // "If you would create one or more Treasure tokens, instead create ..."
   // ...and "If an effect would create ..." (Doubling Season, Parallel Lives, Anointed Procession, #858).
+  // THE TOKEN PHRASE RUNS TO "token(s)", commas and all (#794): "a Clue, Food, or Treasure token"
+  // (Academy Manufactor) was cut at its first comma and read as Clues alone. "under your control"
+  // after it stays on the subject, as before.
   {
-    re: /\bif\s+(?:you|a player|an opponent|one or more players|an effect|a spell or ability)\s+would create\s+([^,.]+)/i,
+    re: /\bif\s+(?:you|a player|an opponent|one or more players|an effect|a spell or ability)\s+would create\s+([^.]*?\btokens?\b(?:\s+under\s+[^,.]+)?|[^,.]+)/i,
     verbs: ["create-token"], kind: "token-doubling", subject: 1,
   },
   // THE PASSIVE FRAME (#858): "If one or more artifact tokens would be created under your control,

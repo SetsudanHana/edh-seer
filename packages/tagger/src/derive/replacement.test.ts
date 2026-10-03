@@ -93,3 +93,10 @@ test("a token multiplier in the passive, or with an effect as its actor", () => 
   // Without "instead" it is not a replacement at all.
   expect(replacementOf("Whenever one or more artifact tokens are created under your control, draw a card.")).toBeNull();
 });
+
+/** A TOKEN LIST IS READ WHOLE (#794): Academy Manufactor's "a Clue, Food, or Treasure token" was cut
+ *  at its first comma, and Treasure makers never met it. */
+test("a token replacement keeps every token its phrase names, and 'under your control'", () => {
+  expect(replacementOf("If you would create a Clue, Food, or Treasure token, instead create one of each.")?.subjectText).toBe("a Clue, Food, or Treasure token");
+  expect(replacementOf("If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.")?.subjectText).toBe("one or more tokens under your control");
+});
