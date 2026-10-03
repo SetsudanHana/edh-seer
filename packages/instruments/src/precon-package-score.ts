@@ -17,11 +17,12 @@ import { normalizeName } from "@edh-seer/data/names";
 import { preconDecklist, type Precon } from "@edh-seer/data/precons";
 import { analyzeDecklist } from "@edh-seer/matcher/orchestrate";
 import { ingredients, rolesOfCard, type Role } from "@edh-seer/matcher/quality";
+import { isCreature } from "@edh-seer/matcher/same-job";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { StaticLookup } from "@edh-seer/matcher/static-lookup";
 import type { UpgradePackage, UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import {
-  hardViolations, s1Share, s2Kept, s2Sample, swapsOf, S1_FLOOR, S2_KEPT, S2_SAMPLE, type Band, type Violation,
+  b1Share, hardViolations, r1Sample, s1Share, s2Kept, s2Sample, swapsOf, B1_FLOOR, S1_FLOOR, S2_KEPT, S2_SAMPLE, type Band, type Violation,
 } from "./precon-package-score-core.js";
 import { STATIC_BASE, staticFetch } from "./static-deck.js";
 
@@ -91,6 +92,7 @@ const sample = new Set(s2Sample(rows).map((r) => r.slug));
 const violations: (Violation & { slug: string })[] = [];
 const pages: Page[] = [];
 const s2: { slug: string; before: number; after: number }[] = [];
+const upgrades: { slug: string; target: number; swap: UpgradeSwap }[] = [];
 let missing = 0;
 for (const { p, slug } of rows) {
   const page = await readPage(slug);
@@ -107,11 +109,18 @@ for (const { p, slug } of rows) {
     if (!cut || !add || !s.role) return null;
     return { cutRoles: rolesOfCard(cut.dc), addRoles: rolesOfCard(add.dc), cut: ingredients(cut.dc, s.role as Role), add: ingredients(add.dc, s.role as Role) };
   }
+  const gcFacts = new Map<UpgradeSwap, Awaited<ReturnType<typeof gcOf>>>();
+  async function gcOf(s: UpgradeSwap) {
+    const [cut, add] = await Promise.all([deckCard(s.out.name), deckCard(s.in.name)]);
+    if (!cut || !add) return null;
+    return { cutRoles: rolesOfCard(cut.dc), addRoles: rolesOfCard(add.dc), isGameChanger: add.dc.card.gameChanger === true, cutIsCreature: isCreature(cut.dc) };
+  }
   const line: string[] = [];
   for (const pkg of page.packages) {
     for (const s of swapsOf(pkg)) {
       if (!identities.has(s.in.name)) identities.set(s.in.name, (await deckCard(s.in.name))?.doc.colorIdentity ?? null);
       if (s.kind === "role") roleFacts.set(s, await roleOf(s));
+      if (s.kind === "game-changer") { gcFacts.set(s, await gcOf(s)); upgrades.push({ slug, target: pkg.target, swap: s }); }
     }
     const after = await analyse(preconDecklist(swapped(p, pkg)), p.commanders);
     const v = hardViolations(pkg, {
@@ -119,6 +128,7 @@ for (const { p, slug } of rows) {
       identityOf: (n) => identities.get(n) ?? null,
       bandAfter: after.band, manaBefore: before.mana, manaAfter: after.mana,
       role: (s) => roleFacts.get(s) ?? null,
+      gameChanger: (s) => gcFacts.get(s) ?? null,
     });
     violations.push(...v.map((x) => ({ ...x, slug })));
     if (pkg.target === 3 && sample.has(slug)) s2.push({ slug, before: before.synergy, after: after.synergy });
@@ -130,11 +140,15 @@ for (const { p, slug } of rows) {
 const s1 = s1Share(pages);
 const kept = s2Kept(s2);
 console.log("");
-for (const m of ["H1", "H2", "H3", "H4", "H5"] as const) {
+for (const m of ["H1", "H2", "H3", "H4", "H5", "G1", "G2"] as const) {
   const hits = violations.filter((v) => v.measure === m);
   console.log(`${m}: ${hits.length ? `FAIL ${hits.length}` : "pass"}${hits.slice(0, 5).map((v) => `\n    ${v.slug} @${v.target}: ${v.detail}`).join("")}`);
 }
 console.log(`S1: ${(100 * s1).toFixed(1)}% of ${pages.length} precons have 5+ swaps at every target (floor ${100 * S1_FLOOR}%) -- ${s1 >= S1_FLOOR ? "pass" : "MISS"}`);
 console.log(`S2: ${s2.length ? `${kept} of ${s2.length} sampled precons kept their synergy (floor ${S2_KEPT} of ${S2_SAMPLE}) -- ${kept >= S2_KEPT ? "pass" : "MISS"}` : "no target-3 packages in the sample"}`);
+const b1 = b1Share(pages);
+console.log(`B1: ${b1.differ} of ${b1.of} precons have different swaps at bracket 4 than at 2 (floor ${100 * B1_FLOOR}%) -- ${b1.of && b1.differ / b1.of >= B1_FLOOR ? "pass" : "MISS"}`);
+console.log(`R1: ${upgrades.length} Game Changer upgrades; read these ${Math.min(upgrades.length, 10)} by hand:`);
+for (const u of r1Sample(upgrades)) console.log(`    ${u.slug} @${u.target}: ${u.swap.out.name} -> ${u.swap.in.name} (${u.swap.role})`);
 if (missing) console.log(`${missing} precon(s) had no page in ${pagesDir}`);
 if (violations.length) process.exit(1);

@@ -155,6 +155,20 @@ export function sameJob(cut: DeckCard, add: DeckCard, role: Role): boolean {
   return true;
 }
 
+/** THE SAME GROUP (#976): what a Game Changer upgrade asks, looser than `sameJob`. A Game Changer is on
+ *  the list for being among the strongest cards at its job, and most are strong through a condition
+ *  `sameJob` refuses: Mana Vault does not untap, Mox Diamond discards a land, Smothering Tithe works
+ *  "unless that player pays" (2026-10-03: no Game Changer passed `sameJob` for any card in 20
+ *  precons). So shape, conditions and amount are left out; the kind of job is kept: the same kind of
+ *  ramp, an answer that hits what the cut hits, or every effect the cut has. */
+export function sameGroup(cut: DeckCard, add: DeckCard, role: Role): boolean {
+  if (isCreature(cut) || isCreature(add)) return false;
+  if (role === "ramp") return rampKind(cut) !== "" && rampKind(cut) === rampKind(add);
+  if (ANSWER_ROLES.has(role)) return answerCovers(subjects(cut, role), subjects(add, role));
+  const theirs = effectsOf(add, role);
+  return [...effectsOf(cut, role)].every((e) => theirs.has(e));
+}
+
 /** WHAT A ROLE ABILITY DOES: its effect kind, and each event it causes with whose it is
  *  ("keyword-grant", "|phases-out|opp", "draw-card|draw|you"). Protection adds what it protects. */
 export function effectsOf(d: DeckCard, role: Role): Set<string> {

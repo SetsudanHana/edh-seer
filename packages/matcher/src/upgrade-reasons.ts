@@ -81,6 +81,17 @@ export function roleReasons(cutName: string, o: RoleOption): { out: string; in: 
   };
 }
 
+/** A GAME CHANGER UPGRADE'S REASONS. The claim is what the rule checked: the same kind of job, a
+ *  higher rating at it, and the official list. "Game Changer" is explained where it is used, as the
+ *  vocabulary ceiling asks. */
+export function gameChangerReasons(cutName: string, o: RoleOption): { out: string; in: string } {
+  const job = JOB[o.role];
+  return {
+    out: fit(`${cutName} `, [`is weaker ${job} than ${o.add}`]),
+    in: fit(`${o.add} `, [`is ${job} too, and one of the strongest cards in Commander: a Game Changer, which this bracket allows`]),
+  };
+}
+
 const tappedWords = (t: number) => (t === 2 ? "enters tapped" : t === 1 ? "can enter tapped" : "enters untapped");
 const colourWords = (cs: readonly string[]) => (cs.length ? list(cs.map((c) => COLOUR[c] ?? c)).replace(/ and ([a-z]+)$/, " or $1") : "no colour your spells use");
 

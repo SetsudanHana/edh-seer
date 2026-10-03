@@ -24,6 +24,7 @@
     "./slug": "./src/slug.ts",
     "./rate": "./src/rate.ts",
     "./quality": "./src/quality.ts",
+    "./same-job": "./src/same-job.ts",
     "./staples": "./src/staples.ts",
     "./archetypes": "./src/archetypes.ts",
     "./brackets": "./src/brackets.ts",

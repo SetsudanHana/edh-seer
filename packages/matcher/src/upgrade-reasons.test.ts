@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { LandFacts } from "./land-score.js";
-import { REASON_MAX, bringDownReason, landReasons, roleReasons, synergyReasons } from "./upgrade-reasons.js";
+import { REASON_MAX, bringDownReason, gameChangerReasons, landReasons, roleReasons, synergyReasons } from "./upgrade-reasons.js";
 import type { LandOption, RoleOption } from "./upgrade-sections.js";
 
 const roleOpt = (add: string, over: Partial<RoleOption> = {}): RoleOption => ({
@@ -43,4 +43,13 @@ test("a synergy pair reads both counts, and keeps the engine's own sentence", ()
   // What can make a card with fewer links the stronger one is said, never left to a count.
   expect(synergyReasons(side("Jazal Goldmane", 16, 0), { ...side("Daxos", 4, 0, true), reason: "r" }).out)
     .toBe("Jazal Goldmane works with 16 cards in this deck, none of them on its theme; Daxos works with 4 cards, none of them on it, and with your commander.");
+});
+
+test("a Game Changer upgrade says what was checked, explains the term, and fits the limit", () => {
+  const o = { add: "Mox Diamond", role: "ramp", gained: [], cut: {}, addIngredients: {}, gameChanger: true, links: 0, upgrade: "game-changer" } as RoleOption;
+  const r = gameChangerReasons("Arcane Signet", o);
+  expect(r.out).toBe("Arcane Signet is weaker ramp than Mox Diamond.");
+  expect(r.in).toBe("Mox Diamond is ramp too, and one of the strongest cards in Commander: a Game Changer, which this bracket allows.");
+  const long = gameChangerReasons("Kaho, Minamo Historian's Very Long Name Indeed", { ...o, add: "Jace, the Mind Sculptor's Even Longer Imaginary Name" });
+  expect(long.in.length).toBeLessThanOrEqual(REASON_MAX);
 });

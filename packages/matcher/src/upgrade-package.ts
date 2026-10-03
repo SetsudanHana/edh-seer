@@ -24,10 +24,11 @@ export interface UpgradeSide {
 export interface UpgradeSwap {
   out: UpgradeSide;
   in: UpgradeSide;
-  /** `role`: a strictly better card in the same role. `land`: a better land. `synergy`: an on-plan
-   *  card for a loose one. `bring-down`: a cut that puts the deck under a lower target. */
-  kind: "role" | "land" | "synergy" | "bring-down";
-  /** For `role` swaps, the build category (`BUILD_CATEGORIES`) the two cards are compared in. */
+  /** `role`: a strictly better card in the same role. `game-changer`: a Game Changer in the same group
+   *  (`sameGroup`), at targets that allow one (2026-10-03). `land`: a better land. `synergy`: an
+   *  on-plan card for a loose one. `bring-down`: a cut that puts the deck under a lower target. */
+  kind: "role" | "game-changer" | "land" | "synergy" | "bring-down";
+  /** For `role` and `game-changer` swaps, the build category (`BUILD_CATEGORIES`) the two cards are compared in. */
   role?: string;
 }
 

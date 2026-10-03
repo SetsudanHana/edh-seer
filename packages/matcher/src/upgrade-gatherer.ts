@@ -11,7 +11,7 @@
 import type { Card, Combo } from "@edh-seer/engine";
 import { fitsTarget, type BringDown } from "./bracket-guard.js";
 import type { DeckBracket } from "./brackets.js";
-import { bringDownInReason, bringDownReason, jobOf, landReasons, roleReasons } from "./upgrade-reasons.js";
+import { bringDownInReason, bringDownReason, gameChangerReasons, jobOf, landReasons, roleReasons } from "./upgrade-reasons.js";
 import { ROLE_SECTIONS, type CutOptions, type LandOption, type Replacement, type RoleOption, type RoleSectionId } from "./upgrade-sections.js";
 import { SECTION_MAX, UPGRADE_SECTIONS, type BracketTarget, type UpgradePackage, type UpgradeSection, type UpgradeSwap } from "./upgrade-package.js";
 
@@ -90,7 +90,10 @@ export function gatherPackage(g: GatherInput): UpgradePackage | null {
       for (const c of g.roles[id as RoleSectionId]) {
         if (swaps.length >= SECTION_MAX) break;
         const o = c.options.find((x) => take(c.cut, x.add));
-        if (o) { const r = roleReasons(c.cut, o); swaps.push({ kind: "role", role: o.role, out: { name: c.cut, reason: r.out }, in: { name: o.add, reason: r.in } }); }
+        if (o) {
+          const r = o.upgrade ? gameChangerReasons(c.cut, o) : roleReasons(c.cut, o);
+          swaps.push({ kind: o.upgrade ?? "role", role: o.role, out: { name: c.cut, reason: r.out }, in: { name: o.add, reason: r.in } });
+        }
       }
     }
     sections.push({ id, swaps });

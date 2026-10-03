@@ -75,3 +75,18 @@ test("an add already on the precon's list is never taken, even when that card di
 test("an unreachable target has no package", () => {
   expect(gatherPackage(input({ target: 2, bringDown: { cuts: [], reachable: false } }))).toBeNull();
 });
+
+test("a Game Changer upgrade is its own kind: refused at bracket 2, taken to the cap at 3, every one at 4", () => {
+  const gcs = ["Rhystic Removal", "Fierce Removal", "Vault Removal", "Tithe Removal"];
+  for (const n of gcs) pool.set(n, card(n, 1, true));
+  const cuts = ["Crib Swap", "Murder", "Doom Blade", "Go for the Throat"];
+  const big = [...deck, ...cuts.slice(2).map((n) => card(n, 2))];
+  const gc = (add: string) => roleOpt(add, { gained: [], gameChanger: true, upgrade: "game-changer" });
+  const roles = { ...input().roles, interaction: cuts.map((cut, i) => ({ cut, options: [gc(gcs[i]!), roleOpt(`Plain ${i}`)] })) };
+  for (let i = 0; i < 4; i++) pool.set(`Plain ${i}`, card(`Plain ${i}`, 1));
+  const at = (target: 2 | 3 | 4) => gatherPackage(input({ target, deck: big, inDeck: new Set(big.map((c) => c.name)), roles }))!.sections.find((s) => s.id === "interaction")!.swaps;
+  expect(at(2).map((s) => s.kind)).toEqual(["role", "role", "role", "role"]);
+  expect(at(3).map((s) => s.kind)).toEqual(["game-changer", "game-changer", "game-changer", "role"]);
+  expect(at(4).map((s) => s.kind)).toEqual(["game-changer", "game-changer", "game-changer", "game-changer"]);
+  expect(at(4)[0]!.in.reason).toMatch(/Game Changer, which this bracket allows/);
+});

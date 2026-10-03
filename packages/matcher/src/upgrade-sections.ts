@@ -24,8 +24,8 @@ import { candidatePool, type IndexCard } from "./suggest.js";
 import { decodeIndex, deckCards } from "./suggest-static.js";
 import type { DeckCard } from "./types.js";
 import type { UpgradeSectionId } from "./upgrade-package.js";
-import { CONDITIONS, isCreature, sameJob, shape } from "./same-job.js";
-export { answerCovers, newConditions, sameJob } from "./same-job.js";
+import { CONDITIONS, isCreature, sameGroup, sameJob, shape } from "./same-job.js";
+export { answerCovers, newConditions, sameGroup, sameJob } from "./same-job.js";
 
 export type RoleSectionId = Exclude<UpgradeSectionId, "lands" | "synergy">;
 
@@ -82,6 +82,8 @@ export interface RoleOption {
   gameChanger: boolean;
   /** Deck cards whose partner lists name the add. */
   links: number;
+  /** A Game Changer in the cut's group (`gameChangerOption`), not a strictly better card. */
+  upgrade?: "game-changer";
 }
 export interface LandOption { add: string; cut: LandFacts; addFacts: LandFacts; untapped: boolean; colours: string[]; gameChanger: boolean }
 export interface CutOptions<O> { cut: string; options: O[] }
@@ -105,18 +107,45 @@ export function roleOption(section: RoleSectionId, cut: DeckCard, add: Candidate
   return best;
 }
 
-/** THE OPTIONS FOR ONE ROLE SECTION, cut by cut, ranked by measures gained, then mana saved, then
- *  links to this deck, then name; cuts by their best option the same way. */
-export function roleOptions(section: RoleSectionId, cuts: readonly DeckCard[], pool: readonly Candidate[]): CutOptions<RoleOption>[] {
-  const out: CutOptions<RoleOption>[] = [];
+/** A card's role quality (the name index's `q`, 0-100), -1 when it has none in that role. */
+export type QualityOf = (name: string, role: Role) => number;
+
+/** A GAME CHANGER UPGRADE (#976; `docs/plans/2026-10-03-game-changer-upgrades.md`): brackets as power
+ *  within a group. Not strictly better -- most Game Changers are strong through a condition `sameJob`
+ *  refuses -- so it is its own kind of swap, held to its own measures. The add is a Game Changer, not
+ *  a creature, fills every role the cut fills, in the same group (`sameGroup`) and with a higher role
+ *  quality in each. The bracket guard decides where one may go: never at bracket 2, up to the cap at 3. */
+export function gameChangerOption(section: RoleSectionId, cut: DeckCard, add: Candidate, quality: QualityOf): RoleOption | null {
+  if (add.dc.card.gameChanger !== true || isCreature(add.dc) || isCreature(cut)) return null;
+  const cutRoles = rolesOfCard(cut);
+  const role = cutRoles.find((r) => SECTION_ROLES[section].includes(r));
+  if (!role) return null;
+  const name = add.dc.card.name;
+  if (!cutRoles.every((r) => add.roles.includes(r) && sameGroup(cut, add.dc, r) && quality(name, r) > quality(cut.card.name, r))) return null;
+  return { add: name, role, gained: [], cut: ingredients(cut, role), addIngredients: ingredients(add.dc, role), gameChanger: true, links: add.links, upgrade: "game-changer" };
+}
+
+/** THE OPTIONS FOR ONE ROLE SECTION, cut by cut. A cut's Game Changer upgrades come first, strongest
+ *  in the section's role first; the bracket guard refuses them at bracket 2, which then takes the
+ *  cut's strict options, ranked by measures gained, then mana saved, then links to this deck, then
+ *  name. Cuts are ranked by their best strict option the same way, then those with Game Changer
+ *  upgrades only. */
+export function roleOptions(
+  section: RoleSectionId, cuts: readonly DeckCard[], pool: readonly Candidate[],
+  gameChangers: { pool: readonly Candidate[]; quality: QualityOf } = { pool: [], quality: () => -1 },
+): CutOptions<RoleOption>[] {
+  const out: (CutOptions<RoleOption> & { strict?: RoleOption })[] = [];
   for (const cut of cuts) {
     if (!rolesOfCard(cut).some((r) => SECTION_ROLES[section].includes(r))) continue;
-    const options = pool.map((c) => roleOption(section, cut, c)).filter((o): o is RoleOption => o !== null);
-    if (options.length === 0) continue;
-    options.sort(byOption);
-    out.push({ cut: cut.card.name, options });
+    const strict = pool.map((c) => roleOption(section, cut, c)).filter((o): o is RoleOption => o !== null).sort(byOption);
+    const upgrades = gameChangers.pool.map((c) => gameChangerOption(section, cut, c, gameChangers.quality)).filter((o): o is RoleOption => o !== null)
+      .sort((a, b) => gameChangers.quality(b.add, b.role) - gameChangers.quality(a.add, a.role) || a.add.localeCompare(b.add));
+    if (strict.length + upgrades.length === 0) continue;
+    out.push({ cut: cut.card.name, options: [...upgrades, ...strict], ...(strict[0] ? { strict: strict[0] } : {}) });
   }
-  return out.sort((a, b) => byOption(a.options[0]!, b.options[0]!) || a.cut.localeCompare(b.cut));
+  return out
+    .sort((a, b) => (a.strict && b.strict ? byOption(a.strict, b.strict) : Number(!a.strict) - Number(!b.strict)) || a.cut.localeCompare(b.cut))
+    .map(({ cut, options }) => ({ cut, options }));
 }
 
 const saved = (o: RoleOption) => (o.cut.manaValue ?? 0) - (o.addIngredients.manaValue ?? 0);
@@ -176,6 +205,10 @@ function byLand(a: LandOption, b: LandOption): number {
   return a.addFacts.tapped - b.addFacts.tapped || b.colours.length - a.colours.length || a.add.localeCompare(b.add);
 }
 
+/** A PREFILTER ONLY: every Game Changer with a section role was rated 95 or more in one in the
+ *  2026-10-03 index (34 cards), so a card under this is not fetched to ask whether it is one. */
+const GAME_CHANGER_FLOOR = 90;
+
 /** THE POOL, FROM THE STATIC CORPUS: every noncreature card in the name index that fills one of a
  *  section's roles, inside the commander's identity, not in the deck, and costing no more than the
  *  dearest card the section may cut (a prefilter only: the comparison reads the full mana value).
@@ -211,6 +244,19 @@ export async function upgradeOptions(input: {
   const linksOf = new Map([...pool.values()].map((c) => [c.card.name, c.connections.length] as const));
 
   const roleCuts = deck.filter((d) => input.roleCuts.includes(d.card.name) && !isCreature(d));
+  // THE GAME CHANGERS IN THE IDENTITY. The flag is on the card, not in the name index, so the index
+  // prefilters to cards rated `GAME_CHANGER_FLOOR` or more in a role and the card says which they are.
+  const qualities = new Map(index.map((c) => [c.name, c.quality ?? {}] as const));
+  const quality: QualityOf = (name, role) => qualities.get(name)?.[role] ?? -1;
+  const sectionRoles = new Set<string>(Object.values(SECTION_ROLES).flat());
+  const strong = index.filter((c) => !c.isLand && !names.has(c.name) && inIdentity(c) && c.roles.some((r) => sectionRoles.has(r))
+    && Math.max(-1, ...Object.values(c.quality ?? {})) >= GAME_CHANGER_FLOOR);
+  await lookup.prefetch(strong.map((c) => normalizeName(c.name)));
+  const gameChangers: Candidate[] = [];
+  for (const c of strong) {
+    const dc = await dcOf(c.name);
+    if (dc && dc.card.gameChanger === true && !isCreature(dc)) gameChangers.push({ dc, roles: rolesOfCard(dc), links: linksOf.get(c.name) ?? 0 });
+  }
   const roles = {} as Record<RoleSectionId, CutOptions<RoleOption>[]>;
   for (const section of ROLE_SECTIONS) {
     const sectionRoles = SECTION_ROLES[section] as readonly BuildCategory[];
@@ -224,7 +270,7 @@ export async function upgradeOptions(input: {
       const dc = await dcOf(c.name);
       if (dc && !isCreature(dc)) candidates.push({ dc, roles: rolesOfCard(dc), links: linksOf.get(c.name) ?? 0 });
     }
-    roles[section] = roleOptions(section, cuts, candidates);
+    roles[section] = roleOptions(section, cuts, candidates, { pool: gameChangers, quality });
   }
 
   // THE BRING-DOWN CUTS' REPLACEMENTS, from every card sharing a role with them, as cheap or cheaper.
