@@ -370,13 +370,60 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
  *  below can ask `impliedCounterEvents` the same question over the same input, rather than rebuilding
  *  the list and drifting from it. */
 function baseEvents(tags: CardTags): GameEvent[] {
+  const targeting = spellTargeting(tags);
   return [
     // A DAMAGE EMIT CARRIES ITS SIZE, the ability's own `amount`, so a trigger that requires one
     // ("exactly 1 damage", Ghyrson Starn) can tell Impact Tremors from Eidolon of the Great Revel.
     ...tags.abilities.flatMap((a) => (a.emits ?? []).map((e) =>
       a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e)),
-    ...impliedEvents(tags.characteristics),
+    ...impliedEvents(tags.characteristics).map((e) => targeting.length && e.verb === "cast" ? { ...e, targeting } : e),
   ].map(normalizeZoneEvent);
+}
+
+/** Effects a player aims at their OWN creature when the text lets them pick any (owner, 2026-10-03). */
+const HELPS_ITS_TARGET: ReadonlySet<string> = new Set(["pump", "counter-placement", "keyword-grant", "untap"]);
+
+/** WHAT AN INSTANT OR SORCERY IS AIMED AT FOR ITS CASTER (#713, owner 2026-10-03). Each spell effect
+ *  with a `target` subject that is a creature you control, or any creature when the effect helps it
+ *  (a -1/-1 counter does not). Origin of Metalbending's second mode puts a +1/+1 counter on "target
+ *  creature you control", so Leyline of Resonance copies it; its first mode destroys an opponent's
+ *  artifact and states nothing. CEILING: an Aura spell also targets as it is cast and is not read
+ *  here (its "enchant creature" is no `target` subject); heroic Aura decks are the upgrade path.
+ *  CEILING: "targets ONLY a single" is not checked against a spell's OTHER targets, because the
+ *  derived abilities do not carry a player target: Quick Draw ("target creature you control ...
+ *  creatures target opponent controls ...") meets Leyline of Resonance and is the one false edge of
+ *  27 on the 71 decks (2026-10-03). Upgrade path: count the mandatory targets per mode in derive. */
+function spellTargeting(tags: CardTags): Partial<SubjectFilter>[] {
+  const types = tags.characteristics.types.map((t) => t.toLowerCase());
+  if (!types.includes("instant") && !types.includes("sorcery")) return [];
+  const out: Partial<SubjectFilter>[] = [];
+  for (const a of tags.abilities) {
+    if (a.kind !== "on-cast") continue;
+    const s = a.effect?.subject;
+    if (!s || s.scope !== "target") continue;
+    const kinds = [s.type].flat();
+    if (!kinds.includes("creature")) continue;
+    const harmful = (a.emits ?? []).some((e) => e.subject.counter === "-1/-1");
+    const helps = HELPS_ITS_TARGET.has(a.effect.kind) && !harmful;
+    if (s.control === "you" || ((s.control === "any" || s.control === undefined) && helps)) {
+      out.push({ control: "you", type: "creature", ...(s.subtype !== undefined ? { subtype: s.subtype } : {}) });
+    }
+  }
+  return out;
+}
+
+/** Does one of the spell's stated targets meet what the consumer's `targets` asks? Only the shapes
+ *  the producer can state are checked -- a creature you control, by type and subtype -- and any other
+ *  narrowing on the demand claims nothing, as an unstated relation always has. */
+function targetingMeets(stated: readonly Partial<SubjectFilter>[] | undefined, want: Partial<SubjectFilter>): boolean {
+  if (!stated?.length) return false;
+  const { self, type, subtype, control, token, ...rest } = want;
+  if (Object.keys(rest).length > 0) return false;
+  if (control !== undefined && control !== "you" && control !== "any") return false;
+  if (token === true) return false;
+  const types = type === undefined ? undefined : [type].flat();
+  if (types && !types.includes("creature") && !types.includes("permanent")) return false;
+  return stated.some((t) => subtype === undefined || [subtype].flat().some((x) => [t.subtype].flat().includes(x)) || (self === true && t.subtype === undefined));
 }
 
 /** A producer card's canonical events: authored emits + self-implied cast/enters, all zone-
@@ -862,6 +909,8 @@ function castConsumerNarrows(subject: SubjectFilter): boolean {
   if (subject.legendary === true) return true;
   // "a prepared spell" (Codie, Ravenous Codex) names which spell: only a prepare spell's cast meets it (CR 722.3d).
   if (subject.prepared === true) return true;
+  // "a spell that targets this creature" (heroic) names which spell: one aimed at it (#713).
+  if (subject.targets !== undefined) return true;
   if (subject.token !== null && subject.token !== undefined) return true;
   const types = Array.isArray(subject.type) ? subject.type : subject.type ? [subject.type] : [];
   return types.length > 0 && !(types.length === 1 && types[0] === "spell");
@@ -948,10 +997,19 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolea
  *  would report holes the engine does not actually have. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
   if (!verbSatisfies(producer, consumer)) return false;
-  // WHAT A SPELL TARGETS (`SubjectFilter.targets`, #896): no producer states it, so the demand claims
-  // nothing, exactly as `restricted` below. Ignoring it would read "a spell that targets this
-  // creature" as every spell in the deck.
-  if (consumer.subject.targets !== undefined) return false;
+  // The trigger as printed, for the gates that ask whether it names WHICH spell: a `targets` met
+  // below is stripped from `consumer`, and "a spell that targets this creature" must still narrow.
+  const asked = consumer;
+  // WHAT A SPELL TARGETS (`SubjectFilter.targets`, #896): checked against what the cast spell states
+  // it is aimed at (`GameEvent.targeting`, #713). A spell that states nothing claims nothing, so "a
+  // spell that targets this creature" is never read as every spell in the deck.
+  if (consumer.subject.targets !== undefined) {
+    if (!targetingMeets(producer.targeting, consumer.subject.targets)) return false;
+    // Met here, so the class test below sees the spell's own class only (`subjectMatches` refuses
+    // an unchecked `targets`, as every relation no producer states).
+    const { targets: _met, ...subject } = consumer.subject;
+    consumer = { ...consumer, subject };
+  }
   // The same for the other relations no producer states (#896): whose ability it is, a
   // characteristic shared with another object, what happened to it this turn, and a name relation.
   const cs = consumer.subject;
@@ -988,7 +1046,7 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   }
   if (!originMatches(producer.subject, consumer.subject)) return false;
   if (combatSelfSupplied(producer, consumer)) return false;
-  if (castSelfSupplied(producer, consumer)) return false;
+  if (castSelfSupplied(producer, asked)) return false;
   if (selfEtbSelfSupplied(producer, consumer)) return false;
   if (producer.verb === "enters" && producer.subject.zone === "graveyard") {
     // A MILL DOES NOT PROMISE A NONCREATURE, NONLAND CARD (#716), for a trigger ("whenever an

@@ -249,7 +249,14 @@ test("origins excluded, combat relations, ownership", () => {
 test("a spell or an ability is two branches, and a restriction binds both", () => {
   expect(parse("target spell or ability")).toEqual({ control: "any", token: null, scope: "target",
     anyOf: [{ type: "spell" }, { abilityKind: ["activated", "triggered"] }] });
-  expect(parse("target spell or ability that targets only a single permanent or player")).toMatchObject({ restricted: true });
+  // "targets only a single" is what it targets since #713, bound to both branches, not a refusal.
+  expect(parse("target spell or ability that targets only a single permanent or player")).toMatchObject({
+    anyOf: [{ type: "spell" }, { abilityKind: ["activated", "triggered"] }],
+    targets: { anyOf: [{ type: "permanent" }, { player: true }] },
+  });
+  expect(parse("an instant or sorcery spell that targets only a single creature you control")).toMatchObject({
+    type: ["instant", "sorcery"], targets: { control: "you", type: "creature" },
+  });
 });
 
 test("copy exceptions, conditions on the target, alternatives, destinations", () => {

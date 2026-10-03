@@ -1,16 +1,16 @@
 {
-  "deriveVersion": 275,
+  "deriveVersion": 277,
   "rulesVersion": 16,
   "roles": {
     "ramp": {
       "weights": {
-        "manaValue": -0.17749039920275556,
-        "frequency": 0.36638680897831155,
-        "timing": 0.07584590949897901,
-        "extraValue": 0.35311414628657767,
-        "restriction": -0.031834335846288794,
-        "rateFloor": 0.278673935105527,
-        "rateCeiling": 0.35854464183810586
+        "manaValue": -0.17747521114816509,
+        "frequency": 0.36646128329756855,
+        "timing": 0.07564063852198728,
+        "extraValue": 0.35291481858552615,
+        "restriction": -0.03183310244192388,
+        "rateFloor": 0.27865680641895957,
+        "rateCeiling": 0.35861778337464495
       },
       "pairs": 432,
       "heldOutAccuracy": 0.6374993688155491,
@@ -59,13 +59,13 @@
     },
     "targetedRemoval": {
       "weights": {
-        "manaValue": -0.1895387002125472,
-        "frequency": 0.02758630246653241,
-        "timing": 1.0106111264611928,
-        "breadth": 0.05004097070664025,
-        "permanence": 0.0159629392368779,
-        "drawback": -0.057075871850030754,
-        "extraValue": 1.0300692809296215
+        "manaValue": -0.18953870153970281,
+        "frequency": 0.027586302427965927,
+        "timing": 1.0106111351261173,
+        "breadth": 0.05004097077827019,
+        "permanence": 0.015962939153273493,
+        "drawback": -0.057075872018597026,
+        "extraValue": 1.0300692842879755
       },
       "pairs": 210,
       "heldOutAccuracy": 0.7390369093340157,
