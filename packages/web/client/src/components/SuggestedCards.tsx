@@ -32,6 +32,7 @@ function Candidate({ c }: { c: SuggestedCard }) {
       <Link
         to={`/cards/${c.slug}`}
         onClick={(ev) => { openSuggestedCard(drawer, (e) => peekOnPlainClick(peek, c.slug, e), c, ev); }}
+        data-card={c.name} data-card-slug={c.slug}
         aria-label={c.name}
         className="block rounded-[4.5%/3.3%] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)"
       >

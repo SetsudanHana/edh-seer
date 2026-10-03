@@ -93,20 +93,20 @@ function Swap({ swap, card }: { swap: UpgradeSwap; card: PreconCard | undefined 
     <li className="grid gap-x-4 gap-y-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 sm:grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)] sm:items-start">
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="eyebrow text-(--muted)">Take out</span>
-        <CardLink slug={slugOf(swap.out.name)} className="font-bold hover:text-(--accent)">{swap.out.name}</CardLink>
+        <CardLink name={swap.out.name} className="font-bold hover:text-(--accent)">{swap.out.name}</CardLink>
         <span className="text-sm text-(--muted)">{beside(swap.out.name, swap.out.reason)}</span>
       </div>
       <span className="text-xl text-(--accent) sm:pt-4"><Arrow dir="right" /></span>
       <div className="flex min-w-0 items-start gap-3">
         {/* THE ART OPENS THE CARD, like the name beside it (#1003): it was the one inert picture. */}
         {card?.art ? (
-          <CardLink slug={card.slug ?? slugOf(swap.in.name)} className="shrink-0" label={swap.in.name}>
+          <CardLink name={swap.in.name} slug={card.slug ?? slugOf(swap.in.name)} className="shrink-0" label={swap.in.name}>
             <img src={cardImageUrl(card.art) ?? undefined} alt="" width={488} height={680} loading="lazy" className="w-14 rounded-[4.5%/3.3%] shadow-md shadow-black/40" />
           </CardLink>
         ) : null}
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="eyebrow text-(--accent)">Put in</span>
-          <CardLink slug={card?.slug ?? slugOf(swap.in.name)} className="font-bold hover:text-(--accent)">{swap.in.name}</CardLink>
+          <CardLink name={swap.in.name} slug={card?.slug ?? slugOf(swap.in.name)} className="font-bold hover:text-(--accent)">{swap.in.name}</CardLink>
           <span className="text-sm text-(--muted)">{beside(swap.in.name, swap.in.reason)}</span>
         </div>
       </div>

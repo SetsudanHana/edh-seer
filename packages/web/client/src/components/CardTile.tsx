@@ -43,6 +43,8 @@ export function CardTile({ slug, name, art, identity, to, caption, note }: {
       <Link
         to={to ?? `/cards/${slug}`}
         onClick={(ev) => { peekOnPlainClick(peek, slug, ev); }}
+        data-card={name}
+        data-card-slug={slug}
         // THE LINK IS NAMED BY THE CARD, once. Without it a screen reader hears the image's alt, the
         // name and the pips' label as one run-on name for every tile in the grid.
         aria-label={name}

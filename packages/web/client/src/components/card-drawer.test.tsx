@@ -269,7 +269,7 @@ test("a click away closes the drawer, a click on another card switches it, a cli
   await user.click(screen.getByText("empty page"));
   expect(screen.queryByTestId("card-inspector")).toBeNull();
   // A card name opens it again, and the same click does not close what it opened.
-  await user.click(screen.getByRole("button", { name: "Sol Ring" }));
+  await user.click(screen.getByRole("link", { name: "Sol Ring" }));
   expect(screen.getByTestId("card-inspector")).toBeInTheDocument();
 });
 
@@ -286,4 +286,14 @@ test("Close and Escape give focus back to the card that opened it (#1003 review)
   await user.keyboard("{Escape}");
   expect(screen.queryByTestId("card-inspector")).toBeNull();
   expect(opener).toHaveFocus();
+});
+
+test("a card name is a link: a plain click opens the drawer, a modifier click is left to the browser (#1003 review)", () => {
+  render(<CardDrawerProvider graph={graph}><CardName name="Sol Ring" /></CardDrawerProvider>);
+  const link = screen.getByRole("link", { name: "Sol Ring" });
+  expect(link).toHaveAttribute("href", "/cards/sol-ring");
+  expect(fireEvent.click(link, { metaKey: true })).toBe(true);
+  expect(screen.queryByTestId("card-inspector")).toBeNull();
+  expect(fireEvent.click(link)).toBe(false);
+  expect(screen.getByTestId("card-inspector")).toBeInTheDocument();
 });

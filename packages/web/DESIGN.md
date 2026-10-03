@@ -553,6 +553,9 @@ page. Each job has one component, and a page never draws its own:
   card / Close), docked right under the header from `lg`, a bottom sheet below; a modifier or
   middle click follows the link; right-click, long-press or ⋯ opens the one card menu (Read the
   card / Open its card page / Copy the name, plus a map's own lines). "Open" stays in the tab.
+  The right-click and long-press are ONE listener (`CardContextMenu`, `pop-menu.tsx`): a card
+  surface carries `data-card="<name>"` on the element its plain click opens, and is covered. A
+  card name is an `<a href>`, never a `<button>`, so the modifier click has a link to follow.
 - **Clicking a map node**: the first click opens the same panel, the second walks the map in place
   with "Back to …"; the page never changes.
 - **The way back up** is `Breadcrumb` on every detail page.

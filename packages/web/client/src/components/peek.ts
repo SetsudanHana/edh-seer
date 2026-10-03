@@ -26,7 +26,7 @@ export function usePeek(): PeekApi | null {
  *  partner list and the search results both follow it, and one definition is how they cannot
  *  drift. Returns false when the click was left to the link. */
 export function peekOnPlainClick(peek: PeekApi | null, slug: string, ev: MouseEvent<HTMLElement>): boolean {
-  if (!peek || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return false;
+  if (!peek || !isPlainClick(ev)) return false;
   ev.preventDefault();
   peek.push(slug, ev.currentTarget);
   return true;
@@ -51,4 +51,9 @@ export function usePeekState(): PeekApi {
     if (el instanceof HTMLElement && el.isConnected) el.focus();
   }, []);
   return useMemo(() => ({ stack, push, back, close }), [stack, push, back, close]);
+}
+
+/** A left click with no modifier: the click that opens the card panel. Any other follows the link. */
+export function isPlainClick(ev: { button: number; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean }): boolean {
+  return ev.button === 0 && !ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey;
 }

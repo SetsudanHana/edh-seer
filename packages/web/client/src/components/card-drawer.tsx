@@ -8,6 +8,8 @@ import type { EngineModel } from "../lib/engine-model.js";
 import { buildOrbit, countText } from "../lib/orbit-model.js";
 import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
 import { SuggestionPanel } from "./SuggestionPanel.js";
+import { slugOf } from "@edh-seer/matcher/slug";
+import { isPlainClick } from "./peek.js";
 
 /** WHAT A REPORT ADDS TO THE DRAWER: the deck's links, to know which cards are on the commander's
  *  map, and a way to walk that map from the card. The report registers them; the drawer sits above it. */
@@ -478,14 +480,17 @@ export function ReasonText({ text, className }: { text: string; className?: stri
 
 /** A card name that opens the drawer — and plain text when the graph cannot show it, so the report
  *  never offers a click that does nothing. Styled as text, not as a button: these sit inside table
- *  rows and list items where a button chrome would fight the row. */
+ *  rows and list items where a button chrome would fight the row. A LINK, NOT A BUTTON (#1003
+ *  review): a plain click opens the drawer, a modifier or middle click opens the card's page in a
+ *  new tab, as every other card on the site does. */
 export function CardName({ name, className }: { name: string; className?: string }) {
   const { open, known } = useCardDrawer();
   if (!known.has(name)) return <>{name}</>;
   return (
-    <button
-      type="button"
-      onClick={() => open(name)}
+    <a
+      href={`/cards/${slugOf(name)}`}
+      data-card={name}
+      onClick={(ev) => { if (isPlainClick(ev)) { ev.preventDefault(); open(name); } }}
       // A 24px HIT BOX ON A 16px LINE (cohesion sweep 2026-09-08, finding 7): 81 of the 84 sub-24px
       // targets on a phone report were this button. Vertical padding grows the box; the matching
       // negative margin hands the space back, so the sentence or the table row it sits in does not
@@ -493,6 +498,6 @@ export function CardName({ name, className }: { name: string; className?: string
       className={`py-1 -my-1 text-left hover:text-(--accent) hover:underline underline-offset-2 ${className ?? ""}`}
     >
       {name}
-    </button>
+    </a>
   );
 }

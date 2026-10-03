@@ -9,7 +9,7 @@ import { PeekContext, type PeekApi } from "./peek.js";
 test("a plain click peeks the card; a modifier click leaves it to the link", () => {
   const push = vi.fn();
   const peek: PeekApi = { stack: [], push, back: () => {}, close: () => {} };
-  render(<MemoryRouter><PeekContext.Provider value={peek}><CardLink slug="godless-shrine">Godless Shrine</CardLink></PeekContext.Provider></MemoryRouter>);
+  render(<MemoryRouter><PeekContext.Provider value={peek}><CardLink name="Godless Shrine" slug="godless-shrine">Godless Shrine</CardLink></PeekContext.Provider></MemoryRouter>);
   const link = screen.getByRole("link", { name: "Godless Shrine" });
   expect(link).toHaveAttribute("href", "/cards/godless-shrine");
   expect(fireEvent.click(link)).toBe(false);

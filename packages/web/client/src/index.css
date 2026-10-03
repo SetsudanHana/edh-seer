@@ -1312,6 +1312,9 @@ a.brand:hover .brand-edh { color: var(--foreground); }
   .site-search[data-open] .site-search-list { inline-size: 100%; }
 }
 
+/* A LONG PRESS ON A CARD OPENS THE CARD MENU (#1003), not the browser's link callout. */
+[data-card] { -webkit-touch-callout: none; }
+
 /* THE PEEK (spec 2026-09-08 part 3). In the rail on a wide viewport; a bottom sheet on a phone.
    `html.peek-open` locks the page behind the sheet below `lg`, where the sheet covers it; on a
    wide viewport the list stays scrollable, which is the whole point of peeking. */

@@ -1,4 +1,5 @@
 import type { MouseEvent } from "react";
+import { isPlainClick } from "./peek.js";
 import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
 import { cardImageUrl } from "./card-node.js";
 
@@ -69,7 +70,7 @@ export function openSuggestedCard(
   card: SuggestedCard, ev: MouseEvent<HTMLElement>, replaces?: string,
 ): void {
   if (peekFirst(ev)) return;
-  if (!drawer.live || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+  if (!drawer.live || !isPlainClick(ev)) return;
   ev.preventDefault();
   drawer.openSuggestion(card, replaces);
 }

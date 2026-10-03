@@ -297,8 +297,8 @@ test("the pairs behind a group name cards you can open", () => {
     </CardDrawerProvider>,
   );
   // `fixtures.ts:102` -- the one pair is a: "Krenko, Mob Boss", b: "Impact Tremors".
-  expect(screen.getAllByRole("button", { name: "Krenko, Mob Boss" }).length).toBeGreaterThan(0);
-  expect(screen.getAllByRole("button", { name: "Impact Tremors" }).length).toBeGreaterThan(0);
+  expect(screen.getAllByRole("link", { name: "Krenko, Mob Boss" }).length).toBeGreaterThan(0);
+  expect(screen.getAllByRole("link", { name: "Impact Tremors" }).length).toBeGreaterThan(0);
 });
 
 test("ArchetypeBoard shows an empty-state message when there are no groups", () => {
@@ -668,7 +668,7 @@ test("HighSynergyCards makes both cards in the sentence checkable", () => {
     </CardDrawerProvider>,
   );
   // "Krenko makes tokens; Impact Tremors pays off tokens." -- the partner is a button, not prose.
-  const partners = screen.getAllByRole("button", { name: "Impact Tremors" });
+  const partners = screen.getAllByRole("link", { name: "Impact Tremors" });
   expect(partners.length).toBeGreaterThan(0);
 });
 
@@ -2288,7 +2288,7 @@ test("clicking a card name in the Cards table opens the inspector on that card",
   const user = userEvent.setup();
   render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
   await user.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
-  await user.click(screen.getByRole("button", { name: "Krenko, Mob Boss" }));
+  await user.click(screen.getByRole("link", { name: "Krenko, Mob Boss" }));
   const panel = screen.getByTestId("card-inspector");
   expect(within(panel).getByRole("heading", { level: 3 })).toHaveTextContent("Krenko, Mob Boss");
   // The edges come from the graph, both directions, with the reason sentence intact.
@@ -2313,7 +2313,7 @@ test("a combo piece opens the inspector, Escape closes it, and an unknown piece 
   expect(screen.getByText("Not In This Deck")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Not In This Deck" })).not.toBeInTheDocument();
 
-  await user.click(screen.getByRole("button", { name: "Krenko, Mob Boss" }));
+  await user.click(screen.getByRole("link", { name: "Krenko, Mob Boss" }));
   const panel = screen.getByTestId("card-inspector");
   expect(panel).toBeInTheDocument();
   // PORTALLED, and this assertion is a regression guard rather than a style preference: the report
@@ -2878,7 +2878,7 @@ test("a card named by the whole card, not by a face, still opens its front face"
       <CardName name="Never in the deck" />
     </CardDrawerProvider>,
   );
-  expect(screen.getByRole("button", { name: "A // B" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "A // B" })).toBeInTheDocument();
   // A name no node carries is still plain text: the drawer must not offer to open what it cannot.
   expect(screen.queryByRole("button", { name: "Never in the deck" })).toBeNull();
 });
@@ -3047,7 +3047,7 @@ test("a hardest-to-cast row shows what the card costs", () => {
  *  drops either one puts 81 sub-24px targets back on a phone report. */
 test("CardName carries the padding-plus-negative-margin pair", () => {
   const { container } = render(<CardDrawerProvider graph={SAMPLE.graph}><CardName name={SAMPLE.graph.nodes[0]!.label} /></CardDrawerProvider>);
-  const btn = container.querySelector("button")!;
+  const btn = container.querySelector("a")!;
   expect(btn.className).toContain("py-1");
   expect(btn.className).toContain("-my-1");
 });

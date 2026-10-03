@@ -51,6 +51,7 @@ function Square({ sq }: { sq: WaffleSquare }) {
       data-commander={sq.isCommander ? "1" : undefined}
       data-new={added ? "1" : undefined}
       onClick={() => open(sq.name)}
+      data-card={sq.name}
       aria-label={`${sq.name}${sq.isCommander ? ", commander" : ""}${added ? ", new" : ""}`}
       className={`w-full aspect-square rounded-[2px] ${
         // ONE CARD, ONE CELL, AND THE COMMANDER IS NOT AN EXCEPTION. It shipped as a 2x2 span, and

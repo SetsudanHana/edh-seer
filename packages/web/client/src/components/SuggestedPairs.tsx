@@ -44,7 +44,8 @@ export function SwapLine({ p }: { p: SuggestedPair }) {
       {/* THE ART OPENS THE CARD, as the cut's art above it does (#1003). The name beside it is the
         *  keyboard's way in; this is the same act for a pointer, so it stays out of the tab order. */}
       <Link to={`/cards/${p.add.slug}`} tabIndex={-1} aria-hidden="true" className="shrink-0"
-        onClick={(ev) => { openSuggestedCard(drawer, (e) => peekOnPlainClick(peek, p.add.slug, e), p.add, ev, p.cut); }}>
+        onClick={(ev) => { openSuggestedCard(drawer, (e) => peekOnPlainClick(peek, p.add.slug, e), p.add, ev, p.cut); }}
+        data-card={p.add.name} data-card-slug={p.add.slug}>
         <Face name={p.add.name} art={p.add.art} className="w-12 sm:w-14" />
       </Link>
       <div className="flex min-w-0 flex-col gap-0.5">
@@ -53,6 +54,7 @@ export function SwapLine({ p }: { p: SuggestedPair }) {
           <Link
             to={`/cards/${p.add.slug}`}
             onClick={(ev) => { openSuggestedCard(drawer, (e) => peekOnPlainClick(peek, p.add.slug, e), p.add, ev, p.cut); }}
+        data-card={p.add.name} data-card-slug={p.add.slug}
             className="font-semibold min-h-11 sm:min-h-0 inline-flex items-center hover:text-(--accent) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent) rounded-(--radius)"
           >
             {p.add.name}
