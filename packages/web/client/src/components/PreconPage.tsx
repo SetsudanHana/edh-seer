@@ -19,7 +19,8 @@ import { MapKey } from "./MapKey.js";
 import { UpgradePackages } from "./UpgradePackages.js";
 import { defaultTarget, swapsOf } from "../lib/precon-upgrades.js";
 
-import { Arrow, Chevron } from "./icons.js";
+import { Arrow } from "./icons.js";
+import { Breadcrumb } from "./Breadcrumb.js";
 /** `/precons/:slug` (Precon mockup, 2026-09-27): the precon's theme and scores beside its
  *  commander's map, then its upgrade packages by bracket (#767), then the list. The page
  *  is the file `build-precons` wrote; only the map is drawn live, from the list, once the page is up. */
@@ -56,7 +57,7 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
         *  the screen's height so the swaps still start on the first screen. */}
       <section className="grid items-center gap-8 lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)]">
         <div className="flex flex-col gap-3">
-          <nav aria-label="Breadcrumb" className="text-sm text-(--muted)"><Link to="/precons" className="hover:text-(--foreground)">Precons</Link> <Chevron dir="right" /> {p.setName}</nav>
+          <Breadcrumb steps={[{ label: "Precons", to: "/precons" }, { label: p.setName }]} />
           <span className="eyebrow text-(--muted)">Commander precon · {p.setName}{p.releaseDate ? ` · ${year(p.releaseDate)}` : ""}</span>
           <h1 className="text-4xl font-bold leading-tight tracking-[-0.02em]">{p.name}</h1>
           <p className="text-(--muted)">

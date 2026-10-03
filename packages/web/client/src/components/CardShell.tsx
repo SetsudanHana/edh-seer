@@ -13,6 +13,7 @@ import { KeywordRow } from "./KeywordRow.js";
 import { TypeLine } from "./TypeLine.js";
 import { useState } from "react";
 
+import { Breadcrumb } from "./Breadcrumb.js";
 /** ONE PAGE SHAPE, TWO SURFACES (spec 2026-09-08 part 2). `/cards/<slug>` and `/commanders/<slug>`
  *  were two components with different headings, rail widths and intro copy for the same card; a
  *  reader arriving from the other door re-learned the page. Both now render through this: the
@@ -74,6 +75,9 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
     <article className={`flex flex-col gap-10 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-x-10 lg:items-start ${readsBeside ? "min-[120rem]:grid-cols-[20rem_minmax(0,68ch)_minmax(0,32rem)]" : ""}`}>
       <div className="flex flex-col gap-8 min-w-0 lg:col-start-2 lg:row-start-1">
         <header className="flex flex-col gap-3">
+          <Breadcrumb steps={surface === "commander"
+            ? [{ label: "Commanders", to: "/commanders" }, { label: page.name }]
+            : [{ label: "Cards", to: "/cards" }, { label: page.name }]} />
           {/* THE PAGE'S ONE `h1` (owner, 2026-09-17); the wordmark in the shell is a link. */}
           <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
             {page.name}
