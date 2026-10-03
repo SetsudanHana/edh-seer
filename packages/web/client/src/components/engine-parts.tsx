@@ -3,6 +3,8 @@ import { tokenLabel, type EngineCard, type Link, type Repeat } from "../lib/engi
 import { ReasonText, useCardDrawer } from "./card-drawer.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { cardImageUrl } from "./card-node.js";
+import { slugOf } from "@edh-seer/matcher/slug";
+import { isPlainClick } from "./peek.js";
 
 /** The pieces the Overview and the Orbit draw a card and a claim with, so the two read alike. */
 
@@ -54,7 +56,7 @@ export function CardFace({ card, className }: { card: EngineCard; className: str
     ? <img src={src} alt={card.name} loading="lazy" decoding="async" width={488} height={680} className="block aspect-[488/680] h-auto w-full rounded-[4.5%/3.3%] shadow-md shadow-black/40" />
     : <span className="flex aspect-[488/680] w-full items-end rounded-[6%/4.4%] border border-(--separator) bg-(--surface-secondary) p-1.5 text-[10px] leading-tight">{card.name}</span>;
   return known.has(card.name)
-    ? <button type="button" onClick={() => open(card.name)} aria-label={`Open ${card.name}`} className={`shrink-0 transition-transform hover:-translate-y-0.5 ${className}`}>{face}</button>
+    ? <a href={`/cards/${slugOf(card.name)}`} data-card={card.name} onClick={(ev) => { if (isPlainClick(ev)) { ev.preventDefault(); open(card.name); } }} aria-label={`Open ${card.name}`} className={`shrink-0 transition-transform hover:-translate-y-0.5 ${className}`}>{face}</a>
     : <span className={`shrink-0 ${className}`}>{face}</span>;
 }
 

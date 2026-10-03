@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentProps } from "react";
+import { CardContextMenu } from "./components/pop-menu.js";
 import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
 import { cardCount, DeckActions, DeckInput } from "./components/DeckInput.js";
@@ -397,6 +398,8 @@ export default function App() {
     {/* THE SEARCH FIELD ON EVERY APP PAGE (spec 2026-09-08 part 1). Outside `<Routes>`, because it
       *  is the header's, not any page's; a portal, because the header is static HTML. */}
     <HeaderSearch />
+    {/* RIGHT-CLICK OR LONG-PRESS ON ANY CARD opens the one card menu (#1003; owner, 2026-10-03). */}
+    <CardContextMenu />
     <main className="px-(--gutter) py-8 w-full flex flex-col gap-8">
     <Suspense fallback={null}>
     <AppBooted />

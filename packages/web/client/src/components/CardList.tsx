@@ -98,7 +98,7 @@ function GridCard({
   const src = art === undefined ? null : cardImageUrl(art);
   return (
     <figure className="relative m-0 rounded-[7px] overflow-hidden border border-(--separator) bg-(--surface-secondary) aspect-[488/680]">
-      <button type="button" onClick={onOpen} className="block w-full h-full text-left" aria-label={name}>
+      <button type="button" onClick={onOpen} data-card={name} className="block w-full h-full text-left" aria-label={name}>
         {src ? (
           <img
             src={src}
@@ -498,7 +498,7 @@ export function CardList({ cards, artByName, coverage }: {
                   <td className="py-2 pr-2 min-w-0">
                     <span className="flex items-center gap-3 min-w-0">
                       {/* THE ROW'S ART OPENS THE CARD, like its name (#1003); the name is the keyboard's way in. */}
-                      <button type="button" tabIndex={-1} aria-hidden="true" className="shrink-0 cursor-pointer" onClick={() => openCard(c.name)}>
+                      <button type="button" tabIndex={-1} aria-hidden="true" data-card={c.name} className="shrink-0 cursor-pointer" onClick={() => openCard(c.name)}>
                         <Thumb art={artByName?.get(c.name)} alt="" />
                       </button>
                       <span className="flex flex-col min-w-0">

@@ -115,7 +115,7 @@ function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord[
             {p.route ? (
               <div className="flex items-center gap-3 rounded-(--radius) border border-dashed border-(--accent) p-3">
                 {p.route.art ? <img src={cardImageUrl(p.route.art) ?? undefined} alt="" width={488} height={680} loading="lazy" className="w-14 shrink-0 rounded-[4.5%/3.3%]" /> : null}
-                <div className="flex flex-col"><span className="eyebrow text-(--accent)">Opens a route</span><CardLink slug={p.route.slug} className="font-bold hover:text-(--accent)">{p.route.name}</CardLink><span className="text-sm text-(--muted)">{p.route.reach} of its cards reach {p.route.to} through it.</span></div>
+                <div className="flex flex-col"><span className="eyebrow text-(--accent)">Opens a route</span><CardLink name={p.route.name} slug={p.route.slug} className="font-bold hover:text-(--accent)">{p.route.name}</CardLink><span className="text-sm text-(--muted)">{p.route.reach} of its cards reach {p.route.to} through it.</span></div>
               </div>
             ) : null}
             {p.gaps.length ? (
@@ -136,7 +136,7 @@ function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord[
         {p.decklist.map((g) => (
           <div key={g.group} className="flex flex-col gap-2 border-t border-(--separator) py-3">
             <h3 className="text-sm font-semibold">{g.group} · {g.cards.reduce((t, c) => t + c.count, 0)}</h3>
-            <ul className="columns-2 sm:columns-[11rem] gap-x-6 text-sm">{g.cards.map((c) => <li key={c.name} className="break-inside-avoid py-0.5">{c.count > 1 ? `${c.count} ` : ""}<CardLink slug={slugOfName(c.name)} className="hover:text-(--accent)">{c.name}</CardLink></li>)}</ul>
+            <ul className="columns-2 sm:columns-[11rem] gap-x-6 text-sm">{g.cards.map((c) => <li key={c.name} className="break-inside-avoid py-0.5">{c.count > 1 ? `${c.count} ` : ""}<CardLink name={c.name} slug={slugOfName(c.name)} className="hover:text-(--accent)">{c.name}</CardLink></li>)}</ul>
           </div>
         ))}
         </div>

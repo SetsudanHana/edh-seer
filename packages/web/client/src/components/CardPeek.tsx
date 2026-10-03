@@ -125,6 +125,8 @@ export function CardPeek({ load, surface = "card" }: {
                       type="button"
                       className="self-start min-h-11 text-left font-semibold text-(--accent) hover:underline underline-offset-2"
                       onClick={(ev) => peek.push(p.slug, ev.currentTarget)}
+                      data-card={p.name}
+                      data-card-slug={p.slug}
                     >
                       {p.name}
                     </button>
