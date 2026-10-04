@@ -56,6 +56,10 @@ const MANA_LINE = /^\{t\}(?:, pay \d+ life)?: add ([^.]*)\./;
 // A SEPARATOR BETWEEN EVERY GROUP, never optional: with it optional the groups could split one run of
 // symbols many ways, which backtracks exponentially on a long one (CodeQL, 2026-09-30).
 const PLAIN_YIELD = /^(?:\{[wubrgc]\})+(?:(?:,? or |, )(?:\{[wubrgc]\})+)*$|^one mana of any colou?r(?: in your commander['’]s colou?r identity)?$/;
+/** A MANA LINE WITH A STRING ATTACHED: an "activate only" (Tainted Wood needs a Swamp), or mana
+ *  spendable only on some spells (Tournament Grounds, Cavern of Souls, Ancient Ziggurat: 45 lands in
+ *  the corpus). Either way its colours are not the deck's to spend. */
+const conditionalLine = (line: string) => /\b(?:activate|spend this mana) only\b/.test(line);
 const BASIC_TYPES: Record<string, string> = { plains: "W", island: "U", swamp: "B", mountain: "R", forest: "G" };
 function tapColours(dc: DeckCard): string[] {
   const out = new Set<string>();
@@ -64,7 +68,7 @@ function tapColours(dc: DeckCard): string[] {
   for (const [t, c] of Object.entries(BASIC_TYPES)) if (new RegExp(`\\b${t}\\b`).test(subtypes)) out.add(c);
   for (const line of printedLines(dc)) {
     const m = MANA_LINE.exec(line);
-    if (!m || /\bactivate only\b/.test(line) || !PLAIN_YIELD.test(m[1]!.trim())) continue;
+    if (!m || conditionalLine(line) || !PLAIN_YIELD.test(m[1]!.trim())) continue;
     if (/\bany colou?r\b/.test(m[1]!)) for (const c of COLORS) out.add(c);
     for (const sym of m[1]!.matchAll(/\{([wubrg])\}/g)) out.add(sym[1]!.toUpperCase());
   }
@@ -137,7 +141,7 @@ export function landFacts(dc: DeckCard, needed: ReadonlySet<Color>, library: rea
   if (printedLines(dc).some((l) => !PLAIN.some((re) => re.test(l)))) kinds.push("printed");
   // MANA ON A CONDITION CANNOT BE WEIGHED: Exotic Orchard's colours are the opponents' lands', Tainted
   // Field's need a Swamp. Read as colourless, either would be "upgraded" to a one-colour land.
-  if (printedLines(dc).some((l) => { const m = MANA_LINE.exec(l); return m && (/\bactivate only\b/.test(l) || !PLAIN_YIELD.test(m[1]!.trim())); })) kinds.push("conditional-mana");
+  if (printedLines(dc).some((l) => { const m = MANA_LINE.exec(l); return m && (conditionalLine(l) || !PLAIN_YIELD.test(m[1]!.trim())); })) kinds.push("conditional-mana");
   const utility = [...new Set(kinds)].filter((k) => !NOT_UTILITY.has(k) && !(tapped === 2 && CONSOLATION.has(k))
     && k !== "damage" && k !== "lose-life" && k !== "non-combat-damage").sort();
   // WHAT IT COSTS YOU TO USE: a painland's damage, a horizon land's life. Paid every time, unlike a

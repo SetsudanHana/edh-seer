@@ -57,6 +57,18 @@ test("a tapped land is never better than an untapped one, whatever its colours",
   expect(betterLand(landFacts(plains, needed, []), landFacts(barrens, needed, [])).ok).toBe(false);
 });
 
+// docs/plans/2026-10-04-mana-base-quality.md F7: "Battlefield Forge -> Tournament Grounds: never enters
+// tapped and makes white, black or red" was offered on 27 precon pages. The restriction is the sentence
+// after the mana line, so the colours were read as free.
+test("mana spendable only on some spells makes no colour, and marks the land conditional", () => {
+  const grounds = dc("Tournament Grounds", "Land", "{T}: Add {C}.\n{T}: Add {R}, {W}, or {B}. Spend this mana only to cast a Knight or Equipment spell.", ["C", "R", "W", "B"]);
+  const forge = dc("Battlefield Forge", "Land", "{T}: Add {C}.\n{T}: Add {R} or {W}. Battlefield Forge deals 1 damage to you.", ["C", "R", "W"]);
+  const rw = new Set(["R", "W"] as const);
+  expect(landFacts(grounds, rw, []).colours).toEqual([]);
+  expect(landFacts(grounds, rw, []).utility).toContain("conditional-mana");
+  expect(betterLand(landFacts(forge, rw, []), landFacts(grounds, rw, [])).ok).toBe(false);
+});
+
 test("the basics floor is what the deck's own cards search for", () => {
   const landscape = dc("Myriad Landscape", "Land", "Myriad Landscape enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice Myriad Landscape: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.", ["C"]);
   const wilds = dc("Evolving Wilds", "Land", "{T}, Sacrifice Evolving Wilds: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.");
