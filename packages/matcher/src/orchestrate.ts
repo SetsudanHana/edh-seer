@@ -77,6 +77,7 @@ export async function analyzeResolvedDeck(
   companions: Card[] = [],
   /** Companion names that did not resolve, reported by legality rather than as missing cards. */
   unresolvedCompanions: string[] = [],
+  opts: { skipSimulation?: boolean } = {},
 ): Promise<DeckReport> {
   const deckCards = await buildDeckCards(cards, sources.lookup, sources.tagsLookup);
   // The companion gets its tags the same way, so its relations are read like any card's.
@@ -95,6 +96,7 @@ export async function analyzeResolvedDeck(
     state,
     companionCards,
     unresolvedCompanions,
+    opts,
   );
 }
 
@@ -212,6 +214,26 @@ export interface DeckAnalysis {
   graph: WireGraph;
 }
 
+async function resolveDecklist(decklist: string, commanders: string | undefined, makeSources: (names: string[]) => Promise<AnalysisSources>) {
+  const sections = parseDecklistSections(decklist);
+  const commanderNames = commanders?.trim() ? parseDecklistText(commanders) : sections.commanders;
+  const sources = await makeSources([...commanderNames, ...sections.deck, ...sections.companions].map(normalizeName));
+  const resolved = await resolveDeck(commanderNames, sections.deck, sources.lookup, sections.companions);
+  return { sections, commanderNames, sources, resolved };
+}
+
+/** A DECKLIST READ FOR ITS NUMBERS ONLY (P1): the report without the mana simulation, and no graph.
+ *  For the precon keeper, which re-reads a swapped list once per candidate move and looks at three
+ *  numbers that read neither. Never shown: the report lacks castability and mana availability. */
+export async function readDecklist(
+  decklist: string,
+  commanders: string | undefined,
+  makeSources: (names: string[]) => Promise<AnalysisSources>,
+): Promise<DeckReport> {
+  const { sources, resolved: r } = await resolveDecklist(decklist, commanders, makeSources);
+  return analyzeResolvedDeck(r.cards, r.combos, r.commanderResolved, sources, undefined, r.companionCards, r.companionMissing, { skipSimulation: true });
+}
+
 /** A PASTED DECKLIST, ANALYSED: the whole pipeline from text to report and graph, ONCE.
  *
  *  This was two copies until 2026-09-25 -- the NestJS `AnalyzeService` and the browser's
@@ -226,12 +248,8 @@ export async function analyzeDecklist(
   makeSources: (names: string[]) => Promise<AnalysisSources>,
   state?: GameState,
 ): Promise<DeckAnalysis> {
-  const sections = parseDecklistSections(decklist);
-  const commanderNames = commanders?.trim() ? parseDecklistText(commanders) : sections.commanders;
-  const sources = await makeSources([...commanderNames, ...sections.deck, ...sections.companions].map(normalizeName));
-
-  const { cards, combos, missing, commanderResolved, commanderColorIdentity, companionCards, companionMissing } =
-    await resolveDeck(commanderNames, sections.deck, sources.lookup, sections.companions);
+  const { sections, commanderNames, sources, resolved } = await resolveDecklist(decklist, commanders, makeSources);
+  const { cards, combos, missing, commanderResolved, commanderColorIdentity, companionCards, companionMissing } = resolved;
   const report = await analyzeResolvedDeck(cards, combos, commanderResolved, sources, state, companionCards, companionMissing);
   // KEYED ON THE PHYSICAL CARD (`cardName ?? name`), because `attachRolesAndArt` looks roles up
   // under `normalize(n.cardName ?? n.id)`. `report.cards[].name` is a FACE name, so keying on it put
