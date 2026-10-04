@@ -3973,3 +3973,16 @@ test("a put onto the battlefield with no player named enters under your control"
   ] }], "Nissa, Leyline Tamer", { 2: text }, {}, `Deathtouch, vigilance\nLandfall — Whenever a land you control enters, ${text.charAt(0).toLowerCase()}${text.slice(1)}`);
   expect(abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters")?.subject.control).toBe("you");
 });
+
+// #697: a draw with no player named is the controller's (CR 608.2c), even in a sentence that names an
+// opponent elsewhere; a draw that names its player keeps that player.
+test("an unnamed draw is yours; a named one is the player it names", () => {
+  const draw = (text: string, abilityType: "spell" | "triggered" = "spell") => deriveAbilities([{
+    id: 1, abilityType, ...(abilityType === "triggered" ? { trigger: { event: "cast", subject: "a spell", control: "opponent" } } : {}),
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }], "Some Card", { 1: text }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "draw")?.subject.control;
+  expect(draw("Draw a card if an opponent has cast a blue or black spell this turn.")).toBe("you");
+  expect(draw("Whenever an opponent casts their first noncreature spell each turn, draw a card unless that player pays {X}.", "triggered")).toBe("you");
+  expect(draw("Each player draws a card.")).toBe("any");
+  expect(draw("Target opponent draws a card.")).toBe("opp");
+});

@@ -17,6 +17,7 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
+  "608.2c": "derive.test.ts — an unnamed draw is yours; a named one is the player it names (#697)",
   "701.47a": "grammar/action.test.ts + derive/emits.test.ts — amass reads as your 0/0 black Army token of its subtype, and emits it with a +1/+1 counter (#971)",
   "701.16a": "derive/emits.test.ts — investigate's token is an artifact Clue (#794)",
   "903.5b": "derive.test.ts — Guardian Project's 'doesn't have the same name' is uniqueName: a singleton printed card, never a token or an any-number card (#896 task 5)",
