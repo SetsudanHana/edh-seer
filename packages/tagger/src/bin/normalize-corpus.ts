@@ -31,6 +31,7 @@
  *    tsx src/bin/normalize-corpus.ts --collect <file>   # poll + persist a submitted batch
  *    tsx src/bin/normalize-corpus.ts --card "Isshin, Two Heavens as One" --run
  *    tsx src/bin/normalize-corpus.ts --commander-legal --refresh-term "prepare|empower jace"   # re-ask cards printing a newly added word
+ *    tsx src/bin/normalize-corpus.ts --buy-complete     # buy cards the grammar reads completely too
  *                                                       # pull one named card into the corpus
  *
  *  Needs `set -a && source .env && set +a` for ANTHROPIC_API_KEY; `--run` refuses without it. */
@@ -45,6 +46,7 @@ import { anthropicText, type AnthropicResponse } from "../llm/anthropic.js";
 import { batchResults, batchStatus, safeBatchId, submitBatch } from "../llm/anthropic-batch.js";
 import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE, VOCAB_VERSION, TRIGGER_VOCAB_VERSION, TRIGGERS, EXEMPLAR_TERMS } from "../normalize-prompt.js";
 import { segment } from "../segment.js";
+import { grammarClauseRecords } from "../grammar/clause-record.js";
 import {
   CLAUSES_COLLECTION, ensureClauseIndexes, needsNormalize, carriesOther, missesASplit, disagreesOnType, dropsOriginZone, dropsTriggerObject, hasPhantomTrigger, carriesOtherTrigger, worthReasking, segmentHash, type CardClausesDoc, dropsUnlessPayment,
 } from "../clause-store.js";
@@ -145,6 +147,11 @@ const COMMANDER_LEGAL = process.argv.includes("--commander-legal");
  *  what stops the report calling a vanilla creature "unread". Buying the tranche should not leave a
  *  Grizzly Bears looking unanalysed when analysing it costs nothing. */
 const MAX_RANK = Number(arg("--max-rank") ?? 0);
+/** A CARD THE GRAMMAR READS COMPLETELY IS NOT BOUGHT (G-T1, owner 2026-10-04: "if grammar covers
+ *  whole card there is no point buying it"). `derive-corpus` derives it from its printed text. This
+ *  flag buys it anyway, for when a model answer is wanted to label a new grammar-diff group. A card
+ *  answered in code is still written: it is free, and no grammar check is needed for it. */
+const BUY_COMPLETE = process.argv.includes("--buy-complete");
 const BATCH = process.argv.includes("--batch");
 const COLLECT = arg("--collect");
 
@@ -286,6 +293,7 @@ type ScopeDoc = { _id: string; name: string; oracleText?: string; keywords?: str
 
 const jobs: Job[] = [];
 const unresolved: string[] = [];
+const grammarComplete: Job[] = [];
 const exemplars = COMMANDER_LEGAL ? [] : await exemplarNames();
 const scope = CARDS.length
   ? [...new Set(CARDS.map(normalizeName))]
@@ -342,7 +350,9 @@ for await (const doc of scopeDocs()) {
   // would buy no money back and would leave it reading as unread. An UNRANKED card is out — EDHREC
   // has no record of the format playing it, which is the same claim the cutoff makes.
   if (MAX_RANK > 0 && needsModel(segmented) && !(doc.edhrecRank !== undefined && doc.edhrecRank <= MAX_RANK)) continue;
-  jobs.push({ oracleId: doc._id, name: doc.name, oracleText: doc.oracleText, keywords: doc.keywords, typeLine: doc.typeLine, hash });
+  const job = { oracleId: doc._id, name: doc.name, oracleText: doc.oracleText, keywords: doc.keywords, typeLine: doc.typeLine, hash };
+  if (!BUY_COMPLETE && needsModel(segmented) && grammarClauseRecords(doc).complete) { grammarComplete.push(job); continue; }
+  jobs.push(job);
 }
 
 // Price the ACTUAL prompts rather than a remembered average, so the bill cannot drift from the
@@ -350,22 +360,24 @@ for await (const doc of scopeDocs()) {
 const MANUAL_BY_ID = new Map(loadManualEntries().map((e) => [e.oracleId, e] as const));
 const manualCount = jobs.filter((j) => MANUAL_BY_ID.has(j.oracleId)).length;
 
-let inputTokens = 0;
-let freeCards = 0;
 const INERT_KINDS = new Set(["keyword", "reminder", "level", "modal"]);
-for (const j of jobs) {
-  const segmented = segment(j.oracleText ?? "", j.keywords ?? [], j.typeLine ?? "");
-  // All-inert cards are answered in code and never reach the model, so they must not be billed.
-  if (!segmented.some((c) => !INERT_KINDS.has(c.kind))) { freeCards++; continue; }
-  // Nor is a hand-authored one. The dry run's bill is the thing read before every --run, so a card
-  // that will never be sent must not appear in it.
-  if (MANUAL_BY_ID.has(j.oracleId)) continue;
-  const { system, user } = buildRequest(j.name, segmented);
-  inputTokens += Math.ceil((system.length + user.length) / 4);
+function bill(list: readonly Job[]) {
+  let inputTokens = 0, freeCards = 0;
+  for (const j of list) {
+    const segmented = segment(j.oracleText ?? "", j.keywords ?? [], j.typeLine ?? "");
+    // All-inert cards are answered in code and never reach the model, so they must not be billed.
+    if (!segmented.some((c) => !INERT_KINDS.has(c.kind))) { freeCards++; continue; }
+    // Nor is a hand-authored one. The dry run's bill is the thing read before every --run, so a card
+    // that will never be sent must not appear in it.
+    if (MANUAL_BY_ID.has(j.oracleId)) continue;
+    const { system, user } = buildRequest(j.name, segmented);
+    inputTokens += Math.ceil((system.length + user.length) / 4);
+  }
+  const billable = list.length - freeCards - list.filter((j) => MANUAL_BY_ID.has(j.oracleId)).length;
+  const outputTokens = billable * EST_OUTPUT_TOKENS;
+  return { inputTokens, freeCards, outputTokens, usd: (inputTokens / 1e6) * USD_PER_M_INPUT + (outputTokens / 1e6) * USD_PER_M_OUTPUT };
 }
-const billable = jobs.length - freeCards - manualCount;
-const outputTokens = billable * EST_OUTPUT_TOKENS;
-const usd = (inputTokens / 1e6) * USD_PER_M_INPUT + (outputTokens / 1e6) * USD_PER_M_OUTPUT;
+const { inputTokens, freeCards, outputTokens, usd } = bill(jobs);
 
 const cfg = loadTaggerConfig();
 console.log(CARDS.length
@@ -375,6 +387,7 @@ console.log(CARDS.length
     : `scope: calibration corpus + ${exemplars.length} keyword exemplars (${scope.length} cards)`);
 console.log(`  cards needing normalization: ${jobs.length}${LIMIT ? ` (limited to ${LIMIT})` : ""}`);
 console.log(`  of those, answered in code (no model call): ${freeCards}`);
+if (grammarComplete.length) console.log(`  NOT BOUGHT, the grammar reads them completely: ${grammarComplete.length} card(s), $${bill(grammarComplete).usd.toFixed(2)} not spent (derive-corpus derives them from printed text; --buy-complete to buy)`);
 if (manualCount) console.log(`  of those, hand-authored in manual-clauses.json: ${manualCount}`);
 if (unresolved.length) console.log(`  unresolved names: ${unresolved.length} (${unresolved.slice(0, 3).join(", ")}...)`);
 console.log(`  model: ${cfg.model}`);

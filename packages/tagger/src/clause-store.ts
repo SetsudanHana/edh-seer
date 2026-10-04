@@ -40,6 +40,9 @@ export interface DerivedTagsDoc extends CardTags {
   /** Copied from the clause doc, so a re-normalize invalidates the derived doc. */
   normalizeVersion: number;
   segmentHash: string;
+  /** Which answer the abilities came from: the printed text alone (the grammar), or the stored model
+   *  answer. Written by derive-corpus. */
+  clauseSource?: "grammar" | "model";
 }
 
 /** A separator that cannot occur in oracle text, a type line or a keyword. Written as an escape

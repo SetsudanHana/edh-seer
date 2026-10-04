@@ -13,7 +13,7 @@ import triage from "../../grammar-only-triage.json" with { type: "json" };
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
 import {
-  CLAUSES_COLLECTION, DERIVED_COLLECTION, ensureClauseIndexes, needsDerive,
+  CLAUSES_COLLECTION, DERIVED_COLLECTION, ensureClauseIndexes, needsDerive, segmentHash,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "../clause-store.js";
 
@@ -36,8 +36,36 @@ const stickers = new Set((await store.cards.find({ oracleText: /sticker/i } as n
   .filter((c) => isStickerCard(c as never)).map((c) => c._id as string));
 const removed = (await derivedCol.deleteMany({ oracleId: { $in: [...stickers] } })).deletedCount;
 console.log(`sticker cards excluded: ${stickers.size} (${removed} derived row(s) removed)`);
+
+// A CARD WITH NO ANSWER FOR ITS TEXT THAT THE GRAMMAR READS COMPLETELY (G-T1): normalize-corpus no
+// longer buys one, so it has no clause doc, or only one bought for text it no longer prints (an
+// erratum). It derives from its printed text here, and the stored loop below leaves it alone. Same
+// scope as `normalize-corpus --commander-legal`. A card the grammar does not read stays as before:
+// derived from its stored answer if it has one, absent until bought if not.
+const answeredHash = new Map(clauseDocs.filter((d) => !(d as { isToken?: boolean }).isToken).map((d) => [d.oracleId, d.segmentHash] as const));
+const grammarOnly = new Set<string>();
+let grammarOnlyWritten = 0;
+for await (const card of store.cards.find({ "legalities.commander": "legal" } as never).project({ _id: 1, oracleText: 1, keywords: 1, typeLine: 1 })) {
+  const c = card as unknown as { _id: string; oracleText?: string; keywords?: string[]; typeLine?: string };
+  if (stickers.has(c._id)) continue;
+  const hash = segmentHash(c.oracleText ?? "", c.typeLine ?? "", c.keywords ?? []);
+  if (answeredHash.get(c._id) === hash) continue;
+  const source = await store.cards.findOne({ _id: c._id } as never) as unknown as { _id: string; name: string } | null;
+  if (!source) continue;
+  const g = grammarClauseRecords(source as never);
+  if (!g.complete) continue;
+  grammarOnly.add(c._id);
+  const existing = await derivedCol.findOne({ oracleId: c._id });
+  if (!FORCE && existing?.deriveVersion === DERIVE_VERSION && existing.segmentHash === hash && existing.clauseSource === "grammar") continue;
+  const tags = deriveCardTags(deriveInputOf(source as never, c._id, source.name, g.records));
+  // normalizeVersion 0: no answer was bought, so a later bought one always reads as new.
+  await derivedCol.updateOne({ oracleId: c._id }, { $set: { ...tags, deriveVersion: DERIVE_VERSION, normalizeVersion: 0, segmentHash: hash, clauseSource: "grammar" } }, { upsert: true });
+  grammarOnlyWritten++;
+}
+console.log(`no answer for the printed text, read completely by the grammar: ${grammarOnly.size} card(s), ${grammarOnlyWritten} derived this run`);
+
 for (const doc of clauseDocs) {
-  if (stickers.has(doc.oracleId)) continue;
+  if (stickers.has(doc.oracleId) || grammarOnly.has(doc.oracleId)) continue;
   const existing = await derivedCol.findOne({ oracleId: doc.oracleId });
   if (!FORCE && !needsDerive(existing, doc, DERIVE_VERSION)) { skipped++; continue; }
 
