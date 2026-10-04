@@ -13,6 +13,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 
 const ASSERTED = new Set(["111.7", "114.1", "903.3", "712.8d"]);
 const TESTED: Record<string, string> = {
+  "118.6": "castability.test.ts — a card with no mana cost is refused; a {0} card and a multi-face card are not (#978)",
   "702.37": "edges.test.ts — a card with morph can be face down: it meets 'a face-down creature you control' (#896 task 3)",
   "702.168": "edges.test.ts — a card with disguise can be face down, as morph (#896 task 3)",
   "702.74a": "implied.test.ts — evoke sacrifices the creature as it enters",
