@@ -210,6 +210,12 @@ happened, and the missing card was not noticed until a user asked.
 "Already rebuilt this session" is not the same as "rebuilt from the commit being deployed". A new
 record field ships absent and the feature is silently dead.
 
+`npm run deploy` builds the 197 precon pages first (`build-precons.mts`, ~16 minutes), and **skips
+them when nothing they read has changed**: `static-out/<version>/precons/build-stamp.json` hashes
+the manifest version, every file the builder imports (its import graph, from esbuild), `precons.json`
+and the lockfile. A UI-only deploy then takes minutes. `--force` rebuilds anyway; a failed precon or
+an `--only` run leaves no stamp, so the next deploy rebuilds.
+
 **The deploy runs from the maintainer's machine**, with a logged-in `wrangler`; there is no deploy
 workflow in CI. The upload is capped at 20,000 files, the free tier's limit, which
 `assemble-deploy.mjs` checks. Two things deploy separately:
