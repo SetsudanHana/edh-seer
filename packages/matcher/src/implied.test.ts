@@ -599,10 +599,11 @@ test("a self graveyard fill carries historic even when the clause named a differ
   const fill = (subject: Record<string, unknown>): GameEvent =>
     ({ verb: "enters", subject: { control: "you", token: null, zone: "graveyard", self: true, ...subject } } as GameEvent);
 
-  // "Sacrifice this creature" on an Artifact Creature — the type is stated, the supertype is not.
+  // "Sacrifice this creature" on an Artifact Creature: the clause's word is replaced by the card's own
+  // types (#956), so the artifact it is reaches the graveyard as one.
   const [hart] = selfFillTypes([fill({ type: "creature" })], chars(["artifact", "creature"]));
   expect(hart.subject.historic).toBe(true);
-  expect(hart.subject.type).toBe("creature");
+  expect(hart.subject.type).toEqual(["artifact", "creature"]);
 
   // A plain creature stamps nothing, which is what keeps this from being a blanket true.
   const [bear] = selfFillTypes([fill({ type: "creature" })], chars(["creature"], ["bear"]));
@@ -730,4 +731,28 @@ test("evolve triggers on a creature bigger in power or toughness than the card i
   expect(matches(1, 1)).toBe(false);  // Llanowar Elves
   // A * P/T names no number: no trigger rather than a guess.
   expect(keywordAbilities({ ...sage, power: "*" } as never).some((a) => a.trigger?.verbs.includes("enters"))).toBe(false);
+});
+
+/** #956: Coretapper (Artifact Creature) says "Sacrifice this creature"; its sacrifice and death are an
+ *  artifact's too, so Wake the Past, Buried Ruin and Emry hear it. */
+test("a self sacrifice or death carries the card's own types, not the clause's word", () => {
+  const chars: Characteristics = { types: ["artifact", "creature"], subtypes: ["myr"], colors: [], identity: [], cmc: 2, power: "1", toughness: "1", token: false, keywords: [] };
+  const out = selfLeavesTypes([
+    { verb: "sacrifice", subject: { control: "you", token: null, type: "creature", self: true } },
+    { verb: "dies", subject: { control: "you", token: null, type: "creature", self: true } },
+    { verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } },
+  ] as GameEvent[], chars);
+  expect(out[0]!.subject).toMatchObject({ type: ["artifact", "creature"], subtype: ["myr"] });
+  expect(out[1]!.subject).toMatchObject({ type: ["artifact", "creature"] });
+  // Not self: a class, and its word stands.
+  expect(out[2]!.subject.type).toBe("creature");
+});
+
+/** #956: a token's own death is a token's, so a recursion that returns a CARD never hears it. */
+test("a token's self fill says token", () => {
+  const scion: Characteristics = { types: ["creature"], subtypes: ["eldrazi", "scion"], colors: [], identity: [], cmc: 0, power: "1", toughness: "1", token: true, keywords: [] };
+  const [fill] = selfFillTypes([{ verb: "enters", subject: { control: "you", token: null, zone: "graveyard", self: true } } as GameEvent], scion);
+  expect(fill!.subject).toMatchObject({ token: true, subtype: ["eldrazi", "scion"] });
+  const [sac] = selfLeavesTypes([{ verb: "sacrifice", subject: { control: "you", token: null, self: true } } as GameEvent], scion);
+  expect(sac!.subject.token).toBe(true);
 });

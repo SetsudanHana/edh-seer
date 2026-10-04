@@ -540,7 +540,7 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
  *  satisfies every consumer filter, which would let an enchantment's self-exile "supply" a
  *  creature-leaves payoff. The card is the thing leaving, so its type line is a known fact about the
  *  event. Union of faces, not `zoneTypes`: the permanent left the BATTLEFIELD, where a multi-face
- *  card is whichever face was up. Only an untyped self emit is touched. */
+ *  card is whichever face was up. Every self emit is stamped, typed or not (#956). */
 /** The self events that name this permanent leaving the battlefield one way or another. */
 const SELF_TYPED_VERBS: ReadonlySet<string> = new Set(["leaves", "sacrifice", "dies",
   // A counter on the card ITSELF lands on a known permanent (DERIVE 153): Primal Amulet's charge
@@ -552,16 +552,19 @@ export function selfLeavesTypes(events: GameEvent[], chars: Characteristics): Ga
   return events.map((e) => {
     // A SELF SACRIFICE OR DEATH IS THE SAME KNOWN PERMANENT (recall v7 #25, 2026-09-16): Riveteers
     // Overlook's "When this land enters, sacrifice it" emitted `sacrifice {self}` with no type, so
-    // Juri's "whenever you sacrifice a permanent" never saw a land leave. The noun form ("Sacrifice
-    // this land", Buried Ruin) carries the type from the clause; the pronoun form carries nothing.
+    // Juri's "whenever you sacrifice a permanent" never saw a land leave. The pronoun form carries
+    // nothing, and THE NOUN FORM CARRIES TOO LITTLE (#956): Coretapper, an Artifact Creature, says
+    // "Sacrifice this creature", and a `creature` read off the clause hid its artifact side from
+    // every artifact payoff. The self is the card, so its printed types replace the clause's word.
     if (!SELF_TYPED_VERBS.has(e.verb) || e.subject.self !== true) return e;
-    if (e.subject.type !== undefined || e.subject.subtype !== undefined) return e;
     const types = chars.types.map((t) => t.toLowerCase());
     const subtypes = chars.subtypes.map((t) => t.toLowerCase());
     return { ...e, subject: {
       ...e.subject,
       ...(types.length ? { type: types } : {}),
       ...(subtypes.length ? { subtype: subtypes } : {}),
+      // ...and whether it is a token: Eldrazi Scion's "Sacrifice this token" is a token's death.
+      ...(chars.token ? { token: true } : {}),
     } };
   });
 }
@@ -574,7 +577,8 @@ export function selfLeavesTypes(events: GameEvent[], chars: Characteristics): Ga
  *  "this", so the fill arrived untyped and a LAND hitting the graveyard "supplied" Bloodline
  *  Necromancer's Vampire recursion and Archaeomancer's instant recursion.
  *
- *  Only fills already marked `self` are touched, and only where the fill states no type of its own. */
+ *  Only fills already marked `self` are touched, and the card's own types replace any the clause
+ *  stated (#956). */
 /** WHAT A MULTI-FACE CARD IS *IN A ZONE*, which is not the union `types` holds and not always the
  *  same as what it can be PLAYED as. Three Comprehensive Rules, three answers, and the layout is the
  *  only thing that separates them — `faces` cannot, because split and adventure both list every face:
@@ -619,9 +623,9 @@ export function selfFillTypes(events: GameEvent[], chars: Characteristics): Game
       ...(isHistoric(ownTypes, ownSubtypes) ? { historic: true as const } : {}),
       ...(isOutlaw(ownSubtypes) ? { outlaw: true as const } : {}),
     };
-    if (e.subject.type !== undefined || e.subject.subtype !== undefined) {
-      return Object.keys(flags).length ? { ...e, subject: { ...e.subject, ...flags } } : e;
-    }
+    // ...AND THE TYPES TOO (#956): the clause's "this creature" was kept over the card's own types,
+    // so Coretapper's death put a creature in the graveyard and never an artifact -- Wake the Past,
+    // Buried Ruin and Emry stopped returning it. The self is the card; see `selfLeavesTypes`.
     // A GRAVEYARD IS A ZONE, so the card there is its front face and not the union of its faces —
     // see `zoneTypes`. Without this an adventurer's fill advertised its Instant half, and
     // Marang River Regent // Coil and Catch "enabled" Archaeomancer returning an instant.
@@ -633,6 +637,9 @@ export function selfFillTypes(events: GameEvent[], chars: Characteristics): Game
       ...flags,
       ...(types.length ? { type: types } : {}),
       ...(subtypes.length ? { subtype: subtypes } : {}),
+      // A TOKEN IN THE GRAVEYARD IS NO CARD (CR 704.5d: it ceases to exist), so Spawnbed Protector's
+      // "return target Eldrazi creature CARD" must not hear Eldrazi Scion's own death (#956).
+      ...(chars.token ? { token: true } : {}),
     } };
   });
 }
