@@ -1,0 +1,871 @@
+{
+ "about": "Same-job ground truth: 69 swap pairs (57 the precon pages showed, 12 a player would call the same), each judged same / weak / different with the parts that differ.",
+ "gate": "docs/plans/2026-10-04-same-job-review.md G1: 90% of pairs the group key puts together are labelled same, and no pair labelled different shares a key",
+ "status": "DRAFT: first reader only. Labelled 2026-10-04 from corpus oracle text (five labellers, one pass by the session that built them, rubric in the file). Not a gate until a second reader (the owner) has checked it.",
+ "firstReader": "claude, 2026-10-04",
+ "secondReader": null,
+ "rubric": "# Same-job pair labels: rubric\n\nA deck tool suggests swapping card OUT for card IN in the same role, claiming IN does \"the same job\"\n(often \"for N less mana\"). For each pair, judge as an experienced Commander (4-player) player whether\nIN really does OUT's job. Read ONLY the oracle text, type line and mana cost given for both cards.\nNEVER use memory of what a card does.\n\nSome pairs carry `priorLabel`/`priorWhy` from an earlier reader. Treat it as a hypothesis: agree only\nif the text supports it; disagree when it does not, and say so.\n\nLabels:\n- `\"same\"`: a player would swap these without losing the job (same effect on the same things, same\n  delivery class; differences only in cost or small upside).\n- `\"weak\"`: same family of effect, but a material difference a player would notice (a cost mode, a\n  drawback, a narrower target, something given back).\n- `\"different\"`: not the same job (different effect, different recipient, conditional where the other\n  is not, removal vs protection, AND-vs-OR targets, singleton-dead conditions...).\n\nOutput one JSON object per pair, input order, exactly these fields:\n- `role`, `out`, `in`: names as given.\n- `source`: as given (`page` = the site shows it, `player` = a pair a player would call the same).\n- `label`: `\"same\"` | `\"weak\"` | `\"different\"`.\n- `differs`: array of the parts that differ, from this closed list: `effect` (what it does), `keywords`\n  (which keywords granted), `recipient` (who/what it affects: one target vs all yours vs each), `whatItHits`\n  (types it can answer, AND vs OR), `control` (whose: any vs opponent's), `duration` (until end of turn vs\n  permanent), `delivery` (instant / sorcery / Equipment / Aura / permanent / activated), `amount` (how\n  much: fixed vs per-X vs equal-to, -1/-1 vs -X/-X), `conditions` (a condition one has), `givesBack`\n  (the opponent gets something), `cost` (mana value, equip cost, alternative cost, life, spree/mode\n  cost), `speed` (instant vs sorcery), `role` (OUT is not really in the stated role). Empty if `same`\n  with no difference beyond a cheaper mana cost; include `cost` whenever costs differ.\n- `priorAgree`: true/false if a prior label was given (map prior \"yes\"/\"plausible\" to same, \"weak\" to\n  weak, \"no\" to different), null otherwise.\n- `why`: ONE sentence quoting the decisive words of both texts.\n\nWrite the array as JSON to the output file given to you.\n",
+ "pairs": [
+  {
+   "role": "draw",
+   "out": "Explore",
+   "in": "Artifist Acumen",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect"
+   ],
+   "priorAgree": true,
+   "why": "Explore's \"may play an additional land\" is its whole point, while Acumen's \"first strike until end of turn\" has nothing to do with card draw."
+  },
+  {
+   "role": "draw",
+   "out": "Syphon Mind",
+   "in": "Artifist Acumen",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "amount"
+   ],
+   "priorAgree": true,
+   "why": "Syphon Mind draws \"a card for each card discarded this way\" (up to three in a 4-player pod) via forced discard, while Acumen just grants first strike and draws one."
+  },
+  {
+   "role": "draw",
+   "out": "Distant Melody",
+   "in": "Birthday Escape",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "amount"
+   ],
+   "priorAgree": true,
+   "why": "\"Draw a card for each permanent you control of that type\" scales with board state; Birthday Escape only ever draws one."
+  },
+  {
+   "role": "draw",
+   "out": "Return of the Wildspeaker",
+   "in": "To Arms!",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "amount"
+   ],
+   "priorAgree": true,
+   "why": "\"Draw cards equal to the greatest power among non-Human creatures\" scales with the board, while To Arms! untaps creatures and draws exactly one."
+  },
+  {
+   "role": "draw",
+   "out": "Rishkar's Expertise",
+   "in": "Artifist Acumen",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "amount"
+   ],
+   "priorAgree": true,
+   "why": "\"Draw cards equal to the greatest power\" plus a free spell dwarfs Acumen's first strike plus a single draw."
+  },
+  {
+   "role": "draw",
+   "out": "Sign in Blood",
+   "in": "Insatiable Avarice",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "cost",
+    "amount"
+   ],
+   "priorAgree": true,
+   "why": "Sign in Blood draws two for {B}{B}, but Avarice's draw mode needs its base cost plus \"+ {B}{B}\" to draw three and lose 3 life, a pricier and bigger version of the same job."
+  },
+  {
+   "role": "draw",
+   "out": "Deep Analysis",
+   "in": "Insatiable Avarice",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "givesBack",
+    "delivery"
+   ],
+   "priorAgree": true,
+   "why": "Deep Analysis draws two with no life cost up front (only flashback costs \"3 life\"), while Avarice's draw mode always costs \"lose 3 life\" and is a sorcery, not an instant held up for flashback value."
+  },
+  {
+   "role": "draw",
+   "out": "Thirst for Knowledge",
+   "in": "Brainstorm",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "effect"
+   ],
+   "priorAgree": true,
+   "why": "\"Discard two cards\" permanently loses cards to the graveyard while Brainstorm's \"put two cards from your hand on top of your library\" keeps them, a real mechanical difference defensible only as \"both cantrip for net one card.\""
+  },
+  {
+   "role": "draw",
+   "out": "Urban Evolution",
+   "in": "Amass the Components",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "effect",
+    "amount"
+   ],
+   "priorAgree": false,
+   "why": "Urban Evolution keeps all three cards and adds \"play an additional land\", while Amass the Components nets only two cards since one goes \"on the bottom of your library\" — a real loss of value, not a plain swap."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Mortify",
+   "in": "Winnow",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "conditions"
+   ],
+   "priorAgree": true,
+   "why": "Winnow only works \"if another permanent with the same name is on the battlefield\", a condition that is dead in a singleton format where Mortify just destroys target creature or enchantment outright."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Beast Within",
+   "in": "Wild Magic Surge",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "control",
+    "givesBack"
+   ],
+   "priorAgree": true,
+   "why": "Surge only hits a permanent \"an opponent controls\" (narrower than Beast Within's any permanent) and hands back a revealed card sharing a type instead of a fixed 3/3 token."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Decimate",
+   "in": "Misguided Rage",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "recipient",
+    "control"
+   ],
+   "priorAgree": true,
+   "why": "Decimate destroys four named targets you pick, while Misguided Rage is \"Target player sacrifices a permanent of their choice\" — an edict the opponent controls, not targeted removal at all."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Terminate",
+   "in": "Unwanted Remake",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "givesBack"
+   ],
+   "priorAgree": true,
+   "why": "Unwanted Remake's destroy is the same but it hands the controller a manifest dread, which \"puts one onto the battlefield face down as a 2/2\" and can flip into something bigger, unlike Terminate's clean kill."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Beast Within",
+   "in": "Assassin's Trophy",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "control",
+    "givesBack"
+   ],
+   "priorAgree": false,
+   "why": "Trophy is restricted to a permanent \"an opponent controls\" (Beast Within hits any permanent) and gives back only a searched basic land rather than a 3/3 token — both real, noticeable differences, not a plain same."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Bedevil",
+   "in": "Transforming Flourish",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "whatItHits",
+    "givesBack",
+    "effect"
+   ],
+   "priorAgree": true,
+   "why": "Flourish can't hit planeswalkers (\"artifact or creature you don't control\" only), hands the controller a free spell cast, and \"Demonstrate\" lets an opponent copy the spell too."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Terminate",
+   "in": "Molten Frame",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "whatItHits"
+   ],
+   "priorAgree": true,
+   "why": "\"Target artifact creature\" is an AND requirement (must be both), not an OR, so Molten Frame can't touch Terminate's any-creature target."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Infernal Grasp",
+   "in": "Molten Frame",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "whatItHits"
+   ],
+   "priorAgree": true,
+   "why": "Same AND problem: \"target artifact creature\" excludes the vast majority of creatures Infernal Grasp's \"target creature\" can hit."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Hex",
+   "in": "Yawgmoth's Vile Offering",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "amount",
+    "conditions"
+   ],
+   "priorAgree": true,
+   "why": "Hex unconditionally destroys six creatures; the Offering is a legendary sorcery (\"only if you control a legendary creature or planeswalker\") that destroys just \"up to one target creature or planeswalker.\""
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Pongify",
+   "in": "Rapid Hybridization",
+   "source": "page",
+   "label": "same",
+   "differs": [],
+   "priorAgree": false,
+   "why": "Both destroy target creature, deny regeneration, and give the controller \"a 3/3 green [token]\" — the token's name (Ape vs Frog Lizard) is cosmetic, so the prior \"no\" is wrong by its own stated reasoning."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Toxic Deluge",
+   "in": "Nausea",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "amount"
+   ],
+   "priorAgree": true,
+   "why": "Toxic Deluge's \"-X/-X\" scales with life paid, while Nausea is a flat \"-1/-1\", a different order of magnitude as a wipe."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Vanquish the Horde",
+   "in": "Fumigate",
+   "source": "page",
+   "label": "same",
+   "differs": [
+    "cost"
+   ],
+   "priorAgree": false,
+   "why": "Both simply \"destroy all creatures\"; Fumigate's life gain is pure upside and the cost difference (reducing cost vs flat {3}{W}{W}) is only a cost swap, not a changed job."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Nevinyrral's Disk",
+   "in": "Boompile",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "conditions",
+    "whatItHits"
+   ],
+   "priorAgree": true,
+   "why": "Boompile only works if you \"win the flip\" on a coin toss, and hits all nonland permanents rather than the Disk's artifacts/creatures/enchantments only."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Their Name Is Death",
+   "in": "Bontu's Last Reckoning",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "whatItHits",
+    "givesBack"
+   ],
+   "priorAgree": true,
+   "why": "Their Name Is Death spares artifact creatures (\"nonartifact creatures\" only) while Bontu's Last Reckoning hits everything but leaves \"lands you control don't untap during your next untap step\" as a drawback."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Mutilate",
+   "in": "Cry of the Carnarium",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "amount",
+    "effect"
+   ],
+   "priorAgree": true,
+   "why": "Mutilate scales \"-1/-1 ... for each Swamp you control\" while Cry is a flat -2/-2 plus a graveyard-exile clause Mutilate never has."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Raise the Palisade",
+   "in": "Harsh Mercy",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "control"
+   ],
+   "priorAgree": true,
+   "why": "Raise the Palisade bounces (\"return ... to their owners' hands\") using one chosen type, while Harsh Mercy destroys and lets \"each player chooses a creature type\", a different effect and a different chooser."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Wash Out",
+   "in": "Day of Judgment",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "whatItHits"
+   ],
+   "priorAgree": true,
+   "why": "Wash Out bounces \"all permanents of the color of your choice\" (any permanent type, one color), nothing like Day of Judgment's destroy-all-creatures."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Austere Command",
+   "in": "Cleansing Nova",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "effect",
+    "amount"
+   ],
+   "priorAgree": false,
+   "why": "Austere Command's \"choose two\" can hit creatures AND artifacts/enchantments in one cast, while Cleansing Nova's \"choose one\" forces picking creatures OR artifacts-and-enchantments, a real loss of flexibility."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Winds of Rath",
+   "in": "Day of Judgment",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "conditions",
+    "whatItHits"
+   ],
+   "priorAgree": false,
+   "why": "Winds of Rath spares creatures \"that aren't enchanted\", a real condition Day of Judgment's unconditional \"destroy all creatures\" doesn't have."
+  },
+  {
+   "role": "stackInteraction",
+   "out": "Counterspell",
+   "in": "Nix",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "conditions"
+   ],
+   "priorAgree": true,
+   "why": "Nix only counters a spell \"if no mana was spent to cast it\", a hard restriction Counterspell's unconditional counter doesn't carry."
+  },
+  {
+   "role": "stackInteraction",
+   "out": "Disdainful Stroke",
+   "in": "Nix",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "conditions"
+   ],
+   "priorAgree": true,
+   "why": "Disdainful Stroke needs mana value 4+; Nix needs the spell to be free — unrelated restrictions, not the same filter."
+  },
+  {
+   "role": "stackInteraction",
+   "out": "Absorb",
+   "in": "Laquatus's Disdain",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "conditions"
+   ],
+   "priorAgree": true,
+   "why": "Laquatus's Disdain only counters \"a spell cast from a graveyard\", a near-dead condition compared to Absorb's unconditional counter."
+  },
+  {
+   "role": "stackInteraction",
+   "out": "Spell Stutter",
+   "in": "Force Spike",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "amount"
+   ],
+   "priorAgree": true,
+   "why": "Both are soft counters, but \"pays {1}\" is a much lower tax than \"pays {2} plus an additional {1} for each Faerie you control.\""
+  },
+  {
+   "role": "tutor",
+   "out": "Diabolic Tutor",
+   "in": "Cateran Summons",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "whatItHits"
+   ],
+   "priorAgree": true,
+   "why": "Cateran Summons can only find \"a Mercenary card\", while Diabolic Tutor can find any card in the library."
+  },
+  {
+   "role": "tutor",
+   "out": "Long-Term Plans",
+   "in": "Trapmaker's Snare",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "whatItHits",
+    "effect"
+   ],
+   "priorAgree": true,
+   "why": "Trapmaker's Snare is restricted to \"a Trap card\" and puts it straight into hand, unlike Long-Term Plans' any-card search that goes \"third from the top.\""
+  },
+  {
+   "role": "impulseDraw",
+   "out": "Escape to the Wilds",
+   "in": "Rob the Archives",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "amount",
+    "effect"
+   ],
+   "priorAgree": true,
+   "why": "\"Exile the top five cards\" plus an extra land drop is much bigger than Rob the Archives' \"exile the top two cards\" with no land bonus."
+  },
+  {
+   "role": "ramp",
+   "out": "Darksteel Ingot",
+   "in": "Arcane Signet",
+   "source": "page",
+   "label": "same",
+   "differs": [
+    "cost",
+    "keywords"
+   ],
+   "priorAgree": true,
+   "why": "Both add \"one mana of any color\" usable by the deck (Signet's colors are always within \"your commander's color identity\"), differing only in cost and Darksteel Ingot's lost \"Indestructible\"."
+  },
+  {
+   "role": "protection",
+   "out": "Swiftfoot Boots",
+   "in": "Commander's Plate",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "keywords",
+    "cost"
+   ],
+   "priorAgree": true,
+   "why": "Hexproof and haste for equip {1} is nothing like +3/+3 and selective protection for \"Equip commander {3}\" / \"Equip {5}.\""
+  },
+  {
+   "role": "protection",
+   "out": "Lightning Greaves",
+   "in": "Commander's Plate",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "keywords",
+    "cost"
+   ],
+   "priorAgree": true,
+   "why": "Shroud at equip {0} versus protection-and-a-pump at triple-to-quintuple the equip cost is a different tool entirely."
+  },
+  {
+   "role": "protection",
+   "out": "Unbreakable Formation",
+   "in": "Break of Day",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "conditions"
+   ],
+   "priorAgree": true,
+   "why": "Unbreakable Formation's indestructible is unconditional, while Break of Day only grants it under \"Fateful hour — If you have 5 or less life.\""
+  },
+  {
+   "role": "protection",
+   "out": "Darksteel Mutation",
+   "in": "Shardmage's Rescue",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "role"
+   ],
+   "priorAgree": true,
+   "why": "Darksteel Mutation neuters the target to a 0/1 with no abilities — that's removal of the creature, not protection like Shardmage's Rescue's hexproof-and-buff."
+  },
+  {
+   "role": "protection",
+   "out": "Flawless Maneuver",
+   "in": "Spare from Evil",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "keywords",
+    "recipient"
+   ],
+   "priorAgree": true,
+   "why": "Indestructible for all your creatures beats protection \"from non-Human creatures\" only, a narrower and different keyword."
+  },
+  {
+   "role": "protection",
+   "out": "Whispersilk Cloak",
+   "in": "Commander's Plate",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "cost"
+   ],
+   "priorAgree": true,
+   "why": "Unblockable-and-shroud for equip {2} is a different tool from +3/+3-and-protection at equip {3}/{5}."
+  },
+  {
+   "role": "protection",
+   "out": "Bathe in Light",
+   "in": "Armor of Shadows",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "keywords",
+    "recipient"
+   ],
+   "priorAgree": true,
+   "why": "Bathe in Light grants protection to a group sharing a color (\"each other creature that shares a color\"); Armor of Shadows only pumps and grants indestructible to one creature."
+  },
+  {
+   "role": "protection",
+   "out": "Akroma's Will",
+   "in": "And They Shall Know No Fear",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "recipient"
+   ],
+   "priorAgree": true,
+   "why": "Akroma's Will can grant a full keyword package to all your creatures; the other card only buffs creatures \"of the chosen type\", a narrower recipient with weaker effect."
+  },
+  {
+   "role": "protection",
+   "out": "Ephemeral Shields",
+   "in": "Blacksmith's Skill",
+   "source": "page",
+   "label": "same",
+   "differs": [
+    "keywords",
+    "recipient"
+   ],
+   "priorAgree": true,
+   "why": "Both grant indestructible to one thing; Blacksmith's Skill is a strict upgrade, hitting \"target permanent\" and adding hexproof plus a conditional +2/+2."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Hour of Reckoning",
+   "in": "End Hostilities",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "whatItHits",
+    "effect"
+   ],
+   "priorAgree": null,
+   "why": "Hour of Reckoning spares tokens (\"all nontoken creatures\"), while End Hostilities hits every creature plus \"all permanents attached to creatures\", a broader and different sweep."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Crush Contraband",
+   "in": "Fate Forgotten",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "amount"
+   ],
+   "priorAgree": null,
+   "why": "Crush Contraband can \"choose one or both\" to exile an artifact and an enchantment in one spell, while Fate Forgotten only ever exiles one permanent."
+  },
+  {
+   "role": "draw",
+   "out": "Endless Atlas",
+   "in": "Sensei's Divining Top",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "conditions"
+   ],
+   "priorAgree": null,
+   "why": "Endless Atlas needs \"three or more lands with the same name\" to draw at all, while the Top's draw ability sends itself back to the library each time (\"put this artifact on top of its owner's library\"), a different repeatable-draw problem entirely."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Damning Verdict",
+   "in": "Day of Judgment",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "whatItHits",
+    "conditions"
+   ],
+   "priorAgree": null,
+   "why": "Damning Verdict spares any creature \"with no counters on them\", a real condition Day of Judgment's unconditional destroy-all lacks."
+  },
+  {
+   "role": "draw",
+   "out": "Ancient Excavation",
+   "in": "Evermind",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "amount",
+    "effect"
+   ],
+   "priorAgree": null,
+   "why": "Ancient Excavation draws up to your whole hand size then discards that many, while Evermind is just \"Draw a card\" with a splice ability — wildly different amounts and mechanics."
+  },
+  {
+   "role": "draw",
+   "out": "Thoughtcast",
+   "in": "See Beyond",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "givesBack",
+    "cost"
+   ],
+   "priorAgree": null,
+   "why": "Both draw two cards, but See Beyond nets one fewer because it must \"shuffle a card from your hand into your library\", and Thoughtcast's affinity can make it much cheaper."
+  },
+  {
+   "role": "draw",
+   "out": "Ambition's Cost",
+   "in": "Harmonize",
+   "source": "page",
+   "label": "same",
+   "differs": [
+    "cost"
+   ],
+   "priorAgree": null,
+   "why": "Both \"draw three cards\" for the same mana value; Harmonize simply drops the \"lose 3 life\" cost Ambition's Cost pays."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Abrade",
+   "in": "Explosive Derailment",
+   "source": "page",
+   "label": "weak",
+   "differs": [
+    "cost",
+    "amount"
+   ],
+   "priorAgree": null,
+   "why": "A single Spree mode of Explosive Derailment costs its base plus \"+ {2}\" (pricier than Abrade's flat {1}{R}) though it deals 4 damage instead of 3."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Conclave Tribunal",
+   "in": "Banishing Light",
+   "source": "page",
+   "label": "same",
+   "differs": [
+    "cost"
+   ],
+   "priorAgree": null,
+   "why": "Both exile target nonland permanent an opponent controls \"until this enchantment leaves the battlefield\" word for word; Conclave Tribunal only adds Convoke as an alternate cost."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Kindred Dominance",
+   "in": "Living Death",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "whatItHits"
+   ],
+   "priorAgree": null,
+   "why": "Kindred Dominance selectively destroys creatures outside one chosen type; Living Death instead has every player sacrifice their board and reanimate their whole graveyard, a completely different effect."
+  },
+  {
+   "role": "draw",
+   "out": "Windfall",
+   "in": "Burning Inquiry",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "effect",
+    "amount"
+   ],
+   "priorAgree": null,
+   "why": "Windfall discards hands first and draws \"equal to the greatest number ... discarded\" (scales with hand size), while Burning Inquiry draws a flat three then discards three at random — different order and different amount."
+  },
+  {
+   "role": "ramp",
+   "out": "Mana Geyser",
+   "in": "Rite of Flame",
+   "source": "page",
+   "label": "different",
+   "differs": [
+    "amount",
+    "conditions"
+   ],
+   "priorAgree": null,
+   "why": "Mana Geyser scales off \"each tapped land your opponents control\" while Rite of Flame scales off copies of itself in graveyards — unrelated conditions producing very different amounts."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Wrath of God",
+   "in": "Day of Judgment",
+   "source": "player",
+   "label": "same",
+   "differs": [],
+   "priorAgree": null,
+   "why": "Both \"Destroy all creatures\"; Wrath of God's extra \"They can't be regenerated\" clause is vestigial against modern decks."
+  },
+  {
+   "role": "boardWipe",
+   "out": "Damnation",
+   "in": "Wrath of God",
+   "source": "player",
+   "label": "same",
+   "differs": [],
+   "priorAgree": null,
+   "why": "\"Destroy all creatures. They can't be regenerated.\" is identical text in both, just a different color."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Swords to Plowshares",
+   "in": "Path to Exile",
+   "source": "player",
+   "label": "weak",
+   "differs": [
+    "givesBack"
+   ],
+   "priorAgree": null,
+   "why": "Both exile target creature, but Swords gives the controller life \"equal to its power\" while Path lets them ramp with a basic land \"onto the battlefield tapped\", a materially different giveback."
+  },
+  {
+   "role": "ramp",
+   "out": "Cultivate",
+   "in": "Kodama's Reach",
+   "source": "player",
+   "label": "same",
+   "differs": [],
+   "priorAgree": null,
+   "why": "The oracle text is identical: \"Search your library for up to two basic land cards ... put one onto the battlefield tapped and the other into your hand.\""
+  },
+  {
+   "role": "ramp",
+   "out": "Arcane Signet",
+   "in": "Fellwar Stone",
+   "source": "player",
+   "label": "weak",
+   "differs": [
+    "conditions"
+   ],
+   "priorAgree": null,
+   "why": "Arcane Signet always makes your commander's colors, while Fellwar Stone depends on \"a land an opponent controls could produce\", which can whiff or miss colors you actually need."
+  },
+  {
+   "role": "ramp",
+   "out": "Dimir Signet",
+   "in": "Talisman of Dominance",
+   "source": "player",
+   "label": "weak",
+   "differs": [
+    "cost",
+    "amount"
+   ],
+   "priorAgree": null,
+   "why": "Dimir Signet pays {1} to get both colors at once, while the Talisman taps for colorless free or one color for \"1 damage to you\", a different cost/amount tradeoff for the same color pair."
+  },
+  {
+   "role": "draw",
+   "out": "Sign in Blood",
+   "in": "Night's Whisper",
+   "source": "player",
+   "label": "weak",
+   "differs": [
+    "recipient"
+   ],
+   "priorAgree": null,
+   "why": "Sign in Blood can target any player (\"Target player draws two cards\"), while Night's Whisper is locked to \"You draw two cards\", a real loss of flexibility."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Generous Gift",
+   "in": "Beast Within",
+   "source": "player",
+   "label": "same",
+   "differs": [],
+   "priorAgree": null,
+   "why": "Both destroy target permanent and give a 3/3 token back; only the token's creature type (Elephant vs Beast) differs."
+  },
+  {
+   "role": "protection",
+   "out": "Swiftfoot Boots",
+   "in": "Lightning Greaves",
+   "source": "player",
+   "label": "weak",
+   "differs": [
+    "keywords",
+    "cost"
+   ],
+   "priorAgree": null,
+   "why": "Hexproof still allows the controller to target their own creature while \"shroud\" on Greaves blocks that too, plus equip {1} versus equip {0}."
+  },
+  {
+   "role": "stackInteraction",
+   "out": "Counterspell",
+   "in": "Mana Drain",
+   "source": "player",
+   "label": "same",
+   "differs": [],
+   "priorAgree": null,
+   "why": "Both \"Counter target spell\" for {U}{U}; Mana Drain's bonus mana next main phase is pure upside on an identical core effect."
+  },
+  {
+   "role": "targetedRemoval",
+   "out": "Doom Blade",
+   "in": "Go for the Throat",
+   "source": "player",
+   "label": "weak",
+   "differs": [
+    "whatItHits"
+   ],
+   "priorAgree": null,
+   "why": "\"Target nonblack creature\" and \"target nonartifact creature\" exclude different creature pools, so each misses things the other would hit."
+  },
+  {
+   "role": "ramp",
+   "out": "Rampant Growth",
+   "in": "Nature's Lore",
+   "source": "player",
+   "label": "weak",
+   "differs": [
+    "effect",
+    "whatItHits"
+   ],
+   "priorAgree": null,
+   "why": "Nature's Lore can grab any \"Forest card\" (including nonbasic Forests) and puts it in untapped, while Rampant Growth is limited to a basic land entering tapped."
+  }
+ ]
+}

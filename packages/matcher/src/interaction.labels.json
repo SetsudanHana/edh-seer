@@ -1,0 +1,3126 @@
+{
+ "about": "Interaction ground truth: 200 cards (the review's probe list, the most frequent interaction cards over the 71 calibration decks and 197 precons, staples, and non-interaction controls), each with what it answers.",
+ "gate": "docs/plans/2026-10-04-interaction-demand.md task 1: precision and recall per kind for answersOf against these labels",
+ "status": "DRAFT: first reader only. Labelled 2026-10-04 from corpus oracle text (five labellers, one pass by the session that built them, rubric in the file). Not a gate until a second reader (the owner) has checked it.",
+ "firstReader": "claude, 2026-10-04",
+ "secondReader": null,
+ "rubric": "# Interaction labels: rubric\n\nYou label Magic: The Gathering cards for a Commander (EDH, 4-player) deck tool. For each card decide\nwhether it is INTERACTION (it stops, removes, neutralises or protects against what OPPONENTS do), and\nwhat it answers. Read ONLY the oracle text, type line and mana cost given. NEVER use memory of what a\ncard does; if the text does not say it, it is not there. Reminder text in parentheses counts.\n\nOutput one JSON object per card, in input order, with exactly these fields:\n\n- `name`: as given.\n- `interaction`: `\"yes\"`, `\"no\"`, or `\"ruling\"`.\n  - `\"ruling\"` ONLY for the three open owner questions: discard (Thoughtseize), theft/steal (Control\n    Magic), static shut-offs and hate permanents (Torpor Orb, Null Rod, Rest in Peace, Grafdigger's\n    Cage, Blood Moon, Drannith Magistrate). Still fill `kinds`/`answers` for them.\n  - A card whose ONLY \"protection\" is for itself (hexproof while untapped, indestructible itself) is\n    `\"no\"`: self-protection is not interaction.\n  - Pure ramp/draw/value cards are `\"no\"`.\n- `kinds`: array from this closed list (empty if `\"no\"`):\n  `destroy`, `exile`, `bounce` (to hand), `tuck` (to library), `edict` (a player sacrifices of their\n  choice), `damage` (deals damage to a creature/planeswalker/battle), `minus` (-N/-N or -X/-X),\n  `neutralise` (Aura/transform/loses abilities/becomes a vanilla token, permanent stays), `steal`,\n  `counter` (counter a spell or ability), `redirect` (change targets / copy-steal a spell),\n  `shut-off` (static or activated effect that stops a class of things), `protect` (grants your\n  permanents/you protection: hexproof, indestructible, protection from, phase out, shroud),\n  `discard` (opponent discards), `graveyard-exile` (exiles cards from graveyards), `tax` (they must\n  pay, e.g. Ghostly Prison), `wipe` is NOT a kind: a wipe is `destroy`/`exile`/... with scope `all`.\n- `answers`: array of what it can remove or stop, from: `creature`, `artifact`, `enchantment`,\n  `planeswalker`, `land`, `battle`, `permanent` (any nonland/any permanent: list `permanent` AND the\n  types), `spell`, `noncreature-spell`, `creature-spell`, `instant-sorcery-spell`, `ability`\n  (activated or triggered), `graveyard`, `hand`, `attackers`. For `protect`: what it protects, from:\n  `your-creatures`, `your-permanents`, `one-creature`, `you` (the player), `your-commander`.\n- `scope`: `target`, `all` (every matching permanent, a wipe), `each-opponent`, `choice` (opponent\n  picks, edict), `self`, `static`, or `null`.\n- `oneSided`: true if it only hits opponents' things (or only protects yours), false if symmetric\n  (Wrath hits yours too), null if not applicable.\n- `conditions`: a short quote of any condition that limits it (\"if no mana was spent to cast it\",\n  \"nonblack\", \"with mana value 3 or less\", \"unless its controller pays {2}\", \"two permanents with the\n  same name\"), or null.\n- `givesBack`: a short quote if the opponent gets something (a token, a land, life, card, a free\n  spell), or null.\n- `why`: ONE sentence, quoting the decisive words of the oracle text.\n\nWrite the array of objects to the output file given to you as JSON (no comments, no trailing text).\n",
+ "cards": [
+  {
+   "name": "Fleshbag Marauder",
+   "interaction": "yes",
+   "kinds": [
+    "edict"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "choice",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"each player sacrifices a creature of their choice\" hits the caster too, so it is symmetric."
+  },
+  {
+   "name": "Grave Pact",
+   "interaction": "yes",
+   "kinds": [
+    "edict"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "choice",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"each other player sacrifices a creature of their choice\"."
+  },
+  {
+   "name": "Dictate of Erebos",
+   "interaction": "yes",
+   "kinds": [
+    "edict"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "choice",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"each opponent sacrifices a creature of their choice\"."
+  },
+  {
+   "name": "Control Magic",
+   "interaction": "ruling",
+   "kinds": [
+    "steal"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"You control enchanted creature.\""
+  },
+  {
+   "name": "Treachery",
+   "interaction": "ruling",
+   "kinds": [
+    "steal"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"You control enchanted creature.\""
+  },
+  {
+   "name": "Gilded Drake",
+   "interaction": "ruling",
+   "kinds": [
+    "steal"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "\"exchange control of this creature and up to one target creature an opponent controls\"",
+   "why": "\"exchange control of this creature and up to one target creature an opponent controls\"."
+  },
+  {
+   "name": "Sower of Temptation",
+   "interaction": "ruling",
+   "kinds": [
+    "steal"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "\"for as long as this creature remains on the battlefield\"",
+   "givesBack": null,
+   "why": "\"gain control of target creature for as long as this creature remains on the battlefield\"."
+  },
+  {
+   "name": "Agent of Treachery",
+   "interaction": "ruling",
+   "kinds": [
+    "steal"
+   ],
+   "answers": [
+    "permanent"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"gain control of target permanent\"."
+  },
+  {
+   "name": "Torpor Orb",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "ability"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Creatures entering don't cause abilities to trigger.\""
+  },
+  {
+   "name": "Null Rod",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "ability"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Activated abilities of artifacts can't be activated.\""
+  },
+  {
+   "name": "Cursed Totem",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "ability"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Activated abilities of creatures can't be activated.\""
+  },
+  {
+   "name": "Containment Priest",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off",
+    "exile"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": "\"and it wasn't cast\"",
+   "givesBack": null,
+   "why": "\"If a nontoken creature would enter and it wasn't cast, exile it instead.\""
+  },
+  {
+   "name": "Linvala, Keeper of Silence",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "ability"
+   ],
+   "scope": "each-opponent",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Activated abilities of creatures your opponents control can't be activated.\""
+  },
+  {
+   "name": "Drannith Magistrate",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "each-opponent",
+   "oneSided": true,
+   "conditions": "\"from anywhere other than their hands\"",
+   "givesBack": null,
+   "why": "\"Your opponents can't cast spells from anywhere other than their hands.\""
+  },
+  {
+   "name": "Opposition Agent",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off",
+    "steal"
+   ],
+   "answers": [
+    "ability"
+   ],
+   "scope": "each-opponent",
+   "oneSided": true,
+   "conditions": "\"while they're searching their libraries\"",
+   "givesBack": null,
+   "why": "\"You control your opponents while they're searching their libraries... they exile each card they find.\""
+  },
+  {
+   "name": "Aven Mindcensor",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "ability"
+   ],
+   "scope": "each-opponent",
+   "oneSided": true,
+   "conditions": "\"searches the top four cards of that library instead\"",
+   "givesBack": null,
+   "why": "\"that player searches the top four cards of that library instead\"."
+  },
+  {
+   "name": "Collector Ouphe",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "ability"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Activated abilities of artifacts can't be activated.\""
+  },
+  {
+   "name": "Dauthi Voidwalker",
+   "interaction": "ruling",
+   "kinds": [
+    "graveyard-exile"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "each-opponent",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"If a card would be put into an opponent's graveyard from anywhere, instead exile it with a void counter on it.\""
+  },
+  {
+   "name": "Pithing Needle",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "ability"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": "\"unless they're mana abilities\"",
+   "givesBack": null,
+   "why": "\"Activated abilities of sources with the chosen name can't be activated unless they're mana abilities.\""
+  },
+  {
+   "name": "Sorcerous Spyglass",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "ability"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": "\"unless they're mana abilities\"",
+   "givesBack": null,
+   "why": "\"Activated abilities of sources with the chosen name can't be activated unless they're mana abilities.\""
+  },
+  {
+   "name": "Blood Moon",
+   "interaction": "ruling",
+   "kinds": [
+    "neutralise"
+   ],
+   "answers": [
+    "land"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Nonbasic lands are Mountains.\""
+  },
+  {
+   "name": "Humility",
+   "interaction": "ruling",
+   "kinds": [
+    "neutralise"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"All creatures lose all abilities and have base power and toughness 1/1.\""
+  },
+  {
+   "name": "Grafdigger's Cage",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Creature cards in graveyards and libraries can't enter the battlefield. Players can't cast spells from graveyards or libraries.\""
+  },
+  {
+   "name": "Thalia, Guardian of Thraben",
+   "interaction": "ruling",
+   "kinds": [
+    "tax"
+   ],
+   "answers": [
+    "noncreature-spell"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Noncreature spells cost {1} more to cast\" taxes every player, including its controller."
+  },
+  {
+   "name": "Winter Orb",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "land"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"players can't untap more than one land during their untap steps\"."
+  },
+  {
+   "name": "Oko, Thief of Crowns",
+   "interaction": "ruling",
+   "kinds": [
+    "neutralise",
+    "steal"
+   ],
+   "answers": [
+    "creature",
+    "artifact"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "\"with power 3 or less\"",
+   "givesBack": "\"target artifact or creature you control\" is given up in the exchange",
+   "why": "+1 turns a permanent into a vanilla 3/3 Elk; -5 exchanges control of your permanent for an opponent's creature with power 3 or less."
+  },
+  {
+   "name": "Song of the Dryads",
+   "interaction": "yes",
+   "kinds": [
+    "neutralise"
+   ],
+   "answers": [
+    "permanent"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Enchanted permanent is a colorless Forest land\", stripping its prior types and abilities."
+  },
+  {
+   "name": "Terminus",
+   "interaction": "yes",
+   "kinds": [
+    "tuck"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Put all creatures on the bottom of their owners' libraries.\""
+  },
+  {
+   "name": "Hallowed Burial",
+   "interaction": "yes",
+   "kinds": [
+    "tuck"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Put all creatures on the bottom of their owners' libraries.\""
+  },
+  {
+   "name": "Silence",
+   "interaction": "yes",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "each-opponent",
+   "oneSided": true,
+   "conditions": "\"this turn\"",
+   "givesBack": null,
+   "why": "\"Your opponents can't cast spells this turn.\""
+  },
+  {
+   "name": "Grand Abolisher",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off"
+   ],
+   "answers": [
+    "spell",
+    "ability"
+   ],
+   "scope": "each-opponent",
+   "oneSided": true,
+   "conditions": "\"During your turn\"",
+   "givesBack": null,
+   "why": "\"your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\" during your turn."
+  },
+  {
+   "name": "Teferi, Time Raveler",
+   "interaction": "ruling",
+   "kinds": [
+    "shut-off",
+    "bounce"
+   ],
+   "answers": [
+    "spell",
+    "artifact",
+    "creature",
+    "enchantment"
+   ],
+   "scope": "each-opponent",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Static: \"Each opponent can cast spells only any time they could cast a sorcery\"; -3 also bounces a permanent and draws a card."
+  },
+  {
+   "name": "Mindbreak Trap",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Exile any number of target spells\" removes them from the stack before they resolve."
+  },
+  {
+   "name": "Narset's Reversal",
+   "interaction": "yes",
+   "kinds": [
+    "redirect"
+   ],
+   "answers": [
+    "instant-sorcery-spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "\"return it to its owner's hand\"",
+   "why": "\"Copy target instant or sorcery spell, then return it to its owner's hand\", taking the original off the stack."
+  },
+  {
+   "name": "Deflecting Palm",
+   "interaction": "yes",
+   "kinds": [
+    "protect",
+    "redirect"
+   ],
+   "answers": [
+    "you"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "\"this turn\"",
+   "givesBack": null,
+   "why": "\"prevent that damage\" to you and \"deals that much damage to that source's controller\" instead."
+  },
+  {
+   "name": "Comeuppance",
+   "interaction": "yes",
+   "kinds": [
+    "protect",
+    "damage"
+   ],
+   "answers": [
+    "you"
+   ],
+   "scope": "all",
+   "oneSided": true,
+   "conditions": "\"by sources you don't control\"",
+   "givesBack": null,
+   "why": "\"Prevent all damage that would be dealt to you and planeswalkers you control this turn\" and reflects it to the source/controller."
+  },
+  {
+   "name": "Paradise Druid",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"This creature has hexproof as long as it's untapped\" protects only itself, which is not interaction."
+  },
+  {
+   "name": "Fleecemane Lion",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"it has hexproof and indestructible\" while monstrous protects only itself."
+  },
+  {
+   "name": "Shimmer Dragon",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"this creature has hexproof\" protects only itself."
+  },
+  {
+   "name": "Yahenni, Undying Partisan",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Yahenni gains indestructible until end of turn\" protects only itself."
+  },
+  {
+   "name": "Jareth, Leonine Titan",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Jareth gains protection from the color of your choice\" protects only itself."
+  },
+  {
+   "name": "Anya, Merciless Angel",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Anya has indestructible\" protects only itself."
+  },
+  {
+   "name": "Darksteel Mutation",
+   "interaction": "yes",
+   "kinds": [
+    "neutralise"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Enchanted creature becomes a 0/1 and \"loses all other abilities, card types, and creature types.\""
+  },
+  {
+   "name": "Oubliette",
+   "interaction": "yes",
+   "kinds": [
+    "phase-out"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "\"until this enchantment leaves the battlefield\"",
+   "givesBack": null,
+   "why": "\"target creature phases out\", removing it from the game for as long as Oubliette stays in play."
+  },
+  {
+   "name": "Riptide Laboratory",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Return target Wizard you control to its owner's hand\" only ever targets your own creature."
+  },
+  {
+   "name": "Imprisoned in the Moon",
+   "interaction": "yes",
+   "kinds": [
+    "neutralise"
+   ],
+   "answers": [
+    "creature",
+    "land",
+    "planeswalker"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Enchanted permanent \"loses all other card types and abilities\", becoming an inert land."
+  },
+  {
+   "name": "Wrath of God",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy all creatures. They can't be regenerated.\""
+  },
+  {
+   "name": "Damnation",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy all creatures. They can't be regenerated.\""
+  },
+  {
+   "name": "Supreme Verdict",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy all creatures.\""
+  },
+  {
+   "name": "Toxic Deluge",
+   "interaction": "yes",
+   "kinds": [
+    "minus"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "\"pay X life\"",
+   "givesBack": null,
+   "why": "\"All creatures get -X/-X until end of turn\", scaled by the X life paid."
+  },
+  {
+   "name": "Blasphemous Act",
+   "interaction": "yes",
+   "kinds": [
+    "damage"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Blasphemous Act deals 13 damage to each creature."
+  },
+  {
+   "name": "Farewell",
+   "interaction": "yes",
+   "kinds": [
+    "exile",
+    "graveyard-exile"
+   ],
+   "answers": [
+    "artifact",
+    "creature",
+    "enchantment",
+    "graveyard"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Choose one or more — Exile all artifacts / creatures / enchantments / graveyards."
+  },
+  {
+   "name": "Austere Command",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "artifact",
+    "enchantment",
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "mana value 3 or less / mana value 4 or greater",
+   "givesBack": null,
+   "why": "Choose two — Destroy all artifacts / enchantments / creatures with mana value 3 or less / 4 or greater."
+  },
+  {
+   "name": "Merciless Eviction",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "artifact",
+    "creature",
+    "enchantment",
+    "planeswalker"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Choose one — Exile all artifacts / creatures / enchantments / planeswalkers."
+  },
+  {
+   "name": "Cyclonic Rift",
+   "interaction": "yes",
+   "kinds": [
+    "bounce"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Return target nonland permanent you don't control to its owner's hand."
+  },
+  {
+   "name": "Arcane Denial",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "Its controller may draw up to two cards at the beginning of the next turn's upkeep.",
+   "why": "Counter target spell."
+  },
+  {
+   "name": "An Offer You Can't Refuse",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "noncreature-spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "Its controller creates two Treasure tokens.",
+   "why": "Counter target noncreature spell."
+  },
+  {
+   "name": "Deflecting Swat",
+   "interaction": "yes",
+   "kinds": [
+    "redirect"
+   ],
+   "answers": [
+    "spell",
+    "ability"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "You may choose new targets for target spell or ability."
+  },
+  {
+   "name": "Swan Song",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "enchantment",
+    "instant-sorcery-spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "Its controller creates a 2/2 blue Bird creature token with flying.",
+   "why": "Counter target enchantment, instant, or sorcery spell."
+  },
+  {
+   "name": "Fierce Guardianship",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "noncreature-spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Counter target noncreature spell."
+  },
+  {
+   "name": "Lightning Greaves",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "one-creature"
+   ],
+   "scope": "static",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Equipped creature has haste and shroud."
+  },
+  {
+   "name": "Swiftfoot Boots",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "one-creature"
+   ],
+   "scope": "static",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Equipped creature has hexproof and haste."
+  },
+  {
+   "name": "Heroic Intervention",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "your-permanents"
+   ],
+   "scope": "all",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Permanents you control gain hexproof and indestructible until end of turn."
+  },
+  {
+   "name": "Nix",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "if no mana was spent to cast it",
+   "givesBack": null,
+   "why": "Counter target spell if no mana was spent to cast it."
+  },
+  {
+   "name": "Winnow",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "if another permanent with the same name is on the battlefield",
+   "givesBack": null,
+   "why": "Destroy target nonland permanent if another permanent with the same name is on the battlefield."
+  },
+  {
+   "name": "Spell Stutter",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "unless its controller pays {2} plus an additional {1} for each Faerie you control",
+   "givesBack": null,
+   "why": "Counter target spell unless its controller pays {2} plus an additional {1} for each Faerie you control."
+  },
+  {
+   "name": "Counterspell",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Counter target spell."
+  },
+  {
+   "name": "Force of Will",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Counter target spell."
+  },
+  {
+   "name": "Teferi's Protection",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "you",
+    "your-permanents"
+   ],
+   "scope": "self",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "You gain protection from everything. All permanents you control phase out."
+  },
+  {
+   "name": "Rest in Peace",
+   "interaction": "ruling",
+   "kinds": [
+    "graveyard-exile",
+    "shut-off"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "static",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "If a card or token would be put into a graveyard from anywhere, exile it instead."
+  },
+  {
+   "name": "Strip Mine",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "land"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Sacrifice this land: Destroy target land."
+  },
+  {
+   "name": "Vandalblast",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "artifact"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Destroy target artifact you don't control."
+  },
+  {
+   "name": "Anguished Unmaking",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Exile target nonland permanent."
+  },
+  {
+   "name": "Assassin's Trophy",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "land",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "Its controller may search their library for a basic land card, put it onto the battlefield.",
+   "why": "Destroy target permanent an opponent controls."
+  },
+  {
+   "name": "Generous Gift",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "land",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "Its controller creates a 3/3 green Elephant creature token.",
+   "why": "Destroy target permanent."
+  },
+  {
+   "name": "Krosan Grip",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "artifact",
+    "enchantment"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Destroy target artifact or enchantment."
+  },
+  {
+   "name": "Nature's Claim",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "artifact",
+    "enchantment"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "Its controller gains 4 life.",
+   "why": "Destroy target artifact or enchantment."
+  },
+  {
+   "name": "Abrupt Decay",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "with mana value 3 or less",
+   "givesBack": null,
+   "why": "Destroy target nonland permanent with mana value 3 or less."
+  },
+  {
+   "name": "Mana Drain",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Counter target spell."
+  },
+  {
+   "name": "Negate",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "noncreature-spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Counter target noncreature spell."
+  },
+  {
+   "name": "Dovin's Veto",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "noncreature-spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Counter target noncreature spell."
+  },
+  {
+   "name": "Pact of Negation",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Counter target spell."
+  },
+  {
+   "name": "Flusterstorm",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "instant-sorcery-spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "unless its controller pays {1}",
+   "givesBack": null,
+   "why": "Counter target instant or sorcery spell unless its controller pays {1}."
+  },
+  {
+   "name": "Tormod's Crypt",
+   "interaction": "yes",
+   "kinds": [
+    "graveyard-exile"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Sacrifice this artifact: Exile target player's graveyard."
+  },
+  {
+   "name": "Bojuka Bog",
+   "interaction": "yes",
+   "kinds": [
+    "graveyard-exile"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "When this land enters, exile target player's graveyard."
+  },
+  {
+   "name": "Relic of Progenitus",
+   "interaction": "yes",
+   "kinds": [
+    "graveyard-exile"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Exile this artifact: Exile all graveyards."
+  },
+  {
+   "name": "Vanquish the Horde",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Destroy all creatures."
+  },
+  {
+   "name": "Feed the Swarm",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature",
+    "enchantment"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Destroy target creature or enchantment an opponent controls."
+  },
+  {
+   "name": "Pongify",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "Its controller creates a 3/3 green Ape creature token.",
+   "why": "Destroy target creature. It can't be regenerated."
+  },
+  {
+   "name": "Rapid Hybridization",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "That creature's controller creates a 3/3 green Frog Lizard creature token.",
+   "why": "Destroy target creature. It can't be regenerated."
+  },
+  {
+   "name": "Reality Shift",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "Its controller manifests the top card of their library.",
+   "why": "Exile target creature."
+  },
+  {
+   "name": "Beast Within",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "land",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "Its controller creates a 3/3 green Beast creature token.",
+   "why": "Destroy target permanent."
+  },
+  {
+   "name": "Chaos Warp",
+   "interaction": "yes",
+   "kinds": [
+    "tuck"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "land",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "Reveals the top card of their library. If it's a permanent card, they put it onto the battlefield.",
+   "why": "The owner of target permanent shuffles it into their library."
+  },
+  {
+   "name": "Thoughtseize",
+   "interaction": "ruling",
+   "kinds": [
+    "discard"
+   ],
+   "answers": [
+    "hand"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "nonland card",
+   "givesBack": null,
+   "why": "You choose a nonland card from it. That player discards that card."
+  },
+  {
+   "name": "Duress",
+   "interaction": "ruling",
+   "kinds": [
+    "discard"
+   ],
+   "answers": [
+    "hand"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "noncreature, nonland card",
+   "givesBack": null,
+   "why": "You choose a noncreature, nonland card from it. That player discards that card."
+  },
+  {
+   "name": "Mana Leak",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "unless its controller pays {3}",
+   "givesBack": null,
+   "why": "Counter target spell unless its controller pays {3}."
+  },
+  {
+   "name": "Stern Scolding",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "creature-spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "with power or toughness 2 or less",
+   "givesBack": null,
+   "why": "Counter target creature spell with power or toughness 2 or less."
+  },
+  {
+   "name": "Flawless Maneuver",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "your-creatures"
+   ],
+   "scope": "all",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Creatures you control gain indestructible until end of turn."
+  },
+  {
+   "name": "Boros Charm",
+   "interaction": "yes",
+   "kinds": [
+    "damage",
+    "protect"
+   ],
+   "answers": [
+    "planeswalker",
+    "your-permanents"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Boros Charm deals 4 damage to target player or planeswalker. / Permanents you control gain indestructible until end of turn."
+  },
+  {
+   "name": "Tamiyo's Safekeeping",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "one-creature"
+   ],
+   "scope": "target",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Target permanent you control gains hexproof and indestructible until end of turn."
+  },
+  {
+   "name": "Snakeskin Veil",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "one-creature"
+   ],
+   "scope": "target",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"It gains hexproof until end of turn\" protects your targeted creature from opponents' spells and abilities."
+  },
+  {
+   "name": "Wear // Tear",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "artifact",
+    "enchantment"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target artifact\" / \"Destroy target enchantment\"."
+  },
+  {
+   "name": "Dismember",
+   "interaction": "yes",
+   "kinds": [
+    "minus"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Target creature gets -5/-5 until end of turn.\""
+  },
+  {
+   "name": "Infernal Grasp",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target creature.\""
+  },
+  {
+   "name": "Kenrith's Transformation",
+   "interaction": "yes",
+   "kinds": [
+    "neutralise"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Enchanted creature loses all abilities and is a green Elk creature with base power and toughness 3/3.\""
+  },
+  {
+   "name": "Lignify",
+   "interaction": "yes",
+   "kinds": [
+    "neutralise"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Enchanted creature is a Treefolk with base power and toughness 0/4 and loses all abilities.\""
+  },
+  {
+   "name": "Kozilek's Return",
+   "interaction": "yes",
+   "kinds": [
+    "damage"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Kozilek's Return deals 2 damage to each creature.\""
+  },
+  {
+   "name": "Settle the Wreckage",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "creature",
+    "attackers"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "\"That player may search their library for that many basic land cards, put those cards onto the battlefield tapped\"",
+   "why": "\"Exile all attacking creatures target player controls.\""
+  },
+  {
+   "name": "Fire Covenant",
+   "interaction": "yes",
+   "kinds": [
+    "damage"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Fire Covenant deals X damage divided as you choose among any number of target creatures.\""
+  },
+  {
+   "name": "Vindicate",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "land",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target permanent.\""
+  },
+  {
+   "name": "Council's Judgment",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "choice",
+   "oneSided": null,
+   "conditions": "\"a nonland permanent you don't control\"",
+   "givesBack": null,
+   "why": "\"Exile each permanent with the most votes or tied for most votes,\" voted from permanents you don't control."
+  },
+  {
+   "name": "Prismatic Ending",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "\"if its mana value is less than or equal to the number of colors of mana spent to cast this spell\"",
+   "givesBack": null,
+   "why": "\"Exile target nonland permanent if its mana value is less than or equal to...\""
+  },
+  {
+   "name": "Evacuation",
+   "interaction": "yes",
+   "kinds": [
+    "bounce"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Return all creatures to their owners' hands.\""
+  },
+  {
+   "name": "Mother of Runes",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "one-creature"
+   ],
+   "scope": "target",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Target creature you control gains protection from the color of your choice until end of turn.\""
+  },
+  {
+   "name": "Ghostly Prison",
+   "interaction": "yes",
+   "kinds": [
+    "tax"
+   ],
+   "answers": [
+    "attackers"
+   ],
+   "scope": "static",
+   "oneSided": true,
+   "conditions": "\"unless their controller pays {2} for each creature they control that's attacking you\"",
+   "givesBack": null,
+   "why": "\"Creatures can't attack you unless their controller pays {2}\" for each attacker."
+  },
+  {
+   "name": "Swords to Plowshares",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "\"Its controller gains life equal to its power.\"",
+   "why": "\"Exile target creature.\""
+  },
+  {
+   "name": "Path to Exile",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "\"Its controller may search their library for a basic land card, put that card onto the battlefield tapped\"",
+   "why": "\"Exile target creature.\""
+  },
+  {
+   "name": "Sol Ring",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"{T}: Add {C}{C}\" is pure mana ramp, not interaction."
+  },
+  {
+   "name": "Rhystic Study",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": "\"unless that player pays {1}\"",
+   "givesBack": null,
+   "why": "\"Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.\""
+  },
+  {
+   "name": "Cultivate",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Searches and ramps lands for yourself; does nothing to opponents."
+  },
+  {
+   "name": "Smothering Tithe",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": "\"that player may pay {2}\"",
+   "givesBack": null,
+   "why": "\"Whenever an opponent draws a card, that player may pay {2}\" or you get a Treasure, taxing their draws."
+  },
+  {
+   "name": "Esper Sentinel",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": "\"their first noncreature spell each turn\"",
+   "givesBack": null,
+   "why": "\"Draw a card unless that player pays {X}\" taxes an opponent's first noncreature spell each turn."
+  },
+  {
+   "name": "Llanowar Elves",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"{T}: Add {G}\" is pure mana ramp."
+  },
+  {
+   "name": "Fell the Profane // Fell Mire",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature",
+    "planeswalker"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target creature or planeswalker.\""
+  },
+  {
+   "name": "Sink into Stupor // Soporific Springs",
+   "interaction": "yes",
+   "kinds": [
+    "bounce"
+   ],
+   "answers": [
+    "spell",
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "\"an opponent controls\"",
+   "givesBack": null,
+   "why": "\"Return target spell or nonland permanent an opponent controls to its owner's hand.\""
+  },
+  {
+   "name": "Scavenger Grounds",
+   "interaction": "yes",
+   "kinds": [
+    "graveyard-exile"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Exile all graveyards.\""
+  },
+  {
+   "name": "Demolition Field",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "land"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "\"nonbasic land an opponent controls\"",
+   "givesBack": "\"That land's controller may search their library for a basic land card, put it onto the battlefield\"",
+   "why": "\"Destroy target nonbasic land an opponent controls.\""
+  },
+  {
+   "name": "Otawara, Soaring City",
+   "interaction": "yes",
+   "kinds": [
+    "bounce"
+   ],
+   "answers": [
+    "artifact",
+    "creature",
+    "enchantment",
+    "planeswalker"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Return target artifact, creature, enchantment, or planeswalker to its owner's hand.\""
+  },
+  {
+   "name": "Deadly Rollick",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Exile target creature.\""
+  },
+  {
+   "name": "Withering Torment",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature",
+    "enchantment"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target creature or enchantment.\""
+  },
+  {
+   "name": "Sundering Eruption // Volcanic Fissure",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "land"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "\"Its controller may search their library for a basic land card, put it onto the battlefield tapped\"",
+   "why": "\"Destroy target land.\" (also makes non-flying creatures unable to block this turn.)"
+  },
+  {
+   "name": "Rakdos Charm",
+   "interaction": "yes",
+   "kinds": [
+    "graveyard-exile",
+    "destroy"
+   ],
+   "answers": [
+    "graveyard",
+    "artifact"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Exile target player's graveyard\" or \"Destroy target artifact\" (third mode, creatures pinging their controllers, isn't a listed kind)."
+  },
+  {
+   "name": "Aetherize",
+   "interaction": "yes",
+   "kinds": [
+    "bounce"
+   ],
+   "answers": [
+    "creature",
+    "attackers"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Return all attacking creatures to their owner's hand.\""
+  },
+  {
+   "name": "Putrefy",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "artifact",
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target artifact or creature.\""
+  },
+  {
+   "name": "Mortify",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature",
+    "enchantment"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target creature or enchantment.\""
+  },
+  {
+   "name": "Chain Reaction",
+   "interaction": "yes",
+   "kinds": [
+    "damage"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Chain Reaction deals X damage to each creature.\""
+  },
+  {
+   "name": "Acidic Slime",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "artifact",
+    "enchantment",
+    "land"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"When this creature enters, destroy target artifact, enchantment, or land.\""
+  },
+  {
+   "name": "Terminate",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target creature.\""
+  },
+  {
+   "name": "Meteor Golem",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "\"an opponent controls\"",
+   "givesBack": null,
+   "why": "\"When this creature enters, destroy target nonland permanent an opponent controls.\""
+  },
+  {
+   "name": "Unstable Obelisk",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "land",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target permanent.\""
+  },
+  {
+   "name": "Steel Hellkite",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "all",
+   "oneSided": true,
+   "conditions": "\"whose controller was dealt combat damage by this creature this turn\"",
+   "givesBack": null,
+   "why": "\"Destroy each nonland permanent with mana value X whose controller was dealt combat damage by this creature this turn.\""
+  },
+  {
+   "name": "Return to Dust",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "artifact",
+    "enchantment"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "\"If you cast this spell during your main phase\" (for the second target)",
+   "givesBack": null,
+   "why": "\"Exile target artifact or enchantment,\" possibly a second one in your main phase."
+  },
+  {
+   "name": "Blasphemous Edict",
+   "interaction": "yes",
+   "kinds": [
+    "edict"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Each player sacrifices thirteen creatures of their choice.\""
+  },
+  {
+   "name": "Untimely Malfunction",
+   "interaction": "yes",
+   "kinds": [
+    "destroy",
+    "redirect"
+   ],
+   "answers": [
+    "artifact",
+    "spell",
+    "ability"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "\"a single target\" (for the redirect mode)",
+   "givesBack": null,
+   "why": "\"Destroy target artifact\" or \"Change the target of target spell or ability with a single target\" (the third mode, making creatures unable to block, isn't a listed kind)."
+  },
+  {
+   "name": "Stroke of Midnight",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "\"Its controller creates a 1/1 white Human creature token.\"",
+   "why": "\"Destroy target nonland permanent.\""
+  },
+  {
+   "name": "Martial Coup",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "\"If X is 5 or more\"",
+   "givesBack": null,
+   "why": "\"If X is 5 or more, destroy all other creatures.\""
+  },
+  {
+   "name": "Inspiring Call",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "your-creatures"
+   ],
+   "scope": "self",
+   "oneSided": true,
+   "conditions": "\"for each creature you control with a +1/+1 counter on it\"",
+   "givesBack": null,
+   "why": "\"Those creatures gain indestructible until end of turn\" protects them from opponents' removal."
+  },
+  {
+   "name": "Cleansing Nova",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature",
+    "artifact",
+    "enchantment"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy all creatures\" or \"Destroy all artifacts and enchantments.\""
+  },
+  {
+   "name": "Utter End",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "permanent",
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Exile target nonland permanent.\""
+  },
+  {
+   "name": "Soul-Guide Lantern",
+   "interaction": "yes",
+   "kinds": [
+    "graveyard-exile"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "each-opponent",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Exile each opponent's graveyard\" (also exiles one target card from a graveyard on entry)."
+  },
+  {
+   "name": "Hour of Reckoning",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "nontoken creatures",
+   "givesBack": null,
+   "why": "\"Destroy all nontoken creatures.\" wipes every nontoken creature, yours included."
+  },
+  {
+   "name": "Crib Swap",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "creates a 1/1 colorless Shapeshifter creature token",
+   "why": "\"Exile target creature.\" removes an opposing creature outright."
+  },
+  {
+   "name": "Angel of the Ruins",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "artifact",
+    "enchantment"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"exile up to two target artifacts and/or enchantments\" on ETB."
+  },
+  {
+   "name": "Resculpt",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "artifact",
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "creates a 4/4 blue and red Elemental creature token",
+   "why": "\"Exile target artifact or creature.\" removes the permanent, though it leaves a 4/4 behind."
+  },
+  {
+   "name": "Mithril Coat",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "one-creature"
+   ],
+   "scope": "target",
+   "oneSided": true,
+   "conditions": "legendary creature you control",
+   "givesBack": null,
+   "why": "\"attach it to target legendary creature you control\" and \"Equipped creature has indestructible\" shields a creature you control from removal."
+  },
+  {
+   "name": "Lethal Scheme",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature",
+    "planeswalker"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target creature or planeswalker.\""
+  },
+  {
+   "name": "Fell the Mighty",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "power greater than target creature's power",
+   "givesBack": null,
+   "why": "\"Destroy all creatures with power greater than target creature's power.\" can hit either side's board."
+  },
+  {
+   "name": "Curse of the Swine",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "its controller creates a 2/2 green Boar creature token",
+   "why": "\"Exile X target creatures.\""
+  },
+  {
+   "name": "Shriekmaw",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "nonartifact, nonblack creature",
+   "givesBack": null,
+   "why": "\"destroy target nonartifact, nonblack creature\" on ETB."
+  },
+  {
+   "name": "Living Death",
+   "interaction": "no",
+   "kinds": [],
+   "answers": [],
+   "scope": null,
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "Creatures are sacrificed but then every exiled creature card \"puts all cards they exiled this way onto the battlefield\", a symmetric reanimation swap rather than removal."
+  },
+  {
+   "name": "Imp's Mischief",
+   "interaction": "yes",
+   "kinds": [
+    "redirect"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "spell with a single target",
+   "givesBack": null,
+   "why": "\"Change the target of target spell with a single target.\" can redirect an opponent's removal or burn."
+  },
+  {
+   "name": "Go for the Throat",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "nonartifact creature",
+   "givesBack": null,
+   "why": "\"Destroy target nonartifact creature.\""
+  },
+  {
+   "name": "Ghost Quarter",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "land"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "its controller may search their library for a basic land card, put it onto the battlefield",
+   "why": "\"Sacrifice this land: Destroy target land.\""
+  },
+  {
+   "name": "Despark",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "permanent"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "mana value 4 or greater",
+   "givesBack": null,
+   "why": "\"Exile target permanent with mana value 4 or greater.\""
+  },
+  {
+   "name": "Decimate",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "artifact",
+    "creature",
+    "enchantment",
+    "land"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target artifact, target creature, target enchantment, and target land.\""
+  },
+  {
+   "name": "Boggart Trawler // Boggart Bog",
+   "interaction": "yes",
+   "kinds": [
+    "graveyard-exile"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"exile target player's graveyard\" on the creature's ETB."
+  },
+  {
+   "name": "Bedevil",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "artifact",
+    "creature",
+    "planeswalker"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy target artifact, creature, or planeswalker.\""
+  },
+  {
+   "name": "Bastion Protector",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "your-commander"
+   ],
+   "scope": "static",
+   "oneSided": true,
+   "conditions": "Commander creatures you control",
+   "givesBack": null,
+   "why": "\"Commander creatures you control ... have indestructible\" shields your commander from removal."
+  },
+  {
+   "name": "Abrade",
+   "interaction": "yes",
+   "kinds": [
+    "damage",
+    "destroy"
+   ],
+   "answers": [
+    "creature",
+    "artifact"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"deals 3 damage to target creature\" or \"Destroy target artifact.\""
+  },
+  {
+   "name": "Unbreakable Formation",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "your-creatures"
+   ],
+   "scope": "all",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Creatures you control gain indestructible until end of turn\" protects your board from a wipe or removal."
+  },
+  {
+   "name": "Time Wipe",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"destroy all creatures\" after bouncing one of your own to spare it."
+  },
+  {
+   "name": "Tibalt's Trickery",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "They may cast that card without paying its mana cost",
+   "why": "\"Counter target spell.\" stops it outright, with a random free-cast consolation for its controller."
+  },
+  {
+   "name": "Terastodon",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "land",
+    "battle"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "noncreature permanents",
+   "givesBack": "its controller creates a 3/3 green Elephant creature token",
+   "why": "\"you may destroy up to three target noncreature permanents\" on ETB."
+  },
+  {
+   "name": "Strix Serenade",
+   "interaction": "yes",
+   "kinds": [
+    "counter"
+   ],
+   "answers": [
+    "creature-spell",
+    "spell"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": "its controller creates a 2/2 blue Bird creature token with flying",
+   "why": "\"Counter target artifact, creature, or planeswalker spell.\""
+  },
+  {
+   "name": "Starstorm",
+   "interaction": "yes",
+   "kinds": [
+    "damage"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"deals X damage to each creature\" is a symmetric board wipe."
+  },
+  {
+   "name": "Soul Snare",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "attacking you or a planeswalker you control",
+   "givesBack": null,
+   "why": "\"Exile target creature that's attacking you or a planeswalker you control.\""
+  },
+  {
+   "name": "Snap",
+   "interaction": "yes",
+   "kinds": [
+    "bounce"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Return target creature to its owner's hand.\""
+  },
+  {
+   "name": "Scavenging Ooze",
+   "interaction": "yes",
+   "kinds": [
+    "graveyard-exile"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Exile target card from a graveyard\" can shut off graveyard strategies, though it is not restricted to opponents' graveyards."
+  },
+  {
+   "name": "Reclamation Sage",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "artifact",
+    "enchantment"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"you may destroy target artifact or enchantment\" on ETB."
+  },
+  {
+   "name": "Noxious Gearhulk",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "another target creature",
+   "givesBack": null,
+   "why": "\"you may destroy another target creature\" on ETB."
+  },
+  {
+   "name": "Magmaquake",
+   "interaction": "yes",
+   "kinds": [
+    "damage"
+   ],
+   "answers": [
+    "creature",
+    "planeswalker"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "without flying",
+   "givesBack": null,
+   "why": "\"deals X damage to each creature without flying and each planeswalker.\""
+  },
+  {
+   "name": "Hullbreaker Horror",
+   "interaction": "yes",
+   "kinds": [
+    "bounce"
+   ],
+   "answers": [
+    "spell",
+    "permanent"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Return target spell you don't control to its owner's hand\" or \"Return target nonland permanent to its owner's hand.\""
+  },
+  {
+   "name": "Espers to Magicite",
+   "interaction": "yes",
+   "kinds": [
+    "graveyard-exile"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "each-opponent",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Exile each opponent's graveyard.\""
+  },
+  {
+   "name": "Dusk // Dawn",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "power 3 or greater",
+   "givesBack": null,
+   "why": "Dusk: \"Destroy all creatures with power 3 or greater.\" (Dawn, cast later from the graveyard, only returns your own small creatures and is not itself interaction.)"
+  },
+  {
+   "name": "Angel of Finality",
+   "interaction": "yes",
+   "kinds": [
+    "graveyard-exile"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"exile target player's graveyard\" on ETB."
+  },
+  {
+   "name": "All Is Dust",
+   "interaction": "yes",
+   "kinds": [
+    "sacrifice"
+   ],
+   "answers": [
+    "artifact",
+    "creature",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "one or more colors",
+   "givesBack": null,
+   "why": "\"Each player sacrifices all permanents they control that are one or more colors\" is a symmetric mass removal effect."
+  },
+  {
+   "name": "Abstergo Entertainment",
+   "interaction": "yes",
+   "kinds": [
+    "graveyard-exile"
+   ],
+   "answers": [
+    "graveyard"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"exile all graveyards\" when the activated ability resolves."
+  },
+  {
+   "name": "Whispersilk Cloak",
+   "interaction": "yes",
+   "kinds": [
+    "protect"
+   ],
+   "answers": [
+    "one-creature"
+   ],
+   "scope": "static",
+   "oneSided": true,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"has shroud\" on the equipped creature keeps it safe from being targeted by opposing spells and abilities."
+  },
+  {
+   "name": "Valorous Stance",
+   "interaction": "yes",
+   "kinds": [
+    "protect",
+    "destroy"
+   ],
+   "answers": [
+    "one-creature",
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "toughness 4 or greater",
+   "givesBack": null,
+   "why": "Choose one: grant \"indestructible\" to a creature, or \"Destroy target creature with toughness 4 or greater.\""
+  },
+  {
+   "name": "Ugin, the Ineffable",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "one or more colors",
+   "givesBack": null,
+   "why": "\"−3: Destroy target permanent that's one or more colors.\""
+  },
+  {
+   "name": "Tragic Arrogance",
+   "interaction": "yes",
+   "kinds": [
+    "sacrifice"
+   ],
+   "answers": [
+    "artifact",
+    "creature",
+    "enchantment",
+    "planeswalker"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "each player keeps only the one chosen artifact, creature, enchantment, and planeswalker",
+   "givesBack": null,
+   "why": "\"each player sacrifices all other nonland permanents they control\" after you pick what each player is allowed to keep."
+  },
+  {
+   "name": "Sylvan Reclamation",
+   "interaction": "yes",
+   "kinds": [
+    "exile"
+   ],
+   "answers": [
+    "artifact",
+    "enchantment"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Exile up to two target artifacts and/or enchantments.\""
+  },
+  {
+   "name": "Spine of Ish Sah",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "permanent"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"destroy target permanent\" on ETB, with no restriction to opponents' permanents."
+  },
+  {
+   "name": "Snuff Out",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "target",
+   "oneSided": null,
+   "conditions": "nonblack creature",
+   "givesBack": null,
+   "why": "\"Destroy target nonblack creature. It can't be regenerated.\""
+  },
+  {
+   "name": "Raise the Palisade",
+   "interaction": "yes",
+   "kinds": [
+    "bounce"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "aren't of the chosen creature type",
+   "givesBack": null,
+   "why": "\"Return all creatures that aren't of the chosen type to their owners' hands.\""
+  },
+  {
+   "name": "Perplexing Test",
+   "interaction": "yes",
+   "kinds": [
+    "bounce"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "creature tokens, or nontoken creatures",
+   "givesBack": null,
+   "why": "\"Return all creature tokens to their owners' hands\" or \"Return all nontoken creatures to their owners' hands.\""
+  },
+  {
+   "name": "Necromantic Selection",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy all creatures\" before reanimating one of them under your control."
+  },
+  {
+   "name": "Kindred Dominance",
+   "interaction": "yes",
+   "kinds": [
+    "destroy"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": "aren't of the chosen creature type",
+   "givesBack": null,
+   "why": "\"Destroy all creatures that aren't of the chosen type.\""
+  },
+  {
+   "name": "Delayed Blast Fireball",
+   "interaction": "yes",
+   "kinds": [
+    "damage"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "each-opponent",
+   "oneSided": true,
+   "conditions": "If this spell was cast from exile, it deals 5 damage instead",
+   "givesBack": null,
+   "why": "\"deals 2 damage to each opponent and each creature they control\" only hits opposing players and their boards."
+  },
+  {
+   "name": "Decree of Pain",
+   "interaction": "yes",
+   "kinds": [
+    "destroy",
+    "minus"
+   ],
+   "answers": [
+    "creature"
+   ],
+   "scope": "all",
+   "oneSided": false,
+   "conditions": null,
+   "givesBack": null,
+   "why": "\"Destroy all creatures. They can't be regenerated.\" (cycling instead gives \"all creatures get -2/-2\")."
+  }
+ ]
+}
