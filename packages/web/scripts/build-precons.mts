@@ -9,8 +9,11 @@
  *
  *  `--static` may also be a URL (`https://edhseer.cards/static`) with `--out <dir>`, to try the
  *  pages against a deployed corpus. */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { build } from "esbuild";
 import { preconDecklist, type Precon } from "@edh-seer/data/precons";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { suggestForDeck } from "@edh-seer/matcher/suggest-static";
@@ -40,6 +43,27 @@ const fetchImpl: typeof fetch = remote ? fetch : (async (input: string | URL | R
 const version = (await (await fetchImpl(`${baseUrl}/manifest.json`)).json() as { version: string }).version;
 const outDir = arg("--out") ?? join(source, version, "precons");
 mkdirSync(outDir, { recursive: true });
+
+// SKIP WHEN NOTHING THE PAGES READ HAS CHANGED (P5, docs/plans/2026-10-04-precon-build-time.md): a
+// UI-only deploy used to pay the whole ~16-minute build. The manifest version covers the DATA but
+// not the code (a matcher-only change keeps it), so the stamp is the version plus every file this
+// script imports, found by esbuild's import graph rather than a hand list that would go stale. The
+// pages' code runs in a browser, so every input is an import; precons.json is read by fs and the
+// lockfile pins the dependencies. A failed precon writes no stamp, so the next run retries.
+const stampPath = join(outDir, "build-stamp.json");
+const inputs = Object.keys((await build({
+  entryPoints: [fileURLToPath(import.meta.url)], bundle: true, write: false, metafile: true,
+  platform: "node", format: "esm", logLevel: "silent", absWorkingDir: repo,
+})).metafile.inputs).filter((p) => !p.includes("node_modules")).concat(relative(repo, preconsPath), "package-lock.json").sort();
+const hash = createHash("sha256").update(version);
+for (const p of inputs) hash.update(p).update(readFileSync(join(repo, p)));
+const stamp = hash.digest("hex");
+if (!onlyIdx && !process.argv.includes("--force") && existsSync(join(outDir, "index.json"))
+    && existsSync(stampPath) && JSON.parse(readFileSync(stampPath, "utf8")).stamp === stamp) {
+  console.log(`precon pages in ${outDir} are current (${inputs.length} inputs unchanged): skipped, --force to rebuild`);
+  process.exit(0);
+}
+rmSync(stampPath, { force: true }); // a run that dies, or an `--only` one, leaves no stamp to trust
 
 // ONE LOOKUP FOR EVERY PRECON'S UPGRADE PACKAGES: their candidate pools overlap almost entirely, so
 // each card shard is read once for the whole build.
@@ -99,4 +123,5 @@ for (const p of precons) {
   }
 }
 writeFileSync(join(outDir, "index.json"), JSON.stringify(index));
+if (!onlyIdx && !failed) writeFileSync(stampPath, JSON.stringify({ stamp }));
 console.log(`${index.length} precon pages in ${outDir}${failed ? `, ${failed} failed` : ""}`);
