@@ -8,6 +8,14 @@ import type { DeckCard } from "./types.js";
  *  one of these makes the printed mana value a lie about what the card costs to cast. */
 const REFUSALS: { test: (dc: DeckCard) => boolean; reason: string }[] = [
   {
+    // NO MANA COST IS AN UNPAYABLE COST (CR 118.6, #978): Mox Tantalite, Lotus Bloom and Ancestral
+    // Vision are never hard-cast -- they arrive off suspend, three turns or more after you exile them --
+    // so a turn-1 figure for their mana value of 0 led Mari's Manabase chapter as its "hardest cast".
+    // A multi-face card carries its costs on its faces and an empty one on the card, so it is not this.
+    test: (dc) => !dc.card.manaCost && !dc.card.name.includes(" // "),
+    reason: "no mana cost — it cannot be cast for mana; it arrives another way, such as suspend",
+  },
+  {
     test: (dc) => /\{X\}/i.test(dc.card.manaCost ?? ""),
     reason: "X cost — the mana value on the card is not what you pay",
   },

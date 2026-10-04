@@ -306,3 +306,12 @@ describe("a percentage needs a denominator (T18b, claimed since August, built 20
     expect(priceCard(cmd, curves).refused).toBeUndefined();
   });
 });
+
+/** #978: a card with no mana cost is never cast for mana (CR 118.6). Mox Tantalite led Mari's
+ *  Manabase chapter as "hardest cast 0% on turn 1"; it arrives off suspend. A {0} card is castable,
+ *  and a multi-face card's empty card-level cost is its faces' business. */
+test("a card with no mana cost is refused; a {0} card and a multi-face card are not", () => {
+  expect(costRefusal(spell("Mox Tantalite", "", 0, "Suspend 3—{0}"))).toMatch(/no mana cost/);
+  expect(costRefusal(spell("Ornithopter", "{0}", 0))).toBeUndefined();
+  expect(costRefusal(spell("Ulvenwald Captive // Ulvenwald Abomination", "", 2))).toBeUndefined();
+});
