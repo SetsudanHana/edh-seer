@@ -1284,6 +1284,12 @@ export interface Characteristics {
    *  named ~" (Relentless Rats), "up to seven cards named ~" (Seven Dwarves). Absent on every other
    *  printed card. Read by `selfSubject`, which carries it onto the card's own events as `multiples`. */
   anyNumber?: true;
+  /** A CREATURE ONLY UNDER A CONDITION: a static of its own says it "isn't a creature" until one holds
+   *  ("As long as your devotion to red is less than five, Purphoros isn't a creature"; The Warring
+   *  Triad; Arvinox). It enters as a noncreature in practice, so its own entry is not a creature's
+   *  (#797). Its cast is still a creature spell: the static works only on the battlefield (CR 113.6).
+   *  Set by derive from the action grammar's reading; absent on every other card. */
+  creatureOnlyIf?: true;
   /** THE ONE DECK FACT ON AN OTHERWISE PRINTED RECORD. Set per deck by `markCommander`
    *  (matcher/commander.ts), never by extraction — CR 903.3 says the commander designation "is not a
    *  characteristic of the object represented by the card". It lives here anyway because a card's
