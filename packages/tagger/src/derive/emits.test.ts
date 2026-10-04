@@ -36,6 +36,18 @@ test("investigate's token is an artifact Clue", () => {
   }
 });
 
+/** AMASS EMITS ITS ARMY AND ITS COUNTER (CR 701.47a, #971): Dreadhorde Invasion's "amass Zombies 1"
+ *  derived only its life loss, so it fed no token payoff. The object is the grammar's Army phrase. */
+test("amass makes the Army token it names, with a +1/+1 counter", () => {
+  const e = actionEmits({ verb: "amass", object: "a 0/0 black Zombie Army creature token you control", amount: "1" }, "you lose 1 life and amass Zombies 1.");
+  expect(e.map((x) => x.verb)).toEqual(["create-token", "enters", "counter-added"]);
+  for (const emit of e) {
+    expect(emit.subject).toMatchObject({ control: "you", token: true, type: "creature", subtype: ["zombie", "army"], counter: "+1/+1" });
+  }
+  // The stored bare subtype, on a clause the grammar never read, would be an Orc for any player: refused.
+  expect(actionEmits({ verb: "amass", object: "Orcs", amount: "1" }, "amass Orcs 1.")).toEqual([]);
+});
+
 test("a token maker whose object DOES name the token still says token", () => {
   const e = actionEmits({ verb: "create", object: "a 1/1 white Soldier creature token" });
   for (const emit of e) expect(emit.subject.token).toBe(true);

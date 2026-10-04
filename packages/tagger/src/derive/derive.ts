@@ -388,7 +388,9 @@ import { emblemRecipient } from "../emblem.js";
 // Clue (CR 701.16a), so it is an artifact token.
 // 279: #794, investigate's Clue also says it is a token, so its artifact type is filled (278 named the
 // Clue but left `token` for later, and the type fill reads it first).
-export const DERIVE_VERSION = 279;
+// 280/281: #971, amass reads as the Army the rules describe (CR 701.47a) in the action grammar, yours
+// even in a clause naming an opponent, and emits create-token, enters and its +1/+1 counter.
+export const DERIVE_VERSION = 281;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

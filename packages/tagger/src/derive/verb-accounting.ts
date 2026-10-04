@@ -37,8 +37,7 @@ export const OPEN: Record<string, { cards: number; note: string }> = {
   // lose-game emit `counter-removed` / `loses-game`.
   // --- CR 4xx / 7xx: zones and objects — CLOSED 2026-09-09 (AC11 batch 2) except `play`.
   play: { cards: 250, note: "CR 305.1 / 116.2a. The TRIGGER `play` maps to `land-play` when its subject is a land (batch 2); the ACTION 'play that card' emits land-play only for a land, and a card played from exile has no event yet" },
-  amass: { cards: 0, note: "CR 701.47; `amass` (26 consumers). Has the kind `counter-placement`, emits nothing — the Army token and its counters are the AC11 row" },
-  "empower-jace": { cards: 0, note: "CR 701.71, Reality Fracture (31 cards); amass's shape and amass's row: kind `counter-placement`, emits nothing — the Jace token is created only if you have none, and a conditional outcome is omitted" },
+  "empower-jace": { cards: 0, note: "CR 701.71, Reality Fracture (31 cards); amass's shape (amass emits since #971): kind `counter-placement`, emits nothing — the Jace token is created only if you have none, and a conditional outcome is omitted" },
   // --- CR 722.3 Prepared, Reality Fracture (67 corpus cards). An event (722.3a gains the designation,
   // 722.3b loses it) with no engine verb yet: its edges wait on the owner's ruling of 2026-09-27.
   unprepare: { cards: 0, note: "CR 722.3b; losing the designation. Same queue as `prepare`" },

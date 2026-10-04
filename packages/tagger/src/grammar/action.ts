@@ -427,9 +427,16 @@ const TOKENS: Record<string, [string, Handler]> = {
     const m = /^(\w+)(?: (twice|\w+ times))?$/.exec(rest);
     return m && amountOf(m[1]!) ? { amount: amountOf(m[1]!)! } : null;
   }],
+  // AMASS'S OBJECT IS THE ARMY THE RULES DESCRIBE (CR 701.47a, #971): "If you don't control an Army
+  // creature, create a 0/0 black [subtype] Army creature token. Choose an Army creature you control."
+  // The printed text names only the subtype, plural; the filter grammar's vocabulary singularises it.
   amass: ["amass", (rest) => {
     const m = /^(?:([A-Z][a-z]+) )?(\w+)$/.exec(rest);
-    return m && amountOf(m[2]!) ? { amount: amountOf(m[2]!)!, ...(m[1] ? { text: m[1] } : {}) } : null;
+    if (!m || !amountOf(m[2]!)) return null;
+    const sub = m[1] ? [parse(m[1])?.subtype].flat()[0] : undefined;
+    if (m[1] && !sub) return null;
+    const text = `a 0/0 black ${sub ? `${sub[0]!.toUpperCase()}${sub.slice(1)} ` : ""}Army creature token you control`;
+    return { object: parse(text)!, amount: amountOf(m[2]!)!, text };
   }],
 };
 
