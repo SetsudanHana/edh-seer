@@ -6,10 +6,10 @@
  *
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
 import { connect, isStickerCard, loadConfig } from "@edh-seer/data";
-import { charsFrom, deriveInputOf } from "../derive-input.js";
+import { deriveInputOf } from "../derive-input.js";
+import { createPool } from "@edh-seer/data/parallel";
+import type { DeriveItem, DeriveResult } from "../derive-worker.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
-import { deriveDiff, lostClaims } from "../grammar/derive-diff.js";
-import triage from "../../grammar-only-triage.json" with { type: "json" };
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
 import {
@@ -64,80 +64,73 @@ for await (const card of store.cards.find({ "legalities.commander": "legal" } as
 }
 console.log(`no answer for the printed text, read completely by the grammar: ${grammarOnly.size} card(s), ${grammarOnlyWritten} derived this run`);
 
-for (const doc of clauseDocs) {
-  if (stickers.has(doc.oracleId) || grammarOnly.has(doc.oracleId)) continue;
-  const existing = await derivedCol.findOne({ oracleId: doc.oracleId });
-  if (!FORCE && !needsDerive(existing, doc, DERIVE_VERSION)) { skipped++; continue; }
-
-  // Task 4 wrote 94 token rows into this same collection, keyed on the token's own oracle id and
-  // flagged `isToken: true` — they have no entry in `cards` at all, so their characteristics must
-  // come from `tokens` instead. `CardClausesDoc` doesn't declare the field because ordinary cards
-  // never carry it; only `normalize-tokens.ts`'s writes do.
-  const isToken = (doc as CardClausesDoc & { isToken?: boolean }).isToken === true;
-  const source = isToken
-    ? await store.db.collection(TOKENS_COLLECTION).findOne({ _id: doc.oracleId } as never)
-    : await store.cards.findOne({ _id: doc.oracleId } as never);
-  if (!source) { console.log(`SKIP ${doc.name}: ${isToken ? "token" : "card"} doc missing`); continue; }
-
-  // Always re-read printed characteristics from the card/token document. Reusing the existing
-  // derived doc's copy would carry stale colours or a stale type line forward through every
-  // re-derive, which is the opposite of what a free rebuild is for.
-  let tags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, doc.canonical, isToken ? tokenCharsFrom(source as never) : undefined));
-  // THE CARD-BY-CARD SWITCH (#896 task 7, owner 2026-10-02, option 1): a card the grammar reads
-  // completely derives from its printed text alone -- no model answer in the loop -- when that gives
-  // the same abilities as the stored answer, or a difference whose group is labelled "grammar right"
-  // in grammar-only-triage.json. Every other card keeps its stored answer until its group is labelled.
-  let fromGrammar = false;
-  if (!isToken) {
-    const g = grammarClauseRecords(source as never);
-    if (g.complete) {
-      const grammarTags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, g.records));
-      const key = deriveDiff(tags.abilities, grammarTags.abilities);
-      // A labelled difference switches only when the grammar claims at least what the stored answer
-      // claims (`lostClaims`): the label was judged on a few cards, the guard holds for every card.
-      const right = key !== null && (triage.groups as Record<string, { label: string }>)[key]?.label === "grammar right"
-        && lostClaims(tags.abilities, grammarTags.abilities).length === 0;
-      if (key === null || right) { tags = grammarTags; fromGrammar = true; grammarSwitched++; }
+// ONE READ OF EVERY DERIVED ROW'S BOOKKEEPING, THEN BATCHES (G-T2, docs/plans/2026-10-04-grammar-derive-review.md
+// F9): this was three round trips per card (the derived row, the card, the write), serial, ~136 s for a
+// --force. Now: one find for the staleness check, then per batch one find for the sources, the derive
+// spread over worker threads, one bulkWrite. Results come back in input order, so the writes are the
+// sequential run's.
+const existingById = new Map((await derivedCol.find({}, { projection: { oracleId: 1, deriveVersion: 1, normalizeVersion: 1, segmentHash: 1 } }).toArray())
+  .map((e) => [e.oracleId, e as DerivedTagsDoc] as const));
+const due = clauseDocs.filter((doc) => {
+  if (stickers.has(doc.oracleId) || grammarOnly.has(doc.oracleId)) return false;
+  if (!FORCE && !needsDerive(existingById.get(doc.oracleId) ?? null, doc, DERIVE_VERSION)) { skipped++; return false; }
+  return true;
+});
+const workersArg = Number(process.argv[process.argv.indexOf("--workers") + 1]);
+const pool = createPool<DeriveItem, DeriveResult>(new URL("../derive-worker.ts", import.meta.url), {
+  ...(process.argv.includes("--workers") && Number.isFinite(workersArg) ? { workers: workersArg } : {}),
+});
+const BATCH = 2000;
+try {
+  for (let b = 0; b < due.length; b += BATCH) {
+    const batch = due.slice(b, b + BATCH);
+    // Task 4 wrote 94 token rows into this same collection, keyed on the token's own oracle id and
+    // flagged `isToken: true` — they have no entry in `cards` at all, so their characteristics must
+    // come from `tokens` instead. `CardClausesDoc` doesn't declare the field because ordinary cards
+    // never carry it; only `normalize-tokens.ts`'s writes do.
+    const isToken = (doc: CardClausesDoc) => (doc as CardClausesDoc & { isToken?: boolean }).isToken === true;
+    const ids = (tokens: boolean) => batch.filter((d) => isToken(d) === tokens).map((d) => d.oracleId);
+    const sources = new Map<string, Record<string, unknown>>();
+    for (const d of await store.cards.find({ _id: { $in: ids(false) } } as never).toArray()) sources.set(d._id as string, d as never);
+    for (const d of await store.db.collection(TOKENS_COLLECTION).find({ _id: { $in: ids(true) } } as never).toArray()) sources.set(d._id as unknown as string, d as never);
+    const items: DeriveItem[] = [];
+    for (const doc of batch) {
+      const source = sources.get(doc.oracleId);
+      if (!source) { console.log(`SKIP ${doc.name}: ${isToken(doc) ? "token" : "card"} doc missing`); continue; }
+      items.push({ doc, source, isToken: isToken(doc) });
     }
+    const results = await pool.map(items);
+    await derivedCol.bulkWrite(items.map(({ doc, isToken: token }, i) => {
+      const { tags, fromGrammar } = results[i]!;
+      if (fromGrammar) grammarSwitched++;
+      // A card with real rules text deriving zero abilities is the Bitterblossom shape -- worth
+      // counting out loud rather than silently writing a doc that reads as a vanilla bear.
+      if (tags.abilities.length === 0 && (doc.canonical.length > 0)) empty++;
+      written++;
+      if (token) tokenWritten++;
+      return {
+        updateOne: {
+          filter: { oracleId: doc.oracleId },
+          update: {
+            $set: {
+              ...tags,
+              deriveVersion: DERIVE_VERSION,
+              normalizeVersion: doc.normalizeVersion,
+              segmentHash: doc.segmentHash,
+              ...(token ? { isToken: true } : {}),
+              // Which answer the abilities came from: the printed text alone, or the stored model answer.
+              clauseSource: fromGrammar ? "grammar" : "model",
+            },
+          },
+          upsert: true,
+        },
+      };
+    }), { ordered: false });
   }
-  // A card with real rules text deriving zero abilities is the Bitterblossom shape -- worth
-  // counting out loud rather than silently writing a doc that reads as a vanilla bear.
-  if (tags.abilities.length === 0 && (doc.canonical.length > 0)) empty++;
-
-  await derivedCol.updateOne(
-    { oracleId: doc.oracleId },
-    {
-      $set: {
-        ...tags,
-        deriveVersion: DERIVE_VERSION,
-        normalizeVersion: doc.normalizeVersion,
-        segmentHash: doc.segmentHash,
-        ...(isToken ? { isToken: true } : {}),
-        // Which answer the abilities came from: the printed text alone, or the stored model answer.
-        clauseSource: fromGrammar ? "grammar" : "model",
-      },
-    },
-    { upsert: true },
-  );
-  written++;
-  if (isToken) tokenWritten++;
+} finally {
+  await pool.close();
 }
 
 console.log(`derived ${written} (${tokenWritten} token), up-to-date ${skipped}, wrote ${empty} card(s)/token(s) with clauses but zero abilities`);
 console.log(`from the printed text alone (task 7): ${grammarSwitched} of ${written - tokenWritten} cards derived this run`);
 await store.close();
-
-/** Same shape as `charsFrom`, plus `token: true` -- or, for a layout-`emblem` row, `emblem: true`
- *  and `token: false`. `extractCharacteristics` hardcodes `token: false` (right for every card,
- *  which is all it has ever seen) so this is the one place that flips it. Load-bearing in both
- *  directions per `subject.ts`'s asymmetric tri-state check: it is what lets a token satisfy a
- *  consumer demanding `token: true`, and what stops it satisfying one demanding `token: false`.
- *
- *  AN EMBLEM IS NOT A TOKEN (CR 114.1 vs 111.1): "whenever a token enters" must never match one,
- *  so `token` stays false and `emblem` says what it is. `splitTypeLine` already reads
- *  "Emblem — Chandra" as types `["emblem"]`, subtypes `["chandra"]`, which is what the node wants.
- *  A token document carries no `manaValue` -- `charsFrom` already defaults an absent one to 0. */
-function tokenCharsFrom(doc: Parameters<typeof charsFrom>[0] & { layout?: string }): DerivedTagsDoc["characteristics"] {
-  if (doc.layout === "emblem") return { ...charsFrom(doc), token: false, emblem: true };
-  return { ...charsFrom(doc), token: true };
-}
