@@ -392,7 +392,9 @@ import { emblemRecipient } from "../emblem.js";
 // even in a clause naming an opponent, and emits create-token, enters and its +1/+1 counter.
 // 282: #697, a draw, mill, scry or surveil the grammar reads with no actor is yours (CR 608.2c), even in a
 // sentence naming an opponent (Esper Sentinel, Veil of Summer).
-export const DERIVE_VERSION = 282;
+// 283: #797, a card whose own static says it isn't a creature under a condition (the Theros gods) is
+// marked `creatureOnlyIf`, read by the action grammar.
+export const DERIVE_VERSION = 283;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2807,6 +2809,12 @@ export function deriveCardTags(input: DeriveInput): CardTags {
   const isSpellFace = (face: number | undefined): boolean =>
     (chars.faces ? chars.faces[face ?? 0]?.types ?? [] : chars.types).some((t) => /^(?:instant|sorcery)$/i.test(t));
   const spellOnce = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const });
+  // A CREATURE ONLY UNDER A CONDITION (#797): the action grammar reads "As long as your devotion to red
+  // is less than five, Purphoros isn't a creature" as the card itself that "can't be a creature".
+  // Read off the printed text, which reaches the Theros gods the store filed as something else.
+  const creatureOnlyIf = chars.types.some((t) => t.toLowerCase() === "creature") && input.clauses.some((c) =>
+    c.abilityType === "static" && parseActions(effectText(textForClause(c, input.clauseTexts), input.name ?? ""), "static")
+      .some((r) => r.verb === "cant" && r.object?.self === true && /^be a creature\b/i.test(r.text ?? "")));
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,
@@ -2816,7 +2824,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     // the moment it is.
     promptVersion: 0,
     model: "derived",
-    characteristics: input.characteristics,
+    characteristics: creatureOnlyIf ? { ...input.characteristics, creatureOnlyIf: true } : input.characteristics,
     abilities: spellOnce,
     // Written only when there is something to surface, so a clean card stays byte-identical.
     ...(unknownTriggers.length ? { unknownTriggers } : {}),

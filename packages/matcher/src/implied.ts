@@ -118,12 +118,19 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
     // the spell face arrives alone.
     const prepared = chars.layout === "prepare" && !isPermanent ? { prepared: true as const } : {};
     const subject = { ...selfSubject({ ...chars, ...face, ...stats }), ...prepared };
-    const push = (verb: GameEvent["verb"]): void => {
-      const key = verb + JSON.stringify(subject);
+    // A CREATURE ONLY UNDER A CONDITION ENTERS AS WHAT IT IS WITHOUT IT (#797, owner: "purphoros is not a
+    // creature until you have proper devotion"): its entry drops `creature` and the creature's stats,
+    // and it neither attacks nor connects. Its cast stays a creature spell (CR 113.6).
+    const asPermanent = chars.creatureOnlyIf !== true ? subject : {
+      ...selfSubject({ ...chars, ...face, types: face.types.filter((t) => t.toLowerCase() !== "creature"), power: null, toughness: null }),
+      ...prepared,
+    };
+    const push = (verb: GameEvent["verb"], on: SubjectFilter = subject): void => {
+      const key = verb + JSON.stringify(on);
       // Wear // Tear is Instant // Instant: two faces, one event.
       if (seen.has(key)) return;
       seen.add(key);
-      out.push({ verb, subject, implied: true });
+      out.push({ verb, subject: on, implied: true });
     };
     // CR 111.7: a token is neither a card nor a spell, so it is never cast. Unreachable for a real
     // card (`Characteristics.token` is always false there) until Task 6 put a TOKEN's own
@@ -135,13 +142,13 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
     // CR 114.1: an emblem is not a card either, and it is not a permanent, so it gets no `cast` here
     // and no `enters` below (its type line names no permanent type).
     if (!isLand && !chars.token && chars.emblem !== true) push("cast");
-    if (isPermanent) push("enters");
+    if (isPermanent) push("enters", asPermanent);
     // A creature on the battlefield can attack and connect, exactly as a nonland card can be cast.
     // These only ever reach a consumer that filters on WHICH creature attacks -- see
     // `combatSelfSupplied` in edges.ts for why the generic case forms no edge. `implied: true`
     // marks them as synthetic so that gate applies only to these, never to a card's own AUTHORED
     // attacks/combat-damage emit (goad, Mage Slayer, Saskia).
-    if (types.includes("creature")) {
+    if (types.includes("creature") && chars.creatureOnlyIf !== true) {
       push("attacks");
       push("combat-damage");
     }

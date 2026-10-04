@@ -3986,3 +3986,17 @@ test("an unnamed draw is yours; a named one is the player it names", () => {
   expect(draw("Each player draws a card.")).toBe("any");
   expect(draw("Target opponent draws a card.")).toBe("opp");
 });
+
+// #797: a god is a creature only under its devotion condition, read by the action grammar.
+test("a card whose own static says it isn't a creature under a condition is marked creatureOnlyIf", () => {
+  const god = (text: string, types = ["legendary", "enchantment", "creature"]) => deriveCardTags({
+    oracleId: "god", name: "Purphoros, God of the Forge",
+    clauses: [{ id: 1, abilityType: "static", actions: [{ verb: "cant", object: "be a creature" }] }],
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types },
+    clauseTexts: { 1: text },
+  }).characteristics.creatureOnlyIf;
+  expect(god("As long as your devotion to red is less than five, Purphoros isn't a creature.")).toBe(true);
+  // Not a creature in the first place: nothing to mark.
+  expect(god("As long as your devotion to red is less than five, Purphoros isn't a creature.", ["enchantment"])).toBeUndefined();
+  expect(god("Purphoros can't block.")).toBeUndefined();
+});

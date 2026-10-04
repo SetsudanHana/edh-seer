@@ -756,3 +756,13 @@ test("a token's self fill says token", () => {
   const [sac] = selfLeavesTypes([{ verb: "sacrifice", subject: { control: "you", token: null, self: true } } as GameEvent], scion);
   expect(sac!.subject.token).toBe(true);
 });
+
+/** #797: Purphoros enters as an enchantment while short on devotion; its cast is still a creature spell. */
+test("a creature only under a condition enters, attacks and connects as no creature", () => {
+  const ev = impliedEvents({ ...chars(["legendary", "enchantment", "creature"], ["god"]), power: "6", toughness: "5", creatureOnlyIf: true });
+  const enters = ev.find((e) => e.verb === "enters")!;
+  expect([enters.subject.type].flat()).not.toContain("creature");
+  expect([enters.subject.type].flat()).toContain("enchantment");
+  expect(ev.some((e) => e.verb === "attacks" || e.verb === "combat-damage")).toBe(false);
+  expect([ev.find((e) => e.verb === "cast")!.subject.type].flat()).toContain("creature");
+});
