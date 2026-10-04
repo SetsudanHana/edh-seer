@@ -17,6 +17,7 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
+  "701.47a": "grammar/action.test.ts + derive/emits.test.ts — amass reads as your 0/0 black Army token of its subtype, and emits it with a +1/+1 counter (#971)",
   "701.16a": "derive/emits.test.ts — investigate's token is an artifact Clue (#794)",
   "903.5b": "derive.test.ts — Guardian Project's 'doesn't have the same name' is uniqueName: a singleton printed card, never a token or an any-number card (#896 task 5)",
   "504.1": "derive.test.ts — Bowmasters' 'except the first one they draw in each of their draw steps' leaves out only the turn-based draw: still claimed (#896 task 5)",
@@ -106,7 +107,7 @@ const PROSE: Record<string, string> = {
   "701.19": "regenerate is a shield, emits nothing", "701.20": "reveal: OPEN", "701.24": "shuffle: OPEN", "701.22": "scry", "701.22a": "scry never touches a graveyard",
   "701.23": "search", "701.23a": "search means a search HAPPENED", "701.25": "surveil", "701.25a": "surveil's graveyard half is any number",
   "701.3": "attach: OPEN", "701.30": "clash", "701.40a": "manifest is a card, not a token", "701.16": "investigate names no object; the rule supplies the Clue", "701.45a": "assemble excluded (Unstable)",
-  "701.50": "connive", "701.54": "the Ring tempts", "701.7": "create", "701.68": "blight", "701.47": "amass: counter-placement, emits nothing", "701.71": "empower Jace: amass's shape, counter-placement, emits nothing",
+  "701.50": "connive", "701.54": "the Ring tempts", "701.7": "create", "701.68": "blight", "701.47": "amass: counter-placement, emits the Army token and its +1/+1 counter", "701.71": "empower Jace: amass's shape, counter-placement, emits nothing",
   "722.3": "prepared: a designation, OPEN", "722.3a": "becomes prepared, a word", "722.3b": "becomes unprepared, a word", "722.3d": "a prepare spell's cast is a prepared spell (SubjectFilter.prepared)",
   "701.46": "adapt puts its counters on the card itself (a self counter emit)", "701.37": "monstrosity puts its counters on the card itself",
   "702.100": "evolve, a trigger word", "702.110": "exploit, a word", "702.122": "becomes-crewed", "702.131": "city-blessing",

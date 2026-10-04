@@ -93,7 +93,13 @@ test("tokens: the printed phrase, its count, a quoted ability kept whole", () =>
     .toMatch(/, where X is the number of land cards in your graveyard$/);
   // A copy of a back-reference keeps the stored object.
   expect(read("For each token you control, create a token that's a copy of that permanent.")[0]?.text).toBeUndefined();
-  expect(read("amass Orcs 2.")).toMatchObject([{ verb: "amass", amount: "2", text: "Orcs" }]);
+  expect(read("amass Orcs 2.")).toMatchObject([{ verb: "amass", amount: "2", text: "a 0/0 black Orc Army creature token you control",
+    object: { control: "you", token: true, type: "creature", subtype: ["orc", "army"] } }]);
+  // Every subtype the corpus amasses (#971), and the Army is yours in a sentence naming an opponent.
+  for (const [printed, sub] of [["Zombies", "zombie"], ["Goblins", "goblin"], ["Slivers", "sliver"]] as const) {
+    expect(read(`Whenever an opponent casts a spell, amass ${printed} 1.`).find((r) => r.verb === "amass")?.object)
+      .toMatchObject({ control: "you", subtype: [sub, "army"] });
+  }
   expect(read("Investigate twice.")).toMatchObject([{ verb: "investigate", amount: "2" }]);
   // Quoted text is the granted ability's, never this clause's actions: the grant is read, whole.
   expect(read('Creatures you control have "Whenever this creature attacks, draw a card."')).toMatchObject([{ verb: "grant-ability", text: '"Whenever this creature attacks, draw a card."' }]);

@@ -139,6 +139,13 @@ const EMITS: Record<string, Verb[]> = {
   blight: ["counter-added"],
   // 701.16: "Investigate means Create a Clue token."
   investigate: ["create-token", "enters"],
+  // 701.47a: "If you don't control an Army creature, create a 0/0 black [subtype] Army creature token.
+  // Choose an Army creature you control. Put N +1/+1 counters on that creature." The token is
+  // conditional, and kept (#971): unlike connive's counter it is the half that makes amass a token
+  // maker, and KEYWORD_EMITS (implied.ts) already emits it for the amass keyword ability.
+  // The Army itself is the action grammar's reading of the printed text (grammar/action.ts); see
+  // the refusal in `actionEmits` for a clause the grammar never read.
+  amass: ["create-token", "enters", "counter-added"],
   // 701.36: "choose a creature token you control and create a token that's a copy of that token."
   populate: ["create-token", "enters"],
   // 701.53: "create an Incubator token that enters the battlefield with N +1/+1 counters on it."
@@ -182,7 +189,7 @@ const EMITS: Record<string, Verb[]> = {
  *  `blight` is -1/-1 (CR 701.68) and is the reason this is a MAP and not a constant. */
 const KEYWORD_COUNTER: Record<string, string> = {
   bolster: "+1/+1", support: "+1/+1", adapt: "+1/+1", monstrosity: "+1/+1", incubate: "+1/+1",
-  earthbend: "+1/+1",
+  amass: "+1/+1", earthbend: "+1/+1",
   blight: "-1/-1",
 };
 
@@ -473,6 +480,11 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     ? counterRecipient(clauseText ?? "")
     : undefined;
   const subject = parseSubject(recipient ?? action.object ?? "");
+  // AN AMASS THE GRAMMAR DID NOT READ EMITS NOTHING, as before #971: the stored object is the bare
+  // subtype ("Orcs"), which would make an Orc that is no Army, for any player. CEILING: two cards on
+  // 2026-10-04, both a compound trigger the store split in two whose second clause has no printed
+  // text to read (Orcish Bowmasters, Mindless Conscription); the first clause carries the Army.
+  if (action.verb === "amass" && ![subject.subtype].flat().includes("army")) return [];
   // INVESTIGATE NAMES ITS TOKEN IN THE RULES, NOT ON THE CARD (CR 701.16a: "Investigate" means "Create
   // a Clue token", #794). The emit carried no subtype, so `tokenTypeFor` below never filled the type
   // and an artifact-token payoff (Stridehangar Automaton) heard nothing from Forensic Gadgeteer.

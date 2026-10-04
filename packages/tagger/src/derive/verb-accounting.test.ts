@@ -18,6 +18,8 @@ const emitsAnything = (verb: string): boolean =>
   || [
     { verb, object: "a creature card", fromZone: "graveyard", toZone: "battlefield" },
     { verb, object: "your library for a card", fromZone: "library", toZone: "hand" },
+    // amass's object as the action grammar writes it (#971); a bare subtype emits nothing.
+    { verb, object: "a 0/0 black Army creature token you control" },
   ].some((a) => actionEmits(a, "").some((e) => e.verb !== "leaves"));
 
 const verbs = VERBS.filter((v) => v !== "other" && v !== "none");
