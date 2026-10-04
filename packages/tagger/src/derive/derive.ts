@@ -390,7 +390,9 @@ import { emblemRecipient } from "../emblem.js";
 // Clue but left `token` for later, and the type fill reads it first).
 // 280/281: #971, amass reads as the Army the rules describe (CR 701.47a) in the action grammar, yours
 // even in a clause naming an opponent, and emits create-token, enters and its +1/+1 counter.
-export const DERIVE_VERSION = 281;
+// 282: #697, a draw, mill, scry or surveil the grammar reads with no actor is yours (CR 608.2c), even in a
+// sentence naming an opponent (Esper Sentinel, Veil of Summer).
+export const DERIVE_VERSION = 282;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1451,6 +1453,10 @@ const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAM
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
  *  cards" -> object "target player"); see `RECIPIENT_VERBS` in emits.ts. */
 const PLAYER_OBJECT_VERBS: ReadonlySet<string> = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life"]);
+/** ...of which these name only a COUNT of cards, so a reading with no actor is the controller's own
+ *  ("Draw a card": CR 608.2c, the controller follows its instructions). Not discard: "discard a creature card" names
+ *  the card's class, which its object carries. */
+const UNNAMED_IS_YOU: ReadonlySet<string> = new Set(["draw", "mill", "scry", "surveil"]);
 
 /** THE ACTION GRAMMAR WINS (owner, 2026-10-01): a clause's stored actions of a taken-over family are
  *  rewritten from the printed text where the grammar read the phrase completely -- object, amount,
@@ -1499,7 +1505,10 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
     const object = r.counter !== undefined
       ? (r.text !== undefined && r.object?.self !== true ? `${r.text}, ${r.counter}` : base.object)
       : PLAYER_OBJECT_VERBS.has(r.verb) && r.verb !== "gain-life" && r.verb !== "lose-life"
-        ? (named ? r.actor!.text : r.actor ? base.object : r.text ?? base.object)
+        // NO ACTOR IS YOU (#697): Esper Sentinel's "Whenever an opponent casts ..., draw a card unless
+        // that player pays {X}" and Veil of Summer's "Draw a card if an opponent has cast ..." name an
+        // opponent elsewhere in the sentence, which kept the draw `any` -- each player's, like Howling Mine.
+        ? (named ? r.actor!.text : r.actor ? base.object : UNNAMED_IS_YOU.has(r.verb) ? "you" : r.text ?? base.object)
         // The card itself keeps the stored object for the same reason ("sacrifice Endrek Sahr").
         // So does a stored object that is the printed one plus where it came from ("a land card" ->
         // "a land card from among the top four cards of your library", Planar Genesis).
