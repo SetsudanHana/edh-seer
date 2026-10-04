@@ -914,3 +914,16 @@ describe("rampGrade (#534)", () => {
     expect(rampGrade(restricted)).toBeGreaterThan(0);
   });
 });
+
+/** #977: an opponent's draw is not yours. Baleful Mastery sat on Gisa's Draw shelf; a symmetric draw
+ *  (Howling Mine) still draws you a card. */
+test("the Draw role counts your draws and everyone's, never only an opponent's", () => {
+  const drawFor = (control: "you" | "any" | "opp"): CardTags["abilities"] =>
+    [{ kind: "spell", effect: { kind: "draw-card", subject: { control, token: null } } } as never];
+  const m = detectBuildCategories([
+    mk("Baleful Mastery", "If the {1}{B} cost was paid, an opponent draws a card.", "Instant", drawFor("opp")),
+    mk("Howling Mine", "that player draws an additional card.", "Artifact", drawFor("any")),
+    mk("Cremate", "Draw a card.", "Instant", drawFor("you")),
+  ]);
+  expect([...(m.get("draw") ?? [])].sort()).toEqual(["Cremate", "Howling Mine"]);
+});
