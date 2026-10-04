@@ -533,6 +533,23 @@ test("fragments 16: triple, one of them, casts paid by a sacrifice", () => {
     .toEqual(["cast", "sacrifice"]);
 });
 
+// THE CENSUS IS PARSED ONCE FOR ALL NINE FAMILIES (docs/plans/2026-10-04-grammar-derive-review.md, T4):
+// each family used to gunzip and parse all 32k rows twice, 18 parses and ~15 s of a 15 s suite.
+// Determinism is still checked on every row, by a second parse compared against the first.
+type CensusRow = { effect: string; type: string | null; cost?: string; actions: { verb: string }[]; cards: number };
+let parsedCensus: { r: CensusRow; a: ReturnType<typeof parseActions> }[] | undefined;
+function census() {
+  if (parsedCensus) return parsedCensus;
+  const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")
+    .map((l) => JSON.parse(l) as CensusRow);
+  parsedCensus = rows.map((r) => {
+    const a = parseActions(r.effect, r.type, r.cost);
+    expect(JSON.stringify(parseActions(r.effect, r.type, r.cost))).toBe(JSON.stringify(a));
+    return { r, a };
+  });
+  return parsedCensus;
+}
+
 test.each([
   ["draw/search", ["draw", "discard", "mill", "scry", "surveil", "search", "reveal"], 0.955],
   ["damage/life", ["deal-damage", "gain-life", "lose-life", "set-life"], 0.942],
@@ -548,12 +565,8 @@ test.each([
   ["cast/play/prevent/cost/double/animate", ["cast", "play", "prevent", "cost-modify", "double", "animate"], 0.836],
 ])("over the census: deterministic, and %s coverage not below its floor", (_name, verbs, floor) => {
   const FAMILY = new Set(verbs as string[]);
-  const rows = gunzipSync(readFileSync(new URL("../../actions.jsonl.gz", import.meta.url))).toString("utf8").trim().split("\n")
-    .map((l) => JSON.parse(l) as { effect: string; type: string | null; cost?: string; actions: { verb: string }[]; cards: number });
   let total = 0, got = 0;
-  for (const r of rows) {
-    const a = parseActions(r.effect, r.type, r.cost);
-    expect(JSON.stringify(parseActions(r.effect, r.type, r.cost))).toBe(JSON.stringify(a));
+  for (const { r, a } of census()) {
     const fam = (v: string) => FAMILY.has(v);
     const si = r.actions.flatMap((x, i) => (fam(x.verb) ? [i] : [])), ri = a.flatMap((x, j) => (fam(x.verb) ? [j] : []));
     const hit = new Set(alignVerbs(si.map((i) => r.actions[i]!.verb), ri.map((j) => a[j]!.verb)).map(([i]) => si[i]));
