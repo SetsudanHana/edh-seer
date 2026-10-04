@@ -1,6 +1,7 @@
 import type { GameState } from "@edh-seer/engine";
 import { StaticLookup } from "@edh-seer/matcher/static-lookup";
-import { analyzeDecklist, type AnalysisSources } from "@edh-seer/matcher/orchestrate";
+import { analyzeDecklist, readDecklist, type AnalysisSources } from "@edh-seer/matcher/orchestrate";
+import type { DeckReport } from "@edh-seer/engine";
 import type { AnalyzeResponse } from "./types.js";
 
 /** A decklist analysed in the browser against the `/static` shards: `analyzeDecklist`, with the
@@ -10,17 +11,27 @@ export async function analyzeDeckStatic(
   decklist: string, commanders: string | undefined, baseUrl: string, fetchImpl: typeof fetch = fetch,
   state?: GameState,
 ): Promise<AnalyzeResponse> {
-  return analyzeDecklist(decklist, commanders, async (names): Promise<AnalysisSources> => {
-    // `StaticLookup` binds `fetchImpl` itself (see its constructor) -- the receiver-check defect
-    // that fixed lives at the one place every caller routes through, not at each call site.
-    const lookup = new StaticLookup(baseUrl, fetchImpl);
-    // Every name the list mentions, fetched before anything resolves: a shard per name prefix,
-    // loaded once, rather than one round trip per card as resolution walks the list.
-    await lookup.prefetch(names);
-    return {
-      lookup, tagsLookup: lookup,
-      tokenTags: await lookup.tokenTags(),
-      tokenArt: (ids: string[]) => lookup.tokenArt(ids),
-    };
-  }, state);
+  return analyzeDecklist(decklist, commanders, staticSources(baseUrl, fetchImpl), state);
 }
+
+/** The report's numbers without its mana simulation or graph (`readDecklist`): the precon keeper's
+ *  reading of a swapped list. Never shown to a reader. */
+export async function readDeckStatic(
+  decklist: string, commanders: string | undefined, baseUrl: string, fetchImpl: typeof fetch = fetch,
+): Promise<DeckReport> {
+  return readDecklist(decklist, commanders, staticSources(baseUrl, fetchImpl));
+}
+
+const staticSources = (baseUrl: string, fetchImpl: typeof fetch) => async (names: string[]): Promise<AnalysisSources> => {
+  // `StaticLookup` binds `fetchImpl` itself (see its constructor) -- the receiver-check defect
+  // that fixed lives at the one place every caller routes through, not at each call site.
+  const lookup = new StaticLookup(baseUrl, fetchImpl);
+  // Every name the list mentions, fetched before anything resolves: a shard per name prefix,
+  // loaded once, rather than one round trip per card as resolution walks the list.
+  await lookup.prefetch(names);
+  return {
+    lookup, tagsLookup: lookup,
+    tokenTags: await lookup.tokenTags(),
+    tokenArt: (ids: string[]) => lookup.tokenArt(ids),
+  };
+};

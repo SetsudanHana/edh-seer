@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { analyzeDeckStatic } from "./api.static.js";
+import { analyzeDeckStatic, readDeckStatic } from "./api.static.js";
 import { shardOf } from "@edh-seer/matcher/static-lookup";
 
 const card = (id: string, name: string, typeLine: string, colorIdentity: string[]) => ({
@@ -62,4 +62,24 @@ test("a card with no file lands in missing and the rest still analyses", async (
   const r = await analyzeDeckStatic("Krenko\n\nNot A Real Card", undefined, "/static", f);
   expect(r.missing).toEqual(["Not A Real Card"]);
   expect(r.resolvedCount).toBe(1);
+});
+
+/** THE KEEPER'S READING (P1) skips the mana simulation and the graph, and must still give the three
+ *  numbers the precon keeper reads exactly as the full report does. Measured on 334 real keeper
+ *  reads over 22 precons, 0 differences; this holds the shape. */
+test("the light reading has the report's band, mana base and synergy, and no mana simulation", async () => {
+  const f = fetchOf({
+    ...shardsOf({
+      krenko: card("id-krenko", "Krenko", "Legendary Creature — Goblin", ["R"]),
+      mountain: card("id-mountain", "Mountain", "Basic Land — Mountain", []),
+    }),
+    [`/static/${VERSION}/token-tags.json`]: {},
+  });
+  const full = (await analyzeDeckStatic("Krenko\n\nMountain", undefined, "/static", f)).report;
+  const light = await readDeckStatic("Krenko\n\nMountain", undefined, "/static", f);
+  expect(full.manaAvailability).toBeDefined();
+  expect(light.manaAvailability).toBeUndefined();
+  expect(light.bracket?.band).toBe(full.bracket?.band);
+  expect(light.deckMath?.lands.manaBase?.total).toBe(full.deckMath?.lands.manaBase?.total);
+  expect(light.synergyOverall).toBe(full.synergyOverall);
 });

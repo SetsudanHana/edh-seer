@@ -236,6 +236,11 @@ export function analyzeDeckStructured(
    *  is the 100 every count, curve, category and simulation reads. */
   companions: DeckCard[] = [],
   unresolvedCompanions: string[] = [],
+  /** THE PRECON KEEPER'S READING (P1, docs/plans/2026-10-04-precon-build-time.md): it reads the band,
+   *  the mana base total and the synergy score, none of which reads the mana simulation, so it skips
+   *  the 2,000-trial run (about half an analysis). The report then has no castability, no mana
+   *  availability and no clock budget: never ship one. */
+  opts: { skipSimulation?: boolean } = {},
 ): DeckReport {
   const rawInputs = inputs;
   inputs = applyState(inputs, state);
@@ -776,9 +781,9 @@ export function analyzeDeckStructured(
   // from the shuffle and PRICED anyway through `alsoPrice` — "can I cast my commander on turn six"
   // is the one card a reader looks for by name.
   const simLibrary = resolved.filter((dc) => !commanderSet.has(dc.card.name));
-  const manaSim = manaModel(simLibrary, { alsoPrice: resolved.filter((dc) => commanderSet.has(dc.card.name)) });
+  const manaSim = opts.skipSimulation ? undefined : manaModel(simLibrary, { alsoPrice: resolved.filter((dc) => commanderSet.has(dc.card.name)) });
   const castByName = new Map(
-    deckCastability(resolved, manaSim.curves).cards
+    (manaSim ? deckCastability(resolved, manaSim.curves).cards : [])
       .map((r: CardCastability) => [r.name, { turn: r.turn, castable: r.castable!, mana: r.mana! }] as const),
   );
   const printedCost = new Map(lookupPool.map((dc) => [dc.card.name, dc.card] as const));
@@ -1051,9 +1056,9 @@ export function analyzeDeckStructured(
   const deckMath = resolved.length > commanderSet.size
     ? computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, {
         comboCards, comboPayoffs: [...comboPayoffNames].sort(), landRecommendation: landRec, primary: strategies[0]?.name,
-        castCurves: manaSim.curves,
+        castCurves: manaSim?.curves,
         // The clock's mana budget, off the same two arms — see `pressure.ts`.
-        manaBudget: manaSim.manaMedian,
+        manaBudget: manaSim?.manaMedian,
       })
     : undefined;
 
@@ -1133,7 +1138,7 @@ export function analyzeDeckStructured(
     // (CR 903.6) and this model draws from one, so it is excluded exactly as `deck-math.ts` excludes
     // it — including one in the shuffle would both dilute the draw and pretend it can be drawn.
     // FEEDS NO SCORE, which is the condition the K7/J7 reconciliation holds under.
-    manaAvailability: manaSim.availability,
+    ...(manaSim ? { manaAvailability: manaSim.availability } : {}),
     // CR 903.3 and 903.5a-d, as a REPORT (roadmap J4). `resolved` is one entry per COPY, which is
     // what the size and duplicate rules count. Feeds no score and refuses nothing.
     legality: deckLegality({

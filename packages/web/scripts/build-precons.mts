@@ -17,7 +17,7 @@ import { build } from "esbuild";
 import { preconDecklist, type Precon } from "@edh-seer/data/precons";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { suggestForDeck } from "@edh-seer/matcher/suggest-static";
-import { analyzeDeckStatic } from "../client/src/api.static.ts";
+import { analyzeDeckStatic, readDeckStatic } from "../client/src/api.static.ts";
 import { buildEngineModel } from "../client/src/lib/engine-model.ts";
 import { chooseCuts, swapCandidates } from "../client/src/lib/cut-choice.ts";
 import { preconPage, type PreconPage } from "../client/src/lib/precon-page.ts";
@@ -95,7 +95,9 @@ for (const p of precons) {
       // THE REPORT'S OWN READING OF THE SWAPPED LIST, so a package is held to the numbers the site
       // would show for it, not to the builder's estimate of them.
       analyse: async (list) => {
-        const r = (await analyzeDeckStatic(list, p.commanders.join("\n"), baseUrl, fetchImpl)).report;
+        // WITHOUT THE MANA SIMULATION OR THE GRAPH (P1): none of the three numbers reads them, and
+        // they were about half of every one of the ~36 readings a precon takes.
+        const r = await readDeckStatic(list, p.commanders.join("\n"), baseUrl, fetchImpl);
         return { band: r.bracket?.band ?? "1-2", mana: r.deckMath?.lands.manaBase?.total ?? 0, synergy: r.synergyOverall ?? 0 };
       },
     });
