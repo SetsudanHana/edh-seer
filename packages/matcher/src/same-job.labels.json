@@ -1,7 +1,7 @@
 {
  "about": "Same-job ground truth: 69 swap pairs (57 the precon pages showed, 12 a player would call the same), each judged same / weak / different with the parts that differ.",
  "gate": "docs/plans/2026-10-04-same-job-review.md G1: 90% of pairs the group key puts together are labelled same, and no pair labelled different shares a key",
- "status": "SECOND READING APPLIED 2026-10-06: 60 agree, 5 disagree, 4 unsure. Same job is judged as a player does: rate, flexibility and asymmetry, and a strictly stronger or weaker card is not the same job. Rows with unresolved: true wait on one owner answer; excluded: true rows are left out of the gate.",
+ "status": "SECOND READING APPLIED 2026-10-06: 60 agree, 5 disagree, 4 unsure. Same job is judged as a player does: rate, flexibility and asymmetry, and an upgrade is the same job (\"same with upside\"); a weaker card or one missing an effect is not. Every row resolved 2026-10-06; excluded: true rows are left out of the gate.",
  "firstReader": "claude, 2026-10-04",
  "secondReader": "owner, 2026-10-06 (artifact 1omExcjrjohaUgb4f26wNn)",
  "rubric": "# Same-job pair labels: rubric\n\nA deck tool suggests swapping card OUT for card IN in the same role, claiming IN does \"the same job\"\n(often \"for N less mana\"). For each pair, judge as an experienced Commander (4-player) player whether\nIN really does OUT's job. Read ONLY the oracle text, type line and mana cost given for both cards.\nNEVER use memory of what a card does.\n\nSome pairs carry `priorLabel`/`priorWhy` from an earlier reader. Treat it as a hypothesis: agree only\nif the text supports it; disagree when it does not, and say so.\n\nLabels:\n- `\"same\"`: a player would swap these without losing the job (same effect on the same things, same\n  delivery class; differences only in cost or small upside).\n- `\"weak\"`: same family of effect, but a material difference a player would notice (a cost mode, a\n  drawback, a narrower target, something given back).\n- `\"different\"`: not the same job (different effect, different recipient, conditional where the other\n  is not, removal vs protection, AND-vs-OR targets, singleton-dead conditions...).\n\nOutput one JSON object per pair, input order, exactly these fields:\n- `role`, `out`, `in`: names as given.\n- `source`: as given (`page` = the site shows it, `player` = a pair a player would call the same).\n- `label`: `\"same\"` | `\"weak\"` | `\"different\"`.\n- `differs`: array of the parts that differ, from this closed list: `effect` (what it does), `keywords`\n  (which keywords granted), `recipient` (who/what it affects: one target vs all yours vs each), `whatItHits`\n  (types it can answer, AND vs OR), `control` (whose: any vs opponent's), `duration` (until end of turn vs\n  permanent), `delivery` (instant / sorcery / Equipment / Aura / permanent / activated), `amount` (how\n  much: fixed vs per-X vs equal-to, -1/-1 vs -X/-X), `conditions` (a condition one has), `givesBack`\n  (the opponent gets something), `cost` (mana value, equip cost, alternative cost, life, spree/mode\n  cost), `speed` (instant vs sorcery), `role` (OUT is not really in the stated role). Empty if `same`\n  with no difference beyond a cheaper mana cost; include `cost` whenever costs differ.\n- `priorAgree`: true/false if a prior label was given (map prior \"yes\"/\"plausible\" to same, \"weak\" to\n  weak, \"no\" to different), null otherwise.\n- `why`: ONE sentence quoting the decisive words of both texts.\n\nWrite the array as JSON to the output file given to you.\n",
@@ -92,7 +92,7 @@
    "out": "Sign in Blood",
    "in": "Insatiable Avarice",
    "source": "page",
-   "label": "weak",
+   "label": "same",
    "differs": [
     "cost",
     "amount"
@@ -103,14 +103,14 @@
     "verdict": "disagree",
     "note": "the rate for price vs cost is exactly the same, Insatiable Avarice has upside  by being modal spell to tutor, overal modal spells gives you more flexibility"
    },
-   "unresolved": true
+   "ownerAnswer": "Insatiable Avarice is an upgrade to Sign in Blood, more flexible"
   },
   {
    "role": "draw",
    "out": "Deep Analysis",
    "in": "Insatiable Avarice",
    "source": "page",
-   "label": "different",
+   "label": "same",
    "differs": [
     "effect",
     "givesBack",
@@ -122,7 +122,7 @@
     "verdict": "disagree",
     "note": "flashback does not give you timing restriction cheat, both are sorcery speed, I would play avarice over deep analysis, harder to cast so probably in 2c decks at most"
    },
-   "unresolved": true
+   "ownerAnswer": "same (2026-10-06)"
   },
   {
    "role": "draw",
@@ -1066,7 +1066,7 @@
     "verdict": "disagree",
     "note": "Mana drain is premium counterspell cause it ramps you on your next mainphase"
    },
-   "unresolved": true
+   "ownerAnswer": "same with upside (2026-10-06)"
   },
   {
    "role": "targetedRemoval",

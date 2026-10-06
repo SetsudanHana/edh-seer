@@ -1,7 +1,7 @@
 {
  "about": "Interaction ground truth: 200 cards (the review's probe list, the most frequent interaction cards over the 71 calibration decks and 197 precons, staples, and non-interaction controls), each with what it answers.",
  "gate": "docs/plans/2026-10-04-interaction-demand.md task 1: precision and recall per kind for answersOf against these labels",
- "status": "SECOND READING APPLIED 2026-10-06: 185 agree, 3 disagree, 12 unsure. Stax/MLD/shut-off is not interaction (stax: true), theft is, tax is its own kind (owner rulings). Rows with unresolved: true wait on one owner answer; excluded: true rows are left out of the gate.",
+ "status": "SECOND READING APPLIED 2026-10-06: 185 agree, 3 disagree, 12 unsure. Hard stax (a global lock, MLD) is not interaction (stax: \"hard\"); soft stax (narrow, one card or action) is (stax: \"soft\"), theft is, tax is its own kind (owner rulings). Every row resolved 2026-10-06; excluded: true rows are left out of the gate.",
  "firstReader": "claude, 2026-10-04",
  "secondReader": "owner, 2026-10-06 (artifact 1omExcjrjohaUgb4f26wNn)",
  "rubric": "# Interaction labels: rubric\n\nYou label Magic: The Gathering cards for a Commander (EDH, 4-player) deck tool. For each card decide\nwhether it is INTERACTION (it stops, removes, neutralises or protects against what OPPONENTS do), and\nwhat it answers. Read ONLY the oracle text, type line and mana cost given. NEVER use memory of what a\ncard does; if the text does not say it, it is not there. Reminder text in parentheses counts.\n\nOutput one JSON object per card, in input order, with exactly these fields:\n\n- `name`: as given.\n- `interaction`: `\"yes\"`, `\"no\"`, or `\"ruling\"`.\n  - `\"ruling\"` ONLY for the three open owner questions: discard (Thoughtseize), theft/steal (Control\n    Magic), static shut-offs and hate permanents (Torpor Orb, Null Rod, Rest in Peace, Grafdigger's\n    Cage, Blood Moon, Drannith Magistrate). Still fill `kinds`/`answers` for them.\n  - A card whose ONLY \"protection\" is for itself (hexproof while untapped, indestructible itself) is\n    `\"no\"`: self-protection is not interaction.\n  - Pure ramp/draw/value cards are `\"no\"`.\n- `kinds`: array from this closed list (empty if `\"no\"`):\n  `destroy`, `exile`, `bounce` (to hand), `tuck` (to library), `edict` (a player sacrifices of their\n  choice), `damage` (deals damage to a creature/planeswalker/battle), `minus` (-N/-N or -X/-X),\n  `neutralise` (Aura/transform/loses abilities/becomes a vanilla token, permanent stays), `steal`,\n  `counter` (counter a spell or ability), `redirect` (change targets / copy-steal a spell),\n  `shut-off` (static or activated effect that stops a class of things), `protect` (grants your\n  permanents/you protection: hexproof, indestructible, protection from, phase out, shroud),\n  `discard` (opponent discards), `graveyard-exile` (exiles cards from graveyards), `tax` (they must\n  pay, e.g. Ghostly Prison), `wipe` is NOT a kind: a wipe is `destroy`/`exile`/... with scope `all`.\n- `answers`: array of what it can remove or stop, from: `creature`, `artifact`, `enchantment`,\n  `planeswalker`, `land`, `battle`, `permanent` (any nonland/any permanent: list `permanent` AND the\n  types), `spell`, `noncreature-spell`, `creature-spell`, `instant-sorcery-spell`, `ability`\n  (activated or triggered), `graveyard`, `hand`, `attackers`. For `protect`: what it protects, from:\n  `your-creatures`, `your-permanents`, `one-creature`, `you` (the player), `your-commander`.\n- `scope`: `target`, `all` (every matching permanent, a wipe), `each-opponent`, `choice` (opponent\n  picks, edict), `self`, `static`, or `null`.\n- `oneSided`: true if it only hits opponents' things (or only protects yours), false if symmetric\n  (Wrath hits yours too), null if not applicable.\n- `conditions`: a short quote of any condition that limits it (\"if no mana was spent to cast it\",\n  \"nonblack\", \"with mana value 3 or less\", \"unless its controller pays {2}\", \"two permanents with the\n  same name\"), or null.\n- `givesBack`: a short quote if the opponent gets something (a token, a land, life, card, a free\n  spell), or null.\n- `why`: ONE sentence, quoting the decisive words of the oracle text.\n\nWrite the array of objects to the output file given to you as JSON (no comments, no trailing text).\n",
@@ -173,7 +173,7 @@
     "verdict": "unsure",
     "note": "I think we have to exclude hard stax from interaction, shut-off"
    },
-   "stax": true
+   "stax": "hard"
   },
   {
    "name": "Null Rod",
@@ -193,7 +193,7 @@
     "verdict": "unsure",
     "note": "I think we have to exclude hard stax from interaction, shut-off"
    },
-   "stax": true
+   "stax": "hard"
   },
   {
    "name": "Cursed Totem",
@@ -213,11 +213,11 @@
     "verdict": "unsure",
     "note": "I think we have to exclude hard stax from interaction, shut-off"
    },
-   "stax": true
+   "stax": "hard"
   },
   {
    "name": "Containment Priest",
-   "interaction": "no",
+   "interaction": "yes",
    "kinds": [
     "shut-off",
     "exile"
@@ -234,7 +234,7 @@
     "verdict": "agree",
     "note": "for me this is very narrow stax piece so it is shut-off"
    },
-   "stax": true
+   "stax": "soft"
   },
   {
    "name": "Linvala, Keeper of Silence",
@@ -254,7 +254,7 @@
     "verdict": "unsure",
     "note": "I think we have to exclude stax from interaction, shut-off"
    },
-   "stax": true
+   "stax": "hard"
   },
   {
    "name": "Drannith Magistrate",
@@ -274,11 +274,11 @@
     "verdict": "unsure",
     "note": "I think we have to exclude stax from interaction, shut-off"
    },
-   "stax": true
+   "stax": "hard"
   },
   {
    "name": "Opposition Agent",
-   "interaction": "ruling",
+   "interaction": "yes",
    "kinds": [
     "shut-off",
     "steal"
@@ -295,11 +295,11 @@
     "verdict": "agree",
     "note": "with your fit"
    },
-   "unresolved": true
+   "ownerAnswer": "theft (2026-10-06)"
   },
   {
    "name": "Aven Mindcensor",
-   "interaction": "ruling",
+   "interaction": "yes",
    "kinds": [
     "shut-off"
    ],
@@ -315,7 +315,8 @@
     "verdict": "agree",
     "note": "same as opo agent"
    },
-   "unresolved": true
+   "stax": "soft",
+   "ownerAnswer": "soft stax is interaction (2026-10-06)"
   },
   {
    "name": "Collector Ouphe",
@@ -335,7 +336,7 @@
     "verdict": "unsure",
     "note": "I think we have to exclude stax from interaction, shut-off"
    },
-   "stax": true
+   "stax": "hard"
   },
   {
    "name": "Dauthi Voidwalker",
@@ -358,7 +359,7 @@
   },
   {
    "name": "Pithing Needle",
-   "interaction": "no",
+   "interaction": "yes",
    "kinds": [
     "shut-off"
    ],
@@ -374,11 +375,11 @@
     "verdict": "agree",
     "note": "shut-off"
    },
-   "stax": true
+   "stax": "soft"
   },
   {
    "name": "Sorcerous Spyglass",
-   "interaction": "no",
+   "interaction": "yes",
    "kinds": [
     "shut-off"
    ],
@@ -394,7 +395,7 @@
     "verdict": "agree",
     "note": "shut-off"
    },
-   "stax": true
+   "stax": "soft"
   },
   {
    "name": "Blood Moon",
@@ -414,7 +415,7 @@
     "verdict": "unsure",
     "note": "I think we have to exclude stax from interaction, shut-off, this is MLD"
    },
-   "stax": true
+   "stax": "hard"
   },
   {
    "name": "Humility",
@@ -434,7 +435,7 @@
     "verdict": "unsure",
     "note": "I think we have to exclude stax from interaction, shut-off, this is MLD"
    },
-   "stax": true
+   "stax": "hard"
   },
   {
    "name": "Grafdigger's Cage",
@@ -454,7 +455,7 @@
     "verdict": "agree",
     "note": "shut-off"
    },
-   "stax": true
+   "stax": "hard"
   },
   {
    "name": "Thalia, Guardian of Thraben",
@@ -493,7 +494,7 @@
     "verdict": "unsure",
     "note": "I think we have to exclude stax from interaction, shut-off, this is MLD"
    },
-   "stax": true
+   "stax": "hard"
   },
   {
    "name": "Oko, Thief of Crowns",
@@ -605,7 +606,7 @@
    "secondReader": {
     "verdict": "agree"
    },
-   "stax": true
+   "stax": "hard"
   },
   {
    "name": "Teferi, Time Raveler",
