@@ -154,3 +154,14 @@ test("a creature is still refused when the board cannot pay for it that turn", (
   const deck = fillTo(100, [beater("Titan", "6", 8)]);
   expect(expectedPower(deck, 5, { manaBudget: [1, 2, 3, 4, 5] })).toBe(0);
 });
+
+/** THE WHOLE-TABLE COMBAT ROUTE READS A FILTERED CURVE (#1056 R1): `include` drops creatures from
+ *  the sum, and leaving it out is the old curve exactly, so the clock cannot move. */
+test("include filters the board; without it the curve is unchanged", () => {
+  const deck = fillTo(100, [beater("Bear", "2", 2), beater("Blight", "3", 3)]);
+  const all = pressureCurve(deck);
+  expect(pressureCurve(deck, { include: () => true })).toEqual(all);
+  const noBlight = pressureCurve(deck, { include: (dc) => dc.card.name !== "Blight" });
+  expect(noBlight[5]!.power).toBeLessThan(all[5]!.power);
+  expect(noBlight[5]!.power).toBeCloseTo(expectedPower(fillTo(100, [beater("Bear", "2", 2)]), 6), 10);
+});

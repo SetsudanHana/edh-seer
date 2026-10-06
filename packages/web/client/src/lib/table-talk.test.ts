@@ -8,7 +8,7 @@ function report(over: Partial<{ gameChangers: string[]; band: string; combos: { 
     bracket: { band: over.band ?? "3", gameChangers: over.gameChangers ?? [], infiniteCombos: 0, cheapCombos: [], reasons: [] },
     combos: over.combos ?? [],
     manaAvailability: { trials: 1, accelerants: 0, rows, headline: { mana: 5, turn: 5, low: 0, high: 0 } },
-    deckMath: { clock: { turn: over.clock ?? 7, powerAtFive: 5 }, wincons: { classes: [{ class: "go-wide", count: 8, share: 0.6, cards: [] }, { class: "burn", count: 4, share: 0.4, cards: [] }], focus: over.focus ?? 0.7 } },
+    deckMath: { clock: { turn: over.clock ?? 7, powerAtFive: 5 }, speed: { combat: { turn: (over.clock ?? 7) + 5 } }, wincons: { classes: [{ class: "go-wide", count: 8, share: 0.6, cards: [] }, { class: "burn", count: 4, share: 0.4, cards: [] }], focus: over.focus ?? 0.7 } },
   } as unknown as DeckReport;
 }
 const graph = (cards: Record<string, string>) => ({ nodes: Object.entries(cards).map(([id, oracleText]) => ({ id, label: id, oracleText, copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 0 })), edges: [] }) as unknown as CardGraph;
@@ -22,7 +22,7 @@ test("the line says the bracket and why, how it wins and how fast, and what to w
     Bear: "",
   }), (n) => mv[n])!;
   expect(t.text).toBe(
-    "Bracket 3, for Rhystic Study (a Game Changer). It wins mostly by attacking with a wide board, or damage or drain, and its creatures can kill one opponent around turn 7. "
+    "Bracket 3, for Rhystic Study (a Game Changer). It wins mostly by attacking with a wide board, or damage or drain, and its creatures can kill the table around turn 12. "
     + "Heads-up: it takes extra turns (Time Warp), steals permanents (Treachery) and can destroy every land (Armageddon).",
   );
 });
@@ -31,7 +31,7 @@ test("the line says the bracket and why, how it wins and how fast, and what to w
  *  evenly across 4 plans" under a table line saying "It wins mostly by …". Same lean test. */
 test("a deck spread evenly across its plans is not said to win mostly by one", () => {
   const t = tableTalk(report({ focus: 0.5 }), graph({}), (n) => mv[n])!;
-  expect(t.plan).toBe("It spreads its wins across 2 plans: attacking with a wide board and damage or drain, and its creatures can kill one opponent around turn 7.");
+  expect(t.plan).toBe("It spreads its wins across 2 plans: attacking with a wide board and damage or drain, and its creatures can kill the table around turn 12.");
   expect(t.text).not.toMatch(/mostly/);
   // Past three, the rest are counted in the same list: one "and", not two.
   const four = report({ focus: 0.3 });

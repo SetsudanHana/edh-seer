@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { seen } from "@edh-seer/engine";
 import { computeDeckMath, CORPUS_MEDIAN_CLOCK } from "./deck-math.js";
+import { expectedPower } from "./pressure.js";
 import { computeBuild } from "./build.js";
 import type { LandRecommendation } from "./land-count.js";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -39,6 +40,27 @@ test("the deck's own clock sets the turn everything is priced against", () => {
   expect(fastMath.turn).toBeLessThan(slowMath.turn);
   // `seen` follows the turn, so the whole readout moves together rather than one number drifting.
   expect(fastMath.seen).toBe(seen(fastMath.turn));
+});
+
+/** COMBAT, THE WHOLE TABLE (#1056 R1; owner 2026-10-06): the turn the board has dealt 120, three
+ *  opponents' 40, beside the one-opponent clock -- which stays the horizon -- and without infect,
+ *  whose damage to a player is poison, not life (CR 702.90b). */
+test("combat speed is the turn the board has dealt 120, infect left out; the clock does not move", () => {
+  const bears = fillTo(100, Array.from({ length: 40 }, (_, i) => beater(`Bear-${i}`, "5", 1)));
+  const math = computeDeckMath(bears, H);
+  expect(math.speed?.combat?.turn).toBeGreaterThan(math.clock.turn!);
+  const curveTurn = (life: number) => {
+    let cum = 0;
+    for (let t = 1; t <= 20; t++) { cum += expectedPower(bears, t); if (cum >= life) return t; }
+    return undefined;
+  };
+  expect(math.speed?.combat?.turn).toBe(curveTurn(120));
+  expect(math.clock.turn).toBe(curveTurn(40));
+
+  const blighters = fillTo(100, Array.from({ length: 40 }, (_, i) => ({ ...beater(`Blight-${i}`, "5", 1), card: { ...beater(`Blight-${i}`, "5", 1).card, keywords: ["Infect"] } })));
+  const infect = computeDeckMath(blighters, H);
+  expect(infect.clock.turn).toBe(math.clock.turn);
+  expect(infect.speed?.combat?.turn).toBeUndefined();
 });
 
 test("a deck with no combat clock is priced at the measured corpus median, not at nothing", () => {

@@ -230,6 +230,9 @@ export interface DeckMath {
    *  opponents, a rough floor. Beside `clock`, never instead of it: `clock` stays the one-opponent
    *  horizon. `drain`: repeating drains at each opponent, fired once per source of their trigger. */
   speed?: {
+    /** The turn the board has dealt 120 (three opponents' 40), infect left out; `turn` absent when it
+     *  never does by the horizon. */
+    combat?: { turn?: number };
     drain?: { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] };
   };
   /** How the deck plans to win, and how concentrated those plans are.
