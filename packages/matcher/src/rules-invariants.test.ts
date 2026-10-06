@@ -41,6 +41,7 @@ const TESTED: Record<string, string> = {
   "122.1": "wincon.test.ts — a counter stays on the player, so poison adds up across turns (#1056 poison)",
   "701.34a": "wincon.test.ts — proliferate adds one to each player who already has poison (#1056 poison)",
   "704.5c": "wincon.test.ts — ten poison counters and a player loses: the poison route's threshold (#1056)",
+  "103.5c": "goldfish.test.ts — the first mulligan in multiplayer is free: every simulated game takes a fresh seven before going to six",
   "103.8c": "wincon.test.ts — no first-turn draw skip in multiplayer, so an opponent's library on our turn t is 92 - t (#1056 mill)",
   "704.5b": "wincon.test.ts — a player loses on the draw from an empty library, so a library at 0 is the mill kill (#1056)",
   "508.1a": "commander-damage.test.ts — a creature attacks only with haste or controlled since the turn began, so the commander-damage turn assumes haste and says so (#1056)",

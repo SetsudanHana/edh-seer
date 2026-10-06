@@ -119,7 +119,7 @@ test("N16: the ramp arm agrees with an exact DP — rocks, which pay the turn th
   const rock = (i: number) => card(`Signet ${i}`, "Artifact", 2, "{T}: Add {C}.", ["C"]);
   const deck = build(36, 10, rock);
   const exact = exactCurve(36, 10, 0, 8);
-  const sim = simulate(deck, { trials: TRIALS, turns: 8, seed: 20260826 });
+  const sim = simulate(deck, { trials: TRIALS, turns: 8, seed: 20260826, mulligan: false });
   for (let t = 1; t <= 8; t++) {
     for (let m = 1; m <= 8; m++) {
       expect(Math.abs(pAtLeastMana(sim, m, t) - exact[t - 1][m])).toBeLessThan(TOL);
@@ -131,7 +131,7 @@ test("N16: the ramp arm agrees with an exact DP — dorks, which wait a turn", (
   const dork = (i: number) => card(`Bird ${i}`, "Creature — Bird", 2, "{T}: Add {C}.", ["C"]);
   const deck = build(36, 10, dork);
   const exact = exactCurve(36, 10, 1, 8);
-  const sim = simulate(deck, { trials: TRIALS, turns: 8, seed: 20260826 });
+  const sim = simulate(deck, { trials: TRIALS, turns: 8, seed: 20260826, mulligan: false });
   for (let t = 1; t <= 8; t++) {
     for (let m = 1; m <= 8; m++) {
       expect(Math.abs(pAtLeastMana(sim, m, t) - exact[t - 1][m])).toBeLessThan(TOL);
@@ -207,7 +207,7 @@ test("N16: a land-fetch agrees with an exact DP, which is the check N15 did not 
   const FETCH = "Search your library for a basic land card, put it onto the battlefield, then shuffle.";
   const deck = build(30, 12, (i) => card(`Lore ${i}`, "Sorcery", 2, FETCH));
   const exact = exactFetchCurve(30, 12, 8);
-  const sim = simulate(deck, { trials: TRIALS, turns: 8, seed: 20260826 });
+  const sim = simulate(deck, { trials: TRIALS, turns: 8, seed: 20260826, mulligan: false });
   for (let t = 1; t <= 8; t++) {
     for (let m = 1; m <= 8; m++) {
       expect(Math.abs(pAtLeastMana(sim, m, t) - exact[t - 1][m])).toBeLessThan(TOL);
