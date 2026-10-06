@@ -212,7 +212,9 @@ export function ritualAdds(dc: DeckCard): number {
 
 /** The colour mask of each mana a ritual adds, one entry per symbol ("{R}{R}{R}" is three red). */
 function ritualMana(text: string): number[] {
-  const m = /(?:^|\n)\s*Add ((?:\{[WUBRGC]\})+)\.(?:\s|$)/.exec(text);
+  // ANCHORED PER LINE (`m`), never `(?:^|\n)\s*`: the newline and the whitespace overlap, and CodeQL's
+  // polynomial-ReDoS check fails the PR on it (js/polynomial-redos, #1063).
+  const m = /^Add ((?:\{[WUBRGC]\})+)\.(?:\s|$)/m.exec(text);
   return m ? (m[1]!.match(/\{[WUBRGC]\}/g) ?? []).map((sym) => colorMask([sym.slice(1, -1)])) : [];
 }
 
