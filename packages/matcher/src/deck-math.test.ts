@@ -75,8 +75,13 @@ test("a commander that prevents your damage to opponents leaves the damage route
   expect(math.speed?.prevented).toBe("Skinner");
   expect(math.speed?.combat?.turn).toBeUndefined();
   expect(math.speed?.commander?.turn).toBeUndefined();
-  expect(math.clock.turn).toBeDefined();
+  // Owner 2026-10-06: the one-opponent clock is damage too, so it has no turn either, and the horizon
+  // falls back to the corpus median like any deck with no combat clock.
+  expect(math.clock.turn).toBeUndefined();
+  expect(math.turnSource).toBe("corpus-median");
+  expect(math.turn).toBe(CORPUS_MEDIAN_CLOCK);
   expect(free.speed?.prevented).toBeUndefined();
+  expect(free.clock.turn).toBeDefined();
 });
 
 test("a deck with no combat clock is priced at the measured corpus median, not at nothing", () => {

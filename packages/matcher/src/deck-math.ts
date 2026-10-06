@@ -151,7 +151,14 @@ export function computeDeckMath(
   // reason: a wrong number here is worse than the older one.
   // `specs/2026-08-19-clock-and-mana-model-review.md` §3.
   const curve = pressureCurve(deck, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) });
-  const clockTurn = curve.find((p) => p.cumulative >= STARTING_LIFE)?.turn;
+  // YOUR DAMAGE TO OPPONENTS IS PREVENTED (The Mindskinner, voltron-mill): a commander that says so
+  // leaves every damage route without a turn -- the board, the commander, the drains deal nothing
+  // that sticks -- and the speed names it so the readout can say why. A card in the 99 is not always
+  // out, so only a commander counts. THE ONE-OPPONENT CLOCK TOO (owner 2026-10-06: "we should fix
+  // it"): it is damage, so the deck has no combat clock and the horizon falls back to the corpus
+  // median like any deck without one.
+  const prevented = deck.find((dc) => commanderNames.includes(dc.card.name) && PREVENTS_YOUR_DAMAGE.test(dc.card.oracleText ?? ""))?.card.name;
+  const clockTurn = prevented ? undefined : curve.find((p) => p.cumulative >= STARTING_LIFE)?.turn;
   const clock = {
     ...(clockTurn !== undefined ? { turn: clockTurn } : {}),
     powerAtFive: Math.round(curve[4].power * 10) / 10,
@@ -345,13 +352,8 @@ export function computeDeckMath(
     .find((p) => p.cumulative >= 3 * STARTING_LIFE)?.turn;
   // COMMANDER DAMAGE (#1056 R2): voltron decks only, the faster commander's whole-table turn.
   const commander = commanderClock(deck, commanderNames, opts.primary, opts.manaBudget ? { manaBudget: opts.manaBudget } : {});
-  // YOUR DAMAGE TO OPPONENTS IS PREVENTED (The Mindskinner, voltron-mill): a commander that says so
-  // leaves every damage route without a turn -- the board, the commander, the drains deal nothing
-  // that sticks -- and the speed names it so the readout can say why. A card in the 99 is not always
-  // out, so only a commander counts.
   // MILL (#1056 R4): cards milled from each opponent against their library, 92 - t.
   const mill = opts.reasons ? millClock(deck, opts.reasons, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) }) : undefined;
-  const prevented = deck.find((dc) => commanderNames.includes(dc.card.name) && PREVENTS_YOUR_DAMAGE.test(dc.card.oracleText ?? ""))?.card.name;
   // POISON (#1056 R3): ten counters on each opponent; attacks need damage dealt, so a commander that
   // prevents your damage leaves only placed counters and proliferate.
   const poison = opts.reasons ? poisonClock(deck, opts.reasons, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}), damagePrevented: prevented !== undefined }) : undefined;
