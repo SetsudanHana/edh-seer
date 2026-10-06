@@ -195,6 +195,44 @@ export interface ManaOutput {
   tron?: { subtypes: [string, string]; amount: number };
 }
 
+/** A RITUAL'S MANA: an instant or sorcery whose text adds a FIXED run of mana -- Dark Ritual's
+ *  "Add {B}{B}{B}." -- and nothing that counts ("for each", Jeska's Will; "then add", Rite of Flame).
+ *  0 for anything else. One-shot mana is no SOURCE (`isManaSource`'s ruling stands); it is read only
+ *  for a single turn's burst, `SimulateResult.fastStart`. */
+export function ritualAdds(dc: DeckCard): number {
+  // A split or Adventure card is priced at a mana value that is not the ritual half's (review).
+  if ((dc.card.typeLine ?? "").includes("//")) return 0;
+  if (!/\b(?:instant|sorcery)\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) return 0;
+  const text = dc.card.oracleText ?? "";
+  // An extra cost (Culling the Weak's creature) or mana that pays only for some spells is not a free
+  // burst toward the commander (review).
+  if (/additional cost|spend this mana only/i.test(text)) return 0;
+  return ritualMana(dc.card.oracleText ?? "").length;
+}
+
+/** The colour mask of each mana a ritual adds, one entry per symbol ("{R}{R}{R}" is three red). */
+function ritualMana(text: string): number[] {
+  const m = /(?:^|\n)\s*Add ((?:\{[WUBRGC]\})+)\.(?:\s|$)/.exec(text);
+  return m ? (m[1]!.match(/\{[WUBRGC]\}/g) ?? []).map((sym) => colorMask([sym.slice(1, -1)])) : [];
+}
+
+const popcount = (m: number): number => { let n = 0; for (let x = m; x; x &= x - 1) n++; return n; };
+
+/** SPEND FROM A POOL OF ONE-MANA UNITS, each carrying the colours it can be: a coloured pip takes the
+ *  least flexible unit that pays it, generic takes the least flexible left. Mutates `units`; false
+ *  (and untouched) when the cost does not fit. */
+function spendUnits(units: number[], cost: Cost): boolean {
+  if (!payable(units.map((colors) => ({ mana: 1, colors })), cost)) return false;
+  const take = (fits: (u: number) => boolean): void => {
+    let best = -1;
+    for (let i = 0; i < units.length; i++) if (fits(units[i]!) && (best < 0 || popcount(units[i]!) < popcount(units[best]!))) best = i;
+    if (best >= 0) units.splice(best, 1);
+  };
+  for (const pip of cost.pips) take((u) => (u & pip) !== 0);
+  for (let i = cost.pips.length; i < cost.total; i++) take(() => true);
+  return true;
+}
+
 /** MANA IN A COST STRING. `{2}` is two, `{U}` is one, `{T}` is none — because "{1}, {T}: Add {U}{B}"
  *  is ONE mana and reading the Add run alone prices it at two. The first count over this corpus made
  *  exactly that mistake and reported 27 lands where the answer is 9. */
@@ -528,6 +566,9 @@ interface DeckSlot {
   costKey: string;
   /** Priced but not shuffled in -- a commander. Excluded from the deck's payable SHARE. */
   isExtra?: boolean;
+  /** A RITUAL: the colour of each mana it adds, cast from hand for one turn's burst (`ritualAdds`).
+   *  Never a source. */
+  ritual?: number[];
   /** A fetchland removes the land it finds from the library. */
   fetches: boolean;
   /** The land this fetch FINDS arrives tapped -- Evolving Wilds and the Landscape cycle. */
@@ -627,6 +668,11 @@ export interface SimulateResult {
    *  this cell", which is what every consumer wants and what `MIN_HELD_TRIALS` gates on -- never as
    *  "how many games had this card in hand". With `pooled: false` the two readings coincide again. */
   byCardHeld: Map<string, number[]>;
+  /** Per commander (`alsoPrice`), per turn: the share of trials whose mana THAT TURN, plus the
+   *  rituals in hand chained cheapest-first, covered its mana value by then -- "Alania on turn 2".
+   *  Colour-blind, and a one-turn burst: the rituals are not spent across turns. Nothing else reads
+   *  rituals; `manaAt` and the castability maps are the board's own mana, unchanged. */
+  fastStart: Map<string, number[]>;
 }
 
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
@@ -684,6 +730,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       cost: isLand ? null : parseCost(castableManaCost(dc.card)),
       costKey: castableManaCost(dc.card) ?? "",
       ...(isLand ? { land: classifyLand(dc.card) } : { accelerant: classifyAccelerant(dc) }),
+      ...(!isLand && ritualAdds(dc) > 0 ? { ritual: ritualMana(dc.card.oracleText ?? "") } : {}),
     };
   });
   const nonlands = slots.filter((s) => !s.isLand);
@@ -740,6 +787,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         : `P:${[...(s.cost?.pips ?? [])].sort((a, b) => a - b).join(",")}`);
 
   const manaAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
+  const fastFirst = new Map<string, number[]>(extras.map((e) => [e.name, Array(turns).fill(0)]));
   const payableShareAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const byCardHits = new Map<string, number[]>();
   const byCardCastHits = new Map<string, number[]>();
@@ -794,6 +842,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     // priced at zero. It is NOT shuffled in -- that would both dilute the draw and pretend it can be
     // drawn (CR 903.6, the rule `alsoPrice` already exists for) -- and it keeps its own priced row.
     for (const e of extras) if (e.accelerant) hand.push(e);
+    const startedAt = new Set<string>();
     const lands: OnBoardLand[] = [];
     const rocks: { turn: number; mana: number; colors: number }[] = [];   // the turn each landed, what it taps for, and in which colours
     const dorks: { turn: number; mana: number; colors: number }[] = [];
@@ -950,6 +999,31 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       const untapped = untappedSources();
       const made = untapped.reduce((n, x) => n + x.mana, 0);
       manaAt[turn - 1].push(made);
+      // ONE TURN'S BURST: the board's mana plus the rituals in hand, cheapest first, each cast only if
+      // it can be paid for and nets mana. The first turn it covers a commander is that trial's start.
+      // ONE TURN'S BURST, IN COLOUR (owner 2026-10-06: "we can not be colorblind regarding rituals").
+      // The board's untapped mana as one-mana units, each with its colours; less what this turn's
+      // accelerants already spent (`made - pool`, taken from the least flexible units, as a rock's
+      // generic cost would be); then the rituals in hand, cheapest first, each cast only if its own
+      // cost is payable IN COLOUR and it nets mana, adding units of its printed colour. The first
+      // turn the commander's own cost fits is that trial's start.
+      if (fastFirst.size > 0 && opts.forceName === undefined) {
+        const units: number[] = [];
+        for (const src of untapped) for (let k = 0; k < src.mana; k++) units.push(src.colors);
+        units.sort((a, b) => popcount(a) - popcount(b));
+        units.splice(0, Math.max(0, made - pool));
+        for (const r of hand.filter((c) => c.ritual !== undefined && c.cost !== null).sort((a, b) => a.manaValue - b.manaValue)) {
+          if (r.ritual!.length <= r.manaValue) continue;
+          if (spendUnits(units, r.cost!)) units.push(...r.ritual!);
+        }
+        for (const e of extras) {
+          if (startedAt.has(e.name)) continue;
+          const fits = e.cost ? payable(units.map((colors) => ({ mana: 1, colors })), e.cost) : units.length >= e.manaValue;
+          if (!fits) continue;
+          startedAt.add(e.name);
+          fastFirst.get(e.name)![turn - 1]++;
+        }
+      }
       // COLOUR IS ASKED OF THE BOARD, ONCE PER DISTINCT COST. A cost the board cannot pay is not a
       // second probability to multiply in -- it is this trial answering no.
       const castableByCost = new Map<string, boolean>();
@@ -1007,7 +1081,13 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   for (const [name, hits] of byCardHits) byCard.set(name, rate(name, hits));
   const byCardCastable = new Map<string, number[]>();
   for (const [name, hits] of byCardCastHits) byCardCastable.set(name, rate(name, hits));
-  return { trials, turns, manaAt, payableShareAt, byCard, byCardCastable, byCardHeld: heldHits };
+  // CUMULATIVE: by turn t, not on it.
+  const fastStart = new Map<string, number[]>();
+  for (const [name, first] of fastFirst) {
+    let n = 0;
+    fastStart.set(name, first.map((c) => (n += c) / trials));
+  }
+  return { trials, turns, manaAt, payableShareAt, byCard, byCardCastable, byCardHeld: heldHits, fastStart };
 }
 
 /** P(at least `m` mana by turn `t`) straight off a run. */
@@ -1282,6 +1362,11 @@ export function manaModel(
       accelerants: deck.map(classifyAccelerant).filter((a) => a !== null).length,
       rows,
       headline: { mana: 6, turn: 6, low: Math.min(lo, hi), high: Math.max(lo, hi) },
+      // FAST STARTS, only for a deck that runs rituals: without one the burst is the board's own mana,
+      // which the commander's castability row already prices with colours (owner 2026-10-06).
+      ...(deck.some((dc) => ritualAdds(dc) > 0) && greedy.fastStart.size > 0
+        ? { fastStart: [...greedy.fastStart].map(([name, byTurn]) => ({ name, byTurn: byTurn.map((p) => Math.round(p * 1000) / 1000) })) }
+        : {}),
     },
   };
 }

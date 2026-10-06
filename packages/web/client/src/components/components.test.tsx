@@ -2752,6 +2752,25 @@ test("the band carries one pip per piece of evidence that put the deck there", (
 // I11's REPORT WIRING. This panel is where the model's refused quantities could leak into a headline,
 // so the copy is asserted, not just the numbers: the range must be named as the PLAY POLICY and the
 // colour blindness must be on screen rather than in a tooltip.
+/** FAST STARTS (owner 2026-10-06: "there were games where I won on turn 3 casting Alania t2"): a deck
+ *  with rituals says the earliest turn its commander comes down in a game in a hundred or more. */
+test("the mana panel names the commander's fast start when rituals make one", () => {
+  const rows = [1, 2, 3].map((turn) => ({ turn, mana: { median: turn, p25: turn, p75: turn }, payableShare: { median: 0.5, p25: 0.4, p75: 0.6 } }));
+  const base = { trials: 2000, accelerants: 4, rows, headline: { mana: 6, turn: 6, low: 0.5, high: 0.5 } };
+  const { unmount } = render(<ManaAvailability manaAvailability={{ ...base, fastStart: [{ name: "Alania, Divergent Storm", byTurn: [0, 0.004, 0.04, 0.3, 0.7] }] }} />);
+  expect(screen.getByTestId("fast-start")).toHaveTextContent("Fast starts: Alania, Divergent Storm by turn 3 in about 1 game in 25, counting its rituals.");
+  unmount();
+  // A common start reads as a share, never "1 game in 1".
+  const { unmount: u2 } = render(<ManaAvailability manaAvailability={{ ...base, fastStart: [{ name: "Sorin", byTurn: [0.08, 0.82] }] }} />);
+  expect(screen.getByTestId("fast-start")).toHaveTextContent("Fast starts: Sorin by turn 1 in about 1 game in 13, counting its rituals.");
+  u2();
+  const { unmount: u3 } = render(<ManaAvailability manaAvailability={{ ...base, fastStart: [{ name: "Cultist", byTurn: [0.95] }] }} />);
+  expect(screen.getByTestId("fast-start")).toHaveTextContent("Fast starts: Cultist by turn 1 in 95% of games, counting its rituals.");
+  u3();
+  render(<ManaAvailability manaAvailability={base} />);
+  expect(screen.queryByTestId("fast-start")).not.toBeInTheDocument();
+});
+
 test("the mana panel shows a policy range, its spread, and says what it is not", () => {
   const rows = [1, 2, 3].map((turn) => ({
     turn,

@@ -130,7 +130,18 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
           Turn {shown.turn} · {pct(shown.payableShare.median)} of the deck payable ({pct(shown.payableShare.p25)}–{pct(shown.payableShare.p75)})
         </p>
       ) : null}
-
+      {(m.fastStart ?? []).map((f) => {
+        // THE EARLIEST TURN A GAME IN A HUNDRED GETS THERE (owner 2026-10-06, Alania on turn 2): a
+        // rarer start is a curiosity, and the typical turn is the castability row's job.
+        const i = f.byTurn.findIndex((p) => p >= 0.01);
+        if (i < 0) return null;
+        const share = f.byTurn[i]!;
+        return (
+          <p key={f.name} className="text-xs" data-testid="fast-start">
+            Fast starts: {f.name} by turn {i + 1} in {share >= 0.5 ? `${Math.round(share * 100)}% of games` : `about 1 game in ${Math.round(1 / share)}`}, counting its rituals.
+          </p>
+        );
+      })}
     </div>
   );
 }
