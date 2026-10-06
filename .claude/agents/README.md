@@ -110,7 +110,11 @@ the browser, so that cross-check is what keeps the classification honest.
 3. **Give each persona its task list** (below). Tasks, not "have a look" — round 1's
    best finding was that 4/4 could not name a single multi-role card, which only
    surfaced because they were asked to.
-4. **Run every seat in parallel, in separate agents, none seeing another's output.**
+4. **A seat file edited in this session is NOT what the seat runs.** Agent definitions load
+   when the session starts (2026-10-06: a dry run after the anchors landed scored on the old
+   one-component text). Restart the session, or launch a general-purpose agent told to read the
+   seat file as its instructions and nothing else in the repo.
+4b. **Run every seat in parallel, in separate agents, none seeing another's output.**
    Independence is what makes agreement mean anything.
 5. **Score the round** (below) and file the findings with the run date.
 
@@ -211,6 +215,39 @@ Ground-truth answers are for the harness operator, never for the agent.
 5. Find the explanation for any /5 score.
 
 ## Scoring a round
+
+**Schedule it against the backlog first.** `docs/measurements/persona-backlog.md` holds one row
+per finding, keyed by its quoted anchor, with its GitHub issue. Run a round only when every P1 there
+is fixed or deferred with a reason, and open the FINDINGS by naming the P1s it re-tests. Findings
+cite backlog ids. A repeat updates the row; it is not a "repeat of" note. A new finding gets a row
+AND an issue.
+
+**Every seat scores all four ICE-T components against fixed anchors** (R-T1, 2026-10-06). Five
+rounds of one feel-based score per seat read 3 to 5, median 3, and could not be moved: nothing
+defined a 7. Each seat file carries this table word for word. Change it here and in all six files
+together:
+
+| component | 3 | 5 | 7 |
+|---|---|---|---|
+| Time | the answer exists, but it is spread over two or more chapters and I needed a fold to put it together | the answer is in one chapter, with one number to act on | the first screen answers my own question, with the number and the one change to make |
+| Essence | the gist arrived only after I looked up a word or read a second page | the gist arrived from one page, with one word left unexplained | I can say in one sentence what the deck does and what to change, using only words on the screen |
+| Insight | the page listed what I already knew | one relationship or outlier I did not know, with its reason | the win named with the cards that do it, one thing I had wrong, and the reason for each |
+| Confidence | I could not check its claims from the screen, and its refusals read as holes | each claim I checked had both cards' text on screen, and the refusals said why | every claim I acted on could be checked from the screen, a zero was said as zero, and where a claim was wrong, the screen let me see it |
+
+- **The seat's own component counts double**; the other three are scored too, so each component
+  has six readings, not one.
+- **The round table reports four component medians over the six seats, with each seat's own score
+  beside it**, plus a tasks-answered column. The weighted figure per component is the median of the
+  six scores with the own-seat score entered twice.
+- **The objective number sits beside every score**: each seat ends its task outcomes with
+  `Totals: answered N/T · couldn't tell N · misread N`. Total these across seats. **A 6 or 7 is
+  void when the seat answered fewer than T−1 tasks.** Check it, as you check the canary.
+  **Re-grade every `answered` against the task's truth before totalling**: a seat that answers a
+  task whose truth is "not answered" by inferring it (the 2026-10-06 dry run: pod-fit "answered"
+  task 6 by reasoning "cut Bowmasters" from the bracket sentence, reached 7/7 and so unlocked three
+  6s) is recorded as `misread`. The seat's own count is a claim, not the number.
+- **Check each score's quote against its anchor's words.** A score whose quote does not meet the
+  anchor it claims is re-read at the anchor the quote does meet, and the FINDINGS say so.
 
 - **Convergence is the severity meter — but only ACROSS ceilings.** Precon-upgrader + plan-seeker
   failing to decode the same readout means the tool is wrong. Expert seats agreeing
