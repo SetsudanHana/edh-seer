@@ -60,6 +60,10 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
   // card nothing argues for is a cut; a card with a reason to stay is a trade-off, and says so.
   const clear = cuts.filter((c) => c.keeps.length === 0);
   const maybe = cuts.filter((c) => c.keeps.length > 0);
+  // WEAKEST FIRST BY THE NUMBER ON SCREEN (#981): which cards are cut is the link reading's call; the
+  // rows it picked read in the order of the score they print, or "weakest first" measured nothing a
+  // reader could see (Krenko: 2.3, 2.6, 2.5, 1.6, 2.9 …).
+  const byShown = (a: CutChoice, b: CutChoice) => shownScore(a) - shownScore(b);
   // OVER 100, THE CUTS ARE THE PLAN (baseline round 2026-09-26). The first-deck seat, 8 over, got 7
   // names, 2 more behind a button, and "Trim 3 5 10", which skips 8. Now the list leads with exactly
   // as many cuts as the deck is over, weakest first (nothing-argues-for-it first, then trade-offs),
@@ -67,7 +71,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
   // this: it ranks every card, and on that deck its fifth and eighth were Sol Ring and Arcane Signet.
   const over = deckSize !== undefined ? Math.max(0, deckSize - 100) : 0;
   const ordered = [...clear, ...maybe];
-  const toCut = over ? ordered.slice(0, over) : [];
+  const toCut = over ? [...ordered.slice(0, over)].sort((a, b) => Number(a.keeps.length > 0) - Number(b.keeps.length > 0) || byShown(a, b)) : [];
   const spare = over ? ordered.slice(over) : [];
   const pairOf = new Map((pairs ?? []).map((p) => [p.cut, p] as const));
   // A deck that is over needs cards out, not swaps; the swaps are for a deck at its size.
@@ -132,7 +136,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
             <section aria-labelledby="cuts-clear" className="flex flex-col gap-2">
               <h4 id="cuts-clear" className="text-base font-semibold">Nothing argues for keeping these</h4>
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(25rem,calc((100%_-_2.25rem)/4))),1fr))]">
-                {clear.map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
+                {[...clear].sort(byShown).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
               </ul>
             </section>
           ) : null}
@@ -140,7 +144,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
             <section aria-labelledby="cuts-maybe" className="flex flex-col gap-2">
               <h4 id="cuts-maybe" className="text-base font-semibold">{clear.length ? "Weak here, but something argues for them" : "The weakest here, though something argues for each"}</h4>
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(25rem,calc((100%_-_2.25rem)/4))),1fr))]">
-                {maybe.slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
+                {[...maybe].sort(byShown).slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
               </ul>
               {maybe.length > maybeN ? (
                 <p>
@@ -300,6 +304,15 @@ function CutCard({ c, swap }: { c: CutChoice; swap?: SuggestedPair }) {
       {swap ? <SwapLine p={swap} /> : null}
     </li>
   );
+}
+
+/** The synergy score a row prints in its keep reason, else the card's own; what "weakest first" orders by. */
+function shownScore(c: CutChoice): number {
+  for (const k of c.keeps) {
+    const m = /scores (\d+(?:\.\d+)?) for synergy/.exec(k);
+    if (m) return Number(m[1]);
+  }
+  return c.card?.score ?? 0;
 }
 
 const capitalFirst = (t: string) => (t ? t[0]!.toUpperCase() + t.slice(1) : t);

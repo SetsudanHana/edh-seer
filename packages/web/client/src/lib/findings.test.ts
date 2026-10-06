@@ -281,7 +281,10 @@ test("the slot trade says so when the surplus is the category a finding asks for
   });
   const trade = slotTrade(withAnswers, findings(withAnswers))!;
   expect(trade).toContain("Interaction sits at 19 against a target of 10");
-  expect(trade).toContain("Swap within Interaction rather than adding more");
+  // ONE INSTRUCTION WITH THE SLOT LINE ABOVE IT (#982): "Take the slots from Interaction" over "Swap
+  // within Interaction rather than adding more" stopped the clunky-deck seat: cut interaction or not?
+  expect(trade).toContain("take the slots from the cards that answer the same things, and keep the ones that answer what nothing else does");
+  expect(trade).not.toContain("rather than adding more");
 
   // AND STAYS QUIET WHEN THEY ARE DIFFERENT CATEGORIES, where "add" and "the room is elsewhere" do
   // not conflict and the extra clause would be noise.

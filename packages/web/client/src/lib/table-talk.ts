@@ -31,6 +31,12 @@ const WARN: { key: HeadsUp["key"]; says: string; test: RegExp }[] = [
   { key: "land-destruction", says: "can destroy every land", test: /\b(?:destroy|exile) all (?:nonbasic )?lands\b|\bsacrifices? all lands\b|\beach player sacrifices [^.]{0,20}lands\b/i },
 ];
 
+/** What the table would be warned about in this text ("steals permanents"), by the same patterns the
+ *  heads-up reads, so the cut list can say a warned-about card is one (#982). */
+export function warnsAbout(text: string): string[] {
+  return WARN.filter((w) => w.test.test(text)).map((w) => w.says);
+}
+
 const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
 const front = (name: string) => name.split(" // ")[0]!;
 
