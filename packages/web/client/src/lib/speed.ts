@@ -22,7 +22,7 @@ import { infiniteCombos } from "./bracket-why.js";
  *  A JOIN over the report: `manaAvailability.rows`, `deckMath.clock`, `deckMath.wincons`, the combo
  *  list and each card's mana value. Nothing new is modelled here. */
 export interface SpeedRoute {
-  kind: "combo" | "alt-win" | "combat" | "commander" | "burn" | "mill";
+  kind: "combo" | "alt-win" | "combat" | "commander" | "poison" | "burn" | "mill";
   /** What the route is, in a player's words. */
   label: string;
   /** Typical turn (half of games), and the spread: fast games and slow games. */
@@ -115,6 +115,18 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
       caveat: preventedWhy ?? (cmd.turn !== undefined
         ? "when it has dealt 21 to each opponent: cast with haste, carrying the Equipment and Auras out by then, nobody blocking"
         : "not timed: it does not deal 21 to all three opponents by turn 20"),
+    });
+  }
+
+  // POISON (#1056 R3): ten counters on each opponent, attacks a third each, proliferate on every one.
+  const poison = report.deckMath?.speed?.poison;
+  if (poison) {
+    routes.push({
+      kind: "poison", label: "poison counters", cards: poison.cards, ...(poison.turn !== undefined ? { turn: poison.turn } : {}),
+      caveat: poison.turn !== undefined
+        ? "when every opponent has ten poison counters: infect and toxic attacks unblocked, each proliferate adding one to everyone already poisoned"
+        : prevented ? `not timed: ${prevented} prevents your damage to opponents, and no counters are placed fast enough`
+        : "not timed: it does not put ten poison counters on every opponent by turn 20",
     });
   }
 

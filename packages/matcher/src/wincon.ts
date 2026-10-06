@@ -194,7 +194,7 @@ export function drainAbilities(dc: DeckCard): { face: number; index: number; amo
 
 type DrainAbility = {
   kind?: string; face?: number; repeats?: string; amount?: string;
-  trigger?: { verbs?: string[]; batched?: true };
+  trigger?: { verbs?: string[]; batched?: true; subject?: unknown };
   effect?: { kind?: string; subject?: { control?: string; scope?: string } };
 };
 
@@ -244,6 +244,13 @@ export interface DrainClock {
 
 const PHASE_VERBS = new Set(["upkeep", "begin-combat", "end-step"]);
 
+/** Fires once, ever: a spell, or "when this enters" (a self trigger on entering alone). */
+const oneShot = (ab: DrainAbility): boolean => {
+  const verbs = ab.trigger?.verbs ?? [];
+  return ab.kind === "on-cast"
+    || ((ab.trigger?.subject as { self?: boolean } | undefined)?.self === true && verbs.length > 0 && verbs.every((v) => v === "enters"));
+};
+
 export function drainClock(
   deck: readonly DeckCard[],
   reasons: readonly Reason[],
@@ -266,7 +273,12 @@ const round2 = (n: number): number => Math.round(n * 100) / 100;
 
 /** One ability whose amount lands on the opponents, with the share of the table each fire reaches:
  *  1 when it hits each opponent, a third when it hits one target (the table needs it three times). */
-interface Pick { dc: DeckCard; face: number; index: number; amount: number; ability: DrainAbility; share: number }
+interface Pick {
+  dc: DeckCard; face: number; index: number; amount: number; ability: DrainAbility; share: number;
+  /** An ENABLER, not the route's payoff (a proliferate for poison): weighted by its odds of being out,
+   *  `arrival`, rather than assumed out from the turn it can be cast. */
+  enabler?: true;
+}
 
 /** THE TRIGGER COUNT SHARED BY THE DRAIN AND MILL ROUTES (#1056): the amount each OPPONENT takes on
  *  each turn to the horizon, from abilities that fire once per SOURCE of their trigger (see
@@ -292,9 +304,18 @@ function triggeredCurve(
   // Ability indexes are per FACE (see `drainAbilities`).
   const repeats = (dc: DeckCard, face: number | undefined, ability: number | undefined): boolean =>
     ability !== undefined && REPEATING.has(((dc.tags?.abilities ?? []).filter((a) => ((a as DrainAbility).face ?? 0) === (face ?? 0))[ability] as DrainAbility | undefined)?.repeats ?? "");
+  // ARRIVALS COST MANA (Venser, 2026-10-06): `arrival` makes every card castable the turn its mana
+  // value is affordable, so all of them "arrive" together -- 55 Surge Conductor sources made six
+  // permanents enter on three mana. A turn's expected arrivals are scaled so their mana values add up
+  // to at most that turn's mana, the cap `expectedPower`'s budget puts on a board.
+  const scale: number[] = [1];
+  for (let t = 1; t <= HORIZON; t++) {
+    const cost = deck.reduce((n, dc) => n + arrives(dc, t) * dc.card.manaValue, 0);
+    scale[t] = cost > 0 ? Math.min(1, affordableAt(opts.manaBudget, t) / cost) : 1;
+  }
   /** Events one card-side source makes on turn t: per use, every turn it is out when it repeats. */
   const fromCard = (dc: DeckCard, r: Reason, t: number): number =>
-    perUse(r) * (repeats(dc, r.producerFace, r.producerAbility) ? on(dc, t) : arrives(dc, t));
+    perUse(r) * (repeats(dc, r.producerFace, r.producerAbility) ? on(dc, t) : arrives(dc, t) * scale[t]!);
   // ONE SOURCE, ONE COUNT: a trigger with a chain of effects says itself in several reasons that
   // differ only in `effectKind` (Archon of Cruelty: six), so sources are keyed by who supplies the
   // event and through which ability, never by reason.
@@ -316,10 +337,16 @@ function triggeredCurve(
     let amount = 0;
     for (const d of withSources) {
       if (!castable(d.dc, t)) continue;
+      // The payoff is assumed out; an enabler is out as often as it is drawn and cast.
+      const out = d.enabler ? (oneShot(d.ability) ? arrives(d.dc, t) * scale[t]! : on(d.dc, t)) : 1;
       let fires: number;
-      if (d.ability.kind === "on-cast") {
+      // A TRIGGER ON THE CARD ITSELF ("whenever this creature deals combat damage", Thrummingbird) has
+      // one source, the card: the edge layer joins every creature that deals combat damage, and
+      // counting them read Venser's proliferate at six a turn. Once a turn; "when this enters", once.
+      const self = (d.ability.trigger?.subject as { self?: boolean } | undefined)?.self === true;
+      if (oneShot(d.ability)) {
         fires = castable(d.dc, t - 1) ? 0 : 1;
-      } else if (d.ability.kind === "activated" || (d.ability.trigger?.verbs ?? []).some((v) => PHASE_VERBS.has(v))) {
+      } else if (self || d.ability.kind === "activated" || (d.ability.trigger?.verbs ?? []).some((v) => PHASE_VERBS.has(v))) {
         fires = 1;
       } else {
         fires = 0;
@@ -336,7 +363,7 @@ function triggeredCurve(
         }
         if (d.ability.trigger?.batched) fires = Math.min(1, fires);
       }
-      amount += d.amount * d.share * fires;
+      amount += d.amount * d.share * (d.enabler && oneShot(d.ability) ? out : fires * out);
     }
     perTurn.push(amount);
   }
@@ -405,6 +432,85 @@ export function millClock(
     unbounded,
   };
 }
+
+/** POISON, TIMED FOR THE WHOLE TABLE (#1056 R3; owner 2026-10-06: "poison is counter so proliferate
+ *  effects work"). The first turn EACH opponent has ten poison counters. Three sources:
+ *  - ATTACKS: infect power (CR 702.90b) and toxic / poisonous N (CR 702.164c, read off the printed
+ *    text: the derived tags carry the keyword, not N), on the attack curve `expectedPower` weighs.
+ *    One player per hit, so a third per opponent -- the same floor as the combat route. Absent when
+ *    your damage to opponents is prevented (`damagePrevented`): infect and toxic need damage dealt.
+ *  - COUNTERS PLACED directly with a fixed amount (`counter-added:poison`): each opponent in full, one
+ *    target a third, counted like a drain (`triggeredCurve`).
+ *  - PROLIFERATE: a counter stays on the player (CR 122.1), so each proliferate adds one to EVERY
+ *    opponent who already has poison (CR 701.34a) -- counted per source of its trigger, and weighted by
+ *    the odds an opponent has poison yet (the expected counters so far, at most one).
+ *  A deck with proliferate and no poison source has no route: proliferate needs a counter to grow. */
+export interface PoisonClock { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] }
+
+// N is read off the text, but only for a keyword the CARD has (Scryfall's keyword list), and never in
+// a grant: "All Sliver creatures have poisonous 1" is Virulent Sliver's gift, not its own (review).
+const POISON_KEYWORDS = /(?<!\b(?:have|has|gains?|gets?) )\b(toxic|poisonous) (\d+)/gi;
+const poisonPerHit = (dc: DeckCard): number => {
+  const own = new Set((dc.card.keywords ?? []).map((k) => k.toLowerCase()));
+  const infect = own.has("infect") ? Number(dc.card.power) || 0 : 0;
+  let n = 0;
+  for (const m of (dc.card.oracleText ?? "").matchAll(POISON_KEYWORDS)) if (own.has(m[1]!.toLowerCase())) n += Number(m[2]);
+  return infect + n;
+};
+
+export function poisonClock(
+  deck: readonly DeckCard[],
+  reasons: readonly Reason[],
+  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[]; damagePrevented?: boolean } = {},
+): PoisonClock | undefined {
+  const placed: Pick[] = [];
+  const proliferates: Pick[] = [];
+  for (const dc of deck) {
+    const faceIndex = new Map<number, number>();
+    for (const a of dc.tags?.abilities ?? []) {
+      const ab = a as DrainAbility & { emits?: { verb?: string; subject?: { counter?: string } }[] };
+      const face = ab.face ?? 0;
+      const index = faceIndex.get(face) ?? 0;
+      faceIndex.set(face, index + 1);
+      if (!oneShot(ab) && (ab.kind !== "triggered" && ab.kind !== "activated" || !REPEATING.has(ab.repeats ?? ""))) continue;
+      if (ab.effect?.kind === "proliferate") {
+        proliferates.push({ dc, face, index, amount: 1, ability: ab, share: 1, enabler: true });
+        continue;
+      }
+      if (!(ab.emits ?? []).some((e) => e.verb === "counter-added" && e.subject?.counter === "poison") || !/^\d+$/.test(ab.amount ?? "")) continue;
+      const scope = ab.effect?.subject?.scope ?? "";
+      const share = EACH.has(scope) ? 1 : scope === "target" ? 1 / 3 : 0;
+      if (share > 0) placed.push({ dc, face, index, amount: Number(ab.amount), ability: ab, share });
+    }
+  }
+  const attackers = deck.filter((dc) => poisonPerHit(dc) > 0);
+  if (attackers.length === 0 && placed.length === 0) return undefined;
+  const base = { ...(opts.commanderNames ? { commanderNames: opts.commanderNames } : {}), ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) };
+  const direct = triggeredCurve(deck, reasons, base, placed);
+  const spread = triggeredCurve(deck, reasons, base, proliferates);
+  const perTurn: number[] = [];
+  let cumulative = 0, turn: number | undefined;
+  for (let t = 1; t <= HORIZON; t++) {
+    const attacks = opts.damagePrevented ? 0 : expectedPower(deck, t, { ...base, include: (dc) => poisonPerHit(dc) > 0, weight: poisonPerHit }) / 3;
+    // A proliferate adds a counter only to an opponent who HAS one, and early on that is a chance, not
+    // a fact: scaled by the expected counters so far, capped at certain (Venser's Surge Conductor,
+    // six proliferates a turn, read a turn-4 kill off a third of a counter before this).
+    const counters = attacks + direct.perTurn[t - 1]! + spread.perTurn[t - 1]! * Math.min(1, cumulative);
+    perTurn.push(round2(counters));
+    cumulative += counters;
+    // A third of a whole number summed fifteen times lands a hair under it.
+    if (turn === undefined && cumulative >= POISON_TO_DIE - 1e-9) turn = t;
+  }
+  return {
+    ...(turn !== undefined ? { turn } : {}),
+    perTurn,
+    cards: [...new Set([...attackers, ...placed.map((p) => p.dc), ...(cumulative > 0 ? proliferates.map((p) => p.dc) : [])].map((dc) => dc.card.name))],
+    unbounded: [...new Set([...direct.unbounded, ...spread.unbounded])].sort(),
+  };
+}
+
+/** Ten poison counters and a player loses (CR 704.5c). */
+const POISON_TO_DIE = 10;
 
 /** 99 cards less the opening seven: an opponent's library before their first draw. */
 const LIBRARY_AFTER_HAND = 92;

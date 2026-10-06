@@ -122,3 +122,13 @@ test("a timed mill route is listed even without a mill win-plan class", () => {
   (r.deckMath as { speed?: Record<string, unknown> }).speed = { combat: {}, mill: { turn: 10, perTurn: [], cards: ["The Mindskinner"], unbounded: [] } };
   expect(speedRoutes(r, () => undefined).map((x) => [x.kind, x.turn])).toEqual([["combat", undefined], ["mill", 10]]);
 });
+
+/** POISON IS ITS OWN ROUTE (#1056 R3). */
+test("a poison route takes its whole-table turn from the poison clock", () => {
+  const r = deck([{ class: "voltron", cards: ["Plate"] }]) as DeckReport;
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = { combat: {}, poison: { turn: 9, perTurn: [], cards: ["Blighted Agent", "Atraxa, Praetors' Voice"], unbounded: [] } };
+  const routes = speedRoutes(r, () => undefined);
+  expect(routes.map((x) => [x.kind, x.turn])).toEqual([["combat", undefined], ["poison", 9]]);
+  expect(routes[1]!.caveat).toMatch(/ten poison counters/);
+  expect(fastestRoute(routes)?.kind).toBe("poison");
+});

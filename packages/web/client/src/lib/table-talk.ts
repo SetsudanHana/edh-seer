@@ -78,6 +78,7 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
         : fastest.kind === "combo" ? `, and can combo as early as turn ${fastest.turn}`
         // THE WHOLE TABLE (#1056): every timed route is now the turn all three opponents can be dead.
         : fastest.kind === "mill" ? `, and can mill the table out around turn ${fastest.turn}`
+        : fastest.kind === "poison" ? `, and can poison the table out around turn ${fastest.turn}`
         : `, and its ${fastest.kind === "burn" ? "drains" : fastest.kind === "commander" ? "commander" : "creatures"} can kill the table around turn ${fastest.turn}`)
       + "."
     : undefined;

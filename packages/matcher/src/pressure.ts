@@ -71,7 +71,7 @@ export function expectedPower(
   for (const dc of deck) {
     if (isLand(dc) || !isCreature(dc)) continue;
     if (opts.include && !opts.include(dc)) continue;
-    const power = Number(dc.card.power);
+    const power = opts.weight ? opts.weight(dc) : Number(dc.card.power);
     // `*`, `1+*` and a missing power are NaN. A creature whose size is a board state contributes
     // nothing rather than poisoning the whole curve -- and every clock derived from it -- with NaN.
     if (!Number.isFinite(power) || power <= 0) continue;
@@ -132,9 +132,14 @@ export function arrival(
   };
 }
 
-/** `include`: which creatures count, all when absent. The clock passes none, so it cannot move; the
- *  whole-table combat speed leaves infect out (its damage to a player is poison, CR 702.90b). */
-export interface PressureOpts { commanderNames?: readonly string[]; manaBudget?: readonly number[]; include?: (dc: DeckCard) => boolean }
+/** `include`: which creatures count, all when absent; `weight`: what each delivers, its power when
+ *  absent. The clock passes neither, so it cannot move; the whole-table combat speed leaves infect out
+ *  (its damage to a player is poison, CR 702.90b), and the poison route weighs it. */
+export interface PressureOpts {
+  commanderNames?: readonly string[]; manaBudget?: readonly number[]; include?: (dc: DeckCard) => boolean;
+  /** What each creature delivers in place of its power (the poison route: infect power, toxic N). */
+  weight?: (dc: DeckCard) => number;
+}
 
 /** Mana the board could have spent by `turn`, summed over every turn up to it.
  *
