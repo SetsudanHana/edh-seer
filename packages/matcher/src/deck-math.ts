@@ -366,7 +366,7 @@ export function computeDeckMath(
   const untimed = <T extends { turn?: number }>(r: T): Omit<T, "turn"> => { const { turn: _, ...rest } = r; return rest; };
   const speed = prevented
     ? { prevented, combat: {}, ...(drain ? { drain: untimed(drain) } : {}), ...(commander ? { commander: untimed(commander) } : {}), ...(mill ? { mill } : {}), ...(poison ? { poison } : {}) }
-    : { combat: { ...(tableTurn !== undefined ? { turn: tableTurn } : {}), ...(opts.combatSpread ?? {}) }, ...(drain ? { drain } : {}), ...(commander ? { commander } : {}), ...(mill ? { mill } : {}), ...(poison ? { poison } : {}) };
+    : { combat: combatSpeed(tableTurn, opts.combatSpread), ...(drain ? { drain } : {}), ...(commander ? { commander } : {}), ...(mill ? { mill } : {}), ...(poison ? { poison } : {}) };
 
   return {
     turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,
@@ -384,3 +384,16 @@ const hasInfect = (dc: DeckCard): boolean => (dc.card.keywords ?? []).some((k) =
 
 /** "If a source you control would deal damage to an opponent, prevent that damage" (The Mindskinner). */
 const PREVENTS_YOUR_DAMAGE = /source you control would deal damage to an opponent, prevent that damage/i;
+
+/** THE WHOLE-TABLE COMBAT TURN (owner 2026-10-07): the MEDIAN simulated game when the simulation ran,
+ *  its fast and slow quarters beside it -- each game spends only its own turn's mana. The expected
+ *  curve (`tableTurn`) banks mana across turns and read about three turns early on the 71 decks, so it
+ *  stands in only when there is no simulation (tests, callers without one). */
+function combatSpeed(tableTurn: number | undefined, spread: { early?: number; typical?: number; late?: number } | undefined): { turn?: number; early?: number; late?: number } {
+  if (!spread) return tableTurn !== undefined ? { turn: tableTurn } : {};
+  return {
+    ...(spread.typical !== undefined ? { turn: spread.typical } : {}),
+    ...(spread.early !== undefined ? { early: spread.early } : {}),
+    ...(spread.late !== undefined ? { late: spread.late } : {}),
+  };
+}

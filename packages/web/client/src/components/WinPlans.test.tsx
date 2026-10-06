@@ -84,3 +84,10 @@ test("a voltron plan takes the commander-damage turn when timed, else the board'
   render(<WinPlans wincons={voltron} routes={[combat, untimed] as never} pressure={10} />);
   expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Can win around turn 12; about 10 power of creatures in play by turn 5.");
 });
+
+/** COMBAT'S SPREAD (owner 2026-10-07): the median simulated game with its fast and slow quarters. */
+test("a combat plan shows the turn its fast and slow games get there", () => {
+  const routes = [{ kind: "combat", label: "attacking with a wide board", turn: 16, early: 14, late: 17, cards: [], caveat: "" }] as never;
+  render(<WinPlans wincons={WINCONS} routes={routes} />);
+  expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Can win around turn 16 (turn 14 in fast games, turn 17 in slow ones)");
+});

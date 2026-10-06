@@ -76,7 +76,7 @@ test("a drain route takes its whole-table turn from the drain clock, and says wh
 test("the combat route takes its turn from the whole-table combat speed, not the one-opponent clock", () => {
   const [combat] = speedRoutes(deck([{ class: "go-wide", cards: ["Goblin Rabblemaster"] }], 6, [], undefined, 9), () => undefined);
   expect(combat!.turn).toBe(9);
-  expect(combat!.caveat).toBe("enough attacking power to kill all three opponents, if nobody blocks and nothing is removed");
+  expect(combat!.caveat).toBe("half our test games have dealt 120 by then, enough for all three opponents, if nobody blocks and nothing is removed");
   const [none] = speedRoutes(deck([{ class: "go-wide", cards: ["Goblin Rabblemaster"] }], 6), () => undefined);
   expect(none!.turn).toBeUndefined();
   expect(none!.caveat).toBe("not timed: in our test games the board never deals 120, enough for all three opponents");
@@ -131,4 +131,15 @@ test("a poison route takes its whole-table turn from the poison clock", () => {
   expect(routes.map((x) => [x.kind, x.turn])).toEqual([["combat", undefined], ["poison", 9]]);
   expect(routes[1]!.caveat).toMatch(/ten poison counters/);
   expect(fastestRoute(routes)?.kind).toBe("poison");
+});
+
+/** THE SIMULATED GAMES' SPREAD rides on the combat route (owner 2026-10-07). */
+test("the combat route carries the fast and slow quarters of the simulated games", () => {
+  const r = deck([{ class: "go-wide", cards: ["Goblin Rabblemaster"] }], 6) as DeckReport;
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = { combat: { turn: 16, early: 14, late: 17 } };
+  expect(speedRoutes(r, () => undefined)[0]).toMatchObject({ kind: "combat", turn: 16, early: 14, late: 17 });
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = { combat: { early: 18 } };
+  const [slow] = speedRoutes(r, () => undefined);
+  expect(slow!.turn).toBeUndefined();
+  expect(slow!.caveat).toBe("not timed: most of our test games never deal 120 by turn 20, though the fastest quarter do by turn 18");
 });

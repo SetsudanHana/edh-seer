@@ -84,6 +84,19 @@ test("a commander that prevents your damage to opponents leaves the damage route
   expect(free.clock.turn).toBeDefined();
 });
 
+/** THE SIMULATED GAMES TIME COMBAT (owner 2026-10-07): with a per-game spread, the whole-table combat
+ *  turn is the median game, its quarters beside it; without one (no simulation) the expected curve
+ *  stands in. Half the games never getting there means no turn. The clock does not move. */
+test("combat speed takes the simulated games' median and quarters when there are some", () => {
+  const bears = fillTo(100, Array.from({ length: 40 }, (_, i) => beater(`Bear-${i}`, "5", 1)));
+  const expected = computeDeckMath(bears, H);
+  const sim = computeDeckMath(bears, H, [], undefined, { combatSpread: { early: 9, typical: 11, late: 13 } });
+  expect(sim.speed?.combat).toEqual({ turn: 11, early: 9, late: 13 });
+  expect(sim.clock).toEqual(expected.clock);
+  const slow = computeDeckMath(bears, H, [], undefined, { combatSpread: { early: 18 } });
+  expect(slow.speed?.combat).toEqual({ early: 18 });
+});
+
 test("a deck with no combat clock is priced at the measured corpus median, not at nothing", () => {
   const math = computeDeckMath(fillTo(100, []), H);
   expect(math.clock.turn).toBeUndefined();

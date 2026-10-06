@@ -233,10 +233,11 @@ export interface DeckMath {
     /** The turn the board has dealt 120 (three opponents' 40), infect left out; `turn` absent when it
      *  never does by the horizon. */
     combat?: {
+      /** The median simulated game's table kill turn (owner 2026-10-07); the expected curve's only when
+       *  there is no simulation. */
       turn?: number;
-      /** The per-game spread (owner 2026-10-07): the fast quarter, the median and the slow quarter of
-       *  the simulated games' own table kill turns. `turn` stays the expected curve's turn. */
-      early?: number; typical?: number; late?: number;
+      /** The fast and slow quarters of the simulated games. */
+      early?: number; late?: number;
     };
     drain?: { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] };
     /** Voltron decks: the faster commander's turn to deal 21 to each opponent, haste assumed. */

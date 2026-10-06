@@ -115,8 +115,10 @@ function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][num
   const comboWins = route?.kind === "combo" ? route.payoffs ?? [] : [];
   const wins = plan.payoffs?.length ? plan.payoffs : comboWins;
   const setup = (plan.cards ?? []).filter((n) => !wins.includes(n));
-  const spread = route?.turn !== undefined && route.mana !== undefined && (route.early !== route.turn || route.late !== route.turn)
-    ? ` (turn ${route.early ?? "?"} in fast games, ${route.late !== undefined ? `turn ${route.late}` : "later than turn 8"} in slow ones)` : "";
+  // THE SPREAD for a route timed off mana (combo) and for combat, timed by the simulated games
+  // themselves (owner 2026-10-07); a slow quarter past the simulated turns says so.
+  const spread = route?.turn !== undefined && (route.mana !== undefined || (route.kind === "combat" && route.early !== undefined)) && (route.early !== route.turn || route.late !== route.turn)
+    ? ` (turn ${route.early ?? "?"} in fast games, ${route.late !== undefined ? `turn ${route.late}` : `later than turn ${route.kind === "combat" ? 20 : 8}`} in slow ones)` : "";
   return (
     <div className="flex flex-col gap-2" data-testid="win-plan-detail">
       <p className="text-sm"><b>{cap(phrase(plan.class))}</b> · {plural(plan.count, "card")}</p>
