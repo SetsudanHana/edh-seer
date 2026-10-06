@@ -1,4 +1,4 @@
-import { arrival, HORIZON } from "./pressure.js";
+import { arrival, HORIZON, type SimOpts } from "./pressure.js";
 import type { DeckCard } from "./types.js";
 
 /** COMMANDER DAMAGE IS TWENTY-ONE, AND IT MUST COME FROM ONE CREATURE (CR 903.10a, 704.6c).
@@ -122,11 +122,11 @@ export function commanderClock(
   deck: readonly DeckCard[],
   commanderNames: readonly string[],
   archetype: string | undefined,
-  opts: { manaBudget?: readonly number[] } = {},
+  opts: Omit<SimOpts, "commanderNames"> = {},
 ): { commander: string; turn?: number } | undefined {
   if (archetype !== "voltron") return undefined;
   const commanders = new Set(commanderNames);
-  const on = arrival(deck, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) });
+  const on = arrival(deck, { ...opts, commanderNames });
   const pieces = attachables(deck, commanders);
   let best: { commander: string; turn?: number } | undefined;
   for (const dc of deck) {

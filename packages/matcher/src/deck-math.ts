@@ -9,7 +9,7 @@ import { recommendedLands, type LandRecommendation } from "./land-count.js";
 import { manaBaseScore } from "./mana-base.js";
 import { drainClock, millClock, poisonClock, winconReport } from "./wincon.js";
 import { commanderClock } from "./commander-damage.js";
-import { pressureCurve, STARTING_LIFE } from "./pressure.js";
+import { pressureCurve, STARTING_LIFE, type SimOpts } from "./pressure.js";
 import { cardCastability, deckCastability } from "./castability.js";
 import type { CastCurve } from "./goldfish.js";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -100,6 +100,8 @@ export function computeDeckMath(
     primary?: Archetype;
     castCurves?: ReadonlyMap<string, CastCurve>;
     manaBudget?: readonly number[];
+    /** The simulated share of each kind of card seen by turn, after mulligans (`manaModel`). */
+    seen?: SimOpts["seen"];
     /** The deck's reasons (`analyze.ts`'s `allReasons`): the drain route counts the sources joined
      *  to each drain's trigger (#1056). Absent for callers without edges, which get no speed. */
     reasons?: readonly Reason[];
@@ -150,7 +152,9 @@ export function computeDeckMath(
   // then get the unbudgeted clock -- the same degradation `castCurves` already makes, and the same
   // reason: a wrong number here is worse than the older one.
   // `specs/2026-08-19-clock-and-mana-model-review.md` §3.
-  const curve = pressureCurve(deck, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) });
+  // The simulation's mana budget and, after mulligans, what kind of cards a kept hand has seen.
+  const sim: Omit<SimOpts, "commanderNames"> = { ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}), ...(opts.seen ? { seen: opts.seen } : {}) };
+  const curve = pressureCurve(deck, { commanderNames, ...sim });
   // YOUR DAMAGE TO OPPONENTS IS PREVENTED (The Mindskinner, voltron-mill): a commander that says so
   // leaves every damage route without a turn -- the board, the commander, the drains deal nothing
   // that sticks -- and the speed names it so the readout can say why. A card in the 99 is not always
@@ -344,19 +348,19 @@ export function computeDeckMath(
 
   // SPEED, THE WHOLE TABLE (#1056): a turn per win route, beside -- never instead of -- the
   // one-opponent `clock`, which stays the horizon everything above is priced against.
-  const drain = opts.reasons ? drainClock(deck, opts.reasons, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) }) : undefined;
+  const drain = opts.reasons ? drainClock(deck, opts.reasons, { commanderNames, ...sim }) : undefined;
   // COMBAT, THE WHOLE TABLE (#1056 R1): the turn the board has dealt 120, three opponents' 40, off
   // the same curve with infect left out -- its damage is poison, not life (CR 702.90b). Splitting
   // attackers across opponents (CR 802.2) makes `3 x 40` a floor: overflow on one player is wasted.
-  const tableTurn = pressureCurve(deck, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}), include: (dc) => !hasInfect(dc) })
+  const tableTurn = pressureCurve(deck, { commanderNames, ...sim, include: (dc) => !hasInfect(dc) })
     .find((p) => p.cumulative >= 3 * STARTING_LIFE)?.turn;
   // COMMANDER DAMAGE (#1056 R2): voltron decks only, the faster commander's whole-table turn.
-  const commander = commanderClock(deck, commanderNames, opts.primary, opts.manaBudget ? { manaBudget: opts.manaBudget } : {});
+  const commander = commanderClock(deck, commanderNames, opts.primary, sim);
   // MILL (#1056 R4): cards milled from each opponent against their library, 92 - t.
-  const mill = opts.reasons ? millClock(deck, opts.reasons, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) }) : undefined;
+  const mill = opts.reasons ? millClock(deck, opts.reasons, { commanderNames, ...sim }) : undefined;
   // POISON (#1056 R3): ten counters on each opponent; attacks need damage dealt, so a commander that
   // prevents your damage leaves only placed counters and proliferate.
-  const poison = opts.reasons ? poisonClock(deck, opts.reasons, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}), damagePrevented: prevented !== undefined }) : undefined;
+  const poison = opts.reasons ? poisonClock(deck, opts.reasons, { commanderNames, ...sim, damagePrevented: prevented !== undefined }) : undefined;
   const untimed = <T extends { turn?: number }>(r: T): Omit<T, "turn"> => { const { turn: _, ...rest } = r; return rest; };
   const speed = prevented
     ? { prevented, combat: {}, ...(drain ? { drain: untimed(drain) } : {}), ...(commander ? { commander: untimed(commander) } : {}), ...(mill ? { mill } : {}), ...(poison ? { poison } : {}) }

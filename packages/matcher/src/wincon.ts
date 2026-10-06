@@ -1,6 +1,6 @@
 import type { Reason } from "@edh-seer/engine";
 import { RESOURCE_TOKENS } from "./archetypes.js";
-import { affordableAt, arrival, expectedPower, HORIZON, STARTING_LIFE } from "./pressure.js";
+import { affordableAt, arrival, expectedPower, HORIZON, STARTING_LIFE, type SimOpts } from "./pressure.js";
 import { loadRules, ruleMatches } from "./rules.js";
 import type { DeckCard } from "./types.js";
 
@@ -254,7 +254,7 @@ const oneShot = (ab: DrainAbility): boolean => {
 export function drainClock(
   deck: readonly DeckCard[],
   reasons: readonly Reason[],
-  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] } = {},
+  opts: SimOpts = {},
 ): DrainClock | undefined {
   const picks = deck.flatMap((dc) => drainAbilities(dc).map((d) => ({ dc, ...d, share: 1 })));
   if (picks.length === 0) return undefined;
@@ -287,7 +287,7 @@ interface Pick {
 function triggeredCurve(
   deck: readonly DeckCard[],
   reasons: readonly Reason[],
-  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] },
+  opts: SimOpts,
   picks: readonly Pick[],
 ): { perTurn: number[]; unbounded: string[] } {
   const byName = new Map(deck.map((dc) => [dc.card.name, dc]));
@@ -392,7 +392,7 @@ const DAMAGE_TO_MILL = /prevent that damage and each opponent mills that many ca
 export function millClock(
   deck: readonly DeckCard[],
   reasons: readonly Reason[],
-  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] } = {},
+  opts: SimOpts = {},
 ): MillClock | undefined {
   const picks: Pick[] = [];
   const faceIndex = new Map<string, number>();
@@ -461,7 +461,7 @@ const poisonPerHit = (dc: DeckCard): number => {
 export function poisonClock(
   deck: readonly DeckCard[],
   reasons: readonly Reason[],
-  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[]; damagePrevented?: boolean } = {},
+  opts: SimOpts & { damagePrevented?: boolean } = {},
 ): PoisonClock | undefined {
   const placed: Pick[] = [];
   const proliferates: Pick[] = [];
@@ -485,7 +485,7 @@ export function poisonClock(
   }
   const attackers = deck.filter((dc) => poisonPerHit(dc) > 0);
   if (attackers.length === 0 && placed.length === 0) return undefined;
-  const base = { ...(opts.commanderNames ? { commanderNames: opts.commanderNames } : {}), ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) };
+  const base: SimOpts = { ...(opts.commanderNames ? { commanderNames: opts.commanderNames } : {}), ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}), ...(opts.seen ? { seen: opts.seen } : {}) };
   const direct = triggeredCurve(deck, reasons, base, placed);
   const spread = triggeredCurve(deck, reasons, base, proliferates);
   const perTurn: number[] = [];

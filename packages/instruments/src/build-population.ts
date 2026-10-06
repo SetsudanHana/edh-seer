@@ -182,7 +182,8 @@ async function main(): Promise<void> {
     const sim = manaModel(inputs.filter((dc) => !cmd.has(dc.card.name)), {
       alsoPrice: inputs.filter((dc) => cmd.has(dc.card.name)),
     });
-    const clockOpts = { commanderNames: sections.commanders, manaBudget: sim.manaMedian };
+    // The SAME odds the report's clock reads: the mana budget AND what a kept hand has seen.
+    const clockOpts = { commanderNames: sections.commanders, manaBudget: sim.manaMedian, seen: sim.seenShare };
     const clock = measuredClock(inputs, clockOpts);
     deck["clock"] = [clock === undefined ? "none" : String(clock)];
     deck["power@5"] = [pressureCurve(inputs, clockOpts)[4].power.toFixed(1)];

@@ -1,3 +1,4 @@
+import { frontTypeLine } from "./goldfish.js";
 import { seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 
@@ -57,7 +58,6 @@ export function expectedPower(
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   if (library.length === 0) return 0;
-  const drawnFraction = Math.min(1, seen(turn) / library.length);
 
   // THE DEADLINE IS THE MANA, NOT THE TURN, WHEN THERE IS A MANA CURVE TO ASK. `manaValue <= turn`
   // is a proxy for a board nothing modelled, and it is the RAMP half of the cascade: a deck that
@@ -80,7 +80,7 @@ export function expectedPower(
     deployable.push({
       manaValue: dc.card.manaValue,
       power,
-      available: commanders.has(dc.card.name) ? 1 : drawnFraction,
+      available: commanders.has(dc.card.name) ? 1 : drawnBy(dc, turn, library.length, opts.seen),
     });
   }
 
@@ -121,22 +121,45 @@ export function affordableAt(manaBudget: readonly number[] | undefined, turn: nu
  *  shared budget, for routes that count ARRIVALS rather than summing a board (the drain route). */
 export function arrival(
   deck: readonly DeckCard[],
-  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] } = {},
+  opts: SimOpts = {},
 ): (dc: DeckCard, turn: number) => number {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name)).length;
   return (dc, turn) => {
     if (turn < 1 || dc.card.manaValue > affordableAt(opts.manaBudget, turn)) return 0;
     if (commanders.has(dc.card.name)) return 1;
-    return library === 0 ? 0 : Math.min(1, seen(turn) / library);
+    return drawnBy(dc, turn, library, opts.seen);
   };
+}
+
+/** WHAT THE SIMULATED GAMES SAY, passed to every curve: the commanders, the median mana by turn, and
+ *  the share of each kind of card seen by turn (`SimulateResult.seenShare`, after mulligans). Each is
+ *  optional; without `seen` a card is drawn by `seen(turn) / library`, the no-mulligan odds. */
+export interface SimOpts {
+  commanderNames?: readonly string[];
+  manaBudget?: readonly number[];
+  seen?: Readonly<Record<"land" | "cheap" | "dear", readonly number[]>>;
+}
+
+/** THE ODDS A LIBRARY CARD IS IN HAND BY `turn`: the simulated share for its kind when there is one
+ *  (mulligans tilt kept hands toward lands and cheap plays), else `seen(turn) / library`. Past the
+ *  simulated turns the share grows by one draw a turn. */
+export function drawnBy(dc: DeckCard, turn: number, library: number, seenShare?: SimOpts["seen"]): number {
+  if (library === 0) return 0;
+  // THE SIMULATION'S OWN KIND TEST: a land by its FRONT face, as `simulate` reads it -- a spell with a
+  // land back face is a spell there, and reading every face here gave it the land share (review).
+  const land = /\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout));
+  const col = seenShare?.[land ? "land" : dc.card.manaValue <= 3 ? "cheap" : "dear"];
+  if (!col || col.length === 0) return Math.min(1, seen(turn) / library);
+  if (turn <= col.length) return col[turn - 1]!;
+  return Math.min(1, col[col.length - 1]! + (seen(turn) - seen(col.length)) / library);
 }
 
 /** `include`: which creatures count, all when absent; `weight`: what each delivers, its power when
  *  absent. The clock passes neither, so it cannot move; the whole-table combat speed leaves infect out
  *  (its damage to a player is poison, CR 702.90b), and the poison route weighs it. */
-export interface PressureOpts {
-  commanderNames?: readonly string[]; manaBudget?: readonly number[]; include?: (dc: DeckCard) => boolean;
+export interface PressureOpts extends SimOpts {
+  include?: (dc: DeckCard) => boolean;
   /** What each creature delivers in place of its power (the poison route: infect power, toxic N). */
   weight?: (dc: DeckCard) => number;
 }
@@ -188,7 +211,7 @@ export function pressureCurve(
  *  construction (see `expectedPower`), so it ranks decks honestly and dates them generously. */
 export function measuredClock(
   deck: readonly DeckCard[],
-  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] } = {},
+  opts: SimOpts = {},
 ): number | undefined {
   return pressureCurve(deck, opts).find((p) => p.cumulative >= STARTING_LIFE)?.turn;
 }

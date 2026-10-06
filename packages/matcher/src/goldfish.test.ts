@@ -1105,3 +1105,18 @@ test("a game keeps a hand a player keeps: turn one almost never goes without a l
   // 4.6% without mulligans; what is left is the forced six that still drew no land.
   expect(noLand).toBeLessThan(0.01);
 });
+
+/** WHAT A KEPT HAND HAS SEEN, BY KIND (#1 after the mulligan, owner 2026-10-06). A mulligan does not
+ *  change how MANY cards you have seen, it changes WHICH: a kept hand holds 2-4 lands and a cheap
+ *  play, so lands and cheap spells are seen more and dear spells less. `seenShare` is the mean
+ *  count of each kind seen by turn t over the kind's copies in the deck. */
+test("seen shares: equal for every kind without mulligans, tilted toward lands and cheap spells with them", () => {
+  const deck = [...basics(37), ...spells(31, 2), ...spells(31, 6)];
+  const raw = simulate(deck, { trials: 6_000, turns: 2, seed: 23, mulligan: false });
+  const kept = simulate(deck, { trials: 6_000, turns: 2, seed: 23 });
+  const exact = seen(1) / 99;
+  for (const k of ["land", "cheap", "dear"] as const) expect(raw.seenShare[k][0]).toBeCloseTo(exact, 2);
+  expect(kept.seenShare.land[0]).toBeGreaterThan(exact);
+  expect(kept.seenShare.cheap[0]).toBeGreaterThan(exact);
+  expect(kept.seenShare.dear[0]).toBeLessThan(exact);
+});

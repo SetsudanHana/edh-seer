@@ -451,7 +451,7 @@ export function fetchMask(oracleText: string, deck: readonly { typeLine: string;
  *  so the next layout printed keeps today's reading rather than being silently narrowed. A MODAL DFC
  *  keeps its land face, because you really do play that side: 28 distinct cards / 186 slots. */
 const FRONT_FACE_ONLY = new Set(["transform", "flip"]);
-function frontTypeLine(typeLine: string | undefined, layout: string | undefined): string {
+export function frontTypeLine(typeLine: string | undefined, layout: string | undefined): string {
   const line = typeLine ?? "";
   return layout && FRONT_FACE_ONLY.has(layout) ? line.split("//")[0] : line;
 }
@@ -699,7 +699,16 @@ export interface SimulateResult {
    *  Colour-blind, and a one-turn burst: the rituals are not spent across turns. Nothing else reads
    *  rituals; `manaAt` and the castability maps are the board's own mana, unchanged. */
   fastStart: Map<string, number[]>;
+  /** Per KIND of card, per turn: the mean number of that kind seen by then (kept hand plus draws,
+   *  bottomed cards excluded) over its copies in the deck -- the per-card chance of having drawn it.
+   *  `land`, `cheap` (a nonland costing 3 or less) and `dear` (the rest): the three kinds the keep
+   *  rule tells apart. Without mulligans every kind reads `seen(t) / library`. */
+  seenShare: Record<SeenKind, number[]>;
 }
+
+export type SeenKind = "land" | "cheap" | "dear";
+/** Which `seenShare` a card reads. */
+export const seenKind = (isLand: boolean, manaValue: number): SeenKind => isLand ? "land" : manaValue <= 3 ? "cheap" : "dear";
 
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
 interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean; colors: number }
@@ -825,6 +834,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         : `P:${s.manaValue <= 3 ? "cheap" : "dear"}:${[...(s.cost?.pips ?? [])].sort((a, b) => a - b).join(",")}`);
 
   const manaAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
+  const kinds: SeenKind[] = ["land", "cheap", "dear"];
+  const kindOf = (c: DeckSlot): SeenKind => seenKind(c.isLand, c.manaValue);
+  const copies: Record<SeenKind, number> = { land: 0, cheap: 0, dear: 0 };
+  for (const sl of slots) copies[kindOf(sl)]++;
+  const seenSum: Record<SeenKind, number[]> = { land: Array(turns).fill(0), cheap: Array(turns).fill(0), dear: Array(turns).fill(0) };
   const fastFirst = new Map<string, number[]>(extras.map((e) => [e.name, Array(turns).fill(0)]));
   const payableShareAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const byCardHits = new Map<string, number[]>();
@@ -906,6 +920,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     // in an opening seven actually is. A zero-mana rock read 0 and would have printed 0%.
     const drawn = new Set<string>();
     for (const c of hand) drawn.add(c.name);
+    // Counted per COPY, not per name: forty Mountains share a name.
+    const seenNow: Record<SeenKind, number> = { land: 0, cheap: 0, dear: 0 };
+    for (const c of hand) seenNow[kindOf(c)]++;
     // A COMMANDER THAT MAKES MANA STARTS IN HAND, because the command zone is not the library: it is
     // available every game with no draw, which makes it the most reliable accelerant a deck has, and
     // rule 3 was never able to cast it (roadmap O1). 6 of the 71 decks have one and every one was
@@ -927,7 +944,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // Rule 1: one card per turn, INCLUDING turn 1. On the play there is no turn-1 draw; modelling
       // the draw is the flattering direction by one card and is stated rather than hidden.
       const pulled = library.shift();
-      if (pulled) { hand.push(pulled); drawn.add(pulled.name); }
+      if (pulled) { hand.push(pulled); drawn.add(pulled.name); seenNow[kindOf(pulled)]++; }
+      for (const k of kinds) seenSum[k][turn - 1] += seenNow[k];
 
       // Rule 2: one land per turn, preferring whichever enters UNTAPPED given the board right now —
       // and never a land whose own gate is unmet, because that is not a land drop, it is a blank.
@@ -1158,7 +1176,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     let n = 0;
     fastStart.set(name, first.map((c) => (n += c) / trials));
   }
-  return { trials, turns, manaAt, payableShareAt, byCard, byCardCastable, byCardHeld: heldHits, fastStart };
+  const seenShare = Object.fromEntries(kinds.map((k) => [k, seenSum[k].map((n) => copies[k] > 0 ? n / trials / copies[k] : 0)])) as Record<SeenKind, number[]>;
+  return { trials, turns, manaAt, payableShareAt, byCard, byCardCastable, byCardHeld: heldHits, fastStart, seenShare };
 }
 
 /** P(at least `m` mana by turn `t`) straight off a run. */
@@ -1314,6 +1333,9 @@ export interface ManaModel {
    *  median at every turn while the tail moves by up to 27.6pp. Its one consumer is
    *  `pressure.ts`'s mana budget, which needs a number rather than a band. */
   manaMedian: number[];
+  /** `SimulateResult.seenShare` of the greedy arm: what kind of cards a kept hand has seen by each
+   *  turn. Read by `pressure.ts`'s `drawnBy` so the attack and trigger curves see mulliganed hands. */
+  seenShare: Record<SeenKind, number[]>;
 }
 
 /** BOTH POLICIES, RUN ONCE. `analyze` needs the availability table AND every card's castability, and
@@ -1428,6 +1450,7 @@ export function manaModel(
     turns,
     curves,
     manaMedian: greedy.manaAt.map((col) => quantiles(col).median),
+    seenShare: greedy.seenShare,
     availability: {
       trials,
       accelerants: deck.map(classifyAccelerant).filter((a) => a !== null).length,
