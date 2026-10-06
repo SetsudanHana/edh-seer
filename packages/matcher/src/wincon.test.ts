@@ -421,6 +421,12 @@ describe("millClock", () => {
     expect(clock.cards).toEqual(["Skinner"]);
   });
 
+  test("a hit on ONE opponent mills EVERY opponent: the board's whole power, not a third (owner 2026-10-06)", () => {
+    const skinner = card("Skinner", 3, [], "If a source you control would deal damage to an opponent, prevent that damage and each opponent mills that many cards.", "9");
+    // 9 power: every opponent mills 9 a turn. Split over the table it would read 3.
+    expect(millClock([skinner, ...lands(30)], [], { commanderNames: ["Skinner"] })!.perTurn[2]).toBe(9);
+  });
+
   test("the board mills only once the converting commander is out; before that its damage is damage", () => {
     const skinner = card("Skinner", 3, [], "If a source you control would deal damage to an opponent, prevent that damage and each opponent mills that many cards.", "10");
     const bears = Array.from({ length: 3 }, (_, i) => card(`Bear ${i}`, 1, [], "", "2"));
