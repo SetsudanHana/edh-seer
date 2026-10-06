@@ -200,6 +200,9 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
     // A ROLE ACTION'S TRIGGER IS PART OF ITS JOB: Moldervine Reclamation draws when a creature dies.
     if (roleClause && r.trigger?.length) job.push(`when ${JSON.stringify(r.trigger)}`);
     for (const a of r.actions ?? []) {
+      // "CAN'T BE REGENERATED" IS NEITHER JOB, COST NOR UPSIDE: vestigial against today's cards (owner,
+      // label p57: Wrath of God is Day of Judgment).
+      if (a.verb === "cant" && /regenerat/i.test(`${(a as { text?: string }).text ?? ""} ${a.phrase ?? ""}`)) continue;
       // A GRANT'S KEYWORD IS ITS `text` ("hexproof", "haste"): the grammar reads it there (S-T1). A grant
       // whose ability was not read is not a job: Swiftfoot Boots and Commander's Plate would read alike.
       // A TYPE OR A COLOUR GRANT IS READ INTO `phrase` ("is every basic land type"), not `text`.
@@ -221,7 +224,9 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
       if (verbs.includes(a.verb) && !atYou) job.push(part);
       else if (giveBack) job.push(`gives ${part}`);
       // A CARD FROM YOUR HAND IS A COST TOO: Brainstorm puts two back, See Beyond shuffles one in.
-      else if ((DRAWBACK.has(a.verb) && o?.control !== "opp") || ((a.verb === "put" || a.verb === "shuffle") && (a as { fromZone?: string }).fromZone === "hand")) drawbacks.add(part);
+      // "CAN'T" IS A COST ONLY WHEN IT BINDS YOU (Bontu's lands): Whispersilk Cloak's "can't be blocked"
+      // is the card's upside, not a drawback (S-T3 census).
+      else if ((DRAWBACK.has(a.verb) && o?.control !== "opp" && (a.verb !== "cant" || o?.control === "you")) || ((a.verb === "put" || a.verb === "shuffle") && (a as { fromZone?: string }).fromZone === "hand")) drawbacks.add(part);
       else upsides.add(part);
     }
   }
