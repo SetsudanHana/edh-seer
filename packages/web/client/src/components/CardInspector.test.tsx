@@ -349,6 +349,15 @@ describe("CardInspector card text", () => {
       .toBeInTheDocument();
   });
 
+  // #983: a token's picture is not a reliable copy of its rules, so its text never folds.
+  it("a token's text stands open even beside its picture", () => {
+    const token = { ...oneFaced, id: "token:Mark of the Rani", label: "Mark of the Rani", isToken: true,
+      artCrop: "https://cards.scryfall.io/art_crop/front/2/3/x.jpg", oracleText: "Enchanted creature gets +2/+2 and is goaded." };
+    render(<CardInspector node={token as never} edges={[]} onClose={() => {}} />);
+    expect(screen.getByText(/gets \+2\/\+2 and is goaded/)).toBeVisible();
+    expect(screen.queryByText("card text")).toBeNull();
+  });
+
   it("says nothing rather than an empty line when the card carries no text", () => {
     const vanilla = { ...oneFaced, oracleText: undefined };
     const { container } = render(<CardInspector node={vanilla as never} edges={[]} onClose={() => {}} />);

@@ -33,5 +33,6 @@ const staticSources = (baseUrl: string, fetchImpl: typeof fetch) => async (names
     lookup, tagsLookup: lookup,
     tokenTags: await lookup.tokenTags(),
     tokenArt: (ids: string[]) => lookup.tokenArt(ids),
+    tokenText: (ids: string[]) => lookup.tokenText(ids),
   };
 };

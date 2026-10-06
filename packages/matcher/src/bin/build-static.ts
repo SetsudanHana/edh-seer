@@ -122,7 +122,7 @@ for (const [name] of collisions) {
 }
 
 const resolveToken = await loadTokenTags(store.db);
-const tokens = await store.db.collection<{ _id: string; artCrop?: string; printingIds: string[] }>(
+const tokens = await store.db.collection<{ _id: string; artCrop?: string; oracleText?: string; printingIds: string[] }>(
   "tokens",
 ).find({}).toArray();
 const tokenTags: Record<string, CardTags> = {};
@@ -148,6 +148,11 @@ writeFileSync(join(stagingDir, "token-tags.json"), JSON.stringify(tokenTags));
 const tokenArt: Record<string, string> = {};
 for (const t of tokens) if (t.artCrop) tokenArt[t._id] = t.artCrop;
 writeFileSync(join(stagingDir, "token-art.json"), JSON.stringify(tokenArt));
+// THE TOKEN'S RULES TEXT, the same shape and the same documents (#983): the drawer a reason's token
+// name opens needs the text the claim rests on, and a token joins no corpus row to carry it.
+const tokenText: Record<string, string> = {};
+for (const t of tokens) if (t.oracleText) tokenText[t._id] = t.oracleText;
+writeFileSync(join(stagingDir, "token-text.json"), JSON.stringify(tokenText));
 
 // THE PARTNER ARTIFACT: one record per substantive card -- its derived events and its most specific
 // partners, each with the sentence `directedReasons` wrote for it. Free, like everything else here:
@@ -286,7 +291,7 @@ for (const f of readdirSync(cardsDir).sort()) {
   hash.update(f);
   hash.update(readFileSync(join(cardsDir, f)));
 }
-for (const f of ["token-tags.json", "token-art.json", "event-frequency.json", "name-index.json", "lands.json"]) {
+for (const f of ["token-tags.json", "token-art.json", "token-text.json", "event-frequency.json", "name-index.json", "lands.json"]) {
   hash.update(f);
   hash.update(readFileSync(join(stagingDir, f)));
 }

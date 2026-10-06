@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { engineDeck } from "../lib/engine-model.fixture.js";
-import { CardDrawerProvider, CardName, useAdded, useCardDrawer } from "./card-drawer.js";
+import { CardDrawerProvider, CardName, ReasonText, useAdded, useCardDrawer } from "./card-drawer.js";
 /** The web package, found from this file rather than from the working directory, so the test runs
  *  the same from `packages/web` and from the repository root (the root vitest config). */
 const WEB = join(import.meta.dirname, "..", "..", "..");
@@ -296,4 +296,34 @@ test("a card name is a link: a plain click opens the drawer, a modifier click is
   expect(screen.queryByTestId("card-inspector")).toBeNull();
   expect(fireEvent.click(link)).toBe(false);
   expect(screen.getByTestId("card-inspector")).toBeInTheDocument();
+});
+
+/** A TOKEN IN A REASON OPENS ITS OWN TEXT (#983): every top reason on Rani reads "When Mark of the
+ *  Rani (token from The Rani) enters", and the token's text was nowhere on screen. The graph carries
+ *  token nodes; the drawer now opens one by name. */
+test("a token named in a reason opens the token in the drawer", async () => {
+  const withToken = {
+    nodes: [
+      { id: "The Rani", label: "The Rani", copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 3 },
+      { id: "token:Mark of the Rani", label: "Mark of the Rani", isToken: true, copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 0 },
+    ],
+    edges: [{ from: "The Rani", to: "token:Mark of the Rani", weight: 1, tags: ["creates:creature"], reasonTexts: [] }],
+  } as never;
+  render(
+    <CardDrawerProvider graph={withToken}>
+      <ReasonText text="When Mark of the Rani enters, The Rani triggers" />
+    </CardDrawerProvider>,
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Mark of the Rani" }));
+  expect(within(screen.getByTestId("card-inspector")).getAllByText("Mark of the Rani").length).toBeGreaterThan(0);
+});
+
+/** A TOKEN NAME THAT IS ALSO A CARD'S stays the card's: 92 of 661 token names collide. */
+test("a name that is both a deck card and a token opens the card", () => {
+  render(
+    <CardDrawerProvider graph={graph}>
+      <ReasonText text="Sol Ring makes a token" />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByRole("link", { name: "Sol Ring" })).toBeInTheDocument();
 });
