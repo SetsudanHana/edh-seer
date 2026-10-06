@@ -1139,6 +1139,15 @@ describe("per-game combat kill turns", () => {
     expect(median(r.killTurns.one)).toBeLessThan(median(r.killTurns.table));
   });
 
+  test("playing on for combat leaves every priced number exactly as it was, fetchlands and all", () => {
+    const wilds = Array.from({ length: 10 }, (_, i) => card(`Wilds ${i}`, "Land", 0, "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."));
+    const deck = [...mountains.slice(0, 30), ...wilds, ...Array.from({ length: 59 }, (_, i) => creature(i))];
+    const priced = simulate(deck, { trials: 300, turns: 8, seed: 37 });
+    const fought = simulate(deck, { trials: 300, turns: 8, seed: 37, combatTo: 20 });
+    expect(fought.manaAt).toEqual(priced.manaAt);
+    expect(fought.seenShare).toEqual(priced.seenShare);
+  });
+
   test("infect damage is poison, never life: an infect deck never kills the table with damage", () => {
     const r = simulate([...mountains, ...Array.from({ length: 59 }, (_, i) => creature(i, ["Infect"]))], { trials: 200, turns: 8, seed: 31, combatTo: 20 });
     expect(r.killTurns.table.every((t) => t === Infinity)).toBe(true);

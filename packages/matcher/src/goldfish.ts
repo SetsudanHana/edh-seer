@@ -863,6 +863,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   const fights = opts.combatTo !== undefined && opts.forceName === undefined;
   const playTo = fights ? Math.max(turns, opts.combatTo!) : turns;
   const killTurns: { one: number[]; table: number[] } = { one: [], table: [] };
+  // THE TURNS PAST `turns` DRAW FROM THEIR OWN STREAM: a fetch on turn 15 taking from the main one
+  // shifted every later trial's shuffle, and moved priced numbers on 47 of 73 decks (caught by the
+  // census). Those turns now cannot touch anything the priced turns read.
+  const spill = rng((opts.seed ?? 1) + 0x5f3759df);
   const fastFirst = new Map<string, number[]>(extras.map((e) => [e.name, Array(turns).fill(0)]));
   const payableShareAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const byCardHits = new Map<string, number[]>();
@@ -1026,7 +1030,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         // land, which is what cracking one actually does -- the fetch itself taps for nothing and
         // the land it finds is what is standing there.
         if (played.fetches) {
-          takeRandomLand(library, random);
+          takeRandomLand(library, turn > turns ? spill : random);
         }
       }
 
@@ -1108,7 +1112,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           // A FETCHED LAND'S IDENTITY IS UNKNOWN, but its COLOUR is not: the spell names what it may
           // find, and `fetchMask` reads that against the lands this deck actually holds.
           lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true, typeLine: "", output: { amount: 1 }, everyLandType: false, colors: cast.colors });
-          takeRandomLand(library, random);
+          takeRandomLand(library, turn > turns ? spill : random);
           if (a.fetchTapped !== true) pool += 1;
         }
       }
