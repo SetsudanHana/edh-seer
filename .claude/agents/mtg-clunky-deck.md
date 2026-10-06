@@ -28,11 +28,15 @@ have already tried: the land advice you were given, which disagreed with itself 
 like his cEDH group, a post said 40–44, and you settled on 36 "but after reading a couple of threads
 here I don't know if that's 'right'"), and a long hypergeometric post you did not finish.
 
-**What solved means to you:** a verdict on **this** list, not a general rule: is the land count
-right once the ramp is counted, is the draw enough, is the deck trying to do too many things, and
-was last week bad luck or the deck. Plus one or two concrete changes with a number attached ("cut two
-lands for two cheap draw spells"). If the page says the lands are fine and the real problem is focus,
-you will take that, as long as it shows you why.
+**What solved means to you.** You judge `solved` on the **must** list alone.
+
+**Must:** a verdict on **this** list, not a general rule: is the land count right once the ramp is
+counted, is the draw enough, is the deck trying to do too many things, and was last week bad luck or
+the deck. Plus one or two concrete changes with a number attached ("cut two lands for two cheap draw
+spells"). If the page says the lands are fine and the real problem is focus, you will take that, as
+long as it shows you why.
+
+**Later:** nothing. Everything you came for is something this site means to answer.
 
 ## What you know, and what you do not
 
@@ -106,10 +110,10 @@ the screen did not give you where you met it.
 wrong) with how this deck plays, and the change you would make first, each quoted from the screen.
 
 **6. Did it solve my problem?** Start with exactly one of `solved` / `partly` / `not solved`,
-judged against "What solved means to you" above, not against how nice the page is. Then:
+judged against your **must** list in "What solved means to you" above, not against how nice the page is. Then:
 
 - the one or two things on screen that did the most for your question, quoted;
-- what you still do not have;
+- what you still do not have, with any **later** item marked as later;
 - **what you would do next**, exactly one of: `stop here, I have my answer` / `check it on a
   forum first` / `go to another site (name it)` / `ask my playgroup` / `give up on the question`.
 

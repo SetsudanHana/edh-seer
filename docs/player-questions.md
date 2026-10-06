@@ -249,10 +249,10 @@ My reading of the product as of #539, to be tested by the round, not taken as it
 | Problem | Answered today | Where | Missing |
 |---|---|---|---|
 | 1. Cut to 100 | Mostly | "What to change": the cut list with reasons and "why you might keep it"; Trim 3/5/10 | a pet-card guard is not obvious; the count "you are 8 over" is not the first thing a 108-card deck sees |
-| 2. Precon upgrade | Partly | suggestions ("Strengthen what works"), swaps beside cuts | adds paired with cuts; nothing says whether this deck would beat the friends' decks. Prices are out of scope (decision 2 below) |
+| 2. Precon upgrade | Partly | suggestions ("Strengthen what works"), swaps beside cuts | adds paired with cuts; what the swaps change in consistency and synergy, in words a beginner can weigh. Prices and a power verdict are out of scope (decisions 2 and 2026-10-06 below) |
 | 3. Slow / screwed | Mostly | Mana chapter (lands vs target, colour sources, cast odds by turn), Roles with targets, "you will run out of cards" | "is this bad luck or my deck?" is never said in those words; the answer is spread across two chapters |
 | 4. How it wins / is X worth it | Mostly — the core | Game plan: commander ring, themes, "How you win" (win plans, clock), combos, "See links" per card | a named finisher when the deck has none; comparison with the usual build for this commander |
-| 5. Bracket and pod | Partly | bracket readout with Game Changers and two-card combos named | tutor quality, a one-line rule-zero summary to share, swaps that move the bracket, "why am I the target" |
+| 5. Bracket and pod | Partly | bracket readout with Game Changers and two-card combos named | tutor quality, a one-line rule-zero summary to share, "why am I the target"; later: swaps that lower consistency or synergy (#985) |
 
 ### Owner's decisions on the six problems (2026-09-26)
 
@@ -266,6 +266,12 @@ After the baseline round (`docs/measurements/persona-round-2026-09-26/BASELINE.m
 4. **How it wins: yes.** The report should determine how the deck wins.
 5. **Bracket: yes, and the first to fix.** The report should assess the bracket and show why.
 6. **The phone and one-line answer: a UX problem,** to be addressed.
+
+**Added 2026-10-06: not a power-level site.** edhseer judges consistency and synergy, and a deck
+moves along both in either direction. "Would I keep up with my friends?" (problem 2) is answered by
+what the swaps do on those two axes, never by a power verdict. "My pod finds it too strong" (problem
+5) is the same move in reverse, swaps that make the deck less consistent or less synergistic (#985).
+That one is scheduled for later.
 
 The two things that set it apart, if the round confirms them, are the ones the research says nobody
 else does: **why** cards work together, with their text on screen, and cuts with reasons tied to this

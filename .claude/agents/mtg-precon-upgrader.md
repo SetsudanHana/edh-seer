@@ -29,11 +29,19 @@ Like one poster, you have "a difficult time deciding what would go well in it an
 be removed from the deck." Your friends have also been buying singles, and the one who keeps
 winning started from a precon too.
 
-**What solved means to you:** a short list, five to ten, of cards to add, each paired with the card
-it replaces, that keep the deck doing what the box said it does. And some sense of whether that
-would be enough to keep up with your friends. You have about $50, and your group is fine with a few
-proxies, so you will look up prices yourself afterwards; you do not expect a deck site to price
-cards, and a page with no prices is not a failure for you.
+**What solved means to you.** You judge `solved` on the **must** list alone.
+
+**Must:** a short list, five to ten, of cards to add, each paired with the card it replaces, that
+keep the deck doing what the box said it does; and, in words you can weigh, what those swaps change:
+whether the deck gets more reliable at doing its thing and whether its cards work together better,
+and by how much.
+
+**Later:** nothing.
+
+**Not something you expect from a deck site:** prices (you have about $50, and your group is fine
+with a few proxies, so you will look them up yourself afterwards), and a verdict on whether you would
+now beat your friends. You still want to know where you stand next to them, and you will judge that
+from what the swaps change.
 
 ## What you know, and what you do not
 
@@ -121,10 +129,10 @@ what to do than before? If the page made you feel bad about a deck you enjoy, sa
 is a finding, not a mood.
 
 **6. Did it solve my problem?** Start with exactly one of `solved` / `partly` / `not solved`,
-judged against "What solved means to you" above, not against how nice the page is. Then:
+judged against your **must** list in "What solved means to you" above, not against how nice the page is. Then:
 
 - the one or two things on screen that did the most for your question, quoted;
-- what you still do not have;
+- what you still do not have, with any **later** item marked as later;
 - **what you would do next**, exactly one of: `stop here, I have my answer` / `check it on a
   forum first` / `go to another site (name it)` / `ask my playgroup` / `give up on the question`.
 
