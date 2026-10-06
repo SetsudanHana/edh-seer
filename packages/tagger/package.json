@@ -13,6 +13,7 @@
     "./subtypes": "./src/derive/subtypes.ts",
     "./emblem": "./src/emblem.ts",
     "./segment": "./src/segment.ts",
+    "./clause-record": "./src/grammar/clause-record.ts",
     "./cr-keywords": "./src/derive/cr-keywords.json"
   },
   "scripts": {

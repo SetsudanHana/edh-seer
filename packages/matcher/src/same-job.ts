@@ -4,6 +4,7 @@
  *  (`suggest-static.ts`), so a swap the report offers and one the precon page offers obey one rule.
  *
  *  The seed of redundancy groups: cards that pass `sameJob` with each other do the same thing. */
+import { grammarClauseRecords } from "@edh-seer/tagger/clause-record";
 import { detectBuildRules } from "./build.js";
 import { roleAbilities, type Role } from "./quality.js";
 import type { DeckCard } from "./types.js";
@@ -62,13 +63,17 @@ const STAT_CLAUSE = /\bwith (?:mana value|power|toughness)[^.,;]*/g;
 const REMINDER = /\([^()]*\)/g;
 const printed = (d: DeckCard) => (d.card.oracleText ?? "").replace(REMINDER, "").toLowerCase();
 
-export function newConditions(cut: DeckCard, add: DeckCard): boolean {
+/** `triggers` false when the caller reads triggers itself (the group key does, from the grammar):
+ *  printed, an upside's trigger (Mana Drain's "at the beginning of your next main phase") reads as a
+ *  condition. */
+export function newConditions(cut: DeckCard, add: DeckCard, triggers_ = true): boolean {
   const a = printed(add);
   const c = printed(cut);
   if (CONDITIONS.some((re) => re.test(a) && !re.test(c))) return true;
   if (REACH.some((re) => re.test(c) && !re.test(a))) return true;
   const cutStats = new Set(c.match(STAT_CLAUSE) ?? []);
   if ((a.match(STAT_CLAUSE) ?? []).some((x) => !cutStats.has(x))) return true;
+  if (!triggers_) return false;
   const cutTriggers = triggers(cut);
   return [...triggers(add)].some((x) => !cutTriggers.has(x));
 }
@@ -127,8 +132,146 @@ export function answerCovers(cut: readonly Subject[], add: readonly Subject[]): 
   return [...limits(add)].every((k) => cutLimits.has(k));
 }
 
-/** THE SAME JOB, before any measure is read. */
+/** THE GROUP KEY (S-T2, docs/plans/2026-10-04-same-job-review.md): every part of the role abilities'
+ *  reading that decides the job -- what it does, to whom and what (types as a conjunction, whose,
+ *  one or all), which keywords, how long, how it is delivered, the shape of how much, what limits
+ *  it, what it gives back -- and nothing the reading does not hold. Two cards do the same job when
+ *  their keys are equal. Cost and the size of a fixed amount are left OUT: they are what an upgrade
+ *  compares inside a group ("same with upside", owner 2026-10-06).
+ *
+ *  NULL IS A REFUSAL, NOT A GUESS: no role ability, a keyword grant whose keywords were not read, or
+ *  a creature (its body does other work no measure reads). A null key joins no group. */
+export function groupKey(d: DeckCard, role: Role): string | null {
+  return readJob(d, role)?.key ?? null;
+}
+/** For the purity instrument's diagnostics only. */
+export const jobOf = (d: DeckCard, role: Role) => readJob(d, role);
+
+/** WHICH OF A CARD'S ACTIONS ARE ITS ROLE, by the grammar's verbs (measured over the 69 labelled pairs'
+ *  cards, 2026-10-06). The rest of the card is upside unless it is a drawback or a give-back, below:
+ *  "same with upside" (owner, 2026-10-06) keeps Mana Drain with Counterspell and Harmonize with
+ *  Ambition's Cost. */
+const ROLE_VERBS: Partial<Record<Role, readonly string[]>> = {
+  draw: ["draw"], impulseDraw: ["exile", "play", "cast"], tutor: ["search", "put"],
+  targetedRemoval: ["destroy", "exile", "deal-damage", "modify-pt", "sacrifice"],
+  boardWipe: ["destroy", "exile", "deal-damage", "modify-pt", "sacrifice"],
+  stackInteraction: ["counter-spell", "counter-ability"], protection: ["grant-ability", "phase-out"],
+  ramp: ["add-mana", "search", "put"], graveyardHate: ["exile"],
+};
+/** WHAT A REMOVAL SPELL HANDS ITS VICTIM: Beast Within's 3/3, Path's land, Swords' life. Two answers do
+ *  the same job only if they hand back the same thing. */
+const GIVE_BACK = new Set(["create", "search", "put", "gain-life", "cast"]);
+const GIVES_BACK_ROLES: ReadonlySet<Role> = new Set(["targetedRemoval", "boardWipe"]);
+/** WHAT IT COSTS YOU beyond mana: Bontu's lands that do not untap, Ambition's Cost's life. The add may
+ *  carry no drawback the cut does not. */
+const DRAWBACK = new Set(["lose-life", "sacrifice", "discard", "cant", "tap", "deal-damage"]);
+
+interface Job { key: string; drawbacks: Set<string>; upsides: Set<string>; all: Set<string> }
+/** ONE READING PER CARD AND ROLE: swap search asks about the same cards hundreds of times, and each
+ *  reading runs the grammar over the printed text. Keyed on the DeckCard object, so a rebuilt card
+ *  (a new analysis) is read afresh and nothing outlives it. */
+const JOBS = new WeakMap<DeckCard, Map<Role, Job | null>>();
+function readJob(d: DeckCard, role: Role): Job | null {
+  let byRole = JOBS.get(d);
+  if (!byRole) JOBS.set(d, (byRole = new Map()));
+  if (!byRole.has(role)) byRole.set(role, readJobOnce(d, role));
+  return byRole.get(role)!;
+}
+function readJobOnce(d: DeckCard, role: Role): Job | null {
+  if (isCreature(d) || roleAbilities(d, role).length === 0) return null;
+  // THE GRAMMAR'S READING, NOT THE STORED TAGS (spec F1): the tags keep `dies:any` for Day of
+  // Judgment, Their Name Is Death, Damning Verdict and Bontu's Last Reckoning alike, and Nix's "if no
+  // mana was spent" not at all. The reading holds each action's verb, its object with every limit,
+  // and its condition. A card the grammar does not read completely joins no group.
+  const verbs = ROLE_VERBS[role];
+  if (!verbs) return null;
+  const g = grammarClauseRecords(d.card as never);
+  if (!g.complete || !g.readings) return null;
+  const job: string[] = [];
+  const drawbacks = new Set<string>();
+  const upsides = new Set<string>();
+  const all = new Set<string>();
+  for (const r of Object.values(g.readings)) {
+    const roleClause = (r.actions ?? []).some((a) => verbs.includes(a.verb));
+    // A ROLE ACTION'S TRIGGER IS PART OF ITS JOB: Moldervine Reclamation draws when a creature dies.
+    if (roleClause && r.trigger?.length) job.push(`when ${JSON.stringify(r.trigger)}`);
+    for (const a of r.actions ?? []) {
+      // A GRANT WHOSE KEYWORDS WERE NOT READ IS NOT A JOB YET: Swiftfoot Boots and Commander's Plate
+      // both read `grant-ability` on a creature (S-T1 carries the keyword).
+      if (a.verb === "grant-ability" && !(a as { grants?: unknown[] }).grants?.length) return null;
+      const o = a.object as Record<string, unknown> | undefined;
+      const giveBack = GIVES_BACK_ROLES.has(role) && GIVE_BACK.has(a.verb) && o?.control !== "you";
+      // THE WHOLE ACTION, its words and its fixed size aside: how much is what an upgrade compares,
+      // and a give-back token's creature type is cosmetic (Pongify's Ape, Rapid Hybridization's Frog
+      // Lizard: both a 3/3 green token).
+      const rest = Object.fromEntries(Object.entries(a as unknown as Record<string, unknown>)
+        .filter(([k]) => !["text", "phrase", "object", "verb", "amount"].includes(k)));
+      const obj = o ? { ...o, amount: undefined, count: undefined, ...(giveBack ? { subtype: undefined } : {}) } : undefined;
+      const part = JSON.stringify([a.verb, canon(obj), canon(rest), amountShape(a.amount === undefined ? undefined : String(a.amount)), giveBack ? "" : objectWords(a.phrase)]);
+      all.add(part);
+      if (verbs.includes(a.verb)) job.push(part);
+      else if (giveBack) job.push(`gives ${part}`);
+      // A CARD FROM YOUR HAND IS A COST TOO: Brainstorm puts two back, See Beyond shuffles one in.
+      else if ((DRAWBACK.has(a.verb) && o?.control !== "opp") || ((a.verb === "put" || a.verb === "shuffle") && (a as { fromZone?: string }).fromZone === "hand")) drawbacks.add(part);
+      else upsides.add(part);
+    }
+  }
+  if (job.length === 0) return null;
+  const ramp = role === "ramp" ? [rampKind(d), [...(d.card.producedMana ?? [])].sort().join("")] : [];
+  return { key: JSON.stringify([role, delivery(d), ...ramp, [...new Set(job)].sort()]), drawbacks, upsides, all };
+}
+
+/** The words of an object with its numbers taken out: "all nonartifact creatures" keeps "nonartifact"
+ *  (which the object filter does not hold), "three cards" and "two cards" read alike, since how much
+ *  is what an upgrade compares, not what the job is. */
+function objectWords(phrase: string | undefined): string {
+  // X STAYS X: -X/-X is not -1/-1 (Toxic Deluge is not Nausea); only a fixed count becomes "#".
+  return (phrase ?? "").toLowerCase().replace(/\b(?:a|an|one|two|three|four|five|six|seven|\d+)\b/g, "#").replace(/\s+/g, " ").trim();
+}
+
+/** A subject as a stable string, every field it states and none it does not: "artifact creature" and
+ *  "artifact or creature" are different objects, and so are "target" and "each". Nested objects (a
+ *  token's stats, an actor) are read the same way; printed words (`text`) and back-references (`ref`)
+ *  are not part of what something is, and an actor that is you is the default. */
+function canon(s: Record<string, unknown> | undefined | null): string {
+  return s ? JSON.stringify(stable(s)) : "";
+}
+function stable(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(stable).map((x) => JSON.stringify(x)).sort();
+  if (v && typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    return Object.keys(o).filter((k) => k !== "text" && k !== "ref" && o[k] !== undefined && o[k] !== null)
+      .filter((k) => !(k === "actor" && (o[k] as { control?: string }).control === "you"))
+      .sort().map((k) => [k, stable(o[k])]);
+  }
+  return v;
+}
+/** The shape of an amount: a fixed number, X, or the expression itself ("for each opponent"). */
+function amountShape(x: string | undefined): string {
+  if (x === undefined) return "";
+  const t = x.trim().toLowerCase();
+  return /^\d+$/.test(t) ? "N" : t === "x" ? "X" : t;
+}
+/** How the card delivers the job: its card types, and an Equipment or an Aura apart. */
+function delivery(d: DeckCard): string {
+  const line = (d.card.typeLine ?? "").split("//")[0]!.toLowerCase();
+  return [shape(d), /\bequipment\b/.test(line) ? "equipment" : "", /\baura\b/.test(line) ? "aura" : ""].filter(Boolean).join(" ");
+}
+
+/** THE SAME JOB: the group key (above), equal and readable on both sides. */
 export function sameJob(cut: DeckCard, add: DeckCard, role: Role): boolean {
+  const c = readJob(cut, role);
+  const a = readJob(add, role);
+  if (!c || !a || c.key !== a.key) return false;
+  // ONE-DIRECTIONAL, so an upgrade that drops a drawback or a condition stays the same job: the add may
+  // carry no drawback, and print no condition, the cut does not.
+  // AND THE CUT'S UPSIDE IS KEPT: "same with upside" is the add having more, never the cut. Explore's
+  // extra land is half the card, and Artifist Acumen's first strike does not replace it.
+  return [...a.drawbacks].every((x) => c.drawbacks.has(x)) && [...c.upsides].every((x) => a.all.has(x)) && !newConditions(cut, add, false);
+}
+
+/** THE OLD TEST, KEPT ONLY FOR THE BEFORE NUMBER while S-T2 is measured; not called by the product. */
+export function sameJobByRules(cut: DeckCard, add: DeckCard, role: Role): boolean {
   // A CREATURE'S BODY IS DOING OTHER WORK (a tribe, a blocker, a sacrifice), and no measure here
   // reads it, so creatures are never swapped as role cards.
   if (isCreature(cut) || isCreature(add)) return false;
