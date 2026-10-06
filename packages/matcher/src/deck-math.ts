@@ -337,11 +337,23 @@ export function computeDeckMath(
   // SPEED, THE WHOLE TABLE (#1056): a turn per win route, beside -- never instead of -- the
   // one-opponent `clock`, which stays the horizon everything above is priced against.
   const drain = opts.reasons ? drainClock(deck, opts.reasons, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) }) : undefined;
-  const speed = drain ? { drain } : undefined;
+  // COMBAT, THE WHOLE TABLE (#1056 R1): the turn the board has dealt 120, three opponents' 40, off
+  // the same curve with infect left out -- its damage is poison, not life (CR 702.90b). Splitting
+  // attackers across opponents (CR 802.2) makes `3 x 40` a floor: overflow on one player is wasted.
+  const tableTurn = pressureCurve(deck, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}), include: (dc) => !hasInfect(dc) })
+    .find((p) => p.cumulative >= 3 * STARTING_LIFE)?.turn;
+  const speed = { combat: tableTurn !== undefined ? { turn: tableTurn } : {}, ...(drain ? { drain } : {}) };
 
   return {
     turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,
     castability, demand, topdeck: topdeckPayoffs(deck, commanderNames), fetchShortfalls,
-    ...(speed ? { speed } : {}),
+    speed,
   };
 }
+
+/** Infect: Scryfall's keyword list, the same field the engine reads everywhere else.
+ *  CEILING: printed infect only. A creature GRANTED infect (Triumph of the Hordes) still counts as
+ *  combat damage, so such a deck's table turn reads a little early; and `keywords` is the union of a
+ *  card's faces, so a DFC with infect on one face is left out whole. Upgrade path: the poison route
+ *  (#1056 R3) reads grants and faces, and R1 takes its complement. */
+const hasInfect = (dc: DeckCard): boolean => (dc.card.keywords ?? []).some((k) => k.toLowerCase() === "infect");

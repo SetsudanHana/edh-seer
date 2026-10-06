@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { CALIBRATION_DECKS } from "@edh-seer/data";
 import { analyzeDeckStatic } from "../../packages/web/client/src/api.static.js";
 
-/** THE DRAIN ROUTE, MEASURED (#1056, R5). For each of the 73 calibration decks plus the two persona
+/** THE SPEED ROUTES, MEASURED (#1056: R5 drain, R1 combat). For each of the 73 calibration decks plus the two persona
  *  decks that raised PB-3 (Gisa, Krenko's first-deck-108): the horizon (`deckMath.turn`,
  *  `turnSource`), the one-opponent `clock.turn`, and the new drain clock. Run on main and on the
  *  branch into two files; the first three fields must be byte-identical ("what must not move"), the
@@ -25,12 +25,13 @@ async function main(): Promise<void> {
   for (const file of files) {
     const { report } = await analyzeDeckStatic(readFileSync(file, "utf8"), undefined, STATIC);
     const m = report.deckMath;
-    const speed = (m as { speed?: { drain?: unknown } } | undefined)?.speed;
+    const speed = (m as { speed?: { drain?: unknown; combat?: unknown } } | undefined)?.speed;
     rows.push({
       deck: file.split("/").pop()!.replace(/\.txt$/, ""),
       horizon: m ? { turn: m.turn, turnSource: m.turnSource, clock: m.clock.turn ?? null } : null,
       burn: m?.wincons.classes.find((c) => c.class === "burn")?.cards ?? [],
       drain: speed?.drain ?? null,
+      combat: speed?.combat ?? null,
     });
     process.stderr.write(".");
   }

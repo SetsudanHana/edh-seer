@@ -1,9 +1,10 @@
 import { seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 
-/** A Commander player's starting life. The clock is measured against ONE opponent: a deck that can
- *  kill the table three times over is not three times as fast, it is a deck that has to attack
- *  three different players. */
+/** A Commander player's starting life. The CLOCK is measured against ONE opponent, and it is the
+ *  horizon every availability figure is priced at, so it stays one opponent. The whole table is a
+ *  separate SPEED (#1056, owner 2026-10-06): `deck-math.ts` reads the turn this curve reaches three
+ *  opponents' 40, beside the clock, never instead of it. */
 export const STARTING_LIFE = 40;
 
 /** How far the curve is computed before giving up on a deck ever getting there. Twenty turns is
@@ -51,7 +52,7 @@ const isCreature = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().inc
 export function expectedPower(
   deck: readonly DeckCard[],
   turn: number,
-  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] } = {},
+  opts: PressureOpts = {},
 ): number {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
@@ -69,6 +70,7 @@ export function expectedPower(
   const deployable: { manaValue: number; power: number; available: number }[] = [];
   for (const dc of deck) {
     if (isLand(dc) || !isCreature(dc)) continue;
+    if (opts.include && !opts.include(dc)) continue;
     const power = Number(dc.card.power);
     // `*`, `1+*` and a missing power are NaN. A creature whose size is a board state contributes
     // nothing rather than poisoning the whole curve -- and every clock derived from it -- with NaN.
@@ -130,6 +132,10 @@ export function arrival(
   };
 }
 
+/** `include`: which creatures count, all when absent. The clock passes none, so it cannot move; the
+ *  whole-table combat speed leaves infect out (its damage to a player is poison, CR 702.90b). */
+export interface PressureOpts { commanderNames?: readonly string[]; manaBudget?: readonly number[]; include?: (dc: DeckCard) => boolean }
+
 /** Mana the board could have spent by `turn`, summed over every turn up to it.
  *
  *  PAST THE SIMULATED TURNS IT GROWS BY ONE A TURN, which is the land drop and nothing else. The
@@ -154,7 +160,7 @@ export interface PressurePoint {
 /** The deck's pressure curve to the horizon: power per turn, and the running total. */
 export function pressureCurve(
   deck: readonly DeckCard[],
-  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] } = {},
+  opts: PressureOpts = {},
 ): PressurePoint[] {
   const out: PressurePoint[] = [];
   let cumulative = 0;

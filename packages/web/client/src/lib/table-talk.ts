@@ -76,7 +76,8 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
       : `It spreads its wins across ${classes.length} plans: ${list([...classes.slice(0, 3).map(phrase), ...(classes.length > 3 ? [`${classes.length - 3} more`] : [])])}`)
       + (fastest?.turn === undefined ? ""
         : fastest.kind === "combo" ? `, and can combo as early as turn ${fastest.turn}`
-        : `, and its creatures can kill one opponent around turn ${fastest.turn}`)
+        // THE WHOLE TABLE (#1056): every timed route is now the turn all three opponents can be dead.
+        : `, and its ${fastest.kind === "burn" ? "drains" : "creatures"} can kill the table around turn ${fastest.turn}`)
       + "."
     : undefined;
 

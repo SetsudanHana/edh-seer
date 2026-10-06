@@ -12,7 +12,8 @@ import { infiniteCombos } from "./bracket-why.js";
  *  - combo: the turn the deck has the MANA for its cheapest infinite combo (from the goldfish's own
  *    mana-by-turn rows), which is a floor: drawing both pieces is not counted;
  *  - alternate win: the turn it can cast its cheapest alt-win card, before that card's condition;
- *  - combat (go-wide, big creatures, one big creature): the report's clock;
+ *  - combat (go-wide, big creatures, one big creature): the turn the board has dealt 120, all three
+ *    opponents (#1056 R1, `deckMath.speed.combat`) -- not the one-opponent clock;
  *  - damage or drain: the turn its repeating drains at each opponent take the whole table (#1056,
  *    `deckMath.speed.drain`), a rough floor at one fire per source of each trigger;
  *  - milling, and burn that is one-shot or single-target: listed with their cards and untimed until
@@ -92,13 +93,14 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   }
 
   const combat = classes.filter((c) => COMBAT[c.class]);
-  const clock = report.deckMath?.clock.turn;
+  // THE WHOLE TABLE (#1056 R1): 120 damage, not the one-opponent clock -- which stays the horizon.
+  const table = report.deckMath?.speed?.combat?.turn;
   if (combat.length) {
     routes.push({
-      kind: "combat", label: combat.map((c) => COMBAT[c.class]!).join(" or "), turn: clock, cards: combat.flatMap((c) => c.cards ?? []),
-      caveat: clock
-        ? "enough attacking power to kill one opponent, if nobody blocks and nothing is removed"
-        : "not timed: in our test games the deck never puts enough power on the board",
+      kind: "combat", label: combat.map((c) => COMBAT[c.class]!).join(" or "), turn: table, cards: combat.flatMap((c) => c.cards ?? []),
+      caveat: table
+        ? "enough attacking power to kill all three opponents, if nobody blocks and nothing is removed"
+        : "not timed: in our test games the board never deals 120, enough for all three opponents",
     });
   }
 

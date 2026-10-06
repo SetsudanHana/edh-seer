@@ -70,12 +70,13 @@ function Scores({ report }: { report: DeckReport }) {
 function Plan({ report }: { report: DeckReport }) {
   const main = mainTheme(report);
   const classes = [...(report.deckMath?.wincons.classes ?? [])].sort((a, b) => b.count - a.count).slice(0, 3);
-  const clock = report.deckMath?.clock.turn;
+  // The whole table (#1056 R1), not the one-opponent clock: "could win" is a claim about the game.
+  const table = report.deckMath?.speed?.combat?.turn;
   return (
     <div className="flex flex-col gap-2">
       {main ? <Row label="Main theme" value={main.name} /> : null}
       {classes.map((c) => <Row key={c.class} label={`Wins by ${WIN_PHRASE[c.class] ?? c.class}`} value={`${c.count} ${c.count === 1 ? "card" : "cards"}`} />)}
-      {clock !== undefined ? <Row label="Creatures alone could win by" value={`turn ${clock}`} /> : null}
+      {table !== undefined ? <Row label="Creatures alone could win by" value={`turn ${table}`} /> : null}
     </div>
   );
 }
