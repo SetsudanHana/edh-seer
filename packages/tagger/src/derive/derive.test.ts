@@ -3830,6 +3830,21 @@ test("a life payment the store left out is added (Toxic Deluge)", () => {
   expect(out.flatMap((a) => a.emits ?? []).some((e) => e.verb === "lose-life" && e.subject.control === "you")).toBe(true);
 });
 
+/** LANDWALK IS ONE KEYWORD WITH A LAND TYPE (CR 702.14): "islandwalk" is not in the keyword list
+ *  by name, so 47 grants carried no keyword (Lord of Atlantis, Goblin King; S-T1, 2026-10-06). */
+test("a landwalk grant names its landwalk (Lord of Atlantis)", () => {
+  const lord = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "modify-pt", object: "other merfolk", amount: "+1/+1" }, { verb: "grant-ability", object: "islandwalk" }] }],
+    "Lord of Atlantis", { 1: "Other Merfolk get +1/+1 and have islandwalk." }).abilities.find((a) => a.effect.kind === "keyword-grant")!;
+  expect(lord.grants).toEqual(["islandwalk"]);
+  const gloves = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "artifact landwalk" }] }],
+    "Vectis Gloves", { 1: "Equipped creature gets +2/+0 and has artifact landwalk." }).abilities.find((a) => a.effect.kind === "keyword-grant")!;
+  expect(gloves.grants).toEqual(["landwalk"]);
+  // A word ending in "walk" that names no land is no keyword (review of #1050).
+  const side = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "\"Sidewalk\"" }] }],
+    "X", { 1: "Creatures you control have \"Sidewalk\"." }).abilities.find((a) => a.effect.kind === "keyword-grant");
+  expect(side?.grants ?? []).not.toContain("sidewalk");
+});
+
 test("a board-wide keyword grant keeps its recipient and names the keyword (Mikaeus, the Unhallowed)", () => {
   const out = deriveAbilities([{ id: 3, abilityType: "static", actions: [
     { verb: "modify-pt", object: "other non-Human creatures you control", amount: "+1/+1" },
