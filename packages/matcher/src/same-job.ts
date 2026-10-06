@@ -185,6 +185,9 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
   // and its condition. A card the grammar does not read completely joins no group.
   const verbs = ROLE_VERBS[role];
   if (!verbs) return null;
+  // A CARD OF TWO FACES JOINS NO GROUP YET (review of #1048): the readings carry both faces' clauses,
+  // and Fire // Ice or a land // creature would key on the two halves at once.
+  if (d.card.name.includes(" // ") || (d.card.faces?.length ?? 0) > 1) return null;
   const g = grammarClauseRecords(d.card as never);
   if (!g.complete || !g.readings) return null;
   const job: string[] = [];
@@ -209,7 +212,10 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
       const obj = o ? { ...o, amount: undefined, count: undefined, ...(giveBack ? { subtype: undefined } : {}) } : undefined;
       const part = JSON.stringify([a.verb, canon(obj), canon(rest), amountShape(a.amount === undefined ? undefined : String(a.amount)), giveBack ? "" : objectWords(a.phrase)]);
       all.add(part);
-      if (verbs.includes(a.verb)) job.push(part);
+      // AIMED AT YOU, A ROLE VERB IS A COST (review of #1048): a wipe that also damages you, or makes
+      // you sacrifice, carries that as a drawback, not as part of the job.
+      const atYou = o?.control === "you" && DRAWBACK.has(a.verb);
+      if (verbs.includes(a.verb) && !atYou) job.push(part);
       else if (giveBack) job.push(`gives ${part}`);
       // A CARD FROM YOUR HAND IS A COST TOO: Brainstorm puts two back, See Beyond shuffles one in.
       else if ((DRAWBACK.has(a.verb) && o?.control !== "opp") || ((a.verb === "put" || a.verb === "shuffle") && (a as { fromZone?: string }).fromZone === "hand")) drawbacks.add(part);
