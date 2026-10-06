@@ -7,7 +7,7 @@ import { manaAudit } from "./mana-audit.js";
 import { fetchDemand } from "./fetch-land.js";
 import { recommendedLands, type LandRecommendation } from "./land-count.js";
 import { manaBaseScore } from "./mana-base.js";
-import { drainClock, millClock, winconReport } from "./wincon.js";
+import { drainClock, millClock, poisonClock, winconReport } from "./wincon.js";
 import { commanderClock } from "./commander-damage.js";
 import { pressureCurve, STARTING_LIFE } from "./pressure.js";
 import { cardCastability, deckCastability } from "./castability.js";
@@ -352,10 +352,13 @@ export function computeDeckMath(
   // MILL (#1056 R4): cards milled from each opponent against their library, 92 - t.
   const mill = opts.reasons ? millClock(deck, opts.reasons, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) }) : undefined;
   const prevented = deck.find((dc) => commanderNames.includes(dc.card.name) && PREVENTS_YOUR_DAMAGE.test(dc.card.oracleText ?? ""))?.card.name;
+  // POISON (#1056 R3): ten counters on each opponent; attacks need damage dealt, so a commander that
+  // prevents your damage leaves only placed counters and proliferate.
+  const poison = opts.reasons ? poisonClock(deck, opts.reasons, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}), damagePrevented: prevented !== undefined }) : undefined;
   const untimed = <T extends { turn?: number }>(r: T): Omit<T, "turn"> => { const { turn: _, ...rest } = r; return rest; };
   const speed = prevented
-    ? { prevented, combat: {}, ...(drain ? { drain: untimed(drain) } : {}), ...(commander ? { commander: untimed(commander) } : {}), ...(mill ? { mill } : {}) }
-    : { combat: tableTurn !== undefined ? { turn: tableTurn } : {}, ...(drain ? { drain } : {}), ...(commander ? { commander } : {}), ...(mill ? { mill } : {}) };
+    ? { prevented, combat: {}, ...(drain ? { drain: untimed(drain) } : {}), ...(commander ? { commander: untimed(commander) } : {}), ...(mill ? { mill } : {}), ...(poison ? { poison } : {}) }
+    : { combat: tableTurn !== undefined ? { turn: tableTurn } : {}, ...(drain ? { drain } : {}), ...(commander ? { commander } : {}), ...(mill ? { mill } : {}), ...(poison ? { poison } : {}) };
 
   return {
     turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,

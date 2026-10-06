@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
-import { detectWincons, drainClock, focusIndex, millClock, winconReport } from "./wincon.js";
+import { detectWincons, drainClock, focusIndex, millClock, poisonClock, winconReport } from "./wincon.js";
 import type { Reason } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 
@@ -342,7 +342,8 @@ describe("drainClock", () => {
     // Tremors and the Upkeeper are in the 99 now, among 90 lands: drawn by turn 3 one game in ten.
     const d = [...deck(), ...Array.from({ length: 90 }, (_, i) => mk(`Land ${i}`, { mv: 0, typeLine: "Basic Land — Mountain" }))];
     const clock = drainClock(d, reasons, { commanderNames: ["Bear", "Maker"] })!;
-    expect(clock.perTurn.slice(0, 5)).toEqual([0, 0, 1, 2, 5]);
+    // 0.99 on turn 3: Tremors' own expected arrival shares that turn's mana with the Bear.
+    expect(clock.perTurn.slice(0, 5)).toEqual([0, 0, 0.99, 2, 5]);
   });
 
   test("ability indexes are per FACE: a back-face drain joins the reasons stamped with its face", () => {
@@ -361,6 +362,23 @@ describe("drainClock", () => {
     const d = deck();
     const twice = [...reasons, { ...reasons[0]!, effectKind: "other" }, { ...reasons[2]!, effectKind: "other" }];
     expect(drainClock(d, twice, all(d))!.perTurn.slice(0, 5)).toEqual([0, 0, 1, 2, 5]);
+  });
+
+  test("arrivals in one turn cannot cost more than the mana that turn: four 3-drops on turn 3 are one", () => {
+    // Every card is a commander, so all four 3-drops become castable on turn 3 at once; 3 mana casts one.
+    const bears = Array.from({ length: 4 }, (_, i) => card(`Bear ${i}`, 3));
+    const d = [card("Tremors", 2, [ability("1", ["enters"])]), ...bears];
+    const r: Reason[] = bears.map((b) => ({ tag: "enters:creature", text: "", consumer: "Tremors", consumerAbility: 0, producer: b.card.name }));
+    expect(drainClock(d, r, all(d))!.perTurn.slice(0, 3)).toEqual([0, 0, 1]);
+  });
+
+  test("a trigger on the card ITSELF has one source, the card: once a turn, however many reasons join it", () => {
+    // "Whenever this creature deals combat damage" (Thrummingbird). The edge layer joins every creature
+    // that deals combat damage; only this one fires it.
+    const self = { ...ability("1", ["combat-damage"]), trigger: { verbs: ["combat-damage"], subject: { self: true } } };
+    const d = [card("Bird", 2, [self]), card("Bear", 3), card("Ox", 4)];
+    const r: Reason[] = ["Bear", "Ox"].map((p) => ({ tag: "combat-damage:creature", text: "", consumer: "Bird", consumerAbility: 0, producer: p }));
+    expect(drainClock(d, r, all(d))!.perTurn.slice(0, 5)).toEqual([0, 1, 1, 1, 1]);
   });
 
   test("no repeating drain at each opponent, no route", () => {
@@ -413,5 +431,77 @@ describe("millClock", () => {
   test("no mill at opponents, no route; an X amount is not a number", () => {
     const d = [card("Sanity", 3, [mill("X", { kind: "triggered", repeats: "per-turn", trigger: { verbs: ["end-step"], subject: {} } })])];
     expect(millClock(d, [], { commanderNames: ["Sanity"] })).toBeUndefined();
+  });
+});
+
+/** POISON, TIMED FOR THE WHOLE TABLE (#1056 R3; owner 2026-10-06: "poison is counter so proliferate
+ *  effects work"). Ten counters on EACH opponent. Attacks carry infect power and toxic N one player at
+ *  a time, so a third per opponent; every proliferate adds one to each opponent who already has one. */
+describe("poisonClock", () => {
+  const lands = (n: number) => Array.from({ length: n }, (_, i) => mk(`Land ${i}`, { mv: 0, typeLine: "Basic Land — Swamp" }));
+  const creature = (name: string, mv: number, power: string, keywords: string[], oracleText = "", abilities: unknown[] = []): DeckCard => {
+    const dc = mk(name, { mv, power, oracleText });
+    dc.card = { ...dc.card, keywords } as Card;
+    dc.tags!.abilities = abilities as never;
+    return dc;
+  };
+  const prolif = { kind: "triggered", repeats: "per-cycle", trigger: { verbs: ["end-step"], subject: {} }, effect: { kind: "proliferate", subject: { control: "any" } } };
+
+  test("infect power, a third a turn per opponent: ten by turn 15; an end-step proliferate from turn 4 makes it 8", () => {
+    const agent = creature("Agent", 1, "2", ["Infect"]);
+    const alone = poisonClock([agent, ...lands(30)], [], { commanderNames: ["Agent"] })!;
+    expect(alone.perTurn.slice(0, 2)).toEqual([0.67, 0.67]);
+    expect(alone.turn).toBe(15);
+    const atraxa = creature("Voice", 4, "4", ["Proliferate"], "", [prolif]);
+    const both = poisonClock([agent, atraxa, ...lands(30)], [], { commanderNames: ["Agent", "Voice"] })!;
+    expect(both.perTurn.slice(0, 5)).toEqual([0.67, 0.67, 0.67, 1.67, 1.67]);
+    expect(both.turn).toBe(8);
+    expect(both.cards).toEqual(["Agent", "Voice"]);
+  });
+
+  test("a proliferate counts only as often as an opponent is likely to have poison yet", () => {
+    // 1 infect power: a third of a counter per opponent a turn. A proliferate from turn 2 meets an
+    // opponent with poison a third of the time, not always (Surge Conductor at six a turn read turn 4).
+    const agent = creature("Agent", 1, "1", ["Infect"]);
+    const sage = creature("Sage", 2, "1", ["Proliferate"], "", [prolif]);
+    const clock = poisonClock([agent, sage, ...lands(30)], [], { commanderNames: ["Agent", "Sage"] })!;
+    expect(clock.perTurn.slice(0, 3)).toEqual([0.33, 0.67, 1.33]);
+  });
+
+  test("a proliferate card is an enabler: weighted by its odds of being drawn, not assumed out", () => {
+    // Three end-step proliferates in a 93-card library are each drawn by turn 3 about one game in nine;
+    // assumed out, they read three counters a turn.
+    const agent = creature("Agent", 1, "6", ["Infect"]);
+    const sages = Array.from({ length: 3 }, (_, i) => creature(`Sage ${i}`, 1, "1", ["Proliferate"], "", [prolif]));
+    const clock = poisonClock([agent, ...sages, ...lands(90)], [], { commanderNames: ["Agent"] })!;
+    expect(clock.perTurn[2]).toBeLessThan(2.5);
+    expect(clock.perTurn[2]).toBeGreaterThan(2);
+  });
+
+  test("toxic N is read off the printed text and counts N per hit, beside the creature's damage", () => {
+    const toxic = creature("Contaminator", 2, "4", ["Toxic", "Trample"], "Trample, toxic 3");
+    expect(poisonClock([toxic, ...lands(30)], [], { commanderNames: ["Contaminator"] })!.perTurn.slice(0, 2)).toEqual([0, 1]);
+  });
+
+  test("toxic or poisonous GRANTED to others is not this card's own: no attacker (Virulent Sliver)", () => {
+    const granter = creature("Granter", 2, "1", [], "All Sliver creatures have poisonous 1.");
+    const aura = creature("Cult", 2, "0", ["Enchant"], "Enchanted creature has poisonous 3.");
+    expect(poisonClock([granter, aura, ...lands(30)], [], { commanderNames: ["Granter", "Cult"] })).toBeUndefined();
+  });
+
+  test("an ETB proliferate drawn late still proliferates when it arrives", () => {
+    const agent = creature("Agent", 1, "6", ["Infect"]);
+    const etb = { kind: "triggered", repeats: "once", trigger: { verbs: ["enters"], subject: { self: true } }, effect: { kind: "proliferate", subject: { control: "any" } } };
+    const sage = creature("Sage", 1, "1", ["Proliferate"], "", [etb]);
+    const clock = poisonClock([agent, sage, ...lands(90)], [], { commanderNames: ["Agent"] })!;
+    // Arriving after turn 1 still counts: the later turns carry more than the attack's 2 alone.
+    expect(clock.perTurn[4]).toBeGreaterThan(2);
+  });
+
+  test("proliferate alone is no poison route; damage prevented leaves the attacks out", () => {
+    const atraxa = creature("Voice", 4, "4", ["Proliferate"], "", [prolif]);
+    expect(poisonClock([atraxa, ...lands(30)], [], { commanderNames: ["Voice"] })).toBeUndefined();
+    const agent = creature("Agent", 1, "2", ["Infect"]);
+    expect(poisonClock([agent, ...lands(30)], [], { commanderNames: ["Agent"], damagePrevented: true })!.turn).toBeUndefined();
   });
 });

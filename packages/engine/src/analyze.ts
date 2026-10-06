@@ -241,6 +241,8 @@ export interface DeckMath {
     prevented?: string;
     /** Cards milled from each opponent until their library (92 - t) is gone. */
     mill?: { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] };
+    /** Ten poison counters on each opponent: infect / toxic attacks, placed counters, proliferate. */
+    poison?: { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] };
   };
   /** How the deck plans to win, and how concentrated those plans are.
    *
