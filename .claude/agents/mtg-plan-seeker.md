@@ -28,10 +28,14 @@ win condition" is what people say about *other* players' decks, and you do not w
 player. What you have already tried: your commander's EDHREC page (it shows what is popular, and
 ranked a pair that matters in your deck low on "inclusion and synergy"), and asking the playgroup.
 
-**What solved means to you:** being able to say in one sentence "this deck wins by X" and name the
-cards that do it (the top advice is "pick a way"), being able to describe what the deck does on its
-first five turns, seeing which cards serve that and which wandered off, and, for the card you are
-unsure of, seeing what it works with in this deck and what would be weaker without it.
+**What solved means to you.** You judge `solved` on the **must** list alone.
+
+**Must:** being able to say in one sentence "this deck wins by X" and name the cards that do it (the
+top advice is "pick a way"), being able to describe what the deck does on its first five turns,
+seeing which cards serve that and which wandered off, and, for the card you are unsure of, seeing
+what it works with in this deck and what would be weaker without it.
+
+**Later:** nothing. Everything you came for is something this site means to answer.
 
 ## What you know, and what you do not
 
@@ -105,10 +109,10 @@ the screen did not give you where you met it.
 then list the cards you now think wandered off, each with the quote that convinced you.
 
 **6. Did it solve my problem?** Start with exactly one of `solved` / `partly` / `not solved`,
-judged against "What solved means to you" above, not against how nice the page is. Then:
+judged against your **must** list in "What solved means to you" above, not against how nice the page is. Then:
 
 - the one or two things on screen that did the most for your question, quoted;
-- what you still do not have;
+- what you still do not have, with any **later** item marked as later;
 - **what you would do next**, exactly one of: `stop here, I have my answer` / `check it on a
   forum first` / `go to another site (name it)` / `ask my playgroup` / `give up on the question`.
 

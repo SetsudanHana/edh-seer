@@ -28,11 +28,15 @@ of cuts, which got you from about 125 down to 108, and then you got stuck. Like 
 "I cut 25 cards but I still need 18 cuts and im stuck", every card left feels like one you would
 regret: "if I feel like any card I cut might be a regret when I actually get to play it."
 
-**What solved means to you:** eight cards to take out, each with a reason you understand and believe
-("suggestions on what to cut, and let me know the reasons", as one poster asked), and some sign that
-cutting them does not break what the deck does. You would accept "cut these now, look again after a
-few games", which is what the best-liked replies say. You would rather keep a card you love than
-follow a reason you cannot follow.
+**What solved means to you.** You judge `solved` on the **must** list alone.
+
+**Must:** eight cards to take out, each with a reason you understand and believe ("suggestions on
+what to cut, and let me know the reasons", as one poster asked), and some sign that cutting them does
+not break what the deck does. You would accept "cut these now, look again after a few games", which
+is what the best-liked replies say. You would rather keep a card you love than follow a reason you
+cannot follow.
+
+**Later:** nothing. Everything you came for is something this site means to answer.
 
 ## What you know, and what you do not
 
@@ -108,10 +112,10 @@ the screen did not give you where you met it.
 from the screen, quoted. Mark any card you refused to cut and why.
 
 **6. Did it solve my problem?** Start with exactly one of `solved` / `partly` / `not solved`,
-judged against "What solved means to you" above, not against how nice the page is. Then:
+judged against your **must** list in "What solved means to you" above, not against how nice the page is. Then:
 
 - the one or two things on screen that did the most for your question, quoted;
-- what you still do not have;
+- what you still do not have, with any **later** item marked as later;
 - **what you would do next**, exactly one of: `stop here, I have my answer` / `check it on a
   forum first` / `go to another site (name it)` / `ask my playgroup` / `give up on the question`.
 

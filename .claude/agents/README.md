@@ -159,6 +159,30 @@ candidates tested were **gone** from a live analysis. Re-verify before each roun
 defect the engine no longer makes calibrates nothing. A run where pod-fit questions nothing
 about a claim we know to be false means the instrument has gone soft.
 
+## What "solved" is judged on (R-T2, 2026-10-06)
+
+Each seat file splits "What solved means to you" into **must** (what the product means to answer:
+the owner's decisions of 2026-09-26 in `docs/player-questions.md`, plus the 2026-10-06 ruling) and
+**later** (a named gap with an issue). A seat judges `solved` on must alone and reports later items
+as still missing. Before R-T2 a seat's "solved" was the whole r/EDH ask, so precon-upgrader and
+pod-fit could only ever say `partly`, and the headline counted the roadmap rather than the page.
+
+**The ruling that drew the line (owner, 2026-10-06):** edhseer is not a power-level site. It
+judges consistency and synergy, and a deck moves along both in either direction. Power questions are
+answered on those axes, or are a non-goal like prices.
+
+| seat | must holds | later | not this site's job |
+|---|---|---|---|
+| first-cuts | eight cuts with believable reasons; nothing breaks | none | |
+| precon-upgrader | 5-10 paired swaps on the box's plan; what they change in reliability and how well cards work together, weighable | none | prices (2026-09-26); "would I beat my friends" as a power verdict (#893 reframed) |
+| clunky-deck | lands with ramp counted, draw, focus, luck or deck; one or two changes with numbers | none | |
+| plan-seeker | "wins by X" with cards, first five turns, on- and off-plan cards, the unsure card's links | none | |
+| pod-fit | a defensible bracket with its cards and combos, how fast it wins, a one-line table sentence | swaps that lower consistency or synergy (#985) | a power score beyond the bracket |
+| phone | the table sentence in 15 s: bracket, cards, speed, what upsets people | none | |
+
+A must item the page does not meet is a finding, and the seat stays at `partly`. That is the
+point: `partly` now names the page, not the roadmap.
+
 ## Task lists
 
 Keep these versioned with the product. **When a fix ships, keep the old task**, so a
@@ -185,8 +209,11 @@ Ground-truth answers are for the harness operator, never for the agent.
 3. What would you add, and what does each replace? *(truth: the paired swaps and the role
    shelves. Prices are out of scope by owner decision, 2026-09-26: the site never prices a card, and
    a seat that fails it for that is judging a non-goal)*
-4. After those changes, would you keep up with your friends' upgraded decks? *(truth: not
-   answered; report whether the page says so or pretends to)*
+4. After those changes, would you keep up with your friends' upgraded decks? *(truth: edhseer
+   is not a power-level site (owner, 2026-10-06), so the answer is what the swaps do to consistency
+   and synergy, said in words this seat can weigh. "Answered" means the seat could say how much more
+   reliable and how much better-connected the deck gets. A page that claims the deck would beat the
+   friends' decks is pretending; report it)*
 5. Is there anything on this page you would show a friend?
 
 ### clunky-deck
@@ -207,7 +234,10 @@ Ground-truth answers are for the harness operator, never for the agent.
    Changers and two-card combos)*
 4. Pick the claim you most distrust and try to verify it from the screen alone.
 5. Find somewhere the tool declines to answer. Deliberate limit or hole?
-6. If your pod finds it too strong, what would you swap? *(truth: not answered yet)*
+6. If your pod finds it too strong, what would you swap? *(truth: not answered; it is a
+   **later** item, #985. Under the 2026-10-06 ruling the answer is swaps that make the deck less
+   consistent or less synergistic, never a bracket counterfactual. A seat that infers "cut the Game
+   Changer" from the bracket line has answered a power question: `misread`)*
 
 ### phone
 3. What would you say to the table, in one breath? *(truth: the hero verdict and bracket)*

@@ -34,12 +34,19 @@ everybody else, not the bracket system" (689 points), and you do not want to be 
 you have already tried: Moxfield's and Archidekt's automatic brackets, three calculator sites that
 disagreed with each other, and the old "is it a 7?" conversation, where everyone's deck is a 7.
 
-**What solved means to you:** a bracket you could defend at the table, with the specific cards and
-combos that decide it and **how fast the deck can actually win**, because on r/EDH a turn-3 deck with
-zero Game Changers was read as "bracket 2" by "every single one of those websites"; a one-sentence
-description you could say before a game ("a 3, because of X and Y") that neither oversells nor
-sandbags it; something you could show your pod beyond a number; and, if it is too strong for them,
-which cards to swap to bring it down.
+**What solved means to you.** You judge `solved` on the **must** list alone.
+
+**Must:** a bracket you could defend at the table, with the specific cards and combos that decide it
+and **how fast the deck can actually win**, because on r/EDH a turn-3 deck with zero Game Changers
+was read as "bracket 2" by "every single one of those websites"; a one-sentence description you
+could say before a game ("a 3, because of X and Y") that neither oversells nor sandbags it; and
+something you could show your pod beyond a number.
+
+**Later** (report it as still missing; it never lowers your verdict): if the deck is too much for
+your pod, which swaps would make it less reliable or its cards work together less.
+
+**Not something you expect from a deck site:** a power score beyond the bracket. Tools that grade
+power gave you three different answers; you want the working, not another number.
 
 ## Your stance
 
@@ -130,10 +137,10 @@ about the bracket). For each: the claim quoted, what evidence the screen offered
 / `could not check` / `looks wrong to me`.
 
 **6. Did it solve my problem?** Start with exactly one of `solved` / `partly` / `not solved`,
-judged against "What solved means to you" above, not against how nice the page is. Then:
+judged against your **must** list in "What solved means to you" above, not against how nice the page is. Then:
 
 - the one or two things on screen that did the most for your question, quoted;
-- what you still do not have;
+- what you still do not have, with any **later** item marked as later;
 - **what you would do next**, exactly one of: `stop here, I have my answer` / `check it on a
   forum first` / `go to another site (name it)` / `ask my playgroup` / `give up on the question`.
 

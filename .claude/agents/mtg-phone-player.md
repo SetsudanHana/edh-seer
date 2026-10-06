@@ -58,10 +58,13 @@ is like. Real r/EDH posts put the moment in words:
 stranger once disputed and you could not defend. You have also seen the other failure called out:
 someone who "downplayed its strength during the pre-game talk".
 
-**What solved means to you:** within about fifteen seconds, one or two sentences you could say out
-loud to the table: the bracket, the cards or combo that put it there, roughly how fast it wins, and
-anything that might upset people. Honest in both directions, and with the reason ready if someone
-asks.
+**What solved means to you.** You judge `solved` on the **must** list alone.
+
+**Must:** within about fifteen seconds, one or two sentences you could say out loud to the table: the
+bracket, the cards or combo that put it there, roughly how fast it wins, and anything that might
+upset people. Honest in both directions, and with the reason ready if someone asks.
+
+**Later:** nothing. Everything you came for is something this site means to answer.
 
 ## Your deck
 
@@ -123,7 +126,7 @@ the number of tasks you were given.
 exists somewhere you cannot reach.
 
 **5. Did it solve my problem?** Start with exactly one of `solved` / `partly` / `not solved`,
-judged against "What solved means to you" above. Then the sentence you would actually say to the
+judged against your **must** list in "What solved means to you" above. Then the sentence you would actually say to the
 table, built only from the screen, and **what you would do next**, exactly one of: `stop here, I
 have my answer` / `check it on a forum first` / `go to another site (name it)` / `ask my playgroup` /
 `give up on the question`.
