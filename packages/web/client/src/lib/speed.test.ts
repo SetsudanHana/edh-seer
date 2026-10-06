@@ -6,7 +6,7 @@ const row = (turn: number, p25: number, median: number, p75: number) =>
   ({ turn, mana: { p25, median, p75 }, payableShare: { p25: 0, median: 0, p75: 0 } });
 const rows = [row(1, 1, 1, 1), row(2, 2, 2, 3), row(3, 2, 3, 4), row(4, 3, 4, 6), row(5, 4, 5, 7), row(6, 5, 6, 8), row(7, 6, 7, 9), row(8, 6, 8, 10)];
 
-function deck(wincons: { class: string; cards?: string[] }[], clock?: number, combos: { cards: string[]; result: string }[] = []) {
+function deck(wincons: { class: string; cards?: string[]; drain?: { cards: number; life: number } }[], clock?: number, combos: { cards: string[]; result: string }[] = []) {
   return {
     combos,
     manaAvailability: { trials: 2000, accelerants: 10, rows, headline: { mana: 6, turn: 6, low: 0.4, high: 0.6 } },
@@ -50,4 +50,14 @@ test("a deck with no combat clock still reports its other routes", () => {
   expect(routes.map((r) => [r.kind, r.turn])).toEqual([["combat", undefined], ["mill", undefined]]);
   expect(routes[0]!.caveat).toMatch(/not timed/);
   expect(fastestRoute(routes)).toBeUndefined();
+});
+
+/** THE DRAIN PER TURN, THE REFUSAL KEPT (#984, owner ruling 2026-10-06): the route still has no turn,
+ *  and says what its repeating drains take from each opponent if each fires once a turn. */
+test("an untimed drain route says its drain per turn, and stays untimed", () => {
+  const [burn] = speedRoutes(deck([{ class: "burn", cards: ["Leech", "Guardian"], drain: { cards: 2, life: 3 } }]), () => undefined);
+  expect(burn!.turn).toBeUndefined();
+  expect(burn!.caveat).toBe("its 2 repeating drains take about 3 life from each opponent a turn if each fires once; how often they fire is not modelled, so it has no turn");
+  const [plain] = speedRoutes(deck([{ class: "burn", cards: ["Bolt"] }]), () => undefined);
+  expect(plain!.caveat).toBe("nothing in the report models how fast this route kills, so it has no turn");
 });
