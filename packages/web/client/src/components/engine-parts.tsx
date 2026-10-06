@@ -60,12 +60,15 @@ export function CardFace({ card, className }: { card: EngineCard; className: str
     : <span className={`shrink-0 ${className}`}>{face}</span>;
 }
 
-/** THE TEXT, ONE TAP AWAY: kept in the page, so checking a claim never waits on a fetch. */
-export function ReadCards({ cards }: { cards: EngineCard[] }) {
+/** THE TEXT, ONE TAP AWAY: kept in the page, so checking a claim never waits on a fetch. `open`
+ *  where there is room (#983): shut, the commander's text sat at the fold of the Glance rail and
+ *  pod-fit could not test a TRUE claim because the text it rests on was hidden. */
+export function ReadCards({ cards, open }: { cards: EngineCard[]; open?: boolean }) {
   return (
-    <details className="text-sm">
+    <details className="text-sm" open={open}>
       <summary className="cursor-pointer py-1.5 text-(--muted) hover:text-(--foreground)">{cards.length === 1 ? "Read the card" : "Read both cards"}</summary>
-      <div className="mt-1 grid gap-2 sm:grid-cols-2">{cards.map((c) => <CardText key={c.id} card={c} />)}</div>
+      {/* TWO COLUMNS FOR TWO CARDS ONLY: one card in half a 20rem rail wrapped The Rani's name. */}
+      <div className={`mt-1 grid gap-2 ${cards.length > 1 ? "sm:grid-cols-2" : ""}`}>{cards.map((c) => <CardText key={c.id} card={c} />)}</div>
     </details>
   );
 }

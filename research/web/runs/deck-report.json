@@ -1,28 +1,32 @@
 {
   "surface": "deck-report",
   "baseUrl": "http://localhost:5173",
-  "_deck_note": "ONE DECK PER SEAT, and the picks are NOT free: they come from the fixture table in .claude/agents/README.md, which reasons about each one. precon-party-time is the arbitrary-pasted-deck path plus the bad-deck case (cohesion 0.11); inalla is tuned, so a false alarm is the strong signal, and it serves BOTH the tuner and the phone seat so modality is the only variable between them; mari-takes-control is seeded with a claim family the owner hand-judged FALSE (graveyard fillers -> Tinybones, first judged on Lively Dirge) and is the instrument's own calibration -- it replaced yuna-grand-summoner on 2026-09-26 when Yuna's plant stopped being emitted (issue #515), which had replaced sarevok-lord-of-pain on 2026-09-20 for the same reason. research/web/seed-check.ts exits 1 when the plant is gone. RE-VERIFY THE SEEDING BEFORE EVERY ROUND -- on 2026-09-18 the two claims the README named were gone from a live analysis and two different FALSE ones had survived in their place.",
+  "_deck_note": "ONE DECK PER SEAT, and the picks are NOT free: they come from the fixture table in .claude/agents/README.md, which reasons about each one. precon-party-time is the arbitrary-pasted-deck path plus the bad-deck case (cohesion 0.11); inalla is tuned, so a false alarm is the strong signal, and it serves BOTH the tuner and the phone seat so modality is the only variable between them; mari-takes-control is seeded with a claim family the owner hand-judged FALSE (graveyard fillers -> Tinybones, first judged on Lively Dirge) and is the instrument's own calibration -- it replaced yuna-grand-summoner on 2026-09-26 when Yuna's plant stopped being emitted (issue #515), which had replaced sarevok-lord-of-pain on 2026-09-20 for the same reason. research/web/seed-check.ts exits 1 when the plant is gone. RE-VERIFY THE SEEDING BEFORE EVERY ROUND -- on 2026-09-18 the two claims the README named were gone from a live analysis and two different FALSE ones had survived in their place. SIX DECKS SINCE 2026-10-06 (R-T4): one per seat, as the README fixture table names them -- first-cuts, precon-upgrader, clunky-deck (gisa, chosen per round), plan-seeker, pod-fit, phone.",
   "decks": [
+    "packages/cli/decks/first-deck-108.txt",
     "packages/cli/decks/precon-party-time.txt",
-    "packages/cli/decks/calibration/inalla.txt",
-    "packages/cli/decks/calibration/mari-takes-control.txt"
+    "packages/cli/decks/gisa.txt",
+    "packages/cli/decks/calibration/enchanting-rani.txt",
+    "packages/cli/decks/calibration/mari-takes-control.txt",
+    "packages/cli/decks/calibration/inalla.txt"
   ],
   "_goal_note": "Every goal below is phrased the way a PLAYER would say it, never in this tool's vocabulary. A goal written as 'inspect the breadth axis' tests nothing, because it hands the persona the word we are trying to find out whether they know. That is the whole knowledge-ceiling axis, and it is the only axis that has ever produced a persona-specific finding here.",
   "keyScreens": [
     {
       "id": "report",
       "path": "/"
-    },
-    {
-      "id": "graph",
-      "path": "/analysis/graph"
     }
   ],
   "steps": [
     {
       "id": "land",
       "path": "/",
-      "goal": "work out what this deck is trying to do, without reading anything twice"
+      "goal": "work out what this deck is trying to do, without reading anything twice",
+      "through": "#read",
+      "regions": [
+        "#read"
+      ],
+      "ready": "#read"
     },
     {
       "id": "verdict",
@@ -42,7 +46,11 @@
           ]
         }
       ],
-      "path": "/"
+      "path": "/",
+      "through": "#stand",
+      "regions": [
+        "#stand"
+      ]
     },
     {
       "id": "plan",
@@ -61,7 +69,16 @@
             }
           ]
         }
-      ]
+      ],
+      "through": "#plan",
+      "regions": [
+        "#plan"
+      ],
+      "drawers": {
+        "scope": "#plan",
+        "heading": "Cards that carry it",
+        "max": 8
+      }
     },
     {
       "id": "mana",
@@ -80,6 +97,10 @@
             }
           ]
         }
+      ],
+      "through": "#mana",
+      "regions": [
+        "#mana"
       ]
     },
     {
@@ -99,6 +120,10 @@
             }
           ]
         }
+      ],
+      "through": "#roles",
+      "regions": [
+        "#roles"
       ]
     },
     {
@@ -118,39 +143,34 @@
             }
           ]
         }
-      ]
-    },
-    {
-      "id": "graph",
-      "path": "/analysis/graph",
-      "goal": "see which cards actually work with each other"
-    },
-    {
-      "id": "graph-find",
-      "path": "/analysis/graph",
-      "goal": "find my commander in the picture and see what it is connected to",
-      "_note": "{{commander}} resolves per deck from the decklist. Round 1 hard-coded a card from a deck that had since been swapped out, so all three seats searched for something genuinely absent and reviewed the empty state by accident.",
-      "acts": [
-        {
-          "waitFor": "input[placeholder='Find a card\u2026'], input[placeholder='Find in this deck\u2026']"
-        },
-        {
-          "type": [
-            "input[placeholder='Find a card\u2026'], input[placeholder='Find in this deck\u2026']",
-            "{{commander}}"
-          ]
-        }
+      ],
+      "through": "#fix",
+      "regions": [
+        "#fix"
       ]
     },
     {
       "id": "cards",
       "path": "/analysis/cards",
-      "goal": "get a shortlist of cards worth cutting"
+      "goal": "get a shortlist of cards worth cutting",
+      "through": "main",
+      "regions": [
+        "main"
+      ],
+      "drawers": {
+        "scope": "main",
+        "max": 0,
+        "extra": true
+      }
     },
     {
       "id": "combos",
       "path": "/analysis/combos",
-      "goal": "check whether this deck can do something degenerate I did not know about"
+      "goal": "check whether this deck can do something degenerate I did not know about",
+      "through": "main",
+      "regions": [
+        "main"
+      ]
     }
   ],
   "measure": [
@@ -167,5 +187,16 @@
     "svg circle",
     "button[data-chapter]"
   ],
-  "_steps_note": "THE SIX CHAPTERS ARE SEPARATE STEPS. Round 1 had one `land` step blind-scrolling the report, and 3 of 4 seats reported the same thing: 'the report is cropped, I never saw MANA, ROLES or FIX'. The rail is buttons at desktop and a native <select> below 1023px, so each chapter step uses `any` to reach it whichever way this width offers -- a failure is recorded only if BOTH fail, which keeps the act log meaningful. Round 1 also had `land` and `judge` byte-identical (same path, no acts) and 3/4 seats said so."
+  "_steps_note": "THE SIX CHAPTERS ARE SEPARATE STEPS. Round 1 had one `land` step blind-scrolling the report, and 3 of 4 seats reported the same thing: 'the report is cropped, I never saw MANA, ROLES or FIX'. The rail is buttons at desktop and a native <select> below 1023px, so each chapter step uses `any` to reach it whichever way this width offers -- a failure is recorded only if BOTH fail, which keeps the act log meaningful. Round 1 also had `land` and `judge` byte-identical (same path, no acts) and 3/4 seats said so.",
+  "drawerExtra": {
+    "mari-takes-control": [
+      "Tinybones, the Pickpocket"
+    ]
+  },
+  "mustShow": {
+    "mari-takes-control": [
+      "Tinybones, the Pickpocket can bring back"
+    ]
+  },
+  "_r_t4_note": "R-T4 (2026-10-06): `through` shoots each chapter to its end, `regions` fails the capture when a frame set misses one, `drawers` captures the card drawer (on plan: the commander + the first 8 cards named in #plan; on cards: the deck's drawerExtra) with every link sentence open, and `mustShow` fails the capture when the pod-fit plant is not in any captured drawer. The graph and graph-find steps went with the Graph page (8cdb94de, #989)."
 }

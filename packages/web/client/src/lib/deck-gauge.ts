@@ -40,8 +40,27 @@ export function floorState(count: number, target: number): GaugeReading {
   const d = count - target;
   if (d <= -3) return { state: "far-under", label: `${-d} short`, tone: "danger", position: -1 };
   if (d < 0) return { state: "under", label: `${-d} short`, tone: "warning", position: -0.5 };
-  if (d <= 2) return { state: "on-target", label: "on target", tone: "success", position: 0 };
+  if (d <= FLOOR_SLACK) return { state: "on-target", label: d === 0 ? "on target" : `${d} over, on target`, tone: "success", position: 0 };
   return { state: "room", label: `${d} over target`, tone: "neutral", position: 1 };
+}
+
+/** HOW FAR OVER A FLOOR STILL READS AS ON IT. One number for the tile and the shelf under it (#980):
+ *  the tile said "on target" at 14 against 13 while the shelf said "1 over: room to cut". */
+export const FLOOR_SLACK = 2;
+
+/** The shelf's words for an overshoot, from the same rule as `floorState`: null when not over, "N
+ *  over, on target" inside the slack, "N over: room to cut" past it.
+ *
+ *  `oneShots`, for Ramp (#1033): the land target counts only the ramp that keeps producing mana, so
+ *  the room is in the rituals and Treasure makers. Said, or "4 over: room to cut" read as spare ramp
+ *  beside "8 of your 17 ramp cards that keep producing mana". */
+export function overNote(count: number, target: number, oneShots = 0): string | null {
+  const d = count - target;
+  if (target <= 0 || d <= 0) return null;
+  if (d <= FLOOR_SLACK) return `${d} over, on target`;
+  return oneShots > 0 && oneShots < count
+    ? `${d} over: cut from the ${oneShots} one-shot${oneShots === 1 ? "" : "s"} first; the land count relies on the other ${count - oneShots}`
+    : `${d} over: room to cut`;
 }
 
 /** THE ONE TWO-SIDED GAUGE. Over is wrong for lands in a way it is not for a role floor, and the

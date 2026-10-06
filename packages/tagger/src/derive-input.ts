@@ -99,8 +99,12 @@ type CardDocLike = Parameters<typeof charsFrom>[0] & { oracleText?: string; keyw
 
 /** EVERYTHING DERIVE READS BESIDE THE CLAUSES, from the card document: the one construction
  *  `derive-corpus` and the grammar-only measurement (#896 task 7) share, so the two derive the same
- *  way. `characteristics` is passed for a token, whose come from the token document. */
-export function deriveInputOf(card: CardDocLike, oracleId: string, name: string, clauses: ClauseRecord[], characteristics?: DerivedTagsDoc["characteristics"]): DeriveInput {
+ *  way. `characteristics` is passed for a token, whose come from the token document.
+ *
+ *  `readings`, when given (G-T3), is `grammarClauseRecords`'s own `GrammarRecords.readings` -- pass
+ *  it ONLY alongside that same call's `records` as `clauses`: the ids line up by construction, and a
+ *  model-path `clauses` (the stored answer) can number and split its clauses differently. */
+export function deriveInputOf(card: CardDocLike, oracleId: string, name: string, clauses: ClauseRecord[], characteristics?: DerivedTagsDoc["characteristics"], readings?: DeriveInput["readings"]): DeriveInput {
   return {
     oracleId,
     name,
@@ -112,5 +116,6 @@ export function deriveInputOf(card: CardDocLike, oracleId: string, name: string,
     clauseFaces: clauseFaces(card),
     oracleText: card.oracleText,
     grantedToken: grantedTokenClauses(card),
+    ...(readings ? { readings } : {}),
   };
 }

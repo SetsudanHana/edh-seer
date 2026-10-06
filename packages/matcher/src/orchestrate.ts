@@ -22,6 +22,9 @@ export interface AnalysisSources {
   /** Token node id (`token:<name>`) -> art crop. The server reads the `tokens` collection; the
    *  client reads the built artifact. */
   tokenArt(oracleIds: string[]): Promise<Map<string, string>>;
+  /** Token oracle id -> rules text (#983). Optional: a source without it leaves token text empty,
+   *  which is what every token had before. */
+  tokenText?(oracleIds: string[]): Promise<Map<string, string>>;
 }
 
 export async function resolveDeck(
@@ -180,6 +183,7 @@ export async function buildWireGraph(
   // `nodeId`'s granularity, not this join's) -- last one wins here; give a node its oracle
   // id if that ever needs separating.
   const tokenArtById = new Map<string, string>();
+  const tokenTextById = new Map<string, string>();
   if (tokenNodes.length > 0) {
     // A ROLE FACE NODE ("Cursed Role", #564) carries `<oracleId>#<face>`; its art is the token's.
     const artId = (t: (typeof tokenNodes)[number]): string => t.tags!.oracleId.split("#")[0]!;
@@ -190,11 +194,19 @@ export async function buildWireGraph(
       // An emblem node lives in the `emblem:` id space (spec 2026-09-08); its art is in `tokens` too.
       if (art) tokenArtById.set(nodeId(t.card.name, true, undefined, t.tags?.characteristics.emblem === true), art);
     }
+    const textByOracle = await sources.tokenText?.(oracleIds) ?? new Map<string, string>();
+    for (const t of tokenNodes) {
+      const text = textByOracle.get(artId(t));
+      if (text) tokenTextById.set(nodeId(t.card.name, true, undefined, t.tags?.characteristics.emblem === true), text);
+    }
   }
   const projected = projectDeckGraph(
     projectionDeck as never, reasons, loadImpactWeights(),
   );
   const wire = attachRolesAndArt(projected, docs, rolesByName, normalizeName, tokenArtById);
+  // A TOKEN'S TEXT (#983): `tokenDeckCard` builds every token with empty text, so the drawer a
+  // reason's token name opens had nothing to check the claim against.
+  for (const n of wire.nodes) if (n.isToken && !n.oracleText && tokenTextById.has(n.id)) n.oracleText = tokenTextById.get(n.id);
   // THE NODE SAYS IT IS THE COMPANION, so no client reader has to cross-reference the report to
   // keep it out of a count -- the reader that did not was an off-by-one (review, 2026-09-22).
   const companions = new Set(report.companions ?? []);

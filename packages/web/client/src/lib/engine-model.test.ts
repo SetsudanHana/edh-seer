@@ -83,6 +83,18 @@ describe("buildEngineModel", () => {
     expect(m.jobs).toEqual([["Removal", [expect.objectContaining({ card: expect.objectContaining({ name: "Doom Blade" }) })]]]);
   });
 
+  // ONE MEASURE, BOTH NUMBERS (#980): "Keeps working with only 4" here beside the precon page's
+  // "Works with 11" for the same card read as the two pages disagreeing.
+  test("a cut that keeps working with some cards says how many it works with in all", () => {
+    const working = m.cuts.filter((c) => /every time/.test(c.why));
+    expect(working.length).toBeGreaterThan(0);
+    for (const c of working) {
+      const [, all, every] = /^Works with (\d+) other cards?, only (\d+) of them every time/.exec(c.why)!;
+      expect(Number(all)).toBeGreaterThanOrEqual(Number(every));
+    }
+    expect(m.cuts.some((c) => /Keeps working with only/.test(c.why))).toBe(false);
+  });
+
   test("a card whose only help works once says so, and counts it at half weight", () => {
     const raise = m.cuts.find((c) => c.card.name === "Raise Once")!;
     expect(raise.why).toBe("All it does here is help 1 card once, by finding them or bringing them back.");

@@ -110,7 +110,11 @@ the browser, so that cross-check is what keeps the classification honest.
 3. **Give each persona its task list** (below). Tasks, not "have a look" — round 1's
    best finding was that 4/4 could not name a single multi-role card, which only
    surfaced because they were asked to.
-4. **Run every seat in parallel, in separate agents, none seeing another's output.**
+4. **A seat file edited in this session is NOT what the seat runs.** Agent definitions load
+   when the session starts (2026-10-06: a dry run after the anchors landed scored on the old
+   one-component text). Restart the session, or launch a general-purpose agent told to read the
+   seat file as its instructions and nothing else in the repo.
+4b. **Run every seat in parallel, in separate agents, none seeing another's output.**
    Independence is what makes agreement mean anything.
 5. **Score the round** (below) and file the findings with the run date.
 
@@ -155,6 +159,30 @@ candidates tested were **gone** from a live analysis. Re-verify before each roun
 defect the engine no longer makes calibrates nothing. A run where pod-fit questions nothing
 about a claim we know to be false means the instrument has gone soft.
 
+## What "solved" is judged on (R-T2, 2026-10-06)
+
+Each seat file splits "What solved means to you" into **must** (what the product means to answer:
+the owner's decisions of 2026-09-26 in `docs/player-questions.md`, plus the 2026-10-06 ruling) and
+**later** (a named gap with an issue). A seat judges `solved` on must alone and reports later items
+as still missing. Before R-T2 a seat's "solved" was the whole r/EDH ask, so precon-upgrader and
+pod-fit could only ever say `partly`, and the headline counted the roadmap rather than the page.
+
+**The ruling that drew the line (owner, 2026-10-06):** edhseer is not a power-level site. It
+judges consistency and synergy, and a deck moves along both in either direction. Power questions are
+answered on those axes, or are a non-goal like prices.
+
+| seat | must holds | later | not this site's job |
+|---|---|---|---|
+| first-cuts | eight cuts with believable reasons; nothing breaks | none | |
+| precon-upgrader | 5-10 paired swaps on the box's plan; what they change in reliability and how well cards work together, weighable | none | prices (2026-09-26); "would I beat my friends" as a power verdict (#893 reframed) |
+| clunky-deck | lands with ramp counted, draw, focus, luck or deck; one or two changes with numbers | none | |
+| plan-seeker | "wins by X" with cards, first five turns, on- and off-plan cards, the unsure card's links | none | |
+| pod-fit | a defensible bracket with its cards and combos, how fast it wins, a one-line table sentence | swaps that lower consistency or synergy (#985) | a power score beyond the bracket |
+| phone | the table sentence in 15 s: bracket, cards, speed, what upsets people | none | |
+
+A must item the page does not meet is a finding, and the seat stays at `partly`. That is the
+point: `partly` now names the page, not the roadmap.
+
 ## Task lists
 
 Keep these versioned with the product. **When a fix ships, keep the old task**, so a
@@ -181,8 +209,11 @@ Ground-truth answers are for the harness operator, never for the agent.
 3. What would you add, and what does each replace? *(truth: the paired swaps and the role
    shelves. Prices are out of scope by owner decision, 2026-09-26: the site never prices a card, and
    a seat that fails it for that is judging a non-goal)*
-4. After those changes, would you keep up with your friends' upgraded decks? *(truth: not
-   answered; report whether the page says so or pretends to)*
+4. After those changes, would you keep up with your friends' upgraded decks? *(truth: edhseer
+   is not a power-level site (owner, 2026-10-06), so the answer is what the swaps do to consistency
+   and synergy, said in words this seat can weigh. "Answered" means the seat could say how much more
+   reliable and how much better-connected the deck gets. A page that claims the deck would beat the
+   friends' decks is pretending; report it)*
 5. Is there anything on this page you would show a friend?
 
 ### clunky-deck
@@ -203,7 +234,10 @@ Ground-truth answers are for the harness operator, never for the agent.
    Changers and two-card combos)*
 4. Pick the claim you most distrust and try to verify it from the screen alone.
 5. Find somewhere the tool declines to answer. Deliberate limit or hole?
-6. If your pod finds it too strong, what would you swap? *(truth: not answered yet)*
+6. If your pod finds it too strong, what would you swap? *(truth: not answered; it is a
+   **later** item, #985. Under the 2026-10-06 ruling the answer is swaps that make the deck less
+   consistent or less synergistic, never a bracket counterfactual. A seat that infers "cut the Game
+   Changer" from the bracket line has answered a power question: `misread`)*
 
 ### phone
 3. What would you say to the table, in one breath? *(truth: the hero verdict and bracket)*
@@ -211,6 +245,47 @@ Ground-truth answers are for the harness operator, never for the agent.
 5. Find the explanation for any /5 score.
 
 ## Scoring a round
+
+**Schedule it against the backlog first.** `docs/measurements/persona-backlog.md` holds one row
+per finding, keyed by its quoted anchor, with its GitHub issue. Run a round only when every P1 there
+is fixed or deferred with a reason, and open the FINDINGS by naming the P1s it re-tests. Findings
+cite backlog ids. A repeat updates the row; it is not a "repeat of" note. A new finding gets a row
+AND an issue.
+
+**Keep the raw returns, and read "What I was looking for" first** (R-T5, 2026-10-06). Each seat's
+full return goes verbatim in `docs/measurements/persona-round-<date>/seats/<seat>.md`. Before this
+only the synthesis was filed, so no score could be audited or re-read against new anchors, and the
+per-task outcomes were never totalled. Section 3b of each return is the seat's missing information
+in its own words, for every `couldn't tell` and `BLOCKED-MY-TASK`. It is the fixer's input. The
+no-fix rule still holds: it names what was missing, never how to show it, and the canary applies to
+its vocabulary.
+
+**Every seat scores all four ICE-T components against fixed anchors** (R-T1, 2026-10-06). Five
+rounds of one feel-based score per seat read 3 to 5, median 3, and could not be moved: nothing
+defined a 7. Each seat file carries this table word for word. Change it here and in all six files
+together:
+
+| component | 3 | 5 | 7 |
+|---|---|---|---|
+| Time | the answer exists, but it is spread over two or more chapters and I needed a fold to put it together | the answer is in one chapter, with one number to act on | the first screen answers my own question, with the number and the one change to make |
+| Essence | the gist arrived only after I looked up a word or read a second page | the gist arrived from one page, with one word left unexplained | I can say in one sentence what the deck does and what to change, using only words on the screen |
+| Insight | the page listed what I already knew | one relationship or outlier I did not know, with its reason | the win named with the cards that do it, one thing I had wrong, and the reason for each |
+| Confidence | I could not check its claims from the screen, and its refusals read as holes | each claim I checked had both cards' text on screen, and the refusals said why | every claim I acted on could be checked from the screen, a zero was said as zero, and where a claim was wrong, the screen let me see it |
+
+- **The seat's own component counts double**; the other three are scored too, so each component
+  has six readings, not one.
+- **The round table reports four component medians over the six seats, with each seat's own score
+  beside it**, plus a tasks-answered column. The weighted figure per component is the median of the
+  six scores with the own-seat score entered twice.
+- **The objective number sits beside every score**: each seat ends its task outcomes with
+  `Totals: answered N/T · couldn't tell N · misread N`. Total these across seats. **A 6 or 7 is
+  void when the seat answered fewer than T−1 tasks.** Check it, as you check the canary.
+  **Re-grade every `answered` against the task's truth before totalling**: a seat that answers a
+  task whose truth is "not answered" by inferring it (the 2026-10-06 dry run: pod-fit "answered"
+  task 6 by reasoning "cut Bowmasters" from the bracket sentence, reached 7/7 and so unlocked three
+  6s) is recorded as `misread`. The seat's own count is a claim, not the number.
+- **Check each score's quote against its anchor's words.** A score whose quote does not meet the
+  anchor it claims is re-read at the anchor the quote does meet, and the FINDINGS say so.
 
 - **Convergence is the severity meter — but only ACROSS ceilings.** Precon-upgrader + plan-seeker
   failing to decode the same readout means the tool is wrong. Expert seats agreeing

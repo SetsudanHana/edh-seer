@@ -71,7 +71,18 @@ function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord[
   const opening = defaultTarget(p);
   const upgrades = opening ? swapsOf(p.packages!.find((k) => k.target === opening)!).length : 0;
   const pip = p.identity.map((c) => `{${c}}`).join("");
+  // THE ANALYSIS RUNS ONCE, FOR THE WHOLE PAGE (#983): it fed only the map, so the drawer stopped at
+  // the map's edge and a swap reason naming Thwart the Grave -- seven of Party Time's eleven -- could
+  // not open the card it rests on. One provider now covers the map and the swaps.
+  const [data, setData] = useState<AnalyzeResponse | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    analyzeDeckStatic(preconDecklist(p), p.commanders.join("\n"), "/static")
+      .then((d) => { if (live) setData(d); }, () => { if (live) setData(null); });
+    return () => { live = false; };
+  }, [p]);
   return (
+    <CardDrawerProvider graph={data?.graph}>
     <div className="flex flex-col gap-12 py-6" data-testid="precon-page">
       {/* THE MAP TAKES THE ROW (designer review 2026-09-30, #770): capped at 30rem it was a 480x393
         *  picture in the top-right corner of a 2560 screen with ~1,500px of nothing between it and
@@ -106,7 +117,7 @@ function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord[
           </div>
         </div>
         <div className="min-w-0 w-full justify-self-center lg:max-w-[calc(55svh*1.2222)] min-[100rem]:max-w-[calc(55svh*1.7778)]">
-          <PreconMap page={p} />
+          <PreconMap data={data} commanders={p.commanders} />
         </div>
       </section>
 
@@ -152,6 +163,7 @@ function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord[
         </section>
       ) : null}
     </div>
+    </CardDrawerProvider>
   );
 }
 
@@ -171,22 +183,11 @@ const spell = (n: number) => WORDS[n] ?? String(n);
 /** THE COMMANDER'S MAP, DRAWN FROM THE LIST ONCE THE PAGE IS UP: the page itself is precomputed, the
  *  map needs the engine's links, so it runs the analysis the report runs and draws what the Glance
  *  map draws. Until then, and on failure, the space says so rather than jumping. */
-function PreconMap({ page }: { page: Page }) {
-  const [data, setData] = useState<AnalyzeResponse | null | undefined>(undefined);
-  useEffect(() => {
-    let live = true;
-    analyzeDeckStatic(preconDecklist(page), page.commanders.join("\n"), "/static")
-      .then((d) => { if (live) setData(d); }, () => { if (live) setData(null); });
-    return () => { live = false; };
-  }, [page]);
+function PreconMap({ data, commanders }: { data: AnalyzeResponse | null | undefined; commanders: string[] }) {
   if (!data?.graph) {
     return <div className="flex aspect-[880/720] min-[100rem]:aspect-[16/9] w-full items-center justify-center rounded-(--radius) text-sm text-(--muted)">{data === null ? "" : "Drawing the commander's map"}</div>;
   }
-  return (
-    <CardDrawerProvider graph={data.graph}>
-      <MapOf data={data} commanders={page.commanders} />
-    </CardDrawerProvider>
-  );
+  return <MapOf data={data} commanders={commanders} />;
 }
 
 function MapOf({ data, commanders }: { data: AnalyzeResponse; commanders: string[] }) {

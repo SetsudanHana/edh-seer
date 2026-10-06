@@ -44,6 +44,10 @@ interface CardDrawerApi {
   /** Open the drawer on a card. A name the graph does not carry is a no-op — see `<CardName>`,
    *  which is what callers should use so an unopenable name never renders as a button. */
   open: (name: string) => void;
+  /** Open the drawer on a TOKEN, by the name a reason sentence prints (#983). A name no token node
+   *  carries is a no-op; `canOpenToken` says so before a caller renders an affordance. */
+  openToken: (name: string) => void;
+  canOpenToken: (name: string) => boolean;
   /** Close it, as a walk on the map does: the card it showed is now the map's middle. */
   close: () => void;
   /** Open a SUGGESTED card, one not in the deck (`SuggestionPanel`); `replaces` names the cut whose
@@ -84,7 +88,7 @@ interface CardDrawerApi {
 }
 
 const CardDrawerContext = createContext<CardDrawerApi>({
-  open: () => {}, close: () => {}, openSuggestion: () => {}, live: false, known: new Set(), tokens: new Map(),
+  open: () => {}, openToken: () => {}, canOpenToken: () => false, close: () => {}, openSuggestion: () => {}, live: false, known: new Set(), tokens: new Map(),
   added: new Set(), isAdded: () => false, setExtras: () => {},
   setRailOn: () => {}, railHost: null, setRailBack: () => {}, pairOf: () => null, walkFrom: () => null,
 });
@@ -181,17 +185,26 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
     opener.current = null;
     if (el instanceof HTMLElement && el.isConnected) el.focus({ preventScroll: true });
   }, [setOpenId]);
-  const open = useCallback(
-    (name: string) => {
-      const id = byName.get(name);
+  const openNode = useCallback(
+    (id: string | undefined) => {
       if (id) {
         if (!shownNow.current) opener.current = document.activeElement;
         setBackTo(railBackNow.current);
         setOpenId(id); opened.current = true;
       }
     },
-    [byName, setOpenId],
+    [setOpenId],
   );
+  const open = useCallback((name: string) => openNode(byName.get(name)), [byName, openNode]);
+  /** TOKENS BY THE NAME A SENTENCE PRINTS, kept apart from `byName` so a token never wins a name a
+   *  deck card also carries (see above). The first node of a name wins, as for cards. */
+  const tokenByName = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of graph?.nodes ?? []) if (n.isToken && !m.has(n.label)) m.set(n.label, n.id);
+    return m;
+  }, [graph]);
+  const openToken = useCallback((name: string) => openNode(tokenByName.get(name)), [tokenByName, openNode]);
+  const canOpenToken = useCallback((name: string) => tokenByName.has(name), [tokenByName]);
   const openSuggestion = useCallback((card: SuggestedCard, replaces?: string) => {
     if (!shownNow.current) opener.current = document.activeElement;
     setOpenIdRaw(null); setSuggestion({ card, replaces }); opened.current = true;
@@ -265,10 +278,10 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   }, [extras, setOpenId]);
   const api = useMemo<CardDrawerApi>(
     () => ({
-      open, close: () => setOpenId(null), openSuggestion, live: true, known: new Set(byName.keys()), tokens, added, isAdded, setExtras,
+      open, openToken, canOpenToken, close: () => setOpenId(null), openSuggestion, live: true, known: new Set(byName.keys()), tokens, added, isAdded, setExtras,
       setRailOn, railHost: railShown ? railEl : null, setRailBack, pairOf, walkFrom,
     }),
-    [open, openSuggestion, setOpenId, byName, tokens, added, isAdded, railShown, railEl, pairOf, walkFrom],
+    [open, openToken, canOpenToken, openSuggestion, setOpenId, byName, tokens, added, isAdded, railShown, railEl, pairOf, walkFrom],
   );
 
   // Escape closes it. The panel has a close button of its own, but this drawer floats over a
@@ -452,7 +465,7 @@ export function useAdded(): Pick<CardDrawerApi, "added" | "isAdded"> {
 export const unreadEffect = (text: string): boolean => /\btriggers$/.test(text.trim());
 
 export function ReasonText({ text, className }: { text: string; className?: string }) {
-  const { known, tokens } = useCardDrawer();
+  const { known, tokens, openToken, canOpenToken } = useCardDrawer();
   const segments = reasonSegments(text, known, tokens);
   return (
     <span className={className}>
@@ -470,7 +483,12 @@ export function ReasonText({ text, className }: { text: string; className?: stri
             <span key={i}>
               {/* A REAL SPACE, not a margin: copied text and screen readers got "Mark of the
                 *  Rani(token from The Rani)" (review 2026-09-25). */}
-              {seg.text}{" "}
+              {canOpenToken(seg.text) ? (
+                // THE TOKEN'S OWN TEXT, ONE TAP AWAY (#983): "Mark of the Rani" carried every top
+                // reason on Rani and its text was nowhere on screen.
+                <button type="button" onClick={() => openToken(seg.text)}
+                  className="py-1 -my-1 text-left hover:text-(--accent) hover:underline underline-offset-2">{seg.text}</button>
+              ) : seg.text}{" "}
               {/* THE WORD, NOT A GLYPH: a coloured pill saying nothing is what the bracket pips
                 *  were before S2 gave them words. `title` is not enough -- it does not exist on
                 *  touch at all, which is the same reason `Explain` exists. */}

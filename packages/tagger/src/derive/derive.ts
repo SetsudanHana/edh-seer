@@ -15,10 +15,11 @@ import { requiresOf } from "./markers.js";
 import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
-import { parse as parseFilter } from "../grammar/filter.js";
+import { parse as parseFilterRaw } from "../grammar/filter.js";
+import { memoizeCloned } from "../memo.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
 import { effectText, printedPreamble } from "../grammar/preamble.js";
-import { alignVerbs, parseActions } from "../grammar/action.js";
+import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
@@ -752,6 +753,13 @@ function stripCardName(text: string, cardName?: string): string {
 const FROM_GRAMMAR = new WeakSet<object>();
 const namesAClassHere = (s: SubjectFilter): boolean => s.type !== undefined || s.subtype !== undefined || (FROM_GRAMMAR.has(s) && namesAClass(s));
 
+/** MEMOIZED (G-T3): a dual derive (stored answer, then a grammar-complete card's own records)
+ *  calls `subjectFrom` with the same trigger-subject text twice, each time reaching the filter
+ *  grammar's `parse()`. Cloned on every hit: `subjectFrom` below writes `.named`, `.notNamed` and
+ *  `.control` onto whatever `parse()` hands it, and a shared cached object would leak one card's
+ *  edit into the next lookup of the same text. */
+const parseFilter = memoizeCloned(parseFilterRaw, (text) => text);
+
 function subjectFrom(text: string, cardName?: string, cardText = ""): ReturnType<typeof parseSubject> {
   const bounded = boundedByEnchantLine(text, cardText).replace(SELF_DISJUNCT, "");
   const read = parseFilter(cardName ? selfAsTilde(bounded.trim(), cardName) : bounded.trim());
@@ -1466,9 +1474,13 @@ const UNNAMED_IS_YOU: ReadonlySet<string> = new Set(["draw", "mill", "scry", "su
  *  it read the stored one. CEILING: a phrase the store left out (the "reveal it" of a tutor) is not
  *  ADDED: an inserted action becomes the antecedent of the "it" after it, and the references
  *  resolver (#900) reads the revealed card's class off the text, not off an action. */
-function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost: string | undefined, cardName: string | undefined): ClauseRecord {
+function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost: string | undefined, cardName: string | undefined, precomputed?: ActionReading[]): ClauseRecord {
   if (!text || !clause.actions?.length) return clause;
-  const readings = parseActions(effectText(text, cardName ?? ""), clause.abilityType ?? null, cost)
+  // PRECOMPUTED READINGS (G-T3): `grammarClauseRecords` already ran `parseActions` on this exact
+  // `(effect, type, cost)` while building `clause` itself (the grammar path's own records) -- reuse
+  // them rather than parsing the same text again. Absent on the model path, where `clause` is the
+  // stored answer and no grammar reading of it exists yet.
+  const readings = (precomputed ?? parseActions(effectText(text, cardName ?? ""), clause.abilityType ?? null, cost))
     .filter((r) => GRAMMAR_ACTION_VERBS.has(r.verb));
   if (readings.length === 0) return clause;
   const stored = clause.actions;
@@ -1545,12 +1557,20 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
 
 type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter } | { refused: string; subject?: SubjectFilter };
 
-function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean): GrammarTrigger[] | null {
+function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[]): GrammarTrigger[] | null {
   // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
-  const preamble = printedPreamble(boundedByEnchantLine(text, enchantText), cardName ?? "");
+  const bounded = boundedByEnchantLine(text, enchantText);
+  const preamble = printedPreamble(bounded, cardName ?? "");
   if (!preamble) return null;
+  // PRECOMPUTED READINGS (G-T3): `grammarClauseRecords` already ran `parseTrigger` on this exact
+  // preamble while building the grammar's own records -- reuse it rather than parsing again. Only
+  // when the enchant-line bounding above was a no-op: `grammarClauseRecords` reads the preamble off
+  // the plain clause text, with no `boundedByEnchantLine` step, so a precomputed reading is only the
+  // SAME computation when bounding changed nothing.
   // The condition with the card's name as "~", as the preamble: "if INALLA is on the battlefield".
-  const read = parseTrigger(preamble, interveningIfOf(cardName ? selfAsTilde(text, cardName) : text));
+  const read = precomputed && bounded === text
+    ? precomputed
+    : parseTrigger(preamble, interveningIfOf(cardName ? selfAsTilde(text, cardName) : text));
   if (!read) return null;
   const readings = [read].flat();
   // A compound the store SPLIT into one clause per event (Inferno Titan: two clauses, one text) takes
@@ -1701,6 +1721,10 @@ export function deriveAbilities(
   castAtInstantSpeed?: boolean,
   /** Clause id -> a game-state requirement, attached to every ability the clause produces. */
   clauseRequires?: Record<number, Requirement>,
+  /** Clause id -> the grammar's own readings (G-T3), from `DeriveInput.readings`. Passed to
+   *  `withGrammarActions` / `grammarTriggersOf` below so a clause the grammar already read does not
+   *  get re-parsed on the grammar path's own derive. */
+  readings?: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }>,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -1728,7 +1752,7 @@ export function deriveAbilities(
     // keeping the effect and dropping the trigger would leave the card claiming to do a thing it
     // never does. The token's own derived row carries both halves.
     if (grantedToken?.has(clause.id)) continue;
-    clause = withGrammarActions(clause, clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName);
+    clause = withGrammarActions(clause, clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
     // matcher can stop reading a back-face ability against the card's UNION of types.
     const face = clauseFaces?.[clause.id];
@@ -1875,7 +1899,8 @@ export function deriveAbilities(
       grantedTo = { control: subject.control, token: null, type: subject.type, ...(subject.subtype ? { subtype: subject.subtype } : {}) };
     };
     const grammarAll = clause.trigger?.event && text ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
-      clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText)) : null;
+      clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
+      readings?.[clause.id]?.trigger) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
     /** The clause's further readings of its own event, each a twin of the first (pushed below). */
     grammarExtra = claimed.slice(1);
@@ -2725,6 +2750,12 @@ export interface DeriveInput {
   /** Clause ids granted to a token the same clause creates, from `segment.ts`'s `grantedToOwnToken`.
    *  Same free-to-recompute contract as `clauseTexts`; absent disables the guard. */
   grantedToken?: ReadonlySet<number>;
+  /** Clause id -> the grammar's own trigger and action readings (G-T3, F2), from
+   *  `grammarClauseRecords`'s `GrammarRecords.readings` -- set only when `clauses` IS that function's
+   *  own `records` (the grammar path, `derive-worker.ts` / `derive-corpus.ts`). `withGrammarActions`
+   *  and `grammarTriggersOf` use the entry for a clause instead of calling `parseActions` /
+   *  `parseTrigger` again when it is present; absent (the model path) parses as before. */
+  readings?: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }>;
 }
 
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
@@ -2735,7 +2766,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     || (chars.keywords ?? []).some((k) => k.toLowerCase() === "flash");
   const derived = deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
-    input.clauseFaces, castAtInstantSpeed, input.clauseRequires);
+    input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings);
   const { unknownTriggers } = derived;
   // AN AURA ON AN OPPONENT'S CREATURE WATCHES THE OPPONENT'S CREATURE (owner 2026-09-23, AN7).
   // Nurgle's Rot prints "Enchant creature an opponent controls / When enchanted creature dies": the

@@ -326,7 +326,10 @@ export function CardInspector({
           *  So it stays, folded, whenever the picture is carrying it, and stands open when nothing
           *  else is. `<details>` is the whole mechanism: assistive technology reads it either way. */}
         {(face?.oracleText ?? node.oracleText) ? (
-          hasImage ? (
+          // A TOKEN'S TEXT STANDS OPEN (#983): its picture is not a reliable copy of its rules --
+          // the drawer a reason's token name opens drew an empty frame over a folded "card text",
+          // and the claim's evidence was one more tap away than the issue allows.
+          hasImage && !node.isToken ? (
             <details className="mt-1">
               <summary className="eyebrow text-(--muted) cursor-pointer">card text</summary>
               <p className="mt-1 whitespace-pre-line text-(--muted) text-xs">

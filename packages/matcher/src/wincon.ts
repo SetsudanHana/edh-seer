@@ -146,11 +146,47 @@ export interface WinconReport {
    *  `payoffs` is go-wide's second half: the cards that turn the board into a win (anthems and
    *  anything that scales with creatures). They gate the class but are not counted in it, so they
    *  were the one part of the plan the report checked and never named. */
-  classes: { class: string; count: number; share: number; cards?: string[]; payoffs?: string[] }[];
+  classes: { class: string; count: number; share: number; cards?: string[]; payoffs?: string[]; drain?: Drain }[];
   /** Herfindahl over the shares. */
   focus: number;
   /** The largest class, absent when the deck names no wincon. */
   primary?: string;
+}
+
+/** THE DRAIN PER TURN (#984, owner ruling 2026-10-06). The burn route stays untimed, and says how
+ *  much life its repeating drains take from each opponent if each fires once a turn: a floor, since a
+ *  trigger can fire many times, stated as the assumption it is. */
+export interface Drain {
+  /** Burn cards with a repeating drain of a fixed amount. */
+  cards: number;
+  /** Their amounts added, one fire per card: life each opponent loses per turn at that rate. */
+  life: number;
+}
+
+const DRAIN_KINDS = new Set(["player-damage", "player-life-loss", "drain", "damage"]);
+const REPEATING = new Set(["repeatable", "per-turn", "per-cycle"]);
+const EACH = new Set(["each", "all"]);
+
+/** Each card counted once, by its largest repeating, fixed-amount drain aimed at the opponents. A
+ *  one-shot (an instant, an ETB that happens once) is not a rate, and an X amount is not a number. */
+export function drainPerTurn(deck: readonly DeckCard[], names: ReadonlySet<string>): Drain | undefined {
+  let cards = 0, life = 0;
+  for (const dc of deck) {
+    if (!names.has(dc.card.name)) continue;
+    let best = 0;
+    for (const a of dc.tags?.abilities ?? []) {
+      const ab = a as { kind?: string; repeats?: string; amount?: string; effect?: { kind?: string; subject?: { control?: string; scope?: string } } };
+      if (ab.kind !== "triggered" && ab.kind !== "activated") continue;
+      // A LABEL, NOT ITS ABSENCE (review of #1045): an unset `repeats` means the rules could not tell,
+      // and "each opponent" is what the sentence says, so a single-target drain is not counted.
+      if (!REPEATING.has(ab.repeats ?? "") || !DRAIN_KINDS.has(ab.effect?.kind ?? "")) continue;
+      if (ab.effect?.subject?.control !== "opp" || !EACH.has(ab.effect.subject.scope ?? "")) continue;
+      if (!/^\d+$/.test(ab.amount ?? "")) continue;
+      best = Math.max(best, Number(ab.amount));
+    }
+    if (best > 0) { cards++; life += best; }
+  }
+  return cards ? { cards, life } : undefined;
 }
 
 /** The deck's win plans and how concentrated they are.
@@ -189,6 +225,7 @@ export function winconReport(
       class: cls, count, share: total > 0 ? count / total : 0,
       cards: [...(members.get(cls) ?? [])].sort(),
       ...(cls === "go-wide" ? { payoffs } : {}),
+      ...(cls === "burn" && drainPerTurn(deck, members.get(cls) ?? new Set()) ? { drain: drainPerTurn(deck, members.get(cls) ?? new Set())! } : {}),
       // THE COMBO'S WIN, NAMED (owner, 2026-09-29): a loop repeats an event forever, and these are the
       // cards that turn that event into lost games for the table.
       ...(cls === "combo" && comboPayoffs.length > 0 ? { payoffs: comboPayoffs } : {}),

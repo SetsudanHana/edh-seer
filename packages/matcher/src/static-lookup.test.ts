@@ -227,6 +227,18 @@ test("tokenArt reads token-art.json, filtered to the requested ids", async () =>
   expect(art.has("oracle-unknown")).toBe(false);
 });
 
+/** A TOKEN'S RULES TEXT, beside its art (#983): every top reason on Rani names Mark of the Rani,
+ *  and the drawer it now opens showed a type line and nothing a reader could check. */
+test("tokenText reads token-text.json, filtered to the requested ids", async () => {
+  const l = new StaticLookup("/static", fetchOf({
+    "/static/manifest.json": { version: VERSION },
+    [`/static/${VERSION}/token-text.json`]: { "oracle-mark": "Enchant creature" },
+  }));
+  const text = await l.tokenText(["oracle-mark", "oracle-unknown"]);
+  expect(text.get("oracle-mark")).toBe("Enchant creature");
+  expect(text.has("oracle-unknown")).toBe(false);
+});
+
 /** THE DEFECT THIS PINS: a real browser's `fetch` brand-checks its receiver, so calling it as
  *  `this.fetchImpl(url)` (a property access) with the BARE global assigned throws
  *  `Illegal invocation` -- Node's global `fetch` does not enforce this, which is why every earlier

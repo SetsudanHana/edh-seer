@@ -5,6 +5,7 @@ import type { PreconCard, PreconPage } from "../lib/precon-page.js";
 import { afterLine, defaultTarget, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_MEANING } from "../lib/precon-upgrades.js";
 import { cardImageUrl } from "./card-node.js";
 
+import { ReasonText } from "./card-drawer.js";
 import { CardLink } from "./CardLink.js";
 import { Arrow } from "./icons.js";
 /** THE UPGRADE PACKAGES (#767, task 8): one package per bracket target, switched by the bracket the
@@ -94,7 +95,7 @@ function Swap({ swap, card }: { swap: UpgradeSwap; card: PreconCard | undefined 
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="eyebrow text-(--muted)">Take out</span>
         <CardLink name={swap.out.name} className="font-bold hover:text-(--accent)">{swap.out.name}</CardLink>
-        <span className="text-sm text-(--muted)">{beside(swap.out.name, swap.out.reason)}</span>
+        <ReasonText className="text-sm text-(--muted)" text={beside(swap.out.name, swap.out.reason)} />
       </div>
       <span className="text-xl text-(--accent) sm:pt-4"><Arrow dir="right" /></span>
       <div className="flex min-w-0 items-start gap-3">
@@ -107,7 +108,7 @@ function Swap({ swap, card }: { swap: UpgradeSwap; card: PreconCard | undefined 
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="eyebrow text-(--accent)">Put in</span>
           <CardLink name={swap.in.name} slug={card?.slug ?? slugOf(swap.in.name)} className="font-bold hover:text-(--accent)">{swap.in.name}</CardLink>
-          <span className="text-sm text-(--muted)">{beside(swap.in.name, swap.in.reason)}</span>
+          <ReasonText className="text-sm text-(--muted)" text={beside(swap.in.name, swap.in.reason)} />
         </div>
       </div>
     </li>

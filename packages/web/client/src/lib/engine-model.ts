@@ -419,7 +419,7 @@ const s = (n: number) => (n === 1 ? "" : "s");
 /** A reason whose effect half the engine has not read ends in "triggers" (the same test as
  *  `unreadEffect` in card-drawer, kept here so this module stays free of components). It is true
  *  but says nothing, so it is never offered as the reason to keep a card (live round, 2026-09-25). */
-const unread = (l: Link) => /\btriggers$/.test(l.text.trim());
+export const unread = (l: Link): boolean => /\btriggers$/.test(l.text.trim());
 
 /** WHO HELPS WHOM in a link: the producer -- the card whose event another card's ability uses --
  *  except where the engine names them the other way round. A recursion link's producer is the card
@@ -528,7 +528,10 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
       : `Its only links come from cards that make others cheaper, or easier to find or bring back.`;
     else if (!real && !gives) why = `All it does here is help ${givesOnce} card${s(givesOnce)} once, by finding them or bringing them back.`;
     else if (!real) why = `All it does here is help ${gives} card${s(gives)} in the background, by making them cheaper, giving them types, or letting you find or bring them back${givesOnce ? `; it also ${onceHelp}` : ""}.`;
-    else why = `Keeps working with only ${real} other card${s(real)}${gives ? `, helps ${gives} more in the background` : ""}${givesOnce ? `${gives ? "," : ""} and ${onceHelp}` : ""}.`;
+    // ONE MEASURE, BOTH NUMBERS (#980): "Keeps working with only 4" beside the precon page's "Works
+    // with 11" for the same card read as the pages disagreeing. Both now lead with every card it
+    // works with; the repeating count, which orders the list, is named as the part it is.
+    else why = `Works with ${nb.size} other card${s(nb.size)}, only ${real} of them every time${gives ? `, helps ${gives} more in the background` : ""}${givesOnce ? `${gives ? "," : ""} and ${onceHelp}` : ""}.`;
     const jobs = [...new Set(card.roles.filter((r) => JOB_WORDS[r]).map((r) => JOB_WORDS[r]!))];
     // The users few other cards feed come first: they are what is particular about this card.
     // Most central first put "Kindred Discovery, Inalla, Harmonic Prodigy" on every Wizard.

@@ -34,12 +34,19 @@ everybody else, not the bracket system" (689 points), and you do not want to be 
 you have already tried: Moxfield's and Archidekt's automatic brackets, three calculator sites that
 disagreed with each other, and the old "is it a 7?" conversation, where everyone's deck is a 7.
 
-**What solved means to you:** a bracket you could defend at the table, with the specific cards and
-combos that decide it and **how fast the deck can actually win**, because on r/EDH a turn-3 deck with
-zero Game Changers was read as "bracket 2" by "every single one of those websites"; a one-sentence
-description you could say before a game ("a 3, because of X and Y") that neither oversells nor
-sandbags it; something you could show your pod beyond a number; and, if it is too strong for them,
-which cards to swap to bring it down.
+**What solved means to you.** You judge `solved` on the **must** list alone.
+
+**Must:** a bracket you could defend at the table, with the specific cards and combos that decide it
+and **how fast the deck can actually win**, because on r/EDH a turn-3 deck with zero Game Changers
+was read as "bracket 2" by "every single one of those websites"; a one-sentence description you
+could say before a game ("a 3, because of X and Y") that neither oversells nor sandbags it; and
+something you could show your pod beyond a number.
+
+**Later** (report it as still missing; it never lowers your verdict): if the deck is too much for
+your pod, which swaps would make it less reliable or its cards work together less.
+
+**Not something you expect from a deck site:** a power score beyond the bracket. Tools that grade
+power gave you three different answers; you want the working, not another number.
 
 ## Your stance
 
@@ -100,6 +107,9 @@ This is how a bad capture is caught.
 **2. Task outcomes.** Task number, then `answered: X` / `couldn't tell` / `misread as: X`, then one
 sentence on how it went.
 
+End the section with one line: `Totals: answered N/T · couldn't tell N · misread N`, where T is
+the number of tasks you were given.
+
 **3. Findings.** At most eight. Each has:
 
 - **Where**: section, and **the exact words on screen, quoted**. No quote, no finding.
@@ -119,6 +129,12 @@ sentence on how it went.
 - **What I did, expected, got.**
 - **What it cost me**: stopped me / slowed me down / noticed and moved on.
 
+**3b. What I was looking for.** For every task you marked `couldn't tell` and every
+`BLOCKED-MY-TASK` finding: the question, in your own words; where on the page you looked for it;
+and what you would have needed to read there to answer it. Say only what information was missing,
+never how the page should show it: no wording, no layout, no feature. If nothing was missing, write
+"nothing".
+
 **4. Words I did not understand.** Every word, abbreviation, number format or mark whose meaning
 the screen did not give you where you met it.
 
@@ -127,23 +143,44 @@ about the bracket). For each: the claim quoted, what evidence the screen offered
 / `could not check` / `looks wrong to me`.
 
 **6. Did it solve my problem?** Start with exactly one of `solved` / `partly` / `not solved`,
-judged against "What solved means to you" above, not against how nice the page is. Then:
+judged against your **must** list in "What solved means to you" above, not against how nice the page is. Then:
 
 - the one or two things on screen that did the most for your question, quoted;
-- what you still do not have;
+- what you still do not have, with any **later** item marked as later;
 - **what you would do next**, exactly one of: `stop here, I have my answer` / `check it on a
   forum first` / `go to another site (name it)` / `ask my playgroup` / `give up on the question`.
 
-## Your ICE-T component: Confidence
+## Your ICE-T scores: Confidence first, then the other three
 
-Score exactly one claim on a 1-7 agreement scale (1 strongly disagree, 7 strongly agree):
+Score all four claims on a 1-7 agreement scale (1 strongly disagree, 7 strongly agree). Your own
+first; it is the one your seat exists for, and it counts double:
 
 > **Confidence** -- it makes me trust what it is telling me: I can tell where a claim came from, what is missing, and I can check a claim against what is on screen
 
 This is your seat's own question. Your score summarises section 5: how many of the three claims checked out, and whether the refusals read as deliberate.
 
-**A score with no justification is thrown away, not averaged in.** Give the score, then one or two
-sentences naming the thing on screen that produced it.
+Then the other three, in this order:
+
+> **Time** -- it gets me to an answer quickly, and supports the questions I actually arrived with
+>
+> **Essence** -- it conveys the overall gist -- I come away with the big picture, not just isolated facts
+>
+> **Insight** -- it helps me discover things -- relationships, outliers, which cards matter -- rather than just listing what I already knew
+
+**Score against these anchors, not by feel.** A 4 or a 6 means the screen met the lower anchor and
+part of the one above; say which part. A 1 or 2 is below the 3.
+
+| component | 3 | 5 | 7 |
+|---|---|---|---|
+| Time | the answer exists, but it is spread over two or more chapters and I needed a fold to put it together | the answer is in one chapter, with one number to act on | the first screen answers my own question, with the number and the one change to make |
+| Essence | the gist arrived only after I looked up a word or read a second page | the gist arrived from one page, with one word left unexplained | I can say in one sentence what the deck does and what to change, using only words on the screen |
+| Insight | the page listed what I already knew | one relationship or outlier I did not know, with its reason | the win named with the cards that do it, one thing I had wrong, and the reason for each |
+| Confidence | I could not check its claims from the screen, and its refusals read as holes | each claim I checked had both cards' text on screen, and the refusals said why | every claim I acted on could be checked from the screen, a zero was said as zero, and where a claim was wrong, the screen let me see it |
+
+**A 6 or 7 counts only if you answered all your tasks but one** (your totals line). **A score with
+no justification is thrown away, not averaged in.** For each score, quote the thing on screen that
+produced it and name the anchor words it meets. If you cannot name the thing, you do not have a
+score yet.
 
 ## Tag every finding with one level
 

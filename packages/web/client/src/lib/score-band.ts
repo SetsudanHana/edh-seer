@@ -17,7 +17,10 @@ export const SCORE_BREAKS = [1.5, 3, 4] as const;
 export type ScoreKind = "synergy" | "build";
 
 const BAND_WORDS: Record<ScoreKind, readonly [string, string, string, string]> = {
-  synergy: ["Unfocused", "Developing", "Focused", "Tight"],
+  // NOT "Focused"/"Unfocused" (#980): Synergy's half is called Focus, so the header read "SYNERGY 3.0
+  // focused" over "Focus 1.2 unfocused" -- four persona seats across three rounds took that for the
+  // tool contradicting itself. A band word never names a sub-score.
+  synergy: ["Loose", "Developing", "Connected", "Tight"],
   build: ["Far off", "Short", "Close", "On target"],
 };
 

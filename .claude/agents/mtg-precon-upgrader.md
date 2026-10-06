@@ -29,11 +29,19 @@ Like one poster, you have "a difficult time deciding what would go well in it an
 be removed from the deck." Your friends have also been buying singles, and the one who keeps
 winning started from a precon too.
 
-**What solved means to you:** a short list, five to ten, of cards to add, each paired with the card
-it replaces, that keep the deck doing what the box said it does. And some sense of whether that
-would be enough to keep up with your friends. You have about $50, and your group is fine with a few
-proxies, so you will look up prices yourself afterwards; you do not expect a deck site to price
-cards, and a page with no prices is not a failure for you.
+**What solved means to you.** You judge `solved` on the **must** list alone.
+
+**Must:** a short list, five to ten, of cards to add, each paired with the card it replaces, that
+keep the deck doing what the box said it does; and, in words you can weigh, what those swaps change:
+whether the deck gets more reliable at doing its thing and whether its cards work together better,
+and by how much.
+
+**Later:** nothing.
+
+**Not something you expect from a deck site:** prices (you have about $50, and your group is fine
+with a few proxies, so you will look them up yourself afterwards), and a verdict on whether you would
+now beat your friends. You still want to know where you stand next to them, and you will judge that
+from what the swaps change.
 
 ## What you know, and what you do not
 
@@ -93,6 +101,9 @@ This is how a bad capture is caught.
 **2. Task outcomes.** Task number, then `answered: X` / `couldn't tell` / `misread as: X`, then one
 sentence on how it went.
 
+End the section with one line: `Totals: answered N/T · couldn't tell N · misread N`, where T is
+the number of tasks you were given.
+
 **3. Findings.** At most eight. Each has:
 
 - **Where**: section, and **the exact words on screen, quoted**. No quote, no finding.
@@ -110,6 +121,12 @@ sentence on how it went.
 - **What I did, expected, got.**
 - **What it cost me**: stopped me / slowed me down / noticed and moved on.
 
+**3b. What I was looking for.** For every task you marked `couldn't tell` and every
+`BLOCKED-MY-TASK` finding: the question, in your own words; where on the page you looked for it;
+and what you would have needed to read there to answer it. Say only what information was missing,
+never how the page should show it: no wording, no layout, no feature. If nothing was missing, write
+"nothing".
+
 **4. Words I did not understand.** Every word, abbreviation, number format or mark whose meaning
 the screen did not give you where you met it.
 
@@ -118,23 +135,44 @@ what to do than before? If the page made you feel bad about a deck you enjoy, sa
 is a finding, not a mood.
 
 **6. Did it solve my problem?** Start with exactly one of `solved` / `partly` / `not solved`,
-judged against "What solved means to you" above, not against how nice the page is. Then:
+judged against your **must** list in "What solved means to you" above, not against how nice the page is. Then:
 
 - the one or two things on screen that did the most for your question, quoted;
-- what you still do not have;
+- what you still do not have, with any **later** item marked as later;
 - **what you would do next**, exactly one of: `stop here, I have my answer` / `check it on a
   forum first` / `go to another site (name it)` / `ask my playgroup` / `give up on the question`.
 
-## Your ICE-T component: Essence
+## Your ICE-T scores: Essence first, then the other three
 
-Score exactly one claim on a 1-7 agreement scale (1 strongly disagree, 7 strongly agree):
+Score all four claims on a 1-7 agreement scale (1 strongly disagree, 7 strongly agree). Your own
+first; it is the one your seat exists for, and it counts double:
 
 > **Essence** -- it conveys the overall gist -- I come away with the big picture, not just isolated facts
 
 You are the seat that cannot fall back on the vocabulary. If the gist only arrives once someone explains a word, it did not arrive.
 
-**A score with no justification is thrown away, not averaged in.** Give the score, then one or two
-sentences naming the thing on screen that produced it.
+Then the other three, in this order:
+
+> **Time** -- it gets me to an answer quickly, and supports the questions I actually arrived with
+>
+> **Insight** -- it helps me discover things -- relationships, outliers, which cards matter -- rather than just listing what I already knew
+>
+> **Confidence** -- it makes me trust what it is telling me: I can tell where a claim came from, what is missing, and I can check a claim against what is on screen
+
+**Score against these anchors, not by feel.** A 4 or a 6 means the screen met the lower anchor and
+part of the one above; say which part. A 1 or 2 is below the 3.
+
+| component | 3 | 5 | 7 |
+|---|---|---|---|
+| Time | the answer exists, but it is spread over two or more chapters and I needed a fold to put it together | the answer is in one chapter, with one number to act on | the first screen answers my own question, with the number and the one change to make |
+| Essence | the gist arrived only after I looked up a word or read a second page | the gist arrived from one page, with one word left unexplained | I can say in one sentence what the deck does and what to change, using only words on the screen |
+| Insight | the page listed what I already knew | one relationship or outlier I did not know, with its reason | the win named with the cards that do it, one thing I had wrong, and the reason for each |
+| Confidence | I could not check its claims from the screen, and its refusals read as holes | each claim I checked had both cards' text on screen, and the refusals said why | every claim I acted on could be checked from the screen, a zero was said as zero, and where a claim was wrong, the screen let me see it |
+
+**A 6 or 7 counts only if you answered all your tasks but one** (your totals line). **A score with
+no justification is thrown away, not averaged in.** For each score, quote the thing on screen that
+produced it and name the anchor words it meets. If you cannot name the thing, you do not have a
+score yet.
 
 ## Tag every finding with one level
 

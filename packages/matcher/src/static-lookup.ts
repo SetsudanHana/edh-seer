@@ -72,6 +72,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
   private manifestPromise: Promise<string> | null = null;
   private tokenTagsPromise: Promise<Record<string, CardTags>> | null = null;
   private tokenArtPromise: Promise<Record<string, string>> | null = null;
+  private tokenTextPromise: Promise<Record<string, string>> | null = null;
   private nameIndexPromise: Promise<NameIndexEntry[] | { types?: string[]; subtypes?: string[]; cards?: NameIndexEntry[] } | null> | undefined;
   private eventFrequencyPromise: Promise<EventFrequencyFile> | null = null;
 
@@ -243,6 +244,22 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
     for (const id of oracleIds) {
       const art = byOracleId[id];
       if (art) out.set(id, art);
+    }
+    return out;
+  }
+
+  /** Reads `token-text.json`, `{ [oracleId]: oracleText }`, the same way `tokenArt` reads art: a
+   *  token joins no corpus row, so its rules text rides beside its art (#983). A version built before
+   *  the file existed answers 404, and every token keeps the empty text it had. */
+  async tokenText(oracleIds: string[]): Promise<Map<string, string>> {
+    const byOracleId = await (this.tokenTextPromise ??= (async () => {
+      const res = await this.fetchCached("/token-text.json");
+      return res.ok ? (await res.json() as Record<string, string>) : {};
+    })());
+    const out = new Map<string, string>();
+    for (const id of oracleIds) {
+      const text = byOracleId[id];
+      if (text) out.set(id, text);
     }
     return out;
   }

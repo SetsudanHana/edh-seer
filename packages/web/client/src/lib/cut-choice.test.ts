@@ -32,7 +32,21 @@ test("the main theme argues for a card instead of hiding it, and sorts it after 
   const { report, model } = withTrim();
   const cuts = chooseCuts(report, model);
   expect(cuts.map((c) => c.name)).toEqual(["Vanilla", "Raise Once", "Sidekick"]);
-  expect(cuts[2]!.keeps).toEqual(["its strongest link is to your main theme"]);
+  // THE LINK BY NAME (#981): "its strongest link is to your main theme" named no card, word for
+  // word under two cards on Rani, and stopped the plan-seeker.
+  expect(cuts[2]!.keeps).toHaveLength(1);
+  expect(cuts[2]!.keeps[0]).toMatch(/^its strongest link: /);
+});
+
+/** A CARD THE TABLE IS WARNED ABOUT IS NOT A SILENT CUT (#982): Treasure Nabber was "Heads-up: it
+ *  steals permanents" in Say this at the table and the second card on the cut list. */
+test("a card the table talk warns about carries that as a reason to keep it", () => {
+  const { report, graph } = engineDeck();
+  const node = (graph.nodes as unknown as { id: string; oracleText?: string }[]).find((n) => n.id === "Raise Once")!;
+  node.oracleText = "Gain control of target artifact.";
+  const r = { ...report, trim: withTrim().report.trim } as DeckReport;
+  const raise = chooseCuts(r, buildEngineModel(r, graph)).find((c) => c.name === "Raise Once")!;
+  expect(raise.keeps).toContain("you warn the table that it steals permanents");
 });
 
 test("each row reads the Overview's wording and keeps the report's unmet condition, without the clause every row shared", () => {
@@ -87,6 +101,14 @@ test("a cut that a win plan counts says so, and is still a cut", () => {
   const r = { ...report, deckMath: { ...report.deckMath, wincons: { focus: 1, primary: "go-wide", classes: [{ class: "go-wide", count: 1, share: 1, cards: ["Raise Once"] }] } } } as DeckReport;
   const cuts = chooseCuts(r, model);
   const raise = cuts.find((c) => c.name === "Raise Once")!;
-  expect(raise.keeps).toEqual(["it is one of the cards your win plan of attacking with a wide board counts"]);
+  // The plan, and (#981) the link it would keep, so the reason names a card.
+  expect(raise.keeps).toContain("it is one of the cards your win plan of attacking with a wide board counts");
+  expect(raise.keeps[0]).toMatch(/^its strongest link: /);
   expect(cuts.map((c) => c.name)).toEqual(["Vanilla", "Raise Once", "Sidekick"]);
+});
+
+/** NEVER AN UNREAD LINK AS THE REASON (review 2026-10-06): "X triggers" is true and says nothing. */
+test("a keep reason never names a link whose effect was not read", () => {
+  const { report, model } = withTrim();
+  for (const c of chooseCuts(report, model)) for (const k of c.keeps) expect(k).not.toMatch(/triggers$/);
 });

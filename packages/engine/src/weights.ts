@@ -194,11 +194,11 @@ export function dampedScore(totalWeighted: number, partnerCount: number): number
 }
 
 /** HOW CONCENTRATED THE DECK IS ON ITS THEME, and the words are deliberately NOT "focused" any more
- *  (roadmap T4). `scoreBand` in the client labels the 0-5 deck score "Focused" at 3.0, and this
+ *  (roadmap T4). `scoreBand` in the client labelled the 0-5 deck score "Focused" at 3.0, and this
  *  labelled the 0-1 theme share "focused" at 0.30 -- two unrelated scales, one word, both printed on
  *  the same screen. The owner read them together and asked which one the deck was. This scale is a
- *  SHARE of the nonlands, so it says how concentrated they are; the 0-5 ladder keeps "Focused",
- *  where it reads as build quality. */
+ *  SHARE of the nonlands, so it says how concentrated they are. The 0-5 ladder has since dropped
+ *  "Focused" too (#980): it collided with the Focus sub-score; it reads "Connected" now. */
 export function cohesionLabel(score: number): string {
   if (score >= 0.6) return "highly concentrated";
   if (score >= 0.3) return "concentrated";

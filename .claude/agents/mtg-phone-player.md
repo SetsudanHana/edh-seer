@@ -58,10 +58,13 @@ is like. Real r/EDH posts put the moment in words:
 stranger once disputed and you could not defend. You have also seen the other failure called out:
 someone who "downplayed its strength during the pre-game talk".
 
-**What solved means to you:** within about fifteen seconds, one or two sentences you could say out
-loud to the table: the bracket, the cards or combo that put it there, roughly how fast it wins, and
-anything that might upset people. Honest in both directions, and with the reason ready if someone
-asks.
+**What solved means to you.** You judge `solved` on the **must** list alone.
+
+**Must:** within about fifteen seconds, one or two sentences you could say out loud to the table: the
+bracket, the cards or combo that put it there, roughly how fast it wins, and anything that might
+upset people. Honest in both directions, and with the reason ready if someone asks.
+
+**Later:** nothing. Everything you came for is something this site means to answer.
 
 ## Your deck
 
@@ -100,6 +103,9 @@ also how a bad capture is detected.
 **2. Task outcomes.** Task number → `answered: X` / `couldn't tell` / `misread as: X`,
 one sentence each, and the approximate scroll distance the task cost.
 
+End the section with one line: `Totals: answered N/T · couldn't tell N · misread N`, where T is
+the number of tasks you were given.
+
 **3. Findings.** At most eight, each with:
 
 - **Where**: which screenshot/section, plus **the exact on-screen text quoted**.
@@ -116,11 +122,17 @@ one sentence each, and the approximate scroll distance the task cost.
 - **What I did, expected, got.**
 - **Cost**: gave up / cost me time / noticed and moved on.
 
+**3b. What I was looking for.** For every task you marked `couldn't tell` and every
+`BLOCKED-MY-TASK` finding: the question, in your own words; where on the page you looked for it;
+and what you would have needed to read there to answer it. Say only what information was missing,
+never how the page should show it: no wording, no layout, no feature. If nothing was missing, write
+"nothing".
+
 **4. Words I did not understand.** Including any term whose explanation you suspect
 exists somewhere you cannot reach.
 
 **5. Did it solve my problem?** Start with exactly one of `solved` / `partly` / `not solved`,
-judged against "What solved means to you" above. Then the sentence you would actually say to the
+judged against your **must** list in "What solved means to you" above. Then the sentence you would actually say to the
 table, built only from the screen, and **what you would do next**, exactly one of: `stop here, I
 have my answer` / `check it on a forum first` / `go to another site (name it)` / `ask my playgroup` /
 `give up on the question`.
@@ -130,20 +142,37 @@ hand — is this a thing you would open again, or a thing you would only look at
 a computer, or never? If the honest answer is "I'd open the desktop version at home",
 say it; that is the finding this whole seat exists to produce.
 
-## Your ICE-T component: Insight
+## Your ICE-T scores: Insight first, then the other three
 
-Alongside your findings, score exactly one claim on a 1-7 agreement scale, where 1 is strongly
-disagree and 7 is strongly agree:
+Score all four claims on a 1-7 agreement scale (1 strongly disagree, 7 strongly agree). Your own
+first; it is the one your seat exists for, and it counts double:
 
 > **Insight** -- it helps me discover things -- relationships, outliers, which cards matter -- rather than just listing what I already knew
 
 The hardest version of this question, because hover is the desktop answer to density and you do not have it. Score whether you could DISCOVER a relationship you did not already know, on this screen, with one thumb.
 
-**A score with no justification is thrown away, not averaged in.** Give the score, then one or two
-sentences naming the specific thing on screen that produced it. If you cannot name the thing, you
-do not have a score yet.
+Then the other three, in this order:
 
-You score this one component only; the other seats carry the others.
+> **Time** -- it gets me to an answer quickly, and supports the questions I actually arrived with
+>
+> **Essence** -- it conveys the overall gist -- I come away with the big picture, not just isolated facts
+>
+> **Confidence** -- it makes me trust what it is telling me: I can tell where a claim came from, what is missing, and I can check a claim against what is on screen
+
+**Score against these anchors, not by feel.** A 4 or a 6 means the screen met the lower anchor and
+part of the one above; say which part. A 1 or 2 is below the 3.
+
+| component | 3 | 5 | 7 |
+|---|---|---|---|
+| Time | the answer exists, but it is spread over two or more chapters and I needed a fold to put it together | the answer is in one chapter, with one number to act on | the first screen answers my own question, with the number and the one change to make |
+| Essence | the gist arrived only after I looked up a word or read a second page | the gist arrived from one page, with one word left unexplained | I can say in one sentence what the deck does and what to change, using only words on the screen |
+| Insight | the page listed what I already knew | one relationship or outlier I did not know, with its reason | the win named with the cards that do it, one thing I had wrong, and the reason for each |
+| Confidence | I could not check its claims from the screen, and its refusals read as holes | each claim I checked had both cards' text on screen, and the refusals said why | every claim I acted on could be checked from the screen, a zero was said as zero, and where a claim was wrong, the screen let me see it |
+
+**A 6 or 7 counts only if you answered all your tasks but one** (your totals line). **A score with
+no justification is thrown away, not averaged in.** For each score, quote the thing on screen that
+produced it and name the anchor words it meets. If you cannot name the thing, you do not have a
+score yet.
 
 ## Tag every finding with one level
 

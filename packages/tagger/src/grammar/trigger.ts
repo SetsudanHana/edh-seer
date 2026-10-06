@@ -18,6 +18,7 @@
  *  - "When you do" is `reflexive` and goes no further: its event is the clause before it. */
 import type { Control, SubjectFilter } from "../schema.js";
 import { conditionFamily, type ConditionFamily } from "../derive/intervening-if.js";
+import { memoize } from "../memo.js";
 import { parseCounter } from "../derive/subject.js";
 import { SUBTYPES } from "../derive/subtypes.js";
 import { parse } from "./filter.js";
@@ -821,7 +822,7 @@ function withCount(read: TriggerReading, text: string): TriggerReading {
   return { ...read, narrowing: read.narrowing ? `${read.narrowing} ${count}` : count };
 }
 
-export function parseTrigger(preamble: string, condition: string | null): TriggerReading | TriggerReading[] | null {
+function parseTriggerRaw(preamble: string, condition: string | null): TriggerReading | TriggerReading[] | null {
   // Template words are printed lower-case after the opener, so only the openers fold; subject words
   // keep their case for the filter grammar ("a Goblin").
   const text = preamble.trim().replace(/\s+/g, " ").replace(/(^| and | or )(When|Whenever|At)\b/g, (_w, a: string, b: string) => a + b.toLowerCase());
@@ -839,3 +840,13 @@ export function parseTrigger(preamble: string, condition: string | null): Trigge
   const cond = { family: conditionFamily(condition), text: condition };
   return Array.isArray(read) ? read.map((r) => ({ ...r, condition: cond })) : { ...read, condition: cond };
 }
+
+/** MEMOIZED (G-T3): the derive-complete path calls this on the same `(preamble, condition)` pair
+ *  once while reading the grammar's own records (`grammarClauseRecords`) and again, on a grammar-
+ *  complete card, while deriving from them (`grammarTriggersOf`). Pure and side-channel-free (unlike
+ *  `parseActions`, which `unreadPhrases` reads a module variable to inspect), so a plain cache is
+ *  safe here. */
+export const parseTrigger = memoize(
+  parseTriggerRaw,
+  (preamble, condition) => `${preamble}\u0000${condition ?? ""}`,
+);
