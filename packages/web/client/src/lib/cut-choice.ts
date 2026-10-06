@@ -1,6 +1,6 @@
 import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
 import type { DeckReport } from "../types.js";
-import { cutWeight, displayName, type CutRow, type EngineCard, type EngineModel } from "./engine-model.js";
+import { cutWeight, displayName, unread, type CutRow, type EngineCard, type EngineModel } from "./engine-model.js";
 import { warnsAbout } from "./table-talk.js";
 
 /** ONE CUT LIST (owner, 2026-09-26: "it does not make any sense to have 2 times the same report").
@@ -64,7 +64,9 @@ function strongestLink(model: EngineModel, id: string): CutRow["keep"] {
   let out: CutRow["keep"];
   for (const [other, pair] of model.partners.get(id) ?? []) {
     const score = model.cards.get(other)?.score ?? 0;
-    const l = pair.links.find((x) => !/\btriggers$/.test(x.text.trim())) ?? pair.links[0];
+    // NEVER AN UNREAD LINK: "X triggers" is true and says nothing, so engine-model never offers it
+    // as a reason to keep, and neither does this (review 2026-10-06).
+    const l = pair.links.find((x) => !unread(x));
     if (l && (!best || score > best.score)) { best = { text: l.text, score }; out = l; }
   }
   return out;

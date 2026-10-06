@@ -106,3 +106,9 @@ test("a cut that a win plan counts says so, and is still a cut", () => {
   expect(raise.keeps[0]).toMatch(/^its strongest link: /);
   expect(cuts.map((c) => c.name)).toEqual(["Vanilla", "Raise Once", "Sidekick"]);
 });
+
+/** NEVER AN UNREAD LINK AS THE REASON (review 2026-10-06): "X triggers" is true and says nothing. */
+test("a keep reason never names a link whose effect was not read", () => {
+  const { report, model } = withTrim();
+  for (const c of chooseCuts(report, model)) for (const k of c.keeps) expect(k).not.toMatch(/triggers$/);
+});

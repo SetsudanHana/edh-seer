@@ -419,7 +419,7 @@ const s = (n: number) => (n === 1 ? "" : "s");
 /** A reason whose effect half the engine has not read ends in "triggers" (the same test as
  *  `unreadEffect` in card-drawer, kept here so this module stays free of components). It is true
  *  but says nothing, so it is never offered as the reason to keep a card (live round, 2026-09-25). */
-const unread = (l: Link) => /\btriggers$/.test(l.text.trim());
+export const unread = (l: Link): boolean => /\btriggers$/.test(l.text.trim());
 
 /** WHO HELPS WHOM in a link: the producer -- the card whose event another card's ability uses --
  *  except where the engine names them the other way round. A recursion link's producer is the card
