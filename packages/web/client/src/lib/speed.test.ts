@@ -104,3 +104,21 @@ test("a damage-preventing commander leaves combat, commander and drain untimed, 
     ["burn", undefined, "not timed: The Mindskinner prevents your damage to opponents"],
   ]);
 });
+
+/** MILL IS TIMED (#1056 R4): the route takes `deckMath.speed.mill`'s turn and says what it assumes. */
+test("a mill route takes its whole-table turn from the mill clock", () => {
+  const r = deck([{ class: "mill", cards: ["Ruin Crab"] }]) as DeckReport;
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = { combat: {}, mill: { turn: 13, perTurn: [], cards: ["Ruin Crab", "Hedron Crab"], unbounded: [] } };
+  const [mill] = speedRoutes(r, () => undefined);
+  expect(mill).toMatchObject({ kind: "mill", turn: 13 });
+  expect(mill!.caveat).toBe("when 2 mill cards have emptied every opponent's library, each firing once per thing that sets it off; their own extra draws would make it sooner");
+  expect(fastestRoute([mill!])?.kind).toBe("mill");
+});
+
+/** A TIMED MILL SHOWS EVEN WHEN THE MILL PLAN CLASS DID NOT FIRE (review of #1056 R4): The Mindskinner
+ *  turns the board into mill, which no mill card in the list announces. */
+test("a timed mill route is listed even without a mill win-plan class", () => {
+  const r = deck([{ class: "voltron", cards: ["Plate"] }]) as DeckReport;
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = { combat: {}, mill: { turn: 10, perTurn: [], cards: ["The Mindskinner"], unbounded: [] } };
+  expect(speedRoutes(r, () => undefined).map((x) => [x.kind, x.turn])).toEqual([["combat", undefined], ["mill", 10]]);
+});

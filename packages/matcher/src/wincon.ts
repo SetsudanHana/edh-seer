@@ -1,6 +1,6 @@
 import type { Reason } from "@edh-seer/engine";
 import { RESOURCE_TOKENS } from "./archetypes.js";
-import { affordableAt, arrival, HORIZON, STARTING_LIFE } from "./pressure.js";
+import { affordableAt, arrival, expectedPower, HORIZON, STARTING_LIFE } from "./pressure.js";
 import { loadRules, ruleMatches } from "./rules.js";
 import type { DeckCard } from "./types.js";
 
@@ -249,9 +249,39 @@ export function drainClock(
   reasons: readonly Reason[],
   opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] } = {},
 ): DrainClock | undefined {
+  const picks = deck.flatMap((dc) => drainAbilities(dc).map((d) => ({ dc, ...d, share: 1 })));
+  if (picks.length === 0) return undefined;
+  const { perTurn, unbounded } = triggeredCurve(deck, reasons, opts, picks);
+  let cumulative = 0, turn: number | undefined;
+  perTurn.forEach((life, i) => { cumulative += life; if (turn === undefined && cumulative >= STARTING_LIFE) turn = i + 1; });
+  return {
+    ...(turn !== undefined ? { turn } : {}),
+    perTurn: perTurn.map(round2),
+    cards: [...new Set(picks.map((d) => d.dc.card.name))],
+    unbounded,
+  };
+}
+
+const round2 = (n: number): number => Math.round(n * 100) / 100;
+
+/** One ability whose amount lands on the opponents, with the share of the table each fire reaches:
+ *  1 when it hits each opponent, a third when it hits one target (the table needs it three times). */
+interface Pick { dc: DeckCard; face: number; index: number; amount: number; ability: DrainAbility; share: number }
+
+/** THE TRIGGER COUNT SHARED BY THE DRAIN AND MILL ROUTES (#1056): the amount each OPPONENT takes on
+ *  each turn to the horizon, from abilities that fire once per SOURCE of their trigger (see
+ *  `DrainClock`), once a turn for a phase trigger or an activation, and once -- on the turn the card
+ *  can first be cast -- for a one-shot. Each ability is assumed out from the turn it can be cast. */
+function triggeredCurve(
+  deck: readonly DeckCard[],
+  reasons: readonly Reason[],
+  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] },
+  picks: readonly Pick[],
+): { perTurn: number[]; unbounded: string[] } {
   const byName = new Map(deck.map((dc) => [dc.card.name, dc]));
   const on = arrival(deck, opts);
   const arrives = (dc: DeckCard, t: number): number => on(dc, t) - on(dc, t - 1);
+  const castable = (dc: DeckCard, t: number): boolean => t >= 1 && dc.card.manaValue <= affordableAt(opts.manaBudget, t);
   const unbounded = new Set<string>();
   const perUse = (r: Reason): number => {
     const m = r.magnitude;
@@ -277,18 +307,19 @@ export function drainClock(
   }
   for (const [token, rs] of makers) makers.set(token, distinct(rs));
 
-  const drains = deck.flatMap((dc) => drainAbilities(dc).map((d) => ({
-    dc, ...d, sources: distinct(reasons.filter((r) =>
-      r.consumer === dc.card.name && (r.consumerFace ?? 0) === d.face && r.consumerAbility === d.index)),
-  })));
-  if (drains.length === 0) return undefined;
+  const withSources = picks.map((d) => ({
+    ...d, sources: distinct(reasons.filter((r) =>
+      r.consumer === d.dc.card.name && (r.consumerFace ?? 0) === d.face && r.consumerAbility === d.index)),
+  }));
   const perTurn: number[] = [];
-  let cumulative = 0, turn: number | undefined;
   for (let t = 1; t <= HORIZON; t++) {
-    let life = 0;
-    for (const d of drains) {
+    let amount = 0;
+    for (const d of withSources) {
+      if (!castable(d.dc, t)) continue;
       let fires: number;
-      if (d.ability.kind === "activated" || (d.ability.trigger?.verbs ?? []).some((v) => PHASE_VERBS.has(v))) {
+      if (d.ability.kind === "on-cast") {
+        fires = castable(d.dc, t - 1) ? 0 : 1;
+      } else if (d.ability.kind === "activated" || (d.ability.trigger?.verbs ?? []).some((v) => PHASE_VERBS.has(v))) {
         fires = 1;
       } else {
         fires = 0;
@@ -305,19 +336,78 @@ export function drainClock(
         }
         if (d.ability.trigger?.batched) fires = Math.min(1, fires);
       }
-      life += d.amount * fires * (d.dc.card.manaValue <= affordableAt(opts.manaBudget, t) ? 1 : 0);
+      amount += d.amount * d.share * fires;
     }
-    perTurn.push(Math.round(life * 100) / 100);
-    cumulative += life;
-    if (turn === undefined && cumulative >= STARTING_LIFE) turn = t;
+    perTurn.push(amount);
   }
+  return { perTurn, unbounded: [...unbounded].sort() };
+}
+
+/** MILL, TIMED FOR THE WHOLE TABLE (#1056 R4; owner 2026-10-06: "estimate how many cards we can mill
+ *  in total by the turn"). The first turn the cards milled from EACH opponent reach the library they
+ *  have left on our turn t: 92 - t (99, less the opening seven and a draw a turn; no first-turn skip in
+ *  multiplayer, CR 103.8c). 92 - t takes the seat that has drawn t times by our turn t -- the smallest
+ *  library, so the earliest turn, which is what a floor asks; an earlier seat holds one card more.
+ *  A player loses on the draw that finds the library empty (CR 704.5b), so a library at 0 on our turn
+ *  t is a kill on their next draw. NOT a floor on one axis, and the readout
+ *  says so: their own extra draws (wheels, symmetric draw) would empty it sooner.
+ *
+ *  Abilities: a mill with a fixed amount, repeating or one-shot. Mill at EACH opponent (or each player)
+ *  counts in full; mill at one target player a third, since the table needs it three times. Counted
+ *  like a drain, once per source of its trigger (`triggeredCurve`). X amounts and doublers (Bruvac)
+ *  are not numbers and add nothing. A COMMANDER that turns your damage into mill (The Mindskinner:
+ *  "prevent that damage and each opponent mills that many cards") mills each opponent the board's
+ *  power every turn, `expectedPower`. */
+export interface MillClock { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] }
+
+const DAMAGE_TO_MILL = /prevent that damage and each opponent mills that many cards/i;
+
+export function millClock(
+  deck: readonly DeckCard[],
+  reasons: readonly Reason[],
+  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] } = {},
+): MillClock | undefined {
+  const picks: Pick[] = [];
+  const faceIndex = new Map<string, number>();
+  for (const dc of deck) {
+    faceIndex.clear();
+    for (const a of dc.tags?.abilities ?? []) {
+      const ab = a as DrainAbility & { effect?: { subject?: { control?: string; scope?: string } } };
+      const face = ab.face ?? 0;
+      const index = faceIndex.get(String(face)) ?? 0;
+      faceIndex.set(String(face), index + 1);
+      if (ab.effect?.kind !== "mill" || !/^\d+$/.test(ab.amount ?? "")) continue;
+      const oneShot = ab.kind === "on-cast";
+      if (!oneShot && (ab.kind !== "triggered" && ab.kind !== "activated" || !REPEATING.has(ab.repeats ?? ""))) continue;
+      const { control, scope } = ab.effect.subject ?? {};
+      const share = EACH.has(scope ?? "") && (control === "opp" || control === "any") ? 1
+        : scope === "target" && (control === "opp" || control === "any") ? 1 / 3
+        : 0;
+      if (share > 0) picks.push({ dc, face, index, amount: Number(ab.amount), ability: ab, share });
+    }
+  }
+  const commanders = new Set(opts.commanderNames ?? []);
+  const converter = deck.find((dc) => commanders.has(dc.card.name) && DAMAGE_TO_MILL.test(dc.card.oracleText ?? ""));
+  if (picks.length === 0 && !converter) return undefined;
+  const { perTurn, unbounded } = triggeredCurve(deck, reasons, opts, picks);
+  if (converter) {
+    // Only once the commander is out: before that, the board's damage is damage (review of R4).
+    for (let t = 1; t <= HORIZON; t++) {
+      if (converter.card.manaValue <= affordableAt(opts.manaBudget, t)) perTurn[t - 1]! += expectedPower(deck, t, opts);
+    }
+  }
+  let cumulative = 0, turn: number | undefined;
+  perTurn.forEach((cards, i) => { cumulative += cards; if (turn === undefined && cumulative >= LIBRARY_AFTER_HAND - (i + 1)) turn = i + 1; });
   return {
     ...(turn !== undefined ? { turn } : {}),
-    perTurn,
-    cards: [...new Set(drains.map((d) => d.dc.card.name))],
-    unbounded: [...unbounded].sort(),
+    perTurn: perTurn.map(round2),
+    cards: [...new Set([...picks.map((d) => d.dc.card.name), ...(converter ? [converter.card.name] : [])])],
+    unbounded,
   };
 }
+
+/** 99 cards less the opening seven: an opponent's library before their first draw. */
+const LIBRARY_AFTER_HAND = 92;
 
 /** The deck's win plans and how concentrated they are.
  *
