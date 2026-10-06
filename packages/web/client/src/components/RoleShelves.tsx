@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
 import type { EngineCard } from "../lib/engine-model.js";
 import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
+import { overNote } from "../lib/deck-gauge.js";
 import { Art } from "./engine-parts.js";
 import { CardName } from "./card-drawer.js";
 
@@ -29,6 +30,11 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
   const parentOf = new Map(parents.flatMap((p) => p.leaves.map((l) => [l, p] as const)));
   const own = new Map((report.buildCategories ?? []).filter((c) => c.target > 0).map((c) => [c.category, c.target]));
   const headed = new Set<string>();
+  // THE RAMP THE LAND COUNT LEANS ON (#1033): the rest of the Ramp shelf is one-shots. Ramp is a
+  // one-leaf group (`BUILD_PARENTS`), so it never heads shelves; its own shelf carries the note.
+  const lasting = report.deckMath?.lands?.accelerants;
+  const rampCount = parents.find((x) => x.key === "ramp")?.count;
+  const oneShots = lasting !== undefined && rampCount !== undefined ? Math.max(0, rampCount - lasting) : 0;
   return (
     <ul className="flex flex-col gap-4 text-sm">
       {shelves.map(({ category, cards, tokens }) => {
@@ -52,7 +58,7 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
               <span className="shrink-0 sm:w-36 sm:pt-2">
                 <b className="block">{label}</b>
                 {target
-                  ? <Against count={cards.length} target={target} />
+                  ? <Against count={cards.length} target={target} oneShots={p?.key === "ramp" ? oneShots : 0} />
                   : <span className="text-(--muted) tabular-nums">{cards.length} card{cards.length === 1 ? "" : "s"}</span>}
               </span>
               {/* CHIPS, NOT CARD IMAGES (owner, 2026-09-27: "less is more"). Full cards ran the shelves to
@@ -80,12 +86,12 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
 }
 
 /** "7 cards · aim for 10 (3 short)": the shortfall in the warning colour, as the dials paint it. */
-function Against({ count, target }: { count: number; target: number }) {
+function Against({ count, target, oneShots }: { count: number; target: number; oneShots?: number }) {
   return (
     <span className="text-(--muted) tabular-nums">
       {count} card{count === 1 ? "" : "s"} · aim for {target}
       {count < target ? <span className="text-(--warning)">{` (${target - count} short)`}</span> : null}
-      {count > target ? ` (${count - target} over: room to cut)` : null}
+      {overNote(count, target, oneShots) ? ` (${overNote(count, target, oneShots)})` : null}
     </span>
   );
 }

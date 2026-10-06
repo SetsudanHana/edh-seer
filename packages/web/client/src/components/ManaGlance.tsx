@@ -36,11 +36,13 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
       .sort((a, b) => (b.worst!.required - b.worst!.available) - (a.worst!.required - a.worst!.available))[0];
     tiles.push(short?.worst ? (
       <Tile key="colours" label="Weakest colour" warn
-        big={<span className="inline-flex items-center gap-1.5"><ManaSymbols cost={`{${short.color}}`} />{short.worst.available}<span className="text-sm text-(--muted)">/{short.worst.required}</span></span>}
+        // NO SLASH (#1033): "30 /37" read as 30 of 37 lands even with the line below naming both
+        // numbers, so the figure says it in words.
+        big={<span className="inline-flex items-center gap-1.5"><ManaSymbols cost={`{${short.color}}`} />{short.worst.available}<span className="text-sm text-(--muted)"> of {short.worst.required} needed</span></span>}
         // BOTH NUMBERS NAMED, AND THE THIRD (persona round 2026-09-29, clunky-deck): "30 /37 sources by
         // turn 3" read as 30 of 37 lands, and the Improve note beside it said "30 of your 38 black
         // sources … takes 37". Same figures; the tile now says which is which.
-        sub={<>can tap by turn {short.worst.turn} (of {short.supplied} in the deck); {short.worst.cards === 1 ? "a card" : `${short.worst.cards} cards`} wanting <ManaSymbols cost={`{${short.color}}`.repeat(short.worst.pips)} /> {short.worst.cards === 1 ? "needs" : "need"} {short.worst.required}</>} />
+        sub={<>sources that can tap by turn {short.worst.turn}, of {short.supplied} in the deck; {short.worst.required} is what {short.worst.cards === 1 ? "a card" : `${short.worst.cards} cards`} wanting <ManaSymbols cost={`{${short.color}}`.repeat(short.worst.pips)} /> {short.worst.cards === 1 ? "needs" : "need"}</>} />
     ) : (
       <Tile key="colours" label="Colours" big={<span className="inline-flex gap-0.5">{colours.map((c) => <ManaSymbols key={c.color} cost={`{${c.color}}`} />)}</span>}
         sub="enough sources for every card" />

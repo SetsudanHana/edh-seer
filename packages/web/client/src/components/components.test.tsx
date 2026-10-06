@@ -849,7 +849,7 @@ test("the score dials name each score, its value and its band", () => {
   expect(screen.getAllByText("3.7").length).toBeGreaterThan(0);   // buildScore
   // The dial prints its band in the gauge's own lower case ("tuned"), where the retired tile
   // capitalised it -- the word is the same one `scoreBand` gives both.
-  expect(screen.getAllByText(/tuned|focused/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/tuned|connected/i).length).toBeGreaterThan(0);
   // Breadth and anchor are the two inputs, printed as their own bullets under the Synergy dial.
   expect(screen.getAllByText(/focus/i).length).toBeGreaterThan(0);
 });
@@ -867,7 +867,7 @@ test("each dial explains its scale, and Synergy names the anchor card", async ()
   const gloss = screen.getAllByText("what this measures");
   expect(gloss).toHaveLength(2); // Synergy and Build each say what they mean
   await user.click(gloss[0]!);
-  expect(screen.getAllByText(/0–1.5 unfocused/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/0–1.5 loose/).length).toBeGreaterThan(0);
   expect(screen.getByText(/Krenko, Mob Boss/)).toBeInTheDocument(); // the deck's best-fed card
 });
 
@@ -904,14 +904,14 @@ test("the band scale is visible under each dial and is not repeated inside the d
   // BY CONTAINER, NOT `getByText`. Each band is its own `whitespace-nowrap` span now, so no single
   // element holds the whole sentence -- the DOM-text-concatenation trap this suite has hit before.
   // Synergy's scale and Build's own (wording review 2026-09-25: Build's bands are its own words).
-  const strips = [...container.querySelectorAll("p")].filter((el) => /unfocused|far off/.test(el.textContent ?? ""));
+  const strips = [...container.querySelectorAll("p")].filter((el) => /loose|far off/.test(el.textContent ?? ""));
   // One per lead dial -- Synergy and Build each carry the scale their own needle is read against.
   expect(strips).toHaveLength(2);
   for (const strip of strips) {
     expect(strip.closest("details"), "the scale is still folded away").toBeNull();
   }
   for (const details of container.querySelectorAll("details")) {
-    expect(details.textContent, "the scale is said twice").not.toMatch(/unfocused ·|far off ·/);
+    expect(details.textContent, "the scale is said twice").not.toMatch(/loose ·|far off ·/);
   }
 });
 
@@ -927,7 +927,7 @@ test("the printed band scale is exactly the four SCORE_BREAKS bands, unchanged b
   // One scale per dial, each in its own words: Build is not called "tuned", which a player reads as
   // power level beside the bracket (wording review 2026-09-25).
   expect(printed).toEqual([
-    "0–1.5 unfocused · 1.5–3 developing · 3–4 focused · 4–5 tight",
+    "0–1.5 loose · 1.5–3 developing · 3–4 connected · 4–5 tight",
     "0–1.5 far off · 1.5–3 short · 3–4 close · 4–5 on target",
   ]);
 });
