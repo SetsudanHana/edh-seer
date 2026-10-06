@@ -1059,6 +1059,7 @@ export function analyzeDeckStructured(
         castCurves: manaSim?.curves,
         // The clock's mana budget, off the same two arms — see `pressure.ts`.
         manaBudget: manaSim?.manaMedian,
+        reasons: allReasons,
       })
     : undefined;
 

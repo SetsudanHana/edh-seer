@@ -8,7 +8,7 @@ export const STARTING_LIFE = 40;
 
 /** How far the curve is computed before giving up on a deck ever getting there. Twenty turns is
  *  well past any real EDH game, so a deck with no clock inside it has no clock at all. */
-const HORIZON = 20;
+export const HORIZON = 20;
 
 const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");
 const isCreature = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("creature");
@@ -65,9 +65,7 @@ export function expectedPower(
   // makes eight. Both halves move and they move in opposite directions -- a ramp deck deploys its
   // top end EARLIER, a creature-dense deck deploys FEWER of them -- which is why this is a
   // correction rather than a discount.
-  const affordableThisTurn = opts.manaBudget === undefined
-    ? turn
-    : (opts.manaBudget[turn - 1] ?? (opts.manaBudget[opts.manaBudget.length - 1] ?? 0) + (turn - opts.manaBudget.length));
+  const affordableThisTurn = affordableAt(opts.manaBudget, turn);
   const deployable: { manaValue: number; power: number; available: number }[] = [];
   for (const dc of deck) {
     if (isLand(dc) || !isCreature(dc)) continue;
@@ -106,6 +104,30 @@ export function expectedPower(
     break;
   }
   return total;
+}
+
+/** The biggest mana value castable on `turn`: the turn itself with no simulation, else the simulated
+ *  median mana that turn, growing by one a turn past the simulated rows (see `manaBy`). */
+export function affordableAt(manaBudget: readonly number[] | undefined, turn: number): number {
+  return manaBudget === undefined
+    ? turn
+    : (manaBudget[turn - 1] ?? (manaBudget[manaBudget.length - 1] ?? 0) + (turn - manaBudget.length));
+}
+
+/** THE ODDS A CARD IS ON THE BOARD BY `turn`, one card at a time: zero until its mana value is
+ *  affordable, then drawn-by-then (the commander: always). `expectedPower`'s availability without its
+ *  shared budget, for routes that count ARRIVALS rather than summing a board (the drain route). */
+export function arrival(
+  deck: readonly DeckCard[],
+  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] } = {},
+): (dc: DeckCard, turn: number) => number {
+  const commanders = new Set(opts.commanderNames ?? []);
+  const library = deck.filter((dc) => !commanders.has(dc.card.name)).length;
+  return (dc, turn) => {
+    if (turn < 1 || dc.card.manaValue > affordableAt(opts.manaBudget, turn)) return 0;
+    if (commanders.has(dc.card.name)) return 1;
+    return library === 0 ? 0 : Math.min(1, seen(turn) / library);
+  };
 }
 
 /** Mana the board could have spent by `turn`, summed over every turn up to it.

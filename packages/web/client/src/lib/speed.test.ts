@@ -6,11 +6,12 @@ const row = (turn: number, p25: number, median: number, p75: number) =>
   ({ turn, mana: { p25, median, p75 }, payableShare: { p25: 0, median: 0, p75: 0 } });
 const rows = [row(1, 1, 1, 1), row(2, 2, 2, 3), row(3, 2, 3, 4), row(4, 3, 4, 6), row(5, 4, 5, 7), row(6, 5, 6, 8), row(7, 6, 7, 9), row(8, 6, 8, 10)];
 
-function deck(wincons: { class: string; cards?: string[]; drain?: { cards: number; life: number } }[], clock?: number, combos: { cards: string[]; result: string }[] = []) {
+type DrainSpeed = { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] };
+function deck(wincons: { class: string; cards?: string[]; drain?: { cards: number; life: number } }[], clock?: number, combos: { cards: string[]; result: string }[] = [], drain?: DrainSpeed) {
   return {
     combos,
     manaAvailability: { trials: 2000, accelerants: 10, rows, headline: { mana: 6, turn: 6, low: 0.4, high: 0.6 } },
-    deckMath: { clock: { turn: clock, powerAtFive: 8 }, wincons: { classes: wincons.map((w) => ({ ...w, count: w.cards?.length ?? 0, share: 0.25 })), focus: 0.5 } },
+    deckMath: { clock: { turn: clock, powerAtFive: 8 }, ...(drain ? { speed: { drain } } : {}), wincons: { classes: wincons.map((w) => ({ ...w, count: w.cards?.length ?? 0, share: 0.25 })), focus: 0.5 } },
   } as unknown as DeckReport;
 }
 const mv: Record<string, number> = { "Dualcaster Mage": 3, "Essence Flux": 1, "Simic Ascendancy": 2, "Thassa's Oracle": 2 };
@@ -34,7 +35,7 @@ test("every win route gets a line, and combat is only one of them", () => {
   expect(routes[2]).toMatchObject({ turn: 7, caveat: expect.stringMatching(/one opponent, if nobody blocks/) });
   // Untimed, but listed: leaving it off would read as "cannot win that way".
   expect(routes[3]!.turn).toBeUndefined();
-  expect(routes[3]!.caveat).toMatch(/has no turn/);
+  expect(routes[3]!.caveat).toMatch(/not timed yet/);
   // The alternate win is castable at turn 2 but that is not when it wins, so the combo leads.
   expect(routes[1]!.turn).toBe(2);
   expect(fastestRoute(routes)?.kind).toBe("combo");
@@ -52,12 +53,18 @@ test("a deck with no combat clock still reports its other routes", () => {
   expect(fastestRoute(routes)).toBeUndefined();
 });
 
-/** THE DRAIN PER TURN, THE REFUSAL KEPT (#984, owner ruling 2026-10-06): the route still has no turn,
- *  and says what its repeating drains take from each opponent if each fires once a turn. */
-test("an untimed drain route says its drain per turn, and stays untimed", () => {
-  const [burn] = speedRoutes(deck([{ class: "burn", cards: ["Leech", "Guardian"], drain: { cards: 2, life: 3 } }]), () => undefined);
-  expect(burn!.turn).toBeUndefined();
-  expect(burn!.caveat).toBe("its 2 repeating drains take about 3 life from each opponent a turn if each fires once; how often they fire is not modelled, so it has no turn");
+/** THE DRAIN IS TIMED (#1056, owner 2026-10-06: speed is the turn the whole table can be dead, a
+ *  rough floor per route). The turn comes from `deckMath.speed.drain`; the caveat says what it
+ *  assumes and names a source that grows with the board. */
+test("a drain route takes its whole-table turn from the drain clock, and says what it assumes", () => {
+  const timed = { turn: 9, perTurn: [], cards: ["Impact Tremors", "Blood Artist"], unbounded: ["Krenko, Mob Boss"] };
+  const [burn] = speedRoutes(deck([{ class: "burn", cards: ["Impact Tremors", "Blood Artist"] }], undefined, [], timed), () => undefined);
+  expect(burn!.turn).toBe(9);
+  expect(burn!.caveat).toBe("when its 2 repeating drains at each opponent have taken 40 from every opponent, each firing once per creature, token or spell that sets it off, and nobody gaining life; Krenko, Mob Boss counted as one a turn, though it grows with your board");
+  expect(fastestRoute([burn!])?.kind).toBe("burn");
+  const [slow] = speedRoutes(deck([{ class: "burn", cards: ["Leech"] }], undefined, [], { perTurn: [], cards: ["Leech"], unbounded: [] }), () => undefined);
+  expect(slow!.turn).toBeUndefined();
+  expect(slow!.caveat).toBe("its 1 repeating drain at each opponent does not take 40 from every opponent by turn 20 at one fire per source");
   const [plain] = speedRoutes(deck([{ class: "burn", cards: ["Bolt"] }]), () => undefined);
-  expect(plain!.caveat).toBe("nothing in the report models how fast this route kills, so it has no turn");
+  expect(plain!.caveat).toBe("its burn is one-shot or aimed at one player, which is not timed yet");
 });

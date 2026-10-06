@@ -1,5 +1,5 @@
 import { minCopies, pAtLeast, seen } from "@edh-seer/engine";
-import type { DeckMath } from "@edh-seer/engine";
+import type { DeckMath, Reason } from "@edh-seer/engine";
 import { loadAnswerPool, identityKey, POOL_CLASSES, commanderIdentity } from "./answer-pool.js";
 import { deckAvailability } from "./availability.js";
 import { detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.js";
@@ -7,7 +7,7 @@ import { manaAudit } from "./mana-audit.js";
 import { fetchDemand } from "./fetch-land.js";
 import { recommendedLands, type LandRecommendation } from "./land-count.js";
 import { manaBaseScore } from "./mana-base.js";
-import { winconReport } from "./wincon.js";
+import { drainClock, winconReport } from "./wincon.js";
 import { pressureCurve, STARTING_LIFE } from "./pressure.js";
 import { cardCastability, deckCastability } from "./castability.js";
 import type { CastCurve } from "./goldfish.js";
@@ -99,6 +99,9 @@ export function computeDeckMath(
     primary?: Archetype;
     castCurves?: ReadonlyMap<string, CastCurve>;
     manaBudget?: readonly number[];
+    /** The deck's reasons (`analyze.ts`'s `allReasons`): the drain route counts the sources joined
+     *  to each drain's trigger (#1056). Absent for callers without edges, which get no speed. */
+    reasons?: readonly Reason[];
   } = {},
 ): DeckMath {
   const castCurves = opts.castCurves ?? new Map<string, CastCurve>();
@@ -331,8 +334,14 @@ export function computeDeckMath(
     return d && d.found < d.wants ? [{ card: dc.card.name, ...d }] : [];
   }).filter((row, i, all) => all.findIndex((o) => o.card === row.card) === i);
 
+  // SPEED, THE WHOLE TABLE (#1056): a turn per win route, beside -- never instead of -- the
+  // one-opponent `clock`, which stays the horizon everything above is priced against.
+  const drain = opts.reasons ? drainClock(deck, opts.reasons, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) }) : undefined;
+  const speed = drain ? { drain } : undefined;
+
   return {
     turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,
     castability, demand, topdeck: topdeckPayoffs(deck, commanderNames), fetchShortfalls,
+    ...(speed ? { speed } : {}),
   };
 }

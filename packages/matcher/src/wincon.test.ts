@@ -1,7 +1,8 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
-import { detectWincons, focusIndex, winconReport } from "./wincon.js";
+import { detectWincons, drainClock, focusIndex, winconReport } from "./wincon.js";
+import type { Reason } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 
 /** `anthem` marks the ability as a STATIC pump on a class, which is what separates a real go-wide
@@ -287,4 +288,83 @@ test("the burn plan carries its repeating drain per turn: one fire per card, X a
     drain("Unsure", "5", "triggered", null), drain("Sniper", "4", "triggered", "repeatable", "target")];
   const burn = winconReport(deck).classes.find((c) => c.class === "burn")!;
   expect(burn.drain).toEqual({ cards: 2, life: 3 });
+});
+
+/** THE DRAIN ROUTE'S TURN (#1056, R5; owner 2026-10-06: "how many triggers of Impact Tremors would
+ *  you have"). A drain fires once per SOURCE of its trigger, and the sources are the reasons the edge
+ *  layer already joined to that ability: a creature entering once on the turn it arrives, a token
+ *  dated by its maker (every turn if the maker repeats), a phase trigger once a turn. Every card is a
+ *  commander here so arrival is exact: on board from the turn its mana value is affordable. */
+describe("drainClock", () => {
+  const ability = (amount: string, verbs: string[], extra: Record<string, unknown> = {}) => ({
+    kind: "triggered", repeats: "repeatable", amount, trigger: { verbs, subject: {} , ...extra },
+    effect: { kind: "player-damage", subject: { control: "opp", token: null, scope: "each" } },
+  });
+  const card = (name: string, mv: number, abilities: unknown[] = []): DeckCard => {
+    const dc = mk(name, { mv });
+    dc.tags!.abilities = abilities as never;
+    return dc;
+  };
+  const maker = card("Maker", 4, [{ kind: "triggered", repeats: "per-turn", trigger: { verbs: ["upkeep"], subject: {} }, effect: { kind: "token-generation" } }]);
+  const reasons: Reason[] = [
+    { tag: "enters:creature", text: "", consumer: "Tremors", consumerAbility: 0, producer: "Bear" },
+    { tag: "enters:creature", text: "", consumer: "Tremors", consumerAbility: 0, producer: "Goblin", producerIsToken: true },
+    { tag: "creates:goblin", text: "", consumer: "Goblin", consumerIsToken: true, producer: "Maker", producerAbility: 0, magnitude: { floor: 2, ceiling: 2 } },
+  ];
+  const deck = (tremors = ability("1", ["enters"])) => [
+    card("Tremors", 2, [tremors]), card("Bear", 3), maker, card("Upkeeper", 5, [ability("3", ["upkeep"])]),
+  ];
+  const all = (d: DeckCard[]) => ({ commanderNames: d.map((dc) => dc.card.name) });
+
+  test("counts each source of the trigger: 1 for the Bear, 2 tokens a turn, 3 on upkeep; 40 by turn 12", () => {
+    const d = deck();
+    const clock = drainClock(d, reasons, all(d))!;
+    expect(clock.perTurn.slice(0, 7)).toEqual([0, 0, 1, 2, 5, 5, 5]);
+    expect(clock.turn).toBe(12);
+    expect(clock.cards).toEqual(["Tremors", "Upkeeper"]);
+    expect(clock.unbounded).toEqual([]);
+  });
+
+  test("a batched trigger fires at most once a turn, however many sources", () => {
+    const d = deck(ability("1", ["enters"], { batched: true }));
+    expect(drainClock(d, reasons, all(d))!.perTurn.slice(0, 5)).toEqual([0, 0, 1, 1, 4]);
+  });
+
+  test("a source that grows with the board counts as one, and is named", () => {
+    const d = deck();
+    const open = reasons.map((r) => r.tag.startsWith("creates:") ? { ...r, magnitude: { floor: 0, ceiling: null, scalesWith: "goblin" } } : r);
+    const clock = drainClock(d, open, all(d))!;
+    expect(clock.perTurn[3]).toBe(1);
+    expect(clock.unbounded).toEqual(["Maker"]);
+  });
+
+  test("the route assumes its drain is out from the turn it can be cast, as the combo route assumes its pieces", () => {
+    // Tremors and the Upkeeper are in the 99 now, among 90 lands: drawn by turn 3 one game in ten.
+    const d = [...deck(), ...Array.from({ length: 90 }, (_, i) => mk(`Land ${i}`, { mv: 0, typeLine: "Basic Land — Mountain" }))];
+    const clock = drainClock(d, reasons, { commanderNames: ["Bear", "Maker"] })!;
+    expect(clock.perTurn.slice(0, 5)).toEqual([0, 0, 1, 2, 5]);
+  });
+
+  test("ability indexes are per FACE: a back-face drain joins the reasons stamped with its face", () => {
+    const front = { kind: "static", face: 0, effect: { kind: "pump" } };
+    const back = { ...ability("1", ["enters"]), face: 1 };
+    const d = [card("Front // Tremors", 2, [front, back]), card("Bear", 3)];
+    // The back face's drain is ability 0 OF FACE 1; a face-0 reason at index 0 is the static, not it.
+    const r: Reason[] = [
+      { tag: "enters:creature", text: "", consumer: "Front // Tremors", consumerFace: 1, consumerAbility: 0, producer: "Bear" },
+      { tag: "enters:creature", text: "", consumer: "Front // Tremors", consumerAbility: 0, producer: "Bear" },
+    ];
+    expect(drainClock(d, r, all(d))!.perTurn.slice(0, 4)).toEqual([0, 0, 1, 0]);
+  });
+
+  test("one source said in several reasons (a trigger with a chain of effects) is still one source", () => {
+    const d = deck();
+    const twice = [...reasons, { ...reasons[0]!, effectKind: "other" }, { ...reasons[2]!, effectKind: "other" }];
+    expect(drainClock(d, twice, all(d))!.perTurn.slice(0, 5)).toEqual([0, 0, 1, 2, 5]);
+  });
+
+  test("no repeating drain at each opponent, no route", () => {
+    const d = [card("Bear", 3)];
+    expect(drainClock(d, [], all(d))).toBeUndefined();
+  });
 });

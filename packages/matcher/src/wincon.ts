@@ -1,4 +1,6 @@
+import type { Reason } from "@edh-seer/engine";
 import { RESOURCE_TOKENS } from "./archetypes.js";
+import { affordableAt, arrival, HORIZON, STARTING_LIFE } from "./pressure.js";
 import { loadRules, ruleMatches } from "./rules.js";
 import type { DeckCard } from "./types.js";
 
@@ -167,26 +169,154 @@ const DRAIN_KINDS = new Set(["player-damage", "player-life-loss", "drain", "dama
 const REPEATING = new Set(["repeatable", "per-turn", "per-cycle"]);
 const EACH = new Set(["each", "all"]);
 
-/** Each card counted once, by its largest repeating, fixed-amount drain aimed at the opponents. A
- *  one-shot (an instant, an ETB that happens once) is not a rate, and an X amount is not a number. */
+/** A card's repeating, fixed-amount drains aimed at each opponent, with the ability's FACE and its
+ *  index WITHIN that face -- the frame `Reason.consumerAbility` is stamped in (`faces.ts` splits a
+ *  card's abilities per face), so the drain route joins on both. A one-shot (an instant, an ETB that
+ *  happens once) is not a rate, and an X amount is not a number. */
+export function drainAbilities(dc: DeckCard): { face: number; index: number; amount: number; ability: DrainAbility }[] {
+  const out: { face: number; index: number; amount: number; ability: DrainAbility }[] = [];
+  const seenOnFace = new Map<number, number>();
+  for (const a of dc.tags?.abilities ?? []) {
+    const ab = a as DrainAbility;
+    const face = ab.face ?? 0;
+    const index = seenOnFace.get(face) ?? 0;
+    seenOnFace.set(face, index + 1);
+    if (ab.kind !== "triggered" && ab.kind !== "activated") continue;
+    // A LABEL, NOT ITS ABSENCE (review of #1045): an unset `repeats` means the rules could not tell,
+    // and "each opponent" is what the sentence says, so a single-target drain is not counted.
+    if (!REPEATING.has(ab.repeats ?? "") || !DRAIN_KINDS.has(ab.effect?.kind ?? "")) continue;
+    if (ab.effect?.subject?.control !== "opp" || !EACH.has(ab.effect.subject.scope ?? "")) continue;
+    if (!/^\d+$/.test(ab.amount ?? "")) continue;
+    out.push({ face, index, amount: Number(ab.amount), ability: ab });
+  }
+  return out;
+}
+
+type DrainAbility = {
+  kind?: string; face?: number; repeats?: string; amount?: string;
+  trigger?: { verbs?: string[]; batched?: true };
+  effect?: { kind?: string; subject?: { control?: string; scope?: string } };
+};
+
+/** Each card counted once, by its largest repeating, fixed-amount drain aimed at the opponents. */
 export function drainPerTurn(deck: readonly DeckCard[], names: ReadonlySet<string>): Drain | undefined {
   let cards = 0, life = 0;
   for (const dc of deck) {
     if (!names.has(dc.card.name)) continue;
-    let best = 0;
-    for (const a of dc.tags?.abilities ?? []) {
-      const ab = a as { kind?: string; repeats?: string; amount?: string; effect?: { kind?: string; subject?: { control?: string; scope?: string } } };
-      if (ab.kind !== "triggered" && ab.kind !== "activated") continue;
-      // A LABEL, NOT ITS ABSENCE (review of #1045): an unset `repeats` means the rules could not tell,
-      // and "each opponent" is what the sentence says, so a single-target drain is not counted.
-      if (!REPEATING.has(ab.repeats ?? "") || !DRAIN_KINDS.has(ab.effect?.kind ?? "")) continue;
-      if (ab.effect?.subject?.control !== "opp" || !EACH.has(ab.effect.subject.scope ?? "")) continue;
-      if (!/^\d+$/.test(ab.amount ?? "")) continue;
-      best = Math.max(best, Number(ab.amount));
-    }
+    const best = Math.max(0, ...drainAbilities(dc).map((d) => d.amount));
     if (best > 0) { cards++; life += best; }
   }
   return cards ? { cards, life } : undefined;
+}
+
+/** THE DRAIN ROUTE'S TURN (#1056, R5; owner 2026-10-06: speed is the turn the whole table can be
+ *  dead, a rough floor per route, and for a drain "how many triggers of Impact Tremors would you
+ *  have"). A drain at EACH opponent kills the table when one opponent's 40 is gone.
+ *
+ *  It fires once per SOURCE of its trigger, and the sources are the reasons the edge layer already
+ *  joined to that very ability (`consumerAbility`). A source is dated by `arrival`:
+ *  - a card that is the event itself (a creature entering) fires it once, on the turn it arrives;
+ *  - a card whose ABILITY makes the event fires it per use: every turn when that ability repeats,
+ *    once on arrival when it does not;
+ *  - a TOKEN is dated by its MAKER (the `creates:` reason), the same way;
+ *  - a phase trigger (upkeep, combat, end step) has no source and fires once a turn; so does an
+ *    activated drain, which is a stated assumption ({1}: could fire many times), not a floor.
+ *  How many events one use makes is the edge's magnitude: its ceiling when finite, else its floor,
+ *  at least one. A source that grows with the board (Krenko's X goblins) is counted as one and
+ *  NAMED in `unbounded`, so the readout can say so. A batched trigger ("one or more") fires at most
+ *  once a turn. Each source is used once a turn; nobody gains life. Rough, by the owner's word.
+ *
+ *  THE ROUTE ASSUMES ITS DRAIN IS OUT from the turn it can be cast, as the combo route assumes its
+ *  pieces: the question is how fast this route kills, not how often it shows up. Weighting the drain
+ *  by its odds of being drawn too (first build, 2026-10-06) read Krenko with Impact Tremors at 0.6
+ *  life a turn and timed 8 decks of 45 -- an average over games mostly WITHOUT the payoff. The
+ *  sources stay weighted by their draw odds: those are the deck, the drain is the route. */
+export interface DrainClock {
+  /** First turn the drains have taken 40 from each opponent; absent past the horizon. */
+  turn?: number;
+  /** Life each opponent loses on each turn, turn 1 first, to the horizon. */
+  perTurn: number[];
+  /** The drain cards counted. */
+  cards: string[];
+  /** Sources whose events grow with the board, counted as one each. */
+  unbounded: string[];
+}
+
+const PHASE_VERBS = new Set(["upkeep", "begin-combat", "end-step"]);
+
+export function drainClock(
+  deck: readonly DeckCard[],
+  reasons: readonly Reason[],
+  opts: { commanderNames?: readonly string[]; manaBudget?: readonly number[] } = {},
+): DrainClock | undefined {
+  const byName = new Map(deck.map((dc) => [dc.card.name, dc]));
+  const on = arrival(deck, opts);
+  const arrives = (dc: DeckCard, t: number): number => on(dc, t) - on(dc, t - 1);
+  const unbounded = new Set<string>();
+  const perUse = (r: Reason): number => {
+    const m = r.magnitude;
+    if (!m) return 1;
+    if (m.ceiling === null && r.producer) unbounded.add(r.producer);
+    return Math.max(1, m.ceiling ?? m.floor);
+  };
+  // Ability indexes are per FACE (see `drainAbilities`).
+  const repeats = (dc: DeckCard, face: number | undefined, ability: number | undefined): boolean =>
+    ability !== undefined && REPEATING.has(((dc.tags?.abilities ?? []).filter((a) => ((a as DrainAbility).face ?? 0) === (face ?? 0))[ability] as DrainAbility | undefined)?.repeats ?? "");
+  /** Events one card-side source makes on turn t: per use, every turn it is out when it repeats. */
+  const fromCard = (dc: DeckCard, r: Reason, t: number): number =>
+    perUse(r) * (repeats(dc, r.producerFace, r.producerAbility) ? on(dc, t) : arrives(dc, t));
+  // ONE SOURCE, ONE COUNT: a trigger with a chain of effects says itself in several reasons that
+  // differ only in `effectKind` (Archon of Cruelty: six), so sources are keyed by who supplies the
+  // event and through which ability, never by reason.
+  const sourceKey = (r: Reason): string => `${r.producer}|${r.producerFace ?? 0}|${r.producerAbility ?? "-"}|${r.producerIsToken ? 1 : 0}`;
+  const distinct = (rs: readonly Reason[]): Reason[] => [...new Map(rs.map((r) => [sourceKey(r), r])).values()];
+  const makers = new Map<string, Reason[]>();
+  for (const r of reasons) {
+    if (!r.tag.startsWith("creates:") || !r.consumer || !r.producer) continue;
+    makers.set(r.consumer, [...(makers.get(r.consumer) ?? []), r]);
+  }
+  for (const [token, rs] of makers) makers.set(token, distinct(rs));
+
+  const drains = deck.flatMap((dc) => drainAbilities(dc).map((d) => ({
+    dc, ...d, sources: distinct(reasons.filter((r) =>
+      r.consumer === dc.card.name && (r.consumerFace ?? 0) === d.face && r.consumerAbility === d.index)),
+  })));
+  if (drains.length === 0) return undefined;
+  const perTurn: number[] = [];
+  let cumulative = 0, turn: number | undefined;
+  for (let t = 1; t <= HORIZON; t++) {
+    let life = 0;
+    for (const d of drains) {
+      let fires: number;
+      if (d.ability.kind === "activated" || (d.ability.trigger?.verbs ?? []).some((v) => PHASE_VERBS.has(v))) {
+        fires = 1;
+      } else {
+        fires = 0;
+        for (const r of d.sources) {
+          if (r.producerIsToken) {
+            for (const m of makers.get(r.producer ?? "") ?? []) {
+              const maker = byName.get(m.producer!);
+              if (maker) fires += fromCard(maker, m, t);
+            }
+            continue;
+          }
+          const producer = byName.get(r.producer ?? "");
+          if (producer) fires += fromCard(producer, r, t);
+        }
+        if (d.ability.trigger?.batched) fires = Math.min(1, fires);
+      }
+      life += d.amount * fires * (d.dc.card.manaValue <= affordableAt(opts.manaBudget, t) ? 1 : 0);
+    }
+    perTurn.push(Math.round(life * 100) / 100);
+    cumulative += life;
+    if (turn === undefined && cumulative >= STARTING_LIFE) turn = t;
+  }
+  return {
+    ...(turn !== undefined ? { turn } : {}),
+    perTurn,
+    cards: [...new Set(drains.map((d) => d.dc.card.name))],
+    unbounded: [...unbounded].sort(),
+  };
 }
 
 /** The deck's win plans and how concentrated they are.
