@@ -9,8 +9,10 @@ const RESULTS_SHOWN = 3;
  *  arrow on it says the loop turns. Beside it: the pieces by name, what it repeats in Commander
  *  Spellbook's words, and what the pieces cost together. A cheap one is marked, since that is what
  *  rules bracket 3 out. */
-export function ComboLoop({ cards, result, manaValue, cheap, artOf }: {
+export function ComboLoop({ cards, result, manaValue, cheap, artOf, wins }: {
   cards: string[]; result: string; manaValue: number; cheap: boolean;
+  /** The deck's cards that turn this loop into a win (`combo.payoffs`); undefined says nothing. */
+  wins?: readonly string[];
   artOf?: (name: string) => string | undefined;
 }) {
   const { open, known } = useCardDrawer();
@@ -52,6 +54,10 @@ export function ComboLoop({ cards, result, manaValue, cheap, artOf }: {
           {results.slice(0, RESULTS_SHOWN).join(" · ")}
           {results.length > RESULTS_SHOWN ? ` +${results.length - RESULTS_SHOWN} more` : ""}
         </span>
+        {/* WHAT KILLS (#1034): the row said what repeats and never what turns it into a win. */}
+        {wins ? (wins.length
+          ? <span className="text-xs">Wins through {wins.map((n, i) => <span key={n}>{i > 0 ? ", " : ""}<CardName name={n} /></span>)}</span>
+          : <span className="text-xs text-(--muted)">No card here turns it into a win</span>) : null}
         <span className="flex flex-wrap items-baseline gap-x-2 text-xs">
           <span className="stat-num text-(--muted)">{manaValue} mana together</span>
           {cheap ? <span className="text-(--accent)">early enough to rule out bracket 3</span> : null}

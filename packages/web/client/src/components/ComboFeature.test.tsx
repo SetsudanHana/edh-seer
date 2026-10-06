@@ -99,3 +99,16 @@ test("a second click on a piece walks the map from it, and its menu offers the w
   fireEvent.click(screen.getByRole("menuitem", { name: "Walk the map from here" }));
   expect(walk).toHaveBeenLastCalledWith("C");
 });
+
+/** WHAT KILLS, AND EACH STEP ONCE (#1034): Rani's Dualcaster loop printed two identical steps and
+ *  never said what wins. */
+test("the drawn combo names its win or says none was found, and prints an identical step once", () => {
+  const parts = comboParts(["A", "B", "C"], m)!;
+  const twice = { ...parts, sides: [parts.sides[0]!, parts.sides[0]!, parts.sides[2] ?? null] };
+  const { unmount } = render(<ComboFeature parts={twice} result="Infinite mana" manaValue={9} cheap={false} wins={[]} />);
+  expect(screen.getByText(/No card here was found that turns what the loop repeats into a win/)).toBeInTheDocument();
+  expect(screen.getAllByText(parts.sides[0]!.text, { exact: false })).toHaveLength(1);
+  unmount();
+  render(<ComboFeature parts={parts} result="Infinite mana" manaValue={9} cheap={false} wins={["Lone"]} />);
+  expect(screen.getByText(/Wins through/)).toHaveTextContent("Wins through Lone");
+});
