@@ -210,6 +210,25 @@ export function ritualAdds(dc: DeckCard): number {
   return ritualMana(dc.card.oracleText ?? "").length;
 }
 
+/** AN OPPONENT'S HAND ON OUR TURN t, ASSUMED (owner 2026-10-06, for Jeska's Will): 7 on turns 1-2, 6
+ *  on turn 3, one fewer a turn after, never below 3 -- they draw one a turn and play a land and a
+ *  spell or so. The goldfish has no opponent; this is the one place it needs a hand. */
+export function opponentHandSize(turn: number): number {
+  return turn <= 2 ? 7 : Math.max(3, 9 - turn);
+}
+
+/** A RITUAL THAT COUNTS THE OPPONENT'S HAND (Jeska's Will, "Add {R} for each card in target opponent's
+ *  hand"): the colour mask of that one symbol, or 0. Read beside `ritualAdds`, which refuses every
+ *  "for each"; this is the one count the owner ruled on. Anchored per line (no `(?:^|\n)\s*`). */
+export function opponentHandRitual(dc: DeckCard): number {
+  if ((dc.card.typeLine ?? "").includes("//")) return 0;
+  if (!/\b(?:instant|sorcery)\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) return 0;
+  const text = dc.card.oracleText ?? "";
+  if (/additional cost|spend this mana only/i.test(text)) return 0;
+  const m = /^(?:• )?Add (\{[WUBRGC]\}) for each card in target opponent's hand\./m.exec(text);
+  return m ? colorMask([m[1]!.slice(1, -1)]) : 0;
+}
+
 /** The colour mask of each mana a ritual adds, one entry per symbol ("{R}{R}{R}" is three red). */
 function ritualMana(text: string): number[] {
   // ANCHORED PER LINE (`m`), never `(?:^|\n)\s*`: the newline and the whitespace overlap, and CodeQL's
@@ -571,6 +590,8 @@ interface DeckSlot {
   /** A RITUAL: the colour of each mana it adds, cast from hand for one turn's burst (`ritualAdds`).
    *  Never a source. */
   ritual?: number[];
+  /** A ritual that adds one mana of this colour per card in an opponent's assumed hand. */
+  ritualPerOppCard?: number;
   /** A fetchland removes the land it finds from the library. */
   fetches: boolean;
   /** The land this fetch FINDS arrives tapped -- Evolving Wilds and the Landscape cycle. */
@@ -733,6 +754,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       costKey: castableManaCost(dc.card) ?? "",
       ...(isLand ? { land: classifyLand(dc.card) } : { accelerant: classifyAccelerant(dc) }),
       ...(!isLand && ritualAdds(dc) > 0 ? { ritual: ritualMana(dc.card.oracleText ?? "") } : {}),
+      ...(!isLand && opponentHandRitual(dc) > 0 ? { ritualPerOppCard: opponentHandRitual(dc) } : {}),
     };
   });
   const nonlands = slots.filter((s) => !s.isLand);
@@ -1014,9 +1036,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         for (const src of untapped) for (let k = 0; k < src.mana; k++) units.push(src.colors);
         units.sort((a, b) => popcount(a) - popcount(b));
         units.splice(0, Math.max(0, made - pool));
-        for (const r of hand.filter((c) => c.ritual !== undefined && c.cost !== null).sort((a, b) => a.manaValue - b.manaValue)) {
-          if (r.ritual!.length <= r.manaValue) continue;
-          if (spendUnits(units, r.cost!)) units.push(...r.ritual!);
+        for (const r of hand.filter((c) => (c.ritual !== undefined || c.ritualPerOppCard !== undefined) && c.cost !== null).sort((a, b) => a.manaValue - b.manaValue)) {
+          const adds = r.ritual ?? Array<number>(opponentHandSize(turn)).fill(r.ritualPerOppCard!);
+          if (adds.length <= r.manaValue) continue;
+          if (spendUnits(units, r.cost!)) units.push(...adds);
         }
         for (const e of extras) {
           if (startedAt.has(e.name)) continue;
@@ -1366,7 +1389,7 @@ export function manaModel(
       headline: { mana: 6, turn: 6, low: Math.min(lo, hi), high: Math.max(lo, hi) },
       // FAST STARTS, only for a deck that runs rituals: without one the burst is the board's own mana,
       // which the commander's castability row already prices with colours (owner 2026-10-06).
-      ...(deck.some((dc) => ritualAdds(dc) > 0) && greedy.fastStart.size > 0
+      ...(deck.some((dc) => ritualAdds(dc) > 0 || opponentHandRitual(dc) > 0) && greedy.fastStart.size > 0
         ? { fastStart: [...greedy.fastStart].map(([name, byTurn]) => ({ name, byTurn: byTurn.map((p) => Math.round(p * 1000) / 1000) })) }
         : {}),
     },
