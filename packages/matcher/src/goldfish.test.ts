@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { pAtLeast, seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
-import { classifyAccelerant, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
+import { classifyAccelerant, ritualAdds, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -1013,4 +1013,55 @@ test("a commander is held in every trial, because the command zone is not the li
   const commander = card("Commander", "Legendary Creature — Human", 4);
   const r = simulate(deck, { trials: 500, turns: 5, seed: 29, alsoPrice: [commander] });
   expect(r.byCardHeld.get("Commander")).toEqual(Array(5).fill(500));
+});
+
+/** RITUALS ARE ONE TURN'S MANA, NOT A SOURCE (owner 2026-10-06: "there were games where I won on turn
+ *  3 casting Alania t2"). A ritual never joins the board, so `manaAt` and every castability figure
+ *  stay as they were; what it changes is how fast the COMMANDER can come down in one burst. */
+test("a ritual is an instant or sorcery that adds a fixed amount; a rate or a creature is not one", () => {
+  expect(ritualAdds(card("Desperate Ritual", "Instant — Arcane", 2, "Add {R}{R}{R}.\nSplice onto Arcane {1}{R}"))).toBe(3);
+  expect(ritualAdds(card("Seething Song", "Instant", 3, "Add {R}{R}{R}{R}{R}."))).toBe(5);
+  expect(ritualAdds(card("Jeska's Will", "Sorcery", 3, "Choose one or both —\n• Add {R} for each card in target opponent's hand."))).toBe(0);
+  expect(ritualAdds(card("Rite of Flame", "Sorcery", 1, "Add {R}{R}, then add {R} for each card named Rite of Flame in each graveyard."))).toBe(0);
+  expect(ritualAdds(card("Elf", "Creature — Elf", 1, "Add {G}."))).toBe(0);
+  // An extra cost, a spending restriction, or a creature wearing an instant face is not a free ritual.
+  expect(ritualAdds(card("Culling", "Instant", 1, "As an additional cost to cast this spell, sacrifice a creature.\nAdd {B}{B}{B}{B}."))).toBe(0);
+  expect(ritualAdds(card("Bound", "Instant", 1, "Add {R}{R}{R}. Spend this mana only to cast instant or sorcery spells."))).toBe(0);
+  expect(ritualAdds(card("Giant", "Creature — Giant // Instant — Adventure", 4, "Add {R}{R}{R}."))).toBe(0);
+});
+
+test("rituals in hand bring the commander down earlier, and leave the board's mana alone", () => {
+  const withCost = (dc: DeckCard, manaCost: string): DeckCard => ({ ...dc, card: { ...dc.card, manaCost } as never });
+  const ritual = (i: number) => withCost(card(`Ritual ${i}`, "Instant", 2, "Add {R}{R}{R}."), "{1}{R}");
+  const inert = (i: number) => withCost(card(`Ritual ${i}`, "Instant", 2, "Draw a card."), "{1}{R}");
+  const commander = withCost(card("Commander", "Legendary Creature — Otter", 5), "{3}{R}{R}");
+  const mountains = Array.from({ length: 40 }, (_, i) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "", ["R"]));
+  const withRituals = simulate([...mountains, ...Array.from({ length: 59 }, (_, i) => ritual(i))], { trials: 2_000, turns: 5, seed: 5, alsoPrice: [commander] });
+  const without = simulate([...mountains, ...Array.from({ length: 59 }, (_, i) => inert(i))], { trials: 2_000, turns: 5, seed: 5, alsoPrice: [commander] });
+  // Two lands and three rituals chain 2 -> 3 -> 4 -> 5 on turn 2.
+  expect(withRituals.fastStart.get("Commander")![1]).toBeGreaterThan(0.5);
+  expect(without.fastStart.get("Commander")![1]).toBe(0);
+  expect(withRituals.manaAt).toEqual(without.manaAt);
+});
+
+test("the burst starts from the mana left after this turn's accelerants, not from what the board made", () => {
+  // Turn 3: three lands pay for a 3-mana rock that taps for three -- six made, three left to spend.
+  const rock = (i: number) => card(`Rock ${i}`, "Artifact", 3, "{T}: Add {C}{C}{C}.", ["C"]);
+  const commander = card("Commander", "Legendary Creature — Human", 6);
+  const r = simulate([...basics(40, "Mountain"), ...Array.from({ length: 59 }, (_, i) => rock(i))], { trials: 500, turns: 4, seed: 9, alsoPrice: [commander] });
+  expect(r.fastStart.get("Commander")![2]).toBe(0);
+  expect(r.fastStart.get("Commander")![3]).toBeGreaterThan(0.5);
+});
+
+/** NOT COLOUR-BLIND (owner 2026-10-06: "we can not be colorblind regarding rituals"). A ritual pays
+ *  its own cost in colour and adds its own colour; the commander has to be payable in colour. */
+test("red rituals on Mountains bring down a red commander, never a blue one", () => {
+  const ritual = (i: number) => ({ card: { name: `Ritual ${i}`, typeLine: "Instant", oracleText: "Add {R}{R}{R}.", manaCost: "{1}{R}", keywords: [], colors: ["R"], manaValue: 2 } as never, tags: null });
+  const mountains = Array.from({ length: 40 }, (_, i) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "", ["R"]));
+  const deck = [...mountains, ...Array.from({ length: 59 }, (_, i) => ritual(i))];
+  const red = { card: { name: "Red", typeLine: "Legendary Creature — Human", oracleText: "", manaCost: "{3}{R}{R}", keywords: [], colors: ["R"], manaValue: 5 } as never, tags: null };
+  const blue = { card: { name: "Blue", typeLine: "Legendary Creature — Otter", oracleText: "", manaCost: "{3}{U}{R}", keywords: [], colors: ["U", "R"], manaValue: 5 } as never, tags: null };
+  const r = simulate(deck, { trials: 1_000, turns: 3, seed: 13, alsoPrice: [red, blue] });
+  expect(r.fastStart.get("Red")![1]).toBeGreaterThan(0.5);
+  expect(r.fastStart.get("Blue")![2]).toBe(0);
 });
