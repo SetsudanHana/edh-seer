@@ -49,7 +49,7 @@ test("a cheap two-card combo is the bracket's reason and the fastest route, and 
 
 test("a combo bracket 3 still allows is named as the reason, with why it is allowed", () => {
   const t = tableTalk(report({ combos: [{ cards: ["A", "B", "C"], result: "Infinite mana" }] }), graph({}), (n) => mv[n])!;
-  expect(t.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C) and needs another card to win.");
+  expect(t.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C) and another card to win.");
 });
 
 test("nothing to warn about is said, as what was checked", () => {

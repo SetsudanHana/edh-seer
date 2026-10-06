@@ -108,6 +108,9 @@ test("the drawn combo names its win or says none was found, and prints an identi
   const { unmount } = render(<ComboFeature parts={twice} result="Infinite mana" manaValue={9} cheap={false} wins={[]} />);
   expect(screen.getByText(/No card here was found that turns what the loop repeats into a win/)).toBeInTheDocument();
   expect(screen.getAllByText(parts.sides[0]!.text, { exact: false })).toHaveLength(1);
+  // Numbered 1, 2 with no gap, in the list and on the drawing alike.
+  expect([...document.querySelectorAll("ol .pip")].map((p) => p.textContent)).toEqual(["1", "2"]);
+  expect([...document.querySelectorAll("svg text")].map((t) => t.textContent).filter((t) => /^\d+$/.test(t ?? ""))).toEqual(["1", "2"]);
   unmount();
   render(<ComboFeature parts={parts} result="Infinite mana" manaValue={9} cheap={false} wins={["Lone"]} />);
   expect(screen.getByText(/Wins through/)).toHaveTextContent("Wins through Lone");

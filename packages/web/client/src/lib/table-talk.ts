@@ -52,7 +52,8 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
   // wins by itself; the report's own payoffs (`combo.payoffs`) answer it.
   const kill = (c: { payoffs?: { name: string }[] }, joiner: "that" | "and") => (c.payoffs?.length
     ? ` ${joiner} wins through ${list(c.payoffs.map((x) => front(x.name)))}`
-    : ` ${joiner} needs another card to win`);
+    // "needs 3 cards (…) and needs another card" said "needs" twice for two different things.
+    : joiner === "and" ? " and another card to win" : " that needs another card to win");
   if (cheap) why.push(`a cheap two-card combo (${cheap.cards.map(front).join(" + ")})${kill(cheap, "that")}`);
   // A COMBO BRACKET 3 STILL ALLOWS is still the thing a stranger asks about: named here, and then
   // not a second time in the heads-up.
