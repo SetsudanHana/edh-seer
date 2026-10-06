@@ -59,6 +59,23 @@ type Step = {
    *  goal, so a goal phrased in our vocabulary ("inspect the breadth axis") tests nothing. */
   goal: string;
   acts?: Act[];
+  /** Wait for this selector after arriving, before anything is shot: the report's first chapter
+   *  (`#read`) is drawn after the network goes quiet, and a frame taken before it is a skeleton. */
+  ready?: string;
+  /** Shoot from where the step leaves the reader down to this element's BOTTOM, not the default
+   *  two screens (R-T4). Two screens left gaps between chapters and stopped the Cards table near row
+   *  30, and every round's seats reported both. Capped at `MAX_THROUGH` frames. */
+  through?: string;
+  /** Selectors that must sit wholly inside the frames this step took, at desktop and phone. One
+   *  outside them fails the capture: a seat that cannot see a region reports it as missing, and the
+   *  round cannot tell that from the product leaving it out (R-T4). */
+  regions?: string[];
+  /** Open the card drawer for the commander and the first `max` card names inside `scope`, one set
+   *  of frames each -- or, with `extra`, for the deck's `drawerExtra` names instead. Extras belong on
+   *  the Cards page, the one place every card is named: the plant card is on no report chapter. The drawer is the only place a card's text
+   *  and its every link are shown, and no round before R-T4 captured it: every claim was checkable
+   *  against one card only. */
+  drawers?: { scope: string; heading?: string; max: number; extra?: boolean };
 };
 
 type RunFile = {
@@ -79,6 +96,13 @@ type RunFile = {
   steps: Step[];
   /** Selectors whose computed numbers the judge gets beside the screenshot. */
   measure: string[];
+  /** Per deck (file stem): cards whose drawer is always captured, beside the commander. Where a
+   *  calibration plant lives, so the seat can reach it (#989: pod-fit missed the Tinybones plant
+   *  three rounds running because it sat in a drawer no frame showed). */
+  drawerExtra?: Record<string, string[]>;
+  /** Per deck: text that must appear in some captured drawer, or the capture fails. The plant's
+   *  sentence goes here, which makes "the plant is reachable from the frames" a checked fact. */
+  mustShow?: Record<string, string[]>;
 };
 
 const DESKTOP = { viewport: { width: 1920, height: 1080 } };
@@ -276,6 +300,26 @@ export function overlapPairs(rects: Rect[]): number {
   return n;
 }
 
+/** How many viewport frames reach from `start` down to `end` (document px), at least one and at most
+ *  `cap`. A region taller than the cap is then reported missing by `covered`, not silently cut. */
+export function sliceCount(start: number, end: number, height: number, cap: number): number {
+  if (height <= 0) return 1;
+  return Math.min(cap, Math.max(1, Math.ceil((end - start) / height)));
+}
+
+/** Whether a document-relative box [top, bottom) lies wholly inside the union of the frames'
+ *  [y, y + height) ranges. The ranges are where the page ACTUALLY scrolled to, which near the end of
+ *  a page is less than asked for, so they overlap rather than leave a gap. */
+export function covered(ranges: readonly [number, number][], top: number, bottom: number): boolean {
+  let reach = top;
+  for (const [a, z] of [...ranges].sort((x, y) => x[0] - y[0])) {
+    if (a > reach) break;
+    reach = Math.max(reach, z);
+    if (reach >= bottom) return true;
+  }
+  return reach >= bottom;
+}
+
 /** Painted where nobody can reach it. Catches the mark that measures perfectly and is unfindable.
  *
  *  THE VERTICAL BOUND IS THE DOCUMENT, NOT THE VIEWPORT. Using the viewport height here flagged 18
@@ -465,26 +509,138 @@ async function openPage(context: BrowserContext): Promise<Page> {
  *  step had to blind-scroll the whole report, and at ten steps it would have cost 320 frames a
  *  round. Coverage went UP when the cap came down, because navigation replaced guessing. */
 const MAX_SLICES = 2;
+/** The cap for a step with `through`. The Cards table of a 100-card deck is about eight desktop
+ *  screens; past this a region is reported missing rather than shot forever. */
+const MAX_THROUGH = 16;
 
-async function shoot(page: Page, dir: string, stem: string): Promise<string[]> {
+/** Document-relative top and bottom of the first match, or null when nothing matches. */
+async function boxOf(page: Page, selector: string): Promise<{ top: number; bottom: number } | null> {
+  return page.evaluate((sel: string) => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { top: r.top + window.scrollY, bottom: r.bottom + window.scrollY };
+  }, selector);
+}
+
+async function shoot(page: Page, dir: string, stem: string, through?: string): Promise<{ files: string[]; ranges: [number, number][] }> {
   const files: string[] = [];
+  const ranges: [number, number][] = [];
   const { height } = page.viewportSize() ?? { height: 0 };
   // FROM WHERE THE STEP LEFT THE READER, not from the top. A step that navigates to a chapter has
   // already scrolled the page to it; slicing from 0 would quietly discard that and shoot the
   // landing screen again, which is how the first round produced two byte-identical steps.
   const startY = await page.evaluate(() => window.scrollY);
   const full = await page.evaluate(() => document.documentElement.scrollHeight);
-  const remaining = Math.max(0, full - startY);
-  const slices = height > 0 ? Math.min(MAX_SLICES, Math.max(1, Math.ceil(remaining / height))) : 1;
+  const end = through ? (await boxOf(page, through))?.bottom : undefined;
+  const slices = end === undefined
+    ? sliceCount(startY, full, height, MAX_SLICES)
+    : sliceCount(startY, end, height, MAX_THROUGH);
   for (let i = 0; i < slices; i++) {
-    await page.evaluate((y: number) => window.scrollTo(0, y), startY + i * height);
+    const y = await page.evaluate((to: number) => { window.scrollTo(0, to); return window.scrollY; }, startY + i * height);
     await page.waitForTimeout(120);
     const file = slices === 1 ? `${stem}.png` : `${stem}-p${i + 1}.png`;
     await page.screenshot({ path: join(dir, file) });
     files.push(file);
+    // WHERE IT LANDED, not where it was asked to go: the last screen of a page clamps.
+    ranges.push([y, y + height]);
   }
   await page.evaluate((y: number) => window.scrollTo(0, y), startY);
-  return files;
+  return { files, ranges };
+}
+
+/** The `regions` this step's frames do not wholly show, by selector. A selector that matches
+ *  nothing is missing too: a region the product stopped drawing is a capture the seats cannot use. */
+async function missingRegions(page: Page, regions: readonly string[], ranges: [number, number][]): Promise<string[]> {
+  const out: string[] = [];
+  for (const sel of regions) {
+    const b = await boxOf(page, sel);
+    if (!b) out.push(`${sel} (not on the page)`);
+    else if (!covered(ranges, b.top, b.bottom)) out.push(`${sel} (${Math.round(b.top)}-${Math.round(b.bottom)}px, frames reach ${ranges.map(([a, z]) => `${Math.round(a)}-${Math.round(z)}`).join(", ")})`);
+  }
+  return out;
+}
+
+/** Clicks every "Show all N" / "Show N more" / "Show N smaller" list open inside the page body,
+ *  repeatedly, since the cut list opens in steps. Returns how many clicks it took (#989: first-cuts
+ *  could not reach its 8th cut behind a shut "Show 2 more").
+ *
+ *  NOT RESTORED IN PLACE: a list knows only its own state. The caller reloads instead. */
+async function openLists(page: Page): Promise<number> {
+  let n = 0;
+  for (let round = 0; round < 10; round++) {
+    const clicked = await page.evaluate(() => {
+      const shut = Array.from(document.querySelectorAll<HTMLElement>("main button, main summary"))
+        .filter((b) => /^Show (all \d+|\d+ more|\d+ smaller)/.test((b.textContent ?? "").trim()) && b.getClientRects().length > 0);
+      for (const b of shut) b.click();
+      return shut.length;
+    });
+    if (!clicked) break;
+    n += clicked;
+    await page.waitForTimeout(150);
+  }
+  return n;
+}
+
+/** The card drawer for each name, as the reader sees it after clicking the name: the viewport,
+ *  then the drawer's own scroll, with its "Every way it works" fold open. Returns the frames and
+ *  the drawer's text, which `mustShow` is checked against. */
+async function shootDrawers(page: Page, dir: string, stem: string, names: readonly string[]): Promise<{ name: string; files: string[]; text: string; failure?: string; covered?: string }[]> {
+  const out: { name: string; files: string[]; text: string; failure?: string; covered?: string }[] = [];
+  for (const name of names) {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const link = page.locator(`a[data-card="${name.replace(/"/g, '\\"')}"]`).first();
+    let covered: string | undefined;
+    try {
+      // TO THE MIDDLE, not the edge: `scrollIntoViewIfNeeded` left the name at the top of a phone
+      // screen, under the sticky chapter bar, and every such tap read as blocked (2026-10-06, six
+      // phone drawers on three decks). A reader scrolls a name to where they can tap it.
+      await link.evaluate((el) => el.scrollIntoView({ block: "center" }), undefined, { timeout: ACT_TIMEOUT });
+      await page.waitForTimeout(150);
+      try {
+        await link.click({ timeout: ACT_TIMEOUT });
+      } catch (e) {
+        // A NAME SOMETHING SITS ON TOP OF (the phone's sticky bar, an open sheet) still has a
+        // drawer the seats need to read. Open it by script, and say the tap was blocked: that a
+        // reader could not tap it is a finding of its own, not a reason to lose the card's text.
+        covered = (e as Error).message.split("\n")[0].slice(0, 200);
+        await link.evaluate((el) => (el as HTMLElement).click());
+      }
+      await page.locator("[data-testid='card-inspector']").first().waitFor({ timeout: ACT_TIMEOUT });
+    } catch (e) {
+      out.push({ name, files: [], text: "", failure: (e as Error).message.split("\n")[0].slice(0, 200) });
+      continue;
+    }
+    await page.waitForTimeout(300);
+    // The fold that holds every link sentence, and the scroll box the drawer lives in.
+    const scroll = await page.evaluate(() => {
+      const ins = document.querySelector<HTMLElement>("[data-testid='card-inspector']")!;
+      for (const d of Array.from(ins.querySelectorAll("details"))) d.open = true;
+      const chain: HTMLElement[] = [ins, ...Array.from(ins.querySelectorAll<HTMLElement>("*"))];
+      for (let p = ins.parentElement; p && p !== document.body; p = p.parentElement) chain.push(p);
+      const box = chain.filter((el) => el.scrollHeight > el.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(el).overflowY))
+        .sort((a, b) => (b.scrollHeight - b.clientHeight) - (a.scrollHeight - a.clientHeight))[0];
+      if (box) box.setAttribute("data-capture-scroll", "");
+      return box ? { h: box.clientHeight, full: box.scrollHeight } : null;
+    });
+    const frames = scroll ? Math.min(4, Math.max(1, Math.ceil(scroll.full / scroll.h))) : 1;
+    const files: string[] = [];
+    for (let i = 0; i < frames; i++) {
+      if (scroll) {
+        await page.evaluate((y: number) => { document.querySelector("[data-capture-scroll]")!.scrollTop = y; }, i * scroll.h);
+        await page.waitForTimeout(100);
+      }
+      const file = `${stem}-${slug}${frames === 1 ? "" : `-p${i + 1}`}.png`;
+      await page.screenshot({ path: join(dir, file) });
+      files.push(file);
+    }
+    const text = await page.evaluate(() => (document.querySelector<HTMLElement>("[data-testid='card-inspector']")?.innerText ?? ""));
+    await page.evaluate(() => document.querySelector("[data-capture-scroll]")?.removeAttribute("data-capture-scroll"));
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(150);
+    out.push({ name, files, text, ...(covered ? { covered } : {}) });
+  }
+  return out;
 }
 
 /** Opens every closed `<details>`, and returns how to put them back.
@@ -619,6 +775,10 @@ async function main(runPath: string): Promise<void> {
   const metrics: Record<string, unknown> = {};
   const bands: Band[] = [];
   const axe: Record<string, unknown> = {};
+  /** Regions a step's frames did not show; any entry fails the capture (R-T4). */
+  const missing: string[] = [];
+  /** Every captured drawer's text, per deck, for `mustShow`. */
+  const drawerText = new Map<string, string>();
 
   // --- the walkthrough pass: every step, both widths, one deck per seat -----------------------
   for (const deckFile of deckFiles) {
@@ -642,9 +802,21 @@ async function main(runPath: string): Promise<void> {
           }
           const actFailures = await apply(page, step.acts, vars);
           await settle(page);
+          if (step.ready) {
+            await page.locator(step.ready).first().waitFor({ timeout: 60_000 })
+              .catch(() => actFailures.push(`ready ${step.ready}: never appeared`));
+          }
 
+          const full = label === "desktop" || label === "phone";
           const stepScrollY = await page.evaluate(() => window.scrollY);
-          const files = await shoot(page, deckDir, `${step.id}-${label}`);
+          // The space pass (wide, uhd) needs two screens, not the whole chapter.
+          const { files, ranges } = await shoot(page, deckDir, `${step.id}-${label}`, full ? step.through : undefined);
+          if (full && step.regions?.length) {
+            for (const m of await missingRegions(page, step.regions, ranges)) {
+              console.log(`  MISSING REGION ${stem}/${step.id}/${label}: ${m}`);
+              missing.push(`${stem}/${step.id}/${label}: ${m}`);
+            }
+          }
           manifest.push({
             deck: stem, step: step.id, goal: step.goal, viewport: label, files,
             // Present and non-empty means the reader could not do this step at this width. The
@@ -689,12 +861,42 @@ async function main(runPath: string): Promise<void> {
           // explained" from "explained one click away" was showing the wrong screen.
           await page.evaluate((y: number) => window.scrollTo(0, y), stepScrollY);
 
-          // The second frame, only where a disclosure was actually shut -- then put them back.
-          if (label !== "wide" && label !== "uhd" && await expandDetails(page)) {
-            await page.waitForTimeout(200);
-            const opened = await shoot(page, deckDir, `${step.id}-${label}-expanded`);
-            manifest.push({ deck: stem, step: step.id, goal: step.goal, viewport: label, variant: "details-expanded", files: opened });
-            await restoreDetails(page);
+          // The second frame, only where a disclosure or a "Show N more" list was actually shut --
+          // then put them back. A list cannot be put back, so a page whose lists were opened is
+          // reloaded: the next step must start from the state a reader arrives in.
+          if (full) {
+            const shut = await expandDetails(page);
+            const lists = await openLists(page);
+            if (shut || lists) {
+              await page.waitForTimeout(200);
+              const opened = await shoot(page, deckDir, `${step.id}-${label}-expanded`, step.through);
+              manifest.push({ deck: stem, step: step.id, goal: step.goal, viewport: label, variant: "details-expanded", files: opened.files });
+              await restoreDetails(page);
+              if (lists) {
+                await page.reload();
+                await settle(page);
+                if (step.ready) await page.locator(step.ready).first().waitFor({ timeout: 60_000 }).catch(() => {});
+              }
+            }
+          }
+
+          // The drawers: the commander, the deck's named extras, and the first cards in scope.
+          if (full && step.drawers) {
+            // `heading` narrows the scope to the block a heading opens ("Cards that carry it"): the
+            // pair sentences, not the first chips the chapter happens to draw.
+            const inScope = await page.evaluate(({ scope, heading, max }: { scope: string; heading?: string; max: number }) => {
+              const root = document.querySelector(scope);
+              const h = heading ? Array.from(root?.querySelectorAll("h2, h3, h4") ?? []).find((x) => x.textContent?.trim() === heading) : null;
+              const box = h ? h.parentElement : root;
+              return [...new Set(Array.from(box?.querySelectorAll("a[data-card]") ?? []).map((a) => a.getAttribute("data-card")!))].slice(0, max);
+            }, step.drawers);
+            const names = [...new Set((step.drawers.extra ? run.drawerExtra?.[stem] ?? [] : [vars.commander, ...inScope]).filter(Boolean))];
+            for (const d of await shootDrawers(page, deckDir, `${step.id}-${label}`, names)) {
+              manifest.push({ deck: stem, step: step.id, goal: `read what ${d.name} does and every card it works with`, viewport: label, variant: "drawer", card: d.name, files: d.files, ...(d.failure ? { actFailures: [d.failure] } : {}), ...(d.covered ? { tapBlocked: d.covered } : {}) });
+              if (d.failure) console.log(`  UNREACHABLE drawer ${stem}/${d.name}/${label}: ${d.failure}`);
+              if (d.covered) console.log(`  COVERED ${stem}/${d.name}/${label}: opened by script, the tap was blocked: ${d.covered.slice(0, 120)}`);
+              drawerText.set(stem, `${drawerText.get(stem) ?? ""}\n${d.text}`);
+            }
           }
         }
       } finally {
@@ -763,6 +965,17 @@ async function main(runPath: string): Promise<void> {
     }
   }
 
+  // THE FRAME LIST, PER DECK DIRECTORY (#989). The seats have `Read` only, which refuses a
+  // directory, so "list the directory first" could not be obeyed and every seat guessed names. The
+  // brief points a seat at this file; it is the inventory, in reading order.
+  for (const deck of new Set(manifest.map((m) => m.deck as string | undefined))) {
+    if (deck === undefined) continue;
+    const dir = deckFiles.length > 1 ? join(out, deck) : out;
+    const lines = manifest.filter((m) => m.deck === deck).flatMap((m) =>
+      ((m.files as string[] | undefined) ?? []).map((f) => `${join(process.cwd(), dir, f)}\t${m.step}\t${m.viewport}\t${m.variant ?? "primary"}${m.card ? `\t${m.card}` : ""}`));
+    writeFileSync(join(dir, "frames.txt"), `${lines.join("\n")}\n`);
+  }
+
   writeFileSync(join(out, "manifest.json"), JSON.stringify({ surface: run.surface, decks: deckFiles, frames: manifest }, null, 2));
   writeFileSync(join(out, "metrics.json"), JSON.stringify(metrics, null, 2));
   writeFileSync(join(out, "axe.json"), JSON.stringify(axe, null, 2));
@@ -779,6 +992,15 @@ async function main(runPath: string): Promise<void> {
   const gate = bandGate(bands, allowed.filter((a) => a.surface === run.surface), new Set(run.steps.map((s) => s.id)));
   for (const b of gate.fail) console.log(`FAIL empty band: ${b.step} @${b.viewport} "${b.section}" reaches ${Math.round(b.used * 100)}% (floor ${EMPTY_BAND * 100}%), fills ${Math.round(b.filled * 100)}% (floor ${FILL_FLOOR * 100}%)`);
   for (const a of gate.stale) console.log(`FAIL stale allowlist entry: ${a.step} /${a.section}/ matched nothing -- remove it from ${BAND_ALLOW}`);
+  // THE COMPLETENESS GATE (R-T4): every region a step names is in its frames, and every
+  // `mustShow` text (the calibration plant) is in a captured drawer. A capture that fails this is
+  // not handed to the seats.
+  for (const m of missing) console.log(`FAIL missing region: ${m}`);
+  const unseen = Object.entries(run.mustShow ?? {}).flatMap(([deck, texts]) =>
+    deckFiles.some((f) => f.endsWith(`/${deck}.txt`)) ? texts.filter((t) => !(drawerText.get(deck) ?? "").includes(t)).map((t) => `${deck}: "${t}"`) : []);
+  for (const u of unseen) console.log(`FAIL not in any captured drawer: ${u}`);
+  if (missing.length || unseen.length) process.exitCode = 1;
+  else console.log(`completeness: ok (${manifest.filter((m) => m.variant === "drawer").length} drawer captures)`);
   if (gate.fail.length || gate.stale.length) process.exitCode = 1;
   else console.log(`space gate: ok (${bands.length} allowlisted band(s))`);
   console.log(`now run the judge: .claude/skills/ui-review/SKILL.md`);
@@ -844,6 +1066,14 @@ function selfTest(): void {
   eq(g.fail.map((b) => b.section), ["Curve"], "a band no entry names fails");
   // "plan" ran and matched nothing: stale. "gone" never ran: not judged.
   eq(g.stale.map((a) => a.step), ["plan"], "an entry for a step that ran and matched nothing is stale");
+
+  eq(sliceCount(0, 2500, 1000, 16), 3, "three screens reach 2500px");
+  eq(sliceCount(0, 50_000, 1000, 16), 16, "capped");
+  eq(sliceCount(900, 900, 1000, 16), 1, "a step always shoots one");
+  eq(covered([[0, 1000], [1000, 2000]], 100, 1900), true, "two adjacent frames cover a box across both");
+  eq(covered([[0, 1000], [1200, 2200]], 100, 1900), false, "a gap between frames is not covered");
+  eq(covered([[1500, 2500], [0, 1000], [800, 1800]], 0, 2500), true, "order of frames does not matter");
+  eq(covered([[0, 1000]], 0, 1001), false, "one pixel past the last frame is missing");
 
   console.log("self-test: ok");
 }
