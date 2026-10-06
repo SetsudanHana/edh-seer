@@ -51,7 +51,7 @@ test("switching down a bracket shows the cuts that get the deck there first", ()
 test("the summary says what the swaps do to the synergy score, and when a higher bracket changes nothing", () => {
   const two = { ...pkg(2, 2), after: { band: "1-2" as const, synergy: 3.4, mana: 0.9 } };
   const three = { ...pkg(3, 2), after: { band: "1-2" as const, synergy: 3.4, mana: 0.9 } };
-  show(page({ bracket: { band: "1-2", gameChangers: 0, combos: 0 }, synergy: { score: 3, band: "Focused" }, packages: [two, three] }));
+  show(page({ bracket: { band: "1-2", gameChangers: 0, combos: 0 }, synergy: { score: 3, band: "Connected" }, packages: [two, three] }));
   expect(screen.getByText(/its synergy score goes from 3.0 to 3.4 of 5/)).toBeInTheDocument();
   expect(screen.queryByTestId("precon-same-swaps")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Bracket 3" }));

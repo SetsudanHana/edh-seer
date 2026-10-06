@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { floorState, bandState, scoreState } from "./deck-gauge.js";
+import { floorState, bandState, scoreState, overNote } from "./deck-gauge.js";
 
 /** THE FLOOR DIAL IS ASYMMETRIC ON PURPOSE, and it is derived rather than styled: `build.ts:520`
  *  reads `Math.min(p.count / p.target, 1) // exceeding a floor never penalizes`. Interaction 19
@@ -54,11 +54,11 @@ test("the lands dial names the direction", () => {
  *  edge-derived, so on a deck where half the cards form no edge by construction a red 0.8/5
  *  renders the engine's blindness as the player's failure. The number still shows. */
 test("the score dial uses the product's own four bands", () => {
-  expect(scoreState(0.8).state).toBe("unfocused");
+  expect(scoreState(0.8).state).toBe("loose");
   expect(scoreState(0.8).tone).toBe("danger");
   expect(scoreState(2).state).toBe("developing");
   expect(scoreState(2).tone).toBe("warning");
-  expect(scoreState(3.4).state).toBe("focused");
+  expect(scoreState(3.4).state).toBe("connected");
   expect(scoreState(3.4).tone).toBe("success");
   expect(scoreState(4.5).state).toBe("tight");
 });
@@ -100,4 +100,24 @@ test("is usable from a jsdom environment, not only from node", () => {
   const el = document.createElement("span");
   el.textContent = bandState(48, 36).state;
   expect(el.textContent).toBe("far-over");
+});
+
+/** ONE TOLERANCE FOR "OVER" (#980): the Interaction tile said "on target" at 14 against 13 while the
+ *  shelf under it said "1 over: room to cut", and Improve then took a slot from it. */
+test("the tile and the shelf say the same thing about a small overshoot", () => {
+  expect(floorState(14, 13).label).toBe("1 over, on target");
+  expect(overNote(14, 13)).toBe("1 over, on target");
+  expect(floorState(13, 13).label).toBe("on target");
+  expect(overNote(13, 13)).toBeNull();
+  expect(floorState(17, 13).label).toBe("4 over target");
+  expect(overNote(17, 13)).toBe("4 over: room to cut");
+});
+
+/** WHERE THE RAMP ROOM IS (#1033): "Ramp 17, 4 over: room to cut" beside "8 of your 17 ramp cards
+ *  that keep producing mana" read as spare ramp the land count never relied on. */
+test("a ramp overshoot points at the one-shots, not the rocks the land count leans on", () => {
+  expect(overNote(17, 13, 9)).toBe("4 over: cut from the 9 one-shots first; the land count relies on the other 8");
+  expect(overNote(17, 13, 0)).toBe("4 over: room to cut");
+  expect(overNote(14, 13, 9)).toBe("1 over, on target");
+  expect(overNote(17, 13, 1)).toBe("4 over: cut from the 1 one-shot first; the land count relies on the other 16");
 });

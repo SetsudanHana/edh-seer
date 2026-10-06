@@ -24,8 +24,9 @@ test("the manabase opens with one tile per question, flagging what is short", ()
   expect(lands).toHaveTextContent("Lands34wants 37: 3 under, within the normal ±3");
   expect(colour).toHaveTextContent("Weakest colour");
   // Which number is which (persona round 2026-09-29): usable by then, in the deck, and needed.
-  expect(colour).toHaveTextContent("13/17can tap by turn 2 (of 13 in the deck); a card wanting");
-  expect(colour).toHaveTextContent("needs 17");
+  // NO SLASH (#1033): "30 /37 (of 38 in the deck)" read as a fraction of 37 four rounds running.
+  expect(colour).toHaveTextContent("13 of 17 neededsources that can tap by turn 2, of 13 in the deck; 17 is what a card wanting");
+  expect(colour).not.toHaveTextContent("/17");
   expect(hands).toHaveTextContent(/Opening hands\d+%have 2 to 4 lands/);
   expect(mana).toHaveTextContent("Mana52%to make 6 mana by turn 6");
   expect(cast).toHaveTextContent("Hardest cast48%Dire Fleet Ravager on turn 5");
