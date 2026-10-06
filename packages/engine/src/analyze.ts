@@ -239,6 +239,8 @@ export interface DeckMath {
     /** A commander that prevents your damage to opponents (The Mindskinner): no damage route has a
      *  turn, and this names why. */
     prevented?: string;
+    /** Cards milled from each opponent until their library (92 - t) is gone. */
+    mill?: { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] };
   };
   /** How the deck plans to win, and how concentrated those plans are.
    *

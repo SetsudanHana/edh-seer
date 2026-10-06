@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
-import { detectWincons, drainClock, focusIndex, winconReport } from "./wincon.js";
+import { detectWincons, drainClock, focusIndex, millClock, winconReport } from "./wincon.js";
 import type { Reason } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 
@@ -366,5 +366,52 @@ describe("drainClock", () => {
   test("no repeating drain at each opponent, no route", () => {
     const d = [card("Bear", 3)];
     expect(drainClock(d, [], all(d))).toBeUndefined();
+  });
+});
+
+/** MILL, TIMED FOR THE WHOLE TABLE (#1056 R4; owner 2026-10-06: "estimate how many cards we can mill
+ *  in total by the turn"). Cards milled from EACH opponent against the library they have left on our
+ *  turn t, 92 - t. Mill at each opponent counts in full; mill at one target player counts a third,
+ *  since the table needs it three times. A one-shot mills once, the turn it can be cast. */
+describe("millClock", () => {
+  const mill = (amount: string, extra: Record<string, unknown>) => ({
+    effect: { kind: "mill", subject: { control: "opp", token: null, scope: "each" } }, amount, ...extra,
+  });
+  const card = (name: string, mv: number, abilities: unknown[] = [], oracleText = "", power?: string): DeckCard => {
+    const dc = mk(name, { mv, oracleText, ...(power ? { power } : {}) });
+    dc.tags!.abilities = abilities as never;
+    return dc;
+  };
+  const lands = (n: number) => Array.from({ length: n }, (_, i) => mk(`Land ${i}`, { mv: 0, typeLine: "Basic Land — Island" }));
+
+  test("an upkeep mill at each opponent and a one-shot at one player: 92 - t reached on turn 15", () => {
+    const d = [
+      card("Grinder", 2, [mill("5", { kind: "triggered", repeats: "per-turn", trigger: { verbs: ["upkeep"], subject: {} } })]),
+      card("Tome", 4, [{ ...mill("30", { kind: "on-cast", repeats: "once" }), effect: { kind: "mill", subject: { control: "any", token: null, scope: "target" } } }]),
+    ];
+    const clock = millClock(d, [], { commanderNames: d.map((dc) => dc.card.name) })!;
+    expect(clock.perTurn.slice(0, 6)).toEqual([0, 5, 5, 15, 5, 5]);
+    expect(clock.turn).toBe(15);
+    expect(clock.cards).toEqual(["Grinder", "Tome"]);
+  });
+
+  test("a commander that turns your damage into mill mills each opponent the board's power", () => {
+    const skinner = card("Skinner", 3, [], "If a source you control would deal damage to an opponent, prevent that damage and each opponent mills that many cards.", "10");
+    const clock = millClock([skinner, ...lands(30)], [], { commanderNames: ["Skinner"] })!;
+    expect(clock.perTurn.slice(0, 4)).toEqual([0, 0, 10, 10]);
+    expect(clock.turn).toBe(11);
+    expect(clock.cards).toEqual(["Skinner"]);
+  });
+
+  test("the board mills only once the converting commander is out; before that its damage is damage", () => {
+    const skinner = card("Skinner", 3, [], "If a source you control would deal damage to an opponent, prevent that damage and each opponent mills that many cards.", "10");
+    const bears = Array.from({ length: 3 }, (_, i) => card(`Bear ${i}`, 1, [], "", "2"));
+    const clock = millClock([skinner, ...bears, ...lands(30)], [], { commanderNames: ["Skinner", ...bears.map((b) => b.card.name)] })!;
+    expect(clock.perTurn.slice(0, 3)).toEqual([0, 0, 16]);
+  });
+
+  test("no mill at opponents, no route; an X amount is not a number", () => {
+    const d = [card("Sanity", 3, [mill("X", { kind: "triggered", repeats: "per-turn", trigger: { verbs: ["end-step"], subject: {} } })])];
+    expect(millClock(d, [], { commanderNames: ["Sanity"] })).toBeUndefined();
   });
 });

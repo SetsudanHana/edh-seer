@@ -121,11 +121,22 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   for (const [kind, label] of [["burn", "damage or drain"], ["mill", "milling them out"]] as const) {
     // By the win plan itself, not its card list: until 2026-09-26 the report named only combo and
     // alt-win cards, and Chandra, "mostly burn, 21 cards", had no burn line when this keyed on the list.
-    if (!has(kind)) continue;
+    // A TIMED mill shows even when no mill plan class fired: The Mindskinner turns the board into mill,
+    // which no mill card in the list announces (review of #1056 R4).
+    if (!has(kind) && !(kind === "mill" && report.deckMath?.speed?.mill?.turn !== undefined)) continue;
     // THE DRAIN IS TIMED (#1056, owner 2026-10-06): the turn its repeating drains have taken 40 from
     // each opponent -- the whole table, since each drain hits all three -- firing once per source of
     // its trigger (`drainClock`). Replaces #984's refusal.
     const drain = kind === "burn" ? report.deckMath?.speed?.drain : undefined;
+    // MILL IS TIMED (#1056 R4): cards milled from each opponent against the library they have left.
+    const mill = kind === "mill" ? report.deckMath?.speed?.mill : undefined;
+    if (mill) {
+      const n = mill.cards.length;
+      routes.push({ kind, label, cards: cardsOf(kind).length ? cardsOf(kind) : mill.cards, ...(mill.turn !== undefined ? { turn: mill.turn } : {}), caveat: mill.turn !== undefined
+        ? `when ${n} mill card${n === 1 ? " has" : "s have"} emptied every opponent's library, each firing once per thing that sets it off; their own extra draws would make it sooner`
+        : `its ${n} mill card${n === 1 ? " does" : "s do"} not empty every opponent's library by turn 20` });
+      continue;
+    }
     routes.push({ kind, label, cards: cardsOf(kind), ...(drain?.turn !== undefined ? { turn: drain.turn } : {}), caveat: kind === "burn" && preventedWhy ? preventedWhy : drain
       ? drainCaveat(drain)
       : kind === "burn"
