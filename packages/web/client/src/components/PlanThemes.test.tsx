@@ -84,7 +84,7 @@ test("the main theme's own group takes its name, leads and says so", () => {
 test("a main theme no group meets is named in words above the themes", () => {
   const { report, graph } = engineDeck();
   render(<PlanThemes report={report} graph={graph} main={{ name: "Blink", tag: "etb-refire", count: 12, nonland: 60 }} />);
-  expect(screen.getByText(/Your main theme is/).textContent).toMatch(/Blink \(12 of 60 nonland cards\)/);
+  expect(screen.getByText(/Your main theme is/).textContent).toMatch(/Blink \(12 of 60 nonland cards/);
   expect(screen.queryByText("main theme")).toBeNull();
 });
 
@@ -127,4 +127,24 @@ test("the main theme never folds under another row", () => {
   cleric.sameAs = { name: other.name, extra: [], missing: [] };
   render(<PlanThemes report={report} graph={graph} model={model} main={{ name: "Clerics", tag: "scales:cleric", count: 9, nonland: 16 }} />);
   expect(screen.getByRole("heading", { name: "Clerics" })).toBeInTheDocument();
+});
+
+/** WHY THE MAIN THEME IS MAIN (#979, owner ruling 2026-10-06, option A): "Blink (27)" over an
+ *  Enchantress bar of 39 read as an error to three seats. The main theme is the most distinctive
+ *  thing the deck does, the bars count every card a link touches, and the page says so wherever a
+ *  bar outnumbers the main theme -- whether or not the main theme has a bar of its own. */
+test("a bar bigger than the main theme gets the reason, named", () => {
+  const { report, graph } = engineDeck();
+  render(<PlanThemes report={report} graph={graph} main={{ name: "Blink", tag: "etb-refire", count: 2, nonland: 16 }} />);
+  const why = screen.getByText(/most distinctive/);
+  expect(why.textContent).toMatch(/Blink/);
+  expect(why.textContent).toMatch(/2 of 16 nonland cards/);
+  expect(why.textContent).toMatch(/Cleric tribal links more cards \(\d+\)/);
+  expect(why.textContent).toMatch(/every card a link touches/);
+});
+
+test("no reason is printed when the main theme's bar is the biggest", () => {
+  const { report, graph } = engineDeck();
+  render(<PlanThemes report={report} graph={graph} main={{ name: "Clerics", tag: "scales:cleric", count: 99, nonland: 120 }} />);
+  expect(screen.queryByText(/most distinctive/)).toBeNull();
 });

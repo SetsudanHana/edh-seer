@@ -52,12 +52,20 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
   // THE BARS SHARE ONE SCALE: the biggest theme's card count.
   const size = (g: EngineGroup) => new Set([...g.hubs, ...g.members]).size;
   const top = Math.max(1, ...m.groups.map(size));
+  // A BAR BIGGER THAN THE MAIN THEME (#979, owner ruling 2026-10-06, option A): the main theme is the
+  // most DISTINCTIVE thing the deck does (`rankThemes` weighs rarity), while a bar counts every card a
+  // link touches. "Blink (27)" over an Enchantress bar of 39 read as an error to three seats, so the
+  // page says which is which wherever a bar outnumbers it.
+  const shown = (g: EngineGroup) => { const w = main ? whichTheme(g, main) : null; return w?.match === "same" ? w.name : g.name; };
+  const bigger = main ? roots.filter((g) => !leads(g) && size(g) > main.count).sort((x, y) => size(y) - size(x))[0] : undefined;
   if (!m.totalLinks) return null;
   return (
     <section aria-labelledby="plan-themes" className="flex flex-col gap-3">
       <h3 id="plan-themes" className="text-lg font-semibold">What your deck does</h3>
       {/* NO GROUP IS THE MAIN THEME: said, not left as two unrelated names on two chapters. */}
-      {main && !matched ? (
+      {main && bigger ? (
+        <p className="max-w-[70ch] text-sm">Your main theme is <b>{main.name}</b> ({main.count} of {main.nonland} nonland cards are about it): the most distinctive thing this deck does. {shown(bigger)} links more cards ({size(bigger)}): a bar counts every card a link touches, while the main theme counts only the cards whose own text is about it, and weighs how rare that is across decks.</p>
+      ) : main && !matched ? (
         <p className="max-w-[70ch] text-sm">Your main theme is <b>{main.name}</b> ({main.count} of {main.nonland} nonland cards); by how the cards work together, the deck does these:</p>
       ) : null}
       {/* ONE ROW PER THEME (owner, 2026-09-27: "less is more", "rely more on data visualisation than
