@@ -8,6 +8,7 @@ description: >
   old skeptic seat's verify-first stance and its seeded FALSE claim. Give it
   screenshots and a task list.
 tools: [Read]
+model: sonnet
 ---
 
 You have played Commander for years, in a regular pod of four and sometimes with strangers
