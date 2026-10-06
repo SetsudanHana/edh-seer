@@ -13,8 +13,10 @@ import { infiniteCombos } from "./bracket-why.js";
  *    mana-by-turn rows), which is a floor: drawing both pieces is not counted;
  *  - alternate win: the turn it can cast its cheapest alt-win card, before that card's condition;
  *  - combat (go-wide, big creatures, one big creature): the report's clock;
- *  - damage or drain, and milling: listed with their cards, and said to be untimed, because nothing
- *    in the report models how fast they kill. Leaving them off would read as "cannot win that way".
+ *  - damage or drain: the turn its repeating drains at each opponent take the whole table (#1056,
+ *    `deckMath.speed.drain`), a rough floor at one fire per source of each trigger;
+ *  - milling, and burn that is one-shot or single-target: listed with their cards and untimed until
+ *    their own routes land (#1056). Leaving them off would read as "cannot win that way".
  *
  *  A JOIN over the report: `manaAvailability.rows`, `deckMath.clock`, `deckMath.wincons`, the combo
  *  list and each card's mana value. Nothing new is modelled here. */
@@ -45,6 +47,17 @@ type Rows = NonNullable<DeckReport["manaAvailability"]>["rows"];
 export function manaTurn(rows: Rows | undefined, mana: number): { turn?: number; early?: number; late?: number } {
   const first = (pick: (r: Rows[number]) => number) => rows?.find((r) => pick(r) >= mana)?.turn;
   return { turn: first((r) => r.mana.median), early: first((r) => r.mana.p75), late: first((r) => r.mana.p25) };
+}
+
+/** What the drain turn assumes, in one line: once per thing that sets it off, nobody gains life, and
+ *  any source that grows with the board counted as one. */
+export function drainCaveat(d: { turn?: number; cards: string[]; unbounded: string[] }): string {
+  const n = d.cards.length;
+  const what = `${n} repeating drain${n === 1 ? "" : "s"} at each opponent`;
+  const grows = d.unbounded.length ? `; ${d.unbounded.join(", ")} counted as one a turn, though ${d.unbounded.length === 1 ? "it grows" : "they grow"} with your board` : "";
+  return d.turn !== undefined
+    ? `when its ${what} have taken 40 from every opponent, each firing once per creature, token or spell that sets it off, and nobody gaining life${grows}`
+    : `its ${what} ${n === 1 ? "does" : "do"} not take 40 from every opponent by turn 20 at one fire per source${grows}`;
 }
 
 const COMBAT: Record<string, string> = { "go-wide": "attacking with a wide board", stompy: "attacking with big creatures", voltron: "one big creature" };
@@ -92,13 +105,16 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   for (const [kind, label] of [["burn", "damage or drain"], ["mill", "milling them out"]] as const) {
     // By the win plan itself, not its card list: until 2026-09-26 the report named only combo and
     // alt-win cards, and Chandra, "mostly burn, 21 cards", had no burn line when this keyed on the list.
-    // THE REFUSAL KEPT, THE DRAIN SAID (#984, owner ruling 2026-10-06): three seats needed this route's
-    // speed and got only "speed not modelled". The rate is a floor -- each card once a turn -- and the
-    // sentence says so; the route stays untimed.
-    const drain = kind === "burn" ? classes.find((c) => c.class === "burn")?.drain : undefined;
-    if (has(kind)) routes.push({ kind, label, cards: cardsOf(kind), caveat: drain
-      ? `its ${drain.cards} repeating drain${drain.cards === 1 ? "" : "s"} take${drain.cards === 1 ? "s" : ""} about ${drain.life} life from each opponent a turn if each fires once; how often they fire is not modelled, so it has no turn`
-      : "nothing in the report models how fast this route kills, so it has no turn" });
+    if (!has(kind)) continue;
+    // THE DRAIN IS TIMED (#1056, owner 2026-10-06): the turn its repeating drains have taken 40 from
+    // each opponent -- the whole table, since each drain hits all three -- firing once per source of
+    // its trigger (`drainClock`). Replaces #984's refusal.
+    const drain = kind === "burn" ? report.deckMath?.speed?.drain : undefined;
+    routes.push({ kind, label, cards: cardsOf(kind), ...(drain?.turn !== undefined ? { turn: drain.turn } : {}), caveat: drain
+      ? drainCaveat(drain)
+      : kind === "burn"
+        ? "its burn is one-shot or aimed at one player, which is not timed yet"
+        : "nothing in the report models how fast this route kills, so it has no turn" });
   }
   return routes;
 }

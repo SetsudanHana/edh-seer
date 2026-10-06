@@ -226,6 +226,12 @@ export interface DeckMath {
     /** Expected attacking power on the board at turn 5. */
     powerAtFive: number;
   };
+  /** SPEED, THE WHOLE TABLE (#1056, owner 2026-10-06): the turn each win route can kill all three
+   *  opponents, a rough floor. Beside `clock`, never instead of it: `clock` stays the one-opponent
+   *  horizon. `drain`: repeating drains at each opponent, fired once per source of their trigger. */
+  speed?: {
+    drain?: { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] };
+  };
   /** How the deck plans to win, and how concentrated those plans are.
    *
    *  Scored the OPPOSITE way to `answers`: coverage wants breadth, focus wants concentration. A
