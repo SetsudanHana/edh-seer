@@ -234,6 +234,11 @@ export interface DeckMath {
      *  never does by the horizon. */
     combat?: { turn?: number };
     drain?: { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] };
+    /** Voltron decks: the faster commander's turn to deal 21 to each opponent, haste assumed. */
+    commander?: { commander: string; turn?: number };
+    /** A commander that prevents your damage to opponents (The Mindskinner): no damage route has a
+     *  turn, and this names why. */
+    prevented?: string;
   };
   /** How the deck plans to win, and how concentrated those plans are.
    *

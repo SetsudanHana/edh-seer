@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { DeckCard } from "./types.js";
-import { commanderDamage } from "./commander-damage.js";
+import { commanderClock, commanderDamage } from "./commander-damage.js";
 
 const card = (name: string, typeLine: string, oracleText = "", power: string | null = null): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue: 0, power, toughness: power } as never,
@@ -50,4 +50,22 @@ test("an aura that does not enchant a creature is not attachable", () => {
 test("a commander with no readable power yields no row", () => {
   const star = card("Lord of Extinction", "Legendary Creature — Elemental", "", "*");
   expect(commanderDamage([star, sword], ["Lord of Extinction"], "voltron")).toEqual([]);
+});
+
+/** COMMANDER DAMAGE, TIMED FOR THE WHOLE TABLE (#1056 R2; owner 2026-10-06). 21 from one creature to
+ *  EACH opponent, and one creature attacks one player a combat, so the table takes three times the
+ *  hits. The turn is the earliest t where a commander cast on t (haste assumed) carrying the gear out
+ *  by then has hit all three: `t + 3 x hits - 1`. A one-card library is always drawn, so it is exact. */
+test("commander damage is timed: cast on 3, carrying +4, hits 2 a player, the table dead on turn 8", () => {
+  const big = { ...card("Ox", "Legendary Creature — Ox", "", "7"), card: { ...card("Ox", "Legendary Creature — Ox", "", "7").card, manaValue: 3 } };
+  const greaves = { ...sword, card: { ...sword.card, name: "Plate", oracleText: "Equipped creature gets +4/+4.", manaValue: 1 } };
+  expect(commanderClock([big, greaves], ["Ox"], "voltron")).toEqual({ commander: "Ox", turn: 8 });
+  // Bare, 7 power needs 3 hits a player: cast on 3, nine hits, the table on turn 11.
+  expect(commanderClock([big], ["Ox"], "voltron")).toEqual({ commander: "Ox", turn: 11 });
+});
+
+test("commander damage is timed only for a voltron deck, and only inside the horizon", () => {
+  expect(commanderClock([cmd, sword], ["Kratos"], "go-wide")).toBeUndefined();
+  // 2 power bare is 11 hits a player: 33 attacks, past turn 20.
+  expect(commanderClock([cmd], ["Kratos"], "voltron")).toEqual({ commander: "Kratos" });
 });

@@ -70,3 +70,17 @@ test("a combo plan names the cards that turn its loop into a win, or says none w
   rerender(<WinPlans wincons={wincons} routes={route()} />);
   expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("No card here was found that turns what the loop repeats into a win.");
 });
+
+/** A VOLTRON PLAN READS ITS COMMANDER-DAMAGE TURN WHEN IT HAS ONE (#1056 R2), and the board's when the
+ *  commander alone never gets there -- an untimed commander route must not hide a timed board. */
+test("a voltron plan takes the commander-damage turn when timed, else the board's", () => {
+  const voltron = { focus: 1, primary: "voltron", classes: [{ class: "voltron", count: 5, share: 1, cards: ["Plate"] }] } as never;
+  const combat = { kind: "combat", label: "one big creature", turn: 12, cards: [], caveat: "enough attacking power to kill all three opponents" };
+  const timed = { kind: "commander", label: "commander damage: Ox", turn: 8, cards: ["Ox"], caveat: "when it has dealt 21 to each opponent" };
+  const untimed = { kind: "commander", label: "commander damage: Ox", cards: ["Ox"], caveat: "not timed: it does not deal 21 to all three opponents by turn 20" };
+  const { unmount } = render(<WinPlans wincons={voltron} routes={[combat, timed] as never} pressure={10} />);
+  expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Can win around turn 8");
+  unmount();
+  render(<WinPlans wincons={voltron} routes={[combat, untimed] as never} pressure={10} />);
+  expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Can win around turn 12; about 10 power of creatures in play by turn 5.");
+});

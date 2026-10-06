@@ -15,9 +15,10 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const phrase = (cls: string) => WIN_PHRASE[cls] ?? cls;
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** Which timed route answers for a plan: combat plans share the clock. */
+/** Which timed route answers for a plan: combat plans share the board's turn; voltron reads its
+ *  commander-damage turn when it has one (#1056 R2), and the board's otherwise. */
 const ROUTE_OF: Record<string, SpeedRoute["kind"]> = {
-  combo: "combo", "alt-win": "alt-win", "go-wide": "combat", stompy: "combat", voltron: "combat", burn: "burn", mill: "mill",
+  combo: "combo", "alt-win": "alt-win", "go-wide": "combat", stompy: "combat", voltron: "commander", burn: "burn", mill: "mill",
 };
 
 /** HOW THE DECK WINS, WITH THE CARDS THAT DO IT, AND HOW FAST (owner, 2026-09-26: "we should be able
@@ -38,7 +39,15 @@ export function WinPlans({ wincons, routes, pressure, model }: {
   const [picked, setPicked] = useState(classes[0]?.class ?? "");
   const plan = classes.find((c) => c.class === picked) ?? classes[0];
   if (!classes.length || !plan) return null;
-  const routeOf = (cls: string) => routes?.find((r) => r.kind === ROUTE_OF[cls]);
+  // A voltron plan reads its commander-damage turn when it HAS one, and the board's otherwise: every
+  // voltron deck with a readable commander gets a commander route, timed or not, and an untimed one
+  // must not hide a timed board (review of #1056 R2).
+  const routeOf = (cls: string) => {
+    const own = routes?.find((r) => r.kind === ROUTE_OF[cls]);
+    if (cls !== "voltron") return own;
+    const board = routes?.find((r) => r.kind === "combat");
+    return own?.turn !== undefined ? own : board?.turn !== undefined ? board : own ?? board;
+  };
   const fastest = routes ? fastestRoute(routes) : undefined;
   const [first] = classes;
   const lean = focus >= 0.8
@@ -58,7 +67,7 @@ export function WinPlans({ wincons, routes, pressure, model }: {
         {classes.map((c) => <Tile key={c.class} plan={c} route={routes ? routeOf(c.class) ?? null : undefined}
           picked={pickable && c.class === plan.class} onPick={pickable ? () => setPicked(c.class) : undefined} />)}
       </div>
-      <Detail plan={plan} route={route} pressure={route?.kind === "combat" ? pressure : undefined} model={model} />
+      <Detail plan={plan} route={route} pressure={route?.kind === "combat" || route?.kind === "commander" ? pressure : undefined} model={model} />
     </div>
   );
 }
