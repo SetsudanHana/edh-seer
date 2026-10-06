@@ -3839,6 +3839,10 @@ test("a landwalk grant names its landwalk (Lord of Atlantis)", () => {
   const gloves = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "artifact landwalk" }] }],
     "Vectis Gloves", { 1: "Equipped creature gets +2/+0 and has artifact landwalk." }).abilities.find((a) => a.effect.kind === "keyword-grant")!;
   expect(gloves.grants).toEqual(["landwalk"]);
+  // A word ending in "walk" that names no land is no keyword (review of #1050).
+  const side = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "\"Sidewalk\"" }] }],
+    "X", { 1: "Creatures you control have \"Sidewalk\"." }).abilities.find((a) => a.effect.kind === "keyword-grant");
+  expect(side?.grants ?? []).not.toContain("sidewalk");
 });
 
 test("a board-wide keyword grant keeps its recipient and names the keyword (Mikaeus, the Unhallowed)", () => {

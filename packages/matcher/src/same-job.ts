@@ -136,8 +136,9 @@ export function answerCovers(cut: readonly Subject[], add: readonly Subject[]): 
  *  reading that decides the job -- what it does, to whom and what (types as a conjunction, whose,
  *  one or all), which keywords, how long, how it is delivered, the shape of how much, what limits
  *  it, what it gives back -- and nothing the reading does not hold. Two cards do the same job when
- *  their keys are equal. Cost and the size of a fixed amount are left OUT: they are what an upgrade
- *  compares inside a group ("same with upside", owner 2026-10-06).
+ *  their keys are equal. `sameJob` is looser on the role parts (the add's may contain the cut's and
+ *  more: "same with upside", owner 2026-10-06) and stricter on drawbacks and printed conditions, so
+ *  neither test implies the other. Cost and the size of a fixed amount are left OUT of both.
  *
  *  NULL IS A REFUSAL, NOT A GUESS: no role ability, a keyword grant whose keywords were not read, or
  *  a creature (its body does other work no measure reads). A null key joins no group. */
@@ -201,7 +202,8 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
     for (const a of r.actions ?? []) {
       // A GRANT'S KEYWORD IS ITS `text` ("hexproof", "haste"): the grammar reads it there (S-T1). A grant
       // whose ability was not read is not a job: Swiftfoot Boots and Commander's Plate would read alike.
-      const granted = a.verb === "grant-ability" ? (a as { text?: string }).text?.toLowerCase().trim() : undefined;
+      // A TYPE OR A COLOUR GRANT IS READ INTO `phrase` ("is every basic land type"), not `text`.
+      const granted = a.verb === "grant-ability" ? ((a as { text?: string }).text ?? a.phrase)?.toLowerCase().trim() : undefined;
       if (a.verb === "grant-ability" && !granted) return null;
       const o = a.object as Record<string, unknown> | undefined;
       const giveBack = GIVES_BACK_ROLES.has(role) && GIVE_BACK.has(a.verb) && o?.control !== "you";
@@ -271,7 +273,8 @@ export function sameJob(cut: DeckCard, add: DeckCard, role: Role): boolean {
   const c = readJob(cut, role);
   const a = readJob(add, role);
   // THE ADD DOES EVERY PART OF THE CUT'S JOB, AND MAY DO MORE ("same with upside"): Unbreakable
-  // Formation's vigilance on top of Flawless Maneuver's indestructible.
+  // Formation's vigilance on top of Flawless Maneuver's indestructible. Deliberately with no tie
+  // between the shared part and the extra one (review of #1050): any extra role action is upside.
   if (!c || !a || c.head !== a.head || ![...c.parts].every((x) => a.parts.has(x))) return false;
   // ONE-DIRECTIONAL, so an upgrade that drops a drawback or a condition stays the same job: the add may
   // carry no drawback, and print no condition, the cut does not.

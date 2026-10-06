@@ -1024,7 +1024,8 @@ function grantedKeywords(objects: string[]): string[] {
   const named = KEYWORD_ABILITIES.filter((k) => new RegExp(`(?:^|[^a-z])${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z])`).test(text));
   // LANDWALK IS ONE KEYWORD WITH A LAND TYPE (CR 702.14): "islandwalk" and "swampwalk" are instances,
   // not names on the list, so 47 grants named no keyword (S-T1, 2026-10-06).
-  const walks = [...text.matchAll(/(?:^|[^a-z])([a-z]+walk)(?=$|[^a-z])/g)].map((m) => m[1]!);
+  // A LAND TYPE OR "land" BEFORE IT (review of #1050): "sidewalk" and "boardwalk" are no keyword.
+  const walks = [...text.matchAll(/(?:^|[^a-z])((?:plains|island|swamp|mountain|forest|desert|land)walk)(?=$|[^a-z])/g)].map((m) => m[1]!);
   return [...new Set([...named, ...walks])].sort();
 }
 
