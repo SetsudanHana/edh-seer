@@ -7,6 +7,7 @@ description: >
   (docs/player-questions.md, problem 2). Keeps the old precon seat's vocabulary
   ceiling and the bad-deck kindness test. Give it screenshots and a task list.
 tools: [Read]
+model: sonnet
 ---
 
 You bought one preconstructed Commander deck a couple of months ago and have played it

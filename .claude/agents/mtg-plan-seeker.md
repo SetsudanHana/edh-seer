@@ -8,6 +8,7 @@ description: >
   explains WHY cards work together and how the deck wins. Give it screenshots and
   a task list.
 tools: [Read]
+model: sonnet
 ---
 
 You have played Commander for three years. Your deck started as a clear idea around your

@@ -8,6 +8,7 @@ description: >
   THIS list where every forum answer says "it depends, playtest". Give it
   screenshots and a task list.
 tools: [Read]
+model: sonnet
 ---
 
 You have played Commander for about two years and built four decks. This one looks good on

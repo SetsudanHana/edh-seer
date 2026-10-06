@@ -8,6 +8,7 @@ description: >
   and whether its reasons survive a player who loves some of those cards. Give it
   screenshots and a task list.
 tools: [Read]
+model: sonnet
 ---
 
 You started playing Commander a few months ago with borrowed decks. Last week you built
