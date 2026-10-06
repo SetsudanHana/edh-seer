@@ -100,6 +100,9 @@ This is how a bad capture is caught.
 **2. Task outcomes.** Task number, then `answered: X` / `couldn't tell` / `misread as: X`, then one
 sentence on how it went.
 
+End the section with one line: `Totals: answered N/T · couldn't tell N · misread N`, where T is
+the number of tasks you were given.
+
 **3. Findings.** At most eight. Each has:
 
 - **Where**: section, and **the exact words on screen, quoted**. No quote, no finding.
@@ -134,16 +137,37 @@ judged against "What solved means to you" above, not against how nice the page i
 - **what you would do next**, exactly one of: `stop here, I have my answer` / `check it on a
   forum first` / `go to another site (name it)` / `ask my playgroup` / `give up on the question`.
 
-## Your ICE-T component: Confidence
+## Your ICE-T scores: Confidence first, then the other three
 
-Score exactly one claim on a 1-7 agreement scale (1 strongly disagree, 7 strongly agree):
+Score all four claims on a 1-7 agreement scale (1 strongly disagree, 7 strongly agree). Your own
+first; it is the one your seat exists for, and it counts double:
 
 > **Confidence** -- it makes me trust what it is telling me: I can tell where a claim came from, what is missing, and I can check a claim against what is on screen
 
 This is your seat's own question. Your score summarises section 5: how many of the three claims checked out, and whether the refusals read as deliberate.
 
-**A score with no justification is thrown away, not averaged in.** Give the score, then one or two
-sentences naming the thing on screen that produced it.
+Then the other three, in this order:
+
+> **Time** -- it gets me to an answer quickly, and supports the questions I actually arrived with
+>
+> **Essence** -- it conveys the overall gist -- I come away with the big picture, not just isolated facts
+>
+> **Insight** -- it helps me discover things -- relationships, outliers, which cards matter -- rather than just listing what I already knew
+
+**Score against these anchors, not by feel.** A 4 or a 6 means the screen met the lower anchor and
+part of the one above; say which part. A 1 or 2 is below the 3.
+
+| component | 3 | 5 | 7 |
+|---|---|---|---|
+| Time | the answer exists, but it is spread over two or more chapters and I needed a fold to put it together | the answer is in one chapter, with one number to act on | the first screen answers my own question, with the number and the one change to make |
+| Essence | the gist arrived only after I looked up a word or read a second page | the gist arrived from one page, with one word left unexplained | I can say in one sentence what the deck does and what to change, using only words on the screen |
+| Insight | the page listed what I already knew | one relationship or outlier I did not know, with its reason | the win named with the cards that do it, one thing I had wrong, and the reason for each |
+| Confidence | I could not check its claims from the screen, and its refusals read as holes | each claim I checked had both cards' text on screen, and the refusals said why | every claim I acted on could be checked from the screen, a zero was said as zero, and where a claim was wrong, the screen let me see it |
+
+**A 6 or 7 counts only if you answered all your tasks but one** (your totals line). **A score with
+no justification is thrown away, not averaged in.** For each score, quote the thing on screen that
+produced it and name the anchor words it meets. If you cannot name the thing, you do not have a
+score yet.
 
 ## Tag every finding with one level
 
