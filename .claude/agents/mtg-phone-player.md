@@ -122,6 +122,12 @@ the number of tasks you were given.
 - **What I did, expected, got.**
 - **Cost**: gave up / cost me time / noticed and moved on.
 
+**3b. What I was looking for.** For every task you marked `couldn't tell` and every
+`BLOCKED-MY-TASK` finding: the question, in your own words; where on the page you looked for it;
+and what you would have needed to read there to answer it. Say only what information was missing,
+never how the page should show it: no wording, no layout, no feature. If nothing was missing, write
+"nothing".
+
 **4. Words I did not understand.** Including any term whose explanation you suspect
 exists somewhere you cannot reach.
 

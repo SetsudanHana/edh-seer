@@ -252,6 +252,14 @@ is fixed or deferred with a reason, and open the FINDINGS by naming the P1s it r
 cite backlog ids. A repeat updates the row; it is not a "repeat of" note. A new finding gets a row
 AND an issue.
 
+**Keep the raw returns, and read "What I was looking for" first** (R-T5, 2026-10-06). Each seat's
+full return goes verbatim in `docs/measurements/persona-round-<date>/seats/<seat>.md`. Before this
+only the synthesis was filed, so no score could be audited or re-read against new anchors, and the
+per-task outcomes were never totalled. Section 3b of each return is the seat's missing information
+in its own words, for every `couldn't tell` and `BLOCKED-MY-TASK`. It is the fixer's input. The
+no-fix rule still holds: it names what was missing, never how to show it, and the canary applies to
+its vocabulary.
+
 **Every seat scores all four ICE-T components against fixed anchors** (R-T1, 2026-10-06). Five
 rounds of one feel-based score per seat read 3 to 5, median 3, and could not be moved: nothing
 defined a 7. Each seat file carries this table word for word. Change it here and in all six files
