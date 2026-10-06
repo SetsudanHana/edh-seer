@@ -36,13 +36,16 @@ is already open on your deck's report, at the top of the first page.
    ref and a `filename`, then Read the file. Do this for EVERY chapter at least once. Never take a
    full-page snapshot without `depth` — the whole report is ~130 KB.
 3. When you open something (a card, a fold, a tab), snapshot only that part, by its ref.
+4. **A ref that says "not found" has gone stale** — clicking re-renders the page and renumbers it.
+   Take a fresh `depth: 6` outline and use the new ref; never give up on a chapter over a stale ref
+   (the 2026-10-06 plan-seeker left Scores, Manabase and Roles unread that way).
 
 ## Screenshots
 
 At most **15**, each saved with `filename`
 `/Users/setsudanhana/projects/mtg-synergy-engine/docs/measurements/<round dir>/<NN>-<what>.png`
-(the dispatcher names the round dir; NN = 01, 02, …). Take one the first time you see each chapter
-or tab, and one before ANY finding about how something LOOKS — layout, crowding, what is above the
+(the dispatcher names the round dir; NN = 01, 02, …). Take one the first time you see EACH chapter
+or tab — that is the minimum, not the budget — and one before ANY finding about how something LOOKS — layout, crowding, what is above the
 fold, what is hard to find. Text shows structure, not what a player sees: never claim anything about
 appearance from a text snapshot alone. Never re-take or re-read a screenshot. **A screenshot you
 did not SEE does not count**: if the tool result shows no image, Read the saved file once, straight
