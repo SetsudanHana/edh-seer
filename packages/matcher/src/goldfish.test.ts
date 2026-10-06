@@ -1148,6 +1148,17 @@ describe("per-game combat kill turns", () => {
     expect(fought.seenShare).toEqual(priced.seenShare);
   });
 
+  test("a mana creature attacks too, and a commander that is both is cast and counted once", () => {
+    // A 10-power commander that taps for mana: cast turn 1 as a dork, it swings 10 a turn -- 40 by turn 4.
+    const dork = { card: { name: "Titan", typeLine: "Legendary Creature — Elf", oracleText: "{T}: Add {G}.", producedMana: ["G"], manaCost: "{G}", keywords: [], colors: ["G"], manaValue: 1, power: "10" } as never, tags: null };
+    const forests = Array.from({ length: 40 }, (_, i) => card(`Forest ${i}`, "Basic Land — Forest", 0, "", ["G"]));
+    const deck = [...forests, ...Array.from({ length: 59 }, (_, i) => card(`Spell ${i}`, "Sorcery", 7, "Draw a card."))];
+    const r = simulate(deck, { trials: 200, turns: 8, seed: 41, alsoPrice: [dork], combatTo: 20 });
+    // Counted twice it would swing 20 and kill on turn 2; a forced landless six casts it late.
+    expect(Math.min(...r.killTurns.one)).toBe(4);
+    expect(r.killTurns.one.filter((t) => t === 4).length).toBeGreaterThan(180);
+  });
+
   test("infect damage is poison, never life: an infect deck never kills the table with damage", () => {
     const r = simulate([...mountains, ...Array.from({ length: 59 }, (_, i) => creature(i, ["Infect"]))], { trials: 200, turns: 8, seed: 31, combatTo: 20 });
     expect(r.killTurns.table.every((t) => t === Infinity)).toBe(true);

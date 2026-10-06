@@ -819,6 +819,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       ...(TAP_REPLACEMENT.test(text) && BONUS_COLORLESS.test(text) ? { tapBonus: "colorless" as const } : {}),
       ...(TAP_REPLACEMENT.test(text) && BONUS_CREATURE.test(text) ? { tapBonus: "creature" as const } : {}),
       ...(landfallMana(text) > 0 ? { landfall: landfallMana(text) } : {}),
+      // THE COMMANDER ATTACKS TOO: it is cast from the command zone like any creature it holds.
+      ...(attackOf(dc) ? { attack: attackOf(dc)! } : {}),
       isExtra: true,
     };
   });
@@ -960,7 +962,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     const startedAt = new Set<string>();
     // THE GAME'S OWN BOARD, for the per-game combat. A creature cast here is MARKED, never taken out
     // of the hand: the land policy reads the hand's pips, so taking it out would move the mana.
-    const cast = new Set<DeckSlot>();
+    const fielded = new Set<DeckSlot>();
     let boardOne = 0, boardTable = 0, dealtOne = 0, dealtTable = 0;
     let oneAt = Infinity, tableAt = Infinity;
     const lands: OnBoardLand[] = [];
@@ -1090,6 +1092,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         if (best < 0) break;
         const cast = hand.splice(best, 1)[0];
         pool -= cast.manaValue;
+        // A CREATURE CAST FOR ITS MANA STILL ATTACKS (review): it is on the board, paid for here once.
+        if (fights && cast.attack && !fielded.has(cast)) {
+          fielded.add(cast);
+          boardOne += cast.attack.power;
+          if (!cast.attack.infect) boardTable += cast.attack.power;
+        }
         const a = cast.accelerant!;
         const mana = produced(cast.output, lands);
         // A PER-SOURCE BONUS BRINGS NO MANA OF ITS OWN, so it goes to `bonuses` INSTEAD of the source
@@ -1121,10 +1129,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       const made = untapped.reduce((n, x) => n + x.mana, 0);
       if (fights) {
         let left = pool;
-        for (const c of [...hand, ...extras].filter((c) => c.attack && !cast.has(c)).sort((a, b) => a.manaValue - b.manaValue)) {
+        // DE-DUPED: a mana-making commander is in the hand AND in `extras` (review).
+        for (const c of [...new Set([...hand, ...extras])].filter((c) => c.attack && !fielded.has(c)).sort((a, b) => a.manaValue - b.manaValue)) {
           if (c.manaValue > left) break;
           left -= c.manaValue;
-          cast.add(c);
+          fielded.add(c);
           boardOne += c.attack!.power;
           if (!c.attack!.infect) boardTable += c.attack!.power;
         }
