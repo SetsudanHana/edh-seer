@@ -90,6 +90,15 @@ test("over 100, the list leads with exactly as many cuts as the deck is over, we
   expect(screen.queryByTestId("swap")).toBeNull();
 });
 
+/** WEAKEST FIRST BY THE NUMBER ON SCREEN (#981): Krenko's eight read 2.3, 2.6, 2.5, 1.6, 2.9 … under
+ *  "weakest first", and the first-cuts seat could not tell what the order measured. */
+test("within a group, the cuts read in the order of the score they print", () => {
+  const cuts = [cut("Clear 1"), cut("Mid", { keeps: ["it scores 2.5 for synergy, where 5 is this deck's best card"] }),
+    cut("Low", { keeps: ["it scores 1.6 for synergy, where 5 is this deck's best card"] }), cut("High", { keeps: ["it scores 2.9 for synergy, where 5 is this deck's best card"] })];
+  render(<MemoryRouter><CutList cuts={cuts} slack={[]} deckSize={104} /></MemoryRouter>);
+  expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/2 mana$/, ""))).toEqual(["Clear 1", "Low", "Mid", "High"]);
+});
+
 test("over 100 with too few cuts, the list says how many are still to find and where", () => {
   const surplus = [{ name: "Consistency", count: 16, target: 13, over: 3, cards: [] }];
   const { unmount } = render(<CutList cuts={[cut("Only One")]} slack={[]} surplus={surplus} deckSize={108} />);

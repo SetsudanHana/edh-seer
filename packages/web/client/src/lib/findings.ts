@@ -513,6 +513,8 @@ export function slotTrade(report: DeckReport, shortfalls: readonly Finding[]): s
     + ` so ${top.over === 1 ? "one slot is" : `${top.over} slots are`} spare.`
     + " You are not short on space; it is all in one place."
     + (asksForSame
-      ? ` The count is fine; what those ${top.count} cards can hit is not. Swap within ${top.category} rather than adding more.`
+      // ONE INSTRUCTION, NOT TWO (#982): the slot line above says "Take the slots from Interaction";
+      // "swap within it rather than adding more" read as its opposite, and the seat stopped.
+      ? ` The count is fine; what those ${top.count} cards can hit is not: take the slots from the cards that answer the same things, and keep the ones that answer what nothing else does.`
       : "");
 }

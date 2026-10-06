@@ -1,6 +1,7 @@
 import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
 import type { DeckReport } from "../types.js";
 import { cutWeight, displayName, type CutRow, type EngineCard, type EngineModel } from "./engine-model.js";
+import { warnsAbout } from "./table-talk.js";
 
 /** ONE CUT LIST (owner, 2026-09-26: "it does not make any sense to have 2 times the same report").
  *
@@ -55,6 +56,19 @@ export function keepWords(p: string): string {
   if (p === "its best edge is on your main theme") return "its strongest link is to your main theme";
   return p;
 }
+const MAIN_EDGE = "its best edge is on your main theme";
+
+/** A card's strongest link of any kind, by its partner's score: the fallback when the model kept none. */
+function strongestLink(model: EngineModel, id: string): CutRow["keep"] {
+  let best: { text: string; score: number } | undefined;
+  let out: CutRow["keep"];
+  for (const [other, pair] of model.partners.get(id) ?? []) {
+    const score = model.cards.get(other)?.score ?? 0;
+    const l = pair.links.find((x) => !/\btriggers$/.test(x.text.trim())) ?? pair.links[0];
+    if (l && (!best || score > best.score)) { best = { text: l.text, score }; out = l; }
+  }
+  return out;
+}
 /** True of every row once role-fillers are gone, so it says nothing. */
 const SAYS_NOTHING = /^doesn't fill a core role/;
 
@@ -104,9 +118,21 @@ export function chooseCuts(report: DeckReport, model?: EngineModel | null): CutC
     const feeder = row && !row.keepActs && row.fedBy.length ? row : undefined;
     const twin = feeder ? out.find((x) => x.row && !x.row.keepActs && usersKey(x.row) === usersKey(feeder)) : undefined;
     if (twin) { twin.twins.push(displayName(row!.card)); continue; }
+    const card = frontOf.get(t.name) ?? row?.card;
+    // THE LINK BY NAME (#981): "its strongest link is to your main theme" named no card, word for
+    // word under two cards on Rani, and "it scores 2.6 for synergy" names none either. Every row
+    // with a reason to stay names the link it would keep: the one the model kept, or else its
+    // strongest link of any kind (a card whose every link works once has no kept one).
+    const link = row?.keep ?? (row && model ? strongestLink(model, row.card.id) : undefined);
+    const keeps = [...t.protections.filter((p) => !(p === MAIN_EDGE && link)).map(keepWords),
+      ...(plansOf.get(t.name) ?? []).map((p) => `it is one of the cards your win plan of ${p} counts`),
+      // WARNED AT THE TABLE, SO NOT A SILENT CUT (#982): Treasure Nabber was "Heads-up: it steals
+      // permanents" and the second card on the cut list, with nothing linking the two.
+      ...warnsAbout(card?.text ?? "").map((w) => `you warn the table that it ${w}`)];
+    if (link && (keeps.length || t.protections.includes(MAIN_EDGE))) keeps.unshift(`its strongest link: ${link.text}`);
     out.push({
-      name: t.name, manaValue: t.manaValue, card: frontOf.get(t.name) ?? row?.card, row,
-      keeps: [...t.protections.map(keepWords), ...(plansOf.get(t.name) ?? []).map((p) => `it is one of the cards your win plan of ${p} counts`)],
+      name: t.name, manaValue: t.manaValue, card, row,
+      keeps,
       unmet: t.reasons.filter((r) => UNMET.test(r)),
       reasons: t.reasons.filter((r) => !UNMET.test(r) && !SAYS_NOTHING.test(r)),
       twins: [],
