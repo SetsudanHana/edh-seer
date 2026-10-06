@@ -164,6 +164,8 @@ export interface Drain {
 }
 
 const DRAIN_KINDS = new Set(["player-damage", "player-life-loss", "drain", "damage"]);
+const REPEATING = new Set(["repeatable", "per-turn", "per-cycle"]);
+const EACH = new Set(["each", "all"]);
 
 /** Each card counted once, by its largest repeating, fixed-amount drain aimed at the opponents. A
  *  one-shot (an instant, an ETB that happens once) is not a rate, and an X amount is not a number. */
@@ -173,9 +175,12 @@ export function drainPerTurn(deck: readonly DeckCard[], names: ReadonlySet<strin
     if (!names.has(dc.card.name)) continue;
     let best = 0;
     for (const a of dc.tags?.abilities ?? []) {
-      const ab = a as { kind?: string; repeats?: string; amount?: string; effect?: { kind?: string; subject?: { control?: string } } };
+      const ab = a as { kind?: string; repeats?: string; amount?: string; effect?: { kind?: string; subject?: { control?: string; scope?: string } } };
       if (ab.kind !== "triggered" && ab.kind !== "activated") continue;
-      if (ab.repeats === "once" || !DRAIN_KINDS.has(ab.effect?.kind ?? "") || ab.effect?.subject?.control !== "opp") continue;
+      // A LABEL, NOT ITS ABSENCE (review of #1045): an unset `repeats` means the rules could not tell,
+      // and "each opponent" is what the sentence says, so a single-target drain is not counted.
+      if (!REPEATING.has(ab.repeats ?? "") || !DRAIN_KINDS.has(ab.effect?.kind ?? "")) continue;
+      if (ab.effect?.subject?.control !== "opp" || !EACH.has(ab.effect.subject.scope ?? "")) continue;
       if (!/^\d+$/.test(ab.amount ?? "")) continue;
       best = Math.max(best, Number(ab.amount));
     }
