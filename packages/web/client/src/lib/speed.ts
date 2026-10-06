@@ -22,7 +22,7 @@ import { infiniteCombos } from "./bracket-why.js";
  *  A JOIN over the report: `manaAvailability.rows`, `deckMath.clock`, `deckMath.wincons`, the combo
  *  list and each card's mana value. Nothing new is modelled here. */
 export interface SpeedRoute {
-  kind: "combo" | "alt-win" | "combat" | "burn" | "mill";
+  kind: "combo" | "alt-win" | "combat" | "commander" | "burn" | "mill";
   /** What the route is, in a player's words. */
   label: string;
   /** Typical turn (half of games), and the spread: fast games and slow games. */
@@ -95,12 +95,26 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   const combat = classes.filter((c) => COMBAT[c.class]);
   // THE WHOLE TABLE (#1056 R1): 120 damage, not the one-opponent clock -- which stays the horizon.
   const table = report.deckMath?.speed?.combat?.turn;
+  // A commander that prevents your damage to opponents (The Mindskinner) times no damage route.
+  const prevented = report.deckMath?.speed?.prevented;
+  const preventedWhy = prevented ? `not timed: ${prevented} prevents your damage to opponents` : undefined;
   if (combat.length) {
     routes.push({
       kind: "combat", label: combat.map((c) => COMBAT[c.class]!).join(" or "), turn: table, cards: combat.flatMap((c) => c.cards ?? []),
-      caveat: table
+      caveat: preventedWhy ?? (table
         ? "enough attacking power to kill all three opponents, if nobody blocks and nothing is removed"
-        : "not timed: in our test games the board never deals 120, enough for all three opponents",
+        : "not timed: in our test games the board never deals 120, enough for all three opponents"),
+    });
+  }
+
+  // COMMANDER DAMAGE (#1056 R2): voltron decks, 21 to each opponent from one creature.
+  const cmd = report.deckMath?.speed?.commander;
+  if (cmd) {
+    routes.push({
+      kind: "commander", label: `commander damage: ${cmd.commander}`, ...(cmd.turn !== undefined ? { turn: cmd.turn } : {}), cards: [cmd.commander],
+      caveat: preventedWhy ?? (cmd.turn !== undefined
+        ? "when it has dealt 21 to each opponent: cast with haste, carrying the Equipment and Auras out by then, nobody blocking"
+        : "not timed: it does not deal 21 to all three opponents by turn 20"),
     });
   }
 
@@ -112,7 +126,7 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
     // each opponent -- the whole table, since each drain hits all three -- firing once per source of
     // its trigger (`drainClock`). Replaces #984's refusal.
     const drain = kind === "burn" ? report.deckMath?.speed?.drain : undefined;
-    routes.push({ kind, label, cards: cardsOf(kind), ...(drain?.turn !== undefined ? { turn: drain.turn } : {}), caveat: drain
+    routes.push({ kind, label, cards: cardsOf(kind), ...(drain?.turn !== undefined ? { turn: drain.turn } : {}), caveat: kind === "burn" && preventedWhy ? preventedWhy : drain
       ? drainCaveat(drain)
       : kind === "burn"
         ? "its burn is one-shot or aimed at one player, which is not timed yet"

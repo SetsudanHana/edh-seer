@@ -25,13 +25,15 @@ async function main(): Promise<void> {
   for (const file of files) {
     const { report } = await analyzeDeckStatic(readFileSync(file, "utf8"), undefined, STATIC);
     const m = report.deckMath;
-    const speed = (m as { speed?: { drain?: unknown; combat?: unknown } } | undefined)?.speed;
+    const speed = (m as { speed?: { drain?: unknown; combat?: unknown; commander?: unknown; prevented?: string } } | undefined)?.speed;
     rows.push({
       deck: file.split("/").pop()!.replace(/\.txt$/, ""),
       horizon: m ? { turn: m.turn, turnSource: m.turnSource, clock: m.clock.turn ?? null } : null,
       burn: m?.wincons.classes.find((c) => c.class === "burn")?.cards ?? [],
       drain: speed?.drain ?? null,
       combat: speed?.combat ?? null,
+      commander: speed?.commander ?? null,
+      prevented: speed?.prevented ?? null,
     });
     process.stderr.write(".");
   }

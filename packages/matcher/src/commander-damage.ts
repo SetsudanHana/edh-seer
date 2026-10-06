@@ -1,3 +1,4 @@
+import { arrival, HORIZON } from "./pressure.js";
 import type { DeckCard } from "./types.js";
 
 /** COMMANDER DAMAGE IS TWENTY-ONE, AND IT MUST COME FROM ONE CREATURE (CR 903.10a, 704.6c).
@@ -66,17 +67,9 @@ export function commanderDamage(
   if (archetype !== "voltron") return [];
   const commanders = new Set(commanderNames);
 
-  let attachable = 0;
-  let attachableCount = 0;
-  for (const dc of deck) {
-    if (commanders.has(dc.card.name)) continue;
-    const line = (dc.card.typeLine ?? "").toLowerCase();
-    const text = dc.card.oracleText ?? "";
-    if (!line.includes("equipment") && !(line.includes("aura") && ENCHANTS_CREATURE.test(text))) continue;
-    attachableCount++;
-    const m = A_RATE.test(text) ? null : FLAT_BONUS.exec(text);
-    if (m) attachable += Number(m[1]);
-  }
+  const pieces = attachables(deck, commanders);
+  const attachable = pieces.reduce((n, a) => n + a.bonus, 0);
+  const attachableCount = pieces.length;
 
   const out: CommanderDamage[] = [];
   for (const dc of deck) {
@@ -95,4 +88,60 @@ export function commanderDamage(
     });
   }
   return out;
+}
+
+/** The deck's Equipment and creature-Auras, each with the flat power it adds (0 when unreadable). */
+function attachables(deck: readonly DeckCard[], commanders: ReadonlySet<string>): { dc: DeckCard; bonus: number }[] {
+  const out: { dc: DeckCard; bonus: number }[] = [];
+  for (const dc of deck) {
+    if (commanders.has(dc.card.name)) continue;
+    const line = (dc.card.typeLine ?? "").toLowerCase();
+    const text = dc.card.oracleText ?? "";
+    if (!line.includes("equipment") && !(line.includes("aura") && ENCHANTS_CREATURE.test(text))) continue;
+    const m = A_RATE.test(text) ? null : FLAT_BONUS.exec(text);
+    out.push({ dc, bonus: m ? Number(m[1]) : 0 });
+  }
+  return out;
+}
+
+/** COMMANDER DAMAGE, TIMED FOR THE WHOLE TABLE (#1056 R2; owner 2026-10-06: speed is the turn the
+ *  whole table can be dead, a rough floor per route). 21 from ONE creature to EACH opponent, and one
+ *  creature attacks one player a combat, so the table takes three times the hits -- counted in hits,
+ *  never as a 63-damage sum.
+ *
+ *  The turn is the earliest `t + 3 x hits - 1` over the turns the commander can be cast: cast on t,
+ *  HASTE ASSUMED (otherwise it attacks from t+1, CR 508.1a), carrying the flat bonus of the gear out
+ *  by then -- each piece weighted by `arrival`, its odds of being drawn and affordable. Equip costs,
+ *  blockers and removal are not counted, and gear arriving later is not credited to hits already
+ *  owed: a rough floor. `bare`/`kitted` above stay the display range; `kitted` (every piece on at
+ *  once) is a ceiling no game reaches and is NOT this turn.
+ *
+ *  Voltron decks only, the same gate as `commanderDamage` and for its reason. With two commanders
+ *  the faster one is the route. `turn` absent when no commander kills the table by the horizon. */
+export function commanderClock(
+  deck: readonly DeckCard[],
+  commanderNames: readonly string[],
+  archetype: string | undefined,
+  opts: { manaBudget?: readonly number[] } = {},
+): { commander: string; turn?: number } | undefined {
+  if (archetype !== "voltron") return undefined;
+  const commanders = new Set(commanderNames);
+  const on = arrival(deck, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) });
+  const pieces = attachables(deck, commanders);
+  let best: { commander: string; turn?: number } | undefined;
+  for (const dc of deck) {
+    if (!commanders.has(dc.card.name)) continue;
+    const power = Number(dc.card.power);
+    if (!Number.isFinite(power) || power <= 0) continue;
+    let turn: number | undefined;
+    for (let t = 1; t <= HORIZON; t++) {
+      if (on(dc, t) === 0) continue;
+      const kit = pieces.reduce((n, a) => n + a.bonus * on(a.dc, t), 0);
+      const done = t + 3 * Math.ceil(COMMANDER_DAMAGE / (power + kit)) - 1;
+      if (done <= HORIZON && (turn === undefined || done < turn)) turn = done;
+    }
+    const row = { commander: dc.card.name, ...(turn !== undefined ? { turn } : {}) };
+    if (!best || (turn !== undefined && (best.turn === undefined || turn < best.turn))) best = row;
+  }
+  return best;
 }

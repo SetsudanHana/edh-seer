@@ -81,3 +81,26 @@ test("the combat route takes its turn from the whole-table combat speed, not the
   expect(none!.turn).toBeUndefined();
   expect(none!.caveat).toBe("not timed: in our test games the board never deals 120, enough for all three opponents");
 });
+
+/** COMMANDER DAMAGE IS ITS OWN ROUTE (#1056 R2): a voltron deck's commander-damage turn, listed
+ *  beside combat, and the fastest when it is. */
+test("a voltron deck gets a commander-damage route with its whole-table turn", () => {
+  const r = { ...deck([{ class: "voltron", cards: ["Sigarda's Aid"] }], 6, [], undefined, 14) } as DeckReport;
+  (r.deckMath as { speed: Record<string, unknown> }).speed.commander = { commander: "Light-Paws", turn: 9 };
+  const routes = speedRoutes(r, () => undefined);
+  expect(routes.map((x) => [x.kind, x.turn])).toEqual([["combat", 14], ["commander", 9]]);
+  expect(routes[1]!.label).toBe("commander damage: Light-Paws");
+  expect(fastestRoute(routes)?.kind).toBe("commander");
+});
+
+/** A COMMANDER THAT PREVENTS YOUR DAMAGE (The Mindskinner) times no damage route, and says so. */
+test("a damage-preventing commander leaves combat, commander and drain untimed, naming it", () => {
+  const r = deck([{ class: "voltron", cards: ["Plate"] }, { class: "burn", cards: ["Leech"] }], 6) as DeckReport;
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = { prevented: "The Mindskinner", combat: {}, commander: { commander: "The Mindskinner" } };
+  const routes = speedRoutes(r, () => undefined);
+  expect(routes.map((x) => [x.kind, x.turn, x.caveat])).toEqual([
+    ["combat", undefined, "not timed: The Mindskinner prevents your damage to opponents"],
+    ["commander", undefined, "not timed: The Mindskinner prevents your damage to opponents"],
+    ["burn", undefined, "not timed: The Mindskinner prevents your damage to opponents"],
+  ]);
+});

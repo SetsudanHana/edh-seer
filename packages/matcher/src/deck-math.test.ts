@@ -63,6 +63,22 @@ test("combat speed is the turn the board has dealt 120, infect left out; the clo
   expect(infect.speed?.combat?.turn).toBeUndefined();
 });
 
+/** A COMMANDER THAT PREVENTS YOUR DAMAGE TO OPPONENTS (The Mindskinner: "If a source you control
+ *  would deal damage to an opponent, prevent that damage and each opponent mills that many cards")
+ *  leaves no damage route a turn: the board, the commander and the drains deal nothing that sticks.
+ *  The speed says which card, so the readout can say why. The clock, the horizon, does not move. */
+test("a commander that prevents your damage to opponents leaves the damage routes untimed, and is named", () => {
+  const skinner: DeckCard = { card: { name: "Skinner", typeLine: "Legendary Creature — Nightmare", oracleText: "Skinner can't be blocked.\nIf a source you control would deal damage to an opponent, prevent that damage and each opponent mills that many cards.", keywords: [], colors: [], manaValue: 3, power: "10" } as Card, tags: null };
+  const deck = fillTo(100, [skinner, ...Array.from({ length: 40 }, (_, i) => beater(`Bear-${i}`, "5", 1))]);
+  const free = computeDeckMath(fillTo(100, Array.from({ length: 41 }, (_, i) => beater(`Bear-${i}`, "5", 1))), H, []);
+  const math = computeDeckMath(deck, H, ["Skinner"], undefined, { primary: "voltron" as never });
+  expect(math.speed?.prevented).toBe("Skinner");
+  expect(math.speed?.combat?.turn).toBeUndefined();
+  expect(math.speed?.commander?.turn).toBeUndefined();
+  expect(math.clock.turn).toBeDefined();
+  expect(free.speed?.prevented).toBeUndefined();
+});
+
 test("a deck with no combat clock is priced at the measured corpus median, not at nothing", () => {
   const math = computeDeckMath(fillTo(100, []), H);
   expect(math.clock.turn).toBeUndefined();

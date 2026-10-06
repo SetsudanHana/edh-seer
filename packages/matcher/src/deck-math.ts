@@ -8,6 +8,7 @@ import { fetchDemand } from "./fetch-land.js";
 import { recommendedLands, type LandRecommendation } from "./land-count.js";
 import { manaBaseScore } from "./mana-base.js";
 import { drainClock, winconReport } from "./wincon.js";
+import { commanderClock } from "./commander-damage.js";
 import { pressureCurve, STARTING_LIFE } from "./pressure.js";
 import { cardCastability, deckCastability } from "./castability.js";
 import type { CastCurve } from "./goldfish.js";
@@ -342,7 +343,17 @@ export function computeDeckMath(
   // attackers across opponents (CR 802.2) makes `3 x 40` a floor: overflow on one player is wasted.
   const tableTurn = pressureCurve(deck, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}), include: (dc) => !hasInfect(dc) })
     .find((p) => p.cumulative >= 3 * STARTING_LIFE)?.turn;
-  const speed = { combat: tableTurn !== undefined ? { turn: tableTurn } : {}, ...(drain ? { drain } : {}) };
+  // COMMANDER DAMAGE (#1056 R2): voltron decks only, the faster commander's whole-table turn.
+  const commander = commanderClock(deck, commanderNames, opts.primary, opts.manaBudget ? { manaBudget: opts.manaBudget } : {});
+  // YOUR DAMAGE TO OPPONENTS IS PREVENTED (The Mindskinner, voltron-mill): a commander that says so
+  // leaves every damage route without a turn -- the board, the commander, the drains deal nothing
+  // that sticks -- and the speed names it so the readout can say why. A card in the 99 is not always
+  // out, so only a commander counts.
+  const prevented = deck.find((dc) => commanderNames.includes(dc.card.name) && PREVENTS_YOUR_DAMAGE.test(dc.card.oracleText ?? ""))?.card.name;
+  const untimed = <T extends { turn?: number }>(r: T): Omit<T, "turn"> => { const { turn: _, ...rest } = r; return rest; };
+  const speed = prevented
+    ? { prevented, combat: {}, ...(drain ? { drain: untimed(drain) } : {}), ...(commander ? { commander: untimed(commander) } : {}) }
+    : { combat: tableTurn !== undefined ? { turn: tableTurn } : {}, ...(drain ? { drain } : {}), ...(commander ? { commander } : {}) };
 
   return {
     turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,
@@ -357,3 +368,6 @@ export function computeDeckMath(
  *  card's faces, so a DFC with infect on one face is left out whole. Upgrade path: the poison route
  *  (#1056 R3) reads grants and faces, and R1 takes its complement. */
 const hasInfect = (dc: DeckCard): boolean => (dc.card.keywords ?? []).some((k) => k.toLowerCase() === "infect");
+
+/** "If a source you control would deal damage to an opponent, prevent that damage" (The Mindskinner). */
+const PREVENTS_YOUR_DAMAGE = /source you control would deal damage to an opponent, prevent that damage/i;

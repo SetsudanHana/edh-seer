@@ -37,6 +37,7 @@ const TESTED: Record<string, string> = {
   "702.124m": "legality.test.ts — Doctor's companion needs a Time Lord Doctor and nothing else",
   "614.1c": "edges.test.ts — an UNTYPED enters emit does not reach a clone (a clone replaces its own entry)",
   "702.90b": "deck-math.test.ts — infect damage to a player is poison, not life: the whole-table combat speed leaves infect out (#1056)",
+  "508.1a": "commander-damage.test.ts — a creature attacks only with haste or controlled since the turn began, so the commander-damage turn assumes haste and says so (#1056)",
   "802.2": "deck-math.test.ts — attackers split across opponents, so three opponents' 40 is a floor for the board's combat speed (#1056)",
   "702.9c": "edges.test.ts — a redundant keyword (flying) the card already prints is not granted again; dethrone stacks",
   "702.108a": "edges.test.ts — prowess reads as the creature getting +1/+1, and only a noncreature spell feeds it",
