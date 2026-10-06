@@ -166,7 +166,7 @@ const GIVES_BACK_ROLES: ReadonlySet<Role> = new Set(["targetedRemoval", "boardWi
  *  carry no drawback the cut does not. */
 const DRAWBACK = new Set(["lose-life", "sacrifice", "discard", "cant", "tap", "deal-damage"]);
 
-interface Job { key: string; drawbacks: Set<string>; upsides: Set<string>; all: Set<string> }
+interface Job { key: string; head: string; parts: Set<string>; drawbacks: Set<string>; upsides: Set<string>; all: Set<string> }
 /** ONE READING PER CARD AND ROLE: swap search asks about the same cards hundreds of times, and each
  *  reading runs the grammar over the printed text. Keyed on the DeckCard object, so a rebuilt card
  *  (a new analysis) is read afresh and nothing outlives it. */
@@ -199,9 +199,10 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
     // A ROLE ACTION'S TRIGGER IS PART OF ITS JOB: Moldervine Reclamation draws when a creature dies.
     if (roleClause && r.trigger?.length) job.push(`when ${JSON.stringify(r.trigger)}`);
     for (const a of r.actions ?? []) {
-      // A GRANT WHOSE KEYWORDS WERE NOT READ IS NOT A JOB YET: Swiftfoot Boots and Commander's Plate
-      // both read `grant-ability` on a creature (S-T1 carries the keyword).
-      if (a.verb === "grant-ability" && !(a as { grants?: unknown[] }).grants?.length) return null;
+      // A GRANT'S KEYWORD IS ITS `text` ("hexproof", "haste"): the grammar reads it there (S-T1). A grant
+      // whose ability was not read is not a job: Swiftfoot Boots and Commander's Plate would read alike.
+      const granted = a.verb === "grant-ability" ? (a as { text?: string }).text?.toLowerCase().trim() : undefined;
+      if (a.verb === "grant-ability" && !granted) return null;
       const o = a.object as Record<string, unknown> | undefined;
       const giveBack = GIVES_BACK_ROLES.has(role) && GIVE_BACK.has(a.verb) && o?.control !== "you";
       // THE WHOLE ACTION, its words and its fixed size aside: how much is what an upgrade compares,
@@ -210,7 +211,7 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
       const rest = Object.fromEntries(Object.entries(a as unknown as Record<string, unknown>)
         .filter(([k]) => !["text", "phrase", "object", "verb", "amount"].includes(k)));
       const obj = o ? { ...o, amount: undefined, count: undefined, ...(giveBack ? { subtype: undefined } : {}) } : undefined;
-      const part = JSON.stringify([a.verb, canon(obj), canon(rest), amountShape(a.amount === undefined ? undefined : String(a.amount)), giveBack ? "" : objectWords(a.phrase)]);
+      const part = JSON.stringify([a.verb, canon(obj), canon(rest), amountShape(a.amount === undefined ? undefined : String(a.amount)), giveBack ? "" : objectWords(a.phrase), granted ?? ""]);
       all.add(part);
       // AIMED AT YOU, A ROLE VERB IS A COST (review of #1048): a wipe that also damages you, or makes
       // you sacrifice, carries that as a drawback, not as part of the job.
@@ -224,7 +225,8 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
   }
   if (job.length === 0) return null;
   const ramp = role === "ramp" ? [rampKind(d), [...(d.card.producedMana ?? [])].sort().join("")] : [];
-  return { key: JSON.stringify([role, delivery(d), ...ramp, [...new Set(job)].sort()]), drawbacks, upsides, all };
+  const head = JSON.stringify([role, delivery(d), ...ramp]);
+  return { key: JSON.stringify([role, delivery(d), ...ramp, [...new Set(job)].sort()]), head, parts: new Set(job), drawbacks, upsides, all };
 }
 
 /** The words of an object with its numbers taken out: "all nonartifact creatures" keeps "nonartifact"
@@ -268,7 +270,9 @@ function delivery(d: DeckCard): string {
 export function sameJob(cut: DeckCard, add: DeckCard, role: Role): boolean {
   const c = readJob(cut, role);
   const a = readJob(add, role);
-  if (!c || !a || c.key !== a.key) return false;
+  // THE ADD DOES EVERY PART OF THE CUT'S JOB, AND MAY DO MORE ("same with upside"): Unbreakable
+  // Formation's vigilance on top of Flawless Maneuver's indestructible.
+  if (!c || !a || c.head !== a.head || ![...c.parts].every((x) => a.parts.has(x))) return false;
   // ONE-DIRECTIONAL, so an upgrade that drops a drawback or a condition stays the same job: the add may
   // carry no drawback, and print no condition, the cut does not.
   // AND THE CUT'S UPSIDE IS KEPT: "same with upside" is the add having more, never the cut. Explore's

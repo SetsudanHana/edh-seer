@@ -24,11 +24,10 @@ test("protecting you is not protecting your permanents, though both read as a ba
   expect(effectsOf(calm, "protection")).toContain("protects|you");
   expect(effectsOf(heroic, "protection")).toContain("protects|permanents");
   expect(sameJob(heroic, calm, "protection")).toBe(false);
-  // A GRANT WHOSE KEYWORDS WERE NOT READ JOINS NO GROUP (S-T2, 2026-10-06): the grammar reads
-  // `grant-ability` without the keyword until S-T1 carries it, and a key that cannot tell hexproof
-  // from haste is a refusal, not a guess -- so not even the card itself.
-  expect(groupKey(heroic, "protection")).toBeNull();
-  expect(sameJob(heroic, heroic, "protection")).toBe(false);
+  // THE GRANT'S KEYWORDS ARE PART OF THE KEY (S-T1, 2026-10-06): read from the grammar, so the card
+  // is the same job as itself and still not Blossoming Calm.
+  expect(groupKey(heroic, "protection")).toMatch(/hexproof/);
+  expect(sameJob(heroic, heroic, "protection")).toBe(true);
 });
 
 /** THE GROUP KEY IS THE JOB (S-T2): a readable card is the same job as itself, and the parts the

@@ -395,7 +395,9 @@ import { emblemRecipient } from "../emblem.js";
 // sentence naming an opponent (Esper Sentinel, Veil of Summer).
 // 283: #797, a card whose own static says it isn't a creature under a condition (the Theros gods) is
 // marked `creatureOnlyIf`, read by the action grammar.
-export const DERIVE_VERSION = 283;
+// 284: S-T1, a landwalk grant names its landwalk (CR 702.14): "islandwalk" is an instance, not a name on
+// the keyword list, so Lord of Atlantis's grant named no keyword.
+export const DERIVE_VERSION = 284;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1019,7 +1021,11 @@ function withoutQuotedAbilities(text: string): string {
 }
 function grantedKeywords(objects: string[]): string[] {
   const text = objects.map(withoutQuotedAbilities).join(" ").toLowerCase();
-  return KEYWORD_ABILITIES.filter((k) => new RegExp(`(?:^|[^a-z])${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z])`).test(text)).sort();
+  const named = KEYWORD_ABILITIES.filter((k) => new RegExp(`(?:^|[^a-z])${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z])`).test(text));
+  // LANDWALK IS ONE KEYWORD WITH A LAND TYPE (CR 702.14): "islandwalk" and "swampwalk" are instances,
+  // not names on the list, so 47 grants named no keyword (S-T1, 2026-10-06).
+  const walks = [...text.matchAll(/(?:^|[^a-z])([a-z]+walk)(?=$|[^a-z])/g)].map((m) => m[1]!);
+  return [...new Set([...named, ...walks])].sort();
 }
 
 /** "YOU MAY CAST ARTIFACT SPELLS AS THOUGH THEY HAD FLASH" (Shimmer Myr, #711): a spell-side grant to a
