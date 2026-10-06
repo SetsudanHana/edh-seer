@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { pAtLeast, seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
-import { classifyAccelerant, ritualAdds, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
+import { classifyAccelerant, ritualAdds, opponentHandSize, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -1064,4 +1064,21 @@ test("red rituals on Mountains bring down a red commander, never a blue one", ()
   const r = simulate(deck, { trials: 1_000, turns: 3, seed: 13, alsoPrice: [red, blue] });
   expect(r.fastStart.get("Red")![1]).toBeGreaterThan(0.5);
   expect(r.fastStart.get("Blue")![2]).toBe(0);
+});
+
+/** JESKA'S WILL (owner 2026-10-06): "Add {R} for each card in target opponent's hand" counts the
+ *  opponent's hand, which the goldfish has none of. Assumed: 7 on our turns 1-2, 6 on turn 3, one
+ *  fewer a turn after, never below 3 -- they draw one and play a land and a spell or so. */
+test("an opponent's hand is assumed 7, 7, 6, 5, 4, then 3", () => {
+  expect([1, 2, 3, 4, 5, 6, 9].map(opponentHandSize)).toEqual([7, 7, 6, 5, 4, 3, 3]);
+});
+
+test("Jeska's Will adds a red for each card in the opponent's assumed hand", () => {
+  const jeska = (i: number) => ({ card: { name: `Will ${i}`, typeLine: "Sorcery", oracleText: "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n• Add {R} for each card in target opponent's hand.\n• Exile the top three cards of your library. You may play them this turn.", manaCost: "{2}{R}", keywords: [], colors: ["R"], manaValue: 3 } as never, tags: null });
+  const mountains = Array.from({ length: 40 }, (_, i) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "", ["R"]));
+  const commander = { card: { name: "Six", typeLine: "Legendary Creature — Human", oracleText: "", manaCost: "{4}{R}{R}", keywords: [], colors: ["R"], manaValue: 6 } as never, tags: null };
+  const r = simulate([...mountains, ...Array.from({ length: 59 }, (_, i) => jeska(i))], { trials: 1_000, turns: 3, seed: 17, alsoPrice: [commander] });
+  // Turn 3: three Mountains cast it for six red; three lands alone never make six.
+  expect(r.fastStart.get("Six")![2]).toBeGreaterThan(0.5);
+  expect(ritualAdds(jeska(0))).toBe(0);
 });
