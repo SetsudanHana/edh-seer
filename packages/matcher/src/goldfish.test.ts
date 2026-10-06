@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { pAtLeast, seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
-import { classifyAccelerant, ritualAdds, opponentHandSize, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
+import { classifyAccelerant, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -38,7 +38,7 @@ test("the generator is seeded and the simulation is reproducible", () => {
 // seen(3), 99)` answers 55.5%, four mana on turn three off three land drops.
 test("A1: lands only reproduces the closed form on the diagonal and is exactly zero above it", () => {
   const deck = [...basics(37), ...spells(62, 3)];
-  const r = simulate(deck, { trials: TRIALS, turns: 6, seed: 11 });
+  const r = simulate(deck, { trials: TRIALS, turns: 6, seed: 11, mulligan: false });
   for (let t = 1; t <= 6; t++) {
     const closed = pAtLeast(t, 37, seen(t), deck.length);
     expect(Math.abs(pAtLeastMana(r, t, t) - closed), `turn ${t}`).toBeLessThan(0.015);
@@ -54,7 +54,7 @@ test("A3: an all-tapped deck is the same curve shifted one turn", () => {
   const tapped = Array.from({ length: 37 }, (_, i) =>
     card(`Tapped ${i}`, "Land", 0, "This land enters tapped.\n{T}: Add {G}."));
   const deck = [...tapped, ...spells(62, 3)];
-  const r = simulate(deck, { trials: TRIALS, turns: 6, seed: 13 });
+  const r = simulate(deck, { trials: TRIALS, turns: 6, seed: 13, mulligan: false });
   expect(pAtLeastMana(r, 1, 1)).toBe(0); // the turn-1 land is tapped, so turn 1 makes nothing
   for (let t = 2; t <= 6; t++) {
     const closed = pAtLeast(t - 1, 37, seen(t - 1), deck.length);
@@ -877,15 +877,16 @@ test("O1: a commander that makes mana is deployed, because the command zone alwa
   const dork = card("Mana Commander", "Legendary Creature — Elf Druid", 2, "{T}: Add {G}.", ["G"]);
   const deck = [...basics(37), ...spells(62, 4)];
 
-  const withMana = simulate(deck, { trials: 8_000, turns: 8, seed: 41, alsoPrice: [dork] });
-  const without = simulate(deck, { trials: 8_000, turns: 8, seed: 41, alsoPrice: [bear] });
+  // No mulligan: a cheap commander is itself "a play by turn 3", so the keep would differ by commander.
+  const withMana = simulate(deck, { trials: 8_000, turns: 8, seed: 41, alsoPrice: [dork], mulligan: false });
+  const without = simulate(deck, { trials: 8_000, turns: 8, seed: 41, alsoPrice: [bear], mulligan: false });
   // The same 99 cards; the only difference is whether the commander taps for mana.
   expect(pAtLeastMana(withMana, 6, 6)).toBeGreaterThan(pAtLeastMana(without, 6, 6) + 0.05);
 
   // IT IS STILL PRICED, not silently turned into a library card: the commander keeps its own row and
   // never dilutes the deck it is not in.
   expect(withMana.byCard.has("Mana Commander")).toBe(true);
-  expect(pAtLeastMana(without, 6, 6)).toBe(pAtLeastMana(simulate(deck, { trials: 8_000, turns: 8, seed: 41 }), 6, 6));
+  expect(pAtLeastMana(without, 6, 6)).toBe(pAtLeastMana(simulate(deck, { trials: 8_000, turns: 8, seed: 41, mulligan: false }), 6, 6));
 });
 
 // --- coloured-source sequencing (roadmap L4) ---
@@ -1081,4 +1082,26 @@ test("Jeska's Will adds a red for each card in the opponent's assumed hand", () 
   // Turn 3: three Mountains cast it for six red; three lands alone never make six.
   expect(r.fastStart.get("Six")![2]).toBeGreaterThan(0.5);
   expect(ritualAdds(jeska(0))).toBe(0);
+});
+
+/** EVERY SIMULATED GAME MULLIGANS (owner 2026-10-06: "if we do not account for mulligans we are making
+ *  our goldfishing worse"). Keep 2-4 lands AND a play by turn 3 (a nonland costing 3 or less, or a
+ *  commander that does); the first mulligan is free, the second goes to six, and six is kept. */
+test("the keep rule: two to four lands and something to cast by turn three", () => {
+  expect(keepsHand(3, 2)).toBe(true);
+  expect(keepsHand(1, 2)).toBe(false);
+  expect(keepsHand(5, 2)).toBe(false);
+  expect(keepsHand(3, 5)).toBe(false);
+  // No cheap spell, but a three-mana commander is the play.
+  expect(keepsHand(3, 5, 3)).toBe(true);
+  expect(keepsHand(3, Infinity, 4)).toBe(false);
+});
+
+test("a game keeps a hand a player keeps: turn one almost never goes without a land", () => {
+  // 30 lands in 99: an unmulliganed seven plus a draw has no land about one game in twenty.
+  const deck = [...basics(30), ...spells(69, 2)];
+  const r = simulate(deck, { trials: 4_000, turns: 1, seed: 21 });
+  const noLand = r.manaAt[0]!.filter((m) => m === 0).length / 4_000;
+  // 4.6% without mulligans; what is left is the forced six that still drew no land.
+  expect(noLand).toBeLessThan(0.01);
 });

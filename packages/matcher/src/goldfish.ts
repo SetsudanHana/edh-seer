@@ -610,6 +610,9 @@ interface DeckSlot {
 }
 
 export interface SimulateOptions {
+  /** Mulligan each game by `keepsHand` (default). `false` keeps every opening seven: the closed-form
+   *  anchors (A1-A3) are hypergeometric with no mulligan, and they check the engine against that. */
+  mulligan?: boolean;
   trials?: number;
   turns?: number;
   seed?: number;
@@ -712,6 +715,12 @@ function boardFor(lands: OnBoardLand[], pod: number): { lands: number; basics: n
   return { lands: lands.length, basics, types, opponents: opponents(pod) };
 }
 
+/** THE KEEP RULE every simulated game plays (owner 2026-10-06): two to four lands AND a play by turn
+ *  three -- a nonland costing three or less in hand, or a commander that costs three or less. */
+export function keepsHand(lands: number, cheapestNonland: number, commanderMv = Infinity): boolean {
+  return lands >= 2 && lands <= 4 && (cheapestNonland <= 3 || commanderMv <= 3);
+}
+
 export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}): SimulateResult {
   // `alsoPrice` cards are COSTED but never SHUFFLED IN. A commander is not in the library (CR 903.6)
   // and yet "can I cast my commander on turn six" is the one question a reader looks for by name.
@@ -799,7 +808,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   // "held X by turn n" is identical for every member of the class. Every trial holding ANY member is
   // therefore a valid sample for EVERY member's conditional cell, weighted by how many members it
   // holds (linearity over members keeps the ratio exactly the per-member conditional probability).
-  // An accelerant changes the board it is held in, so it stays its own class; an extra (commander)
+  // Since every game mulligans, the keep rule reads one more thing -- whether a nonland costs 3 or
+  // less -- so that joins the key below. An accelerant changes the board it is held in, so it stays
+  // its own class; an extra (commander)
   // is held in every trial and stays its own class too.
   const pooled = opts.pooled ?? true;
   const classOf = priced.map((s, i) => !pooled
@@ -808,7 +819,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       ? `X:${s.name}`
       : s.accelerant
         ? `A:${s.name}`
-        : `P:${[...(s.cost?.pips ?? [])].sort((a, b) => a - b).join(",")}`);
+        // CHEAP OR NOT IS PART OF THE CLASS (review of the mulligan, 2026-10-06): the keep rule reads
+        // "a nonland costing 3 or less", so a 2-drop and a 7-drop with the same pips change which
+        // hands are KEPT, and are exchangeable only within their side of that line.
+        : `P:${s.manaValue <= 3 ? "cheap" : "dear"}:${[...(s.cost?.pips ?? [])].sort((a, b) => a - b).join(",")}`);
 
   const manaAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const fastFirst = new Map<string, number[]>(extras.map((e) => [e.name, Array(turns).fill(0)]));
@@ -829,7 +843,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   const prefixK = opts.forceName !== undefined
     ? Math.min(slots.length, 7 + forceTurn + slots.filter((s) => s.fetches).length + 1)
     : slots.length;
-  for (let t = 0; t < trials; t++) {
+  // THE CHEAPEST COMMANDER, for the keep rule's "a play by turn 3".
+  const commanderMv = Math.min(Infinity, ...extras.map((e) => e.manaValue));
+  const shuffled = (): DeckSlot[] => {
     const library = [...slots];
     if (prefixK >= library.length) {
       // Fisher-Yates against the seeded generator, so a run is reproducible card-for-card.
@@ -844,15 +860,45 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       }
     }
     if (opts.forceName !== undefined) {
-      // Conditioning by construction: the other 98 cards stay a uniform shuffle whatever position
-      // the forced card held, so moving it to a uniform slot among the first 7+turn IS the
-      // conditional law of the shuffle given "drawn by turn" (minus the fetch-advancement sliver).
+      // Conditioning by construction, IN EACH CANDIDATE SHUFFLE, so the keep decision sees the forced
+      // card when it is in the seven (review: placing it after the keep skipped the selection a cheap
+      // card makes). The other cards stay a uniform shuffle; moving it to a uniform slot among the
+      // first 7+turn is the conditional law of "drawn by turn" for that shuffle.
       const at = library.findIndex((s) => s.name === opts.forceName);
       const target = Math.floor(random() * (7 + forceTurn));
       const [x] = library.splice(at, 1);
-      library.splice(target, 0, x);
+      library.splice(target, 0, x!);
     }
-    const hand: DeckSlot[] = library.splice(0, 7);
+    return library;
+  };
+  const keeps = (h: readonly DeckSlot[]): boolean => keepsHand(
+    h.filter((c) => c.isLand).length,
+    Math.min(Infinity, ...h.filter((c) => !c.isLand).map((c) => c.manaValue)),
+    commanderMv,
+  );
+  for (let t = 0; t < trials; t++) {
+    // EVERY GAME MULLIGANS (owner 2026-10-06: "if we do not account for mulligans we are making our
+    // goldfishing worse"): keep 2-4 lands and a play by turn 3 (`keepsHand`). The first mulligan is
+    // FREE -- a fresh seven, nothing bottomed (CR 103.5c) -- the second goes to six, London-style:
+    // bottom a land from five or more, else the dearest spell, and that six is kept whatever it holds
+    // (`mulligan.ts`'s shape, owner 2026-08-23).
+    let library = shuffled();
+    let hand: DeckSlot[] = library.splice(0, 7);
+    if (opts.mulligan !== false && !keeps(hand)) {
+      library = shuffled();
+      hand = library.splice(0, 7);
+      if (!keeps(hand)) {
+        library = shuffled();
+        hand = library.splice(0, 7);
+        let out = hand.filter((c) => c.isLand).length >= 5 ? hand.findIndex((c) => c.isLand) : -1;
+        if (out < 0) {
+          for (let i = 0; i < hand.length; i++) {
+            if (!hand[i]!.isLand && (out < 0 || hand[i]!.manaValue > hand[out]!.manaValue)) out = i;
+          }
+        }
+        library.push(...hand.splice(Math.max(0, out), 1));
+      }
+    }
     // EVERY CARD THIS TRIAL HAS SEEN, and it never forgets one (T18b). "Still in hand" is the wrong
     // condition and it inverted the answer on exactly the cards a deck is happiest to draw: rule 3
     // casts accelerants greedily, so `Sol Ring` had already LEFT the hand by the time the cell below
