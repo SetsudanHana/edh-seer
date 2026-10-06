@@ -57,7 +57,7 @@ for await (const card of store.cards.find({ "legalities.commander": "legal" } as
   grammarOnly.add(c._id);
   const existing = await derivedCol.findOne({ oracleId: c._id });
   if (!FORCE && existing?.deriveVersion === DERIVE_VERSION && existing.segmentHash === hash && existing.clauseSource === "grammar") continue;
-  const tags = deriveCardTags(deriveInputOf(source as never, c._id, source.name, g.records));
+  const tags = deriveCardTags(deriveInputOf(source as never, c._id, source.name, g.records, undefined, g.readings));
   // normalizeVersion 0: no answer was bought, so a later bought one always reads as new.
   await derivedCol.updateOne({ oracleId: c._id }, { $set: { ...tags, deriveVersion: DERIVE_VERSION, normalizeVersion: 0, segmentHash: hash, clauseSource: "grammar" } }, { upsert: true });
   grammarOnlyWritten++;

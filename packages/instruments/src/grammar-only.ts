@@ -25,7 +25,7 @@ for (const doc of docs as unknown as { oracleId: string; name: string; canonical
   if (!g.complete) { const k = g.blocker!.kind; blockers[k] = (blockers[k] ?? 0) + 1; continue; }
   complete++;
   const stored = deriveCardTags(deriveInputOf(card as never, doc.oracleId, doc.name, doc.canonical)).abilities;
-  const grammar = deriveCardTags(deriveInputOf(card as never, doc.oracleId, doc.name, g.records)).abilities;
+  const grammar = deriveCardTags(deriveInputOf(card as never, doc.oracleId, doc.name, g.records, undefined, g.readings)).abilities;
   const key = deriveDiff(stored, grammar);
   if (key === null) { same++; continue; }
   (groups.get(key) ?? groups.set(key, []).get(key)!).push(doc.name);

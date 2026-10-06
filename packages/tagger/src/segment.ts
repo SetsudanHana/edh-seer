@@ -11,6 +11,7 @@
  *  with zero abilities, indistinguishable from a vanilla bear. */
 import { KEYWORD_ABILITIES } from "./derive/subtypes.js";
 import { GETS_AN_EMBLEM } from "./emblem.js";
+import { memoize } from "./memo.js";
 
 export type ClauseKind =
   | "ability"        // ordinary rules text
@@ -540,8 +541,13 @@ function isKeywordLine(line: string, keywords: string[]): boolean {
 }
 
 /** Split a card's oracle text into numbered clauses. Deterministic: the same text always yields
- *  the same clause list, which is the property the LLM could not provide. */
-export function segment(oracleText: string, keywords: string[] = [], typeLine = ""): Clause[] {
+ *  the same clause list, which is the property the LLM could not provide.
+ *
+ *  MEMOIZED (G-T3): one derive call reaches this six times over the SAME `(oracleText, keywords,
+ *  typeLine)` triple -- five in `derive-input.ts`, one in `grammar/clause-record.ts` -- and a
+ *  dual derive (stored answer, then the grammar's own records) calls it again. `segmentRaw` holds
+ *  the real implementation; nothing outside this file calls it, so every caller gets the cache. */
+function segmentRaw(oracleText: string, keywords: string[] = [], typeLine = ""): Clause[] {
   const out: Clause[] = [];
   let id = 0;
   // Classification is PER FACE. The corpus joins faces into one type line, so a card whose back is
@@ -648,3 +654,8 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
   }
   return out;
 }
+
+export const segment = memoize(
+  segmentRaw,
+  (oracleText, keywords = [], typeLine = "") => `${oracleText}\u0000${keywords.join(",")}\u0000${typeLine}`,
+);
