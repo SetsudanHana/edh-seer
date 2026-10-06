@@ -11,7 +11,7 @@ import { segment } from "../segment.js";
 import { amountOf, parseActions, unreadPhrases, type ActionReading } from "./action.js";
 import { effectText, printedPreamble } from "./preamble.js";
 import { selfAsTilde } from "./self-as-tilde.js";
-import { parseTrigger } from "./trigger.js";
+import { parseTrigger, type TriggerReading } from "./trigger.js";
 
 export interface CardText { name: string; oracleText?: string; keywords?: string[]; typeLine?: string }
 export interface GrammarRecords {
@@ -19,6 +19,12 @@ export interface GrammarRecords {
   complete: boolean;
   /** Why not complete: the first clause that did not read, and how. */
   blocker?: { clause: number; kind: "trigger" | "action"; phrase?: string };
+  /** Clause id -> the trigger and action grammar readings this function already computed while
+   *  building `records` (G-T3, F2: derive re-parses the same clause text when it derives from these
+   *  records). Threaded through `deriveInputOf` as `DeriveInput.readings`; `withGrammarActions` and
+   *  `grammarTriggersOf` in `derive/derive.ts` use them instead of calling `parseActions` /
+   *  `parseTrigger` again when they are present and safe to reuse verbatim. */
+  readings?: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }>;
 }
 
 /** The verbs a trigger opening's event is printed with, to cut its subject off the front. */
@@ -253,6 +259,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
   // which derive reads back to the parent's text.
   const overflow: ClauseRecord[] = [];
   let nextId = Math.max(0, ...clauses.map((c) => c.id)) + 1;
+  const readings: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }> = {};
   for (const c of clauses) {
     if (c.kind === "reminder") continue;
     if (c.kind === "keyword") { records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] }); continue; }
@@ -263,6 +270,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       const read = preamble ? parseTrigger(preamble, interveningIfOf(selfAsTilde(c.text, card.name))) : null;
       if (!read) return { records, complete: false, blocker: { clause: c.id, kind: "trigger", ...(preamble ? { phrase: preamble } : {}) } };
       const reads = [read].flat();
+      readings[c.id] = { trigger: reads };
       const first = reads[0]!;
       const phaseTrigger = /^at the beginning of\b/i.test(preamble!);
       record.trigger = { event: first.event, subject: triggerSubjectText(preamble!), control: phaseTrigger ? phaseControl(preamble!) : first.control ?? "any" };
@@ -284,11 +292,12 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     const cost = c.cost;
     const unread = unreadPhrases(effect, type, cost);
     if (unread.length) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: unread[0]! } };
-    const readings = parseActions(effect, type, cost);
+    const readingsHere = parseActions(effect, type, cost);
+    readings[c.id] = { ...readings[c.id], actions: readingsHere };
     // A KEYWORD LINE the segmenter left as an ability ("Suspend 4—{U}", its reminder stripped): the
     // card's own keywords, which the store records as no action, as it does a keyword clause.
-    if (type !== "triggered" && !cost && readings.length > 0 && !/\b(?:has|have|gains?|gets?|is|are|becomes?)\b|^equip\b/i.test(effect)
-      && readings.every((r) => r.verb === "grant-ability" && r.object?.self === true)) {
+    if (type !== "triggered" && !cost && readingsHere.length > 0 && !/\b(?:has|have|gains?|gets?|is|are|becomes?)\b|^equip\b/i.test(effect)
+      && readingsHere.every((r) => r.verb === "grant-ability" && r.object?.self === true)) {
       records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] });
       continue;
     }
@@ -299,10 +308,10 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // The card's own name ("~") is written "this", the store's self spelling; a self subject action
     // with no trigger noun takes the clause's own "this creature".
     const selfWord = selfNoun && selfNoun !== "~" ? selfNoun : /\bthis (?:creature|artifact|enchantment|land|planeswalker|permanent|vehicle|card|spell|aura|equipment|battle)\b/i.exec(c.text)?.[0] ?? "this";
-    record.actions = actionsOf(readings, selfNoun === "~" ? "this" : selfNoun, type, selfWord, record.trigger?.subject, record.trigger?.event);
+    record.actions = actionsOf(readingsHere, selfNoun === "~" ? "this" : selfNoun, type, selfWord, record.trigger?.subject, record.trigger?.event);
     if (record.actions.length === 0 && type !== "static") record.actions = [{ verb: "none", object: "" } as Action];
     records.push(record);
     for (const o of overflow) if (o.actions!.length === 0 && o.trigger) o.actions = record.actions;
   }
-  return { records: [...records, ...overflow], complete: true };
+  return { records: [...records, ...overflow], complete: true, readings };
 }

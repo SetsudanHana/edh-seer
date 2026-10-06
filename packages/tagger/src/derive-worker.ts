@@ -26,7 +26,7 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
   if (!isToken) {
     const g = grammarClauseRecords(source as never);
     if (g.complete) {
-      const grammarTags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, g.records));
+      const grammarTags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, g.records, undefined, g.readings));
       const key = deriveDiff(tags.abilities, grammarTags.abilities);
       // A labelled difference switches only when the grammar claims at least what the stored answer
       // claims (`lostClaims`): the label was judged on a few cards, the guard holds for every card.
