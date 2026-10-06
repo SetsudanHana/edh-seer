@@ -4,6 +4,7 @@ import { expect, test } from "vitest";
 import type { UpgradePackage, UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import type { PreconPage } from "../lib/precon-page.js";
 import { beside, UpgradePackages } from "./UpgradePackages.js";
+import { CardDrawerProvider } from "./card-drawer.js";
 
 const swap = (out: string, into: string): UpgradeSwap => ({
   kind: "land", out: { name: out, reason: `${out} enters tapped.` }, in: { name: into, reason: `${into} never enters tapped and makes white or black.` },
@@ -73,4 +74,26 @@ test("a reason beside its card's name drops the name it opens with", () => {
 test("a page built before packages draws nothing", () => {
   const { container } = show(page({ packages: undefined }));
   expect(container).toBeEmptyDOMElement();
+});
+
+/** A CARD A REASON LEANS ON OPENS ITS TEXT (#983): seven of Party Time's eleven swaps cited Thwart
+ *  the Grave, and the precon seat could not read it from the swap list. */
+test("a deck card named in a swap reason opens the card drawer", () => {
+  const graph = {
+    nodes: [{ id: "Thwart the Grave", label: "Thwart the Grave", copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 3 }],
+    edges: [],
+  } as never;
+  const reasoned: UpgradeSwap = {
+    kind: "synergy", out: { name: "Stick Together", reason: "Stick Together works with 4 cards in this deck." },
+    in: { name: "Pious Evangel", reason: "Pious Evangel puts cards into the graveyard that Thwart the Grave can bring back." },
+  };
+  render(
+    <MemoryRouter>
+      <CardDrawerProvider graph={graph}>
+        <UpgradePackages page={page({ packages: [{ target: 3, from: "3", bringDown: [], sections: [{ id: "synergy", swaps: [reasoned] }] }] })} />
+      </CardDrawerProvider>
+    </MemoryRouter>,
+  );
+  fireEvent.click(screen.getByRole("link", { name: "Thwart the Grave" }));
+  expect(screen.getByTestId("card-inspector")).toBeInTheDocument();
 });

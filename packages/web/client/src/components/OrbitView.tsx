@@ -359,6 +359,7 @@ function Through({ t, onCentre }: { t: OrbitModel["through"][number]; onCentre: 
 }
 
 function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; paused: boolean; onPause?: () => void; onSector: (s: OrbitSector) => void; onCentre: (id: string) => void }) {
+  const narrow = useNarrow();
   const name = displayName(o.focus);
   const first = firstPart(o.focus);
   return (
@@ -376,6 +377,10 @@ function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; pa
           </p>
         </div>
       </div>
+      {/* THE CARD'S OWN TEXT FIRST, AND OPEN BEYOND A PHONE (#983): every claim below is about this
+        *  card, and at the bottom of the rail it sat at the fold, where pod-fit could not test a true
+        *  claim ("Mari gives Dauthi Voidwalker deathtouch") because the text it rests on was hidden. */}
+      <ReadCards cards={[o.focus]} open={!narrow} />
       {o.sectors.length ? (
         // WHAT THESE COUNTS COUNT (appeal review 2026-09-26): "Wizards entering 18 cards" here beside
         // "Wizards entering 37 cards" in the themes read as a contradiction. These are the cards that
@@ -397,7 +402,6 @@ function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; pa
         {/* ONE LINE (owner, 2026-09-27: "less is more"): it was a paragraph on dashes, the gold line
           *  and right-click, which the map shows by doing them. */}
         Tap a card to read it, tap it again to put it in the middle. A solid line keeps working; a dashed line works once.</p>
-      <ReadCards cards={[o.focus]} />
       {o.through.length ? (
         <details>
           <summary className="cursor-pointer py-1.5">
