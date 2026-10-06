@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
-import { expectedPower, pressureCurve, measuredClock, STARTING_LIFE } from "./pressure.js";
+import { drawnBy, expectedPower, pressureCurve, measuredClock, STARTING_LIFE } from "./pressure.js";
 import type { DeckCard } from "./types.js";
 
 const beater = (name: string, power: string, mv: number): DeckCard => ({
@@ -164,4 +164,24 @@ test("include filters the board; without it the curve is unchanged", () => {
   const noBlight = pressureCurve(deck, { include: (dc) => dc.card.name !== "Blight" });
   expect(noBlight[5]!.power).toBeLessThan(all[5]!.power);
   expect(noBlight[5]!.power).toBeCloseTo(expectedPower(fillTo(100, [beater("Bear", "2", 2)]), 6), 10);
+});
+
+/** AFTER MULLIGANS (owner 2026-10-06): a creature is drawn by its KIND's simulated share when the
+ *  simulation gives one -- kept hands lean to lands and cheap plays -- and by `seen(t) / library`
+ *  when it does not. */
+test("a creature's draw odds come from its kind's simulated share when there is one", () => {
+  const deck = fillTo(100, [beater("Bear", "4", 2), beater("Giant", "6", 6)]);
+  const seenShare = { land: [0.1, 0.2], cheap: [0.15, 0.25], dear: [0.05, 0.1] };
+  expect(expectedPower(deck, 2, { seen: seenShare })).toBeCloseTo(4 * 0.25, 10);
+  expect(expectedPower(deck, 2)).toBeCloseTo(4 * (9 / 100), 10);
+});
+
+test("a card reads the share of the kind the simulation files it under", () => {
+  const seenShare = { land: [0.3], cheap: [0.2], dear: [0.1] };
+  // A TRANSFORM card with a land back face is reached by transforming, never played as a land: a spell.
+  const flips: DeckCard = { card: { name: "Map // Cove", typeLine: "Artifact // Land", layout: "transform", oracleText: "", keywords: [], colors: [], manaValue: 1 } as Card, tags: null };
+  expect(drawnBy(flips, 1, 99, seenShare)).toBe(0.2);
+  // A MODAL card keeps its land face -- you really can play it -- so the simulation counts it a land.
+  const modal: DeckCard = { card: { name: "Elf // Grove", typeLine: "Creature — Elf // Land", layout: "modal_dfc", oracleText: "", keywords: [], colors: [], manaValue: 2 } as Card, tags: null };
+  expect(drawnBy(modal, 1, 99, seenShare)).toBe(0.3);
 });

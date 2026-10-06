@@ -1059,6 +1059,8 @@ export function analyzeDeckStructured(
         castCurves: manaSim?.curves,
         // The clock's mana budget, off the same two arms — see `pressure.ts`.
         manaBudget: manaSim?.manaMedian,
+        // What a KEPT hand has seen, by kind (#1 after the mulligan, owner 2026-10-06).
+        ...(manaSim?.seenShare ? { seen: manaSim.seenShare } : {}),
         reasons: allReasons,
       })
     : undefined;
