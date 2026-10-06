@@ -272,3 +272,17 @@ test("life you lose is not burn, and a count of creature cards is not the board"
   expect(payoffs(scaler("Corpse Augur", "When this creature dies, you draw X cards and you lose X life, where X is the number of creature cards in target player's graveyard."))).toEqual([]);
   expect(payoffs(scaler("Shamanic Revelation", "Draw a card for each creature you control."))).toEqual(["Shamanic Revelation"]);
 });
+
+/** THE DRAIN, SAID PER TURN (#984, owner ruling 2026-10-06): the route keeps its "not timed" refusal,
+ *  and says how much life its repeating drains take from each opponent if each fires once. A one-shot
+ *  (an instant) is not a per-turn drain, and an X amount is not a number. */
+test("the burn plan carries its repeating drain per turn: one fire per card, X and one-shots left out", () => {
+  const drain = (name: string, amount: string, kind = "triggered", repeats = "repeatable"): DeckCard => {
+    const dc = mk(name, { kinds: ["player-damage"] });
+    dc.tags!.abilities = [{ kind, effect: { kind: "player-damage", subject: { control: "opp", token: null, scope: "each" } }, amount, repeats } as never];
+    return dc;
+  };
+  const deck = [drain("Leech", "1"), drain("Guardian", "2"), drain("Fireball", "X"), drain("Bolt", "3", "on-cast", "once")];
+  const burn = winconReport(deck).classes.find((c) => c.class === "burn")!;
+  expect(burn.drain).toEqual({ cards: 2, life: 3 });
+});

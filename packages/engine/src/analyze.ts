@@ -232,7 +232,8 @@ export interface DeckMath {
    *  deck all-in on one plan beats a deck with three half-plans, so a low focus is the finding. */
   wincons: {
     /** The cards on each plan; `payoffs` on go-wide only, the cards that turn the board into a win. */
-    classes: { class: string; count: number; share: number; cards?: string[]; payoffs?: string[] }[];
+    /** `drain` on the burn class (#984): its repeating drains' life per turn, one fire per card. */
+    classes: { class: string; count: number; share: number; cards?: string[]; payoffs?: string[]; drain?: { cards: number; life: number } }[];
     /** Herfindahl over the class shares: 1 is single-minded, 1/n is n plans split evenly. */
     focus: number;
     primary?: string;

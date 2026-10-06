@@ -92,7 +92,13 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   for (const [kind, label] of [["burn", "damage or drain"], ["mill", "milling them out"]] as const) {
     // By the win plan itself, not its card list: until 2026-09-26 the report named only combo and
     // alt-win cards, and Chandra, "mostly burn, 21 cards", had no burn line when this keyed on the list.
-    if (has(kind)) routes.push({ kind, label, cards: cardsOf(kind), caveat: "nothing in the report models how fast this route kills, so it has no turn" });
+    // THE REFUSAL KEPT, THE DRAIN SAID (#984, owner ruling 2026-10-06): three seats needed this route's
+    // speed and got only "speed not modelled". The rate is a floor -- each card once a turn -- and the
+    // sentence says so; the route stays untimed.
+    const drain = kind === "burn" ? classes.find((c) => c.class === "burn")?.drain : undefined;
+    if (has(kind)) routes.push({ kind, label, cards: cardsOf(kind), caveat: drain
+      ? `its ${drain.cards} repeating drain${drain.cards === 1 ? "" : "s"} take${drain.cards === 1 ? "s" : ""} about ${drain.life} life from each opponent a turn if each fires once; how often they fire is not modelled, so it has no turn`
+      : "nothing in the report models how fast this route kills, so it has no turn" });
   }
   return routes;
 }
