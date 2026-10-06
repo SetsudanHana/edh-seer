@@ -13,7 +13,7 @@ import type { DeckCard } from "./types.js";
 export type Role = Exclude<BuildCategory, "lands">;
 export const ROLES: readonly Role[] = BUILD_CATEGORIES.filter((c): c is Role => c !== "lands");
 export type Ingredient = "manaValue" | "rateFloor" | "rateCeiling" | "frequency" | "timing" | "breadth"
-  | "permanence" | "oneSided" | "drawback" | "extraValue" | "restriction";
+  | "permanence" | "oneSided" | "drawback" | "extraValue" | "restriction" | "amount";
 export type Ingredients = Partial<Record<Ingredient, number>>;
 
 /** NEVER IN A DECK (owner, 2026-09-27: "no one plays stickers"): Unfinity sticker sheets and Attractions.
@@ -105,6 +105,33 @@ function permanenceOf(a: Ability): number | undefined {
   return undefined;
 }
 
+/** COST AS THE CARD CHARGES IT (S-T3): the cast cost alone priced Commander's Plate at 1 against
+ *  Swiftfoot Boots' 2, and every Spree card at its base. An Equipment pays its plain equip once (not
+ *  "Equip commander", which only one creature may use); a Spree card pays the cheapest mode that does
+ *  its role. */
+const FREE_WITH_COMMANDER = /\bif you control a commander, you may cast this spell without paying its mana cost\b/i;
+// RECONFIGURE IS AN EQUIPMENT'S ATTACH COST TOO ("Reconfigure—Pay {2}", review of #1051).
+const PLAIN_EQUIP = /^(?:equip |reconfigure\s*[—-]\s*(?:pay )?)((?:\{[^}]+\})+)/gim;
+const SPREE_MODE = /^\+ ((?:\{[^}]+\})+) — (.+)$/gm;
+const ROLE_MODE: Partial<Record<Role, RegExp>> = {
+  draw: /\bdraws?\b/i, targetedRemoval: /\b(?:destroy|exile|damage|-\d+\/-\d+)\b/i, boardWipe: /\b(?:destroy|exile|damage)\b/i,
+  stackInteraction: /\bcounter\b/i, tutor: /\bsearch\b/i, ramp: /\b(?:add|search)\b/i, protection: /\b(?:hexproof|indestructible|protection|shroud|phase)\b/i,
+};
+function chargedExtra(d: DeckCard, role: Role): number {
+  const text = d.card.oracleText ?? "";
+  const line = (d.card.typeLine ?? "").toLowerCase();
+  if (/\bequipment\b/.test(line)) {
+    const equips = [...text.matchAll(PLAIN_EQUIP)].map((m) => manaOf(m[1])).filter((n): n is number => n !== null);
+    if (equips.length > 0) return Math.min(...equips);
+  }
+  if (/\bspree\b/i.test(text)) {
+    const want = ROLE_MODE[role];
+    const modes = [...text.matchAll(SPREE_MODE)].filter((m) => !want || want.test(m[2]!)).map((m) => manaOf(m[1])).filter((n): n is number => n !== null);
+    if (modes.length > 0) return Math.min(...modes);
+  }
+  return 0;
+}
+
 /** The yield roles and the rate families that measure them (rate.ts). */
 const YIELD: Partial<Record<Role, readonly RateFamily[]>> = {
   ramp: ["mana", "search"], draw: ["cards"], tutor: ["search"], burn: ["damage"],
@@ -143,8 +170,16 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
   if (typeof cmc === "number" && !hasX && !faceTypes.includes("land")) {
     // CAST PLUS ACTIVATION (the 09-17 ruling): an activated role ability costs its activation on top.
     const activations = abilities.every((a) => a.kind === "activated") ? abilities.map((a) => manaOf(a.cost)).filter((m): m is number => m !== null) : [];
-    out.manaValue = cmc + (activations.length > 0 ? Math.min(...activations) : 0);
+    out.manaValue = cmc + (activations.length > 0 ? Math.min(...activations) : 0) + chargedExtra(d, role);
+    // FREE WITH A COMMANDER IS FREE (Flawless Maneuver, Deadly Rollick): every Commander deck has one,
+    // so a free spell is never "worse" than a paid one.
+    if (FREE_WITH_COMMANDER.test(d.card.oracleText ?? "")) out.manaValue = 0;
   }
+  // HOW MUCH THE ROLE DOES, AS A NUMBER (S-T3): the largest fixed amount among its role abilities,
+  // none when any is X or an expression. Higher is better, so a same-job add that draws one where the
+  // cut draws two is never offered "for 1 less mana".
+  const amounts = abilities.map((a) => a.amount).filter((x): x is string => x !== undefined);
+  if (amounts.length > 0 && amounts.every((x) => /^\d+$/.test(x.trim()))) out.amount = Math.max(...amounts.map(Number));
   const timings = abilities.map((a) => timingOf(d, a)).filter((t): t is number => t !== undefined);
   if (timings.length > 0) out.timing = Math.max(...timings);
   out.frequency = Math.max(...abilities.map(frequencyOf));

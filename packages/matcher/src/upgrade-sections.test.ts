@@ -157,3 +157,10 @@ test("a cut's Game Changer upgrades come before its strict options, strongest fi
   expect(only!.options.map((o) => o.add)).toEqual(["Mox Diamond", "Mana Vault"]);
   expect(roleOptions("ramp", [real("Arcane Signet")], [])).toEqual([]);
 });
+
+/** AN UNREAD AMOUNT IS NOT A WORSE ONE (review of #1051): the add's X or conditional amount leaves
+ *  `amount` unset, and the swap is still judged on everything else. A smaller amount still refuses. */
+test("strictlyBetter skips an amount the add cannot state, and refuses a smaller one", () => {
+  expect(strictlyBetter({ manaValue: 2, timing: 1, amount: 2, rateFloor: 50 }, { manaValue: 1, timing: 1, rateFloor: 90 })).toEqual(["manaValue", "rateFloor"]);
+  expect(strictlyBetter({ manaValue: 2, timing: 1, amount: 2 }, { manaValue: 1, timing: 1, amount: 1 })).toBeNull();
+});

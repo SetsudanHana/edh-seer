@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import fixtures from "./quality.fixtures.json" with { type: "json" };
 import { ingredients, rolesOfCard, roleAbilities } from "./quality.js";
 import type { DeckCard } from "./types.js";
+import labelCards from "./same-job.labels.cards.json" with { type: "json" };
 
 const dc = (name: keyof typeof fixtures): DeckCard => fixtures[name] as unknown as DeckCard;
 
@@ -110,4 +111,19 @@ test("a wipe whose one-sided or mass mode is not derived is not scored as its ch
 
 test("a sticker sheet or an Attraction is never in a deck, so it has no role to be scored in (owner, 2026-09-27)", () => {
   expect(rolesOfCard(dc("Giant Mana Cake"))).toEqual([]);
+});
+
+/** COST AS THE CARD CHARGES IT (S-T3, docs/plans/2026-10-04-same-job-review.md): an Equipment costs
+ *  its equip too, a Spree card its role's mode, and a spell free with a commander costs nothing; and
+ *  how much a role does is a measure, so a same-job add that does less is never "for 1 less mana". */
+test("an Equipment pays its equip, a Spree card its mode, a commander-free spell nothing", () => {
+  const c = (n: string) => (labelCards as unknown as Record<string, DeckCard>)[n]!;
+  expect(ingredients(c("Swiftfoot Boots"), "protection").manaValue).toBe(3);       // {2} + equip {1}
+  expect(ingredients(c("Commander's Plate"), "protection").manaValue).toBe(6);     // {1} + equip {5}, not "equip commander"
+  expect(ingredients(c("Explosive Derailment"), "targetedRemoval").manaValue).toBe(3); // {R} + the damage mode's {2}
+  expect(ingredients(c("Abrade"), "targetedRemoval").manaValue).toBe(2);
+  expect(ingredients(c("Insatiable Avarice"), "draw").manaValue).toBe(3);         // {B} + the draw mode's {B}{B}
+  expect(ingredients(c("Flawless Maneuver"), "protection").manaValue).toBe(0);
+  expect(ingredients(c("Sign in Blood"), "draw").amount).toBe(2);
+  expect(ingredients(c("Insatiable Avarice"), "draw").amount).toBe(3);
 });

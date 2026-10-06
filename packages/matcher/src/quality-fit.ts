@@ -23,7 +23,7 @@ export interface Pair { role: Role; set: string; cut: Ingredients; add: Ingredie
 /** +1: more is better. −1: more is worse. */
 export const SIGN: Record<Ingredient, 1 | -1> = {
   manaValue: -1, rateFloor: 1, rateCeiling: 1, frequency: 1, timing: 1, breadth: 1,
-  permanence: 1, oneSided: 1, drawback: -1, extraValue: 1, restriction: -1,
+  permanence: 1, oneSided: 1, drawback: -1, extraValue: 1, restriction: -1, amount: 1,
 };
 /** Below this many pairs a role's fit is noise: it ships on the fallback (spec). */
 const MIN_PAIRS = 150;

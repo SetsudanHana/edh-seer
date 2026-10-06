@@ -52,6 +52,7 @@ function gains(o: RoleOption): string[] {
     else if (k === "oneSided") out.push("spares your own creatures");
     else if (k === "drawback") out.push("gives the opponent nothing back");
     else if (k === "restriction") out.push("makes mana you can spend on anything");
+    else if (k === "amount") out.push(`and does more of it (${a.amount} where it was ${c.amount})`);
   }
   return out;
 }
@@ -68,6 +69,7 @@ function shortfalls(o: RoleOption, addName: string): string[] {
     else if (k === "breadth") out.push("hits fewer kinds of card");
     else if (k === "permanence") out.push(`only ${permanence(c.permanence)}`);
     else if (k === "oneSided") out.push("hits your creatures too");
+    else if (k === "amount") out.push(`does less (${c.amount} where ${addName} does ${a.amount})`);
     else if (k === "drawback") out.push("gives the opponent something back");
     else if (k === "restriction") out.push("makes mana you can't spend on everything");
   }
