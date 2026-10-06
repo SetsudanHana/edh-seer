@@ -232,7 +232,12 @@ export interface DeckMath {
   speed?: {
     /** The turn the board has dealt 120 (three opponents' 40), infect left out; `turn` absent when it
      *  never does by the horizon. */
-    combat?: { turn?: number };
+    combat?: {
+      turn?: number;
+      /** The per-game spread (owner 2026-10-07): the fast quarter, the median and the slow quarter of
+       *  the simulated games' own table kill turns. `turn` stays the expected curve's turn. */
+      early?: number; typical?: number; late?: number;
+    };
     drain?: { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] };
     /** Voltron decks: the faster commander's turn to deal 21 to each opponent, haste assumed. */
     commander?: { commander: string; turn?: number };

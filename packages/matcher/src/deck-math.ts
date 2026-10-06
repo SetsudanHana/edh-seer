@@ -102,6 +102,8 @@ export function computeDeckMath(
     manaBudget?: readonly number[];
     /** The simulated share of each kind of card seen by turn, after mulligans (`manaModel`). */
     seen?: SimOpts["seen"];
+    /** The per-game spread of the table's combat kill turn (`ManaModel.combat.table`). */
+    combatSpread?: { early?: number; typical?: number; late?: number };
     /** The deck's reasons (`analyze.ts`'s `allReasons`): the drain route counts the sources joined
      *  to each drain's trigger (#1056). Absent for callers without edges, which get no speed. */
     reasons?: readonly Reason[];
@@ -364,7 +366,7 @@ export function computeDeckMath(
   const untimed = <T extends { turn?: number }>(r: T): Omit<T, "turn"> => { const { turn: _, ...rest } = r; return rest; };
   const speed = prevented
     ? { prevented, combat: {}, ...(drain ? { drain: untimed(drain) } : {}), ...(commander ? { commander: untimed(commander) } : {}), ...(mill ? { mill } : {}), ...(poison ? { poison } : {}) }
-    : { combat: tableTurn !== undefined ? { turn: tableTurn } : {}, ...(drain ? { drain } : {}), ...(commander ? { commander } : {}), ...(mill ? { mill } : {}), ...(poison ? { poison } : {}) };
+    : { combat: { ...(tableTurn !== undefined ? { turn: tableTurn } : {}), ...(opts.combatSpread ?? {}) }, ...(drain ? { drain } : {}), ...(commander ? { commander } : {}), ...(mill ? { mill } : {}), ...(poison ? { poison } : {}) };
 
   return {
     turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,

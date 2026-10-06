@@ -592,6 +592,9 @@ interface DeckSlot {
   ritual?: number[];
   /** A ritual that adds one mana of this colour per card in an opponent's assumed hand. */
   ritualPerOppCard?: number;
+  /** A creature with a printed numeric power: what it adds to each attack, and whether that damage
+   *  is poison (infect, CR 702.90b) rather than life. Read only by the per-game combat. */
+  attack?: { power: number; infect: boolean };
   /** A fetchland removes the land it finds from the library. */
   fetches: boolean;
   /** The land this fetch FINDS arrives tapped -- Evolving Wilds and the Landscape cycle. */
@@ -609,7 +612,18 @@ interface DeckSlot {
   accelerant?: Accelerant | null;
 }
 
+/** A creature's attack, by its front face's type and printed power; null for anything else. */
+function attackOf(dc: DeckCard): { power: number; infect: boolean } | null {
+  if (!/\bcreature\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) return null;
+  const power = Number(dc.card.power);
+  if (!Number.isFinite(power) || power <= 0) return null;
+  return { power, infect: (dc.card.keywords ?? []).some((k) => k.toLowerCase() === "infect") };
+}
+
 export interface SimulateOptions {
+  /** Play each game on to this turn for its COMBAT only (`killTurns`), past `turns`, where nothing
+   *  else is priced. Absent: no per-game combat. */
+  combatTo?: number;
   /** Mulligan each game by `keepsHand` (default). `false` keeps every opening seven: the closed-form
    *  anchors (A1-A3) are hypergeometric with no mulligan, and they check the engine against that. */
   mulligan?: boolean;
@@ -704,6 +718,12 @@ export interface SimulateResult {
    *  `land`, `cheap` (a nonland costing 3 or less) and `dear` (the rest): the three kinds the keep
    *  rule tells apart. Without mulligans every kind reads `seen(t) / library`. */
   seenShare: Record<SeenKind, number[]>;
+  /** Per trial, with `combatTo`: the first turn the game's own attacks have dealt 40 (one opponent)
+   *  and 120 (the table, infect left out), Infinity if never by `combatTo`. Each game casts the
+   *  creatures it holds -- and its commander -- cheapest first with the mana left after its
+   *  accelerants, and attacks with all of them: no blocks, no summoning sickness, the expected
+   *  curve's own rule (`pressure.ts`). Empty without `combatTo`. */
+  killTurns: { one: number[]; table: number[] };
 }
 
 export type SeenKind = "land" | "cheap" | "dear";
@@ -773,6 +793,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       ...(isLand ? { land: classifyLand(dc.card) } : { accelerant: classifyAccelerant(dc) }),
       ...(!isLand && ritualAdds(dc) > 0 ? { ritual: ritualMana(dc.card.oracleText ?? "") } : {}),
       ...(!isLand && opponentHandRitual(dc) > 0 ? { ritualPerOppCard: opponentHandRitual(dc) } : {}),
+      ...(attackOf(dc) ? { attack: attackOf(dc)! } : {}),
     };
   });
   const nonlands = slots.filter((s) => !s.isLand);
@@ -839,6 +860,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   const copies: Record<SeenKind, number> = { land: 0, cheap: 0, dear: 0 };
   for (const sl of slots) copies[kindOf(sl)]++;
   const seenSum: Record<SeenKind, number[]> = { land: Array(turns).fill(0), cheap: Array(turns).fill(0), dear: Array(turns).fill(0) };
+  const fights = opts.combatTo !== undefined && opts.forceName === undefined;
+  const playTo = fights ? Math.max(turns, opts.combatTo!) : turns;
+  const killTurns: { one: number[]; table: number[] } = { one: [], table: [] };
   const fastFirst = new Map<string, number[]>(extras.map((e) => [e.name, Array(turns).fill(0)]));
   const payableShareAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const byCardHits = new Map<string, number[]>();
@@ -930,6 +954,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     // drawn (CR 903.6, the rule `alsoPrice` already exists for) -- and it keeps its own priced row.
     for (const e of extras) if (e.accelerant) hand.push(e);
     const startedAt = new Set<string>();
+    // THE GAME'S OWN BOARD, for the per-game combat. A creature cast here is MARKED, never taken out
+    // of the hand: the land policy reads the hand's pips, so taking it out would move the mana.
+    const cast = new Set<DeckSlot>();
+    let boardOne = 0, boardTable = 0, dealtOne = 0, dealtTable = 0;
+    let oneAt = Infinity, tableAt = Infinity;
     const lands: OnBoardLand[] = [];
     const rocks: { turn: number; mana: number; colors: number }[] = [];   // the turn each landed, what it taps for, and in which colours
     const dorks: { turn: number; mana: number; colors: number }[] = [];
@@ -940,12 +969,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     // is the land drop and anything a fetch put down beside it.
     const landfalls: { turn: number; mana: number; colors: number }[] = [];
 
-    for (let turn = 1; turn <= turns; turn++) {
+    for (let turn = 1; turn <= playTo; turn++) {
       // Rule 1: one card per turn, INCLUDING turn 1. On the play there is no turn-1 draw; modelling
       // the draw is the flattering direction by one card and is stated rather than hidden.
       const pulled = library.shift();
       if (pulled) { hand.push(pulled); drawn.add(pulled.name); seenNow[kindOf(pulled)]++; }
-      for (const k of kinds) seenSum[k][turn - 1] += seenNow[k];
+      if (turn <= turns) for (const k of kinds) seenSum[k][turn - 1] += seenNow[k];
 
       // Rule 2: one land per turn, preferring whichever enters UNTAPPED given the board right now —
       // and never a land whose own gate is unmet, because that is not a land drop, it is a blank.
@@ -1086,6 +1115,22 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
 
       const untapped = untappedSources();
       const made = untapped.reduce((n, x) => n + x.mana, 0);
+      if (fights) {
+        let left = pool;
+        for (const c of [...hand, ...extras].filter((c) => c.attack && !cast.has(c)).sort((a, b) => a.manaValue - b.manaValue)) {
+          if (c.manaValue > left) break;
+          left -= c.manaValue;
+          cast.add(c);
+          boardOne += c.attack!.power;
+          if (!c.attack!.infect) boardTable += c.attack!.power;
+        }
+        dealtOne += boardOne;
+        dealtTable += boardTable;
+        if (oneAt === Infinity && dealtOne >= 40) oneAt = turn;
+        if (tableAt === Infinity && dealtTable >= 120) tableAt = turn;
+      }
+      // PAST THE PRICED TURNS ONLY THE COMBAT RUNS.
+      if (turn > turns) continue;
       manaAt[turn - 1].push(made);
       // ONE TURN'S BURST: the board's mana plus the rituals in hand, cheapest first, each cast only if
       // it can be paid for and nets mana. The first turn it covers a commander is that trial's start.
@@ -1160,6 +1205,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       }
       payableShareAt[turn - 1].push(nonlands.length > 0 ? affordable / nonlands.length : 0);
     }
+    if (fights) { killTurns.one.push(oneAt); killTurns.table.push(tableAt); }
   }
 
   // OVER THE TRIALS THAT HELD THE CARD, never over every trial. A zero denominator reads 0 and
@@ -1177,7 +1223,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     fastStart.set(name, first.map((c) => (n += c) / trials));
   }
   const seenShare = Object.fromEntries(kinds.map((k) => [k, seenSum[k].map((n) => copies[k] > 0 ? n / trials / copies[k] : 0)])) as Record<SeenKind, number[]>;
-  return { trials, turns, manaAt, payableShareAt, byCard, byCardCastable, byCardHeld: heldHits, fastStart, seenShare };
+  return { trials, turns, manaAt, payableShareAt, byCard, byCardCastable, byCardHeld: heldHits, fastStart, seenShare, killTurns };
 }
 
 /** P(at least `m` mana by turn `t`) straight off a run. */
@@ -1336,6 +1382,22 @@ export interface ManaModel {
   /** `SimulateResult.seenShare` of the greedy arm: what kind of cards a kept hand has seen by each
    *  turn. Read by `pressure.ts`'s `drawnBy` so the attack and trigger curves see mulliganed hands. */
   seenShare: Record<SeenKind, number[]>;
+  /** THE PER-GAME SPREAD of the combat kill turn (owner 2026-10-07): the fast quarter (p25) and the
+   *  slow quarter (p75) of the greedy arm's games, for one opponent and for the table. A quartile is
+   *  absent when that quarter of games never gets there by turn 20. */
+  combat: Record<"one" | "table", { early?: number; typical?: number; late?: number }>;
+}
+
+/** p25 / p50 / p75 of a list that may hold Infinity (never), each absent when it is Infinity. */
+function turnQuartiles(xs: readonly number[]): { early?: number; typical?: number; late?: number } {
+  if (xs.length === 0) return {};
+  const sorted = [...xs].sort((a, b) => a - b);
+  const at = (q: number): number | undefined => {
+    const v = sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))]!;
+    return Number.isFinite(v) ? v : undefined;
+  };
+  const e = at(0.25), m = at(0.5), l = at(0.75);
+  return { ...(e !== undefined ? { early: e } : {}), ...(m !== undefined ? { typical: m } : {}), ...(l !== undefined ? { late: l } : {}) };
 }
 
 /** BOTH POLICIES, RUN ONCE. `analyze` needs the availability table AND every card's castability, and
@@ -1352,7 +1414,9 @@ export function manaModel(
   // past twelve the honest answer is a refusal rather than a longer simulation.
   const biggest = Math.max(0, ...[...deck, ...alsoPrice].map((dc) => Math.round(dc.card.manaValue ?? 0)));
   const turns = opts.turns ?? Math.min(MAX_PRICED_TURN, Math.max(ROW_TURNS, biggest));
-  const greedy = simulate(deck, { trials, turns, seed, alsoPrice });
+  // THE GREEDY ARM PLAYS ON TO TURN 20 FOR ITS COMBAT ONLY: the table's kill turn sits past the
+  // twelve priced turns for most decks, and only the combat runs out there.
+  const greedy = simulate(deck, { trials, turns, seed, alsoPrice, combatTo: 20 });
   const held = simulate(deck, { trials, turns, seed, holdUp: 2, alsoPrice });
   const rows: ManaAvailabilityRow[] = [];
   for (let t = 1; t <= Math.min(ROW_TURNS, turns); t++) {
@@ -1451,6 +1515,7 @@ export function manaModel(
     curves,
     manaMedian: greedy.manaAt.map((col) => quantiles(col).median),
     seenShare: greedy.seenShare,
+    combat: { one: turnQuartiles(greedy.killTurns.one), table: turnQuartiles(greedy.killTurns.table) },
     availability: {
       trials,
       accelerants: deck.map(classifyAccelerant).filter((a) => a !== null).length,
