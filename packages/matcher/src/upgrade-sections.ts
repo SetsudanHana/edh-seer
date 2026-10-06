@@ -64,6 +64,9 @@ export function strictlyBetter(cut: Ingredients, add: Ingredients): Ingredient[]
     const c = cut[k];
     const a = add[k];
     if (c === undefined) continue;
+    // AN AMOUNT THAT CANNOT BE READ IS NOT A WORSE ONE (review of #1051): an X or a conditional draw on
+    // the add leaves `amount` unset, and refusing on that dropped cheaper, faster swaps whole.
+    if (a === undefined && k === "amount") continue;
     if (a === undefined) return null;
     if (LOWER_IS_BETTER.has(k) ? a > c : a < c) return null;
     if (a !== c && !NOT_A_GAIN.has(k)) gained.push(k);

@@ -110,7 +110,8 @@ function permanenceOf(a: Ability): number | undefined {
  *  "Equip commander", which only one creature may use); a Spree card pays the cheapest mode that does
  *  its role. */
 const FREE_WITH_COMMANDER = /\bif you control a commander, you may cast this spell without paying its mana cost\b/i;
-const PLAIN_EQUIP = /^equip ((?:\{[^}]+\})+)/gim;
+// RECONFIGURE IS AN EQUIPMENT'S ATTACH COST TOO ("Reconfigure—Pay {2}", review of #1051).
+const PLAIN_EQUIP = /^(?:equip |reconfigure\s*[—-]\s*(?:pay )?)((?:\{[^}]+\})+)/gim;
 const SPREE_MODE = /^\+ ((?:\{[^}]+\})+) — (.+)$/gm;
 const ROLE_MODE: Partial<Record<Role, RegExp>> = {
   draw: /\bdraws?\b/i, targetedRemoval: /\b(?:destroy|exile|damage|-\d+\/-\d+)\b/i, boardWipe: /\b(?:destroy|exile|damage)\b/i,
