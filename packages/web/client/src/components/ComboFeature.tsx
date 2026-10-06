@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import { menuExtras } from "./pop-menu.js";
 import type { EngineCard, EngineModel, Link } from "../lib/engine-model.js";
 import { displayName } from "../lib/engine-model.js";
-import { ReasonText, useCardDrawer } from "./card-drawer.js";
+import { CardName, ReasonText, useCardDrawer } from "./card-drawer.js";
 
 /** Cards outside the loop drawn under it. */
 const PAYOFFS = 3;
@@ -52,8 +52,10 @@ export function comboParts(cards: readonly string[], m: EngineModel, winners: re
 /** THE DECK'S COMBO DRAWN AS THE MOCKUP DRAWS IT (Combo mockup, 2026-09-27): the pieces on a loop,
  *  each side numbered and said in one sentence beside it, what it repeats in Commander
  *  Spellbook's words, and under the loop the cards that turn each lap into something. */
-export function ComboFeature({ parts, result, manaValue, cheap }: {
+export function ComboFeature({ parts, result, manaValue, cheap, wins }: {
   parts: ComboParts; result: string; manaValue: number; cheap: boolean;
+  /** The deck's cards that turn this loop into a win (`combo.payoffs`); undefined says nothing. */
+  wins?: readonly string[];
 }) {
   const { open, known, walkFrom } = useCardDrawer();
   // THE MAP RULE (#1003; owner, 2026-10-03): the first click on a piece opens the card, the second
@@ -96,7 +98,8 @@ export function ComboFeature({ parts, result, manaValue, cheap }: {
     <div data-testid="combo-feature" className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:items-start">
       <div className="flex flex-col gap-3 text-sm">
         <ol className="flex flex-col gap-2">
-          {sides.map((l, i) => l ? (
+          {/* EACH STEP ONCE (#1034): Rani's Dualcaster loop printed ① and ② word for word the same. */}
+          {sides.map((l, i) => l && !sides.slice(0, i).some((x) => x?.text === l.text) ? (
             <li key={i} className="flex items-center gap-2.5">
               <span aria-hidden="true" className="pip shrink-0">{i + 1}</span>
               <span><ReasonText text={l.text} /></span>
@@ -110,6 +113,12 @@ export function ComboFeature({ parts, result, manaValue, cheap }: {
               {results.map((x) => <span key={x} className="rounded-(--radius) border border-(--separator) px-2 py-0.5 text-xs">{x}</span>)}
             </span>
           </div>
+        ) : null}
+        {/* WHAT KILLS (#1034): "what it repeats" never said which card turns the loop into a win. */}
+        {wins?.length ? (
+          <p>Wins through {wins.map((n, i) => <span key={n}>{i > 0 ? ", " : ""}<CardName name={n} /></span>)}</p>
+        ) : wins ? (
+          <p className="text-(--muted)">No card here was found that turns what the loop repeats into a win.</p>
         ) : null}
         {payoffs[0] ? (
           <p><span className="text-(--muted)">Outside the loop, each lap pays: </span><ReasonText text={payoffs[0].link.text} /></p>

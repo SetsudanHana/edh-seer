@@ -54,6 +54,9 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf, model }: {
   if (!bracket) return null;
   const why = bracketWhy(bracket, combos ? listed : []);
   // THE FIRST COMBO, DRAWN AS MOCKED UP (Combo mockup, 2026-09-27); the rest stay rows.
+  // WHAT KILLS (#1034), from the report's full combo list; an older report's cheap-combo stand-ins
+  // never carried payoffs, so they say nothing rather than "none" (undefined).
+  const winsOf = (c: object): string[] | undefined => (combos ? ((c as InfiniteCombo).payoffs ?? []).map((p) => p.name) : undefined);
   const lead = listed[0] && model ? comboParts(listed[0].cards, model, ((listed[0] as InfiniteCombo).payoffs ?? []).map((p) => p.name)) : null;
   const rows = lead ? listed.slice(1) : listed;
   const shownCombos = allCombos ? rows : rows.slice(0, COMBO_ROWS);
@@ -141,10 +144,10 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf, model }: {
           <span className="eyebrow text-(--muted)">{plural(bracket.infiniteCombos || listed.length, "infinite combo")} · each repeats without limit</span>
           {/* THE LEAD COMBO AND THE REST SIDE BY SIDE on a wide screen (#770); stacked below 1800px. */}
           <div className={`grid gap-4 items-start ${lead && shownCombos.length ? "min-[1800px]:grid-cols-[minmax(0,68rem)_minmax(0,1fr)]" : ""}`}>
-            {lead ? <ComboFeature parts={lead} result={listed[0]!.result} manaValue={listed[0]!.manaValue} cheap={listed[0]!.cheap} /> : null}
+            {lead ? <ComboFeature parts={lead} result={listed[0]!.result} manaValue={listed[0]!.manaValue} cheap={listed[0]!.cheap} wins={winsOf(listed[0]!)} /> : null}
             {shownCombos.length ? (
               <ul className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(min(100%,23rem),1fr))]" aria-label={lead ? "The deck's other infinite combos" : "The infinite combos in this deck"}>
-                {shownCombos.map((c) => <ComboLoop key={c.cards.join("|")} cards={c.cards} result={c.result} manaValue={c.manaValue} cheap={c.cheap} artOf={artOf} />)}
+                {shownCombos.map((c) => <ComboLoop key={c.cards.join("|")} cards={c.cards} result={c.result} manaValue={c.manaValue} cheap={c.cheap} artOf={artOf} wins={winsOf(c)} />)}
               </ul>
             ) : null}
           </div>

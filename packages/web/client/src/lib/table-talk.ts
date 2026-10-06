@@ -48,11 +48,16 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
   const why: string[] = [];
   if (b.gameChangers.length) why.push(b.gameChangers.length <= 2 ? `${list(b.gameChangers.map(front))} (${b.gameChangers.length === 1 ? "a Game Changer" : "Game Changers"})` : `${b.gameChangers.length} Game Changers`);
   const cheap = combos.find((c) => c.cheap);
-  if (cheap) why.push(`a cheap two-card combo (${cheap.cards.map(front).join(" + ")})`);
+  // WHAT KILLS (#1034): "an infinite combo that needs 3 cards" left the phone seat asking whether it
+  // wins by itself; the report's own payoffs (`combo.payoffs`) answer it.
+  const kill = (c: { payoffs?: { name: string }[] }, joiner: "that" | "and") => (c.payoffs?.length
+    ? ` ${joiner} wins through ${list(c.payoffs.map((x) => front(x.name)))}`
+    : ` ${joiner} needs another card to win`);
+  if (cheap) why.push(`a cheap two-card combo (${cheap.cards.map(front).join(" + ")})${kill(cheap, "that")}`);
   // A COMBO BRACKET 3 STILL ALLOWS is still the thing a stranger asks about: named here, and then
   // not a second time in the heads-up.
   const allowed = !cheap && combos[0] ? combos[0] : undefined;
-  if (allowed) why.push(`an infinite combo that ${allowed.cards.length > 2 ? `needs ${allowed.cards.length} cards` : "comes together late"} (${allowed.cards.map(front).join(" + ")})`);
+  if (allowed) why.push(`an infinite combo that ${allowed.cards.length > 2 ? `needs ${allowed.cards.length} cards` : "comes together late"} (${allowed.cards.map(front).join(" + ")})${kill(allowed, "and")}`);
   const bracket = `Bracket ${band}${why.length ? `, for ${list(why)}` : b.band === "1-2" ? ": no Game Changers and no infinite combo" : ""}.`;
 
   const classes = report.deckMath?.wincons.classes ?? [];

@@ -3,7 +3,7 @@ import type { CardGraph, DeckReport } from "../types.js";
 import { tableTalk } from "./table-talk.js";
 
 const rows = [1, 2, 3, 4, 5, 6, 7, 8].map((turn) => ({ turn, mana: { p25: turn, median: turn, p75: turn + 1 }, payableShare: { p25: 0, median: 0, p75: 0 } }));
-function report(over: Partial<{ gameChangers: string[]; band: string; combos: { cards: string[]; result: string }[]; clock: number; focus: number }> = {}): DeckReport {
+function report(over: Partial<{ gameChangers: string[]; band: string; combos: { cards: string[]; result: string; payoffs?: { name: string; on: string[]; effect: string }[] }[]; clock: number; focus: number }> = {}): DeckReport {
   return {
     bracket: { band: over.band ?? "3", gameChangers: over.gameChangers ?? [], infiniteCombos: 0, cheapCombos: [], reasons: [] },
     combos: over.combos ?? [],
@@ -41,7 +41,7 @@ test("a deck spread evenly across its plans is not said to win mostly by one", (
 
 test("a cheap two-card combo is the bracket's reason and the fastest route, and is not repeated as a heads-up", () => {
   const t = tableTalk(report({ band: "4-5", combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB" }] }), graph({}), (n) => mv[n])!;
-  expect(t.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux).");
+  expect(t.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that needs another card to win.");
   expect(t.plan).toMatch(/can combo as early as turn 4\.$/);
   expect(t.headsUp).toEqual([]);
   expect(t.text).toMatch(/Beyond that combo, nothing in it takes extra turns, steals or destroys every land\.$/);
@@ -49,7 +49,7 @@ test("a cheap two-card combo is the bracket's reason and the fastest route, and 
 
 test("a combo bracket 3 still allows is named as the reason, with why it is allowed", () => {
   const t = tableTalk(report({ combos: [{ cards: ["A", "B", "C"], result: "Infinite mana" }] }), graph({}), (n) => mv[n])!;
-  expect(t.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C).");
+  expect(t.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C) and needs another card to win.");
 });
 
 test("nothing to warn about is said, as what was checked", () => {
@@ -61,4 +61,13 @@ test("nothing to warn about is said, as what was checked", () => {
 test("stealing your own permanent back is not stealing", () => {
   const t = tableTalk(report(), graph({ Homeward: "Gain control of target permanent you own." }), (n) => mv[n])!;
   expect(t.headsUp).toEqual([]);
+});
+
+/** WHAT KILLS (#1034): the phone seat on Inalla could not tell whether "an infinite combo that needs 3
+ *  cards" wins by itself; the Combos page said "Wins through Impact Tremors", a page away. */
+test("a combo in the table sentence says what turns it into a win, or that something else must", () => {
+  const winning = tableTalk(report({ combos: [{ cards: ["A", "B", "C"], result: "Infinite creature ETB", payoffs: [{ name: "Impact Tremors", on: ["A"], effect: "damage" }] }] }), graph({}), (n) => mv[n])!;
+  expect(winning.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C) and wins through Impact Tremors.");
+  const bare = tableTalk(report({ band: "4-5", combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB" }] }), graph({}), (n) => mv[n])!;
+  expect(bare.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that needs another card to win.");
 });

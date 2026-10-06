@@ -17,3 +17,12 @@ test("draws each piece on one dashed ring, with its art, and names the loop besi
   expect(row).toHaveTextContent("9 mana together");
   expect(row).not.toHaveTextContent(/rule out bracket 3/);
 });
+
+/** WHAT KILLS (#1034): a row said what the loop repeats and never what turns it into a win. */
+test("a combo row names what wins through it, or says nothing here does", () => {
+  const { unmount } = render(<ul><ComboLoop cards={["A", "B"]} result="Infinite ETB" manaValue={4} cheap wins={["Impact Tremors"]} /></ul>);
+  expect(screen.getByTestId("bracket-combo")).toHaveTextContent("Wins through Impact Tremors");
+  unmount();
+  render(<ul><ComboLoop cards={["A", "B"]} result="Infinite ETB" manaValue={4} cheap wins={[]} /></ul>);
+  expect(screen.getByTestId("bracket-combo")).toHaveTextContent("No card here turns it into a win");
+});
