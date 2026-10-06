@@ -1,9 +1,9 @@
 {
  "about": "Interaction ground truth: 200 cards (the review's probe list, the most frequent interaction cards over the 71 calibration decks and 197 precons, staples, and non-interaction controls), each with what it answers.",
  "gate": "docs/plans/2026-10-04-interaction-demand.md task 1: precision and recall per kind for answersOf against these labels",
- "status": "DRAFT: first reader only. Labelled 2026-10-04 from corpus oracle text (five labellers, one pass by the session that built them, rubric in the file). Not a gate until a second reader (the owner) has checked it.",
+ "status": "SECOND READING APPLIED 2026-10-06: 185 agree, 3 disagree, 12 unsure. Stax/MLD/shut-off is not interaction (stax: true), theft is, tax is its own kind (owner rulings). Rows with unresolved: true wait on one owner answer; excluded: true rows are left out of the gate.",
  "firstReader": "claude, 2026-10-04",
- "secondReader": null,
+ "secondReader": "owner, 2026-10-06 (artifact 1omExcjrjohaUgb4f26wNn)",
  "rubric": "# Interaction labels: rubric\n\nYou label Magic: The Gathering cards for a Commander (EDH, 4-player) deck tool. For each card decide\nwhether it is INTERACTION (it stops, removes, neutralises or protects against what OPPONENTS do), and\nwhat it answers. Read ONLY the oracle text, type line and mana cost given. NEVER use memory of what a\ncard does; if the text does not say it, it is not there. Reminder text in parentheses counts.\n\nOutput one JSON object per card, in input order, with exactly these fields:\n\n- `name`: as given.\n- `interaction`: `\"yes\"`, `\"no\"`, or `\"ruling\"`.\n  - `\"ruling\"` ONLY for the three open owner questions: discard (Thoughtseize), theft/steal (Control\n    Magic), static shut-offs and hate permanents (Torpor Orb, Null Rod, Rest in Peace, Grafdigger's\n    Cage, Blood Moon, Drannith Magistrate). Still fill `kinds`/`answers` for them.\n  - A card whose ONLY \"protection\" is for itself (hexproof while untapped, indestructible itself) is\n    `\"no\"`: self-protection is not interaction.\n  - Pure ramp/draw/value cards are `\"no\"`.\n- `kinds`: array from this closed list (empty if `\"no\"`):\n  `destroy`, `exile`, `bounce` (to hand), `tuck` (to library), `edict` (a player sacrifices of their\n  choice), `damage` (deals damage to a creature/planeswalker/battle), `minus` (-N/-N or -X/-X),\n  `neutralise` (Aura/transform/loses abilities/becomes a vanilla token, permanent stays), `steal`,\n  `counter` (counter a spell or ability), `redirect` (change targets / copy-steal a spell),\n  `shut-off` (static or activated effect that stops a class of things), `protect` (grants your\n  permanents/you protection: hexproof, indestructible, protection from, phase out, shroud),\n  `discard` (opponent discards), `graveyard-exile` (exiles cards from graveyards), `tax` (they must\n  pay, e.g. Ghostly Prison), `wipe` is NOT a kind: a wipe is `destroy`/`exile`/... with scope `all`.\n- `answers`: array of what it can remove or stop, from: `creature`, `artifact`, `enchantment`,\n  `planeswalker`, `land`, `battle`, `permanent` (any nonland/any permanent: list `permanent` AND the\n  types), `spell`, `noncreature-spell`, `creature-spell`, `instant-sorcery-spell`, `ability`\n  (activated or triggered), `graveyard`, `hand`, `attackers`. For `protect`: what it protects, from:\n  `your-creatures`, `your-permanents`, `one-creature`, `you` (the player), `your-commander`.\n- `scope`: `target`, `all` (every matching permanent, a wipe), `each-opponent`, `choice` (opponent\n  picks, edict), `self`, `static`, or `null`.\n- `oneSided`: true if it only hits opponents' things (or only protects yours), false if symmetric\n  (Wrath hits yours too), null if not applicable.\n- `conditions`: a short quote of any condition that limits it (\"if no mana was spent to cast it\",\n  \"nonblack\", \"with mana value 3 or less\", \"unless its controller pays {2}\", \"two permanents with the\n  same name\"), or null.\n- `givesBack`: a short quote if the opponent gets something (a token, a land, life, card, a free\n  spell), or null.\n- `why`: ONE sentence, quoting the decisive words of the oracle text.\n\nWrite the array of objects to the output file given to you as JSON (no comments, no trailing text).\n",
  "cards": [
   {
@@ -19,7 +19,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"each player sacrifices a creature of their choice\" hits the caster too, so it is symmetric."
+   "why": "\"each player sacrifices a creature of their choice\" hits the caster too, so it is symmetric.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Grave Pact",
@@ -34,7 +37,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"each other player sacrifices a creature of their choice\"."
+   "why": "\"each other player sacrifices a creature of their choice\".",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Dictate of Erebos",
@@ -49,11 +55,14 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"each opponent sacrifices a creature of their choice\"."
+   "why": "\"each opponent sacrifices a creature of their choice\".",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Control Magic",
-   "interaction": "ruling",
+   "interaction": "yes",
    "kinds": [
     "steal"
    ],
@@ -64,11 +73,15 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"You control enchanted creature.\""
+   "why": "\"You control enchanted creature.\"",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "gaining control is interaction, so theft"
+   }
   },
   {
    "name": "Treachery",
-   "interaction": "ruling",
+   "interaction": "yes",
    "kinds": [
     "steal"
    ],
@@ -79,11 +92,15 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"You control enchanted creature.\""
+   "why": "\"You control enchanted creature.\"",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "gaining control is interaction, so theft"
+   }
   },
   {
    "name": "Gilded Drake",
-   "interaction": "ruling",
+   "interaction": "yes",
    "kinds": [
     "steal"
    ],
@@ -94,11 +111,15 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "\"exchange control of this creature and up to one target creature an opponent controls\"",
-   "why": "\"exchange control of this creature and up to one target creature an opponent controls\"."
+   "why": "\"exchange control of this creature and up to one target creature an opponent controls\".",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "gaining control is interaction, so theft"
+   }
   },
   {
    "name": "Sower of Temptation",
-   "interaction": "ruling",
+   "interaction": "yes",
    "kinds": [
     "steal"
    ],
@@ -109,11 +130,15 @@
    "oneSided": null,
    "conditions": "\"for as long as this creature remains on the battlefield\"",
    "givesBack": null,
-   "why": "\"gain control of target creature for as long as this creature remains on the battlefield\"."
+   "why": "\"gain control of target creature for as long as this creature remains on the battlefield\".",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "gaining control is interaction, so theft"
+   }
   },
   {
    "name": "Agent of Treachery",
-   "interaction": "ruling",
+   "interaction": "yes",
    "kinds": [
     "steal"
    ],
@@ -124,11 +149,15 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"gain control of target permanent\"."
+   "why": "\"gain control of target permanent\".",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "gaining control is interaction, so theft"
+   }
   },
   {
    "name": "Torpor Orb",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off"
    ],
@@ -139,11 +168,16 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Creatures entering don't cause abilities to trigger.\""
+   "why": "\"Creatures entering don't cause abilities to trigger.\"",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "I think we have to exclude hard stax from interaction, shut-off"
+   },
+   "stax": true
   },
   {
    "name": "Null Rod",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off"
    ],
@@ -154,11 +188,16 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Activated abilities of artifacts can't be activated.\""
+   "why": "\"Activated abilities of artifacts can't be activated.\"",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "I think we have to exclude hard stax from interaction, shut-off"
+   },
+   "stax": true
   },
   {
    "name": "Cursed Totem",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off"
    ],
@@ -169,11 +208,16 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Activated abilities of creatures can't be activated.\""
+   "why": "\"Activated abilities of creatures can't be activated.\"",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "I think we have to exclude hard stax from interaction, shut-off"
+   },
+   "stax": true
   },
   {
    "name": "Containment Priest",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off",
     "exile"
@@ -185,11 +229,16 @@
    "oneSided": false,
    "conditions": "\"and it wasn't cast\"",
    "givesBack": null,
-   "why": "\"If a nontoken creature would enter and it wasn't cast, exile it instead.\""
+   "why": "\"If a nontoken creature would enter and it wasn't cast, exile it instead.\"",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "for me this is very narrow stax piece so it is shut-off"
+   },
+   "stax": true
   },
   {
    "name": "Linvala, Keeper of Silence",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off"
    ],
@@ -200,11 +249,16 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Activated abilities of creatures your opponents control can't be activated.\""
+   "why": "\"Activated abilities of creatures your opponents control can't be activated.\"",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "I think we have to exclude stax from interaction, shut-off"
+   },
+   "stax": true
   },
   {
    "name": "Drannith Magistrate",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off"
    ],
@@ -215,7 +269,12 @@
    "oneSided": true,
    "conditions": "\"from anywhere other than their hands\"",
    "givesBack": null,
-   "why": "\"Your opponents can't cast spells from anywhere other than their hands.\""
+   "why": "\"Your opponents can't cast spells from anywhere other than their hands.\"",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "I think we have to exclude stax from interaction, shut-off"
+   },
+   "stax": true
   },
   {
    "name": "Opposition Agent",
@@ -231,7 +290,12 @@
    "oneSided": true,
    "conditions": "\"while they're searching their libraries\"",
    "givesBack": null,
-   "why": "\"You control your opponents while they're searching their libraries... they exile each card they find.\""
+   "why": "\"You control your opponents while they're searching their libraries... they exile each card they find.\"",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "with your fit"
+   },
+   "unresolved": true
   },
   {
    "name": "Aven Mindcensor",
@@ -246,11 +310,16 @@
    "oneSided": true,
    "conditions": "\"searches the top four cards of that library instead\"",
    "givesBack": null,
-   "why": "\"that player searches the top four cards of that library instead\"."
+   "why": "\"that player searches the top four cards of that library instead\".",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "same as opo agent"
+   },
+   "unresolved": true
   },
   {
    "name": "Collector Ouphe",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off"
    ],
@@ -261,11 +330,16 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Activated abilities of artifacts can't be activated.\""
+   "why": "\"Activated abilities of artifacts can't be activated.\"",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "I think we have to exclude stax from interaction, shut-off"
+   },
+   "stax": true
   },
   {
    "name": "Dauthi Voidwalker",
-   "interaction": "ruling",
+   "interaction": "yes",
    "kinds": [
     "graveyard-exile"
    ],
@@ -276,11 +350,15 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "\"If a card would be put into an opponent's graveyard from anywhere, instead exile it with a void counter on it.\""
+   "why": "\"If a card would be put into an opponent's graveyard from anywhere, instead exile it with a void counter on it.\"",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "shut-off + theft"
+   }
   },
   {
    "name": "Pithing Needle",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off"
    ],
@@ -291,11 +369,16 @@
    "oneSided": false,
    "conditions": "\"unless they're mana abilities\"",
    "givesBack": null,
-   "why": "\"Activated abilities of sources with the chosen name can't be activated unless they're mana abilities.\""
+   "why": "\"Activated abilities of sources with the chosen name can't be activated unless they're mana abilities.\"",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "shut-off"
+   },
+   "stax": true
   },
   {
    "name": "Sorcerous Spyglass",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off"
    ],
@@ -306,11 +389,16 @@
    "oneSided": false,
    "conditions": "\"unless they're mana abilities\"",
    "givesBack": null,
-   "why": "\"Activated abilities of sources with the chosen name can't be activated unless they're mana abilities.\""
+   "why": "\"Activated abilities of sources with the chosen name can't be activated unless they're mana abilities.\"",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "shut-off"
+   },
+   "stax": true
   },
   {
    "name": "Blood Moon",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "neutralise"
    ],
@@ -321,11 +409,16 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Nonbasic lands are Mountains.\""
+   "why": "\"Nonbasic lands are Mountains.\"",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "I think we have to exclude stax from interaction, shut-off, this is MLD"
+   },
+   "stax": true
   },
   {
    "name": "Humility",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "neutralise"
    ],
@@ -336,11 +429,16 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"All creatures lose all abilities and have base power and toughness 1/1.\""
+   "why": "\"All creatures lose all abilities and have base power and toughness 1/1.\"",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "I think we have to exclude stax from interaction, shut-off, this is MLD"
+   },
+   "stax": true
   },
   {
    "name": "Grafdigger's Cage",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off"
    ],
@@ -351,11 +449,16 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Creature cards in graveyards and libraries can't enter the battlefield. Players can't cast spells from graveyards or libraries.\""
+   "why": "\"Creature cards in graveyards and libraries can't enter the battlefield. Players can't cast spells from graveyards or libraries.\"",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "shut-off"
+   },
+   "stax": true
   },
   {
    "name": "Thalia, Guardian of Thraben",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "tax"
    ],
@@ -366,11 +469,15 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Noncreature spells cost {1} more to cast\" taxes every player, including its controller."
+   "why": "\"Noncreature spells cost {1} more to cast\" taxes every player, including its controller.",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "tax"
+   }
   },
   {
    "name": "Winter Orb",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off"
    ],
@@ -381,11 +488,16 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"players can't untap more than one land during their untap steps\"."
+   "why": "\"players can't untap more than one land during their untap steps\".",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "I think we have to exclude stax from interaction, shut-off, this is MLD"
+   },
+   "stax": true
   },
   {
    "name": "Oko, Thief of Crowns",
-   "interaction": "ruling",
+   "interaction": "yes",
    "kinds": [
     "neutralise",
     "steal"
@@ -398,7 +510,10 @@
    "oneSided": null,
    "conditions": "\"with power 3 or less\"",
    "givesBack": "\"target artifact or creature you control\" is given up in the exchange",
-   "why": "+1 turns a permanent into a vanilla 3/3 Elk; -5 exchanges control of your permanent for an opponent's creature with power 3 or less."
+   "why": "+1 turns a permanent into a vanilla 3/3 Elk; -5 exchanges control of your permanent for an opponent's creature with power 3 or less.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Song of the Dryads",
@@ -413,7 +528,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Enchanted permanent is a colorless Forest land\", stripping its prior types and abilities."
+   "why": "\"Enchanted permanent is a colorless Forest land\", stripping its prior types and abilities.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Terminus",
@@ -428,7 +546,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Put all creatures on the bottom of their owners' libraries.\""
+   "why": "\"Put all creatures on the bottom of their owners' libraries.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Hallowed Burial",
@@ -443,7 +564,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Put all creatures on the bottom of their owners' libraries.\""
+   "why": "\"Put all creatures on the bottom of their owners' libraries.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Silence",
@@ -458,11 +582,14 @@
    "oneSided": true,
    "conditions": "\"this turn\"",
    "givesBack": null,
-   "why": "\"Your opponents can't cast spells this turn.\""
+   "why": "\"Your opponents can't cast spells this turn.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Grand Abolisher",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "shut-off"
    ],
@@ -474,11 +601,15 @@
    "oneSided": true,
    "conditions": "\"During your turn\"",
    "givesBack": null,
-   "why": "\"your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\" during your turn."
+   "why": "\"your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\" during your turn.",
+   "secondReader": {
+    "verdict": "agree"
+   },
+   "stax": true
   },
   {
    "name": "Teferi, Time Raveler",
-   "interaction": "ruling",
+   "interaction": "yes",
    "kinds": [
     "shut-off",
     "bounce"
@@ -493,7 +624,10 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "Static: \"Each opponent can cast spells only any time they could cast a sorcery\"; -3 also bounces a permanent and draws a card."
+   "why": "Static: \"Each opponent can cast spells only any time they could cast a sorcery\"; -3 also bounces a permanent and draws a card.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Mindbreak Trap",
@@ -508,7 +642,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Exile any number of target spells\" removes them from the stack before they resolve."
+   "why": "\"Exile any number of target spells\" removes them from the stack before they resolve.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Narset's Reversal",
@@ -523,7 +660,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "\"return it to its owner's hand\"",
-   "why": "\"Copy target instant or sorcery spell, then return it to its owner's hand\", taking the original off the stack."
+   "why": "\"Copy target instant or sorcery spell, then return it to its owner's hand\", taking the original off the stack.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Deflecting Palm",
@@ -539,7 +679,10 @@
    "oneSided": null,
    "conditions": "\"this turn\"",
    "givesBack": null,
-   "why": "\"prevent that damage\" to you and \"deals that much damage to that source's controller\" instead."
+   "why": "\"prevent that damage\" to you and \"deals that much damage to that source's controller\" instead.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Comeuppance",
@@ -555,7 +698,10 @@
    "oneSided": true,
    "conditions": "\"by sources you don't control\"",
    "givesBack": null,
-   "why": "\"Prevent all damage that would be dealt to you and planeswalkers you control this turn\" and reflects it to the source/controller."
+   "why": "\"Prevent all damage that would be dealt to you and planeswalkers you control this turn\" and reflects it to the source/controller.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Paradise Druid",
@@ -566,7 +712,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"This creature has hexproof as long as it's untapped\" protects only itself, which is not interaction."
+   "why": "\"This creature has hexproof as long as it's untapped\" protects only itself, which is not interaction.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Fleecemane Lion",
@@ -577,7 +726,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"it has hexproof and indestructible\" while monstrous protects only itself."
+   "why": "\"it has hexproof and indestructible\" while monstrous protects only itself.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Shimmer Dragon",
@@ -588,7 +740,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"this creature has hexproof\" protects only itself."
+   "why": "\"this creature has hexproof\" protects only itself.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Yahenni, Undying Partisan",
@@ -599,7 +754,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Yahenni gains indestructible until end of turn\" protects only itself."
+   "why": "\"Yahenni gains indestructible until end of turn\" protects only itself.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Jareth, Leonine Titan",
@@ -610,7 +768,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Jareth gains protection from the color of your choice\" protects only itself."
+   "why": "\"Jareth gains protection from the color of your choice\" protects only itself.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Anya, Merciless Angel",
@@ -621,7 +782,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Anya has indestructible\" protects only itself."
+   "why": "\"Anya has indestructible\" protects only itself.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Darksteel Mutation",
@@ -636,7 +800,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Enchanted creature becomes a 0/1 and \"loses all other abilities, card types, and creature types.\""
+   "why": "Enchanted creature becomes a 0/1 and \"loses all other abilities, card types, and creature types.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Oubliette",
@@ -651,7 +818,10 @@
    "oneSided": null,
    "conditions": "\"until this enchantment leaves the battlefield\"",
    "givesBack": null,
-   "why": "\"target creature phases out\", removing it from the game for as long as Oubliette stays in play."
+   "why": "\"target creature phases out\", removing it from the game for as long as Oubliette stays in play.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Riptide Laboratory",
@@ -662,7 +832,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Return target Wizard you control to its owner's hand\" only ever targets your own creature."
+   "why": "\"Return target Wizard you control to its owner's hand\" only ever targets your own creature.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Imprisoned in the Moon",
@@ -679,7 +852,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Enchanted permanent \"loses all other card types and abilities\", becoming an inert land."
+   "why": "Enchanted permanent \"loses all other card types and abilities\", becoming an inert land.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Wrath of God",
@@ -694,7 +870,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy all creatures. They can't be regenerated.\""
+   "why": "\"Destroy all creatures. They can't be regenerated.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Damnation",
@@ -709,7 +888,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy all creatures. They can't be regenerated.\""
+   "why": "\"Destroy all creatures. They can't be regenerated.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Supreme Verdict",
@@ -724,7 +906,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy all creatures.\""
+   "why": "\"Destroy all creatures.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Toxic Deluge",
@@ -739,7 +924,10 @@
    "oneSided": false,
    "conditions": "\"pay X life\"",
    "givesBack": null,
-   "why": "\"All creatures get -X/-X until end of turn\", scaled by the X life paid."
+   "why": "\"All creatures get -X/-X until end of turn\", scaled by the X life paid.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Blasphemous Act",
@@ -754,7 +942,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "Blasphemous Act deals 13 damage to each creature."
+   "why": "Blasphemous Act deals 13 damage to each creature.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Farewell",
@@ -773,7 +964,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "Choose one or more — Exile all artifacts / creatures / enchantments / graveyards."
+   "why": "Choose one or more — Exile all artifacts / creatures / enchantments / graveyards.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Austere Command",
@@ -790,7 +984,10 @@
    "oneSided": false,
    "conditions": "mana value 3 or less / mana value 4 or greater",
    "givesBack": null,
-   "why": "Choose two — Destroy all artifacts / enchantments / creatures with mana value 3 or less / 4 or greater."
+   "why": "Choose two — Destroy all artifacts / enchantments / creatures with mana value 3 or less / 4 or greater.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Merciless Eviction",
@@ -808,7 +1005,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "Choose one — Exile all artifacts / creatures / enchantments / planeswalkers."
+   "why": "Choose one — Exile all artifacts / creatures / enchantments / planeswalkers.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Cyclonic Rift",
@@ -828,7 +1028,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Return target nonland permanent you don't control to its owner's hand."
+   "why": "Return target nonland permanent you don't control to its owner's hand.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Arcane Denial",
@@ -843,7 +1046,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "Its controller may draw up to two cards at the beginning of the next turn's upkeep.",
-   "why": "Counter target spell."
+   "why": "Counter target spell.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "An Offer You Can't Refuse",
@@ -858,7 +1064,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "Its controller creates two Treasure tokens.",
-   "why": "Counter target noncreature spell."
+   "why": "Counter target noncreature spell.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Deflecting Swat",
@@ -874,7 +1083,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "You may choose new targets for target spell or ability."
+   "why": "You may choose new targets for target spell or ability.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Swan Song",
@@ -890,7 +1102,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "Its controller creates a 2/2 blue Bird creature token with flying.",
-   "why": "Counter target enchantment, instant, or sorcery spell."
+   "why": "Counter target enchantment, instant, or sorcery spell.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Fierce Guardianship",
@@ -905,7 +1120,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Counter target noncreature spell."
+   "why": "Counter target noncreature spell.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Lightning Greaves",
@@ -920,7 +1138,11 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "Equipped creature has haste and shroud."
+   "why": "Equipped creature has haste and shroud.",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "this is protection, which is sorcery speed "
+   }
   },
   {
    "name": "Swiftfoot Boots",
@@ -935,7 +1157,11 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "Equipped creature has hexproof and haste."
+   "why": "Equipped creature has hexproof and haste.",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "this is protection, which is sorcery speed "
+   }
   },
   {
    "name": "Heroic Intervention",
@@ -950,7 +1176,10 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "Permanents you control gain hexproof and indestructible until end of turn."
+   "why": "Permanents you control gain hexproof and indestructible until end of turn.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Nix",
@@ -965,7 +1194,10 @@
    "oneSided": null,
    "conditions": "if no mana was spent to cast it",
    "givesBack": null,
-   "why": "Counter target spell if no mana was spent to cast it."
+   "why": "Counter target spell if no mana was spent to cast it.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Winnow",
@@ -985,7 +1217,10 @@
    "oneSided": null,
    "conditions": "if another permanent with the same name is on the battlefield",
    "givesBack": null,
-   "why": "Destroy target nonland permanent if another permanent with the same name is on the battlefield."
+   "why": "Destroy target nonland permanent if another permanent with the same name is on the battlefield.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Spell Stutter",
@@ -1000,7 +1235,10 @@
    "oneSided": null,
    "conditions": "unless its controller pays {2} plus an additional {1} for each Faerie you control",
    "givesBack": null,
-   "why": "Counter target spell unless its controller pays {2} plus an additional {1} for each Faerie you control."
+   "why": "Counter target spell unless its controller pays {2} plus an additional {1} for each Faerie you control.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Counterspell",
@@ -1015,7 +1253,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Counter target spell."
+   "why": "Counter target spell.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Force of Will",
@@ -1030,7 +1271,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Counter target spell."
+   "why": "Counter target spell.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Teferi's Protection",
@@ -1046,11 +1290,14 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "You gain protection from everything. All permanents you control phase out."
+   "why": "You gain protection from everything. All permanents you control phase out.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Rest in Peace",
-   "interaction": "ruling",
+   "interaction": "yes",
    "kinds": [
     "graveyard-exile",
     "shut-off"
@@ -1062,7 +1309,11 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "If a card or token would be put into a graveyard from anywhere, exile it instead."
+   "why": "If a card or token would be put into a graveyard from anywhere, exile it instead.",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "this is shut-off basically gravehate"
+   }
   },
   {
    "name": "Strip Mine",
@@ -1077,7 +1328,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Sacrifice this land: Destroy target land."
+   "why": "Sacrifice this land: Destroy target land.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Vandalblast",
@@ -1092,7 +1346,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Destroy target artifact you don't control."
+   "why": "Destroy target artifact you don't control.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Anguished Unmaking",
@@ -1112,7 +1369,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Exile target nonland permanent."
+   "why": "Exile target nonland permanent.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Assassin's Trophy",
@@ -1133,7 +1393,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "Its controller may search their library for a basic land card, put it onto the battlefield.",
-   "why": "Destroy target permanent an opponent controls."
+   "why": "Destroy target permanent an opponent controls.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Generous Gift",
@@ -1154,7 +1417,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "Its controller creates a 3/3 green Elephant creature token.",
-   "why": "Destroy target permanent."
+   "why": "Destroy target permanent.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Krosan Grip",
@@ -1170,7 +1436,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Destroy target artifact or enchantment."
+   "why": "Destroy target artifact or enchantment.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Nature's Claim",
@@ -1186,7 +1455,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "Its controller gains 4 life.",
-   "why": "Destroy target artifact or enchantment."
+   "why": "Destroy target artifact or enchantment.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Abrupt Decay",
@@ -1206,7 +1478,10 @@
    "oneSided": null,
    "conditions": "with mana value 3 or less",
    "givesBack": null,
-   "why": "Destroy target nonland permanent with mana value 3 or less."
+   "why": "Destroy target nonland permanent with mana value 3 or less.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Mana Drain",
@@ -1221,7 +1496,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Counter target spell."
+   "why": "Counter target spell.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Negate",
@@ -1236,7 +1514,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Counter target noncreature spell."
+   "why": "Counter target noncreature spell.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Dovin's Veto",
@@ -1251,7 +1532,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Counter target noncreature spell."
+   "why": "Counter target noncreature spell.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Pact of Negation",
@@ -1266,7 +1550,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Counter target spell."
+   "why": "Counter target spell.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Flusterstorm",
@@ -1281,7 +1568,10 @@
    "oneSided": null,
    "conditions": "unless its controller pays {1}",
    "givesBack": null,
-   "why": "Counter target instant or sorcery spell unless its controller pays {1}."
+   "why": "Counter target instant or sorcery spell unless its controller pays {1}.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Tormod's Crypt",
@@ -1296,7 +1586,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Sacrifice this artifact: Exile target player's graveyard."
+   "why": "Sacrifice this artifact: Exile target player's graveyard.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Bojuka Bog",
@@ -1311,7 +1604,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "When this land enters, exile target player's graveyard."
+   "why": "When this land enters, exile target player's graveyard.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Relic of Progenitus",
@@ -1326,7 +1622,11 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "Exile this artifact: Exile all graveyards."
+   "why": "Exile this artifact: Exile all graveyards.",
+   "secondReader": {
+    "verdict": "agree",
+    "note": "both gravehates, one is targeted so opponent chooses and repetable second one is all graveyards and one off"
+   }
   },
   {
    "name": "Vanquish the Horde",
@@ -1341,7 +1641,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "Destroy all creatures."
+   "why": "Destroy all creatures.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Feed the Swarm",
@@ -1357,7 +1660,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Destroy target creature or enchantment an opponent controls."
+   "why": "Destroy target creature or enchantment an opponent controls.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Pongify",
@@ -1372,7 +1678,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "Its controller creates a 3/3 green Ape creature token.",
-   "why": "Destroy target creature. It can't be regenerated."
+   "why": "Destroy target creature. It can't be regenerated.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Rapid Hybridization",
@@ -1387,7 +1696,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "That creature's controller creates a 3/3 green Frog Lizard creature token.",
-   "why": "Destroy target creature. It can't be regenerated."
+   "why": "Destroy target creature. It can't be regenerated.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Reality Shift",
@@ -1402,7 +1714,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "Its controller manifests the top card of their library.",
-   "why": "Exile target creature."
+   "why": "Exile target creature.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Beast Within",
@@ -1423,7 +1738,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "Its controller creates a 3/3 green Beast creature token.",
-   "why": "Destroy target permanent."
+   "why": "Destroy target permanent.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Chaos Warp",
@@ -1444,11 +1762,14 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "Reveals the top card of their library. If it's a permanent card, they put it onto the battlefield.",
-   "why": "The owner of target permanent shuffles it into their library."
+   "why": "The owner of target permanent shuffles it into their library.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Thoughtseize",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "discard"
    ],
@@ -1459,11 +1780,15 @@
    "oneSided": null,
    "conditions": "nonland card",
    "givesBack": null,
-   "why": "You choose a nonland card from it. That player discards that card."
+   "why": "You choose a nonland card from it. That player discards that card.",
+   "secondReader": {
+    "verdict": "disagree",
+    "note": "this is form of disruption, but sorcery speed, one player which is pretty eak in multiplayer format"
+   }
   },
   {
    "name": "Duress",
-   "interaction": "ruling",
+   "interaction": "no",
    "kinds": [
     "discard"
    ],
@@ -1474,7 +1799,11 @@
    "oneSided": null,
    "conditions": "noncreature, nonland card",
    "givesBack": null,
-   "why": "You choose a noncreature, nonland card from it. That player discards that card."
+   "why": "You choose a noncreature, nonland card from it. That player discards that card.",
+   "secondReader": {
+    "verdict": "disagree",
+    "note": "same as above"
+   }
   },
   {
    "name": "Mana Leak",
@@ -1489,7 +1818,10 @@
    "oneSided": null,
    "conditions": "unless its controller pays {3}",
    "givesBack": null,
-   "why": "Counter target spell unless its controller pays {3}."
+   "why": "Counter target spell unless its controller pays {3}.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Stern Scolding",
@@ -1504,7 +1836,10 @@
    "oneSided": null,
    "conditions": "with power or toughness 2 or less",
    "givesBack": null,
-   "why": "Counter target creature spell with power or toughness 2 or less."
+   "why": "Counter target creature spell with power or toughness 2 or less.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Flawless Maneuver",
@@ -1519,7 +1854,10 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "Creatures you control gain indestructible until end of turn."
+   "why": "Creatures you control gain indestructible until end of turn.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Boros Charm",
@@ -1536,7 +1874,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Boros Charm deals 4 damage to target player or planeswalker. / Permanents you control gain indestructible until end of turn."
+   "why": "Boros Charm deals 4 damage to target player or planeswalker. / Permanents you control gain indestructible until end of turn.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Tamiyo's Safekeeping",
@@ -1551,7 +1892,10 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "Target permanent you control gains hexproof and indestructible until end of turn."
+   "why": "Target permanent you control gains hexproof and indestructible until end of turn.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Snakeskin Veil",
@@ -1566,7 +1910,10 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "\"It gains hexproof until end of turn\" protects your targeted creature from opponents' spells and abilities."
+   "why": "\"It gains hexproof until end of turn\" protects your targeted creature from opponents' spells and abilities.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Wear // Tear",
@@ -1582,7 +1929,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target artifact\" / \"Destroy target enchantment\"."
+   "why": "\"Destroy target artifact\" / \"Destroy target enchantment\".",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Dismember",
@@ -1597,7 +1947,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Target creature gets -5/-5 until end of turn.\""
+   "why": "\"Target creature gets -5/-5 until end of turn.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Infernal Grasp",
@@ -1612,7 +1965,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target creature.\""
+   "why": "\"Destroy target creature.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Kenrith's Transformation",
@@ -1627,7 +1983,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Enchanted creature loses all abilities and is a green Elk creature with base power and toughness 3/3.\""
+   "why": "\"Enchanted creature loses all abilities and is a green Elk creature with base power and toughness 3/3.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Lignify",
@@ -1642,7 +2001,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Enchanted creature is a Treefolk with base power and toughness 0/4 and loses all abilities.\""
+   "why": "\"Enchanted creature is a Treefolk with base power and toughness 0/4 and loses all abilities.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Kozilek's Return",
@@ -1657,7 +2019,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Kozilek's Return deals 2 damage to each creature.\""
+   "why": "\"Kozilek's Return deals 2 damage to each creature.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Settle the Wreckage",
@@ -1673,7 +2038,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "\"That player may search their library for that many basic land cards, put those cards onto the battlefield tapped\"",
-   "why": "\"Exile all attacking creatures target player controls.\""
+   "why": "\"Exile all attacking creatures target player controls.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Fire Covenant",
@@ -1688,7 +2056,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Fire Covenant deals X damage divided as you choose among any number of target creatures.\""
+   "why": "\"Fire Covenant deals X damage divided as you choose among any number of target creatures.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Vindicate",
@@ -1709,7 +2080,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target permanent.\""
+   "why": "\"Destroy target permanent.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Council's Judgment",
@@ -1729,7 +2103,10 @@
    "oneSided": null,
    "conditions": "\"a nonland permanent you don't control\"",
    "givesBack": null,
-   "why": "\"Exile each permanent with the most votes or tied for most votes,\" voted from permanents you don't control."
+   "why": "\"Exile each permanent with the most votes or tied for most votes,\" voted from permanents you don't control.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Prismatic Ending",
@@ -1749,7 +2126,10 @@
    "oneSided": null,
    "conditions": "\"if its mana value is less than or equal to the number of colors of mana spent to cast this spell\"",
    "givesBack": null,
-   "why": "\"Exile target nonland permanent if its mana value is less than or equal to...\""
+   "why": "\"Exile target nonland permanent if its mana value is less than or equal to...\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Evacuation",
@@ -1764,7 +2144,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Return all creatures to their owners' hands.\""
+   "why": "\"Return all creatures to their owners' hands.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Mother of Runes",
@@ -1779,7 +2162,10 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Target creature you control gains protection from the color of your choice until end of turn.\""
+   "why": "\"Target creature you control gains protection from the color of your choice until end of turn.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Ghostly Prison",
@@ -1794,7 +2180,10 @@
    "oneSided": true,
    "conditions": "\"unless their controller pays {2} for each creature they control that's attacking you\"",
    "givesBack": null,
-   "why": "\"Creatures can't attack you unless their controller pays {2}\" for each attacker."
+   "why": "\"Creatures can't attack you unless their controller pays {2}\" for each attacker.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Swords to Plowshares",
@@ -1809,7 +2198,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "\"Its controller gains life equal to its power.\"",
-   "why": "\"Exile target creature.\""
+   "why": "\"Exile target creature.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Path to Exile",
@@ -1824,7 +2216,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "\"Its controller may search their library for a basic land card, put that card onto the battlefield tapped\"",
-   "why": "\"Exile target creature.\""
+   "why": "\"Exile target creature.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Sol Ring",
@@ -1835,18 +2230,27 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"{T}: Add {C}{C}\" is pure mana ramp, not interaction."
+   "why": "\"{T}: Add {C}{C}\" is pure mana ramp, not interaction.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Rhystic Study",
    "interaction": "no",
-   "kinds": [],
+   "kinds": [
+    "tax"
+   ],
    "answers": [],
    "scope": null,
    "oneSided": null,
    "conditions": "\"unless that player pays {1}\"",
    "givesBack": null,
-   "why": "\"Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.\""
+   "why": "\"Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.\"",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "well, floor for this one is that everyones spell costs one more which is basically tax"
+   }
   },
   {
    "name": "Cultivate",
@@ -1857,29 +2261,44 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Searches and ramps lands for yourself; does nothing to opponents."
+   "why": "Searches and ramps lands for yourself; does nothing to opponents.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Smothering Tithe",
    "interaction": "no",
-   "kinds": [],
+   "kinds": [
+    "tax"
+   ],
    "answers": [],
    "scope": null,
    "oneSided": null,
    "conditions": "\"that player may pay {2}\"",
    "givesBack": null,
-   "why": "\"Whenever an opponent draws a card, that player may pay {2}\" or you get a Treasure, taxing their draws."
+   "why": "\"Whenever an opponent draws a card, that player may pay {2}\" or you get a Treasure, taxing their draws.",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "same as rhystic study"
+   }
   },
   {
    "name": "Esper Sentinel",
    "interaction": "no",
-   "kinds": [],
+   "kinds": [
+    "tax"
+   ],
    "answers": [],
    "scope": null,
    "oneSided": null,
    "conditions": "\"their first noncreature spell each turn\"",
    "givesBack": null,
-   "why": "\"Draw a card unless that player pays {X}\" taxes an opponent's first noncreature spell each turn."
+   "why": "\"Draw a card unless that player pays {X}\" taxes an opponent's first noncreature spell each turn.",
+   "secondReader": {
+    "verdict": "unsure",
+    "note": "same as rhystic study"
+   }
   },
   {
    "name": "Llanowar Elves",
@@ -1890,7 +2309,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"{T}: Add {G}\" is pure mana ramp."
+   "why": "\"{T}: Add {G}\" is pure mana ramp.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Fell the Profane // Fell Mire",
@@ -1906,7 +2328,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target creature or planeswalker.\""
+   "why": "\"Destroy target creature or planeswalker.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Sink into Stupor // Soporific Springs",
@@ -1927,7 +2352,10 @@
    "oneSided": null,
    "conditions": "\"an opponent controls\"",
    "givesBack": null,
-   "why": "\"Return target spell or nonland permanent an opponent controls to its owner's hand.\""
+   "why": "\"Return target spell or nonland permanent an opponent controls to its owner's hand.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Scavenger Grounds",
@@ -1942,7 +2370,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Exile all graveyards.\""
+   "why": "\"Exile all graveyards.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Demolition Field",
@@ -1957,7 +2388,10 @@
    "oneSided": null,
    "conditions": "\"nonbasic land an opponent controls\"",
    "givesBack": "\"That land's controller may search their library for a basic land card, put it onto the battlefield\"",
-   "why": "\"Destroy target nonbasic land an opponent controls.\""
+   "why": "\"Destroy target nonbasic land an opponent controls.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Otawara, Soaring City",
@@ -1975,7 +2409,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Return target artifact, creature, enchantment, or planeswalker to its owner's hand.\""
+   "why": "\"Return target artifact, creature, enchantment, or planeswalker to its owner's hand.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Deadly Rollick",
@@ -1990,7 +2427,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Exile target creature.\""
+   "why": "\"Exile target creature.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Withering Torment",
@@ -2006,7 +2446,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target creature or enchantment.\""
+   "why": "\"Destroy target creature or enchantment.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Sundering Eruption // Volcanic Fissure",
@@ -2021,7 +2464,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "\"Its controller may search their library for a basic land card, put it onto the battlefield tapped\"",
-   "why": "\"Destroy target land.\" (also makes non-flying creatures unable to block this turn.)"
+   "why": "\"Destroy target land.\" (also makes non-flying creatures unable to block this turn.)",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Rakdos Charm",
@@ -2038,7 +2484,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Exile target player's graveyard\" or \"Destroy target artifact\" (third mode, creatures pinging their controllers, isn't a listed kind)."
+   "why": "\"Exile target player's graveyard\" or \"Destroy target artifact\" (third mode, creatures pinging their controllers, isn't a listed kind).",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Aetherize",
@@ -2054,7 +2503,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Return all attacking creatures to their owner's hand.\""
+   "why": "\"Return all attacking creatures to their owner's hand.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Putrefy",
@@ -2070,7 +2522,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target artifact or creature.\""
+   "why": "\"Destroy target artifact or creature.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Mortify",
@@ -2086,7 +2541,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target creature or enchantment.\""
+   "why": "\"Destroy target creature or enchantment.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Chain Reaction",
@@ -2101,7 +2559,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Chain Reaction deals X damage to each creature.\""
+   "why": "\"Chain Reaction deals X damage to each creature.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Acidic Slime",
@@ -2118,7 +2579,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"When this creature enters, destroy target artifact, enchantment, or land.\""
+   "why": "\"When this creature enters, destroy target artifact, enchantment, or land.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Terminate",
@@ -2133,7 +2597,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target creature.\""
+   "why": "\"Destroy target creature.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Meteor Golem",
@@ -2153,7 +2620,10 @@
    "oneSided": null,
    "conditions": "\"an opponent controls\"",
    "givesBack": null,
-   "why": "\"When this creature enters, destroy target nonland permanent an opponent controls.\""
+   "why": "\"When this creature enters, destroy target nonland permanent an opponent controls.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Unstable Obelisk",
@@ -2174,7 +2644,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target permanent.\""
+   "why": "\"Destroy target permanent.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Steel Hellkite",
@@ -2194,7 +2667,10 @@
    "oneSided": true,
    "conditions": "\"whose controller was dealt combat damage by this creature this turn\"",
    "givesBack": null,
-   "why": "\"Destroy each nonland permanent with mana value X whose controller was dealt combat damage by this creature this turn.\""
+   "why": "\"Destroy each nonland permanent with mana value X whose controller was dealt combat damage by this creature this turn.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Return to Dust",
@@ -2210,7 +2686,10 @@
    "oneSided": null,
    "conditions": "\"If you cast this spell during your main phase\" (for the second target)",
    "givesBack": null,
-   "why": "\"Exile target artifact or enchantment,\" possibly a second one in your main phase."
+   "why": "\"Exile target artifact or enchantment,\" possibly a second one in your main phase.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Blasphemous Edict",
@@ -2225,7 +2704,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Each player sacrifices thirteen creatures of their choice.\""
+   "why": "\"Each player sacrifices thirteen creatures of their choice.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Untimely Malfunction",
@@ -2243,7 +2725,10 @@
    "oneSided": null,
    "conditions": "\"a single target\" (for the redirect mode)",
    "givesBack": null,
-   "why": "\"Destroy target artifact\" or \"Change the target of target spell or ability with a single target\" (the third mode, making creatures unable to block, isn't a listed kind)."
+   "why": "\"Destroy target artifact\" or \"Change the target of target spell or ability with a single target\" (the third mode, making creatures unable to block, isn't a listed kind).",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Stroke of Midnight",
@@ -2263,7 +2748,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "\"Its controller creates a 1/1 white Human creature token.\"",
-   "why": "\"Destroy target nonland permanent.\""
+   "why": "\"Destroy target nonland permanent.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Martial Coup",
@@ -2278,7 +2766,10 @@
    "oneSided": false,
    "conditions": "\"If X is 5 or more\"",
    "givesBack": null,
-   "why": "\"If X is 5 or more, destroy all other creatures.\""
+   "why": "\"If X is 5 or more, destroy all other creatures.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Inspiring Call",
@@ -2293,7 +2784,10 @@
    "oneSided": true,
    "conditions": "\"for each creature you control with a +1/+1 counter on it\"",
    "givesBack": null,
-   "why": "\"Those creatures gain indestructible until end of turn\" protects them from opponents' removal."
+   "why": "\"Those creatures gain indestructible until end of turn\" protects them from opponents' removal.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Cleansing Nova",
@@ -2310,7 +2804,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy all creatures\" or \"Destroy all artifacts and enchantments.\""
+   "why": "\"Destroy all creatures\" or \"Destroy all artifacts and enchantments.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Utter End",
@@ -2330,7 +2827,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Exile target nonland permanent.\""
+   "why": "\"Exile target nonland permanent.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Soul-Guide Lantern",
@@ -2345,7 +2845,10 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Exile each opponent's graveyard\" (also exiles one target card from a graveyard on entry)."
+   "why": "\"Exile each opponent's graveyard\" (also exiles one target card from a graveyard on entry).",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Hour of Reckoning",
@@ -2360,7 +2863,10 @@
    "oneSided": false,
    "conditions": "nontoken creatures",
    "givesBack": null,
-   "why": "\"Destroy all nontoken creatures.\" wipes every nontoken creature, yours included."
+   "why": "\"Destroy all nontoken creatures.\" wipes every nontoken creature, yours included.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Crib Swap",
@@ -2375,7 +2881,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "creates a 1/1 colorless Shapeshifter creature token",
-   "why": "\"Exile target creature.\" removes an opposing creature outright."
+   "why": "\"Exile target creature.\" removes an opposing creature outright.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Angel of the Ruins",
@@ -2391,7 +2900,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"exile up to two target artifacts and/or enchantments\" on ETB."
+   "why": "\"exile up to two target artifacts and/or enchantments\" on ETB.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Resculpt",
@@ -2407,7 +2919,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "creates a 4/4 blue and red Elemental creature token",
-   "why": "\"Exile target artifact or creature.\" removes the permanent, though it leaves a 4/4 behind."
+   "why": "\"Exile target artifact or creature.\" removes the permanent, though it leaves a 4/4 behind.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Mithril Coat",
@@ -2422,7 +2937,10 @@
    "oneSided": true,
    "conditions": "legendary creature you control",
    "givesBack": null,
-   "why": "\"attach it to target legendary creature you control\" and \"Equipped creature has indestructible\" shields a creature you control from removal."
+   "why": "\"attach it to target legendary creature you control\" and \"Equipped creature has indestructible\" shields a creature you control from removal.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Lethal Scheme",
@@ -2438,7 +2956,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target creature or planeswalker.\""
+   "why": "\"Destroy target creature or planeswalker.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Fell the Mighty",
@@ -2453,7 +2974,10 @@
    "oneSided": false,
    "conditions": "power greater than target creature's power",
    "givesBack": null,
-   "why": "\"Destroy all creatures with power greater than target creature's power.\" can hit either side's board."
+   "why": "\"Destroy all creatures with power greater than target creature's power.\" can hit either side's board.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Curse of the Swine",
@@ -2468,7 +2992,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "its controller creates a 2/2 green Boar creature token",
-   "why": "\"Exile X target creatures.\""
+   "why": "\"Exile X target creatures.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Shriekmaw",
@@ -2483,7 +3010,10 @@
    "oneSided": null,
    "conditions": "nonartifact, nonblack creature",
    "givesBack": null,
-   "why": "\"destroy target nonartifact, nonblack creature\" on ETB."
+   "why": "\"destroy target nonartifact, nonblack creature\" on ETB.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Living Death",
@@ -2494,7 +3024,11 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "Creatures are sacrificed but then every exiled creature card \"puts all cards they exiled this way onto the battlefield\", a symmetric reanimation swap rather than removal."
+   "why": "Creatures are sacrificed but then every exiled creature card \"puts all cards they exiled this way onto the battlefield\", a symmetric reanimation swap rather than removal.",
+   "secondReader": {
+    "verdict": "disagree",
+    "note": "not everything comes back, cause it replaces basically creatures on the battlefield with creatures in the graveyard so it is good in specific decks"
+   }
   },
   {
    "name": "Imp's Mischief",
@@ -2509,7 +3043,10 @@
    "oneSided": null,
    "conditions": "spell with a single target",
    "givesBack": null,
-   "why": "\"Change the target of target spell with a single target.\" can redirect an opponent's removal or burn."
+   "why": "\"Change the target of target spell with a single target.\" can redirect an opponent's removal or burn.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Go for the Throat",
@@ -2524,7 +3061,10 @@
    "oneSided": null,
    "conditions": "nonartifact creature",
    "givesBack": null,
-   "why": "\"Destroy target nonartifact creature.\""
+   "why": "\"Destroy target nonartifact creature.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Ghost Quarter",
@@ -2539,7 +3079,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "its controller may search their library for a basic land card, put it onto the battlefield",
-   "why": "\"Sacrifice this land: Destroy target land.\""
+   "why": "\"Sacrifice this land: Destroy target land.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Despark",
@@ -2554,7 +3097,10 @@
    "oneSided": null,
    "conditions": "mana value 4 or greater",
    "givesBack": null,
-   "why": "\"Exile target permanent with mana value 4 or greater.\""
+   "why": "\"Exile target permanent with mana value 4 or greater.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Decimate",
@@ -2572,7 +3118,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target artifact, target creature, target enchantment, and target land.\""
+   "why": "\"Destroy target artifact, target creature, target enchantment, and target land.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Boggart Trawler // Boggart Bog",
@@ -2587,7 +3136,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"exile target player's graveyard\" on the creature's ETB."
+   "why": "\"exile target player's graveyard\" on the creature's ETB.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Bedevil",
@@ -2604,7 +3156,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy target artifact, creature, or planeswalker.\""
+   "why": "\"Destroy target artifact, creature, or planeswalker.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Bastion Protector",
@@ -2619,7 +3174,10 @@
    "oneSided": true,
    "conditions": "Commander creatures you control",
    "givesBack": null,
-   "why": "\"Commander creatures you control ... have indestructible\" shields your commander from removal."
+   "why": "\"Commander creatures you control ... have indestructible\" shields your commander from removal.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Abrade",
@@ -2636,7 +3194,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"deals 3 damage to target creature\" or \"Destroy target artifact.\""
+   "why": "\"deals 3 damage to target creature\" or \"Destroy target artifact.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Unbreakable Formation",
@@ -2651,7 +3212,10 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Creatures you control gain indestructible until end of turn\" protects your board from a wipe or removal."
+   "why": "\"Creatures you control gain indestructible until end of turn\" protects your board from a wipe or removal.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Time Wipe",
@@ -2666,7 +3230,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"destroy all creatures\" after bouncing one of your own to spare it."
+   "why": "\"destroy all creatures\" after bouncing one of your own to spare it.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Tibalt's Trickery",
@@ -2681,7 +3248,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "They may cast that card without paying its mana cost",
-   "why": "\"Counter target spell.\" stops it outright, with a random free-cast consolation for its controller."
+   "why": "\"Counter target spell.\" stops it outright, with a random free-cast consolation for its controller.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Terastodon",
@@ -2700,7 +3270,10 @@
    "oneSided": null,
    "conditions": "noncreature permanents",
    "givesBack": "its controller creates a 3/3 green Elephant creature token",
-   "why": "\"you may destroy up to three target noncreature permanents\" on ETB."
+   "why": "\"you may destroy up to three target noncreature permanents\" on ETB.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Strix Serenade",
@@ -2716,7 +3289,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": "its controller creates a 2/2 blue Bird creature token with flying",
-   "why": "\"Counter target artifact, creature, or planeswalker spell.\""
+   "why": "\"Counter target artifact, creature, or planeswalker spell.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Starstorm",
@@ -2731,7 +3307,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"deals X damage to each creature\" is a symmetric board wipe."
+   "why": "\"deals X damage to each creature\" is a symmetric board wipe.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Soul Snare",
@@ -2746,7 +3325,10 @@
    "oneSided": null,
    "conditions": "attacking you or a planeswalker you control",
    "givesBack": null,
-   "why": "\"Exile target creature that's attacking you or a planeswalker you control.\""
+   "why": "\"Exile target creature that's attacking you or a planeswalker you control.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Snap",
@@ -2761,7 +3343,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Return target creature to its owner's hand.\""
+   "why": "\"Return target creature to its owner's hand.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Scavenging Ooze",
@@ -2776,7 +3361,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Exile target card from a graveyard\" can shut off graveyard strategies, though it is not restricted to opponents' graveyards."
+   "why": "\"Exile target card from a graveyard\" can shut off graveyard strategies, though it is not restricted to opponents' graveyards.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Reclamation Sage",
@@ -2792,7 +3380,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"you may destroy target artifact or enchantment\" on ETB."
+   "why": "\"you may destroy target artifact or enchantment\" on ETB.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Noxious Gearhulk",
@@ -2807,7 +3398,10 @@
    "oneSided": null,
    "conditions": "another target creature",
    "givesBack": null,
-   "why": "\"you may destroy another target creature\" on ETB."
+   "why": "\"you may destroy another target creature\" on ETB.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Magmaquake",
@@ -2823,7 +3417,10 @@
    "oneSided": false,
    "conditions": "without flying",
    "givesBack": null,
-   "why": "\"deals X damage to each creature without flying and each planeswalker.\""
+   "why": "\"deals X damage to each creature without flying and each planeswalker.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Hullbreaker Horror",
@@ -2839,7 +3436,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Return target spell you don't control to its owner's hand\" or \"Return target nonland permanent to its owner's hand.\""
+   "why": "\"Return target spell you don't control to its owner's hand\" or \"Return target nonland permanent to its owner's hand.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Espers to Magicite",
@@ -2854,7 +3454,10 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Exile each opponent's graveyard.\""
+   "why": "\"Exile each opponent's graveyard.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Dusk // Dawn",
@@ -2869,7 +3472,10 @@
    "oneSided": false,
    "conditions": "power 3 or greater",
    "givesBack": null,
-   "why": "Dusk: \"Destroy all creatures with power 3 or greater.\" (Dawn, cast later from the graveyard, only returns your own small creatures and is not itself interaction.)"
+   "why": "Dusk: \"Destroy all creatures with power 3 or greater.\" (Dawn, cast later from the graveyard, only returns your own small creatures and is not itself interaction.)",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Angel of Finality",
@@ -2884,7 +3490,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"exile target player's graveyard\" on ETB."
+   "why": "\"exile target player's graveyard\" on ETB.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "All Is Dust",
@@ -2903,7 +3512,10 @@
    "oneSided": false,
    "conditions": "one or more colors",
    "givesBack": null,
-   "why": "\"Each player sacrifices all permanents they control that are one or more colors\" is a symmetric mass removal effect."
+   "why": "\"Each player sacrifices all permanents they control that are one or more colors\" is a symmetric mass removal effect.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Abstergo Entertainment",
@@ -2918,7 +3530,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"exile all graveyards\" when the activated ability resolves."
+   "why": "\"exile all graveyards\" when the activated ability resolves.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Whispersilk Cloak",
@@ -2933,7 +3548,10 @@
    "oneSided": true,
    "conditions": null,
    "givesBack": null,
-   "why": "\"has shroud\" on the equipped creature keeps it safe from being targeted by opposing spells and abilities."
+   "why": "\"has shroud\" on the equipped creature keeps it safe from being targeted by opposing spells and abilities.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Valorous Stance",
@@ -2950,7 +3568,10 @@
    "oneSided": null,
    "conditions": "toughness 4 or greater",
    "givesBack": null,
-   "why": "Choose one: grant \"indestructible\" to a creature, or \"Destroy target creature with toughness 4 or greater.\""
+   "why": "Choose one: grant \"indestructible\" to a creature, or \"Destroy target creature with toughness 4 or greater.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Ugin, the Ineffable",
@@ -2965,7 +3586,10 @@
    "oneSided": null,
    "conditions": "one or more colors",
    "givesBack": null,
-   "why": "\"−3: Destroy target permanent that's one or more colors.\""
+   "why": "\"−3: Destroy target permanent that's one or more colors.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Tragic Arrogance",
@@ -2983,7 +3607,10 @@
    "oneSided": false,
    "conditions": "each player keeps only the one chosen artifact, creature, enchantment, and planeswalker",
    "givesBack": null,
-   "why": "\"each player sacrifices all other nonland permanents they control\" after you pick what each player is allowed to keep."
+   "why": "\"each player sacrifices all other nonland permanents they control\" after you pick what each player is allowed to keep.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Sylvan Reclamation",
@@ -2999,7 +3626,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Exile up to two target artifacts and/or enchantments.\""
+   "why": "\"Exile up to two target artifacts and/or enchantments.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Spine of Ish Sah",
@@ -3014,7 +3644,10 @@
    "oneSided": null,
    "conditions": null,
    "givesBack": null,
-   "why": "\"destroy target permanent\" on ETB, with no restriction to opponents' permanents."
+   "why": "\"destroy target permanent\" on ETB, with no restriction to opponents' permanents.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Snuff Out",
@@ -3029,7 +3662,10 @@
    "oneSided": null,
    "conditions": "nonblack creature",
    "givesBack": null,
-   "why": "\"Destroy target nonblack creature. It can't be regenerated.\""
+   "why": "\"Destroy target nonblack creature. It can't be regenerated.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Raise the Palisade",
@@ -3044,7 +3680,10 @@
    "oneSided": false,
    "conditions": "aren't of the chosen creature type",
    "givesBack": null,
-   "why": "\"Return all creatures that aren't of the chosen type to their owners' hands.\""
+   "why": "\"Return all creatures that aren't of the chosen type to their owners' hands.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Perplexing Test",
@@ -3059,7 +3698,10 @@
    "oneSided": false,
    "conditions": "creature tokens, or nontoken creatures",
    "givesBack": null,
-   "why": "\"Return all creature tokens to their owners' hands\" or \"Return all nontoken creatures to their owners' hands.\""
+   "why": "\"Return all creature tokens to their owners' hands\" or \"Return all nontoken creatures to their owners' hands.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Necromantic Selection",
@@ -3074,7 +3716,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy all creatures\" before reanimating one of them under your control."
+   "why": "\"Destroy all creatures\" before reanimating one of them under your control.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Kindred Dominance",
@@ -3089,7 +3734,10 @@
    "oneSided": false,
    "conditions": "aren't of the chosen creature type",
    "givesBack": null,
-   "why": "\"Destroy all creatures that aren't of the chosen type.\""
+   "why": "\"Destroy all creatures that aren't of the chosen type.\"",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Delayed Blast Fireball",
@@ -3104,7 +3752,10 @@
    "oneSided": true,
    "conditions": "If this spell was cast from exile, it deals 5 damage instead",
    "givesBack": null,
-   "why": "\"deals 2 damage to each opponent and each creature they control\" only hits opposing players and their boards."
+   "why": "\"deals 2 damage to each opponent and each creature they control\" only hits opposing players and their boards.",
+   "secondReader": {
+    "verdict": "agree"
+   }
   },
   {
    "name": "Decree of Pain",
@@ -3120,7 +3771,10 @@
    "oneSided": false,
    "conditions": null,
    "givesBack": null,
-   "why": "\"Destroy all creatures. They can't be regenerated.\" (cycling instead gives \"all creatures get -2/-2\")."
+   "why": "\"Destroy all creatures. They can't be regenerated.\" (cycling instead gives \"all creatures get -2/-2\").",
+   "secondReader": {
+    "verdict": "agree"
+   }
   }
  ]
 }
