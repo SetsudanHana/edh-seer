@@ -99,6 +99,21 @@ test("within a group, the cuts read in the order of the score they print", () =>
   expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/2 mana$/, ""))).toEqual(["Clear 1", "Low", "Mid", "High"]);
 });
 
+/** WHAT A CUT LOSES COMES FIRST (owner 2026-10-07, #981): Roaming Throne led Krenko's cuts at 1.6
+ *  while losing 20 links no other card makes, ahead of six that lose nothing. */
+test("a cut that loses nothing comes before one that does, whatever the score", () => {
+  const row = (loses: string[]) => ({ partners: 3, why: "Works with 3 other cards.", loses: loses.map((text) => ({ from: "a", to: "b", tag: "t", text, repeat: "static" })) }) as never;
+  const score = (n: string) => [`it scores ${n} for synergy, where 5 is this deck's best card`];
+  const cuts = [cut("Throne", { keeps: score("1.6"), row: row(["Kreat's triggers trigger twice", "Taunter's too", "Lackey's too"]) }),
+    cut("Mid", { keeps: score("2.5"), row: row([]) }), cut("High", { keeps: score("2.9"), row: row([]) })];
+  render(<MemoryRouter><CutList cuts={cuts} slack={[]} deckSize={103} /></MemoryRouter>);
+  expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/2 mana$/, ""))).toEqual(["Mid", "High", "Throne"]);
+  const throne = screen.getByRole("heading", { name: /Throne/ }).closest("li")!;
+  expect(within(throne).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses 3 links no other card makes: Kreat's triggers trigger twice; Taunter's too");
+  expect(within(throne).getByText("and 1 more")).toBeInTheDocument();
+  expect(within(screen.getByRole("heading", { name: /Mid/ }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing");
+});
+
 test("over 100 with too few cuts, the list says how many are still to find and where", () => {
   const surplus = [{ name: "Consistency", count: 16, target: 13, over: 3, cards: [] }];
   const { unmount } = render(<CutList cuts={[cut("Only One")]} slack={[]} surplus={surplus} deckSize={108} />);

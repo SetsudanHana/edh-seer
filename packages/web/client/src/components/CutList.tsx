@@ -63,15 +63,19 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
   // WEAKEST FIRST BY THE NUMBER ON SCREEN (#981): which cards are cut is the link reading's call; the
   // rows it picked read in the order of the score they print, or "weakest first" measured nothing a
   // reader could see (Krenko: 2.3, 2.6, 2.5, 1.6, 2.9 …).
-  const byShown = (a: CutChoice, b: CutChoice) => shownScore(a) - shownScore(b);
+  // A CUT THAT LOSES NOTHING GOES FIRST (owner 2026-10-07, #981): Roaming Throne led Krenko's
+  // cuts at 1.6 while losing 20 links no other card makes, ahead of six that lose nothing. Inside
+  // each half, still the score shown.
+  const costs = (c: CutChoice) => Number((c.row?.loses.length ?? 0) > 0);
+  const byShown = (a: CutChoice, b: CutChoice) => costs(a) - costs(b) || shownScore(a) - shownScore(b);
   // OVER 100, THE CUTS ARE THE PLAN (baseline round 2026-09-26). The first-deck seat, 8 over, got 7
   // names, 2 more behind a button, and "Trim 3 5 10", which skips 8. Now the list leads with exactly
   // as many cuts as the deck is over, weakest first (nothing-argues-for-it first, then trade-offs),
   // and says how many are still to find when the list runs short. The trim order is not used for
   // this: it ranks every card, and on that deck its fifth and eighth were Sol Ring and Arcane Signet.
   const over = deckSize !== undefined ? Math.max(0, deckSize - 100) : 0;
-  const ordered = [...clear, ...maybe];
-  const toCut = over ? [...ordered.slice(0, over)].sort((a, b) => Number(a.keeps.length > 0) - Number(b.keeps.length > 0) || byShown(a, b)) : [];
+  const ordered = [...clear, ...maybe].sort((a, b) => costs(a) - costs(b));
+  const toCut = over ? [...ordered.slice(0, over)].sort((a, b) => costs(a) - costs(b) || Number(a.keeps.length > 0) - Number(b.keeps.length > 0) || byShown(a, b)) : [];
   const spare = over ? ordered.slice(over) : [];
   const pairOf = new Map((pairs ?? []).map((p) => [p.cut, p] as const));
   // A deck that is over needs cards out, not swaps; the swaps are for a deck at its size.
