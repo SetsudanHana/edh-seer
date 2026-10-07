@@ -71,10 +71,15 @@ export function castableManaCost(card: SplitCostCard): string | undefined {
   // The layout is checked as well as the separator: an "Instant // Land" modal DFC never carries a
   // joined cost here (`docToCard` takes the FRONT FACE's cost for those layouts), and a card that
   // somehow did should not be re-split by this function.
-  if (card.layout !== undefined && card.layout !== "split") return cost;
+  // TWO MORE LAYOUTS PRINT A JOINED COST (persona round 2026-10-07: Grave Researcher // Reanimate,
+  // {2}{B} // {B}, read 5%-32% on turn 3, priced as a four-mana BB spell; 152 adventure and 67
+  // prepare cards in the corpus). An ADVENTURE is cast from hand as either half (CR 715.3), so it is
+  // a plain split here; a PREPARE card's spell is cast from a copy in exile (CR 722.3c), never from
+  // hand, so only its front face is.
+  if (card.layout !== undefined && card.layout !== "split" && card.layout !== "adventure" && card.layout !== "prepare") return cost;
   if (has(card.keywords, "fuse")) return cost;
   const halves = cost.split(SPLIT).map((h) => h.trim()).filter((h) => h.length > 0);
   if (halves.length < 2) return cost;
-  if (has(card.keywords, "aftermath")) return halves[0];
+  if (has(card.keywords, "aftermath") || card.layout === "prepare") return halves[0];
   return halves.reduce((a, b) => (convertedTotal(b) < convertedTotal(a) ? b : a));
 }

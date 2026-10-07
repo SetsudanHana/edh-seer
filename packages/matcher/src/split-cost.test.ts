@@ -67,3 +67,16 @@ test("a mana-symbol scan is linear on a cost whose braces never close", () => {
   expect(cost).toHaveLength(50_000);
   expect(performance.now() - started).toBeLessThan(200);
 });
+
+// THE OTHER TWO LAYOUTS WITH A JOINED COST (persona round 2026-10-07: Grave Researcher // Reanimate,
+// {2}{B} // {B}, read 5%-32% on turn 3 because it was priced as a four-mana BB spell). 152 adventure
+// and 67 prepare cards in the corpus carry " // " in `manaCost`.
+test("an adventure is castable from hand at its cheaper half (CR 715.3)", () => {
+  expect(castableManaCost({ manaCost: "{W} // {1}{W}", layout: "adventure" })).toBe("{W}");
+  expect(castableManaCost({ manaCost: "{4}{U}{U} // {2}{U}", layout: "adventure" })).toBe("{2}{U}");
+});
+
+test("a prepare card is cast from hand as its front face only", () => {
+  expect(castableManaCost({ manaCost: "{2}{B} // {B}", layout: "prepare" })).toBe("{2}{B}");
+  expect(castableManaCost({ manaCost: "{2}{W} // {3}{W}", layout: "prepare" })).toBe("{2}{W}");
+});
