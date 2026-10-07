@@ -1134,9 +1134,6 @@ function damagedMatches(victim: SubjectFilter, consumer: SubjectFilter, h: Hiera
   return subjectMatches(victim, consumer, h);
 }
 
-/** Repeatability of a triggered CONSUMER: a bare self-ETB (trigger names neither a type nor a
- *  subtype — "when this enters") is only satisfied by its own single entry, so it is one-time; any
- *  typed/subtyped trigger fires each time such a permanent recurs, so it is a repeatable engine. */
 /** A counter-placing ability whose every counter goes on its own source: its self emit, else undefined. */
 function ownCounters(a: CardTags["abilities"][number]): GameEvent | undefined {
   if (a.effect.kind !== "counter-placement") return undefined;
@@ -1144,9 +1141,14 @@ function ownCounters(a: CardTags["abilities"][number]): GameEvent | undefined {
   return counters.length > 0 && counters.every((e) => e.subject.self === true) ? counters[0] : undefined;
 }
 
+/** Repeatability of a triggered CONSUMER: a bare self-ETB ("when this enters": the card's OWN
+ *  trigger, naming neither a type nor a subtype) is satisfied by its own single entry, so it is
+ *  one-time; any other trigger fires each time its event recurs. ONLY THE CARD'S OWN (#1077): an
+ *  untyped trigger that is not -- "whenever a source you control deals noncombat damage" (Chandra's
+ *  Pyreling), "whenever you gain life" -- was read as this and every such link as one-time. */
 function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
   const bare = list(subject.type).length === 0 && list(subject.subtype).length === 0;
-  return bare ? "oneshot" : "triggered";
+  return subject.self === true && bare ? "oneshot" : "triggered";
 }
 
 /** A PRODUCER THAT SUPPLIES ITS EVENT ONCE (overview persona rounds 2026-09-25, item 6a): an instant

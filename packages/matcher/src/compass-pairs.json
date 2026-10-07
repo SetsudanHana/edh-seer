@@ -725,9 +725,10 @@
     "a": "Maddening Hex",
     "b": "Chandra's Pyreling",
     "category": "damage",
-    "note": "A Curse's \"whenever enchanted player casts a noncreature spell ... deals damage to that player\" is an opponent's trigger (owner 2026-10-07): its damage meets \"whenever a source you control deals noncombat damage to an opponent\". Before DERIVE 285 the trigger was refused as a narrowing and the damage had no trigger at all.",
-    "source": "persona round 2026-10-07 (plan-seeker, Rani)",
+    "note": "A Curse's \"whenever enchanted player casts a noncreature spell ... deals damage to that player\" is an opponent's trigger (owner 2026-10-07): its damage meets \"whenever a source you control deals noncombat damage to an opponent\". Before DERIVE 285 the trigger was refused as a narrowing and the damage had no trigger at all. #1077: and every time -- Pyreling's untyped \"a source you control\" trigger is not a bare self-ETB, so the link is repeatable.",
+    "source": "persona round 2026-10-07 (plan-seeker, Rani); #1077",
     "verified": true,
-    "tag": "non-combat-damage:any"
+    "tag": "non-combat-damage:any",
+    "repeatability": "triggered"
   }
 ]
