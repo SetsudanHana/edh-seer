@@ -293,7 +293,7 @@ export function cardsSubject(names: readonly string[], cards: number): string {
  *  "35/37" makes the reader check which 2 that is. */
 const PIP_WORD: Record<number, string> = { 1: "one", 2: "two", 3: "three", 4: "four", 5: "five" };
 
-const NAME: Record<string, string> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", C: "Colourless" };
+export const NAME: Record<string, string> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", C: "Colourless" };
 
 /** A DEMAND NOTHING IN THE DECK SUPPLIES — the one finding that comes from the synergy engine
  *  rather than from printed data, and the reason it exists.

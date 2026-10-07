@@ -5,6 +5,7 @@ import { bandState } from "../lib/deck-gauge.js";
 import { landHandProbabilities } from "../lib/land-math.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { CardName } from "./card-drawer.js";
+import { NAME as COLOUR_NAME } from "../lib/findings.js";
 
 /** THE MANABASE, ANSWERED FIRST (owner, 2026-09-27: "manabase is also a section that no one is going
  *  to read through"). The chapter was five panels of figures and the paragraphs that qualify them,
@@ -12,6 +13,16 @@ import { CardName } from "./card-drawer.js";
  *  colour, will my opening hands work, will I have the mana, which card will I struggle to cast. Each
  *  gets one tile, from the same numbers the panels print; the panels are kept, behind "Show the
  *  numbers", for whoever wants the working. */
+/** Which colour problem it is -- speed or count -- then the demand and the sources behind it. */
+function ColourVerdict({ c, worst }: { c: { color: string; supplied: number }; worst: { pips: number; turn: number; required: number; available: number; cards: number } }) {
+  const colour = (COLOUR_NAME[c.color] ?? c.color).toLowerCase();
+  const demand = <>{worst.cards === 1 ? "A card" : `${worst.cards} cards`} wanting <ManaSymbols cost={`{${c.color}}`.repeat(worst.pips)} /> {worst.cards === 1 ? "needs" : "need"} {worst.required} by turn {worst.turn}.</>;
+  if (c.supplied >= worst.required) {
+    return <><span className="font-medium">Enough {colour}, but not in time:</span> you run {c.supplied} {colour} sources and only {worst.available} can tap by turn {worst.turn} (tapped lands, and rocks you couldn&apos;t have cast yet, don&apos;t count). {demand}</>;
+  }
+  return <><span className="font-medium">Short of {colour}:</span> you run {c.supplied} {colour} sources{c.supplied > worst.available ? `, ${worst.available} of them in time for turn ${worst.turn}` : ""}. {demand}</>;
+}
+
 export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: {
   deckMath?: DeckReport["deckMath"];
   manaAvailability?: DeckReport["manaAvailability"];
@@ -39,11 +50,11 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
         // NO SLASH (#1033): "30 /37" read as 30 of 37 lands even with the line below naming both
         // numbers, so the figure says it in words.
         big={<span className="inline-flex items-center gap-1.5"><ManaSymbols cost={`{${short.color}}`} />{short.worst.available}<span className="text-sm text-(--muted)"> of {short.worst.required} needed</span></span>}
-        // EACH NUMBER ONCE, IN THE ORDER IT IS NEEDED (#1033): "sources that can tap by turn 3, of 38 in
-        // the deck; 37 is what 2 cards wanting BBB need" put three numbers and two "of"s in one clause,
-        // and the seats still read 37 as the deck. The demand first, then what the deck runs, then the
-        // part of it that is there in time -- which is the number in big type.
-        sub={<>{short.worst.cards === 1 ? "A card" : `${short.worst.cards} cards`} wanting <ManaSymbols cost={`{${short.color}}`.repeat(short.worst.pips)} /> {short.worst.cards === 1 ? "needs" : "need"} {short.worst.required} sources of it by turn {short.worst.turn}. You run {short.supplied}{short.supplied > short.worst.available ? `, and ${short.worst.available} of them can tap by then` : ""}.</>} />
+        // THE VERDICT FIRST (persona round 2026-10-07): "need 37 … You run 38, and 30 of them can tap by
+        // then" left the seat asking "more black lands or fewer tapped ones?", and the Improve finding
+        // two chapters down already knew: a deck that runs enough of the colour has a SPEED problem.
+        // The tile says which problem it is, in the finding's own words, then the numbers.
+        sub={<ColourVerdict c={short} worst={short.worst} />} />
     ) : (
       <Tile key="colours" label="Colours" big={<span className="inline-flex gap-0.5">{colours.map((c) => <ManaSymbols key={c.color} cost={`{${c.color}}`} />)}</span>}
         sub="enough sources for every card" />
