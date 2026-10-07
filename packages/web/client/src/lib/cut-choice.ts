@@ -32,6 +32,9 @@ export interface CutChoice {
   row?: CutRow;
   /** What argues it stays. */
   keeps: string[];
+  /** Its synergy rating, 0–5: the number "weakest first" orders by. Absent on a saved report from
+   *  before trim mode. */
+  rating?: number;
   /** "its condition needs …, and nothing in the deck provides that". */
   unmet: string[];
   /** The report's own reasons, for a deck the graph could not read. */
@@ -133,7 +136,7 @@ export function chooseCuts(report: DeckReport, model?: EngineModel | null): CutC
       ...warnsAbout(card?.text ?? "").map((w) => `you warn the table that it ${w}`)];
     if (link && (keeps.length || t.protections.includes(MAIN_EDGE))) keeps.unshift(`its strongest link: ${link.text}`);
     out.push({
-      name: t.name, manaValue: t.manaValue, card, row,
+      name: t.name, manaValue: t.manaValue, card, row, rating: t.rating,
       keeps,
       unmet: t.reasons.filter((r) => UNMET.test(r)),
       reasons: t.reasons.filter((r) => !UNMET.test(r) && !SAYS_NOTHING.test(r)),

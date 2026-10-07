@@ -69,7 +69,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
   // cuts at 1.6 while losing 20 links no other card makes, ahead of six that lose nothing. Inside
   // each half, still the score shown.
   const costs = (c: CutChoice) => Number((c.row?.loses.length ?? 0) > 0);
-  const byShown = (a: CutChoice, b: CutChoice) => costs(a) - costs(b) || shownScore(a) - shownScore(b);
+  const byShown = (a: CutChoice, b: CutChoice) => costs(a) - costs(b) || (shownScore(a) ?? 0) - (shownScore(b) ?? 0);
   // OVER 100, THE CUTS ARE THE PLAN (baseline round 2026-09-26). The first-deck seat, 8 over, got 7
   // names, 2 more behind a button, and "Trim 3 5 10", which skips 8. Now the list leads with exactly
   // as many cuts as the deck is over, weakest first (nothing-argues-for-it first, then trade-offs),
@@ -85,14 +85,15 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
     : undefined;
   const costsTogether = (c: CutChoice) => Number((losesWith(c)?.length ?? 0) > 0);
   // THE CARD THAT COVERS MOST OF IT (persona round 2026-10-07): "loses nothing" named no card, so
-  // the seat could not check it. Never a card that is being cut alongside it.
+  // the seat could not check it. Never a card this list also proposes cutting (review): over 100
+  // that is the cut itself, otherwise every card shown here.
+  const listed = new Set(cuts.map((c) => c.name));
   const coverOf = (c: CutChoice): { name: string; n: number } | undefined => {
-    // Counted in CARDS, the unit of "works with 39 other cards": a link count read 49 beside 39.
-    const self = c.row?.card?.id;
+    const excluded = over ? chosen : listed;
+    // Counted in partner CARDS, the unit of "works with 39 other cards": a link count read 49 beside 39.
     const tally = new Map<string, Set<string>>();
     for (const x of c.row?.covers ?? []) {
-      const partner = x.link.from === self ? x.link.to : x.link.from;
-      for (const n of x.by) if (!chosen.has(n)) tally.set(n, (tally.get(n) ?? new Set()).add(partner));
+      for (const n of x.by) if (!excluded.has(n)) tally.set(n, (tally.get(n) ?? new Set()).add(x.partner));
     }
     const [name, set] = [...tally].sort((a, b) => b[1].size - a[1].size || (a[0] < b[0] ? -1 : 1))[0] ?? [];
     return name ? { name, n: set!.size } : undefined;
@@ -104,7 +105,6 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
   const swapFor = (c: CutChoice) => (over ? undefined : pairOf.get(c.name));
   // SWAPS FOR ROLE CARDS, which the cut list never offers (see `swapCandidates`): the role stays
   // filled, by a card that works with more of the deck.
-  const listed = new Set(cuts.map((c) => c.name));
   const roleSwaps = over ? [] : (pairs ?? []).filter((p) => !listed.has(p.cut));
   const hasSurplus = !!surplus && surplus.length > 0;
   const rest = over - toCut.length;
@@ -315,7 +315,7 @@ function CutCard({ c, swap, loses, cover }: { c: CutChoice; swap?: SuggestedPair
                 <CardName name={c.name} />
                 {/* THE NUMBER "WEAKEST FIRST" ORDERS BY (#1041), here now that the keep line no longer
                     carries it. */}
-                <span className="shrink-0 text-xs font-normal stat-num text-(--muted)">{score ? `${score} synergy · ` : ""}{c.manaValue} mana</span>
+                <span className="shrink-0 text-xs font-normal stat-num text-(--muted)">{score !== undefined ? `${score.toFixed(1)} synergy · ` : ""}{c.manaValue} mana</span>
               </h4>
               <CardMenuButton name={c.name} />
             </div>
@@ -324,7 +324,7 @@ function CutCard({ c, swap, loses, cover }: { c: CutChoice; swap?: SuggestedPair
           </div>
           {r && r.partners > 0
             ? <Verdict links={loses ?? r.loses.map((l) => l.text)} cover={cover} keeps={realKeeps(c)} />
-            : c.keeps.length ? <p><span className="font-medium text-(--success)">Why you might keep it:</span> {c.keeps.join(" · ")}</p> : null}
+            : realKeeps(c).length ? <p><span className="font-medium text-(--success)">Why you might keep it:</span> {realKeeps(c).join(" · ")}</p> : null}
           {c.twins.length ? (
             <p className="text-(--muted)">Stands in for {listNames(c.twins)}: the same cards use {c.twins.length === 1 ? "both" : "all of them"}.</p>
           ) : null}
@@ -372,13 +372,16 @@ const realKeeps = (c: CutChoice): string[] => c.row
   ? c.keeps.filter((k) => !/^its strongest link: /.test(k) && !/^it scores \d+(?:\.\d+)? for synergy/.test(k))
   : c.keeps;
 
-/** The synergy score a row prints in its keep reason, else the card's own; what "weakest first" orders by. */
-function shownScore(c: CutChoice): number {
+/** The synergy rating, 0–5, that "weakest first" orders by and the header prints; from a saved report
+ *  without one, the rating its keep line printed. Never `card.score`, which is the raw score on
+ *  another scale (review). */
+function shownScore(c: CutChoice): number | undefined {
+  if (c.rating !== undefined) return c.rating;
   for (const k of c.keeps) {
     const m = /scores (\d+(?:\.\d+)?) for synergy/.exec(k);
     if (m) return Number(m[1]);
   }
-  return c.card?.score ?? 0;
+  return undefined;
 }
 
 const capitalFirst = (t: string) => (t ? t[0]!.toUpperCase() + t.slice(1) : t);

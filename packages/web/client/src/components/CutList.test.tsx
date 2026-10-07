@@ -118,7 +118,7 @@ test("a cut that loses nothing comes before one that does, whatever the score", 
  *  nothing -- and cutting both loses it. */
 test("two cuts that cover each other both say what cutting them together loses", () => {
   const link = { from: "Elf", to: "Payoff", tag: "enters:creature", text: "When an Elf enters, Payoff draws", repeat: "static" };
-  const row = (other: string) => ({ partners: 1, why: "Works with 1 other card.", loses: [], covers: [{ link, by: [other] }] }) as never;
+  const row = (other: string) => ({ partners: 1, why: "Works with 1 other card.", loses: [], covers: [{ link, by: [other], partner: "Payoff" }] }) as never;
   render(<MemoryRouter><CutList cuts={[cut("Elf", { row: row("Druid") }), cut("Druid", { row: row("Elf") }), cut("Spare", { row: row("Nobody") })]} slack={[]} deckSize={102} /></MemoryRouter>);
   for (const name of ["Elf", "Druid"]) {
     expect(within(screen.getByRole("heading", { name: new RegExp(name) }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("Why you might keep it: cutting it loses the one link no other card makes: When an Elf enters, Payoff draws.");
@@ -130,11 +130,11 @@ test("two cuts that cover each other both say what cutting them together loses",
 test("a cut that loses nothing names what covers it and argues for itself only with a real reason", () => {
   const link = (text: string, from: string) => ({ from, to: "Lackey", tag: "t", text, repeat: "static" });
   const row = { partners: 2, why: "Works with 2 other cards.", loses: [], covers: [
-    { link: link("Lackey is fodder for Trashmaster", "Trashmaster"), by: ["Bushwhacker", "Chieftain"] },
-    { link: link("Anthem gives Lackey +1/+1", "Anthem"), by: ["Chieftain"] },
+    { link: link("Lackey is fodder for Trashmaster", "Trashmaster"), by: ["Bushwhacker", "Chieftain"], partner: "Trashmaster" },
+    { link: link("Anthem gives Lackey +1/+1", "Anthem"), by: ["Chieftain"], partner: "Anthem" },
   ] } as never;
   const keeps = ["its strongest link: Lackey is fodder for Trashmaster", "it scores 2.8 for synergy, where 5 is this deck's best card"];
-  const { unmount } = render(<MemoryRouter><CutList cuts={[cut("Lackey", { keeps, row })]} slack={[]} /></MemoryRouter>);
+  const { unmount } = render(<MemoryRouter><CutList cuts={[cut("Lackey", { keeps, row, rating: 2.8 })]} slack={[]} /></MemoryRouter>);
   const lackey = screen.getByRole("heading", { name: /Lackey/ }).closest("li")!;
   expect(within(lackey).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing: every card it works with gets the same from another card; Chieftain does the same with 2 of them.");
   expect(within(lackey).queryByText(/Why you might keep it/)).toBeNull();
@@ -146,6 +146,24 @@ test("a cut that loses nothing names what covers it and argues for itself only w
   // A real reason still argues for it.
   render(<MemoryRouter><CutList cuts={[cut("Nabber", { keeps: [...keeps, "you warn the table that it steals permanents"], row })]} slack={[]} /></MemoryRouter>);
   expect(screen.getByText(/Why you might keep it:/).parentElement).toHaveTextContent("Why you might keep it: you warn the table that it steals permanents");
+});
+
+/** REVIEW (2026-10-07): a cover is never a card the same list proposes cutting, and a row with no
+ *  partners keeps only real reasons. */
+test("a cover is never another proposed cut, and a partnerless row shows only real reasons", () => {
+  const link = { from: "Elf", to: "Payoff", tag: "enters:creature", text: "When an Elf enters, Payoff draws", repeat: "static" };
+  const row = (other: string) => ({ partners: 1, why: "Works with 1 other card.", loses: [], covers: [{ link, by: [other], partner: "Payoff" }] }) as never;
+  const { unmount } = render(<MemoryRouter><CutList cuts={[cut("Elf", { row: row("Druid") }), cut("Druid", { row: row("Elf") })]} slack={[]} /></MemoryRouter>);
+  for (const name of ["Elf", "Druid"]) {
+    const li = screen.getByRole("heading", { name: new RegExp(name) }).closest("li")!;
+    expect(within(li).getByTestId("cut-loses")).toHaveTextContent(/^Cutting it loses nothing: every card it works with gets the same from another card\.$/);
+  }
+  unmount();
+  const lone = { partners: 0, why: "Works with nothing else in this deck.", loses: [], covers: [] } as never;
+  render(<MemoryRouter><CutList cuts={[cut("Lone", { row: lone, rating: 0.4, keeps: ["it scores 0.4 for synergy, where 5 is this deck's best card"] })]} slack={[]} /></MemoryRouter>);
+  const li = screen.getByRole("heading", { name: /Lone/ }).closest("li")!;
+  expect(within(li).queryByText(/Why you might keep it/)).toBeNull();
+  expect(within(li).getByRole("heading", { level: 4 })).toHaveTextContent("0.4 synergy · 2 mana");
 });
 
 test("over 100 with too few cuts, the list says how many are still to find and where", () => {

@@ -294,4 +294,6 @@ test("a one-time link does not cover a repeating one, and the partner's side mus
   expect(engine.loses.map((l) => l.text)).toEqual(["When Engine enters, Payoff draws"]);
   // The one-time link is covered by the repeating one.
   expect(m.cutRows.find((c) => c.card.name === "Once")!.covers.map((x) => x.by)).toEqual([["Engine"]]);
+  // The partner it covers is named as a card, for the cut list's "does the same with N of them".
+  expect(m.cutRows.find((c) => c.card.name === "Once")!.covers.map((x) => x.partner)).toEqual(["Payoff"]);
 });
