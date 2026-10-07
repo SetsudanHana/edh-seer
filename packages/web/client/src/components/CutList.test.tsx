@@ -84,7 +84,7 @@ test("over 100, the list leads with exactly as many cuts as the deck is over, we
   render(<MemoryRouter><CutList cuts={cuts} slack={[]} deckSize={103}
     pairs={[{ cut: "Clear 1", add: add("Swap In"), rule: "no-role", counts: [], cutConnections: 0, cutStrength: { strength: 1, partners: 0, onTheme: 0, commander: false }, addStrength: { strength: 2, partners: 4, onTheme: 1, commander: false } }]} /></MemoryRouter>);
   expect(screen.getByTestId("cuts-over")).toHaveTextContent("Your list has 103 cards, 3 over 100. These 3 are doing the least here, weakest first: take them out and it is 100.");
-  expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/2 mana$/, ""))).toEqual(["Clear 1", "Clear 2", "Maybe 1"]);
+  expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/(\d+(\.\d+)? synergy · )?2 mana$/, ""))).toEqual(["Clear 1", "Clear 2", "Maybe 1"]);
   expect(screen.getByText(/If you would rather keep one of these,/).parentElement).toHaveTextContent("the next weakest is Maybe 2.");
   // A deck over its size needs cards out, not swaps.
   expect(screen.queryByTestId("swap")).toBeNull();
@@ -96,7 +96,7 @@ test("within a group, the cuts read in the order of the score they print", () =>
   const cuts = [cut("Clear 1"), cut("Mid", { keeps: ["it scores 2.5 for synergy, where 5 is this deck's best card"] }),
     cut("Low", { keeps: ["it scores 1.6 for synergy, where 5 is this deck's best card"] }), cut("High", { keeps: ["it scores 2.9 for synergy, where 5 is this deck's best card"] })];
   render(<MemoryRouter><CutList cuts={cuts} slack={[]} deckSize={104} /></MemoryRouter>);
-  expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/2 mana$/, ""))).toEqual(["Clear 1", "Low", "Mid", "High"]);
+  expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/(\d+(\.\d+)? synergy · )?2 mana$/, ""))).toEqual(["Clear 1", "Low", "Mid", "High"]);
 });
 
 /** WHAT A CUT LOSES COMES FIRST (owner 2026-10-07, #981): Roaming Throne led Krenko's cuts at 1.6
@@ -107,9 +107,9 @@ test("a cut that loses nothing comes before one that does, whatever the score", 
   const cuts = [cut("Throne", { keeps: score("1.6"), row: row(["Kreat's triggers trigger twice", "Taunter's too", "Lackey's too"]) }),
     cut("Mid", { keeps: score("2.5"), row: row([]) }), cut("High", { keeps: score("2.9"), row: row([]) })];
   render(<MemoryRouter><CutList cuts={cuts} slack={[]} deckSize={103} /></MemoryRouter>);
-  expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/2 mana$/, ""))).toEqual(["Mid", "High", "Throne"]);
+  expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/(\d+(\.\d+)? synergy · )?2 mana$/, ""))).toEqual(["Mid", "High", "Throne"]);
   const throne = screen.getByRole("heading", { name: /Throne/ }).closest("li")!;
-  expect(within(throne).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses 3 links no other card makes: Kreat's triggers trigger twice; Taunter's too");
+  expect(within(throne).getByTestId("cut-loses")).toHaveTextContent("Why you might keep it: cutting it loses 3 links no other card makes: Kreat's triggers trigger twice; Taunter's too");
   expect(within(throne).getByText("and 1 more")).toBeInTheDocument();
   expect(within(screen.getByRole("heading", { name: /Mid/ }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing");
 });
@@ -121,8 +121,31 @@ test("two cuts that cover each other both say what cutting them together loses",
   const row = (other: string) => ({ partners: 1, why: "Works with 1 other card.", loses: [], covers: [{ link, by: [other] }] }) as never;
   render(<MemoryRouter><CutList cuts={[cut("Elf", { row: row("Druid") }), cut("Druid", { row: row("Elf") }), cut("Spare", { row: row("Nobody") })]} slack={[]} deckSize={102} /></MemoryRouter>);
   for (const name of ["Elf", "Druid"]) {
-    expect(within(screen.getByRole("heading", { name: new RegExp(name) }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses the one link no other card makes: When an Elf enters, Payoff draws.");
+    expect(within(screen.getByRole("heading", { name: new RegExp(name) }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("Why you might keep it: cutting it loses the one link no other card makes: When an Elf enters, Payoff draws.");
   }
+});
+
+/** ONE VERDICT PER CUT (persona round 2026-10-07): "Cutting it loses nothing" beside a green "Why
+ *  you might keep it: its strongest link … it scores 2.3" read as two verdicts, on both seats. */
+test("a cut that loses nothing names what covers it and argues for itself only with a real reason", () => {
+  const link = (text: string, from: string) => ({ from, to: "Lackey", tag: "t", text, repeat: "static" });
+  const row = { partners: 2, why: "Works with 2 other cards.", loses: [], covers: [
+    { link: link("Lackey is fodder for Trashmaster", "Trashmaster"), by: ["Bushwhacker", "Chieftain"] },
+    { link: link("Anthem gives Lackey +1/+1", "Anthem"), by: ["Chieftain"] },
+  ] } as never;
+  const keeps = ["its strongest link: Lackey is fodder for Trashmaster", "it scores 2.8 for synergy, where 5 is this deck's best card"];
+  const { unmount } = render(<MemoryRouter><CutList cuts={[cut("Lackey", { keeps, row })]} slack={[]} /></MemoryRouter>);
+  const lackey = screen.getByRole("heading", { name: /Lackey/ }).closest("li")!;
+  expect(within(lackey).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing: every card it works with gets the same from another card; Chieftain does the same with 2 of them.");
+  expect(within(lackey).queryByText(/Why you might keep it/)).toBeNull();
+  // The score the order reads is in the header now.
+  expect(within(lackey).getByRole("heading", { level: 4 })).toHaveTextContent("2.8 synergy · 2 mana");
+  // With nothing arguing for it, it is a clear cut.
+  expect(screen.getByRole("region", { name: "Nothing argues for keeping these" })).toContainElement(lackey);
+  unmount();
+  // A real reason still argues for it.
+  render(<MemoryRouter><CutList cuts={[cut("Nabber", { keeps: [...keeps, "you warn the table that it steals permanents"], row })]} slack={[]} /></MemoryRouter>);
+  expect(screen.getByText(/Why you might keep it:/).parentElement).toHaveTextContent("Why you might keep it: you warn the table that it steals permanents");
 });
 
 test("over 100 with too few cuts, the list says how many are still to find and where", () => {

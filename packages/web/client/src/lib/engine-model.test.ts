@@ -183,7 +183,7 @@ test("one-time links are named, count a little, and a card that can be brought b
     { producer: "Lone", consumer: "A", tag: "attacks:any", text: "When Lone attacks, A grows" },
   ]);
   const flicker = m.cuts.find((c) => c.card.name === "Flicker")!;
-  expect(flicker.why).toMatch(/^Does its part only once: with A, B and C\. Digger can bring it back to do it again\./);
+  expect(flicker.why).toMatch(/^It works with other cards only once, when it is played: with A, B and C\. Digger can bring it back to do it again\./);
   expect(flicker.broughtBackBy).toBe("Digger");
   // Rows show in the order of the number they print: no repeating link comes before one.
   expect(m.cuts.indexOf(flicker)).toBeLessThan(m.cuts.findIndex((c) => c.card.name === "Lone"));

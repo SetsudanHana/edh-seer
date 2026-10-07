@@ -530,7 +530,7 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     let why: string;
     if (!nb.size) why = "Works with nothing else in this deck.";
     else if (!real && !gives && !givesOnce) why = once
-      ? `Does its part only once: with ${listNames(onceNames, 3)}.${back ? ` ${back.name} can bring it back to do it again.` : ""}`
+      ? `It works with other cards only once, when it is played: with ${listNames(onceNames, 3)}.${back ? ` ${back.name} can bring it back to do it again.` : ""}`
       : `Its only links come from cards that make others cheaper, or easier to find or bring back.`;
     else if (!real && !gives) why = `All it does here is help ${givesOnce} card${s(givesOnce)} once, by finding them or bringing them back.`;
     else if (!real) why = `All it does here is help ${gives} card${s(gives)} in the background, by making them cheaper, giving them types, or letting you find or bring them back${givesOnce ? `; it also ${onceHelp}` : ""}.`;
