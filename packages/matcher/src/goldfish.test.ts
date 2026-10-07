@@ -1232,4 +1232,27 @@ describe("draw and tutors", () => {
     const r = simulate(deck, { ...opts, combatTo: 20 });
     expect(r.killTurns.one.filter((t) => t <= 2).length / r.killTurns.one.length).toBeGreaterThan(0.9);
   });
+
+  test("a deck that draws nothing and tutors nothing plays exactly as it did", () => {
+    const deck = [...forests(37), ...Array.from({ length: 62 }, (_, i) => tagged(`Bear ${i}`, "Creature", "{1}{G}", 2, [], { power: "2" }))];
+    const tagged_ = simulate(deck, { trials: 500, turns: 6, seed: 9 });
+    const plain = simulate(untag(deck), { trials: 500, turns: 6, seed: 9 });
+    expect(tagged_.manaAt).toEqual(plain.manaAt);
+    expect(tagged_.byCardCastable).toEqual(plain.byCardCastable);
+  });
+
+  test("a search that puts the card into the graveyard is not a tutor", () => {
+    const entomb = (i: number) => ({ ...tutor(i), card: { ...tutor(i).card, oracleText: "Search your library for a card, put that card into your graveyard, then shuffle." } as never });
+    const deck = [...forests(3), ...Array.from({ length: 96 }, (_, i) => entomb(i))];
+    expect(simulate(deck, opts).manaAt).toEqual(simulate(untag(deck), opts).manaAt);
+  });
+
+  test("an accelerant that draws still draws", () => {
+    const prism = (i: number) => {
+      const d = tagged(`Prism ${i}`, "Artifact", "{2}", 2, [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { ...you, self: true } }, effect: { kind: "draw-card", subject: you }, amount: "1", repeats: "once" }]);
+      return { ...d, card: { ...d.card, oracleText: "When this artifact enters, draw a card.\n{1}, {T}: Add one mana of any color.", producedMana: ["W", "U", "B", "R", "G"] } as never };
+    };
+    const deck = [...forests(37), ...Array.from({ length: 62 }, (_, i) => prism(i))];
+    expect(simulate(deck, opts).seenShare.land[5]!).toBeGreaterThan(simulate(untag(deck), opts).seenShare.land[5]! + 0.02);
+  });
 });

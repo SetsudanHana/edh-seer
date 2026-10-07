@@ -634,6 +634,8 @@ function attackOf(dc: DeckCard): { power: number; infect: boolean } | null {
 
 interface CardDraw { once: number; upkeep: number; activated?: { mana: number; amount: number; delayed: boolean } }
 
+const TO_GRAVEYARD = /\b(?:it|that card|them|those cards) into your graveyard\b/i;
+
 /** WHAT A CARD DRAWS IN A GOLDFISH GAME, each ability priced by `ratesOf` -- over that ability and the
  *  card's non-draw ones, so its put-back or discard companion still nets it (Brainstorm +1, a loot
  *  0). Kept: a cast, a self-enters trigger, a trigger on your upkeep or end step, a repeatable
@@ -660,7 +662,10 @@ function drawOf(dc: DeckCard): CardDraw | null {
  *  like a draw. A land tutor is an accelerant already (`classifyAccelerant`) and never reaches here. */
 function tutorFilter(dc: DeckCard): SubjectFilter | null {
   const abilities = dc.tags?.abilities ?? [];
-  const a = abilities.find((x) => x.kind === "on-cast" && x.effect?.kind === "search" && x.effect.subject?.control !== "opp");
+  const a = abilities.find((x) => x.kind === "on-cast" && x.effect?.kind === "search" && x.effect.subject !== undefined && x.effect.subject.control !== "opp");
+  // A SEARCH INTO THE GRAVEYARD IS NOT A TUTOR (Entomb, Buried Alive): the tags carry no destination,
+  // so the printed text is asked.
+  if (TO_GRAVEYARD.test(dc.card.oracleText ?? "")) return null;
   if (!a || !ratesOf({ ...dc, tags: { ...dc.tags!, abilities: [a] } }).some((r) => r.family === "search" && r.amount > 0 && !r.conditional)) return null;
   // What the filter says the CARD is; where it is and how it arrives are the search's own business.
   const { zone: _z, fromZone: _f, counter: _c, entersTapped: _t, self: _s, other: _o, prepared: _p, ...want } = a.effect!.subject!;
@@ -903,6 +908,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   // its own class; an extra (commander)
   // is held in every trial and stays its own class too.
   const pooled = opts.pooled ?? true;
+  // A TUTOR READS MORE THAN PIPS (review, 2026-10-07): which tutors may find a card, its mana value
+  // and its power all steer `tutored`, so with a tutor in the deck they join the class. A deck with
+  // none keeps the key it had.
+  const tutors = slots.filter((s) => s.tutor);
+  const tutorKey = (s: DeckSlot): string => tutors.length === 0 ? ""
+    : `:${s.manaValue}:${s.attack?.power ?? 0}:${tutors.map((t) => t.tutor!.has(s) ? 1 : 0).join("")}`;
   const classOf = priced.map((s, i) => !pooled
     ? `U:${i}`
     : s.isExtra
@@ -913,7 +924,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         // CHEAP OR NOT IS PART OF THE CLASS (review of the mulligan, 2026-10-06): the keep rule reads
         // "a nonland costing 3 or less", so a 2-drop and a 7-drop with the same pips change which
         // hands are KEPT, and are exchangeable only within their side of that line.
-        : `P:${s.manaValue <= 3 ? "cheap" : "dear"}:${[...(s.cost?.pips ?? [])].sort((a, b) => a - b).join(",")}`);
+        : `P:${s.manaValue <= 3 ? "cheap" : "dear"}:${[...(s.cost?.pips ?? [])].sort((a, b) => a - b).join(",")}${tutorKey(s)}`);
 
   const manaAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const kinds: SeenKind[] = ["land", "cheap", "dear"];
@@ -943,9 +954,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   // FORCED MODE shuffles only the prefix a short trial can consume: 7 + turn draws, plus at most one
   // library removal per fetch SLOT in the deck (each fires once) -- an exact bound, so the partial
   // Fisher-Yates prefix is a uniform permutation prefix and never reads unshuffled tail.
-  // Every draw a card can make by then counts too, and a tutor's one removal.
-  const drawBound = slots.reduce((n, s) => n + (s.draw?.once ?? 0) + ((s.draw?.upkeep ?? 0) + (s.draw?.activated?.amount ?? 0)) * forceTurn + (s.tutor ? 1 : 0), 0);
-  const prefixK = opts.forceName !== undefined
+  // Every draw a card can make by then counts too.
+  const drawBound = slots.reduce((n, s) => n + (s.draw?.once ?? 0) + ((s.draw?.upkeep ?? 0) + (s.draw?.activated?.amount ?? 0)) * forceTurn, 0);
+  // A TUTOR SEARCHES THE WHOLE LIBRARY, so a partly shuffled one would hand it the unshuffled tail in
+  // deck order (review): with a tutor in the deck, forced mode shuffles it all.
+  const prefixK = opts.forceName !== undefined && !slots.some((s) => s.tutor)
     ? Math.min(slots.length, 7 + forceTurn + slots.filter((s) => s.fetches).length + drawBound + 1)
     : slots.length;
   // THE CHEAPEST COMMANDER, for the keep rule's "a play by turn 3".
@@ -1161,6 +1174,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         if (best < 0) break;
         const cast = hand.splice(best, 1)[0];
         pool -= cast.manaValue;
+        // AN ACCELERANT THAT DRAWS STILL DRAWS (review): Prophetic Prism enters, makes mana and a card.
+        if (cast.draw) {
+          drawCards(cast.draw.once);
+          if (cast.draw.upkeep > 0 || cast.draw.activated) engines.push({ slot: cast, turn });
+        }
         // A CREATURE CAST FOR ITS MANA STILL ATTACKS (review): it is on the board, paid for here once.
         if (fights && cast.attack && !fielded.has(cast)) {
           fielded.add(cast);
