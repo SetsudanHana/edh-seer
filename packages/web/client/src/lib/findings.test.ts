@@ -59,7 +59,7 @@ test("a colour finding names the card and reads the deadline count", () => {
     } as DeckReport["deckMath"],
   }));
   expect(row.headline).toBe("Archmage's Charm and Mana Sculpt want three blue on turn 3.");
-  expect(row.figure).toBe("35/37");
+  expect(row.figure).toBe("35 of 37");
   // The deck HOLDS enough; they are not online that early, and the sentence has to say which.
   expect(row.detail).toContain("35 of your 39 blue sources");
   expect(row.detail).toContain("it's a speed problem");
