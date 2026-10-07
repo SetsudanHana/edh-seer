@@ -183,7 +183,7 @@ test("one-time links are named, count a little, and a card that can be brought b
     { producer: "Lone", consumer: "A", tag: "attacks:any", text: "When Lone attacks, A grows" },
   ]);
   const flicker = m.cuts.find((c) => c.card.name === "Flicker")!;
-  expect(flicker.why).toMatch(/^Does its part only once: with A, B and C\. Digger can bring it back to do it again\./);
+  expect(flicker.why).toMatch(/^It works with other cards only once, when it is played: with A, B and C\. Digger can bring it back to do it again\./);
   expect(flicker.broughtBackBy).toBe("Digger");
   // Rows show in the order of the number they print: no repeating link comes before one.
   expect(m.cuts.indexOf(flicker)).toBeLessThan(m.cuts.findIndex((c) => c.card.name === "Lone"));
@@ -294,4 +294,6 @@ test("a one-time link does not cover a repeating one, and the partner's side mus
   expect(engine.loses.map((l) => l.text)).toEqual(["When Engine enters, Payoff draws"]);
   // The one-time link is covered by the repeating one.
   expect(m.cutRows.find((c) => c.card.name === "Once")!.covers.map((x) => x.by)).toEqual([["Engine"]]);
+  // The partner it covers is named as a card, for the cut list's "does the same with N of them".
+  expect(m.cutRows.find((c) => c.card.name === "Once")!.covers.map((x) => x.partner)).toEqual(["Payoff"]);
 });

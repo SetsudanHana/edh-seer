@@ -93,7 +93,7 @@ export interface CutRow {
   loses: Link[];
   /** Its other links, each with the physical cards that give the partner the same: lost too when
    *  every one of them is cut alongside it. */
-  covers: { link: Link; by: string[] }[];
+  covers: { link: Link; by: string[]; partner: string }[];
 }
 
 export interface StrongPair { pair: Pair; ways: string[]; both: boolean; lines: Link[] }
@@ -530,7 +530,7 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     let why: string;
     if (!nb.size) why = "Works with nothing else in this deck.";
     else if (!real && !gives && !givesOnce) why = once
-      ? `Does its part only once: with ${listNames(onceNames, 3)}.${back ? ` ${back.name} can bring it back to do it again.` : ""}`
+      ? `It works with other cards only once, when it is played: with ${listNames(onceNames, 3)}.${back ? ` ${back.name} can bring it back to do it again.` : ""}`
       : `Its only links come from cards that make others cheaper, or easier to find or bring back.`;
     else if (!real && !gives) why = `All it does here is help ${givesOnce} card${s(givesOnce)} once, by finding them or bringing them back.`;
     else if (!real) why = `All it does here is help ${gives} card${s(gives)} in the background, by making them cheaper, giving them types, or letting you find or bring them back${givesOnce ? `; it also ${onceHelp}` : ""}.`;
@@ -569,7 +569,9 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     const seenText = new Set<string>();
     const read = (self: string, links: Link[]) => links
       .filter((l) => !gone(l.from === self ? l.to : l.from) && !isHelperTag(l.tag) && !unread(l) && !seenText.has(l.text) && seenText.add(l.text))
-      .map((link) => ({ link, by: coverers(link, self) }));
+      // THE PARTNER, as a physical card: the other end from `self`, which is a token for its links
+      // (review: counting from the card's id made the token the partner of every one of them).
+      .map((link) => { const p = link.from === self ? link.to : link.from; return { link, by: coverers(link, self), partner: cards.get(p)?.physical ?? p }; });
     const reads = [...read(card.id, [...nb.values()].flatMap((p) => p.links)),
       ...[...ownTokens].flatMap((t) => read(t, [...(partners.get(t)?.values() ?? [])].flatMap((p) => p.links)))];
     const loses = reads.filter((x) => x.by.length === 0).map((x) => x.link);
