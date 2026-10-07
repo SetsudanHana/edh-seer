@@ -38,7 +38,9 @@ export function reasonSegments(
 ): ReasonSegment[] {
   const all = [...new Set([...cards, ...tokens.keys()])].sort((a, b) => b.length - a.length);
   if (all.length === 0) return [{ kind: "text", text }];
-  const re = new RegExp(`(${all.map(escape).join("|")})`, "g");
+  // A NAME ENDS WHERE A WORD DOES (#825): "Treasure" inside "Treasures" is the class, plural, and was
+  // rendered "Treasure (token from Revel in Riches)s". A possessive ("Sarevok's") still ends the name.
+  const re = new RegExp(`(${all.map(escape).join("|")})(?![\\p{L}\\p{N}])`, "gu");
   const out: ReasonSegment[] = [];
   let last = 0;
   for (const m of text.matchAll(re)) {
