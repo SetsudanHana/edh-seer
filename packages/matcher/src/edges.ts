@@ -1134,9 +1134,6 @@ function damagedMatches(victim: SubjectFilter, consumer: SubjectFilter, h: Hiera
   return subjectMatches(victim, consumer, h);
 }
 
-/** Repeatability of a triggered CONSUMER: a bare self-ETB (trigger names neither a type nor a
- *  subtype — "when this enters") is only satisfied by its own single entry, so it is one-time; any
- *  typed/subtyped trigger fires each time such a permanent recurs, so it is a repeatable engine. */
 /** A counter-placing ability whose every counter goes on its own source: its self emit, else undefined. */
 function ownCounters(a: CardTags["abilities"][number]): GameEvent | undefined {
   if (a.effect.kind !== "counter-placement") return undefined;
@@ -1144,10 +1141,13 @@ function ownCounters(a: CardTags["abilities"][number]): GameEvent | undefined {
   return counters.length > 0 && counters.every((e) => e.subject.self === true) ? counters[0] : undefined;
 }
 
-function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
-  const bare = list(subject.type).length === 0 && list(subject.subtype).length === 0;
-  return bare ? "oneshot" : "triggered";
-}
+/** A TRIGGERED CONSUMER REPEATS; WHETHER THE LINK DOES IS THE PRODUCER'S (#1077). This read any
+ *  untyped trigger as a bare self-ETB ("when this enters", satisfied once), so "whenever a source you
+ *  control deals noncombat damage" (Chandra's Pyreling) and every "whenever you gain life" read as
+ *  one-time. A self trigger is now `subject.self`, its own entry is gated (`selfEtbSelfSupplied`),
+ *  and what supplies it again -- a blink -- says itself whether it is once (Blur) or every turn
+ *  (Thassa): `oneShotProducer` and the own-entry rule above. */
+const triggerRepeatability = (_subject: SubjectFilter): "triggered" => "triggered";
 
 /** A PRODUCER THAT SUPPLIES ITS EVENT ONCE (overview persona rounds 2026-09-25, item 6a): an instant
  *  or a sorcery, or the ability that supplied it is a cast trigger or sacrifices its own card (a

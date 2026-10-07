@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
+import { fixtureDeckCard } from "./fixture-cards.js";
 import type { Reason } from "@edh-seer/engine";
 import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -322,16 +323,15 @@ test("event-edge reason carries the consumer's effectKind and triggered repeatab
   expect(reason.repeatability).toBe("triggered");
 });
 
-test("a bare self-ETB trigger (no type, no subtype) is classified oneshot", () => {
-  const maker = base("SomeWizard", [], ["wizard"]); // implies self enters:wizard event
-  const dockside = base("Dockside", [{
-    kind: "triggered",
-    trigger: { verbs: ["enters"], subject: { control: "you", token: false } }, // "when this enters"
-    effect: { kind: "token-generation" },
-  }]);
-  const reason = pairReasons(maker, dockside, H).find((r) => r.repeatability !== undefined)!;
-  expect(reason.effectKind).toBe("token-generation");
-  expect(reason.repeatability).toBe("oneshot");
+// AN UNTYPED TRIGGER IS ONE-TIME ONLY WHEN IT IS THE CARD'S OWN (#1077): "whenever a source you
+// control deals noncombat damage to an opponent" (Chandra's Pyreling) names no type and fires every
+// time; reading it as a bare self-ETB made Maddening Hex -> Pyreling a one-time link.
+test("an untyped trigger that is not the card's own is repeatable", () => {
+  // The production derivation of both cards (the compass fixture), not a hand-built shape.
+  const reasons = pairReasons(fixtureDeckCard("Maddening Hex"), fixtureDeckCard("Chandra's Pyreling"), H)
+    .filter((r) => r.tag === "non-combat-damage:any");
+  expect(reasons.length).toBeGreaterThan(0);
+  for (const r of reasons) expect(r.repeatability).toBe("triggered");
 });
 
 test("static-edge reason carries static effectKind and static repeatability", () => {
