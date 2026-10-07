@@ -1297,6 +1297,61 @@
   "typeLine": "Legendary Planeswalker — Chandra"
  },
  {
+  "name": "Chocobo Knights",
+  "oracleId": "6cbefcba-0c1c-48fd-9b78-905ed61aae1e",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "creatures you control with counters on them gain double strike until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "human",
+    "knight"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 4,
+   "power": "3",
+   "toughness": "3",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever you attack, creatures you control with counters on them gain double strike until end of turn."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Whenever you attack, creatures you control with counters on them gain double strike until end of turn.",
+  "typeLine": "Creature — Human Knight"
+ },
+ {
   "name": "Cloudshift",
   "oracleId": "6879f5ce-7a1b-4606-bad1-885779b0d456",
   "clauses": [
@@ -3168,6 +3223,73 @@
   "grantedToken": [],
   "oracleText": "Whenever you cast an instant or sorcery spell, this creature deals 2 damage to each opponent.",
   "typeLine": "Creature — Goblin Shaman"
+ },
+ {
+  "name": "Gyre Sage",
+  "oracleId": "e3aa16cf-079b-4737-9ffd-7bfdffef0cb2",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Evolve",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G} for each +1/+1 counter on this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "elf",
+    "druid"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 2,
+   "power": "1",
+   "toughness": "2",
+   "token": false,
+   "keywords": [
+    "evolve"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Evolve",
+   "2": "Add {G} for each +1/+1 counter on this creature."
+  },
+  "clauseCosts": {
+   "2": "{T}"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Evolve (Whenever a creature you control enters, if that creature has greater power or toughness than this creature, put a +1/+1 counter on this creature.)\n{T}: Add {G} for each +1/+1 counter on this creature.",
+  "typeLine": "Creature — Elf Druid"
  },
  {
   "name": "Hardened Scales",
@@ -5233,6 +5355,59 @@
   "grantedToken": [],
   "oracleText": "Flying\nWhenever you cast an instant spell from your hand, it gains rebound. (Exile it as it resolves. At the beginning of your next upkeep, you may cast it from exile without paying its mana cost.)\nWhen Ojer Pakpatiq dies, return it to the battlefield tapped and transformed under its owner's control with three time counters on it.\n//\n(Transforms from Ojer Pakpatiq, Deepest Epoch.)\n{T}: Add {U}. Remove a time counter from this land.\n{2}{U}, {T}: Transform this land. Activate only if it has no time counters on it and only as a sorcery.",
   "typeLine": "Legendary Creature — God // Land"
+ },
+ {
+  "name": "Phyrexian Altar",
+  "oracleId": "8d02b297-97c4-4379-9862-0a462400f66f",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "artifact"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [],
+   "identity": [],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Add one mana of any color."
+  },
+  "clauseCosts": {
+   "1": "Sacrifice a creature"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Sacrifice a creature: Add one mana of any color.",
+  "typeLine": "Artifact"
  },
  {
   "name": "Planar Genesis",
