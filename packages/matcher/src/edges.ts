@@ -1141,13 +1141,15 @@ function ownCounters(a: CardTags["abilities"][number]): GameEvent | undefined {
   return counters.length > 0 && counters.every((e) => e.subject.self === true) ? counters[0] : undefined;
 }
 
-/** A TRIGGERED CONSUMER REPEATS; WHETHER THE LINK DOES IS THE PRODUCER'S (#1077). This read any
- *  untyped trigger as a bare self-ETB ("when this enters", satisfied once), so "whenever a source you
- *  control deals noncombat damage" (Chandra's Pyreling) and every "whenever you gain life" read as
- *  one-time. A self trigger is now `subject.self`, its own entry is gated (`selfEtbSelfSupplied`),
- *  and what supplies it again -- a blink -- says itself whether it is once (Blur) or every turn
- *  (Thassa): `oneShotProducer` and the own-entry rule above. */
-const triggerRepeatability = (_subject: SubjectFilter): "triggered" => "triggered";
+/** Repeatability of a triggered CONSUMER: a bare self-ETB ("when this enters": the card's OWN
+ *  trigger, naming neither a type nor a subtype) is satisfied by its own single entry, so it is
+ *  one-time; any other trigger fires each time its event recurs. ONLY THE CARD'S OWN (#1077): an
+ *  untyped trigger that is not -- "whenever a source you control deals noncombat damage" (Chandra's
+ *  Pyreling), "whenever you gain life" -- was read as this and every such link as one-time. */
+function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
+  const bare = list(subject.type).length === 0 && list(subject.subtype).length === 0;
+  return subject.self === true && bare ? "oneshot" : "triggered";
+}
 
 /** A PRODUCER THAT SUPPLIES ITS EVENT ONCE (overview persona rounds 2026-09-25, item 6a): an instant
  *  or a sorcery, or the ability that supplied it is a cast trigger or sacrifices its own card (a
