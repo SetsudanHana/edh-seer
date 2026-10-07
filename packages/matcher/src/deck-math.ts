@@ -387,8 +387,9 @@ const PREVENTS_YOUR_DAMAGE = /source you control would deal damage to an opponen
 
 /** THE WHOLE-TABLE COMBAT TURN (owner 2026-10-07): the MEDIAN simulated game when the simulation ran,
  *  its fast and slow quarters beside it -- each game spends only its own turn's mana. The expected
- *  curve (`tableTurn`) banks mana across turns and read about three turns early on the 71 decks, so it
- *  stands in only when there is no simulation (tests, callers without one). */
+ *  curve (`tableTurn`) banks mana across turns (CR 500.5 empties it), so it reads one or two turns
+ *  early: 41 of 53 decks within a turn of the simulation, 54 of 56 once the simulation banks too
+ *  (2026-10-07). It stands in only when there is no simulation (tests, callers without one). */
 function combatSpeed(tableTurn: number | undefined, spread: { early?: number; typical?: number; late?: number } | undefined): { turn?: number; early?: number; late?: number } {
   if (!spread) return tableTurn !== undefined ? { turn: tableTurn } : {};
   return {

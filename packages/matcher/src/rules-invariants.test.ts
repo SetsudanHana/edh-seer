@@ -68,7 +68,7 @@ const TESTED: Record<string, string> = {
 const PROSE: Record<string, string> = {
   "106.1b": "mana colours", "107.4c": "hybrid mana", "107.14": "energy symbol is a counter on a player (subject.test asserts the player-counter gate)", "114.2": "emblem recipient (tagger asserts it)", "118.7": "costs paid once",
   "120.3": "damage to a player", "202.3b": "mana value of a split card", "205.2a": "type line", "205.3": "subtypes", "205.4a": "supertypes",
-  "302.6": "a creature's summoning sickness", "305.1": "land play", "500.4": "effects expire as a step begins", "501": "beginning phase",
+  "302.6": "a creature's summoning sickness", "305.1": "land play", "500.5": "unspent mana empties as a step ends", "501": "beginning phase",
   "603.4": "intervening if", "603.6c": "leaves the battlefield", "613": "layers: OPEN", "613.1f": "P/T layer", "700.6": "historic",
   "700.8": "party", "700.9": "modified", "701.17": "mill", "701.22": "scry", "701.23a": "search", "701.25": "surveil",
   "701.34": "proliferate", "701.5": "cast (tagger asserts the emit)", "702": "keyword abilities", "702.179": "speed", "702.62": "suspend (goldfish.ts: a suspended card is never cast from hand for its printed cost)", "704.5d": "a token in a graveyard ceases to exist",
