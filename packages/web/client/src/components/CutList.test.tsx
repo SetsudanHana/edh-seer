@@ -102,7 +102,7 @@ test("within a group, the cuts read in the order of the score they print", () =>
 /** WHAT A CUT LOSES COMES FIRST (owner 2026-10-07, #981): Roaming Throne led Krenko's cuts at 1.6
  *  while losing 20 links no other card makes, ahead of six that lose nothing. */
 test("a cut that loses nothing comes before one that does, whatever the score", () => {
-  const row = (loses: string[]) => ({ partners: 3, why: "Works with 3 other cards.", loses: loses.map((text) => ({ from: "a", to: "b", tag: "t", text, repeat: "static" })) }) as never;
+  const row = (loses: string[]) => ({ partners: 3, why: "Works with 3 other cards.", loses: loses.map((text) => ({ from: "a", to: "b", tag: "t", text, repeat: "static" })), covers: [] }) as never;
   const score = (n: string) => [`it scores ${n} for synergy, where 5 is this deck's best card`];
   const cuts = [cut("Throne", { keeps: score("1.6"), row: row(["Kreat's triggers trigger twice", "Taunter's too", "Lackey's too"]) }),
     cut("Mid", { keeps: score("2.5"), row: row([]) }), cut("High", { keeps: score("2.9"), row: row([]) })];
@@ -112,6 +112,17 @@ test("a cut that loses nothing comes before one that does, whatever the score", 
   expect(within(throne).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses 3 links no other card makes: Kreat's triggers trigger twice; Taunter's too");
   expect(within(throne).getByText("and 1 more")).toBeInTheDocument();
   expect(within(screen.getByRole("heading", { name: /Mid/ }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing");
+});
+
+/** CUT TOGETHER (review, #981): Elf and Druid each give Payoff the same, so alone each loses
+ *  nothing -- and cutting both loses it. */
+test("two cuts that cover each other both say what cutting them together loses", () => {
+  const link = { from: "Elf", to: "Payoff", tag: "enters:creature", text: "When an Elf enters, Payoff draws", repeat: "static" };
+  const row = (other: string) => ({ partners: 1, why: "Works with 1 other card.", loses: [], covers: [{ link, by: [other] }] }) as never;
+  render(<MemoryRouter><CutList cuts={[cut("Elf", { row: row("Druid") }), cut("Druid", { row: row("Elf") }), cut("Spare", { row: row("Nobody") })]} slack={[]} deckSize={102} /></MemoryRouter>);
+  for (const name of ["Elf", "Druid"]) {
+    expect(within(screen.getByRole("heading", { name: new RegExp(name) }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses the one link no other card makes: When an Elf enters, Payoff draws.");
+  }
 });
 
 test("over 100 with too few cuts, the list says how many are still to find and where", () => {

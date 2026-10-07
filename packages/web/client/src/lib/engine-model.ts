@@ -91,6 +91,9 @@ export interface CutRow {
   /** WHAT CUTTING IT LOSES (#981): its links no other card gives the same partner -- the same kind
    *  of link, with the partner on the same side. Empty when every partner is covered. */
   loses: Link[];
+  /** Its other links, each with the physical cards that give the partner the same: lost too when
+   *  every one of them is cut alongside it. */
+  covers: { link: Link; by: string[] }[];
 }
 
 export interface StrongPair { pair: Pair; ways: string[]; both: boolean; lines: Link[] }
@@ -543,26 +546,35 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     // COVERED when the partner has another card -- not a face of this one -- giving it a link of the
     // same tag from the same side.
     // A TOKEN ONLY THIS CARD MAKES GOES WITH IT, so "Asinine Antics creates Cursed Role" says nothing
-    // (Rani, #981): what is lost is what the token does for the rest of the deck.
+    // (Rani, #981): what is lost is what the token does for the rest of the deck. "This card" is the
+    // physical card, every face of it (review).
+    const mine = (q: string): boolean => cards.get(q)?.physical === card.physical;
     const isMaker = (t: string, maker: string): boolean => (partners.get(t)?.get(maker)?.links ?? []).some((l) => l.from === maker && l.to === t && /^creates/.test(l.tag));
     const ownTokens = new Set([...nb.keys()].filter((t) => cards.get(t)?.isToken
-      && isMaker(t, card.id) && ![...(partners.get(t)?.keys() ?? [])].some((q) => q !== card.id && isMaker(t, q))));
-    const gone = new Set([card.id, ...ownTokens]);
-    const covered = (l: Link, self: string): boolean => {
+      && isMaker(t, card.id) && ![...(partners.get(t)?.keys() ?? [])].some((q) => !mine(q) && isMaker(t, q))));
+    const gone = (q: string): boolean => mine(q) || ownTokens.has(q);
+    // WHO ELSE GIVES THE PARTNER THE SAME: a link of the same tag, the partner on the same side, and as
+    // often -- a one-time link does not cover a repeating one (review). Physical names, so the cut
+    // list can ask whether every one of them is being cut too.
+    const coverers = (l: Link, self: string): string[] => {
       const p = l.from === self ? l.to : l.from;
       const side = l.from === p ? "from" : "to";
+      const by = new Set<string>();
       for (const [q, pair] of partners.get(p) ?? []) {
-        if (gone.has(q) || cards.get(q)?.physical === card.physical) continue;
-        if (pair.links.some((x) => x.tag === l.tag && x[side] === p)) return true;
+        if (gone(q)) continue;
+        if (pair.links.some((x) => x.tag === l.tag && x[side] === p && (x.repeat !== "oneshot" || l.repeat === "oneshot"))) by.add(cards.get(q)?.physical ?? q);
       }
-      return false;
+      return [...by];
     };
     const seenText = new Set<string>();
-    const lost = (self: string, links: Link[]): Link[] => links
-      .filter((l) => !gone.has(l.from === self ? l.to : l.from) && !isHelperTag(l.tag) && !unread(l) && !covered(l, self) && !seenText.has(l.text) && seenText.add(l.text));
-    const loses = [...lost(card.id, [...nb.values()].flatMap((p) => p.links)),
-      ...[...ownTokens].flatMap((t) => lost(t, [...(partners.get(t)?.values() ?? [])].flatMap((p) => p.links)))];
-    return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, broughtBackBy: back?.name, partners: nb.size, why, keep, keepActs: !!keep && acts(card, keep), twins: [], jobs, options, loses };
+    const read = (self: string, links: Link[]) => links
+      .filter((l) => !gone(l.from === self ? l.to : l.from) && !isHelperTag(l.tag) && !unread(l) && !seenText.has(l.text) && seenText.add(l.text))
+      .map((link) => ({ link, by: coverers(link, self) }));
+    const reads = [...read(card.id, [...nb.values()].flatMap((p) => p.links)),
+      ...[...ownTokens].flatMap((t) => read(t, [...(partners.get(t)?.values() ?? [])].flatMap((p) => p.links)))];
+    const loses = reads.filter((x) => x.by.length === 0).map((x) => x.link);
+    const covers = reads.filter((x) => x.by.length > 0);
+    return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, broughtBackBy: back?.name, partners: nb.size, why, keep, keepActs: !!keep && acts(card, keep), twins: [], jobs, options, loses, covers };
   }).sort((a, b) => cutWeight(a) - cutWeight(b) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
   // A CARD THAT DRIVES A GROUP IS NOT A CUT: Skullclamp sat on the list while "Creatures dying"
   // named it among the cards doing something extra (round 10), and a helper's hub -- the cost

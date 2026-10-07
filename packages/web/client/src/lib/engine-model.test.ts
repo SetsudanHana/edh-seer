@@ -282,3 +282,16 @@ test("a token only the cut makes goes with it: what is lost is what the token do
   const maker = buildEngineModel(report, graph).cutRows.find((c) => c.card.name === "Maker")!;
   expect(maker.loses.map((l) => l.text)).toEqual(["When Rat enters, Payoff grows"]);
 });
+
+test("a one-time link does not cover a repeating one, and the partner's side must match", () => {
+  const m = tiny(["Engine", "Once", "Payoff", "Other"], [
+    { producer: "Engine", consumer: "Payoff", tag: "enters:creature", text: "When Engine enters, Payoff draws", repeatability: "static" },
+    { producer: "Once", consumer: "Payoff", tag: "enters:creature", text: "When Once enters thanks to it, Payoff draws", repeatability: "oneshot" },
+    // Payoff on the OTHER side of the same tag is not the same thing given to it.
+    { producer: "Payoff", consumer: "Other", tag: "enters:creature", text: "When Payoff enters, Other draws", repeatability: "static" },
+  ]);
+  const engine = m.cutRows.find((c) => c.card.name === "Engine")!;
+  expect(engine.loses.map((l) => l.text)).toEqual(["When Engine enters, Payoff draws"]);
+  // The one-time link is covered by the repeating one.
+  expect(m.cutRows.find((c) => c.card.name === "Once")!.covers.map((x) => x.by)).toEqual([["Engine"]]);
+});
