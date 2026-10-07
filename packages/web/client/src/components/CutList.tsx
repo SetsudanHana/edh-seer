@@ -357,7 +357,7 @@ function CutCard({ c, swap, loses, cover }: { c: CutChoice; swap?: SuggestedPair
             {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
           </div>
           {r && r.partners > 0
-            ? <Verdict links={loses ?? r.loses.map((l) => l.text)} cover={cover} keeps={realKeeps(c)} partners={r.partners} />
+            ? <Verdict links={loses ?? r.loses.map((l) => l.text)} cover={cover} keeps={realKeeps(c)} />
             : realKeeps(c).length ? <p><span className="font-medium text-(--success)">Why you might keep it:</span> {realKeeps(c).join(" · ")}</p> : null}
           {c.twins.length ? (
             <p className="text-(--muted)">Stands in for {listNames(c.twins)}: the same cards use {c.twins.length === 1 ? "both" : "all of them"}.</p>
@@ -374,7 +374,7 @@ function CutCard({ c, swap, loses, cover }: { c: CutChoice; swap?: SuggestedPair
  *  the reason to keep it; when it loses nothing, its strongest link and its score argue nothing (the
  *  link is covered, the score is the ranking), and only a real argument -- a win plan, a table
  *  warning -- still shows as one. Two lost links are named; the rest open. */
-function Verdict({ links, cover, keeps, partners }: { links: string[]; cover?: { name: string; n: number; of: number }; keeps: string[]; partners: number }) {
+function Verdict({ links, cover, keeps }: { links: string[]; cover?: { name: string; n: number; of: number }; keeps: string[] }) {
   const keepLabel = <span className="font-medium text-(--success)">Why you might keep it:</span>;
   const also = keeps.length ? <p>{links.length ? "Also: " : <>{keepLabel} </>}{keeps.join(" · ")}</p> : null;
   if (!links.length) {
