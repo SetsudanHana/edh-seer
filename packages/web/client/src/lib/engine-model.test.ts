@@ -86,10 +86,10 @@ describe("buildEngineModel", () => {
   // ONE MEASURE, BOTH NUMBERS (#980): "Keeps working with only 4" here beside the precon page's
   // "Works with 11" for the same card read as the two pages disagreeing.
   test("a cut that keeps working with some cards says how many it works with in all", () => {
-    const working = m.cuts.filter((c) => /every time/.test(c.why));
+    const working = m.cuts.filter((c) => /again and again/.test(c.why));
     expect(working.length).toBeGreaterThan(0);
     for (const c of working) {
-      const [, all, every] = /^Works with (\d+) other cards?, only (\d+) of them every time/.exec(c.why)!;
+      const [, all, every] = /^Works with (\d+) other cards?: with (\d+) again and again/.exec(c.why)!;
       expect(Number(all)).toBeGreaterThanOrEqual(Number(every));
     }
     expect(m.cuts.some((c) => /Keeps working with only/.test(c.why))).toBe(false);
@@ -183,7 +183,7 @@ test("one-time links are named, count a little, and a card that can be brought b
     { producer: "Lone", consumer: "A", tag: "attacks:any", text: "When Lone attacks, A grows" },
   ]);
   const flicker = m.cuts.find((c) => c.card.name === "Flicker")!;
-  expect(flicker.why).toMatch(/happens only once: with A, B and C\. Digger can bring it back to do it again\./);
+  expect(flicker.why).toMatch(/^Does its part only once: with A, B and C\. Digger can bring it back to do it again\./);
   expect(flicker.broughtBackBy).toBe("Digger");
   // Rows show in the order of the number they print: no repeating link comes before one.
   expect(m.cuts.indexOf(flicker)).toBeLessThan(m.cuts.findIndex((c) => c.card.name === "Lone"));
@@ -246,4 +246,52 @@ test("donate and spell-grant tags have players' names", () => {
   expect(groupName("scales:donated")).toBe("Donate");
   expect(groupName("keyword-grant:spell")).toBe("Spell keyword granting");
   expect(groupName("keyword-grant:instant-sorcery")).toBe("Instant and sorcery keyword granting");
+});
+
+// WHAT A CUT LOSES (#981): the seats read every cut as argued FOR, because the list said what a card
+// connects to and never what goes with it. A link is lost when no other card gives its partner the
+// same kind of link.
+test("a cut whose partner gets the same from another card loses nothing", () => {
+  const m = tiny(["Elf", "Druid", "Payoff"], [
+    { producer: "Elf", consumer: "Payoff", tag: "enters:creature", text: "When Elf enters, Payoff draws you 1 card" },
+    { producer: "Druid", consumer: "Payoff", tag: "enters:creature", text: "When Druid enters, Payoff draws you 1 card" },
+  ]);
+  expect(m.cutRows.find((c) => c.card.name === "Elf")!.loses).toEqual([]);
+});
+
+test("a cut that is the only source of a link names it as lost", () => {
+  const m = tiny(["Lone", "A", "Elf", "Payoff"], [
+    { producer: "Lone", consumer: "A", tag: "attacks:any", text: "When Lone attacks, A grows" },
+    { producer: "Elf", consumer: "Payoff", tag: "enters:creature", text: "When Elf enters, Payoff draws you 1 card" },
+  ]);
+  expect(m.cuts.find((c) => c.card.name === "Lone")!.loses.map((l) => l.text)).toEqual(["When Lone attacks, A grows"]);
+  // Elf's link: Payoff has no other enters source either, so it is lost too.
+  expect(m.cuts.find((c) => c.card.name === "Elf")!.loses).toHaveLength(1);
+});
+
+test("a token only the cut makes goes with it: what is lost is what the token does", () => {
+  const report = {
+    commanders: [], cards: ["Maker", "Payoff"].map((name) => ({ name, score: 1 })),
+    edges: [
+      { a: "Maker", b: "Rat", score: 1, reasons: [{ producer: "Maker", consumer: "Rat", tag: "creates:rat", text: "Maker creates Rat" }] },
+      { a: "Rat", b: "Payoff", score: 1, reasons: [{ producer: "Rat", consumer: "Payoff", tag: "enters:rat", text: "When Rat enters, Payoff grows" }] },
+    ],
+  } as unknown as DeckReport;
+  const node = (id: string, isToken = false) => ({ id, label: id, copies: 1, types: ["creature"], subtypes: [], supertypes: [], colors: [], cmc: 2, roles: [], ...(isToken ? { isToken: true } : {}) });
+  const graph = { nodes: [node("Maker"), node("Payoff"), node("Rat", true)], edges: [], undirectedReasons: 0, offDeckReasons: 0 } as unknown as CardGraph;
+  const maker = buildEngineModel(report, graph).cutRows.find((c) => c.card.name === "Maker")!;
+  expect(maker.loses.map((l) => l.text)).toEqual(["When Rat enters, Payoff grows"]);
+});
+
+test("a one-time link does not cover a repeating one, and the partner's side must match", () => {
+  const m = tiny(["Engine", "Once", "Payoff", "Other"], [
+    { producer: "Engine", consumer: "Payoff", tag: "enters:creature", text: "When Engine enters, Payoff draws", repeatability: "static" },
+    { producer: "Once", consumer: "Payoff", tag: "enters:creature", text: "When Once enters thanks to it, Payoff draws", repeatability: "oneshot" },
+    // Payoff on the OTHER side of the same tag is not the same thing given to it.
+    { producer: "Payoff", consumer: "Other", tag: "enters:creature", text: "When Payoff enters, Other draws", repeatability: "static" },
+  ]);
+  const engine = m.cutRows.find((c) => c.card.name === "Engine")!;
+  expect(engine.loses.map((l) => l.text)).toEqual(["When Engine enters, Payoff draws"]);
+  // The one-time link is covered by the repeating one.
+  expect(m.cutRows.find((c) => c.card.name === "Once")!.covers.map((x) => x.by)).toEqual([["Engine"]]);
 });

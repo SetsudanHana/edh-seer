@@ -58,20 +58,33 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
   // TWO KINDS OF CUT, SAID APART (appeal review 2026-09-26). One list headed "weakest first" whose
   // first row carried a green "Keeps it:" read as the list arguing with itself on three seats. A
   // card nothing argues for is a cut; a card with a reason to stay is a trade-off, and says so.
-  const clear = cuts.filter((c) => c.keeps.length === 0);
-  const maybe = cuts.filter((c) => c.keeps.length > 0);
+  // Losing a link nothing else makes argues for keeping a card too (review, #981).
+  const argued = (c: CutChoice) => c.keeps.length > 0 || (c.row?.loses.length ?? 0) > 0;
+  const clear = cuts.filter((c) => !argued(c));
+  const maybe = cuts.filter(argued);
   // WEAKEST FIRST BY THE NUMBER ON SCREEN (#981): which cards are cut is the link reading's call; the
   // rows it picked read in the order of the score they print, or "weakest first" measured nothing a
   // reader could see (Krenko: 2.3, 2.6, 2.5, 1.6, 2.9 …).
-  const byShown = (a: CutChoice, b: CutChoice) => shownScore(a) - shownScore(b);
+  // A CUT THAT LOSES NOTHING GOES FIRST (owner 2026-10-07, #981): Roaming Throne led Krenko's
+  // cuts at 1.6 while losing 20 links no other card makes, ahead of six that lose nothing. Inside
+  // each half, still the score shown.
+  const costs = (c: CutChoice) => Number((c.row?.loses.length ?? 0) > 0);
+  const byShown = (a: CutChoice, b: CutChoice) => costs(a) - costs(b) || shownScore(a) - shownScore(b);
   // OVER 100, THE CUTS ARE THE PLAN (baseline round 2026-09-26). The first-deck seat, 8 over, got 7
   // names, 2 more behind a button, and "Trim 3 5 10", which skips 8. Now the list leads with exactly
   // as many cuts as the deck is over, weakest first (nothing-argues-for-it first, then trade-offs),
   // and says how many are still to find when the list runs short. The trim order is not used for
   // this: it ranks every card, and on that deck its fifth and eighth were Sol Ring and Arcane Signet.
   const over = deckSize !== undefined ? Math.max(0, deckSize - 100) : 0;
-  const ordered = [...clear, ...maybe];
-  const toCut = over ? [...ordered.slice(0, over)].sort((a, b) => Number(a.keeps.length > 0) - Number(b.keeps.length > 0) || byShown(a, b)) : [];
+  const ordered = [...clear, ...maybe].sort((a, b) => costs(a) - costs(b));
+  // CUT TOGETHER, TWO CARDS THAT COVER EACH OTHER BOTH GO (review): a link is lost when every card
+  // that also gives it is on this list too, so the losses are read against the whole cut.
+  const chosen = new Set(over ? ordered.slice(0, over).map((c) => c.name) : []);
+  const losesWith = (c: CutChoice): string[] | undefined => c.row
+    ? [...c.row.loses, ...c.row.covers.filter((x) => x.by.every((n) => chosen.has(n))).map((x) => x.link)].map((l) => l.text)
+    : undefined;
+  const costsTogether = (c: CutChoice) => Number((losesWith(c)?.length ?? 0) > 0);
+  const toCut = over ? [...ordered.slice(0, over)].sort((a, b) => costsTogether(a) - costsTogether(b) || Number(a.keeps.length > 0) - Number(b.keeps.length > 0) || byShown(a, b)) : [];
   const spare = over ? ordered.slice(over) : [];
   const pairOf = new Map((pairs ?? []).map((p) => [p.cut, p] as const));
   // A deck that is over needs cards out, not swaps; the swaps are for a deck at its size.
@@ -115,7 +128,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
           </p>
           {toCut.length ? (
             <ol className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(25rem,calc((100%_-_2.25rem)/4))),1fr))]">
-              {toCut.map((c) => <CutCard key={c.name} c={c} />)}
+              {toCut.map((c) => <CutCard key={c.name} c={c} loses={losesWith(c)} />)}
             </ol>
           ) : null}
           {spare.length ? (
@@ -275,7 +288,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
 const MAYBE_STEP = 4;
 
 /** One cut: the card, why it is here, and what argues it stays. */
-function CutCard({ c, swap }: { c: CutChoice; swap?: SuggestedPair }) {
+function CutCard({ c, swap, loses }: { c: CutChoice; swap?: SuggestedPair; loses?: string[] }) {
   const r = c.row;
   return (
     <li className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
@@ -293,6 +306,7 @@ function CutCard({ c, swap }: { c: CutChoice; swap?: SuggestedPair }) {
             <p>{r ? r.why : `${capitalFirst(c.reasons.join("; "))}.`}</p>
             {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
           </div>
+          {r && r.partners > 0 ? <Loses links={loses ?? r.loses.map((l) => l.text)} /> : null}
           {c.keeps.length ? (
             <p><span className="font-medium text-(--success)">Why you might keep it:</span> {c.keeps.join(" · ")}</p>
           ) : null}
@@ -303,6 +317,26 @@ function CutCard({ c, swap }: { c: CutChoice; swap?: SuggestedPair }) {
       </div>
       {swap ? <SwapLine p={swap} /> : null}
     </li>
+  );
+}
+
+/** WHAT CUTTING IT LOSES (#981), the cut's own reason beside the keep reasons: the links no other
+ *  card in the deck gives the same partner. Two are named; the rest open rather than end in an
+ *  unreachable "and 6 others". */
+function Loses({ links }: { links: string[] }) {
+  const label = <span className="font-medium">Cutting it loses</span>;
+  if (!links.length) return <p data-testid="cut-loses">{label} nothing: every card it works with gets the same from another card.</p>;
+  const head = links.slice(0, 2), rest = links.slice(2);
+  return (
+    <div data-testid="cut-loses">
+      <p>{label} {links.length === 1 ? "the one link" : `${links.length} links`} no other card makes: {head.join("; ")}{rest.length ? "" : "."}</p>
+      {rest.length ? (
+        <details>
+          <summary className="cursor-pointer py-1 text-(--muted)">and {rest.length} more</summary>
+          <ul className="list-disc pl-5">{rest.map((t) => <li key={t}>{t}</li>)}</ul>
+        </details>
+      ) : null}
+    </div>
   );
 }
 
