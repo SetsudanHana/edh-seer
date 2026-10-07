@@ -293,6 +293,7 @@ function CutCard({ c, swap }: { c: CutChoice; swap?: SuggestedPair }) {
             <p>{r ? r.why : `${capitalFirst(c.reasons.join("; "))}.`}</p>
             {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
           </div>
+          {r && r.partners > 0 ? <Loses links={r.loses.map((l) => l.text)} /> : null}
           {c.keeps.length ? (
             <p><span className="font-medium text-(--success)">Why you might keep it:</span> {c.keeps.join(" · ")}</p>
           ) : null}
@@ -303,6 +304,26 @@ function CutCard({ c, swap }: { c: CutChoice; swap?: SuggestedPair }) {
       </div>
       {swap ? <SwapLine p={swap} /> : null}
     </li>
+  );
+}
+
+/** WHAT CUTTING IT LOSES (#981), the cut's own reason beside the keep reasons: the links no other
+ *  card in the deck gives the same partner. Two are named; the rest open rather than end in an
+ *  unreachable "and 6 others". */
+function Loses({ links }: { links: string[] }) {
+  const label = <span className="font-medium">Cutting it loses</span>;
+  if (!links.length) return <p data-testid="cut-loses">{label} nothing: every card it works with gets the same from another card.</p>;
+  const head = links.slice(0, 2), rest = links.slice(2);
+  return (
+    <div data-testid="cut-loses">
+      <p>{label} {links.length === 1 ? "the one link" : `${links.length} links`} no other card makes: {head.join("; ")}{rest.length ? "" : "."}</p>
+      {rest.length ? (
+        <details>
+          <summary className="cursor-pointer py-1 text-(--muted)">and {rest.length} more</summary>
+          <ul className="list-disc pl-5">{rest.map((t) => <li key={t}>{t}</li>)}</ul>
+        </details>
+      ) : null}
+    </div>
   );
 }
 

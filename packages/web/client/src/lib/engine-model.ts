@@ -88,6 +88,9 @@ export interface CutRow {
   /** A card in the deck that can bring this one back, so its one-time links happen again. */
   broughtBackBy?: string;
   jobs: string[];
+  /** WHAT CUTTING IT LOSES (#981): its links no other card gives the same partner -- the same kind
+   *  of link, with the partner on the same side. Empty when every partner is covered. */
+  loses: Link[];
 }
 
 export interface StrongPair { pair: Pair; ways: string[]; both: boolean; lines: Link[] }
@@ -524,20 +527,42 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     let why: string;
     if (!nb.size) why = "Works with nothing else in this deck.";
     else if (!real && !gives && !givesOnce) why = once
-      ? `Everything it does with other cards happens only once: with ${listNames(onceNames, 3)}.${back ? ` ${back.name} can bring it back to do it again.` : ""}`
+      ? `Does its part only once: with ${listNames(onceNames, 3)}.${back ? ` ${back.name} can bring it back to do it again.` : ""}`
       : `Its only links come from cards that make others cheaper, or easier to find or bring back.`;
     else if (!real && !gives) why = `All it does here is help ${givesOnce} card${s(givesOnce)} once, by finding them or bringing them back.`;
     else if (!real) why = `All it does here is help ${gives} card${s(gives)} in the background, by making them cheaper, giving them types, or letting you find or bring them back${givesOnce ? `; it also ${onceHelp}` : ""}.`;
     // ONE MEASURE, BOTH NUMBERS (#980): "Keeps working with only 4" beside the precon page's "Works
     // with 11" for the same card read as the pages disagreeing. Both now lead with every card it
     // works with; the repeating count, which orders the list, is named as the part it is.
-    else why = `Works with ${nb.size} other card${s(nb.size)}, only ${real} of them every time${gives ? `, helps ${gives} more in the background` : ""}${givesOnce ? `${gives ? "," : ""} and ${onceHelp}` : ""}.`;
+    else why = `Works with ${nb.size} other card${s(nb.size)}: with ${real} again and again${nb.size - real > 0 ? `, with ${nb.size - real} just once or in the background` : ""}${gives ? `, helps ${gives} more in the background` : ""}${givesOnce ? `${gives ? "," : ""} and ${onceHelp}` : ""}.`;
     const jobs = [...new Set(card.roles.filter((r) => JOB_WORDS[r]).map((r) => JOB_WORDS[r]!))];
     // The users few other cards feed come first: they are what is particular about this card.
     // Most central first put "Kindred Discovery, Inalla, Harmonic Prodigy" on every Wizard.
     const reach = (c: EngineCard) => partners.get(c.id)?.size ?? 0;
     const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => displayName(c) + (c.isToken ? ` ${tokenLabel(c)}` : ""));
-    return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, broughtBackBy: back?.name, partners: nb.size, why, keep, keepActs: !!keep && acts(card, keep), twins: [], jobs, options };
+    // COVERED when the partner has another card -- not a face of this one -- giving it a link of the
+    // same tag from the same side.
+    // A TOKEN ONLY THIS CARD MAKES GOES WITH IT, so "Asinine Antics creates Cursed Role" says nothing
+    // (Rani, #981): what is lost is what the token does for the rest of the deck.
+    const isMaker = (t: string, maker: string): boolean => (partners.get(t)?.get(maker)?.links ?? []).some((l) => l.from === maker && l.to === t && /^creates/.test(l.tag));
+    const ownTokens = new Set([...nb.keys()].filter((t) => cards.get(t)?.isToken
+      && isMaker(t, card.id) && ![...(partners.get(t)?.keys() ?? [])].some((q) => q !== card.id && isMaker(t, q))));
+    const gone = new Set([card.id, ...ownTokens]);
+    const covered = (l: Link, self: string): boolean => {
+      const p = l.from === self ? l.to : l.from;
+      const side = l.from === p ? "from" : "to";
+      for (const [q, pair] of partners.get(p) ?? []) {
+        if (gone.has(q) || cards.get(q)?.physical === card.physical) continue;
+        if (pair.links.some((x) => x.tag === l.tag && x[side] === p)) return true;
+      }
+      return false;
+    };
+    const seenText = new Set<string>();
+    const lost = (self: string, links: Link[]): Link[] => links
+      .filter((l) => !gone.has(l.from === self ? l.to : l.from) && !isHelperTag(l.tag) && !unread(l) && !covered(l, self) && !seenText.has(l.text) && seenText.add(l.text));
+    const loses = [...lost(card.id, [...nb.values()].flatMap((p) => p.links)),
+      ...[...ownTokens].flatMap((t) => lost(t, [...(partners.get(t)?.values() ?? [])].flatMap((p) => p.links)))];
+    return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, broughtBackBy: back?.name, partners: nb.size, why, keep, keepActs: !!keep && acts(card, keep), twins: [], jobs, options, loses };
   }).sort((a, b) => cutWeight(a) - cutWeight(b) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
   // A CARD THAT DRIVES A GROUP IS NOT A CUT: Skullclamp sat on the list while "Creatures dying"
   // named it among the cards doing something extra (round 10), and a helper's hub -- the cost
