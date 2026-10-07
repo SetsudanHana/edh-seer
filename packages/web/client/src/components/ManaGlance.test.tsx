@@ -25,7 +25,7 @@ test("the manabase opens with one tile per question, flagging what is short", ()
   expect(colour).toHaveTextContent("Weakest colour");
   // Which number is which (persona round 2026-09-29): usable by then, in the deck, and needed.
   // NO SLASH (#1033): "30 /37 (of 38 in the deck)" read as a fraction of 37 four rounds running.
-  expect(colour).toHaveTextContent(/13 of 17 neededA card wanting.*needs 17 sources of it by turn 2\. You run 13\.$/);
+  expect(colour).toHaveTextContent(/13 of 17 neededShort of black: you run 13 black sources\. A card wanting.*needs 17 by turn 2\.$/);
   expect(colour).not.toHaveTextContent("/17");
   expect(hands).toHaveTextContent(/Opening hands\d+%have 2 to 4 lands/);
   expect(mana).toHaveTextContent("Mana52%to make 6 mana by turn 6");
@@ -58,5 +58,6 @@ test("the lands tile reads the count as the Lands dial does", () => {
 test("when some sources come too late, the tile says how many of the deck's are there in time", () => {
   const dm = { ...(deckMath as object), colors: [{ color: "B", supplied: 38, worst: { pips: 3, turn: 3, required: 37, requiredRaw: 37, cards: 2, available: 30 } }] } as never;
   render(<ManaGlance deckMath={dm} landCount={37} deckSize={100} />);
-  expect(screen.getAllByTestId("mana-tile")[1]).toHaveTextContent(/30 of 37 needed2 cards wanting.*need 37 sources of it by turn 3\. You run 38, and 30 of them can tap by then\.$/);
+  // ENOUGH, BUT NOT IN TIME (persona round 2026-10-07): the verdict the Improve finding gives.
+  expect(screen.getAllByTestId("mana-tile")[1]).toHaveTextContent(/30 of 37 neededEnough black, but not in time: you run 38 black sources and only 30 can tap by turn 3 \(tapped lands, and rocks you couldn't have cast yet, don't count\)\. 2 cards wanting.*need 37 by turn 3\.$/);
 });
