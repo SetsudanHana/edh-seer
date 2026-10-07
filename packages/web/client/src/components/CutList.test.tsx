@@ -107,7 +107,9 @@ test("a cut that loses nothing comes before one that does, whatever the score", 
   const cuts = [cut("Throne", { keeps: score("1.6"), row: row(["Kreat's triggers trigger twice", "Taunter's too", "Lackey's too"]) }),
     cut("Mid", { keeps: score("2.5"), row: row([]) }), cut("High", { keeps: score("2.9"), row: row([]) })];
   render(<MemoryRouter><CutList cuts={cuts} slack={[]} deckSize={103} /></MemoryRouter>);
-  expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/(\d+(\.\d+)? synergy · )?2 mana$/, ""))).toEqual(["Mid", "High", "Throne"]);
+  expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/(\d+(\.\d+)? synergy · )?2 mana$/, ""))).toEqual(["Mid", "High", "This one costs something to cut, so it is not counted", "Throne"]);
+  // ONLY THE LOSS-FREE COUNT TOWARD 100 (owner 2026-10-07): Throne is listed, not counted.
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 2 are doing the least here. The other 1 has to come from the one below that costs something to cut, or the cards you like least.");
   const throne = screen.getByRole("heading", { name: /Throne/ }).closest("li")!;
   expect(within(throne).getByTestId("cut-loses")).toHaveTextContent("Why you might keep it: cutting it loses 3 links no other card makes: Kreat's triggers trigger twice; Taunter's too");
   expect(within(throne).getByText("and 1 more")).toBeInTheDocument();
@@ -136,7 +138,7 @@ test("a cut that loses nothing names what covers it and argues for itself only w
   const keeps = ["its strongest link: Lackey is fodder for Trashmaster", "it scores 2.8 for synergy, where 5 is this deck's best card"];
   const { unmount } = render(<MemoryRouter><CutList cuts={[cut("Lackey", { keeps, row, rating: 2.8 })]} slack={[]} /></MemoryRouter>);
   const lackey = screen.getByRole("heading", { name: /Lackey/ }).closest("li")!;
-  expect(within(lackey).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing: every card it works with gets the same from another card; Chieftain does the same with 2 of them.");
+  expect(within(lackey).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing: each of the 2 cards it works with gets the same from another card, Chieftain alone for all of them.");
   expect(within(lackey).queryByText(/Why you might keep it/)).toBeNull();
   // The score the order reads is in the header now.
   expect(within(lackey).getByRole("heading", { level: 4 })).toHaveTextContent("2.8 synergy · 2 mana");
@@ -156,7 +158,7 @@ test("a cover is never another proposed cut, and a partnerless row shows only re
   const { unmount } = render(<MemoryRouter><CutList cuts={[cut("Elf", { row: row("Druid") }), cut("Druid", { row: row("Elf") })]} slack={[]} /></MemoryRouter>);
   for (const name of ["Elf", "Druid"]) {
     const li = screen.getByRole("heading", { name: new RegExp(name) }).closest("li")!;
-    expect(within(li).getByTestId("cut-loses")).toHaveTextContent(/^Cutting it loses nothing: every card it works with gets the same from another card\.$/);
+    expect(within(li).getByTestId("cut-loses")).toHaveTextContent(/^Cutting it loses nothing: the one card it works with gets the same from another card\.$/);
   }
   unmount();
   const lone = { partners: 0, why: "Works with nothing else in this deck.", loses: [], covers: [] } as never;

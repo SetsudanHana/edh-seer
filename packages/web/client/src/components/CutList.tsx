@@ -77,9 +77,15 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
   // this: it ranks every card, and on that deck its fifth and eighth were Sol Ring and Arcane Signet.
   const over = deckSize !== undefined ? Math.max(0, deckSize - 100) : 0;
   const ordered = [...clear, ...maybe].sort((a, b) => costs(a) - costs(b));
+  // ONLY A CUT THAT LOSES NOTHING COUNTS TOWARD 100 (owner 2026-10-07, persona round b): Roaming
+  // Throne and Brash Taunter sat in "these 8 are doing the least" with "Why you might keep it:
+  // cutting it loses 20 / 4 links", and the seat refused both and took two cards that fit no theme
+  // instead. Those come from the fill below; a costly cut is listed after, as costing something.
+  const free = over ? ordered.filter((c) => !costs(c)) : ordered;
+  const costly = over ? ordered.filter((c) => costs(c)) : [];
   // CUT TOGETHER, TWO CARDS THAT COVER EACH OTHER BOTH GO (review): a link is lost when every card
   // that also gives it is on this list too, so the losses are read against the whole cut.
-  const chosen = new Set(over ? ordered.slice(0, over).map((c) => c.name) : []);
+  const chosen = new Set(over ? free.slice(0, over).map((c) => c.name) : []);
   const losesWith = (c: CutChoice): string[] | undefined => c.row
     ? [...c.row.loses, ...c.row.covers.filter((x) => x.by.every((n) => chosen.has(n))).map((x) => x.link)].map((l) => l.text)
     : undefined;
@@ -98,8 +104,8 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
     const [name, set] = [...tally].sort((a, b) => b[1].size - a[1].size || (a[0] < b[0] ? -1 : 1))[0] ?? [];
     return name ? { name, n: set!.size } : undefined;
   };
-  const toCut = over ? [...ordered.slice(0, over)].sort((a, b) => costsTogether(a) - costsTogether(b) || Number(a.keeps.length > 0) - Number(b.keeps.length > 0) || byShown(a, b)) : [];
-  const spare = over ? ordered.slice(over) : [];
+  const toCut = over ? [...free.slice(0, over)].sort((a, b) => costsTogether(a) - costsTogether(b) || Number(a.keeps.length > 0) - Number(b.keeps.length > 0) || byShown(a, b)) : [];
+  const spare = over ? free.slice(over) : [];
   const pairOf = new Map((pairs ?? []).map((p) => [p.cut, p] as const));
   // A deck that is over needs cards out, not swaps; the swaps are for a deck at its size.
   const swapFor = (c: CutChoice) => (over ? undefined : pairOf.get(c.name));
@@ -115,7 +121,11 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
     <>
       {fill.length ? <>the cards that fit no theme and are neither removal nor protection ({fill.map((n, i) => <span key={n}>{i > 0 ? ", " : ""}<CardName name={n} /></span>)}), </> : null}
       {hasSurplus ? "a role you run more of than you need, below, " : ""}
-      {fill.length || hasSurplus ? "or " : ""}the cards you like least
+      {/* THE COSTLY CUTS ARE THE NEXT PLACE TO LOOK when nothing safe is left (Krenko: every card that
+          fits no theme fills a role at or under its target), and the page says so rather than ending
+          on "the cards you like least". */}
+      {costly.length ? `${costly.length === 1 ? "the one" : `the ${costly.length}`} below that cost${costly.length === 1 ? "s" : ""} something to cut, ` : ""}
+      {fill.length || hasSurplus || costly.length ? "or " : ""}the cards you like least
     </>
   );
   const hasCuts = cuts.length > 0;
@@ -150,6 +160,14 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
               {spare.length === 1 ? "is" : "are"}{" "}
               {spare.map((c, i) => <span key={c.name}>{i > 0 ? ", " : ""}<CardName name={c.name} /></span>)}.
             </p>
+          ) : null}
+          {costly.length ? (
+            <section aria-labelledby="cuts-costly" className="flex flex-col gap-2">
+              <h4 id="cuts-costly" className="text-base font-semibold">{costly.length === 1 ? "This one costs" : "These cost"} something to cut, so {costly.length === 1 ? "it is" : "they are"} not counted</h4>
+              <ol className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(25rem,calc((100%_-_2.25rem)/4))),1fr))]">
+                {costly.map((c) => <CutCard key={c.name} c={c} loses={losesWith(c)} />)}
+              </ol>
+            </section>
           ) : null}
         </section>
       ) : hasCuts && (
@@ -323,7 +341,7 @@ function CutCard({ c, swap, loses, cover }: { c: CutChoice; swap?: SuggestedPair
             {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
           </div>
           {r && r.partners > 0
-            ? <Verdict links={loses ?? r.loses.map((l) => l.text)} cover={cover} keeps={realKeeps(c)} />
+            ? <Verdict links={loses ?? r.loses.map((l) => l.text)} cover={cover} keeps={realKeeps(c)} partners={r.partners} />
             : realKeeps(c).length ? <p><span className="font-medium text-(--success)">Why you might keep it:</span> {realKeeps(c).join(" · ")}</p> : null}
           {c.twins.length ? (
             <p className="text-(--muted)">Stands in for {listNames(c.twins)}: the same cards use {c.twins.length === 1 ? "both" : "all of them"}.</p>
@@ -340,13 +358,15 @@ function CutCard({ c, swap, loses, cover }: { c: CutChoice; swap?: SuggestedPair
  *  the reason to keep it; when it loses nothing, its strongest link and its score argue nothing (the
  *  link is covered, the score is the ranking), and only a real argument -- a win plan, a table
  *  warning -- still shows as one. Two lost links are named; the rest open. */
-function Verdict({ links, cover, keeps }: { links: string[]; cover?: { name: string; n: number }; keeps: string[] }) {
+function Verdict({ links, cover, keeps, partners }: { links: string[]; cover?: { name: string; n: number }; keeps: string[]; partners: number }) {
   const keepLabel = <span className="font-medium text-(--success)">Why you might keep it:</span>;
   const also = keeps.length ? <p>{links.length ? "Also: " : <>{keepLabel} </>}{keeps.join(" · ")}</p> : null;
   if (!links.length) {
     return (
       <div className="flex flex-col gap-2" data-testid="cut-loses">
-        <p><span className="font-medium">Cutting it loses nothing:</span> every card it works with gets the same from another card{cover ? <>; <CardName name={cover.name} /> does the same with {cover.n} of them</> : null}.</p>
+        {/* "EVERY CARD … DOES THE SAME WITH 28 OF THEM" read as 28 is not every (round b): the whole
+            and the part, both counted, in that order. */}
+        <p><span className="font-medium">Cutting it loses nothing:</span> {partners === 1 ? "the one card" : `each of the ${partners} cards`} it works with gets the same from another card{cover ? <>, <CardName name={cover.name} /> alone for {cover.n === partners ? (partners === 1 ? "it" : "all of them") : `${cover.n} of them`}</> : null}.</p>
         {also}
       </div>
     );
