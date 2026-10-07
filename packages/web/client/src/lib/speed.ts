@@ -94,16 +94,23 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
 
   const combat = classes.filter((c) => COMBAT[c.class]);
   // THE WHOLE TABLE (#1056 R1): 120 damage, not the one-opponent clock -- which stays the horizon.
-  const table = report.deckMath?.speed?.combat?.turn;
+  // THE MEDIAN SIMULATED GAME and its fast/slow quarters (owner 2026-10-07): each game spends only its
+  // own turn's mana. The expected curve banked mana across turns and read ~3 turns early.
+  const combatSpeed = report.deckMath?.speed?.combat;
+  const table = combatSpeed?.turn;
   // A commander that prevents your damage to opponents (The Mindskinner) times no damage route.
   const prevented = report.deckMath?.speed?.prevented;
   const preventedWhy = prevented ? `not timed: ${prevented} prevents your damage to opponents` : undefined;
   if (combat.length) {
     routes.push({
       kind: "combat", label: combat.map((c) => COMBAT[c.class]!).join(" or "), turn: table, cards: combat.flatMap((c) => c.cards ?? []),
+      ...(!preventedWhy && combatSpeed?.early !== undefined ? { early: combatSpeed.early } : {}),
+      ...(!preventedWhy && combatSpeed?.late !== undefined ? { late: combatSpeed.late } : {}),
       caveat: preventedWhy ?? (table
-        ? "enough attacking power to kill all three opponents, if nobody blocks and nothing is removed"
-        : "not timed: in our test games the board never deals 120, enough for all three opponents"),
+        ? "half our test games have dealt 120 by then, enough for all three opponents, if nobody blocks and nothing is removed"
+        : combatSpeed?.early !== undefined
+          ? `not timed: most of our test games never deal 120 by turn 20, though the fastest quarter do by turn ${combatSpeed.early}`
+          : "not timed: in our test games the board never deals 120, enough for all three opponents"),
     });
   }
 

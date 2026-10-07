@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { pAtLeast, seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 import { classifyAccelerant, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
@@ -1119,4 +1119,48 @@ test("seen shares: equal for every kind without mulligans, tilted toward lands a
   expect(kept.seenShare.land[0]).toBeGreaterThan(exact);
   expect(kept.seenShare.cheap[0]).toBeGreaterThan(exact);
   expect(kept.seenShare.dear[0]).toBeLessThan(exact);
+});
+
+/** EACH GAME ATTACKS (owner 2026-10-07, item 2: the per-game spread). A trial casts the creatures it
+ *  holds, cheapest first, with the mana left after its accelerants, attacks with everything (no
+ *  blocks, no summoning sickness -- the expected curve's rule), and records the first turn its
+ *  damage reaches 40 (one opponent) and 120 (the table, infect left out). */
+describe("per-game combat kill turns", () => {
+  const creature = (i: number, keywords: string[] = []): DeckCard => ({ card: { name: `Ox ${i}`, typeLine: "Creature — Ox", oracleText: "", manaCost: "{1}{R}", keywords, colors: ["R"], manaValue: 2, power: "3" } as never, tags: null });
+  const mountains = Array.from({ length: 40 }, (_, i) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "", ["R"]));
+
+  test("every game records a kill turn; one opponent never later than the table", () => {
+    const r = simulate([...mountains, ...Array.from({ length: 59 }, (_, i) => creature(i))], { trials: 400, turns: 8, seed: 31, combatTo: 20 });
+    expect(r.killTurns.one).toHaveLength(400);
+    expect(r.killTurns.table).toHaveLength(400);
+    r.killTurns.one.forEach((one, i) => expect(one).toBeLessThanOrEqual(r.killTurns.table[i]!));
+    const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!;
+    expect(median(r.killTurns.table)).toBeLessThanOrEqual(20);
+    expect(median(r.killTurns.one)).toBeLessThan(median(r.killTurns.table));
+  });
+
+  test("playing on for combat leaves every priced number exactly as it was, fetchlands and all", () => {
+    const wilds = Array.from({ length: 10 }, (_, i) => card(`Wilds ${i}`, "Land", 0, "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."));
+    const deck = [...mountains.slice(0, 30), ...wilds, ...Array.from({ length: 59 }, (_, i) => creature(i))];
+    const priced = simulate(deck, { trials: 300, turns: 8, seed: 37 });
+    const fought = simulate(deck, { trials: 300, turns: 8, seed: 37, combatTo: 20 });
+    expect(fought.manaAt).toEqual(priced.manaAt);
+    expect(fought.seenShare).toEqual(priced.seenShare);
+  });
+
+  test("a mana creature attacks too, and a commander that is both is cast and counted once", () => {
+    // A 10-power commander that taps for mana: cast turn 1 as a dork, it swings 10 a turn -- 40 by turn 4.
+    const dork = { card: { name: "Titan", typeLine: "Legendary Creature — Elf", oracleText: "{T}: Add {G}.", producedMana: ["G"], manaCost: "{G}", keywords: [], colors: ["G"], manaValue: 1, power: "10" } as never, tags: null };
+    const forests = Array.from({ length: 40 }, (_, i) => card(`Forest ${i}`, "Basic Land — Forest", 0, "", ["G"]));
+    const deck = [...forests, ...Array.from({ length: 59 }, (_, i) => card(`Spell ${i}`, "Sorcery", 7, "Draw a card."))];
+    const r = simulate(deck, { trials: 200, turns: 8, seed: 41, alsoPrice: [dork], combatTo: 20 });
+    // Counted twice it would swing 20 and kill on turn 2; a forced landless six casts it late.
+    expect(Math.min(...r.killTurns.one)).toBe(4);
+    expect(r.killTurns.one.filter((t) => t === 4).length).toBeGreaterThan(180);
+  });
+
+  test("infect damage is poison, never life: an infect deck never kills the table with damage", () => {
+    const r = simulate([...mountains, ...Array.from({ length: 59 }, (_, i) => creature(i, ["Infect"]))], { trials: 200, turns: 8, seed: 31, combatTo: 20 });
+    expect(r.killTurns.table.every((t) => t === Infinity)).toBe(true);
+  });
 });

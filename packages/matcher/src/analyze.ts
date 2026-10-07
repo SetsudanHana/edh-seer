@@ -1061,6 +1061,7 @@ export function analyzeDeckStructured(
         manaBudget: manaSim?.manaMedian,
         // What a KEPT hand has seen, by kind (#1 after the mulligan, owner 2026-10-06).
         ...(manaSim?.seenShare ? { seen: manaSim.seenShare } : {}),
+        ...(manaSim?.combat ? { combatSpread: manaSim.combat.table } : {}),
         reasons: allReasons,
       })
     : undefined;

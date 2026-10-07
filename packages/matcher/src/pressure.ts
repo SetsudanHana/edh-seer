@@ -38,7 +38,7 @@ const isCreature = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().inc
  *  GIVEN A BUDGET: creatures are deployed CHEAPEST FIRST against the mana the board could have made
  *  by `turn`, cumulatively -- a board is built over several turns, so the 3-drop cast on turn three
  *  and the 4-drop on turn four together cost seven of the ten mana turns one to four produced. The
- *  per-creature `manaValue <= turn` gate stays on top of it: mana empties each step (CR 500.4), so
+ *  per-creature `manaValue <= turn` gate stays on top of it: mana empties each step (CR 500.5), so
  *  banking three turns of it does not cast a nine-drop on turn three.
  *
  *  CHEAPEST FIRST because that is rule 3's own policy one module over, not because it is optimal --
