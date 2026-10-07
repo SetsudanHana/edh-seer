@@ -397,7 +397,9 @@ import { emblemRecipient } from "../emblem.js";
 // marked `creatureOnlyIf`, read by the action grammar.
 // 284: S-T1, a landwalk grant names its landwalk (CR 702.14): "islandwalk" is an instance, not a name on
 // the keyword list, so Lord of Atlantis's grant named no keyword.
-export const DERIVE_VERSION = 284;
+// 285: a Curse's enchanted player is an opponent (owner 2026-10-07): "whenever enchanted player casts"
+// keeps its trigger as an opponent's, where any other Aura's still refuses as a narrowing (Maddening Hex).
+export const DERIVE_VERSION = 285;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1564,7 +1566,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
 
 type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter } | { refused: string; subject?: SubjectFilter };
 
-function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[]): GrammarTrigger[] | null {
+function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[], curse?: boolean): GrammarTrigger[] | null {
   // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
   const bounded = boundedByEnchantLine(text, enchantText);
   const preamble = printedPreamble(bounded, cardName ?? "");
@@ -1588,10 +1590,17 @@ function grammarTriggersOf(text: string, cardName: string | undefined, storedEve
   const mine = readings.filter((x) => x.event === storedEvent);
   const chosen = !split ? readings : mine.length > 0 ? mine : [readings[0]!];
   if (chosen.some((r) => r.event === "reflexive")) return null;
-  return chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText));
+  return chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText, curse));
 }
 
-function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, cardName: string | undefined, cardText: string): GrammarTrigger {
+function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, cardName: string | undefined, cardText: string, curse?: boolean): GrammarTrigger {
+  // A CURSE'S ENCHANTED PLAYER IS AN OPPONENT (owner 2026-10-07): Maddening Hex's "whenever enchanted
+  // player casts a noncreature spell" was refused as a narrowing to one player, so its damage had
+  // no trigger. A Curse goes on an opponent in play, so the one player reads as an opponent; on any
+  // other Aura the narrowing still refuses the claim (ruling 2026-10-01).
+  if (curse && r.narrowing && /^enchanted (?:player|opponent)$/.test(r.narrowing)) {
+    r = { ...r, narrowing: undefined, control: "opp", ...(r.subject ? { subject: { ...r.subject, control: "opp" } } : {}) };
+  }
   const subject: SubjectFilter = { ...(r.subject ?? { control: r.control ?? "any", token: null }) };
   FROM_GRAMMAR.add(subject);
   // A refused EVENT is named before any condition: the event is the first thing the claim lacks.
@@ -1732,6 +1741,8 @@ export function deriveAbilities(
    *  `withGrammarActions` / `grammarTriggersOf` below so a clause the grammar already read does not
    *  get re-parsed on the grammar path's own derive. */
   readings?: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }>,
+  /** The card is a Curse: its enchanted player is an opponent (owner 2026-10-07). */
+  curse?: boolean,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -1907,7 +1918,7 @@ export function deriveAbilities(
     };
     const grammarAll = clause.trigger?.event && text ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
       clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
-      readings?.[clause.id]?.trigger) : null;
+      readings?.[clause.id]?.trigger, curse) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
     /** The clause's further readings of its own event, each a twin of the first (pushed below). */
     grammarExtra = claimed.slice(1);
@@ -2773,7 +2784,8 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     || (chars.keywords ?? []).some((k) => k.toLowerCase() === "flash");
   const derived = deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
-    input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings);
+    input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
+    chars.subtypes.some((t) => t.toLowerCase() === "curse"));
   const { unknownTriggers } = derived;
   // AN AURA ON AN OPPONENT'S CREATURE WATCHES THE OPPONENT'S CREATURE (owner 2026-09-23, AN7).
   // Nurgle's Rot prints "Enchant creature an opponent controls / When enchanted creature dies": the

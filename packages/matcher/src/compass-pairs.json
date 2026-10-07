@@ -720,5 +720,14 @@
     "note": "#931: Ojer Pakpatiq's \"whenever you cast an instant spell from your hand, it gains rebound\" is met by every instant you cast from hand; a card's own cast is from your hand.",
     "source": "#931 (2026-10-02, owner issue)",
     "verified": true
+  },
+  {
+    "a": "Maddening Hex",
+    "b": "Chandra's Pyreling",
+    "category": "damage",
+    "note": "A Curse's \"whenever enchanted player casts a noncreature spell ... deals damage to that player\" is an opponent's trigger (owner 2026-10-07): its damage meets \"whenever a source you control deals noncombat damage to an opponent\". Before DERIVE 285 the trigger was refused as a narrowing and the damage had no trigger at all.",
+    "source": "persona round 2026-10-07 (plan-seeker, Rani)",
+    "verified": true,
+    "tag": "non-combat-damage:any"
   }
 ]

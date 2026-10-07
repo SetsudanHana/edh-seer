@@ -1050,6 +1050,69 @@
   "typeLine": "Creature — Goblin"
  },
  {
+  "name": "Chandra's Pyreling",
+  "oracleId": "5291deb9-0b89-42c2-bde6-26f88931c3f4",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a source you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+0",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "double strike",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "elemental",
+    "lizard"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 2,
+   "power": "1",
+   "toughness": "3",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever a source you control deals noncombat damage to an opponent, this creature gets +1/+0 and gains double strike until end of turn."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Whenever a source you control deals noncombat damage to an opponent, this creature gets +1/+0 and gains double strike until end of turn. (It deals both first-strike and regular combat damage.)",
+  "typeLine": "Creature — Elemental Lizard"
+ },
+ {
   "name": "Chandra's Regulator",
   "oracleId": "d8c95a86-2f05-44f9-8ed7-b1798eaed42f",
   "clauses": [
@@ -4052,6 +4115,92 @@
   "grantedToken": [],
   "oracleText": "Kicker {3}{U}\nEach opponent mills eight cards. If this spell was kicked, instead each opponent mills half their library, rounded up.",
   "typeLine": "Sorcery"
+ },
+ {
+  "name": "Maddening Hex",
+  "oracleId": "5d96170f-14dd-496e-a485-bd3b9eedfe02",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant player",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a noncreature spell",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "roll-dice",
+      "object": "a d6",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "that player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the result",
+      "optional": false
+     },
+     {
+      "verb": "attach",
+      "object": "this Aura to another one of your opponents chosen at random",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura",
+    "curse"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Enchant player",
+   "2": "Whenever enchanted player casts a noncreature spell, roll a d6. This Aura deals damage to that player equal to the result. Then attach this Aura to another one of your opponents chosen at random."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Enchant player\nWhenever enchanted player casts a noncreature spell, roll a d6. This Aura deals damage to that player equal to the result. Then attach this Aura to another one of your opponents chosen at random.",
+  "typeLine": "Enchantment — Aura Curse"
  },
  {
   "name": "Mage's Attendant",

@@ -4015,3 +4015,25 @@ test("a card whose own static says it isn't a creature under a condition is mark
   expect(god("As long as your devotion to red is less than five, Purphoros isn't a creature.", ["enchantment"])).toBeUndefined();
   expect(god("Purphoros can't block.")).toBeUndefined();
 });
+
+// A CURSE'S ENCHANTED PLAYER IS AN OPPONENT (owner 2026-10-07, persona round 2026-10-07): Maddening
+// Hex's "Whenever enchanted player casts a noncreature spell" was refused as a narrowing
+// (`narrowing:cast`, one player the matcher cannot pick out), so its damage had no trigger at all.
+// On a Curse that player is an opponent; on any other Aura the refusal stands.
+test("a Curse reads its enchanted player as an opponent, and keeps the trigger", () => {
+  const input = (subtypes: string[]) => ({
+    oracleId: "hex",
+    clauses: [{ id: 2, abilityType: "triggered" as const, trigger: { event: "cast", subject: "a noncreature spell", control: "opponent" },
+      actions: [{ verb: "deal-damage", object: "that player", amount: "the result" }] }],
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["enchantment"], subtypes },
+    clauseTexts: { 2: "Whenever enchanted player casts a noncreature spell, roll a d6. This Aura deals damage to that player equal to the result." },
+    oracleText: "Enchant player\nWhenever enchanted player casts a noncreature spell, roll a d6. This Aura deals damage to that player equal to the result. Then attach this Aura to another one of your opponents chosen at random.",
+  });
+  const curse = deriveCardTags(input(["aura", "curse"]) as never);
+  const damage = curse.abilities.find((a) => a.effect?.kind === "damage")!;
+  expect(damage.trigger?.verbs).toEqual(["cast"]);
+  expect(damage.trigger?.subject.control).toBe("opp");
+  expect(curse.unknownTriggers ?? []).not.toContain("narrowing:cast");
+  const aura = deriveCardTags(input(["aura"]) as never);
+  expect(aura.unknownTriggers).toContain("narrowing:cast");
+});
