@@ -68,3 +68,11 @@ test("a token's name after 'a', 'another' or 'each' is the class, not the token"
   // Named as the thing itself, it is still the token.
   expect(reasonSegments("Transpose creates Wizard", new Set(["Transpose"]), tokens).filter((s) => s.kind === "token").map((s) => s.text)).toEqual(["Wizard"]);
 });
+
+// A PLURAL IS THE CLASS, NOT THE TOKEN (#825): "the 10 or more Treasures Revel in Riches needs" matched
+// "Treasure" inside "Treasures" and rendered "Treasure (token from Revel in Riches)s".
+test("a token name inside a longer word is not the token", () => {
+  const segs = reasonSegments("Treasure counts toward the 10 or more Treasures Revel in Riches needs", new Set(["Revel in Riches"]), new Map([["Treasure", "Revel in Riches"]]));
+  expect(segs.filter((s) => s.kind === "token").map((s) => s.text)).toEqual(["Treasure"]);
+  expect(segs.map((s) => s.text).join("")).toBe("Treasure counts toward the 10 or more Treasures Revel in Riches needs");
+});
