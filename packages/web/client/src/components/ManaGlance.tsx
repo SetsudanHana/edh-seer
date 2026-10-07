@@ -39,10 +39,11 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
         // NO SLASH (#1033): "30 /37" read as 30 of 37 lands even with the line below naming both
         // numbers, so the figure says it in words.
         big={<span className="inline-flex items-center gap-1.5"><ManaSymbols cost={`{${short.color}}`} />{short.worst.available}<span className="text-sm text-(--muted)"> of {short.worst.required} needed</span></span>}
-        // BOTH NUMBERS NAMED, AND THE THIRD (persona round 2026-09-29, clunky-deck): "30 /37 sources by
-        // turn 3" read as 30 of 37 lands, and the Improve note beside it said "30 of your 38 black
-        // sources … takes 37". Same figures; the tile now says which is which.
-        sub={<>sources that can tap by turn {short.worst.turn}, of {short.supplied} in the deck; {short.worst.required} is what {short.worst.cards === 1 ? "a card" : `${short.worst.cards} cards`} wanting <ManaSymbols cost={`{${short.color}}`.repeat(short.worst.pips)} /> {short.worst.cards === 1 ? "needs" : "need"}</>} />
+        // EACH NUMBER ONCE, IN THE ORDER IT IS NEEDED (#1033): "sources that can tap by turn 3, of 38 in
+        // the deck; 37 is what 2 cards wanting BBB need" put three numbers and two "of"s in one clause,
+        // and the seats still read 37 as the deck. The demand first, then what the deck runs, then the
+        // part of it that is there in time -- which is the number in big type.
+        sub={<>{short.worst.cards === 1 ? "A card" : `${short.worst.cards} cards`} wanting <ManaSymbols cost={`{${short.color}}`.repeat(short.worst.pips)} /> {short.worst.cards === 1 ? "needs" : "need"} {short.worst.required} sources of it by turn {short.worst.turn}. You run {short.supplied}{short.supplied > short.worst.available ? `, and ${short.worst.available} of them can tap by then` : ""}.</>} />
     ) : (
       <Tile key="colours" label="Colours" big={<span className="inline-flex gap-0.5">{colours.map((c) => <ManaSymbols key={c.color} cost={`{${c.color}}`} />)}</span>}
         sub="enough sources for every card" />

@@ -264,7 +264,8 @@ function colourFindings(report: DeckReport): Finding[] {
         + " (tapped lands, and rocks you couldn't have cast yet, don't count)."
         + ` Casting it on curve nine games in ten takes ${worst.required}.${timing}`,
       action: "Delay or cut the early double pip, or trade a tapped source for one that enters untapped.",
-      figure: `${worst.available}/${worst.required}`,
+      // NO SLASH (#1033), the same words as the Manabase tile: "30/37" read as 30 of 37 lands.
+      figure: `${worst.available} of ${worst.required}`,
       figureLabel: `${colour} sources by turn ${worst.turn}`,
       filled: worst.available / worst.required,
       shortfall: (worst.required - worst.available) / worst.required,
