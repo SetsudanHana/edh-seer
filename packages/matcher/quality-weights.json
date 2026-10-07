@@ -1,20 +1,21 @@
 {
-  "deriveVersion": 284,
+  "deriveVersion": 285,
   "rulesVersion": 17,
   "roles": {
     "ramp": {
       "weights": {
-        "manaValue": -0.17747521114816509,
-        "frequency": 0.36646128329756855,
-        "timing": 0.07564063852198728,
-        "extraValue": 0.35291481858552615,
-        "restriction": -0.03183310244192388,
-        "rateFloor": 0.27865680641895957,
-        "rateCeiling": 0.35861778337464495
+        "manaValue": -0.18586306937052363,
+        "frequency": 0.3634305796022358,
+        "timing": 0.07365041303765177,
+        "extraValue": 0.35549882320823195,
+        "restriction": -0.03205505181132212,
+        "amount": 0.000009929554461834967,
+        "rateFloor": 0.27867718756849785,
+        "rateCeiling": 0.3596488292642446
       },
       "pairs": 432,
       "heldOutAccuracy": 0.6374993688155491,
-      "baselineAccuracy": 0.6046422372184616,
+      "baselineAccuracy": 0.60952184718181,
       "fallbackAccuracy": 0.5312009325985348,
       "fallback": false
     },
@@ -26,9 +27,9 @@
         "timing": 0.5
       },
       "pairs": 1153,
-      "heldOutAccuracy": 0.48617006004773544,
-      "baselineAccuracy": 0.578197678602647,
-      "fallbackAccuracy": 0.6727022407975962,
+      "heldOutAccuracy": 0.4760421493698415,
+      "baselineAccuracy": 0.5621885450201562,
+      "fallbackAccuracy": 0.6375720453360909,
       "fallback": true
     },
     "cardSelection": {
@@ -39,8 +40,8 @@
         "timing": 0.5
       },
       "pairs": 28,
-      "heldOutAccuracy": 0.06421205439474806,
-      "baselineAccuracy": 0.08289710329283756,
+      "heldOutAccuracy": 0,
+      "baselineAccuracy": 0.01868504889808949,
       "fallbackAccuracy": 0.5489549130715925,
       "fallback": true
     },
@@ -59,13 +60,14 @@
     },
     "targetedRemoval": {
       "weights": {
-        "manaValue": -0.18953870153970281,
-        "frequency": 0.027586302427965927,
-        "timing": 1.0106111351261173,
-        "breadth": 0.05004097077827019,
-        "permanence": 0.015962939153273493,
-        "drawback": -0.057075872018597026,
-        "extraValue": 1.0300692842879755
+        "manaValue": -0.19008801641538461,
+        "frequency": 0.027450846749585728,
+        "timing": 1.0128872411965288,
+        "breadth": 0.04969029909261663,
+        "permanence": 0.016020608720543644,
+        "drawback": -0.05693615399452781,
+        "extraValue": 1.0304145696173175,
+        "amount": 0.018441151546725036
       },
       "pairs": 210,
       "heldOutAccuracy": 0.7390369093340157,
