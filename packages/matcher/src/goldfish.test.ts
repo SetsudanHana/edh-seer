@@ -1164,3 +1164,72 @@ describe("per-game combat kill turns", () => {
     expect(r.killTurns.table.every((t) => t === Infinity)).toBe(true);
   });
 });
+
+/** DRAW AND TUTORS (item 3, owner 2026-10-07). After its accelerants a game spends on draw -- a draw
+ *  spell, an enters-draw creature, an upkeep engine, an activated draw, a tutor -- cheapest first,
+ *  and only then on creatures. A tutor finds what the HAND needs: a land when it holds none, an
+ *  accelerant while the board makes less than the commander costs, else the biggest creature the
+ *  next turn can cast, and never a card its own filter refuses. */
+describe("draw and tutors", () => {
+  const tagged = (name: string, typeLine: string, manaCost: string, manaValue: number, abilities: unknown[], extra: { power?: string; types?: string[] } = {}): DeckCard => ({
+    card: { name, typeLine, oracleText: "", manaCost, keywords: [], colors: [], manaValue, ...(extra.power ? { power: extra.power } : {}) } as never,
+    tags: { abilities, characteristics: { types: extra.types ?? [typeLine.split(" ")[0]!.toLowerCase()], subtypes: [], colors: [], identity: [], cmc: manaValue, power: extra.power ?? null, toughness: null, token: false, keywords: [] } } as never,
+  });
+  const you = { control: "you", token: null };
+  const drawTwo = (i: number) => tagged(`Divination ${i}`, "Sorcery", "{1}", 1, [{ kind: "on-cast", effect: { kind: "draw-card", subject: you }, amount: "2", repeats: "once" }]);
+  const arena = (i: number) => tagged(`Arena ${i}`, "Enchantment", "{1}", 1, [{ kind: "triggered", trigger: { verbs: ["upkeep"], subject: you }, effect: { kind: "draw-card", subject: you }, amount: "1", repeats: "per-cycle" }]);
+  const tutor = (i: number, type?: string) => tagged(`Tutor ${i}`, "Sorcery", "{0}", 0, [{ kind: "on-cast", effect: { kind: "search", subject: { ...you, ...(type ? { type } : {}) } }, amount: "1", repeats: "once" }]);
+  const forest = (i: number) => ({ ...tagged(`Forest ${i}`, "Basic Land — Forest", "", 0, [], { types: ["basic", "land"] }), card: { name: `Forest ${i}`, typeLine: "Basic Land — Forest", oracleText: "", keywords: [], colors: [], manaValue: 0, producedMana: ["G"] } as never });
+  const forests = (n: number) => Array.from({ length: n }, (_, i) => forest(i));
+  const untag = (d: DeckCard[]): DeckCard[] => d.map((x) => ({ ...x, tags: null }));
+  const opts = { trials: 2_000, turns: 6, seed: 5, mulligan: false } as const;
+
+  test("a draw spell shows the game more cards than one a turn", () => {
+    const deck = [...forests(37), ...Array.from({ length: 62 }, (_, i) => drawTwo(i))];
+    const drew = simulate(deck, opts).seenShare.land[5]!;
+    const plain = simulate(untag(deck), opts).seenShare.land[5]!;
+    expect(drew).toBeGreaterThan(plain + 0.05);
+  });
+
+  test("an upkeep engine draws every turn after it lands", () => {
+    const deck = [...forests(37), ...Array.from({ length: 62 }, (_, i) => arena(i))];
+    expect(simulate(deck, opts).seenShare.land[5]!).toBeGreaterThan(simulate(untag(deck), opts).seenShare.land[5]! + 0.05);
+  });
+
+  test("a hand with no land tutors one", () => {
+    const deck = [...forests(3), ...Array.from({ length: 96 }, (_, i) => tutor(i))];
+    // Landless sevens are nearly every game; the turn-1 tutor finds a land and turn 2 plays it.
+    expect(pAtLeastMana(simulate(deck, opts), 1, 2)).toBeGreaterThan(0.95);
+    expect(pAtLeastMana(simulate(untag(deck), opts), 1, 2)).toBeLessThan(0.3);
+  });
+
+  test("with land in hand and the commander out of reach, a tutor finds an accelerant", () => {
+    const ring = tagged("Sol Ring", "Artifact", "{1}", 1, [], {});
+    (ring.card as { oracleText: string }).oracleText = "{T}: Add {C}{C}.";
+    (ring.card as { producedMana?: string[] }).producedMana = ["C"];
+    const commander = tagged("Big", "Legendary Creature", "{6}", 6, [], { types: ["legendary", "creature"] });
+    const deck = [...forests(40), ring, ...Array.from({ length: 58 }, (_, i) => tutor(i))];
+    // Turn 1: Forest, tutor for Sol Ring, cast it off the Forest: three mana on turn 2.
+    const r = simulate(deck, { ...opts, alsoPrice: [commander] });
+    expect(pAtLeastMana(r, 3, 2)).toBeGreaterThan(0.9);
+  });
+
+  test("a tutor never finds what its filter refuses", () => {
+    const ring = tagged("Sol Ring", "Artifact", "{1}", 1, []);
+    (ring.card as { oracleText: string }).oracleText = "{T}: Add {C}{C}.";
+    (ring.card as { producedMana?: string[] }).producedMana = ["C"];
+    const commander = tagged("Big", "Legendary Creature", "{6}", 6, [], { types: ["legendary", "creature"] });
+    const deck = [...forests(40), ring, ...Array.from({ length: 58 }, (_, i) => tutor(i, "creature"))];
+    const withTutors = simulate(deck, { ...opts, alsoPrice: [commander] });
+    // A creature tutor in a deck with no creature finds nothing, so the board is the untutored one.
+    expect(withTutors.manaAt).toEqual(simulate(untag(deck), { ...opts, alsoPrice: untag([commander]) }).manaAt);
+  });
+
+  test("with the mana there, a tutor finds the biggest creature the next turn can cast", () => {
+    const titan = tagged("Titan", "Creature", "{1}", 1, [], { power: "40" });
+    const deck = [...forests(40), titan, ...Array.from({ length: 58 }, (_, i) => tutor(i, "creature"))];
+    // No commander, so nothing waits on mana: turn 1 tutors the Titan and casts it -- 40 on turn 1.
+    const r = simulate(deck, { ...opts, combatTo: 20 });
+    expect(r.killTurns.one.filter((t) => t <= 2).length / r.killTurns.one.length).toBeGreaterThan(0.9);
+  });
+});

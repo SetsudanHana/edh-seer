@@ -1,10 +1,15 @@
 import { POLICY_COLLAPSE } from "@edh-seer/engine/percent";
+import type { SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { FETCHES_TAPPED, FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands, isLandFetch } from "./fetch-land.js";
 import { DEFAULT_POD_SIZE, opponents } from "./format.js";
+import { ratesOf } from "./rate.js";
+import { characteristicsSubject } from "./edges.js";
+import { subjectMatches } from "./subject.js";
+import { buildHierarchy } from "./hierarchy.js";
 
 /** THE MANA AVAILABILITY MODEL — a seeded goldfish simulation with a WRITTEN PLAY POLICY, because
  *  the policy IS the model (roadmap I11, `specs/2026-08-22-mana-availability-model-design.md`).
@@ -38,8 +43,10 @@ import { DEFAULT_POD_SIZE, opponents } from "./format.js";
  *  - **NO EXTERNAL GROUND TRUTH EXISTS.** Nothing in this repo can tell a simulated 55.8% from a
  *    true 58%. The closed-form anchors bound the MECHANICAL error; the POLICY error is bounded only
  *    by the sensitivity arm.
- *  - **THE DRAW BIAS SURVIVES**: rule 5 casts no cantrips, so `seen(T) = 7 + T` is as wrong here as
- *    in the closed form.
+ *  - **THE DRAW BIAS IS HALF CLOSED (2026-10-07)**: rule 3b casts draw spells, enters-draws, upkeep
+ *    engines, mana-only draw activations and tutors after the accelerants, so a draw-heavy deck sees
+ *    more than `7 + T`. A draw on any other event (Rhystic Study, "whenever a creature enters") still
+ *    never fires: there is no opponent and no event board (`drawOf`).
  *  - **COLOURS ARE MODELLED SINCE L4a**, which is why `byCardCastable` may carry that word and the
  *    mana rows may not: `manaAt` and `payableShareAt` are still P(six mana) and say nothing about
  *    whether three of those six can be the right colours.
@@ -595,6 +602,11 @@ interface DeckSlot {
   /** A creature with a printed numeric power: what it adds to each attack, and whether that damage
    *  is poison (infect, CR 702.90b) rather than life. Read only by the per-game combat. */
   attack?: { power: number; infect: boolean };
+  /** THE CARDS IT DRAWS (`drawOf`): `once` as it is cast or enters, `upkeep` each turn after it
+   *  lands, `activated` once a turn for its mana. */
+  draw?: CardDraw;
+  /** A NON-LAND TUTOR: the library cards its own search filter may find, filled in once per deck. */
+  tutor?: Set<DeckSlot>;
   /** A fetchland removes the land it finds from the library. */
   fetches: boolean;
   /** The land this fetch FINDS arrives tapped -- Evolving Wilds and the Landscape cycle. */
@@ -618,6 +630,41 @@ function attackOf(dc: DeckCard): { power: number; infect: boolean } | null {
   const power = Number(dc.card.power);
   if (!Number.isFinite(power) || power <= 0) return null;
   return { power, infect: (dc.card.keywords ?? []).some((k) => k.toLowerCase() === "infect") };
+}
+
+interface CardDraw { once: number; upkeep: number; activated?: { mana: number; amount: number; delayed: boolean } }
+
+/** WHAT A CARD DRAWS IN A GOLDFISH GAME, each ability priced by `ratesOf` -- over that ability and the
+ *  card's non-draw ones, so its put-back or discard companion still nets it (Brainstorm +1, a loot
+ *  0). Kept: a cast, a self-enters trigger, a trigger on your upkeep or end step, a repeatable
+ *  activation that costs only mana. CEILING: a draw on any other event (Rhystic Study, "whenever a
+ *  creature enters") never fires, because there is no opponent and no event board; a conditional
+ *  draw, one an opponent can pay to stop, and one whose cost is more than mana are left out too. */
+function drawOf(dc: DeckCard): CardDraw | null {
+  const abilities = dc.tags?.abilities ?? [];
+  const out: CardDraw = { once: 0, upkeep: 0 };
+  for (const a of abilities) {
+    if (a.effect?.kind !== "draw-card") continue;
+    const own = { ...dc, tags: { ...dc.tags!, abilities: abilities.filter((b) => b === a || b.effect?.kind !== "draw-card") } };
+    const r = ratesOf(own).find((x) => x.family === "cards");
+    if (!r || r.amount <= 0 || r.conditional || r.extraCost || r.fallback) continue;
+    const verbs: readonly string[] = a.trigger?.verbs ?? [];
+    if (r.kind === "on-cast" || (r.kind === "triggered" && a.trigger?.subject?.self === true && verbs.includes("enters"))) out.once += r.amount;
+    else if (r.kind === "triggered" && a.trigger?.subject?.control !== "opp" && (verbs.includes("upkeep") || verbs.includes("end-step"))) out.upkeep += r.amount;
+    else if (r.kind === "activated" && r.repeats !== "once") out.activated = { mana: r.mana, amount: r.amount, delayed: r.delayed === true };
+  }
+  return out.once > 0 || out.upkeep > 0 || out.activated ? out : null;
+}
+
+/** A CAST TUTOR'S SEARCH FILTER, or null: an on-cast `search` for a card of yours, priced by `ratesOf`
+ *  like a draw. A land tutor is an accelerant already (`classifyAccelerant`) and never reaches here. */
+function tutorFilter(dc: DeckCard): SubjectFilter | null {
+  const abilities = dc.tags?.abilities ?? [];
+  const a = abilities.find((x) => x.kind === "on-cast" && x.effect?.kind === "search" && x.effect.subject?.control !== "opp");
+  if (!a || !ratesOf({ ...dc, tags: { ...dc.tags!, abilities: [a] } }).some((r) => r.family === "search" && r.amount > 0 && !r.conditional)) return null;
+  // What the filter says the CARD is; where it is and how it arrives are the search's own business.
+  const { zone: _z, fromZone: _f, counter: _c, entersTapped: _t, self: _s, other: _o, prepared: _p, ...want } = a.effect!.subject!;
+  return want as SubjectFilter;
 }
 
 export interface SimulateOptions {
@@ -794,7 +841,18 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       ...(!isLand && ritualAdds(dc) > 0 ? { ritual: ritualMana(dc.card.oracleText ?? "") } : {}),
       ...(!isLand && opponentHandRitual(dc) > 0 ? { ritualPerOppCard: opponentHandRitual(dc) } : {}),
       ...(attackOf(dc) ? { attack: attackOf(dc)! } : {}),
+      ...(!isLand && drawOf(dc) ? { draw: drawOf(dc)! } : {}),
     };
+  });
+  // WHAT EACH TUTOR MAY FIND, asked once per deck: the card's printed characteristics against the
+  // search's filter -- the same test a tutor edge makes (`edges.ts`). A card with no tags is never
+  // found, because nothing says what it is.
+  const hierarchy = buildHierarchy(deck.map((dc) => dc.card.typeLine ?? ""));
+  deck.forEach((dc, i) => {
+    const want = slots[i]!.isLand || slots[i]!.accelerant ? null : tutorFilter(dc);
+    if (!want) return;
+    slots[i]!.tutor = new Set(slots.filter((s, j) => j !== i && deck[j]!.tags !== null
+      && subjectMatches(characteristicsSubject(deck[j]!.tags!, deck[j]!.card.name), want, hierarchy)));
   });
   const nonlands = slots.filter((s) => !s.isLand);
   // AN EXTRA IS PRICED, AND IF IT MAKES MANA IT IS ALSO PLAYED. These rows used to be cost-only --
@@ -849,7 +907,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     ? `U:${i}`
     : s.isExtra
       ? `X:${s.name}`
-      : s.accelerant
+      // A DRAW OR A TUTOR CHANGES THE GAME IT IS HELD IN, as an accelerant does: its own class.
+      : s.accelerant || s.draw || s.tutor
         ? `A:${s.name}`
         // CHEAP OR NOT IS PART OF THE CLASS (review of the mulligan, 2026-10-06): the keep rule reads
         // "a nonland costing 3 or less", so a 2-drop and a 7-drop with the same pips change which
@@ -884,8 +943,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   // FORCED MODE shuffles only the prefix a short trial can consume: 7 + turn draws, plus at most one
   // library removal per fetch SLOT in the deck (each fires once) -- an exact bound, so the partial
   // Fisher-Yates prefix is a uniform permutation prefix and never reads unshuffled tail.
+  // Every draw a card can make by then counts too, and a tutor's one removal.
+  const drawBound = slots.reduce((n, s) => n + (s.draw?.once ?? 0) + ((s.draw?.upkeep ?? 0) + (s.draw?.activated?.amount ?? 0)) * forceTurn + (s.tutor ? 1 : 0), 0);
   const prefixK = opts.forceName !== undefined
-    ? Math.min(slots.length, 7 + forceTurn + slots.filter((s) => s.fetches).length + 1)
+    ? Math.min(slots.length, 7 + forceTurn + slots.filter((s) => s.fetches).length + drawBound + 1)
     : slots.length;
   // THE CHEAPEST COMMANDER, for the keep rule's "a play by turn 3".
   const commanderMv = Math.min(Infinity, ...extras.map((e) => e.manaValue));
@@ -965,6 +1026,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     const fielded = new Set<DeckSlot>();
     let boardOne = 0, boardTable = 0, dealtOne = 0, dealtTable = 0;
     let oneAt = Infinity, tableAt = Infinity;
+    // THE DRAW ENGINES ON THE BOARD and the turn each landed: an upkeep trigger fires from the next
+    // turn, an activation from the next when it taps a creature (`delayed`).
+    const engines: { slot: DeckSlot; turn: number }[] = [];
+    const take = (c: DeckSlot): void => { hand.push(c); drawn.add(c.name); seenNow[kindOf(c)]++; };
+    const drawCards = (n: number): void => { for (let k = 0; k < n && library.length > 0; k++) take(library.shift()!); };
     const lands: OnBoardLand[] = [];
     const rocks: { turn: number; mana: number; colors: number }[] = [];   // the turn each landed, what it taps for, and in which colours
     const dorks: { turn: number; mana: number; colors: number }[] = [];
@@ -978,8 +1044,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     for (let turn = 1; turn <= playTo; turn++) {
       // Rule 1: one card per turn, INCLUDING turn 1. On the play there is no turn-1 draw; modelling
       // the draw is the flattering direction by one card and is stated rather than hidden.
-      const pulled = library.shift();
-      if (pulled) { hand.push(pulled); drawn.add(pulled.name); seenNow[kindOf(pulled)]++; }
+      drawCards(1);
+      // An end-step draw lands before the next turn's decisions, so it is read here with the upkeep's.
+      for (const e of engines) if (e.turn < turn) drawCards(e.slot.draw!.upkeep);
       if (turn <= turns) for (const k of kinds) seenSum[k][turn - 1] += seenNow[k];
 
       // Rule 2: one land per turn, preferring whichever enters UNTAPPED given the board right now —
@@ -1082,7 +1149,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // not a defect: the order is uniformly random across trials, so it averages rather than biases,
       // and preferring the rock would be a THIRD policy arm, not a fix.
       let pool = production();
-      for (;;) {
+      // What the draw step spent this turn, which a commander's own burst below does not give up.
+      let drawSpent = 0;
+      const castAccelerants = (): void => { for (;;) {
         let best = -1;
         for (let i = 0; i < hand.length; i++) {
           const a = hand[i].accelerant;
@@ -1123,6 +1192,67 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           takeRandomLand(library, turn > turns ? spill : random);
           if (a.fetchTapped !== true) pool += 1;
         }
+      } };
+      castAccelerants();
+
+      // Rule 3b: DRAW, after the accelerants and before any creature (owner 2026-10-07: ramp, draw,
+      // creatures). Cheapest first among the draw cards and tutors in hand and the engines' unused
+      // activations; whatever it finds, rule 3 gets another look at, so a drawn rock is still cast.
+      // WHAT A TUTOR FINDS IS WHAT THE HAND NEEDS (owner 2026-10-07), among what its filter allows: a
+      // land when the hand holds none; an accelerant while the board makes less than the commander
+      // costs (no commander: the dearest spell in hand); else the biggest creature the next turn can
+      // cast; else the cheapest card it may find. CEILING: a tutor that puts the card onto the
+      // battlefield (Natural Order) is read as one to hand, the slower direction.
+      const tutored = (may: ReadonlySet<DeckSlot>): DeckSlot | undefined => {
+        const there = library.filter((s) => may.has(s));
+        if (there.length === 0) return undefined;
+        const cheapest = (xs: DeckSlot[]): DeckSlot | undefined => xs.reduce<DeckSlot | undefined>((b, s) => !b || s.manaValue < b.manaValue ? s : b, undefined);
+        if (!hand.some((c) => c.isLand)) { const land = there.find((s) => s.isLand); if (land) return land; }
+        const wants = extras.length > 0 ? Math.max(...extras.map((e) => e.manaValue)) : Math.max(0, ...hand.filter((c) => !c.isLand).map((c) => c.manaValue));
+        if (production() < wants) { const accel = cheapest(there.filter((s) => s.accelerant)); if (accel) return accel; }
+        const next = production() + 1;
+        const body = there.filter((s) => s.attack && s.manaValue <= next).reduce<DeckSlot | undefined>((b, s) => !b || s.attack!.power > b.attack!.power ? s : b, undefined);
+        return body ?? cheapest(there.filter((s) => !s.isLand)) ?? there[0];
+      };
+      const activatedThisTurn = new Set<DeckSlot>();
+      for (;;) {
+        let best = -1;
+        for (let i = 0; i < hand.length; i++) {
+          const c = hand[i]!;
+          if ((!c.draw && !c.tutor) || c.manaValue > pool - holdUp) continue;
+          if (best < 0 || c.manaValue < hand[best]!.manaValue) best = i;
+        }
+        const engine = engines.find((e) => {
+          const act = e.slot.draw!.activated;
+          return act !== undefined && !activatedThisTurn.has(e.slot) && (!act.delayed || e.turn < turn) && act.mana <= pool - holdUp
+            && (best < 0 || act.mana < hand[best]!.manaValue);
+        });
+        if (engine) {
+          activatedThisTurn.add(engine.slot);
+          pool -= engine.slot.draw!.activated!.mana;
+          drawSpent += engine.slot.draw!.activated!.mana;
+          drawCards(engine.slot.draw!.activated!.amount);
+          castAccelerants();
+          continue;
+        }
+        if (best < 0) break;
+        const cast = hand.splice(best, 1)[0]!;
+        pool -= cast.manaValue;
+        drawSpent += cast.manaValue;
+        if (fights && cast.attack && !fielded.has(cast)) {
+          fielded.add(cast);
+          boardOne += cast.attack.power;
+          if (!cast.attack.infect) boardTable += cast.attack.power;
+        }
+        if (cast.draw) {
+          drawCards(cast.draw.once);
+          if (cast.draw.upkeep > 0 || cast.draw.activated) engines.push({ slot: cast, turn });
+        }
+        if (cast.tutor) {
+          const found = tutored(cast.tutor);
+          if (found) { library.splice(library.indexOf(found), 1); take(found); }
+        }
+        castAccelerants();
       }
 
       const untapped = untappedSources();
@@ -1157,7 +1287,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         const units: number[] = [];
         for (const src of untapped) for (let k = 0; k < src.mana; k++) units.push(src.colors);
         units.sort((a, b) => popcount(a) - popcount(b));
-        units.splice(0, Math.max(0, made - pool));
+        units.splice(0, Math.max(0, made - pool - drawSpent));
         for (const r of hand.filter((c) => (c.ritual !== undefined || c.ritualPerOppCard !== undefined) && c.cost !== null).sort((a, b) => a.manaValue - b.manaValue)) {
           const adds = r.ritual ?? Array<number>(opponentHandSize(turn)).fill(r.ritualPerOppCard!);
           if (adds.length <= r.manaValue) continue;
