@@ -546,3 +546,26 @@ test("the triggering object reads as the pronoun: Mari + a destroy spell 'exiles
   expect(reasonSentence({ producer: "Incandescent Soulstoke", consumer: "Cavalier of Thorns", eventKey: "dies:creature", self: true, emits: mari }))
     .toBe("When Cavalier of Thorns dies thanks to Incandescent Soulstoke, it exiles itself");
 });
+
+// WHO LOSES THE LIFE (#826): Sarevok, Deathbringer's "that player loses X life" is each player's own
+// end step, and the phrase said "makes each opponent lose life" whatever the effect's subject was.
+test("a life loss names who loses it", () => {
+  expect(effectPhrase("player-life-loss", "Sarevok's power", undefined, "any")).toBe("makes a player lose life equal to Sarevok's power");
+  expect(effectPhrase("player-life-loss", "2", undefined, "any")).toBe("makes a player lose 2 life");
+  // An opponent's, the default, still reads as before.
+  expect(effectPhrase("player-life-loss", "1", undefined, "opp")).toBe("makes each opponent lose 1 life");
+  expect(effectPhrase("player-life-loss", "1")).toBe("makes each opponent lose 1 life");
+});
+
+// A SPEED GRANT NAMES ITS KEYWORD (#1079): Chocobo Knights' "gain double strike" is the
+// `speed-increase` kind haste shares, and the phrase said "grants haste" for both.
+test("a speed grant names the keyword it grants", () => {
+  expect(reasonSentence({
+    producer: "Tromell, Seymour's Butler", consumer: "Chocobo Knights", eventKey: "attacks:any",
+    effectKind: "speed-increase", keywords: ["double strike"],
+  })).toBe("When Tromell, Seymour's Butler attacks, Chocobo Knights grants double strike");
+  // With no keyword recorded, the kind's own phrase.
+  expect(reasonSentence({
+    producer: "Tromell, Seymour's Butler", consumer: "Hellrider", eventKey: "attacks:any", effectKind: "speed-increase",
+  })).toBe("When Tromell, Seymour's Butler attacks, Hellrider grants haste");
+});
