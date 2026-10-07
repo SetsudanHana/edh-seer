@@ -399,7 +399,9 @@ import { emblemRecipient } from "../emblem.js";
 // the keyword list, so Lord of Atlantis's grant named no keyword.
 // 285: a Curse's enchanted player is an opponent (owner 2026-10-07): "whenever enchanted player casts"
 // keeps its trigger as an opponent's, where any other Aura's still refuses as a narrowing (Maddening Hex).
-export const DERIVE_VERSION = 285;
+// 286: #1079, a speed grant (haste, double strike) records its keywords in `grants`, as a keyword grant
+// does, so Chocobo Knights' double strike stops reading "grants haste".
+export const DERIVE_VERSION = 286;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2648,7 +2650,9 @@ export function deriveAbilities(
       if (payment) abilities[i] = { ...abilities[i], payment };
       // WHICH KEYWORDS A GRANT HANDS OUT (#857): read off the clause's grant objects against the CR
       // keyword-ability list. CEILING: a clause with two grants gives each ability the union.
-      if (abilities[i].effect?.kind === "keyword-grant") {
+      // A SPEED GRANT TOO (#1079): haste and double strike share `speed-increase`, and without its
+      // keywords Chocobo Knights' double strike read "grants haste".
+      if (abilities[i].effect?.kind === "keyword-grant" || abilities[i].effect?.kind === "speed-increase") {
         const grants = grantedKeywords((clause.actions ?? []).filter((a) => a.verb === "grant-ability").map((a) => a.object ?? ""));
         if (grants.length > 0) abilities[i] = { ...abilities[i], grants };
       }

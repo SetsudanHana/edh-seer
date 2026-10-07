@@ -122,7 +122,7 @@ export function effectTargetNoun(subject: {
   return noun ?? "something";
 }
 
-/** WHO THE PAYOUT GOES TO, for the two kinds whose phrase names a recipient. "draws you" and "gains
+/** WHO THE PAYOUT GOES TO, for the kinds whose phrase names a recipient. "draws you" and "gains
  *  you" were hard-coded, so Arcane Denial's "its controller may draw up to two cards" -- derived
  *  correctly as `opp` -- printed as *draws you up to two cards* on the card page (owner, 2026-09-05).
  *  `opp` names an opponent, `any` a player; `you` and an unstated recipient read as before. */
@@ -134,6 +134,12 @@ const RECIPIENT_PHRASES: Record<string, Record<string, [(n: string) => string, s
   lifegain: {
     opp: [(n) => `gains an opponent ${n} life`, "gains an opponent life"],
     any: [(n) => `gains a player ${n} life`, "gains a player life"],
+  },
+  // WHO LOSES THE LIFE (#826): Sarevok, Deathbringer's "that player loses X life" is each player's own
+  // end step, and every life loss read "makes each opponent lose" whatever its subject said. An
+  // opponent's, the default, keeps that phrase (`PHRASES`).
+  "player-life-loss": {
+    any: [(n) => (/^(\d+|X)$/.test(n) ? `makes a player lose ${n} life` : `makes a player lose life equal to ${n}`), "makes a player lose life"],
   },
   // Chandra, Roaring Flame's −7 hands the emblem to each opponent she hits; the sentence has to say
   // so, because CR 114.2 makes that opponent its controller.
@@ -470,7 +476,8 @@ export function reasonSentence(input: {
   keywords?: readonly string[];
 }): string {
   const verb = eventVerbPhrase(input.eventKey);
-  const phrase = (input.effectKind === "keyword-grant" && input.keywords?.length ? `grants ${keywordList(input.keywords)}` : undefined)
+  // A SPEED GRANT NAMES ITS KEYWORD TOO (#1079): double strike is `speed-increase` with haste.
+  const phrase = ((input.effectKind === "keyword-grant" || input.effectKind === "speed-increase") && input.keywords?.length ? `grants ${keywordList(input.keywords)}` : undefined)
     ?? effectPhrase(input.effectKind, input.amount, input.effectTarget, input.effectRecipient, input.counterKind)
     ?? emitPhrase(input.emits ?? [], input.self ? "itself" : "it");
   if (input.self) {

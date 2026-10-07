@@ -4037,3 +4037,18 @@ test("a Curse reads its enchanted player as an opponent, and keeps the trigger",
   const aura = deriveCardTags(input(["aura"]) as never);
   expect(aura.unknownTriggers).toContain("narrowing:cast");
 });
+
+// A SPEED GRANT CARRIES ITS KEYWORDS (#1079): Chocobo Knights' "creatures you control with counters on
+// them gain double strike" is the `speed-increase` kind, and only `keyword-grant` recorded `grants`,
+// so the sentence could only say "grants haste".
+test("a speed grant records which keyword it grants", () => {
+  const tags = deriveCardTags({
+    oracleId: "chocobo",
+    clauses: [{ id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "you", control: "you" },
+      actions: [{ verb: "grant-ability", object: "creatures you control with counters on them gain double strike until end of turn" }] }],
+    characteristics: MINIMAL_CHARACTERISTICS,
+    clauseTexts: { 1: "Whenever you attack, creatures you control with counters on them gain double strike until end of turn." },
+  } as never);
+  const speed = tags.abilities.find((a) => a.effect?.kind === "speed-increase")!;
+  expect(speed.grants).toEqual(["double strike"]);
+});
