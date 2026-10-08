@@ -38,7 +38,7 @@ export const RELATION_PARENTS: Record<string, readonly string[]> = {
 
 /** One tag's axis weight: its own entry if present (an explicit entry always wins), else the
  *  strongest parent-theme weight for a mapped relation family, else 0. */
-export function axisWeightOf(tag: string, axis: Map<string, number>): number {
+export function axisWeightOf(tag: string, axis: ReadonlyMap<string, number>): number {
   const own = axis.get(tag);
   if (own !== undefined) return own;
   const i = tag.indexOf(":");
