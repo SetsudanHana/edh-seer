@@ -278,8 +278,9 @@ function colourFindings(report: DeckReport): Finding[] {
 
 /** THE JOINT DEMAND THE COLOUR ROWS HIDE (#1116, owner 2026-10-08): a gold cost needs its colours from ONE hand. It is a
  *  finding only when the matcher found every colour passing alone and the whole cost failing, so it supplements the
- *  rows above and never repeats one. 0.9 is the audit's `SOURCE_CONFIDENCE`. */
-const GOLD_TARGET = 0.9;
+ *  rows above and never repeats one. 0.8 is the audit's `GOLD_CONFIDENCE` (owner 2026-10-09), the bar the joint
+ *  figure is held to, so the meter fills toward the line it was measured against. */
+const GOLD_TARGET = 0.8;
 function goldFindings(report: DeckReport): Finding[] {
   const g = report.deckMath?.gold;
   if (!g) return [];

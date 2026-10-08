@@ -24,6 +24,11 @@ export type Color = (typeof COLORS)[number];
  *  one its reference table is computed at, so a different value here would quietly invalidate every
  *  number that table anchors. */
 export const SOURCE_CONFIDENCE = 0.9;
+/** THE BAR A GOLD CARD'S JOINT DEMAND IS HELD TO (owner 2026-10-09, #1116): below 80%, not the per-colour 90%.
+ *  At 90% the finding fired on 121 of 268 decks (71 calibration + 197 precons), 101 of them for one card, a third
+ *  at 85-89%; at 80% it keeps the misses that change a mana base (Casualties of War 44%, three-colour three-drops
+ *  near 60%) and drops the band only a few points worse than what the per-colour rows already accept. */
+export const GOLD_CONFIDENCE = 0.8;
 
 /** The five basic land types, lowercased, as `classifyLand` reports them in `subtypes`. */
 const EMPTY_TYPES: ReadonlySet<string> = new Set<string>();
@@ -198,7 +203,8 @@ export function manaAudit(
 }
 
 /** A GOLD CARD'S JOINT DEMAND THAT THE PER-COLOUR ROWS HIDE (#1116, owner 2026-10-08): every colour alone is there at
- *  `SOURCE_CONFIDENCE` or better, and the cards due by `turn` still need all of them from one hand and that fails. */
+ *  `SOURCE_CONFIDENCE` or better, and the cards due by `turn` still need all of them from one hand, which happens
+ *  less than `GOLD_CONFIDENCE` of the time. */
 export interface GoldJoint {
   colours: Color[];
   /** Pips of each colour, aligned with `colours`. */
@@ -418,7 +424,7 @@ export function manaAuditFull(
     const pEach = Math.min(...g.colours.map((_, i) => pCanPayByTurn([library.length - online[i]!.size, online[i]!.size], [g.pips[i]!], g.turn)));
     if (pEach < SOURCE_CONFIDENCE) continue;
     const pJoint = pCanPayByTurn(sizes, g.pips, g.turn);
-    if (pJoint >= SOURCE_CONFIDENCE) continue;
+    if (pJoint >= GOLD_CONFIDENCE) continue;
     if (!worstGold || pJoint < worstGold.pJoint) worstGold = { ...g, cards: g.names.length, pJoint, pEach };
   }
   return { rows, ...(worstGold ? { gold: worstGold } : {}) };

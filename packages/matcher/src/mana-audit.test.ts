@@ -526,7 +526,7 @@ test("an all-mana fixer (Chromatic Orrery) credits rocks and dorks too, once it 
 
 /** GOLD CARDS ARE A JOINT DEMAND (#1116, owner 2026-10-08): the per-colour rows stay, and the joint check surfaces only
  *  when every colour alone passes and the cost as a whole does not. */
-import { manaAuditFull, plainPips } from "./mana-audit.js";
+import { GOLD_CONFIDENCE, SOURCE_CONFIDENCE, manaAuditFull, plainPips } from "./mana-audit.js";
 import { pCanPayByTurn } from "./mulligan.js";
 
 const many = (n: number, produces: string[], tag: string) => Array.from({ length: n }, (_, i) => source(`${tag}-${i}`, produces));
@@ -537,17 +537,26 @@ test("a hybrid or Phyrexian symbol is not a joint pip", () => {
   expect(plainPips("{2/B}{B/P}{G}")).toEqual({ G: 1 });
 });
 
-test("{W}{U} on turn 2 fails jointly while white and blue each pass alone", () => {
-  const deck = fillTo(100, [card("Absorb-ish", "{W}{U}", 2), ...many(25, ["W"], "Plains"), ...many(25, ["U"], "Island")]);
+test("{W}{W}{U}{U} on turn 4 fails jointly while white and blue each pass alone", () => {
+  const deck = fillTo(100, [card("Gold-ish", "{W}{W}{U}{U}", 4), ...many(25, ["W"], "Plains"), ...many(25, ["U"], "Island")]);
   const { gold } = manaAuditFull(deck);
   expect(gold).toBeDefined();
   expect(gold!.colours).toEqual(["W", "U"]);
-  expect(gold!.turn).toBe(2);
-  expect(gold!.names).toEqual(["Absorb-ish"]);
-  expect(gold!.pEach).toBeCloseTo(pCanPayByTurn([75, 25], [1], 2), 10);
-  expect(gold!.pEach).toBeGreaterThanOrEqual(0.9);
-  expect(gold!.pJoint).toBeCloseTo(pCanPayByTurn([50, 25, 25, 0], [1, 1], 2), 10);
-  expect(gold!.pJoint).toBeLessThan(0.9);
+  expect(gold!.turn).toBe(4);
+  expect(gold!.names).toEqual(["Gold-ish"]);
+  expect(gold!.pEach).toBeCloseTo(pCanPayByTurn([75, 25], [2], 4), 10);
+  expect(gold!.pEach).toBeGreaterThanOrEqual(SOURCE_CONFIDENCE);
+  expect(gold!.pJoint).toBeCloseTo(pCanPayByTurn([50, 25, 25, 0], [2, 2], 4), 10);
+  expect(gold!.pJoint).toBeLessThan(GOLD_CONFIDENCE);
+});
+
+test("a joint miss between the gold bar and the colour bar is not a finding (owner 2026-10-09: below 80%)", () => {
+  // {W}{U} on turn 2 from 25 + 25: both together about 87%, under 90% and over 80%.
+  const deck = fillTo(100, [card("Absorb-ish", "{W}{U}", 2), ...many(25, ["W"], "Plains"), ...many(25, ["U"], "Island")]);
+  const p = pCanPayByTurn([50, 25, 25, 0], [1, 1], 2);
+  expect(p).toBeLessThan(SOURCE_CONFIDENCE);
+  expect(p).toBeGreaterThanOrEqual(GOLD_CONFIDENCE);
+  expect(manaAuditFull(deck).gold).toBeUndefined();
 });
 
 test("enough duals make the joint demand pass, so there is no gold field", () => {
