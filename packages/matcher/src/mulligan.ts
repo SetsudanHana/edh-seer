@@ -1,4 +1,4 @@
-import { pAtLeast, seen } from "@edh-seer/engine";
+import { comb, pAtLeast, pCanPay, seen } from "@edh-seer/engine";
 
 /** EDH MULLIGAN POLICY, IN CLOSED FORM. No simulation is needed for a land-count question, and
  *  that is the whole point of this module.
@@ -62,7 +62,7 @@ const bottomed = (j: number): number => (j >= 5 ? j - 1 : Math.min(j, HAND - 1))
  *  five-colour deck this reads optimistic. Its counterpart bound is the RAW figure (`minCopies`,
  *  no mulligan at all), which under-states by the same mismatch, so the pair is reported and neither
  *  is deleted. */
-function pByTurn(
+export function pByTurn(
   size: number, need: number, turn: number, keep: ReadonlySet<number> = STANDARD_KEEP,
 ): number {
   const draws = seen(turn) - HAND;
@@ -121,4 +121,61 @@ export function landsForDrops(
 ): number | undefined {
   for (let l = 1; l <= max; l++) if (pLandDrops(l, need, keep) >= confidence) return l;
   return undefined;
+}
+
+/** THE JOINT COUNTERPART OF `pByTurn` (#1116 review): P(by `turn`, the sources held can pay a multicolour cost), under the
+ *  same policy -- keep a seven-card hand on `keep` SOURCES of the cost's colours (the union), a free mulligan, then the
+ *  forced six -- so a gold finding is held to the frame the per-colour rows are. With one colour it IS `pByTurn`
+ *  (the consistency test), whose `DECK` is 99; here the library is the sum of the class sizes.
+ *
+ *  `classSizes[m]` is the library cards of membership class `m`, a bitmask over the `need.length` colours (0 = none of
+ *  them); `need[i]` is pips of colour i. A kept hand is split exactly over the classes, and the draw is `pCanPay` with
+ *  the hand as its offset, over the cards never drawn (`REACHABLE`: the bottomed card is under everything).
+ *
+ *  CEILING: the same land-band caveat as `pByTurn` -- an UPPER bound on the mulligan's help. The forced six bottoms a
+ *  spell, or from a hand of five-plus sources one of the class the hand holds most of (fewest colours on a tie), where
+ *  a player would pick by what the hand still needs. */
+export function pCanPayByTurn(
+  classSizes: readonly number[], need: readonly number[], turn: number, keep: ReadonlySet<number> = STANDARD_KEEP,
+): number {
+  const L = classSizes.reduce((a, b) => a + b, 0);
+  const draws = seen(turn) - HAND;
+  const classes = classSizes.length;
+  const bits = (m: number): number => { let c = 0; for (; m; m >>= 1) c += m & 1; return c; };
+  const hands: { weight: number; keep: number; forced: number; sources: number }[] = [];
+  const hand = new Array<number>(classes).fill(0);
+  const payAfter = (h: readonly number[], bottom: number): number => {
+    const inHand = h.slice();
+    if (bottom >= 0) inHand[bottom]!--;
+    const pool = classSizes.map((s, m) => s - h[m]!);
+    return pCanPay(pool, need, draws, L - HAND, inHand);
+  };
+  const walk = (m: number, left: number, weight: number): void => {
+    if (m === classes - 1) {
+      if (left > classSizes[m]!) return;
+      hand[m] = left;
+      const w = (weight * comb(classSizes[m]!, left)) / comb(L, HAND);
+      const sources = hand.reduce((a, x, i) => (i > 0 ? a + x : a), 0);
+      // The forced six bottoms a spell (a class-0 card) unless the hand holds five or more sources.
+      let bottom = 0;
+      if (sources >= 5) {
+        bottom = -1;
+        for (let i = 1; i < classes; i++) {
+          if (hand[i]! > 0 && (bottom < 0 || hand[i]! > hand[bottom]! || (hand[i]! === hand[bottom]! && bits(i) < bits(bottom)))) bottom = i;
+        }
+      }
+      hands.push({ weight: w, keep: keep.has(sources) ? payAfter(hand, -1) : -1, forced: payAfter(hand, bottom), sources });
+      return;
+    }
+    for (let x = 0; x <= Math.min(left, classSizes[m]!); x++) {
+      hand[m] = x;
+      walk(m + 1, left - x, weight * comb(classSizes[m]!, x));
+    }
+  };
+  walk(0, HAND, 1);
+  let stage = hands.reduce((a, h) => a + h.weight * h.forced, 0);
+  for (let round = 0; round < 2; round++) {
+    stage = hands.reduce((a, h) => a + h.weight * (h.keep >= 0 ? h.keep : stage), 0);
+  }
+  return Math.min(stage, 1);
 }

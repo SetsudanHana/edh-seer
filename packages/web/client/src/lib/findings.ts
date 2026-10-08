@@ -276,6 +276,33 @@ function colourFindings(report: DeckReport): Finding[] {
   return out;
 }
 
+/** THE JOINT DEMAND THE COLOUR ROWS HIDE (#1116, owner 2026-10-08): a gold cost needs its colours from ONE hand. It is a
+ *  finding only when the matcher found every colour passing alone and the whole cost failing, so it supplements the
+ *  rows above and never repeats one. 0.8 is the audit's `GOLD_CONFIDENCE` (owner 2026-10-09), the bar the joint
+ *  figure is held to, so the meter fills toward the line it was measured against. */
+const GOLD_TARGET = 0.8;
+function goldFindings(report: DeckReport): Finding[] {
+  const g = report.deckMath?.gold;
+  if (!g) return [];
+  const names = g.colours.map((c) => NAME[c]?.toLowerCase() ?? c);
+  const kinds = names.join("-");
+  const all = g.colours.length === 2 ? "both colours" : "all three colours";
+  // Floored: a probability just under the bar must not print as the bar.
+  const pct = (p: number): number => Math.floor(p * 100);
+  const one = g.cards === 1;
+  return [{
+    kind: "colour",
+    id: "colour:gold",
+    headline: `Your ${kinds} ${one ? "card" : "cards"} due by turn ${g.turn} (${cardsSubject(g.names, g.cards)}) ${one ? "needs" : "need"} ${all} in the same hand.`,
+    detail: `Each colour alone is there ${pct(g.pEach)}% of the time, ${g.colours.length === 2 ? "both" : "all"} together ${pct(g.pJoint)}%.`,
+    action: `Trade a single-colour source for a land that makes ${g.colours.length === 2 ? "both" : "more than one of them"}, or cast ${one ? "it" : "them"} later.`,
+    figure: `${pct(g.pJoint)}%`,
+    figureLabel: `${kinds} together by turn ${g.turn}`,
+    filled: g.pJoint / GOLD_TARGET,
+    shortfall: (GOLD_TARGET - g.pJoint) / GOLD_TARGET,
+  }];
+}
+
 /** THE ACTION FOR A COLOUR SHORTFALL (#966 T3): when the matcher found the deck's own sources worth
  *  trading, name them; otherwise the general advice, which still holds. */
 function tradeAction(replace: readonly string[], colour: string, turn: number): string {
@@ -450,6 +477,7 @@ export function findings(report: DeckReport): Finding[] {
   const all = [
     ...buildFindings(report),
     ...colourFindings(report),
+    ...goldFindings(report),
     ...(answerFinding(report) ? [answerFinding(report)!] : []),
     ...(synergyFinding(report) ? [synergyFinding(report)!] : []),
     ...(landFinding(report) ? [landFinding(report)!] : []),

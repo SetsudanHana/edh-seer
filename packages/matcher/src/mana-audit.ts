@@ -1,6 +1,6 @@
 import { minCopies } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
-import { minSources } from "./mulligan.js";
+import { minSources, pCanPayByTurn } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
 import { fixedColours } from "./mana-lines.js";
@@ -24,6 +24,11 @@ export type Color = (typeof COLORS)[number];
  *  one its reference table is computed at, so a different value here would quietly invalidate every
  *  number that table anchors. */
 export const SOURCE_CONFIDENCE = 0.9;
+/** THE BAR A GOLD CARD'S JOINT DEMAND IS HELD TO (owner 2026-10-09, #1116): below 80%, not the per-colour 90%.
+ *  At 90% the finding fired on 121 of 268 decks (71 calibration + 197 precons), 101 of them for one card, a third
+ *  at 85-89%; at 80% it keeps the misses that change a mana base (Casualties of War 44%, three-colour three-drops
+ *  near 60%) and drops the band only a few points worse than what the per-colour rows already accept. */
+export const GOLD_CONFIDENCE = 0.8;
 
 /** The five basic land types, lowercased, as `classifyLand` reports them in `subtypes`. */
 const EMPTY_TYPES: ReadonlySet<string> = new Set<string>();
@@ -194,6 +199,41 @@ export function manaAudit(
   deck: readonly DeckCard[],
   opts: { commanderNames?: readonly string[] } = {},
 ): ManaAuditRow[] {
+  return manaAuditFull(deck, opts).rows;
+}
+
+/** A GOLD CARD'S JOINT DEMAND THAT THE PER-COLOUR ROWS HIDE (#1116, owner 2026-10-08): every colour alone is there at
+ *  `SOURCE_CONFIDENCE` or better, and the cards due by `turn` still need all of them from one hand, which happens
+ *  less than `GOLD_CONFIDENCE` of the time. */
+export interface GoldJoint {
+  colours: Color[];
+  /** Pips of each colour, aligned with `colours`. */
+  pips: number[];
+  turn: number;
+  names: string[];
+  cards: number;
+  /** P(the sources held pay the whole cost), with the free mulligan priced as the rows' `required` does. */
+  pJoint: number;
+  /** The LOWEST per-colour probability in the same frame: what each colour alone reaches at worst. */
+  pEach: number;
+}
+
+/** The coloured pips of a cost that a single colour must pay: `{W}`, `{U}`... A hybrid (`{W/U}`, `{2/B}`) or Phyrexian
+ *  (`{B/P}`) symbol is NOT one -- either half, or life, pays it -- so it is dropped from a joint demand.
+ *  CEILING: dropped, not modelled as a choice; a card whose only gold is hybrid is not a joint demand here. */
+export function plainPips(manaCost: string | undefined): Partial<Record<Color, number>> {
+  const out: Partial<Record<Color, number>> = {};
+  for (const symbol of manaCost?.match(/\{[^{}]+\}/g) ?? []) {
+    const inner = symbol.slice(1, -1).toUpperCase();
+    if ((COLORS as readonly string[]).includes(inner)) out[inner as Color] = (out[inner as Color] ?? 0) + 1;
+  }
+  return out;
+}
+
+export function manaAuditFull(
+  deck: readonly DeckCard[],
+  opts: { commanderNames?: readonly string[] } = {},
+): { rows: ManaAuditRow[]; gold?: GoldJoint } {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const libraryCards = library.map((dc) => dc.card);
@@ -244,17 +284,19 @@ export function manaAudit(
   // CEILING: a nonland source counts from the turn after its own mana value, which assumes it was
   // cast on curve. Pricing how often that actually happens needs the simulator, and the simulator
   // is the other half of this pair; a turn number is the cheap half that closes the contradiction.
+  // A rock cast on turn M taps for mana from turn M+1: you spent the turn's mana casting it.
+  // A land-fetch SPELL is on that clock too -- Cultivate on turn 3 pays from turn 4. A land is
+  // asked `landOnlineBy`; a SPELL's fetch is already on the rock clock, and charging it for the
+  // tapped arrival as well made it a source on no turn at all.
+  const sourceOnline = (dc: DeckCard, turn: number): boolean =>
+    /\bland\b/i.test(dc.card.typeLine) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
   const availability = (sources: readonly DeckCard[]) => {
     const availableAt = new Map<number, number>();
     return (turn: number): number => {
       const hit = availableAt.get(turn);
       if (hit !== undefined) return hit;
       const n = sources.filter((dc) => {
-        // A rock cast on turn M taps for mana from turn M+1: you spent the turn's mana casting it.
-        // A land-fetch SPELL is on that clock too -- Cultivate on turn 3 pays from turn 4. A land is
-        // asked `landOnlineBy`; a SPELL's fetch is already on the rock clock, and charging it for the
-        // tapped arrival as well made it a source on no turn at all.
-        return /\bland\b/i.test(dc.card.typeLine) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
+        return sourceOnline(dc, turn);
       }).length;
       availableAt.set(turn, n);
       return n;
@@ -351,7 +393,41 @@ export function manaAudit(
       worst: unmet.sort((a, b) => (b.required - b.available) - (a.required - a.available))[0],
     });
   }
-  return rows;
+
+  // THE JOINT DEMAND OF THE GOLD CARDS (#1116). Grouped by (plain pips per colour, deadline) like the rows above.
+  // Sources are the ones the rows count, online by the deadline; the fixer credit is NOT applied.
+  // CEILING: a cost of four or five colours is skipped (the class table is 2^d): 6 slots, 5 distinct cards, across the 71
+  // calibration decks (2026-10-08; 3 four-colour, 3 five-colour). A fixer's credit is not applied either.
+  const gold = new Map<string, { colours: Color[]; pips: number[]; turn: number; names: string[] }>();
+  for (const dc of library) {
+    const pipsOf = plainPips(castableManaCost(dc.card));
+    const colours = COLORS.filter((c) => (pipsOf[c] ?? 0) > 0);
+    if (colours.length < 2 || colours.length > 3) continue;
+    const turn = Math.max(1, Math.round(dc.card.manaValue));
+    // CEILING: a three-colour cost due after turn 6 is skipped: the exact joint costs ~0.4 s at turn 6 and ~1.3 s at turn 8.
+    if (colours.length === 3 && turn > 6) continue;
+    const key = `${colours.map((c) => c + pipsOf[c]).join("")}:${turn}`;
+    const g = gold.get(key);
+    if (g) g.names.push(dc.card.name);
+    else gold.set(key, { colours, pips: colours.map((c) => pipsOf[c]!), turn, names: [dc.card.name] });
+  }
+  let worstGold: GoldJoint | undefined;
+  for (const g of gold.values()) {
+    const online = g.colours.map((c) => new Set(sourcesByColor.get(c)!.filter((dc) => sourceOnline(dc, g.turn))));
+    const sizes = new Array<number>(1 << g.colours.length).fill(0);
+    for (const dc of new Set(online.flatMap((s) => [...s]))) {
+      sizes[online.reduce((m, s, i) => (s.has(dc) ? m | (1 << i) : m), 0)]!++;
+    }
+    sizes[0] = library.length - sizes.slice(1).reduce((a, b) => a + b, 0);
+    // THE FRAME THE ROWS ARE READ IN: the free mulligan priced (`required` is), not the raw draw. Per colour is the
+    // one-colour case of the same function, so the two numbers differ only by the joint requirement.
+    const pEach = Math.min(...g.colours.map((_, i) => pCanPayByTurn([library.length - online[i]!.size, online[i]!.size], [g.pips[i]!], g.turn)));
+    if (pEach < SOURCE_CONFIDENCE) continue;
+    const pJoint = pCanPayByTurn(sizes, g.pips, g.turn);
+    if (pJoint >= GOLD_CONFIDENCE) continue;
+    if (!worstGold || pJoint < worstGold.pJoint) worstGold = { ...g, cards: g.names.length, pJoint, pEach };
+  }
+  return { rows, ...(worstGold ? { gold: worstGold } : {}) };
 }
 
 /** THE DECK-WIDE COLOUR SHORTFALL (owner, 2026-10-08, #966): per colour, how many more sources the

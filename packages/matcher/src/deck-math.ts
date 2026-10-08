@@ -5,7 +5,7 @@ import { deckAvailability } from "./availability.js";
 import { detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.js";
 import { colourReplacements } from "./land-score.js";
 import { themedSubjects } from "./same-job.js";
-import { manaAudit, type Color } from "./mana-audit.js";
+import { manaAuditFull, type Color } from "./mana-audit.js";
 import { fetchDemand } from "./fetch-land.js";
 import { recommendedLands, type LandRecommendation } from "./land-count.js";
 import { manaBaseScore } from "./mana-base.js";
@@ -224,7 +224,7 @@ export function computeDeckMath(
       fromCommandZone: r.fromCommandZone,
     }));
 
-  const audit = manaAudit(deck, { commanderNames });
+  const { rows: audit, gold } = manaAuditFull(deck, { commanderNames });
   const deficit: Partial<Record<Color, number>> = {};
   // ONLY THE ROWS THE FINDING SHOWS: a single pip is hidden as "a fault every deck has" (findings.ts), so
   // it must not rule out the sources that would be traded.
@@ -387,6 +387,8 @@ export function computeDeckMath(
 
   return {
     turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,
+    // THE JOINT DEMAND THE PER-COLOUR ROWS HIDE (#1116): present only when it fails with every colour passing alone.
+    ...(gold ? { gold: { ...gold, names: gold.names.slice(0, 2) } } : {}),
     castability, demand, topdeck: topdeckPayoffs(deck, commanderNames), fetchShortfalls,
     speed,
   };

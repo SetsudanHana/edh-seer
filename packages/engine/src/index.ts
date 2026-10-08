@@ -48,6 +48,6 @@ export {
   type MechanicCoverageSummary,
 } from "./mechanics.js";
 export {
-  comb, jointAvailability, LIBRARY, minCopies, pAtLeast, seen,
+  comb, jointAvailability, LIBRARY, minCopies, pAtLeast, pCanPay, seen,
 } from "./hypergeometric.js";
 export { karstenLands, type KarstenInputs } from "./karsten.js";
