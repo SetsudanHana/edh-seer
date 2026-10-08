@@ -7668,5 +7668,788 @@
    "segmentHash": "676d55ed58c2531e3f60fe139876cdc29fd6219f5d7217d3a088291d7929852d",
    "clauseSource": "model"
   }
+ },
+ "Cascade Bluffs": {
+  "card": {
+   "_id": "f1603384-4361-49c9-98aa-7785fc3504c4",
+   "name": "Cascade Bluffs",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add {C}.\n{U/R}, {T}: Add {U}{U}, {U}{R}, or {R}{R}.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "C",
+    "R",
+    "U"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-04-24",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af1222136",
+   "oracleId": "f1603384-4361-49c9-98aa-7785fc3504c4",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{U/R}, {T}",
+     "amount": "2",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     },
+     "payment": {
+      "mana": "{U/R}",
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "land"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [
+     "R",
+     "U"
+    ],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "a6384b0b2d37da8d3251077ed97406ea4b55c414f42acd93fcb19686094f67c8",
+   "clauseSource": "grammar"
+  }
+ },
+ "Cascading Cataracts": {
+  "card": {
+   "_id": "d98b4250-3492-4864-9c4c-42db09b3ccd4",
+   "name": "Cascading Cataracts",
+   "typeLine": "Land",
+   "oracleText": "Indestructible\n{T}: Add {C}.\n{5}, {T}: Add five mana in any combination of colors.",
+   "keywords": [
+    "Indestructible"
+   ],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2022-09-09",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a5af6eb344af1943292",
+   "oracleId": "d98b4250-3492-4864-9c4c-42db09b3ccd4",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{5}, {T}",
+     "amount": "5",
+     "clause": 3,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 5,
+      "ceiling": 5
+     },
+     "payment": {
+      "mana": "{5}",
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "land"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "indestructible"
+    ]
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "dff54f18c94ede15083739e0c5faef382f96990ee15a1bd1c52c337eae9dc687",
+   "clauseSource": "grammar"
+  }
+ },
+ "Darkwater Catacombs": {
+  "card": {
+   "_id": "4869a530-757f-4364-8d8e-4dc8001f433c",
+   "name": "Darkwater Catacombs",
+   "typeLine": "Land",
+   "oracleText": "{1}, {T}: Add {U}{B}.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "U"
+   ],
+   "layout": "normal",
+   "releasedAt": "2025-04-11",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af122246b",
+   "oracleId": "4869a530-757f-4364-8d8e-4dc8001f433c",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{1}, {T}",
+     "amount": "2",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     },
+     "payment": {
+      "mana": "{1}",
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "land"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [
+     "B",
+     "U"
+    ],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "01bea8aa79ad17c9268c16167d602809e1a129261cce6a9e831a825845fc7169",
+   "clauseSource": "grammar"
+  }
+ },
+ "Sunken Ruins": {
+  "card": {
+   "_id": "e6415ffb-8b7a-41c3-bedf-0d4112b7b795",
+   "name": "Sunken Ruins",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add {C}.\n{U/B}, {T}: Add {U}{U}, {U}{B}, or {B}{B}.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "U"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-10-02",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af122212a",
+   "oracleId": "e6415ffb-8b7a-41c3-bedf-0d4112b7b795",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{U/B}, {T}",
+     "amount": "2",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     },
+     "payment": {
+      "mana": "{U/B}",
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "land"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [
+     "B",
+     "U"
+    ],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "41ed2fe3d11952374181204c1840f5cd8dbbba76d6e6e5002d02e7c9d72d7fd3",
+   "clauseSource": "grammar"
+  }
+ },
+ "Cabal Coffers": {
+  "card": {
+   "_id": "7358e164-5704-4e78-9b21-6a9bf2a968ce",
+   "name": "Cabal Coffers",
+   "typeLine": "Land",
+   "oracleText": "{2}, {T}: Add {B} for each Swamp you control.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "B"
+   ],
+   "layout": "normal",
+   "releasedAt": "2021-06-18",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a56f6eb344af193f08a",
+   "oracleId": "7358e164-5704-4e78-9b21-6a9bf2a968ce",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "scaling": "per-permanent",
+      "scalingSubject": {
+       "control": "you",
+       "token": null,
+       "subtype": "swamp",
+       "zone": "battlefield"
+      }
+     },
+     "cost": "{2}, {T}",
+     "amount": "for each Swamp you control",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "you",
+       "token": null,
+       "subtype": "swamp"
+      }
+     },
+     "payment": {
+      "mana": "{2}",
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "land"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [
+     "B"
+    ],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "5a8725878b0b17820906673ea0b488b75203a510245f5d4d8ea4468da7ecbb7f",
+   "clauseSource": "grammar"
+  }
+ },
+ "Study Hall": {
+  "card": {
+   "_id": "eb735501-19e7-4910-aa6a-6667fff6f4e5",
+   "name": "Study Hall",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add {C}.\n{1}, {T}: Add one mana of any color. When you spend this mana to cast your commander, scry X, where X is the number of times it's been cast from the command zone this game.",
+   "keywords": [
+    "Scry"
+   ],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-04-24",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a52f6eb344af1939b3c",
+   "oracleId": "eb735501-19e7-4910-aa6a-6667fff6f4e5",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{1}, {T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{1}",
+      "tap": true
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "scry",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "the number of times it's been cast from the command zone this game",
+     "emits": [
+      {
+       "verb": "scry",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 3,
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "any",
+       "token": null
+      }
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "land"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "scry"
+    ]
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "82fabbc1062c55f3fc97dca146bb22194cbf347989ae58fd2d797c6267d973e0",
+   "unknownTriggers": [
+    "mana-spent"
+   ],
+   "clauseSource": "grammar"
+  }
+ },
+ "Opal Palace": {
+  "card": {
+   "_id": "aa6723a2-75da-49f5-a1ba-cbfa82c55301",
+   "name": "Opal Palace",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add {C}.\n{1}, {T}: Add one mana of any color in your commander's color identity. If you spend this mana to cast your commander, it enters with a number of additional +1/+1 counters on it equal to the number of times it's been cast from the command zone this game.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-04-24",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a51f6eb344af19389d0",
+   "oracleId": "aa6723a2-75da-49f5-a1ba-cbfa82c55301",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "commander": true
+      }
+     },
+     "cost": "{1}, {T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{1}",
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "enters-with-counters",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{1}, {T}",
+     "amount": "the number of times it's been cast from the command zone this game",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "counter": "+1/+1"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "payment": {
+      "mana": "{1}",
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "land"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "a7f024249fc77a17d2ed5a7bf68a484ad7521f274aa9a1a3f6460a8ef9e201cb",
+   "clauseSource": "model"
+  }
  }
 }

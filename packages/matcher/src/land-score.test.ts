@@ -199,3 +199,23 @@ test("a land-fetch spell is named only if it cannot reach the short colour", () 
   // A Forest search cannot reach blue, so it may be named.
   expect(colourReplacements(deckOf(island, forest, spell("Three Visits")), "U", 2, { U: 4 })).toContain("Three Visits");
 });
+
+test("a filter land is a source of both its colours to the land swaps, and is not a colourless trade (#1114)", () => {
+  const bluffs = fetches["Cascade Bluffs" as keyof typeof fetches] as unknown as DeckCard;
+  const cataracts = fetches["Cascading Cataracts" as keyof typeof fetches] as unknown as DeckCard;
+  const needUR = neededColours(izzetSpells);
+  expect(landFacts(bluffs, needUR, []).colours).toEqual(["U", "R"]);
+  expect(landFacts(cataracts, new Set(["W", "U", "B", "R", "G"] as const), []).colours).toEqual([]);
+  // Short on blue, Bluffs makes blue and is online: it is not named, where read as colourless it was tier 1.
+  expect(colourReplacements(deckOf(bluffs), "U", 2, { U: 4 })).toEqual([]);
+  // The mana line that is a cost, not a spend restriction, is not conditional mana.
+  expect(landFacts(bluffs, needUR, []).utility).not.toContain("conditional-mana");
+});
+
+test("a rock that fixes no colour is named as a trade when a colour is short; one that makes it is not (#1114)", () => {
+  const lens = fetches["Prismatic Lens" as keyof typeof fetches] as unknown as DeckCard;
+  const signet = fetches["Izzet Signet" as keyof typeof fetches] as unknown as DeckCard;
+  // Prismatic Lens' producedMana lists blue, but its blue line costs as much as it makes: colourless only.
+  expect(colourReplacements(deckOf(lens), "U", 2, { U: 4 })).toEqual(["Prismatic Lens"]);
+  expect(colourReplacements(deckOf(signet), "U", 2, { U: 4 })).toEqual([]);
+});

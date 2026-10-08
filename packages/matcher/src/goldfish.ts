@@ -3,6 +3,7 @@ import type { SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
+import { fixedColours } from "./mana-lines.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { FETCHES_TAPPED, FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands, isLandFetch } from "./fetch-land.js";
 import { DEFAULT_POD_SIZE, opponents } from "./format.js";
@@ -830,7 +831,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       isLand,
       output: spendable(manaOutput(dc.card.oracleText), cheapest),
       everyLandType: isEveryLandType(dc.card.typeLine, dc.card.oracleText),
-      colors: fetches ? fetchMask(text, printed) : colorMask(dc.card.producedMana),
+      colors: fetches ? fetchMask(text, printed) : colorMask(fixedColours(dc)),
       fetches,
       fetchTapped: fetches && FETCHES_TAPPED.test(text),
       ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_COLORLESS.test(text) ? { tapBonus: "colorless" as const } : {}),
@@ -874,7 +875,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       isLand: false,
       output: spendable(manaOutput(text), cheapest),
       everyLandType: false,
-      colors: colorMask(dc.card.producedMana),
+      colors: colorMask(fixedColours(dc)),
       fetches: false,
       cost: parseCost(castableManaCost(dc.card)),
       costKey: castableManaCost(dc.card) ?? "",

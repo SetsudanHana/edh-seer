@@ -7,6 +7,7 @@
 import { grammarClauseRecords } from "@edh-seer/tagger/clause-record";
 import { detectBuildRules } from "./build.js";
 import { roleAbilities, rolesOfCard, type Role } from "./quality.js";
+import { ADD_LINE, ADDITIONAL, manaLines, printedText } from "./mana-lines.js";
 import type { DeckCard } from "./types.js";
 
 /** THE SAME KIND OF CARD: the same card types on its front face, supertypes and Kindred aside. */
@@ -61,7 +62,7 @@ const STAT_CLAUSE = /\bwith (?:mana value|power|toughness)[^.,;]*/g;
 /** REMINDER TEXT, one parenthesis at a time: "[^()]" stops at the next "(", so a run of unclosed ones
  *  is read once, not once per "(" (CodeQL, 2026-09-30). */
 const REMINDER = /\([^()]*\)/g;
-const printed = (d: DeckCard) => (d.card.oracleText ?? "").replace(REMINDER, "").toLowerCase();
+const printed = printedText;
 
 /** `triggers` false when the caller reads triggers itself (the group key does, from the grammar):
  *  printed, an upside's trigger (Mana Drain's "at the beginning of your next main phase") reads as a
@@ -343,34 +344,6 @@ export function sameRockAnyColour(cut: DeckCard, add: DeckCard, crossType = fals
  *  less the generic mana its activation costs, so a Signet ("{1}, {T}: Add {U}{R}") nets 1 where Worn
  *  Powerstone nets 2. "One mana of any color / the chosen color / any type" is one mana (`yieldOf`
  *  reads symbols only, and `sameJob` and `strictlyBetter` keep reading it). Null when no line reads. */
-const ADD_LINE = /^([^:\n]*):\s*add ([^\n]*)/gm;
-const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3 };
-const ADDITIONAL = /\badds? an additional ((?:\{[^}]+\})+|(one|two|three) mana of (?:any|the chosen) (?:color|type))/g;
-const ANY_COLOUR = /^(one|two|three) mana of (?:any|the chosen) (?:color|type)/;
-/** The repeatable mana lines of a rock: what each nets, and whether it can make a colour. A line that
- *  sacrifices the card is a one-shot (Lotus Petal, Dire Mimic), and a line whose mana is restricted
- *  ("Spend this mana only to cast ...") is not yield for the deck's spells (#966 T2 review). */
-function manaLines(d: DeckCard): { net: number; coloured: boolean }[] {
-  const out: { net: number; coloured: boolean }[] = [];
-  for (const m of printed(d).matchAll(ADD_LINE)) {
-    const cost = m[1]!;
-    const rest = m[2]!;
-    if (/\bsacrifice\b/.test(cost) || /\bspend this mana only\b/.test(rest)) continue;
-    const any = ANY_COLOUR.exec(rest);
-    const run = /^(?:\{[^}]+\})+/.exec(rest)?.[0];
-    if (!any && !run) continue;
-    const made = any ? NUMBER_WORDS[any[1]!]! : (run!.match(/\{/g) ?? []).length;
-    const generic = (cost.match(/\{(\d+)\}/g) ?? []).reduce((n, x) => n + Number(x.slice(1, -1)), 0);
-    out.push({ net: made - generic, coloured: !!any || /\{[wubrg](?:\/[wubrgp])?\}/.test(rest.split(/\.\s/)[0]!) });
-  }
-  // AN AURA'S MANA IS A TRIGGER, not a "{T}: Add" line (Wild Growth, Utopia Sprawl): "adds an additional
-  // {G}" / "one mana of the chosen color" is that many, free, every time the land taps.
-  for (const m of printed(d).matchAll(ADDITIONAL)) {
-    const any = m[2];
-    out.push({ net: any ? NUMBER_WORDS[any]! : (m[1]!.match(/\{/g) ?? []).length, coloured: !!any || /\{[wubrg](?:\/[wubrgp])?\}/.test(m[1]!) });
-  }
-  return out;
-}
 /** A COLOUR SET AN OPPONENT DECIDES IS NOT A FIX (Fellwar Stone: "...that a land an opponent controls
  *  could produce"): the audit counts it as every colour, so reading it would bank a guess as a closed
  *  shortfall. A missing answer instead. */

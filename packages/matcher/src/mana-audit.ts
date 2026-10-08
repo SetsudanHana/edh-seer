@@ -3,6 +3,7 @@ import { castableManaCost } from "./split-cost.js";
 import { minSources } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
+import { fixedColours } from "./mana-lines.js";
 import type { DeckCard } from "./types.js";
 import { BASIC_LAND_TYPES } from "./typeline.js";
 
@@ -206,7 +207,9 @@ export function manaAudit(
     // That gate refuses instants and sorceries because a RITUAL is a one-shot; Cultivate is not one.
     // It leaves a Forest on the battlefield permanently, which is the whole definition of a source,
     // and `availableBy` already prices the delay the same way it prices a rock.
-    const direct = library.filter((dc) => isManaSource(dc) && (dc.card.producedMana ?? []).includes(color));
+    // BY WHAT IT FIXES, NOT WHAT IT CAN ADD (owner, 2026-10-08, #1114): a colour only a line that costs more than it
+    // makes can produce (Cascading Cataracts, Prismatic Lens) is not a source of it.
+    const direct = library.filter((dc) => isManaSource(dc) && fixedColours(dc).includes(color));
     // Asked of the LIBRARY: a commander is not in it (CR 903.6) and cannot be fetched.
     const fetches = library.filter((dc) => !direct.includes(dc)
       && isLandFetch(dc.card.oracleText ?? "")

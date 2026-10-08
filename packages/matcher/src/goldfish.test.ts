@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { pAtLeast, seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
+import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { classifyAccelerant, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
@@ -1255,4 +1256,17 @@ describe("draw and tutors", () => {
     const deck = [...forests(37), ...Array.from({ length: 62 }, (_, i) => prism(i))];
     expect(simulate(deck, opts).seenShare.land[5]!).toBeGreaterThan(simulate(untag(deck), opts).seenShare.land[5]! + 0.02);
   });
+});
+
+// COST AGAINST PRODUCTION (owner, 2026-10-08, #1114): the simulation's slot colours are what a source FIXES, not
+// everything its card can add, so it agrees with the audit and the mana base score.
+test("Prismatic Lens is not a blue source in the simulation: it pays {U}{U} no better than a colourless rock", () => {
+  const lens = rocks["Prismatic Lens"] as unknown as DeckCard;
+  const grey = card("Grey Rock", "Artifact", 2, "{T}: Add {C}.", ["C"]);
+  const island = (i: number) => card(`Island ${i}`, "Basic Land — Island", 0, "({T}: Add {U}.)", ["U"]);
+  const mountain = (i: number) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "({T}: Add {R}.)", ["R"]);
+  const counterspell: DeckCard = { ...card("Counterspell", "Instant", 2), card: { ...card("Counterspell", "Instant", 2).card, manaCost: "{U}{U}" } };
+  const deckWith = (extra: DeckCard) => [...Array.from({ length: 4 }, (_, i) => island(i)), ...Array.from({ length: 30 }, (_, i) => mountain(i)), extra, counterspell, ...spells(30, 1)];
+  const run = (d: DeckCard[]) => simulate(d, { trials: 4_000, turns: 6, seed: 5 }).byCardCastable.get("Counterspell");
+  expect(run(deckWith(lens))).toEqual(run(deckWith(grey)));
 });
