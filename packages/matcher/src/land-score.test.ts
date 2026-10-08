@@ -132,3 +132,16 @@ test("a land that does something besides make mana, a commander, and a basic of 
   const out = colourReplacements([...spellsB, bog, swamp, mountain, diamond], "U", 2, { U: 4, B: 2 }, ["Mountain"]);
   expect(out).toEqual(["Fire Diamond"]);
 });
+
+test("a rock with a targeting ability is a tapper, not a plain rock: Ring of the Lucii is refused, Hedron Archive is named", () => {
+  const ring = rock("Ring of the Lucii", 3, "{T}: Add {C}{C}.\n{2}, {T}, Pay 1 life: Tap target nonland permanent.", ["C"]);
+  const archive = rock("Hedron Archive", 4, "{T}: Add {C}{C}.\n{2}, {T}, Sacrifice this artifact: Draw two cards.", ["C"]);
+  expect(colourReplacements(deckOf(ring), "U", 2, { U: 4 })).toEqual([]);
+  expect(colourReplacements(deckOf(ring, archive), "U", 2, { U: 4 })).toEqual(["Hedron Archive"]);
+});
+
+test("among lands of other deck colours, fewer colours made go first: a Mountain before Blood Crypt when green is short", () => {
+  const crypt = dc("Blood Crypt", "Land — Swamp Mountain", "({T}: Add {B} or {R}.)\nAs Blood Crypt enters, you may pay 2 life. If you don't, it enters tapped.", ["B", "R"]);
+  const spellsG = [dc("Cultivate-ish", "Sorcery", "", [], [], "{G}{G}"), dc("Lightning Bolt", "Instant", "", [], [], "{R}"), dc("Doom Blade", "Instant", "", [], [], "{1}{B}")];
+  expect(colourReplacements([...spellsG, crypt, mountain], "G", 2, { G: 4 })).toEqual(["Mountain", "Blood Crypt"]);
+});

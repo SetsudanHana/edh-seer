@@ -198,6 +198,8 @@ export function basicsFloor(deck: readonly DeckCard[]): number {
  *  deriver split off (Mind Stone's sacrifice), so it does not count. */
 function plainRock(dc: DeckCard): boolean {
   if (netYield(dc) === null) return false;
+  // A TAPPER IS NOT PLAIN (Ring of the Lucii): any line that is not a mana line and targets.
+  if ((dc.card.oracleText ?? "").toLowerCase().split("\n").some((l) => !/\badd\b/.test(l) && /\btarget\b/.test(l))) return false;
   return (dc.tags?.abilities ?? []).every((a) =>
     a.effect.kind === "mana-generation" || a.effect.kind === "draw-card" || (a.kind === "activated" && !a.effect.kind));
 }
@@ -210,7 +212,7 @@ function plainRock(dc: DeckCard): boolean {
  *  TIERS BY LEAST COLLATERAL LOSS (coordinator, 2026-10-08): 1 makes none of the deck's colours
  *  (Wastes, Mind Stone: trading costs nothing); 2 is a land that makes `colour` but always enters
  *  tapped, so it is not online by `turn` (trade it for an untapped one, nothing lost); 3 makes only
- *  other colours the deck uses (a Mountain in Izzet). A rock is named only as a plain rock
+ *  other colours the deck uses (a Mountain in Izzet), fewer deck colours made first (a basic before a dual). A rock is named only as a plain rock
  *  (`plainRock`) that does not make the colour. Each name appears once. Within a tier lands come first, the always-tapped before the rest (T1's order), then rocks, then by name.
  *
  *  NEVER NAMED: a commander; a land that does something besides make mana, or whose mana is
@@ -232,7 +234,7 @@ export function colourReplacements(
   // rocks are, so a deck whose only spare mana is a dork gets no name for it.
   // CEILING: a conditionally-tapped land (tapped===1: check, slow, fast) is never named, though the
   // audit can count it as not available on an early turn.
-  const ranked: { name: string; tier: 1 | 2 | 3; land: boolean; tapped: Tapped }[] = [];
+  const ranked: { name: string; tier: 1 | 2 | 3; land: boolean; tapped: Tapped; colours: number }[] = [];
   for (const dc of deck) {
     if (commanders.has(dc.card.name)) continue;
     if (isLand(dc)) {
@@ -241,7 +243,7 @@ export function colourReplacements(
       if (f.colours.length === 0 && (dc.card.producedMana ?? []).length === 0) continue;
       const makes = f.colours.includes(colour);
       if (makes && f.tapped < 2) continue;
-      ranked.push({ name: f.name, tier: f.colours.length === 0 ? 1 : makes ? 2 : 3, land: true, tapped: f.tapped });
+      ranked.push({ name: f.name, tier: f.colours.length === 0 ? 1 : makes ? 2 : 3, land: true, tapped: f.tapped, colours: f.colours.length });
     } else {
       const made = (dc.card.producedMana ?? []) as readonly string[];
       if (!/\bartifact\b/i.test(dc.card.typeLine) || /\bcreature\b/i.test(dc.card.typeLine) || made.length === 0) continue;
@@ -249,11 +251,11 @@ export function colourReplacements(
       // trading ramp that makes the colour for a land is not a colour fix, and an artifact that does
       // something else is a utility card.
       if (made.includes(colour) || !plainRock(dc) || netPositiveMana(dc) || made.some((c) => otherShort.includes(c as Color))) continue;
-      ranked.push({ name: dc.card.name, tier: made.some((c) => needed.has(c as Color)) ? 3 : 1, land: false, tapped: 0 });
+      ranked.push({ name: dc.card.name, tier: made.some((c) => needed.has(c as Color)) ? 3 : 1, land: false, tapped: 0, colours: made.filter((c) => needed.has(c as Color)).length });
     }
   }
   const seen = new Set<string>();
   return ranked
-    .sort((a, b) => a.tier - b.tier || Number(b.land) - Number(a.land) || b.tapped - a.tapped || a.name.localeCompare(b.name))
+    .sort((a, b) => a.tier - b.tier || (a.tier === 3 ? a.colours - b.colours : 0) || Number(b.land) - Number(a.land) || b.tapped - a.tapped || a.name.localeCompare(b.name))
     .map((r) => r.name).filter((n) => !seen.has(n) && seen.add(n)).slice(0, 2);
 }
