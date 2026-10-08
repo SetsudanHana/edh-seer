@@ -6231,3 +6231,58 @@ describe("a mana rock's own entry is not a theme (#966)", () => {
     expect(cardThemeTags(mk(["artifact"], [equip])).has("enters:artifact")).toBe(true);
   });
 });
+
+/** A CARD'S OWN ENTRY TRIGGER IS NOT A THEME (#1097): a Temple's "When this land enters, scry 1"
+ *  put `enters:land` on Tinker Time's lands although `impliedEntryThemeTags` deliberately excludes a
+ *  land's own entry. Only the THEME path skips it; the SUPPLY path keeps it (a Temple really is a land
+ *  entering). */
+describe("a self enters trigger is not a theme (#1097)", () => {
+  const withTypes = (types: string[], abilities: unknown[]) => {
+    const c = base("X", abilities as CardTags["abilities"]);
+    (c.tags.characteristics as { types: string[] }).types = types;
+    return c.tags;
+  };
+  const trig = (verb: string, subject: unknown) => ({ kind: "triggered", trigger: { verbs: [verb], subject }, effect: { kind: "scry" } });
+
+  test("a Temple-shaped land has no enters:land theme, but still supplies it", () => {
+    const temple = withTypes(["land"], [trig("enters", { self: true, type: "land", control: "you" })]);
+    expect(cardThemeTags(temple).has("enters:land")).toBe(false);
+    expect(cardSupplyTags(temple).has("enters:land")).toBe(true);
+  });
+  test("a creature's self ETB keeps enters:creature, its subtype tag and etb-refire", () => {
+    const m = withTypes(["creature"], [trig("enters", { self: true, type: "creature", control: "you" })]);
+    (m.characteristics as { subtypes: string[] }).subtypes = ["elemental"];
+    const out = cardThemeTags(m);
+    expect(out.has("enters:creature")).toBe(true);
+    expect(out.has("enters:elemental")).toBe(true);
+    expect(out.has(ETB_REFIRE)).toBe(true);
+  });
+  test("a mana rock's self ETB gives no enters:artifact theme, kept in supply", () => {
+    const rock = withTypes(["artifact"], [
+      { kind: "activated", effect: { kind: "mana-generation" } },
+      trig("enters", { self: true, type: "artifact", control: "you" })]);
+    expect(cardThemeTags(rock).has("enters:artifact")).toBe(false);
+    expect(cardSupplyTags(rock).has("enters:artifact")).toBe(true);
+  });
+  test("a creature // land MDFC keeps its creature-face self ETB theme", () => {
+    const d = withTypes(["creature", "land"], [trig("enters", { self: true, type: "creature", control: "you" })]);
+    (d.characteristics as { subtypes: string[] }).subtypes = ["human", "warlock"];
+    expect(cardThemeTags(d).has("enters:creature")).toBe(true);
+  });
+  test("an Equipment // land MDFC whose trigger names only a subtype keeps its Equipment-face theme (Dowsing Dagger)", () => {
+    const d = withTypes(["artifact", "land"], [trig("enters", { self: true, subtype: "equipment", control: "you" })]);
+    expect(cardThemeTags(d).has("enters:equipment")).toBe(true);
+  });
+  test("a land whose self trigger names a LAND subtype still skips (a Gate entering)", () => {
+    const g = withTypes(["land"], [trig("enters", { self: true, subtype: "gate", control: "you" })]);
+    expect(cardThemeTags(g).has("enters:gate")).toBe(false);
+  });
+  test("a land with a NON-self landfall trigger keeps enters:land", () => {
+    const l = withTypes(["land"], [trig("enters", { type: "land", control: "you" })]);
+    expect(cardThemeTags(l).has("enters:land")).toBe(true);
+  });
+  test("a creature's self attacks trigger still themes", () => {
+    const c = withTypes(["creature"], [trig("attacks", { self: true, type: "creature", control: "you" })]);
+    expect([...cardThemeTags(c)].some((t) => t.startsWith("attacks:"))).toBe(true);
+  });
+});

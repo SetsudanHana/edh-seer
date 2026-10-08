@@ -119,6 +119,26 @@ function isManaRock(tags: CardTags): boolean {
  *  took distinct headlines to 20, under the incumbent 21. The subtype key loses none and takes
  *  distinct headlines to 29. Fragmentation is not a hazard here because `computeCohesion` FOLDS
  *  (`theme-fold.ts`), so a deck's Dragons are counted inside the creature family regardless. */
+/** The ONE place a card's own entry is excluded from the theme: a land (the mana base) and, unless
+ *  `keepRockEntry`, a mana rock (#966). Read by `impliedEntryThemeTags` AND the self-trigger skip in
+ *  `themeTags`, so the two cannot drift. */
+function ownEntryExcluded(tags: CardTags, keepRockEntry: boolean): boolean {
+  if ((tags.characteristics?.types ?? []).some((t) => t.toLowerCase() === "land")) return true;
+  return !keepRockEntry && isManaRock(tags);
+}
+
+/** Does a SELF trigger's subject name the land face? A nonland TYPE or a nonland SUBTYPE ("When this
+ *  Equipment enters" on Dowsing Dagger // Lost Vale says only `subtype: equipment`) names the front
+ *  face, whose entry is a theme; an untyped subject on a land card is the land itself. */
+const selfSubjectIsLand = (subject: SubjectFilter): boolean => {
+  const list = (v: string | string[] | undefined): string[] => (v === undefined ? [] : Array.isArray(v) ? v : [v]).map((x) => x.toLowerCase());
+  const types = list((subject as { type?: string | string[] }).type);
+  const subtypes = list((subject as { subtype?: string | string[] }).subtype);
+  if (types.length > 0) return types.includes("land");
+  if (subtypes.length > 0) return subtypes.every((x) => LAND_SUBTYPES.has(x));
+  return true;
+};
+
 function impliedEntryThemeTags(tags: CardTags, keepRockEntry = false): string[] {
   // Absent characteristics (partial fixtures, and any caller holding a hand-built CardTags) yield
   // NO entry tags rather than throwing -- a missing answer, never a crash.
@@ -130,8 +150,7 @@ function impliedEntryThemeTags(tags: CardTags, keepRockEntry = false): string[] 
   // ~35 basics per deck out-count every real theme. A landfall deck still themes `enters:land`
   // through the payoffs that TRIGGER on it and the ramp that AUTHORS it; what is excluded is a
   // Island claiming to be a theme by existing.
-  if ((tags.characteristics.types ?? []).some((t) => t.toLowerCase() === "land")) return [];
-  if (!keepRockEntry && isManaRock(tags)) return [];
+  if (ownEntryExcluded(tags, keepRockEntry)) return [];
   return impliedEvents(tags.characteristics)
     .filter((e) => e.verb === "enters")
     .flatMap((e) => {
@@ -297,6 +316,15 @@ function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
     // they did, and two of the 71 decks took "leaves the battlefield" as their headline theme on
     // the strength of their reanimation.
     if (a.trigger) for (const v of a.trigger.verbs) {
+      // THE SELF TRIGGER MAY NOT RE-ADD AN ENTRY THE IMPLIED-ENTRY RULE DELIBERATELY EXCLUDES (#1097):
+      // a Temple's "when this land enters" put `enters:land` on every Temple and fetch land. Creatures
+      // keep it: their implied entry is keyed by SUBTYPE, so the self trigger is today's only source of
+      // `enters:creature` (measured 4,007 -> 1,336 when skipped broadly -- not ruled). Supply keeps
+      // it (`keepRockEntry`): a Temple really IS a land entering.
+      // A modal DFC is a union-land card (creature // land), but its creature-face trigger names the
+      // FRONT type: that one stays. A land skip therefore needs a subject that is untyped or "land".
+      if (!keepRockEntry && v === "enters" && a.trigger.subject?.self === true && ownEntryExcluded(tags, false)
+        && (isManaRock(tags) || selfSubjectIsLand(a.trigger.subject))) continue;
       const t = normalizeZoneEvent({ verb: v, subject: a.trigger.subject });
       out.add(zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject)));
     }
