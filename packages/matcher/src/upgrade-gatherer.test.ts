@@ -90,3 +90,23 @@ test("a Game Changer upgrade is its own kind: refused at bracket 2, taken to the
   expect(at(4).map((s) => s.kind)).toEqual(["game-changer", "game-changer", "game-changer", "game-changer"]);
   expect(at(4)[0]!.in.reason).toMatch(/Game Changer, which this bracket allows/);
 });
+
+// #966 T1: worst-first cuts must not strand a later cut whose only option is the scarce add.
+const landCut = (cut: string, tapped: 0 | 1 | 2, adds: string[]) => ({
+  cut,
+  options: adds.map((a) => ({ add: a, cut: lf(cut, tapped, ["W"]), addFacts: lf(a, 0, ["W"]), untapped: true, colours: [], gameChanger: false })),
+});
+const landSwaps = (lands: GatherInput["lands"]) =>
+  gatherPackage(input({ lands, roles: { ramp: [], consistency: [], wipes: [], interaction: [] }, synergy: [] }))!
+    .sections.find((s) => s.id === "lands")!.swaps.map((s) => [s.out.name, s.in.name]);
+
+test("land adds are matched, not taken greedily: the worse cut takes its second option so the later cut keeps its only one", () => {
+  // Abzan Armor shape: Temple of Plenty (always tapped) prefers Isolated Chapel; Sunpetal Grove can only have Chapel.
+  expect(landSwaps([landCut("Temple of Plenty", 2, ["Isolated Chapel", "Pious Evangel"]), landCut("Sunpetal Grove", 1, ["Isolated Chapel"])]))
+    .toEqual([["Temple of Plenty", "Pious Evangel"], ["Sunpetal Grove", "Isolated Chapel"]]);
+});
+
+test("an uncontested best add stays with the worse cut", () => {
+  expect(landSwaps([landCut("Temple of Plenty", 2, ["Isolated Chapel", "Pious Evangel"]), landCut("Sunpetal Grove", 1, ["Pious Evangel"])]))
+    .toEqual([["Temple of Plenty", "Isolated Chapel"], ["Sunpetal Grove", "Pious Evangel"]]);
+});
