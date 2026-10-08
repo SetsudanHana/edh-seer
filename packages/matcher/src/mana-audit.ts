@@ -1,6 +1,6 @@
-import { minCopies, pAtLeast, pCanPay, seen } from "@edh-seer/engine";
+import { minCopies } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
-import { minSources } from "./mulligan.js";
+import { minSources, pCanPayByTurn } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
 import { fixedColours } from "./mana-lines.js";
@@ -206,9 +206,9 @@ export interface GoldJoint {
   turn: number;
   names: string[];
   cards: number;
-  /** P(the drawn sources pay the whole cost), in the plain draw model. */
+  /** P(the sources held pay the whole cost), with the free mulligan priced as the rows' `required` does. */
   pJoint: number;
-  /** The LOWEST per-colour probability in the same model: what each colour alone reaches at worst. */
+  /** The LOWEST per-colour probability in the same frame: what each colour alone reaches at worst. */
   pEach: number;
 }
 
@@ -392,13 +392,14 @@ export function manaAuditFull(
   // Sources are the ones the rows count, online by the deadline; the fixer credit is NOT applied.
   // CEILING: a cost of four or five colours is skipped (the class table is 2^d): 6 slots, 5 distinct cards, across the 71
   // calibration decks (2026-10-08; 3 four-colour, 3 five-colour). A fixer's credit is not applied either.
-  const n = (turn: number): number => seen(turn);
   const gold = new Map<string, { colours: Color[]; pips: number[]; turn: number; names: string[] }>();
   for (const dc of library) {
     const pipsOf = plainPips(castableManaCost(dc.card));
     const colours = COLORS.filter((c) => (pipsOf[c] ?? 0) > 0);
     if (colours.length < 2 || colours.length > 3) continue;
     const turn = Math.max(1, Math.round(dc.card.manaValue));
+    // CEILING: a three-colour cost due after turn 6 is skipped: the exact joint costs ~0.4 s at turn 6 and ~1.3 s at turn 8.
+    if (colours.length === 3 && turn > 6) continue;
     const key = `${colours.map((c) => c + pipsOf[c]).join("")}:${turn}`;
     const g = gold.get(key);
     if (g) g.names.push(dc.card.name);
@@ -412,9 +413,11 @@ export function manaAuditFull(
       sizes[online.reduce((m, s, i) => (s.has(dc) ? m | (1 << i) : m), 0)]!++;
     }
     sizes[0] = library.length - sizes.slice(1).reduce((a, b) => a + b, 0);
-    const pEach = Math.min(...g.colours.map((_, i) => pAtLeast(g.pips[i]!, online[i]!.size, n(g.turn), library.length)));
+    // THE FRAME THE ROWS ARE READ IN: the free mulligan priced (`required` is), not the raw draw. Per colour is the
+    // one-colour case of the same function, so the two numbers differ only by the joint requirement.
+    const pEach = Math.min(...g.colours.map((_, i) => pCanPayByTurn([library.length - online[i]!.size, online[i]!.size], [g.pips[i]!], g.turn)));
     if (pEach < SOURCE_CONFIDENCE) continue;
-    const pJoint = pCanPay(sizes, g.pips, n(g.turn), library.length);
+    const pJoint = pCanPayByTurn(sizes, g.pips, g.turn);
     if (pJoint >= SOURCE_CONFIDENCE) continue;
     if (!worstGold || pJoint < worstGold.pJoint) worstGold = { ...g, cards: g.names.length, pJoint, pEach };
   }

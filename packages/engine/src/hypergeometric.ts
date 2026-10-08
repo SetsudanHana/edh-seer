@@ -159,8 +159,11 @@ export function jointAvailability(
  *  multivariate-hypergeometric weight, and a split pays the cost when Hall's condition holds -- for every non-empty
  *  set S of colours, the drawn cards making some colour in S number at least the pips over S (the pips of one colour
  *  share a neighbourhood, so subsets of colours are all the sets Hall needs). Cost is the number of splits, fine for
- *  the three colours and ~17 cards this layer asks. */
-export function pCanPay(classSizes: readonly number[], need: readonly number[], n: number, N: number = LIBRARY): number {
+ *  the three colours and ~17 cards this layer asks.
+ *
+ *  `have[m]` is cards of class m ALREADY in hand (a kept opening hand): they count toward every set and are not part of
+ *  the draw, so `classSizes` and `N` describe only the library still to draw from. */
+export function pCanPay(classSizes: readonly number[], need: readonly number[], n: number, N: number = LIBRARY, have?: readonly number[]): number {
   const d = need.length;
   if (classSizes.length !== 1 << d) throw new Error(`pCanPay: ${d} colours need ${1 << d} classes, got ${classSizes.length}`);
   if (classSizes.reduce((a, b) => a + b, 0) !== N) throw new Error("pCanPay: the classes must sum to the library");
@@ -171,9 +174,9 @@ export function pCanPay(classSizes: readonly number[], need: readonly number[], 
     for (let s = 1; s < 1 << d; s++) {
       let want = 0;
       for (let i = 0; i < d; i++) if (s & (1 << i)) want += need[i]!;
-      let have = 0;
-      for (let m = 1; m < take.length; m++) if (m & s) have += take[m]!;
-      if (have < want) return false;
+      let got = 0;
+      for (let m = 1; m < take.length; m++) if (m & s) got += take[m]! + (have?.[m] ?? 0);
+      if (got < want) return false;
     }
     return true;
   };

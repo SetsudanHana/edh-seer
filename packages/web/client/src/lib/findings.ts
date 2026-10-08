@@ -288,12 +288,13 @@ function goldFindings(report: DeckReport): Finding[] {
   const all = g.colours.length === 2 ? "both colours" : "all three colours";
   // Floored: a probability just under the bar must not print as the bar.
   const pct = (p: number): number => Math.floor(p * 100);
+  const one = g.cards === 1;
   return [{
     kind: "colour",
     id: "colour:gold",
-    headline: `Your ${kinds} cards due by turn ${g.turn} (${cardsSubject(g.names, g.cards)}) need ${all} in the same hand.`,
+    headline: `Your ${kinds} ${one ? "card" : "cards"} due by turn ${g.turn} (${cardsSubject(g.names, g.cards)}) ${one ? "needs" : "need"} ${all} in the same hand.`,
     detail: `Each colour alone is there ${pct(g.pEach)}% of the time, ${g.colours.length === 2 ? "both" : "all"} together ${pct(g.pJoint)}%.`,
-    action: "Trade a single-colour source for a land that makes both, or cast them later.",
+    action: `Trade a single-colour source for a land that makes ${g.colours.length === 2 ? "both" : "more than one of them"}, or cast ${one ? "it" : "them"} later.`,
     figure: `${pct(g.pJoint)}%`,
     figureLabel: `${kinds} together by turn ${g.turn}`,
     filled: g.pJoint / GOLD_TARGET,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pAtLeast } from "@edh-seer/engine";
+import { pAtLeast, pCanPay } from "@edh-seer/engine";
 import { landsForDrops, pLandDrops, STANDARD_KEEP } from "./mulligan.js";
 
 describe("mulligan policy", () => {
@@ -61,5 +61,22 @@ describe("landsForDrops is not a per-deck quantity — L1's refusal", () => {
     const bands = [STANDARD_KEEP, new Set([2, 3, 4, 5]), new Set([2, 3, 4, 5, 6])];
     const answers = bands.map((k) => landsForDrops(3, 0.9, k)!);
     expect(Math.max(...answers) - Math.min(...answers)).toBeLessThanOrEqual(1);
+  });
+});
+
+/** The joint frame (#1116 review): one colour is exactly `pByTurn`; the mulligan adds to a joint demand. */
+import { pByTurn, pCanPayByTurn } from "./mulligan.js";
+describe("pCanPayByTurn", () => {
+  it("one colour equals pByTurn for the same counts", () => {
+    for (const [size, need, turn] of [[37, 3, 3], [25, 1, 2], [30, 2, 4], [12, 2, 5]] as const) {
+      expect(pCanPayByTurn([99 - size, size], [need], turn), `${size}/${need}/${turn}`).toBeCloseTo(pByTurn(size, need, turn), 10);
+    }
+  });
+  it("the free mulligan lifts a joint demand over its raw draw", () => {
+    // {W}{U} on turn 2, 15 white, 15 blue, 5 duals (the reviewer's Monte Carlo: raw 0.777, mulligan 0.850).
+    const sizes = [99 - 35, 15, 15, 5];
+    const joint = pCanPayByTurn(sizes, [1, 1], 2);
+    expect(joint).toBeGreaterThan(pCanPay(sizes, [1, 1], 9, 99));
+    expect(joint).toBeCloseTo(0.85, 1);
   });
 });
