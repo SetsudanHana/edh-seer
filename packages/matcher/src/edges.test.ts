@@ -6286,3 +6286,36 @@ describe("a self enters trigger is not a theme (#1097)", () => {
     expect([...cardThemeTags(c)].some((t) => t.startsWith("attacks:"))).toBe(true);
   });
 });
+
+/** A MODAL DFC'S NONLAND FACE KEEPS ITS OWN ENTRY (#1101): the land exclusion is per FACE, not on the
+ *  union `types`. */
+describe("face-aware own-entry exclusion (#1101)", () => {
+  const withFaces = (types: string[], subtypes: string[], faces: { types: string[]; subtypes: string[] }[], abilities: unknown[] = []) => {
+    const c = base("X", abilities as CardTags["abilities"]);
+    Object.assign(c.tags.characteristics, { types, subtypes, faces });
+    return c.tags;
+  };
+  const selfLand = { kind: "triggered", trigger: { verbs: ["enters"], subject: { self: true, type: "land", control: "you" } }, effect: { kind: "scry" } };
+
+  test("creature // land MDFC themes its creature subtypes and not enters:land", () => {
+    const t = withFaces(["creature", "land"], ["human", "warlock"], [{ types: ["creature"], subtypes: ["human", "warlock"] }, { types: ["land"], subtypes: [] }]);
+    const out = cardThemeTags(t);
+    expect(out.has("enters:human")).toBe(true);
+    expect(out.has("enters:warlock")).toBe(true);
+    expect(out.has("enters:land")).toBe(false);
+  });
+  test("a transform enchantment // land (front face only) themes enters:enchantment", () => {
+    const t = withFaces(["enchantment", "land"], [], [{ types: ["enchantment"], subtypes: [] }]);
+    expect(cardThemeTags(t).has("enters:enchantment")).toBe(true);
+  });
+  test("a plain land and a mana rock still have no own-entry theme", () => {
+    expect([...cardThemeTags(withFaces(["land"], ["island"], undefined as never))]).toEqual([]);
+    const rock = withFaces(["artifact"], [], undefined as never, [{ kind: "activated", effect: { kind: "mana-generation" } }]);
+    expect(cardThemeTags(rock).has("enters:artifact")).toBe(false);
+  });
+  test("the MDFC's land face still supplies enters:land (via its own trigger), not as theme", () => {
+    const t = withFaces(["creature", "land"], ["human"], [{ types: ["creature"], subtypes: ["human"] }, { types: ["land"], subtypes: [] }], [selfLand]);
+    expect(cardSupplyTags(t).has("enters:land")).toBe(true);
+    expect(cardThemeTags(t).has("enters:land")).toBe(false);
+  });
+});
