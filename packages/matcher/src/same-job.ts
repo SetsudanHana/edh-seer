@@ -322,7 +322,8 @@ export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
   if (![...a.drawbacks].every((x) => c.drawbacks.has(x) || selfDamage(x))) return false;
   if (newConditions(cut, add, false, damagesOthers(printed(add)) ? [] : SELF_DAMAGE)) return false;
   const cy = netYield(cut);
-  const ay = netYield(add);
+  // THE ADD IS HELD TO WHAT IT NETS IN COLOUR (Prismatic Lens makes {C} free and a colour for {1}).
+  const ay = colouredNetYield(add);
   return cy !== null && ay !== null && ay >= cy;
 }
 
@@ -330,18 +331,41 @@ export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
  *  less the generic mana its activation costs, so a Signet ("{1}, {T}: Add {U}{R}") nets 1 where Worn
  *  Powerstone nets 2. "One mana of any color / the chosen color / any type" is one mana (`yieldOf`
  *  reads symbols only, and `sameJob` and `strictlyBetter` keep reading it). Null when no line reads. */
-const ADD_LINE = /^([^:\n]*):\s*add (?:(one|two|three) mana of (?:any|the chosen) (?:color|type)|((?:\{[^}]+\})+))/gm;
+const ADD_LINE = /^([^:\n]*):\s*add ([^\n]*)/gm;
 const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3 };
+const ANY_COLOUR = /^(one|two|three) mana of (?:any|the chosen) (?:color|type)/;
+/** The repeatable mana lines of a rock: what each nets, and whether it can make a colour. A line that
+ *  sacrifices the card is a one-shot (Lotus Petal, Dire Mimic), and a line whose mana is restricted
+ *  ("Spend this mana only to cast ...") is not yield for the deck's spells (#966 T2 review). */
+function manaLines(d: DeckCard): { net: number; coloured: boolean }[] {
+  const out: { net: number; coloured: boolean }[] = [];
+  for (const m of printed(d).matchAll(ADD_LINE)) {
+    const cost = m[1]!;
+    const rest = m[2]!;
+    if (/\bsacrifice\b/.test(cost) || /\bspend this mana only\b/.test(rest)) continue;
+    const any = ANY_COLOUR.exec(rest);
+    const run = /^(?:\{[^}]+\})+/.exec(rest)?.[0];
+    if (!any && !run) continue;
+    const made = any ? NUMBER_WORDS[any[1]!]! : (run!.match(/\{/g) ?? []).length;
+    const generic = (cost.match(/\{(\d+)\}/g) ?? []).reduce((n, x) => n + Number(x.slice(1, -1)), 0);
+    out.push({ net: made - generic, coloured: !!any || /\{[wubrg](?:\/[wubrgp])?\}/.test(rest.split(/\.\s/)[0]!) });
+  }
+  return out;
+}
+/** A COLOUR SET AN OPPONENT DECIDES IS NOT A FIX (Fellwar Stone: "...that a land an opponent controls
+ *  could produce"): the audit counts it as every colour, so reading it would bank a guess as a closed
+ *  shortfall. A missing answer instead. */
+const opponentDecides = (d: DeckCard) => /\ban opponent controls\b/i.test(printed(d));
+/** What it nets overall (the best repeatable line), null when none reads. */
 export function netYield(d: DeckCard): number | null {
-  // A COLOUR SET AN OPPONENT DECIDES IS NOT A FIX (Fellwar Stone: "...that a land an opponent controls
-  // could produce"): the audit counts it as every colour, so reading it would bank a guess as a
-  // closed shortfall. A missing answer instead (#966 T2 review).
-  if (/\ban opponent controls\b/i.test(printed(d))) return null;
-  const nets = [...printed(d).matchAll(ADD_LINE)].map((m) => {
-    const made = m[2] ? NUMBER_WORDS[m[2]]! : (m[3]!.match(/\{/g) ?? []).length;
-    const generic = (m[1]!.match(/\{(\d+)\}/g) ?? []).reduce((n, x) => n + Number(x.slice(1, -1)), 0);
-    return made - generic;
-  });
+  if (opponentDecides(d)) return null;
+  const nets = manaLines(d).map((l) => l.net);
+  return nets.length ? Math.max(...nets) : null;
+}
+/** What its COLOURED lines net: Prismatic Lens makes {C} for free but a colour only for {1}, so 0. */
+export function colouredNetYield(d: DeckCard): number | null {
+  if (opponentDecides(d)) return null;
+  const nets = manaLines(d).filter((l) => l.coloured).map((l) => l.net);
   return nets.length ? Math.max(...nets) : null;
 }
 

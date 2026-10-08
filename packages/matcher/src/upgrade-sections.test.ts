@@ -282,6 +282,20 @@ describe("what a rock really yields", () => {
     expect(ramp(rock("Worn Powerstone"), rock("Izzet Signet"))).toEqual([]);
     expect(ramp(rock("Hedron Archive"), rock("Izzet Signet"))).toEqual([]);
   });
+  test("a one-shot is not a rock: Dire Mimic and Lotus Petal never replace Mind Stone", () => {
+    expect(ramp(rock("Mind Stone"), rock("Dire Mimic"))).toEqual([]);
+    expect(ramp(rock("Mind Stone"), rock("Lotus Petal"))).toEqual([]);
+  });
+  test("the add's coloured mana must net as much as the cut: Prismatic Lens (coloured line nets 0) is not a Talisman", () => {
+    expect(ramp(rock("Talisman of Dominance"), rock("Prismatic Lens"))).toEqual([]);
+  });
+  test("mana that can only be spent on instants and sorceries is not yield: Tablet of Discovery is not Worn Powerstone", () => {
+    expect(ramp(rock("Worn Powerstone"), rock("Tablet of Discovery"))).toEqual([]);
+  });
+  test("the real upgrades stay: Fire Diamond to Talisman, Mind Stone to Arcane Signet", () => {
+    expect(ramp(rock("Fire Diamond"), rock("Talisman of Creativity"))).toEqual(["Talisman of Creativity"]);
+    expect(ramp(rock("Mind Stone"), rock("Arcane Signet"))).toEqual(["Arcane Signet"]);
+  });
   test("any colour is one mana: Fire Diamond to Arcane Signet when the deck is short", () => {
     expect(ramp(rock("Fire Diamond"), rock("Arcane Signet"))).toEqual(["Arcane Signet"]);
   });

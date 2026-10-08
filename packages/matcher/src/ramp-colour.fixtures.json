@@ -1334,5 +1334,669 @@
    "segmentHash": "2f011529c6071d6135d38d4737734b8921574ded0f0cc31f5b52ae004bbf36ee",
    "clauseSource": "grammar"
   }
+ },
+ "Dire Mimic": {
+  "card": {
+   "_id": "b657b3df-9287-44cf-a1cd-a80ead71a553",
+   "name": "Dire Mimic",
+   "typeLine": "Artifact — Treasure",
+   "oracleText": "Flash\n{T}, Sacrifice this artifact: Add one mana of any color.\n{3}: This artifact becomes a Shapeshifter artifact creature with base power and toughness 5/5 until end of turn.",
+   "keywords": [
+    "Flash"
+   ],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2022-06-10",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6aa131cb22a4c97a52ec4fcc",
+   "oracleId": "b657b3df-9287-44cf-a1cd-a80ead71a553",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}, Sacrifice this artifact",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "animate",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      }
+     },
+     "cost": "{3}",
+     "amount": "5/5",
+     "clause": 3,
+     "repeats": "repeatable",
+     "payment": {
+      "mana": "{3}"
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "keyword-grant",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "subtype": "shapeshifter"
+      }
+     },
+     "cost": "{3}",
+     "clause": 3,
+     "repeats": "repeatable",
+     "payment": {
+      "mana": "{3}"
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [
+     "treasure"
+    ],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "flash"
+    ]
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 19,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "d0715ab6bd41d6ef4bda95b3dc233b5fec50b035469cfe75aa06166d662669d8",
+   "clauseSource": "model"
+  }
+ },
+ "Lotus Petal": {
+  "card": {
+   "_id": "32e5339e-9e4f-46f8-b305-f9d6d3ba8bb5",
+   "name": "Lotus Petal",
+   "typeLine": "Artifact",
+   "oracleText": "{T}, Sacrifice this artifact: Add one mana of any color.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "{0}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2015-05-06",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a50f6eb344af1938024",
+   "oracleId": "32e5339e-9e4f-46f8-b305-f9d6d3ba8bb5",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}, Sacrifice this artifact",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}, Sacrifice this artifact",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "4ab141d3791e4ae5ad588ef24ccf94bc4ac89c6fba3e791290b1ab18bcef512c",
+   "clauseSource": "grammar"
+  }
+ },
+ "Prismatic Lens": {
+  "card": {
+   "_id": "e3056f28-868b-401a-a528-7528d639bdeb",
+   "name": "Prismatic Lens",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {C}.\n{1}, {T}: Add one mana of any color.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2024-04-19",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a4ef6eb344af1935d80",
+   "oracleId": "e3056f28-868b-401a-a528-7528d639bdeb",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{1}, {T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{1}",
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "b4d3e96472e76f361f26514cce7c1e0fa5d4e0a6b74bd9c5ace2ffee96dca86d",
+   "clauseSource": "grammar"
+  }
+ },
+ "Tablet of Discovery": {
+  "card": {
+   "_id": "19cf5798-4600-4a66-b1c7-de77bde157d0",
+   "name": "Tablet of Discovery",
+   "typeLine": "Artifact",
+   "oracleText": "When this artifact enters, mill a card. You may play that card this turn. (To mill a card, put the top card of your library into your graveyard.)\n{T}: Add {R}.\n{T}: Add {R}{R}. Spend this mana only to cast instant and sorcery spells.",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "graveyard",
+     "mana"
+    ],
+    "cares": [
+     "cast:instant",
+     "cast:sorcery"
+    ]
+   },
+   "manaCost": "{2}{R}",
+   "producedMana": [
+    "R"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-04-24",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736acaf6eb344af122347b",
+   "oracleId": "19cf5798-4600-4a66-b1c7-de77bde157d0",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "mill",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "mill",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "2",
+     "clause": 3,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "mill"
+    ]
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 13,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "590aa8528e01f62ce8e195e180524e62b106b99f1d5cf0d24023df3b758da73e",
+   "clauseSource": "grammar"
+  }
+ },
+ "Talisman of Dominance": {
+  "card": {
+   "_id": "4c0a0448-b9d6-43a0-8549-64066dac63f0",
+   "name": "Talisman of Dominance",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {C}.\n{T}: Add {U} or {B}. This artifact deals 1 damage to you.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}",
+   "producedMana": [
+    "B",
+    "C",
+    "U"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-10-02",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af12220c2",
+   "oracleId": "4c0a0448-b9d6-43a0-8549-64066dac63f0",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "damage",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "non-combat-damage",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "dealer": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [
+     "B",
+     "U"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "1fe94399ec483b7c8b02de2be64b3b0580beb73a60582bc280e4a059188c0965",
+   "clauseSource": "grammar"
+  }
  }
 }
