@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
-import { basicsFloor, betterLand, landFacts, neededColours } from "./land-score.js";
+import { basicsFloor, betterLand, colourReplacements, landFacts, neededColours } from "./land-score.js";
 import type { DeckCard } from "./types.js";
 
 const dc = (name: string, typeLine: string, oracleText: string, producedMana: string[] = [], kinds: string[] = [], manaCost?: string): DeckCard => ({
@@ -74,4 +74,87 @@ test("the basics floor is what the deck's own cards search for", () => {
   const wilds = dc("Evolving Wilds", "Land", "{T}, Sacrifice Evolving Wilds: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.");
   expect(basicsFloor([landscape, wilds, plains, shrine])).toBe(3);
   expect(basicsFloor([shrine, plains])).toBe(0);
+});
+
+// OWNER RULINGS 2026-10-08 (#966 T3): trade what makes none of the colour first, lands before rocks;
+// then what makes it but is not online in time; never fast mana, a utility land, or a commander.
+const rock = (name: string, mv: number, text: string, made: string[]): DeckCard => ({
+  card: { name, typeLine: "Artifact", oracleText: text, keywords: [], colors: [], manaValue: mv, producedMana: made } as Card,
+  tags: null,
+});
+const izzetSpells = [dc("Counterspell", "Instant", "", [], [], "{U}{U}"), dc("Lightning Bolt", "Instant", "", [], [], "{R}")];
+const mountain = dc("Mountain", "Basic Land — Mountain", "({T}: Add {R}.)", ["R"]);
+const gate = dc("Izzet Guildgate", "Land — Gate", "Izzet Guildgate enters tapped.\n{T}: Add {U} or {R}.", ["U", "R"]);
+const vents = dc("Steam Vents", "Land — Island Mountain", "({T}: Add {U} or {R}.)\nAs Steam Vents enters, you may pay 2 life. If you don't, it enters tapped.", ["U", "R"]);
+const diamond = rock("Fire Diamond", 2, "Fire Diamond enters tapped.\n{T}: Add {R}.", ["R"]);
+const solRing = rock("Sol Ring", 1, "{T}: Add {C}{C}.", ["C"]);
+const bog = dc("Bojuka Bog", "Land", "Bojuka Bog enters tapped.\nWhen Bojuka Bog enters, exile target player's graveyard.\n{T}: Add {B}.", ["B"], ["graveyard-hate", "mana-generation"]);
+const deckOf = (...more: DeckCard[]) => [...izzetSpells, ...more];
+
+test("short on blue by turn 2: the always-tapped blue gate (nothing lost) before the red-only land; Sol Ring and Steam Vents are never named", () => {
+  expect(colourReplacements(deckOf(mountain, diamond, gate, solRing, vents), "U", 2, { U: 4 })).toEqual(["Izzet Guildgate", "Mountain"]);
+});
+
+test("with no other source, the always-tapped blue dual is named: it makes blue but never in time", () => {
+  expect(colourReplacements(deckOf(gate, solRing, vents), "U", 2, { U: 4 })).toEqual(["Izzet Guildgate"]);
+});
+
+test("a rock that makes the colour is never named, however late it is: Arcane Signet and Sceptre-shaped rocks stay", () => {
+  const sapphire = rock("Sapphire Medallion", 3, "{T}: Add {U}.", ["U"]);
+  const signet = rock("Arcane Signet", 2, "{T}: Add one mana of any color in your commander's color identity.", ["W", "U", "B", "R", "G"]);
+  const sceptre = rock("Sceptre of Eternal Glory", 3, "{T}: Add one mana of any color.", ["W", "U", "B", "R", "G"]);
+  expect(colourReplacements(deckOf(sapphire, signet, sceptre), "U", 2, { U: 2 })).toEqual([]);
+});
+
+const withTags = (d: DeckCard, kinds: [string, string][]): DeckCard => ({
+  ...d, tags: { abilities: kinds.map(([kind, k]) => ({ kind, effect: { kind: k } })) } as unknown as DeckCard["tags"],
+});
+
+test("only plain rocks are named: a sacrifice outlet, a win condition and a play-from-top artifact are refused; a Mind Stone is not", () => {
+  const altar = withTags(rock("Ashnod's Altar", 3, "Sacrifice a creature: Add {C}{C}.", ["C"]), [["activated", ""], ["activated", "mana-generation"]]);
+  const stadium = withTags(rock("Strixhaven Stadium", 3, "{T}: Add {C}. Put a point counter on this artifact.\nWhenever a creature deals combat damage to you, remove a point counter from this artifact.", ["C"]),
+    [["activated", "mana-generation"], ["activated", "counter-placement"], ["triggered", ""]]);
+  const skull = withTags(rock("Crystal Skull, Isu Spyglass", 2, "You may look at the top card of your library any time.\n{T}: Add {C}.", ["C"]),
+    [["static", "play-from-top"], ["activated", "mana-generation"]]);
+  const stone = withTags(rock("Mind Stone", 2, "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.", ["C"]),
+    [["activated", "mana-generation"], ["activated", ""], ["activated", "draw-card"]]);
+  expect(colourReplacements(deckOf(altar, stadium, skull), "U", 2, { U: 4 })).toEqual([]);
+  expect(colourReplacements(deckOf(altar, stadium, skull, stone), "U", 2, { U: 4 })).toEqual(["Mind Stone"]);
+});
+
+test("a name appears once however many copies of the basic the deck runs", () => {
+  expect(colourReplacements(deckOf(mountain, mountain, mountain, diamond), "U", 2, { U: 4 })).toEqual(["Mountain", "Fire Diamond"]);
+});
+
+test("a land that does something besides make mana, a commander, and a basic of another short colour are never named", () => {
+  const swamp = dc("Swamp", "Basic Land — Swamp", "({T}: Add {B}.)", ["B"]);
+  const spellsB = [...izzetSpells, dc("Doom Blade", "Instant", "", [], [], "{1}{B}")];
+  const out = colourReplacements([...spellsB, bog, swamp, mountain, diamond], "U", 2, { U: 4, B: 2 }, ["Mountain"]);
+  expect(out).toEqual(["Fire Diamond"]);
+});
+
+test("a rock's extra activated ability is an upside (primary use, owner 2026-10-08): Ring of the Lucii and Hedron Archive are both named", () => {
+  const ring = rock("Ring of the Lucii", 3, "{T}: Add {C}{C}.\n{2}, {T}, Pay 1 life: Tap target nonland permanent.", ["C"]);
+  const archive = rock("Hedron Archive", 4, "{T}: Add {C}{C}.\n{2}, {T}, Sacrifice this artifact: Draw two cards.", ["C"]);
+  expect(colourReplacements(deckOf(ring), "U", 2, { U: 4 })).toEqual(["Ring of the Lucii"]);
+  expect(colourReplacements(deckOf(ring, archive), "U", 2, { U: 4 })).toEqual(["Hedron Archive", "Ring of the Lucii"]);
+});
+
+test("among lands of other deck colours, fewer colours made go first: a Mountain before Blood Crypt when green is short", () => {
+  const crypt = dc("Blood Crypt", "Land — Swamp Mountain", "({T}: Add {B} or {R}.)\nAs Blood Crypt enters, you may pay 2 life. If you don't, it enters tapped.", ["B", "R"]);
+  const spellsG = [dc("Cultivate-ish", "Sorcery", "", [], [], "{G}{G}"), dc("Lightning Bolt", "Instant", "", [], [], "{R}"), dc("Doom Blade", "Instant", "", [], [], "{1}{B}")];
+  expect(colourReplacements([...spellsG, crypt, mountain], "G", 2, { G: 4 })).toEqual(["Mountain", "Blood Crypt"]);
+});
+
+test("a rock that lets mana be spent as any colour is every colour and is never named (Chromatic Orrery)", () => {
+  const orrery = rock("Chromatic Orrery", 7, "You may spend mana as though it were mana of any color.\n{T}: Add {C}{C}{C}{C}{C}.\n{5}, {T}: Draw a card for each color among permanents you control.", ["C"]);
+  expect(colourReplacements(deckOf(orrery), "U", 2, { U: 4 })).toEqual([]);
+});
+
+test("among other-colour lands of equal colour count, one that deepens no hidden shortfall goes first: Swamp before Island", () => {
+  const island = dc("Island", "Basic Land — Island", "({T}: Add {U}.)", ["U"]);
+  const swamp = dc("Swamp", "Basic Land — Swamp", "({T}: Add {B}.)", ["B"]);
+  const spellsG = [dc("Cultivate-ish", "Sorcery", "", [], [], "{G}{G}"), dc("Counterspell", "Instant", "", [], [], "{U}"), dc("Doom Blade", "Instant", "", [], [], "{1}{B}")];
+  // U is short but hidden (one pip), so it is in `anyShort` and not in the shown deficit.
+  expect(colourReplacements([...spellsG, island, swamp], "G", 2, { G: 4 }, [], { G: 4, U: 1 })).toEqual(["Swamp", "Island"]);
 });

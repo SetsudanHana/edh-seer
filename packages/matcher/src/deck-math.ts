@@ -3,7 +3,8 @@ import type { DeckMath, Reason } from "@edh-seer/engine";
 import { loadAnswerPool, identityKey, POOL_CLASSES, commanderIdentity } from "./answer-pool.js";
 import { deckAvailability } from "./availability.js";
 import { detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.js";
-import { manaAudit } from "./mana-audit.js";
+import { colourReplacements } from "./land-score.js";
+import { manaAudit, type Color } from "./mana-audit.js";
 import { fetchDemand } from "./fetch-land.js";
 import { recommendedLands, type LandRecommendation } from "./land-count.js";
 import { manaBaseScore } from "./mana-base.js";
@@ -220,7 +221,15 @@ export function computeDeckMath(
       fromCommandZone: r.fromCommandZone,
     }));
 
-  const colors = manaAudit(deck, { commanderNames }).map((r) => ({
+  const audit = manaAudit(deck, { commanderNames });
+  const deficit: Partial<Record<Color, number>> = {};
+  // ONLY THE ROWS THE FINDING SHOWS: a single pip is hidden as "a fault every deck has" (findings.ts), so
+  // it must not rule out the sources that would be traded.
+  for (const r of audit) if (r.worst && r.worst.pips >= 2 && r.worst.required > r.worst.available) deficit[r.color] = r.worst.required - r.worst.available;
+  // EVERY unmet demand, hidden single-pip rows too: ordering only, never exclusion.
+  const anyShort: Partial<Record<Color, number>> = {};
+  for (const r of audit) if (r.worst && r.worst.required > r.worst.available) anyShort[r.color] = r.worst.required - r.worst.available;
+  const colors = audit.map((r) => ({
     color: r.color,
     supplied: r.supplied,
     ...(r.countBound ? { countBound: true } : {}),
@@ -235,6 +244,10 @@ export function computeDeckMath(
           names: r.worst.names.slice(0, 2),
           // The count the shortfall is actually against: sources able to produce by this deadline.
           available: r.worst.available,
+          // THE DECK'S OWN SOURCES TO TRADE FOR IT (#966 T3), only for a shortfall that is real.
+          ...(r.worst.available < r.worst.required
+            ? { replace: colourReplacements(deck, r.color, r.worst.turn, deficit, [...commanderNames], anyShort) }
+            : {}),
         },
       }
       : {}),

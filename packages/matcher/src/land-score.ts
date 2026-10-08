@@ -12,6 +12,7 @@ import { fetchableLands, fetchDemand, fetchedLandEntersTapped, isLandFetch } fro
 import { classifyLand } from "./land-conditions.js";
 import { COLORS, pipsByColor, type Color } from "./mana-audit.js";
 import { rolesOfCard } from "./quality.js";
+import { netPositiveMana, netYield } from "./same-job.js";
 import type { DeckCard } from "./types.js";
 
 /** The same test `mana-base.ts` uses, so a land here is a land there. */
@@ -188,4 +189,76 @@ export function basicsFloor(deck: readonly DeckCard[]): number {
     if (d) floor += d.wants;
   }
   return floor;
+}
+
+/** A PLAIN ROCK: a repeatable tap-for-mana line with no sacrifice in its cost (`netYield` reads one),
+ *  and no triggered or static ability (Strixhaven Stadium, Sarevok's Tome, Crystal Skull): such a
+ *  card's primary job is not mana. CARDS ARE READ BY PRIMARY USE (owner, 2026-10-08): an extra
+ *  ACTIVATED ability is an upside, not the card's job, so Mind Stone's draw and Ring of the Lucii's
+ *  tapper stay nameable. */
+function plainRock(dc: DeckCard): boolean {
+  if (netYield(dc) === null) return false;
+  return (dc.tags?.abilities ?? []).every((a) => a.kind === "activated");
+}
+
+/** THE DECK'S OWN SOURCES MOST WORTH TRADING FOR A COLOUR IT IS SHORT OF (owner rulings, 2026-10-08,
+ *  #966 T3): up to two, worst first, so the report can say which cards to take out and not only that
+ *  the colour is short. The yardstick is the deck-wide colour shortfall (`colourDeficit`), the swaps
+ *  are iterative suggestions, and fast mana is never named for colour.
+ *
+ *  TIERS BY LEAST COLLATERAL LOSS (coordinator, 2026-10-08): 1 makes none of the deck's colours
+ *  (Wastes, Mind Stone: trading costs nothing); 2 is a land that makes `colour` but always enters
+ *  tapped, so it is not online by `turn` (trade it for an untapped one, nothing lost); 3 makes only
+ *  other colours the deck uses (a Mountain in Izzet), fewer deck colours made first (a basic before a dual). A rock is named only as a plain rock
+ *  (`plainRock`) that does not make the colour. Each name appears once. Within a tier lands come first, the always-tapped before the rest (T1's order), then rocks, then by name.
+ *
+ *  NEVER NAMED: a commander; a land that does something besides make mana, or whose mana is
+ *  conditional (T1's uncuttable gate: `utility`); a net-positive rock (`netPositiveMana`, Sol Ring);
+ *  a source that makes a OTHER colour the deck is short of (a basic of it, or a dual), since trading
+ *  it deepens that shortfall. Creatures and one-shot spells are not a mana base's to trade. */
+export function colourReplacements(
+  deck: readonly DeckCard[],
+  colour: Color,
+  turn: number,
+  deficit: Partial<Record<Color, number>>,
+  commanderNames: readonly string[] = [],
+  /** Every colour with ANY unmet demand, hidden single-pip rows included (default: `deficit`'s). Only
+   *  the order reads it: a source that deepens one of these goes after one that does not. */
+  anyShort: Partial<Record<Color, number>> = deficit,
+): string[] {
+  const commanders = new Set(commanderNames);
+  const library = deck.filter((dc) => !commanders.has(dc.card.name)).map((dc) => dc.card);
+  const needed = neededColours(deck);
+  const otherShort = COLORS.filter((c) => c !== colour && (deficit[c] ?? 0) > 0);
+  // CEILING: creature dorks and land-fetch spells (Cultivate) are never named; only lands and artifact
+  // rocks are, so a deck whose only spare mana is a dork gets no name for it.
+  // CEILING: a conditionally-tapped land (tapped===1: check, slow, fast) is never named, though the
+  // audit can count it as not available on an early turn.
+  const ranked: { name: string; tier: 1 | 2 | 3; land: boolean; tapped: Tapped; colours: number; hidden: number }[] = [];
+  for (const dc of deck) {
+    if (commanders.has(dc.card.name)) continue;
+    if (isLand(dc)) {
+      const f = landFacts(dc, needed, library);
+      if (!f.front || f.utility.length > 0 || f.colours.some((c) => otherShort.includes(c))) continue;
+      if (f.colours.length === 0 && (dc.card.producedMana ?? []).length === 0) continue;
+      const makes = f.colours.includes(colour);
+      if (makes && f.tapped < 2) continue;
+      ranked.push({ name: f.name, tier: f.colours.length === 0 ? 1 : makes ? 2 : 3, land: true, tapped: f.tapped, colours: f.colours.length, hidden: f.colours.filter((c) => (anyShort[c] ?? 0) > 0).length });
+    } else {
+      const made = (dc.card.producedMana ?? []) as readonly string[];
+      // MANA SPENT "AS THOUGH IT WERE MANA OF ANY COLOR" (Chromatic Orrery) is not derived and is every
+      // colour: refused like Arcane Signet.
+      if (/as though it were mana of any colou?r/i.test(dc.card.oracleText ?? "")) continue;
+      if (!/\bartifact\b/i.test(dc.card.typeLine) || /\bcreature\b/i.test(dc.card.typeLine) || made.length === 0) continue;
+      // A ROCK THAT MAKES THE COLOUR IS NEVER NAMED, and only a PLAIN rock is (coordinator, 2026-10-08):
+      // trading ramp that makes the colour for a land is not a colour fix, and an artifact that does
+      // something else is a utility card.
+      if (made.includes(colour) || !plainRock(dc) || netPositiveMana(dc) || made.some((c) => otherShort.includes(c as Color))) continue;
+      ranked.push({ name: dc.card.name, tier: made.some((c) => needed.has(c as Color)) ? 3 : 1, land: false, tapped: 0, colours: made.filter((c) => needed.has(c as Color)).length, hidden: made.filter((c) => (anyShort[c as Color] ?? 0) > 0).length });
+    }
+  }
+  const seen = new Set<string>();
+  return ranked
+    .sort((a, b) => a.tier - b.tier || (a.tier === 3 ? a.colours - b.colours || a.hidden - b.hidden : 0) || Number(b.land) - Number(a.land) || b.tapped - a.tapped || a.name.localeCompare(b.name))
+    .map((r) => r.name).filter((n) => !seen.has(n) && seen.add(n)).slice(0, 2);
 }

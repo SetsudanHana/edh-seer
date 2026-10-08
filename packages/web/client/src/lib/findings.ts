@@ -263,7 +263,7 @@ function colourFindings(report: DeckReport): Finding[] {
       detail: `Only ${worst.available} of your ${c.supplied} ${colour} sources can tap for mana by then`
         + " (tapped lands, and rocks you couldn't have cast yet, don't count)."
         + ` Casting it on curve nine games in ten takes ${worst.required}.${timing}`,
-      action: "Delay or cut the early double pip, or trade a tapped source for one that enters untapped.",
+      action: tradeAction(worst.replace ?? [], colour, worst.turn),
       // NO SLASH (#1033), the same words as the Manabase tile: "30/37" read as 30 of 37 lands.
       figure: `${worst.available} of ${worst.required}`,
       figureLabel: `${colour} sources by turn ${worst.turn}`,
@@ -272,6 +272,13 @@ function colourFindings(report: DeckReport): Finding[] {
     });
   }
   return out;
+}
+
+/** THE ACTION FOR A COLOUR SHORTFALL (#966 T3): when the matcher found the deck's own sources worth
+ *  trading, name them; otherwise the general advice, which still holds. */
+function tradeAction(replace: readonly string[], colour: string, turn: number): string {
+  if (replace.length === 0) return "Delay or cut the early double pip, or trade a tapped source for one that enters untapped.";
+  return `Trade ${replace.join(" or ")} for a ${colour} source that taps for mana by turn ${turn}.`;
 }
 
 /** THE CARDS A COLOUR DEMAND IS ABOUT, AS A SENTENCE SUBJECT. Every name the wire carries (it sends
