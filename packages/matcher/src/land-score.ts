@@ -11,7 +11,6 @@ import type { Card } from "@edh-seer/engine";
 import { fetchableLands, fetchDemand, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
 import { classifyLand } from "./land-conditions.js";
 import { COLORS, pipsByColor, type Color } from "./mana-audit.js";
-import { castableManaCost } from "./split-cost.js";
 import { rolesOfCard } from "./quality.js";
 import type { DeckCard } from "./types.js";
 
@@ -104,28 +103,6 @@ export function neededColours(deck: readonly DeckCard[]): Set<Color> {
     for (const c of COLORS) if ((pips[c] ?? 0) > 0) out.add(c);
   }
   return out;
-}
-
-/** THE DECK'S COLOUR DEMAND: coloured pips per colour over every nonland card's mana cost,
- *  commanders included. Computed once per deck; `demandCoverage` reads it. */
-export function pipDemand(deck: readonly DeckCard[]): Partial<Record<Color, number>> {
-  const out: Partial<Record<Color, number>> = {};
-  for (const dc of deck) {
-    if (isLand(dc)) continue;
-    const pips = pipsByColor(castableManaCost(dc.card));
-    for (const c of COLORS) if (pips[c]) out[c] = (out[c] ?? 0) + pips[c]!;
-  }
-  return out;
-}
-
-/** HOW MUCH OF THE DECK'S COLOUR DEMAND A SOURCE COVERS (owner, 2026-10-08): the sum, over the
- *  colours it makes, of that colour's share of the deck's total coloured pip demand. 1 makes every
- *  colour the deck asks for in proportion; a colourless-only source (or a deck with no pips) is 0.
- *  Lands judge their cuts by it; rocks and dorks reuse it. */
-export function demandCoverage(colours: readonly string[], demand: Partial<Record<Color, number>>): number {
-  const total = COLORS.reduce((n, c) => n + (demand[c] ?? 0), 0);
-  if (total === 0) return 0;
-  return COLORS.filter((c) => colours.includes(c)).reduce((n, c) => n + (demand[c] ?? 0), 0) / total;
 }
 
 export function landFacts(dc: DeckCard, needed: ReadonlySet<Color>, library: readonly Card[]): LandFacts {

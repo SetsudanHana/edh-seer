@@ -60,3 +60,9 @@ test("a colour swap says which colour the deck is short of, on both sides", () =
   expect(r.out).toBe("Fire Diamond doesn't make blue, which the deck is short of for its spells.");
   expect(roleReasons("A", roleOpt("B", { role: "ramp", gained: [], colour: ["U", "R"] })).in).toContain("makes blue and red, which");
 });
+
+test("a colour swap that gives up a role says so, on both sides", () => {
+  const r = roleReasons("Mind Stone", roleOpt("Izzet Signet", { role: "ramp", gained: [], colour: ["U"], lost: ["draw"] }));
+  expect(r.out).toBe("Mind Stone also does card draw, and doesn't make blue, which the deck is short of for its spells.");
+  expect(r.in).toBe("Izzet Signet is the same ramp and makes blue, which the deck is short of for its spells, but does not do card draw.");
+});

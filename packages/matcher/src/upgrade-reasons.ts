@@ -81,7 +81,12 @@ function shortfalls(o: RoleOption, addName: string): string[] {
 const shortWords = (o: RoleOption) => `${colourWords(o.colour ?? []).replace(" or ", " and ")}, which the deck is short of for its spells`;
 
 export function roleReasons(cutName: string, o: RoleOption): { out: string; in: string } {
-  if (o.colour?.length) return { out: fit(`${cutName} doesn't make `, [shortWords(o)]), in: fit(`${o.add} is the same ${JOB[o.role]} and makes `, [shortWords(o)]) };
+  if (o.colour?.length) {
+    const lost = list((o.lost ?? []).map((r) => JOB[r]));
+    return o.lost?.length
+      ? { out: fit(`${cutName} also does ${lost}, and doesn't make `, [shortWords(o)]), in: fit(`${o.add} is the same ${JOB[o.role]} and makes `, [shortWords(o)], `, but does not do ${lost}.`) }
+      : { out: fit(`${cutName} doesn't make `, [shortWords(o)]), in: fit(`${o.add} is the same ${JOB[o.role]} and makes `, [shortWords(o)]) };
+  }
   return {
     out: fit(`${cutName} `, shortfalls(o, o.add)),
     in: fit(`${o.add} is the same ${JOB[o.role]} `, gains(o)),

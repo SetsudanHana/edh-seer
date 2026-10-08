@@ -90,6 +90,8 @@ export interface RoleOption {
   upgrade?: "game-changer";
   /** A COLOUR SWAP (#966): the colours the deck is short of that the add makes and the cut does not. */
   colour?: Color[];
+  /** Roles the cut fills that the add does not (Mind Stone's draw): a colour swap says what it gives up. */
+  lost?: Role[];
 }
 export interface LandOption { add: string; cut: LandFacts; addFacts: LandFacts; untapped: boolean; colours: string[]; gameChanger: boolean }
 export interface CutOptions<O> { cut: string; options: O[] }
@@ -128,8 +130,10 @@ export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Rec
   const made = MADE_COLOURS(add.dc);
   if (!had.every((c) => made.includes(c))) return null;
   const colour = made.filter((c) => !had.includes(c) && (deficit[c] ?? 0) > 0);
-  if (colour.length === 0 || !sameRockAnyColour(cut, add.dc)) return null;
-  return { add: add.dc.card.name, role: "ramp", gained: [], cut: ingredients(cut, "ramp"), addIngredients: ingredients(add.dc, "ramp"), gameChanger: add.dc.card.gameChanger === true, links: add.links, colour };
+  // NO DEARER THAN THE CUT: `roleOption` gets this from `strictlyBetter`, a colour swap has to ask.
+  if (colour.length === 0 || (add.dc.card.manaValue ?? 0) > (cut.card.manaValue ?? 0) || !sameRockAnyColour(cut, add.dc)) return null;
+  const lost = rolesOfCard(cut).filter((r) => !add.roles.includes(r));
+  return { add: add.dc.card.name, role: "ramp", gained: [], cut: ingredients(cut, "ramp"), addIngredients: ingredients(add.dc, "ramp"), gameChanger: add.dc.card.gameChanger === true, links: add.links, colour, ...(lost.length ? { lost } : {}) };
 }
 const closedBy = (o: RoleOption, deficit: Partial<Record<Color, number>>) => (o.colour ?? []).reduce((n, c) => n + (deficit[c] ?? 0), 0);
 

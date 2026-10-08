@@ -224,6 +224,13 @@ describe("a rock that makes a colour the deck is short of (coverage swap)", () =
 
   test("Mind Stone to a Signet that makes the short colours; its draw does not protect it", () => {
     expect(ramp(rock("Mind Stone"), [rock("Izzet Signet")], { U: 4, R: 2 })).toEqual([["Mind Stone", [["Izzet Signet", ["U", "R"], []]]]]);
+    expect(roleOptions("ramp", [rock("Mind Stone")], [candidate(rock("Izzet Signet"))], undefined, { U: 4 })[0]!.options[0]!.lost).toEqual(["draw"]);
+  });
+
+  test("a dearer rock is never offered for a colour: a Talisman at mana value 6 does not replace Fire Diamond", () => {
+    const tal = rock("Talisman of Creativity");
+    const dear = { ...tal, card: { ...tal.card, name: "Costly Talisman", manaValue: 6 } } as unknown as DeckCard;
+    expect(ramp(rock("Fire Diamond"), [dear], { U: 4 })).toEqual([]);
   });
 
   test("a rock that produces more mana than it costs is never cut for colour", () => {

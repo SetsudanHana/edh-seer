@@ -307,7 +307,8 @@ export function netPositiveMana(d: DeckCard): boolean {
  *  needs the rest of the job alike and the colours free: both are rocks of one shape, the add does
  *  whatever else the cut does (its mana line aside), prints no drawback or condition the cut lacks bar
  *  damage to its own controller, and yields at least as much as printed. The cut's own upside (Mind
- *  Stone's draw) is not kept: an extra ability does not protect a source.
+ *  Stone's draw) is not kept, by owner ruling (2026-10-08, #966): a minor extra ability does not
+ *  protect a source; only net-positive fast mana does (`netPositiveMana`). The reason names what is lost.
  *  CEILING: creatures (dorks) are out, as for `sameJob`: a body does other work no measure reads. */
 export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
   if (isCreature(cut) || isCreature(add)) return false;

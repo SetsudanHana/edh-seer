@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
-import { basicsFloor, betterLand, demandCoverage, landFacts, neededColours, pipDemand } from "./land-score.js";
+import { basicsFloor, betterLand, landFacts, neededColours } from "./land-score.js";
 import type { DeckCard } from "./types.js";
 
 const dc = (name: string, typeLine: string, oracleText: string, producedMana: string[] = [], kinds: string[] = [], manaCost?: string): DeckCard => ({
@@ -74,20 +74,4 @@ test("the basics floor is what the deck's own cards search for", () => {
   const wilds = dc("Evolving Wilds", "Land", "{T}, Sacrifice Evolving Wilds: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.");
   expect(basicsFloor([landscape, wilds, plains, shrine])).toBe(3);
   expect(basicsFloor([shrine, plains])).toBe(0);
-});
-
-test("demand coverage: the share of the deck's coloured pip demand a source's colours make (Izzet, U 10 / R 30)", () => {
-  const izzet = [dc("Blue", "Creature", "", [], [], "{U}".repeat(10)), dc("Red", "Creature", "", [], [], "{R}".repeat(30))];
-  const demand = pipDemand(izzet);
-  expect(demand).toEqual({ U: 10, R: 30 });
-  expect(demandCoverage(["U", "R"], demand)).toBe(1);
-  expect(demandCoverage(["R"], demand)).toBe(0.75);
-  expect(demandCoverage(["U"], demand)).toBe(0.25);
-  expect(demandCoverage([], demand)).toBe(0);
-  expect(demandCoverage(["R"], {})).toBe(0);
-  // A land is not demand.
-  expect(pipDemand([...izzet, dc("Steam Vents", "Land", "", ["U", "R"], [], "{U}{R}")])).toEqual({ U: 10, R: 30 });
-  // A split card prints a joined cost; only the castable half is demand (as manaAudit reads it).
-  const split = dc("Dusk // Dawn", "Sorcery // Sorcery", "", [], [], "{2}{W}{W} // {3}{W}{W}");
-  expect(pipDemand([split])).toEqual({ W: 2 });
 });
