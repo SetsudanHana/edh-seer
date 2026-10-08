@@ -2867,11 +2867,11 @@ test("a card that exiles what would hit an opponent's graveyard AND plays it is 
   const { abilities } = deriveAbilities([], "Valgavoth, Terror Eater", {}, undefined, valgavoth);
   expect(abilities).toContainEqual({
     kind: "static", repeats: "continuous",
-    effect: { kind: "graveyard-recursion", subject: { control: "opp", token: null, zone: "graveyard" } },
+    effect: { kind: "graveyard-recursion", subject: { control: "opp", token: null, zone: "graveyard" }, intercepted: true },
   });
   // Dauthi Voidwalker plays ONE such card, via its own sacrifice; still a payoff over their fills.
   const dauthi = "Shadow\nIf a card would be put into an opponent's graveyard from anywhere, instead exile it with a void counter on it.\n{T}, Sacrifice this creature: Choose an exiled card an opponent owns with a void counter on it. You may play it this turn without paying its mana cost.";
-  expect(deriveAbilities([], "Dauthi Voidwalker", {}, undefined, dauthi).abilities.some((a) => a.effect.kind === "graveyard-recursion")).toBe(true);
+  expect(deriveAbilities([], "Dauthi Voidwalker", {}, undefined, dauthi).abilities.find((a) => a.effect.kind === "graveyard-recursion")?.effect.intercepted).toBe(true);
   // Leyline of the Void exiles and plays nothing: hate, not a payoff.
   const leyline = "If Leyline of the Void is in your opening hand, you may begin the game with it on the battlefield.\nIf a card would be put into an opponent's graveyard from anywhere, exile it instead.";
   expect(deriveAbilities([], "Leyline of the Void", {}, undefined, leyline).abilities).toEqual([]);

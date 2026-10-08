@@ -2260,6 +2260,7 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
         tag,
         text: graveyardEnablesRecursion(p.card.name, c.card.name, {
           producerItself: e.subject.self === true, returnsItself: a.effect.subject.self === true,
+          intercepted: a.effect.intercepted === true,
         }),
         effectKind: a.effect.kind,
         repeatability,

@@ -175,6 +175,14 @@ describe("graveyardEnablesRecursion — the reanimator-consumer relation", () =>
   });
 });
 
+describe("graveyardEnablesRecursion — an intercepted fill (#1083)", () => {
+  test("the card never reaches the graveyard, so nothing is brought back", () => {
+    const s = graveyardEnablesRecursion("Shelob, Dread Weaver", "Dauthi Voidwalker", { producerItself: false, returnsItself: false, intercepted: true });
+    expect(s).toBe("Cards Shelob, Dread Weaver would put into an opponent's graveyard are exiled by Dauthi Voidwalker instead, and it can play from among them");
+    expect(s).not.toContain("bring back");
+  });
+});
+
 describe("graveyardFeedsScaling — the per-graveyard payoff relation", () => {
   test("cause first, both cards named", () => {
     expect(graveyardFeedsScaling("Ruin Crab", "Bonehoard", false)).toBe(

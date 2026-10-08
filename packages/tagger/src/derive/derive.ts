@@ -401,7 +401,9 @@ import { emblemRecipient } from "../emblem.js";
 // keeps its trigger as an opponent's, where any other Aura's still refuses as a narrowing (Maddening Hex).
 // 286: #1079, a speed grant (haste, double strike) records its keywords in `grants`, as a keyword grant
 // does, so Chocobo Knights' double strike stops reading "grants haste".
-export const DERIVE_VERSION = 286;
+// 287: #1083, the synthesized opponent-graveyard recursion (Dauthi Voidwalker, Valgavoth) carries
+// `intercepted`, so its reason stops saying the card is brought back from a graveyard it never reached.
+export const DERIVE_VERSION = 287;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2706,7 +2708,7 @@ export function deriveAbilities(
   if (OPP_GRAVEYARD_TAKER.test(cardText) && PLAYS_WHAT_IT_EXILED.test(cardText)) {
     abilities.push({
       kind: "static", repeats: "continuous",
-      effect: { kind: "graveyard-recursion", subject: { control: "opp", token: null, zone: "graveyard" } },
+      effect: { kind: "graveyard-recursion", subject: { control: "opp", token: null, zone: "graveyard" }, intercepted: true },
     });
   }
   // "THIS CREATURE ENTERS PREPARED" IS ITS OWN ENTRY PREPARING IT (CR 722.3a; owner ruling 2026-09-27:
