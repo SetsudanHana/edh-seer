@@ -26,6 +26,36 @@ export const SOURCE_CONFIDENCE = 0.9;
 /** The five basic land types, lowercased, as `classifyLand` reports them in `subtypes`. */
 const EMPTY_TYPES: ReadonlySet<string> = new Set<string>();
 
+/** THE BASIC LAND TYPES THE DECK'S OWN LANDS CARRY, lowercased to match `classifyLand`'s subtypes. A
+ *  check land ("unless you control a Mountain") is satisfiable only if the deck runs something with
+ *  that type at all, so this is the ceiling on the optimistic board below. */
+export function deckBasicTypes(library: readonly DeckCard[]): Set<string> {
+  const out = new Set<string>();
+  for (const dc of library) {
+    if (!/\bland\b/i.test(dc.card.typeLine)) continue;
+    for (const t of BASIC_LAND_TYPES) if (dc.card.typeLine.toLowerCase().includes(t)) out.add(t);
+  }
+  return out;
+}
+
+/** WOULD THE AUDIT COUNT THIS LAND AS TAPPING FOR MANA ON TURN `turn`? The one test `manaAudit`'s
+ *  availability uses, on its optimistic board (every earlier land drop was the one a condition
+ *  wanted; empty on turn 1), exported so naming a land to trade and counting it as a source can never
+ *  disagree. A fetch's own land arrives on the same clock. */
+export function landOnlineBy(dc: DeckCard, turn: number, basicTypes: ReadonlySet<string>): boolean {
+  const board = {
+    lands: turn - 1,
+    basics: turn - 1,
+    types: turn > 1 ? basicTypes : EMPTY_TYPES,
+    opponents: 3,
+  };
+  if (entersTapped(classifyLand(dc.card), board)) return false;
+  // WHAT IS STANDING THERE IS THE FETCHED LAND, and `classifyLand` cannot see it: Evolving Wilds
+  // enters untapped and the basic it finds does not. Same board the simulator reads.
+  const text = dc.card.oracleText ?? "";
+  return !isLandFetch(text) || !fetchedLandEntersTapped(text, board.lands);
+}
+
 const produces = (card: { producedMana?: readonly string[] }, color: Color | "C"): boolean =>
   (card.producedMana ?? []).includes(color);
 
@@ -163,14 +193,7 @@ export function manaAudit(
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const libraryCards = library.map((dc) => dc.card);
 
-  // The basic land types the deck's own lands carry, lowercased to match `classifyLand`'s subtypes.
-  // A check land ("unless you control a Mountain") is satisfiable only if the deck runs something
-  // with that type at all, so this is the ceiling on the optimistic board below.
-  const deckBasicTypes = new Set<string>();
-  for (const dc of library) {
-    if (!/\bland\b/i.test(dc.card.typeLine)) continue;
-    for (const t of BASIC_LAND_TYPES) if (dc.card.typeLine.toLowerCase().includes(t)) deckBasicTypes.add(t);
-  }
+  const basicTypes = deckBasicTypes(library);
 
   const coloredSources = (color: Color): DeckCard[] => {
     // A FETCHLAND PRODUCES THE COLOUR IT FINDS. `producedMana` is empty on a real fetch and that is
@@ -219,28 +242,12 @@ export function manaAudit(
     return (turn: number): number => {
       const hit = availableAt.get(turn);
       if (hit !== undefined) return hit;
-      // The lands already down when the turn-N drop is made. Empty on turn 1, which is what makes a
-      // slow land tapped exactly then.
-      const board = {
-        lands: turn - 1,
-        basics: turn - 1,
-        types: turn > 1 ? deckBasicTypes : EMPTY_TYPES,
-        opponents: 3,
-      };
       const n = sources.filter((dc) => {
-        const text = dc.card.oracleText ?? "";
-        const isLand = /\bland\b/i.test(dc.card.typeLine);
         // A rock cast on turn M taps for mana from turn M+1: you spent the turn's mana casting it.
-        // A land-fetch SPELL is on that clock too -- Cultivate on turn 3 pays from turn 4.
-        if (!(isLand ? !entersTapped(classifyLand(dc.card), board) : dc.card.manaValue < turn)) return false;
-        // WHAT IS STANDING THERE IS THE FETCHED LAND, and `classifyLand` cannot see it: Evolving
-        // Wilds enters untapped and the basic it finds does not. Same board the simulator reads.
-        //
-        // ASKED OF A LAND ONLY, because a SPELL's fetch is already on the rock clock above: Cultivate
-        // cast on turn 3 puts its Forest down tapped that turn and taps for mana on turn 4, which is
-        // exactly what `manaValue < turn` says. Charging it for the tapped arrival as well made it a
-        // source on no turn at all.
-        return !isLand || !isLandFetch(text) || !fetchedLandEntersTapped(text, board.lands);
+        // A land-fetch SPELL is on that clock too -- Cultivate on turn 3 pays from turn 4. A land is
+        // asked `landOnlineBy`; a SPELL's fetch is already on the rock clock, and charging it for the
+        // tapped arrival as well made it a source on no turn at all.
+        return /\bland\b/i.test(dc.card.typeLine) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
       }).length;
       availableAt.set(turn, n);
       return n;
