@@ -17,7 +17,8 @@
  *  A swap this refuses is a swap a player can still find; a swap it lets through is on the page. */
 import { normalizeName } from "@edh-seer/data/names";
 import type { BuildCategory } from "./build.js";
-import { basicsFloor, betterLand, landFacts, neededColours, unusualText, type LandFacts } from "./land-score.js";
+import { basicsFloor, betterLand, demandCoverage, landFacts, neededColours, pipDemand, unusualText, type LandFacts } from "./land-score.js";
+import type { Color } from "./mana-audit.js";
 import { ingredients, rolesOfCard, type Ingredient, type Ingredients, type Role } from "./quality.js";
 import type { StaticLookup } from "./static-lookup.js";
 import { candidatePool, type IndexCard } from "./suggest.js";
@@ -185,7 +186,8 @@ export function replacements(cut: DeckCard, pool: readonly Candidate[]): Replace
  *  name. A basic is offered for cutting only while the deck keeps more basics than its own cards
  *  search for; a basic is never added, so no swap asks for a second copy of anything. Nonbasic cuts
  *  rank before basics, and one basic stands for them all. */
-export function landOptions(deckLands: readonly LandCandidate[], candidates: readonly LandCandidate[], basicsFloor: number): CutOptions<LandOption>[] {
+export function landOptions(deckLands: readonly LandCandidate[], candidates: readonly LandCandidate[], basicsFloor: number,
+  demand: Partial<Record<Color, number>> = {}): CutOptions<LandOption>[] {
   const basics = deckLands.filter((l) => l.facts.basic).length;
   const out: CutOptions<LandOption>[] = [];
   const seen = new Set<string>();
@@ -210,7 +212,13 @@ export function landOptions(deckLands: readonly LandCandidate[], candidates: rea
     options.sort(byLand);
     out.push({ cut: x.facts.name, options });
   }
-  return out.sort((a, b) => Number(a.options[0]!.cut.basic) - Number(b.options[0]!.cut.basic) || byLand(a.options[0]!, b.options[0]!) || a.cut.localeCompare(b.cut));
+  // WORST CUT FIRST (owner, 2026-10-08, #966): nonbasics before basics as before, then always tapped
+  // before sometimes before never, then the land covering less of the deck's colour demand, then the
+  // old order (best add) so nothing that does not differ moves.
+  const cover = (c: CutOptions<LandOption>) => demandCoverage(c.options[0]!.cut.colours, demand);
+  return out.sort((a, b) => Number(a.options[0]!.cut.basic) - Number(b.options[0]!.cut.basic)
+    || b.options[0]!.cut.tapped - a.options[0]!.cut.tapped || cover(a) - cover(b)
+    || byLand(a.options[0]!, b.options[0]!) || a.cut.localeCompare(b.cut));
 }
 function byLand(a: LandOption, b: LandOption): number {
   return a.addFacts.tapped - b.addFacts.tapped || b.colours.length - a.colours.length || a.add.localeCompare(b.add);
@@ -316,5 +324,5 @@ export async function upgradeOptions(input: {
     const dc = await dcOf(c.name);
     if (dc && /\bland\b/i.test(dc.card.typeLine)) landCandidates.push({ facts: landFacts(dc, needed, library), dc, gameChanger: dc.card.gameChanger === true });
   }
-  return { roles, lands: landOptions(deckLands, landCandidates, basicsFloor(deck)), replacements: replaced };
+  return { roles, lands: landOptions(deckLands, landCandidates, basicsFloor(deck), pipDemand(deck)), replacements: replaced };
 }
