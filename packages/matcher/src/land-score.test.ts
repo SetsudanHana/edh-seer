@@ -133,15 +133,28 @@ test("a land that does something besides make mana, a commander, and a basic of 
   expect(out).toEqual(["Fire Diamond"]);
 });
 
-test("a rock with a targeting ability is a tapper, not a plain rock: Ring of the Lucii is refused, Hedron Archive is named", () => {
+test("a rock's extra activated ability is an upside (primary use, owner 2026-10-08): Ring of the Lucii and Hedron Archive are both named", () => {
   const ring = rock("Ring of the Lucii", 3, "{T}: Add {C}{C}.\n{2}, {T}, Pay 1 life: Tap target nonland permanent.", ["C"]);
   const archive = rock("Hedron Archive", 4, "{T}: Add {C}{C}.\n{2}, {T}, Sacrifice this artifact: Draw two cards.", ["C"]);
-  expect(colourReplacements(deckOf(ring), "U", 2, { U: 4 })).toEqual([]);
-  expect(colourReplacements(deckOf(ring, archive), "U", 2, { U: 4 })).toEqual(["Hedron Archive"]);
+  expect(colourReplacements(deckOf(ring), "U", 2, { U: 4 })).toEqual(["Ring of the Lucii"]);
+  expect(colourReplacements(deckOf(ring, archive), "U", 2, { U: 4 })).toEqual(["Hedron Archive", "Ring of the Lucii"]);
 });
 
 test("among lands of other deck colours, fewer colours made go first: a Mountain before Blood Crypt when green is short", () => {
   const crypt = dc("Blood Crypt", "Land — Swamp Mountain", "({T}: Add {B} or {R}.)\nAs Blood Crypt enters, you may pay 2 life. If you don't, it enters tapped.", ["B", "R"]);
   const spellsG = [dc("Cultivate-ish", "Sorcery", "", [], [], "{G}{G}"), dc("Lightning Bolt", "Instant", "", [], [], "{R}"), dc("Doom Blade", "Instant", "", [], [], "{1}{B}")];
   expect(colourReplacements([...spellsG, crypt, mountain], "G", 2, { G: 4 })).toEqual(["Mountain", "Blood Crypt"]);
+});
+
+test("a rock that lets mana be spent as any colour is every colour and is never named (Chromatic Orrery)", () => {
+  const orrery = rock("Chromatic Orrery", 7, "You may spend mana as though it were mana of any color.\n{T}: Add {C}{C}{C}{C}{C}.\n{5}, {T}: Draw a card for each color among permanents you control.", ["C"]);
+  expect(colourReplacements(deckOf(orrery), "U", 2, { U: 4 })).toEqual([]);
+});
+
+test("among other-colour lands of equal colour count, one that deepens no hidden shortfall goes first: Swamp before Island", () => {
+  const island = dc("Island", "Basic Land — Island", "({T}: Add {U}.)", ["U"]);
+  const swamp = dc("Swamp", "Basic Land — Swamp", "({T}: Add {B}.)", ["B"]);
+  const spellsG = [dc("Cultivate-ish", "Sorcery", "", [], [], "{G}{G}"), dc("Counterspell", "Instant", "", [], [], "{U}"), dc("Doom Blade", "Instant", "", [], [], "{1}{B}")];
+  // U is short but hidden (one pip), so it is in `anyShort` and not in the shown deficit.
+  expect(colourReplacements([...spellsG, island, swamp], "G", 2, { G: 4 }, [], { G: 4, U: 1 })).toEqual(["Swamp", "Island"]);
 });
