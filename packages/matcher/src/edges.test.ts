@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
+import { pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import { fixtureDeckCard } from "./fixture-cards.js";
@@ -6213,6 +6213,11 @@ describe("a mana rock's own entry is not a theme (#966)", () => {
   });
   test("an Aura/enchantment with a mana ability keeps enters:enchantment (Cryptolith Rite)", () => {
     expect(cardThemeTags(mk(["enchantment"], [manaAbility])).has("enters:enchantment")).toBe(true);
+  });
+  test("a rock still SUPPLIES enters:artifact (Akal Pakal's condition) though it does not theme it", () => {
+    const signet = mk(["artifact"], [manaAbility]);
+    expect(cardThemeTags(signet).has("enters:artifact")).toBe(false);
+    expect(cardSupplyTags(signet).has("enters:artifact")).toBe(true);
   });
   test("a mana dork keeps its tribe entry", () => {
     expect(cardThemeTags(mk(["creature"], [manaAbility], ["elf", "druid"])).has("enters:elf")).toBe(true);
