@@ -66,10 +66,10 @@ const printed = (d: DeckCard) => (d.card.oracleText ?? "").replace(REMINDER, "")
 /** `triggers` false when the caller reads triggers itself (the group key does, from the grammar):
  *  printed, an upside's trigger (Mana Drain's "at the beginning of your next main phase") reads as a
  *  condition. */
-export function newConditions(cut: DeckCard, add: DeckCard, triggers_ = true): boolean {
+export function newConditions(cut: DeckCard, add: DeckCard, triggers_ = true, tolerated: readonly string[] = []): boolean {
   const a = printed(add);
   const c = printed(cut);
-  if (CONDITIONS.some((re) => re.test(a) && !re.test(c))) return true;
+  if (CONDITIONS.some((re) => !tolerated.includes(re.source) && re.test(a) && !re.test(c))) return true;
   if (REACH.some((re) => re.test(c) && !re.test(a))) return true;
   const cutStats = new Set(c.match(STAT_CLAUSE) ?? []);
   if ((a.match(STAT_CLAUSE) ?? []).some((x) => !cutStats.has(x))) return true;
@@ -167,7 +167,7 @@ const GIVES_BACK_ROLES: ReadonlySet<Role> = new Set(["targetedRemoval", "boardWi
  *  carry no drawback the cut does not. */
 const DRAWBACK = new Set(["lose-life", "sacrifice", "discard", "cant", "tap", "deal-damage"]);
 
-interface Job { key: string; head: string; parts: Set<string>; drawbacks: Set<string>; upsides: Set<string>; all: Set<string> }
+interface Job { key: string; head: string; kind: string; parts: Set<string>; drawbacks: Set<string>; upsides: Set<string>; all: Set<string> }
 /** ONE READING PER CARD AND ROLE: swap search asks about the same cards hundreds of times, and each
  *  reading runs the grammar over the printed text. Keyed on the DeckCard object, so a rebuilt card
  *  (a new analysis) is read afresh and nothing outlives it. */
@@ -233,7 +233,8 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
   if (job.length === 0) return null;
   const ramp = role === "ramp" ? [rampKind(d), [...(d.card.producedMana ?? [])].sort().join("")] : [];
   const head = JSON.stringify([role, delivery(d), ...ramp]);
-  return { key: JSON.stringify([role, delivery(d), ...ramp, [...new Set(job)].sort()]), head, parts: new Set(job), drawbacks, upsides, all };
+  const kind = JSON.stringify([role, delivery(d), ...ramp.slice(0, 1)]);
+  return { key: JSON.stringify([role, delivery(d), ...ramp, [...new Set(job)].sort()]), head, kind, parts: new Set(job), drawbacks, upsides, all };
 }
 
 /** The words of an object with its numbers taken out: "all nonartifact creatures" keeps "nonartifact"
@@ -286,6 +287,42 @@ export function sameJob(cut: DeckCard, add: DeckCard, role: Role): boolean {
   // AND THE CUT'S UPSIDE IS KEPT: "same with upside" is the add having more, never the cut. Explore's
   // extra land is half the card, and Artifist Acumen's first strike does not replace it.
   return [...a.drawbacks].every((x) => c.drawbacks.has(x)) && [...c.upsides].every((x) => a.all.has(x)) && !newConditions(cut, add, false);
+}
+
+/** DAMAGE TO YOURSELF is the price of a Talisman's coloured mana, and "life is a resource" (owner,
+ *  2026-10-08): on the add of a colour swap it blocks nothing. These are the two conditions that
+ *  read it, so `newConditions` is told to let them by. */
+const SELF_DAMAGE = [/\bdamage to you\b/.source, /\bdeals? (?:\d+|x) damage\b/.source];
+const damagesOthers = (t: string) => /\bdeals? (?:\d+|x) damage to (?!you\b)/.test(t);
+
+/** A ROCK THAT PRINTS MORE MANA THAN IT COSTS (Sol Ring, Mana Vault, Mana Crypt, Grim Monolith: owner
+ *  2026-10-08): the printed yield is above the mana value. Never cut for the sake of a colour. */
+export function netPositiveMana(d: DeckCard): boolean {
+  const y = yieldOf(d, "ramp");
+  return typeof y === "number" && y > (d.card.manaValue ?? 0);
+}
+
+/** THE SAME ROCK, ANY COLOURS (owner 2026-10-08, #966): `sameJob`'s ramp head holds the exact colour set
+ *  and its parts hold the mana words, so no two rocks of different colours ever pass it. A colour swap
+ *  needs the rest of the job alike and the colours free: both are rocks of one shape, the add does
+ *  whatever else the cut does (its mana line aside), prints no drawback or condition the cut lacks bar
+ *  damage to its own controller, and yields at least as much as printed. The cut's own upside (Mind
+ *  Stone's draw) is not kept: an extra ability does not protect a source.
+ *  CEILING: creatures (dorks) are out, as for `sameJob`: a body does other work no measure reads. */
+export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
+  if (isCreature(cut) || isCreature(add)) return false;
+  const c = readJob(cut, "ramp");
+  const a = readJob(add, "ramp");
+  if (!c || !a || c.kind !== a.kind || rampKind(cut) !== "rock") return false;
+  const isMana = (x: string) => x.startsWith('["add-mana"');
+  if (![...c.parts].filter((x) => !isMana(x)).every((x) => a.parts.has(x))) return false;
+  if (![...a.parts].some(isMana)) return false;
+  const selfDamage = (x: string) => x.startsWith('["deal-damage"') && !damagesOthers(printed(add));
+  if (![...a.drawbacks].every((x) => c.drawbacks.has(x) || selfDamage(x))) return false;
+  if (newConditions(cut, add, false, damagesOthers(printed(add)) ? [] : SELF_DAMAGE)) return false;
+  const cy = yieldOf(cut, "ramp");
+  const ay = yieldOf(add, "ramp");
+  return typeof cy === "number" && typeof ay === "number" && ay >= cy;
 }
 
 /** THE OLD TEST, KEPT ONLY FOR THE BEFORE NUMBER while S-T2 is measured; not called by the product. */

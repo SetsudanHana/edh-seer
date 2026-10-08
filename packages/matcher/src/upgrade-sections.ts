@@ -17,15 +17,15 @@
  *  A swap this refuses is a swap a player can still find; a swap it lets through is on the page. */
 import { normalizeName } from "@edh-seer/data/names";
 import type { BuildCategory } from "./build.js";
-import { basicsFloor, betterLand, demandCoverage, landFacts, neededColours, pipDemand, unusualText, type LandFacts } from "./land-score.js";
-import type { Color } from "./mana-audit.js";
+import { basicsFloor, betterLand, landFacts, neededColours, unusualText, type LandFacts } from "./land-score.js";
+import { COLORS, colourDeficit, type Color } from "./mana-audit.js";
 import { ingredients, rolesOfCard, type Ingredient, type Ingredients, type Role } from "./quality.js";
 import type { StaticLookup } from "./static-lookup.js";
 import { candidatePool, type IndexCard } from "./suggest.js";
 import { decodeIndex, deckCards } from "./suggest-static.js";
 import type { DeckCard } from "./types.js";
 import type { UpgradeSectionId } from "./upgrade-package.js";
-import { CONDITIONS, isCreature, sameGroup, sameJob, shape } from "./same-job.js";
+import { CONDITIONS, isCreature, netPositiveMana, sameGroup, sameJob, sameRockAnyColour, shape } from "./same-job.js";
 export { answerCovers, newConditions, sameGroup, sameJob } from "./same-job.js";
 
 export type RoleSectionId = Exclude<UpgradeSectionId, "lands" | "synergy">;
@@ -88,6 +88,8 @@ export interface RoleOption {
   links: number;
   /** A Game Changer in the cut's group (`gameChangerOption`), not a strictly better card. */
   upgrade?: "game-changer";
+  /** A COLOUR SWAP (#966): the colours the deck is short of that the add makes and the cut does not. */
+  colour?: Color[];
 }
 export interface LandOption { add: string; cut: LandFacts; addFacts: LandFacts; untapped: boolean; colours: string[]; gameChanger: boolean }
 export interface CutOptions<O> { cut: string; options: O[] }
@@ -110,6 +112,26 @@ export function roleOption(section: RoleSectionId, cut: DeckCard, add: Candidate
   }
   return best;
 }
+
+const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => (d.card.producedMana ?? []).includes(c));
+
+/** A COLOUR SWAP FOR A ROCK (owner, 2026-10-08, #966): the same rock in everything but its colours, and
+ *  the add makes a colour the deck is short of (`colourDeficit`) that the cut does not, keeping every
+ *  colour the cut makes. "If you have Fire Diamond in Izzet you can replace it with a Talisman." The
+ *  gain is the colour, not a measure, so `gained` is empty. A rock that prints more mana than it costs
+ *  is never the cut. CEILING: rocks only; a dork's body does other work, so creatures stay out, and a
+ *  land fetcher makes no colour of its own. Where the payoff type matters (an enchantress wants
+ *  enchantment ramp) shape blocks every cross-type pair here, so there is nothing to prefer. */
+export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Record<Color, number>>): RoleOption | null {
+  if (!rolesOfCard(cut).includes("ramp") || !add.roles.includes("ramp") || netPositiveMana(cut)) return null;
+  const had = MADE_COLOURS(cut);
+  const made = MADE_COLOURS(add.dc);
+  if (!had.every((c) => made.includes(c))) return null;
+  const colour = made.filter((c) => !had.includes(c) && (deficit[c] ?? 0) > 0);
+  if (colour.length === 0 || !sameRockAnyColour(cut, add.dc)) return null;
+  return { add: add.dc.card.name, role: "ramp", gained: [], cut: ingredients(cut, "ramp"), addIngredients: ingredients(add.dc, "ramp"), gameChanger: add.dc.card.gameChanger === true, links: add.links, colour };
+}
+const closedBy = (o: RoleOption, deficit: Partial<Record<Color, number>>) => (o.colour ?? []).reduce((n, c) => n + (deficit[c] ?? 0), 0);
 
 /** A card's role quality (the name index's `q`, 0-100), -1 when it has none in that role. */
 export type QualityOf = (name: string, role: Role) => number;
@@ -145,18 +167,32 @@ function asOften(cut: DeckCard, add: DeckCard, role: Role): boolean {
 export function roleOptions(
   section: RoleSectionId, cuts: readonly DeckCard[], pool: readonly Candidate[],
   gameChangers: { pool: readonly Candidate[]; quality: QualityOf } = { pool: [], quality: () => -1 },
+  deficit: Partial<Record<Color, number>> = {},
 ): CutOptions<RoleOption>[] {
-  const out: (CutOptions<RoleOption> & { strict?: RoleOption })[] = [];
+  const out: (CutOptions<RoleOption> & { strict?: RoleOption; colour?: RoleOption; shortMade: number })[] = [];
   for (const cut of cuts) {
     if (!rolesOfCard(cut).some((r) => SECTION_ROLES[section].includes(r))) continue;
     const strict = pool.map((c) => roleOption(section, cut, c)).filter((o): o is RoleOption => o !== null).sort(byOption);
+    // WHERE NO STRICT OPTION EXISTS FOR A PAIR, a rock may still close the deck's colour shortfall. Best
+    // first: the most shortfall closed, then the deck's own links, then name.
+    const strictAdds = new Set(strict.map((o) => o.add));
+    const colour = section !== "ramp" ? [] : pool.filter((c) => !strictAdds.has(c.dc.card.name)).map((c) => colourOption(cut, c, deficit))
+      .filter((o): o is RoleOption => o !== null)
+      .sort((a, b) => closedBy(b, deficit) - closedBy(a, deficit) || b.links - a.links || a.add.localeCompare(b.add));
     const upgrades = gameChangers.pool.map((c) => gameChangerOption(section, cut, c, gameChangers.quality)).filter((o): o is RoleOption => o !== null)
       .sort((a, b) => gameChangers.quality(b.add, b.role) - gameChangers.quality(a.add, a.role) || a.add.localeCompare(b.add));
-    if (strict.length + upgrades.length === 0) continue;
-    out.push({ cut: cut.card.name, options: [...upgrades, ...strict], ...(strict[0] ? { strict: strict[0] } : {}) });
+    if (strict.length + upgrades.length + colour.length === 0) continue;
+    const shortMade = MADE_COLOURS(cut).reduce((n, c) => n + (deficit[c] ?? 0), 0);
+    out.push({ cut: cut.card.name, options: [...upgrades, ...strict, ...colour], shortMade, ...(strict[0] ? { strict: strict[0] } : {}), ...(colour[0] ? { colour: colour[0] } : {}) });
   }
+  // CUTS: those with a strict option first as before; then those that only close a colour shortfall,
+  // worst first (the rock making the least of the colours the deck is short of); Game Changer upgrades last.
+  const tier = (c: { strict?: RoleOption; colour?: RoleOption }) => (c.strict ? 0 : c.colour ? 1 : 2);
   return out
-    .sort((a, b) => (a.strict && b.strict ? byOption(a.strict, b.strict) : Number(!a.strict) - Number(!b.strict)) || a.cut.localeCompare(b.cut))
+    .sort((a, b) => tier(a) - tier(b)
+      || (a.strict && b.strict ? byOption(a.strict, b.strict) : 0)
+      || (tier(a) === 1 ? a.shortMade - b.shortMade || closedBy(b.colour!, deficit) - closedBy(a.colour!, deficit) : 0)
+      || a.cut.localeCompare(b.cut))
     .map(({ cut, options }) => ({ cut, options }));
 }
 
@@ -187,7 +223,7 @@ export function replacements(cut: DeckCard, pool: readonly Candidate[]): Replace
  *  search for; a basic is never added, so no swap asks for a second copy of anything. Nonbasic cuts
  *  rank before basics, and one basic stands for them all. */
 export function landOptions(deckLands: readonly LandCandidate[], candidates: readonly LandCandidate[], basicsFloor: number,
-  demand: Partial<Record<Color, number>> = {}): CutOptions<LandOption>[] {
+  deficit: Partial<Record<Color, number>> = {}): CutOptions<LandOption>[] {
   const basics = deckLands.filter((l) => l.facts.basic).length;
   const out: CutOptions<LandOption>[] = [];
   const seen = new Set<string>();
@@ -209,16 +245,21 @@ export function landOptions(deckLands: readonly LandCandidate[], candidates: rea
       if (g.ok) options.push({ add: y.facts.name, cut: x.facts, addFacts: y.facts, untapped: g.untapped, colours: g.colours, gameChanger: y.gameChanger });
     }
     if (options.length === 0) continue;
-    options.sort(byLand);
+    // THE ADD THAT CLOSES THE DECK'S COLOUR SHORTFALL COMES FIRST (owner, 2026-10-08), then the old order.
+    options.sort((a, b) => closed(b, deficit) - closed(a, deficit) || byLand(a, b));
     out.push({ cut: x.facts.name, options });
   }
   // WORST CUT FIRST (owner, 2026-10-08, #966): nonbasics before basics as before, then always tapped
-  // before sometimes before never, then the land covering less of the deck's colour demand, then the
-  // old order (best add) so nothing that does not differ moves.
-  const cover = (c: CutOptions<LandOption>) => demandCoverage(c.options[0]!.cut.colours, demand);
+  // before sometimes before never, then the land making no colour the deck is short of (the shortfall
+  // it makes, least first), then the old order (best add) so nothing that does not differ moves.
+  const shortMade = (c: CutOptions<LandOption>) => c.options[0]!.cut.colours.reduce((n, k) => n + (deficit[k as Color] ?? 0), 0);
   return out.sort((a, b) => Number(a.options[0]!.cut.basic) - Number(b.options[0]!.cut.basic)
-    || b.options[0]!.cut.tapped - a.options[0]!.cut.tapped || cover(a) - cover(b)
+    || b.options[0]!.cut.tapped - a.options[0]!.cut.tapped || shortMade(a) - shortMade(b)
     || byLand(a.options[0]!, b.options[0]!) || a.cut.localeCompare(b.cut));
+}
+/** THE SHORTFALL AN ADD CLOSES: the deficit of every short colour it makes that the cut does not. */
+function closed(o: LandOption, deficit: Partial<Record<Color, number>>): number {
+  return o.addFacts.colours.filter((c) => !o.cut.colours.includes(c)).reduce((n, c) => n + (deficit[c as Color] ?? 0), 0);
 }
 function byLand(a: LandOption, b: LandOption): number {
   return a.addFacts.tapped - b.addFacts.tapped || b.colours.length - a.colours.length || a.add.localeCompare(b.add);
@@ -276,6 +317,7 @@ export async function upgradeOptions(input: {
     const dc = await dcOf(c.name);
     if (dc && dc.card.gameChanger === true && !isCreature(dc)) gameChangers.push({ dc, roles: rolesOfCard(dc), links: linksOf.get(c.name) ?? 0 });
   }
+  const deficit = colourDeficit(deck, input.commanders);
   const roles = {} as Record<RoleSectionId, CutOptions<RoleOption>[]>;
   for (const section of ROLE_SECTIONS) {
     const sectionRoles = SECTION_ROLES[section] as readonly BuildCategory[];
@@ -289,7 +331,7 @@ export async function upgradeOptions(input: {
       const dc = await dcOf(c.name);
       if (dc && !isCreature(dc)) candidates.push({ dc, roles: rolesOfCard(dc), links: linksOf.get(c.name) ?? 0 });
     }
-    roles[section] = roleOptions(section, cuts, candidates, { pool: gameChangers, quality });
+    roles[section] = roleOptions(section, cuts, candidates, { pool: gameChangers, quality }, deficit);
   }
 
   // THE BRING-DOWN CUTS' REPLACEMENTS, from every card sharing a role with them, as cheap or cheaper.
@@ -324,5 +366,5 @@ export async function upgradeOptions(input: {
     const dc = await dcOf(c.name);
     if (dc && /\bland\b/i.test(dc.card.typeLine)) landCandidates.push({ facts: landFacts(dc, needed, library), dc, gameChanger: dc.card.gameChanger === true });
   }
-  return { roles, lands: landOptions(deckLands, landCandidates, basicsFloor(deck), pipDemand(deck)), replacements: replaced };
+  return { roles, lands: landOptions(deckLands, landCandidates, basicsFloor(deck), deficit), replacements: replaced };
 }

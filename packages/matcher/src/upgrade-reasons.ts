@@ -76,7 +76,12 @@ function shortfalls(o: RoleOption, addName: string): string[] {
   return out;
 }
 
+/** A COLOUR SWAP says the colour, and that the deck is short of it: "short" is what the colour row of the
+ *  report says, and "for its spells" is the reason the colour matters. */
+const shortWords = (o: RoleOption) => `${colourWords(o.colour ?? []).replace(" or ", " and ")}, which the deck is short of for its spells`;
+
 export function roleReasons(cutName: string, o: RoleOption): { out: string; in: string } {
+  if (o.colour?.length) return { out: fit(`${cutName} doesn't make `, [shortWords(o)]), in: fit(`${o.add} is the same ${JOB[o.role]} and makes `, [shortWords(o)]) };
   return {
     out: fit(`${cutName} `, shortfalls(o, o.add)),
     in: fit(`${o.add} is the same ${JOB[o.role]} `, gains(o)),

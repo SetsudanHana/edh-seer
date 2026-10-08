@@ -1,7 +1,8 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { landFacts } from "./land-score.js";
 import fixtures from "./same-job.fixtures.json" with { type: "json" };
+import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
 import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, sameJob, strictlyBetter } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
@@ -165,8 +166,8 @@ test("strictlyBetter skips an amount the add cannot state, and refuses a smaller
   expect(strictlyBetter({ manaValue: 2, timing: 1, amount: 2 }, { manaValue: 1, timing: 1, amount: 1 })).toBeNull();
 });
 
-test("land cuts go worst first: always tapped before sometimes before never, then the lower demand coverage", () => {
-  const demand = { W: 30, B: 10 };
+test("land cuts go worst first: always tapped before sometimes before never, then a cut making no short colour", () => {
+  const deficit = { B: 5 };
   const mk = (name: string, oracle: string, produced: string[]) => land(name, "Land", oracle, produced);
   const tappedMono = mk("Tapped Mono", "Tapped Mono enters tapped.\n{T}: Add {B}.", ["B"]);
   const tappedDual = mk("Tapped Dual", "Tapped Dual enters tapped.\n{T}: Add {W} or {B}.", ["W", "B"]);
@@ -174,18 +175,62 @@ test("land cuts go worst first: always tapped before sometimes before never, the
   const openMono = mk("Open Mono", "{T}: Add {W}.", ["W"]);
   const better = mk("Better Land", "{T}: Add {W} or {B}.", ["W", "B"]);
   const tappedMonoW = mk("Tapped Mono W", "Tapped Mono W enters tapped.\n{T}: Add {W}.", ["W"]);
-  const out = landOptions([openMono, checkDual, tappedDual, tappedMono, tappedMonoW], [better], 0, demand).map((o) => o.cut);
+  const out = landOptions([openMono, checkDual, tappedDual, tappedMono, tappedMonoW], [better], 0, deficit).map((o) => o.cut);
   // Better Land only improves on lands that lack a colour or enter tapped: Open Mono gains B.
-  expect(out).toEqual(["Tapped Mono", "Tapped Mono W", "Tapped Dual", "Check Dual", "Open Mono"]);
+  // Tapped Mono W makes no short colour, so it goes before the two always-tapped lands that make black (those two tie; the old order, the best add, splits them).
+  expect(out).toEqual(["Tapped Mono W", "Tapped Mono", "Tapped Dual", "Check Dual", "Open Mono"]);
 });
 
-test("within a tier the cut covering less demand goes first, whatever the old tiebreaks say; flipping the demand flips them", () => {
+test("within a tier the cut making no short colour goes first, whatever the old tiebreaks say; flipping the shortfall flips them", () => {
   const mk = (name: string, oracle: string, produced: string[]) => land(name, "Land", oracle, produced);
   // Same tier, same best add (one colour gained), so only the cut's name would order them: A before Z.
   const high = mk("A High W", "A High W enters tapped.\n{T}: Add {W}.", ["W"]);
   const low = mk("Z Low B", "Z Low B enters tapped.\n{T}: Add {B}.", ["B"]);
   const better = mk("Better Land", "{T}: Add {W} or {B}.", ["W", "B"]);
-  const order = (demand: Partial<Record<"W" | "B", number>>) => landOptions([high, low], [better], 0, demand).map((o) => o.cut);
-  expect(order({ W: 30, B: 10 })).toEqual(["Z Low B", "A High W"]);
-  expect(order({ W: 10, B: 30 })).toEqual(["A High W", "Z Low B"]);
+  const order = (deficit: Partial<Record<"W" | "B", number>>) => landOptions([high, low], [better], 0, deficit).map((o) => o.cut);
+  expect(order({ W: 4 })).toEqual(["Z Low B", "A High W"]);
+  expect(order({ B: 4 })).toEqual(["A High W", "Z Low B"]);
+});
+
+test("a land add that makes the short colour ranks above one that does not, before the tapped tiebreak", () => {
+  const mk = (name: string, oracle: string, produced: string[]) => land(name, "Land", oracle, produced);
+  const cut = mk("Tapped Mono B", "Tapped Mono B enters tapped.\n{T}: Add {B}.", ["B"]);
+  const openB = mk("Open B", "{T}: Add {B}.", ["B"]);
+  const checkDual = mk("Check Dual", "Check Dual enters tapped unless you control a Swamp.\n{T}: Add {W} or {B}.", ["W", "B"]);
+  const adds = (deficit: Partial<Record<"W" | "B", number>>) => landOptions([cut], [openB, checkDual], 0, deficit).map((o) => o.options.map((x) => x.add));
+  // No shortfall: the old order stands (fewer tapped first).
+  expect(adds({})).toEqual([["Open B", "Check Dual"]]);
+  // White is short: the add that makes it goes first although it can enter tapped.
+  expect(adds({ W: 3 })).toEqual([["Check Dual", "Open B"]]);
+});
+
+/** Rocks as the corpus derives them (read from the static build, 2026-10-08). */
+const rock = (name: keyof typeof rocks) => rocks[name] as unknown as DeckCard;
+describe("a rock that makes a colour the deck is short of (coverage swap)", () => {
+  const ramp = (cut: DeckCard, adds: DeckCard[], deficit: Partial<Record<"W" | "U" | "B" | "R" | "G", number>>) =>
+    roleOptions("ramp", [cut], adds.map(candidate), undefined, deficit).map((o) => [o.cut, o.options.map((x) => [x.add, x.colour, x.gained])]);
+
+  test("Fire Diamond to Talisman of Creativity when blue is short, and not when it is not", () => {
+    const fd = rock("Fire Diamond");
+    const tal = rock("Talisman of Creativity");
+    expect(ramp(fd, [tal], { U: 4 })).toEqual([["Fire Diamond", [["Talisman of Creativity", ["U"], []]]]]);
+    expect(ramp(fd, [tal], {})).toEqual([]);
+    expect(ramp(fd, [tal], { R: 4 })).toEqual([]);
+  });
+
+  test("the swap goes one way: Talisman to Fire Diamond closes nothing", () => {
+    expect(ramp(rock("Talisman of Creativity"), [rock("Fire Diamond")], { U: 4, R: 4 })).toEqual([]);
+  });
+
+  test("Mind Stone to a Signet that makes the short colours; its draw does not protect it", () => {
+    expect(ramp(rock("Mind Stone"), [rock("Izzet Signet")], { U: 4, R: 2 })).toEqual([["Mind Stone", [["Izzet Signet", ["U", "R"], []]]]]);
+  });
+
+  test("a rock that produces more mana than it costs is never cut for colour", () => {
+    expect(ramp(rock("Sol Ring"), [rock("Izzet Signet")], { U: 4 })).toEqual([]);
+  });
+
+  test("an Aura is not a rock: a Signet never replaces Wild Growth", () => {
+    expect(ramp(rock("Wild Growth"), [rock("Izzet Signet")], { U: 4 })).toEqual([]);
+  });
 });

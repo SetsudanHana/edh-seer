@@ -316,3 +316,16 @@ export function manaAudit(
   }
   return rows;
 }
+
+/** THE DECK-WIDE COLOUR SHORTFALL (owner, 2026-10-08, #966): per colour, how many more sources the
+ *  worst unmet demand needs than all the deck's sources (lands, rocks, dorks, fetchables) supply by
+ *  its deadline. Only colours with a shortfall appear. A mana-source swap is good when it closes one;
+ *  a source's own colour count is not the measure. */
+export function colourDeficit(deck: readonly DeckCard[], commanderNames: readonly string[] = []): Partial<Record<Color, number>> {
+  const out: Partial<Record<Color, number>> = {};
+  for (const row of manaAudit(deck, { commanderNames })) {
+    const gap = row.worst ? row.worst.required - row.worst.available : 0;
+    if (gap > 0) out[row.color] = gap;
+  }
+  return out;
+}

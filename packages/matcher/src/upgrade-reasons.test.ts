@@ -53,3 +53,10 @@ test("a Game Changer upgrade says what was checked, explains the term, and fits 
   const long = gameChangerReasons("Kaho, Minamo Historian's Very Long Name Indeed", { ...o, add: "Jace, the Mind Sculptor's Even Longer Imaginary Name" });
   expect(long.in.length).toBeLessThanOrEqual(REASON_MAX);
 });
+
+test("a colour swap says which colour the deck is short of, on both sides", () => {
+  const r = roleReasons("Fire Diamond", roleOpt("Talisman of Creativity", { role: "ramp", gained: [], colour: ["U"] }));
+  expect(r.in).toBe("Talisman of Creativity is the same ramp and makes blue, which the deck is short of for its spells.");
+  expect(r.out).toBe("Fire Diamond doesn't make blue, which the deck is short of for its spells.");
+  expect(roleReasons("A", roleOpt("B", { role: "ramp", gained: [], colour: ["U", "R"] })).in).toContain("makes blue and red, which");
+});
