@@ -56,7 +56,9 @@ test("an explicit axis entry wins over the parent", () => {
 });
 
 test("an unmapped relation family weighs 0; an ordinary tag reads its own weight", () => {
-  const axis = new Map([["tutor:creature", 0], ["enters:creature", 0.9], ["draw:any", 0.3]]);
+  // No `tutor:creature` entry: the lookup must reach the parent code and find no parent for `tutor`,
+  // even though `enters:creature` is on the axis.
+  const axis = new Map([["enters:creature", 0.9], ["draw:any", 0.3]]);
   expect(maxAxisWeight([{ tag: "tutor:creature" } as never], axis)).toBe(0);
   expect(maxAxisWeight([{ tag: "draw:any" } as never], axis)).toBe(0.3);
 });
