@@ -10,7 +10,7 @@
 import type { Card } from "@edh-seer/engine";
 import { fetchableLands, fetchDemand, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
 import { classifyLand } from "./land-conditions.js";
-import { COLORS, pipsByColor, type Color } from "./mana-audit.js";
+import { COLORS, deckBasicTypes, landOnlineBy, pipsByColor, type Color } from "./mana-audit.js";
 import { rolesOfCard } from "./quality.js";
 import { netPositiveMana, netYield } from "./same-job.js";
 import type { DeckCard } from "./types.js";
@@ -232,8 +232,7 @@ export function colourReplacements(
   const otherShort = COLORS.filter((c) => c !== colour && (deficit[c] ?? 0) > 0);
   // CEILING: creature dorks and land-fetch spells (Cultivate) are never named; only lands and artifact
   // rocks are, so a deck whose only spare mana is a dork gets no name for it.
-  // CEILING: a conditionally-tapped land (tapped===1: check, slow, fast) is never named, though the
-  // audit can count it as not available on an early turn.
+  const basicTypes = deckBasicTypes(deck.filter((dc) => !commanders.has(dc.card.name)));
   const ranked: { name: string; tier: 1 | 2 | 3; land: boolean; tapped: Tapped; colours: number; hidden: number }[] = [];
   for (const dc of deck) {
     if (commanders.has(dc.card.name)) continue;
@@ -242,7 +241,9 @@ export function colourReplacements(
       if (!f.front || f.utility.length > 0 || f.colours.some((c) => otherShort.includes(c))) continue;
       if (f.colours.length === 0 && (dc.card.producedMana ?? []).length === 0) continue;
       const makes = f.colours.includes(colour);
-      if (makes && f.tapped < 2) continue;
+      // TIER 2 READS THE AUDIT'S OWN TEST: a land of the colour that `manaAudit` would not count as
+      // tapping for mana by `turn` (always tapped, or a check/slow/fast land on an early board).
+      if (makes && landOnlineBy(dc, turn, basicTypes)) continue;
       ranked.push({ name: f.name, tier: f.colours.length === 0 ? 1 : makes ? 2 : 3, land: true, tapped: f.tapped, colours: f.colours.length, hidden: f.colours.filter((c) => (anyShort[c] ?? 0) > 0).length });
     } else {
       const made = (dc.card.producedMana ?? []) as readonly string[];

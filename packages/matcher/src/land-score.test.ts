@@ -158,3 +158,18 @@ test("among other-colour lands of equal colour count, one that deepens no hidden
   // U is short but hidden (one pip), so it is in `anyShort` and not in the shown deficit.
   expect(colourReplacements([...spellsG, island, swamp], "G", 2, { G: 4 }, [], { G: 4, U: 1 })).toEqual(["Swamp", "Island"]);
 });
+
+// THE AUDIT'S OWN TEST (mana follow-ups, item 2): a slow land is tapped on turn 2 (one land down) and
+// untapped on turn 5, exactly as `manaAudit` counts it, so naming and shortfall cannot disagree.
+test("a conditionally tapped land of the colour is named when the audit counts it unavailable by the deadline, and not when it does", () => {
+  const coast = dc("Stormcarved Coast", "Land", "Stormcarved Coast enters tapped unless you control two or more other lands.\n{T}: Add {U} or {R}.", ["U", "R"]);
+  const deck = deckOf(coast, mountain);
+  expect(colourReplacements(deck, "U", 2, { U: 4 })).toEqual(["Stormcarved Coast", "Mountain"]);
+  expect(colourReplacements(deck, "U", 5, { U: 4 })).toEqual(["Mountain"]);
+});
+
+test("among lands of the colour the audit counts unavailable, always tapped comes before conditionally tapped", () => {
+  const coast = dc("Stormcarved Coast", "Land", "Stormcarved Coast enters tapped unless you control two or more other lands.\n{T}: Add {U} or {R}.", ["U", "R"]);
+  const zeta = dc("Zeta Gate", "Land — Gate", "Zeta Gate enters tapped.\n{T}: Add {U} or {R}.", ["U", "R"]);
+  expect(colourReplacements(deckOf(coast, zeta), "U", 2, { U: 4 })).toEqual(["Zeta Gate", "Stormcarved Coast"]);
+});
