@@ -2258,10 +2258,11 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered";
       // AN INTERCEPTED FILL IS NOT REANIMATION (owner 2026-10-08, #1083: "Dauthi shouldn't count
       // toward reanimator"): the card is exiled on its way to a graveyard and played from exile, so
-      // it is exile-processing -- the relation `exileProcessingEdges` already names.
+      // it is exile-processing by effect kind. Its TAG is its own family, `graveyard-intercept:`,
+      // because `exile-processing:` runs the other way (producer exiles, consumer processes) and one
+      // tag for both folded Nullifier -> Dauthi's two opposite reasons into a single row.
       const intercepted = a.effect.intercepted === true;
-      const kind = intercepted ? "exile-processing" : "graveyard-recursion";
-      const tag = `${kind}:${themeSubjectKey(keyedOn(a.effect.subject, e.subject))}`;
+      const tag = `${intercepted ? "graveyard-intercept" : "graveyard-recursion"}:${themeSubjectKey(keyedOn(a.effect.subject, e.subject))}`;
       if (said.has(tag)) continue;
       said.add(tag);
       reasons.push({
@@ -2270,7 +2271,7 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
           producerItself: e.subject.self === true, returnsItself: a.effect.subject.self === true,
           intercepted,
         }),
-        effectKind: kind,
+        effectKind: intercepted ? "exile-processing" : a.effect.kind,
         repeatability,
         scaling: a.effect.scaling,
         consumer: c.card.name,

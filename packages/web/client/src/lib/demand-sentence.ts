@@ -497,6 +497,8 @@ export const MECHANISM: Record<string, string> = {
   wincon: "counting toward a win",
   // The processor pass's tag is `exile-processing:<what was exiled>` (AF7b, 2026-09-16).
   "exile-processing": "processing an opponent's exiled card",
+  // Dauthi / Valgavoth: an intercepted graveyard fill (owner ruling 2026-10-08, #1083).
+  "graveyard-intercept": "taking an opponent's cards on the way to the graveyard",
   // The threshold pass's tag is `threshold:<what it counts>` (2026-09-16): a count the ability is
   // GATED on -- Gadrak's four artifacts, Chrome Steed's metalcraft -- as `wincon` is for a win.
   threshold: "counting toward a condition",

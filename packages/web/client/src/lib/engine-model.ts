@@ -434,7 +434,7 @@ export const unread = (l: Link): boolean => /\btriggers$/.test(l.text.trim());
  *  helps Sythis by copying it, round 9). Not "the card that acts": in "When Weaver is cast, Sythis
  *  gains you life" Sythis acts and Weaver helped, which read as each helping the other. */
 function helper(l: Link): string {
-  return /^(graveyard-recursion|copies):/.test(l.tag) ? l.to : l.from;
+  return /^(graveyard-recursion|graveyard-intercept|copies):/.test(l.tag) ? l.to : l.from;
 }
 
 /** Whether a card's own text does the work in a line: the sentence's main clause starts with its
