@@ -455,3 +455,15 @@ test("the audit counts a source only for the colours it fixes", () => {
   expect(suppliedU(real("Cascading Cataracts"))).toBe(base);
   expect(suppliedU(real("Prismatic Lens"))).toBe(base);
 });
+
+test("the mana base score counts sources by what they fix: Cascading Cataracts is not a blue source there either", async () => {
+  const { colourSources, manaBaseScore } = await import("./mana-base.js");
+  const deck = (extra: DeckCard) => fillTo(100, [card("Counterspell", "{U}{U}", 2), ...islands(10), extra]);
+  const withCataracts = deck(real("Cascading Cataracts"));
+  expect(colourSources(withCataracts).get("U")).toBe(10);
+  expect(colourSources(deck(real("Cascade Bluffs"))).get("U")).toBe(11);
+  // One fewer blue source than before the fix, so the colour cost can only rise.
+  const lost = manaBaseScore(withCataracts, { target: 37, actual: 37 });
+  const kept = manaBaseScore(deck(real("Cascade Bluffs")), { target: 37, actual: 37 });
+  expect(lost.costs.colour).toBeGreaterThanOrEqual(kept.costs.colour);
+});

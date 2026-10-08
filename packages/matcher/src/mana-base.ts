@@ -3,6 +3,7 @@ import { castableManaCost } from "./split-cost.js";
 import { classifyLand } from "./land-conditions.js";
 import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
+import { fixedColours } from "./mana-lines.js";
 import type { DeckCard } from "./types.js";
 
 /** ONE MANA-BASE MODEL, IN ONE UNIT (owner, 2026-09-29: "you have to account for finding golden
@@ -188,10 +189,10 @@ export function colourSources(deck: readonly DeckCard[], commanderNames: readonl
     let colours: readonly string[] = [];
     if (isLand(dc)) {
       colours = produced.length > 0 || !isLandFetch(text)
-        ? produced
+        ? fixedColours(dc)
         : [...new Set(fetchableLands(text, libraryCards).flatMap((c) => c.producedMana ?? []))];
     } else if (isManaSource(dc) && tapsForMana(text)) {
-      colours = produced;
+      colours = fixedColours(dc);
     }
     for (const c of new Set(colours)) if (out.has(c as Color)) out.set(c as Color, out.get(c as Color)! + 1);
   }

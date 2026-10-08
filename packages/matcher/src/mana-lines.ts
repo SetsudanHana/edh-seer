@@ -77,3 +77,9 @@ export function fixedColours(d: DeckCard): readonly string[] {
   const passing = new Set(lines.filter((l) => l.qualifies).flatMap((l) => l.colours));
   return produced.filter((c) => !failing.has(c) || passing.has(c));
 }
+
+/** THE COLOURS A SOURCE MAKES ONLY THROUGH A COSTED LINE THAT PASSES THE RULE: a filter land's pair
+ *  (Cascade Bluffs' {U} and {R}), a Signet's. `landFacts` reads a land's plain lines itself and adds these. */
+export function costedFixedColours(d: DeckCard): string[] {
+  return [...new Set(manaLines(d).filter((l) => l.paid > 0 && l.qualifies).flatMap((l) => l.colours))];
+}
