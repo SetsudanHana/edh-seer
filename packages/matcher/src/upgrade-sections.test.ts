@@ -4,8 +4,9 @@ import { landFacts } from "./land-score.js";
 import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
-import { colourDeficit } from "./mana-audit.js";
-import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, sameJob, strictlyBetter, swapCloser } from "./upgrade-sections.js";
+import { colourDeficit, landTypeDemand } from "./mana-audit.js";
+import { colouredNetYield, jobOf, netYield } from "./same-job.js";
+import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, auraSupport, sameJob, strictlyBetter, swapCloser, watchedTypes } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
 
 /** Cards as printed (oracle text read 2026-09-30); the text rules read nothing else. */
@@ -303,4 +304,87 @@ describe("what a rock really yields", () => {
     expect(ramp(rock("Fire Diamond"), rock("Fellwar Stone"))).toEqual([]);
     expect(ramp(rock("Mind Stone"), rock("Fellwar Stone"))).toEqual([]);
   });
+});
+
+describe("an Aura is a rock the job reader sees", () => {
+  test("all four growth Auras read a ramp job, and Utopia Sprawl reads the same kind as Wild Growth", () => {
+    for (const n of ["Utopia Sprawl", "Wild Growth", "Fertile Ground", "Overgrowth"] as const) expect(jobOf(rock(n), "ramp"), n).toBeTruthy();
+    expect(jobOf(rock("Utopia Sprawl"), "ramp")!.kind).toBe(jobOf(rock("Wild Growth"), "ramp")!.kind);
+  });
+});
+
+describe("a colour swap may cross card types, toward the type the deck's payoffs watch", () => {
+  const swap = (cut: DeckCard, adds: DeckCard[], watched: string[]) =>
+    roleOptions("ramp", [cut], adds.map(candidate), undefined, { G: 4, U: 4 }, () => 1, new Set(watched)).flatMap((o) => o.options.map((x) => [x.add, x.crossType]));
+
+  test("a type is watched only when the deck's THEMES say so: an incidental payoff is not a theme", () => {
+    expect([...watchedTypes(["enters:enchantment", "cast:artifact"])].sort()).toEqual(["artifact", "enchantment"]);
+    expect([...watchedTypes(["lifegain:any", "enters:creature"])]).toEqual(["creature"]);
+    expect([...watchedTypes([])]).toEqual([]);
+    expect([...watchedTypes(undefined)]).toEqual([]);
+  });
+
+  test("an enchantress deck gets the growth Auras for a colour; with no enchantment payoff, or an artifact one, it does not", () => {
+    const adds = [rock("Fertile Ground"), rock("Utopia Sprawl")];
+    expect(swap(rock("Mind Stone"), adds, ["enchantment"])).toEqual([["Fertile Ground", "enchantment"], ["Utopia Sprawl", "enchantment"]]);
+    expect(swap(rock("Mind Stone"), adds, [])).toEqual([]);
+    expect(swap(rock("Mind Stone"), adds, ["artifact"])).toEqual([]);
+  });
+
+  test("never the other way: an Aura is not swapped for a Signet, and not when the cut's type is watched too", () => {
+    expect(swap(rock("Wild Growth"), [rock("Arcane Signet")], ["enchantment"])).toEqual([]);
+    expect(swap(rock("Mind Stone"), [rock("Fertile Ground")], ["enchantment", "artifact"])).toEqual([]);
+  });
+
+  test("an Aura's extra mana is yield: a growth Aura nets what a Signet does", () => {
+    expect(netYield(rock("Wild Growth"))).toBe(1);
+    expect(netYield(rock("Overgrowth"))).toBe(2);
+    expect(colouredNetYield(rock("Utopia Sprawl"))).toBe(1);
+  });
+});
+
+describe("the cross-type path takes only an Aura that enchants a land and adds mana by trigger", () => {
+  const mind4 = { ...rock("Mind Stone"), card: { ...rock("Mind Stone").card, manaValue: 4 } } as unknown as DeckCard;
+  const offered = (add: DeckCard) => roleOptions("ramp", [mind4], [candidate(add)], undefined, { G: 4 }, () => 1, new Set(["enchantment"])).flatMap((o) => o.options.map((x) => x.add));
+  const karametra = (() => {
+    const fg = rock("Fertile Ground");
+    return { ...fg, card: { ...fg.card, name: "Karametra's Favor", oracleText: fg.card.oracleText!.replace("Enchant land", "Enchant creature").replace("enchanted land", "enchanted creature") } } as unknown as DeckCard;
+  })();
+  test("what is not a land Aura with an 'adds an additional' trigger is refused", () => {
+    expect(offered(karametra)).toEqual([]);
+    expect(offered(rock("Cryptolith Rite"))).toEqual([]);
+    expect(offered(rock("Abundant Growth"))).toEqual([]);
+    expect(offered(rock("Urban Utopia"))).toEqual([]);
+  });
+  test("the growth Auras stay", () => {
+    for (const n of ["Fertile Ground", "Wild Growth", "Overgrowth", "Trace of Abundance", "Utopia Sprawl"] as const) expect(offered(rock(n)), n).toEqual([n]);
+  });
+});
+
+describe("'Enchant Forest' is a demand for Forests, judged like a colour pip", () => {
+  const spell = (name: string): DeckCard => ({ ...card(name, "Sorcery", ""), card: { ...card(name, "Sorcery", "").card, manaCost: "{1}", manaValue: 1 } });
+  const forest = () => card("Forest", "Basic Land — Forest", "({T}: Add {G}.)", ["G"]);
+  const deckWith = (forests: number) => [...Array.from({ length: forests }, forest), ...Array.from({ length: 100 - forests }, (_, i) => spell(`Filler ${i}`))];
+  test("the model's own number: required Forests by the Aura's turn against the deck's Forests", () => {
+    const few = landTypeDemand(deckWith(5), [], "forest", 1);
+    const many = landTypeDemand(deckWith(40), [], "forest", 1);
+    expect(few.available).toBe(5);
+    expect(few.required).toBeGreaterThan(5);
+    expect(many.available).toBe(40);
+    expect(many.required).toBeLessThanOrEqual(40);
+  });
+  test("Utopia Sprawl is refused for a deck with few Forests and offered for one with many; an 'Enchant land' Aura needs neither", () => {
+    const run = (forests: number, add: DeckCard) => roleOptions("ramp", [rock("Mind Stone")], [candidate(add)], undefined, { G: 4 }, () => 1, new Set(["enchantment"]),
+      auraSupport(deckWith(forests), [])).flatMap((o) => o.options.map((x) => x.add));
+    expect(run(5, rock("Utopia Sprawl"))).toEqual([]);
+    expect(run(40, rock("Utopia Sprawl"))).toEqual(["Utopia Sprawl"]);
+    expect(run(5, rock("Fertile Ground"))).toEqual(["Fertile Ground"]);
+  });
+});
+
+test("a Game Changer upgrade is untouched by the colour and cross-type paths (Enduring Enchantments: Arcane Signet to a Game Changer, enchantment watched, colours short)", () => {
+  const quality = rated({ "Arcane Signet": 92, "Mana Vault": 98 });
+  const out = roleOptions("ramp", [real("Arcane Signet")], [candidate(rock("Fertile Ground")), candidate(rock("Wild Growth"))], { pool: [candidate(real("Mana Vault"))], quality },
+    { W: 5, B: 7, G: 5 }, () => 2, new Set(["enchantment"]), () => true);
+  expect(out.map((o) => [o.cut, o.options.map((x) => [x.add, x.upgrade ?? null])])).toEqual([["Arcane Signet", [["Mana Vault", "game-changer"]]]]);
 });

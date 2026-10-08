@@ -167,6 +167,16 @@ const GIVES_BACK_ROLES: ReadonlySet<Role> = new Set(["targetedRemoval", "boardWi
  *  carry no drawback the cut does not. */
 const DRAWBACK = new Set(["lose-life", "sacrifice", "discard", "cant", "tap", "deal-damage"]);
 
+/** "AS THIS AURA ENTERS, CHOOSE A COLOR" is a free choice, not a condition on the job, and the grammar
+ *  does not read it (Utopia Sprawl was the only growth Aura that joined no group: its blocker was that
+ *  clause). CEILING: the line is dropped for the job reading only, leaving derive and the tags as
+ *  they are; the grammar should read it, which would change what derive banks. */
+const COLOUR_CHOICE = /^as (?:this|~|[^,\n]+) enters, choose a colou?r\.?$/gim;
+function withoutColourChoice<T extends { oracleText?: string }>(card: T): T {
+  const text = card.oracleText ?? "";
+  return new RegExp(COLOUR_CHOICE.source, "im").test(text) ? { ...card, oracleText: text.replace(COLOUR_CHOICE, "").replace(/\n{2,}/g, "\n").trim() } : card;
+}
+
 interface Job { key: string; head: string; kind: string; parts: Set<string>; drawbacks: Set<string>; upsides: Set<string>; all: Set<string> }
 /** ONE READING PER CARD AND ROLE: swap search asks about the same cards hundreds of times, and each
  *  reading runs the grammar over the printed text. Keyed on the DeckCard object, so a rebuilt card
@@ -189,7 +199,7 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
   // A CARD OF TWO FACES JOINS NO GROUP YET (review of #1048): the readings carry both faces' clauses,
   // and Fire // Ice or a land // creature would key on the two halves at once.
   if (d.card.name.includes(" // ") || (d.card.faces?.length ?? 0) > 1) return null;
-  const g = grammarClauseRecords(d.card as never);
+  const g = grammarClauseRecords(withoutColourChoice(d.card) as never);
   if (!g.complete || !g.readings) return null;
   const job: string[] = [];
   const drawbacks = new Set<string>();
@@ -310,17 +320,19 @@ export function netPositiveMana(d: DeckCard): boolean {
  *  Stone's draw) is not kept, by owner ruling (2026-10-08, #966): a minor extra ability does not
  *  protect a source; only net-positive fast mana does (`netPositiveMana`). The reason names what is lost.
  *  CEILING: creatures (dorks) are out, as for `sameJob`: a body does other work no measure reads. */
-export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
+export function sameRockAnyColour(cut: DeckCard, add: DeckCard, crossType = false): boolean {
   if (isCreature(cut) || isCreature(add)) return false;
   const c = readJob(cut, "ramp");
   const a = readJob(add, "ramp");
-  if (!c || !a || c.kind !== a.kind || rampKind(cut) !== "rock") return false;
+  if (!c || !a || rampKind(cut) !== "rock" || (crossType ? rampKind(add) !== "rock" || landAuraType(add) === null : c.kind !== a.kind)) return false;
   const isMana = (x: string) => x.startsWith('["add-mana"');
   if (![...c.parts].filter((x) => !isMana(x)).every((x) => a.parts.has(x))) return false;
   if (![...a.parts].some(isMana)) return false;
   const selfDamage = (x: string) => x.startsWith('["deal-damage"') && !damagesOthers(printed(add));
   if (![...a.drawbacks].every((x) => c.drawbacks.has(x) || selfDamage(x))) return false;
-  if (newConditions(cut, add, false, damagesOthers(printed(add)) ? [] : SELF_DAMAGE)) return false;
+  // AN AURA'S "ENCHANTED LAND" AND ITS COLOUR CHOICE are what it is, not a condition on the swap.
+  const auraOk = crossType && /\baura\b/i.test(add.card.typeLine ?? "") ? [/\benchanted\b/.source, /\bchooses?\b/.source] : [];
+  if (newConditions(cut, add, false, [...(damagesOthers(printed(add)) ? [] : SELF_DAMAGE), ...auraOk])) return false;
   const cy = netYield(cut);
   // THE ADD IS HELD TO WHAT IT NETS IN COLOUR (Prismatic Lens makes {C} free and a colour for {1}).
   const ay = colouredNetYield(add);
@@ -333,6 +345,7 @@ export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
  *  reads symbols only, and `sameJob` and `strictlyBetter` keep reading it). Null when no line reads. */
 const ADD_LINE = /^([^:\n]*):\s*add ([^\n]*)/gm;
 const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3 };
+const ADDITIONAL = /\badds? an additional ((?:\{[^}]+\})+|(one|two|three) mana of (?:any|the chosen) (?:color|type))/g;
 const ANY_COLOUR = /^(one|two|three) mana of (?:any|the chosen) (?:color|type)/;
 /** The repeatable mana lines of a rock: what each nets, and whether it can make a colour. A line that
  *  sacrifices the card is a one-shot (Lotus Petal, Dire Mimic), and a line whose mana is restricted
@@ -349,6 +362,12 @@ function manaLines(d: DeckCard): { net: number; coloured: boolean }[] {
     const made = any ? NUMBER_WORDS[any[1]!]! : (run!.match(/\{/g) ?? []).length;
     const generic = (cost.match(/\{(\d+)\}/g) ?? []).reduce((n, x) => n + Number(x.slice(1, -1)), 0);
     out.push({ net: made - generic, coloured: !!any || /\{[wubrg](?:\/[wubrgp])?\}/.test(rest.split(/\.\s/)[0]!) });
+  }
+  // AN AURA'S MANA IS A TRIGGER, not a "{T}: Add" line (Wild Growth, Utopia Sprawl): "adds an additional
+  // {G}" / "one mana of the chosen color" is that many, free, every time the land taps.
+  for (const m of printed(d).matchAll(ADDITIONAL)) {
+    const any = m[2];
+    out.push({ net: any ? NUMBER_WORDS[any]! : (m[1]!.match(/\{/g) ?? []).length, coloured: !!any || /\{[wubrg](?:\/[wubrgp])?\}/.test(m[1]!) });
   }
   return out;
 }
@@ -367,6 +386,19 @@ export function colouredNetYield(d: DeckCard): number | null {
   if (opponentDecides(d)) return null;
   const nets = manaLines(d).filter((l) => l.coloured).map((l) => l.net);
   return nets.length ? Math.max(...nets) : null;
+}
+
+/** THE LAND AN AURA OF MANA ENCHANTS, when it is the kind a colour swap may take: an Aura that enchants a
+ *  land ("land") or a basic land type ("forest"), whose mana is the "adds an additional ..." trigger and
+ *  nothing else (no "{T}: Add" line, and no granted ability: Abundant Growth gives the land an ability it
+ *  already has). Null for anything else. */
+const ENCHANT_LAND = /^enchant (land|plains|island|swamp|mountain|forest)\b/im;
+export function landAuraType(d: DeckCard): string | null {
+  const t = printed(d);
+  if (!/\baura\b/i.test(d.card.typeLine ?? "")) return null;
+  const type = ENCHANT_LAND.exec(t)?.[1];
+  if (!type || !new RegExp(ADDITIONAL.source).test(t) || [...t.matchAll(ADD_LINE)].length > 0 || /["“][^"”]*\{t\}/.test(t)) return null;
+  return type;
 }
 
 /** THE OLD TEST, KEPT ONLY FOR THE BEFORE NUMBER while S-T2 is measured; not called by the product. */

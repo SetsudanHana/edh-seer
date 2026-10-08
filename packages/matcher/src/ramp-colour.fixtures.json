@@ -638,7 +638,7 @@
   "card": {
    "_id": "706ae742-1807-44b7-a4fa-f2e26f61519a",
    "name": "Wild Growth",
-   "typeLine": "Enchantment — Aura",
+   "typeLine": "Enchantment \u2014 Aura",
    "oracleText": "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.",
    "keywords": [
     "Enchant"
@@ -1339,7 +1339,7 @@
   "card": {
    "_id": "b657b3df-9287-44cf-a1cd-a80ead71a553",
    "name": "Dire Mimic",
-   "typeLine": "Artifact — Treasure",
+   "typeLine": "Artifact \u2014 Treasure",
    "oracleText": "Flash\n{T}, Sacrifice this artifact: Add one mana of any color.\n{3}: This artifact becomes a Shapeshifter artifact creature with base power and toughness 5/5 until end of turn.",
    "keywords": [
     "Flash"
@@ -1996,6 +1996,1536 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "1fe94399ec483b7c8b02de2be64b3b0580beb73a60582bc280e4a059188c0965",
+   "clauseSource": "grammar"
+  }
+ },
+ "Utopia Sprawl": {
+  "card": {
+   "_id": "00d8efa6-a2d9-4249-8da7-b45173675329",
+   "name": "Utopia Sprawl",
+   "typeLine": "Enchantment \u2014 Aura",
+   "oracleText": "Enchant Forest\nAs this Aura enters, choose a color.\nWhenever enchanted Forest is tapped for mana, its controller adds an additional one mana of the chosen color.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2024-01-12",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736acaf6eb344af1224132",
+   "oracleId": "00d8efa6-a2d9-4249-8da7-b45173675329",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "chosenType": true
+      }
+     },
+     "amount": "1",
+     "clause": 3,
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [
+     "aura"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "enchant"
+    ],
+    "enchants": {
+     "control": "any",
+     "token": null,
+     "subtype": "forest"
+    }
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 18,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "415dc8aaaaccbb7a5f27b2cb0145c0ea8d2e6595993a63c50f778271d53402ce",
+   "unknownTriggers": [
+    "taps-for-mana"
+   ],
+   "clauseSource": "model"
+  }
+ },
+ "Fertile Ground": {
+  "card": {
+   "_id": "cf14d4e5-5965-45ad-97f7-26facf2884b5",
+   "name": "Fertile Ground",
+   "typeLine": "Enchantment \u2014 Aura",
+   "oracleText": "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional one mana of any color.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-01-23",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a52f6eb344af193a49c",
+   "oracleId": "cf14d4e5-5965-45ad-97f7-26facf2884b5",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "clause": 2,
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [
+     "aura"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "enchant"
+    ],
+    "enchants": {
+     "control": "any",
+     "token": null,
+     "type": "land"
+    }
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "6418a1c1dcb81d24f33c8208b04d902a05976c9a776dc700de84a86899b7e37f",
+   "unknownTriggers": [
+    "taps-for-mana"
+   ],
+   "clauseSource": "grammar"
+  }
+ },
+ "Overgrowth": {
+  "card": {
+   "_id": "e6ccebf4-f4f0-404f-a634-4d751ef9c8aa",
+   "name": "Overgrowth",
+   "typeLine": "Enchantment \u2014 Aura",
+   "oracleText": "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}{G}.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "G"
+   ],
+   "layout": "normal",
+   "releasedAt": "2018-08-10",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a88bec1f6eb344af17b864e",
+   "oracleId": "e6ccebf4-f4f0-404f-a634-4d751ef9c8aa",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "amount": "2",
+     "clause": 2,
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [
+     "aura"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "enchant"
+    ],
+    "enchants": {
+     "control": "any",
+     "token": null,
+     "type": "land"
+    }
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "bc0361b758f28529c07b7a90d56470fbb31b3f0d3a39e14fa4dbeb928d86c377",
+   "unknownTriggers": [
+    "taps-for-mana"
+   ],
+   "clauseSource": "grammar"
+  }
+ },
+ "Argothian Enchantress": {
+  "card": {
+   "_id": "11f17f85-ca97-4551-838f-7cb32f0e5f10",
+   "name": "Argothian Enchantress",
+   "typeLine": "Creature \u2014 Human Druid",
+   "oracleText": "Shroud (This creature can't be the target of spells or abilities.)\nWhenever you cast an enchantment spell, draw a card.",
+   "keywords": [
+    "Shroud"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "0",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "card-draw",
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:druid",
+     "tribe-nontoken:druid"
+    ],
+    "cares": [
+     "enchantment"
+    ]
+   },
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "releasedAt": "2016-06-10",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a52f6eb344af193a30c",
+   "oracleId": "11f17f85-ca97-4551-838f-7cb32f0e5f10",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "enchantment"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "human",
+     "druid"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": "0",
+    "toughness": "1",
+    "token": false,
+    "keywords": [
+     "shroud"
+    ]
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "7b2b7046359c695f139d9cfb4f4540be1dfcf6423a02d7ac5f3482f0c189f343",
+   "clauseSource": "grammar"
+  }
+ },
+ "Eidolon of Blossoms": {
+  "card": {
+   "_id": "77ccbea1-70af-4194-adad-39a904221c75",
+   "name": "Eidolon of Blossoms",
+   "typeLine": "Enchantment Creature \u2014 Spirit",
+   "oracleText": "Constellation \u2014 Whenever this creature or another enchantment you control enters, draw a card.",
+   "keywords": [
+    "Constellation"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "card-draw",
+     "tribe:spirit",
+     "tribe-nontoken:spirit",
+     "enchantment"
+    ],
+    "cares": [
+     "enchantment"
+    ]
+   },
+   "manaCost": "{2}{G}{G}",
+   "layout": "normal",
+   "releasedAt": "2023-08-04",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736acaf6eb344af122412e",
+   "oracleId": "77ccbea1-70af-4194-adad-39a904221c75",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "enchantment"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment",
+     "creature"
+    ],
+    "subtypes": [
+     "spirit"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 4,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": [
+     "constellation"
+    ]
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 13,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "80a770da5c243d91e756d24cef2febca9ad4a7110b352a1721cd18959aa76968",
+   "clauseSource": "grammar"
+  }
+ },
+ "Reckless Fireweaver": {
+  "card": {
+   "_id": "180e1a7e-890d-477c-80a5-da8a5f2857b3",
+   "name": "Reckless Fireweaver",
+   "typeLine": "Creature \u2014 Human Artificer",
+   "oracleText": "Whenever an artifact you control enters, this creature deals 1 damage to each opponent.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:artificer",
+     "tribe-nontoken:artificer"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{R}",
+   "layout": "normal",
+   "releasedAt": "2016-09-30",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac8f6eb344af1221ea2",
+   "oracleId": "180e1a7e-890d-477c-80a5-da8a5f2857b3",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "non-combat-damage",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "scope": "each"
+       },
+       "dealer": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "human",
+     "artificer"
+    ],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 2,
+    "power": "1",
+    "toughness": "3",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "00d1df4a146fe7a0083618bc3329857872667b06db880f9d747bc0a118908271",
+   "clauseSource": "grammar"
+  }
+ },
+ "Goblin Welder": {
+  "card": {
+   "_id": "9fc28e1f-f4ea-4bf8-9442-a36dba3b3b29",
+   "name": "Goblin Welder",
+   "typeLine": "Creature \u2014 Goblin Artificer",
+   "oracleText": "{T}: Choose target artifact a player controls and target artifact card in that player's graveyard. If both targets are still legal as this ability resolves, that player simultaneously sacrifices the artifact and returns the artifact card to the battlefield.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "tribe:goblin",
+     "tribe-nontoken:goblin",
+     "tribe:artificer",
+     "tribe-nontoken:artificer"
+    ],
+    "cares": []
+   },
+   "manaCost": "{R}",
+   "layout": "normal",
+   "releasedAt": "2018-06-08",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736acaf6eb344af12237ba",
+   "oracleId": "9fc28e1f-f4ea-4bf8-9442-a36dba3b3b29",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "artifact",
+        "scope": "target"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "artifact",
+        "scope": "target"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "graveyard-recursion",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "artifact",
+       "scope": "target",
+       "zone": "graveyard"
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "artifact",
+        "scope": "target",
+        "fromZone": "graveyard"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "artifact",
+        "scope": "target",
+        "zone": "graveyard",
+        "fromZone": "graveyard"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "goblin",
+     "artificer"
+    ],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 13,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "6d6cdd55c25a41e39539f6c045e9d74dfaf4e330a03162aa9cdc9e1433b24e0d",
+   "clauseSource": "model"
+  }
+ },
+ "Efficient Construction": {
+  "card": {
+   "_id": "5af48f87-7b94-44de-90e3-91f10ced00d3",
+   "name": "Efficient Construction",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever you cast an artifact spell, create a 1/1 colorless Thopter artifact creature token with flying.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "enchantment"
+    ],
+    "cares": [
+     "artifact"
+    ]
+   },
+   "manaCost": "{3}{U}",
+   "layout": "normal",
+   "releasedAt": "2023-08-04",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Thopter",
+     "typeLine": "Token Artifact Creature \u2014 Thopter",
+     "printingId": "27a94450-ebe4-49c6-b2b0-bf335880f44f"
+    }
+   ],
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af1223183",
+   "oracleId": "5af48f87-7b94-44de-90e3-91f10ced00d3",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "token-generation",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": [
+        "creature",
+        "artifact"
+       ],
+       "allTypes": [
+        "artifact",
+        "creature"
+       ],
+       "subtype": "thopter",
+       "colors": [
+        "C"
+       ],
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ],
+       "keyword": [
+        "flying"
+       ]
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "create-token",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "keyword": [
+         "flying"
+        ],
+        "colors": [
+         "C"
+        ],
+        "type": [
+         "creature",
+         "artifact"
+        ],
+        "allTypes": [
+         "artifact",
+         "creature"
+        ],
+        "subtype": "thopter",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       }
+      },
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "keyword": [
+         "flying"
+        ],
+        "colors": [
+         "C"
+        ],
+        "type": [
+         "creature",
+         "artifact"
+        ],
+        "allTypes": [
+         "artifact",
+         "creature"
+        ],
+        "subtype": "thopter",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 4,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 13,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "f571e83028d8e9c52a37a0bb19a5e66e12e3e106335f1c93d3f26525bcc65d31",
+   "clauseSource": "grammar"
+  }
+ },
+ "Cryptolith Rite": {
+  "card": {
+   "_id": "043f869d-b11c-4c0d-9591-2bf0df7bde55",
+   "name": "Cryptolith Rite",
+   "typeLine": "Enchantment",
+   "oracleText": "Creatures you control have \"{T}: Add one mana of any color.\"",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana",
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2025-01-24",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a51f6eb344af1938924",
+   "oracleId": "043f869d-b11c-4c0d-9591-2bf0df7bde55",
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "keyword-grant",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     },
+     "clause": 1,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "67f3cb4199a3b02cf285ec35d977789d1e76ce979634f5014e82680aa8f0d7b3",
+   "clauseSource": "grammar"
+  }
+ },
+ "Abundant Growth": {
+  "card": {
+   "_id": "947a2665-2f4d-4193-8768-118f85334549",
+   "name": "Abundant Growth",
+   "typeLine": "Enchantment \u2014 Aura",
+   "oracleText": "Enchant land\nWhen this Aura enters, draw a card.\nEnchanted land has \"{T}: Add one mana of any color.\"",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana",
+     "card-draw",
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-01-23",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a51f6eb344af1938ce0",
+   "oracleId": "947a2665-2f4d-4193-8768-118f85334549",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "aura",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "keyword-grant"
+     },
+     "clause": 3,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 4,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [
+     "aura"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "enchant"
+    ],
+    "enchants": {
+     "control": "any",
+     "token": null,
+     "type": "land"
+    }
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "b9ac68c7ebe2d1f6ae466fe6297d0f34871a1b77155fec88f86d9bf6bf9631e8",
+   "clauseSource": "grammar"
+  }
+ },
+ "Trace of Abundance": {
+  "card": {
+   "_id": "530140f1-e992-4b5e-882c-c15bacc328fa",
+   "name": "Trace of Abundance",
+   "typeLine": "Enchantment \u2014 Aura",
+   "oracleText": "Enchant land\nEnchanted land has shroud. (It can't be the target of spells or abilities.)\nWhenever enchanted land is tapped for mana, its controller adds an additional one mana of any color.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G",
+    "R",
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G",
+    "R",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{R/W}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2009-04-30",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a5cf6eb344af1945166",
+   "oracleId": "530140f1-e992-4b5e-882c-c15bacc328fa",
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "keyword-grant"
+     },
+     "clause": 2,
+     "repeats": "continuous",
+     "grants": [
+      "shroud"
+     ]
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "clause": 3,
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [
+     "aura"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G",
+     "R",
+     "W"
+    ],
+    "identity": [
+     "G",
+     "R",
+     "W"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "enchant"
+    ],
+    "enchants": {
+     "control": "any",
+     "token": null,
+     "type": "land"
+    }
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "d776a3c3c73974a962f5d1355ec31a04b125cc23c86325bf0e2130cf9875fbc7",
+   "unknownTriggers": [
+    "taps-for-mana"
+   ],
+   "clauseSource": "grammar"
+  }
+ },
+ "Urban Utopia": {
+  "card": {
+   "_id": "77b73f11-a59a-4f2b-83d3-e6fe5064bc87",
+   "name": "Urban Utopia",
+   "typeLine": "Enchantment \u2014 Aura",
+   "oracleText": "Enchant land\nWhen this Aura enters, draw a card.\nEnchanted land has \"{T}: Add one mana of any color.\"",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana",
+     "card-draw",
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2018-10-05",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a55f6eb344af193d2fc",
+   "oracleId": "77b73f11-a59a-4f2b-83d3-e6fe5064bc87",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "aura",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "keyword-grant"
+     },
+     "clause": 3,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 4,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [
+     "aura"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "enchant"
+    ],
+    "enchants": {
+     "control": "any",
+     "token": null,
+     "type": "land"
+    }
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "b9ac68c7ebe2d1f6ae466fe6297d0f34871a1b77155fec88f86d9bf6bf9631e8",
    "clauseSource": "grammar"
   }
  }
