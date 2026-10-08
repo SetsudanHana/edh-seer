@@ -99,10 +99,31 @@ test("with only two non-blue sources gone, the always-tapped blue dual is next: 
   expect(colourReplacements(deckOf(gate, solRing, vents), "U", 2, { U: 4 })).toEqual(["Izzet Guildgate"]);
 });
 
-test("a rock that makes the colour is named only when its mana value is the demand's turn or later", () => {
+test("a rock that makes the colour is never named, however late it is: Arcane Signet and Sceptre-shaped rocks stay", () => {
   const sapphire = rock("Sapphire Medallion", 3, "{T}: Add {U}.", ["U"]);
-  expect(colourReplacements(deckOf(sapphire), "U", 3, { U: 2 })).toEqual(["Sapphire Medallion"]);
-  expect(colourReplacements(deckOf(sapphire), "U", 4, { U: 2 })).toEqual([]);
+  const signet = rock("Arcane Signet", 2, "{T}: Add one mana of any color in your commander's color identity.", ["W", "U", "B", "R", "G"]);
+  const sceptre = rock("Sceptre of Eternal Glory", 3, "{T}: Add one mana of any color.", ["W", "U", "B", "R", "G"]);
+  expect(colourReplacements(deckOf(sapphire, signet, sceptre), "U", 4, { U: 2 })).toEqual([]);
+});
+
+const withTags = (d: DeckCard, kinds: [string, string][]): DeckCard => ({
+  ...d, tags: { abilities: kinds.map(([kind, k]) => ({ kind, effect: { kind: k } })) } as unknown as DeckCard["tags"],
+});
+
+test("only plain rocks are named: a sacrifice outlet, a win condition and a play-from-top artifact are refused; a Mind Stone is not", () => {
+  const altar = withTags(rock("Ashnod's Altar", 3, "Sacrifice a creature: Add {C}{C}.", ["C"]), [["activated", ""], ["activated", "mana-generation"]]);
+  const stadium = withTags(rock("Strixhaven Stadium", 3, "{T}: Add {C}. Put a point counter on this artifact.\nWhenever a creature deals combat damage to you, remove a point counter from this artifact.", ["C"]),
+    [["activated", "mana-generation"], ["activated", "counter-placement"], ["triggered", ""]]);
+  const skull = withTags(rock("Crystal Skull, Isu Spyglass", 2, "You may look at the top card of your library any time.\n{T}: Add {C}.", ["C"]),
+    [["static", "play-from-top"], ["activated", "mana-generation"]]);
+  const stone = withTags(rock("Mind Stone", 2, "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.", ["C"]),
+    [["activated", "mana-generation"], ["activated", ""], ["activated", "draw-card"]]);
+  expect(colourReplacements(deckOf(altar, stadium, skull), "U", 2, { U: 4 })).toEqual([]);
+  expect(colourReplacements(deckOf(altar, stadium, skull, stone), "U", 2, { U: 4 })).toEqual(["Mind Stone"]);
+});
+
+test("a name appears once however many copies of the basic the deck runs", () => {
+  expect(colourReplacements(deckOf(mountain, mountain, mountain, diamond), "U", 2, { U: 4 })).toEqual(["Mountain", "Fire Diamond"]);
 });
 
 test("a land that does something besides make mana, a commander, and a basic of another short colour are never named", () => {

@@ -12,7 +12,7 @@ import { fetchableLands, fetchDemand, fetchedLandEntersTapped, isLandFetch } fro
 import { classifyLand } from "./land-conditions.js";
 import { COLORS, pipsByColor, type Color } from "./mana-audit.js";
 import { rolesOfCard } from "./quality.js";
-import { netPositiveMana } from "./same-job.js";
+import { netPositiveMana, netYield } from "./same-job.js";
 import type { DeckCard } from "./types.js";
 
 /** The same test `mana-base.ts` uses, so a land here is a land there. */
@@ -191,14 +191,25 @@ export function basicsFloor(deck: readonly DeckCard[]): number {
   return floor;
 }
 
+/** A PLAIN ROCK: a repeatable tap-for-mana line with no sacrifice in its cost (`netYield` reads one),
+ *  and no derived ability but making mana or drawing a card (Mind Stone, Commander's Sphere). A
+ *  triggered or static ability, or any other effect kind (Strixhaven Stadium's counters, Crystal
+ *  Skull's play-from-top), makes it a utility artifact. A blank activated effect is a cost line the
+ *  deriver split off (Mind Stone's sacrifice), so it does not count. */
+function plainRock(dc: DeckCard): boolean {
+  if (netYield(dc) === null) return false;
+  return (dc.tags?.abilities ?? []).every((a) =>
+    a.effect.kind === "mana-generation" || a.effect.kind === "draw-card" || (a.kind === "activated" && !a.effect.kind));
+}
+
 /** THE DECK'S OWN SOURCES MOST WORTH TRADING FOR A COLOUR IT IS SHORT OF (owner rulings, 2026-10-08,
  *  #966 T3): up to two, worst first, so the report can say which cards to take out and not only that
  *  the colour is short. The yardstick is the deck-wide colour shortfall (`colourDeficit`), the swaps
  *  are iterative suggestions, and fast mana is never named for colour.
  *
- *  TIER 0 makes none of `colour`; TIER 1 makes it but is not online by `turn` (a land that always
- *  enters tapped, a rock whose mana value is `turn` or more: the audit's own clock). Within a tier
- *  lands come first, the always-tapped before the rest (T1's order), then rocks, then by name.
+ *  TIER 0 makes none of `colour`; TIER 1 is a land that makes it but always enters tapped, so it is
+ *  not online by `turn`. A rock is named only as a plain rock (`plainRock`) that does not make the
+ *  colour. Each name appears once. Within a tier lands come first, the always-tapped before the rest (T1's order), then rocks, then by name.
  *
  *  NEVER NAMED: a commander; a land that does something besides make mana, or whose mana is
  *  conditional (T1's uncuttable gate: `utility`); a net-positive rock (`netPositiveMana`, Sol Ring);
@@ -228,13 +239,15 @@ export function colourReplacements(
     } else {
       const made = (dc.card.producedMana ?? []) as readonly string[];
       if (!/\bartifact\b/i.test(dc.card.typeLine) || /\bcreature\b/i.test(dc.card.typeLine) || made.length === 0) continue;
-      if (netPositiveMana(dc) || made.some((c) => otherShort.includes(c as Color))) continue;
-      const makes = made.includes(colour);
-      if (makes && dc.card.manaValue < turn) continue;
-      ranked.push({ name: dc.card.name, tier: makes ? 1 : 0, land: false, tapped: 0 });
+      // A ROCK THAT MAKES THE COLOUR IS NEVER NAMED, and only a PLAIN rock is (coordinator, 2026-10-08):
+      // trading ramp that makes the colour for a land is not a colour fix, and an artifact that does
+      // something else is a utility card.
+      if (made.includes(colour) || !plainRock(dc) || netPositiveMana(dc) || made.some((c) => otherShort.includes(c as Color))) continue;
+      ranked.push({ name: dc.card.name, tier: 0, land: false, tapped: 0 });
     }
   }
+  const seen = new Set<string>();
   return ranked
     .sort((a, b) => a.tier - b.tier || Number(b.land) - Number(a.land) || b.tapped - a.tapped || a.name.localeCompare(b.name))
-    .slice(0, 2).map((r) => r.name);
+    .map((r) => r.name).filter((n) => !seen.has(n) && seen.add(n)).slice(0, 2);
 }
