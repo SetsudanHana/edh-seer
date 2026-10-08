@@ -216,7 +216,7 @@ function plainRock(dc: DeckCard): boolean {
  *  NEVER NAMED: a commander; a land that does something besides make mana, or whose mana is
  *  conditional (T1's uncuttable gate: `utility`); a net-positive rock (`netPositiveMana`, Sol Ring);
  *  a source that makes a OTHER colour the deck is short of (a basic of it, or a dual), since trading
- *  it deepens that shortfall. Creatures and one-shot spells are not a mana base's to trade. */
+ *  it deepens that shortfall. A plain dork (`isPlainDork`) is named like a plain rock unless its creature type is themed; one-shot spells and land-fetch spells are not named (CEILING below). */
 export function colourReplacements(
   deck: readonly DeckCard[],
   colour: Color,

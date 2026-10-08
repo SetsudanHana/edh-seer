@@ -414,6 +414,10 @@ describe("a dork for a dork, to close a colour shortfall", () => {
     expect(swap(rock("Llanowar Elves"), [elf("Angel Blue", "{T}: Add {U}. Spend this mana only to cast Angel spells.", ["U"])], [])).toEqual([]);
     expect(swap(angelic, [blue], [])).toEqual([]);
   });
+  test("a dork that taps OTHER creatures for its mana is not plain: Birchlore Rangers never replaces Llanowar Elves", () => {
+    const birchlore = elf("Birchlore Rangers", "Tap two untapped Elves you control: Add one mana of any color.", ["W", "U", "B", "R", "G"]);
+    expect(swap(rock("Llanowar Elves"), [birchlore], [])).toEqual([]);
+  });
   test("a rock is still not a dork: Birds never replaces Mind Stone, and a rock never replaces Llanowar", () => {
     expect(swap(rock("Mind Stone"), [rock("Birds of Paradise")], [])).toEqual([]);
     expect(swap(rock("Llanowar Elves"), [rock("Izzet Signet")], [])).toEqual([]);

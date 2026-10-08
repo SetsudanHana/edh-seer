@@ -407,6 +407,9 @@ export function themedSubjects(themes: readonly string[] | undefined): Set<strin
 export function isPlainDork(d: DeckCard): boolean {
   if (!isCreature(d) || (d.card.faces?.length ?? 0) > 1 || netYield(d) === null) return false;
   if (/\badd [^.\n]*\bfor each\b|\badd [^.\n]*\{x\}/.test(printed(d))) return false;
+  // ITS OWN TAP PAYS FOR THE MANA: Birchlore Rangers' "Tap two untapped Elves you control: Add …" taps
+  // other creatures, so it is a tribal engine, not a dork (precon measurement, 2026-10-08).
+  if (!/(^|\n)[^:\n]*\{t\}[^:\n]*:\s*add\b/.test(printed(d))) return false;
   return (d.tags?.abilities ?? []).every((a) => a.kind === "activated");
 }
 /** THE SAME DORK, ANY COLOURS: both plain dorks, the add prints nothing the cut does not (self-damage aside)
