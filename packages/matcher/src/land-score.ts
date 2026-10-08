@@ -11,6 +11,7 @@ import type { Card } from "@edh-seer/engine";
 import { fetchableLands, fetchDemand, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
 import { classifyLand } from "./land-conditions.js";
 import { COLORS, pipsByColor, type Color } from "./mana-audit.js";
+import { castableManaCost } from "./split-cost.js";
 import { rolesOfCard } from "./quality.js";
 import type { DeckCard } from "./types.js";
 
@@ -111,7 +112,7 @@ export function pipDemand(deck: readonly DeckCard[]): Partial<Record<Color, numb
   const out: Partial<Record<Color, number>> = {};
   for (const dc of deck) {
     if (isLand(dc)) continue;
-    const pips = pipsByColor(dc.card.manaCost);
+    const pips = pipsByColor(castableManaCost(dc.card));
     for (const c of COLORS) if (pips[c]) out[c] = (out[c] ?? 0) + pips[c]!;
   }
   return out;

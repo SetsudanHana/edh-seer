@@ -87,4 +87,7 @@ test("demand coverage: the share of the deck's coloured pip demand a source's co
   expect(demandCoverage(["R"], {})).toBe(0);
   // A land is not demand.
   expect(pipDemand([...izzet, dc("Steam Vents", "Land", "", ["U", "R"], [], "{U}{R}")])).toEqual({ U: 10, R: 30 });
+  // A split card prints a joined cost; only the castable half is demand (as manaAudit reads it).
+  const split = dc("Dusk // Dawn", "Sorcery // Sorcery", "", [], [], "{2}{W}{W} // {3}{W}{W}");
+  expect(pipDemand([split])).toEqual({ W: 2 });
 });

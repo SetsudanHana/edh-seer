@@ -178,3 +178,14 @@ test("land cuts go worst first: always tapped before sometimes before never, the
   // Better Land only improves on lands that lack a colour or enter tapped: Open Mono gains B.
   expect(out).toEqual(["Tapped Mono", "Tapped Mono W", "Tapped Dual", "Check Dual", "Open Mono"]);
 });
+
+test("within a tier the cut covering less demand goes first, whatever the old tiebreaks say; flipping the demand flips them", () => {
+  const mk = (name: string, oracle: string, produced: string[]) => land(name, "Land", oracle, produced);
+  // Same tier, same best add (one colour gained), so only the cut's name would order them: A before Z.
+  const high = mk("A High W", "A High W enters tapped.\n{T}: Add {W}.", ["W"]);
+  const low = mk("Z Low B", "Z Low B enters tapped.\n{T}: Add {B}.", ["B"]);
+  const better = mk("Better Land", "{T}: Add {W} or {B}.", ["W", "B"]);
+  const order = (demand: Partial<Record<"W" | "B", number>>) => landOptions([high, low], [better], 0, demand).map((o) => o.cut);
+  expect(order({ W: 30, B: 10 })).toEqual(["Z Low B", "A High W"]);
+  expect(order({ W: 10, B: 30 })).toEqual(["A High W", "Z Low B"]);
+});
