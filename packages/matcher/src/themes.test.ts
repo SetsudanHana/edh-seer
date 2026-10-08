@@ -175,3 +175,21 @@ test("a static grant to lands is not a payoff of a land entering, a landfall tri
   expect(t.payoffs).not.toContain("Chromatic Lantern");
   expect(t.payoffs).toContain("Landfall Payoff");
 });
+
+test("a basic-land-type grant is refused, an animate-lands static keeps its credit", () => {
+  const swamps = card("Swamp Granter", [{
+    kind: "static",
+    effect: { kind: "keyword-grant", subject: { subtype: "swamp", control: "you", token: null, scope: "all" } },
+  }] as never);
+  const animator = card("Land Animator", [{
+    kind: "static",
+    effect: { kind: "animate", subject: { type: "land", control: "you", token: null, scope: "all" } },
+  }] as never);
+  const lordOfLands = card("Land Lord", [{
+    kind: "static",
+    effect: { kind: "pump", subject: { type: "land", control: "you", token: null, scope: "all" } },
+  }] as never);
+  const [sw, ln] = themeMembership([swamps, animator, lordOfLands], [], ["enters:swamp", "enters:land"]);
+  expect(sw.payoffs).not.toContain("Swamp Granter");
+  expect(ln.payoffs).toEqual(["Land Animator", "Land Lord"]);
+});
