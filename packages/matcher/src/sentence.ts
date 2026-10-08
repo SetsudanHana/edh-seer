@@ -562,7 +562,7 @@ export function graveyardEnablesRecursion(
 ): string {
   // INTERCEPTED (#1083): a replacement exiles the card on its way in and the consumer plays it from
   // exile; it never reaches a graveyard, so "bring back" would be wrong.
-  if (fill.intercepted) return `Cards ${producer} would put into an opponent's graveyard are exiled by ${consumer} instead, and it can play them`;
+  if (fill.intercepted) return `Cards ${producer} would put into an opponent's graveyard are exiled by ${consumer} instead, and it can play from among them`;
   if (fill.producerItself) return `When ${producer} is in the graveyard, ${consumer} can bring it back`;
   // A FILL OF OTHER CARDS -- a discard, a mill, a sacrifice of something else -- never puts the
   // producer there, and "When Chandra's Regulator is in the graveyard, Chandra, Acolyte of Flame can
