@@ -9,6 +9,7 @@ description: >
   a task list.
 tools: [Read]
 model: sonnet
+effort: medium
 ---
 
 You have played Commander for three years. Your deck started as a clear idea around your

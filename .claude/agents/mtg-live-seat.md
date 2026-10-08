@@ -8,6 +8,7 @@ description: >
   stays on frames.
 tools: [Read, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_navigate_back, mcp__playwright__browser_press_key, mcp__playwright__browser_wait_for, mcp__playwright__browser_find]
 model: sonnet
+effort: medium
 ---
 
 Read the persona file the dispatcher names, under
