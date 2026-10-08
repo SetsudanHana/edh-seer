@@ -381,3 +381,10 @@ describe("'Enchant Forest' is a demand for Forests, judged like a colour pip", (
     expect(run(5, rock("Fertile Ground"))).toEqual(["Fertile Ground"]);
   });
 });
+
+test("a Game Changer upgrade is untouched by the colour and cross-type paths (Enduring Enchantments: Arcane Signet to a Game Changer, enchantment watched, colours short)", () => {
+  const quality = rated({ "Arcane Signet": 92, "Mana Vault": 98 });
+  const out = roleOptions("ramp", [real("Arcane Signet")], [candidate(rock("Fertile Ground")), candidate(rock("Wild Growth"))], { pool: [candidate(real("Mana Vault"))], quality },
+    { W: 5, B: 7, G: 5 }, () => 2, new Set(["enchantment"]), () => true);
+  expect(out.map((o) => [o.cut, o.options.map((x) => [x.add, x.upgrade ?? null])])).toEqual([["Arcane Signet", [["Mana Vault", "game-changer"]]]]);
+});
