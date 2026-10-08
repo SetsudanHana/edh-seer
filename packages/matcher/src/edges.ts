@@ -70,6 +70,21 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
 
 /** A card's set of theme tags (for deck-frequency ranking): one per trigger verb, emit, and
  *  static effect. Mirrors the flat engine's produces∪cares membership. */
+/** A MANA ROCK: a non-land, non-creature permanent with an ACTIVATED mana ability. Its own entry is
+ *  the mana base, never a theme (#966, owner 2026-10-02: "Mana rocks are not a theme ... A mana
+ *  source must not count toward cohesion or the theme"). MEASURED: the precon Multiverse Reforged,
+ *  11 rocks, headlined "Artifacts (artifacts entering)" because each Signet implied `enters:artifact`.
+ *  Only the card's OWN implied entry is dropped; its other theme tags and every edge are untouched
+ *  (this function is read by `cardThemeTags` alone). A mana DORK is a creature and stays its tribe.
+ *  CEILING: a rock whose derive has no mana-generation ability (Jeweled Lotus derives none) still
+ *  themes; a Treasure MAKER (Smothering Tithe) has no activated mana ability, so it is not a rock
+ *  and keeps its entry, deliberately. */
+function isManaRock(tags: CardTags): boolean {
+  const types = (tags.characteristics?.types ?? []).map((t) => t.toLowerCase());
+  if (types.includes("land") || types.includes("creature")) return false;
+  return tags.abilities.some((a) => a.kind === "activated" && a.effect?.kind === "mana-generation");
+}
+
 /** The theme tags a card earns just by BEING a permanent that enters the battlefield.
  *
  *  `cardThemeTags` read a card's ABILITIES only, so a permanent's own entry contributed nothing:
@@ -105,6 +120,7 @@ function impliedEntryThemeTags(tags: CardTags): string[] {
   // through the payoffs that TRIGGER on it and the ramp that AUTHORS it; what is excluded is a
   // Island claiming to be a theme by existing.
   if ((tags.characteristics.types ?? []).some((t) => t.toLowerCase() === "land")) return [];
+  if (isManaRock(tags)) return [];
   return impliedEvents(tags.characteristics)
     .filter((e) => e.verb === "enters")
     .flatMap((e) => {
