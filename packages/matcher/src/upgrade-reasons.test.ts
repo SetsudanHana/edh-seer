@@ -82,3 +82,9 @@ test("a fetch-spell swap says the add can find a land of the short colour", () =
   expect(r.in).toBe("Farseek can find a land that makes green, which the deck is short of for its spells.");
   expect(r.out).toBe("Rampant Growth can't find a land that makes green, which the deck is short of for its spells.");
 });
+
+test("a fetch swap that gives up a role says so", () => {
+  const r = roleReasons("Mwonvuli Acid-Moss", roleOpt("Farseek", { role: "ramp", gained: [], colour: ["G"], fetch: true, lost: ["targetedRemoval"] }));
+  expect(r.out).toBe("Mwonvuli Acid-Moss also does removal, and can't find a land that makes green, which the deck is short of for its spells.");
+  expect(r.in).toBe("Farseek can find a land that makes green, which the deck is short of for its spells, but does not do removal.");
+});

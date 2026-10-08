@@ -26,7 +26,7 @@ import { candidatePool, type IndexCard } from "./suggest.js";
 import { decodeIndex, deckCards } from "./suggest-static.js";
 import type { DeckCard } from "./types.js";
 import type { UpgradeSectionId } from "./upgrade-package.js";
-import { CONDITIONS, isCreature, netPositiveMana, sameGroup, creatureSubtypes, landAuraType, isFetchSpell, sameDorkAnyColour, sameFetchAnyColour, sameJob, sameRockAnyColour, themedSubjects, shape } from "./same-job.js";
+import { CONDITIONS, isCreature, netPositiveMana, sameGroup, creatureSubtypes, landAuraType, isFetchSpell, landsToBattlefield, singleLandFetch, sameDorkAnyColour, sameFetchAnyColour, sameJob, sameRockAnyColour, themedSubjects, shape } from "./same-job.js";
 export { answerCovers, newConditions, sameGroup, sameJob } from "./same-job.js";
 
 export type RoleSectionId = Exclude<UpgradeSectionId, "lands" | "synergy">;
@@ -165,6 +165,9 @@ export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Rec
     } else {
       crossType = typesOf(add.dc).find((t) => watched.has(t));
       if (!crossType || typesOf(cut).some((t) => watched.has(t)) || landAuraType(add.dc) === null) return null;
+      // ONLY A SINGLE PLAIN FETCH becomes an Aura: two lands (Explosive Vegetation), or one in hand too
+      // (Cultivate), would be thrown away.
+      if (landsToBattlefield(cut) !== 1 || !singleLandFetch(cut)) return null;
     }
   } else if (!sameRockAnyColour(cut, add.dc)) {
     const cutWatched = typesOf(cut).some((t) => watched.has(t));

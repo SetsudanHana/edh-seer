@@ -83,8 +83,11 @@ const typeWords = (o: RoleOption) => (o.keptType ? `, and it's still ${/^[aeiou]
 
 export function roleReasons(cutName: string, o: RoleOption): { out: string; in: string } {
   if (o.colour?.length && o.fetch) {
-    const c = colourWords(o.colour).replace(" or ", " and ");
-    return { out: fit(`${cutName} can't find a land that makes `, [`${c}, which the deck is short of for its spells`]), in: fit(`${o.add} can find a land that makes `, [`${c}, which the deck is short of for its spells`]) };
+    const c = `${colourWords(o.colour).replace(" or ", " and ")}, which the deck is short of for its spells`;
+    const lost = list((o.lost ?? []).map((r) => JOB[r]));
+    return o.lost?.length
+      ? { out: fit(`${cutName} also does ${lost}, and can't find a land that makes `, [c]), in: fit(`${o.add} can find a land that makes `, [c], `, but does not do ${lost}.`) }
+      : { out: fit(`${cutName} can't find a land that makes `, [c]), in: fit(`${o.add} can find a land that makes `, [c]) };
   }
   if (o.colour?.length) {
     const lost = list((o.lost ?? []).map((r) => JOB[r]));

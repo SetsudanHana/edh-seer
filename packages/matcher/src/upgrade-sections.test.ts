@@ -444,6 +444,26 @@ describe("a land-fetch spell, swapped for a colour", () => {
     expect(landsToBattlefield(rock("Explosive Vegetation"))).toBe(2);
     expect(landsToBattlefield(rock("Rampant Growth"))).toBe(1);
   });
+  test("a count the text cannot bound is not a fetch to replace: Boundless Realms, and an unreadable count reads 2 where it names two", () => {
+    expect(landsToBattlefield(rock("Boundless Realms"))).toBe(Infinity);
+    expect(landsToBattlefield(rock("Verdant Mastery"))).toBe(2);
+    expect(landsToBattlefield(rock("Viewpoint Synchronization"))).toBe(2);
+    expect(landsToBattlefield(rock("Elemental Teachings"))).toBe(0);
+    expect(swap(rock("Boundless Realms"), [rock("Farseek")], { reach: { Farseek: ["G"] } })).toEqual([]);
+    expect(swap(rock("Elemental Teachings"), [rock("Farseek")], { reach: { Farseek: ["G"] } })).toEqual([]);
+  });
+  test("only a plain fetch is cut or added: removal, land destruction, draw, sagas and planes are not", () => {
+    for (const n of ["Deathsprout", "Frenzied Tilling", "Renewal", "Binding the Old Gods", "Horizon Boughs"] as const) {
+      expect(swap(rock(n), [rock("Farseek")], { reach: { Farseek: ["G"] } }), n).toEqual([]);
+      expect(swap(rock("Rampant Growth"), [rock(n)], { reach: { [n]: ["G"] } }), n).toEqual([]);
+    }
+  });
+  test("only a single plain fetch becomes a land Aura: Explosive Vegetation, Skyshroud Claim, Circuitous Route and Cultivate stay", () => {
+    for (const n of ["Explosive Vegetation", "Skyshroud Claim", "Circuitous Route", "Cultivate"] as const) {
+      expect(swap(rock(n), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { [n]: ["R"] } }), n).toEqual([]);
+    }
+    expect(swap(rock("Three Visits"), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { "Three Visits": ["R"] } })).toEqual([["Fertile Ground", "enchantment", false]]);
+  });
   test("a creature fetcher is never cut, and never added", () => {
     expect(swap(rock("Wood Elves"), [rock("Rampant Growth"), rock("Farseek")], { reach: { Farseek: ["G"] } })).toEqual([]);
     expect(swap(rock("Rampant Growth"), [rock("Wood Elves")], { reach: { "Wood Elves": ["G"] } })).toEqual([]);
