@@ -234,6 +234,9 @@ export function groupName(tag: string): string {
     case "non-combat-damage": return "Burn";
     case "counter-added": return none ? "Counters matter" : `Counters on ${p}`;
     case "graveyard-recursion": return none ? "Recursion" : tribe ? `${T} reanimation` : `${S} recursion`;
+    // #1083 (owner 2026-10-08): Dauthi Voidwalker / Valgavoth exile what would hit an opponent's
+    // graveyard and play it; not recursion, so not "Recursion" and not the raw tag.
+    case "graveyard-intercept": return "Playing their exiled cards";
     case "recursion-target": return none ? "Recursion targets" : `${S} recursion targets`;
     case "ramp-target": return none || sub === "land" || sub === "basic" ? "Land ramp" : `${T} ramp`;
     case "tutor": return none ? "Tutors" : `${S} tutors`;
