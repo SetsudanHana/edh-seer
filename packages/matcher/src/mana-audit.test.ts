@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { minCopies } from "@edh-seer/engine";
-import { manaAudit, pipsByColor } from "./mana-audit.js";
+import { colourDeficit, manaAudit, pipsByColor } from "./mana-audit.js";
 import { minSources } from "./mulligan.js";
 import type { DeckCard } from "./types.js";
 
@@ -410,4 +410,20 @@ test("a land-fetch sorcery is a source, and a ritual still is not", () => {
   // not charged twice -- that IS the turn the rock clock already skips.
   expect(green.demands.find((d) => d.turn === 3)!.available).toBe(20);
   expect(green.demands.find((d) => d.turn === 5)!.available).toBe(24);
+});
+
+test("the colour deficit is the worst demand's shortfall per colour, and absent when the colour is met", () => {
+  // Black wants {B}{B} early and has two sources while blue has plenty of its own: black is short, blue is not.
+  const deck = fillTo(100, [
+    card("Damnation", "{2}{B}{B}", 4),
+    card("Counterspell", "{U}{U}", 2),
+    ...Array.from({ length: 2 }, () => source("Swamp", ["B"])),
+    ...islands(30),
+  ]);
+  const rows = manaAudit(deck);
+  const black = rows.find((r) => r.color === "B")!.worst!;
+  const d = colourDeficit(deck);
+  expect(d.B).toBe(black.required - black.available);
+  expect(d.B).toBeGreaterThan(0);
+  expect(d.U).toBeUndefined();
 });

@@ -66,10 +66,10 @@ const printed = (d: DeckCard) => (d.card.oracleText ?? "").replace(REMINDER, "")
 /** `triggers` false when the caller reads triggers itself (the group key does, from the grammar):
  *  printed, an upside's trigger (Mana Drain's "at the beginning of your next main phase") reads as a
  *  condition. */
-export function newConditions(cut: DeckCard, add: DeckCard, triggers_ = true): boolean {
+export function newConditions(cut: DeckCard, add: DeckCard, triggers_ = true, tolerated: readonly string[] = []): boolean {
   const a = printed(add);
   const c = printed(cut);
-  if (CONDITIONS.some((re) => re.test(a) && !re.test(c))) return true;
+  if (CONDITIONS.some((re) => !tolerated.includes(re.source) && re.test(a) && !re.test(c))) return true;
   if (REACH.some((re) => re.test(c) && !re.test(a))) return true;
   const cutStats = new Set(c.match(STAT_CLAUSE) ?? []);
   if ((a.match(STAT_CLAUSE) ?? []).some((x) => !cutStats.has(x))) return true;
@@ -167,7 +167,7 @@ const GIVES_BACK_ROLES: ReadonlySet<Role> = new Set(["targetedRemoval", "boardWi
  *  carry no drawback the cut does not. */
 const DRAWBACK = new Set(["lose-life", "sacrifice", "discard", "cant", "tap", "deal-damage"]);
 
-interface Job { key: string; head: string; parts: Set<string>; drawbacks: Set<string>; upsides: Set<string>; all: Set<string> }
+interface Job { key: string; head: string; kind: string; parts: Set<string>; drawbacks: Set<string>; upsides: Set<string>; all: Set<string> }
 /** ONE READING PER CARD AND ROLE: swap search asks about the same cards hundreds of times, and each
  *  reading runs the grammar over the printed text. Keyed on the DeckCard object, so a rebuilt card
  *  (a new analysis) is read afresh and nothing outlives it. */
@@ -233,7 +233,8 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
   if (job.length === 0) return null;
   const ramp = role === "ramp" ? [rampKind(d), [...(d.card.producedMana ?? [])].sort().join("")] : [];
   const head = JSON.stringify([role, delivery(d), ...ramp]);
-  return { key: JSON.stringify([role, delivery(d), ...ramp, [...new Set(job)].sort()]), head, parts: new Set(job), drawbacks, upsides, all };
+  const kind = JSON.stringify([role, delivery(d), ...ramp.slice(0, 1)]);
+  return { key: JSON.stringify([role, delivery(d), ...ramp, [...new Set(job)].sort()]), head, kind, parts: new Set(job), drawbacks, upsides, all };
 }
 
 /** The words of an object with its numbers taken out: "all nonartifact creatures" keeps "nonartifact"
@@ -286,6 +287,86 @@ export function sameJob(cut: DeckCard, add: DeckCard, role: Role): boolean {
   // AND THE CUT'S UPSIDE IS KEPT: "same with upside" is the add having more, never the cut. Explore's
   // extra land is half the card, and Artifist Acumen's first strike does not replace it.
   return [...a.drawbacks].every((x) => c.drawbacks.has(x)) && [...c.upsides].every((x) => a.all.has(x)) && !newConditions(cut, add, false);
+}
+
+/** DAMAGE TO YOURSELF is the price of a Talisman's coloured mana, and "life is a resource" (owner,
+ *  2026-10-08): on the add of a colour swap it blocks nothing. These are the two conditions that
+ *  read it, so `newConditions` is told to let them by. */
+const SELF_DAMAGE = [/\bdamage to you\b/.source, /\bdeals? (?:\d+|x) damage\b/.source];
+const damagesOthers = (t: string) => /\bdeals? (?:\d+|x) damage to (?!you\b)/.test(t);
+
+/** A ROCK THAT PRINTS MORE MANA THAN IT COSTS (Sol Ring, Mana Vault, Mana Crypt, Grim Monolith: owner
+ *  2026-10-08): the printed yield is above the mana value. Never cut for the sake of a colour. */
+export function netPositiveMana(d: DeckCard): boolean {
+  const y = yieldOf(d, "ramp");
+  return typeof y === "number" && y > (d.card.manaValue ?? 0);
+}
+
+/** THE SAME ROCK, ANY COLOURS (owner 2026-10-08, #966): `sameJob`'s ramp head holds the exact colour set
+ *  and its parts hold the mana words, so no two rocks of different colours ever pass it. A colour swap
+ *  needs the rest of the job alike and the colours free: both are rocks of one shape, the add does
+ *  whatever else the cut does (its mana line aside), prints no drawback or condition the cut lacks bar
+ *  damage to its own controller, and yields at least as much as printed. The cut's own upside (Mind
+ *  Stone's draw) is not kept, by owner ruling (2026-10-08, #966): a minor extra ability does not
+ *  protect a source; only net-positive fast mana does (`netPositiveMana`). The reason names what is lost.
+ *  CEILING: creatures (dorks) are out, as for `sameJob`: a body does other work no measure reads. */
+export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
+  if (isCreature(cut) || isCreature(add)) return false;
+  const c = readJob(cut, "ramp");
+  const a = readJob(add, "ramp");
+  if (!c || !a || c.kind !== a.kind || rampKind(cut) !== "rock") return false;
+  const isMana = (x: string) => x.startsWith('["add-mana"');
+  if (![...c.parts].filter((x) => !isMana(x)).every((x) => a.parts.has(x))) return false;
+  if (![...a.parts].some(isMana)) return false;
+  const selfDamage = (x: string) => x.startsWith('["deal-damage"') && !damagesOthers(printed(add));
+  if (![...a.drawbacks].every((x) => c.drawbacks.has(x) || selfDamage(x))) return false;
+  if (newConditions(cut, add, false, damagesOthers(printed(add)) ? [] : SELF_DAMAGE)) return false;
+  const cy = netYield(cut);
+  // THE ADD IS HELD TO WHAT IT NETS IN COLOUR (Prismatic Lens makes {C} free and a colour for {1}).
+  const ay = colouredNetYield(add);
+  return cy !== null && ay !== null && ay >= cy;
+}
+
+/** WHAT A ROCK NETS EACH TIME IT TAPS, for the colour swap only (review of #966 T2): the mana it adds
+ *  less the generic mana its activation costs, so a Signet ("{1}, {T}: Add {U}{R}") nets 1 where Worn
+ *  Powerstone nets 2. "One mana of any color / the chosen color / any type" is one mana (`yieldOf`
+ *  reads symbols only, and `sameJob` and `strictlyBetter` keep reading it). Null when no line reads. */
+const ADD_LINE = /^([^:\n]*):\s*add ([^\n]*)/gm;
+const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3 };
+const ANY_COLOUR = /^(one|two|three) mana of (?:any|the chosen) (?:color|type)/;
+/** The repeatable mana lines of a rock: what each nets, and whether it can make a colour. A line that
+ *  sacrifices the card is a one-shot (Lotus Petal, Dire Mimic), and a line whose mana is restricted
+ *  ("Spend this mana only to cast ...") is not yield for the deck's spells (#966 T2 review). */
+function manaLines(d: DeckCard): { net: number; coloured: boolean }[] {
+  const out: { net: number; coloured: boolean }[] = [];
+  for (const m of printed(d).matchAll(ADD_LINE)) {
+    const cost = m[1]!;
+    const rest = m[2]!;
+    if (/\bsacrifice\b/.test(cost) || /\bspend this mana only\b/.test(rest)) continue;
+    const any = ANY_COLOUR.exec(rest);
+    const run = /^(?:\{[^}]+\})+/.exec(rest)?.[0];
+    if (!any && !run) continue;
+    const made = any ? NUMBER_WORDS[any[1]!]! : (run!.match(/\{/g) ?? []).length;
+    const generic = (cost.match(/\{(\d+)\}/g) ?? []).reduce((n, x) => n + Number(x.slice(1, -1)), 0);
+    out.push({ net: made - generic, coloured: !!any || /\{[wubrg](?:\/[wubrgp])?\}/.test(rest.split(/\.\s/)[0]!) });
+  }
+  return out;
+}
+/** A COLOUR SET AN OPPONENT DECIDES IS NOT A FIX (Fellwar Stone: "...that a land an opponent controls
+ *  could produce"): the audit counts it as every colour, so reading it would bank a guess as a closed
+ *  shortfall. A missing answer instead. */
+const opponentDecides = (d: DeckCard) => /\ban opponent controls\b/i.test(printed(d));
+/** What it nets overall (the best repeatable line), null when none reads. */
+export function netYield(d: DeckCard): number | null {
+  if (opponentDecides(d)) return null;
+  const nets = manaLines(d).map((l) => l.net);
+  return nets.length ? Math.max(...nets) : null;
+}
+/** What its COLOURED lines net: Prismatic Lens makes {C} for free but a colour only for {1}, so 0. */
+export function colouredNetYield(d: DeckCard): number | null {
+  if (opponentDecides(d)) return null;
+  const nets = manaLines(d).filter((l) => l.coloured).map((l) => l.net);
+  return nets.length ? Math.max(...nets) : null;
 }
 
 /** THE OLD TEST, KEPT ONLY FOR THE BEFORE NUMBER while S-T2 is measured; not called by the product. */
