@@ -5,7 +5,7 @@ import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
 import { colourDeficit, landTypeDemand } from "./mana-audit.js";
-import { colouredNetYield, jobOf, landsToBattlefield, netYield, themedSubjects } from "./same-job.js";
+import { colouredNetYield, jobOf, landsToBattlefield, netYield, themedSubjects, sameFetchAnyColour } from "./same-job.js";
 import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, auraSupport, sameJob, strictlyBetter, swapCloser, watchedTypes } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
 
@@ -440,6 +440,9 @@ describe("a land-fetch spell, swapped for a colour", () => {
     expect(swap(rock("Rampant Growth"), [rock("Farseek")], { reach })).toEqual([["Farseek", null, true]]);
     expect(swap(rock("Rampant Growth"), [rock("Cultivate")], { reach, closes: 0 })).toEqual([]);
     expect(swap(rock("Explosive Vegetation"), [rock("Cultivate")], { reach: { "Explosive Vegetation": ["R"], Cultivate: ["R", "G"] } })).toEqual([]);
+    // An untapped fetch is never traded for a tapped one for colour (Three Visits -> Farseek).
+    expect(sameFetchAnyColour(rock("Three Visits"), rock("Farseek"))).toBe(false);
+    expect(sameFetchAnyColour(rock("Farseek"), rock("Rampant Growth"))).toBe(true);
     expect(landsToBattlefield(rock("Cultivate"))).toBe(1);
     expect(landsToBattlefield(rock("Explosive Vegetation"))).toBe(2);
     expect(landsToBattlefield(rock("Rampant Growth"))).toBe(1);

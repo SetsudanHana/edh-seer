@@ -420,8 +420,12 @@ export function singleLandFetch(d: DeckCard): boolean {
 /** THE SAME FETCH, ANY LANDS: both fetch spells, the cut's count is known (a fetch-X spell is never
  *  replaced for colour), the add puts at least as many lands onto the battlefield and prints no
  *  condition the cut does not. Which colours it can reach is the yardstick's to judge. */
+const fetchesTapped = (d: DeckCard): boolean => /onto the battlefield tapped/.test(printed(d));
 export function sameFetchAnyColour(cut: DeckCard, add: DeckCard): boolean {
   const c = landsToBattlefield(cut);
+  // A TAPPED ARRIVAL IS A LOST TURN THE AUDIT DOES NOT PRICE (it puts every fetch spell on one MV+1
+  // clock): Three Visits ("onto the battlefield") is never traded for Farseek ("…tapped") for colour.
+  if (!fetchesTapped(cut) && fetchesTapped(add)) return false;
   return isFetchSpell(cut) && isFetchSpell(add) && c >= 1 && Number.isFinite(c) && landsToBattlefield(add) >= c && !newConditions(cut, add, false);
 }
 
