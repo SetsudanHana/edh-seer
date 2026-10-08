@@ -472,3 +472,11 @@ describe("a land-fetch spell, swapped for a colour", () => {
     expect(swap(rock("Rampant Growth"), [rock("Wood Elves")], { reach: { "Wood Elves": ["G"] } })).toEqual([]);
   });
 });
+
+describe("a rock that fixes no colour gives way to one that does (#1114)", () => {
+  test("Prismatic Lens, which makes blue only at a loss, is swapped for an Izzet Signet when blue is short; the Signet is not swapped for it", () => {
+    const run = (cut: DeckCard, add: DeckCard) => roleOptions("ramp", [cut], [candidate(add)], undefined, { U: 4 }, () => 1).flatMap((o) => o.options.map((x) => [x.add, x.colour]));
+    expect(run(rock("Prismatic Lens"), rock("Izzet Signet"))).toEqual([["Izzet Signet", ["U"]]]);
+    expect(run(rock("Izzet Signet"), rock("Prismatic Lens"))).toEqual([]);
+  });
+});
