@@ -4,6 +4,7 @@ import { minSources } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
 import { fixedColours } from "./mana-lines.js";
+import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import type { DeckCard } from "./types.js";
 import { BASIC_LAND_TYPES } from "./typeline.js";
 
@@ -132,6 +133,9 @@ export interface ColorDemand {
    *  62 of the 71 calibration decks they were short by a median of ten sources, off a model measured
    *  to over-state by up to fourteen. */
   met: boolean;
+  /** THE STATIC FIXERS THAT RAISED `available` (#1115): Chromatic Lantern, Prismatic Omen, Urborg, Chromatic
+   *  Orrery... Absent when none was out by `turn` or none changed the count. */
+  fixedBy?: string[];
 }
 
 export interface ManaAuditRow {
@@ -265,6 +269,25 @@ export function manaAudit(
     ...library.filter((dc) => isManaSource(dc) && produces(dc.card, "C")),
   ])]);
 
+  // STATIC COLOUR FIXERS (owner, 2026-10-08, #1115): "after you play cards like Chromatic Lantern your color
+  // issues disappear, you are only bounded by the landcount". From the turn a fixer is out, every source it
+  // covers makes the colours it grants. It is one or two cards and not every game draws one, so the credit is
+  // weighted by P(at least one is seen by the deadline) -- the same `seen` and library `minCopies` prices a turn
+  // with -- and FLOORED, the direction this audit under-claims in. The fixer comes out on its own clock: a land
+  // when `landOnlineBy` says it taps, a nonland the turn after its mana value (the rock clock above).
+  const fixers = libraryFixers(library);
+  const fixerOut = (dc: DeckCard, turn: number): boolean =>
+    /\bland\b/i.test(dc.card.typeLine) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
+  const lands = library.filter((dc) => /\bland\b/i.test(dc.card.typeLine));
+  const credit = (color: Color, sources: readonly DeckCard[], turn: number, available: number): { extra: number; by: string[] } => {
+    if (fixers.length === 0) return { extra: 0, by: [] };
+    const have = new Set(sources);
+    // WHAT EACH KIND OF FIXER NEWLY REACHES: a land-fixer, the online lands that were not already this colour's
+    // source; an all-mana fixer, also every other online source (a rock, a dork).
+    const newLands = lands.filter((dc) => !have.has(dc) && landOnlineBy(dc, turn, basicTypes)).length;
+    return fixerCredit(fixers, color, turn, fixerOut, newLands, Math.max(0, anyAvailableBy(turn) - available), library.length);
+  };
+
   const rows: ManaAuditRow[] = [];
   for (const color of COLORS) {
     const sources = sourcesByColor.get(color)!;
@@ -295,10 +318,14 @@ export function manaAudit(
       // figure is the conservative end, so the corrected one is clamped never to exceed it rather
       // than allowed to read HIGHER than the model it corrects (criterion S2).
       const required = Math.min(requiredRaw, minSources(pips, turn, SOURCE_CONFIDENCE) ?? requiredRaw);
-      const available = availableBy(turn);
+      const own = availableBy(turn);
+      const { extra, by } = credit(color, sources, turn, own);
+      // Never more than the deck's every source (the cap `unmet` below uses), so a credit cannot outrun the land count.
+      const available = Math.min(own + extra, Math.max(own, anyAvailableBy(turn)));
       groups.set(key, {
         pips, turn, required, requiredRaw, cards: 1, names: [dc.card.name], available,
         met: available >= required,
+        ...(available > own ? { fixedBy: [...new Set(by)] } : {}),
       });
     }
     if (groups.size === 0) continue;

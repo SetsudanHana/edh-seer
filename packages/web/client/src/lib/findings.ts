@@ -260,7 +260,9 @@ function colourFindings(report: DeckReport): Finding[] {
       kind: "colour",
       id: `colour:${c.color}`,
       headline: `${subject} ${verb} ${pips} ${colour} on turn ${worst.turn}.`,
-      detail: `Only ${worst.available} of your ${c.supplied} ${colour} sources can tap for mana by then`
+      detail: (worst.fixedBy?.length
+        ? `Only ${worst.available} ${colour} sources can tap for mana by then, counting ${worst.fixedBy.join(" and ")} fixing your lands (${c.supplied} make ${colour} on their own)`
+        : `Only ${worst.available} of your ${c.supplied} ${colour} sources can tap for mana by then`)
         + " (tapped lands, and rocks you couldn't have cast yet, don't count)."
         + ` Casting it on curve nine games in ten takes ${worst.required}.${timing}`,
       action: tradeAction(worst.replace ?? [], colour, worst.turn),
@@ -525,4 +527,13 @@ export function slotTrade(report: DeckReport, shortfalls: readonly Finding[]): s
       // "swap within it rather than adding more" read as its opposite, and the seat stopped.
       ? ` The count is fine; what those ${top.count} cards can hit is not: take the slots from the cards that answer the same things, and keep the ones that answer what nothing else does.`
       : "");
+}
+
+/** The Colours row's one-line label. A static fixer (Chromatic Lantern) can lift the count past the sources the deck has,
+ *  so then it says "by turn N with the fixer" rather than "N of them" (#1115); the unfixed wording is unchanged. */
+export function colourRowLabel(c: NonNullable<NonNullable<DeckReport["deckMath"]>["colors"]>[number]): string | null {
+  const w = c.worst;
+  if (!w) return null;
+  const reach = w.fixedBy?.length ? `${w.available} by turn ${w.turn} with ${w.fixedBy.join(" and ")}` : `${w.available} of them by turn ${w.turn}`;
+  return `${c.color}, ${c.supplied} sources, ${reach}, when ${cardsSubject(w.names ?? [], w.cards)} want${w.cards === 1 ? "s" : ""} ${w.pips} pip${w.pips === 1 ? "" : "s"} and that needs ${w.required}`;
 }

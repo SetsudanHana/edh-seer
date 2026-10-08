@@ -247,6 +247,7 @@ export function computeDeckMath(
           names: r.worst.names.slice(0, 2),
           // The count the shortfall is actually against: sources able to produce by this deadline.
           available: r.worst.available,
+          ...(r.worst.fixedBy ? { fixedBy: r.worst.fixedBy } : {}),
           // THE DECK'S OWN SOURCES TO TRADE FOR IT (#966 T3), only for a shortfall that is real.
           ...(r.worst.available < r.worst.required
             ? { replace: colourReplacements(deck, r.color, r.worst.turn, deficit, [...commanderNames], anyShort, themedSubjects(opts.themeTags)) }

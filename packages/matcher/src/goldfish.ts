@@ -4,6 +4,7 @@ import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
 import { fixedColours } from "./mana-lines.js";
+import { staticFixer } from "./static-fixers.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { FETCHES_TAPPED, FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands, isLandFetch } from "./fetch-land.js";
 import { DEFAULT_POD_SIZE, opponents } from "./format.js";
@@ -623,6 +624,15 @@ interface DeckSlot {
   landfall?: number;
   land?: LandCondition;
   accelerant?: Accelerant | null;
+  /** A STATIC COLOUR FIXER (#1115): while on the battlefield, the lands (or all mana) also make these colours. */
+  fixer?: FixerMask;
+}
+interface FixerMask { mask: number; covers: "lands" | "all-mana" }
+
+/** The static colour fixer a card prints, as the simulation's mask (the audit reads the same `staticFixer`). */
+function fixerOf(dc: DeckCard): { fixer?: FixerMask } {
+  const f = staticFixer(dc);
+  return f ? { fixer: { mask: colorMask(f.colours), covers: f.covers } } : {};
 }
 
 /** A creature's attack, by its front face's type and printed power; null for anything else. */
@@ -784,7 +794,7 @@ export type SeenKind = "land" | "cheap" | "dear";
 export const seenKind = (isLand: boolean, manaValue: number): SeenKind => isLand ? "land" : manaValue <= 3 ? "cheap" : "dear";
 
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
-interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean; colors: number }
+interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean; colors: number; fixer?: FixerMask }
 
 function boardFor(lands: OnBoardLand[], pod: number): { lands: number; basics: number; types: Set<string>; opponents: number } {
   const types = new Set<string>();
@@ -832,6 +842,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       output: spendable(manaOutput(dc.card.oracleText), cheapest),
       everyLandType: isEveryLandType(dc.card.typeLine, dc.card.oracleText),
       colors: fetches ? fetchMask(text, printed) : colorMask(fixedColours(dc)),
+      ...fixerOf(dc),
       fetches,
       fetchTapped: fetches && FETCHES_TAPPED.test(text),
       ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_COLORLESS.test(text) ? { tapBonus: "colorless" as const } : {}),
@@ -920,7 +931,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     : s.isExtra
       ? `X:${s.name}`
       // A DRAW OR A TUTOR CHANGES THE GAME IT IS HELD IN, as an accelerant does: its own class.
-      : s.accelerant || s.draw || s.tutor
+      : s.accelerant || s.draw || s.tutor || s.fixer
         ? `A:${s.name}`
         // CHEAP OR NOT IS PART OF THE CLASS (review of the mulligan, 2026-10-06): the keep rule reads
         // "a nonland costing 3 or less", so a 2-drop and a 7-drop with the same pips change which
@@ -1054,6 +1065,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     // Landfall mana is per EVENT, not per turn: it pays for each land that entered THIS turn, which
     // is the land drop and anything a fetch put down beside it.
     const landfalls: { turn: number; mana: number; colors: number }[] = [];
+    // STATIC COLOUR FIXERS ON THE BATTLEFIELD, nonland (a land fixer rides on its `OnBoardLand`) (#1115).
+    const statics: { turn: number; fixer: FixerMask }[] = [];
 
     for (let turn = 1; turn <= playTo; turn++) {
       // Rule 1: one card per turn, INCLUDING turn 1. On the play there is no turn-1 draw; modelling
@@ -1108,6 +1121,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           output: played.output,
           everyLandType: played.everyLandType,
           colors: played.colors,
+          fixer: played.fixer,
         });
         // A FETCHLAND TAKES ITS LAND OUT OF THE DECK (owner, 2026-08-25). Board +1 land, library -1
         // land, which is what cracking one actually does -- the fetch itself taps for nothing and
@@ -1125,13 +1139,21 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         // dorks and not for lands, a colourless one for anything that taps for {C}.
         const isCreature: boolean[] = [];
         const push = (mana: number, colors: number, creature: boolean): void => { out.push({ mana, colors }); isCreature.push(creature); };
+        // A STATIC FIXER (Chromatic Lantern, Prismatic Omen, Urborg, Chromatic Orrery) makes every source it
+        // covers tap for its colours, from the turn AFTER it is cast (the audit's `manaValue < turn` clock) or
+        // the turn its land taps. CEILING: a land with no mana ability of its own (a fetch) gains none.
+        let fixLands = 0, fixAll = 0;
+        const fixes = (f: FixerMask): void => { if (f.covers === "all-mana") fixAll |= f.mask; else fixLands |= f.mask; };
+        for (const t of statics) if (t.turn < turn) fixes(t.fixer);
+        for (const l of lands) if (l.fixer && !(l.enteredTapped && l.enteredTurn === turn)) fixes(l.fixer);
+        fixLands |= fixAll;
         for (const l of lands) {
           if (l.enteredTapped && l.enteredTurn === turn) continue;
           const m = produced(l.output, lands);
-          if (m > 0) push(m, l.colors, false);
+          if (m > 0) push(m, l.colors | fixLands, false);
         }
-        for (const r of rocks) if (r.turn <= turn) push(r.mana, r.colors, false);
-        for (const d of dorks) if (d.turn < turn) push(d.mana, d.colors, true);
+        for (const r of rocks) if (r.turn <= turn) push(r.mana, r.colors | fixAll, false);
+        for (const d of dorks) if (d.turn < turn) push(d.mana, d.colors | fixAll, true);
         // A TAP-REPLACEMENT PAYS PER SOURCE, NOT PER MANA: Forsaken Monument adds one {C} for every
         // permanent TAPPED for {C}, so a source making two mana off one tap is still one trigger.
         // Counted after the sources exist and never against another bonus, which is what keeps two
@@ -1187,6 +1209,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           if (!cast.attack.infect) boardTable += cast.attack.power;
         }
         const a = cast.accelerant!;
+        if (cast.fixer) statics.push({ turn, fixer: cast.fixer });
         const mana = produced(cast.output, lands);
         // A PER-SOURCE BONUS BRINGS NO MANA OF ITS OWN, so it goes to `bonuses` INSTEAD of the source
         // lists -- adding it to both would pay it once for existing and once per source.
@@ -1213,6 +1236,26 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         }
       } };
       castAccelerants();
+      // A FIXER THAT MAKES NO MANA OF ITS OWN (Prismatic Omen) is cast once the mana is there, cheapest first.
+      for (;;) {
+        let best = -1;
+        for (let i = 0; i < hand.length; i++) {
+          const c = hand[i]!;
+          if (!c.fixer || c.accelerant || c.isLand || c.manaValue > pool - holdUp) continue;
+          if (best < 0 || c.manaValue < hand[best]!.manaValue) best = i;
+        }
+        if (best < 0) break;
+        const cast = hand.splice(best, 1)[0]!;
+        pool -= cast.manaValue;
+        // STILL A CREATURE: Stormtide Leviathan and Dryad of the Ilysian Grove attack, so they are fielded as the
+        // accelerant and draw casts do.
+        if (fights && cast.attack && !fielded.has(cast)) {
+          fielded.add(cast);
+          boardOne += cast.attack.power;
+          if (!cast.attack.infect) boardTable += cast.attack.power;
+        }
+        statics.push({ turn, fixer: cast.fixer! });
+      }
 
       // Rule 3b: DRAW, after the accelerants and before any creature (owner 2026-10-07: ramp, draw,
       // creatures). Cheapest first among the draw cards and tutors in hand and the engines' unused

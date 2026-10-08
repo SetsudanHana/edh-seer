@@ -1270,3 +1270,35 @@ test("Prismatic Lens is not a blue source in the simulation: it pays {U}{U} no b
   const run = (d: DeckCard[]) => simulate(d, { trials: 4_000, turns: 6, seed: 5 }).byCardCastable.get("Counterspell");
   expect(run(deckWith(lens))).toEqual(run(deckWith(grey)));
 });
+
+// STATIC COLOUR FIXERS (owner, 2026-10-08, #1115): the simulation agrees with the audit -- once Chromatic Lantern is out,
+// every land taps for every colour. Isolated from Lantern's own "{T}: Add one mana of any color" by a twin that has
+// only that line.
+test("Chromatic Lantern makes the lands blue in the simulation, beyond its own tap", () => {
+  const lantern = rocks["Chromatic Lantern"] as unknown as DeckCard;
+  const twin: DeckCard = { ...lantern, card: { ...lantern.card, name: "Lantern Twin", oracleText: "{T}: Add one mana of any color." } as never };
+  const island = (i: number) => card(`Island ${i}`, "Basic Land — Island", 0, "({T}: Add {U}.)", ["U"]);
+  const mountain = (i: number) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "({T}: Add {R}.)", ["R"]);
+  const counterspell: DeckCard = { ...card("Counterspell", "Instant", 4), card: { ...card("Counterspell", "Instant", 4).card, manaCost: "{2}{U}{U}" } };
+  const deckWith = (extra: DeckCard) => [...Array.from({ length: 4 }, (_, i) => island(i)), ...Array.from({ length: 30 }, (_, i) => mountain(i)), extra, counterspell, ...spells(30, 1)];
+  const run = (d: DeckCard[]) => simulate(d, { trials: 6_000, turns: 8, seed: 5 }).byCardCastable.get("Counterspell")!;
+  const withStatic = run(deckWith(lantern));
+  const without = run(deckWith(twin));
+  expect(withStatic[7]!).toBeGreaterThan(without[7]! + 0.01);
+  // Not out before it can be cast: nothing moves on turns 1-3 (it costs three).
+  for (let t = 0; t < 3; t++) expect(withStatic[t]).toBe(without[t]);
+});
+
+// A creature that is also a static fixer (Stormtide Leviathan, Dryad of the Ilysian Grove) is still a creature: it
+// attacks (#1115 review). A vanilla twin with the same body is the yardstick.
+test("a creature fixer is fielded and attacks like its vanilla twin", () => {
+  const body = (name: string, oracleText: string): DeckCard => ({ card: { name, typeLine: "Creature — Leviathan", oracleText, manaCost: "{1}{U}", keywords: [], colors: ["U"], manaValue: 2, power: "20", toughness: "20" } as never, tags: null });
+  const islands = Array.from({ length: 40 }, (_, i) => card(`Island ${i}`, "Basic Land — Island", 0, "", ["U"]));
+  const deckOf = (text: string) => [...islands, ...Array.from({ length: 59 }, (_, i) => body(`Body ${i}`, text))];
+  const run = (text: string) => simulate(deckOf(text), { trials: 300, turns: 8, seed: 43, combatTo: 20 }).killTurns.one;
+  const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!;
+  const twin = run("");
+  const fixer = run("All lands are Islands in addition to their other types.");
+  expect(med(twin)).toBeLessThan(Infinity);
+  expect(med(fixer)).toBeLessThanOrEqual(med(twin));
+});

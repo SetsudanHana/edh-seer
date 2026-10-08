@@ -439,3 +439,18 @@ test("a fetch shortfall is a finding, ranked by the fraction of lands it cannot 
   expect(f.figure).toBe("1/2");
   expect(f.shortfall).toBeCloseTo(0.5);
 });
+
+/** STATIC FIXERS (#1115): a Lantern can lift `available` past `supplied`, so neither sentence may say "17 of your 15". */
+import { colourRowLabel } from "./findings.js";
+test("a fixed colour count says it is counting the fixer; the unfixed wording is unchanged", () => {
+  const row = (fixedBy?: string[]) => ({
+    color: "U", supplied: 15,
+    worst: { pips: 2, turn: 6, required: 30, requiredRaw: 36, cards: 1, available: fixedBy ? 17 : 12, names: ["Cancel"], ...(fixedBy ? { fixedBy } : {}) },
+  });
+  const detail = (fixedBy?: string[]) => findings(report({ deckMath: { colors: [row(fixedBy)] } as DeckReport["deckMath"] }))[0]!.detail;
+  expect(detail(["Chromatic Lantern"])).toContain("Only 17 blue sources can tap for mana by then, counting Chromatic Lantern fixing your lands (15 make blue on their own)");
+  expect(detail(["Chromatic Lantern"])).not.toContain("of your 15");
+  expect(detail()).toContain("Only 12 of your 15 blue sources can tap for mana by then");
+  expect(colourRowLabel(row(["Chromatic Lantern"]) as never)).toBe("U, 15 sources, 17 by turn 6 with Chromatic Lantern, when Cancel wants 2 pips and that needs 30");
+  expect(colourRowLabel(row() as never)).toBe("U, 15 sources, 12 of them by turn 6, when Cancel wants 2 pips and that needs 30");
+});

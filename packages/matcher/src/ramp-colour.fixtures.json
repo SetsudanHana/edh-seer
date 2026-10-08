@@ -8451,5 +8451,657 @@
    "segmentHash": "a7f024249fc77a17d2ed5a7bf68a484ad7521f274aa9a1a3f6460a8ef9e201cb",
    "clauseSource": "model"
   }
+ },
+ "Prismatic Omen": {
+  "card": {
+   "_id": "d90882ae-6572-4214-8d9c-0bdfb75f9be2",
+   "name": "Prismatic Omen",
+   "typeLine": "Enchantment",
+   "oracleText": "Lands you control are every basic land type in addition to their other types.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "releasedAt": "2008-05-02",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Urborg, Tomb of Yawgmoth": {
+  "card": {
+   "_id": "db6174d7-211d-4817-b8e4-8384594c83f9",
+   "name": "Urborg, Tomb of Yawgmoth",
+   "typeLine": "Legendary Land",
+   "oracleText": "Each land is a Swamp in addition to its other land types.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "B"
+   ],
+   "layout": "normal",
+   "releasedAt": "2021-03-19",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Chromatic Orrery": {
+  "card": {
+   "_id": "95c3976c-33f3-490b-bfd3-7f1af2fe0416",
+   "name": "Chromatic Orrery",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "You may spend mana as though it were mana of any color.\n{T}: Add {C}{C}{C}{C}{C}.\n{5}, {T}: Draw a card for each color among permanents you control.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 7,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana",
+     "card-draw"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{7}",
+   "producedMana": [
+    "C"
+   ],
+   "layout": "normal",
+   "releasedAt": "2020-07-03",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Joiner Adept": {
+  "card": {
+   "_id": "139b098c-d4be-4dca-9bde-9eb8ea97c7bf",
+   "name": "Joiner Adept",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "Lands you control have \"{T}: Add one mana of any color.\"",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "mana",
+     "tribe:elf",
+     "tribe-nontoken:elf",
+     "tribe:druid",
+     "tribe-nontoken:druid"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2007-07-13",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Yavimaya, Cradle of Growth": {
+  "card": {
+   "_id": "8dd5f5af-d2d8-4356-8617-8381081b930c",
+   "name": "Yavimaya, Cradle of Growth",
+   "typeLine": "Legendary Land",
+   "oracleText": "Each land is a Forest in addition to its other land types.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "G"
+   ],
+   "layout": "normal",
+   "releasedAt": "2021-06-18",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Emissary's Ploy": {
+  "card": {
+   "_id": "88e936c3-cab9-430f-baa1-930ff557cbf6",
+   "name": "Emissary's Ploy",
+   "typeLine": "Conspiracy",
+   "oracleText": "(Start the game with this conspiracy face up in the command zone.)\nBefore drawing your opening hand, choose 1, 2, or 3.\nYou may spend mana as though it were mana of any color to cast creature spells with mana value equal to the chosen number.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [],
+    "cares": []
+   },
+   "manaCost": "",
+   "layout": "normal",
+   "releasedAt": "2016-08-26",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Vizier of the Menagerie": {
+  "card": {
+   "_id": "4f890d42-e4f1-4eed-aa6c-718865de8927",
+   "name": "Vizier of the Menagerie",
+   "typeLine": "Creature — Snake Cleric",
+   "oracleText": "You may look at the top card of your library any time.\nYou may cast creature spells from the top of your library.\nYou can spend mana of any type to cast creature spells.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "tribe:snake",
+     "tribe-nontoken:snake",
+     "tribe:cleric",
+     "tribe-nontoken:cleric"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "releasedAt": "2026-04-24",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Mystic Skull // Mystic Monstrosity": {
+  "card": {
+   "_id": "1a7e367e-1d8d-463d-a35f-4bad44a5ebea",
+   "name": "Mystic Skull // Mystic Monstrosity",
+   "typeLine": "Artifact // Artifact Creature — Construct",
+   "oracleText": "{1}, {T}: Add one mana of any color.\n{5}, {T}: Transform this artifact.\n//\nLands you control have \"{T}: Add one mana of any color.\"",
+   "keywords": [
+    "Transform"
+   ],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana",
+     "tribe:construct",
+     "tribe-nontoken:construct"
+    ],
+    "cares": []
+   },
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "transform",
+   "releasedAt": "2021-09-24",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Greenhouse // Rickety Gazebo": {
+  "card": {
+   "_id": "a341eb75-e6a0-468b-8c83-61102249c648",
+   "name": "Greenhouse // Rickety Gazebo",
+   "typeLine": "Enchantment — Room // Enchantment — Room",
+   "oracleText": "Lands you control have \"{T}: Add one mana of any color.\"\n(You may cast either half. That door unlocks on the battlefield. As a sorcery, you may pay the mana cost of a locked door to unlock it.)\n//\nWhen you unlock this door, mill four cards, then return up to two permanent cards from among them to your hand.\n(You may cast either half. That door unlocks on the battlefield. As a sorcery, you may pay the mana cost of a locked door to unlock it.)",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "graveyard",
+     "mana",
+     "enchantment"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{2}{G} // {3}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "split",
+   "releasedAt": "2024-09-27",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "The World Tree": {
+  "card": {
+   "_id": "3437d504-bf62-4c27-b15f-f6330182ff7e",
+   "name": "The World Tree",
+   "typeLine": "Land",
+   "oracleText": "This land enters tapped.\n{T}: Add {G}.\nAs long as you control six or more lands, lands you control have \"{T}: Add one mana of any color.\"\n{W}{W}{U}{U}{B}{B}{R}{R}{G}{G}, {T}, Sacrifice this land: Search your library for any number of God cards, put them onto the battlefield, then shuffle.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana",
+     "ramp",
+     "land-etb"
+    ],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2021-02-05",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Celestial Dawn": {
+  "card": {
+   "_id": "b4d27fad-9a94-4760-80a6-6a2948109864",
+   "name": "Celestial Dawn",
+   "typeLine": "Enchantment",
+   "oracleText": "Lands you control are Plains.\nNonland permanents you control are white. The same is true for spells you control and nonland cards you own that aren't on the battlefield.\nYou may spend white mana as though it were mana of any color. You may spend other mana only as though it were colorless mana.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2006-10-06",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Divergent Growth": {
+  "card": {
+   "_id": "0123b162-0413-4022-acc0-e5bd061d3fb4",
+   "name": "Divergent Growth",
+   "typeLine": "Instant",
+   "oracleText": "Until end of turn, lands you control gain \"{T}: Add one mana of any color.\"",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2003-05-26",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Mycosynth Lattice": {
+  "card": {
+   "_id": "ae1f2ab5-c6a5-4d49-a746-3cb4668bf805",
+   "name": "Mycosynth Lattice",
+   "typeLine": "Artifact",
+   "oracleText": "All permanents are artifacts in addition to their other types.\nAll cards that aren't on the battlefield, spells, and permanents are colorless.\nPlayers may spend mana as though it were mana of any color.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 6,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{6}",
+   "layout": "normal",
+   "releasedAt": "2018-06-08",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Island": {
+  "card": {
+   "_id": "b2c6aa39-2d2a-459c-a555-fb48ba993373",
+   "name": "Island",
+   "typeLine": "Basic Land — Island",
+   "oracleText": "({T}: Add {U}.)",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "U"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-11-13",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Mountain": {
+  "card": {
+   "_id": "a3fb7228-e76b-4e96-a40e-20b5fed75685",
+   "name": "Mountain",
+   "typeLine": "Basic Land — Mountain",
+   "oracleText": "({T}: Add {R}.)",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "R"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-11-13",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Swamp": {
+  "card": {
+   "_id": "56719f6a-1a6c-4c0a-8d21-18f7d7350b68",
+   "name": "Swamp",
+   "typeLine": "Basic Land — Swamp",
+   "oracleText": "({T}: Add {B}.)",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "",
+   "producedMana": [
+    "B"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-11-13",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Oath of Nissa": {
+  "card": {
+   "_id": "c4efdbab-711d-4269-9b24-b05d36f7e5c7",
+   "name": "Oath of Nissa",
+   "typeLine": "Legendary Enchantment",
+   "oracleText": "When Oath of Nissa enters, look at the top three cards of your library. You may reveal a creature, land, or planeswalker card from among them and put it into your hand. Put the rest on the bottom of your library in any order.\nYou may spend mana as though it were mana of any color to cast planeswalker spells.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "manaCost": "{G}",
+   "layout": "normal",
+   "releasedAt": "2016-01-22",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Agatha's Soul Cauldron": {
+  "card": {
+   "_id": "c259e16f-2a44-4552-8678-815f757a02e8",
+   "name": "Agatha's Soul Cauldron",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "You may spend mana as though it were mana of any color to activate abilities of creatures you control.\nCreatures you control with +1/+1 counters on them have all activated abilities of all creature cards exiled with Agatha's Soul Cauldron.\n{T}: Exile target card from a graveyard. When a creature card is exiled this way, put a +1/+1 counter on target creature you control.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "counter:+1/+1"
+    ],
+    "cares": [
+     "counter:+1/+1"
+    ]
+   },
+   "manaCost": "{2}",
+   "layout": "normal",
+   "releasedAt": "2023-09-08",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Stormtide Leviathan": {
+  "card": {
+   "_id": "131a7475-0b9e-46eb-9ade-fef1b9820184",
+   "name": "Stormtide Leviathan",
+   "typeLine": "Creature — Leviathan",
+   "oracleText": "Islandwalk (This creature can't be blocked as long as defending player controls an Island.)\nAll lands are Islands in addition to their other types.\nCreatures without flying or islandwalk can't attack.",
+   "keywords": [
+    "Landwalk",
+    "Islandwalk"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "8",
+   "toughness": "8",
+   "tags": {
+    "produces": [
+     "tribe:leviathan",
+     "tribe-nontoken:leviathan"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{5}{U}{U}{U}",
+   "layout": "normal",
+   "releasedAt": "2020-11-20",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Swampbenders": {
+  "card": {
+   "_id": "feb00c6d-ff43-49bc-84d5-57e2d4651258",
+   "name": "Swampbenders",
+   "typeLine": "Creature — Human Druid Ally",
+   "oracleText": "Swampbenders's power and toughness are each equal to the number of Swamps on the battlefield.\nLands you control are Swamps in addition to their other types.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "*",
+   "toughness": "*",
+   "tags": {
+    "produces": [
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:druid",
+     "tribe-nontoken:druid",
+     "tribe:ally",
+     "tribe-nontoken:ally"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{4}{G}{G}",
+   "layout": "normal",
+   "releasedAt": "2025-11-21",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
  }
 }
