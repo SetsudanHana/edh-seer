@@ -202,3 +202,22 @@ export function demoteThinHeadline(
   if (first === -1) return [...ranked];
   return [ranked[first], ...ranked.filter((_, i) => i !== first)];
 }
+
+/** THE HEADLINE PASS, in the one order that lets both rules see each other's result (#966).
+ *
+ *  Generalise FIRST, then promote. The other order failed on Wakanda Forever once mana rocks stopped
+ *  theming: `enters:vibranium` (5 cards, nothing watches it) ranked first, promotion skipped it as
+ *  already specific, and generalisation handed the head to `enters:artifact` -- past
+ *  `enters:equipment` (8 cards, watched), the sibling promotion exists to pick. Generalised first,
+ *  the head becomes `enters:artifact` and promotion then names Equipment, as it did before.
+ *  Measured: 197 precons and 71 calibration decks, no headline moves on the swap alone except
+ *  Wakanda's two printings returning to "equipments entering". */
+export function orderHeadline(
+  ranked: readonly string[],
+  deckFreq: ReadonlyMap<string, number>,
+  membership: readonly ThemeMembership[],
+  floor: number,
+  cared: ReadonlySet<string>,
+): string[] {
+  return promoteSpecificHeadline(generalizeWatchlessHeadline(ranked, deckFreq, membership, floor, cared), deckFreq, membership);
+}
