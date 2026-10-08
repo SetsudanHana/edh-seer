@@ -15,6 +15,8 @@ export const ADD_LINE = /^([^:\n]*):\s*add ([^\n]*)/gm;
 const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7 };
 const WORDS = "one|two|three|four|five|six|seven";
 export const ADDITIONAL = new RegExp(`\\badds? an additional ((?:\\{[^}]+\\})+|(${WORDS}) mana of (?:any|the chosen) (?:color|type))`, "g");
+// CEILING: "three mana of any ONE color" (Pyramid of the Pantheon) is not matched here, so its line reads no
+// production and is not judged either way; "in any combination of colors" is.
 const ANY_COLOUR = new RegExp(`^(${WORDS}) mana (?:of (?:any|the chosen) (?:color|type)|in any combination of colou?rs)`);
 const WUBRG = ["W", "U", "B", "R", "G"];
 
@@ -48,12 +50,16 @@ export function manaLines(d: DeckCard): ManaLine[] {
     if (!any && !run) continue;
     const made = any ? NUMBER_WORDS[any[1]!]! : (run!.match(/\{/g) ?? []).length;
     // WHAT THE COST ASKS: a number is that many, any other symbol (coloured, hybrid) is one; {T} is the tap.
+    // CEILING: only MANA symbols are costs. A discard (Bog Witch), a forage or an energy payment is counted free,
+    // and a Phyrexian {W/P} counts as 1 whichever way it is paid.
     const symbols = [...cost.matchAll(/\{([^}]+)\}/g)].map((x) => x[1]!);
     const paid = symbols.filter((s) => !/^[tqe]$/.test(s)).reduce((n, s) => n + (/^\d+$/.test(s) ? Number(s) : s === "x" ? 0 : 1), 0);
     const tap = symbols.includes("t") ? 1 : 0;
     const colours = any ? WUBRG : coloursOf(rest.split(/\.\s/)[0]!);
-    // AN AMOUNT THAT SCALES ("{B} for each Swamp", Cabal Coffers) CANNOT BE JUDGED FROM THE LINE: it is not struck.
-    const qualifies = made >= paid + tap || /\bfor each\b|\bwhere x\b|\bequal to\b|\{x\}/.test(rest);
+    // CEILING: AN AMOUNT THAT SCALES ("{B} for each Swamp", Cabal Coffers) CANNOT BE JUDGED FROM THE LINE, so it
+    // is not struck. Read on the produced-mana clause only: a later sentence (Study Hall's "where X is") is no
+    // part of the amount.
+    const qualifies = made >= paid + tap || /\bfor each\b|\bwhere x\b|\bequal to\b|\{x\}/.test(rest.split(/\.\s/)[0]!);
     out.push({ net: made - paid, coloured: colours.length > 0 && qualifies, colours, qualifies, paid });
   }
   // AN AURA'S MANA IS A TRIGGER, not a "{T}: Add" line (Wild Growth, Utopia Sprawl): "adds an additional

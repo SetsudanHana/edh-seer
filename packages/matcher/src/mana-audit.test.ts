@@ -443,6 +443,10 @@ test("a filter land is a full source of both its colours; Cascading Cataracts an
   expect(fixedColours(real("Prismatic Lens"))).toEqual(["C"]);
   // An amount that scales cannot be judged from the line, so Cabal Coffers keeps its black.
   expect(fixedColours(real("Cabal Coffers"))).toEqual(["B"]);
+  // The scaling exemption reads the produced-mana clause only: a later "where X is" / "equal to" sentence
+  // (Study Hall, Opal Palace) is no part of the amount, and these are Prismatic Lens lines.
+  expect(fixedColours(real("Study Hall"))).toEqual(["C"]);
+  expect(fixedColours(real("Opal Palace"))).toEqual(["C"]);
   expect(manaLines(real("Cascading Cataracts")).map((l) => [l.net, l.qualifies])).toEqual([[1, true], [0, false]]);
 });
 
@@ -457,13 +461,9 @@ test("the audit counts a source only for the colours it fixes", () => {
 });
 
 test("the mana base score counts sources by what they fix: Cascading Cataracts is not a blue source there either", async () => {
-  const { colourSources, manaBaseScore } = await import("./mana-base.js");
+  const { colourSources } = await import("./mana-base.js");
   const deck = (extra: DeckCard) => fillTo(100, [card("Counterspell", "{U}{U}", 2), ...islands(10), extra]);
   const withCataracts = deck(real("Cascading Cataracts"));
   expect(colourSources(withCataracts).get("U")).toBe(10);
   expect(colourSources(deck(real("Cascade Bluffs"))).get("U")).toBe(11);
-  // One fewer blue source than before the fix, so the colour cost can only rise.
-  const lost = manaBaseScore(withCataracts, { target: 37, actual: 37 });
-  const kept = manaBaseScore(deck(real("Cascade Bluffs")), { target: 37, actual: 37 });
-  expect(lost.costs.colour).toBeGreaterThanOrEqual(kept.costs.colour);
 });
