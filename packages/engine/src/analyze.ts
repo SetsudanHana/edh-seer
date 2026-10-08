@@ -430,6 +430,13 @@ export interface DeckMath {
      *  is no `worst` row, and it is not "enough" either. */
     countBound?: boolean;
   }[];
+  /** A gold cost the per-colour rows cannot see (#1116): each colour alone is there at the audit's confidence and the
+   *  whole cost from one hand is not. Absent when the joint check passes, or fails only because a colour is short alone. */
+  gold?: {
+    colours: string[]; pips: number[]; turn: number; names: string[]; cards: number;
+    /** P(the drawn sources pay the whole cost) and the lowest per-colour P, both in the plain draw model. */
+    pJoint: number; pEach: number;
+  };
   /** The deck's biggest demand shapes: how many cards want the event, how many supply it, and
    *  whether you will have a supplier. */
   demand: {

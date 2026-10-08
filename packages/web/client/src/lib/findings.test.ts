@@ -454,3 +454,15 @@ test("a fixed colour count says it is counting the fixer; the unfixed wording is
   expect(colourRowLabel(row(["Chromatic Lantern"]) as never)).toBe("U, 15 sources, 17 by turn 6 with Chromatic Lantern, when Cancel wants 2 pips and that needs 30");
   expect(colourRowLabel(row() as never)).toBe("U, 15 sources, 12 of them by turn 6, when Cancel wants 2 pips and that needs 30");
 });
+
+/** #1116: the joint finding exists only when the matcher found it, and says what the two numbers are. */
+test("a gold joint demand is one plain finding, and a report without one has none", () => {
+  const withGold = findings(report({
+    deckMath: { colors: [], gold: { colours: ["W", "U"], pips: [1, 1], turn: 3, names: ["Absorb", "Sphinx's Revelation"], cards: 2, pJoint: 0.8123, pEach: 0.9271 } } as unknown as DeckReport["deckMath"],
+  })).filter((f) => f.id === "colour:gold");
+  expect(withGold).toHaveLength(1);
+  expect(withGold[0]!.headline).toBe("Your white-blue cards due by turn 3 (Absorb and Sphinx's Revelation) need both colours in the same hand.");
+  expect(withGold[0]!.detail).toBe("Each colour alone is there 92% of the time, both together 81%.");
+  expect(withGold[0]!.figure).toBe("81%");
+  expect(findings(report({ deckMath: { colors: [] } as unknown as DeckReport["deckMath"] })).some((f) => f.id === "colour:gold")).toBe(false);
+});

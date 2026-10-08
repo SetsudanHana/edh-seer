@@ -523,3 +523,47 @@ test("an all-mana fixer (Chromatic Orrery) credits rocks and dorks too, once it 
   expect(withOrrery.available).toBe(none.available + Math.floor(pAtLeast(1, 1, seen(8), 100) * 41 + 1e-9));
   expect(withOrrery.fixedBy).toEqual(["Chromatic Orrery"]);
 });
+
+/** GOLD CARDS ARE A JOINT DEMAND (#1116, owner 2026-10-08): the per-colour rows stay, and the joint check surfaces only
+ *  when every colour alone passes and the cost as a whole does not. */
+import { manaAuditFull, plainPips } from "./mana-audit.js";
+import { pAtLeast as pAtLeastE, pCanPay, seen as seenE } from "@edh-seer/engine";
+
+const many = (n: number, produces: string[], tag: string) => Array.from({ length: n }, (_, i) => source(`${tag}-${i}`, produces));
+
+test("a hybrid or Phyrexian symbol is not a joint pip", () => {
+  expect(plainPips("{W}{U}")).toEqual({ W: 1, U: 1 });
+  expect(plainPips("{W/U}{B}")).toEqual({ B: 1 });
+  expect(plainPips("{2/B}{B/P}{G}")).toEqual({ G: 1 });
+});
+
+test("{W}{U} on turn 2 fails jointly while white and blue each pass alone", () => {
+  const deck = fillTo(100, [card("Absorb-ish", "{W}{U}", 2), ...many(25, ["W"], "Plains"), ...many(25, ["U"], "Island")]);
+  const { gold } = manaAuditFull(deck);
+  const n = seenE(2);
+  expect(gold).toBeDefined();
+  expect(gold!.colours).toEqual(["W", "U"]);
+  expect(gold!.turn).toBe(2);
+  expect(gold!.names).toEqual(["Absorb-ish"]);
+  expect(gold!.pEach).toBeCloseTo(pAtLeastE(1, 25, n, 100), 10);
+  expect(gold!.pEach).toBeGreaterThanOrEqual(0.9);
+  expect(gold!.pJoint).toBeCloseTo(pCanPay([50, 25, 25, 0], [1, 1], n, 100), 10);
+  expect(gold!.pJoint).toBeLessThan(0.9);
+});
+
+test("enough duals make the joint demand pass, so there is no gold field", () => {
+  const deck = fillTo(100, [card("Absorb-ish", "{W}{U}", 2), ...many(25, ["W"], "Plains"), ...many(25, ["U"], "Island"), ...many(20, ["W", "U"], "Dual")]);
+  expect(manaAuditFull(deck).gold).toBeUndefined();
+});
+
+test("a deck with no gold demand has no gold field, and a colour alone short is not a gold finding", () => {
+  expect(manaAuditFull(fillTo(100, [card("Mono", "{W}{W}", 2), ...many(25, ["W"], "Plains")])).gold).toBeUndefined();
+  // White is short alone (3 sources): the per-colour row owns that, the joint check stays quiet.
+  expect(manaAuditFull(fillTo(100, [card("Absorb-ish", "{W}{U}", 2), ...many(3, ["W"], "Plains"), ...many(25, ["U"], "Island")])).gold).toBeUndefined();
+  // A hybrid-only gold cost is not a joint demand.
+  expect(manaAuditFull(fillTo(100, [card("Hybrid", "{W/U}{W/U}", 2), ...many(25, ["W"], "Plains")])).gold).toBeUndefined();
+});
+
+test("manaAudit still returns the rows alone", () => {
+  expect(Array.isArray(manaAudit(fillTo(100, [card("Mono", "{W}{W}", 2), ...many(25, ["W"], "Plains")])))).toBe(true);
+});

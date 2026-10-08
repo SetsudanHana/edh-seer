@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { comb, jointAvailability, minCopies, pAtLeast, seen } from "./hypergeometric.js";
+import { comb, jointAvailability, minCopies, pAtLeast, pCanPay, seen } from "./hypergeometric.js";
 
 /** The external spec's §9 acceptance values, plus every other Tier A number in that document that
  *  these four functions can produce.
@@ -189,4 +189,29 @@ test("drawing past the end of the library sees all of it, rather than reading as
   // The deliberate throw survives for a question that is genuinely unanswerable: 8 successes cannot
   // come out of a 7-card opener at any deck composition.
   expect(() => minCopies(8, 0, 0.5)).toThrow(/unreachable/);
+});
+
+/** pCanPay (#1116), on cases small enough to count by hand. Classes are indexed by bitmask over the colours:
+ *  [none, colour 0 only, colour 1 only, both]. */
+describe("pCanPay", () => {
+  test("one colour is the plain hypergeometric", () => {
+    expect(pCanPay([60, 39], [2], 10, 99)).toBeCloseTo(pAtLeast(2, 39, 10, 99), 12);
+  });
+  test("{W}{U} from 1 white, 1 blue and 2 blanks, drawing 2 of 4: only the pair {W, U} pays, 1 in 6", () => {
+    expect(pCanPay([2, 1, 1, 0], [1, 1], 2, 4)).toBeCloseTo(1 / 6, 12);
+  });
+  test("a dual pays one pip, not two: 1 white, 1 dual, 1 blank, draw 2 -- {W, dual} pays, {dual, blank} does not, 1 in 3", () => {
+    expect(pCanPay([1, 1, 0, 1], [1, 1], 2, 3)).toBeCloseTo(1 / 3, 12);
+  });
+  test("two duals pay {W}{U} together and not alone", () => {
+    expect(pCanPay([0, 0, 0, 2], [1, 1], 2, 2)).toBe(1);
+    expect(pCanPay([0, 0, 0, 2], [1, 1], 1, 2)).toBe(0);
+  });
+  test("{W}{W}{U}: a dual cannot be both a white pip and the blue one", () => {
+    // 2 white, 1 dual, 1 blank; draw 3. Only {W,W,D} pays (D as the blue): 1 of 4.
+    expect(pCanPay([1, 2, 0, 1], [2, 1], 3, 4)).toBeCloseTo(1 / 4, 12);
+  });
+  test("a class table of the wrong size is refused", () => {
+    expect(() => pCanPay([1, 1], [1, 1], 1, 2)).toThrow();
+  });
 });

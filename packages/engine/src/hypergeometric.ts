@@ -148,3 +148,47 @@ export function jointAvailability(
   }
   return Math.min(Math.max(total, 0), 1);
 }
+
+/** P(the cards drawn can PAY a multicolour cost), drawing `n` from `N` (#1116). A gold spell wants {W}{U} from ONE
+ *  hand, which is harder than "enough white" and "enough blue" taken separately: a dual counts toward both, but pays
+ *  only one pip.
+ *
+ *  `classSizes[m]` is the number of library cards of membership class `m`, a bitmask over the `need.length` colours
+ *  (bit i set: the card makes colour i); class 0 is the cards that make none of them, so the sizes must sum to `N`.
+ *  `need[i]` is the pips of colour i. Exact: every way the draw can split across the classes is enumerated with its
+ *  multivariate-hypergeometric weight, and a split pays the cost when Hall's condition holds -- for every non-empty
+ *  set S of colours, the drawn cards making some colour in S number at least the pips over S (the pips of one colour
+ *  share a neighbourhood, so subsets of colours are all the sets Hall needs). Cost is the number of splits, fine for
+ *  the three colours and ~17 cards this layer asks. */
+export function pCanPay(classSizes: readonly number[], need: readonly number[], n: number, N: number = LIBRARY): number {
+  const d = need.length;
+  if (classSizes.length !== 1 << d) throw new Error(`pCanPay: ${d} colours need ${1 << d} classes, got ${classSizes.length}`);
+  if (classSizes.reduce((a, b) => a + b, 0) !== N) throw new Error("pCanPay: the classes must sum to the library");
+  n = Math.min(n, N);
+  const take = new Array<number>(classSizes.length).fill(0);
+  const total = comb(N, n);
+  const pays = (): boolean => {
+    for (let s = 1; s < 1 << d; s++) {
+      let want = 0;
+      for (let i = 0; i < d; i++) if (s & (1 << i)) want += need[i]!;
+      let have = 0;
+      for (let m = 1; m < take.length; m++) if (m & s) have += take[m]!;
+      if (have < want) return false;
+    }
+    return true;
+  };
+  const walk = (m: number, left: number, weight: number): number => {
+    if (m === classSizes.length - 1) {
+      if (left > classSizes[m]!) return 0;
+      take[m] = left;
+      return pays() ? weight * comb(classSizes[m]!, left) : 0;
+    }
+    let sum = 0;
+    for (let x = 0; x <= Math.min(left, classSizes[m]!); x++) {
+      take[m] = x;
+      sum += walk(m + 1, left - x, weight * comb(classSizes[m]!, x));
+    }
+    return sum;
+  };
+  return Math.min(walk(0, n, 1) / total, 1);
+}

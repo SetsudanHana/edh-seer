@@ -1,4 +1,4 @@
-import { minCopies } from "@edh-seer/engine";
+import { minCopies, pAtLeast, pCanPay, seen } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { minSources } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
@@ -194,6 +194,40 @@ export function manaAudit(
   deck: readonly DeckCard[],
   opts: { commanderNames?: readonly string[] } = {},
 ): ManaAuditRow[] {
+  return manaAuditFull(deck, opts).rows;
+}
+
+/** A GOLD CARD'S JOINT DEMAND THAT THE PER-COLOUR ROWS HIDE (#1116, owner 2026-10-08): every colour alone is there at
+ *  `SOURCE_CONFIDENCE` or better, and the cards due by `turn` still need all of them from one hand and that fails. */
+export interface GoldJoint {
+  colours: Color[];
+  /** Pips of each colour, aligned with `colours`. */
+  pips: number[];
+  turn: number;
+  names: string[];
+  cards: number;
+  /** P(the drawn sources pay the whole cost), in the plain draw model. */
+  pJoint: number;
+  /** The LOWEST per-colour probability in the same model: what each colour alone reaches at worst. */
+  pEach: number;
+}
+
+/** The coloured pips of a cost that a single colour must pay: `{W}`, `{U}`... A hybrid (`{W/U}`, `{2/B}`) or Phyrexian
+ *  (`{B/P}`) symbol is NOT one -- either half, or life, pays it -- so it is dropped from a joint demand.
+ *  CEILING: dropped, not modelled as a choice; a card whose only gold is hybrid is not a joint demand here. */
+export function plainPips(manaCost: string | undefined): Partial<Record<Color, number>> {
+  const out: Partial<Record<Color, number>> = {};
+  for (const symbol of manaCost?.match(/\{[^{}]+\}/g) ?? []) {
+    const inner = symbol.slice(1, -1).toUpperCase();
+    if ((COLORS as readonly string[]).includes(inner)) out[inner as Color] = (out[inner as Color] ?? 0) + 1;
+  }
+  return out;
+}
+
+export function manaAuditFull(
+  deck: readonly DeckCard[],
+  opts: { commanderNames?: readonly string[] } = {},
+): { rows: ManaAuditRow[]; gold?: GoldJoint } {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const libraryCards = library.map((dc) => dc.card);
@@ -244,17 +278,19 @@ export function manaAudit(
   // CEILING: a nonland source counts from the turn after its own mana value, which assumes it was
   // cast on curve. Pricing how often that actually happens needs the simulator, and the simulator
   // is the other half of this pair; a turn number is the cheap half that closes the contradiction.
+  // A rock cast on turn M taps for mana from turn M+1: you spent the turn's mana casting it.
+  // A land-fetch SPELL is on that clock too -- Cultivate on turn 3 pays from turn 4. A land is
+  // asked `landOnlineBy`; a SPELL's fetch is already on the rock clock, and charging it for the
+  // tapped arrival as well made it a source on no turn at all.
+  const sourceOnline = (dc: DeckCard, turn: number): boolean =>
+    /\bland\b/i.test(dc.card.typeLine) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
   const availability = (sources: readonly DeckCard[]) => {
     const availableAt = new Map<number, number>();
     return (turn: number): number => {
       const hit = availableAt.get(turn);
       if (hit !== undefined) return hit;
       const n = sources.filter((dc) => {
-        // A rock cast on turn M taps for mana from turn M+1: you spent the turn's mana casting it.
-        // A land-fetch SPELL is on that clock too -- Cultivate on turn 3 pays from turn 4. A land is
-        // asked `landOnlineBy`; a SPELL's fetch is already on the rock clock, and charging it for the
-        // tapped arrival as well made it a source on no turn at all.
-        return /\bland\b/i.test(dc.card.typeLine) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
+        return sourceOnline(dc, turn);
       }).length;
       availableAt.set(turn, n);
       return n;
@@ -351,7 +387,38 @@ export function manaAudit(
       worst: unmet.sort((a, b) => (b.required - b.available) - (a.required - a.available))[0],
     });
   }
-  return rows;
+
+  // THE JOINT DEMAND OF THE GOLD CARDS (#1116). Grouped by (plain pips per colour, deadline) like the rows above.
+  // Sources are the ones the rows count, online by the deadline; the fixer credit is NOT applied.
+  // CEILING: a cost of four or five colours is skipped (the class table is 2^d): 6 slots, 5 distinct cards, across the 71
+  // calibration decks (2026-10-08; 3 four-colour, 3 five-colour). A fixer's credit is not applied either.
+  const n = (turn: number): number => seen(turn);
+  const gold = new Map<string, { colours: Color[]; pips: number[]; turn: number; names: string[] }>();
+  for (const dc of library) {
+    const pipsOf = plainPips(castableManaCost(dc.card));
+    const colours = COLORS.filter((c) => (pipsOf[c] ?? 0) > 0);
+    if (colours.length < 2 || colours.length > 3) continue;
+    const turn = Math.max(1, Math.round(dc.card.manaValue));
+    const key = `${colours.map((c) => c + pipsOf[c]).join("")}:${turn}`;
+    const g = gold.get(key);
+    if (g) g.names.push(dc.card.name);
+    else gold.set(key, { colours, pips: colours.map((c) => pipsOf[c]!), turn, names: [dc.card.name] });
+  }
+  let worstGold: GoldJoint | undefined;
+  for (const g of gold.values()) {
+    const online = g.colours.map((c) => new Set(sourcesByColor.get(c)!.filter((dc) => sourceOnline(dc, g.turn))));
+    const sizes = new Array<number>(1 << g.colours.length).fill(0);
+    for (const dc of new Set(online.flatMap((s) => [...s]))) {
+      sizes[online.reduce((m, s, i) => (s.has(dc) ? m | (1 << i) : m), 0)]!++;
+    }
+    sizes[0] = library.length - sizes.slice(1).reduce((a, b) => a + b, 0);
+    const pEach = Math.min(...g.colours.map((_, i) => pAtLeast(g.pips[i]!, online[i]!.size, n(g.turn), library.length)));
+    if (pEach < SOURCE_CONFIDENCE) continue;
+    const pJoint = pCanPay(sizes, g.pips, n(g.turn), library.length);
+    if (pJoint >= SOURCE_CONFIDENCE) continue;
+    if (!worstGold || pJoint < worstGold.pJoint) worstGold = { ...g, cards: g.names.length, pJoint, pEach };
+  }
+  return { rows, ...(worstGold ? { gold: worstGold } : {}) };
 }
 
 /** THE DECK-WIDE COLOUR SHORTFALL (owner, 2026-10-08, #966): per colour, how many more sources the
