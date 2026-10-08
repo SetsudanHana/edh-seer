@@ -12,6 +12,7 @@ import { fetchableLands, fetchDemand, fetchedLandEntersTapped, isLandFetch } fro
 import { classifyLand } from "./land-conditions.js";
 import { COLORS, pipsByColor, type Color } from "./mana-audit.js";
 import { rolesOfCard } from "./quality.js";
+import { netPositiveMana } from "./same-job.js";
 import type { DeckCard } from "./types.js";
 
 /** The same test `mana-base.ts` uses, so a land here is a land there. */
@@ -188,4 +189,52 @@ export function basicsFloor(deck: readonly DeckCard[]): number {
     if (d) floor += d.wants;
   }
   return floor;
+}
+
+/** THE DECK'S OWN SOURCES MOST WORTH TRADING FOR A COLOUR IT IS SHORT OF (owner rulings, 2026-10-08,
+ *  #966 T3): up to two, worst first, so the report can say which cards to take out and not only that
+ *  the colour is short. The yardstick is the deck-wide colour shortfall (`colourDeficit`), the swaps
+ *  are iterative suggestions, and fast mana is never named for colour.
+ *
+ *  TIER 0 makes none of `colour`; TIER 1 makes it but is not online by `turn` (a land that always
+ *  enters tapped, a rock whose mana value is `turn` or more: the audit's own clock). Within a tier
+ *  lands come first, the always-tapped before the rest (T1's order), then rocks, then by name.
+ *
+ *  NEVER NAMED: a commander; a land that does something besides make mana, or whose mana is
+ *  conditional (T1's uncuttable gate: `utility`); a net-positive rock (`netPositiveMana`, Sol Ring);
+ *  a source that makes a OTHER colour the deck is short of (a basic of it, or a dual), since trading
+ *  it deepens that shortfall. Creatures and one-shot spells are not a mana base's to trade. */
+export function colourReplacements(
+  deck: readonly DeckCard[],
+  colour: Color,
+  turn: number,
+  deficit: Partial<Record<Color, number>>,
+  commanderNames: readonly string[] = [],
+): string[] {
+  const commanders = new Set(commanderNames);
+  const library = deck.filter((dc) => !commanders.has(dc.card.name)).map((dc) => dc.card);
+  const needed = neededColours(deck);
+  const otherShort = COLORS.filter((c) => c !== colour && (deficit[c] ?? 0) > 0);
+  const ranked: { name: string; tier: 0 | 1; land: boolean; tapped: Tapped }[] = [];
+  for (const dc of deck) {
+    if (commanders.has(dc.card.name)) continue;
+    if (isLand(dc)) {
+      const f = landFacts(dc, needed, library);
+      if (!f.front || f.utility.length > 0 || f.colours.some((c) => otherShort.includes(c))) continue;
+      if (f.colours.length === 0 && (dc.card.producedMana ?? []).length === 0) continue;
+      const makes = f.colours.includes(colour);
+      if (makes && f.tapped < 2) continue;
+      ranked.push({ name: f.name, tier: makes ? 1 : 0, land: true, tapped: f.tapped });
+    } else {
+      const made = (dc.card.producedMana ?? []) as readonly string[];
+      if (!/\bartifact\b/i.test(dc.card.typeLine) || /\bcreature\b/i.test(dc.card.typeLine) || made.length === 0) continue;
+      if (netPositiveMana(dc) || made.some((c) => otherShort.includes(c as Color))) continue;
+      const makes = made.includes(colour);
+      if (makes && dc.card.manaValue < turn) continue;
+      ranked.push({ name: dc.card.name, tier: makes ? 1 : 0, land: false, tapped: 0 });
+    }
+  }
+  return ranked
+    .sort((a, b) => a.tier - b.tier || Number(b.land) - Number(a.land) || b.tapped - a.tapped || a.name.localeCompare(b.name))
+    .slice(0, 2).map((r) => r.name);
 }

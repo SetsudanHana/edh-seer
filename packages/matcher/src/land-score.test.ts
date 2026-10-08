@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
-import { basicsFloor, betterLand, landFacts, neededColours } from "./land-score.js";
+import { basicsFloor, betterLand, colourReplacements, landFacts, neededColours } from "./land-score.js";
 import type { DeckCard } from "./types.js";
 
 const dc = (name: string, typeLine: string, oracleText: string, producedMana: string[] = [], kinds: string[] = [], manaCost?: string): DeckCard => ({
@@ -74,4 +74,40 @@ test("the basics floor is what the deck's own cards search for", () => {
   const wilds = dc("Evolving Wilds", "Land", "{T}, Sacrifice Evolving Wilds: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.");
   expect(basicsFloor([landscape, wilds, plains, shrine])).toBe(3);
   expect(basicsFloor([shrine, plains])).toBe(0);
+});
+
+// OWNER RULINGS 2026-10-08 (#966 T3): trade what makes none of the colour first, lands before rocks;
+// then what makes it but is not online in time; never fast mana, a utility land, or a commander.
+const rock = (name: string, mv: number, text: string, made: string[]): DeckCard => ({
+  card: { name, typeLine: "Artifact", oracleText: text, keywords: [], colors: [], manaValue: mv, producedMana: made } as Card,
+  tags: null,
+});
+const izzetSpells = [dc("Counterspell", "Instant", "", [], [], "{U}{U}"), dc("Lightning Bolt", "Instant", "", [], [], "{R}")];
+const mountain = dc("Mountain", "Basic Land — Mountain", "({T}: Add {R}.)", ["R"]);
+const gate = dc("Izzet Guildgate", "Land — Gate", "Izzet Guildgate enters tapped.\n{T}: Add {U} or {R}.", ["U", "R"]);
+const vents = dc("Steam Vents", "Land — Island Mountain", "({T}: Add {U} or {R}.)\nAs Steam Vents enters, you may pay 2 life. If you don't, it enters tapped.", ["U", "R"]);
+const diamond = rock("Fire Diamond", 2, "Fire Diamond enters tapped.\n{T}: Add {R}.", ["R"]);
+const solRing = rock("Sol Ring", 1, "{T}: Add {C}{C}.", ["C"]);
+const bog = dc("Bojuka Bog", "Land", "Bojuka Bog enters tapped.\nWhen Bojuka Bog enters, exile target player's graveyard.\n{T}: Add {B}.", ["B"], ["graveyard-hate", "mana-generation"]);
+const deckOf = (...more: DeckCard[]) => [...izzetSpells, ...more];
+
+test("short on blue by turn 2: the red-only land, then the red-only rock; Sol Ring and Steam Vents are never named", () => {
+  expect(colourReplacements(deckOf(mountain, diamond, gate, solRing, vents), "U", 2, { U: 4 })).toEqual(["Mountain", "Fire Diamond"]);
+});
+
+test("with only two non-blue sources gone, the always-tapped blue dual is next: it makes blue but never in time", () => {
+  expect(colourReplacements(deckOf(gate, solRing, vents), "U", 2, { U: 4 })).toEqual(["Izzet Guildgate"]);
+});
+
+test("a rock that makes the colour is named only when its mana value is the demand's turn or later", () => {
+  const sapphire = rock("Sapphire Medallion", 3, "{T}: Add {U}.", ["U"]);
+  expect(colourReplacements(deckOf(sapphire), "U", 3, { U: 2 })).toEqual(["Sapphire Medallion"]);
+  expect(colourReplacements(deckOf(sapphire), "U", 4, { U: 2 })).toEqual([]);
+});
+
+test("a land that does something besides make mana, a commander, and a basic of another short colour are never named", () => {
+  const swamp = dc("Swamp", "Basic Land — Swamp", "({T}: Add {B}.)", ["B"]);
+  const spellsB = [...izzetSpells, dc("Doom Blade", "Instant", "", [], [], "{1}{B}")];
+  const out = colourReplacements([...spellsB, bog, swamp, mountain, diamond], "U", 2, { U: 4, B: 2 }, ["Mountain"]);
+  expect(out).toEqual(["Fire Diamond"]);
 });

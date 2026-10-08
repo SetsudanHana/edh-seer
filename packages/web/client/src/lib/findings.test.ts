@@ -66,6 +66,22 @@ test("a colour finding names the card and reads the deadline count", () => {
   expect(row.shortfall).toBeCloseTo(2 / 37);
 });
 
+/** #966 T3: the action names the deck's own sources to trade, and keeps the old sentence without. */
+test("a colour finding names the sources to trade, and keeps the general advice when there are none", () => {
+  const rowOf = (replace?: string[]) => findings(report({
+    deckMath: {
+      colors: [{
+        color: "U", supplied: 20,
+        worst: { pips: 2, turn: 2, required: 30, requiredRaw: 36, cards: 1, available: 18, names: ["Counterspell"], ...(replace ? { replace } : {}) },
+      }],
+    } as DeckReport["deckMath"],
+  }))[0]!;
+  expect(rowOf(["Fire Diamond", "Mountain"]).action).toBe("Trade Fire Diamond or Mountain for a blue source that's online by turn 2.");
+  expect(rowOf(["Mountain"]).action).toBe("Trade Mountain for a blue source that's online by turn 2.");
+  expect(rowOf([]).action).toBe("Delay or cut the early double pip, or trade a tapped source for one that enters untapped.");
+  expect(rowOf().action).toBe("Delay or cut the early double pip, or trade a tapped source for one that enters untapped.");
+});
+
 /** Too many to list is a count, not a wall of names -- and the count is of the cards NOT named. It
  *  read "Bitterblossom and 3 other cards" for five: one named, two subtracted, one card gone. */
 test("a colour finding past two cards names what it has and counts the rest", () => {

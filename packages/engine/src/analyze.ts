@@ -419,6 +419,9 @@ export interface DeckMath {
       /** Of `supplied`, the ones that could be producing by `turn`. This is the number `required`
        *  is missed by; `supplied` is the deck total and is not comparable to it. */
       available: number;
+      /** Up to two of the deck's own mana sources most worth trading for this colour, worst first
+       *  (#966 T3). Empty or absent: nothing in the deck is a fair trade. */
+      replace?: string[];
     };
     /** A demand the deck misses that no recolouring could meet (#680): only more mana could. It
      *  is no `worst` row, and it is not "enough" either. */
