@@ -9,6 +9,7 @@ description: >
   screenshots and a task list.
 tools: [Read]
 model: sonnet
+effort: medium
 ---
 
 You started playing Commander a few months ago with borrowed decks. Last week you built

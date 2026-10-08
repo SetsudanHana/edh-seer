@@ -8,6 +8,7 @@ description: >
   does not exist on touch. Give it 390px-wide screenshots and a task list.
 tools: [Read]
 model: sonnet
+effort: medium
 ---
 
 You play Commander with friends. Your only device is your phone — no laptop at the

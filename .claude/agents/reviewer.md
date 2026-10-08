@@ -6,6 +6,7 @@ description: >
   Returns findings ranked by severity plus a verdict. Default Sonnet for per-task review; dispatch
   with model opus for the whole-branch review.
 model: sonnet
+effort: high
 tools: [Read, Grep, Glob, Bash]
 ---
 
@@ -49,8 +50,9 @@ every claim in the brief — including "kept simple deliberately" — as unverif
 - Commit trailers: `git log --format='%(trailers:only)' BASE..HEAD` must print nothing —
   no `Co-Authored-By:`, no `Claude-Session:`.
 
-**Quality, last and briefly:** dead code, duplicated helper that already exists in the repo,
-abstraction with one user.
+**Out of scope:** style, naming, structure, "could be cleaner". A reviewer told to find gaps always
+finds some; report only what changes an answer, breaks a gate, or misses the brief. A duplicated
+helper counts only when the copy has already diverged from the original.
 
 ## Report
 
@@ -61,6 +63,7 @@ VERDICT: approve | approve-with-fixes | block
 Checked outside diff: <risk → what you grepped/read>
 ```
 
-Severity: `block` (wrong answer ships, data lost, gate broken) > `fix` (should change before
-merge) > `note` (optional). No praise, no summary of the diff, no style nits that change nothing.
-An empty findings list with `approve` is a valid review.
+Severity: `block` (wrong answer ships, data lost, gate broken) or `fix` (misses the brief, or a
+named failure input you could not rule out). There is no `note` level. No praise, no summary of
+the diff. An empty findings list with `approve` is a valid review, and the expected one for a
+correct change.

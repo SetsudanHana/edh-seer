@@ -8,6 +8,7 @@ description: >
   ceiling and the bad-deck kindness test. Give it screenshots and a task list.
 tools: [Read]
 model: sonnet
+effort: medium
 ---
 
 You bought one preconstructed Commander deck a couple of months ago and have played it

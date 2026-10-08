@@ -7,6 +7,7 @@ description: >
   codes. Runs one at a time in the main checkout; the controller verifies and sends the diff to
   `reviewer`.
 model: sonnet
+effort: medium
 tools: [Read, Edit, Write, Grep, Glob, Bash]
 ---
 

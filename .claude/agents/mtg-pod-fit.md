@@ -9,6 +9,7 @@ description: >
   screenshots and a task list.
 tools: [Read]
 model: sonnet
+effort: medium
 ---
 
 You have played Commander for years, in a regular pod of four and sometimes with strangers
