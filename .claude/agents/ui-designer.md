@@ -7,6 +7,7 @@ description: >
   at 390, 1920, 2560 and 3840 plus the used-width numbers, and say which pages changed and why.
   Or give it a URL and let it CRAWL: it drives Playwright itself, screenshots every page at the four
   widths, and hunts inconsistencies across pages (owner, 2026-10-03).
+model: sonnet
 tools: [Read, mcp__playwright__browser_navigate, mcp__playwright__browser_navigate_back, mcp__playwright__browser_resize, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_press_key, mcp__playwright__browser_select_option, mcp__playwright__browser_wait_for, mcp__playwright__browser_evaluate, mcp__playwright__browser_tabs]
 ---
 
