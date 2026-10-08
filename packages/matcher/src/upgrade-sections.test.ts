@@ -4,7 +4,8 @@ import { landFacts } from "./land-score.js";
 import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
-import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, sameJob, strictlyBetter } from "./upgrade-sections.js";
+import { colourDeficit } from "./mana-audit.js";
+import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, sameJob, strictlyBetter, swapCloser } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
 
 /** Cards as printed (oracle text read 2026-09-30); the text rules read nothing else. */
@@ -239,5 +240,49 @@ describe("a rock that makes a colour the deck is short of (coverage swap)", () =
 
   test("an Aura is not a rock: a Signet never replaces Wild Growth", () => {
     expect(ramp(rock("Wild Growth"), [rock("Izzet Signet")], { U: 4 })).toEqual([]);
+  });
+});
+
+describe("a swap is judged by the yardstick it is meant to move", () => {
+  const spell = (name: string, cost: string, mv: number): DeckCard => ({ ...card(name, "Sorcery", ""), card: { ...card(name, "Sorcery", "").card, manaCost: cost, manaValue: mv } });
+  const basic = (name: string, c: string) => card(name, `Basic Land — ${name}`, `({T}: Add {${c}}.)`, [c]);
+  const fill = (deck: DeckCard[]) => [...deck, ...Array.from({ length: 100 - deck.length }, (_, i) => spell(`Filler ${i}`, "{1}", 1))];
+  const izzet = (demand: DeckCard) => fill([demand, rock("Fire Diamond"), ...Array.from({ length: 12 }, () => basic("Island", "U")), ...Array.from({ length: 24 }, () => basic("Mountain", "R"))]);
+  const offered = (deck: DeckCard[]) => roleOptions("ramp", [rock("Fire Diamond")], [candidate(rock("Talisman of Creativity"))], undefined, colourDeficit(deck),
+    swapCloser(deck, [])).flatMap((o) => o.options.map((x) => x.add));
+
+  test("a Talisman that is not a source yet when the short demand falls due closes nothing, and is not offered", () => {
+    const early = izzet(spell("Counterspell", "{U}{U}", 2));
+    expect(colourDeficit(early).U).toBeGreaterThan(0);
+    expect(swapCloser(early, [])("Fire Diamond", rock("Talisman of Creativity"))).toBe(0);
+    expect(offered(early)).toEqual([]);
+  });
+
+  test("the same Talisman is offered when the short demand falls due after it can tap", () => {
+    const late = izzet(spell("Big Blue", "{2}{U}{U}", 4));
+    expect(swapCloser(late, [])("Fire Diamond", rock("Talisman of Creativity"))).toBeGreaterThan(0);
+    expect(offered(late)).toEqual(["Talisman of Creativity"]);
+  });
+
+  test("a land is ranked by the shortfall it closes: a check dual that is tapped on turn one closes none of a turn-one white demand", () => {
+    const deck = fill([spell("White One", "{W}", 1), ...Array.from({ length: 2 }, () => basic("Plains", "W")), ...Array.from({ length: 30 }, () => basic("Mountain", "R")), land("Bad Land", "Land", "Bad Land enters tapped.\n{T}: Add {R}.", ["R"]).dc]);
+    const deficit = colourDeficit(deck);
+    expect(deficit.W).toBeGreaterThan(0);
+    const check = land("Check Dual", "Land", "Check Dual enters tapped unless you control a Plains.\n{T}: Add {W} or {B}.", ["W", "B"]);
+    const open = land("Open Dual", "Land", "{T}: Add {W} or {B}.", ["W", "B"]);
+    const mountain = land("Bad Land", "Land", "Bad Land enters tapped.\n{T}: Add {R}.", ["R"]);
+    const [o] = landOptions([mountain], [check, open], 0, deficit, swapCloser(deck, []));
+    expect(o!.options.map((x) => [x.add, (x.closed ?? 0) > 0])).toEqual([["Open Dual", true], ["Check Dual", false]]);
+  });
+});
+
+describe("what a rock really yields", () => {
+  const ramp = (cut: DeckCard, add: DeckCard) => roleOptions("ramp", [cut], [candidate(add)], undefined, { U: 4, R: 4 }, () => 1).flatMap((o) => o.options.map((x) => x.add));
+  test("an activation cost comes off the yield: Worn Powerstone and Hedron Archive are not Izzet Signet", () => {
+    expect(ramp(rock("Worn Powerstone"), rock("Izzet Signet"))).toEqual([]);
+    expect(ramp(rock("Hedron Archive"), rock("Izzet Signet"))).toEqual([]);
+  });
+  test("any colour is one mana: Fire Diamond to Arcane Signet when the deck is short", () => {
+    expect(ramp(rock("Fire Diamond"), rock("Arcane Signet"))).toEqual(["Arcane Signet"]);
   });
 });

@@ -321,9 +321,24 @@ export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
   const selfDamage = (x: string) => x.startsWith('["deal-damage"') && !damagesOthers(printed(add));
   if (![...a.drawbacks].every((x) => c.drawbacks.has(x) || selfDamage(x))) return false;
   if (newConditions(cut, add, false, damagesOthers(printed(add)) ? [] : SELF_DAMAGE)) return false;
-  const cy = yieldOf(cut, "ramp");
-  const ay = yieldOf(add, "ramp");
-  return typeof cy === "number" && typeof ay === "number" && ay >= cy;
+  const cy = netYield(cut);
+  const ay = netYield(add);
+  return cy !== null && ay !== null && ay >= cy;
+}
+
+/** WHAT A ROCK NETS EACH TIME IT TAPS, for the colour swap only (review of #966 T2): the mana it adds
+ *  less the generic mana its activation costs, so a Signet ("{1}, {T}: Add {U}{R}") nets 1 where Worn
+ *  Powerstone nets 2. "One mana of any color / the chosen color / any type" is one mana (`yieldOf`
+ *  reads symbols only, and `sameJob` and `strictlyBetter` keep reading it). Null when no line reads. */
+const ADD_LINE = /^([^:\n]*):\s*add (?:(one|two|three) mana of (?:any|the chosen) (?:color|type)|((?:\{[^}]+\})+))/gm;
+const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3 };
+export function netYield(d: DeckCard): number | null {
+  const nets = [...printed(d).matchAll(ADD_LINE)].map((m) => {
+    const made = m[2] ? NUMBER_WORDS[m[2]]! : (m[3]!.match(/\{/g) ?? []).length;
+    const generic = (m[1]!.match(/\{(\d+)\}/g) ?? []).reduce((n, x) => n + Number(x.slice(1, -1)), 0);
+    return made - generic;
+  });
+  return nets.length ? Math.max(...nets) : null;
 }
 
 /** THE OLD TEST, KEPT ONLY FOR THE BEFORE NUMBER while S-T2 is measured; not called by the product. */
