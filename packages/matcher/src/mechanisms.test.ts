@@ -243,7 +243,7 @@ test("a pair in two groups leads with each group's own reason", () => {
 });
 
 test("an exile-processing reason is neither reanimator nor graveyard-matters (#1083)", () => {
-  const r = reason({ tag: "exile-processing:any", effectKind: "exile-processing" });
+  const r = reason({ tag: "graveyard-intercept:any", effectKind: "exile-processing" });
   expect(categoryMatches(r, "reanimator")).toBe(false);
   expect(categoryMatches(r, "graveyard-matters")).toBe(false);
 });

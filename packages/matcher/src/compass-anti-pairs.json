@@ -224,6 +224,15 @@
       "why": "#931 / owner ruling 2026-10-02 (#929/#930), redundant keywords: Ephemerate already has rebound, so Ojer Pakpatiq's rebound grant gives it nothing (CR 702.88c).",
       "source": "#931",
       "verified": true
+    },
+    {
+      "a": "Shelob, Dread Weaver",
+      "b": "Dauthi Voidwalker",
+      "tag": "graveyard-recursion:any",
+      "class": "false-emit",
+      "why": "#1083 (2026-10-08): owner ruled an intercept is not recursion. Dauthi exiles what would reach an opponent's graveyard and plays it from exile; nothing is brought back from a graveyard.",
+      "source": "#1083 (2026-10-08): owner ruled an intercept is not recursion",
+      "verified": true
     }
   ],
   "knownDefects": [],

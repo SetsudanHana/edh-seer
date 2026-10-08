@@ -113,6 +113,9 @@ export function claimFor(tag: string, producer: string, consumer: string, implie
   if (family === "graveyard-recursion") {
     return `${producer} puts ${subject} cards into a graveyard; ${consumer} returns them from it`;
   }
+  if (family === "graveyard-intercept") {
+    return `${producer} puts ${subject} cards into an opponent's graveyard; ${consumer} exiles them instead and can play them`;
+  }
   if (family === "counter-added") {
     return `${producer} puts counters on ${subject}; ${consumer} benefits from them being there`;
   }

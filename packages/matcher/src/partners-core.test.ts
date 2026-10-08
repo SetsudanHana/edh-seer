@@ -2138,3 +2138,11 @@ test("past the first VERIFY_LIMIT checks, an event the page has room for is stil
   expect(rows.filter((p) => p.event.startsWith("cast|")).length).toBe(PER_EVENT_CAP);
   expect(rows.map((p) => p.name)).toContain("Enters Payoff");
 });
+
+test("an intercepted recursion demands a graveyard-intercept fill and reads as such in its ability row (#1083)", () => {
+  const dauthi = { card: { name: "Dauthi Voidwalker" }, tags: { characteristics: { types: ["creature"], subtypes: [], keywords: [] }, abilities: [{
+    kind: "static", effect: { kind: "graveyard-recursion", intercepted: true, subject: { control: "opp", token: null, zone: "graveyard" } },
+  }] } } as unknown as DeckCard;
+  expect(fillDemandsOf(dauthi).map((d) => d.tags)).toEqual([["graveyard-intercept:any"]]);
+  expect(abilityRowsOf(dauthi).map((r) => r.effect)).toEqual(["graveyard-intercept"]);
+});

@@ -1028,7 +1028,8 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] => {
       ...(a.face !== undefined ? { face: a.face } : {}),
       // A GAME-STATE REQUIREMENT the deck report honours only under a state (roadmap W18).
       ...(a.requires ? { requires: a.requires } : {}),
-      effect: a.effect?.kind ?? "",
+      // An intercepted fill is not a recursion: its row must not say "brings a card back" (#1083).
+      effect: a.effect?.kind === "graveyard-recursion" && a.effect.intercepted === true ? "graveyard-intercept" : (a.effect?.kind ?? ""),
       ...(a.amount ? { amount: a.amount } : {}),
       ...(a.effect?.subject?.control && a.effect.subject.control !== "you" ? { recipient: a.effect.subject.control } : {}),
       ...(a.effect?.scaling ? { scaling: a.effect.scaling } : {}),
@@ -1190,11 +1191,9 @@ export const fillDemandsOf = (d: DeckCard): { key: string; tag: string; tags: st
   };
   for (const a of abilitiesOf(d)) {
     const s = a.effect?.subject;
-    // CEILING: an intercepted fill (Dauthi, Valgavoth) is exile-processing, not a graveyard demand
-    // (owner 2026-10-08, #1083), and no `exile-processing:` demand row exists on the supply side
-    // yet, so it is skipped: Valgavoth as commander then suggests no fillers.
-    if (a.effect?.kind === "graveyard-recursion" && a.effect.intercepted !== true && s?.zone === "graveyard" && s.self !== true) {
-      push(keyOf(s), [`graveyard-recursion:${themeSubjectKey(s)}`]);
+    // An intercepted fill (Dauthi, Valgavoth) is its own family, as the engine tags it (#1083).
+    if (a.effect?.kind === "graveyard-recursion" && s?.zone === "graveyard" && s.self !== true) {
+      push(keyOf(s), [`${a.effect.intercepted === true ? "graveyard-intercept" : "graveyard-recursion"}:${themeSubjectKey(s)}`]);
     }
     const scaled = a.effect?.scalingSubject;
     if (a.effect?.scaling === "per-graveyard" && scaled && (asList(scaled.type).length > 0 || asList(scaled.subtype).length > 0)) {

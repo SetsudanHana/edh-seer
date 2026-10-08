@@ -227,6 +227,7 @@ test("instant and sorcery tags fold into one group labelled for both", () => {
   expect(foldSpellTag("cast:creature")).toBe("cast:creature");
   expect(groupName("cast:instant-sorcery")).toBe("Spellslinger");
   expect(groupName("graveyard-recursion:instant-sorcery")).toBe("Instant and sorcery recursion");
+  expect(groupName("graveyard-intercept:any")).toBe("Playing their exiled cards");
 });
 
 /** Owner ruling 2026-09-27 (#519): a token stays a node, and wherever it is named the page says whose. */
