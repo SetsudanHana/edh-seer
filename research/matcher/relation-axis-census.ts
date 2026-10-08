@@ -1,7 +1,8 @@
 /** ONE-SHOT (#972 census, owner 2026-10-08: "measure first, then decide"). Over the 71 calibration
  *  decks: which reason-tag FAMILIES never reach the deck axis, how many reasons and edges each
- *  carries, and how many edges weigh as off-plan ONLY because their sole on-plan reasons are
- *  relation tags. Also prints what the "inherit from parent theme" candidate map would give.
+ *  carries, and how many off-plan edges each family appears on. "Off-plan" is read through
+ *  `axisWeightOf`, so after #972 step 1 the inherited families count as on-plan. Also prints what
+ *  the "inherit from parent theme" candidate map would give.
  *
  *    npx tsx research/matcher/relation-axis-census.ts */
 import { readdirSync, readFileSync } from "node:fs";
@@ -9,6 +10,7 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
 import { ComboIndex } from "../../packages/engine/src/index.js";
 import { createTagsLookup } from "../../packages/tagger/src/index.js";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../../packages/matcher/src/index.js";
+import { axisWeightOf } from "../../packages/matcher/src/axis.js";
 
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
@@ -28,7 +30,7 @@ const PARENTS: Record<string, string[]> = {
 type Fam = { reasons: number; onAxis: number; decks: Set<string>; edgesOnlyVia: number; inheritOn: number };
 const fams = new Map<string, Fam>();
 const fam = (f: string): Fam => fams.get(f) ?? (fams.set(f, { reasons: 0, onAxis: 0, decks: new Set(), edgesOnlyVia: 0, inheritOn: 0 }), fams.get(f)!);
-let totalEdges = 0, offPlanEdges = 0, offPlanWithRelation = 0;
+let totalEdges = 0, offPlanEdges = 0;
 const perDeck: string[] = [];
 
 for (const file of readdirSync(CALIBRATION_DECKS).filter((f) => f.endsWith(".txt")).sort()) {
@@ -39,10 +41,10 @@ for (const file of readdirSync(CALIBRATION_DECKS).filter((f) => f.endsWith(".txt
   const report = analyzeDeckStructured(await buildDeckCards(cards, lookup, tags), commanders, undefined, undefined, new ComboIndex(combos), undefined, tokenTags);
   const axis = new Map((report.axis ?? []).map((a: { tag: string; weight: number }) => [a.tag, a.weight]));
   const deck = file.replace(/\.txt$/, "");
-  let dEdges = 0, dOff = 0, dOffRel = 0;
+  let dEdges = 0, dOff = 0;
   for (const edge of report.edges as { reasons: { tag: string }[] }[]) {
     dEdges++;
-    const onW = Math.max(0, ...edge.reasons.map((r) => axis.get(r.tag) ?? 0));
+    const onW = Math.max(0, ...edge.reasons.map((r) => axisWeightOf(r.tag, axis)));
     for (const r of edge.reasons) {
       const f = fam(famOf(r.tag));
       f.reasons++; f.decks.add(deck);
@@ -57,11 +59,10 @@ for (const file of readdirSync(CALIBRATION_DECKS).filter((f) => f.endsWith(".txt
       dOff++;
       // Every family on an off-plan edge; the families that never reach any axis are read off the table.
       const relFams = [...new Set(edge.reasons.map((r) => famOf(r.tag)))];
-      dOffRel++;
       for (const x of relFams) fam(x).edgesOnlyVia++;
     }
   }
-  totalEdges += dEdges; offPlanEdges += dOff; offPlanWithRelation += dOffRel;
+  totalEdges += dEdges; offPlanEdges += dOff;
   perDeck.push(`${deck.padEnd(40)} edges ${String(dEdges).padStart(5)}  off-plan ${String(dOff).padStart(5)}  `);
 }
 await store.close();

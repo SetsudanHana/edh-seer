@@ -489,7 +489,7 @@ export function analyzeDeckStructured(
   // CEILING: step 1 of #972 covers fodder/scales/cheat/creates: `RELATION_PARENTS` (axis.ts) lets
   // them inherit their parent theme's axis weight. The parentless families (graveyard-recursion,
   // recursion-target, ramp-target, tutor, prowess, threshold, copies, play-from-top,
-  // land-condition, reuse, doubles, ...) still weigh 0 pending an owner ruling (#972).
+  // land-condition, reuse, doubles, ...) still weigh 0 pending an owner ruling (#1095).
   const earlySignals = resolved.filter((dc) => dc.tags && !isLand(dc)).map((dc) => cardSignalOf(dc.card, dc.tags!));
   if (detectPolymorph(earlySignals, resolved.filter((dc) => !isLand(dc)).length)) for (const tag of POLYMORPH_AXIS) axis.set(tag, 1);
   // AXIS_BOOST, AXIS_ON_THRESHOLD and FEEDER_SHARE live in `card-strength.ts`, which swaps read too.

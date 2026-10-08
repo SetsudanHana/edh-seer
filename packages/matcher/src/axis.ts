@@ -31,6 +31,10 @@ export function buildAxis(
  *  `cheat:X` puts X onto the battlefield; `creates:X` makes X. Step 1 of #972. */
 export const RELATION_PARENTS: Record<string, readonly string[]> = {
   fodder: ["sacrifice", "dies"],
+  // CEILING: the graveyard-scaling channel (edges.ts, Bonehoard) also emits `scales:X`, and
+  // `themeSubjectKey` drops the zone, so "each creature card in your graveyard" reads as the board of
+  // creatures and borrows an ETB/token deck's weight. Split that channel's tag or give it its own
+  // parent (dies/enters-graveyard) under #1095.
   scales: ["enters", "create-token"],
   cheat: ["enters"],
   creates: ["create-token", "enters"],
