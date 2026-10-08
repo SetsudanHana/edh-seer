@@ -79,7 +79,7 @@ function shortfalls(o: RoleOption, addName: string): string[] {
 /** A COLOUR SWAP says the colour, and that the deck is short of it: "short" is what the colour row of the
  *  report says, and "for its spells" is the reason the colour matters. */
 const shortWords = (o: RoleOption) => `${colourWords(o.colour ?? []).replace(" or ", " and ")}, which the deck is short of for its spells`;
-const typeWords = (o: RoleOption) => (o.crossType ? `, and it's ${/^[aeiou]/.test(o.crossType) ? "an" : "a"} ${o.crossType}, which your ${o.crossType} payoffs count` : "");
+const typeWords = (o: RoleOption) => (o.keptType ? `, and it's still ${/^[aeiou]/.test(o.keptType) ? "an" : "a"} ${o.keptType[0]!.toUpperCase()}${o.keptType.slice(1)}` : o.crossType ? `, and it's ${/^[aeiou]/.test(o.crossType) ? "an" : "a"} ${o.crossType}, which your ${o.crossType} payoffs count` : "");
 
 export function roleReasons(cutName: string, o: RoleOption): { out: string; in: string } {
   if (o.colour?.length) {

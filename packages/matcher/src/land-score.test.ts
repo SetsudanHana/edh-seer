@@ -173,3 +173,16 @@ test("among lands of the colour the audit counts unavailable, always tapped come
   const zeta = dc("Zeta Gate", "Land — Gate", "Zeta Gate enters tapped.\n{T}: Add {U} or {R}.", ["U", "R"]);
   expect(colourReplacements(deckOf(coast, zeta), "U", 2, { U: 4 })).toEqual(["Zeta Gate", "Stormcarved Coast"]);
 });
+
+test("a plain dork is named like a plain rock, unless its creature type is the deck's theme, its mana is type-restricted, or it does more than tap for mana", () => {
+  const mv1 = (d: DeckCard): DeckCard => ({ ...d, card: { ...d.card, manaValue: 1 } });
+  const elfDork = mv1(dc("Elvish Mystic", "Creature — Elf Druid", "{T}: Add {G}.", ["G"], ["mana-generation"]));
+  const bird = mv1(dc("Birds of Paradise", "Creature — Bird", "Flying\n{T}: Add one mana of any color.", ["W", "U", "B", "R", "G"], ["mana-generation"]));
+  const giada = mv1(dc("Giada Alike", "Creature — Angel", "{T}: Add {W}. Spend this mana only to cast Angel spells.", ["W"], ["mana-generation"]));
+  const lord = mv1(withTags(dc("Elf Lord", "Creature — Elf Druid", "Other Elves get +1/+1.\n{T}: Add {G}.", ["G"]), [["static", ""], ["activated", "mana-generation"]]));
+  const deck = (...more: DeckCard[]) => deckOf(...more);
+  expect(colourReplacements(deck(elfDork), "U", 2, { U: 4 })).toEqual(["Elvish Mystic"]);
+  expect(colourReplacements(deck(elfDork), "U", 2, { U: 4 }, [], { U: 4 }, new Set(["elf"]))).toEqual([]);
+  expect(colourReplacements(deck(bird, giada, lord), "U", 2, { U: 4 })).toEqual([]);
+  expect(colourReplacements(deck(giada), "U", 2, { U: 4 })).toEqual([]);
+});

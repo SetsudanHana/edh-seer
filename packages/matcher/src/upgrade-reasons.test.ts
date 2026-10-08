@@ -71,3 +71,8 @@ test("a swap toward a type the deck's payoffs watch says so", () => {
   const r = roleReasons("Mind Stone", roleOpt("Fertile Ground", { role: "ramp", gained: [], colour: ["G"], crossType: "enchantment" }));
   expect(r.in).toBe("Fertile Ground is the same ramp and makes green, which the deck is short of for its spells, and it's an enchantment, which your enchantment payoffs count.");
 });
+
+test("a dork swap that keeps a themed creature type says it is still one", () => {
+  const r = roleReasons("Llanowar Elves", roleOpt("Mystic of the Deep", { role: "ramp", gained: [], colour: ["U"], keptType: "elf" }));
+  expect(r.in).toBe("Mystic of the Deep is the same ramp and makes blue, which the deck is short of for its spells, and it's still an Elf.");
+});

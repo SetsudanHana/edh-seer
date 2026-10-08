@@ -5,7 +5,7 @@ import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
 import { colourDeficit, landTypeDemand } from "./mana-audit.js";
-import { colouredNetYield, jobOf, netYield } from "./same-job.js";
+import { colouredNetYield, jobOf, netYield, themedSubjects } from "./same-job.js";
 import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, auraSupport, sameJob, strictlyBetter, swapCloser, watchedTypes } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
 
@@ -387,4 +387,39 @@ test("a Game Changer upgrade is untouched by the colour and cross-type paths (En
   const out = roleOptions("ramp", [real("Arcane Signet")], [candidate(rock("Fertile Ground")), candidate(rock("Wild Growth"))], { pool: [candidate(real("Mana Vault"))], quality },
     { W: 5, B: 7, G: 5 }, () => 2, new Set(["enchantment"]), () => true);
   expect(out.map((o) => [o.cut, o.options.map((x) => [x.add, x.upgrade ?? null])])).toEqual([["Arcane Signet", [["Mana Vault", "game-changer"]]]]);
+});
+
+describe("a dork for a dork, to close a colour shortfall", () => {
+  const elf = (name: string, oracle: string, produced: string[], over: Record<string, unknown> = {}) => {
+    const m = rock("Elvish Mystic");
+    return { ...m, card: { ...m.card, name, oracleText: oracle, producedMana: produced, ...over } } as unknown as DeckCard;
+  };
+  const swap = (cut: DeckCard, adds: DeckCard[], themed: string[]) =>
+    roleOptions("ramp", [cut], adds.map(candidate), undefined, { U: 4 }, () => 1, new Set(), undefined, themedSubjects(themed)).flatMap((o) => o.options.map((x) => [x.add, x.keptType ?? null]));
+
+  test("a deck with no tribe: Llanowar Elves gives way to Birds of Paradise when blue is short", () => {
+    expect(swap(rock("Llanowar Elves"), [rock("Birds of Paradise")], [])).toEqual([["Birds of Paradise", null]]);
+  });
+  test("an Elf-themed deck keeps its Elves: a non-Elf blue dork is refused, an Elf blue dork is taken, and the reason can say it is still an Elf", () => {
+    const blueElf = elf("Mystic of the Deep", "{T}: Add {G} or {U}.", ["G", "U"]);
+    expect(swap(rock("Llanowar Elves"), [rock("Birds of Paradise")], ["enters:elf"])).toEqual([]);
+    expect(swap(rock("Llanowar Elves"), [blueElf], ["enters:elf"])).toEqual([["Mystic of the Deep", "elf"]]);
+  });
+  test("a dork whose creature types are not themed is free to go: Birds for Llanowar when the theme is another tribe", () => {
+    expect(swap(rock("Llanowar Elves"), [rock("Birds of Paradise")], ["enters:goblin"])).toEqual([["Birds of Paradise", null]]);
+  });
+  test("a type-restricted dork (Giada style) is neither cut nor added for colour", () => {
+    const angelic = elf("Angel Mystic", "{T}: Add {W}. Spend this mana only to cast Angel spells.", ["W"]);
+    const blue = elf("Blue Mystic", "{T}: Add {G} or {U}.", ["G", "U"]);
+    expect(swap(rock("Llanowar Elves"), [elf("Angel Blue", "{T}: Add {U}. Spend this mana only to cast Angel spells.", ["U"])], [])).toEqual([]);
+    expect(swap(angelic, [blue], [])).toEqual([]);
+  });
+  test("a dork that taps OTHER creatures for its mana is not plain: Birchlore Rangers never replaces Llanowar Elves", () => {
+    const birchlore = elf("Birchlore Rangers", "Tap two untapped Elves you control: Add one mana of any color.", ["W", "U", "B", "R", "G"]);
+    expect(swap(rock("Llanowar Elves"), [birchlore], [])).toEqual([]);
+  });
+  test("a rock is still not a dork: Birds never replaces Mind Stone, and a rock never replaces Llanowar", () => {
+    expect(swap(rock("Mind Stone"), [rock("Birds of Paradise")], [])).toEqual([]);
+    expect(swap(rock("Llanowar Elves"), [rock("Izzet Signet")], [])).toEqual([]);
+  });
 });

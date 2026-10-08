@@ -12,7 +12,7 @@ import { fetchableLands, fetchDemand, fetchedLandEntersTapped, isLandFetch } fro
 import { classifyLand } from "./land-conditions.js";
 import { COLORS, deckBasicTypes, landOnlineBy, pipsByColor, type Color } from "./mana-audit.js";
 import { rolesOfCard } from "./quality.js";
-import { netPositiveMana, netYield } from "./same-job.js";
+import { creatureSubtypes, isPlainDork, netPositiveMana, netYield } from "./same-job.js";
 import type { DeckCard } from "./types.js";
 
 /** The same test `mana-base.ts` uses, so a land here is a land there. */
@@ -216,7 +216,7 @@ function plainRock(dc: DeckCard): boolean {
  *  NEVER NAMED: a commander; a land that does something besides make mana, or whose mana is
  *  conditional (T1's uncuttable gate: `utility`); a net-positive rock (`netPositiveMana`, Sol Ring);
  *  a source that makes a OTHER colour the deck is short of (a basic of it, or a dual), since trading
- *  it deepens that shortfall. Creatures and one-shot spells are not a mana base's to trade. */
+ *  it deepens that shortfall. A plain dork (`isPlainDork`) is named like a plain rock unless its creature type is themed; one-shot spells and land-fetch spells are not named (CEILING below). */
 export function colourReplacements(
   deck: readonly DeckCard[],
   colour: Color,
@@ -226,13 +226,14 @@ export function colourReplacements(
   /** Every colour with ANY unmet demand, hidden single-pip rows included (default: `deficit`'s). Only
    *  the order reads it: a source that deepens one of these goes after one that does not. */
   anyShort: Partial<Record<Color, number>> = deficit,
+  /** The creature types the deck's themes name: a dork of one is doing tribal work and is never named. */
+  themed: ReadonlySet<string> = new Set(),
 ): string[] {
   const commanders = new Set(commanderNames);
   const library = deck.filter((dc) => !commanders.has(dc.card.name)).map((dc) => dc.card);
   const needed = neededColours(deck);
   const otherShort = COLORS.filter((c) => c !== colour && (deficit[c] ?? 0) > 0);
-  // CEILING: creature dorks and land-fetch spells (Cultivate) are never named; only lands and artifact
-  // rocks are, so a deck whose only spare mana is a dork gets no name for it.
+  // CEILING: land-fetch spells (Cultivate) are never named; lands, artifact rocks and plain dorks are.
   const basicTypes = deckBasicTypes(deck.filter((dc) => !commanders.has(dc.card.name)));
   const ranked: { name: string; tier: 1 | 2 | 3; land: boolean; tapped: Tapped; colours: number; hidden: number }[] = [];
   for (const dc of deck) {
@@ -251,11 +252,12 @@ export function colourReplacements(
       // MANA SPENT "AS THOUGH IT WERE MANA OF ANY COLOR" (Chromatic Orrery) is not derived and is every
       // colour: refused like Arcane Signet.
       if (/as though it were mana of any colou?r/i.test(dc.card.oracleText ?? "")) continue;
-      if (!/\bartifact\b/i.test(dc.card.typeLine) || /\bcreature\b/i.test(dc.card.typeLine) || made.length === 0) continue;
+      const dork = /\bcreature\b/i.test(dc.card.typeLine);
+      if (made.length === 0 || (dork ? !isPlainDork(dc) || creatureSubtypes(dc).some((t) => themed.has(t)) : !/\bartifact\b/i.test(dc.card.typeLine))) continue;
       // A ROCK THAT MAKES THE COLOUR IS NEVER NAMED, and only a PLAIN rock is (coordinator, 2026-10-08):
       // trading ramp that makes the colour for a land is not a colour fix, and an artifact that does
       // something else is a utility card.
-      if (made.includes(colour) || !plainRock(dc) || netPositiveMana(dc) || made.some((c) => otherShort.includes(c as Color))) continue;
+      if (made.includes(colour) || (!dork && !plainRock(dc)) || netPositiveMana(dc) || made.some((c) => otherShort.includes(c as Color))) continue;
       ranked.push({ name: dc.card.name, tier: made.some((c) => needed.has(c as Color)) ? 3 : 1, land: false, tapped: 0, colours: made.filter((c) => needed.has(c as Color)).length, hidden: made.filter((c) => (anyShort[c as Color] ?? 0) > 0).length });
     }
   }

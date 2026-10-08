@@ -388,6 +388,40 @@ export function colouredNetYield(d: DeckCard): number | null {
   return nets.length ? Math.max(...nets) : null;
 }
 
+/** THE CREATURE TYPES OF A CARD, lowercased: the words after the dash of its front face. */
+export function creatureSubtypes(d: DeckCard): string[] {
+  const front = (d.card.typeLine ?? "").split("//")[0]!;
+  const i = front.search(/[—-]/);
+  return i < 0 ? [] : front.slice(i + 1).trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+/** THE SUBJECTS THE DECK'S THEMES NAME: the part after the colon of each theme tag (`enters:elf` -> "elf"),
+ *  lowercased. A creature type in this set is what the deck is built around. */
+export function themedSubjects(themes: readonly string[] | undefined): Set<string> {
+  return new Set((themes ?? []).map((t) => t.slice(t.indexOf(":") + 1).toLowerCase()).filter(Boolean));
+}
+
+/** A PLAIN DORK (owner, 2026-10-08, #966 follow-up 5): a creature whose abilities are all activated, with a
+ *  repeatable, unrestricted, fixed "{T}: Add" line. A static or triggered ability is the body's other job
+ *  (a lord, a payoff), an amount "for each" something scales with the board, and a mana line that
+ *  sacrifices or restricts the mana (Giada: "spend this mana only to cast Angel spells") is not a colour. */
+export function isPlainDork(d: DeckCard): boolean {
+  if (!isCreature(d) || (d.card.faces?.length ?? 0) > 1 || netYield(d) === null) return false;
+  if (/\badd [^.\n]*\bfor each\b|\badd [^.\n]*\{x\}/.test(printed(d))) return false;
+  // ITS OWN TAP PAYS FOR THE MANA: Birchlore Rangers' "Tap two untapped Elves you control: Add …" taps
+  // other creatures, so it is a tribal engine, not a dork (precon measurement, 2026-10-08).
+  if (!/(^|\n)[^:\n]*\{t\}[^:\n]*:\s*add\b/.test(printed(d))) return false;
+  return (d.tags?.abilities ?? []).every((a) => a.kind === "activated");
+}
+/** THE SAME DORK, ANY COLOURS: both plain dorks, the add prints nothing the cut does not (self-damage aside)
+ *  and nets as much in colour as the cut nets. Summoning sickness is the same for both. */
+export function sameDorkAnyColour(cut: DeckCard, add: DeckCard): boolean {
+  if (!isPlainDork(cut) || !isPlainDork(add)) return false;
+  if (newConditions(cut, add, false, damagesOthers(printed(add)) ? [] : SELF_DAMAGE)) return false;
+  const cy = netYield(cut);
+  const ay = colouredNetYield(add);
+  return cy !== null && ay !== null && ay >= cy;
+}
+
 /** THE LAND AN AURA OF MANA ENCHANTS, when it is the kind a colour swap may take: an Aura that enchants a
  *  land ("land") or a basic land type ("forest"), whose mana is the "adds an additional ..." trigger and
  *  nothing else (no "{T}: Add" line, and no granted ability: Abundant Growth gives the land an ability it

@@ -4,6 +4,7 @@ import { loadAnswerPool, identityKey, POOL_CLASSES, commanderIdentity } from "./
 import { deckAvailability } from "./availability.js";
 import { detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.js";
 import { colourReplacements } from "./land-score.js";
+import { themedSubjects } from "./same-job.js";
 import { manaAudit, type Color } from "./mana-audit.js";
 import { fetchDemand } from "./fetch-land.js";
 import { recommendedLands, type LandRecommendation } from "./land-count.js";
@@ -108,6 +109,8 @@ export function computeDeckMath(
     /** The deck's reasons (`analyze.ts`'s `allReasons`): the drain route counts the sources joined
      *  to each drain's trigger (#1056). Absent for callers without edges, which get no speed. */
     reasons?: readonly Reason[];
+    /** The deck's headline and second theme tags: the creature types they name are not a dork to trade for a colour. */
+    themeTags?: readonly string[];
   } = {},
 ): DeckMath {
   const castCurves = opts.castCurves ?? new Map<string, CastCurve>();
@@ -246,7 +249,7 @@ export function computeDeckMath(
           available: r.worst.available,
           // THE DECK'S OWN SOURCES TO TRADE FOR IT (#966 T3), only for a shortfall that is real.
           ...(r.worst.available < r.worst.required
-            ? { replace: colourReplacements(deck, r.color, r.worst.turn, deficit, [...commanderNames], anyShort) }
+            ? { replace: colourReplacements(deck, r.color, r.worst.turn, deficit, [...commanderNames], anyShort, themedSubjects(opts.themeTags)) }
             : {}),
         },
       }
