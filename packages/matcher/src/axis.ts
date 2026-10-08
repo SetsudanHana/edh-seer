@@ -26,11 +26,36 @@ export function buildAxis(
   return axis;
 }
 
+/** Relation families (reason tags that are never on the axis) and the axis themes they feed.
+ *  `fodder:X` feeds the deck's sacrifice/death theme on X; `scales:X` grows with the board of X;
+ *  `cheat:X` puts X onto the battlefield; `creates:X` makes X. Step 1 of #972. */
+export const RELATION_PARENTS: Record<string, readonly string[]> = {
+  fodder: ["sacrifice", "dies"],
+  scales: ["enters", "create-token"],
+  cheat: ["enters"],
+  creates: ["create-token", "enters"],
+};
+
+/** One tag's axis weight: its own entry if present (an explicit entry always wins), else the
+ *  strongest parent-theme weight for a mapped relation family, else 0. */
+export function axisWeightOf(tag: string, axis: Map<string, number>): number {
+  const own = axis.get(tag);
+  if (own !== undefined) return own;
+  const i = tag.indexOf(":");
+  if (i < 0) return 0;
+  const parents = Object.hasOwn(RELATION_PARENTS, tag.slice(0, i)) ? RELATION_PARENTS[tag.slice(0, i)] : undefined;
+  if (!parents) return 0;
+  const subject = tag.slice(i + 1);
+  let w = 0;
+  for (const p of parents) w = Math.max(w, axis.get(`${p}:${subject}`) ?? 0);
+  return w;
+}
+
 /** The strongest axis weight among an edge's reason tags (0 when none are on-axis). */
 export function maxAxisWeight(reasons: Reason[], axis: Map<string, number>): number {
   let maxW = 0;
   for (const r of reasons) {
-    const w = axis.get(r.tag) ?? 0;
+    const w = axisWeightOf(r.tag, axis);
     if (w > maxW) maxW = w;
   }
   return maxW;
