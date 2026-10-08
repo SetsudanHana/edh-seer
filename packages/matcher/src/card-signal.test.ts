@@ -34,3 +34,13 @@ test("an aura counts as a voltron subtype only when it enchants a creature", () 
   expect(cardSignalOf({ name: "A", oracleText: "Enchant creature" }, aura).subtypes).toEqual(["aura"]);
   expect(cardSignalOf({ name: "B", oracleText: "Enchant land" }, aura).subtypes).toEqual([]);
 });
+
+test("an intercepted graveyard fill signals exile-processing, not reanimation (#1083)", () => {
+  const tags = {
+    ...TAGS,
+    abilities: [{ kind: "static", effect: { kind: "graveyard-recursion", intercepted: true, subject: { control: "opp", zone: "graveyard" } } }],
+  } as unknown as CardTags;
+  const s = cardSignalOf({ name: "Dauthi Voidwalker", oracleText: "" }, tags);
+  expect(s.effectKinds).toEqual(["exile-processing"]);
+  expect(s.themeTags).not.toContain("static:graveyard-recursion");
+});

@@ -1190,7 +1190,10 @@ export const fillDemandsOf = (d: DeckCard): { key: string; tag: string; tags: st
   };
   for (const a of abilitiesOf(d)) {
     const s = a.effect?.subject;
-    if (a.effect?.kind === "graveyard-recursion" && s?.zone === "graveyard" && s.self !== true) {
+    // CEILING: an intercepted fill (Dauthi, Valgavoth) is exile-processing, not a graveyard demand
+    // (owner 2026-10-08, #1083), and no `exile-processing:` demand row exists on the supply side
+    // yet, so it is skipped: Valgavoth as commander then suggests no fillers.
+    if (a.effect?.kind === "graveyard-recursion" && a.effect.intercepted !== true && s?.zone === "graveyard" && s.self !== true) {
       push(keyOf(s), [`graveyard-recursion:${themeSubjectKey(s)}`]);
     }
     const scaled = a.effect?.scalingSubject;

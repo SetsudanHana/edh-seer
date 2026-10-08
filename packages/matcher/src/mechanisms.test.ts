@@ -241,3 +241,9 @@ test("a pair in two groups leads with each group's own reason", () => {
   // And the edge the caller handed in is untouched, whatever the groups did to their copies.
   expect(edge.reasons[0]!.tag).toBe("cast:creature");
 });
+
+test("an exile-processing reason is neither reanimator nor graveyard-matters (#1083)", () => {
+  const r = reason({ tag: "exile-processing:any", effectKind: "exile-processing" });
+  expect(categoryMatches(r, "reanimator")).toBe(false);
+  expect(categoryMatches(r, "graveyard-matters")).toBe(false);
+});

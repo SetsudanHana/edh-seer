@@ -418,6 +418,25 @@ test("filler -> reanimator: a discard fills the graveyard, feeding a graveyard-r
   expect(reasons.some((r) => r.tag.startsWith("graveyard-recursion") && r.effectKind === "graveyard-recursion")).toBe(true);
 });
 
+test("an intercepted fill is exile-processing, not reanimation (#1083, owner 2026-10-08)", () => {
+  const filler = base("Faithless Looting", [{
+    kind: "on-cast",
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+    emits: [{ verb: "discard", subject: { control: "you", token: null } }],
+  }]);
+  const dauthi = base("Dauthi Voidwalker", [{
+    kind: "static",
+    effect: { kind: "graveyard-recursion", intercepted: true, subject: { control: "any", token: null, zone: "graveyard" } },
+  }]);
+  const reasons = pairReasons(filler, dauthi, H);
+  expect(reasons.some((r) => r.tag.startsWith("graveyard-recursion"))).toBe(false);
+  expect(reasons.some((r) => r.effectKind === "graveyard-recursion")).toBe(false);
+  const r = reasons.find((x) => x.tag === "exile-processing:any");
+  expect(r).toBeDefined();
+  expect(r!.effectKind).toBe("exile-processing");
+  expect(r!.consumer).toBe("Dauthi Voidwalker");
+});
+
 test("mill -> Syr Konrad: a mill fills the graveyard, feeding an enters-graveyard:creature trigger", () => {
   const miller = base("Ruin Crab", [{
     kind: "triggered",
