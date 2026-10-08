@@ -6202,6 +6202,18 @@ describe("a mana rock's own entry is not a theme (#966)", () => {
     expect(tags.has("enters:artifact")).toBe(false);
     expect(tags.has("static:pump")).toBe(true);
   });
+  test("a planeswalker with a mana ability keeps its entry (Chandra, Torch of Defiance)", () => {
+    expect(cardThemeTags(mk(["legendary", "planeswalker"], [manaAbility], ["chandra"])).has("enters:planeswalker")).toBe(true);
+  });
+  test("an Equipment with a mana ability keeps enters:equipment (Paradise Mantle)", () => {
+    expect(cardThemeTags(mk(["artifact"], [manaAbility], ["equipment"])).has("enters:equipment")).toBe(true);
+  });
+  test("a Vehicle with a mana ability keeps its entry (Cultivator's Caravan)", () => {
+    expect(cardThemeTags(mk(["artifact"], [manaAbility], ["vehicle"])).has("enters:vehicle")).toBe(true);
+  });
+  test("an Aura/enchantment with a mana ability keeps enters:enchantment (Cryptolith Rite)", () => {
+    expect(cardThemeTags(mk(["enchantment"], [manaAbility])).has("enters:enchantment")).toBe(true);
+  });
   test("a mana dork keeps its tribe entry", () => {
     expect(cardThemeTags(mk(["creature"], [manaAbility], ["elf", "druid"])).has("enters:elf")).toBe(true);
   });

@@ -68,20 +68,30 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
     ?? "any";
 }
 
-/** A card's set of theme tags (for deck-frequency ranking): one per trigger verb, emit, and
- *  static effect. Mirrors the flat engine's produces∪cares membership. */
-/** A MANA ROCK: a non-land, non-creature permanent with an ACTIVATED mana ability. Its own entry is
+/** A MANA ROCK: a noncreature, nonland ARTIFACT with an ACTIVATED mana ability. Its own entry is
  *  the mana base, never a theme (#966, owner 2026-10-02: "Mana rocks are not a theme ... A mana
  *  source must not count toward cohesion or the theme"). MEASURED: the precon Multiverse Reforged,
  *  11 rocks, headlined "Artifacts (artifacts entering)" because each Signet implied `enters:artifact`.
  *  Only the card's OWN implied entry is dropped; its other theme tags and every edge are untouched
  *  (this function is read by `cardThemeTags` alone). A mana DORK is a creature and stays its tribe.
+ *
+ *  NARROWED after review: the bare "activated mana-generation" test matched 420 corpus cards --
+ *  planeswalkers (Chandra's "+1: Add {R}{R}"), Equipment whose GRANTED "{T}: Add" is attributed to
+ *  them (Paradise Mantle), Vehicles, 46 enchantments, an instant. Wakanda Forever's theme flipped
+ *  equipments -> artifacts. An Equipment's or Vehicle's job is not mana, and an Equipment/Vehicle
+ *  deck needs their entry, so both are excluded.
  *  CEILING: a rock whose derive has no mana-generation ability (Jeweled Lotus derives none) still
- *  themes; a Treasure MAKER (Smothering Tithe) has no activated mana ability, so it is not a rock
- *  and keeps its entry, deliberately. */
+ *  themes; a Treasure MAKER (Smothering Tithe) has no activated mana ability and keeps its entry,
+ *  deliberately. Enchantment mana sources (Utopia Sprawl, Cryptolith Rite, Gift of Paradise) are
+ *  deliberately NOT rocks pending an owner call; Cultivator's Caravan (a Vehicle that is also a
+ *  rock) keeps its entry, deliberately. */
 function isManaRock(tags: CardTags): boolean {
-  const types = (tags.characteristics?.types ?? []).map((t) => t.toLowerCase());
-  if (types.includes("land") || types.includes("creature")) return false;
+  const c = tags.characteristics;
+  const types = (c?.types ?? []).map((t) => t.toLowerCase());
+  const subtypes = (c?.subtypes ?? []).map((t) => t.toLowerCase());
+  if (!types.includes("artifact")) return false;
+  if (["land", "creature", "planeswalker"].some((t) => types.includes(t))) return false;
+  if (subtypes.includes("equipment") || subtypes.includes("vehicle")) return false;
   return tags.abilities.some((a) => a.kind === "activated" && a.effect?.kind === "mana-generation");
 }
 
@@ -256,6 +266,8 @@ function opponentsPermanent(subject: SubjectFilter | undefined): boolean {
   return subject.type !== undefined || subject.subtype !== undefined;
 }
 
+/** A card's set of theme tags (for deck-frequency ranking): one per trigger verb, emit, and
+ *  static effect. Mirrors the flat engine's produces∪cares membership. */
 export function cardThemeTags(tags: CardTags): Set<string> {
   const out = new Set<string>();
   for (const t of impliedEntryThemeTags(tags)) out.add(t);
