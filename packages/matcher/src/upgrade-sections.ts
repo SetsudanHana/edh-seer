@@ -25,7 +25,7 @@ import { candidatePool, type IndexCard } from "./suggest.js";
 import { decodeIndex, deckCards } from "./suggest-static.js";
 import type { DeckCard } from "./types.js";
 import type { UpgradeSectionId } from "./upgrade-package.js";
-import { CONDITIONS, isCreature, netPositiveMana, sameGroup, landAuraType, sameJob, sameRockAnyColour, shape } from "./same-job.js";
+import { CONDITIONS, isCreature, netPositiveMana, sameGroup, creatureSubtypes, landAuraType, sameDorkAnyColour, sameJob, sameRockAnyColour, themedSubjects, shape } from "./same-job.js";
 export { answerCovers, newConditions, sameGroup, sameJob } from "./same-job.js";
 
 export type RoleSectionId = Exclude<UpgradeSectionId, "lands" | "synergy">;
@@ -96,6 +96,8 @@ export interface RoleOption {
   closed?: number;
   /** A swap that changes card type, toward a type the deck's payoffs watch (an enchantress's Aura for a rock). */
   crossType?: string;
+  /** A dork swap that keeps a creature type the deck's themes name (Elf): the reason says it is still one. */
+  keptType?: string;
 }
 export interface LandOption { closed?: number; add: string; cut: LandFacts; addFacts: LandFacts; untapped: boolean; colours: string[]; gameChanger: boolean }
 export interface CutOptions<O> { cut: string; options: O[] }
@@ -125,10 +127,9 @@ const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => (d.card.prod
  *  the add makes a colour the deck is short of (`colourDeficit`) that the cut does not, keeping every
  *  colour the cut makes. "If you have Fire Diamond in Izzet you can replace it with a Talisman." The
  *  gain is the colour, not a measure, so `gained` is empty. A rock that prints more mana than it costs
- *  is never the cut. CEILING: rocks only; a dork's body does other work, so creatures stay out, and a
- *  land fetcher makes no colour of its own. Where the payoff type matters (an enchantress wants
+ *  is never the cut. CEILING: rocks and plain dorks; a land fetcher makes no colour of its own. Where the payoff type matters (an enchantress wants
  *  enchantment ramp) shape blocks every cross-type pair here, so there is nothing to prefer. */
-export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Record<Color, number>>, closes?: Closes, watched: ReadonlySet<string> = new Set(), auraOk?: (add: DeckCard) => boolean): RoleOption | null {
+export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Record<Color, number>>, closes?: Closes, watched: ReadonlySet<string> = new Set(), auraOk?: (add: DeckCard) => boolean, themed: ReadonlySet<string> = new Set()): RoleOption | null {
   if (!rolesOfCard(cut).includes("ramp") || !add.roles.includes("ramp") || netPositiveMana(cut)) return null;
   const had = MADE_COLOURS(cut);
   const made = MADE_COLOURS(add.dc);
@@ -142,7 +143,16 @@ export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Rec
   // by trigger. Enchant-creature Auras, 'Creatures you control have {T}: Add' enchantments and cross-type
   // non-Auras (an artifact for an enchantment) are left out: no measure here reads what else they do.
   let crossType: string | undefined;
-  if (!sameRockAnyColour(cut, add.dc)) {
+  let keptType: string | undefined;
+  if (isCreature(cut) || isCreature(add.dc)) {
+    // A DORK FOR A DORK (owner, 2026-10-08), keeping every creature type the deck's themes name: an Elf deck's
+    // Llanowar Elves gives way only to another Elf. CEILING: land-fetch spells are not swapped for colour.
+    if (!sameDorkAnyColour(cut, add.dc)) return null;
+    const kept = creatureSubtypes(cut).filter((t) => themed.has(t));
+    const addTypes = creatureSubtypes(add.dc);
+    if (!kept.every((t) => addTypes.includes(t))) return null;
+    keptType = kept[0];
+  } else if (!sameRockAnyColour(cut, add.dc)) {
     const cutWatched = typesOf(cut).some((t) => watched.has(t));
     crossType = typesOf(add.dc).find((t) => watched.has(t));
     if (cutWatched || !crossType || !sameRockAnyColour(cut, add.dc, true)) return null;
@@ -153,7 +163,7 @@ export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Rec
   const closed = closes ? closes(cut.card.name, add.dc) : colour.reduce((n, c) => n + (deficit[c] ?? 0), 0);
   if (closed <= 0) return null;
   const lost = rolesOfCard(cut).filter((r) => !add.roles.includes(r));
-  return { add: add.dc.card.name, role: "ramp", gained: [], cut: ingredients(cut, "ramp"), addIngredients: ingredients(add.dc, "ramp"), gameChanger: add.dc.card.gameChanger === true, links: add.links, colour, closed, ...(crossType ? { crossType } : {}), ...(lost.length ? { lost } : {}) };
+  return { add: add.dc.card.name, role: "ramp", gained: [], cut: ingredients(cut, "ramp"), addIngredients: ingredients(add.dc, "ramp"), gameChanger: add.dc.card.gameChanger === true, links: add.links, colour, closed, ...(crossType ? { crossType } : {}), ...(keptType ? { keptType } : {}), ...(lost.length ? { lost } : {}) };
 }
 /** A CARD'S TYPES as a payoff names them: its front-face card types, and Aura or Equipment. */
 const typesOf = (d: DeckCard): string[] => [...shape(d).split(" "), ...(/\baura\b/i.test(d.card.typeLine ?? "") ? ["aura"] : []), ...(/\bequipment\b/i.test(d.card.typeLine ?? "") ? ["equipment"] : [])].filter(Boolean);
@@ -240,6 +250,7 @@ export function roleOptions(
   closes?: Closes,
   watched?: ReadonlySet<string>,
   auraOk?: (add: DeckCard) => boolean,
+  themed?: ReadonlySet<string>,
 ): CutOptions<RoleOption>[] {
   const out: (CutOptions<RoleOption> & { strict?: RoleOption; colour?: RoleOption; shortMade: number })[] = [];
   for (const cut of cuts) {
@@ -248,7 +259,7 @@ export function roleOptions(
     // WHERE NO STRICT OPTION EXISTS FOR A PAIR, a rock may still close the deck's colour shortfall. Best
     // first: the most shortfall closed, then the deck's own links, then name.
     const strictAdds = new Set(strict.map((o) => o.add));
-    const colour = section !== "ramp" ? [] : pool.filter((c) => !strictAdds.has(c.dc.card.name)).map((c) => colourOption(cut, c, deficit, closes, watched, auraOk))
+    const colour = section !== "ramp" ? [] : pool.filter((c) => !strictAdds.has(c.dc.card.name)).map((c) => colourOption(cut, c, deficit, closes, watched, auraOk, themed))
       .filter((o): o is RoleOption => o !== null)
       .sort((a, b) => closedBy(b) - closedBy(a) || b.links - a.links || a.add.localeCompare(b.add));
     const upgrades = gameChangers.pool.map((c) => gameChangerOption(section, cut, c, gameChangers.quality)).filter((o): o is RoleOption => o !== null)
@@ -382,7 +393,8 @@ export async function upgradeOptions(input: {
   const pool = candidatePool({ names, identity, pi }, index);
   const linksOf = new Map([...pool.values()].map((c) => [c.card.name, c.connections.length] as const));
 
-  const roleCuts = deck.filter((d) => input.roleCuts.includes(d.card.name) && !isCreature(d));
+  // A DORK MAY BE CUT FOR A COLOUR (ramp section only; every other section skips a creature below).
+  const roleCuts = deck.filter((d) => input.roleCuts.includes(d.card.name));
   // THE GAME CHANGERS IN THE IDENTITY. The flag is on the card, not in the name index, so the index
   // prefilters to cards rated `GAME_CHANGER_FLOOR` or more in a role and the card says which they are.
   const qualities = new Map(index.map((c) => [c.name, c.quality ?? {}] as const));
@@ -402,7 +414,7 @@ export async function upgradeOptions(input: {
   const roles = {} as Record<RoleSectionId, CutOptions<RoleOption>[]>;
   for (const section of ROLE_SECTIONS) {
     const sectionRoles = SECTION_ROLES[section] as readonly BuildCategory[];
-    const cuts = roleCuts.filter((d) => rolesOfCard(d).some((r) => sectionRoles.includes(r)));
+    const cuts = roleCuts.filter((d) => rolesOfCard(d).some((r) => sectionRoles.includes(r)) && (section === "ramp" || !isCreature(d)));
     const ceiling = Math.max(-1, ...cuts.map((d) => d.card.manaValue ?? 0));
     const wanted = index.filter((c) => !c.isLand && !names.has(c.name) && inIdentity(c) && c.mv <= ceiling
       && c.roles.some((r) => sectionRoles.includes(r as BuildCategory)));
@@ -410,9 +422,9 @@ export async function upgradeOptions(input: {
     const candidates: Candidate[] = [];
     for (const c of wanted) {
       const dc = await dcOf(c.name);
-      if (dc && !isCreature(dc)) candidates.push({ dc, roles: rolesOfCard(dc), links: linksOf.get(c.name) ?? 0 });
+      if (dc && (section === "ramp" || !isCreature(dc))) candidates.push({ dc, roles: rolesOfCard(dc), links: linksOf.get(c.name) ?? 0 });
     }
-    roles[section] = roleOptions(section, cuts, candidates, { pool: gameChangers, quality }, deficit, closes, watched, auraSupport(deck, input.commanders));
+    roles[section] = roleOptions(section, cuts, candidates, { pool: gameChangers, quality }, deficit, closes, watched, auraSupport(deck, input.commanders), themedSubjects(input.themes));
   }
 
   // THE BRING-DOWN CUTS' REPLACEMENTS, from every card sharing a role with them, as cheap or cheaper.

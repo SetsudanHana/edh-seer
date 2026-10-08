@@ -1063,6 +1063,8 @@ export function analyzeDeckStructured(
         ...(manaSim?.seenShare ? { seen: manaSim.seenShare } : {}),
         ...(manaSim?.combat ? { combatSpread: manaSim.combat.table } : {}),
         reasons: allReasons,
+        // The two themes the report names, as `mainTheme` reads them (none when no theme dominates).
+        themeTags: cohesion && cohesion.dominant !== false ? [cohesion.tag, ...(cohesion.secondaryTag ? [cohesion.secondaryTag] : [])] : [],
       })
     : undefined;
 

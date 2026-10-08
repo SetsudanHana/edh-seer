@@ -638,7 +638,7 @@
   "card": {
    "_id": "706ae742-1807-44b7-a4fa-f2e26f61519a",
    "name": "Wild Growth",
-   "typeLine": "Enchantment \u2014 Aura",
+   "typeLine": "Enchantment — Aura",
    "oracleText": "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.",
    "keywords": [
     "Enchant"
@@ -1339,7 +1339,7 @@
   "card": {
    "_id": "b657b3df-9287-44cf-a1cd-a80ead71a553",
    "name": "Dire Mimic",
-   "typeLine": "Artifact \u2014 Treasure",
+   "typeLine": "Artifact — Treasure",
    "oracleText": "Flash\n{T}, Sacrifice this artifact: Add one mana of any color.\n{3}: This artifact becomes a Shapeshifter artifact creature with base power and toughness 5/5 until end of turn.",
    "keywords": [
     "Flash"
@@ -2003,7 +2003,7 @@
   "card": {
    "_id": "00d8efa6-a2d9-4249-8da7-b45173675329",
    "name": "Utopia Sprawl",
-   "typeLine": "Enchantment \u2014 Aura",
+   "typeLine": "Enchantment — Aura",
    "oracleText": "Enchant Forest\nAs this Aura enters, choose a color.\nWhenever enchanted Forest is tapped for mana, its controller adds an additional one mana of the chosen color.",
    "keywords": [
     "Enchant"
@@ -2103,7 +2103,7 @@
   "card": {
    "_id": "cf14d4e5-5965-45ad-97f7-26facf2884b5",
    "name": "Fertile Ground",
-   "typeLine": "Enchantment \u2014 Aura",
+   "typeLine": "Enchantment — Aura",
    "oracleText": "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional one mana of any color.",
    "keywords": [
     "Enchant"
@@ -2202,7 +2202,7 @@
   "card": {
    "_id": "e6ccebf4-f4f0-404f-a634-4d751ef9c8aa",
    "name": "Overgrowth",
-   "typeLine": "Enchantment \u2014 Aura",
+   "typeLine": "Enchantment — Aura",
    "oracleText": "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}{G}.",
    "keywords": [
     "Enchant"
@@ -2297,7 +2297,7 @@
   "card": {
    "_id": "11f17f85-ca97-4551-838f-7cb32f0e5f10",
    "name": "Argothian Enchantress",
-   "typeLine": "Creature \u2014 Human Druid",
+   "typeLine": "Creature — Human Druid",
    "oracleText": "Shroud (This creature can't be the target of spells or abilities.)\nWhenever you cast an enchantment spell, draw a card.",
    "keywords": [
     "Shroud"
@@ -2407,8 +2407,8 @@
   "card": {
    "_id": "77ccbea1-70af-4194-adad-39a904221c75",
    "name": "Eidolon of Blossoms",
-   "typeLine": "Enchantment Creature \u2014 Spirit",
-   "oracleText": "Constellation \u2014 Whenever this creature or another enchantment you control enters, draw a card.",
+   "typeLine": "Enchantment Creature — Spirit",
+   "oracleText": "Constellation — Whenever this creature or another enchantment you control enters, draw a card.",
    "keywords": [
     "Constellation"
    ],
@@ -2553,7 +2553,7 @@
   "card": {
    "_id": "180e1a7e-890d-477c-80a5-da8a5f2857b3",
    "name": "Reckless Fireweaver",
-   "typeLine": "Creature \u2014 Human Artificer",
+   "typeLine": "Creature — Human Artificer",
    "oracleText": "Whenever an artifact you control enters, this creature deals 1 damage to each opponent.",
    "keywords": [],
    "colors": [
@@ -2662,7 +2662,7 @@
   "card": {
    "_id": "9fc28e1f-f4ea-4bf8-9442-a36dba3b3b29",
    "name": "Goblin Welder",
-   "typeLine": "Creature \u2014 Goblin Artificer",
+   "typeLine": "Creature — Goblin Artificer",
    "oracleText": "{T}: Choose target artifact a player controls and target artifact card in that player's graveyard. If both targets are still legal as this ability resolves, that player simultaneously sacrifices the artifact and returns the artifact card to the battlefield.",
    "keywords": [],
    "colors": [
@@ -2849,7 +2849,7 @@
     {
      "component": "token",
      "name": "Thopter",
-     "typeLine": "Token Artifact Creature \u2014 Thopter",
+     "typeLine": "Token Artifact Creature — Thopter",
      "printingId": "27a94450-ebe4-49c6-b2b0-bf335880f44f"
     }
    ],
@@ -3119,7 +3119,7 @@
   "card": {
    "_id": "947a2665-2f4d-4193-8768-118f85334549",
    "name": "Abundant Growth",
-   "typeLine": "Enchantment \u2014 Aura",
+   "typeLine": "Enchantment — Aura",
    "oracleText": "Enchant land\nWhen this Aura enters, draw a card.\nEnchanted land has \"{T}: Add one mana of any color.\"",
    "keywords": [
     "Enchant"
@@ -3267,7 +3267,7 @@
   "card": {
    "_id": "530140f1-e992-4b5e-882c-c15bacc328fa",
    "name": "Trace of Abundance",
-   "typeLine": "Enchantment \u2014 Aura",
+   "typeLine": "Enchantment — Aura",
    "oracleText": "Enchant land\nEnchanted land has shroud. (It can't be the target of spells or abilities.)\nWhenever enchanted land is tapped for mana, its controller adds an additional one mana of any color.",
    "keywords": [
     "Enchant"
@@ -3385,7 +3385,7 @@
   "card": {
    "_id": "77b73f11-a59a-4f2b-83d3-e6fe5064bc87",
    "name": "Urban Utopia",
-   "typeLine": "Enchantment \u2014 Aura",
+   "typeLine": "Enchantment — Aura",
    "oracleText": "Enchant land\nWhen this Aura enters, draw a card.\nEnchanted land has \"{T}: Add one mana of any color.\"",
    "keywords": [
     "Enchant"
@@ -3526,6 +3526,1611 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "b9ac68c7ebe2d1f6ae466fe6297d0f34871a1b77155fec88f86d9bf6bf9631e8",
+   "clauseSource": "grammar"
+  }
+ },
+ "Llanowar Elves": {
+  "card": {
+   "_id": "68954295-54e3-4303-a6bc-fc4547a4e3a3",
+   "name": "Llanowar Elves",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add {G}.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "mana",
+     "tribe:elf",
+     "tribe-nontoken:elf",
+     "tribe:druid",
+     "tribe-nontoken:druid"
+    ],
+    "cares": []
+   },
+   "manaCost": "{G}",
+   "producedMana": [
+    "G"
+   ],
+   "layout": "normal",
+   "releasedAt": "2024-11-15",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Llanowar Elves",
+     "typeLine": "Creature — Elf Druid",
+     "printingId": "11bd6cef-f887-4b07-a957-4c53cb3c9c87"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Marwyn's Kindred",
+     "typeLine": "Sorcery",
+     "printingId": "8ef95e7a-9f07-41f8-908b-2df93e03d391"
+    }
+   ],
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af122236b",
+   "oracleId": "68954295-54e3-4303-a6bc-fc4547a4e3a3",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elf",
+     "druid"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "02ab38ff881cfe07df0fbf730a861bd9aa196da25f2561fc0633d67ee78c3edd",
+   "clauseSource": "grammar"
+  }
+ },
+ "Birds of Paradise": {
+  "card": {
+   "_id": "d3a0b660-358c-41bd-9cd2-41fbf3491b1a",
+   "name": "Birds of Paradise",
+   "typeLine": "Creature — Bird",
+   "oracleText": "Flying\n{T}: Add one mana of any color.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "0",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "mana",
+     "tribe:bird",
+     "tribe-nontoken:bird"
+    ],
+    "cares": []
+   },
+   "manaCost": "{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af1222fbb",
+   "oracleId": "d3a0b660-358c-41bd-9cd2-41fbf3491b1a",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "bird"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": "0",
+    "toughness": "1",
+    "token": false,
+    "keywords": [
+     "flying"
+    ]
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 13,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "1e118b32cc8e191202e45e591688fbedffb548982c6371e43e97d6fe85b3b053",
+   "clauseSource": "grammar"
+  }
+ },
+ "Elvish Mystic": {
+  "card": {
+   "_id": "3f3b2c10-21f8-4e13-be83-4ef3fa36e123",
+   "name": "Elvish Mystic",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add {G}.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "mana",
+     "tribe:elf",
+     "tribe-nontoken:elf",
+     "tribe:druid",
+     "tribe-nontoken:druid"
+    ],
+    "cares": []
+   },
+   "manaCost": "{G}",
+   "producedMana": [
+    "G"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-08-14",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af1222feb",
+   "oracleId": "3f3b2c10-21f8-4e13-be83-4ef3fa36e123",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elf",
+     "druid"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 13,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "02ab38ff881cfe07df0fbf730a861bd9aa196da25f2561fc0633d67ee78c3edd",
+   "clauseSource": "grammar"
+  }
+ },
+ "Fyndhorn Elves": {
+  "card": {
+   "_id": "df317532-7d36-40fd-938f-e972749c8792",
+   "name": "Fyndhorn Elves",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add {G}.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "mana",
+     "tribe:elf",
+     "tribe-nontoken:elf",
+     "tribe:druid",
+     "tribe-nontoken:druid"
+    ],
+    "cares": []
+   },
+   "manaCost": "{G}",
+   "producedMana": [
+    "G"
+   ],
+   "layout": "normal",
+   "releasedAt": "2020-11-20",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a57f6eb344af193f506",
+   "oracleId": "df317532-7d36-40fd-938f-e972749c8792",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elf",
+     "druid"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "02ab38ff881cfe07df0fbf730a861bd9aa196da25f2561fc0633d67ee78c3edd",
+   "clauseSource": "grammar"
+  }
+ },
+ "Noble Hierarch": {
+  "card": {
+   "_id": "98aa9424-5912-4bd6-9300-b3972a31d8af",
+   "name": "Noble Hierarch",
+   "typeLine": "Creature — Human Druid",
+   "oracleText": "Exalted (Whenever a creature you control attacks alone, that creature gets +1/+1 until end of turn.)\n{T}: Add {G}, {W}, or {U}.",
+   "keywords": [
+    "Exalted"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "power": "0",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "mana",
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:druid",
+     "tribe-nontoken:druid",
+     "attack-trigger"
+    ],
+    "cares": [
+     "attack-trigger"
+    ]
+   },
+   "manaCost": "{G}",
+   "producedMana": [
+    "G",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2020-08-07",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a54f6eb344af193ccc4",
+   "oracleId": "98aa9424-5912-4bd6-9300-b3972a31d8af",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "human",
+     "druid"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G",
+     "U",
+     "W"
+    ],
+    "cmc": 1,
+    "power": "0",
+    "toughness": "1",
+    "token": false,
+    "keywords": [
+     "exalted"
+    ]
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "fcb6ddfaff4353a7ee67591f7774921a71f6c63fd544d5d0cf2cc1358dd0f357",
+   "clauseSource": "grammar"
+  }
+ },
+ "Priest of Titania": {
+  "card": {
+   "_id": "3a198a16-17b9-481e-b516-5bc945c7e247",
+   "name": "Priest of Titania",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add {G} for each Elf on the battlefield.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "mana",
+     "tribe:elf",
+     "tribe-nontoken:elf",
+     "tribe:druid",
+     "tribe-nontoken:druid"
+    ],
+    "cares": [
+     "tribe:elf"
+    ]
+   },
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "G"
+   ],
+   "layout": "normal",
+   "releasedAt": "2024-06-14",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736acaf6eb344af1223dc6",
+   "oracleId": "3a198a16-17b9-481e-b516-5bc945c7e247",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "scalingSubject": {
+       "control": "any",
+       "token": null,
+       "subtype": "elf",
+       "zone": "battlefield"
+      }
+     },
+     "cost": "{T}",
+     "amount": "for each Elf on the battlefield",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "any",
+       "token": null,
+       "subtype": "elf"
+      }
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elf",
+     "druid"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 13,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "b6d340ef7ae12d8ab64418cda4efcca2670002c4efab39c7b4a1044ba3aab6f3",
+   "clauseSource": "grammar"
+  }
+ },
+ "Elvish Archdruid": {
+  "card": {
+   "_id": "6e2c2423-d854-4478-99e6-64f29851f026",
+   "name": "Elvish Archdruid",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "Other Elf creatures you control get +1/+1.\n{T}: Add {G} for each Elf you control.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "mana",
+     "tribe:elf",
+     "tribe-nontoken:elf",
+     "tribe:druid",
+     "tribe-nontoken:druid"
+    ],
+    "cares": [
+     "tribe:elf"
+    ]
+   },
+   "manaCost": "{1}{G}{G}",
+   "producedMana": [
+    "G"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-08-14",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a5bf6eb344af1944506",
+   "oracleId": "6e2c2423-d854-4478-99e6-64f29851f026",
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "pump",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "subtype": "elf",
+       "scope": "all",
+       "other": true
+      }
+     },
+     "amount": "+1/+1",
+     "clause": 1,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "scaling": "per-permanent",
+      "scalingSubject": {
+       "control": "you",
+       "token": null,
+       "subtype": "elf",
+       "zone": "battlefield"
+      }
+     },
+     "cost": "{T}",
+     "amount": "for each Elf you control",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "you",
+       "token": null,
+       "subtype": "elf"
+      }
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elf",
+     "druid"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 3,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "f6bd25fa244d91e4a56be5232295b93296cab8c2c112426d41a766349c57654a",
+   "clauseSource": "grammar"
+  }
+ },
+ "Joraga Warcaller": {
+  "card": {
+   "_id": "8959a147-75b1-4f4a-a699-cb354ff55e59",
+   "name": "Joraga Warcaller",
+   "typeLine": "Creature — Elf Warrior",
+   "oracleText": "Multikicker {1}{G} (You may pay an additional {1}{G} any number of times as you cast this spell.)\nThis creature enters with a +1/+1 counter on it for each time it was kicked.\nOther Elf creatures you control get +1/+1 for each +1/+1 counter on this creature.",
+   "keywords": [
+    "Multikicker"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "counter:+1/+1",
+     "tribe:elf",
+     "tribe-nontoken:elf",
+     "tribe:warrior",
+     "tribe-nontoken:warrior"
+    ],
+    "cares": [
+     "counter:+1/+1",
+     "tribe:elf"
+    ]
+   },
+   "manaCost": "{G}",
+   "layout": "normal",
+   "releasedAt": "2017-06-09",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a5af6eb344af1942936",
+   "oracleId": "8959a147-75b1-4f4a-a699-cb354ff55e59",
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "enters-with-counters"
+     },
+     "amount": "1 for each time it was kicked",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "counter": "+1/+1",
+        "self": true
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "continuous",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "any",
+       "token": null
+      }
+     }
+    },
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "pump",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "subtype": "elf",
+       "scope": "all",
+       "other": true
+      }
+     },
+     "amount": "+1/+1 for each +1/+1 counter on this creature",
+     "clause": 3,
+     "repeats": "continuous",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1",
+       "type": "creature"
+      }
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elf",
+     "warrior"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": [
+     "multikicker"
+    ]
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "e2b5e8f9c2c9cc6e46c3e54a5676e052e1e6712a506b6326bffe2d712a0b9c2a",
+   "clauseSource": "grammar"
+  }
+ },
+ "Imperious Perfect": {
+  "card": {
+   "_id": "3fa71348-fa4d-4f39-a451-cf1570591991",
+   "name": "Imperious Perfect",
+   "typeLine": "Creature — Elf Warrior",
+   "oracleText": "Other Elves you control get +1/+1.\n{G}, {T}: Create a 1/1 green Elf Warrior creature token.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "tribe:elf",
+     "tribe-nontoken:elf",
+     "tribe:warrior",
+     "tribe-nontoken:warrior"
+    ],
+    "cares": [
+     "tribe:elf"
+    ]
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2024-11-15",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Elf Warrior",
+     "typeLine": "Token Creature — Elf Warrior",
+     "printingId": "315c45f4-7bc9-45d5-bbf5-2533cf80af60"
+    }
+   ],
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a57f6eb344af193f606",
+   "oracleId": "3fa71348-fa4d-4f39-a451-cf1570591991",
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "pump",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "elf",
+       "scope": "all",
+       "other": true
+      }
+     },
+     "amount": "+1/+1",
+     "clause": 1,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "token-generation",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "creature",
+       "subtype": [
+        "elf",
+        "warrior"
+       ],
+       "colors": [
+        "G"
+       ],
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     },
+     "cost": "{G}, {T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "create-token",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "colors": [
+         "G"
+        ],
+        "type": "creature",
+        "subtype": [
+         "elf",
+         "warrior"
+        ],
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "colors": [
+         "G"
+        ],
+        "type": "creature",
+        "subtype": [
+         "elf",
+         "warrior"
+        ],
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{G}",
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elf",
+     "warrior"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 3,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "0dd1f1949492448e3dc7788d3b2bca7edd86bdf74dac30bbc2c1fdd2e79fe90d",
+   "clauseSource": "grammar"
+  }
+ },
+ "Wirewood Symbiote": {
+  "card": {
+   "_id": "67a52a74-9474-4f4e-8785-6ff54078a8ca",
+   "name": "Wirewood Symbiote",
+   "typeLine": "Creature — Insect",
+   "oracleText": "Return an Elf you control to its owner's hand: Untap target creature. Activate only once each turn.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "tribe:insect",
+     "tribe-nontoken:insect"
+    ],
+    "cares": []
+   },
+   "manaCost": "{G}",
+   "layout": "normal",
+   "releasedAt": "2024-06-14",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a52f6eb344af193a0fc",
+   "oracleId": "67a52a74-9474-4f4e-8785-6ff54078a8ca",
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "bounce"
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "elf",
+        "fromZone": "battlefield"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-turn",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "untap"
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "untaps",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "creature",
+        "scope": "target"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-turn",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "insect"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "b33cb7a8d47579bd012428a8b19b2d741bd6b98cbe59c4ef1ed647e4298fdc0a",
+   "clauseSource": "model"
+  }
+ },
+ "Delighted Halfling": {
+  "card": {
+   "_id": "f9d3b046-0b95-4103-a630-4b3fb88bb60b",
+   "name": "Delighted Halfling",
+   "typeLine": "Creature — Halfling Citizen",
+   "oracleText": "{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a legendary spell, and that spell can't be countered.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "mana",
+     "tribe:halfling",
+     "tribe-nontoken:halfling",
+     "tribe:citizen",
+     "tribe-nontoken:citizen"
+    ],
+    "cares": []
+   },
+   "manaCost": "{G}",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2023-06-23",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af1222413",
+   "oracleId": "f9d3b046-0b95-4103-a630-4b3fb88bb60b",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "halfling",
+     "citizen"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "9f940e186646ec382e45d4f57cea5e3c18192fbb4be91d5a0e33c7503cb87efa",
+   "clauseSource": "grammar"
+  }
+ },
+ "Deathrite Shaman": {
+  "card": {
+   "_id": "22f1a4a4-c423-4d1c-8775-0ed604a9fa51",
+   "name": "Deathrite Shaman",
+   "typeLine": "Creature — Elf Shaman",
+   "oracleText": "{T}: Exile target land card from a graveyard. Add one mana of any color. (Activate only as an instant.)\n{B}, {T}: Exile target instant or sorcery card from a graveyard. Each opponent loses 2 life.\n{G}, {T}: Exile target creature card from a graveyard. You gain 2 life.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "1",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "lifegain",
+     "mana",
+     "removal",
+     "tribe:elf",
+     "tribe-nontoken:elf",
+     "tribe:shaman",
+     "tribe-nontoken:shaman"
+    ],
+    "cares": []
+   },
+   "manaCost": "{B/G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2024-01-12",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a4ef6eb344af1935658",
+   "oracleId": "22f1a4a4-c423-4d1c-8775-0ed604a9fa51",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "graveyard-hate",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "target",
+       "fromZone": "graveyard",
+       "zone": "graveyard"
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "exiled",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "fromZone": "graveyard",
+        "type": "land",
+        "scope": "target"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "fromZone": "graveyard",
+        "type": "land",
+        "scope": "target",
+        "zone": "graveyard"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "graveyard-hate",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ],
+       "scope": "target",
+       "fromZone": "graveyard",
+       "zone": "graveyard"
+      }
+     },
+     "cost": "{B}, {T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "exiled",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "fromZone": "graveyard",
+        "type": [
+         "instant",
+         "sorcery"
+        ],
+        "scope": "target"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "fromZone": "graveyard",
+        "type": [
+         "instant",
+         "sorcery"
+        ],
+        "scope": "target",
+        "zone": "graveyard"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{B}",
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "cost": "{B}, {T}",
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "scope": "each"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     },
+     "payment": {
+      "mana": "{B}",
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "graveyard-hate",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "graveyard",
+       "zone": "graveyard"
+      }
+     },
+     "cost": "{G}, {T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "exiled",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "fromZone": "graveyard",
+        "type": "creature",
+        "scope": "target"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "fromZone": "graveyard",
+        "type": "creature",
+        "scope": "target",
+        "zone": "graveyard"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 3,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{G}",
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "cost": "{G}, {T}",
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 3,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     },
+     "payment": {
+      "mana": "{G}",
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elf",
+     "shaman"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B",
+     "G"
+    ],
+    "identity": [
+     "B",
+     "G"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "0245626db86c1afdc0bc665b11ab90baf6abcdf65b23f0297e778e5e968f97ef",
    "clauseSource": "grammar"
   }
  }
