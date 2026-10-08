@@ -18,15 +18,14 @@
 import { normalizeName } from "@edh-seer/data/names";
 import type { BuildCategory } from "./build.js";
 import { basicsFloor, betterLand, landFacts, neededColours, unusualText, type LandFacts } from "./land-score.js";
-import { COLORS, colourDeficit, type Color } from "./mana-audit.js";
-import { cardCaresTags } from "./edges.js";
+import { COLORS, colourDeficit, landTypeDemand, type Color } from "./mana-audit.js";
 import { ingredients, rolesOfCard, type Ingredient, type Ingredients, type Role } from "./quality.js";
 import type { StaticLookup } from "./static-lookup.js";
 import { candidatePool, type IndexCard } from "./suggest.js";
 import { decodeIndex, deckCards } from "./suggest-static.js";
 import type { DeckCard } from "./types.js";
 import type { UpgradeSectionId } from "./upgrade-package.js";
-import { CONDITIONS, isCreature, netPositiveMana, sameGroup, sameJob, sameRockAnyColour, shape } from "./same-job.js";
+import { CONDITIONS, isCreature, netPositiveMana, sameGroup, landAuraType, sameJob, sameRockAnyColour, shape } from "./same-job.js";
 export { answerCovers, newConditions, sameGroup, sameJob } from "./same-job.js";
 
 export type RoleSectionId = Exclude<UpgradeSectionId, "lands" | "synergy">;
@@ -129,7 +128,7 @@ const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => (d.card.prod
  *  is never the cut. CEILING: rocks only; a dork's body does other work, so creatures stay out, and a
  *  land fetcher makes no colour of its own. Where the payoff type matters (an enchantress wants
  *  enchantment ramp) shape blocks every cross-type pair here, so there is nothing to prefer. */
-export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Record<Color, number>>, closes?: Closes, watched: ReadonlySet<string> = new Set()): RoleOption | null {
+export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Record<Color, number>>, closes?: Closes, watched: ReadonlySet<string> = new Set(), auraOk?: (add: DeckCard) => boolean): RoleOption | null {
   if (!rolesOfCard(cut).includes("ramp") || !add.roles.includes("ramp") || netPositiveMana(cut)) return null;
   const had = MADE_COLOURS(cut);
   const made = MADE_COLOURS(add.dc);
@@ -139,12 +138,16 @@ export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Rec
   if (colour.length === 0 || (add.dc.card.manaValue ?? 0) > (cut.card.manaValue ?? 0)) return null;
   // ANOTHER CARD TYPE ONLY TOWARD THE ONE THE DECK'S PAYOFFS WATCH (owner, 2026-10-08: an enchantress
   // wants enchantment ramp), never away from it, and never when the cut's type is watched too.
+  // CEILING: across types the only add is an Aura that enchants a land (or a basic land type) and adds mana
+  // by trigger. Enchant-creature Auras, 'Creatures you control have {T}: Add' enchantments and cross-type
+  // non-Auras (an artifact for an enchantment) are left out: no measure here reads what else they do.
   let crossType: string | undefined;
   if (!sameRockAnyColour(cut, add.dc)) {
     const cutWatched = typesOf(cut).some((t) => watched.has(t));
     crossType = typesOf(add.dc).find((t) => watched.has(t));
     if (cutWatched || !crossType || !sameRockAnyColour(cut, add.dc, true)) return null;
   }
+  if (auraOk && !auraOk(add.dc)) return null;
   // CLOSED BY THE YARDSTICK, NOT BY THE COLOUR'S NAME: the audit counts a rock only for a demand due
   // after its mana value, so a Talisman can make the colour and still move nothing (review of #966 T2).
   const closed = closes ? closes(cut.card.name, add.dc) : colour.reduce((n, c) => n + (deficit[c] ?? 0), 0);
@@ -154,18 +157,28 @@ export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Rec
 }
 /** A CARD'S TYPES as a payoff names them: its front-face card types, and Aura or Equipment. */
 const typesOf = (d: DeckCard): string[] => [...shape(d).split(" "), ...(/\baura\b/i.test(d.card.typeLine ?? "") ? ["aura"] : []), ...(/\bequipment\b/i.test(d.card.typeLine ?? "") ? ["equipment"] : [])].filter(Boolean);
-/** THE CARD TYPES THE DECK'S PAYOFFS WATCH: a card that cares when one enters or is cast (`enters:enchantment`,
- *  `cast:artifact`). Computed once per deck. */
-export function watchedTypes(deck: readonly DeckCard[]): Set<string> {
+/** THE CARD TYPES THE DECK IS BUILT AROUND (owner, 2026-10-08): a type is watched only when
+ *  `enters:<type>` or `cast:<type>` is among the deck's detected THEMES (the headline and the second
+ *  the report names), never because one card happens to care. */
+export function watchedTypes(themes: readonly string[] | undefined): Set<string> {
   const out = new Set<string>();
-  for (const dc of deck) {
-    if (!dc.tags) continue;
-    for (const t of cardCaresTags(dc.tags)) {
-      const m = /^(?:enters|cast):(artifact|enchantment|aura|equipment|creature|land|planeswalker)$/.exec(t);
-      if (m) out.add(m[1]!);
-    }
+  for (const t of themes ?? []) {
+    const m = /^(?:enters|cast):(artifact|enchantment|aura|equipment|creature|land|planeswalker)$/.exec(t);
+    if (m) out.add(m[1]!);
   }
   return out;
+}
+/** "ENCHANT FOREST" IS A DEMAND FOR FORESTS (owner, 2026-10-08): the Aura needs a Forest to enchant, so it
+ *  is judged as one more demand for that land type by its own mana value's turn, with `manaAudit`'s model
+ *  (`landTypeDemand`). "Enchant land" needs no such check. CEILING: the demand is judged alone, against
+ *  the deck's sources of the type as they stand, not against the Auras already in the deck. */
+export function auraSupport(deck: readonly DeckCard[], commanders: readonly string[]): (add: DeckCard) => boolean {
+  return (add) => {
+    const type = landAuraType(add);
+    if (!type || type === "land") return true;
+    const { required, available } = landTypeDemand(deck, commanders, type, Math.max(1, Math.round(add.card.manaValue ?? 1)));
+    return available >= required;
+  };
 }
 /** The total colour shortfall a swap of the named deck card for `add` closes (`swapCloser`). */
 export type Closes = (cutName: string, add: DeckCard) => number;
@@ -226,6 +239,7 @@ export function roleOptions(
   deficit: Partial<Record<Color, number>> = {},
   closes?: Closes,
   watched?: ReadonlySet<string>,
+  auraOk?: (add: DeckCard) => boolean,
 ): CutOptions<RoleOption>[] {
   const out: (CutOptions<RoleOption> & { strict?: RoleOption; colour?: RoleOption; shortMade: number })[] = [];
   for (const cut of cuts) {
@@ -234,7 +248,7 @@ export function roleOptions(
     // WHERE NO STRICT OPTION EXISTS FOR A PAIR, a rock may still close the deck's colour shortfall. Best
     // first: the most shortfall closed, then the deck's own links, then name.
     const strictAdds = new Set(strict.map((o) => o.add));
-    const colour = section !== "ramp" ? [] : pool.filter((c) => !strictAdds.has(c.dc.card.name)).map((c) => colourOption(cut, c, deficit, closes, watched))
+    const colour = section !== "ramp" ? [] : pool.filter((c) => !strictAdds.has(c.dc.card.name)).map((c) => colourOption(cut, c, deficit, closes, watched, auraOk))
       .filter((o): o is RoleOption => o !== null)
       .sort((a, b) => closedBy(b) - closedBy(a) || b.links - a.links || a.add.localeCompare(b.add));
     const upgrades = gameChangers.pool.map((c) => gameChangerOption(section, cut, c, gameChangers.quality)).filter((o): o is RoleOption => o !== null)
@@ -345,6 +359,8 @@ export async function upgradeOptions(input: {
   identity: readonly string[];
   /** The deck cards a role section may cut (the report's trim cards whose only protection is a role). */
   roleCuts: readonly string[];
+  /** The deck's detected themes as tags (`enters:enchantment`): the headline and the second the report names. */
+  themes?: readonly string[];
   /** Cards the bracket guard cuts, which need a replacement whatever protects them. */
   bringDownCuts?: readonly string[];
 }): Promise<{ roles: Record<RoleSectionId, CutOptions<RoleOption>[]>; lands: CutOptions<LandOption>[]; replacements: Map<string, Replacement[]> }> {
@@ -382,7 +398,7 @@ export async function upgradeOptions(input: {
   }
   const deficit = colourDeficit(deck, input.commanders);
   const closes = swapCloser(deck, input.commanders);
-  const watched = watchedTypes(deck);
+  const watched = watchedTypes(input.themes);
   const roles = {} as Record<RoleSectionId, CutOptions<RoleOption>[]>;
   for (const section of ROLE_SECTIONS) {
     const sectionRoles = SECTION_ROLES[section] as readonly BuildCategory[];
@@ -396,7 +412,7 @@ export async function upgradeOptions(input: {
       const dc = await dcOf(c.name);
       if (dc && !isCreature(dc)) candidates.push({ dc, roles: rolesOfCard(dc), links: linksOf.get(c.name) ?? 0 });
     }
-    roles[section] = roleOptions(section, cuts, candidates, { pool: gameChangers, quality }, deficit, closes, watched);
+    roles[section] = roleOptions(section, cuts, candidates, { pool: gameChangers, quality }, deficit, closes, watched, auraSupport(deck, input.commanders));
   }
 
   // THE BRING-DOWN CUTS' REPLACEMENTS, from every card sharing a role with them, as cheap or cheaper.

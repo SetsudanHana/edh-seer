@@ -324,7 +324,7 @@ export function sameRockAnyColour(cut: DeckCard, add: DeckCard, crossType = fals
   if (isCreature(cut) || isCreature(add)) return false;
   const c = readJob(cut, "ramp");
   const a = readJob(add, "ramp");
-  if (!c || !a || rampKind(cut) !== "rock" || (crossType ? rampKind(add) !== "rock" : c.kind !== a.kind)) return false;
+  if (!c || !a || rampKind(cut) !== "rock" || (crossType ? rampKind(add) !== "rock" || landAuraType(add) === null : c.kind !== a.kind)) return false;
   const isMana = (x: string) => x.startsWith('["add-mana"');
   if (![...c.parts].filter((x) => !isMana(x)).every((x) => a.parts.has(x))) return false;
   if (![...a.parts].some(isMana)) return false;
@@ -386,6 +386,19 @@ export function colouredNetYield(d: DeckCard): number | null {
   if (opponentDecides(d)) return null;
   const nets = manaLines(d).filter((l) => l.coloured).map((l) => l.net);
   return nets.length ? Math.max(...nets) : null;
+}
+
+/** THE LAND AN AURA OF MANA ENCHANTS, when it is the kind a colour swap may take: an Aura that enchants a
+ *  land ("land") or a basic land type ("forest"), whose mana is the "adds an additional ..." trigger and
+ *  nothing else (no "{T}: Add" line, and no granted ability: Abundant Growth gives the land an ability it
+ *  already has). Null for anything else. */
+const ENCHANT_LAND = /^enchant (land|plains|island|swamp|mountain|forest)\b/im;
+export function landAuraType(d: DeckCard): string | null {
+  const t = printed(d);
+  if (!/\baura\b/i.test(d.card.typeLine ?? "")) return null;
+  const type = ENCHANT_LAND.exec(t)?.[1];
+  if (!type || !new RegExp(ADDITIONAL.source).test(t) || [...t.matchAll(ADD_LINE)].length > 0 || /["“][^"”]*\{t\}/.test(t)) return null;
+  return type;
 }
 
 /** THE OLD TEST, KEPT ONLY FOR THE BEFORE NUMBER while S-T2 is measured; not called by the product. */

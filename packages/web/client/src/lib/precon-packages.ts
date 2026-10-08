@@ -19,6 +19,7 @@ import type { Card } from "@edh-seer/engine";
 import type { DeckBracket } from "@edh-seer/matcher/brackets";
 import type { AnalyzeResponse } from "../types.js";
 import { roleSwapCuts } from "./cut-choice.js";
+import { mainTheme } from "./main-theme.js";
 import type { EngineModel } from "./engine-model.js";
 import type { PreconCard } from "./precon-page.js";
 
@@ -69,6 +70,8 @@ export async function preconPackages(input: {
   const options = await upgradeOptions({
     lookup, deckNames: input.deckNames, commanders: input.commanders, identity: data.commanderColorIdentity ?? [],
     roleCuts: roleSwapCuts(report, input.model),
+    // THE THEMES THE REPORT NAMES (headline and second), as tags: what the deck is built around.
+    themes: ((m) => (m ? [m.tag, ...(m.second ? [m.second.tag] : [])] : []))(mainTheme(report)),
     bringDownCuts: [...new Set([...downs.values()].flatMap((d) => d.cuts.map((c) => c.name)))],
   });
   // EVERY CARD ANY OPTION COULD ADD, for the guard and for the page's pictures.

@@ -4,9 +4,9 @@ import { landFacts } from "./land-score.js";
 import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
-import { colourDeficit } from "./mana-audit.js";
+import { colourDeficit, landTypeDemand } from "./mana-audit.js";
 import { colouredNetYield, jobOf, netYield } from "./same-job.js";
-import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, sameJob, strictlyBetter, swapCloser, watchedTypes } from "./upgrade-sections.js";
+import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, auraSupport, sameJob, strictlyBetter, swapCloser, watchedTypes } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
 
 /** Cards as printed (oracle text read 2026-09-30); the text rules read nothing else. */
@@ -317,10 +317,11 @@ describe("a colour swap may cross card types, toward the type the deck's payoffs
   const swap = (cut: DeckCard, adds: DeckCard[], watched: string[]) =>
     roleOptions("ramp", [cut], adds.map(candidate), undefined, { G: 4, U: 4 }, () => 1, new Set(watched)).flatMap((o) => o.options.map((x) => [x.add, x.crossType]));
 
-  test("the watched types are read from the deck's payoffs", () => {
-    expect([...watchedTypes([rock("Argothian Enchantress"), rock("Goblin Welder" as never)])]).toEqual(["enchantment"]);
-    expect([...watchedTypes([rock("Eidolon of Blossoms"), rock("Reckless Fireweaver")])].sort()).toEqual(["artifact", "enchantment"]);
-    expect([...watchedTypes([rock("Mind Stone")])]).toEqual([]);
+  test("a type is watched only when the deck's THEMES say so: an incidental payoff is not a theme", () => {
+    expect([...watchedTypes(["enters:enchantment", "cast:artifact"])].sort()).toEqual(["artifact", "enchantment"]);
+    expect([...watchedTypes(["lifegain:any", "enters:creature"])]).toEqual(["creature"]);
+    expect([...watchedTypes([])]).toEqual([]);
+    expect([...watchedTypes(undefined)]).toEqual([]);
   });
 
   test("an enchantress deck gets the growth Auras for a colour; with no enchantment payoff, or an artifact one, it does not", () => {
@@ -339,5 +340,44 @@ describe("a colour swap may cross card types, toward the type the deck's payoffs
     expect(netYield(rock("Wild Growth"))).toBe(1);
     expect(netYield(rock("Overgrowth"))).toBe(2);
     expect(colouredNetYield(rock("Utopia Sprawl"))).toBe(1);
+  });
+});
+
+describe("the cross-type path takes only an Aura that enchants a land and adds mana by trigger", () => {
+  const mind4 = { ...rock("Mind Stone"), card: { ...rock("Mind Stone").card, manaValue: 4 } } as unknown as DeckCard;
+  const offered = (add: DeckCard) => roleOptions("ramp", [mind4], [candidate(add)], undefined, { G: 4 }, () => 1, new Set(["enchantment"])).flatMap((o) => o.options.map((x) => x.add));
+  const karametra = (() => {
+    const fg = rock("Fertile Ground");
+    return { ...fg, card: { ...fg.card, name: "Karametra's Favor", oracleText: fg.card.oracleText!.replace("Enchant land", "Enchant creature").replace("enchanted land", "enchanted creature") } } as unknown as DeckCard;
+  })();
+  test("what is not a land Aura with an 'adds an additional' trigger is refused", () => {
+    expect(offered(karametra)).toEqual([]);
+    expect(offered(rock("Cryptolith Rite"))).toEqual([]);
+    expect(offered(rock("Abundant Growth"))).toEqual([]);
+    expect(offered(rock("Urban Utopia"))).toEqual([]);
+  });
+  test("the growth Auras stay", () => {
+    for (const n of ["Fertile Ground", "Wild Growth", "Overgrowth", "Trace of Abundance", "Utopia Sprawl"] as const) expect(offered(rock(n)), n).toEqual([n]);
+  });
+});
+
+describe("'Enchant Forest' is a demand for Forests, judged like a colour pip", () => {
+  const spell = (name: string): DeckCard => ({ ...card(name, "Sorcery", ""), card: { ...card(name, "Sorcery", "").card, manaCost: "{1}", manaValue: 1 } });
+  const forest = () => card("Forest", "Basic Land — Forest", "({T}: Add {G}.)", ["G"]);
+  const deckWith = (forests: number) => [...Array.from({ length: forests }, forest), ...Array.from({ length: 100 - forests }, (_, i) => spell(`Filler ${i}`))];
+  test("the model's own number: required Forests by the Aura's turn against the deck's Forests", () => {
+    const few = landTypeDemand(deckWith(5), [], "forest", 1);
+    const many = landTypeDemand(deckWith(40), [], "forest", 1);
+    expect(few.available).toBe(5);
+    expect(few.required).toBeGreaterThan(5);
+    expect(many.available).toBe(40);
+    expect(many.required).toBeLessThanOrEqual(40);
+  });
+  test("Utopia Sprawl is refused for a deck with few Forests and offered for one with many; an 'Enchant land' Aura needs neither", () => {
+    const run = (forests: number, add: DeckCard) => roleOptions("ramp", [rock("Mind Stone")], [candidate(add)], undefined, { G: 4 }, () => 1, new Set(["enchantment"]),
+      auraSupport(deckWith(forests), [])).flatMap((o) => o.options.map((x) => x.add));
+    expect(run(5, rock("Utopia Sprawl"))).toEqual([]);
+    expect(run(40, rock("Utopia Sprawl"))).toEqual(["Utopia Sprawl"]);
+    expect(run(5, rock("Fertile Ground"))).toEqual(["Fertile Ground"]);
   });
 });

@@ -336,3 +336,25 @@ export function colourDeficit(deck: readonly DeckCard[], commanderNames: readonl
   }
   return out;
 }
+
+/** THE DEMAND AN "ENCHANT FOREST" AURA MAKES (owner, 2026-10-08): one source of that land type by the
+ *  Aura's turn, priced like a colour pip -- the same mulligan-corrected requirement `manaAudit` asks of
+ *  `{G}` on that turn -- against the lands the deck has of the type, counted as the audit counts a colour's
+ *  sources: lands carrying the type that are online by the turn, plus the fetches that can find one,
+ *  capped at what there is to find. Returns both figures; the caller compares. */
+export function landTypeDemand(deck: readonly DeckCard[], commanderNames: readonly string[], landType: string, turn: number): { required: number; available: number } {
+  const commanders = new Set(commanderNames);
+  const library = deck.filter((dc) => !commanders.has(dc.card.name));
+  const libraryCards = library.map((dc) => dc.card);
+  const has = (c: { typeLine: string }) => /\bland\b/i.test(c.typeLine) && c.typeLine.toLowerCase().includes(landType);
+  const types = deckBasicTypes(library);
+  const direct = library.filter((dc) => has(dc.card));
+  const fetches = library.filter((dc) => !direct.includes(dc) && isLandFetch(dc.card.oracleText ?? "")
+    && fetchableLands(dc.card.oracleText ?? "", libraryCards).some(has));
+  const reachable = new Set(fetches.flatMap((f) => fetchableLands(f.card.oracleText ?? "", libraryCards)));
+  const targets = [...reachable].filter(has).length;
+  const sources = [...direct, ...[...fetches].sort((a, b) => a.card.manaValue - b.card.manaValue).slice(0, targets)];
+  const available = sources.filter((dc) => (/\bland\b/i.test(dc.card.typeLine) ? landOnlineBy(dc, turn, types) : dc.card.manaValue < turn)).length;
+  const requiredRaw = minCopies(1, turn, SOURCE_CONFIDENCE, library.length);
+  return { required: Math.min(requiredRaw, minSources(1, turn, SOURCE_CONFIDENCE) ?? requiredRaw), available };
+}
