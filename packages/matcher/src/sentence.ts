@@ -23,6 +23,8 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   emblem: [() => "gets an emblem", "gets an emblem"],
   "mana-generation": [(n) => `adds ${n} mana`, "adds mana"],
   "graveyard-recursion": [() => "brings a card back", "brings a card back"],
+  // An intercepted fill (Dauthi, Valgavoth) is not a recursion (owner 2026-10-08, #1083).
+  "graveyard-intercept": [() => "takes an opponent's cards on the way to the graveyard", "takes an opponent's cards on the way to the graveyard"],
   // NINE KINDS THE ENGINE READ AND THE SENTENCE REFUSED TO SAY. MEASURED 2026-09-04 over every
   // consumer ability in the derived corpus: 27.7% of all partner rows on the site ended in a bare
   // "<card> triggers", and only 3,453 of those were a genuine blank -- the rest were these, kinds

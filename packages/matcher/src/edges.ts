@@ -270,7 +270,10 @@ export function cardThemeTags(tags: CardTags): Set<string> {
     // grant-ability records "double strike", the thing granted, not who receives it -- and across
     // the 71 calibration decks that stripped derived decks of their static themes, letting whatever
     // tag had the most raw volume win the axis instead.
-    if (a.kind === "static" && a.effect.kind) out.add(`static:${a.effect.kind}`);
+    // An intercepted graveyard fill is exile-processing, not recursion (owner 2026-10-08, #1083).
+    if (a.kind === "static" && a.effect.kind) {
+      out.add(`static:${a.effect.kind === "graveyard-recursion" && a.effect.intercepted === true ? "exile-processing" : a.effect.kind}`);
+    }
   }
   return out;
 }
@@ -2253,16 +2256,22 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       }
       const repeatability =
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered";
-      const tag = `graveyard-recursion:${themeSubjectKey(keyedOn(a.effect.subject, e.subject))}`;
+      // AN INTERCEPTED FILL IS NOT REANIMATION (owner 2026-10-08, #1083: "Dauthi shouldn't count
+      // toward reanimator"): the card is exiled on its way to a graveyard and played from exile, so
+      // it is exile-processing by effect kind. Its TAG is its own family, `graveyard-intercept:`,
+      // because `exile-processing:` runs the other way (producer exiles, consumer processes) and one
+      // tag for both folded Nullifier -> Dauthi's two opposite reasons into a single row.
+      const intercepted = a.effect.intercepted === true;
+      const tag = `${intercepted ? "graveyard-intercept" : "graveyard-recursion"}:${themeSubjectKey(keyedOn(a.effect.subject, e.subject))}`;
       if (said.has(tag)) continue;
       said.add(tag);
       reasons.push({
         tag,
         text: graveyardEnablesRecursion(p.card.name, c.card.name, {
           producerItself: e.subject.self === true, returnsItself: a.effect.subject.self === true,
-          intercepted: a.effect.intercepted === true,
+          intercepted,
         }),
-        effectKind: a.effect.kind,
+        effectKind: intercepted ? "exile-processing" : a.effect.kind,
         repeatability,
         scaling: a.effect.scaling,
         consumer: c.card.name,

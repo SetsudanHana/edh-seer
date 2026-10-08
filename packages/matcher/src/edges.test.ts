@@ -418,6 +418,31 @@ test("filler -> reanimator: a discard fills the graveyard, feeding a graveyard-r
   expect(reasons.some((r) => r.tag.startsWith("graveyard-recursion") && r.effectKind === "graveyard-recursion")).toBe(true);
 });
 
+test("an intercepted fill is its own family, not reanimation or exile-processing (#1083, owner 2026-10-08)", () => {
+  const dauthi = base("Dauthi Voidwalker", [{
+    kind: "static",
+    effect: { kind: "graveyard-recursion", intercepted: true, subject: { control: "opp", token: null, zone: "graveyard" } },
+  }]);
+  // A fill the opponent's graveyard receives.
+  const shelob = base("Shelob, Dread Weaver", [{
+    kind: "on-cast",
+    effect: { kind: "mill", subject: { control: "opp", token: null } },
+    emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature" } }],
+  }]);
+  const reasons = pairReasons(shelob, dauthi, H);
+  expect(reasons).toHaveLength(1);
+  expect(reasons[0]!.tag).toBe("graveyard-intercept:any");
+  expect(reasons[0]!.effectKind).toBe("exile-processing");
+  expect(reasons[0]!.consumer).toBe("Dauthi Voidwalker");
+  // Your own discard never reaches an opponent's graveyard, so nothing is intercepted.
+  const filler = base("Faithless Looting", [{
+    kind: "on-cast",
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+    emits: [{ verb: "discard", subject: { control: "you", token: null } }],
+  }]);
+  expect(pairReasons(filler, dauthi, H)).toEqual([]);
+});
+
 test("mill -> Syr Konrad: a mill fills the graveyard, feeding an enters-graveyard:creature trigger", () => {
   const miller = base("Ruin Crab", [{
     kind: "triggered",

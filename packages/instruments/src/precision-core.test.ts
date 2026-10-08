@@ -183,3 +183,8 @@ test("a claim on an authored emit is unchanged", () => {
 test("the marker does not disturb the other claim shapes", () => {
   expect(claimFor("static:pump", "Anthem", "Bear", true)).toContain("applies to");
 });
+
+test("claimFor words an intercepted fill as exile, not return (#1083)", () => {
+  expect(claimFor("graveyard-intercept:any", "Shelob, Dread Weaver", "Dauthi Voidwalker"))
+    .toBe("Shelob, Dread Weaver puts any cards into an opponent's graveyard; Dauthi Voidwalker exiles them instead and can play them");
+});

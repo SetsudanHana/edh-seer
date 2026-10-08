@@ -577,3 +577,7 @@ test("a speed grant names the keyword it grants", () => {
     producer: "Tromell, Seymour's Butler", consumer: "Hellrider", eventKey: "attacks:any", effectKind: "speed-increase",
   })).toBe("When Tromell, Seymour's Butler attacks, Hellrider grants haste");
 });
+
+test("effectPhrase: an intercepted graveyard fill does not bring a card back (#1083)", () => {
+  expect(effectPhrase("graveyard-intercept", undefined)).toBe("takes an opponent's cards on the way to the graveyard");
+});
