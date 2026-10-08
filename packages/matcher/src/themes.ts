@@ -2,6 +2,7 @@ import type { Reason } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import { themeSubjectKey } from "./edges.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import { BASIC_LAND_TYPE_SET } from "./typeline.js";
 import type { DeckCard } from "./types.js";
 
 /** A static effect is never a theme of its own. A continuous modifier is a PAYOFF of whatever
@@ -79,6 +80,14 @@ function staticPayoffTags(tags: CardTags): Set<string> {
       ? "legendary"
       : subject.historic === true ? "historic" : themeSubjectKey(subject);
     if (key === "any") continue;
+    // A GRANT TO LANDS IS NOT LANDFALL (#1103). Chromatic Lantern, Prismatic Omen and "Swamps you
+    // control have '{T}: Add {B}'" give an ability to lands already in play; a land ENTERING is not
+    // what they reward. `pump` and `animate` on lands stay credited: they are the land analogue of a
+    // lord ("Lands you control are 2/2 creatures"), which the 2026-08-19 ruling above credits.
+    // CEILING: Blood Moon / Magus of the Moon derive as `animate` and so keep a (not-really-landfall)
+    // `enters:land` credit.
+    if (verb === "enters" && (kind === "keyword-grant" || kind === "type-grant")
+      && (key === "land" || BASIC_LAND_TYPE_SET.has(key))) continue;
     out.add(`${verb}:${key}`);
   }
   return out;
