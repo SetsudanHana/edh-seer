@@ -119,9 +119,9 @@ function isManaRock(tags: CardTags): boolean {
  *  took distinct headlines to 20, under the incumbent 21. The subtype key loses none and takes
  *  distinct headlines to 29. Fragmentation is not a hazard here because `computeCohesion` FOLDS
  *  (`theme-fold.ts`), so a deck's Dragons are counted inside the creature family regardless. */
-/** The ONE place a card's own entry is excluded from the theme: a land (the mana base) and, unless
- *  `keepRockEntry`, a mana rock (#966). Read by `impliedEntryThemeTags` AND the self-trigger skip in
- *  `themeTags`, so the two cannot drift. */
+/** Whether a card's own SELF TRIGGER may be skipped from the theme: it is a (union) land, or, unless
+ *  `keepRockEntry`, a mana rock (#966). `impliedEntryThemeTags` applies the land half per FACE (#1101)
+ *  and the trigger skip refines it by the trigger's subject (`selfSubjectIsLand`), which names the face. */
 function ownEntryExcluded(tags: CardTags, keepRockEntry: boolean): boolean {
   if ((tags.characteristics?.types ?? []).some((t) => t.toLowerCase() === "land")) return true;
   return !keepRockEntry && isManaRock(tags);
@@ -150,9 +150,14 @@ function impliedEntryThemeTags(tags: CardTags, keepRockEntry = false): string[] 
   // ~35 basics per deck out-count every real theme. A landfall deck still themes `enters:land`
   // through the payoffs that TRIGGER on it and the ramp that AUTHORS it; what is excluded is a
   // Island claiming to be a theme by existing.
-  if (ownEntryExcluded(tags, keepRockEntry)) return [];
+  // PER FACE (#1101): `impliedEvents` already emits one entry per playable face, so the land
+  // exclusion is applied to each ENTRY (below) rather than to the union `types` -- a creature // land
+  // MDFC keeps its creature face's entry and drops only the land face's. The mana rock stays a
+  // whole-card test.
+  if (!keepRockEntry && isManaRock(tags)) return [];
   return impliedEvents(tags.characteristics)
     .filter((e) => e.verb === "enters")
+    .filter((e) => ![e.subject.type ?? []].flat().some((t) => String(t).toLowerCase() === "land"))
     .flatMap((e) => {
       const n = normalizeZoneEvent(e);
       // ONE TAG PER SUBTYPE, not one keyed on the first (roadmap A9). `themeSubjectKey` returns a
