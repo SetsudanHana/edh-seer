@@ -137,6 +137,9 @@ export function demoteWatchlessSupertypeHeadline(
   ranked: readonly string[],
   membership: readonly ThemeMembership[],
   cared: ReadonlySet<string> = new Set(),
+  deckFreq: ReadonlyMap<string, number> = new Map(),
+  floor = 0,
+  suppliedPhases: ReadonlySet<string> = new Set(),
 ): string[] {
   const head = ranked[0];
   const parts = head === undefined ? undefined : split(head);
@@ -144,7 +147,12 @@ export function demoteWatchlessSupertypeHeadline(
   const value = parts[1];
   if (membership.some((m) => split(m.tag)?.[1] === value && m.payoffs.length > 0)) return [...ranked];
   if ([...cared].some((t) => split(t)?.[1] === value)) return [...ranked];
-  return [ranked[1], ranked[0], ...ranked.slice(2)];
+  // THE REPLACEMENT MUST BE A HEAD THE EARLIER PASSES WOULD ACCEPT: this runs after
+  // `demoteThinHeadline` / `demoteUnrankableHeadline`, which work by moving a bad head to second
+  // place, so blindly taking ranked[1] would hand the head back to a 1-card or timing tag.
+  const next = ranked.findIndex((t, i) => i > 0 && (deckFreq.get(t) ?? 0) >= floor && !isUnrankableHeadline(t, suppliedPhases));
+  if (next === -1) return [...ranked];
+  return [ranked[next], ...ranked.filter((_, i) => i !== next)];
 }
 
 /** A tag that is TRUE of the deck and says nothing a deckbuilder can act on.
@@ -246,7 +254,8 @@ export function orderHeadline(
   membership: readonly ThemeMembership[],
   floor: number,
   cared: ReadonlySet<string>,
+  suppliedPhases: ReadonlySet<string> = new Set(),
 ): string[] {
-  const demoted = demoteWatchlessSupertypeHeadline(ranked, membership, cared);
+  const demoted = demoteWatchlessSupertypeHeadline(ranked, membership, cared, deckFreq, floor, suppliedPhases);
   return promoteSpecificHeadline(generalizeWatchlessHeadline(demoted, deckFreq, membership, floor, cared), deckFreq, membership);
 }
