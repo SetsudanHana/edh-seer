@@ -207,9 +207,11 @@ function plainRock(dc: DeckCard): boolean {
  *  the colour is short. The yardstick is the deck-wide colour shortfall (`colourDeficit`), the swaps
  *  are iterative suggestions, and fast mana is never named for colour.
  *
- *  TIER 0 makes none of `colour`; TIER 1 is a land that makes it but always enters tapped, so it is
- *  not online by `turn`. A rock is named only as a plain rock (`plainRock`) that does not make the
- *  colour. Each name appears once. Within a tier lands come first, the always-tapped before the rest (T1's order), then rocks, then by name.
+ *  TIERS BY LEAST COLLATERAL LOSS (coordinator, 2026-10-08): 1 makes none of the deck's colours
+ *  (Wastes, Mind Stone: trading costs nothing); 2 is a land that makes `colour` but always enters
+ *  tapped, so it is not online by `turn` (trade it for an untapped one, nothing lost); 3 makes only
+ *  other colours the deck uses (a Mountain in Izzet). A rock is named only as a plain rock
+ *  (`plainRock`) that does not make the colour. Each name appears once. Within a tier lands come first, the always-tapped before the rest (T1's order), then rocks, then by name.
  *
  *  NEVER NAMED: a commander; a land that does something besides make mana, or whose mana is
  *  conditional (T1's uncuttable gate: `utility`); a net-positive rock (`netPositiveMana`, Sol Ring);
@@ -230,7 +232,7 @@ export function colourReplacements(
   // rocks are, so a deck whose only spare mana is a dork gets no name for it.
   // CEILING: a conditionally-tapped land (tapped===1: check, slow, fast) is never named, though the
   // audit can count it as not available on an early turn.
-  const ranked: { name: string; tier: 0 | 1; land: boolean; tapped: Tapped }[] = [];
+  const ranked: { name: string; tier: 1 | 2 | 3; land: boolean; tapped: Tapped }[] = [];
   for (const dc of deck) {
     if (commanders.has(dc.card.name)) continue;
     if (isLand(dc)) {
@@ -239,7 +241,7 @@ export function colourReplacements(
       if (f.colours.length === 0 && (dc.card.producedMana ?? []).length === 0) continue;
       const makes = f.colours.includes(colour);
       if (makes && f.tapped < 2) continue;
-      ranked.push({ name: f.name, tier: makes ? 1 : 0, land: true, tapped: f.tapped });
+      ranked.push({ name: f.name, tier: f.colours.length === 0 ? 1 : makes ? 2 : 3, land: true, tapped: f.tapped });
     } else {
       const made = (dc.card.producedMana ?? []) as readonly string[];
       if (!/\bartifact\b/i.test(dc.card.typeLine) || /\bcreature\b/i.test(dc.card.typeLine) || made.length === 0) continue;
@@ -247,7 +249,7 @@ export function colourReplacements(
       // trading ramp that makes the colour for a land is not a colour fix, and an artifact that does
       // something else is a utility card.
       if (made.includes(colour) || !plainRock(dc) || netPositiveMana(dc) || made.some((c) => otherShort.includes(c as Color))) continue;
-      ranked.push({ name: dc.card.name, tier: 0, land: false, tapped: 0 });
+      ranked.push({ name: dc.card.name, tier: made.some((c) => needed.has(c as Color)) ? 3 : 1, land: false, tapped: 0 });
     }
   }
   const seen = new Set<string>();

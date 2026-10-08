@@ -257,29 +257,38 @@ test("a commander that exiles what dies makes every creature answer an exile (#6
 
 /** #966 T3 REVIEW: a colour row the finding hides (one pip, turn 1: "a fault every deck has") must not
  *  fill the "also short" set, or it rules out the very lands that would be traded. Here blue is short
- *  (UU by turn 2) and red misses only a one-pip turn-1 demand; Mountain and the Gates make red. */
-test("a hidden one-pip row does not stop a land that makes that colour being named for the colour that is short", () => {
+ *  (UU by turn 2) and red misses only a one-pip turn-1 demand. Trades go by least collateral loss:
+ *  sources making none of the deck's colours first, then an always-tapped land of the short colour,
+ *  then a source of a colour the deck uses only otherwise. */
+const izzetDeck = (colourless: boolean): DeckCard[] => {
   const land = (name: string, typeLine: string, text: string, made: string[]): DeckCard => ({
     card: { name, typeLine, oracleText: text, keywords: [], colors: [], manaValue: 0, producedMana: made } as Card, tags: null,
   });
   const cast = (name: string, cost: string, mv: number): DeckCard => ({
     card: { name, typeLine: "Instant", manaCost: cost, oracleText: "", keywords: [], colors: [], manaValue: mv } as Card, tags: null,
   });
-  const deck: DeckCard[] = [
+  return [
     ...Array.from({ length: 9 }, () => land("Island", "Basic Land — Island", "({T}: Add {U}.)", ["U"])),
     ...Array.from({ length: 9 }, () => land("Mountain", "Basic Land — Mountain", "({T}: Add {R}.)", ["R"])),
     ...Array.from({ length: 4 }, (_, i) => land(`Izzet Gate ${i}`, "Land — Gate", "Izzet Gate enters tapped.\n{T}: Add {U} or {R}.", ["U", "R"])),
-    land("Wastes", "Basic Land", "{T}: Add {C}.", ["C"]),
-    { card: { name: "Mind Stone", typeLine: "Artifact", oracleText: "{T}: Add {C}.", keywords: [], colors: [], manaValue: 2, producedMana: ["C"] } as Card, tags: null },
+    ...(colourless ? [
+      land("Wastes", "Basic Land", "{T}: Add {C}.", ["C"]),
+      { card: { name: "Mind Stone", typeLine: "Artifact", oracleText: "{T}: Add {C}.", keywords: [], colors: [], manaValue: 2, producedMana: ["C"] } as Card, tags: null } as DeckCard,
+    ] : []),
     ...Array.from({ length: 10 }, (_, i) => cast(`Counterspell ${i}`, "{U}{U}", 2)),
     ...Array.from({ length: 6 }, (_, i) => cast(`Bolt ${i}`, "{R}", 1)),
   ];
-  const colors = computeDeckMath(deck, H).colors;
-  const blue = colors.find((c) => c.color === "U")!.worst!;
-  const red = colors.find((c) => c.color === "R")?.worst;
-  expect(blue.available).toBeLessThan(blue.required);
-  // the premise: red is short, but only on a single pip -- the row the finding hides
-  expect(red && red.pips < 2 && red.available < red.required).toBe(true);
-  // Before the fix red (hidden) counted as short, which excluded Mountain and the Gates: ["Wastes", "Mind Stone"].
-  expect(blue.replace).toEqual(["Mountain", "Wastes"]);
+};
+
+test("blue short, red hidden: colourless sources are traded first; without them an always-tapped blue gate beats a Mountain", () => {
+  for (const colourless of [true, false]) {
+    const colors = computeDeckMath(izzetDeck(colourless), H).colors;
+    const blue = colors.find((c) => c.color === "U")!.worst!;
+    const red = colors.find((c) => c.color === "R")?.worst;
+    expect(blue.available).toBeLessThan(blue.required);
+    // the premise of the first deck: red is short, but only on a single pip -- the row the finding hides
+    if (colourless) expect(red && red.pips < 2 && red.available < red.required).toBe(true);
+    if (colourless) expect(blue.replace).toEqual(["Wastes", "Mind Stone"]);
+    else expect(blue.replace![0]).toMatch(/^Izzet Gate/);
+  }
 });

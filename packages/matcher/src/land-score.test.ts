@@ -91,11 +91,11 @@ const solRing = rock("Sol Ring", 1, "{T}: Add {C}{C}.", ["C"]);
 const bog = dc("Bojuka Bog", "Land", "Bojuka Bog enters tapped.\nWhen Bojuka Bog enters, exile target player's graveyard.\n{T}: Add {B}.", ["B"], ["graveyard-hate", "mana-generation"]);
 const deckOf = (...more: DeckCard[]) => [...izzetSpells, ...more];
 
-test("short on blue by turn 2: the red-only land, then the red-only rock; Sol Ring and Steam Vents are never named", () => {
-  expect(colourReplacements(deckOf(mountain, diamond, gate, solRing, vents), "U", 2, { U: 4 })).toEqual(["Mountain", "Fire Diamond"]);
+test("short on blue by turn 2: the always-tapped blue gate (nothing lost) before the red-only land; Sol Ring and Steam Vents are never named", () => {
+  expect(colourReplacements(deckOf(mountain, diamond, gate, solRing, vents), "U", 2, { U: 4 })).toEqual(["Izzet Guildgate", "Mountain"]);
 });
 
-test("with only two non-blue sources gone, the always-tapped blue dual is next: it makes blue but never in time", () => {
+test("with no other source, the always-tapped blue dual is named: it makes blue but never in time", () => {
   expect(colourReplacements(deckOf(gate, solRing, vents), "U", 2, { U: 4 })).toEqual(["Izzet Guildgate"]);
 });
 
