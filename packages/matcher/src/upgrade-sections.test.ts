@@ -285,4 +285,8 @@ describe("what a rock really yields", () => {
   test("any colour is one mana: Fire Diamond to Arcane Signet when the deck is short", () => {
     expect(ramp(rock("Fire Diamond"), rock("Arcane Signet"))).toEqual(["Arcane Signet"]);
   });
+  test("a colour an opponent decides is not a fix: Fellwar Stone is never the colour add", () => {
+    expect(ramp(rock("Fire Diamond"), rock("Fellwar Stone"))).toEqual([]);
+    expect(ramp(rock("Mind Stone"), rock("Fellwar Stone"))).toEqual([]);
+  });
 });

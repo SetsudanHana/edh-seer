@@ -333,6 +333,10 @@ export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
 const ADD_LINE = /^([^:\n]*):\s*add (?:(one|two|three) mana of (?:any|the chosen) (?:color|type)|((?:\{[^}]+\})+))/gm;
 const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3 };
 export function netYield(d: DeckCard): number | null {
+  // A COLOUR SET AN OPPONENT DECIDES IS NOT A FIX (Fellwar Stone: "...that a land an opponent controls
+  // could produce"): the audit counts it as every colour, so reading it would bank a guess as a
+  // closed shortfall. A missing answer instead (#966 T2 review).
+  if (/\ban opponent controls\b/i.test(printed(d))) return null;
   const nets = [...printed(d).matchAll(ADD_LINE)].map((m) => {
     const made = m[2] ? NUMBER_WORDS[m[2]]! : (m[3]!.match(/\{/g) ?? []).length;
     const generic = (m[1]!.match(/\{(\d+)\}/g) ?? []).reduce((n, x) => n + Number(x.slice(1, -1)), 0);
