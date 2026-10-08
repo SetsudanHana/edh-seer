@@ -2,7 +2,8 @@ import { pAtLeast, seen } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { classifyLand } from "./land-conditions.js";
 import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
-import { COLORS, isManaSource, type Color } from "./mana-audit.js";
+import { COLORS, deckBasicTypes, isManaSource, landOnlineBy, type Color } from "./mana-audit.js";
+import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import { fixedColours } from "./mana-lines.js";
 import type { DeckCard } from "./types.js";
 
@@ -184,19 +185,43 @@ export function colourSources(deck: readonly DeckCard[], commanderNames: readonl
   const libraryCards = library.map((dc) => dc.card);
   const out = new Map<Color, number>(COLORS.map((c) => [c, 0]));
   for (const dc of library) {
-    const text = dc.card.oracleText ?? "";
-    const produced = dc.card.producedMana ?? [];
-    let colours: readonly string[] = [];
-    if (isLand(dc)) {
-      colours = produced.length > 0 || !isLandFetch(text)
-        ? fixedColours(dc)
-        : [...new Set(fetchableLands(text, libraryCards).flatMap((c) => c.producedMana ?? []))];
-    } else if (isManaSource(dc) && tapsForMana(text)) {
-      colours = fixedColours(dc);
-    }
-    for (const c of new Set(colours)) if (out.has(c as Color)) out.set(c as Color, out.get(c as Color)! + 1);
+    for (const c of new Set(coloursOf(dc, libraryCards))) if (out.has(c as Color)) out.set(c as Color, out.get(c as Color)! + 1);
   }
   return out;
+}
+
+/** What one library card counts as a source of, by `colourSources`' rule. */
+function coloursOf(dc: DeckCard, libraryCards: readonly DeckCard["card"][]): readonly string[] {
+  const text = dc.card.oracleText ?? "";
+  const produced = dc.card.producedMana ?? [];
+  if (isLand(dc)) {
+    return produced.length > 0 || !isLandFetch(text)
+      ? fixedColours(dc)
+      : [...new Set(fetchableLands(text, libraryCards).flatMap((c) => c.producedMana ?? []))];
+  }
+  return isManaSource(dc) && tapsForMana(text) ? fixedColours(dc) : [];
+}
+
+/** THE STATIC-FIXER CREDIT `colourMiss` ADDS to a colour's supply at a card's deadline (#1115): the colour audit's own
+ *  `fixerCredit`, so the two give one number. This score has no turn axis of its own, so the deadline is the one
+ *  `colourMiss` already prices each card at (its mana value), and "newly reached" is read off the deck's flat
+ *  counts rather than a per-turn board: every land that was not already a source of the colour, and for an all-mana
+ *  fixer every other source of any mana. A fixer is out by that turn on the audit's clock. */
+export function fixerSupply(deck: readonly DeckCard[], commanderNames: readonly string[] = []): (colour: Color, turn: number) => number {
+  const commanders = new Set(commanderNames);
+  const library = deck.filter((dc) => !commanders.has(dc.card.name));
+  const fixers = libraryFixers(library);
+  if (fixers.length === 0) return () => 0;
+  const cards = library.map((dc) => dc.card);
+  const types = deckBasicTypes(library);
+  const per = library.map((dc) => ({ dc, colours: new Set(coloursOf(dc, cards)) }));
+  const anySources = per.filter((x) => x.colours.size > 0).length;
+  const isOut = (dc: DeckCard, turn: number): boolean => (isLand(dc) ? landOnlineBy(dc, turn, types) : dc.card.manaValue < turn);
+  return (colour, turn) => {
+    const have = per.filter((x) => x.colours.has(colour)).length;
+    const newLands = per.filter((x) => isLand(x.dc) && !x.colours.has(colour)).length;
+    return fixerCredit(fixers, colour, turn, isOut, newLands, Math.max(0, anySources - have), library.length).extra;
+  };
 }
 
 /** THE CARDS WHOSE COLOURS ARE MISSING ON THEIR OWN TURN, expected: for every nonland in the deck
@@ -207,7 +232,7 @@ export function colourSources(deck: readonly DeckCard[], commanderNames: readonl
  *  `colourSources`. Colours are multiplied as if independent, which they are not
  *  quite; the coefficient in `MANA_BASE_COST` was fitted on this exact figure. A hybrid pip is
  *  charged to its better-supplied colour, since that is the one a player pays it with. */
-export function colourMiss(deck: readonly DeckCard[], supplied: ReadonlyMap<Color, number>): number {
+export function colourMiss(deck: readonly DeckCard[], supplied: ReadonlyMap<Color, number>, fixed: (colour: Color, turn: number) => number = () => 0): number {
   let total = 0;
   for (const dc of deck) {
     if (isLand(dc)) continue;
@@ -220,7 +245,7 @@ export function colourMiss(deck: readonly DeckCard[], supplied: ReadonlyMap<Colo
     }
     const turn = Math.max(1, Math.round(dc.card.manaValue));
     let ok = 1;
-    for (const [colour, pipsOf] of need) ok *= pAtLeast(pipsOf, Math.min(99, supplied.get(colour) ?? 0), seen(turn));
+    for (const [colour, pipsOf] of need) ok *= pAtLeast(pipsOf, Math.min(99, (supplied.get(colour) ?? 0) + fixed(colour, turn)), seen(turn));
     total += 1 - ok;
   }
   return total;
@@ -271,7 +296,7 @@ export function manaBaseScore(
 ): ManaBaseScore {
   const delta = land.actual - land.target;
   const count = delta < 0 ? MANA_BASE_COST.short * delta * delta : MANA_BASE_COST.over * delta * delta;
-  const miss = colourMiss(deck, colourSources(deck, commanderNames));
+  const miss = colourMiss(deck, colourSources(deck, commanderNames), fixerSupply(deck, commanderNames));
   const tappedLands = tappedLandCount(deck, commanderNames);
   const costs = {
     count: round2(count),

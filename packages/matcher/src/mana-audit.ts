@@ -1,10 +1,10 @@
-import { minCopies, pAtLeast, seen } from "@edh-seer/engine";
+import { minCopies } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { minSources } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
 import { fixedColours } from "./mana-lines.js";
-import { staticFixer } from "./static-fixers.js";
+import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import type { DeckCard } from "./types.js";
 import { BASIC_LAND_TYPES } from "./typeline.js";
 
@@ -275,25 +275,17 @@ export function manaAudit(
   // weighted by P(at least one is seen by the deadline) -- the same `seen` and library `minCopies` prices a turn
   // with -- and FLOORED, the direction this audit under-claims in. The fixer comes out on its own clock: a land
   // when `landOnlineBy` says it taps, a nonland the turn after its mana value (the rock clock above).
-  const fixers = library.flatMap((dc) => { const f = staticFixer(dc); return f ? [{ dc, ...f }] : []; });
+  const fixers = libraryFixers(library);
   const fixerOut = (dc: DeckCard, turn: number): boolean =>
     /\bland\b/i.test(dc.card.typeLine) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
   const lands = library.filter((dc) => /\bland\b/i.test(dc.card.typeLine));
   const credit = (color: Color, sources: readonly DeckCard[], turn: number, available: number): { extra: number; by: string[] } => {
-    const out = fixers.filter((f) => f.colours.includes(color) && fixerOut(f.dc, turn));
-    if (out.length === 0) return { extra: 0, by: [] };
+    if (fixers.length === 0) return { extra: 0, by: [] };
     const have = new Set(sources);
     // WHAT EACH KIND OF FIXER NEWLY REACHES: a land-fixer, the online lands that were not already this colour's
     // source; an all-mana fixer, also every other online source (a rock, a dork).
     const newLands = lands.filter((dc) => !have.has(dc) && landOnlineBy(dc, turn, basicTypes)).length;
-    const newAll = Math.max(0, anyAvailableBy(turn) - available);
-    const pAny = pAtLeast(1, out.length, seen(turn), library.length);
-    const allMana = out.filter((f) => f.covers === "all-mana");
-    const pAll = allMana.length > 0 ? pAtLeast(1, allMana.length, seen(turn), library.length) : 0;
-    // Lands are covered by either kind; the rest only by the all-mana kind. Float noise is rounded off before the
-    // floor, so 0.15 x 40 reads as 6 rather than 5.
-    const extra = Math.floor(pAny * Math.min(newLands, newAll) + pAll * Math.max(0, newAll - newLands) + 1e-9);
-    return { extra, by: out.map((f) => f.dc.card.name) };
+    return fixerCredit(fixers, color, turn, fixerOut, newLands, Math.max(0, anyAvailableBy(turn) - available), library.length);
   };
 
   const rows: ManaAuditRow[] = [];

@@ -1,6 +1,6 @@
 /** STATIC COLOUR FIXERS (owner, 2026-10-08, #1115): "after you play cards like Chromatic Lantern your color
  *  issues disappear, you are only bounded by the landcount". A card whose STATIC text makes OTHER mana sources
- *  produce colours, read once. Leaf module: imports nothing but a type.
+ *  produce colours, read once. Leaf module: imports only the engine's hypergeometric and a type.
  *
  *  Read from the printed FRONT FACE, one whole line at a time, anchored at both ends. A line is a fixer only when
  *  it is the entire ability: that is what refuses a granted ability inside quotes (Lae'zel's "perpetually gains
@@ -26,6 +26,7 @@
  *  land's own colours, and a CHOSEN type (Realmwright) names no colour here.
  *  CEILING: the BACK face (Mystic Skull // Mystic Monstrosity) is another card on another turn.
  *  CEILING: a one-turn or one-spell effect (Divergent Growth, North Star, Five-Finger Discount) is not a board. */
+import { pAtLeast, seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 
 export type FixerColour = "W" | "U" | "B" | "R" | "G";
@@ -58,4 +59,30 @@ export function staticFixer(dc: DeckCard): StaticFixer | null {
     if (SPEND.test(line)) return { colours: WUBRG, covers: "all-mana" };
   }
   return null;
+}
+
+export interface LibraryFixer extends StaticFixer { dc: DeckCard }
+
+/** The static fixers among a library's cards. */
+export const libraryFixers = (library: readonly DeckCard[]): LibraryFixer[] =>
+  library.flatMap((dc) => { const f = staticFixer(dc); return f ? [{ dc, ...f }] : []; });
+
+/** THE CREDIT A DECK'S STATIC FIXERS GIVE ONE COLOUR AT ONE DEADLINE, shared by the colour audit and the mana base
+ *  score so the two give one number (#1115). The caller says which fixers are out by `turn` and how many sources
+ *  each kind newly reaches: `newLands`, the lands that were not already a source of the colour; `newAll`, every
+ *  source of any mana that was not. The deck holds one or two copies and not every game draws one, so the credit is
+ *  weighted by P(at least one is seen by `turn`) -- the `seen` that `minCopies` prices a turn with -- and FLOORED,
+ *  the direction both readers under-claim in. Lands are covered by either kind; the rest only by the all-mana kind.
+ *  The float noise is rounded off before the floor, so 0.15 x 40 reads as 6 and not 5. */
+export function fixerCredit(
+  fixers: readonly LibraryFixer[], color: FixerColour, turn: number, isOut: (dc: DeckCard, turn: number) => boolean,
+  newLands: number, newAll: number, libraryLength: number,
+): { extra: number; by: string[] } {
+  const out = fixers.filter((f) => f.colours.includes(color) && isOut(f.dc, turn));
+  if (out.length === 0) return { extra: 0, by: [] };
+  const pAny = pAtLeast(1, out.length, seen(turn), libraryLength);
+  const allMana = out.filter((f) => f.covers === "all-mana");
+  const pAll = allMana.length > 0 ? pAtLeast(1, allMana.length, seen(turn), libraryLength) : 0;
+  const extra = Math.floor(pAny * Math.min(newLands, newAll) + pAll * Math.max(0, newAll - newLands) + 1e-9);
+  return { extra, by: out.map((f) => f.dc.card.name) };
 }

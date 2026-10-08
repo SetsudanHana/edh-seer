@@ -123,3 +123,17 @@ test("a draw card's credit follows its cost, at half the goldfish rate", () => {
   expect(drawCredit(4)).toBeGreaterThan(drawCredit(5));
   expect(drawCredit(7)).toBeLessThan(0);
 });
+
+// STATIC COLOUR FIXERS (#1115): the mana base score credits them as the colour audit does, per card at its own deadline.
+import rocksFx from "./ramp-colour.fixtures.json" with { type: "json" };
+test("a blue-short deck's colour cost drops with Chromatic Lantern, beyond Lantern's own tap", () => {
+  const lantern = rocksFx["Chromatic Lantern"] as unknown as DeckCard;
+  const twin: DeckCard = { ...lantern, card: { ...lantern.card, name: "Lantern Twin", oracleText: "{T}: Add one mana of any color." } as never };
+  const basic = (n: number, t: string, c: string) => Array.from({ length: n }, (_, i) => mk(`${t} ${i}`, `Basic Land — ${t}`, { oracleText: `({T}: Add {${c}}.)`, producedMana: [c] }));
+  const deck = (x: DeckCard) => [...basic(30, "Mountain", "R"), ...basic(4, "Island", "U"), x, spell("Cancel", "{2}{U}{U}", 4), spell("Hex", "{2}{U}{U}", 4)];
+  const score = (x: DeckCard) => manaBaseScore(deck(x), { target: 35, actual: 35 }).colourMiss;
+  expect(score(lantern)).toBeLessThan(score(twin));
+  // A fixer that is not out by the deadline (cost 3, deadline 3) changes nothing.
+  const early = (x: DeckCard) => manaBaseScore([...basic(30, "Mountain", "R"), ...basic(4, "Island", "U"), x, spell("Early", "{U}{U}", 3)], { target: 35, actual: 35 }).colourMiss;
+  expect(early(lantern)).toBe(early(twin));
+});
