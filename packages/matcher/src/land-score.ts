@@ -207,8 +207,9 @@ function plainRock(dc: DeckCard): boolean {
  *  are iterative suggestions, and fast mana is never named for colour.
  *
  *  TIERS BY LEAST COLLATERAL LOSS (coordinator, 2026-10-08): 1 makes none of the deck's colours
- *  (Wastes, Mind Stone: trading costs nothing); 2 is a land that makes `colour` but always enters
- *  tapped, so it is not online by `turn` (trade it for an untapped one, nothing lost); 3 makes only
+ *  (Wastes, Mind Stone: trading costs nothing); 2 is a land that makes `colour` but that the audit
+ *  counts unavailable by `turn` (`landOnlineBy`: always tapped, or a check/slow/fast land on an early
+ *  turn) -- trade it for an untapped one, nothing lost; 3 makes only
  *  other colours the deck uses (a Mountain in Izzet), fewer deck colours made first (a basic before a dual). A rock is named only as a plain rock
  *  (`plainRock`) that does not make the colour. Each name appears once. Within a tier lands come first, the always-tapped before the rest (T1's order), then rocks, then by name.
  *
