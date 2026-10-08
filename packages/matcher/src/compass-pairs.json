@@ -749,5 +749,15 @@
     "note": "#826: Blood Artist makes TARGET PLAYER lose 1 life, not each opponent; a life loss names who loses it.",
     "source": "#826 (2026-10-07)",
     "verified": true
+  },
+  {
+    "a": "Shelob, Dread Weaver",
+    "b": "Dauthi Voidwalker",
+    "category": "graveyard-matters",
+    "tag": "graveyard-recursion:any",
+    "says": "are exiled by Dauthi Voidwalker instead",
+    "note": "#1083: Dauthi takes opponents' cards on the way INTO the graveyard (CR 614 replacement) and plays them from exile; the reason said \"can bring back\".",
+    "source": "#1083 (2026-10-08)",
+    "verified": true
   }
 ]

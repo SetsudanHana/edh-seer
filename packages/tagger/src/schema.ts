@@ -984,6 +984,11 @@ export interface Effect {
    *  edge drawn off the basis would claim that milling anything feeds all three. Carries the zone
    *  and the owner too, so `graveyardFillMatches` can judge it like any other graveyard demand. */
   scalingSubject?: SubjectFilter;
+  /** A recursion that takes the card ON THE WAY IN: a replacement exiles what would go to an
+   *  opponent's graveyard and this card plays it from exile (Dauthi Voidwalker, Valgavoth). The card
+   *  never reaches the graveyard, so the reason must not say "bring back". Edges are unchanged by
+   *  it; only the sentence reads it. */
+  intercepted?: true;
 }
 
 export type AbilityKind = "triggered" | "activated" | "static" | "on-cast";

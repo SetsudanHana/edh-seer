@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **286** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **287** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -222,6 +222,7 @@ Defined in [`Effect`](../../packages/tagger/src/schema.ts).
 | `subject` | `SubjectFilter` | optional |  |
 | `scaling` | `string` | optional | Normalized to the closed SCALING_BASES set at validation time; absent → "fixed". |
 | `scalingSubject` | `SubjectFilter` | optional | WHAT the count counts, when the basis alone cannot say. `per-graveyard` covers Cavalier of Flame's land cards, Glamdring's instants and sorceries and Bonehoard's creatures alike, so an edge drawn off the basis would claim that milling anything feeds all three. Carries the zone and the owner too, so `graveyardFillMatches` can judge it like any other graveyard demand. |
+| `intercepted` | `true` | optional | A recursion that takes the card ON THE WAY IN: a replacement exiles what would go to an opponent's graveyard and this card plays it from exile (Dauthi Voidwalker, Valgavoth). The card never reaches the graveyard, so the reason must not say "bring back". Edges are unchanged by it; only the sentence reads it. |
 
 ### Ability
 
