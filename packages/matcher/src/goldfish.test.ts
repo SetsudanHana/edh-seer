@@ -1288,3 +1288,17 @@ test("Chromatic Lantern makes the lands blue in the simulation, beyond its own t
   // Not out before it can be cast: nothing moves on turns 1-3 (it costs three).
   for (let t = 0; t < 3; t++) expect(withStatic[t]).toBe(without[t]);
 });
+
+// A creature that is also a static fixer (Stormtide Leviathan, Dryad of the Ilysian Grove) is still a creature: it
+// attacks (#1115 review). A vanilla twin with the same body is the yardstick.
+test("a creature fixer is fielded and attacks like its vanilla twin", () => {
+  const body = (name: string, oracleText: string): DeckCard => ({ card: { name, typeLine: "Creature — Leviathan", oracleText, manaCost: "{1}{U}", keywords: [], colors: ["U"], manaValue: 2, power: "20", toughness: "20" } as never, tags: null });
+  const islands = Array.from({ length: 40 }, (_, i) => card(`Island ${i}`, "Basic Land — Island", 0, "", ["U"]));
+  const deckOf = (text: string) => [...islands, ...Array.from({ length: 59 }, (_, i) => body(`Body ${i}`, text))];
+  const run = (text: string) => simulate(deckOf(text), { trials: 300, turns: 8, seed: 43, combatTo: 20 }).killTurns.one;
+  const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!;
+  const twin = run("");
+  const fixer = run("All lands are Islands in addition to their other types.");
+  expect(med(twin)).toBeLessThan(Infinity);
+  expect(med(fixer)).toBeLessThanOrEqual(med(twin));
+});

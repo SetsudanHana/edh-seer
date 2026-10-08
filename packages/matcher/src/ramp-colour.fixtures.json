@@ -8972,5 +8972,136 @@
    "reserved": false
   },
   "tags": null
+ },
+ "Oath of Nissa": {
+  "card": {
+   "_id": "c4efdbab-711d-4269-9b24-b05d36f7e5c7",
+   "name": "Oath of Nissa",
+   "typeLine": "Legendary Enchantment",
+   "oracleText": "When Oath of Nissa enters, look at the top three cards of your library. You may reveal a creature, land, or planeswalker card from among them and put it into your hand. Put the rest on the bottom of your library in any order.\nYou may spend mana as though it were mana of any color to cast planeswalker spells.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "manaCost": "{G}",
+   "layout": "normal",
+   "releasedAt": "2016-01-22",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Agatha's Soul Cauldron": {
+  "card": {
+   "_id": "c259e16f-2a44-4552-8678-815f757a02e8",
+   "name": "Agatha's Soul Cauldron",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "You may spend mana as though it were mana of any color to activate abilities of creatures you control.\nCreatures you control with +1/+1 counters on them have all activated abilities of all creature cards exiled with Agatha's Soul Cauldron.\n{T}: Exile target card from a graveyard. When a creature card is exiled this way, put a +1/+1 counter on target creature you control.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "counter:+1/+1"
+    ],
+    "cares": [
+     "counter:+1/+1"
+    ]
+   },
+   "manaCost": "{2}",
+   "layout": "normal",
+   "releasedAt": "2023-09-08",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Stormtide Leviathan": {
+  "card": {
+   "_id": "131a7475-0b9e-46eb-9ade-fef1b9820184",
+   "name": "Stormtide Leviathan",
+   "typeLine": "Creature — Leviathan",
+   "oracleText": "Islandwalk (This creature can't be blocked as long as defending player controls an Island.)\nAll lands are Islands in addition to their other types.\nCreatures without flying or islandwalk can't attack.",
+   "keywords": [
+    "Landwalk",
+    "Islandwalk"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "8",
+   "toughness": "8",
+   "tags": {
+    "produces": [
+     "tribe:leviathan",
+     "tribe-nontoken:leviathan"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{5}{U}{U}{U}",
+   "layout": "normal",
+   "releasedAt": "2020-11-20",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
+ },
+ "Swampbenders": {
+  "card": {
+   "_id": "feb00c6d-ff43-49bc-84d5-57e2d4651258",
+   "name": "Swampbenders",
+   "typeLine": "Creature — Human Druid Ally",
+   "oracleText": "Swampbenders's power and toughness are each equal to the number of Swamps on the battlefield.\nLands you control are Swamps in addition to their other types.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "*",
+   "toughness": "*",
+   "tags": {
+    "produces": [
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:druid",
+     "tribe-nontoken:druid",
+     "tribe:ally",
+     "tribe-nontoken:ally"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{4}{G}{G}",
+   "layout": "normal",
+   "releasedAt": "2025-11-21",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "tags": null
  }
 }

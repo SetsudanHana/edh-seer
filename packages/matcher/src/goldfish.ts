@@ -1247,6 +1247,13 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         if (best < 0) break;
         const cast = hand.splice(best, 1)[0]!;
         pool -= cast.manaValue;
+        // STILL A CREATURE: Stormtide Leviathan and Dryad of the Ilysian Grove attack, so they are fielded as the
+        // accelerant and draw casts do.
+        if (fights && cast.attack && !fielded.has(cast)) {
+          fielded.add(cast);
+          boardOne += cast.attack.power;
+          if (!cast.attack.infect) boardTable += cast.attack.power;
+        }
         statics.push({ turn, fixer: cast.fixer! });
       }
 

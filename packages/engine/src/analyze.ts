@@ -419,6 +419,9 @@ export interface DeckMath {
       /** Of `supplied`, the ones that could be producing by `turn`. This is the number `required`
        *  is missed by; `supplied` is the deck total and is not comparable to it. */
       available: number;
+      /** Static colour fixers (Chromatic Lantern...) that lifted `available` above what the deck's own sources
+       *  make (#1115). Present means `available` may exceed `supplied`. */
+      fixedBy?: string[];
       /** Up to two of the deck's own mana sources most worth trading for this colour, worst first
        *  (#966 T3). Empty or absent: nothing in the deck is a fair trade. */
       replace?: string[];

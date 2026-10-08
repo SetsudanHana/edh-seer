@@ -16,6 +16,9 @@ test("Lantern-style and every-basic-type statics fix every colour for lands", ()
 test("a land-type static fixes its own colour, for lands", () => {
   expect(staticFixer(real("Urborg, Tomb of Yawgmoth"))).toEqual({ colours: ["B"], covers: "lands" });
   expect(staticFixer(real("Yavimaya, Cradle of Growth"))).toEqual({ colours: ["G"], covers: "lands" });
+  // The "All lands are Xs" and "Lands you control are Xs" forms.
+  expect(staticFixer(real("Stormtide Leviathan"))).toEqual({ colours: ["U"], covers: "lands" });
+  expect(staticFixer(real("Swampbenders"))).toEqual({ colours: ["B"], covers: "lands" });
 });
 
 test("an unconditional 'spend mana as though any color' fixes all mana", () => {
@@ -27,6 +30,9 @@ test("the near misses are refused", () => {
   // Restricted to a card type or a number of spells.
   expect(staticFixer(real("Emissary's Ploy"))).toBeNull();
   expect(staticFixer(real("Vizier of the Menagerie"))).toBeNull();
+  // Spend-as-any restricted to a card type or to abilities: the sentence has more after "color".
+  expect(staticFixer(real("Oath of Nissa"))).toBeNull();
+  expect(staticFixer(real("Agatha's Soul Cauldron"))).toBeNull();
   // Conditional, and one-turn.
   expect(staticFixer(real("The World Tree"))).toBeNull();
   expect(staticFixer(real("Divergent Growth"))).toBeNull();
