@@ -427,3 +427,31 @@ test("the colour deficit is the worst demand's shortfall per colour, and absent 
   expect(d.B).toBeGreaterThan(0);
   expect(d.U).toBeUndefined();
 });
+
+/** COST AGAINST PRODUCTION (owner, 2026-10-08, #1114): a colour counts only when a line that makes it produces
+ *  at least its cost plus its own tap. Cards as the corpus prints them. */
+import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
+import { fixedColours, manaLines } from "./mana-lines.js";
+const real = (name: keyof typeof rocks) => rocks[name] as unknown as DeckCard;
+
+test("a filter land is a full source of both its colours; Cascading Cataracts and Prismatic Lens fix none; a Signet still does", () => {
+  expect([...fixedColours(real("Cascade Bluffs"))].sort()).toEqual(["C", "R", "U"]);
+  expect([...fixedColours(real("Sunken Ruins"))].sort()).toEqual(["B", "C", "U"]);
+  expect([...fixedColours(real("Darkwater Catacombs"))].sort()).toEqual(["B", "U"]);
+  expect([...fixedColours(real("Izzet Signet"))].sort()).toEqual(["R", "U"]);
+  expect(fixedColours(real("Cascading Cataracts"))).toEqual(["C"]);
+  expect(fixedColours(real("Prismatic Lens"))).toEqual(["C"]);
+  // An amount that scales cannot be judged from the line, so Cabal Coffers keeps its black.
+  expect(fixedColours(real("Cabal Coffers"))).toEqual(["B"]);
+  expect(manaLines(real("Cascading Cataracts")).map((l) => [l.net, l.qualifies])).toEqual([[1, true], [0, false]]);
+});
+
+test("the audit counts a source only for the colours it fixes", () => {
+  const blue = fillTo(100, [card("Counterspell", "{U}{U}", 2), ...islands(10)]);
+  const suppliedU = (extra: DeckCard) => manaAudit([...blue.slice(0, 11), extra, ...blue.slice(11, 99)]).find((r) => r.color === "U")!.supplied;
+  const base = suppliedU(filler(999));
+  expect(suppliedU(real("Cascade Bluffs"))).toBe(base + 1);
+  expect(suppliedU(real("Izzet Signet"))).toBe(base + 1);
+  expect(suppliedU(real("Cascading Cataracts"))).toBe(base);
+  expect(suppliedU(real("Prismatic Lens"))).toBe(base);
+});

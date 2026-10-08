@@ -19,6 +19,7 @@ import { normalizeName } from "@edh-seer/data/names";
 import type { BuildCategory } from "./build.js";
 import { basicsFloor, betterLand, landFacts, neededColours, unusualText, type LandFacts } from "./land-score.js";
 import { fetchableLands } from "./fetch-land.js";
+import { fixedColours } from "./mana-lines.js";
 import { COLORS, colourDeficit, landTypeDemand, type Color } from "./mana-audit.js";
 import { ingredients, rolesOfCard, type Ingredient, type Ingredients, type Role } from "./quality.js";
 import type { StaticLookup } from "./static-lookup.js";
@@ -124,7 +125,7 @@ export function roleOption(section: RoleSectionId, cut: DeckCard, add: Candidate
   return best;
 }
 
-const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => (d.card.producedMana ?? []).includes(c));
+const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => fixedColours(d).includes(c));
 
 /** A COLOUR SWAP FOR A ROCK (owner, 2026-10-08, #966): the same rock in everything but its colours, and
  *  the add makes a colour the deck is short of (`colourDeficit`) that the cut does not, keeping every

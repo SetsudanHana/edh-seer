@@ -12,6 +12,7 @@ import { fetchableLands, fetchDemand, fetchedLandEntersTapped, isLandFetch } fro
 import { classifyLand } from "./land-conditions.js";
 import { COLORS, deckBasicTypes, landOnlineBy, pipsByColor, type Color } from "./mana-audit.js";
 import { rolesOfCard } from "./quality.js";
+import { fixedColours } from "./mana-lines.js";
 import { creatureSubtypes, isFetchSpell, isPlainDork, netPositiveMana, netYield } from "./same-job.js";
 import type { DeckCard } from "./types.js";
 
@@ -248,7 +249,7 @@ export function colourReplacements(
       if (makes && landOnlineBy(dc, turn, basicTypes)) continue;
       ranked.push({ name: f.name, tier: f.colours.length === 0 ? 1 : makes ? 2 : 3, land: true, tapped: f.tapped, colours: f.colours.length, hidden: f.colours.filter((c) => (anyShort[c] ?? 0) > 0).length });
     } else {
-      const made = (dc.card.producedMana ?? []) as readonly string[];
+      const made = fixedColours(dc);
       // MANA SPENT "AS THOUGH IT WERE MANA OF ANY COLOR" (Chromatic Orrery) is not derived and is every
       // colour: refused like Arcane Signet.
       if (/as though it were mana of any colou?r/i.test(dc.card.oracleText ?? "")) continue;
