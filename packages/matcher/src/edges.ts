@@ -127,9 +127,16 @@ function ownEntryExcluded(tags: CardTags, keepRockEntry: boolean): boolean {
   return !keepRockEntry && isManaRock(tags);
 }
 
+/** Does a SELF trigger's subject name the land face? A nonland TYPE or a nonland SUBTYPE ("When this
+ *  Equipment enters" on Dowsing Dagger // Lost Vale says only `subtype: equipment`) names the front
+ *  face, whose entry is a theme; an untyped subject on a land card is the land itself. */
 const selfSubjectIsLand = (subject: SubjectFilter): boolean => {
-  const ty = (subject as { type?: string | string[] }).type;
-  return ty === undefined || (Array.isArray(ty) ? ty : [ty]).some((x) => x.toLowerCase() === "land");
+  const list = (v: string | string[] | undefined): string[] => (v === undefined ? [] : Array.isArray(v) ? v : [v]).map((x) => x.toLowerCase());
+  const types = list((subject as { type?: string | string[] }).type);
+  const subtypes = list((subject as { subtype?: string | string[] }).subtype);
+  if (types.length > 0) return types.includes("land");
+  if (subtypes.length > 0) return subtypes.every((x) => LAND_SUBTYPES.has(x));
+  return true;
 };
 
 function impliedEntryThemeTags(tags: CardTags, keepRockEntry = false): string[] {

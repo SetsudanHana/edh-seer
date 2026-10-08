@@ -6269,6 +6269,14 @@ describe("a self enters trigger is not a theme (#1097)", () => {
     (d.characteristics as { subtypes: string[] }).subtypes = ["human", "warlock"];
     expect(cardThemeTags(d).has("enters:creature")).toBe(true);
   });
+  test("an Equipment // land MDFC whose trigger names only a subtype keeps its Equipment-face theme (Dowsing Dagger)", () => {
+    const d = withTypes(["artifact", "land"], [trig("enters", { self: true, subtype: "equipment", control: "you" })]);
+    expect(cardThemeTags(d).has("enters:equipment")).toBe(true);
+  });
+  test("a land whose self trigger names a LAND subtype still skips (a Gate entering)", () => {
+    const g = withTypes(["land"], [trig("enters", { self: true, subtype: "gate", control: "you" })]);
+    expect(cardThemeTags(g).has("enters:gate")).toBe(false);
+  });
   test("a land with a NON-self landfall trigger keeps enters:land", () => {
     const l = withTypes(["land"], [trig("enters", { type: "land", control: "you" })]);
     expect(cardThemeTags(l).has("enters:land")).toBe(true);
