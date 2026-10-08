@@ -388,6 +388,27 @@ export function colouredNetYield(d: DeckCard): number | null {
   return nets.length ? Math.max(...nets) : null;
 }
 
+/** A LAND-FETCH SPELL (Rampant Growth, Cultivate, Farseek): a noncreature, nonland card whose ramp is
+ *  putting lands onto the battlefield. Creature fetchers (Wood Elves) are the body's other job. */
+export function isFetchSpell(d: DeckCard): boolean {
+  return !isCreature(d) && !/\bland\b/i.test((d.card.typeLine ?? "").split("//")[0]!) && rampKind(d) === "land";
+}
+/** HOW MANY LANDS A FETCH SPELL PUTS ONTO THE BATTLEFIELD, off the printed text: Cultivate puts one there
+ *  and one in hand, Explosive Vegetation two. 0 when the text does not say. */
+export function landsToBattlefield(d: DeckCard): number {
+  const t = printed(d);
+  const upTo = /search your library for up to (two|three|four)\b/.exec(t)?.[1];
+  const n = upTo ? NUMBER[upTo] ?? 1 : 1;
+  const m = /\bput (it|that card|one|them|those cards|two|three) onto the battlefield/.exec(t)?.[1];
+  if (!m) return 0;
+  return /^(?:it|that card|one)$/.test(m) ? 1 : m === "two" ? 2 : m === "three" ? 3 : n;
+}
+/** THE SAME FETCH, ANY LANDS: both fetch spells, the add puts at least as many lands onto the battlefield
+ *  and prints no condition the cut does not. Which colours it can reach is the yardstick's to judge. */
+export function sameFetchAnyColour(cut: DeckCard, add: DeckCard): boolean {
+  return isFetchSpell(cut) && isFetchSpell(add) && landsToBattlefield(add) >= Math.max(1, landsToBattlefield(cut)) && !newConditions(cut, add, false);
+}
+
 /** THE CREATURE TYPES OF A CARD, lowercased: the words after the dash of its front face. */
 export function creatureSubtypes(d: DeckCard): string[] {
   const front = (d.card.typeLine ?? "").split("//")[0]!;

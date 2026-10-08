@@ -5,7 +5,7 @@ import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
 import { colourDeficit, landTypeDemand } from "./mana-audit.js";
-import { colouredNetYield, jobOf, netYield, themedSubjects } from "./same-job.js";
+import { colouredNetYield, jobOf, landsToBattlefield, netYield, themedSubjects } from "./same-job.js";
 import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, auraSupport, sameJob, strictlyBetter, swapCloser, watchedTypes } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
 
@@ -421,5 +421,31 @@ describe("a dork for a dork, to close a colour shortfall", () => {
   test("a rock is still not a dork: Birds never replaces Mind Stone, and a rock never replaces Llanowar", () => {
     expect(swap(rock("Mind Stone"), [rock("Birds of Paradise")], [])).toEqual([]);
     expect(swap(rock("Llanowar Elves"), [rock("Izzet Signet")], [])).toEqual([]);
+  });
+});
+
+describe("a land-fetch spell, swapped for a colour", () => {
+  const reachOf = (m: Record<string, ("W" | "U" | "B" | "R" | "G")[]>) => (d: DeckCard) => new Set(m[d.card.name] ?? []);
+  const swap = (cut: DeckCard, adds: DeckCard[], o: { watched?: string[]; closes?: number; reach?: Record<string, ("W" | "U" | "B" | "R" | "G")[]> } = {}) =>
+    roleOptions("ramp", [cut], adds.map(candidate), undefined, { G: 4 }, () => o.closes ?? 1, new Set(o.watched ?? []), () => true, undefined, reachOf(o.reach ?? {}))
+      .flatMap((x) => x.options.map((y) => [y.add, y.crossType ?? null, y.fetch ?? false]));
+
+  test("an enchantment deck takes Fertile Ground for Rampant Growth; any other deck does not", () => {
+    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { "Rampant Growth": ["R"] } })).toEqual([["Fertile Ground", "enchantment", false]]);
+    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { reach: { "Rampant Growth": ["R"] } })).toEqual([]);
+    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { watched: ["artifact"] })).toEqual([]);
+  });
+  test("a fetch spell for a fetch spell needs the shortfall closed, and no fewer lands onto the battlefield", () => {
+    const reach = { "Rampant Growth": ["R"] as ("R")[], Farseek: ["R", "G"] as ("R" | "G")[], Cultivate: ["R", "G"] as ("R" | "G")[] };
+    expect(swap(rock("Rampant Growth"), [rock("Farseek")], { reach })).toEqual([["Farseek", null, true]]);
+    expect(swap(rock("Rampant Growth"), [rock("Cultivate")], { reach, closes: 0 })).toEqual([]);
+    expect(swap(rock("Explosive Vegetation"), [rock("Cultivate")], { reach: { "Explosive Vegetation": ["R"], Cultivate: ["R", "G"] } })).toEqual([]);
+    expect(landsToBattlefield(rock("Cultivate"))).toBe(1);
+    expect(landsToBattlefield(rock("Explosive Vegetation"))).toBe(2);
+    expect(landsToBattlefield(rock("Rampant Growth"))).toBe(1);
+  });
+  test("a creature fetcher is never cut, and never added", () => {
+    expect(swap(rock("Wood Elves"), [rock("Rampant Growth"), rock("Farseek")], { reach: { Farseek: ["G"] } })).toEqual([]);
+    expect(swap(rock("Rampant Growth"), [rock("Wood Elves")], { reach: { "Wood Elves": ["G"] } })).toEqual([]);
   });
 });

@@ -186,3 +186,18 @@ test("a plain dork is named like a plain rock, unless its creature type is the d
   expect(colourReplacements(deck(bird, giada, lord), "U", 2, { U: 4 })).toEqual([]);
   expect(colourReplacements(deck(giada), "U", 2, { U: 4 })).toEqual([]);
 });
+
+test("a land-fetch spell is named only if it cannot reach the short colour", () => {
+  const mv2 = (d: DeckCard): DeckCard => ({ ...d, card: { ...d.card, manaValue: 2 } });
+  const forest = dc("Forest", "Basic Land — Forest", "({T}: Add {G}.)", ["G"]);
+  const rampantAny = mv2(dc("Rampant Growth", "Sorcery", "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.", [], []));
+  const threeVisits = mv2(dc("Three Visits", "Sorcery", "Search your library for a Forest card, put it onto the battlefield, then shuffle.", [], []));
+  const seekMtn = mv2(dc("Mountain Seek", "Sorcery", "Search your library for a Mountain card, put it onto the battlefield tapped, then shuffle.", [], []));
+  // Short on blue; the deck's lands are Mountain and Forest only, so no basic search reaches blue.
+  expect(colourReplacements(deckOf(mountain, seekMtn), "U", 2, { U: 4 })).toEqual(["Mountain", "Mountain Seek"]);
+  // A spell that can fetch an Island is never named: it IS a blue source.
+  const island = dc("Island", "Basic Land — Island", "({T}: Add {U}.)", ["U"]);
+  expect(colourReplacements(deckOf(island, mountain, rampantAny), "U", 2, { U: 4 })).not.toContain("Rampant Growth");
+  // A Forest search cannot reach blue, so it may be named.
+  expect(colourReplacements(deckOf(island, forest, threeVisits), "U", 2, { U: 4 })).toContain("Three Visits");
+});

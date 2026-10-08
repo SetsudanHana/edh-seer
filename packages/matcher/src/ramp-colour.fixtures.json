@@ -5133,5 +5133,1009 @@
    "segmentHash": "0245626db86c1afdc0bc665b11ab90baf6abcdf65b23f0297e778e5e968f97ef",
    "clauseSource": "grammar"
   }
+ },
+ "Rampant Growth": {
+  "card": {
+   "_id": "8539f295-5d58-4436-a73a-b9277c4c7795",
+   "name": "Rampant Growth",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "ramp",
+     "land-etb",
+     "mana",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "releasedAt": "2025-04-11",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a8eec05f6eb344af1412608",
+   "oracleId": "8539f295-5d58-4436-a73a-b9277c4c7795",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "basic": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "fromZone": "library"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "entersTapped": true,
+        "fromZone": "library"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "e516baa5854eee966674c7f611c6860d389f03ee473345e77a4393be59c65201",
+   "clauseSource": "grammar"
+  }
+ },
+ "Cultivate": {
+  "card": {
+   "_id": "8b755881-a72d-4e21-a369-d2924eb4585a",
+   "name": "Cultivate",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "ramp",
+     "land-etb",
+     "mana",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af1222172",
+   "oracleId": "8b755881-a72d-4e21-a369-d2924eb4585a",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "basic": true
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "fromZone": "library"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "entersTapped": true,
+        "fromZone": "library"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c",
+   "clauseSource": "grammar"
+  }
+ },
+ "Farseek": {
+  "card": {
+   "_id": "495e52e6-4c2b-4574-9474-eadbdcc8b4ac",
+   "name": "Farseek",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for a Plains, Island, Swamp, or Mountain card, put it onto the battlefield tapped, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "ramp",
+     "land-etb",
+     "mana",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac8f6eb344af1221c1a",
+   "oracleId": "495e52e6-4c2b-4574-9474-eadbdcc8b4ac",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": [
+        "plains",
+        "island",
+        "swamp",
+        "mountain"
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": [
+         "plains",
+         "island",
+         "swamp",
+         "mountain"
+        ],
+        "fromZone": "library",
+        "type": "land"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": [
+         "plains",
+         "island",
+         "swamp",
+         "mountain"
+        ],
+        "entersTapped": true,
+        "fromZone": "library",
+        "type": "land"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "3fed79c656e0ee417eeff1b4bed0a0bec40ee9741d8b35a0d4d92ef818559cf3",
+   "clauseSource": "grammar"
+  }
+ },
+ "Wood Elves": {
+  "card": {
+   "_id": "8973bd99-20f8-4867-90ef-50392147ee1b",
+   "name": "Wood Elves",
+   "typeLine": "Creature — Elf Scout",
+   "oracleText": "When this creature enters, search your library for a Forest card, put that card onto the battlefield, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "tribe:elf",
+     "tribe-nontoken:elf",
+     "tribe:scout",
+     "tribe-nontoken:scout"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2026-08-14",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a59f6eb344af1942656",
+   "oracleId": "8973bd99-20f8-4867-90ef-50392147ee1b",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "forest"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "forest",
+        "fromZone": "library",
+        "type": "land"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "forest",
+        "fromZone": "library",
+        "type": "land"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elf",
+     "scout"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 3,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "18864bd45942aa2b0fb7de08ebc80039e3870c3f2294139390fa8d8b25b5f49f",
+   "clauseSource": "grammar"
+  }
+ },
+ "Explosive Vegetation": {
+  "card": {
+   "_id": "a0abd957-01a0-4aa9-8fc8-0e6840d21606",
+   "name": "Explosive Vegetation",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "ramp",
+     "land-etb",
+     "mana",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "releasedAt": "2024-09-27",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a57f6eb344af19400ee",
+   "oracleId": "a0abd957-01a0-4aa9-8fc8-0e6840d21606",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "basic": true
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "fromZone": "library"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "up to two",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "entersTapped": true,
+        "fromZone": "library"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 0,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 4,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "d55860ea4665c449f16e4d7455136cd0329fe2ee44480573af31e9b24e0031f3",
+   "clauseSource": "grammar"
+  }
+ },
+ "Three Visits": {
+  "card": {
+   "_id": "1b882a0e-0ede-4d1a-bd1a-9b7cffbcde8e",
+   "name": "Three Visits",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for a Forest card, put it onto the battlefield, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736ac8f6eb344af1221cb2",
+   "oracleId": "1b882a0e-0ede-4d1a-bd1a-9b7cffbcde8e",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "forest"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "forest",
+        "fromZone": "library",
+        "type": "land"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "forest",
+        "fromZone": "library",
+        "type": "land"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "c2f1c8e42a995533f1a0cb0611440f836ea1d9d52e5c57e799ffc269641c38e3",
+   "clauseSource": "grammar"
+  }
+ },
+ "Skyshroud Claim": {
+  "card": {
+   "_id": "376c9d3f-21d3-4251-bb6a-026fa9e1b0e1",
+   "name": "Skyshroud Claim",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for up to two Forest cards, put them onto the battlefield, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "releasedAt": "2025-08-01",
+   "gameChanger": false,
+   "reserved": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a53f6eb344af193b3a8",
+   "oracleId": "376c9d3f-21d3-4251-bb6a-026fa9e1b0e1",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "forest"
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "forest",
+        "fromZone": "library",
+        "type": "land"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "forest",
+        "fromZone": "library",
+        "type": "land"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 4,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 287,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "e7fea2af8ca886eab4132982ac363e939849c138cfb8547e28ce5f0825a7212e",
+   "clauseSource": "model"
+  }
  }
 }

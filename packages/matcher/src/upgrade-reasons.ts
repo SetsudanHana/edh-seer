@@ -82,6 +82,10 @@ const shortWords = (o: RoleOption) => `${colourWords(o.colour ?? []).replace(" o
 const typeWords = (o: RoleOption) => (o.keptType ? `, and it's still ${/^[aeiou]/.test(o.keptType) ? "an" : "a"} ${o.keptType[0]!.toUpperCase()}${o.keptType.slice(1)}` : o.crossType ? `, and it's ${/^[aeiou]/.test(o.crossType) ? "an" : "a"} ${o.crossType}, which your ${o.crossType} payoffs count` : "");
 
 export function roleReasons(cutName: string, o: RoleOption): { out: string; in: string } {
+  if (o.colour?.length && o.fetch) {
+    const c = colourWords(o.colour).replace(" or ", " and ");
+    return { out: fit(`${cutName} can't find a land that makes `, [`${c}, which the deck is short of for its spells`]), in: fit(`${o.add} can find a land that makes `, [`${c}, which the deck is short of for its spells`]) };
+  }
   if (o.colour?.length) {
     const lost = list((o.lost ?? []).map((r) => JOB[r]));
     return o.lost?.length
