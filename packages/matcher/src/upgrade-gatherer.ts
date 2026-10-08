@@ -76,6 +76,12 @@ export function gatherPackage(g: GatherInput): UpgradePackage | null {
   for (const id of UPGRADE_SECTIONS) {
     const swaps: UpgradeSwap[] = [];
     if (id === "lands") {
+      // GREEDY, WORST CUT FIRST, ON PURPOSE (owner 2026-10-08, #966): the worst land takes the best add
+      // even when that leaves a later cut with nothing. The swaps are suggestions, not a binding
+      // assignment -- "if they do the modification and reanalyze the swap will recalculate". Measured
+      // on the 197 precons: 68 swaps fewer per page than the old deck-order pass (e.g. Abzan Armor's
+      // Sunpetal Grove waits for Temple of Plenty to take Temple Garden); a maximum matching that kept
+      // them was built and reverted as solving a problem the product does not have.
       for (const c of g.lands) {
         if (swaps.length >= SECTION_MAX) break;
         const o = c.options.find((x) => take(c.cut, x.add));
