@@ -106,11 +106,13 @@ test("a source's {T}: Add is read per line, and a sacrifice in the cost is not a
   const rock = (name: string, oracleText: string) => mk(name, "Artifact", { oracleText, producedMana: ["G"] });
   const s = colourSources([
     rock("Rock", "{T}: Add {G}."),
-    rock("Two Lines", "Flying\n{2}, {T}: Add {G}."),
+    rock("Two Lines", "Flying\n{T}: Add {G}."),
     rock("Sac", "{T}, Sacrifice this artifact: Add {G}."),
     rock("Other Line", "{T}: Draw a card.\nWhenever you cast a spell, add {G}."),
   ]);
   expect(s.get("G")).toBe(2);
+  // COST AGAINST PRODUCTION (owner, 2026-10-08, #1114): paying {2} to tap for one mana is not a source.
+  expect(colourSources([rock("Dear Rock", "{2}, {T}: Add {G}.")]).get("G")).toBe(0);
 });
 
 // Owner, 2026-09-29: cantrips help find lands, a six-mana draw spell does not. Measured in the goldfish.
