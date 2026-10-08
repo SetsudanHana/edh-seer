@@ -66,3 +66,8 @@ test("a colour swap that gives up a role says so, on both sides", () => {
   expect(r.out).toBe("Mind Stone also does card draw, and doesn't make blue, which the deck is short of for its spells.");
   expect(r.in).toBe("Izzet Signet is the same ramp and makes blue, which the deck is short of for its spells, but does not do card draw.");
 });
+
+test("a swap toward a type the deck's payoffs watch says so", () => {
+  const r = roleReasons("Mind Stone", roleOpt("Fertile Ground", { role: "ramp", gained: [], colour: ["G"], crossType: "enchantment" }));
+  expect(r.in).toBe("Fertile Ground is the same ramp and makes green, which the deck is short of for its spells, and it's an enchantment, which your enchantment payoffs count.");
+});

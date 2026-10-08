@@ -5,7 +5,8 @@ import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
 import { colourDeficit } from "./mana-audit.js";
-import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, sameJob, strictlyBetter, swapCloser } from "./upgrade-sections.js";
+import { colouredNetYield, jobOf, netYield } from "./same-job.js";
+import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, sameJob, strictlyBetter, swapCloser, watchedTypes } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
 
 /** Cards as printed (oracle text read 2026-09-30); the text rules read nothing else. */
@@ -302,5 +303,41 @@ describe("what a rock really yields", () => {
   test("a colour an opponent decides is not a fix: Fellwar Stone is never the colour add", () => {
     expect(ramp(rock("Fire Diamond"), rock("Fellwar Stone"))).toEqual([]);
     expect(ramp(rock("Mind Stone"), rock("Fellwar Stone"))).toEqual([]);
+  });
+});
+
+describe("an Aura is a rock the job reader sees", () => {
+  test("all four growth Auras read a ramp job, and Utopia Sprawl reads the same kind as Wild Growth", () => {
+    for (const n of ["Utopia Sprawl", "Wild Growth", "Fertile Ground", "Overgrowth"] as const) expect(jobOf(rock(n), "ramp"), n).toBeTruthy();
+    expect(jobOf(rock("Utopia Sprawl"), "ramp")!.kind).toBe(jobOf(rock("Wild Growth"), "ramp")!.kind);
+  });
+});
+
+describe("a colour swap may cross card types, toward the type the deck's payoffs watch", () => {
+  const swap = (cut: DeckCard, adds: DeckCard[], watched: string[]) =>
+    roleOptions("ramp", [cut], adds.map(candidate), undefined, { G: 4, U: 4 }, () => 1, new Set(watched)).flatMap((o) => o.options.map((x) => [x.add, x.crossType]));
+
+  test("the watched types are read from the deck's payoffs", () => {
+    expect([...watchedTypes([rock("Argothian Enchantress"), rock("Goblin Welder" as never)])]).toEqual(["enchantment"]);
+    expect([...watchedTypes([rock("Eidolon of Blossoms"), rock("Reckless Fireweaver")])].sort()).toEqual(["artifact", "enchantment"]);
+    expect([...watchedTypes([rock("Mind Stone")])]).toEqual([]);
+  });
+
+  test("an enchantress deck gets the growth Auras for a colour; with no enchantment payoff, or an artifact one, it does not", () => {
+    const adds = [rock("Fertile Ground"), rock("Utopia Sprawl")];
+    expect(swap(rock("Mind Stone"), adds, ["enchantment"])).toEqual([["Fertile Ground", "enchantment"], ["Utopia Sprawl", "enchantment"]]);
+    expect(swap(rock("Mind Stone"), adds, [])).toEqual([]);
+    expect(swap(rock("Mind Stone"), adds, ["artifact"])).toEqual([]);
+  });
+
+  test("never the other way: an Aura is not swapped for a Signet, and not when the cut's type is watched too", () => {
+    expect(swap(rock("Wild Growth"), [rock("Arcane Signet")], ["enchantment"])).toEqual([]);
+    expect(swap(rock("Mind Stone"), [rock("Fertile Ground")], ["enchantment", "artifact"])).toEqual([]);
+  });
+
+  test("an Aura's extra mana is yield: a growth Aura nets what a Signet does", () => {
+    expect(netYield(rock("Wild Growth"))).toBe(1);
+    expect(netYield(rock("Overgrowth"))).toBe(2);
+    expect(colouredNetYield(rock("Utopia Sprawl"))).toBe(1);
   });
 });
