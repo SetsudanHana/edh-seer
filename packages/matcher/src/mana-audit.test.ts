@@ -467,3 +467,59 @@ test("the mana base score counts sources by what they fix: Cascading Cataracts i
   expect(colourSources(withCataracts).get("U")).toBe(10);
   expect(colourSources(deck(real("Cascade Bluffs"))).get("U")).toBe(11);
 });
+
+/** STATIC COLOUR FIXERS (owner, 2026-10-08, #1115): once Chromatic Lantern is out, every land is a source of every
+ *  colour. One card, not always drawn, so the credit is weighted by P(at least one seen by the turn). */
+import { pAtLeast, seen } from "@edh-seer/engine";
+
+const mountains = (n: number) => Array.from({ length: n }, (_, i) => source(`Mountain-${i}`, ["R"]));
+
+test("a Lantern credits blue to the lands that were not blue, weighted by P(seen), floored; without it nothing moves", () => {
+  const base = [card("Cancel", "{2}{U}{U}", 4), ...mountains(30), ...islands(6)];
+  const withLantern = fillTo(100, [...base, real("Chromatic Lantern")]);
+  const without = fillTo(100, [...base, filler(900)]);
+  const uDemand = (deck: DeckCard[]) => manaAudit(deck).find((r) => r.color === "U")!.demands.find((d) => d.turn === 4)!;
+
+  const plain = uDemand(without);
+  expect(plain.available).toBe(6);
+  expect(plain.fixedBy).toBeUndefined();
+
+  // Lantern itself is one blue source (mana value 3 < 4); the 30 Mountains are the lands it newly fixes.
+  const lantern = uDemand(withLantern);
+  const p = pAtLeast(1, 1, seen(4), 100);
+  expect(lantern.available).toBe(7 + Math.floor(p * 30));
+  expect(lantern.available).toBeGreaterThan(7);
+  expect(lantern.fixedBy).toEqual(["Chromatic Lantern"]);
+  expect(lantern.met).toBe(lantern.available >= lantern.required);
+});
+
+test("a fixer that is not out yet by the deadline credits nothing", () => {
+  // Lantern costs 3: a turn-3 demand sees it only as a card in hand.
+  const deck = fillTo(100, [card("Counterspell", "{U}{U}", 3), ...mountains(30), ...islands(6), real("Chromatic Lantern")]);
+  const d = manaAudit(deck).find((r) => r.color === "U")!.demands[0]!;
+  expect(d.fixedBy).toBeUndefined();
+  expect(d.available).toBe(6);
+});
+
+test("Urborg fixes black only", () => {
+  const swamps = (n: number) => Array.from({ length: n }, (_, i) => source(`Swamp-${i}`, ["B"]));
+  const urborg = real("Urborg, Tomb of Yawgmoth");
+  const inert = { ...urborg, card: { ...urborg.card, oracleText: "" } } as DeckCard;
+  const build = (u: DeckCard) => fillTo(100, [card("Cancel", "{2}{U}{U}", 4), card("Doom", "{2}{B}{B}", 4), ...mountains(30), ...islands(6), ...swamps(6), u]);
+  const at = (deck: DeckCard[], c: string) => manaAudit(deck).find((r) => r.color === c)!.demands[0]!;
+  expect(at(build(urborg), "B").available).toBeGreaterThan(at(build(inert), "B").available);
+  expect(at(build(urborg), "U").available).toBe(at(build(inert), "U").available);
+});
+
+test("an all-mana fixer (Chromatic Orrery) credits rocks and dorks too, once it is out", () => {
+  const rock = (i: number) => ({ card: { name: `Rock-${i}`, typeLine: "Artifact", oracleText: "{T}: Add {C}.", keywords: [], colors: [], manaValue: 1, producedMana: ["C"] }, tags: null }) as unknown as DeckCard;
+  const rocksN = Array.from({ length: 10 }, (_, i) => rock(i));
+  const build = (extra: DeckCard) => fillTo(100, [card("Big Blue", "{6}{U}{U}", 8), ...mountains(30), ...islands(6), ...rocksN, extra]);
+  const at = (deck: DeckCard[]) => manaAudit(deck).find((r) => r.color === "U")!.demands[0]!;
+  const withOrrery = at(build(real("Chromatic Orrery")));
+  const none = at(build(filler(901)));
+  // Orrery costs 7, so it is out for an eight-drop; lands AND the ten rocks gain blue.
+  // Everything online that was not blue: 30 Mountains, 10 rocks and the Orrery itself (it taps for {C}).
+  expect(withOrrery.available).toBe(none.available + Math.floor(pAtLeast(1, 1, seen(8), 100) * 41 + 1e-9));
+  expect(withOrrery.fixedBy).toEqual(["Chromatic Orrery"]);
+});

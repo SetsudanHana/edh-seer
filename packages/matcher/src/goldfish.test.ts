@@ -1270,3 +1270,21 @@ test("Prismatic Lens is not a blue source in the simulation: it pays {U}{U} no b
   const run = (d: DeckCard[]) => simulate(d, { trials: 4_000, turns: 6, seed: 5 }).byCardCastable.get("Counterspell");
   expect(run(deckWith(lens))).toEqual(run(deckWith(grey)));
 });
+
+// STATIC COLOUR FIXERS (owner, 2026-10-08, #1115): the simulation agrees with the audit -- once Chromatic Lantern is out,
+// every land taps for every colour. Isolated from Lantern's own "{T}: Add one mana of any color" by a twin that has
+// only that line.
+test("Chromatic Lantern makes the lands blue in the simulation, beyond its own tap", () => {
+  const lantern = rocks["Chromatic Lantern"] as unknown as DeckCard;
+  const twin: DeckCard = { ...lantern, card: { ...lantern.card, name: "Lantern Twin", oracleText: "{T}: Add one mana of any color." } as never };
+  const island = (i: number) => card(`Island ${i}`, "Basic Land — Island", 0, "({T}: Add {U}.)", ["U"]);
+  const mountain = (i: number) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "({T}: Add {R}.)", ["R"]);
+  const counterspell: DeckCard = { ...card("Counterspell", "Instant", 4), card: { ...card("Counterspell", "Instant", 4).card, manaCost: "{2}{U}{U}" } };
+  const deckWith = (extra: DeckCard) => [...Array.from({ length: 4 }, (_, i) => island(i)), ...Array.from({ length: 30 }, (_, i) => mountain(i)), extra, counterspell, ...spells(30, 1)];
+  const run = (d: DeckCard[]) => simulate(d, { trials: 6_000, turns: 8, seed: 5 }).byCardCastable.get("Counterspell")!;
+  const withStatic = run(deckWith(lantern));
+  const without = run(deckWith(twin));
+  expect(withStatic[7]!).toBeGreaterThan(without[7]! + 0.01);
+  // Not out before it can be cast: nothing moves on turns 1-3 (it costs three).
+  for (let t = 0; t < 3; t++) expect(withStatic[t]).toBe(without[t]);
+});
