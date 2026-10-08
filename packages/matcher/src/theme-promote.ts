@@ -1,6 +1,7 @@
 import { SUBTYPE_TYPES } from "@edh-seer/tagger/subtypes";
 import { ALL_CARD_TYPES } from "./hierarchy.js";
 import { PHASE_VERBS } from "./availability.js";
+import { SUPERTYPES } from "./typeline.js";
 import type { ThemeMembership } from "./themes.js";
 
 /** How much of the headline's in-deck support a more-specific sibling must hold to replace it.
@@ -119,6 +120,33 @@ export function generalizeWatchlessHeadline(
   return [general, ...ranked.filter((t) => t !== general)];
 }
 
+/**
+ * A headline naming a SUPERTYPE that nothing in the deck watches gives the head to the next tag
+ * (#1098). `generalizeWatchlessHeadline` cannot help here: a supertype (legendary, snow, basic, ...)
+ * is not a subtype and has no card type to generalise to, so "legendary permanents entering" stayed
+ * the head. Every legendary card supplies its own implied `enters:legendary`, so a legends-heavy deck
+ * out-counts its real theme: Revival Trance (FIC, Terra, a reanimator; both printings) and
+ * Multiverse Reforged read it with 0 cards caring about `enters:legendary`.
+ *
+ * The guard is the one `generalizeWatchlessHeadline` uses (the #748 mirror of promotion's payoff
+ * guard): no membership entry with that value has payoffs, and no tag in `cared` has that value. A
+ * Legends-matter deck, with payoffs, keeps its headline. A DEMOTION, NOT A DELETION: the tag keeps
+ * its place second.
+ */
+export function demoteWatchlessSupertypeHeadline(
+  ranked: readonly string[],
+  membership: readonly ThemeMembership[],
+  cared: ReadonlySet<string> = new Set(),
+): string[] {
+  const head = ranked[0];
+  const parts = head === undefined ? undefined : split(head);
+  if (!parts || ranked.length < 2 || !SUPERTYPES.has(parts[1])) return [...ranked];
+  const value = parts[1];
+  if (membership.some((m) => split(m.tag)?.[1] === value && m.payoffs.length > 0)) return [...ranked];
+  if ([...cared].some((t) => split(t)?.[1] === value)) return [...ranked];
+  return [ranked[1], ranked[0], ...ranked.slice(2)];
+}
+
 /** A tag that is TRUE of the deck and says nothing a deckbuilder can act on.
  *
  *  Two kinds, both measured on the 71 calibration decks rather than guessed:
@@ -219,5 +247,6 @@ export function orderHeadline(
   floor: number,
   cared: ReadonlySet<string>,
 ): string[] {
-  return promoteSpecificHeadline(generalizeWatchlessHeadline(ranked, deckFreq, membership, floor, cared), deckFreq, membership);
+  const demoted = demoteWatchlessSupertypeHeadline(ranked, membership, cared);
+  return promoteSpecificHeadline(generalizeWatchlessHeadline(demoted, deckFreq, membership, floor, cared), deckFreq, membership);
 }

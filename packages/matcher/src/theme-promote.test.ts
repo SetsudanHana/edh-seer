@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { promoteSpecificHeadline, demoteUnrankableHeadline, demoteThinHeadline, headlineFloor, generalizeWatchlessHeadline, orderHeadline } from "./theme-promote.js";
+import { promoteSpecificHeadline, demoteUnrankableHeadline, demoteThinHeadline, headlineFloor, generalizeWatchlessHeadline, orderHeadline, demoteWatchlessSupertypeHeadline } from "./theme-promote.js";
 import type { ThemeMembership } from "./themes.js";
 
 const m = (tag: string, payoffs: number): ThemeMembership => ({
@@ -123,4 +123,28 @@ test("an unwatched subtype head generalises, and the watched sibling is then pro
   const freq = new Map([["enters:vibranium", 5], ["enters:equipment", 8], ["enters:artifact", 10], ["enters:hero", 8]]);
   const membership = [m("enters:vibranium", 0), m("enters:equipment", 1), m("enters:artifact", 3), m("enters:hero", 0)];
   expect(orderHeadline(ranked, freq, membership, 3, new Set(["enters:equipment", "enters:artifact"]))[0]).toBe("enters:equipment");
+});
+
+// #1098: every legendary card supplies its own implied `enters:legendary`, so a legends-heavy deck
+// headlined "legendary permanents entering" with nothing watching it (Revival Trance, Multiverse Reforged).
+test("an unwatched supertype head gives way to the next tag (#1098)", () => {
+  const ranked = ["enters:legendary", "leaves-graveyard:creature"];
+  const membership = [m("enters:legendary", 0), m("leaves-graveyard:creature", 2)];
+  const freq = new Map([["enters:legendary", 20], ["leaves-graveyard:creature", 8]]);
+  expect(orderHeadline(ranked, freq, membership, 3, new Set())[0]).toBe("leaves-graveyard:creature");
+  expect(demoteWatchlessSupertypeHeadline(ranked, membership, new Set())).toEqual(["leaves-graveyard:creature", "enters:legendary"]);
+});
+
+test("a watched supertype head keeps the headline (#1098)", () => {
+  const ranked = ["enters:legendary", "leaves-graveyard:creature"];
+  const freq = new Map([["enters:legendary", 20], ["leaves-graveyard:creature", 8]]);
+  const watched = [m("enters:legendary", 2), m("leaves-graveyard:creature", 2)];
+  expect(orderHeadline(ranked, freq, watched, 3, new Set())[0]).toBe("enters:legendary");
+  const unwatched = [m("enters:legendary", 0), m("leaves-graveyard:creature", 2)];
+  expect(orderHeadline(ranked, freq, unwatched, 3, new Set(["enters:legendary"]))[0]).toBe("enters:legendary");
+});
+
+test("a non-supertype unwatched head is unaffected by the supertype rule (#1098)", () => {
+  const ranked = ["draw:any", "enters:creature"];
+  expect(demoteWatchlessSupertypeHeadline(ranked, [m("draw:any", 0)], new Set())).toEqual(ranked);
 });
