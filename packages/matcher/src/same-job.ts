@@ -6,7 +6,7 @@
  *  The seed of redundancy groups: cards that pass `sameJob` with each other do the same thing. */
 import { grammarClauseRecords } from "@edh-seer/tagger/clause-record";
 import { detectBuildRules } from "./build.js";
-import { roleAbilities, type Role } from "./quality.js";
+import { roleAbilities, rolesOfCard, type Role } from "./quality.js";
 import type { DeckCard } from "./types.js";
 
 /** THE SAME KIND OF CARD: the same card types on its front face, supertypes and Kindred aside. */
@@ -386,6 +386,47 @@ export function colouredNetYield(d: DeckCard): number | null {
   if (opponentDecides(d)) return null;
   const nets = manaLines(d).filter((l) => l.coloured).map((l) => l.net);
   return nets.length ? Math.max(...nets) : null;
+}
+
+/** A PLAIN LAND-FETCH SPELL (Rampant Growth, Cultivate, Farseek): a sorcery or instant whose only role is
+ *  ramp and whose ramp is putting lands onto the battlefield. Creature fetchers (Wood Elves), sagas
+ *  (Binding the Old Gods), equipment, land destruction (Frenzied Tilling), removal (Deathsprout) and
+ *  draw (Renewal) have a second job a colour swap would throw away. */
+export function isFetchSpell(d: DeckCard): boolean {
+  if (!d.tags?.characteristics || (shape(d) !== "sorcery" && shape(d) !== "instant") || rampKind(d) !== "land") return false;
+  const roles = rolesOfCard(d);
+  return roles.length === 1 && roles[0] === "ramp";
+}
+/** HOW MANY LANDS A FETCH SPELL PUTS ONTO THE BATTLEFIELD UNDER ITS CONTROLLER, off the printed text:
+ *  Cultivate puts one there and one in hand, Explosive Vegetation two, Verdant Mastery two of up to four.
+ *  Infinity when the text names an amount this cannot bound (X, ten, "up to five"); 0 when it does not say. */
+export function landsToBattlefield(d: DeckCard): number {
+  const t = printed(d);
+  const upTo = /search your library for up to (\w+)\b/.exec(t)?.[1];
+  const n = upTo ? ({ two: 2, three: 3, four: 4 } as Record<string, number>)[upTo] ?? Infinity : 1;
+  let total = 0;
+  for (const m of t.matchAll(/\bput (it|that card|one|them|those cards|two|three|four|(?:one|two|three|four) of them) onto the battlefield([^.]*)/g)) {
+    if (/under an opponent/.test(m[2]!)) continue;
+    const w = m[1]!.replace(" of them", "");
+    total += /^(?:it|that card|one)$/.test(w) ? 1 : w === "two" ? 2 : w === "three" ? 3 : w === "four" ? 4 : n;
+  }
+  return total;
+}
+/** A FETCH THAT IS NOTHING BUT "SEARCH, PUT ONE ONTO THE BATTLEFIELD, SHUFFLE": no extra land in hand
+ *  (Cultivate), no sacrifice, no second sentence. */
+export function singleLandFetch(d: DeckCard): boolean {
+  return /^search your library for an? [^.]*? card, put (?:it|that card) onto the battlefield(?: tapped)?, then shuffle\.?$/.test(printed(d).trim());
+}
+/** THE SAME FETCH, ANY LANDS: both fetch spells, the cut's count is known (a fetch-X spell is never
+ *  replaced for colour), the add puts at least as many lands onto the battlefield and prints no
+ *  condition the cut does not. Which colours it can reach is the yardstick's to judge. */
+const fetchesTapped = (d: DeckCard): boolean => /onto the battlefield tapped/.test(printed(d));
+export function sameFetchAnyColour(cut: DeckCard, add: DeckCard): boolean {
+  const c = landsToBattlefield(cut);
+  // A TAPPED ARRIVAL IS A LOST TURN THE AUDIT DOES NOT PRICE (it puts every fetch spell on one MV+1
+  // clock): Three Visits ("onto the battlefield") is never traded for Farseek ("…tapped") for colour.
+  if (!fetchesTapped(cut) && fetchesTapped(add)) return false;
+  return isFetchSpell(cut) && isFetchSpell(add) && c >= 1 && Number.isFinite(c) && landsToBattlefield(add) >= c && !newConditions(cut, add, false);
 }
 
 /** THE CREATURE TYPES OF A CARD, lowercased: the words after the dash of its front face. */

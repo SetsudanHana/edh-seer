@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { basicsFloor, betterLand, colourReplacements, landFacts, neededColours } from "./land-score.js";
 import type { DeckCard } from "./types.js";
+import fetches from "./ramp-colour.fixtures.json" with { type: "json" };
 
 const dc = (name: string, typeLine: string, oracleText: string, producedMana: string[] = [], kinds: string[] = [], manaCost?: string): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue: 0, producedMana, ...(manaCost ? { manaCost } : {}) } as Card,
@@ -185,4 +186,16 @@ test("a plain dork is named like a plain rock, unless its creature type is the d
   expect(colourReplacements(deck(elfDork), "U", 2, { U: 4 }, [], { U: 4 }, new Set(["elf"]))).toEqual([]);
   expect(colourReplacements(deck(bird, giada, lord), "U", 2, { U: 4 })).toEqual([]);
   expect(colourReplacements(deck(giada), "U", 2, { U: 4 })).toEqual([]);
+});
+
+test("a land-fetch spell is named only if it cannot reach the short colour", () => {
+  const spell = (n: "Rampant Growth" | "Three Visits" | "Farseek"): DeckCard => ({ ...(fetches[n] as unknown as DeckCard), card: { ...(fetches[n] as unknown as DeckCard).card, manaValue: 2 } });
+  const forest = dc("Forest", "Basic Land — Forest", "({T}: Add {G}.)", ["G"]);
+  const island = dc("Island", "Basic Land — Island", "({T}: Add {U}.)", ["U"]);
+  // Short on blue. Farseek finds a Plains, Island, Swamp or Mountain: with the deck's Mountain only, it reaches no blue.
+  expect(colourReplacements(deckOf(mountain, spell("Farseek")), "U", 2, { U: 4 })).toEqual(["Mountain", "Farseek"]);
+  // A basic search can fetch an Island: it IS a blue source, never named.
+  expect(colourReplacements(deckOf(island, mountain, spell("Rampant Growth")), "U", 2, { U: 4 })).not.toContain("Rampant Growth");
+  // A Forest search cannot reach blue, so it may be named.
+  expect(colourReplacements(deckOf(island, forest, spell("Three Visits")), "U", 2, { U: 4 })).toContain("Three Visits");
 });

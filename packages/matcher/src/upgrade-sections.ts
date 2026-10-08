@@ -18,6 +18,7 @@
 import { normalizeName } from "@edh-seer/data/names";
 import type { BuildCategory } from "./build.js";
 import { basicsFloor, betterLand, landFacts, neededColours, unusualText, type LandFacts } from "./land-score.js";
+import { fetchableLands } from "./fetch-land.js";
 import { COLORS, colourDeficit, landTypeDemand, type Color } from "./mana-audit.js";
 import { ingredients, rolesOfCard, type Ingredient, type Ingredients, type Role } from "./quality.js";
 import type { StaticLookup } from "./static-lookup.js";
@@ -25,7 +26,7 @@ import { candidatePool, type IndexCard } from "./suggest.js";
 import { decodeIndex, deckCards } from "./suggest-static.js";
 import type { DeckCard } from "./types.js";
 import type { UpgradeSectionId } from "./upgrade-package.js";
-import { CONDITIONS, isCreature, netPositiveMana, sameGroup, creatureSubtypes, landAuraType, sameDorkAnyColour, sameJob, sameRockAnyColour, themedSubjects, shape } from "./same-job.js";
+import { CONDITIONS, isCreature, netPositiveMana, sameGroup, creatureSubtypes, landAuraType, isFetchSpell, landsToBattlefield, singleLandFetch, sameDorkAnyColour, sameFetchAnyColour, sameJob, sameRockAnyColour, themedSubjects, shape } from "./same-job.js";
 export { answerCovers, newConditions, sameGroup, sameJob } from "./same-job.js";
 
 export type RoleSectionId = Exclude<UpgradeSectionId, "lands" | "synergy">;
@@ -98,6 +99,8 @@ export interface RoleOption {
   crossType?: string;
   /** A dork swap that keeps a creature type the deck's themes name (Elf): the reason says it is still one. */
   keptType?: string;
+  /** The add is a land-fetch spell: the reason says it can find a land of the colour. */
+  fetch?: boolean;
 }
 export interface LandOption { closed?: number; add: string; cut: LandFacts; addFacts: LandFacts; untapped: boolean; colours: string[]; gameChanger: boolean }
 export interface CutOptions<O> { cut: string; options: O[] }
@@ -129,12 +132,14 @@ const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => (d.card.prod
  *  gain is the colour, not a measure, so `gained` is empty. A rock that prints more mana than it costs
  *  is never the cut. CEILING: rocks and plain dorks; a land fetcher makes no colour of its own. Where the payoff type matters (an enchantress wants
  *  enchantment ramp) shape blocks every cross-type pair here, so there is nothing to prefer. */
-export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Record<Color, number>>, closes?: Closes, watched: ReadonlySet<string> = new Set(), auraOk?: (add: DeckCard) => boolean, themed: ReadonlySet<string> = new Set()): RoleOption | null {
+export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Record<Color, number>>, closes?: Closes, watched: ReadonlySet<string> = new Set(), auraOk?: (add: DeckCard) => boolean, themed: ReadonlySet<string> = new Set(), fetchReach?: (d: DeckCard) => ReadonlySet<Color>): RoleOption | null {
   if (!rolesOfCard(cut).includes("ramp") || !add.roles.includes("ramp") || netPositiveMana(cut)) return null;
-  const had = MADE_COLOURS(cut);
-  const made = MADE_COLOURS(add.dc);
+  // A LAND-FETCH SPELL MAKES NO COLOUR OF ITS OWN: its colours are those of the deck's lands it can find.
+  const fetchCut = isFetchSpell(cut);
+  const had = fetchCut && fetchReach ? [...fetchReach(cut)] : MADE_COLOURS(cut);
+  const made = isFetchSpell(add.dc) && fetchReach ? [...fetchReach(add.dc)] : MADE_COLOURS(add.dc);
   if (!had.every((c) => made.includes(c))) return null;
-  const colour = made.filter((c) => !had.includes(c) && (deficit[c] ?? 0) > 0);
+  const colour = COLORS.filter((c) => made.includes(c) && !had.includes(c) && (deficit[c] ?? 0) > 0);
   // NO DEARER THAN THE CUT: `roleOption` gets this from `strictlyBetter`, a colour swap has to ask.
   if (colour.length === 0 || (add.dc.card.manaValue ?? 0) > (cut.card.manaValue ?? 0)) return null;
   // ANOTHER CARD TYPE ONLY TOWARD THE ONE THE DECK'S PAYOFFS WATCH (owner, 2026-10-08: an enchantress
@@ -152,6 +157,18 @@ export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Rec
     const addTypes = creatureSubtypes(add.dc);
     if (!kept.every((t) => addTypes.includes(t))) return null;
     keptType = kept[0];
+  } else if (fetchCut) {
+    // A FETCH SPELL FOR A FETCH SPELL, or (toward a watched type only) for a land Aura. CEILING: creature
+    // fetchers (Wood Elves) are never swapped.
+    if (isFetchSpell(add.dc)) {
+      if (!sameFetchAnyColour(cut, add.dc)) return null;
+    } else {
+      crossType = typesOf(add.dc).find((t) => watched.has(t));
+      if (!crossType || typesOf(cut).some((t) => watched.has(t)) || landAuraType(add.dc) === null) return null;
+      // ONLY A SINGLE PLAIN FETCH becomes an Aura: two lands (Explosive Vegetation), or one in hand too
+      // (Cultivate), would be thrown away.
+      if (landsToBattlefield(cut) !== 1 || !singleLandFetch(cut)) return null;
+    }
   } else if (!sameRockAnyColour(cut, add.dc)) {
     const cutWatched = typesOf(cut).some((t) => watched.has(t));
     crossType = typesOf(add.dc).find((t) => watched.has(t));
@@ -163,7 +180,7 @@ export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Rec
   const closed = closes ? closes(cut.card.name, add.dc) : colour.reduce((n, c) => n + (deficit[c] ?? 0), 0);
   if (closed <= 0) return null;
   const lost = rolesOfCard(cut).filter((r) => !add.roles.includes(r));
-  return { add: add.dc.card.name, role: "ramp", gained: [], cut: ingredients(cut, "ramp"), addIngredients: ingredients(add.dc, "ramp"), gameChanger: add.dc.card.gameChanger === true, links: add.links, colour, closed, ...(crossType ? { crossType } : {}), ...(keptType ? { keptType } : {}), ...(lost.length ? { lost } : {}) };
+  return { add: add.dc.card.name, role: "ramp", gained: [], cut: ingredients(cut, "ramp"), addIngredients: ingredients(add.dc, "ramp"), gameChanger: add.dc.card.gameChanger === true, links: add.links, colour, closed, ...(crossType ? { crossType } : {}), ...(keptType ? { keptType } : {}), ...(isFetchSpell(add.dc) ? { fetch: true } : {}), ...(lost.length ? { lost } : {}) };
 }
 /** A CARD'S TYPES as a payoff names them: its front-face card types, and Aura or Equipment. */
 const typesOf = (d: DeckCard): string[] => [...shape(d).split(" "), ...(/\baura\b/i.test(d.card.typeLine ?? "") ? ["aura"] : []), ...(/\bequipment\b/i.test(d.card.typeLine ?? "") ? ["equipment"] : [])].filter(Boolean);
@@ -251,6 +268,7 @@ export function roleOptions(
   watched?: ReadonlySet<string>,
   auraOk?: (add: DeckCard) => boolean,
   themed?: ReadonlySet<string>,
+  fetchReach?: (d: DeckCard) => ReadonlySet<Color>,
 ): CutOptions<RoleOption>[] {
   const out: (CutOptions<RoleOption> & { strict?: RoleOption; colour?: RoleOption; shortMade: number })[] = [];
   for (const cut of cuts) {
@@ -259,7 +277,7 @@ export function roleOptions(
     // WHERE NO STRICT OPTION EXISTS FOR A PAIR, a rock may still close the deck's colour shortfall. Best
     // first: the most shortfall closed, then the deck's own links, then name.
     const strictAdds = new Set(strict.map((o) => o.add));
-    const colour = section !== "ramp" ? [] : pool.filter((c) => !strictAdds.has(c.dc.card.name)).map((c) => colourOption(cut, c, deficit, closes, watched, auraOk, themed))
+    const colour = section !== "ramp" ? [] : pool.filter((c) => !strictAdds.has(c.dc.card.name)).map((c) => colourOption(cut, c, deficit, closes, watched, auraOk, themed, fetchReach))
       .filter((o): o is RoleOption => o !== null)
       .sort((a, b) => closedBy(b) - closedBy(a) || b.links - a.links || a.add.localeCompare(b.add));
     const upgrades = gameChangers.pool.map((c) => gameChangerOption(section, cut, c, gameChangers.quality)).filter((o): o is RoleOption => o !== null)
@@ -411,6 +429,8 @@ export async function upgradeOptions(input: {
   const deficit = colourDeficit(deck, input.commanders);
   const closes = swapCloser(deck, input.commanders);
   const watched = watchedTypes(input.themes);
+  const libraryLands = deck.filter((d) => !input.commanders.includes(d.card.name)).map((d) => d.card);
+  const fetchReach = (d: DeckCard): ReadonlySet<Color> => new Set(fetchableLands(d.card.oracleText ?? "", libraryLands).flatMap((c) => c.producedMana ?? []).filter((c): c is Color => (COLORS as readonly string[]).includes(c)));
   const roles = {} as Record<RoleSectionId, CutOptions<RoleOption>[]>;
   for (const section of ROLE_SECTIONS) {
     const sectionRoles = SECTION_ROLES[section] as readonly BuildCategory[];
@@ -424,7 +444,7 @@ export async function upgradeOptions(input: {
       const dc = await dcOf(c.name);
       if (dc && (section === "ramp" || !isCreature(dc))) candidates.push({ dc, roles: rolesOfCard(dc), links: linksOf.get(c.name) ?? 0 });
     }
-    roles[section] = roleOptions(section, cuts, candidates, { pool: gameChangers, quality }, deficit, closes, watched, auraSupport(deck, input.commanders), themedSubjects(input.themes));
+    roles[section] = roleOptions(section, cuts, candidates, { pool: gameChangers, quality }, deficit, closes, watched, auraSupport(deck, input.commanders), themedSubjects(input.themes), fetchReach);
   }
 
   // THE BRING-DOWN CUTS' REPLACEMENTS, from every card sharing a role with them, as cheap or cheaper.

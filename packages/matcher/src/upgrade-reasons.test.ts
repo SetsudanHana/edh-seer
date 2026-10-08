@@ -76,3 +76,15 @@ test("a dork swap that keeps a themed creature type says it is still one", () =>
   const r = roleReasons("Llanowar Elves", roleOpt("Mystic of the Deep", { role: "ramp", gained: [], colour: ["U"], keptType: "elf" }));
   expect(r.in).toBe("Mystic of the Deep is the same ramp and makes blue, which the deck is short of for its spells, and it's still an Elf.");
 });
+
+test("a fetch-spell swap says the add can find a land of the short colour", () => {
+  const r = roleReasons("Rampant Growth", roleOpt("Farseek", { role: "ramp", gained: [], colour: ["G"], fetch: true }));
+  expect(r.in).toBe("Farseek can find a land that makes green, which the deck is short of for its spells.");
+  expect(r.out).toBe("Rampant Growth can't find a land that makes green, which the deck is short of for its spells.");
+});
+
+test("a fetch swap that gives up a role says so", () => {
+  const r = roleReasons("Mwonvuli Acid-Moss", roleOpt("Farseek", { role: "ramp", gained: [], colour: ["G"], fetch: true, lost: ["targetedRemoval"] }));
+  expect(r.out).toBe("Mwonvuli Acid-Moss also does removal, and can't find a land that makes green, which the deck is short of for its spells.");
+  expect(r.in).toBe("Farseek can find a land that makes green, which the deck is short of for its spells, but does not do removal.");
+});

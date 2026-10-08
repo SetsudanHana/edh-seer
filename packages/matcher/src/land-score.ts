@@ -12,7 +12,7 @@ import { fetchableLands, fetchDemand, fetchedLandEntersTapped, isLandFetch } fro
 import { classifyLand } from "./land-conditions.js";
 import { COLORS, deckBasicTypes, landOnlineBy, pipsByColor, type Color } from "./mana-audit.js";
 import { rolesOfCard } from "./quality.js";
-import { creatureSubtypes, isPlainDork, netPositiveMana, netYield } from "./same-job.js";
+import { creatureSubtypes, isFetchSpell, isPlainDork, netPositiveMana, netYield } from "./same-job.js";
 import type { DeckCard } from "./types.js";
 
 /** The same test `mana-base.ts` uses, so a land here is a land there. */
@@ -233,7 +233,7 @@ export function colourReplacements(
   const library = deck.filter((dc) => !commanders.has(dc.card.name)).map((dc) => dc.card);
   const needed = neededColours(deck);
   const otherShort = COLORS.filter((c) => c !== colour && (deficit[c] ?? 0) > 0);
-  // CEILING: land-fetch spells (Cultivate) are never named; lands, artifact rocks and plain dorks are.
+  // CEILING: creature fetchers (Wood Elves) are never named; lands, artifact rocks, plain dorks and land-fetch spells are.
   const basicTypes = deckBasicTypes(deck.filter((dc) => !commanders.has(dc.card.name)));
   const ranked: { name: string; tier: 1 | 2 | 3; land: boolean; tapped: Tapped; colours: number; hidden: number }[] = [];
   for (const dc of deck) {
@@ -252,6 +252,14 @@ export function colourReplacements(
       // MANA SPENT "AS THOUGH IT WERE MANA OF ANY COLOR" (Chromatic Orrery) is not derived and is every
       // colour: refused like Arcane Signet.
       if (/as though it were mana of any colou?r/i.test(dc.card.oracleText ?? "")) continue;
+      // A LAND-FETCH SPELL (Rampant Growth): its colours are those of the deck's lands it can reach, and one
+      // that can reach the short colour is a source of it, never named.
+      if (isFetchSpell(dc)) {
+        const reach = [...new Set(fetchableLands(dc.card.oracleText ?? "", library).flatMap((c) => c.producedMana ?? []))].filter((c): c is Color => (COLORS as readonly string[]).includes(c));
+        if (reach.includes(colour) || reach.some((c) => otherShort.includes(c))) continue;
+        ranked.push({ name: dc.card.name, tier: reach.some((c) => needed.has(c)) ? 3 : 1, land: false, tapped: 0, colours: reach.filter((c) => needed.has(c)).length, hidden: reach.filter((c) => (anyShort[c] ?? 0) > 0).length });
+        continue;
+      }
       const dork = /\bcreature\b/i.test(dc.card.typeLine);
       if (made.length === 0 || (dork ? !isPlainDork(dc) || creatureSubtypes(dc).some((t) => themed.has(t)) : !/\bartifact\b/i.test(dc.card.typeLine))) continue;
       // A ROCK THAT MAKES THE COLOUR IS NEVER NAMED, and only a PLAIN rock is (coordinator, 2026-10-08):

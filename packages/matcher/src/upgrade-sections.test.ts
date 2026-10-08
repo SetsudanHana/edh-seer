@@ -5,7 +5,7 @@ import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
 import { colourDeficit, landTypeDemand } from "./mana-audit.js";
-import { colouredNetYield, jobOf, netYield, themedSubjects } from "./same-job.js";
+import { colouredNetYield, jobOf, landsToBattlefield, netYield, themedSubjects, sameFetchAnyColour } from "./same-job.js";
 import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, auraSupport, sameJob, strictlyBetter, swapCloser, watchedTypes } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
 
@@ -421,5 +421,54 @@ describe("a dork for a dork, to close a colour shortfall", () => {
   test("a rock is still not a dork: Birds never replaces Mind Stone, and a rock never replaces Llanowar", () => {
     expect(swap(rock("Mind Stone"), [rock("Birds of Paradise")], [])).toEqual([]);
     expect(swap(rock("Llanowar Elves"), [rock("Izzet Signet")], [])).toEqual([]);
+  });
+});
+
+describe("a land-fetch spell, swapped for a colour", () => {
+  const reachOf = (m: Record<string, ("W" | "U" | "B" | "R" | "G")[]>) => (d: DeckCard) => new Set(m[d.card.name] ?? []);
+  const swap = (cut: DeckCard, adds: DeckCard[], o: { watched?: string[]; closes?: number; reach?: Record<string, ("W" | "U" | "B" | "R" | "G")[]> } = {}) =>
+    roleOptions("ramp", [cut], adds.map(candidate), undefined, { G: 4 }, () => o.closes ?? 1, new Set(o.watched ?? []), () => true, undefined, reachOf(o.reach ?? {}))
+      .flatMap((x) => x.options.map((y) => [y.add, y.crossType ?? null, y.fetch ?? false]));
+
+  test("an enchantment deck takes Fertile Ground for Rampant Growth; any other deck does not", () => {
+    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { "Rampant Growth": ["R"] } })).toEqual([["Fertile Ground", "enchantment", false]]);
+    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { reach: { "Rampant Growth": ["R"] } })).toEqual([]);
+    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { watched: ["artifact"] })).toEqual([]);
+  });
+  test("a fetch spell for a fetch spell needs the shortfall closed, and no fewer lands onto the battlefield", () => {
+    const reach = { "Rampant Growth": ["R"] as ("R")[], Farseek: ["R", "G"] as ("R" | "G")[], Cultivate: ["R", "G"] as ("R" | "G")[] };
+    expect(swap(rock("Rampant Growth"), [rock("Farseek")], { reach })).toEqual([["Farseek", null, true]]);
+    expect(swap(rock("Rampant Growth"), [rock("Cultivate")], { reach, closes: 0 })).toEqual([]);
+    expect(swap(rock("Explosive Vegetation"), [rock("Cultivate")], { reach: { "Explosive Vegetation": ["R"], Cultivate: ["R", "G"] } })).toEqual([]);
+    // An untapped fetch is never traded for a tapped one for colour (Three Visits -> Farseek).
+    expect(sameFetchAnyColour(rock("Three Visits"), rock("Farseek"))).toBe(false);
+    expect(sameFetchAnyColour(rock("Farseek"), rock("Rampant Growth"))).toBe(true);
+    expect(landsToBattlefield(rock("Cultivate"))).toBe(1);
+    expect(landsToBattlefield(rock("Explosive Vegetation"))).toBe(2);
+    expect(landsToBattlefield(rock("Rampant Growth"))).toBe(1);
+  });
+  test("a count the text cannot bound is not a fetch to replace: Boundless Realms, and an unreadable count reads 2 where it names two", () => {
+    expect(landsToBattlefield(rock("Boundless Realms"))).toBe(Infinity);
+    expect(landsToBattlefield(rock("Verdant Mastery"))).toBe(2);
+    expect(landsToBattlefield(rock("Viewpoint Synchronization"))).toBe(2);
+    expect(landsToBattlefield(rock("Elemental Teachings"))).toBe(0);
+    expect(swap(rock("Boundless Realms"), [rock("Farseek")], { reach: { Farseek: ["G"] } })).toEqual([]);
+    expect(swap(rock("Elemental Teachings"), [rock("Farseek")], { reach: { Farseek: ["G"] } })).toEqual([]);
+  });
+  test("only a plain fetch is cut or added: removal, land destruction, draw, sagas and planes are not", () => {
+    for (const n of ["Deathsprout", "Frenzied Tilling", "Renewal", "Binding the Old Gods", "Horizon Boughs"] as const) {
+      expect(swap(rock(n), [rock("Farseek")], { reach: { Farseek: ["G"] } }), n).toEqual([]);
+      expect(swap(rock("Rampant Growth"), [rock(n)], { reach: { [n]: ["G"] } }), n).toEqual([]);
+    }
+  });
+  test("only a single plain fetch becomes a land Aura: Explosive Vegetation, Skyshroud Claim, Circuitous Route and Cultivate stay", () => {
+    for (const n of ["Explosive Vegetation", "Skyshroud Claim", "Circuitous Route", "Cultivate"] as const) {
+      expect(swap(rock(n), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { [n]: ["R"] } }), n).toEqual([]);
+    }
+    expect(swap(rock("Three Visits"), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { "Three Visits": ["R"] } })).toEqual([["Fertile Ground", "enchantment", false]]);
+  });
+  test("a creature fetcher is never cut, and never added", () => {
+    expect(swap(rock("Wood Elves"), [rock("Rampant Growth"), rock("Farseek")], { reach: { Farseek: ["G"] } })).toEqual([]);
+    expect(swap(rock("Rampant Growth"), [rock("Wood Elves")], { reach: { "Wood Elves": ["G"] } })).toEqual([]);
   });
 });
