@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { promoteSpecificHeadline, demoteUnrankableHeadline, demoteThinHeadline, headlineFloor, generalizeWatchlessHeadline } from "./theme-promote.js";
+import { promoteSpecificHeadline, demoteUnrankableHeadline, demoteThinHeadline, headlineFloor, generalizeWatchlessHeadline, orderHeadline } from "./theme-promote.js";
 import type { ThemeMembership } from "./themes.js";
 
 const m = (tag: string, payoffs: number): ThemeMembership => ({
@@ -115,4 +115,12 @@ test("a watchless kind gives the head to its watched card type, but never a trib
   expect(generalizeWatchlessHeadline(["enters:curse", "enters:enchantment"], freq, census, 3, new Set(["attached:curse"]))[0]).toBe("enters:curse");
   // The general sibling has to clear the carried floor.
   expect(generalizeWatchlessHeadline(["enters:saga", "enters:enchantment"], freq, census, 9)[0]).toBe("enters:saga");
+});
+
+
+test("an unwatched subtype head generalises, and the watched sibling is then promoted (Wakanda Forever, #966)", () => {
+  const ranked = ["enters:vibranium", "enters:equipment", "enters:artifact", "enters:hero"];
+  const freq = new Map([["enters:vibranium", 5], ["enters:equipment", 8], ["enters:artifact", 10], ["enters:hero", 8]]);
+  const membership = [m("enters:vibranium", 0), m("enters:equipment", 1), m("enters:artifact", 3), m("enters:hero", 0)];
+  expect(orderHeadline(ranked, freq, membership, 3, new Set(["enters:equipment", "enters:artifact"]))[0]).toBe("enters:equipment");
 });

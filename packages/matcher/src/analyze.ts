@@ -22,7 +22,7 @@ import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
 import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
-import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
+import { pairReasons, cardThemeTags, cardSupplyTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { GETS_AN_EMBLEM } from "@edh-seer/tagger/emblem";
 import { flipPerspective } from "./perspective.js";
@@ -47,7 +47,7 @@ import { commanderIdentity } from "./answer-pool.js";
 import { deckCastability, type CardCastability } from "./castability.js";
 import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
-import { promoteSpecificHeadline, demoteUnrankableHeadline, demoteThinHeadline, generalizeWatchlessHeadline, headlineFloor } from "./theme-promote.js";
+import { orderHeadline, demoteUnrankableHeadline, demoteThinHeadline, headlineFloor } from "./theme-promote.js";
 import { rankThemesByLoop } from "./theme-loop.js";
 import { deckThing } from "./thing.js";
 import { deckBracket } from "./brackets.js";
@@ -455,7 +455,7 @@ export function analyzeDeckStructured(
   const suppliedTags = new Map<string, Set<string>>();
   for (const dc of resolved) {
     if (!dc.tags) continue;
-    for (const tag of cardThemeTags(dc.tags)) {
+    for (const tag of cardSupplyTags(dc.tags)) {
       for (const key of new Set([tag, foldFit(tag)])) {
         const set = suppliedTags.get(key) ?? new Set<string>();
         set.add(dc.card.name);
@@ -923,9 +923,7 @@ export function analyzeDeckStructured(
   }
   // AND A TAG ONE OR TWO CARDS CARRY CANNOT EITHER (#748), however rare it is.
   const rankableThemes = demoteThinHeadline(demoteUnrankableHeadline(rankedThemes, suppliedPhases), deckFreq, resolved.length, suppliedPhases);
-  const promotedThemes = generalizeWatchlessHeadline(
-    promoteSpecificHeadline(rankableThemes, deckFreq, promoteMembership), deckFreq, promoteMembership, headlineFloor(resolved.length),
-    new Set(caresFreq.keys()));
+  const promotedThemes = orderHeadline(rankableThemes, deckFreq, promoteMembership, headlineFloor(resolved.length), new Set(caresFreq.keys()));
   const themes = promotedThemes.map((tag) => ({ tag, count: deckFreq.get(tag) ?? 0 }));
 
   const nonlands = resolved.filter((dc) => !isLand(dc));

@@ -68,8 +68,34 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
     ?? "any";
 }
 
-/** A card's set of theme tags (for deck-frequency ranking): one per trigger verb, emit, and
- *  static effect. Mirrors the flat engine's produces∪cares membership. */
+/** A MANA ROCK: a noncreature, nonland ARTIFACT with an ACTIVATED mana ability. Its own entry is
+ *  the mana base, never a theme (#966, owner 2026-10-02: "Mana rocks are not a theme ... A mana
+ *  source must not count toward cohesion or the theme"). MEASURED: the precon Multiverse Reforged,
+ *  11 rocks, headlined "Artifacts (artifacts entering)" because each Signet implied `enters:artifact`.
+ *  Only the card's OWN implied entry is dropped; its other theme tags and every edge are untouched
+ *  (`impliedEntryThemeTags` is read by `cardThemeTags` and, for SUPPLY, `cardSupplyTags`, which keeps
+ *  the rock's entry: the ruling covers theme and cohesion, not whether an artifact entered). A mana DORK is a creature and stays its tribe.
+ *
+ *  NARROWED after review: the bare "activated mana-generation" test matched 420 corpus cards --
+ *  planeswalkers (Chandra's "+1: Add {R}{R}"), Equipment whose GRANTED "{T}: Add" is attributed to
+ *  them (Paradise Mantle), Vehicles, 46 enchantments, an instant. Wakanda Forever's theme flipped
+ *  equipments -> artifacts. An Equipment's or Vehicle's job is not mana, and an Equipment/Vehicle
+ *  deck needs their entry, so both are excluded.
+ *  CEILING: a rock whose derive has no mana-generation ability (Jeweled Lotus derives none) still
+ *  themes; a Treasure MAKER (Smothering Tithe) has no activated mana ability and keeps its entry,
+ *  deliberately. Enchantment mana sources (Utopia Sprawl, Cryptolith Rite, Gift of Paradise) are
+ *  deliberately NOT rocks pending an owner call; Cultivator's Caravan (a Vehicle that is also a
+ *  rock) keeps its entry, deliberately. */
+function isManaRock(tags: CardTags): boolean {
+  const c = tags.characteristics;
+  const types = (c?.types ?? []).map((t) => t.toLowerCase());
+  const subtypes = (c?.subtypes ?? []).map((t) => t.toLowerCase());
+  if (!types.includes("artifact")) return false;
+  if (["land", "creature", "planeswalker"].some((t) => types.includes(t))) return false;
+  if (subtypes.includes("equipment") || subtypes.includes("vehicle")) return false;
+  return tags.abilities.some((a) => a.kind === "activated" && a.effect?.kind === "mana-generation");
+}
+
 /** The theme tags a card earns just by BEING a permanent that enters the battlefield.
  *
  *  `cardThemeTags` read a card's ABILITIES only, so a permanent's own entry contributed nothing:
@@ -93,7 +119,7 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
  *  took distinct headlines to 20, under the incumbent 21. The subtype key loses none and takes
  *  distinct headlines to 29. Fragmentation is not a hazard here because `computeCohesion` FOLDS
  *  (`theme-fold.ts`), so a deck's Dragons are counted inside the creature family regardless. */
-function impliedEntryThemeTags(tags: CardTags): string[] {
+function impliedEntryThemeTags(tags: CardTags, keepRockEntry = false): string[] {
   // Absent characteristics (partial fixtures, and any caller holding a hand-built CardTags) yield
   // NO entry tags rather than throwing -- a missing answer, never a crash.
   if (!tags.characteristics) return [];
@@ -105,6 +131,7 @@ function impliedEntryThemeTags(tags: CardTags): string[] {
   // through the payoffs that TRIGGER on it and the ramp that AUTHORS it; what is excluded is a
   // Island claiming to be a theme by existing.
   if ((tags.characteristics.types ?? []).some((t) => t.toLowerCase() === "land")) return [];
+  if (!keepRockEntry && isManaRock(tags)) return [];
   return impliedEvents(tags.characteristics)
     .filter((e) => e.verb === "enters")
     .flatMap((e) => {
@@ -240,9 +267,23 @@ function opponentsPermanent(subject: SubjectFilter | undefined): boolean {
   return subject.type !== undefined || subject.subtype !== undefined;
 }
 
+/** A card's set of theme tags (for deck-frequency ranking): one per trigger verb, emit, and
+ *  static effect. Mirrors the flat engine's produces∪cares membership. */
 export function cardThemeTags(tags: CardTags): Set<string> {
+  return themeTags(tags, false);
+}
+
+/** WHAT A CARD SUPPLIES, as opposed to what it THEMES (#966). Identical to `cardThemeTags` except a
+ *  mana rock keeps its own implied entry: a Signet really IS an artifact entering, so it satisfies
+ *  Akal Pakal's "if an artifact entered the battlefield under your control this turn" even though
+ *  the owner ruling keeps it out of the deck's theme. Used by the deck-fit supply map only. */
+export function cardSupplyTags(tags: CardTags): Set<string> {
+  return themeTags(tags, true);
+}
+
+function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
   const out = new Set<string>();
-  for (const t of impliedEntryThemeTags(tags)) out.add(t);
+  for (const t of impliedEntryThemeTags(tags, keepRockEntry)) out.add(t);
   // BOTH SIDES carry the tag, because `rankFreq` is only computed for tags present in `deckFreq`,
   // which this function feeds. The demand half is added to `cardCaresTags` as well; the supply half
   // is not, so it rides at `PRODUCER_SHARE` like any other supply.

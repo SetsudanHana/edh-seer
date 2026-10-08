@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
+import { pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import { fixtureDeckCard } from "./fixture-cards.js";
@@ -6178,4 +6178,56 @@ test("an implied cast meets a 'from your hand' demand; a cast that states anothe
   const fromHand = { verb: "cast", subject: { control: "you", token: false, type: "instant" }, implied: true } as never;
   expect(eventMatches(fromHand, wants, H)).toBe(true);
   expect(eventMatches(fromExile, wants, H)).toBe(false);
+});
+
+/** A MANA ROCK IS NOT A THEME (#966, owner 2026-10-02): its own implied `enters:<type>` must not
+ *  reach `cardThemeTags`, or 11 rocks headline a precon "Artifacts". Dorks and non-mana permanents
+ *  keep their entry. */
+describe("a mana rock's own entry is not a theme (#966)", () => {
+  const manaAbility = { kind: "activated", effect: { kind: "mana-generation" } };
+  const withTypes = (c: ReturnType<typeof base>, types: string[]) => {
+    (c.tags.characteristics as { types: string[] }).types = types;
+    return c.tags;
+  };
+  const mk = (types: string[], abilities: unknown[], subtypes: string[] = []) =>
+    withTypes(base("X", abilities as CardTags["abilities"], subtypes), types);
+
+  test("a Signet-shaped artifact has no enters:artifact", () => {
+    expect(cardThemeTags(mk(["artifact"], [manaAbility])).has("enters:artifact")).toBe(false);
+  });
+  test("a rock's other abilities still theme; only the own entry goes", () => {
+    // `cardThemeTags` tags triggers, emits and statics (an activated draw adds none), so the
+    // stand-in for "the rest of the card" is a static.
+    const tags = cardThemeTags(mk(["artifact"], [manaAbility, { kind: "static", effect: { kind: "pump" } }]));
+    expect(tags.has("enters:artifact")).toBe(false);
+    expect(tags.has("static:pump")).toBe(true);
+  });
+  test("a planeswalker with a mana ability keeps its entry (Chandra, Torch of Defiance)", () => {
+    expect(cardThemeTags(mk(["legendary", "planeswalker"], [manaAbility], ["chandra"])).has("enters:planeswalker")).toBe(true);
+  });
+  test("an Equipment with a mana ability keeps enters:equipment (Paradise Mantle)", () => {
+    expect(cardThemeTags(mk(["artifact"], [manaAbility], ["equipment"])).has("enters:equipment")).toBe(true);
+  });
+  test("a Vehicle with a mana ability keeps its entry (Cultivator's Caravan)", () => {
+    expect(cardThemeTags(mk(["artifact"], [manaAbility], ["vehicle"])).has("enters:vehicle")).toBe(true);
+  });
+  test("an Aura/enchantment with a mana ability keeps enters:enchantment (Cryptolith Rite)", () => {
+    expect(cardThemeTags(mk(["enchantment"], [manaAbility])).has("enters:enchantment")).toBe(true);
+  });
+  test("a rock still SUPPLIES enters:artifact (Akal Pakal's condition) though it does not theme it", () => {
+    const signet = mk(["artifact"], [manaAbility]);
+    expect(cardThemeTags(signet).has("enters:artifact")).toBe(false);
+    expect(cardSupplyTags(signet).has("enters:artifact")).toBe(true);
+  });
+  test("a mana dork keeps its tribe entry", () => {
+    expect(cardThemeTags(mk(["creature"], [manaAbility], ["elf", "druid"])).has("enters:elf")).toBe(true);
+  });
+  test("an enchantment Treasure-maker (no activated mana ability) keeps enters:enchantment", () => {
+    const tithe = { kind: "triggered", trigger: { verbs: ["cast"], subject: { control: "opp", token: null } }, effect: { kind: "token-generation" } };
+    expect(cardThemeTags(mk(["enchantment"], [tithe])).has("enters:enchantment")).toBe(true);
+  });
+  test("a plain artifact with no mana ability keeps its implied entry", () => {
+    const equip = { kind: "static", effect: { kind: "pump" } };
+    expect(cardThemeTags(mk(["artifact"], [equip])).has("enters:artifact")).toBe(true);
+  });
 });
