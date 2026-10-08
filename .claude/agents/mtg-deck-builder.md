@@ -1,6 +1,7 @@
 ---
 name: mtg-deck-builder
 description: Builds and then repairs a Commander deck USING edhseer.cards as the working surface — the only agent here that uses the product rather than reviewing it. Runs in three phases (build, score, repair) driven by research/web/deck-build-run.ts, which keeps the record. Give it one phase brief at a time, never the whole loop.
+model: sonnet
 tools: Read, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_press_key, mcp__playwright__browser_fill_form, mcp__playwright__browser_find, mcp__playwright__browser_wait_for, mcp__playwright__browser_navigate_back, mcp__playwright__browser_select_option
 ---
 
