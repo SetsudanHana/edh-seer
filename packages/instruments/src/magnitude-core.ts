@@ -7,6 +7,7 @@
  *  scorer's report can say which term lost. */
 import type { Reason } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
+import { axisWeightOf } from "@edh-seer/matcher/axis";
 
 /** How wide the demand class of a payoff's best inbound tag is. The draw takes 20 of each. */
 export type Width = "narrow" | "type" | "wide";
@@ -111,7 +112,7 @@ export function edgeTerms(reasons: readonly Reason[], ctx: WeightContext): EdgeT
       tag: r.tag,
       kind: r.effectKind ? (ctx.kinds[r.effectKind] ?? UNKNOWN_KIND) : UNKNOWN_KIND,
       rate: rateOf(ctx.producer, r.tag), reach: reachOf(ctx.consumer, r.tag),
-      specificity: specificityOf(r.tag), strategy: 1 + AXIS_BOOST * (ctx.axis.get(r.tag) ?? 0),
+      specificity: specificityOf(r.tag), strategy: 1 + AXIS_BOOST * (axisWeightOf(r.tag, ctx.axis)),
     };
     const w = t.kind * t.rate * t.reach * t.specificity * t.strategy;
     const prev = best.get(r.tag);
@@ -126,7 +127,7 @@ export function productEdgeWeight(reasons: readonly Reason[], ctx: WeightContext
   const best = new Map<string, number>();
   for (const r of reasons) {
     const kind = r.effectKind ? (ctx.kinds[r.effectKind] ?? UNKNOWN_KIND) : UNKNOWN_KIND;
-    const strategy = 1 + AXIS_BOOST * (ctx.axis.get(r.tag) ?? 0);
+    const strategy = 1 + AXIS_BOOST * (axisWeightOf(r.tag, ctx.axis));
     const w = kind * rateOf(ctx.producer, r.tag) * reachOf(ctx.consumer, r.tag) * specificityOf(r.tag) * strategy;
     if ((best.get(r.tag) ?? 0) < w) best.set(r.tag, w);
   }

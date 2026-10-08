@@ -39,3 +39,26 @@ test("axisFactor rides the new weights (1 + boost*maxWeight)", () => {
   expect(axisFactor([{ tag: "dies:creature" }] as never, axis, 1.5)).toBeCloseTo(2.5);
   expect(axisFactor([{ tag: "x" }] as never, axis, 1.5)).toBe(1);
 });
+
+test("fodder inherits the stronger of its parents' axis weight", () => {
+  const axis = new Map([["sacrifice:creature", 0.4], ["dies:creature", 0.7]]);
+  expect(maxAxisWeight([{ tag: "fodder:creature" } as never], axis)).toBe(0.7);
+});
+
+test("scales inherits create-token; 0 with no parent on the axis", () => {
+  expect(maxAxisWeight([{ tag: "scales:goblin" } as never], new Map([["create-token:goblin", 0.5]]))).toBe(0.5);
+  expect(maxAxisWeight([{ tag: "scales:goblin" } as never], new Map())).toBe(0);
+});
+
+test("an explicit axis entry wins over the parent", () => {
+  const axis = new Map([["cheat:creature", 1], ["enters:creature", 0.2]]);
+  expect(maxAxisWeight([{ tag: "cheat:creature" } as never], axis)).toBe(1);
+});
+
+test("an unmapped relation family weighs 0; an ordinary tag reads its own weight", () => {
+  // No `tutor:creature` entry: the lookup must reach the parent code and find no parent for `tutor`,
+  // even though `enters:creature` is on the axis.
+  const axis = new Map([["enters:creature", 0.9], ["draw:any", 0.3]]);
+  expect(maxAxisWeight([{ tag: "tutor:creature" } as never], axis)).toBe(0);
+  expect(maxAxisWeight([{ tag: "draw:any" } as never], axis)).toBe(0.3);
+});

@@ -19,6 +19,7 @@ import { join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex, impactEdgeWeight, loadImpactWeights, type Reason } from "@edh-seer/engine";
 import { createTagsLookup, type CardTags } from "@edh-seer/tagger";
+import { axisWeightOf } from "@edh-seer/matcher/axis";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "@edh-seer/matcher";
 import { sample, seededRng } from "./precision-core.js";
 import { AXIS_BOOST, edgeTerms, narrowestWidth, productEdgeWeight, type Width } from "./magnitude-core.js";
@@ -82,7 +83,7 @@ const key: { seed: number; n: number; drawnAt: string; population: Record<Width,
   seed: SEED, n: N, drawnAt: new Date().toISOString(),
   population: { narrow: pools.narrow.length, type: pools.type.length, wide: pools.wide.length }, rows: [],
 };
-const maxAxis = (reasons: Reason[], axis: Map<string, number>): number => Math.max(0, ...reasons.map((r) => axis.get(r.tag) ?? 0));
+const maxAxis = (reasons: Reason[], axis: Map<string, number>): number => Math.max(0, ...reasons.map((r) => axisWeightOf(r.tag, axis)));
 for (const width of ["narrow", "type", "wide"] as Width[]) {
   for (const c of sample(pools[width], N, rng)) {
     // A TRIPLE THE CANDIDATE CAN ORDER, where the payoff has one. Three random feeders of a spell

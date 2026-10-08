@@ -23,7 +23,7 @@ import { detectPolymorph, type CardSignal } from "./archetypes.js";
 import { faceDeckCards } from "./faces.js";
 import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { commanderSubtypes, markCommander, resolveSharedTypes } from "./commander.js";
-import { maxAxisWeight } from "./axis.js";
+import { axisWeightOf, maxAxisWeight } from "./axis.js";
 import { loadHierarchy } from "./hierarchy.js";
 import { BUILD_CATEGORIES, BUILD_PARENTS } from "./build.js";
 import { POOL_CLASSES } from "./answer-pool.js";
@@ -397,7 +397,7 @@ export async function suggestForDeck(input: {
   // engine wrote for it, so its on-plan weight is the same sum `verified` measures, over the deck
   // cards whose lists hold it -- no card fetched, no engine run.
   const { pairTags } = await lookup.nameIndexVocabulary();
-  const tagWeight = pairTags.map((t) => axis.get(t) ?? 0);
+  const tagWeight = pairTags.map((t) => axisWeightOf(t, axis));
   for (const c of pool.values()) {
     c.hint = c.connections.reduce((sum, x) => sum + Math.max(0, ...(x.tags ?? []).map((t) => tagWeight[t] ?? 0)), 0);
   }
