@@ -79,6 +79,10 @@ function staticPayoffTags(tags: CardTags): Set<string> {
       ? "legendary"
       : subject.historic === true ? "historic" : themeSubjectKey(subject);
     if (key === "any") continue;
+    // A GRANT TO LANDS IS NOT LANDFALL (#1103). Chromatic Lantern, Prismatic Omen and Urborg change
+    // lands already in play; nothing about one ENTERING is what they care about. Creature lords stay
+    // payoffs of entering by the 2026-08-19 ruling above -- a land key is the only one refused.
+    if (verb === "enters" && key === "land") continue;
     out.add(`${verb}:${key}`);
   }
   return out;

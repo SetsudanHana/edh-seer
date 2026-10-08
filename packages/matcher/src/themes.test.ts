@@ -157,3 +157,21 @@ test("a legends anthem is a payoff of legendary permanents entering, not of crea
   expect(legendary?.payoffs).toContain("Jodah, the Unifier");
   expect(creature?.payoffs ?? []).not.toContain("Jodah, the Unifier");
 });
+
+// #1103. Chromatic Lantern, "Lands you control have '{T}: Add one mana of any color.'", grants an
+// ability to lands already in play. A land ENTERING is not what it pays off, so it is no landfall
+// payoff; a trigger on a land entering still is.
+test("a static grant to lands is not a payoff of a land entering, a landfall trigger is", () => {
+  const lantern = card("Chromatic Lantern", [{
+    kind: "static",
+    effect: { kind: "keyword-grant", subject: { type: "land", control: "you", token: null, scope: "all" } },
+  }] as never);
+  const landfall = card("Landfall Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "land", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const [t] = themeMembership([lantern, landfall], [reason("enters:land", "Some Land", "Landfall Payoff")], ["enters:land"]);
+  expect(t.payoffs).not.toContain("Chromatic Lantern");
+  expect(t.payoffs).toContain("Landfall Payoff");
+});
