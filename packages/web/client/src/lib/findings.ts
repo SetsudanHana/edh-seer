@@ -278,7 +278,7 @@ function colourFindings(report: DeckReport): Finding[] {
  *  trading, name them; otherwise the general advice, which still holds. */
 function tradeAction(replace: readonly string[], colour: string, turn: number): string {
   if (replace.length === 0) return "Delay or cut the early double pip, or trade a tapped source for one that enters untapped.";
-  return `Trade ${replace.join(" or ")} for a ${colour} source that's online by turn ${turn}.`;
+  return `Trade ${replace.join(" or ")} for a ${colour} source that taps for mana by turn ${turn}.`;
 }
 
 /** THE CARDS A COLOUR DEMAND IS ABOUT, AS A SENTENCE SUBJECT. Every name the wire carries (it sends

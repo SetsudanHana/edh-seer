@@ -223,7 +223,9 @@ export function computeDeckMath(
 
   const audit = manaAudit(deck, { commanderNames });
   const deficit: Partial<Record<Color, number>> = {};
-  for (const r of audit) if (r.worst && r.worst.required > r.worst.available) deficit[r.color] = r.worst.required - r.worst.available;
+  // ONLY THE ROWS THE FINDING SHOWS: a single pip is hidden as "a fault every deck has" (findings.ts), so
+  // it must not rule out the sources that would be traded.
+  for (const r of audit) if (r.worst && r.worst.pips >= 2 && r.worst.required > r.worst.available) deficit[r.color] = r.worst.required - r.worst.available;
   const colors = audit.map((r) => ({
     color: r.color,
     supplied: r.supplied,

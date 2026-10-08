@@ -76,8 +76,8 @@ test("a colour finding names the sources to trade, and keeps the general advice 
       }],
     } as DeckReport["deckMath"],
   }))[0]!;
-  expect(rowOf(["Fire Diamond", "Mountain"]).action).toBe("Trade Fire Diamond or Mountain for a blue source that's online by turn 2.");
-  expect(rowOf(["Mountain"]).action).toBe("Trade Mountain for a blue source that's online by turn 2.");
+  expect(rowOf(["Fire Diamond", "Mountain"]).action).toBe("Trade Fire Diamond or Mountain for a blue source that taps for mana by turn 2.");
+  expect(rowOf(["Mountain"]).action).toBe("Trade Mountain for a blue source that taps for mana by turn 2.");
   expect(rowOf([]).action).toBe("Delay or cut the early double pip, or trade a tapped source for one that enters untapped.");
   expect(rowOf().action).toBe("Delay or cut the early double pip, or trade a tapped source for one that enters untapped.");
 });

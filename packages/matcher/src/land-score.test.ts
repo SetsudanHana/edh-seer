@@ -103,7 +103,7 @@ test("a rock that makes the colour is never named, however late it is: Arcane Si
   const sapphire = rock("Sapphire Medallion", 3, "{T}: Add {U}.", ["U"]);
   const signet = rock("Arcane Signet", 2, "{T}: Add one mana of any color in your commander's color identity.", ["W", "U", "B", "R", "G"]);
   const sceptre = rock("Sceptre of Eternal Glory", 3, "{T}: Add one mana of any color.", ["W", "U", "B", "R", "G"]);
-  expect(colourReplacements(deckOf(sapphire, signet, sceptre), "U", 4, { U: 2 })).toEqual([]);
+  expect(colourReplacements(deckOf(sapphire, signet, sceptre), "U", 2, { U: 2 })).toEqual([]);
 });
 
 const withTags = (d: DeckCard, kinds: [string, string][]): DeckCard => ({

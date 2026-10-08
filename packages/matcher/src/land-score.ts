@@ -226,6 +226,10 @@ export function colourReplacements(
   const library = deck.filter((dc) => !commanders.has(dc.card.name)).map((dc) => dc.card);
   const needed = neededColours(deck);
   const otherShort = COLORS.filter((c) => c !== colour && (deficit[c] ?? 0) > 0);
+  // CEILING: creature dorks and land-fetch spells (Cultivate) are never named; only lands and artifact
+  // rocks are, so a deck whose only spare mana is a dork gets no name for it.
+  // CEILING: a conditionally-tapped land (tapped===1: check, slow, fast) is never named, though the
+  // audit can count it as not available on an early turn.
   const ranked: { name: string; tier: 0 | 1; land: boolean; tapped: Tapped }[] = [];
   for (const dc of deck) {
     if (commanders.has(dc.card.name)) continue;
