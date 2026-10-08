@@ -37,29 +37,6 @@ export interface GatherInput {
   synergy: readonly SynergySwap[];
 }
 
-/** WHO GETS WHICH ADD, for the land section: a maximum bipartite matching (Kuhn's augmenting paths),
- *  cuts visited worst first and each cut's options in their preference order, stopping once `max` cuts
- *  are matched. A matched cut stays matched, so no earlier (worse) cut is ever stranded by a later one,
- *  and an uncontested cut keeps its best add. Greedy assignment lost swaps when worst-first ordering
- *  let an always-tapped cut take the scarce add that was a later cut's only option: 3,003 -> 2,935
- *  land swaps over 24 precons (-68), e.g. Abzan Armor, where Temple of Plenty took Temple Garden and
- *  Sunpetal Grove, whose only option it was, got nothing. `usable` is the static part of `take`. */
-export function matchAdds(cuts: readonly { cut: string; options: readonly { add: string }[] }[], usable: (add: string) => boolean, max: number): Map<string, string> {
-  const owner = new Map<string, number>(); // add -> index of the cut holding it
-  const mine = new Map<number, string>();
-  const augment = (i: number, seen: Set<string>): boolean => {
-    for (const o of cuts[i]!.options) {
-      if (!usable(o.add) || seen.has(o.add)) continue;
-      seen.add(o.add);
-      const j = owner.get(o.add);
-      if (j === undefined || augment(j, seen)) { owner.set(o.add, i); mine.set(i, o.add); return true; }
-    }
-    return false;
-  };
-  for (let i = 0; i < cuts.length && mine.size < max; i++) augment(i, new Set());
-  return new Map([...mine].map(([i, add]) => [cuts[i]!.cut, add]));
-}
-
 /** One package, or `null` when no cut can bring the deck down to the target (its commander is a Game
  *  Changer, or a forbidden combo is made of commanders alone). */
 export function gatherPackage(g: GatherInput): UpgradePackage | null {
@@ -99,12 +76,9 @@ export function gatherPackage(g: GatherInput): UpgradePackage | null {
   for (const id of UPGRADE_SECTIONS) {
     const swaps: UpgradeSwap[] = [];
     if (id === "lands") {
-      const plan = matchAdds(g.lands, (a) => !added.has(a) && !g.inDeck.has(a) && g.cardOf(a) !== undefined, SECTION_MAX);
       for (const c of g.lands) {
         if (swaps.length >= SECTION_MAX) break;
-        // The matched add first; the guard may still refuse it, then any other option as before.
-        const m = plan.get(c.cut);
-        const o = c.options.find((x) => x.add === m && take(c.cut, x.add)) ?? c.options.find((x) => take(c.cut, x.add));
+        const o = c.options.find((x) => take(c.cut, x.add));
         if (o) { const r = landReasons(o); swaps.push({ kind: "land", out: { name: c.cut, reason: r.out }, in: { name: o.add, reason: r.in } }); }
       }
     } else if (id === "synergy") {
