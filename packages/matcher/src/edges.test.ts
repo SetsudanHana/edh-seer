@@ -6264,6 +6264,11 @@ describe("a self enters trigger is not a theme (#1097)", () => {
     expect(cardThemeTags(rock).has("enters:artifact")).toBe(false);
     expect(cardSupplyTags(rock).has("enters:artifact")).toBe(true);
   });
+  test("a creature // land MDFC keeps its creature-face self ETB theme", () => {
+    const d = withTypes(["creature", "land"], [trig("enters", { self: true, type: "creature", control: "you" })]);
+    (d.characteristics as { subtypes: string[] }).subtypes = ["human", "warlock"];
+    expect(cardThemeTags(d).has("enters:creature")).toBe(true);
+  });
   test("a land with a NON-self landfall trigger keeps enters:land", () => {
     const l = withTypes(["land"], [trig("enters", { type: "land", control: "you" })]);
     expect(cardThemeTags(l).has("enters:land")).toBe(true);

@@ -127,6 +127,11 @@ function ownEntryExcluded(tags: CardTags, keepRockEntry: boolean): boolean {
   return !keepRockEntry && isManaRock(tags);
 }
 
+const selfSubjectIsLand = (subject: SubjectFilter): boolean => {
+  const ty = (subject as { type?: string | string[] }).type;
+  return ty === undefined || (Array.isArray(ty) ? ty : [ty]).some((x) => x.toLowerCase() === "land");
+};
+
 function impliedEntryThemeTags(tags: CardTags, keepRockEntry = false): string[] {
   // Absent characteristics (partial fixtures, and any caller holding a hand-built CardTags) yield
   // NO entry tags rather than throwing -- a missing answer, never a crash.
@@ -309,7 +314,10 @@ function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
       // keep it: their implied entry is keyed by SUBTYPE, so the self trigger is today's only source of
       // `enters:creature` (measured 4,007 -> 1,336 when skipped broadly -- not ruled). Supply keeps
       // it (`keepRockEntry`): a Temple really IS a land entering.
-      if (!keepRockEntry && v === "enters" && a.trigger.subject?.self === true && ownEntryExcluded(tags, false)) continue;
+      // A modal DFC is a union-land card (creature // land), but its creature-face trigger names the
+      // FRONT type: that one stays. A land skip therefore needs a subject that is untyped or "land".
+      if (!keepRockEntry && v === "enters" && a.trigger.subject?.self === true && ownEntryExcluded(tags, false)
+        && (isManaRock(tags) || selfSubjectIsLand(a.trigger.subject))) continue;
       const t = normalizeZoneEvent({ verb: v, subject: a.trigger.subject });
       out.add(zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject)));
     }
