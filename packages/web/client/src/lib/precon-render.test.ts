@@ -34,7 +34,7 @@ function assets(files: Record<string, unknown>) {
     },
   };
 }
-const site = assets({ "/static/manifest.json": { version: "v-1" }, "/static/v-1/precons/index.json": index, [`/static/v-1/precons/${page.slug}.json`]: page });
+const site = assets({ "/static/manifest.json": { version: "v-1", precons: "p-abc" }, "/static/v-1/precons/p-abc/index.json": index, [`/static/v-1/precons/p-abc/${page.slug}.json`]: page });
 
 test("a precon page is served with its own head, its crawler block and its record", async () => {
   const res = await renderPreconPage(new Request(`https://edhseer.cards/precons/${page.slug}`), site, page.slug);
@@ -62,6 +62,13 @@ test("a slug the index does not hold is a real 404 that asks not to be indexed",
 test("an artifact that did not load is degraded to the shell, never called missing", async () => {
   const res = await renderPreconPage(new Request(`https://edhseer.cards/precons/${page.slug}`), assets({}), page.slug);
   expect(res.status).toBe(200);
+});
+
+test("a manifest with no precons pointer serves the shell, not a page", async () => {
+  const noPointer = assets({ "/static/manifest.json": { version: "v-1" }, "/static/v-1/precons/index.json": index, [`/static/v-1/precons/${page.slug}.json`]: page });
+  const res = await renderPreconPage(new Request(`https://edhseer.cards/precons/${page.slug}`), noPointer, page.slug);
+  expect(res.status).toBe(200);
+  expect(await res.text()).not.toContain(`data-slug="${preconDataSlug(page.slug)}"`);
 });
 
 test("the precon list links every precon, sets newest first", async () => {

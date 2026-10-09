@@ -124,7 +124,8 @@ if (!canonical) {
   process.exit(1);
 }
 const origin = canonical.replace(/\/$/, "");
-const version = JSON.parse(readFileSync(join(target, "manifest.json"), "utf8")).version;
+const manifest = JSON.parse(readFileSync(join(target, "manifest.json"), "utf8"));
+const version = manifest.version;
 // THE ROWS OUT OF THE FILE, WHICH IS AN OBJECT SINCE 2026-09-21. It was the bare array until the
 // type and subtype tables had to ship beside the rows. This reader is BUILD TIME and reads an
 // artifact the same tree just produced, so it takes the new shape only -- the browser's reader
@@ -163,8 +164,9 @@ const browseCommanderLetters = browseRows.filter(([, r]) => r.some((e) => e.comm
 // THE PRECON PAGES (2026-09-27), when `build-precons` wrote them: every one is indexable, since each
 // is a whole deck read card by card. Absent, the deploy goes on without them and says so -- the rest
 // of the site does not depend on them.
-const preconIndexPath = join(target, version, "precons", "index.json");
-const precons = existsSync(preconIndexPath) ? JSON.parse(readFileSync(preconIndexPath, "utf8")) : [];
+// Found through the manifest's `precons` pointer (a content-addressed `p-<hash>` directory).
+const preconIndexPath = manifest.precons ? join(target, version, "precons", manifest.precons, "index.json") : null;
+const precons = preconIndexPath && existsSync(preconIndexPath) ? JSON.parse(readFileSync(preconIndexPath, "utf8")) : [];
 if (precons.length === 0) console.warn("sitemap: no precon pages in the artifact (run packages/web/scripts/build-precons.mts after build-static)");
 const byPartners = (a, b) => (b.partners ?? 0) - (a.partners ?? 0) || a.slug.localeCompare(b.slug);
 const coreUrls = [

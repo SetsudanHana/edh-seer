@@ -8,9 +8,18 @@
  *    npx tsx packages/web/scripts/build-precons.mts [--static static-out] [--precons packages/data/precons.json]
  *
  *  `--static` may also be a URL (`https://edhseer.cards/static`) with `--out <dir>`, to try the
- *  pages against a deployed corpus. */
+ *  pages against a deployed corpus. An explicit `--out` writes the files flat into that directory and
+ *  nothing else.
+ *
+ *  THE PAGES' URL IS THEIR BYTES (#1121). Locally they are built into `<version>/precons/.staging`,
+ *  and a clean run renames that to `<version>/precons/p-<hash of the output>`, which `manifest.json`
+ *  names as `precons`. `<version>` hashes the DATA, so an engine-only change rebuilds the pages
+ *  under the same version, and `/static/v-*` is served immutable for a year and cached first by the
+ *  service worker: a fixed URL would keep the old bytes in every returning browser. Same principle
+ *  as the shards; the manifest is the one revalidated file. The build stamp only decides whether to
+ *  rebuild. A failed or `--only` run leaves the manifest on the last good directory. */
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
@@ -41,8 +50,16 @@ const fetchImpl: typeof fetch = remote ? fetch : (async (input: string | URL | R
 }) as typeof fetch;
 
 const version = (await (await fetchImpl(`${baseUrl}/manifest.json`)).json() as { version: string }).version;
-const outDir = arg("--out") ?? join(source, version, "precons");
-mkdirSync(outDir, { recursive: true });
+const explicitOut = arg("--out");
+const preconsRoot = join(source, version, "precons");
+const stagingDir = join(preconsRoot, ".staging");
+const outDir = explicitOut ?? stagingDir;
+const manifestPath = join(source, "manifest.json");
+/** Point the manifest at a precon directory, keeping every other key (`build-static` writes `{version}` only). */
+const pointManifest = (dir: string) => {
+  const m = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
+  writeFileSync(manifestPath, JSON.stringify({ ...m, precons: dir }));
+};
 
 // SKIP WHEN NOTHING THE PAGES READ HAS CHANGED (P5, docs/plans/2026-10-04-precon-build-time.md): a
 // UI-only deploy used to pay the whole ~16-minute build. The manifest version covers the DATA but
@@ -50,7 +67,7 @@ mkdirSync(outDir, { recursive: true });
 // script imports, found by esbuild's import graph rather than a hand list that would go stale. The
 // pages' code runs in a browser, so every input is an import; precons.json is read by fs and the
 // lockfile pins the dependencies. A failed precon writes no stamp, so the next run retries.
-const stampPath = join(outDir, "build-stamp.json");
+const stampPath = join(explicitOut ?? preconsRoot, "build-stamp.json");
 const inputs = Object.keys((await build({
   entryPoints: [fileURLToPath(import.meta.url)], bundle: true, write: false, metafile: true,
   platform: "node", format: "esm", logLevel: "silent", absWorkingDir: repo,
@@ -58,12 +75,20 @@ const inputs = Object.keys((await build({
 const hash = createHash("sha256").update(version);
 for (const p of inputs) hash.update(p).update(readFileSync(join(repo, p)));
 const stamp = hash.digest("hex");
-if (!onlyIdx && !process.argv.includes("--force") && existsSync(join(outDir, "index.json"))
-    && existsSync(stampPath) && JSON.parse(readFileSync(stampPath, "utf8")).stamp === stamp) {
-  console.log(`precon pages in ${outDir} are current (${inputs.length} inputs unchanged): skipped, --force to rebuild`);
-  process.exit(0);
+if (!onlyIdx && !process.argv.includes("--force") && existsSync(stampPath)) {
+  const saved = JSON.parse(readFileSync(stampPath, "utf8")) as { stamp?: string; dir?: string };
+  const dir = explicitOut ? "" : saved.dir;
+  const index = explicitOut ? join(explicitOut, "index.json") : dir && join(preconsRoot, dir, "index.json");
+  if (saved.stamp === stamp && (explicitOut || dir) && index && existsSync(index)) {
+    // `build-static` rewrites the manifest as `{version}`, so a skip has to put the pointer back.
+    if (dir) pointManifest(dir);
+    console.log(`precon pages in ${explicitOut ?? join(preconsRoot, dir!)} are current (${inputs.length} inputs unchanged): skipped, --force to rebuild`);
+    process.exit(0);
+  }
 }
 rmSync(stampPath, { force: true }); // a run that dies, or an `--only` one, leaves no stamp to trust
+if (!explicitOut) rmSync(stagingDir, { recursive: true, force: true });
+mkdirSync(outDir, { recursive: true });
 
 // ONE LOOKUP FOR EVERY PRECON'S UPGRADE PACKAGES: their candidate pools overlap almost entirely, so
 // each card shard is read once for the whole build.
@@ -125,5 +150,22 @@ for (const p of precons) {
   }
 }
 writeFileSync(join(outDir, "index.json"), JSON.stringify(index));
-if (!onlyIdx && !failed) writeFileSync(stampPath, JSON.stringify({ stamp }));
-console.log(`${index.length} precon pages in ${outDir}${failed ? `, ${failed} failed` : ""}`);
+if (explicitOut) {
+  if (!onlyIdx && !failed) writeFileSync(stampPath, JSON.stringify({ stamp }));
+  console.log(`${index.length} precon pages in ${outDir}${failed ? `, ${failed} failed` : ""}`);
+} else if (failed || onlyIdx) {
+  // NOT PROMOTED: the manifest keeps pointing at the last good directory, which is left alone.
+  console.log(`${index.length} precon pages in ${outDir}${failed ? `, ${failed} failed` : ""}: staging kept for inspection, manifest and live pages untouched`);
+} else {
+  // NAME THEN BYTES, SORTED (as `build-static` hashes its shards), so two files swapping contents is a different directory.
+  const h = createHash("sha256");
+  for (const f of readdirSync(stagingDir).sort()) h.update(f).update(readFileSync(join(stagingDir, f)));
+  const dir = `p-${h.digest("hex").slice(0, 12)}`;
+  rmSync(join(preconsRoot, dir), { recursive: true, force: true });
+  renameSync(stagingDir, join(preconsRoot, dir));
+  // ONE DIRECTORY SURVIVES: the previous flat layout's files and older `p-*` directories go.
+  for (const e of readdirSync(preconsRoot)) if (e !== dir && e !== "build-stamp.json") rmSync(join(preconsRoot, e), { recursive: true, force: true });
+  writeFileSync(stampPath, JSON.stringify({ stamp, dir }));
+  pointManifest(dir);
+  console.log(`${index.length} precon pages in ${join(preconsRoot, dir)}, manifest points at ${dir}`);
+}

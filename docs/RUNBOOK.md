@@ -213,7 +213,7 @@ record field ships absent and the feature is silently dead.
 `npm run deploy` builds the 197 precon pages first (`build-precons.mts`, ~16 minutes), and **skips
 them when nothing they read has changed**: `static-out/<version>/precons/build-stamp.json` hashes
 the manifest version, every file the builder imports (its import graph, from esbuild), `precons.json`
-and the lockfile. A UI-only deploy then takes minutes. `--force` rebuilds anyway; a failed precon or
+and the lockfile. The pages themselves sit in `static-out/<version>/precons/p-<hash of their bytes>/`, named by `precons` in `manifest.json`, so their URL moves with their bytes (#1121). A UI-only deploy then takes minutes. `--force` rebuilds anyway; a failed precon or
 an `--only` run leaves no stamp, so the next deploy rebuilds.
 
 **The deploy runs from the maintainer's machine**, with a logged-in `wrangler`; there is no deploy

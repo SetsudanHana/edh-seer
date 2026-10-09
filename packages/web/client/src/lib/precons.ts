@@ -16,8 +16,9 @@ function inline<T>(slug: string): T | null {
 async function precons(baseUrl: string, fetchImpl: typeof fetch): Promise<string | null> {
   const res = await fetchImpl(`${baseUrl}/manifest.json`);
   if (!res.ok) return null;
-  const { version } = await res.json() as { version?: string };
-  return version ? `${baseUrl}/${version}/precons` : null;
+  // The pointer is the manifest's `precons` (a `p-<hash>` directory named from the pages' bytes).
+  const { version, precons: dir } = await res.json() as { version?: string; precons?: string };
+  return version && dir ? `${baseUrl}/${version}/precons/${dir}` : null;
 }
 
 export async function loadPrecon(slug: string, baseUrl = "/static", fetchImpl: typeof fetch = fetch): Promise<PreconRecord | null> {

@@ -17,8 +17,8 @@ async function load(request: Request, assets: Assets) {
   const origin = new URL(request.url).origin;
   const shell = await (await assets.fetch(`${origin}/index.html`)).text();
   const manifest = await assets.fetch(`${origin}/static/manifest.json`);
-  const version = manifest.ok ? (await manifest.json() as { version?: string }).version : undefined;
-  const base = version ? `${origin}/static/${version}/precons` : null;
+  const m = manifest.ok ? await manifest.json() as { version?: string; precons?: string } : {};
+  const base = m.version && m.precons ? `${origin}/static/${m.version}/precons/${m.precons}` : null;
   const index = base ? await assets.fetch(`${base}/index.json`) : null;
   const list = index?.ok ? await index.json() as PreconIndexEntry[] : null;
   return { origin, shell, base, list };
