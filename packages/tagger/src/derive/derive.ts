@@ -412,7 +412,7 @@ import { emblemRecipient } from "../emblem.js";
 // additional (Xorn, Chatterfang), one-of-each (Academy Manufactor), replaced (Divine Visitation).
 // 291: #1141, a doubling verb reads what is doubled from its OBJECT first (counters, damage, life), so a
 // clause that merely mentions a token (Paradox Zone, Elvish Vatkeeper, Arna) is no token doubler, and
-// "gains double strike" is a keyword grant, not the verb double (Akim and 19 more).
+// "gains double strike" is a speed-increase (as on the grant path), not the verb double (Akim and 20 more).
 export const DERIVE_VERSION = 291;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant

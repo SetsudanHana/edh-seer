@@ -541,7 +541,7 @@ test("doubling reads the object before the clause text (#1141)", () => {
 
 test("'double strike' is a keyword, not the verb double (#1141)", () => {
   expect(actionEffectKind({ verb: "double", object: "Creature tokens you control" },
-    "Creature tokens you control gain double strike until end of turn.")).toBe("keyword-grant");
+    "Creature tokens you control gain double strike until end of turn.")).toBe("speed-increase");
 });
 
 test("doubling something unnamed is refused, not guessed", () => {

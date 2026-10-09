@@ -469,11 +469,12 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     // Then create a ... Fractal creature token"), Elvish Vatkeeper ("Transform target Incubator
     // token. Double the number of +1/+1 counters on it") and Arna Kennerud read "makes more tokens".
     const fromObject = doubledKind(action.object ?? "");
-    // "double strike" is a KEYWORD (CR 702.4), not this verb: the normalizer read Akim's "Creature
+    // "double strike" is a KEYWORD (CR 702.4), not this verb; granting it is a speed-increase, the kind
+    // the grant-ability path gives the same text (SPEED_KEYWORDS, #1079): the normalizer read Akim's "Creature
     // tokens you control gain double strike" as `double` with the tokens as object. The model made
     // that call (cardClauses, normalize v14), so the guard lives here rather than in the grammar.
     // CEILING: only when the object names no counters/damage/life/mana, i.e. nothing real is doubled.
-    if (/\bdouble strike\b/i.test(clauseText) && (fromObject === null || fromObject === "token-doubling")) return "keyword-grant";
+    if (/\bdouble strike\b/i.test(clauseText) && (fromObject === null || fromObject === "token-doubling")) return "speed-increase";
     if (fromObject) return fromObject;
     const fromClause = doubledKind(clauseText);
     if (fromClause) return fromClause;

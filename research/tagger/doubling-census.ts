@@ -24,3 +24,4 @@ for (const d of docs) {
 }
 console.log(rows.sort().join("\n"));
 console.log(`\n${rows.length} actions`);
+process.exit(0);
