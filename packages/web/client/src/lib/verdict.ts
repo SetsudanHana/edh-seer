@@ -3,17 +3,26 @@ import { scoreBand } from "./score-band.js";
 import { findings } from "./findings.js";
 
 /** A short basic, in the words the verdict says it in. */
-const GAP: Record<string, string> = { Consistency: "card draw", Ramp: "ramp", Interaction: "answers", "Board wipes": "board wipes" };
+const GAP: Record<string, string> = { "Card advantage": "card advantage", Ramp: "ramp", Interaction: "answers", "Board wipes": "board wipes" };
 const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
 
 /** THE BASICS THE SUGGESTIONS SAY ARE SHORT (persona round 2026-09-27: "Well built: it has the
  *  ramp, draw and answers a deck needs" sat above "You will run out of cards" and "3 short on
  *  interaction" on three seats' reports, and read as a pass the page then took back). Read off the
  *  same findings the suggestions are, so the two can never disagree. */
+/** Each gap as the page says it, with its numbers where the role has them. */
 function gaps(report: DeckReport): string[] {
   const out: string[] = [];
   for (const f of findings(report)) {
-    if (f.kind === "build") { const name = f.id.replace(/^build:/, ""); const w = GAP[name]; if (w && !out.includes(w)) out.push(w); }
+    if (f.kind === "build") {
+      const name = f.id.replace(/^build:/, ""); const w = GAP[name];
+      // THE ROLE'S OWN NUMBERS (#1086): "short on card advantage (12 of 15)" cannot be read against a
+      // Roles shelf that says "Draw 11", because the count it names is the one the shelf's group shows.
+      // Read from the build parent the finding was made from, never from the headline's words.
+      const parent = report.buildParents?.find((p) => p.name === name);
+      const said = w && parent ? `${w} (${parent.count} of ${parent.target})` : w;
+      if (said && !out.includes(said)) out.push(said);
+    }
     else if (f.kind === "lands" && /short|under/i.test(f.headline) && !out.includes("lands")) out.push("lands");
   }
   return out;

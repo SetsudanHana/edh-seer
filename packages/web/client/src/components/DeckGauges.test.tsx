@@ -6,7 +6,7 @@ import { floorState } from "../lib/deck-gauge.js";
 const DATA = {
   report: {
     buildParents: [
-      { name: "Consistency", count: 15, target: 14, leaves: ["draw", "cardSelection"] },
+      { name: "Card advantage", count: 15, target: 14, leaves: ["draw", "cardSelection"] },
       { name: "Ramp", count: 17, target: 10, leaves: ["ramp"] },
       { name: "Interaction", count: 19, target: 10, leaves: ["targetedRemoval", "protection"] },
       { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
@@ -23,7 +23,7 @@ test("draws two groups, each with its lead dial and its inputs", () => {
   render(<DeckGauges data={DATA as never} />);
   for (const name of [
     "Synergy", "Focus", "Key card",
-    "Build", "Consistency", "Ramp", "Interaction", "Board wipes", "Lands",
+    "Build", "Card advantage", "Ramp", "Interaction", "Board wipes", "Lands",
   ]) {
     // `getAllBy`, because S15 moved each score's gloss onto its own dial and those sentences name
     // Breadth and Anchor in prose ("Breadth is how much of the deck sits on its main theme"). The
@@ -49,7 +49,7 @@ test("a report with only synergyOverall renders only the Synergy group", () => {
   render(<DeckGauges data={onlySynergy as never} />);
   expect(screen.getByRole("group", { name: "Synergy, and the two measures behind it" })).toBeInTheDocument();
   expect(screen.queryByRole("group", { name: "Build, and the five measures behind it" })).toBeNull();
-  expect(screen.queryByText("Consistency")).toBeNull();
+  expect(screen.queryByText("Card advantage")).toBeNull();
 });
 
 test("a report with only buildScore renders only the Build group", () => {
@@ -167,8 +167,8 @@ test("the input grids carry the classes the measured layout table above depends 
   expect(buildGrid.className).toMatch(/\bgrid-cols-2\b/);
   // Tiers by the group's own width (UI review 2026-09-25): at 1440px the group is half the row,
   // and the viewport tier put five tiles in ~620px and cut their names.
-  expect(buildGrid.className).toMatch(/@min-\[480px\]:grid-cols-3/);
-  expect(buildGrid.className).toMatch(/@min-\[800px\]:grid-cols-5/);
+  expect(buildGrid.className).toMatch(/@min-\[540px\]:grid-cols-3/);
+  expect(buildGrid.className).toMatch(/@min-\[900px\]:grid-cols-5/);
   expect(buildGrid.parentElement!.className).toMatch(/@container/);
   // No stray flex-wrap row survives from the reverted attempt.
   expect(container.querySelector(".flex-wrap")).toBeNull();

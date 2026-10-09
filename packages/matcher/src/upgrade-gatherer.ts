@@ -20,7 +20,7 @@ import { SECTION_MAX, UPGRADE_SECTIONS, type BracketTarget, type UpgradePackage,
  *  The package closes the gap, up to `short`, instead of leaving "still 2 short on ramp" beside a
  *  report that names Fellwar Stone. */
 export interface RoleFill {
-  /** The page's word for the group ("card draw"): how the add's reason opens and what it counts as. */
+  /** The page's word for the group ("card advantage"): how the add's reason opens and what it counts as. */
   label: string;
   /** What one card of it counts as, singular ("a board wipe"). */
   noun: string;

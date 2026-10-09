@@ -247,7 +247,7 @@ test("a parent's count is the UNION of its leaves, not the sum -- a card carryin
   expect(members.get("cardSelection")).toEqual(new Set(["Grave Researcher"]));
 
   const { buildParents } = computeBuild(cards, undefined);
-  const consistency = buildParents.find((p) => p.name === "Consistency")!;
+  const consistency = buildParents.find((p) => p.name === "Card advantage")!;
   expect(consistency.count).toBe(2);
 });
 
@@ -272,7 +272,7 @@ test("buildScore is computed from PARENT attainment: any leaf inside a parent ca
   const tutors = Array.from({ length: 14 }, (_, i) =>
     mk(`Tutor ${i}`, "Search your library for a card, put that card into your hand, then shuffle.", "Sorcery"));
   const { buildParents, buildScore } = computeBuild(tutors, undefined);
-  const consistency = buildParents.find((p) => p.name === "Consistency")!;
+  const consistency = buildParents.find((p) => p.name === "Card advantage")!;
   expect(consistency.count).toBe(14);
   // The population median (13) now, not the doctrine's 14 -- 14 still clears it outright.
   expect(consistency.target).toBe(TEMPLATE.population.consistency);

@@ -6,7 +6,7 @@ import type { PreconPage } from "./precon-page.js";
 import { scoreBand } from "./score-band.js";
 
 export const SECTION_TITLE: Record<UpgradeSectionId, string> = {
-  lands: "Lands", ramp: "Ramp", consistency: "Card draw", interaction: "Removal and protection",
+  lands: "Lands", ramp: "Ramp", consistency: "Card advantage", interaction: "Removal and protection",
   wipes: "Board wipes", synergy: "Cards that work together",
 };
 
@@ -63,11 +63,11 @@ export function afterLine(p: UpgradePackage): string {
  *  the shortfalls the swaps close or leave. Never a power word. A package from before `build` was
  *  recorded says nothing about Build rather than make it up. "" when there is nothing to compare. */
 /** THE WORDS FOR A ROLE GROUP, one map for the effect line and the gaps line (#893). The engine names
- *  the group "Consistency" (card draw and selection); said bare beside "It is more consistent" it would
+ *  the group "Card advantage" (draw, selection and tutors); said bare beside "It is more consistent" it would
  *  mean two things. An unknown group falls back to its lowercased name. */
-const GROUP_WORDS: Record<string, string> = { Consistency: "card draw", Ramp: "ramp", Interaction: "interaction", "Board wipes": "board wipes" };
+const GROUP_WORDS: Record<string, string> = { "Card advantage": "card advantage", Ramp: "ramp", Interaction: "interaction", "Board wipes": "board wipes" };
 /** ONE CARD OF THE GROUP, for "X counts as ...": the plural "board wipes" says "Wrath counts as board wipes". */
-const GROUP_NOUNS: Record<string, string> = { Consistency: "card draw", Ramp: "ramp", Interaction: "interaction", "Board wipes": "a board wipe" };
+const GROUP_NOUNS: Record<string, string> = { "Card advantage": "card advantage", Ramp: "ramp", Interaction: "interaction", "Board wipes": "a board wipe" };
 export const GROUP_NOUN = (group: string): string => GROUP_NOUNS[group] ?? group.toLowerCase();
 export const GROUP_WORD = (group: string): string => GROUP_WORDS[group] ?? group.toLowerCase();
 

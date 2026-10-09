@@ -164,7 +164,7 @@ export function bringDownInReason(add: string, cut: BringDownCut, job: string | 
 /** A FILL SWAP'S REASONS (owner 2026-10-09, #1137). The cut is the next card on the report's cut list,
  *  said as the cut list says it (`why`), with the argument for keeping it that the list still carries
  *  (`keep`). The add is the report's own suggestion for the role the deck is short on, opened with how
- *  short and what the card counts as (`f.label` is the page's word for the group: "card draw"), then
+ *  short and what the card counts as (`f.label` is the page's word for the group: "card advantage"), then
  *  the report's sentence for it when there is room. */
 export function fillReasons(f: { label: string; noun: string; short: number }, cutName: string, cutWhy: string, add: { name: string; reason: string }, keep = ""): { out: string; in: string } {
   const head = `${cutName} is next on the report's cut list.`;

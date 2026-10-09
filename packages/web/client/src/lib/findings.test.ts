@@ -6,7 +6,7 @@ const report = (over: Partial<DeckReport>): DeckReport => ({ ...over } as DeckRe
 
 test("a build parent under target becomes a finding, and the shortfall is the fraction missing", () => {
   const [f] = findings(report({
-    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: ["draw"] }],
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: ["draw"] }],
   }));
   expect(f.figure).toBe("6/14");
   expect(f.shortfall).toBeCloseTo(8 / 14);
@@ -27,7 +27,7 @@ test("a parent AT or OVER target is not a finding — a surplus is a trade, not 
  *  10 of 31 (0.32) — and mutating the sort to ascending must flip them. */
 test("findings rank by fraction of target missing, across different kinds", () => {
   const rows = findings(report({
-    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: [] }],
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: [] }],
     deckMath: {
       colors: [{ color: "W", supplied: 21, worst: { pips: 4, turn: 9, required: 31, requiredRaw: 36, cards: 1, available: 18 } }],
     } as DeckReport["deckMath"],
@@ -212,7 +212,7 @@ test("lands are a finding in BOTH directions", () => {
 
 test("the slot trade names the category and never a card, and stays silent with nothing short", () => {
   const r = report({
-    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: [] }],
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: [] }],
     slack: [{ category: "Interaction", count: 15, target: 10, over: 5 }],
   });
   const trade = slotTrade(r, findings(r))!;
@@ -229,7 +229,7 @@ test("the cap is a stated presentational constant, not a threshold on the data",
   // CLI can read the whole list.
   expect(findings(report({
     buildParents: [
-      { name: "Consistency", count: 1, target: 14, leaves: [] },
+      { name: "Card advantage", key: "consistency", count: 1, target: 14, leaves: [] },
       { name: "Ramp", count: 1, target: 10, leaves: [] },
       { name: "Interaction", count: 1, target: 10, leaves: [] },
       { name: "Board wipes", count: 0, target: 3, leaves: [] },
@@ -274,7 +274,7 @@ test("a demand WITH a supplier is not a finding", () => {
 test("one idle card ranks below a large build shortfall", () => {
   const rows = findings(report({
     cards: Array.from({ length: 100 }, (_, i) => ({ name: `c${i}` })) as DeckReport["cards"],
-    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: [] }],
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: [] }],
     deckMath: demand([{ key: "attacks:any", consumers: 1, suppliers: 0, available: 0.1 }]),
   }));
   expect(rows.map((r) => r.kind)).toEqual(["build", "synergy"]);
@@ -306,7 +306,7 @@ test("the slot trade says so when the surplus is the category a finding asks for
   // not conflict and the extra clause would be noise.
   const elsewhere = report({
     slack: [{ category: "Ramp", count: 17, target: 10, over: 7 }] as DeckReport["slack"],
-    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: [] }],
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: [] }],
   });
   const other = slotTrade(elsewhere, findings(elsewhere))!;
   expect(other).toContain("Ramp sits at 17");
@@ -321,11 +321,11 @@ test("the slot trade says so when the surplus is the category a finding asks for
 test("the scored group is ordered by impact, not by shortfall", () => {
   const { scored } = rankedFindings(report({
     buildParents: [
-      { name: "Consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 },
+      { name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 },
       { name: "Board wipes", count: 0, target: 3, leaves: ["boardWipe"], impact: 0.556 },
     ],
   }));
-  expect(scored.map((f) => f.figureLabel)).toEqual(["Consistency", "Board wipes"]);
+  expect(scored.map((f) => f.figureLabel)).toEqual(["Card advantage", "Board wipes"]);
   // And the old rule would have put them the other way round: 1.0 missing beats 0.571.
   expect(scored[1]!.shortfall).toBeGreaterThan(scored[0]!.shortfall);
 });
@@ -335,7 +335,7 @@ test("the scored group is ordered by impact, not by shortfall", () => {
  *  by a conversion factor, which is exactly the invented constant this module refuses. */
 test("colour and synergy findings never enter the scored group", () => {
   const { scored, unseen } = rankedFindings(report({
-    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: [], impact: 0.635 }],
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: [], impact: 0.635 }],
     cards: Array.from({ length: 100 }, (_, i) => ({ name: `c${i}` })) as DeckReport["cards"],
     deckMath: {
       ...demand([{ key: "dies:type:creature", consumers: 4, suppliers: 0, available: 0.2 }]),
@@ -365,8 +365,8 @@ test("a zero impact stays in the scored group", () => {
  *  because attainment caps -- which is what makes the +1 side the whole delta. */
 test("the action line names the cut when the deck has slack", () => {
   const { scored } = rankedFindings(report({
-    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 }],
-    suggestions: ["Consistency 6/14 — add ~8, typically 2–4 mana"],
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 }],
+    suggestions: ["Card advantage 6/14 — add ~8, typically 2–4 mana"],
     slack: [{ category: "ramp", count: 17, target: 10, over: 7 }],
   }));
   // ~8 to add against 7 spare: the donor covers 7 and the sentence says so, rather than promising
@@ -377,8 +377,8 @@ test("the action line names the cut when the deck has slack", () => {
 
 test("the donor covers the whole add when its surplus is big enough", () => {
   const { scored } = rankedFindings(report({
-    buildParents: [{ name: "Consistency", count: 11, target: 14, leaves: ["draw"], impact: 0.3 }],
-    suggestions: ["Consistency 11/14 — add ~3, typically 2–4 mana"],
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 11, target: 14, leaves: ["draw"], impact: 0.3 }],
+    suggestions: ["Card advantage 11/14 — add ~3, typically 2–4 mana"],
     slack: [{ category: "ramp", count: 17, target: 10, over: 7 }],
   }));
   expect(scored[0]!.action).toContain("Take the slots from ramp, where you have 17 against a target of 10.");
@@ -392,9 +392,9 @@ test("two findings never spend the same spare slots twice", () => {
   const { scored } = rankedFindings(report({
     buildParents: [
       { name: "Ramp", count: 9, target: 11, leaves: ["ramp"], impact: 0.26 },
-      { name: "Consistency", count: 10, target: 13, leaves: ["draw"], impact: 0.2 },
+      { name: "Card advantage", key: "consistency", count: 10, target: 13, leaves: ["draw"], impact: 0.2 },
     ],
-    suggestions: ["Ramp 9/11 — add ~3, typically 2–4 mana", "Consistency 10/13 — add ~3, typically 2–3 mana"],
+    suggestions: ["Ramp 9/11 — add ~3, typically 2–4 mana", "Card advantage 10/13 — add ~3, typically 2–3 mana"],
     slack: [{ category: "Interaction", count: 15, target: 13, over: 2 }],
   }));
   const [first, second] = scored.filter((f) => f.kind === "build");
@@ -411,17 +411,17 @@ test("a second surplus is used before the reader is told to find the rest", () =
     suggestions: ["Ramp 8/11 — add ~3, typically 2–4 mana"],
     slack: [
       { category: "Interaction", count: 15, target: 13, over: 2 },
-      { category: "Consistency", count: 15, target: 14, over: 1 },
+      { category: "Card advantage", count: 15, target: 14, over: 1 },
     ],
   }));
-  expect(scored[0]!.action).toContain("Take 2 of them from Interaction (15 against a target of 13) and 1 from Consistency (15 against a target of 14).");
+  expect(scored[0]!.action).toContain("Take 2 of them from Interaction (15 against a target of 13) and 1 from Card advantage (15 against a target of 14).");
 });
 
 /** No surplus, no donor. Nothing is invented to fill the sentence. */
 test("the action line names no cut when the deck has no slack", () => {
   const { scored } = rankedFindings(report({
-    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 }],
-    suggestions: ["Consistency 6/14 — add ~8, typically 2–4 mana"],
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 }],
+    suggestions: ["Card advantage 6/14 — add ~8, typically 2–4 mana"],
     slack: [],
   }));
   expect(scored[0]!.action).not.toContain("cutting from");

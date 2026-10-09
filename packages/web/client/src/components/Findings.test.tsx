@@ -68,7 +68,7 @@ test("run one renders the list unchanged", () => {
 /** A report whose only problems are priceable ones, so the second group has nothing under it. */
 const buildOnly = {
   ...report,
-  buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 }],
+  buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 }],
   deckMath: undefined,
   cards: [],
 } as typeof report;
@@ -122,7 +122,7 @@ test("a gain too small to show at one decimal says so rather than printing the s
  *  of" (clunky-deck seat, #1055). */
 test("the list says what the Build score measures", () => {
   render(<Findings report={buildOnly} />);
-  expect(screen.getByText(/Build, out of 5, is how close your card draw, ramp, interaction, board wipes and lands are to their targets, and whether your removal can hit every kind of permanent/)).toBeInTheDocument();
+  expect(screen.getByText(/Build, out of 5, is how close your card advantage, ramp, interaction, board wipes and lands are to their targets, and whether your removal can hit every kind of permanent/)).toBeInTheDocument();
 });
 
 test("the heading says what the order is by", () => {

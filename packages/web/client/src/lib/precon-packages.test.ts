@@ -61,11 +61,17 @@ test("a fill is dropped last: at equal mana base cost the keeper drops an ordina
 test("fills are made for the groups the report is short in, from the report's suggestions", () => {
   const sug = { build: { Ramp: [{ name: "Fellwar Stone", reasons: [{ text: "Fellwar Stone makes mana.", others: [] }] }], Interaction: [{ name: "Swords", reasons: [] }] } } as unknown as Parameters<typeof fillsFor>[1];
   const cuts = [{ name: "Weak A", why: "Works with 1 card." }];
-  const f = fillsFor([{ group: "Ramp", have: 9, target: 11 }, { group: "Card draw", have: 1, target: 2 }, { group: "Consistency", have: 1, target: 2 }], sug, cuts);
+  const f = fillsFor([{ group: "Ramp", have: 9, target: 11 }, { group: "Card draw", have: 1, target: 2 }, { group: "Card advantage", have: 1, target: 2 }], sug, cuts);
   expect(f.consistency).toBeUndefined();
   expect(Object.keys(f)).toEqual(["ramp"]);
   expect(f.ramp).toEqual({ label: "ramp", noun: "ramp", short: 2, adds: [{ name: "Fellwar Stone", reason: "Fellwar Stone makes mana." }], cuts });
   expect(fillsFor([{ group: "Ramp", have: 9, target: 11 }], null, cuts)).toEqual({});
+});
+
+test("the card-advantage group (#1086) fills its section and reads 'counts as card advantage'", () => {
+  const sug = { build: { "Card advantage": [{ name: "Night's Whisper", reasons: [{ text: "Night's Whisper draws two.", others: [] }] }] } } as unknown as Parameters<typeof fillsFor>[1];
+  const f = fillsFor([{ group: "Card advantage", have: 12, target: 15 }], sug, [{ name: "Weak A", why: "Works with 1 card." }]);
+  expect(f.consistency).toMatchObject({ label: "card advantage", noun: "card advantage", short: 3 });
 });
 
 test("a fill never cuts a card a win plan counts or the table is warned about, read off the real cut list", () => {

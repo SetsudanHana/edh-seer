@@ -240,7 +240,7 @@ export function DeckGauges({ data, diff, bars = true }: {
                 <>
                 <BandScale kind="build" />
                 <Explain label="what this measures">
-                  How your number of ramp (cards that give extra mana), card draw, removal (cards that
+                  How your number of ramp (cards that give extra mana), card advantage (draw, selection and tutors), removal (cards that
                   destroy or exile an opponent&rsquo;s things) and other cards compares with similar
                   decks: the typical count across ten EDHREC decks with the same plan. That is what those decks
                   play, not a minimum you need. It also checks that your removal can hit each kind of
@@ -256,8 +256,9 @@ export function DeckGauges({ data, diff, bars = true }: {
             {/* COLUMNS BY THE GROUP'S OWN WIDTH, NOT THE VIEWPORT'S (UI review 2026-09-25). From
               * `lg` this group shares its row with Synergy, so at 1440px `xl:grid-cols-5` put five
               * tiles in ~620px and cut three names ("Consis...", "Interac...", "Board w..."). A tile
-              * needs ~150px for "Consistency" and its count: three columns from 480px of group
-              * width, five from 800px. */}
+              * needs ~170px for "Card advantage" and its count (3 characters wider than the old
+              * "Consistency", #1086, which fit at ~150): three columns from 540px of group
+              * width, five from 900px. */}
             {bars ? <RoleBars data={data} /> : null}
           </div>
         ) : null}
@@ -296,7 +297,7 @@ export function RoleBars({ data }: { data: AnalyzeResponse }) {
   return (
     <div className="flex flex-col gap-3 w-full">
       <div className="@container w-full">
-      <div className="build-inputs-grid grid grid-cols-2 @min-[480px]:grid-cols-3 @min-[800px]:grid-cols-5 gap-3 w-full">
+      <div className="build-inputs-grid grid grid-cols-2 @min-[540px]:grid-cols-3 @min-[900px]:grid-cols-5 gap-3 w-full">
         {parents.map((p) => (
           <Bullet
             key={p.name}

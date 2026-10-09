@@ -143,3 +143,8 @@ test("one source reads 'reaches', several read 'reach'", () => {
   inRouter(<SuggestedCards cards={[one]} empty="none" />);
   expect(screen.getAllByRole("listitem")[0]!.textContent).toContain("1 of your cards reaches Razorkin Needlehead through it");
 });
+
+test("the card-advantage group's chip reads 'Counts as card advantage' (#1086)", () => {
+  inRouter(<SuggestedCards cards={[{ ...chaosWarp, fills: "Card advantage" }]} empty="none" />);
+  expect(screen.getByText("Counts as card advantage")).toBeInTheDocument();
+});

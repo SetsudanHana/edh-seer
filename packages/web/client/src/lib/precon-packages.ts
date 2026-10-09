@@ -34,7 +34,7 @@ export interface PreconPackages {
 
 /** The report's group name for each role section: how `DeckSuggestions.build` is keyed, and what
  *  `gapsOf` calls a group. Answers have no section and are not filled. */
-const SECTION_OF_GROUP: Record<string, RoleSectionId> = { Ramp: "ramp", Consistency: "consistency", Interaction: "interaction", "Board wipes": "wipes" };
+const SECTION_OF_GROUP: Record<string, RoleSectionId> = { Ramp: "ramp", "Card advantage": "consistency", Interaction: "interaction", "Board wipes": "wipes" };
 
 /** THE CUT LIST A FILL MAY CUT, OFF-PLAN AS RULED (2026-10-09): a row whose keeps name a win plan it
  *  counts for, or a table warning, is never cut by a fill; other keeps ride along into the reason. */

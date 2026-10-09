@@ -19,7 +19,7 @@ function deck() {
       { name: "Kodama's Reach", isCommander: false, manaValue: 3, roles: ["ramp", "draw"] },
     ],
     buildParents: [
-      { name: "Consistency", count: 1, target: 10, leaves: ["draw", "tutor"] },
+      { name: "Card advantage", count: 1, target: 10, leaves: ["draw", "tutor"] },
       { name: "Ramp", count: 2, target: 10, leaves: ["ramp"] },
       { name: "Interaction", count: 4, target: 10, leaves: ["targetedRemoval", "stackInteraction"] },
     ],
@@ -61,7 +61,7 @@ test("each shelf carries its target: a one-role group on the shelf, a several-ro
   // Interaction holds removal and counterspells: one header, with the group's own count.
   const head = screen.getByTestId("shelf-group-Interaction");
   expect(head).toHaveTextContent(/Interaction4 cards · aim for 10 \(6 short\)/);
-  expect(screen.getAllByTestId(/^shelf-group-/).map((e) => e.dataset.testid)).toEqual(["shelf-group-Consistency", "shelf-group-Interaction"]);
+  expect(screen.getAllByTestId(/^shelf-group-/).map((e) => e.dataset.testid)).toEqual(["shelf-group-Card advantage", "shelf-group-Interaction"]);
 });
 
 /** Owner ruling 2026-09-27 (#533): Mage's Attendant's counterspell is its Wizard TOKEN's role. The

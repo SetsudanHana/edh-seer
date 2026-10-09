@@ -71,7 +71,7 @@ export const SAMPLE: AnalyzeResponse = {
     buildParents: [
       // Consistency is OVER its own target (union of draw 12 + cardSelection 2 + tutor 0, no
       // overlap in this fixture) -- Ramp is UNDER, same numbers the old leaf-scored fixture used.
-      { name: "Consistency", key: "consistency", count: 14, target: 10, leaves: ["draw", "cardSelection", "tutor"] },
+      { name: "Card advantage", key: "consistency", count: 14, target: 10, leaves: ["draw", "cardSelection", "tutor"] },
       { name: "Ramp", key: "ramp", count: 6, target: 10, leaves: ["ramp"] },
       { name: "Interaction", key: "interaction", count: 8, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], coverageWeighted: true },
       { name: "Board wipes", key: "boardWipes", count: 0, target: 3, leaves: ["boardWipe"] },
