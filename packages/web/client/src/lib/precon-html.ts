@@ -1,6 +1,7 @@
 import { slugOf } from "@edh-seer/matcher/slug";
+import { TARGET_LABEL } from "@edh-seer/matcher/upgrade-package";
 import type { PreconPage } from "./precon-page.js";
-import { afterLine, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_LABEL, TARGET_MEANING } from "./precon-upgrades.js";
+import { afterLine, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_MEANING } from "./precon-upgrades.js";
 
 /** THE PRECON PAGES AS A CRAWLER READS THEM (and a reader, for the moment before the app boots):
  *  the same facts the React page draws, as plain HTML inside `.prerendered`, which the app hides

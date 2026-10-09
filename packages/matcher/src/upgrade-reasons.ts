@@ -8,7 +8,7 @@
 import type { BringDownCut } from "./bracket-guard.js";
 import type { Ingredient, Role } from "./quality.js";
 import type { LandOption, RoleOption } from "./upgrade-sections.js";
-import type { BracketTarget } from "./upgrade-package.js";
+import { TARGET_LABEL, type BracketTarget } from "./upgrade-package.js";
 
 /** At most this long on either side (H2, pre-registered). */
 export const REASON_MAX = 160;
@@ -151,9 +151,9 @@ export function synergyReasons(cut: PairSide, add: PairSide & { reason: string }
 export function bringDownReason(c: BringDownCut, target: BracketTarget): string {
   if (c.why.kind === "game-changer") {
     const allows = c.why.limit === 0 ? "allows none" : `allows ${c.why.limit}`;
-    return fit(`${c.name} is on the official Game Changer list, which raises a deck's bracket; bracket ${target} ${allows}`, [], `, and this deck has ${c.why.count}.`);
+    return fit(`${c.name} is on the official Game Changer list, which raises a deck's bracket; bracket ${TARGET_LABEL[target]} ${allows}`, [], `, and this deck has ${c.why.count}.`);
   }
-  return fit(`With ${list(c.why.with)}, ${c.name} makes an infinite combo`, [], `, which bracket ${target} doesn't allow.`);
+  return fit(`With ${list(c.why.with)}, ${c.name} makes an infinite combo`, [], `, which bracket ${TARGET_LABEL[target]} doesn't allow.`);
 }
 /** Why its replacement comes in: the same job without what raised the bracket. */
 export function bringDownInReason(add: string, cut: BringDownCut, job: string | null): string {

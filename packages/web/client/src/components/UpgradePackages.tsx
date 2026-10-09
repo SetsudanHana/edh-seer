@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { slugOf } from "@edh-seer/matcher/slug";
-import { SECTION_MAX, SECTION_SHOWN, type BracketTarget, type UpgradePackage, type UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
+import { SECTION_MAX, SECTION_SHOWN, TARGET_LABEL, type BracketTarget, type UpgradePackage, type UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import type { PreconCard, PreconPage } from "../lib/precon-page.js";
-import { afterLine, defaultTarget, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_LABEL, TARGET_MEANING } from "../lib/precon-upgrades.js";
+import { afterLine, defaultTarget, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_MEANING } from "../lib/precon-upgrades.js";
 import { cardImageUrl } from "./card-node.js";
 
 import { ReasonText } from "./card-drawer.js";
