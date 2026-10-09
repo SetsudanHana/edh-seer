@@ -234,3 +234,13 @@ test("run one draws no ticks", () => {
   const { container } = render(<DeckGauges data={DATA as never} />);
   expect(container.querySelectorAll('[data-testid="ghost-tick"]')).toHaveLength(0);
 });
+
+/** THE ROLES LINK BELONGS TO THE BUILD CARD (#987): it floated under the group as a loose line. */
+test("with the bars off, the roles link is once, inside the Build card", () => {
+  const { container } = render(<DeckGauges data={DATA as never} bars={false} />);
+  const links = container.querySelectorAll('a[href="#roles"]');
+  expect(links.length).toBe(1);
+  const card = links[0]!.closest("div.border")!;
+  expect(card).not.toBeNull();
+  expect(card.textContent).toContain("Build");
+});

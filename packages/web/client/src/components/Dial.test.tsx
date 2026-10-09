@@ -165,3 +165,19 @@ test("the button variant names the previous value in its label", () => {
   );
   expect(screen.getByRole("button", { name: /previously 3\.1/ })).toBeInTheDocument();
 });
+
+/** A FOOTER LIVES INSIDE THE CARD (#987): the Build dial's "five roles" link sat loose under it. */
+test("a footer renders inside the card, as a sibling of the button when the dial opens", () => {
+  const { container } = render(<Dial name="Build" value="3.4" reading={scoreState(3.4)} zones="score" footer={<a href="#roles">Roles</a>} />);
+  const card = container.querySelector("div.border")!;
+  expect(card.contains(screen.getByRole("link", { name: "Roles" }))).toBe(true);
+  expect(card.contains(screen.getByText("Build"))).toBe(true);
+});
+
+test("with onOpen the footer is in the bordered shell but never inside the button", () => {
+  const { container } = render(<Dial name="Build" value="3.4" reading={scoreState(3.4)} zones="score" onOpen={() => {}} openLabel="Build" footer={<a href="#roles">Roles</a>} />);
+  const link = screen.getByRole("link", { name: "Roles" });
+  expect(link.closest("button")).toBeNull();
+  expect(container.querySelector("div.border")!.contains(link)).toBe(true);
+  expect(container.querySelector("div.border")!.contains(screen.getByRole("button"))).toBe(true);
+});
