@@ -8,7 +8,7 @@ const lines: string[] = [];
 for (const d of docs) for (const a of d.abilities ?? []) {
   if (a.effect?.kind !== "speed-increase") continue;
   total++;
-  if (!a.grants || a.grants.length === 0) { bare++; lines.push(`${(await store.cards.findOne({ _id: d.oracleId } as never, { projection: { name: 1 } }) as any)?.name ?? d.oracleId}: ${a.effect?.subject?.type ?? ""} ${JSON.stringify(a.trigger?.verbs ?? "")}`); }
+  if (!a.grants || a.grants.length === 0) { bare++; lines.push(`${(await store.cards.findOne({ _id: d.oracleId } as never, { projection: { name: 1 } }) as any)?.name ?? d.oracleId} | ${((await store.cards.findOne({ _id: d.oracleId } as never, { projection: { oracleText: 1 } }) as any)?.oracleText ?? "").replace(/\n/g, " / ")} | ${a.effect?.subject?.type ?? ""} ${JSON.stringify(a.trigger?.verbs ?? "")}`); }
 }
 console.log(`speed-increase abilities ${total}, with no grants ${bare}`);
 console.log([...new Set(lines)].sort().join("\n"));
