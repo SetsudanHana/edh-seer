@@ -58,6 +58,7 @@ const TESTED: Record<string, string> = {
   "605.1a": "derive.test.ts — a mana ability's amount is the mana its object adds (Sol Ring 2, Talisman 1, Gilded Lotus 3)",
   "701.21a": "payment.test.ts — a sacrifice in a cost is of your own permanents, so its class is control you",
   "702.14": "derive.test.ts — a landwalk grant names its [type]walk (Lord of Atlantis islandwalk, Vectis Gloves landwalk)",
+  "702.4": "effect-kind.test.ts — Double Strike is a keyword, not the verb double (Akim, the Soaring Wind) (#1141)",
   "702.153a": "emits.test.ts / derive.test.ts — casualty N sacrifices a creature with power N or greater (Anhelo's grant, Make Disappear's keyword line)",
   "702.177a": "repeats.test.ts — an Exhaust ability repeats once (Loot, the Pathfinder)",
   "700.11": "intervening-if.test.ts — 'you descended this turn' cares about permanents hitting your graveyard",

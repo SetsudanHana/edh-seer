@@ -410,7 +410,10 @@ import { emblemRecipient } from "../emblem.js";
 // (Soundwave, Froghemoth).
 // 290: #1136, a token replacement says how it changes the tokens (`Effect.tokenMultiplier`): twice, thrice,
 // additional (Xorn, Chatterfang), one-of-each (Academy Manufactor), replaced (Divine Visitation).
-export const DERIVE_VERSION = 290;
+// 291: #1141, a doubling verb reads what is doubled from its OBJECT first (counters, damage, life), so a
+// clause that merely mentions a token (Paradox Zone, Elvish Vatkeeper, Arna) is no token doubler, and
+// "gains double strike" is a keyword grant, not the verb double (Akim and 19 more).
+export const DERIVE_VERSION = 291;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

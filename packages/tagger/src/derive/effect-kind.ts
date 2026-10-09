@@ -402,6 +402,17 @@ const PROCESSES_EXILE: ReadonlySet<string> = new Set(["put", "return", "exile", 
  *  owner phrase that makes a from-exile move a processor rather than a flicker. */
 const OPPONENT_OWNS = /\b(?:an opponent|your opponents|target opponent|that player|each opponent) owns?\b/i;
 
+/** The kind a doubled/tripled THING names: damage, then counters, then tokens, life, mana. Counters
+ *  precede tokens so "the number of +1/+1 counters on it" beats a token elsewhere in the text. */
+function doubledKind(text: string): EffectKind | null {
+  if (/\bdamage\b/i.test(text)) return "damage-multiplier";
+  if (/\bcounters?\b/i.test(text)) return "counter-placement";
+  if (/\btokens?\b/i.test(text)) return "token-doubling";
+  if (/\blife\b/i.test(text)) return "lifegain";
+  if (/\bmana\b/i.test(text)) return "mana-generation";
+  return null;
+}
+
 export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
   const verb = action.verb ?? "";
   // CR 614.1c — "this creature enters with three +1/+1 counters on it" is a REPLACEMENT EFFECT on
@@ -452,12 +463,20 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // seven never-produced EFFECT_KINDS are this family (`token-doubling`, `damage-multiplier`,
   // `enters-with-counters`) — the labels existed and nothing could emit them.
   if (verb === "double" || verb === "triple") {
-    const o = `${action.object ?? ""} ${clauseText}`;
-    if (/\btokens?\b/i.test(o)) return "token-doubling";
-    if (/\bdamage\b/i.test(o)) return "damage-multiplier";
-    if (/\bcounters?\b/i.test(o)) return "counter-placement";
-    if (/\blife\b/i.test(o)) return "lifegain";
-    if (/\bmana\b/i.test(o)) return "mana-generation";
+    // WHAT IS DOUBLED IS THE ACTION'S OBJECT, read first (#1141). The clause text is only a fallback
+    // for an object that names nothing: reading both together made every clause that merely
+    // MENTIONED a token a token doubler -- Paradox Zone ("double the number of growth counters ...
+    // Then create a ... Fractal creature token"), Elvish Vatkeeper ("Transform target Incubator
+    // token. Double the number of +1/+1 counters on it") and Arna Kennerud read "makes more tokens".
+    const fromObject = doubledKind(action.object ?? "");
+    // "double strike" is a KEYWORD (CR 702.4), not this verb: the normalizer read Akim's "Creature
+    // tokens you control gain double strike" as `double` with the tokens as object. The model made
+    // that call (cardClauses, normalize v14), so the guard lives here rather than in the grammar.
+    // CEILING: only when the object names no counters/damage/life/mana, i.e. nothing real is doubled.
+    if (/\bdouble strike\b/i.test(clauseText) && (fromObject === null || fromObject === "token-doubling")) return "keyword-grant";
+    if (fromObject) return fromObject;
+    const fromClause = doubledKind(clauseText);
+    if (fromClause) return fromClause;
     // "Double the power and toughness of each creature you control" (Unnatural Growth, #711) is a
     // pump: it was refused as unguessable, so the clause claimed nothing at all. Read off the OBJECT
     // alone (review): "power" is a common word elsewhere in a clause ("creatures with power 4 or
