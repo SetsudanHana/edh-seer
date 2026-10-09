@@ -63,11 +63,43 @@ export function allPartners(o: OrbitModel, cap = MAP_CAP): MapPartner[] {
   return mapPartners(o, Infinity).map((x) => ({ ...x, minor: !named.has(x.p.card.id) }));
 }
 
+/** A PHONE DRAWS ONLY THE NAMED PARTNERS (#986). The small unnamed discs of `allPartners` cannot be
+ *  told apart at 390px and sat under other cards' names; the cards they stood for stay in the
+ *  sector lists below the map. Wide screens get the list untouched. */
+export function drawnPartners(list: MapPartner[], narrow: boolean): MapPartner[] {
+  return narrow ? list.filter((x) => !x.minor) : list;
+}
+
+/** How drawn a placed card is that is neither the middle, walked through, nor a partner now: faint
+ *  context on a wide map; on a phone it would be an unnamed disc that still takes taps, so it is
+ *  not drawn (its lines go with it, and it takes no taps below 0.05). */
+export const idleOpacity = (narrow: boolean) => (narrow ? 0 : 0.35);
+
+export interface LabelBox { x0: number; x1: number; y0: number; y1: number }
+export interface LabelSpot { box: LabelBox; x: number; y: number; anchor: "middle" | "start" | "end" }
+const boxesHit = (a: LabelBox, b: LabelBox) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
+
+/** The places a name may go, in order of preference: below its disc (where it always sat), above,
+ *  then to the right, then to the left. `w` is the name's width and `f` its font size. */
+export function labelSpots(d: { x: number; y: number; r: number }, w: number, f: number, gap = f * 1.33): LabelSpot[] {
+  const at = (x: number, y: number, anchor: LabelSpot["anchor"]): LabelSpot => ({
+    x, y, anchor,
+    box: { x0: anchor === "middle" ? x - w / 2 : anchor === "start" ? x : x - w, x1: anchor === "middle" ? x + w / 2 : anchor === "start" ? x + w : x, y0: y - f, y1: y + f * 0.25 },
+  });
+  const side = d.r + f * 0.4, mid = d.y + f * 0.35;
+  return [at(d.x, d.y + d.r + gap, "middle"), at(d.x, d.y - d.r - f * 0.5, "middle"), at(d.x + side, mid, "start"), at(d.x - side, mid, "end")];
+}
+
+/** The first spot that covers neither a name already placed nor another card's disc; null if none. */
+export function placeLabel(spots: LabelSpot[], blockers: LabelBox[]): LabelSpot | null {
+  return spots.find((s) => !blockers.some((b) => boxesHit(s.box, b))) ?? null;
+}
+
 interface Tween { from: Look; to: Look; t0: number; dur: number; delay: number }
 interface Look { x: number; y: number; r: number; o: number; lo: number }
 interface Node extends Look {
   id: string; card: EngineCard; g: SVGGElement; hit: SVGCircleElement; halo: SVGCircleElement; rim: SVGCircleElement; pip: SVGCircleElement; pin: SVGPathElement; label: SVGTextElement;
-  tw: Tween | null; glow: number; tglow: number; hue: string; dashed: boolean; homeR: number; minor: boolean;
+  tw: Tween | null; /** left off a phone's map because no name fits beside it (#986) */ hidden: boolean; glow: number; tglow: number; hue: string; dashed: boolean; homeR: number; minor: boolean;
 }
 interface Edge {
   a: string; b: string; line: SVGLineElement; t1: SVGLineElement; t2: SVGLineElement; arrow: SVGPathElement;
@@ -174,7 +206,7 @@ class Sky {
     g.addEventListener("pointermove", (e) => { const pe = e as PointerEvent; if (Math.hypot(pe.clientX - this.press.x, pe.clientY - this.press.y) > 10) this.cancelPress(); });
     for (const t of ["pointerup", "pointercancel", "pointerleave"]) g.addEventListener(t, () => this.cancelPress());
     g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); this.tap(id); } });
-    const n: Node = { id, card, g, hit, halo, rim, pip, pin, label, x: 0, y: 0, r: 0, o: 0, lo: 0, tw: null, glow: 0, tglow: 0, hue: "var(--muted)", dashed: false, homeR: 0, minor: false };
+    const n: Node = { id, card, g, hit, halo, rim, pip, pin, label, x: 0, y: 0, r: 0, o: 0, lo: 0, tw: null, hidden: false, glow: 0, tglow: 0, hue: "var(--muted)", dashed: false, homeR: 0, minor: false };
     this.nodes.set(id, n);
     return n;
   }
@@ -263,7 +295,7 @@ class Sky {
       n.homeR = isF ? G.focusR : isV ? G.visitedR : n.minor ? G.minorR : isP ? G.partnerR : G.otherR;
       n.tglow = isF ? 0.5 : isV ? 0.18 : 0;
       const on = isF || isV || isP;
-      const to = { x: pos.x, y: pos.y, r: n.homeR, o: on ? 1 : 0.35, lo: on && !n.minor ? 1 : 0 };
+      const to = { x: pos.x, y: pos.y, r: n.homeR, o: on ? 1 : idleOpacity(G === NARROW), lo: on && !n.minor ? 1 : 0 };
       if (n.o < 0.05) {
         // New to the map: grow out of the card you walked to, one after another.
         n.x = here.x; n.y = here.y; n.r = 4;
@@ -352,17 +384,18 @@ class Sky {
       n.pip.setAttribute("opacity", this.visited.includes(n.id) && !isF ? "1" : "0");
       n.pin.setAttribute("opacity", this.added(n.id) ? "1" : "0");
       n.label.setAttribute("class", `constellation-label${isF ? " constellation-label-focus" : ""}`);
+      n.label.setAttribute("text-anchor", "middle");
       n.label.setAttribute("x", n.x.toFixed(1));
       n.label.setAttribute("y", (n.y + n.r + (isF ? 24 : 16) * px).toFixed(1));
       n.label.setAttribute("opacity", ((n.minor && isLit ? 1 : n.lo) * n.o).toFixed(3));
     }
-    this.cull(px);
+    if (this.geo === NARROW) this.cullStrict(px); else this.cull(px);
     for (const e of this.edges.values()) {
       const A = this.nodes.get(e.a), B = this.nodes.get(e.b);
       const on = this.lit !== null && (e.a === this.lit || e.b === this.lit) && (e.a === this.focus || e.b === this.focus);
       e.o += (e.to - e.o) * kf; e.bright += ((on ? 1 : 0) - e.bright) * kf;
       const show = Math.min(e.o, A?.o ?? 0, B?.o ?? 0);
-      const vis = show > 0.02 && !!A && !!B;
+      const vis = show > 0.02 && !!A && !!B && !A.hidden && !B.hidden;
       e.line.style.display = vis ? "" : "none";
       e.t1.style.display = vis && !this.still ? "" : "none";
       e.t2.style.display = vis && !this.still && e.both ? "" : "none";
@@ -415,6 +448,7 @@ class Sky {
    *  first three always show, and a partner's name that would cover a name already placed, or another card's disc, is left off; its card still
    *  has its name on tap and in the panel. */
   cull(px: number) {
+    for (const n of this.nodes.values()) if (n.hidden) { n.hidden = false; n.g.style.display = ""; }
     const font = 12 * px;
     const rank = (n: Node) => (n.id === this.focus ? 0 : n.id === this.lit ? 1 : this.visited.includes(n.id) ? 2 : 3);
     const shown = [...this.nodes.values()].filter((n) => n.lo > 0.02 || (n.minor && n.id === this.lit)).sort((a, b) => rank(a) - rank(b));
@@ -432,6 +466,48 @@ class Sky {
       n.label.style.display = ok ? "" : "none";
       if (ok) kept.push(b);
     }
+  }
+
+  /** A PHONE'S RULE (#986): every drawn card has its name, and no name sits over another card's
+   *  disc. The middle, the pointed-at card and the walked-through cards keep their names where they
+   *  are; a partner whose disc one of those covers yields. Each other partner's name tries below,
+   *  above, then beside its disc; if none is clear, the card is left off the map (its disc and
+   *  lines too) -- it is still in the sector list below and on the key. */
+  // CEILING: greedy and order-dependent. Blockers include the discs of partners hidden later in the
+  // same pass, so it can drop more cards than needed; a name's width is guessed from its character
+  // count x 0.56 of the font size, not measured.
+  cullStrict(px: number) {
+    const font = 12 * px;
+    const rank = (n: Node) => (n.id === this.focus ? 0 : n.id === this.lit ? 1 : this.visited.includes(n.id) ? 2 : 3);
+    const all = [...this.nodes.values()];
+    const named = all.filter((n) => n.lo > 0.02).sort((a, b) => rank(a) - rank(b));
+    for (const n of all) n.hidden = false;
+    const discOf = (n: Node): LabelBox => ({ x0: n.x - n.r, x1: n.x + n.r, y0: n.y - n.r, y1: n.y + n.r });
+    const drawn = (n: Node) => n.o > 0.3 && !n.hidden;
+    const spotsOf = (n: Node) => {
+      const f = n.id === this.focus ? font * 1.2 : font;
+      const w = (n.label.textContent?.length ?? 0) * f * 0.56;
+      return labelSpots(n, w, f, Number(n.label.getAttribute("y")) - n.y - n.r);
+    };
+    const kept: LabelBox[] = [];
+    const put = (n: Node, s: LabelSpot | null) => {
+      n.label.style.display = s ? "" : "none";
+      if (!s) return;
+      n.label.setAttribute("text-anchor", s.anchor);
+      n.label.setAttribute("x", s.x.toFixed(1));
+      n.label.setAttribute("y", s.y.toFixed(1));
+      kept.push(s.box);
+    };
+    for (const n of named.filter((x) => rank(x) < 3)) put(n, spotsOf(n)[0]!);
+    // A partner under a name that cannot move yields.
+    for (const n of all) if (rank(n) === 3 && n.o > 0.3 && kept.some((k) => boxesHit(k, discOf(n)))) n.hidden = true;
+    for (const n of named.filter((x) => rank(x) === 3)) {
+      if (n.hidden) { n.label.style.display = "none"; continue; }
+      const blockers = [...kept, ...all.filter((o) => o !== n && drawn(o)).map(discOf)];
+      const s = placeLabel(spotsOf(n), blockers);
+      if (s) put(n, s); else { n.hidden = true; n.label.style.display = "none"; }
+    }
+    for (const n of all) n.g.style.display = n.hidden ? "none" : "";
   }
 
   /** Mouse drag pans the map; a touch scrolls the page, as a touch should. */
@@ -526,7 +602,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, broad =
   useEffect(() => {
     const s = sky.current;
     if (!s) return;
-    s.walk(orbit.focus.id, trail.at(-1), pick(orbit, s.geo.cap), [...trail]);
+    s.walk(orbit.focus.id, trail.at(-1), drawnPartners(pick(orbit, s.geo.cap), narrow), [...trail]);
     // `orbit` changes with its focus, and `trail` with it; both are read here, once per step.
   }, [orbit, trail, narrow, broad]);
 
@@ -539,7 +615,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, broad =
     ...(menuFor?.(menu.id) ?? []),
     ...(menu.id === null ? [
       ...(trail.length ? [{ label: "See my path", run: () => sky.current?.fitPath() }] : []),
-      { label: `Frame ${displayName(orbit.focus)} and its cards`, run: () => sky.current?.fit([orbit.focus.id, ...pick(orbit, geometry(narrow, broad).cap).map(({ p }) => p.card.id)], 1.15) },
+      { label: `Frame ${displayName(orbit.focus)} and its cards`, run: () => sky.current?.fit([orbit.focus.id, ...drawnPartners(pick(orbit, geometry(narrow, broad).cap), narrow).map(({ p }) => p.card.id)], 1.15) },
     ] : []),
   ];
   const close = (back: boolean) => {
@@ -550,6 +626,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, broad =
   };
   return (
     <div className="relative">
+      {narrow ? <p className="mb-1 text-sm text-(--muted)">Tap a card to read it.</p> : null}
       <svg ref={svg} role="group" aria-label={label ?? `${name} and the ${orbit.direct + orbit.directTokens} cards it works with`}
         viewBox="-450 -368 900 736" className={`block h-auto w-full select-none touch-pan-y ${narrow ? "aspect-[20/23]" : broad ? "aspect-[16/9]" : "aspect-[880/720]"}`}>
         <defs>
