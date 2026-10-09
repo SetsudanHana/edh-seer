@@ -205,8 +205,25 @@ async function usedWidth(page: Page): Promise<{ viewport: number; sections: { na
       let { lo, hi } = boxes[i]!;
       const b = boxes[i]!;
       const spans = [...b.spans];
+      // A SECTION IN A MULTI-COLUMN FLOW IS JUDGED WITH ITS COLUMNS (#989). CSS columns put the
+      // precon index's sets side by side, but the last set of the longest column runs on alone once
+      // the others have ended, and read as a 31-47% band at 1920-2560 -- a band of the measurement,
+      // not of the page, whose columns container fills the width. The container's leaves count as
+      // the section's row whatever their height overlap.
+      let flow: HTMLElement | null = el.parentElement;
+      while (flow && flow.tagName !== "MAIN") {
+        const cs = getComputedStyle(flow);
+        if (cs.columnCount !== "auto" || cs.columnWidth !== "auto") break;
+        flow = flow.parentElement;
+      }
+      const columns = flow && flow.tagName !== "MAIN" ? flow : null;
       for (const { d, r } of leaves) {
         if (el.contains(d)) continue;
+        if (columns?.contains(d)) {
+          lo = Math.min(lo, Math.max(0, r.left)); hi = Math.max(hi, Math.min(vw, r.right));
+          spans.push([Math.max(0, r.left), Math.min(vw, r.right)]);
+          continue;
+        }
         // Half the leaf's own height, to 40px: a leaf is usually one line of text, 20px tall.
         if (Math.min(b.bottom, r.bottom) - Math.max(b.top, r.top) < Math.min(40, r.height / 2)) continue;
         lo = Math.min(lo, Math.max(0, r.left)); hi = Math.max(hi, Math.min(vw, r.right));
