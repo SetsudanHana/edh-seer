@@ -86,7 +86,11 @@ function Tile({ plan, route, picked, onPick }: { plan: Wincons["classes"][number
           ? <span className="text-xs text-(--muted)">wins on its own condition</span>
           // AN UNTIMED ROUTE SAYS WHY ON ITS FACE (persona round 2026-09-29, four seats): "no turn
           // estimate" read as a hole, where it is a limit the report states.
-          : <span className="stat-num text-lg leading-none">{route?.turn !== undefined ? `turn ${route.turn}` : <span className="text-xs text-(--muted)">{route?.needsFinisher ? "needs a finisher" : "speed not modelled"}</span>}</span>
+          : <span className="stat-num text-lg leading-none">{route?.turn !== undefined ? `turn ${route.turn}` : <span className="text-xs text-(--muted)">{route?.needsFinisher ? "needs a finisher"
+            // A COMBO THAT KILLS BUT HAS NO TURN (#1139): its mana is why, said on the tile as the
+            // Say-this box says it, not the generic refusal.
+            : route?.kind === "combo" && route.mana !== undefined ? `${route.mana} mana, not timed`
+            : "speed not modelled"}</span>}</span>
       ) : null}
       <span className="text-xs stat-num text-(--muted)">{plural(plan.count, "card")}</span>
     </>
