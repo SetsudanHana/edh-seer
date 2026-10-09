@@ -759,5 +759,23 @@
     "note": "#1083: Dauthi takes opponents' cards on the way INTO the graveyard (CR 614 replacement) and plays them from exile; the reason said \"can bring back\".",
     "source": "#1083 (2026-10-08)",
     "verified": true
+  },
+  {
+    "a": "Ruin Crab",
+    "b": "Espers to Magicite",
+    "category": "reanimator",
+    "tag": "graveyard-recursion:creature",
+    "note": "#729 owner ruling 2026-10-09: a card that uses a card from an OPPONENT's graveyard joins only cards that explicitly MILL opponents.",
+    "source": "#729 (2026-10-09)",
+    "verified": true
+  },
+  {
+    "a": "Maddening Cacophony",
+    "b": "Gruesome Encore",
+    "category": "reanimator",
+    "tag": "graveyard-recursion:creature",
+    "note": "#729 owner ruling 2026-10-09: a card that uses a card from an OPPONENT's graveyard joins only cards that explicitly MILL opponents.",
+    "source": "#729 (2026-10-09)",
+    "verified": true
   }
 ]

@@ -2046,6 +2046,73 @@
   "typeLine": "Instant"
  },
  {
+  "name": "Espers to Magicite",
+  "oracleId": "06f7ec6d-d70e-44d8-bf43-ae667d244ab4",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "each opponent's graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "reflexive",
+     "subject": "exile each opponent's graveyard",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a token that's a copy of target creature card exiled this way, except it's an artifact and it loses all other card types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Exile each opponent's graveyard.",
+   "2": "When you do, choose up to one target creature card exiled this way. Create a token that's a copy of that card, except it's an artifact and it loses all other card types."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Exile each opponent's graveyard. When you do, choose up to one target creature card exiled this way. Create a token that's a copy of that card, except it's an artifact and it loses all other card types.",
+  "typeLine": "Instant"
+ },
+ {
   "name": "Essence Warden",
   "oracleId": "6ca2a89e-7032-4864-b4e9-66f3178f90ab",
   "clauses": [
@@ -3213,6 +3280,69 @@
   "grantedToken": [],
   "oracleText": "Draw a card. You may put a land card from your hand onto the battlefield.",
   "typeLine": "Instant"
+ },
+ {
+  "name": "Gruesome Encore",
+  "oracleId": "f87bf51e-6218-4418-ae3e-98055e9601e4",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature card from an opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "sorcery"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Put target creature card from an opponent's graveyard onto the battlefield under your control. It gains haste. Exile it at the beginning of the next end step. If that creature would leave the battlefield, exile it instead of putting it anywhere else."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Put target creature card from an opponent's graveyard onto the battlefield under your control. It gains haste. Exile it at the beginning of the next end step. If that creature would leave the battlefield, exile it instead of putting it anywhere else.",
+  "typeLine": "Sorcery"
  },
  {
   "name": "Grumgully, the Generous",

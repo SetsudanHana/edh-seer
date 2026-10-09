@@ -233,6 +233,24 @@
       "why": "#1083 (2026-10-08): owner ruled an intercept is not recursion. Dauthi exiles what would reach an opponent's graveyard and plays it from exile; nothing is brought back from a graveyard.",
       "source": "#1083 (2026-10-08): owner ruled an intercept is not recursion",
       "verified": true
+    },
+    {
+      "a": "Murder",
+      "b": "Gruesome Encore",
+      "tag": "graveyard-recursion:creature",
+      "class": "false-emit",
+      "why": "Murder only kills; Gruesome Encore takes from an opponent's graveyard, which a kill does not mill. Every deck kills creatures; the edge would be noise (owner ruling 2026-10-09, #729).",
+      "source": "#729 (2026-10-09)",
+      "verified": true
+    },
+    {
+      "a": "Damnation",
+      "b": "Espers to Magicite",
+      "tag": "graveyard-recursion:creature",
+      "class": "false-emit",
+      "why": "Damnation only destroys; Espers to Magicite takes from an opponent's graveyard, which a wrath does not mill. Every deck kills creatures; the edge would be noise (owner ruling 2026-10-09, #729).",
+      "source": "#729 (2026-10-09)",
+      "verified": true
     }
   ],
   "knownDefects": [],
