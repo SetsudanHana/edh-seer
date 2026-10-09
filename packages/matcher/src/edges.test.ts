@@ -6376,6 +6376,11 @@ test("a producer that sacrifices ITSELF reads 'When you sacrifice <it>', not 'Wh
   expect(t2[0]).toMatch(/^When you sacrifice Aethersnipe, Mirkwood Bats /);
   // An outlet sacrificing ANOTHER creature keeps the cost wording.
   expect(t1.join() + t2.join()).not.toContain("sacrifices something");
+  // Canoptek Wraith's "you may pay {3} and sacrifice it" derives the self with control `any`: a card
+  // sacrificing itself is still sacrificed by its controller.
+  const wraith = base("Canoptek Wraith", [{ kind: "triggered", trigger: { verbs: ["attacks"], subject: { control: "you", token: null, self: true } }, effect: { kind: "" },
+    emits: [{ verb: "sacrifice", subject: { control: "any", token: null, self: true } }] }] as CardTags["abilities"]);
+  expect(directedReasons(wraith, bats, H).map((r) => r.text)[0]).toMatch(/^When you sacrifice Canoptek Wraith, Mirkwood Bats /);
 });
 
 // #729 (f) remaining shapes, oracle read from the corpus: Deadly Dispute makes YOU sacrifice an artifact

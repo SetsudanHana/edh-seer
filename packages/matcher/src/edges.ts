@@ -2153,8 +2153,10 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true, keywords,
             ...(t.subject.self !== true && sacrificedTo(p, origin, e0) ? { sacrificedTo: sacrificedTo(p, origin, e0) } : {}),
             // THE PRODUCER IS THE THING SACRIFICED (#729 f): Treasure's "Sacrifice this artifact", an
-            // evoke creature. The player sacrifices it; the card does not sacrifice anything.
-            ...(t.subject.self !== true && e0.verb === "sacrifice" && e0.subject.self === true && e0.subject.control === "you"
+            // evoke creature. The player sacrifices it; the card does not sacrifice anything. A card
+            // sacrificing ITSELF is sacrificed by its controller, so `any` (Canoptek Wraith's "sacrifice
+            // it") is you too; only an opponent-controlled self is not.
+            ...(t.subject.self !== true && e0.verb === "sacrifice" && e0.subject.self === true && e0.subject.control !== "opp"
               ? { sacrificedSelf: p.tags?.characteristics.token === true
                 ? `${/^[aeiou]/i.test(p.card.name) ? "an" : "a"} ${p.card.name}` : p.card.name } : {}),
             // A BLANK EFFECT IS READ OFF ITS EMITS (#647 item 5), its clause siblings' too: Displacer
