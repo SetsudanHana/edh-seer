@@ -989,7 +989,14 @@ export interface Effect {
    *  never reaches the graveyard, so the reason must not say "bring back". Edges are unchanged by
    *  it; only the sentence reads it. */
   intercepted?: true;
+  /** HOW A `token-doubling` REPLACEMENT CHANGES THE TOKENS (#1136), read from what follows "instead".
+   *  The kind alone said "doubles" of Xorn (adds one more), Academy Manufactor (one of each), Divine
+   *  Visitation (the same count, a different token) and Ojer Taq (triples). Absent on a doubler read
+   *  off a bare "double"/"triple" verb: the sentence says "makes more tokens" then. */
+  tokenMultiplier?: TokenMultiplier;
 }
+
+export type TokenMultiplier = "twice" | "thrice" | "additional" | "one-of-each" | "replaced";
 
 export type AbilityKind = "triggered" | "activated" | "static" | "on-cast";
 /** The kinds a card can name as an OBJECT (CR 113.3 plus the two the cards single out). */

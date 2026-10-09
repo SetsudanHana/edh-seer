@@ -291,6 +291,25 @@ test("CR 614 multiplier still edges the maker, never the token, after mediation 
   expect(directedReasons(withTreasurePart(treasureMaker()), artifactPayoff(), H).some((r) => r.tag.startsWith("enters:"))).toBe(false);
 });
 
+test("a token replacement is worded by how it multiplies, never as a doubler by default (#1136)", () => {
+  const sentenceFor = (mode: "twice" | "thrice" | "additional" | "one-of-each" | "replaced" | undefined) => {
+    const doubler = base("Treasure Doubler", [{
+      kind: "triggered",
+      trigger: { verbs: ["create-token"], subject: { type: "artifact", subtype: "treasure", control: "you", token: true } },
+      effect: { kind: "token-doubling", ...(mode ? { tokenMultiplier: mode } : {}) },
+    }]);
+    return directedReasons(withTreasurePart(treasureMaker()), doubler, H).map((r) => r.text).join(" | ");
+  };
+  expect(sentenceFor("twice")).toContain("doubles the tokens");
+  expect(sentenceFor("additional")).toContain("makes extra tokens");
+  expect(sentenceFor("additional")).not.toContain("doubles");
+  expect(sentenceFor("one-of-each")).toContain("makes extra tokens");
+  expect(sentenceFor("thrice")).toContain("triples the tokens");
+  expect(sentenceFor("replaced")).toContain("turns them into its own tokens");
+  expect(sentenceFor(undefined)).toContain("makes more tokens");
+  expect(sentenceFor(undefined)).not.toContain("doubles");
+});
+
 test("themeSubjectKey prefers subtype, then type, else any", () => {
   expect(themeSubjectKey({ subtype: "wizard", control: "you", token: null })).toBe("wizard");
   expect(themeSubjectKey({ type: "creature", control: "you", token: null })).toBe("creature");
