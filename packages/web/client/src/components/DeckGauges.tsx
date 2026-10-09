@@ -232,7 +232,7 @@ export function DeckGauges({ data, diff, bars = true }: {
               zones="score"
               size="lead"
               /* The link to the Roles chapter lives IN the card (#987), where it was a loose line. */
-              footer={bars ? undefined : <a href="#roles" className="text-sm mt-1 text-(--muted) underline underline-offset-2 hover:text-(--foreground)">The five roles behind it are in the Roles chapter</a>}
+              footer={bars ? undefined : <a href="#roles" className="text-sm text-center mt-1 text-(--muted) underline underline-offset-2 hover:text-(--foreground)">The five roles behind it are in the Roles chapter</a>}
               /* Same move, and the wording follows the panel it points at: the category targets are
                * the Roles chapter's, not "the benchmarks below" — that phrase was true of a
                * single-scroll Overview two layouts ago. */

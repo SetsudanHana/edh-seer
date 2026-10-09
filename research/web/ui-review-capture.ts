@@ -246,8 +246,10 @@ async function usedWidth(page: Page): Promise<{ viewport: number; sections: { na
       if (!name) {
         // A bare tag names nothing (#987's band printed "section"): say which chapter it is in and
         // what it starts with. Inline on purpose -- a named helper breaks under tsx's __name in-page.
-        const ch = el.closest("[data-chapter]") as HTMLElement | null;
-        const where = ch ? (ch.id || ch.dataset.chapter || "") : "";
+        // A chapter is `<section id>` (ReportChapters' Chapter); `data-chapter` is only on the rail's
+        // buttons, never an ancestor of content.
+        const ch = el.parentElement?.closest("section[id]") as HTMLElement | null | undefined;
+        const where = ch?.id ?? "";
         const text = (el.textContent || "").replace(/\s+/g, " ").trim().slice(0, 40);
         name = `${el.tagName.toLowerCase()}${where ? ` in ${where}` : ""}${text ? `: "${text}"` : ""}`;
       }
