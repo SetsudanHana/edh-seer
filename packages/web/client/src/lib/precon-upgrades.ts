@@ -18,6 +18,21 @@ export const TARGET_MEANING: Record<BracketTarget, string> = {
 /** The one place the phrase is explained. */
 export const GAME_CHANGER = "Game Changers are cards on WotC's official list of cards that make a deck much stronger.";
 
+/** THE ONE BRACKET LABEL SET, the report's (#991). A target is the band the package keeps the deck
+ *  inside: `bandFits` (matcher `upgrade-package.ts`) reads target 2 as band 1-2, 3 as band 3 or lower,
+ *  4 as any band. The tabs once said "Bracket 2" beside a hero fact "1–2" and a report that says
+ *  "1–2 / 3 / 4–5", so the seat could not tell they were the same thing. Display only: the
+ *  `BracketTarget` numbers stay as data. */
+export const TARGET_LABEL: Record<BracketTarget, string> = { 2: "1–2", 3: "3", 4: "4–5" };
+
+/** WHAT THE HERO'S NUMBER COUNTS (#991): every swap of the package it opens on, the folded ones too,
+ *  for the bracket it names. `word` is the count spelled out. */
+export function heroUpgradesLine(word: string, n: number, target: BracketTarget): string {
+  return `${word.charAt(0).toUpperCase()}${word.slice(1)} ${n === 1 ? "swap" : "swaps"} below ${n === 1 ? "upgrades" : "upgrade"} it for bracket ${TARGET_LABEL[target]}; switch the bracket to see the others.`;
+}
+/** The report ranks the deck's gaps; the page is an upgrade package, so the two lists differ. */
+export const REPORT_DIFFERS = "The full report is a different list: it ranks what the deck is short on, so its counts differ.";
+
 export const swapsOf = (p: UpgradePackage): UpgradeSwap[] => [...p.bringDown, ...p.sections.flatMap((s) => s.swaps)];
 
 /** THE TAB THE PAGE OPENS ON: the target the precon already sits in, so the first package keeps the
@@ -40,7 +55,7 @@ export function startsAbove(p: UpgradePackage): string {
  *  still fits, and what the swaps do to its synergy score, as the report reads the swapped list. */
 export function afterLine(p: UpgradePackage, before: number | null): string {
   const n = swapsOf(p).length;
-  const head = `${n} ${n === 1 ? "swap" : "swaps"}, and after them the deck still fits bracket ${p.target}`;
+  const head = `${n} ${n === 1 ? "swap" : "swaps"}, and after them the deck still fits bracket ${TARGET_LABEL[p.target]}`;
   const s = p.after?.synergy;
   if (s === undefined || before === null) return `${head}.`;
   const from = before.toFixed(1);
@@ -55,5 +70,5 @@ export function sameAsBelow(p: UpgradePackage, packages: readonly UpgradePackage
   if (!below) return "";
   const key = (k: UpgradePackage) => swapsOf(k).map((s) => `${s.out.name}>${s.in.name}`).sort().join("|");
   if (key(below) !== key(p)) return "";
-  return `These are the same swaps as at bracket ${below.target}: none of the stronger cards bracket ${p.target} allows does any of these jobs strictly better, so aiming higher changes nothing for this deck.`;
+  return `These are the same swaps as at bracket ${TARGET_LABEL[below.target]}: none of the stronger cards bracket ${TARGET_LABEL[p.target]} allows does any of these jobs strictly better, so aiming higher changes nothing for this deck.`;
 }

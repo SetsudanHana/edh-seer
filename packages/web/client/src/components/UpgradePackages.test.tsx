@@ -33,18 +33,20 @@ test("opens on the bracket the precon already sits in, and says what that bracke
 
 test("a section shows three swaps, and the rest on request", () => {
   show(page());
-  const lands = screen.getByRole("heading", { name: "Lands" }).parentElement!;
+  const lands = screen.getByRole("heading", { name: "Lands · 5" }).parentElement!;
   expect(within(lands).getAllByRole("listitem")).toHaveLength(3);
   fireEvent.click(within(lands).getByRole("button", { name: "Show 2 more" }));
   expect(within(lands).getAllByRole("listitem")).toHaveLength(5);
+  // The fold's total sits in the heading the reader counts from (#991).
+  expect(screen.getByRole("heading", { name: "Lands · 5" })).toBeInTheDocument();
   // An empty section is not drawn.
   expect(screen.queryByRole("heading", { name: "Ramp" })).toBeNull();
 });
 
 test("switching down a bracket shows the cuts that get the deck there first", () => {
   show(page());
-  fireEvent.click(screen.getByRole("button", { name: "Bracket 2" }));
-  expect(screen.getByRole("heading", { name: "First, to reach bracket 2" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Bracket 1–2" }));
+  expect(screen.getByRole("heading", { name: "First, to reach bracket 1–2 · 1" })).toBeInTheDocument();
   expect(screen.getByText(/It starts at bracket 3, so the first swap brings it down/)).toBeInTheDocument();
 });
 
@@ -55,13 +57,20 @@ test("the summary says what the swaps do to the synergy score, and when a higher
   expect(screen.getByText(/its synergy score goes from 3.0 to 3.4 of 5/)).toBeInTheDocument();
   expect(screen.queryByTestId("precon-same-swaps")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Bracket 3" }));
-  expect(screen.getByTestId("precon-same-swaps")).toHaveTextContent("the same swaps as at bracket 2");
+  expect(screen.getByTestId("precon-same-swaps")).toHaveTextContent("the same swaps as at bracket 1–2");
 });
 
 test("a bracket no swap can reach says why instead of offering a package", () => {
   show(page({ packages: [pkg(3, 1), pkg(4, 1)], unreachable: [2] }));
-  fireEvent.click(screen.getByRole("button", { name: "Bracket 2" }));
+  fireEvent.click(screen.getByRole("button", { name: "Bracket 1–2" }));
   expect(screen.getByTestId("precon-unreachable")).toHaveTextContent("a commander can’t be swapped out");
+});
+
+test("the tabs and the unreachable line carry the report's labels", () => {
+  show(page({ packages: [pkg(3, 1)], unreachable: [2, 4] }));
+  expect(screen.getAllByRole("button").map((b) => b.textContent).slice(0, 3)).toEqual(["Bracket 1–2", "Bracket 3", "Bracket 4–5"]);
+  fireEvent.click(screen.getByRole("button", { name: "Bracket 4–5" }));
+  expect(screen.getByTestId("precon-unreachable")).toHaveTextContent("No swaps bring this deck to bracket 4–5");
 });
 
 test("a reason beside its card's name drops the name it opens with", () => {

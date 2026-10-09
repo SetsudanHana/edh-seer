@@ -2,7 +2,7 @@ import { useState } from "react";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { SECTION_MAX, SECTION_SHOWN, type BracketTarget, type UpgradePackage, type UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import type { PreconCard, PreconPage } from "../lib/precon-page.js";
-import { afterLine, defaultTarget, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_MEANING } from "../lib/precon-upgrades.js";
+import { afterLine, defaultTarget, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_LABEL, TARGET_MEANING } from "../lib/precon-upgrades.js";
 import { cardImageUrl } from "./card-node.js";
 
 import { ReasonText } from "./card-drawer.js";
@@ -30,7 +30,7 @@ export function UpgradePackages({ page, children }: { page: PreconPage; children
           {targets.map((t) => (
             <button key={t} type="button" aria-pressed={t === target} onClick={() => setTarget(t)}
               className="chip justify-center">
-              Bracket {t}
+              Bracket {TARGET_LABEL[t]}
             </button>
           ))}
         </div>
@@ -38,7 +38,7 @@ export function UpgradePackages({ page, children }: { page: PreconPage; children
       </div>
       {pkg ? <Package pkg={pkg} all={page.packages ?? []} before={page.synergy?.score ?? null} cards={cards} extra={children} /> : target ? (
         <p className="max-w-[70ch]" data-testid="precon-unreachable">
-          No swaps bring this deck to bracket {target}: what keeps it above is its commander, or a combo made with its commander, and a commander can&rsquo;t be swapped out.
+          No swaps bring this deck to bracket {TARGET_LABEL[target]}: what keeps it above is its commander, or a combo made with its commander, and a commander can&rsquo;t be swapped out.
         </p>
       ) : null}
     </section>
@@ -48,7 +48,7 @@ export function UpgradePackages({ page, children }: { page: PreconPage; children
 function Package({ pkg, all, before, cards, extra }: { pkg: UpgradePackage; all: readonly UpgradePackage[]; before: number | null; cards: Record<string, PreconCard>; extra?: React.ReactNode }) {
   const same = sameAsBelow(pkg, all);
   const sections = [
-    ...(pkg.bringDown.length ? [{ id: "bring-down", title: `First, to reach bracket ${pkg.target}`, swaps: pkg.bringDown }] : []),
+    ...(pkg.bringDown.length ? [{ id: "bring-down", title: `First, to reach bracket ${TARGET_LABEL[pkg.target]}`, swaps: pkg.bringDown }] : []),
     ...pkg.sections.filter((s) => s.swaps.length).map((s) => ({ id: s.id, title: SECTION_TITLE[s.id], swaps: s.swaps })),
   ];
   return (
@@ -76,7 +76,7 @@ function Section({ title, swaps, cards }: { title: string; swaps: readonly Upgra
   const more = Math.min(swaps.length, SECTION_MAX) - SECTION_SHOWN;
   return (
     <div className="flex flex-col gap-2.5" data-testid="precon-section">
-      <h3 className="t-subsection">{title}</h3>
+      <h3 className="t-subsection">{title} · {Math.min(swaps.length, SECTION_MAX)}</h3>
       <ul className="flex flex-col gap-2.5">
         {shown.map((s) => <Swap key={`${s.out.name}>${s.in.name}`} swap={s} card={cards[s.in.name]} />)}
       </ul>
