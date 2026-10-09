@@ -574,6 +574,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               *  gets more cards across, never a name and its "5 mana" a screen apart. */}
             <div className="min-w-0">
             <CutList
+              model={themes}
               cuts={cuts}
               unjudged={report.unjudged}
               coverage={report.coverage}

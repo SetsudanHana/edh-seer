@@ -2,10 +2,10 @@ import { useState } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
 import type { CutChoice } from "../lib/cut-choice.js";
-import { listNames, type EngineCard } from "../lib/engine-model.js";
+import { listNames, type EngineCard, type EngineModel } from "../lib/engine-model.js";
 import { CardName } from "./card-drawer.js";
 import { CardMenuButton } from "./card-menu.js";
-import { CardFace } from "./engine-parts.js";
+import { CardFace, ReadCards } from "./engine-parts.js";
 import type { SuggestedPair } from "@edh-seer/matcher/suggest-static";
 import { SwapLine } from "./SuggestedPairs.js";
 
@@ -30,7 +30,7 @@ export interface Surplus {
   shelf?: string;
 }
 
-export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHeld, surplus, pairs, deckSize, fillFrom }:
+export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHeld, surplus, pairs, deckSize, fillFrom, model }:
   {
     /** The one cut list: the report's eligibility, the Overview's reading. See `chooseCuts`. */
     cuts: readonly CutChoice[];
@@ -55,7 +55,19 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
     /** Where the rest of an overage can come from when the cuts run short: cards that fit no theme
      *  and are neither interaction nor protection. */
     fillFrom?: readonly string[];
+    /** The engine's cards, to put a cut card's text beside the card that covers it. */
+    model?: EngineModel | null;
   }) {
+  // BY NAME, the way a player cuts: the card, or the front of a double-faced one.
+  const textOf = (name: string): EngineCard | undefined => {
+    if (!model) return undefined;
+    let face: EngineCard | undefined;
+    for (const c of model.cards.values()) {
+      if (c.name === name) return c;
+      if (!face && c.physical === name) face = c;
+    }
+    return face;
+  };
   const [maybeN, setMaybeN] = useState(MAYBE_STEP);
   // TWO KINDS OF CUT, SAID APART (appeal review 2026-09-26). One list headed "weakest first" whose
   // first row carried a green "Keeps it:" read as the list arguing with itself on three seats. A
@@ -159,17 +171,17 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
           <p id="cuts-over" className="text-sm max-w-[65ch]" data-testid="cuts-over">
             Your list has <b className="tabular-nums">{deckSize}</b> cards, <b className="tabular-nums">{over}</b> over 100.{" "}
             {toCut.length === over
-              ? <>These {over} are doing the least here, weakest first: take them out and it is 100.</>
+              ? <>These {over} can go without losing anything: every link they make, another card makes too. Take them out and it is 100.</>
               // "A ROLE YOU RUN MORE OF THAN YOU NEED" ONLY WHEN ONE IS (persona round 2026-09-27: the
               // first-cuts seat looked below for a role over its target and every role was short or
               // on target, a dead end).
               : toCut.length
-                ? <>{toCut.length === 1 ? "This one is" : `These ${toCut.length} are`} doing the least here. The other {rest} {rest === 1 ? "has" : "have"} to come from {elsewhere}.</>
+                ? <>{toCut.length === 1 ? "This one can go" : `These ${toCut.length} can go`} without losing anything: every link {toCut.length === 1 ? "it makes" : "they make"}, another card makes too. The other {rest} {rest === 1 ? "has" : "have"} to come from {elsewhere}.</>
                 : <>Every card here fills a role or works with your themes, so the {over} have to come from {elsewhere}.</>}
           </p>
           {toCut.length ? (
             <ol className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(25rem,calc((100%_-_2.25rem)/4))),1fr))]">
-              {toCut.map((c) => <CutCard key={c.name} c={c} loses={losesWith(c)} cover={coverOf(c)} />)}
+              {toCut.map((c) => <CutCard key={c.name} c={c} loses={losesWith(c)} cover={coverOf(c)} textOf={textOf} />)}
             </ol>
           ) : null}
           {spare.length ? (
@@ -199,7 +211,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
             <section aria-labelledby="cuts-clear" className="flex flex-col gap-2">
               <h4 id="cuts-clear" className="text-base font-semibold">Nothing argues for keeping these</h4>
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(25rem,calc((100%_-_2.25rem)/4))),1fr))]">
-                {[...clear].sort(byShown).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} cover={coverOf(c)} />)}
+                {[...clear].sort(byShown).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} cover={coverOf(c)} textOf={textOf} />)}
               </ul>
             </section>
           ) : null}
@@ -207,7 +219,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
             <section aria-labelledby="cuts-maybe" className="flex flex-col gap-2">
               <h4 id="cuts-maybe" className="text-base font-semibold">{clear.length ? "Weak here, but something argues for them" : "The weakest here, though something argues for each"}</h4>
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(25rem,calc((100%_-_2.25rem)/4))),1fr))]">
-                {[...maybe].sort(byShown).slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} cover={coverOf(c)} />)}
+                {[...maybe].sort(byShown).slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} cover={coverOf(c)} textOf={textOf} />)}
               </ul>
               {maybe.length > maybeN ? (
                 <p>
@@ -351,7 +363,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
 const MAYBE_STEP = 4;
 
 /** One cut: the card, why it is here, and what argues it stays. */
-function CutCard({ c, swap, loses, cover }: { c: CutChoice; swap?: SuggestedPair; loses?: string[]; cover?: { name: string; n: number; of: number } }) {
+function CutCard({ c, swap, loses, cover, textOf }: { c: CutChoice; textOf?: (name: string) => EngineCard | undefined; swap?: SuggestedPair; loses?: string[]; cover?: { name: string; n: number; of: number } }) {
   const r = c.row;
   const score = shownScore(c);
   return (
@@ -373,7 +385,7 @@ function CutCard({ c, swap, loses, cover }: { c: CutChoice; swap?: SuggestedPair
             {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
           </div>
           {r && r.partners > 0
-            ? <Verdict links={loses ?? r.loses.map((l) => l.text)} cover={cover} keeps={realKeeps(c)} />
+            ? <Verdict links={loses ?? r.loses.map((l) => l.text)} cover={cover} keeps={realKeeps(c)} cut={c.name} textOf={textOf} />
             : realKeeps(c).length ? <p><span className="font-medium text-(--success)">Why you might keep it:</span> {realKeeps(c).join(" · ")}</p> : null}
           {c.twins.length ? (
             <p className="text-(--muted)">Stands in for {listNames(c.twins)}: the same cards use {c.twins.length === 1 ? "both" : "all of them"}.</p>
@@ -390,17 +402,22 @@ function CutCard({ c, swap, loses, cover }: { c: CutChoice; swap?: SuggestedPair
  *  the reason to keep it; when it loses nothing, its strongest link and its score argue nothing (the
  *  link is covered, the score is the ranking), and only a real argument -- a win plan, a table
  *  warning -- still shows as one. Two lost links are named; the rest open. */
-function Verdict({ links, cover, keeps }: { links: string[]; cover?: { name: string; n: number; of: number }; keeps: string[] }) {
+function Verdict({ links, cover, keeps, cut, textOf }: { cut?: string; textOf?: (name: string) => EngineCard | undefined; links: string[]; cover?: { name: string; n: number; of: number }; keeps: string[] }) {
   const keepLabel = <span className="font-medium text-(--success)">Why you might keep it:</span>;
   const also = keeps.length ? <p>{links.length ? "Also: " : <>{keepLabel} </>}{keeps.join(" · ")}</p> : null;
   if (!links.length) {
+    // THE COVER'S TEXT BESIDE THE CUT'S (persona round 2026-10-09): "Beetleback Chief alone covers all
+    // 28" could not be checked without leaving the page.
+    const pair = cover && cut ? [textOf?.(cut), textOf?.(cover.name)] : [];
+    const both = pair.every((x): x is EngineCard => !!x) && pair.length === 2 ? pair as EngineCard[] : undefined;
     return (
       <div className="flex flex-col gap-2" data-testid="cut-loses">
         {/* "EVERY CARD … DOES THE SAME WITH 28 OF THEM" read as 28 is not every (round b): the whole
             and the part, both counted, in that order. */}
         {/* LINKS, NOT "WORKS WITH" (review b): the count beside it is every card it works with,
             background helpers included, and those are not the links a cover is read for. */}
-        <p><span className="font-medium">Cutting it loses nothing:</span> another card makes every link it makes{cover ? <>. <CardName name={cover.name} /> alone covers {cover.n === cover.of ? (cover.of === 1 ? "it" : `all ${cover.of} cards involved`) : `${cover.n} of the ${cover.of} cards involved`}</> : null}.</p>
+        <p><span className="font-medium">Cutting it loses nothing:</span> another card makes every link it makes{cover ? <>. <CardName name={cover.name} className="underline underline-offset-2" /> alone covers {cover.n === cover.of ? (cover.of === 1 ? "it" : `all ${cover.of} cards involved`) : `${cover.n} of the ${cover.of} cards involved`}</> : null}.</p>
+        {both ? <ReadCards cards={both} /> : null}
         {also}
       </div>
     );
