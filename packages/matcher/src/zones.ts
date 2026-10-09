@@ -27,12 +27,35 @@ export function normalizeZoneEvent(e: GameEvent): GameEvent {
   }
 }
 
+/** ONLY A CREATURE ATTACKS OR BLOCKS (#1088). CR 508.1a: the active player chooses which creatures
+ *  they control will attack; CR 509.1a: the defending player chooses which creatures they control
+ *  will block. So "whenever you attack" (a subject naming no class) and "whenever a creature
+ *  attacks" are ONE event, and a key that says `attacks:any` beside `attacks:creature` is the same
+ *  event twice: Enchanting Rani's report listed two "Attack triggers" bars of 27 cards. The untyped
+ *  fallback of a combat verb is therefore the creature. A subtype or a "non-" class keeps its key. */
+export function combatSubjectKey(verb: string, subjectKey: string): string {
+  return (verb === "attacks" || verb === "blocks") && subjectKey === "any" ? "creature" : subjectKey;
+}
+
+/** A persisted theme tag (`conditionCares`, derived before #1088) with the same canon applied. */
+export function combatTag(tag: string): string {
+  const i = tag.indexOf(":");
+  return i < 0 ? tag : `${tag.slice(0, i)}:${combatSubjectKey(tag.slice(0, i), tag.slice(i + 1))}`;
+}
+
 /** The reason-tag grouping key for a canonical zone event, kept in legacy spelling so the
  *  CATEGORY_MATCH table and theme labels don't change: enters@battlefield -> enters:key,
  *  enters@graveyard -> enters-graveyard:key, leaves@graveyard -> leaves-graveyard:key. `dies` and a
  *  battlefield `leaves` key on their own verb -- the same strings every cached panel verdict was
  *  written against. */
 export function zoneEventKey(verb: string, zone: string | undefined, subjectKey: string): string {
+  return zoneEventKeyRaw(verb, zone, combatSubjectKey(verb, subjectKey));
+}
+
+/** `zoneEventKey` without the combat canon: the census's own row keys, which keep an untyped subject
+ *  (`attacks:any`) apart from a creature-typed one because they COUNT shapes and `suggest-keys.ts`
+ *  reads `:any` as "every subject". Tags a player sees use `zoneEventKey`. */
+export function zoneEventKeyRaw(verb: string, zone: string | undefined, subjectKey: string): string {
   if (verb === "enters" && zone === "graveyard") return `enters-graveyard:${subjectKey}`;
   if (verb === "leaves" && zone === "graveyard") return `leaves-graveyard:${subjectKey}`;
   return `${verb}:${subjectKey}`;

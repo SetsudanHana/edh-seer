@@ -735,7 +735,7 @@
     "a": "Gyre Sage",
     "b": "Chocobo Knights",
     "category": "attack-matters",
-    "tag": "attacks:any",
+    "tag": "attacks:creature",
     "says": "grants double strike",
     "note": "#1079: Chocobo Knights grants double strike (\"Whenever you attack, creatures you control with counters on them gain double strike\"); the sentence said \"grants haste\" because double strike shares the speed-increase kind.",
     "source": "#1079 (2026-10-07)",

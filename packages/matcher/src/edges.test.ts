@@ -6424,3 +6424,38 @@ test("a sacrifice another card causes reads 'When <thing> is sacrificed thanks t
   expect(sb).toContain("When Smoke Bomb is sacrificed thanks to Deadly Dispute");
   expect(sb).not.toContain("sacrifices something");
 });
+
+// #1088 (owner 2026-10-09: "you need to be a creature to attack"). CR 508.1a: the active player
+// chooses which CREATURES they control will attack. An attack trigger that names no class and one
+// that names "a creature" are the same event, so no tag is ever `attacks:any`.
+describe("attack tags are one event (CR 508.1a)", () => {
+  const typed = base("Typed Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "pump" },
+  }]);
+  const untyped = base("Untyped Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "pump" },
+  }]);
+  const attacker = base("Attacker", []);
+
+  test("an untyped attack trigger and a creature one carry the same tag, and a plain attacker still joins both", () => {
+    const tags = [typed, untyped].flatMap((c) => directedReasons(attacker, c, H).map((r) => r.tag).filter((t) => t.startsWith("attacks")));
+    expect(tags).toHaveLength(2);
+    expect(new Set(tags)).toEqual(new Set(["attacks:creature"]));
+  });
+  test("neither the theme tags nor the cares tags of a card name attacks:any", () => {
+    for (const c of [typed, untyped]) {
+      const all = [...cardThemeTags(c.tags), ...cardCaresTags(c.tags), ...cardSupplyTags(c.tags)];
+      expect(all).not.toContain("attacks:any");
+    }
+    expect([...cardCaresTags(untyped.tags)]).toContain("attacks:creature");
+  });
+  test("a condition recorded before #1088 as attacks:any reads as attacks:creature", () => {
+    const alesha = base("Alesha", [{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["attacks:any"], effect: { kind: "graveyard-recursion" } }] as CardTags["abilities"]);
+    expect([...cardCaresTags(alesha.tags)]).toContain("attacks:creature");
+    expect([...cardCaresTags(alesha.tags)]).not.toContain("attacks:any");
+  });
+});

@@ -1,4 +1,5 @@
 import { cardRate } from "./rate-stats.js";
+import { combatTag } from "./zones.js";
 import {
   COMMANDER_BOOST,
   rankThemes,
@@ -466,7 +467,7 @@ export function analyzeDeckStructured(
   const unmetByCard = new Map<string, string[]>();
   for (const dc of resolved) {
     if (!dc.tags) continue;
-    const wants = [...new Set(dc.tags.abilities.flatMap((a) => a.conditionCares ?? []))];
+    const wants = [...new Set(dc.tags.abilities.flatMap((a) => (a.conditionCares ?? []).map(combatTag)))];
     const unmet = wants.filter((w) => {
       const suppliers = suppliedTags.get(w);
       return !suppliers || [...suppliers].every((n) => n === dc.card.name);
