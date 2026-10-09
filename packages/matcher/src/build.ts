@@ -216,7 +216,7 @@ export interface BuildParentSpec {
  *  14/10/10/3 doctrine these carried before is gone: it measured nothing (67 of 71 owner decks hit
  *  it outright) and the per-theme spread it hid is the whole finding (Interaction 9 to 21 by theme). */
 export const BUILD_PARENTS: BuildParentSpec[] = [
-  { name: "Consistency", key: "consistency", leaves: ["draw", "cardSelection", "impulseDraw", "tutor"], target: TEMPLATE.population.consistency, weight: 1, costBand: [2, 4] },
+  { name: "Card advantage", key: "consistency", leaves: ["draw", "cardSelection", "impulseDraw", "tutor"], target: TEMPLATE.population.consistency, weight: 1, costBand: [2, 4] },
   { name: "Ramp", key: "ramp", leaves: ["ramp"], target: TEMPLATE.population.ramp, weight: 1, costBand: [2, 3] },
   { name: "Interaction", key: "interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], target: TEMPLATE.population.interaction, weight: 1, coverageWeighted: true, costBand: [2, 4] },
   { name: "Board wipes", key: "boardWipes", leaves: ["boardWipe"], target: TEMPLATE.population.boardWipes, weight: 0.5, costBand: [3, 5] },

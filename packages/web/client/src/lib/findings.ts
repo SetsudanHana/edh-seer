@@ -84,7 +84,7 @@ function buildFindings(report: DeckReport): Finding[] {
     out.push({
       kind: "build",
       id: `build:${p.name}`,
-      headline: p.name === "Consistency"
+      headline: p.key === "consistency"
         ? "You will run out of cards before you run out of turns."
         : `You are ${missing} short on ${p.name.toLowerCase()}.`,
       // THE HEDGE IS SHORT HERE AND LONG ON THE TICK LEGEND (T1). It was the same twenty words in

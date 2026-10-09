@@ -10,6 +10,6 @@ test("a card with a counted job is indexable without partners; a card with neith
 
 test("a card with several roles is named by the first job in the report's order", () => {
   expect(jobOf(["draw", "ramp"])).toEqual({ noun: "ramp", tally: "Ramp" });
-  expect(jobOf(["tutor"])).toEqual({ noun: "a tutor", tally: "Consistency" });
+  expect(jobOf(["tutor"])).toEqual({ noun: "a tutor", tally: "Card advantage" });
   expect(jobOf([])).toBeNull();
 });

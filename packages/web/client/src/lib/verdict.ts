@@ -1,20 +1,35 @@
 import type { DeckReport } from "../types.js";
 import { scoreBand } from "./score-band.js";
 import { findings } from "./findings.js";
+import { groupKey } from "./role-group.js";
 
 /** A short basic, in the words the verdict says it in. */
-const GAP: Record<string, string> = { Consistency: "card draw", Ramp: "ramp", Interaction: "answers", "Board wipes": "board wipes" };
+export const GAP_WORD_BY_KEY: Record<string, string> = { consistency: "card advantage", ramp: "ramp", interaction: "answers", boardWipes: "board wipes" };
 const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
 
 /** THE BASICS THE SUGGESTIONS SAY ARE SHORT (persona round 2026-09-27: "Well built: it has the
  *  ramp, draw and answers a deck needs" sat above "You will run out of cards" and "3 short on
  *  interaction" on three seats' reports, and read as a pass the page then took back). Read off the
  *  same findings the suggestions are, so the two can never disagree. */
+/** Each gap as the page says it, with its numbers where the role has them. */
 function gaps(report: DeckReport): string[] {
   const out: string[] = [];
   for (const f of findings(report)) {
-    if (f.kind === "build") { const name = f.id.replace(/^build:/, ""); const w = GAP[name]; if (w && !out.includes(w)) out.push(w); }
-    else if (f.kind === "lands" && /short|under/i.test(f.headline) && !out.includes("lands")) out.push("lands");
+    if (f.kind === "build") {
+      const name = f.id.replace(/^build:/, ""); const key = groupKey(name); const w = key ? GAP_WORD_BY_KEY[key] : undefined;
+      // THE ROLE'S OWN NUMBERS (#1086): "short on card advantage (12 of 15)" cannot be read against a
+      // Roles shelf that says "Draw 11", because the count it names is the one the shelf's group shows.
+      // Read from the build parent the finding was made from, never from the headline's words.
+      const parent = report.buildParents?.find((p) => p.name === name);
+      const said = w && parent ? `${w} (${parent.count} of ${parent.target})` : w;
+      if (said && !out.includes(said)) out.push(said);
+    }
+    else if (f.kind === "lands" && /short|under/i.test(f.headline)) {
+      // The Lands tile's own figures: what is run, against the modelled target.
+      const l = report.deckMath?.lands;
+      const said = l ? `lands (${l.actual} of ${l.target})` : "lands";
+      if (!out.includes(said)) out.push(said);
+    }
   }
   return out;
 }
@@ -39,8 +54,8 @@ export function verdict(report: DeckReport): string | null {
   if (built && together) return short.length ? `A well-built deck whose cards work together, short only on ${list(short)}.` : "A well-built deck whose cards work together.";
   if (built) return short.length
     ? `Mostly well built, but short on ${list(short)}. Its cards don't work with each other much yet, which is what the synergy score measures.`
-    : "Well built: it has the ramp, draw and answers a deck needs. Its cards don't work with each other much yet, which is what the synergy score measures.";
-  if (together) return "Its cards work together well, but it is short on some basics a deck needs, like ramp, draw or answers.";
+    : "Well built: it has the ramp, card advantage and answers a deck needs. Its cards don't work with each other much yet, which is what the synergy score measures.";
+  if (together) return "Its cards work together well, but it is short on some basics a deck needs, like ramp, card advantage or answers.";
   return "Short on some basics a deck needs, and its cards don't work with each other much yet.";
 }
 

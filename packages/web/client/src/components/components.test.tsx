@@ -780,7 +780,7 @@ test("HighSynergyCards marks the top-authority anchor and double-duty cards", ()
  *  Aristocrats 14.5" next to EDHREC and check it, which is the whole point of showing them. */
 test("each role tick names the theme rows it was blended from, and the source line says the weights", () => {
   render(<DeckGauges data={SAMPLE} />);
-  expect(screen.getByText("Tokens 8 · Aristocrats 13")).toBeInTheDocument();        // Consistency, blends to the tick's 10
+  expect(screen.getByText("Tokens 8 · Aristocrats 13")).toBeInTheDocument();        // Card advantage, blends to the tick's 10
   expect(screen.getByText("Tokens 11 · Aristocrats 8.5")).toBeInTheDocument();      // Interaction
   expect(screen.getByText(/Ticks: what Tokens \(60%\) and Aristocrats \(40%\) decks run/)).toBeInTheDocument();
   expect(screen.queryByText(/Command Zone/)).toBeNull();
@@ -795,7 +795,7 @@ test("with no theme strong enough the ticks say they are the population's, and a
   const population = { consistency: 13, ramp: 11, interaction: 13, boardWipes: 2 };
   const fallback = { ...SAMPLE, report: { ...SAMPLE.report, template: { population, targets: population } } };
   const { unmount } = render(<DeckGauges data={fallback} />);
-  expect(screen.getAllByText("Typical deck: 13").length).toBe(2); // Consistency and Interaction share it
+  expect(screen.getAllByText("Typical deck: 13").length).toBe(2); // Card advantage and Interaction share it
   expect(screen.getByText(/Ticks: what a typical Commander deck runs/)).toBeInTheDocument();
   unmount();
   const { template: _t, ...withoutTemplate } = SAMPLE.report;
@@ -969,21 +969,21 @@ const OVERLAP_CATEGORIES = [
 ] as unknown as typeof SAMPLE.report.buildCategories;
 const OVERLAP_PARENTS = [
   // 6 + 3 = 9 leaf mentions; ONE card fills both leaves, so the parent's own union is only 8.
-  { name: "Consistency", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
+  { name: "Card advantage", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
 ] as unknown as typeof SAMPLE.report.buildParents;
 
 test("leaf shares total 100% even when a card fills two leaves, and the header says why", () => {
   render(<BuildBenchmarks categories={OVERLAP_CATEGORIES} parents={OVERLAP_PARENTS} />);
   // Divided by the LEAF SUM (9), never the parent's union (8): 6/9 = 67%, 3/9 = 33%. These total
   // 100% by construction -- 6/8 + 3/8 would have been 112%.
-  expect(screen.getByLabelText(/^Draw 6, 67% of Consistency/)).toBeInTheDocument();
-  expect(screen.getByLabelText(/^Card selection 3, 33% of Consistency/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Draw 6, 67% of Card advantage/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Card selection 3, 33% of Card advantage/)).toBeInTheDocument();
   // C1 (whole-branch review, 2026-09-01), RESTORED after fix round 2 deleted it with the parent
   // row: the denominator those shares are OF has to be on the same screen as the shares. It is 9,
   // and Recognition's "Consistency 8" is the UNION -- so without this line a reader who does the
   // only arithmetic available to them gets 8 x 67% = 5.4 for a leaf that holds 6 cards. The
   // overlap is a real fact about the deck and is stated, not left to be inferred.
-  const header = screen.getByTestId("role-group-total-Consistency");
+  const header = screen.getByTestId("role-group-total-Card advantage");
   expect(header).toHaveTextContent("9 counted across 8 cards");
   expect(header).toHaveTextContent(/some fill two of these roles/);
 });
@@ -1000,7 +1000,7 @@ test("the role groups keep list semantics: every list holds only real list items
       expect(child.getAttribute("role")).toBeNull();
     }
   }
-  const group = screen.getByRole("group", { name: "Consistency" });
+  const group = screen.getByRole("group", { name: "Card advantage" });
   expect(within(group).getAllByRole("listitem")).toHaveLength(2);
 });
 
@@ -1008,10 +1008,10 @@ test("the role groups keep list semantics: every list holds only real list items
 // and the header states the whole and stops.
 test("a parent whose leaves do not overlap states the whole and nothing else", () => {
   const parents = [
-    { name: "Consistency", count: 9, target: 10, leaves: ["draw", "cardSelection"] },
+    { name: "Card advantage", count: 9, target: 10, leaves: ["draw", "cardSelection"] },
   ] as unknown as typeof SAMPLE.report.buildParents;
   render(<BuildBenchmarks categories={OVERLAP_CATEGORIES} parents={parents} />);
-  const header = screen.getByTestId("role-group-total-Consistency");
+  const header = screen.getByTestId("role-group-total-Card advantage");
   expect(header).toHaveTextContent("9 cards");
   expect(header).not.toHaveTextContent(/fill two/);
 });
@@ -1045,7 +1045,7 @@ const ZERO_TARGET_MULTI_LEAF_CATEGORIES = [
   { category: "stackInteraction", count: 1, target: 0 },
 ] as unknown as typeof SAMPLE.report.buildCategories;
 const ZERO_TARGET_MULTI_LEAF_PARENTS = [
-  { name: "Consistency", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
+  { name: "Card advantage", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
   // count > 0 against target 0 is deliberate, mirroring the original fixture's own reasoning: a
   // parent can be unscored while its cards still exist in the deck.
   { name: "Interaction", count: 4, target: 0, leaves: ["targetedRemoval", "stackInteraction"] },
@@ -1082,7 +1082,7 @@ const SCRAMBLED_CATEGORIES = [
   { category: "graveyardHate", count: 1, target: 0 },
 ] as unknown as typeof SAMPLE.report.buildCategories;
 const SCRAMBLED_PARENTS = [
-  { name: "Consistency", count: 8, target: 10, leaves: ["draw", "cardSelection", "tutor"] }, // 6+2+0
+  { name: "Card advantage", count: 8, target: 10, leaves: ["draw", "cardSelection", "tutor"] }, // 6+2+0
   { name: "Ramp", count: 8, target: 10, leaves: ["ramp"] },
   { name: "Interaction", count: 4, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] }, // 3+0+1+0
   { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
@@ -1097,9 +1097,9 @@ test("every leaf still renders grouped under its own parent, in the parent's own
   // would just repeat that same count, so neither renders anything here.
   const leaves = screen.getAllByRole("listitem").map((li) => li.getAttribute("aria-label"));
   expect(leaves).toEqual([
-    expect.stringMatching(/^Draw 6, 75% of Consistency/),
-    expect.stringMatching(/^Card selection 2, 25% of Consistency/),
-    expect.stringMatching(/^Tutors 0, 0% of Consistency/), // absent from SCRAMBLED_CATEGORIES entirely -- still renders, at 0
+    expect.stringMatching(/^Draw 6, 75% of Card advantage/),
+    expect.stringMatching(/^Card selection 2, 25% of Card advantage/),
+    expect.stringMatching(/^Tutors 0, 0% of Card advantage/), // absent from SCRAMBLED_CATEGORIES entirely -- still renders, at 0
     expect.stringMatching(/^Removal 3, 75% of Interaction/),
     expect.stringMatching(/^Counterspells 0, 0% of Interaction/),
     expect.stringMatching(/^Graveyard hate 1, 25% of Interaction/),
@@ -1746,7 +1746,15 @@ test("the land row names the ramp and draw package and where the target goes on 
   expect(screen.getByText(/Ramp is 6 over its target/i)).toHaveTextContent(
     "Ramp is 6 over its target: if you cut rocks or dorks to get there, plan for about 35 lands.",
   );
-  expect(screen.queryByText(/Consistency is .* over its target/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Card advantage is .* over its target/i)).not.toBeInTheDocument();
+});
+
+test("a draw group over its target says it in the group's own name (#1086)", () => {
+  const over = { ...DECK_MATH, lands: { ...DECK_MATH.lands, target: 32, ifTrimmed: { draw: { over: 3, target: 34 } } } };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={over}
+    parents={[{ name: "Card advantage", key: "consistency", count: 16, target: 13, leaves: ["draw"] }]} />);
+  expect(screen.getByText(/Card advantage is 3 over its target/)).toBeInTheDocument();
+  expect(screen.queryByText(/Consistency is/)).not.toBeInTheDocument();
 });
 
 test("the land row names the commander's cost, which the target reads", () => {

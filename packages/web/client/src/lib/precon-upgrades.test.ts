@@ -61,12 +61,12 @@ test("synergy: the same figure is said unchanged", () => {
 
 test("build: a rise across a band, with a shortfall closed and one left", () => {
   const s = whatTheSwapsDo(
-    withAfter({ build: 4.2, short: [{ group: "Consistency", have: 7, target: 8 }] }),
-    before({ build: 3.6, gaps: [{ group: "Ramp", have: 9, target: 11 }, { group: "Consistency", have: 5, target: 8 }] }),
+    withAfter({ build: 4.2, short: [{ group: "Card advantage", have: 7, target: 8 }] }),
+    before({ build: 3.6, gaps: [{ group: "Ramp", have: 9, target: 11 }, { group: "Card advantage", have: 5, target: 8 }] }),
   );
   expect(s).toContain("It is more consistent: Build 3.6 → 4.2 of 5, from close to on target");
   expect(s).toContain("no longer short on ramp");
-  expect(s).toContain("1 short on card draw, was 3");
+  expect(s).toContain("1 short on card advantage, was 3");
   expect(s).not.toMatch(/consistency[,.;]|short on consistency/);
 });
 
@@ -85,7 +85,7 @@ test("a gap that got worse says so, one that stayed says still, one that shrank 
 });
 
 test("one label map names the engine's groups for every surface", () => {
-  expect(GROUP_WORD("Consistency")).toBe("card draw");
+  expect(GROUP_WORD("Card advantage")).toBe("card advantage");
   expect(GROUP_WORD("Board wipes")).toBe("board wipes");
   expect(GROUP_WORD("Something New")).toBe("something new");
 });

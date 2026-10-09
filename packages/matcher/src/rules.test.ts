@@ -444,7 +444,7 @@ test("impulse draw is its own category and no longer reads as card selection", (
 
   // BOTH LEAVES SIT INSIDE CONSISTENCY, which is what makes this a labelling change and not a
   // scoring one: measured over the 71 decks, the Consistency union moved in 0 of them.
-  const consistency = BUILD_PARENTS.find((p) => p.name === "Consistency")!;
+  const consistency = BUILD_PARENTS.find((p) => p.name === "Card advantage")!;
   expect(consistency.leaves).toContain("impulseDraw");
   expect(consistency.leaves).toContain("cardSelection");
 });

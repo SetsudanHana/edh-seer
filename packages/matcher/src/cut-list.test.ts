@@ -11,7 +11,7 @@ const card = (over: Partial<CutInput> & { name: string }): CutInput => ({
 // each parent here still lists the same leaf the old fixture named.
 const PARENTS: SlackParent[] = [
   { name: "Ramp", count: 14, target: 10, leaves: ["ramp"] },        // four to spare
-  { name: "Consistency", count: 10, target: 10, leaves: ["draw"] }, // exactly at target
+  { name: "Card advantage", count: 10, target: 10, leaves: ["draw"] }, // exactly at target
   { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
 ];
 

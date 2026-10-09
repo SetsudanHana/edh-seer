@@ -11,12 +11,12 @@ const diff: RunDiff = {
   build: { from: 4.3, to: 4.1 },
   theme: { from: "artifacts", to: "spellslinger" },
   categories: [{ category: "cardDraw", from: 6, to: 8 }],
-  findings: [{ id: "build:Consistency", label: "Consistency", from: "Consistency 6/14" }],
+  findings: [{ id: "build:Card advantage", label: "Card advantage", from: "Card advantage 6/14" }],
 };
 
 test("names what moved: the finding, the theme and the cards", () => {
   render(<RunDiffLine diff={diff} />);
-  expect(screen.getByText("Consistency")).toBeInTheDocument();
+  expect(screen.getByText("Card advantage")).toBeInTheDocument();
   expect(screen.getByText("fixed")).toBeInTheDocument();
   expect(screen.getByText(/spellslinger/)).toBeInTheDocument();
   expect(screen.getByText(/Rhystic Study, Mystic Remora/)).toBeInTheDocument();
@@ -41,7 +41,7 @@ test("renders nothing at all without a diff", () => {
 test("dismissing removes the line", async () => {
   render(<RunDiffLine diff={diff} />);
   await userEvent.click(screen.getByRole("button", { name: "Dismiss what changed" }));
-  expect(screen.queryByText("Consistency")).toBeNull();
+  expect(screen.queryByText("Card advantage")).toBeNull();
 });
 
 /** The dismissal remembers WHICH diff was dismissed rather than a boolean, so the next run brings
@@ -49,9 +49,9 @@ test("dismissing removes the line", async () => {
 test("a new run brings the line back after a dismissal", async () => {
   const { rerender } = render(<RunDiffLine diff={diff} />);
   await userEvent.click(screen.getByRole("button", { name: "Dismiss what changed" }));
-  expect(screen.queryByText("Consistency")).toBeNull();
+  expect(screen.queryByText("Card advantage")).toBeNull();
   rerender(<RunDiffLine diff={{ ...diff }} />);
-  expect(screen.getByText("Consistency")).toBeInTheDocument();
+  expect(screen.getByText("Card advantage")).toBeInTheDocument();
 });
 
 test("signed prints an explicit plus", () => {
@@ -68,13 +68,13 @@ test("a finding that appeared or went away names its label once", () => {
     added: [], removed: [], categories: [],
     findings: [
       { id: "a", label: "Board wipes", to: "Board wipes 0/1" },
-      { id: "b", label: "Consistency", from: "Consistency 6/14" },
+      { id: "b", label: "Card advantage", from: "Card advantage 6/14" },
     ],
   }} />);
   expect(screen.getByText("0/1")).toBeInTheDocument();
   expect(screen.getByText("6/14")).toBeInTheDocument();
   expect(screen.queryByText(/Board wipes Board wipes/)).toBeNull();
-  expect(screen.queryByText(/Consistency Consistency/)).toBeNull();
+  expect(screen.queryByText(/Card advantage Card advantage/)).toBeNull();
 });
 
 /** THE PHONE CUT, PINNED AS A CONTRACT rather than as a layout measurement, which jsdom cannot make.

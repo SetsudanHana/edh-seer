@@ -43,11 +43,11 @@ test("trade-offs show four at a time; clear cuts always show in full", async () 
  *  are on the Roles shelves, which were repeated here as card images. */
 test("a role over its target says how many can go, and the row takes you to its shelf", () => {
   const card = (name: string) => ({ id: name, name, typeLine: "", text: "", isToken: false, isCommander: false, isLand: false, isFace: false, roles: ["draw"], score: 0, manaCost: "", physical: name });
-  render(<CutList cuts={[]} slack={[{ category: "Consistency", count: 16, target: 13, over: 3 }]}
-    surplus={[{ name: "Consistency", count: 16, target: 13, over: 3, cards: [card("Brainstorm"), card("Ponder")], shelf: "draw" }]} />);
+  render(<CutList cuts={[]} slack={[{ category: "Card advantage", count: 16, target: 13, over: 3 }]}
+    surplus={[{ name: "Card advantage", count: 16, target: 13, over: 3, cards: [card("Brainstorm"), card("Ponder")], shelf: "draw" }]} />);
   // ONE BUTTON PER ROLE, scrolling to that role's own shelf (owner, 2026-09-29: "if I click it it
   // does not work"): a `#roles` link replaced the deck the report keeps in the URL's hash.
-  const row = screen.getByRole("button", { name: /Consistency.*16 against 13: up to 3 can go/ });
+  const row = screen.getByRole("button", { name: /Card advantage.*16 against 13: up to 3 can go/ });
   expect(screen.queryByRole("link", { name: /on the shelf/ })).toBeNull();
   const shelf = document.createElement("li");
   shelf.id = "shelf-draw";
@@ -58,7 +58,7 @@ test("a role over its target says how many can go, and the row takes you to its 
   expect(shelf.scrollIntoView).toHaveBeenCalled();
   expect(window.location.hash).toBe("#deck=abc");
   shelf.remove();
-  expect(screen.queryByRole("list", { name: "Consistency: 2 cards" })).toBeNull();
+  expect(screen.queryByRole("list", { name: "Card advantage: 2 cards" })).toBeNull();
   // The bare chip is gone where the cards are shown.
   expect(screen.queryByText("16/13 (+3)")).toBeNull();
 });
@@ -172,7 +172,7 @@ test("a cover is never another proposed cut, and a partnerless row shows only re
 });
 
 test("over 100 with too few cuts, the list says how many are still to find and where", () => {
-  const surplus = [{ name: "Consistency", count: 16, target: 13, over: 3, cards: [] }];
+  const surplus = [{ name: "Card advantage", count: 16, target: 13, over: 3, cards: [] }];
   const { unmount } = render(<CutList cuts={[cut("Only One")]} slack={[]} surplus={surplus} deckSize={108} />);
   expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses no link when cut: every link it makes, another card makes too. The other 7 have to come from a role you run more of than you need, below, or the cards you like least.");
   unmount();

@@ -270,7 +270,7 @@ test("draws the colour identity as mana pips beside its name", () => {
  *  The judgement now lives in a panel allowed to make it. */
 test("no longer carries the role bars", () => {
   render(<RecognitionPanel data={DATA} />);
-  expect(screen.queryByTestId("role-row-Consistency")).toBeNull();
+  expect(screen.queryByTestId("role-row-Card advantage")).toBeNull();
   expect(screen.queryByTestId("role-row-Interaction")).toBeNull();
 });
 

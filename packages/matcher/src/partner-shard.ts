@@ -52,10 +52,10 @@ const JOBS: readonly { role: string; noun: string; tally: string }[] = [
   { role: "stackInteraction", noun: "interaction", tally: "Interaction" },
   { role: "protection", noun: "protection", tally: "Interaction" },
   { role: "graveyardHate", noun: "graveyard hate", tally: "Interaction" },
-  { role: "tutor", noun: "a tutor", tally: "Consistency" },
-  { role: "draw", noun: "card draw", tally: "Consistency" },
-  { role: "cardSelection", noun: "card selection", tally: "Consistency" },
-  { role: "impulseDraw", noun: "card draw", tally: "Consistency" },
+  { role: "tutor", noun: "a tutor", tally: "Card advantage" },
+  { role: "draw", noun: "card draw", tally: "Card advantage" },
+  { role: "cardSelection", noun: "card selection", tally: "Card advantage" },
+  { role: "impulseDraw", noun: "card draw", tally: "Card advantage" },
 ];
 // NOT `lands`: every land carries that role, and "X is a land" would promise a search engine
 // thousands of pages that say nothing a type line does not.

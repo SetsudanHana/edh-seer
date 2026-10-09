@@ -125,7 +125,7 @@ export function Findings({ report, diff, suggestions }: {
           *  know what the Build score is made of"). The five are `BUILD_PARENTS` plus lands. */}
         {all.length > 0 ? (
           <span className="text-xs text-(--muted)">
-            Build, out of 5, is how close your card draw, ramp, interaction, board wipes and lands are to their targets, and whether your removal can hit every kind of permanent.
+            Build, out of 5, is how close your card advantage, ramp, interaction, board wipes and lands are to their targets, and whether your removal can hit every kind of permanent.
           </span>
         ) : null}
       </div>
