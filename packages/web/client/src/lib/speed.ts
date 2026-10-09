@@ -41,6 +41,8 @@ export interface SpeedRoute {
   payoffs?: string[];
   /** A combo route whose loop nothing in the deck turns into a win: listed, never timed. */
   needsFinisher?: boolean;
+  /** False when the combo's result is not a loop ("Win the game" alone): it wins, it does not go infinite. */
+  infinite?: boolean;
   /** A combo that wins by itself with no payoff card: the Commander Spellbook result phrase that says so. */
   winsBy?: string;
   /** What the number does and does not count. */
@@ -93,6 +95,7 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
       ...timing, cards: cheapest.cards,
       ...(cheapest.payoffs?.length ? { payoffs: cheapest.payoffs.map((p) => p.name) } : {}),
       ...(phrase ? { winsBy: phrase } : {}),
+      infinite: isInfiniteCombo(cheapest.result),
       caveat: timing.turn !== undefined
         ? "when the deck has the mana for both pieces; drawing or finding them is not counted, so this is the earliest it can happen, not a typical kill"
         : `not timed: its pieces cost ${cheapest.manaValue} mana together, which half our test games have not reached${lastTurn !== undefined ? ` by turn ${lastTurn}` : ""}`,

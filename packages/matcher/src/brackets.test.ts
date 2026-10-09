@@ -93,7 +93,7 @@ test("a combo wins itself only when its result kills the whole table", () => {
     "Infinite mana, infinite combat damage", "Infinite lifeloss", "Near-infinite lifeloss", "Infinite mill", "near-infinite mill", "Infinite ETB,  Infinite Damage", "Near-infinite combat damage", "Each opponent loses the game at the beginning of their next upkeep",
     "Infinite card draw for each opponent", "Infinite card draw for opponents", "Near-infinite card draw for any number of opponents", "Infinite card draw for any number of players"];
   const no = ["Infinite damage to one opponent", "Infinite damage to target opponent", "Target opponent loses the game", "Infinite damage to all players",
-    "Infinite lifeloss for target opponent", "Infinite self-mill", "Infinite card draw", "Infinite card draw for all players", "Infinite card draw for each player", "Infinite card draw for target opponent", "Infinite mill for all players", "Infinite turns", "Infinite mana", "Infinite lifegain", "", undefined];
+    "Infinite lifeloss for target opponent", "Infinite self-mill", "Infinite card draw", "Infinite card draw for all players", "Infinite card draw for each player", "Infinite card draw for target opponent", "Infinite card draw for opponents that control a Wedding Ring", "Infinite mill for all players", "Infinite turns", "Infinite mana", "Infinite lifegain", "", undefined];
   for (const r of yes) expect(comboWinsItself(r), String(r)).toBe(true);
   for (const r of no) expect(comboWinsItself(r), String(r)).toBe(false);
 });

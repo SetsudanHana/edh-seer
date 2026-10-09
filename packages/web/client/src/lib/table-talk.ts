@@ -74,8 +74,9 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
   const timedCombo = routes.find((r) => r.kind === "combo" && r.turn !== undefined);
   const bracketCombo = cheap ?? allowed;
   // The bracket sentence may name a different loop (a cheap one nothing wins with): say which one is timed.
-  const whichCombo = timedCombo && (!bracketCombo || bracketCombo.cards.join() !== timedCombo.cards.join()) ? ` (${timedCombo.cards.map(front).join(" + ")})` : "";
   const slowCombo = routes.find((r) => r.kind === "combo" && !r.needsFinisher && r.turn === undefined && r.mana !== undefined);
+  const namedIfOther = (r: { cards: string[] } | undefined) => r && (!bracketCombo || bracketCombo.cards.join() !== r.cards.join()) ? ` (${r.cards.map(front).join(" + ")})` : "";
+  const whichCombo = namedIfOther(timedCombo);
   // "MOSTLY" ONLY WHEN THE DECK LEANS (persona round 2026-09-27: "It wins mostly by …" beside How
   // you win's "Spread about evenly across 4 plans"). The lean test is the one `WinPlans` prints.
   const focus = report.deckMath?.wincons.focus ?? 1;
@@ -92,7 +93,7 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
         : fastest.kind === "poison" ? `, and can poison the table out around turn ${fastest.turn}`
         : `, and its ${fastest.kind === "burn" ? "drains" : fastest.kind === "commander" ? "commander" : "creatures"} can kill the table around turn ${fastest.turn}`)
       + (slowCombo && fastest?.kind !== "combo"
-        ? (fastest?.turn !== undefined ? "; the combo's own speed is not timed" : ", and the combo's speed is not timed") + `: its pieces cost ${slowCombo.mana} mana together`
+        ? (fastest?.turn !== undefined ? "; the combo's own speed is not timed" : ", and the combo's speed is not timed") + namedIfOther(slowCombo) + `: its pieces cost ${slowCombo.mana} mana together`
         : "")
       + "."
     : undefined;

@@ -40,6 +40,8 @@ export const isInfiniteCombo = (result: string | undefined): boolean => INFINITE
 // Forced draw: a player who draws from an empty library loses (CR 704.5b). "for any number of players"
 // is the player's own choice of who, so it can leave them out; "for all players" / "for each player"
 // kills them too and is not here.
+// CEILING: "any number of players" is read as "you may leave yourself out" and "opponents" as all of
+// them; a phrase with a tail ("opponents that control a Wedding Ring") is not matched.
 const SELF_WINNING = /^(?:win the game\b.*|each opponent loses the game\b.*|(?:near-)?infinite damage|(?:near-)?infinite combat damage|(?:near-)?infinite lifeloss|(?:near-)?infinite mill|(?:near-)?infinite card draw for (?:each opponent|opponents|any number of opponents|any number of players))$/;
 export const comboWinsItself = (result: string | undefined): boolean =>
   (result ?? "").split(",").some((p) => SELF_WINNING.test(p.trim().toLowerCase()));

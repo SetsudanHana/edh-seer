@@ -113,3 +113,12 @@ test("a combo that wins by itself says so, naming the result, and is not told it
   expect(d).not.toHaveTextContent("No card here was found");
   expect(d).toHaveTextContent("Can go infinite around turn 4");
 });
+
+test("a timed combo whose result is not a loop says it can win, not go infinite", () => {
+  const wincons = { focus: 0.5, primary: "combo", classes: [{ class: "combo", count: 2, share: 1, cards: ["Demonic Consultation", "Thassa's Oracle"] }] } as never;
+  const routes = [{ kind: "combo", label: "a combo: Demonic Consultation + Thassa's Oracle", turn: 3, mana: 3, cards: ["Demonic Consultation", "Thassa's Oracle"], winsBy: "Win the game", infinite: false, caveat: "x" }] as never;
+  render(<WinPlans wincons={wincons} routes={routes} />);
+  const d = screen.getByTestId("win-plan-detail");
+  expect(d).toHaveTextContent("Can win around turn 3");
+  expect(d).not.toHaveTextContent("Can go infinite");
+});

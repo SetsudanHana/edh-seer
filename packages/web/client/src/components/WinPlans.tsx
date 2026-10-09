@@ -128,8 +128,8 @@ function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][num
         <p className="text-sm">
           {/* A LOOP GOES INFINITE; ITS PAYOFF WINS (persona round 2026-09-29). "Can win" beside "no card
             *  here turns the loop into a win" said both. */}
-          {route.kind === "combo" ? "Can go infinite" : "Can win"} around <b>turn {route.turn}</b>{spread}
-          {route.kind === "combo" ? <>, with {route.cards.join(" + ")}</> : null}
+          {route.kind === "combo" && route.infinite !== false ? "Can go infinite" : "Can win"} around <b>turn {route.turn}</b>{spread}
+          {route.kind === "combo" && route.infinite !== false ? <>, with {route.cards.join(" + ")}</> : null}
           {pressure !== undefined ? <span className="text-(--muted)">; about {Math.round(pressure)} power of creatures in play by turn 5</span> : null}.
         </p>
       ) : route ? <p className="text-xs text-(--muted)">No turn: {route.caveat}.</p> : null}

@@ -110,3 +110,11 @@ test("an untimed killing combo is marked unknown even when no route is timed", (
   const t = tableTalk(r, graph({}), () => 6)!;
   expect(t.plan).toMatch(/, and the combo's speed is not timed: its pieces cost 12 mana together\.$/);
 });
+
+test("an untimed killing combo is named when the bracket sentence names a different loop", () => {
+  const m: Record<string, number> = { A: 1, B: 1, X: 6, Y: 6 };
+  const r = report({ band: "4-5", combos: [{ cards: ["A", "B"], result: "Infinite lifegain" }, { cards: ["X", "Y"], result: "Infinite damage" }] });
+  delete (r.deckMath!.speed as { combat?: unknown }).combat;
+  const t = tableTalk(r, graph({}), (n) => m[n])!;
+  expect(t.plan).toMatch(/, and the combo's speed is not timed \(X \+ Y\): its pieces cost 12 mana together\.$/);
+});
