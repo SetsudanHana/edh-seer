@@ -376,6 +376,7 @@ export function BuildBenchmarks({
           answerCoverage={answerCoverage}
           only={sections}
           coverageWeightedName={coverageWeightedName}
+          drawGroupName={(parents ?? []).find((p) => p.key === "consistency")?.name}
           rampCards={parents?.find((p) => p.key === "ramp")?.count}
         />
       ) : null}
@@ -425,7 +426,7 @@ const VULNERABLE = 0.3;
  *
  *  A benchmark says "6 ramp, want 10". These say what that means in a game you actually play. */
 function DeckMathRows({
-  deckMath, answerCoverage, only, coverageWeightedName, rampCards,
+  deckMath, answerCoverage, only, coverageWeightedName, drawGroupName, rampCards,
 }: {
   /** The Ramp role's count, so the land working can say how much of it the target leans on. */
   rampCards?: number;
@@ -443,6 +444,8 @@ function DeckMathRows({
    *  true whether or not this panel happens to know which row wears it, and suppressing a true
    *  disclosure over a missing prop is how the disclosure got lost in the first place. */
   coverageWeightedName?: string;
+  /** The report's own name for the draw/selection/tutor group (found by key), so this sentence says what the Roles shelf says. */
+  drawGroupName?: string;
 }) {
   const { isAdded } = useAdded();
   // ON A PHONE, A ROW'S CARDS SHOW ON A TAP (owner, 2026-09-27): six rows of names under their bars
@@ -905,7 +908,7 @@ function DeckMathRows({
           ) : null}
           {lands.ifTrimmed?.draw ? (
             <p className="text-sm">
-              Consistency is {lands.ifTrimmed.draw.over} over its target: if you cut draw to get there,
+              {drawGroupName ?? "Card advantage"} is {lands.ifTrimmed.draw.over} over its target: if you cut draw to get there,
               plan for about <span className="stat-num">{lands.ifTrimmed.draw.target}</span> lands.
             </p>
           ) : null}

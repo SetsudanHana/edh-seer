@@ -1749,6 +1749,14 @@ test("the land row names the ramp and draw package and where the target goes on 
   expect(screen.queryByText(/Card advantage is .* over its target/i)).not.toBeInTheDocument();
 });
 
+test("a draw group over its target says it in the group's own name (#1086)", () => {
+  const over = { ...DECK_MATH, lands: { ...DECK_MATH.lands, target: 32, ifTrimmed: { draw: { over: 3, target: 34 } } } };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={over}
+    parents={[{ name: "Card advantage", key: "consistency", count: 16, target: 13, leaves: ["draw"] }]} />);
+  expect(screen.getByText(/Card advantage is 3 over its target/)).toBeInTheDocument();
+  expect(screen.queryByText(/Consistency is/)).not.toBeInTheDocument();
+});
+
 test("the land row names the commander's cost, which the target reads", () => {
   const withCommander = { ...DECK_MATH, lands: { ...DECK_MATH.lands, commanderManaValue: 6 } };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={withCommander} />);
