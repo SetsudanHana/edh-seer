@@ -521,6 +521,29 @@ test("doubling reads WHAT is doubled, because the verb alone cannot say", () => 
   expect(actionEffectKind({ verb: "triple", object: "the tokens" })).toBe("token-doubling");
 });
 
+// #1141: the clause text was read WITH the object and "token" anywhere won, so four cards read as
+// token doublers. Real clause texts from the corpus.
+test("doubling reads the object before the clause text (#1141)", () => {
+  expect(actionEffectKind({ verb: "double", object: "the number of growth counters on this enchantment" },
+    "At the beginning of your end step, double the number of growth counters on this enchantment. Then create a 0/0 green and blue Fractal creature token.")).toBe("counter-placement");
+  expect(actionEffectKind({ verb: "double", object: "the number of +1/+1 counters on it" },
+    "Transform target Incubator token you control. Double the number of +1/+1 counters on it.")).toBe("counter-placement");
+  expect(actionEffectKind({ verb: "double", object: "the number of each kind of counter on it" },
+    "Whenever a modified creature you control attacks, double the number of each kind of counter on it. Then for each nontoken permanent attached to it, create a token that's a copy of it.")).toBe("counter-placement");
+  // Regressions: damage, power, and a true token doubler keep their kinds.
+  expect(actionEffectKind({ verb: "double", object: "that damage" },
+    "If a creature you control would deal damage to a permanent or player, it deals double that damage instead.")).toBe("damage-multiplier");
+  expect(actionEffectKind({ verb: "double", object: "the power and toughness of each creature you control" },
+    "Double the power and toughness of each creature you control until end of turn.")).toBe("pump");
+  expect(actionEffectKind({ verb: "double", object: "tokens created under your control" },
+    "If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.")).toBe("token-doubling");
+});
+
+test("'double strike' is a keyword, not the verb double (#1141)", () => {
+  expect(actionEffectKind({ verb: "double", object: "Creature tokens you control" },
+    "Creature tokens you control gain double strike until end of turn.")).toBe("speed-increase");
+});
+
 test("doubling something unnamed is refused, not guessed", () => {
   expect(actionEffectKind({ verb: "double", object: "that many instead" })).toBeNull();
 });

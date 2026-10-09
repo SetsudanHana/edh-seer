@@ -410,7 +410,10 @@ import { emblemRecipient } from "../emblem.js";
 // (Soundwave, Froghemoth).
 // 290: #1136, a token replacement says how it changes the tokens (`Effect.tokenMultiplier`): twice, thrice,
 // additional (Xorn, Chatterfang), one-of-each (Academy Manufactor), replaced (Divine Visitation).
-export const DERIVE_VERSION = 290;
+// 291: #1141, a doubling verb reads what is doubled from its OBJECT first (counters, damage, life), so a
+// clause that merely mentions a token (Paradox Zone, Elvish Vatkeeper, Arna) is no token doubler, and
+// "gains double strike" is a speed-increase (as on the grant path), not the verb double (Akim and 20 more).
+export const DERIVE_VERSION = 291;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2668,7 +2671,16 @@ export function deriveAbilities(
       // A SPEED GRANT TOO (#1079): haste and double strike share `speed-increase`, and without its
       // keywords Chocobo Knights' double strike read "grants haste".
       if (abilities[i].effect?.kind === "keyword-grant" || abilities[i].effect?.kind === "speed-increase") {
-        const grants = grantedKeywords((clause.actions ?? []).filter((a) => a.verb === "grant-ability").map((a) => a.object ?? ""));
+        const granted = grantedKeywords((clause.actions ?? []).filter((a) => a.verb === "grant-ability").map((a) => a.object ?? ""));
+        // A "gains double strike" the normalizer filed as the verb `double` (#1141) has no grant-ability
+        // action to read, so the speed keywords come off the clause text -- and are ADDED to any the
+        // clause's grant-ability actions name: Assault on Osgiliath stores `double` + grant-ability
+        // (haste), and reading the actions alone kept haste and lost the double strike it prints.
+        // CEILING: haste and double strike only, and only when effect-kind routed a `double` action here.
+        const doubled = abilities[i].effect?.kind === "speed-increase" && /\bdouble strike\b/i.test(text ?? "")
+          && (clause.actions ?? []).some((a) => a.verb === "double" || a.verb === "triple")
+          ? grantedKeywords([text ?? ""]).filter((k) => k === "haste" || k === "double strike") : [];
+        const grants = [...new Set([...granted, ...doubled])];
         if (grants.length > 0) abilities[i] = { ...abilities[i], grants };
       }
       const reduces = abilities[i].effect?.kind === "cost-reduction" ? reductionOf(text ?? "", abilities[i].amount) : undefined;

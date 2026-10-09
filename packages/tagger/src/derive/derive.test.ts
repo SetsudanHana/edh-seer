@@ -4141,3 +4141,32 @@ test("a speed grant records which keyword it grants", () => {
   const speed = tags.abilities.find((a) => a.effect?.kind === "speed-increase")!;
   expect(speed.grants).toEqual(["double strike"]);
 });
+
+// A DOUBLE-STRIKE GRANT READ AS THE VERB `double` STILL RECORDS WHAT IT GRANTS (#1141): the normalizer
+// filed Akim's "gain double strike" as a `double` action, effect-kind answers speed-increase, and with
+// no `grants` the sentence says "grants haste" (the #1079 defect) and the edge defaults to haste.
+test("a double-strike grant read as the verb double records its keywords", () => {
+  const speedOf = (text: string, object: string) => deriveCardTags({
+    oracleId: "doubled",
+    clauses: [{ id: 1, abilityType: "activated", actions: [{ verb: "double", object }] }],
+    characteristics: MINIMAL_CHARACTERISTICS,
+    clauseTexts: { 1: text },
+  } as never).abilities.find((a) => a.effect?.kind === "speed-increase");
+  expect(speedOf("{3}{U}{R}{W}: Creature tokens you control gain double strike until end of turn.", "Creature tokens you control")?.grants)
+    .toEqual(["double strike"]);
+  expect(speedOf("Amass Orcs X, then Goblins and Orcs you control gain double strike and haste until end of turn.", "Goblins and Orcs you control")?.grants)
+    .toEqual(["double strike", "haste"]);
+});
+
+// AND WHEN THE SAME CLAUSE ALSO CARRIES A GRANT-ABILITY ACTION (review of 6194cb57): Assault on
+// Osgiliath's stored clause is `double` + `grant-ability` (haste), and the grant-ability branch alone
+// recorded ["haste"], losing the double strike the clause prints.
+test("a clause with both a double and a grant-ability action records every speed keyword it prints", () => {
+  const ability = deriveCardTags({
+    oracleId: "assault",
+    clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "double", object: "Goblins and Orcs you control" }, { verb: "grant-ability", object: "haste" }] }],
+    characteristics: MINIMAL_CHARACTERISTICS,
+    clauseTexts: { 1: "Amass Orcs X, then Goblins and Orcs you control gain double strike and haste until end of turn." },
+  } as never).abilities.find((a) => a.effect?.kind === "speed-increase");
+  expect([...(ability?.grants ?? [])].sort()).toEqual(["double strike", "haste"]);
+});
