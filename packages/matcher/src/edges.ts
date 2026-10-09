@@ -2208,6 +2208,12 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
             // member the trigger watches: Yuna's Decision puts "a creature card and/or a land card"
             // onto the battlefield, and a landfall trigger heard "When a creature enters".
             subjectNoun: fillNoun(e)
+              // A SACRIFICE THE PRODUCER CAUSES IS THE EVENT OF THE THING SACRIFICED (#729 f): Gaius van
+              // Baelsar makes each player sacrifice, and "When Gaius sacrifices something" had the card
+              // doing it. The sentence names the thing, in the passive; its own sacrifice (`self`) is
+              // `sacrificedSelf` above.
+              ?? (e0.verb === "sacrifice" && e.subject.self !== true ? emitSubjectNoun(nounSubject(e.subject, t.subject)) ?? "a permanent"
+              : undefined)
               ?? (t.verb === "counter-added" && e.subject.self !== true ? emitSubjectNoun(e.subject) ?? "a permanent"
               // A COMMANDER IS NEVER WHAT A `notCommander` TRIGGER HEARD (#559): Nalia is a Rogue, but
               // the Rogue Folk Hero's commander ability draws for is one Nalia lets you cast.

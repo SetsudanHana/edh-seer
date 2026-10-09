@@ -6377,3 +6377,26 @@ test("a producer that sacrifices ITSELF reads 'When you sacrifice <it>', not 'Wh
   // An outlet sacrificing ANOTHER creature keeps the cost wording.
   expect(t1.join() + t2.join()).not.toContain("sacrifices something");
 });
+
+// #729 (f) remaining shapes, oracle read from the corpus: Deadly Dispute makes YOU sacrifice an artifact
+// or creature (Smoke Bomb's "when sacrificed" fires); Goblin Welder makes a PLAYER sacrifice an artifact;
+// Gaius van Baelsar makes EACH PLAYER sacrifice. None of them is the card sacrificing "something" -- the
+// event is the thing being sacrificed, and the sentence says that without naming a sacrificer it cannot know.
+test("a sacrifice another card causes reads 'When <thing> is sacrificed thanks to <producer>'", () => {
+  const mayhem = base("Mayhem Devil", [{ kind: "triggered", trigger: { verbs: ["sacrifice"], subject: { control: "any", token: null, type: "permanent" } },
+    effect: { kind: "damage", subject: { control: "any", token: null, scope: "target" } } }] as CardTags["abilities"]);
+  const welder = base("Goblin Welder", [{ kind: "activated", cost: "{T}", effect: { kind: "" },
+    emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "artifact", scope: "target" }, instantSpeed: true }] }] as CardTags["abilities"]);
+  welder.tags.characteristics.types = ["creature"];
+  expect(directedReasons(welder, mayhem, H).map((r) => r.text)[0]).toMatch(/^When an artifact is sacrificed thanks to Goblin Welder, Mayhem Devil /);
+  const gaius = base("Gaius van Baelsar", [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } }, effect: { kind: "" },
+    emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "creature" } }] }] as CardTags["abilities"]);
+  gaius.tags.characteristics.types = ["creature"];
+  expect(directedReasons(gaius, mayhem, H).map((r) => r.text)[0]).toMatch(/^When a creature is sacrificed thanks to Gaius van Baelsar, Mayhem Devil /);
+  const smokeBomb = base("Smoke Bomb", [{ kind: "triggered", trigger: { verbs: ["sacrifice"], subject: { control: "you", token: null, type: "artifact", self: true } }, effect: { kind: "" } }] as CardTags["abilities"]);
+  const dispute = base("Deadly Dispute", [{ kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: ["creature", "artifact"] }, instantSpeed: true }] }] as CardTags["abilities"]);
+  const sb = directedReasons(dispute, smokeBomb, H).map((r) => r.text).join();
+  expect(sb).toContain("When Smoke Bomb is sacrificed thanks to Deadly Dispute");
+  expect(sb).not.toContain("sacrifices something");
+});

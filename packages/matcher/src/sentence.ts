@@ -479,7 +479,10 @@ export function reasonSentence(input: {
   /** The keywords a `keyword-grant` hands out (`Ability.grants`): "grants flying" over "grants a keyword". */
   keywords?: readonly string[];
 }): string {
-  const verb = eventVerbPhrase(input.eventKey);
+  // A SACRIFICE NAMES THE THING SACRIFICED, NOT A SACRIFICER (#729 f): the producer may make you, a
+  // player or each player sacrifice it, and the event does not say which.
+  const verb = input.eventKey.split(":")[0] === "sacrifice" && (input.self || input.subjectNoun)
+    ? "is sacrificed" : eventVerbPhrase(input.eventKey);
   // A SPEED GRANT NAMES ITS KEYWORD TOO (#1079): double strike is `speed-increase` with haste.
   const phrase = ((input.effectKind === "keyword-grant" || input.effectKind === "speed-increase") && input.keywords?.length ? `grants ${keywordList(input.keywords)}` : undefined)
     ?? effectPhrase(input.effectKind, input.amount, input.effectTarget, input.effectRecipient, input.counterKind)
