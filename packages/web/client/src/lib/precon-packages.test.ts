@@ -1,7 +1,10 @@
 import { expect, test } from "vitest";
 import type { UpgradePackage, UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
-import type { AnalyzeResponse } from "../types.js";
-import { keepManaBase } from "./precon-packages.js";
+import type { AnalyzeResponse, DeckReport } from "../types.js";
+import { chooseCuts } from "./cut-choice.js";
+import { buildEngineModel } from "./engine-model.js";
+import { engineDeck } from "./engine-model.fixture.js";
+import { fillCuts, fillsFor, keepManaBase } from "./precon-packages.js";
 
 const swap = (out: string, add: string, kind: UpgradeSwap["kind"]): UpgradeSwap => ({ kind, out: { name: out, reason: "r" }, in: { name: add, reason: "r" } });
 const pkg = (over: Partial<UpgradePackage> = {}): UpgradePackage => ({
@@ -46,4 +49,43 @@ test("land swaps never go, and a package that cannot fit ships without an after 
   const kept = await keepManaBase(pkg(), input(() => ({ band: "1-2", mana: 0.3, synergy: 3 })), () => []);
   expect(names(kept)).toEqual(["Chapel"]);
   expect(kept.after).toBeUndefined();
+});
+
+test("a fill is dropped last: at equal mana base cost the keeper drops an ordinary swap first", async () => {
+  const p = pkg({ sections: [{ id: "synergy", swaps: [swap("B", "Fill Rock", "fill"), swap("A", "Heavy Pips", "synergy")] }] });
+  // Either one alone fixes the mana base; the keeper drops the synergy swap.
+  const kept = await keepManaBase(p, input((l) => ({ band: "1-2", mana: l.includes("Heavy Pips") && l.includes("Fill Rock") ? 0.2 : 0.18, synergy: 3 })), () => []);
+  expect(names(kept)).toEqual(["Fill Rock"]);
+});
+
+test("fills are made for the groups the report is short in, from the report's suggestions", () => {
+  const sug = { build: { Ramp: [{ name: "Fellwar Stone", reasons: [{ text: "Fellwar Stone makes mana.", others: [] }] }], Interaction: [{ name: "Swords", reasons: [] }] } } as unknown as Parameters<typeof fillsFor>[1];
+  const cuts = [{ name: "Weak A", why: "Works with 1 card." }];
+  const f = fillsFor([{ group: "Ramp", have: 9, target: 11 }, { group: "Card draw", have: 1, target: 2 }, { group: "Consistency", have: 1, target: 2 }], sug, cuts);
+  expect(f.consistency).toBeUndefined();
+  expect(Object.keys(f)).toEqual(["ramp"]);
+  expect(f.ramp).toEqual({ label: "ramp", noun: "ramp", short: 2, adds: [{ name: "Fellwar Stone", reason: "Fellwar Stone makes mana." }], cuts });
+  expect(fillsFor([{ group: "Ramp", have: 9, target: 11 }], null, cuts)).toEqual({});
+});
+
+test("a fill never cuts a card a win plan counts or the table is warned about, read off the real cut list", () => {
+  const { report, graph } = engineDeck();
+  const trim = [
+    { name: "Planned", rating: 0.1, partners: 1, manaValue: 2, reasons: ["only 1 card connects to it"], protections: [] },
+    { name: "Warned", rating: 0.1, partners: 1, manaValue: 2, reasons: ["only 1 card connects to it"], protections: [] },
+    { name: "Free", rating: 0.1, partners: 1, manaValue: 2, reasons: ["only 1 card connects to it"], protections: [] },
+  ];
+  const node = (graph.nodes as unknown as { id: string; oracleText?: string }[]).find((n) => n.id === "Warned");
+  if (node) node.oracleText = "Gain control of target artifact.";
+  const r = { ...report, trim, deckMath: { ...report.deckMath, wincons: { focus: 1, primary: "go-wide", classes: [{ class: "go-wide", count: 1, share: 1, cards: ["Planned"] }] } } } as DeckReport;
+  const choices = chooseCuts(r, buildEngineModel(r, graph));
+  expect(choices.find((c) => c.name === "Planned")?.onPlan).toBe(true);
+  expect(fillCuts(choices, []).map((c) => c.name)).not.toContain("Planned");
+  expect(fillCuts(choices, []).map((c) => c.name)).toContain("Free");
+  expect(fillCuts(choices, ["Free"]).map((c) => c.name)).not.toContain("Free");
+});
+
+test("a keep that is not on-plan rides along into the reason", () => {
+  const cuts = fillCuts([{ name: "Soft", onPlan: false, keeps: ["it scores 2 for synergy"], reasons: [], row: { why: "Soft why" } }], []);
+  expect(cuts).toEqual([{ name: "Soft", why: "Soft why", keep: "it scores 2 for synergy" }]);
 });

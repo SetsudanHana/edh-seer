@@ -160,3 +160,21 @@ export function bringDownInReason(add: string, cut: BringDownCut, job: string | 
   const without = cut.why.kind === "game-changer" ? "without being a Game Changer" : "without the combo";
   return fit(`${add} `, [job ? `does the same ${job} as ${cut.name}, ${without}` : `takes the slot ${without}`]);
 }
+
+/** A FILL SWAP'S REASONS (owner 2026-10-09, #1137). The cut is the next card on the report's cut list,
+ *  said as the cut list says it (`why`), with the argument for keeping it that the list still carries
+ *  (`keep`). The add is the report's own suggestion for the role the deck is short on, opened with how
+ *  short and what the card counts as (`f.label` is the page's word for the group: "card draw"), then
+ *  the report's sentence for it when there is room. */
+export function fillReasons(f: { label: string; noun: string; short: number }, cutName: string, cutWhy: string, add: { name: string; reason: string }, keep = ""): { out: string; in: string } {
+  const head = `${cutName} is next on the report's cut list.`;
+  const why = cutWhy.trim();
+  const against = keep.trim() ? ` Against cutting it: ${keep.trim().replace(/\.$/, "")}.` : "";
+  const outs = [`${head}${why ? ` ${why}` : ""}${against}`, `${head}${why ? ` ${why}` : ""}`, head];
+  const open = `${f.label[0]!.toUpperCase()}${f.label.slice(1)}: you were ${f.short} short; ${add.name} counts as ${f.noun}.`;
+  const link = add.reason.trim().replace(/[^.!?]$/, "$&.");
+  return {
+    out: outs.find((o) => o.length <= REASON_MAX) ?? head,
+    in: link && `${open} ${link}`.length <= REASON_MAX ? `${open} ${link}` : open,
+  };
+}

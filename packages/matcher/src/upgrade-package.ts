@@ -30,8 +30,10 @@ export interface UpgradeSwap {
   in: UpgradeSide;
   /** `role`: a strictly better card in the same role. `game-changer`: a Game Changer in the same group
    *  (`sameGroup`), at targets that allow one (2026-10-03). `land`: a better land. `synergy`: an
-   *  on-plan card for a loose one. `bring-down`: a cut that puts the deck under a lower target. */
-  kind: "role" | "game-changer" | "land" | "synergy" | "bring-down";
+   *  on-plan card for a loose one. `bring-down`: a cut that puts the deck under a lower target.
+   *  `fill` (owner 2026-10-09, #1137): the report's own suggested card for a role the deck is short
+   *  on, for the weakest off-plan card on its cut list; not "better", but a gap closed. */
+  kind: "role" | "game-changer" | "land" | "synergy" | "bring-down" | "fill";
   /** For `role` and `game-changer` swaps, the build category (`BUILD_CATEGORIES`) the two cards are compared in. */
   role?: string;
 }

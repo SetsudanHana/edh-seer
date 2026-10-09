@@ -32,6 +32,9 @@ export interface CutChoice {
   row?: CutRow;
   /** What argues it stays. */
   keeps: string[];
+  /** A win plan counts it, or the table is warned about it: the keeps that make it on-plan, typed so no
+   *  reader matches their wording (#1137). */
+  onPlan: boolean;
   /** Its synergy rating, 0–5: the number "weakest first" orders by. Absent on a saved report from
    *  before trim mode. */
   rating?: number;
@@ -81,7 +84,7 @@ export function chooseCuts(report: DeckReport, model?: EngineModel | null): CutC
   // A saved report from before trim mode: its passive list is the whole answer it has.
   if (!report.trim?.length) {
     return (report.cutList ?? []).map((c) => ({
-      name: c.name, manaValue: c.manaValue, keeps: [], twins: [],
+      name: c.name, manaValue: c.manaValue, keeps: [], onPlan: false, twins: [],
       unmet: c.reasons.filter((r) => UNMET.test(r)),
       reasons: c.reasons.filter((r) => !UNMET.test(r) && !SAYS_NOTHING.test(r)),
     }));
@@ -129,15 +132,16 @@ export function chooseCuts(report: DeckReport, model?: EngineModel | null): CutC
     // with a reason to stay names the link it would keep: the one the model kept, or else its
     // strongest link of any kind (a card whose every link works once has no kept one).
     const link = row?.keep ?? (row && model ? strongestLink(model, row.card.id) : undefined);
+    const warns = warnsAbout(card?.text ?? "");
     const keeps = [...t.protections.filter((p) => !(p === MAIN_EDGE && link)).map(keepWords),
       ...(plansOf.get(t.name) ?? []).map((p) => `it is one of the cards your win plan of ${p} counts`),
       // WARNED AT THE TABLE, SO NOT A SILENT CUT (#982): Treasure Nabber was "Heads-up: it steals
       // permanents" and the second card on the cut list, with nothing linking the two.
-      ...warnsAbout(card?.text ?? "").map((w) => `you warn the table that it ${w}`)];
+      ...warns.map((w) => `you warn the table that it ${w}`)];
     if (link && (keeps.length || t.protections.includes(MAIN_EDGE))) keeps.unshift(`its strongest link: ${link.text}`);
     out.push({
       name: t.name, manaValue: t.manaValue, card, row, rating: t.rating,
-      keeps,
+      keeps, onPlan: (plansOf.get(t.name) ?? []).length > 0 || warns.length > 0,
       unmet: t.reasons.filter((r) => UNMET.test(r)),
       reasons: t.reasons.filter((r) => !UNMET.test(r) && !SAYS_NOTHING.test(r)),
       twins: [],

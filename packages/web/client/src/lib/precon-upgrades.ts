@@ -66,6 +66,9 @@ export function afterLine(p: UpgradePackage): string {
  *  the group "Consistency" (card draw and selection); said bare beside "It is more consistent" it would
  *  mean two things. An unknown group falls back to its lowercased name. */
 const GROUP_WORDS: Record<string, string> = { Consistency: "card draw", Ramp: "ramp", Interaction: "interaction", "Board wipes": "board wipes" };
+/** ONE CARD OF THE GROUP, for "X counts as ...": the plural "board wipes" says "Wrath counts as board wipes". */
+const GROUP_NOUNS: Record<string, string> = { Consistency: "card draw", Ramp: "ramp", Interaction: "interaction", "Board wipes": "a board wipe" };
+export const GROUP_NOUN = (group: string): string => GROUP_NOUNS[group] ?? group.toLowerCase();
 export const GROUP_WORD = (group: string): string => GROUP_WORDS[group] ?? group.toLowerCase();
 
 export function whatTheSwapsDo(p: UpgradePackage, page: Pick<PreconPage, "synergy" | "build" | "gaps">): string {

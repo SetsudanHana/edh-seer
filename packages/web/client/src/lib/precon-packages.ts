@@ -11,17 +11,18 @@ import { bringDown, fitsTarget } from "@edh-seer/matcher/bracket-guard";
 import { slugOf } from "@edh-seer/matcher/slug";
 import type { StaticLookup } from "@edh-seer/matcher/static-lookup";
 import type { DeckSuggestions } from "@edh-seer/matcher/suggest-static";
-import { gatherPackage } from "@edh-seer/matcher/upgrade-gatherer";
+import { gatherPackage, type RoleFill } from "@edh-seer/matcher/upgrade-gatherer";
 import { BRACKET_TARGETS, bandFits, type BracketTarget, type UpgradePackage, type UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import { bringDownInReason, jobOf, synergyReasons } from "@edh-seer/matcher/upgrade-reasons";
-import { upgradeOptions } from "@edh-seer/matcher/upgrade-sections";
+import { upgradeOptions, type RoleSectionId } from "@edh-seer/matcher/upgrade-sections";
 import type { Card } from "@edh-seer/engine";
 import type { DeckBracket } from "@edh-seer/matcher/brackets";
 import type { AnalyzeResponse } from "../types.js";
-import { roleSwapCuts } from "./cut-choice.js";
+import { chooseCuts, roleSwapCuts } from "./cut-choice.js";
+import { GROUP_NOUN, GROUP_WORD } from "./precon-upgrades.js";
 import { mainTheme } from "./main-theme.js";
 import type { EngineModel } from "./engine-model.js";
-import type { PreconCard } from "./precon-page.js";
+import { gapsOf, type PreconCard } from "./precon-page.js";
 
 export interface PreconPackages {
   packages: UpgradePackage[];
@@ -29,6 +30,36 @@ export interface PreconPackages {
   unreachable: BracketTarget[];
   /** Slug and art for every card a package adds, by name. */
   cards: Record<string, PreconCard>;
+}
+
+/** The report's group name for each role section: how `DeckSuggestions.build` is keyed, and what
+ *  `gapsOf` calls a group. Answers have no section and are not filled. */
+const SECTION_OF_GROUP: Record<string, RoleSectionId> = { Ramp: "ramp", Consistency: "consistency", Interaction: "interaction", "Board wipes": "wipes" };
+
+/** THE CUT LIST A FILL MAY CUT, OFF-PLAN AS RULED (2026-10-09): a row whose keeps name a win plan it
+ *  counts for, or a table warning, is never cut by a fill; other keeps ride along into the reason. */
+export function fillCuts(choices: readonly { name: string; onPlan: boolean; keeps: readonly string[]; reasons: readonly string[]; row?: { why: string } }[], commanders: readonly string[]): { name: string; why: string; keep?: string }[] {
+  return choices.filter((c) => !commanders.includes(c.name) && !c.onPlan)
+    .map((c) => ({ name: c.name, why: c.row?.why ?? c.reasons[0] ?? "", ...(c.keeps[0] ? { keep: c.keeps[0] } : {}) }));
+}
+
+/** THE FILLS (owner 2026-10-09, #1137): for each role section the deck is short in, the cards the
+ *  report suggests for that group and the cards its cut list would cut, in the report's own order, so
+ *  the package can close the gap the report names. The cut list's cards are the ones it can cut:
+ *  never a card that fills a role, a commander or a land (`chooseCuts` and the trim list), whichever
+ *  role is at or over target. */
+export function fillsFor(
+  gaps: readonly { group: string; have: number; target: number }[],
+  suggestions: DeckSuggestions | null,
+  cuts: readonly { name: string; why: string; keep?: string }[],
+): Partial<Record<RoleSectionId, RoleFill>> {
+  const out: Partial<Record<RoleSectionId, RoleFill>> = {};
+  for (const gap of gaps) {
+    const id = SECTION_OF_GROUP[gap.group];
+    const adds = (suggestions?.build[gap.group] ?? []).map((c) => ({ name: c.name, reason: c.reasons[0]?.text ?? "" }));
+    if (id && adds.length) out[id] = { label: GROUP_WORD(gap.group), noun: GROUP_NOUN(gap.group), short: gap.target - gap.have, adds, cuts };
+  }
+  return out;
 }
 
 /** The report's reading of a decklist: its band, its mana base total and its synergy score. */
@@ -71,6 +102,7 @@ export async function preconPackages(input: {
   const deckCombos = await lookup.allCombos();
   const downs = new Map(BRACKET_TARGETS.map((t) => [t, bringDown(deck, deckCombos, t, input.commanders, links)] as const));
 
+  const fills = fillsFor(gapsOf(report), input.suggestions, fillCuts(chooseCuts(report, input.model), input.commanders));
   const options = await upgradeOptions({
     lookup, deckNames: input.deckNames, commanders: input.commanders, identity: data.commanderColorIdentity ?? [],
     roleCuts: roleSwapCuts(report, input.model),
@@ -84,6 +116,7 @@ export async function preconPackages(input: {
     ...options.lands.flatMap((c) => c.options.map((o) => o.add)),
     ...[...options.replacements.values()].flatMap((rs) => rs.map((r) => r.add)),
     ...(input.suggestions?.pairs ?? []).map((p) => p.add.name),
+    ...Object.values(fills).flatMap((f) => f.adds.map((a) => a.name)),
   ]);
   await lookup.prefetch([...addNames].map(normalizeName));
   const addCards = new Map<string, Card>();
@@ -110,7 +143,7 @@ export async function preconPackages(input: {
   for (const target of BRACKET_TARGETS) {
     const pkg = gatherPackage({
       target, from: band, deck, combos, cardOf: (n) => addCards.get(n), inDeck: new Set(input.deckNames), bringDown: downs.get(target)!,
-      replacements: options.replacements, roles: options.roles, lands: options.lands, synergy,
+      replacements: options.replacements, roles: options.roles, lands: options.lands, synergy, fills,
     });
     if (!pkg) { unreachable.push(target); continue; }
     /** THE OTHER CARDS THAT COULD FILL A BRING-DOWN CUT'S SLOT: its replacements after the one taken,
@@ -173,7 +206,9 @@ export async function keepManaBase(
   if (before === undefined || !analyse) return pkg;
   const read = (p: UpgradePackage) => analyse(swappedList(input.commanders, input.cards, p));
   const fits = (r: Reading) => bandFits(r.band, pkg.target) && r.mana <= before;
-  const rank = (r: Reading, lost: number) => [bandFits(r.band, pkg.target) ? 0 : 1, Math.max(r.mana - before, 0), lost, -r.synergy];
+  // A FILL GOES LAST (owner 2026-10-09, #1137): at equal mana base cost, a move that keeps the fills beats one that drops one.
+  const fillCount = (p: UpgradePackage) => p.sections.reduce((n, s) => n + s.swaps.filter((w) => w.kind === "fill").length, 0);
+  const rank = (r: Reading, lost: number, fillsLost: number) => [bandFits(r.band, pkg.target) ? 0 : 1, Math.max(r.mana - before, 0), fillsLost, lost, -r.synergy];
   const beats = (a: number[], b: number[]) => { const i = a.findIndex((v, j) => v !== b[j]); return i >= 0 && a[i]! < b[i]!; };
   let current = pkg;
   let reading = await read(current);
@@ -189,7 +224,7 @@ export async function keepManaBase(
     let best: { pkg: UpgradePackage; reading: Reading; rank: number[] } | null = null;
     for (const next of moves) {
       const r = await read(next);
-      const k = rank(r, count(current) - count(next));
+      const k = rank(r, count(current) - count(next), fillCount(current) - fillCount(next));
       if (!best || beats(k, best.rank)) best = { pkg: next, reading: r, rank: k };
     }
     current = best!.pkg;

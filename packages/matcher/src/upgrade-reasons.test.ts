@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { LandFacts } from "./land-score.js";
-import { REASON_MAX, bringDownReason, gameChangerReasons, landReasons, roleReasons, synergyReasons } from "./upgrade-reasons.js";
+import { REASON_MAX, bringDownReason, fillReasons, gameChangerReasons, landReasons, roleReasons, synergyReasons } from "./upgrade-reasons.js";
 import type { LandOption, RoleOption } from "./upgrade-sections.js";
 
 const roleOpt = (add: string, over: Partial<RoleOption> = {}): RoleOption => ({
@@ -87,4 +87,20 @@ test("a fetch swap that gives up a role says so", () => {
   const r = roleReasons("Mwonvuli Acid-Moss", roleOpt("Farseek", { role: "ramp", gained: [], colour: ["G"], fetch: true, lost: ["targetedRemoval"] }));
   expect(r.out).toBe("Mwonvuli Acid-Moss also does removal, and can't find a land that makes green, which the deck is short of for its spells.");
   expect(r.in).toBe("Farseek can find a land that makes green, which the deck is short of for its spells, but does not do removal.");
+});
+
+test("a fill says how short the deck was, what the card counts as, and where the cut sits on the report's list", () => {
+  const add = { name: "Fellwar Stone", reason: "Fellwar Stone makes mana for the colours your commander asks for." };
+  const r = fillReasons({ label: "card draw", noun: "card draw", short: 2 }, "Weak A", "Works with 1 other card in this deck.", add, "its strongest link: Foo");
+  expect(r.out).toBe("Weak A is next on the report's cut list. Works with 1 other card in this deck. Against cutting it: its strongest link: Foo.");
+  expect(r.in).toBe("Card draw: you were 2 short; Fellwar Stone counts as card draw. Fellwar Stone makes mana for the colours your commander asks for.");
+  expect(fillReasons({ label: "ramp", noun: "ramp", short: 1 }, "Weak A", "", { name: "Sol Ring", reason: "" }).in).toBe("Ramp: you were 1 short; Sol Ring counts as ramp.");
+  const long = fillReasons({ label: "ramp", noun: "ramp", short: 2 }, "Weak A", "x".repeat(200), { name: "Fellwar Stone", reason: "y".repeat(200) }, "k");
+  expect(long.out.length).toBeLessThanOrEqual(REASON_MAX);
+  expect(long.in).toBe("Ramp: you were 2 short; Fellwar Stone counts as ramp.");
+});
+
+test("a fill's in-reason names one card of the group and ends in a full stop", () => {
+  const r = fillReasons({ label: "board wipes", noun: "a board wipe", short: 1 }, "Weak A", "", { name: "Wrath of God", reason: "Wrath of God clears the board for your commander" });
+  expect(r.in).toBe("Board wipes: you were 1 short; Wrath of God counts as a board wipe. Wrath of God clears the board for your commander.");
 });
