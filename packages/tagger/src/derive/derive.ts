@@ -406,7 +406,9 @@ import { emblemRecipient } from "../emblem.js";
 // 288: #729, a card that USES a card from an opponent's graveyard (Gruesome Encore, Espers to Magicite,
 // Flawless Forgery, Saruman, Kefka, Hedonist's Trove) derives graveyard-recursion over `opp` (owner
 // ruling 2026-10-09); Uchuulon, which copies itself, stays hate.
-export const DERIVE_VERSION = 288;
+// 289: #729, exile from THEIR graveyard after combat damage to a player is an opponent's graveyard
+// (Soundwave, Froghemoth).
+export const DERIVE_VERSION = 289;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -825,6 +827,11 @@ const ZONE_OWNER: ReadonlyArray<readonly [RegExp, Control]> = [
   [/\bfrom (?:your|their) own\b/i, "you"],
   [/\bfrom your\b/i, "you"],
   [/\bfrom (?:an |each |target )?opponent'?s?\b/i, "opp"],
+  // "THEIR" AFTER COMBAT DAMAGE TO A PLAYER IS THE DAMAGED PLAYER, an opponent (#729): Soundwave and
+  // Froghemoth exile "from their graveyard". Only when the clause EXILES (a taking): "that player returns
+  // a card from their graveyard" (Neyam Shai Murad) gives their own card back to them. Other "their"
+  // wordings (each player, target player) name no one and stay `any`.
+  [/\bcombat damage to a player\b[^.]*?,\s*exile\b[^.]*?\bfrom their/i, "opp"],
 ];
 
 function zoneOwner(clauseText: string, zone: string | null | undefined): Control | undefined {

@@ -251,6 +251,15 @@
       "why": "Damnation only destroys; Espers to Magicite takes from an opponent's graveyard, which a wrath does not mill. Every deck kills creatures; the edge would be noise (owner ruling 2026-10-09, #729).",
       "source": "#729 (2026-10-09)",
       "verified": true
+    },
+    {
+      "a": "Faithless Looting",
+      "b": "Soundwave, Sonic Spy // Soundwave, Superior Captain",
+      "tag": "graveyard-recursion:instant",
+      "class": "false-emit",
+      "why": "#729: Soundwave exiles an instant or sorcery from THEIR (the damaged player's) graveyard; your own discard fills yours, so Faithless Looting brings nothing back for it. Own-yard fills are not what an opponent recursion joins (owner ruling 2026-10-09).",
+      "source": "#729 (2026-10-09)",
+      "verified": true
     }
   ],
   "knownDefects": [],

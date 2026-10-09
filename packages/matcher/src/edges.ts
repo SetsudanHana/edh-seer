@@ -2284,7 +2284,11 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // only cards that explicitly MILL opponents. Not "dies", discard or removal: every deck kills
       // creatures and the edge would be noise. `any` and `you` are untouched, and so is an
       // INTERCEPTED one (Dauthi Voidwalker, Valgavoth), which takes whatever would reach their yard.
-      // CEILING: a mill that is not the opponent's (`you`) never fills their graveyard.
+      // CEILING: a mill that is not the opponent's (`you`) never fills their graveyard. A TYPED
+      // NONCREATURE opponent recursion (Flawless Forgery, Saruman of Many Colors, Spelltwine's opponent
+      // half: instant/sorcery cards) therefore joins NOTHING: this gate needs a mill and the #716 rule
+      // below says an untyped mill does not promise a noncreature class. The two rulings meet here, and
+      // they are joinable in tags only. An owner call could open them to opponent mills.
       if (a.effect.subject.control === "opp" && a.effect.intercepted !== true
         && !(e.milled === true && e.subject.control !== "you")) continue;
       // Skip if the event-edge loop already credited this fill via a graveyard-entry trigger on the same ability.

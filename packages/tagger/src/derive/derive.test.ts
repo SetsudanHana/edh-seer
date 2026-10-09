@@ -1504,6 +1504,16 @@ test("Uchuulon exiles a creature card as a cost of copying ITSELF: stays hate, u
   expect(abilities.some((a) => a.effect.kind === "graveyard-hate")).toBe(true);
 });
 
+// Soundwave, Sonic Spy: "their" in a combat-damage-to-a-player trigger is the damaged player, an opponent.
+test("exiling from THEIR graveyard after combat damage to a player is a recursion over an opponent's yard", () => {
+  const text = "Whenever one or more creature tokens you control deal combat damage to a player, exile target instant or sorcery card with mana value equal to the damage dealt from their graveyard. Copy it. You may cast the copy without paying its mana cost.";
+  const { abilities } = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "combat-damage", subject: "one or more creature tokens you control", control: "you" }, actions: [
+    { verb: "exile", object: "target instant or sorcery card with mana value equal to the damage dealt", fromZone: "graveyard", toZone: "exile" },
+    { verb: "copy", object: "it" }, { verb: "cast", object: "the copy", optional: true },
+  ] }], "Soundwave, Sonic Spy", { 2: text }, undefined, text);
+  expect(oppRecursion(abilities)?.control).toBe("opp");
+});
+
 test("an exile from a graveyard that uses nothing stays hate", () => {
   const { abilities } = deriveAbilities([{
     id: 1, abilityType: "activated",
