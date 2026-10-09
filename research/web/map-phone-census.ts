@@ -13,15 +13,9 @@ const args = process.argv.slice(2);
 const shotsAt = args.indexOf("--shots");
 const shots = shotsAt >= 0 ? args.splice(shotsAt, 2)[1] : undefined;
 const decks = args.length ? args : ["packages/cli/decks/calibration/inalla.txt", "packages/cli/decks/gisa.txt", "packages/cli/decks/calibration/enchanting-rani.txt", "packages/cli/decks/first-deck-108.txt"];
-const b = await chromium.launch();
-for (const file of decks) {
-  const { commanders, deck } = parseDecklistSections(readFileSync(file, "utf8"));
-  const payload = await encodeShare({ commanders: commanders.join("\n"), decklist: deck.join("\n") });
-  const p = await b.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, reducedMotion: "reduce" });
-  await p.goto(`${process.env.BASE ?? "http://localhost:5173"}/#deck=${payload}`);
-  await p.waitForSelector("#stand", { timeout: 120000 });
-  await p.waitForTimeout(3000);
-  const r = await p.evaluate(() => {
+/** What one look at the map counts. Module-level and passed by reference: tsx's __name helper
+ *  wraps named functions, and nothing named may be declared INSIDE the page. */
+const measure = () => {
     // THE ONE MAP ON SCREEN: the largest visible svg in the Glance chapter that draws cards.
     const svg = [...document.querySelectorAll<SVGSVGElement>("#read svg")].filter((v) => v.querySelector(".constellation-node") && v.getBoundingClientRect().width > 1)
       .sort((a, c) => c.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
@@ -42,9 +36,29 @@ for (const file of decks) {
     }
     svg.scrollIntoView({ block: "center" });
     return { drawn: discs.length, unique, named: labels.length, overlaps, hint: /tap a card/i.test(svg.parentElement?.parentElement?.textContent ?? "") };
-  });
+  };
+
+const b = await chromium.launch();
+for (const file of decks) {
+  const { commanders, deck } = parseDecklistSections(readFileSync(file, "utf8"));
+  const payload = await encodeShare({ commanders: commanders.join("\n"), decklist: deck.join("\n") });
+  const p = await b.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, reducedMotion: "reduce" });
+  await p.goto(`${process.env.BASE ?? "http://localhost:5173"}/#deck=${payload}`);
+  await p.waitForSelector("#stand", { timeout: 120000 });
+  await p.waitForTimeout(3000);
+  const first = await p.evaluate(measure);
+  // A WALK, TWICE (review of #986): tap a named partner to point at it, tap again to put it in the
+  // middle, then once more from there. Cards the old middle drew must not stay as unnamed dots.
+  for (let step = 0; step < 2; step++) {
+    const target = p.locator("#read .constellation-node:visible").nth(1);
+    await target.click({ force: true }); await p.waitForTimeout(400);
+    await target.click({ force: true }); await p.waitForTimeout(2500);
+  }
+  const walked = await p.evaluate(measure);
   const name = file.split("/").pop()!.replace(/\.txt$/, "");
-  console.log(`${name}: ${r.drawn} discs drawn (${r.unique} cards), ${r.named} named, ${r.drawn - r.named} unnamed, ${r.overlaps} names over another disc, tap hint ${r.hint ? "yes" : "no"}`);
+  for (const [when, r] of [["first", first], ["walked", walked]] as const) {
+    console.log(`${name} (${when}): ${r.drawn} discs drawn (${r.unique} cards), ${r.named} named, ${r.drawn - r.named} unnamed, ${r.overlaps} names over another disc, tap hint ${r.hint ? "yes" : "no"}`);
+  }
   if (shots) { await p.waitForTimeout(500); await p.screenshot({ path: `${shots}/map-${name}.png` }); }
   await p.close();
 }
