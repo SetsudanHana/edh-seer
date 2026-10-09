@@ -44,3 +44,12 @@ test("zoneEventKey keeps legacy tag spellings, and a graveyard leave is its own 
   expect(zoneEventKey("leaves", "graveyard", "creature")).toBe("leaves-graveyard:creature");
   expect(zoneEventKey("mill", undefined, "any")).toBe("mill:any");
 });
+
+test("a combat verb with no class is the creature (CR 508.1a, 509.1a; #1088)", () => {
+  expect(zoneEventKey("attacks", undefined, "any")).toBe("attacks:creature");
+  expect(zoneEventKey("blocks", undefined, "any")).toBe("blocks:creature");
+  expect(zoneEventKey("attacks", undefined, "goblin")).toBe("attacks:goblin");
+  expect(zoneEventKey("attacks", undefined, "-token")).toBe("attacks:-token");
+  expect(zoneEventKey("enters", "battlefield", "any")).toBe("enters:any");
+  expect(zoneEventKey("combat-damage", undefined, "any")).toBe("combat-damage:any");
+});

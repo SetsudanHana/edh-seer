@@ -2041,7 +2041,7 @@ test("a condition's demand is a demand key, the same as a trigger on that event"
   const spells = card([{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["cast:-creature"], effect: { kind: "draw-card" } }]);
   expect(demandKeysOf(spells).some((k) => k.startsWith("cast|") && !k.includes("|creature|"))).toBe(true);
   // The older condition tags stay out of the pools: "if you attacked this turn" (Alesha).
-  const alesha = card([{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["attacks:any"], effect: { kind: "graveyard-recursion" } }]);
+  const alesha = card([{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["attacks:creature"], effect: { kind: "graveyard-recursion" } }]);
   expect(demandKeysOf(alesha).some((k) => k.startsWith("attacks"))).toBe(false);
 });
 

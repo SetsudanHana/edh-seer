@@ -7,7 +7,7 @@ import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
-import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import { combatSubjectKey, normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
@@ -371,7 +371,7 @@ export function cardCaresTags(tags: CardTags): Set<string> {
     // wants, so they are dropped rather than re-keyed. Left deliberately narrow: an extra combat is
     // the analogous supply for a self `attacks` trigger and is its own item.
     if (a.trigger && a.trigger.subject?.self !== true) {
-      for (const v of a.trigger.verbs) out.add(`${v}:${themeSubjectKey(a.trigger.subject)}`);
+      for (const v of a.trigger.verbs) out.add(`${v}:${combatSubjectKey(v, themeSubjectKey(a.trigger.subject))}`);
     }
     // AN INTERVENING-IF CONDITION IS A DEMAND EVEN WHEN NO SINGLE CARD SATISFIES IT (owner,
     // 2026-08-20). "Whenever a permanent you control is put into a graveyard, IF IT HAD COUNTERS ON

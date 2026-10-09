@@ -46,3 +46,12 @@ test("an axis tag takes the keys of its word in either slot", () => {
   expect(axisEventKeys("static:pump", ["applies:pump|creature|-|-", "applies:pump|-|goblin|-", "applies:cost-reduction|creature|-|-"]))
     .toEqual(["applies:pump|creature|-|-"]);
 });
+
+// #1088: the axis tag `attacks:any` is now `attacks:creature` (only creatures attack, CR 508.1a), so it
+// must still reach the untyped attack keys it reached before; another verb's creature axis must not.
+test("a combat verb's creature axis also reaches the untyped keys; other verbs do not gain them", () => {
+  const keys = ["attacks|creature|-|-", "attacks|-|-|-", "attacks|-|-|n", "attacks|-|goblin|-", "enters|creature|-|-", "enters|-|-|-", "blocks|-|-|-"];
+  expect(axisEventKeys("attacks:creature", keys)).toEqual(expect.arrayContaining(["attacks|creature|-|-", "attacks|-|-|-", "attacks|-|-|n"]));
+  expect(axisEventKeys("blocks:creature", keys)).toEqual(["blocks|-|-|-"]);
+  expect(axisEventKeys("enters:creature", keys)).toEqual(["enters|creature|-|-"]);
+});

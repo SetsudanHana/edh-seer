@@ -413,7 +413,9 @@ import { emblemRecipient } from "../emblem.js";
 // 291: #1141, a doubling verb reads what is doubled from its OBJECT first (counters, damage, life), so a
 // clause that merely mentions a token (Paradox Zone, Elvish Vatkeeper, Arna) is no token doubler, and
 // "gains double strike" is a speed-increase (as on the grant path), not the verb double (Akim and 20 more).
-export const DERIVE_VERSION = 291;
+// 292: #1088, "if you attacked this turn" cares about `attacks:creature` (CR 508.1a: only creatures attack), not
+// `attacks:any`, which named the same event twice.
+export const DERIVE_VERSION = 292;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

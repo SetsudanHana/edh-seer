@@ -1,7 +1,7 @@
 import type { CardTags, GameEvent, SubjectFilter, Verb } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
 import { COMBAT_VERBS, combatNarrowsByType, combatSelfSupplied, eventMatches, producerEvents } from "./edges.js";
-import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import { normalizeZoneEvent, zoneEventKeyRaw } from "./zones.js";
 import { ALSO_SUPPLIED_BY } from "./suggest-keys.js";
 
 const list = (v: string | string[] | undefined): string[] =>
@@ -29,7 +29,7 @@ function censusSubjectKey(s: SubjectFilter): string {
   return "any";
 }
 
-const censusKey = (e: GameEvent): string => zoneEventKey(e.verb, e.subject.zone, censusSubjectKey(e.subject));
+const censusKey = (e: GameEvent): string => zoneEventKeyRaw(e.verb, e.subject.zone, censusSubjectKey(e.subject));
 
 /** A consumer row's key, marked when a combat trigger NARROWS on something the subject key does not
  *  carry.

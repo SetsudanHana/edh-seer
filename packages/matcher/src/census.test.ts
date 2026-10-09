@@ -321,3 +321,17 @@ test("a generic attack payoff counts every creature as a supplier (#561)", () =>
   expect(row(c.consumers, "attacks:type:creature")).toMatchObject({ selfSupplied: false });
   expect(row(c.consumers, "attacks:type:creature")!.counterpart).toBeGreaterThan(0);
 });
+
+// #1088: the census keeps an untyped combat subject as `:any` (zoneEventKeyRaw), not `:creature`, because
+// `eventKeysForDemand` reads `:any` as every key of the verb and has no reading for `attacks:creature`.
+test("an untyped attacks consumer rows as attacks:any, and that row translates to event keys", async () => {
+  const { eventKeysForDemand } = await import("./suggest-keys.js");
+  const payoff = card("untypedAttack", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "pump" },
+  }]);
+  const c = buildCensus([payoff], H);
+  expect(row(c.consumers, "attacks:any")).toBeDefined();
+  expect(eventKeysForDemand("attacks:any", ["attacks|-|-|-"])).not.toEqual([]);
+});

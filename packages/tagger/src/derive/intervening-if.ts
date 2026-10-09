@@ -95,8 +95,9 @@ export function conditionCares(condition: string): string[] {
   if (/\bcounters?\b/i.test(condition)) out.push("counter-added:any");
   // "if a creature died this turn" (Warlock Class) — the aristocrats demand.
   if (/\b(?:a|another|one or more) creatures? (?:died|has died|have died)\b/i.test(condition)) out.push("dies:creature");
-  // "if you attacked this turn" (Alesha) — the aggro demand.
-  if (/\byou(?:'ve)? attacked\b|\byou have attacked\b/i.test(condition)) out.push("attacks:any");
+  // "if you attacked this turn" (Alesha) — the aggro demand. `creature`, not `any`: only creatures attack
+  // (CR 508.1a), so the untyped key named one event twice (#1088).
+  if (/\byou(?:'ve)? attacked\b|\byou have attacked\b/i.test(condition)) out.push("attacks:creature");
   // "if a planeswalker entered the battlefield under your control this turn" (Oath of Liliana,
   // Oath of Chandra).
   const entered = condition.match(/\ban? (planeswalker|creature|artifact|enchantment|land) entered\b/i);

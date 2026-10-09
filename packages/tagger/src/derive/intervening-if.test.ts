@@ -6,7 +6,7 @@ import { conditionCares, interveningIfOf } from "./intervening-if.js";
 test("a condition contributes the cares tag its text names, and nothing else", () => {
   expect(conditionCares("it had one or more counters on it")).toEqual(["counter-added:any"]);
   expect(conditionCares("a creature died this turn")).toEqual(["dies:creature"]);
-  expect(conditionCares("you attacked this turn")).toEqual(["attacks:any"]);
+  expect(conditionCares("you attacked this turn")).toEqual(["attacks:creature"]);
   expect(conditionCares("a planeswalker entered the battlefield under your control this turn"))
     .toEqual(["enters:planeswalker"]);
 
