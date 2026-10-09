@@ -71,6 +71,10 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
   const fastest = fastestRoute(routes);
   // A COMBO THAT KILLS BUT IS NOT TIMED (#1084): its pieces cost more mana than the simulated games
   // reach. Saying only another route's turn would read as "the combo is slower than that".
+  const timedCombo = routes.find((r) => r.kind === "combo" && r.turn !== undefined);
+  const bracketCombo = cheap ?? allowed;
+  // The bracket sentence may name a different loop (a cheap one nothing wins with): say which one is timed.
+  const whichCombo = timedCombo && (!bracketCombo || bracketCombo.cards.join() !== timedCombo.cards.join()) ? ` (${timedCombo.cards.map(front).join(" + ")})` : "";
   const slowCombo = routes.find((r) => r.kind === "combo" && !r.needsFinisher && r.turn === undefined && r.mana !== undefined);
   // "MOSTLY" ONLY WHEN THE DECK LEANS (persona round 2026-09-27: "It wins mostly by …" beside How
   // you win's "Spread about evenly across 4 plans"). The lean test is the one `WinPlans` prints.
@@ -82,12 +86,14 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
       ? `It wins mostly by ${phrase(primary)}${second ? `, or ${phrase(second)}` : ""}`
       : `It spreads its wins across ${classes.length} plans: ${list([...classes.slice(0, 3).map(phrase), ...(classes.length > 3 ? [`${classes.length - 3} more`] : [])])}`)
       + (fastest?.turn === undefined ? ""
-        : fastest.kind === "combo" ? `, and can combo as early as turn ${fastest.turn}`
+        : fastest.kind === "combo" ? `, and can combo as early as turn ${fastest.turn}${whichCombo}`
         // THE WHOLE TABLE (#1056): every timed route is now the turn all three opponents can be dead.
         : fastest.kind === "mill" ? `, and can mill the table out around turn ${fastest.turn}`
         : fastest.kind === "poison" ? `, and can poison the table out around turn ${fastest.turn}`
         : `, and its ${fastest.kind === "burn" ? "drains" : fastest.kind === "commander" ? "commander" : "creatures"} can kill the table around turn ${fastest.turn}`)
-      + (fastest?.turn !== undefined && fastest.kind !== "combo" && slowCombo ? `; the combo's own speed is not timed: its pieces cost ${slowCombo.mana} mana together` : "")
+      + (slowCombo && fastest?.kind !== "combo"
+        ? (fastest?.turn !== undefined ? "; the combo's own speed is not timed" : ", and the combo's speed is not timed") + `: its pieces cost ${slowCombo.mana} mana together`
+        : "")
       + "."
     : undefined;
 

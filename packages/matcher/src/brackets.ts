@@ -37,7 +37,10 @@ export const isInfiniteCombo = (result: string | undefined): boolean => INFINITE
  *  loses the game 693.
  *  CEILING: "Infinite turns" is not a kill by itself (it needs something to do with the turns) and is
  *  left out, though a deck that attacks each of them may well win; it reads as needing a finisher. */
-const SELF_WINNING = /^(?:win the game\b.*|each opponent loses the game|(?:near-)?infinite damage|infinite combat damage|(?:near-)?infinite lifeloss|(?:near-)?infinite mill)$/;
+// Forced draw: a player who draws from an empty library loses (CR 704.5b). "for any number of players"
+// is the player's own choice of who, so it can leave them out; "for all players" / "for each player"
+// kills them too and is not here.
+const SELF_WINNING = /^(?:win the game\b.*|each opponent loses the game\b.*|(?:near-)?infinite damage|(?:near-)?infinite combat damage|(?:near-)?infinite lifeloss|(?:near-)?infinite mill|(?:near-)?infinite card draw for (?:each opponent|opponents|any number of opponents|any number of players))$/;
 export const comboWinsItself = (result: string | undefined): boolean =>
   (result ?? "").split(",").some((p) => SELF_WINNING.test(p.trim().toLowerCase()));
 

@@ -135,7 +135,7 @@ function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][num
       ) : route ? <p className="text-xs text-(--muted)">No turn: {route.caveat}.</p> : null}
       {wins.length ? <Names lead="Turns it into a win" names={wins} art={art} /> : route?.kind === "combo" && route.winsBy ? (
         <p className="text-sm">The loop wins by itself: {route.winsBy}.</p>
-      ) : route?.kind === "combo" ? (
+      ) : route?.kind === "combo" && !route.needsFinisher ? (
         <p className="text-xs text-(--muted)">No card here was found that turns what the loop repeats into a win.</p>
       ) : null}
       {setup.length ? <Names lead={wins.length ? (plan.class === "combo" ? "The loop" : "Makes the board") : undefined} names={setup} art={art} /> : null}

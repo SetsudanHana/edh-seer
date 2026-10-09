@@ -96,10 +96,12 @@ test("a combat plan shows the turn its fast and slow games get there", () => {
  *  itself is not told it has no win. */
 test("a combo no card here finishes says it needs a finisher, not that its speed is unmodelled", () => {
   const wincons = { focus: 0.5, primary: "combo", classes: [{ class: "combo", count: 2, share: 1, cards: ["A", "B"] }] } as never;
-  const routes = [{ kind: "combo", label: "a combo: A + B", cards: ["A", "B"], needsFinisher: true, caveat: "the loop needs a finisher: no card here turns what it repeats into a win" }] as never;
+  const routes = [{ kind: "combo", label: "a combo: A + B", cards: ["A", "B"], needsFinisher: true, caveat: "the loop needs a finisher: no card here was found to turn what it repeats into a win" }] as never;
   render(<WinPlans wincons={wincons} routes={routes} />);
   expect(screen.getByTestId("win-plan")).toHaveTextContent("needs a finisher");
   expect(screen.getByTestId("win-plan")).not.toHaveTextContent("speed not modelled");
+  // The caveat already says so; the detail does not print the "No card here was found" line as well.
+  expect(screen.getByTestId("win-plan-detail")).not.toHaveTextContent("No card here was found that turns");
 });
 
 test("a combo that wins by itself says so, naming the result, and is not told it has no win", () => {

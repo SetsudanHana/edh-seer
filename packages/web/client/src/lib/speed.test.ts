@@ -162,7 +162,7 @@ test("the combo route times the cheapest combo that kills, not the cheapest comb
 test("a deck whose only combos kill nothing lists the route with no turn, and it never leads", () => {
   const routes = speedRoutes(deck([], undefined, [{ cards: ["A", "B"], result: "Infinite lifegain, Infinite turns" }]), mvOf);
   expect(routes).toHaveLength(1);
-  expect(routes[0]).toMatchObject({ kind: "combo", label: "a combo: A + B", needsFinisher: true, caveat: "the loop needs a finisher: no card here turns what it repeats into a win" });
+  expect(routes[0]).toMatchObject({ kind: "combo", label: "a combo: A + B", needsFinisher: true, caveat: "the loop needs a finisher: no card here was found to turn what it repeats into a win" });
   expect(routes[0]!.turn).toBeUndefined();
   expect(fastestRoute(routes)).toBeUndefined();
 });
@@ -179,4 +179,14 @@ test("a killing combo past the simulated rows is untimed and says what it costs"
   expect(routes[0]!.turn).toBeUndefined();
   expect(routes[0]!.needsFinisher).toBeUndefined();
   expect(routes[0]!.caveat).toBe("not timed: its pieces cost 12 mana together, which half our test games have not reached by turn 8");
+});
+
+test("a win-the-game combo with no \"infinite\" in its result is a candidate, and beats a no-kill loop", () => {
+  const m: Record<string, number> = { "Demonic Consultation": 1, "Thassa's Oracle": 2, A: 1, B: 1 };
+  const routes = speedRoutes(deck([], undefined, [
+    { cards: ["A", "B"], result: "Infinite lifegain" },
+    { cards: ["Demonic Consultation", "Thassa's Oracle"], result: "Exile your library, Win the game" },
+  ]), (n) => m[n]);
+  expect(routes[0]).toMatchObject({ label: "a combo: Demonic Consultation + Thassa's Oracle", mana: 3, turn: 3, winsBy: "Win the game" });
+  expect(routes[0]!.needsFinisher).toBeUndefined();
 });

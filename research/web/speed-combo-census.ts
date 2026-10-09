@@ -7,7 +7,7 @@ import { tableTalk } from "../../packages/web/client/src/lib/table-talk.js";
 
 /** THE COMBO ROUTE'S TURN, MEASURED (#1084). For the 73 calibration decks plus Inalla: the combo
  *  route (its cards, whether anything turns it into a win, its turn), the fastest route the "How you
- *  win" headline leads with, and the Say-this line. Counts the two defects the persona round found:
+ *  win" headline leads with, and the Say-this line. Prints a summary of the two defects the persona round found (stderr):
  *  a combo with no kill that is timed (and may lead), and a combo that kills but has no turn while
  *  the Say-this box gives another route's turn without saying the combo's is unknown.
  *
@@ -23,7 +23,7 @@ async function main(): Promise<void> {
     ...readdirSync(CALIBRATION_DECKS).filter((f) => f.endsWith(".txt")).sort().map((f) => join(CALIBRATION_DECKS, f)),
     ...EXTRA,
   ];
-  const rows: { deck: string; combo: unknown; fastest: unknown; say: string | null }[] = [];
+  const rows: { deck: string; combo: { payoffs: string[]; winsBy: string | null; needsFinisher: boolean; turn: number | null } | null; fastest: unknown; say: string | null }[] = [];
   for (const file of files) {
     const data = await analyzeDeckStatic(readFileSync(file, "utf8"), undefined, STATIC);
     const mv = new Map<string, number>();
@@ -33,14 +33,23 @@ async function main(): Promise<void> {
     const combo = routes.find((r) => r.kind === "combo");
     const fastest = fastestRoute(routes);
     const talk = tableTalk(data.report, data.graph, manaValueOf);
+    const comboRow = combo ? { cards: combo.cards, payoffs: combo.payoffs ?? [], winsBy: combo.winsBy ?? null, needsFinisher: combo.needsFinisher ?? false, turn: combo.turn ?? null, mana: combo.mana ?? null, caveat: combo.caveat } : null;
     rows.push({
       deck: file.split("/").pop()!.replace(/\.txt$/, ""),
-      combo: combo ? { cards: combo.cards, payoffs: combo.payoffs ?? [], turn: combo.turn ?? null, mana: combo.mana ?? null, caveat: combo.caveat } : null,
+      combo: comboRow,
       fastest: fastest ? { kind: fastest.kind, turn: fastest.turn } : null,
       say: talk ? JSON.stringify(talk) : null,
     });
     process.stderr.write(".");
   }
+  const combos = rows.filter((r) => r.combo);
+  const killing = combos.filter((r) => !r.combo!.needsFinisher);
+  const untimed = killing.filter((r) => r.combo!.turn === null);
+  const sayNotTimed = untimed.filter((r) => /not timed/.test(r.say ?? ""));
+  process.stderr.write(`\n${rows.length} decks, ${combos.length} combo routes\n`
+    + `timed with neither payoff nor winsBy (must be 0): ${combos.filter((r) => r.combo!.turn !== null && !r.combo!.payoffs.length && !r.combo!.winsBy).length}\n`
+    + `needsFinisher: ${combos.length - killing.length}\n`
+    + `killing but untimed: ${untimed.length}, of which Say-this says "not timed": ${sayNotTimed.length}\n`);
   writeFileSync(out, JSON.stringify(rows, null, 1));
   process.stderr.write(`\n${rows.length} decks -> ${out}\n`);
 }

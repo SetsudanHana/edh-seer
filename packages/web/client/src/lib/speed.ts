@@ -1,6 +1,5 @@
 import type { DeckReport } from "../types.js";
-import { comboWinsItself } from "@edh-seer/matcher/brackets";
-import { infiniteCombos } from "./bracket-why.js";
+import { comboWinsItself, isInfiniteCombo } from "@edh-seer/matcher/brackets";
 
 /** HOW FAST THE DECK CAN WIN, BY EVERY ROUTE IT HAS (owner, 2026-09-26: "we should be able to assess
  *  deck speed", and "remember that combat is not the only way to win"). The report timed one route:
@@ -77,8 +76,12 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   const has = (cls: string) => classes.some((c) => c.class === cls);
   const routes: SpeedRoute[] = [];
 
-  const combos = infiniteCombos(report.combos, manaValueOf);
-  const byCost = [...combos].sort((a, b) => a.manaValue - b.manaValue);
+  // CANDIDATES ARE WIDER THAN `infiniteCombos` (which the bracket reads): "Exile your library, Win the
+  // game" (Demonic Consultation + Thassa's Oracle) says nothing infinite and is the surest kill there is.
+  const byCost = (report.combos ?? [])
+    .filter((c) => isInfiniteCombo(c.result) || comboWinsItself(c.result))
+    .map((c) => ({ ...c, manaValue: c.cards.reduce((t, n) => t + (manaValueOf(n) ?? 0), 0) }))
+    .sort((a, b) => a.manaValue - b.manaValue || a.cards.join().localeCompare(b.cards.join()));
   // A combo KILLS when a card here turns its loop into a win, or its result wins by itself.
   const cheapest = byCost.find((c) => c.payoffs?.length || comboWinsItself(c.result));
   if (cheapest) {
@@ -97,7 +100,7 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   } else if (byCost[0]) {
     routes.push({
       kind: "combo", label: `a combo: ${byCost[0].cards.join(" + ")}`, cards: byCost[0].cards, needsFinisher: true,
-      caveat: "the loop needs a finisher: no card here turns what it repeats into a win",
+      caveat: "the loop needs a finisher: no card here was found to turn what it repeats into a win",
     });
   }
 

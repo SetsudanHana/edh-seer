@@ -88,3 +88,25 @@ test("a killing combo the test games cannot afford is said to be untimed beside 
   const none = tableTalk(report({ combos: [{ cards: ["A", "B"], result: "Infinite lifegain" }] }), graph({}), (n) => big[n])!;
   expect(none.plan).not.toMatch(/own speed/);
 });
+
+test("the plan clause names the timed combo when the bracket sentence names a different loop", () => {
+  const m: Record<string, number> = { A: 1, B: 1, "Wayta, Trainer Prodigy": 2, "Boros Reckoner": 3 };
+  const t = tableTalk(report({ band: "4-5", combos: [
+    { cards: ["A", "B"], result: "Infinite lifegain" },
+    { cards: ["Wayta, Trainer Prodigy", "Boros Reckoner"], result: "Infinite damage" },
+  ] }), graph({}), (n) => m[n])!;
+  expect(t.bracket).toMatch(/\(A \+ B\) that needs another card to win/);
+  expect(t.plan).toMatch(/can combo as early as turn 5 \(Wayta, Trainer Prodigy \+ Boros Reckoner\)\.$/);
+});
+
+test("a deck whose only loop has no kill never says it can combo", () => {
+  const t = tableTalk(report({ combos: [{ cards: ["A", "B"], result: "Infinite lifegain" }] }), graph({}), (n) => mv[n])!;
+  expect(t.plan).not.toMatch(/can combo as early as/);
+});
+
+test("an untimed killing combo is marked unknown even when no route is timed", () => {
+  const r = report({ combos: [{ cards: ["A", "B"], result: "Infinite damage" }] });
+  delete (r.deckMath!.speed as { combat?: unknown }).combat;
+  const t = tableTalk(r, graph({}), () => 6)!;
+  expect(t.plan).toMatch(/, and the combo's speed is not timed: its pieces cost 12 mana together\.$/);
+});
