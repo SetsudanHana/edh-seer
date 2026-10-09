@@ -115,3 +115,10 @@ test("the drawn combo names its win or says none was found, and prints an identi
   render(<ComboFeature parts={parts} result="Infinite mana" manaValue={9} cheap={false} wins={["Lone"]} />);
   expect(screen.getByText(/Wins through/)).toHaveTextContent("Wins through Lone");
 });
+
+test("the drawn combo whose result is the kill says it wins by itself", () => {
+  const parts = comboParts(["A", "B", "C"], m)!;
+  render(<ComboFeature parts={parts} result="Infinite mana, Infinite damage" manaValue={9} cheap={false} wins={[]} />);
+  expect(screen.getByText(/The loop wins by itself: Infinite damage\./)).toBeInTheDocument();
+  expect(screen.queryByText(/No card here was found/)).toBeNull();
+});

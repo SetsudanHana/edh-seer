@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card, Combo } from "@edh-seer/engine";
-import { CHEAP_COMBO_MV, deckBracket } from "./brackets.js";
+import { CHEAP_COMBO_MV, comboWinsItself, deckBracket } from "./brackets.js";
 
 const card = (name: string, manaValue: number, gameChanger?: boolean): Card => ({
   name, typeLine: "Artifact", oracleText: "", keywords: [], colors: [], manaValue,
@@ -86,4 +86,13 @@ test("an unresolved piece is priced at zero, which is the strict direction", () 
   const b = deckBracket([card("A", 2)], [combo(["A", "Not In Deck"], INFINITE)]);
   expect(b.cheapCombos[0]?.manaValue).toBe(2);
   expect(b.band).toBe("4-5");
+});
+
+test("a combo wins itself only when its result kills the whole table", () => {
+  const yes = ["Infinite damage", "Near-infinite damage", "Win the game", "Win the game, Infinite mana", "Each opponent loses the game",
+    "Infinite mana, infinite combat damage", "Infinite lifeloss", "Near-infinite lifeloss", "Infinite mill", "near-infinite mill", "Infinite ETB,  Infinite Damage"];
+  const no = ["Infinite damage to one opponent", "Infinite damage to target opponent", "Target opponent loses the game", "Infinite damage to all players",
+    "Infinite lifeloss for target opponent", "Infinite self-mill", "Infinite mill for all players", "Infinite turns", "Infinite mana", "Infinite lifegain", "", undefined];
+  for (const r of yes) expect(comboWinsItself(r), String(r)).toBe(true);
+  for (const r of no) expect(comboWinsItself(r), String(r)).toBe(false);
 });

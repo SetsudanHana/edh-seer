@@ -40,8 +40,8 @@ test("a deck spread evenly across its plans is not said to win mostly by one", (
 });
 
 test("a cheap two-card combo is the bracket's reason and the fastest route, and is not repeated as a heads-up", () => {
-  const t = tableTalk(report({ band: "4-5", combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB" }] }), graph({}), (n) => mv[n])!;
-  expect(t.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that needs another card to win.");
+  const t = tableTalk(report({ band: "4-5", combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB", payoffs: [{ name: "Impact Tremors", on: ["Dualcaster Mage"], effect: "damage" }] }] }), graph({}), (n) => mv[n])!;
+  expect(t.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that wins through Impact Tremors.");
   expect(t.plan).toMatch(/can combo as early as turn 4\.$/);
   expect(t.headsUp).toEqual([]);
   expect(t.text).toMatch(/Beyond that combo, nothing in it takes extra turns, steals or destroys every land\.$/);
@@ -70,4 +70,21 @@ test("a combo in the table sentence says what turns it into a win, or that somet
   expect(winning.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C) and wins through Impact Tremors.");
   const bare = tableTalk(report({ band: "4-5", combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB" }] }), graph({}), (n) => mv[n])!;
   expect(bare.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that needs another card to win.");
+});
+
+/** (#1084) A loop whose RESULT is the kill needs no other card; one past the simulated mana says so. */
+test("a combo that wins by itself is not said to need another card", () => {
+  const t = tableTalk(report({ band: "4-5", combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite mana, Infinite damage" }] }), graph({}), (n) => mv[n])!;
+  expect(t.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that wins by itself.");
+  const late = tableTalk(report({ combos: [{ cards: ["A", "B", "C"], result: "Infinite damage" }] }), graph({}), (n) => mv[n])!;
+  expect(late.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C) and wins by itself.");
+});
+
+test("a killing combo the test games cannot afford is said to be untimed beside another route's turn", () => {
+  const big: Record<string, number> = { A: 7, B: 7 };
+  const t = tableTalk(report({ combos: [{ cards: ["A", "B"], result: "Infinite damage" }] }), graph({}), (n) => big[n])!;
+  expect(t.plan).toMatch(/its creatures can kill the table around turn 12; the combo's own speed is not timed: its pieces cost 14 mana together\.$/);
+  // A loop nothing finishes is not "a combo that kills": no such clause.
+  const none = tableTalk(report({ combos: [{ cards: ["A", "B"], result: "Infinite lifegain" }] }), graph({}), (n) => big[n])!;
+  expect(none.plan).not.toMatch(/own speed/);
 });
