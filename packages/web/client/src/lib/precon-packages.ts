@@ -19,6 +19,7 @@ import type { Card } from "@edh-seer/engine";
 import type { DeckBracket } from "@edh-seer/matcher/brackets";
 import type { AnalyzeResponse } from "../types.js";
 import { chooseCuts, roleSwapCuts } from "./cut-choice.js";
+import { GROUP_WORD } from "./precon-upgrades.js";
 import { mainTheme } from "./main-theme.js";
 import type { EngineModel } from "./engine-model.js";
 import { gapsOf, type PreconCard } from "./precon-page.js";
@@ -35,6 +36,14 @@ export interface PreconPackages {
  *  `gapsOf` calls a group. Answers have no section and are not filled. */
 const SECTION_OF_GROUP: Record<string, RoleSectionId> = { Ramp: "ramp", Consistency: "consistency", Interaction: "interaction", "Board wipes": "wipes" };
 
+/** THE CUT LIST A FILL MAY CUT, OFF-PLAN AS RULED (2026-10-09): a row whose keeps name a win plan it
+ *  counts for, or a table warning, is never cut by a fill; other keeps ride along into the reason. */
+const ON_PLAN = /^(it is one of the cards your win plan of|you warn the table that it)/;
+export function fillCuts(choices: readonly { name: string; keeps: readonly string[]; reasons: readonly string[]; row?: { why: string } }[], commanders: readonly string[]): { name: string; why: string; keep?: string }[] {
+  return choices.filter((c) => !commanders.includes(c.name) && !c.keeps.some((k) => ON_PLAN.test(k)))
+    .map((c) => ({ name: c.name, why: c.row?.why ?? c.reasons[0] ?? "", ...(c.keeps[0] ? { keep: c.keeps[0] } : {}) }));
+}
+
 /** THE FILLS (owner 2026-10-09, #1137): for each role section the deck is short in, the cards the
  *  report suggests for that group and the cards its cut list would cut, in the report's own order, so
  *  the package can close the gap the report names. The cut list's cards are the ones it can cut:
@@ -43,13 +52,13 @@ const SECTION_OF_GROUP: Record<string, RoleSectionId> = { Ramp: "ramp", Consiste
 export function fillsFor(
   gaps: readonly { group: string; have: number; target: number }[],
   suggestions: DeckSuggestions | null,
-  cuts: readonly { name: string; why: string }[],
+  cuts: readonly { name: string; why: string; keep?: string }[],
 ): Partial<Record<RoleSectionId, RoleFill>> {
   const out: Partial<Record<RoleSectionId, RoleFill>> = {};
   for (const gap of gaps) {
     const id = SECTION_OF_GROUP[gap.group];
-    const adds = (suggestions?.build[gap.group] ?? []).map((c) => ({ name: c.name, reason: c.reasons[0]?.text ?? `${c.name} fills the gap.` }));
-    if (id && adds.length) out[id] = { label: gap.group, short: gap.target - gap.have, adds, cuts };
+    const adds = (suggestions?.build[gap.group] ?? []).map((c) => ({ name: c.name, reason: c.reasons[0]?.text ?? "" }));
+    if (id && adds.length) out[id] = { label: GROUP_WORD(gap.group), short: gap.target - gap.have, adds, cuts };
   }
   return out;
 }
@@ -94,10 +103,7 @@ export async function preconPackages(input: {
   const deckCombos = await lookup.allCombos();
   const downs = new Map(BRACKET_TARGETS.map((t) => [t, bringDown(deck, deckCombos, t, input.commanders, links)] as const));
 
-  const commanders = new Set(input.commanders);
-  const fills = fillsFor(gapsOf(report), input.suggestions, chooseCuts(report, input.model)
-    .filter((c) => !commanders.has(c.name))
-    .map((c) => ({ name: c.name, why: c.row?.why ?? c.reasons[0] ?? "" })));
+  const fills = fillsFor(gapsOf(report), input.suggestions, fillCuts(chooseCuts(report, input.model), input.commanders));
   const options = await upgradeOptions({
     lookup, deckNames: input.deckNames, commanders: input.commanders, identity: data.commanderColorIdentity ?? [],
     roleCuts: roleSwapCuts(report, input.model),

@@ -89,11 +89,13 @@ test("a fetch swap that gives up a role says so", () => {
   expect(r.in).toBe("Farseek can find a land that makes green, which the deck is short of for its spells, but does not do removal.");
 });
 
-test("a fill says how short the deck was and why the cut is the weakest card", () => {
-  const r = fillReasons({ label: "Ramp", short: 2 }, "Weak A", "Works with 1 other card in this deck.", { name: "Fellwar Stone", reason: "Fellwar Stone makes mana for the colours your commander asks for." });
-  expect(r.out).toBe("Weak A is the weakest card here. Works with 1 other card in this deck.");
-  expect(r.in).toBe("Ramp: you were 2 short; Fellwar Stone makes mana for the colours your commander asks for.");
-  const long = fillReasons({ label: "Ramp", short: 2 }, "Weak A", "x".repeat(200), { name: "Fellwar Stone", reason: "y".repeat(200) });
+test("a fill says how short the deck was, what the card counts as, and where the cut sits on the report's list", () => {
+  const add = { name: "Fellwar Stone", reason: "Fellwar Stone makes mana for the colours your commander asks for." };
+  const r = fillReasons({ label: "card draw", short: 2 }, "Weak A", "Works with 1 other card in this deck.", add, "its strongest link: Foo");
+  expect(r.out).toBe("Weak A is next on the report's cut list. Works with 1 other card in this deck. Against cutting it: its strongest link: Foo.");
+  expect(r.in).toBe("Card draw: you were 2 short; Fellwar Stone counts as card draw. Fellwar Stone makes mana for the colours your commander asks for.");
+  expect(fillReasons({ label: "ramp", short: 1 }, "Weak A", "", { name: "Sol Ring", reason: "" }).in).toBe("Ramp: you were 1 short; Sol Ring counts as ramp.");
+  const long = fillReasons({ label: "ramp", short: 2 }, "Weak A", "x".repeat(200), { name: "Fellwar Stone", reason: "y".repeat(200) }, "k");
   expect(long.out.length).toBeLessThanOrEqual(REASON_MAX);
-  expect(long.in).toBe("Ramp: you were 2 short; Fellwar Stone fills the gap.");
+  expect(long.in).toBe("Ramp: you were 2 short; Fellwar Stone counts as ramp.");
 });

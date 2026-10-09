@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import type { UpgradePackage, UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import type { AnalyzeResponse } from "../types.js";
-import { fillsFor, keepManaBase } from "./precon-packages.js";
+import { fillCuts, fillsFor, keepManaBase } from "./precon-packages.js";
 
 const swap = (out: string, add: string, kind: UpgradeSwap["kind"]): UpgradeSwap => ({ kind, out: { name: out, reason: "r" }, in: { name: add, reason: "r" } });
 const pkg = (over: Partial<UpgradePackage> = {}): UpgradePackage => ({
@@ -49,7 +49,7 @@ test("land swaps never go, and a package that cannot fit ships without an after 
 });
 
 test("a fill is dropped last: at equal mana base cost the keeper drops an ordinary swap first", async () => {
-  const p = pkg({ sections: [{ id: "synergy", swaps: [swap("A", "Heavy Pips", "synergy"), swap("B", "Fill Rock", "fill")] }] });
+  const p = pkg({ sections: [{ id: "synergy", swaps: [swap("B", "Fill Rock", "fill"), swap("A", "Heavy Pips", "synergy")] }] });
   // Either one alone fixes the mana base; the keeper drops the synergy swap.
   const kept = await keepManaBase(p, input((l) => ({ band: "1-2", mana: l.includes("Heavy Pips") && l.includes("Fill Rock") ? 0.2 : 0.18, synergy: 3 })), () => []);
   expect(names(kept)).toEqual(["Fill Rock"]);
@@ -59,7 +59,14 @@ test("fills are made for the groups the report is short in, from the report's su
   const sug = { build: { Ramp: [{ name: "Fellwar Stone", reasons: [{ text: "Fellwar Stone makes mana.", others: [] }] }], Interaction: [{ name: "Swords", reasons: [] }] } } as unknown as Parameters<typeof fillsFor>[1];
   const cuts = [{ name: "Weak A", why: "Works with 1 card." }];
   const f = fillsFor([{ group: "Ramp", have: 9, target: 11 }, { group: "Card draw", have: 1, target: 2 }, { group: "Consistency", have: 1, target: 2 }], sug, cuts);
+  expect(f.consistency).toBeUndefined();
   expect(Object.keys(f)).toEqual(["ramp"]);
-  expect(f.ramp).toEqual({ label: "Ramp", short: 2, adds: [{ name: "Fellwar Stone", reason: "Fellwar Stone makes mana." }], cuts });
+  expect(f.ramp).toEqual({ label: "ramp", short: 2, adds: [{ name: "Fellwar Stone", reason: "Fellwar Stone makes mana." }], cuts });
   expect(fillsFor([{ group: "Ramp", have: 9, target: 11 }], null, cuts)).toEqual({});
+});
+
+test("a fill never cuts a card a win plan counts or the table is warned about; other keeps ride along", () => {
+  const row = (name: string, keeps: string[]) => ({ name, keeps, reasons: ["r"], row: { why: `${name} why` } });
+  const cuts = fillCuts([row("Plan", ["it is one of the cards your win plan of one big creature counts"]), row("Warn", ["you warn the table that it steals permanents"]), row("Cmd", []), row("Soft", ["it scores 2 for synergy"]), row("Free", [])], ["Cmd"]);
+  expect(cuts).toEqual([{ name: "Soft", why: "Soft why", keep: "it scores 2 for synergy" }, { name: "Free", why: "Free why" }]);
 });

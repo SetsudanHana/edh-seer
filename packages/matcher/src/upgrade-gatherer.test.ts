@@ -98,7 +98,7 @@ const fillInput = (over: Partial<GatherInput> = {}) => input({
   deck: fillDeck, cardOf: (n) => fillPool.get(n), inDeck: new Set(fillDeck.map((c) => c.name)),
   fills: {
     ramp: {
-      label: "Ramp", short: 2,
+      label: "ramp", short: 2,
       adds: [{ name: "Tempting Rock", reason: "Tempting Rock is ramp." }, { name: "Fellwar Stone", reason: "Fellwar Stone makes mana." }, { name: "Prismatic Lens", reason: "Prismatic Lens makes mana." }, { name: "The Mind Stone", reason: "The Mind Stone makes mana." }],
       cuts: [{ name: "Some Land", why: "" }, { name: "Weak A", why: "Works with 1 card." }, { name: "Weak B", why: "Works with 2 cards." }, { name: "Weak C", why: "Works with 3 cards." }],
     },
@@ -113,7 +113,7 @@ test("a short role is filled up to the shortfall: the cut list's weakest for the
   expect(ramp.every((s) => s.kind === "fill")).toBe(true);
   expect(ramp.length).toBe(2);
   expect(ramp.map((s) => s.out.name)).toEqual(["Weak A", "Weak B"]);
-  expect(ramp[0]!.out.reason).toContain("weakest");
+  expect(ramp[0]!.out.reason).toContain("next on the report's cut list");
   expect(ramp[0]!.in.reason).toContain("Ramp: you were 2 short; ");
 });
 

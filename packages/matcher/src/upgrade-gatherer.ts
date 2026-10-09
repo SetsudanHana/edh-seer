@@ -20,14 +20,14 @@ import { SECTION_MAX, UPGRADE_SECTIONS, type BracketTarget, type UpgradePackage,
  *  The package closes the gap, up to `short`, instead of leaving "still 2 short on ramp" beside a
  *  report that names Fellwar Stone. */
 export interface RoleFill {
-  /** The report's name for the group ("Ramp"): how the add's reason opens. */
+  /** The page's word for the group ("card draw"): how the add's reason opens and what it counts as. */
   label: string;
   /** How many cards short: the most fills taken. */
   short: number;
   /** The report's suggested cards for the role, in its order, each with the sentence the report gives. */
   adds: readonly { name: string; reason: string }[];
   /** The report's cut list, weakest first, each with its own reason. */
-  cuts: readonly { name: string; why: string }[];
+  cuts: readonly { name: string; why: string; keep?: string }[];
 }
 
 /** A synergy pair as the report's suggestions made it, with both reasons already written. */
@@ -122,7 +122,7 @@ export function gatherPackage(g: GatherInput): UpgradePackage | null {
         continue;
       }
       if (dropped) section.splice(dropAt, 1);
-      const r = fillReasons(f, cut.name, cut.why, a);
+      const r = fillReasons(f, cut.name, cut.why, a, cut.keep);
       taken.push({ kind: "fill", role: SECTION_ROLES[id][0], out: { name: cut.name, reason: r.out }, in: { name: a.name, reason: r.in } });
     }
     section.unshift(...taken);
