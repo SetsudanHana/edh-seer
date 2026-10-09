@@ -20,6 +20,7 @@ import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } 
  *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
  *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
 export { effectPhrase } from "./sentence.js";
+import { phraseKindOf } from "./sentence.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
@@ -1029,7 +1030,7 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] => {
       // A GAME-STATE REQUIREMENT the deck report honours only under a state (roadmap W18).
       ...(a.requires ? { requires: a.requires } : {}),
       // An intercepted fill is not a recursion: its row must not say "brings a card back" (#1083).
-      effect: a.effect?.kind === "graveyard-recursion" && a.effect.intercepted === true ? "graveyard-intercept" : (a.effect?.kind ?? ""),
+      effect: a.effect?.kind === "graveyard-recursion" && a.effect.intercepted === true ? "graveyard-intercept" : a.effect ? phraseKindOf(a.effect) : "",
       ...(a.amount ? { amount: a.amount } : {}),
       ...(a.effect?.subject?.control && a.effect.subject.control !== "you" ? { recipient: a.effect.subject.control } : {}),
       ...(a.effect?.scaling ? { scaling: a.effect.scaling } : {}),

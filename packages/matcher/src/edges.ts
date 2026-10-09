@@ -12,7 +12,7 @@ import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
-  enterAsCopySentence, entersAsCopyOfSentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, creatureConditionSentence,
+  enterAsCopySentence, entersAsCopyOfSentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, phraseKindOf, creatureConditionSentence,
   boardCountFeedsScaling,
   lifeLostFeedsScaling,
   effectTargetNoun,
@@ -2150,7 +2150,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
             : clonesOnEntry ? enterAsCopySentence(p.card.name, c.card.name)
             : reasonSentence({
             producer: enteringFaceName(p, e0) ?? p.card.name, consumer: c.card.name, eventKey: key,
-            effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true, keywords,
+            effectKind: phraseKindOf(a.effect), amount: a.amount, self: t.subject.self === true, keywords,
             ...(t.subject.self !== true && sacrificedTo(p, origin, e0) ? { sacrificedTo: sacrificedTo(p, origin, e0) } : {}),
             // THE PRODUCER IS THE THING SACRIFICED (#729 f): Treasure's "Sacrifice this artifact", an
             // evoke creature. The player sacrifices it; the card does not sacrifice anything. A card

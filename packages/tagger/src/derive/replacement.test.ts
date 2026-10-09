@@ -100,3 +100,18 @@ test("a token replacement keeps every token its phrase names, and 'under your co
   expect(replacementOf("If you would create a Clue, Food, or Treasure token, instead create one of each.")?.subjectText).toBe("a Clue, Food, or Treasure token");
   expect(replacementOf("If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.")?.subjectText).toBe("one or more tokens under your control");
 });
+
+test("a token replacement says HOW it multiplies (#1136)", () => {
+  const mode = (t: string) => replacementOf(t)?.tokenMultiplier;
+  expect(mode("If you would create one or more Treasure tokens, instead create those tokens plus an additional Treasure token.")).toBe("additional");
+  expect(mode("If one or more tokens would be created under your control, those tokens plus that many 1/1 green Squirrel creature tokens are created instead.")).toBe("additional");
+  expect(mode("If you would create a Food token, instead create a Food token and a Treasure token.")).toBe("additional");
+  expect(mode("If you would create a Clue, Food, or Treasure token, instead create one of each.")).toBe("one-of-each");
+  expect(mode("If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.")).toBe("twice");
+  expect(mode("If one or more creature tokens would be created under your control, three times that many of those tokens are created instead.")).toBe("thrice");
+  // The same count, a different token: not a multiplier.
+  expect(mode("If one or more creature tokens would be created under your control, that many 4/4 white Angel creature tokens with flying and vigilance are created instead.")).toBe("replaced");
+  expect(mode("If you would create one or more tokens, you may instead create that many 2/2 green Cat creature tokens with haste or that many 3/1 green Dog creature tokens with vigilance.")).toBe("replaced");
+  // Only the token family carries it.
+  expect(mode("If an opponent would mill one or more cards, they mill twice that many cards instead.")).toBeUndefined();
+});

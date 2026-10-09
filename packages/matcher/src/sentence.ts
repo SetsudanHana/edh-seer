@@ -60,7 +60,15 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   // AND THE MULTIPLIERS, which a sample of the still-bare rows put next in volume: 28 of 400 were
   // `token-doubling`, 18 `proliferate`, 14 `damage-multiplier`. Each one is a card whose whole
   // reason for being in a deck is what it multiplies, printed as "triggers".
-  "token-doubling": [() => "doubles the tokens", "doubles the tokens"],
+  // BY WHAT THE REPLACEMENT PRINTS (#1136): 60 "doubles the tokens" sentences over the calibration
+  // decks were all false -- Xorn adds one, Academy Manufactor makes one of each. The bare kind (an old
+  // derive, or a doubler read off a "double" verb) claims only "more".
+  "token-doubling": [() => "makes more tokens", "makes more tokens"],
+  "token-doubling-twice": [() => "doubles the tokens", "doubles the tokens"],
+  "token-doubling-thrice": [() => "triples the tokens", "triples the tokens"],
+  "token-doubling-additional": [() => "makes extra tokens", "makes extra tokens"],
+  "token-doubling-one-of-each": [() => "makes extra tokens", "makes extra tokens"],
+  "token-doubling-replaced": [() => "turns them into its own tokens", "turns them into its own tokens"],
   "damage-multiplier": [() => "doubles the damage", "doubles the damage"],
   "trigger-doubling": [() => "doubles the trigger", "doubles the trigger"],
   proliferate: [() => "proliferates", "proliferates"],
@@ -167,6 +175,12 @@ const PROSE_AMOUNT = /\bfor each\b|\bequal to\b|\bwhere\b|\bthe number of\b/i;
 export function counterCostSentence(producer: string, consumer: string, onItself: boolean, phrase: string | null): string {
   const from = onItself ? producer : `a permanent ${producer} put counters on`;
   return `${consumer} removes a counter from ${from}${phrase ? ` and ${phrase}` : ""}`;
+}
+
+/** The phrase key of an effect: `token-doubling` splits by how it multiplies (#1136), as an
+ *  intercepted recursion splits into `graveyard-intercept`. The effect's own kind is untouched. */
+export function phraseKindOf(effect: { kind: string; tokenMultiplier?: string }): string {
+  return effect.kind === "token-doubling" && effect.tokenMultiplier ? `token-doubling-${effect.tokenMultiplier}` : effect.kind;
 }
 
 export function effectPhrase(

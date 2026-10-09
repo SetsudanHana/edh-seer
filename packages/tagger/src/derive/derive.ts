@@ -408,7 +408,9 @@ import { emblemRecipient } from "../emblem.js";
 // ruling 2026-10-09); Uchuulon, which copies itself, stays hate.
 // 289: #729, exile from THEIR graveyard after combat damage to a player is an opponent's graveyard
 // (Soundwave, Froghemoth).
-export const DERIVE_VERSION = 289;
+// 290: #1136, a token replacement says how it changes the tokens (`Effect.tokenMultiplier`): twice, thrice,
+// additional (Xorn, Chatterfang), one-of-each (Academy Manufactor), replaced (Divine Visitation).
+export const DERIVE_VERSION = 290;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2409,6 +2411,7 @@ export function deriveAbilities(
         kind,
         effect: countedSubject ? { ...scaled, scalingSubject: countedSubject } : scaled,
       };
+      if (replacement?.tokenMultiplier) ability.effect = { ...ability.effect, tokenMultiplier: replacement.tokenMultiplier };
       if (trigger) ability.trigger = trigger;
       // "DRAW A CARD IF IT WAS ATTACKING. OTHERWISE, ..." (#798, Garna; Zurgo Stormrender): the
       // condition narrows the action its own sentence names to a death IN COMBAT, which is the
@@ -2607,7 +2610,7 @@ export function deriveAbilities(
       // a static clause, which `keywordActionOnStaticClause` drops precisely so it never becomes a
       // proliferate source. The KIND is known even though the action was refused, so the ability is
       // labelled rather than left empty.
-      abilities.push({ kind, effect: replacement ? { kind: replacement.kind } : { kind: "" as const },
+      abilities.push({ kind, effect: replacement ? { kind: replacement.kind, ...(replacement.tokenMultiplier ? { tokenMultiplier: replacement.tokenMultiplier } : {}) } : { kind: "" as const },
         ...(trigger ? { trigger } : {}), ...(face ? { face } : {}) });
     }
 

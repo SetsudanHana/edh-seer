@@ -29,7 +29,7 @@
  *  that field existed and captured the victim, so Fiery Emancipation's trigger read `permanent` and
  *  Khalni Ambush's fight -- dealer `{control: you}`, no type -- could never satisfy it. The source
  *  phrase before "would" is now the half the matcher checks, so it is the subject. */
-import type { EffectKind, Verb } from "../schema.js";
+import type { EffectKind, TokenMultiplier, Verb } from "../schema.js";
 
 export interface Replacement {
   /** The event this modifies — what a consumer trigger fires on. */
@@ -49,6 +49,22 @@ export interface Replacement {
    *  control" is the dealer, the emit records the dealer, and `subjectMatches` refuses a burn spell's
    *  typeless dealer against a `creature` demand on its own. */
   restricted?: true;
+  /** Token replacements only: how the tokens change. See `Effect.tokenMultiplier`. */
+  tokenMultiplier?: TokenMultiplier;
+}
+
+/** HOW A TOKEN REPLACEMENT CHANGES THE COUNT (#1136). Of the 34 corpus cards deriving `token-doubling`
+ *  only 14 print "twice that many"; 11 ADD tokens ("plus an additional Treasure"), Academy Manufactor
+ *  makes "one of each", Ojer Taq triples, and the rest (Divine Visitation, Draconic Visitor, Jinnie
+ *  Fay, Fisher's Talent) keep the count and change WHICH token. Order matters: "those tokens plus
+ *  that many Squirrels" (Chatterfang) holds "that many" and is an addition, not a replacement.
+ *  CEILING: "create a Food token and a Treasure token" (Bilbo) is the only 'and' addition recognised. */
+export function tokenMultiplierOf(text: string): TokenMultiplier {
+  if (/\bthree times that many\b/i.test(text)) return "thrice";
+  if (/\btwice that many\b/i.test(text)) return "twice";
+  if (/\bone of each\b/i.test(text)) return "one-of-each";
+  if (/\bplus\b|\badditional\b|\bin addition\b|\binstead create an? [^.]*?\btokens? and an? /i.test(text)) return "additional";
+  return "replaced";
 }
 
 /** Each entry: what the sentence must say, and what it means. Order matters only in that the first
@@ -132,6 +148,7 @@ export function replacementOf(clauseText: string): Replacement | null {
       verbs: t.verbs,
       kind: t.kind,
       subjectText: (t.subject === 0 ? "" : m[t.subject] ?? "").trim(),
+      ...(t.kind === "token-doubling" ? { tokenMultiplier: tokenMultiplierOf(clauseText) } : {}),
       ...(t.counter !== undefined && m[t.counter] ? { counter: m[t.counter].trim() } : {}),
       ...(t.actor !== undefined && !UNRESTRICTED_ACTOR.test(actor) ? { restricted: true as const } : {}),
     };
