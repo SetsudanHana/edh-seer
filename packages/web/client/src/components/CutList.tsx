@@ -53,7 +53,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
     /** Cards in the list, commander included and companion not: over 100, the cuts reach 100. */
     deckSize?: number;
     /** Where the rest of an overage can come from when the cuts run short: cards that fit no theme
-     *  and are neither removal nor protection. */
+     *  and are neither interaction nor protection. */
     fillFrom?: readonly string[];
   }) {
   const [maybeN, setMaybeN] = useState(MAYBE_STEP);
@@ -136,7 +136,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
   const fill = (fillFrom ?? []).slice(0, Math.max(rest, 3));
   const elsewhere = (
     <>
-      {fill.length ? <>the cards that fit no theme and are neither removal nor protection ({fill.map((n, i) => <span key={n}>{i > 0 ? ", " : ""}<CardName name={n} /></span>)}), </> : null}
+      {fill.length ? <>the cards that fit no theme and are neither interaction nor protection ({fill.map((n, i) => <span key={n}>{i > 0 ? ", " : ""}<CardName name={n} /></span>)}), </> : null}
       {hasSurplus ? "a role you run more of than you need, below, " : ""}
       {/* THE COSTLY CUTS ARE THE NEXT PLACE TO LOOK when nothing safe is left (Krenko: every card that
           fits no theme fills a role at or under its target), and the page says so rather than ending
@@ -287,8 +287,8 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
       {held > 0 && (
         <p className="text-sm text-(--muted) max-w-[65ch]">
           {hasOffTheme
-            ? `${held} more ${held === 1 ? "fits" : "fit"} no theme but ${held === 1 ? "fills" : "fill"} a role you are at or under target on, or ${held === 1 ? "is" : "are"} removal or protection, so ${held === 1 ? "it is" : "they are"} not listed.`
-            : `${held} ${held === 1 ? "card fits" : "cards fit"} no theme, but ${held === 1 ? "it fills" : "each fills"} a role you are at or under target on, or is removal or protection.`}
+            ? `${held} more ${held === 1 ? "fits" : "fit"} no theme but ${held === 1 ? "fills" : "fill"} a role you are at or under target on, or ${held === 1 ? "is" : "are"} interaction or protection, so ${held === 1 ? "it is" : "they are"} not listed.`
+            : `${held} ${held === 1 ? "card fits" : "cards fit"} no theme, but ${held === 1 ? "it fills" : "each fills"} a role you are at or under target on, or is interaction or protection.`}
         </p>
       )}
       {/* AN EMPTY CUT LIST IS AN ANSWER AND HAS TO SAY SO. It used to render nothing at all, which
