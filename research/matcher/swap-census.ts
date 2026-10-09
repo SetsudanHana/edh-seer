@@ -14,16 +14,18 @@ const remote = /^https?:\/\//.test(src);
 const get = async (path: string): Promise<unknown> => remote
   ? (await fetch(`${src.replace(/\/$/, "")}/${path}`)).json()
   : JSON.parse(readFileSync(join(src, path), "utf8"));
-const { version } = await get("manifest.json") as { version: string };
+const { version, precons } = await get("manifest.json") as { version: string; precons?: string };
+if (!precons) { console.error("manifest.json has no `precons` pointer: no precon pages."); process.exit(1); }
+const dir = `${version}/precons/${precons}`;
 const slugs: string[] = remote
-  ? ((await get(`${version}/precons/index.json`)) as { slug: string }[]).map((p) => p.slug)
-  : readdirSync(join(src, version, "precons")).filter((f) => f.endsWith(".json") && f !== "index.json").map((f) => f.slice(0, -5));
+  ? ((await get(`${dir}/index.json`)) as { slug: string }[]).map((p) => p.slug)
+  : readdirSync(join(src, dir)).filter((f) => f.endsWith(".json") && f !== "index.json").map((f) => f.slice(0, -5));
 type Swap = { kind: string; out: { name: string; reason: string }; in: { name: string; reason: string } };
 const byKind = new Map<string, number>();
 const roleSwaps = new Map<string, number>();
 let manaOnly = 0, role = 0, pages = 0;
 for (const slug of slugs) {
-  const path = `${version}/precons/${slug}.json`;
+  const path = `${dir}/${slug}.json`;
   if (!remote && !existsSync(join(src, path))) continue;
   const page = await get(path) as { packages?: { sections: { swaps: Swap[] }[]; bringDown?: Swap[] }[] };
   if (!page.packages) continue;

@@ -30,7 +30,9 @@
 # its bytes, so `1be5.json` used to survive a rebuild that changed every card in it -- which is why
 # this rule read `max-age=3600` and could not read anything stronger. Under `v-<content hash>/` the
 # URL changes exactly when the bytes do, so a year is correct rather than optimistic, and a service
-# worker can go cache-first here without freezing a reader on last month's oracle text.
+# worker can go cache-first here without freezing a reader on last month's oracle text. The precon
+# pages are the same: they live under a `p-<hash of their bytes>` directory the manifest names,
+# because the version hashes the data and an engine-only rebuild changes the pages without it.
 /static/v-*
   Cache-Control: public, max-age=31536000, immutable
 
