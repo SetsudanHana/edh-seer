@@ -62,19 +62,28 @@ export function afterLine(p: UpgradePackage): string {
  *  figures, each with the report's own band words: synergy, and consistency = the Build score, with
  *  the shortfalls the swaps close or leave. Never a power word. A package from before `build` was
  *  recorded says nothing about Build rather than make it up. "" when there is nothing to compare. */
+/** THE WORDS FOR A ROLE GROUP, one map for the effect line and the gaps line (#893). The engine names
+ *  the group "Consistency" (card draw and selection); said bare beside "It is more consistent" it would
+ *  mean two things. An unknown group falls back to its lowercased name. */
+const GROUP_WORDS: Record<string, string> = { Consistency: "card draw", Ramp: "ramp", Interaction: "interaction", "Board wipes": "board wipes" };
+export const GROUP_WORD = (group: string): string => GROUP_WORDS[group] ?? group.toLowerCase();
+
 export function whatTheSwapsDo(p: UpgradePackage, page: Pick<PreconPage, "synergy" | "build" | "gaps">): string {
   const a = p.after;
   if (!a) return "";
   const parts: string[] = [];
   const one = (n: number) => n.toFixed(1);
-  const size = (d: number) => (Math.abs(d) < 0.5 ? "a little " : "");
+  // CEILING: 0.5 of the 0-5 scale is "a little", an editorial line with no source in score-band. Judged on
+  // the PRINTED one-decimal figures (as tenths, to dodge float error), so one printed delta gets one word.
+  const tenths = (n: number) => Math.round(Number(one(n)) * 10);
+  const size = (from: number, to: number) => (Math.abs(tenths(to) - tenths(from)) < 5 ? "a little " : "");
   const bandOf = (n: number, kind: "synergy" | "build") => scoreBand(n, kind).label.toLowerCase();
 
   if (page.synergy && a.synergy !== undefined) {
     const from = page.synergy.score, to = a.synergy;
     const [f, t] = [bandOf(from, "synergy"), bandOf(to, "synergy")];
     if (one(from) === one(to)) parts.push(`Its cards work together as before: synergy stays at ${one(to)} of 5, ${t}.`);
-    else parts.push(`Its cards work together ${size(to - from)}${to > from ? "more" : "less"}: synergy ${one(from)} → ${one(to)} of 5, ${f === t ? `still ${t}` : `from ${f} to ${t}`}.`);
+    else parts.push(`Its cards work together ${size(from, to)}${to > from ? "more" : "less"}: synergy ${one(from)} → ${one(to)} of 5, ${f === t ? `still ${t}` : `from ${f} to ${t}`}.`);
   }
 
   if (page.build && a.build !== undefined) {
@@ -82,14 +91,19 @@ export function whatTheSwapsDo(p: UpgradePackage, page: Pick<PreconPage, "synerg
     const [f, t] = [bandOf(from, "build"), bandOf(to, "build")];
     const head = one(from) === one(to)
       ? `Its consistency is unchanged: Build stays at ${one(to)} of 5, ${t}`
-      : `It is ${size(to - from)}${to > from ? "more" : "less"} consistent: Build ${one(from)} → ${one(to)} of 5, ${f === t ? `still ${t}` : `from ${f} to ${t}`}`;
+      : `It is ${size(from, to)}${to > from ? "more" : "less"} consistent: Build ${one(from)} → ${one(to)} of 5, ${f === t ? `still ${t}` : `from ${f} to ${t}`}`;
     // THE SHORTFALLS, before and after, by the group names the gaps line already uses.
     const now = a.short ?? [];
-    const label = (g: string) => g.toLowerCase();
-    const closed = page.gaps.filter((g) => !now.some((n) => n.group === g.group)).map((g) => `no longer short on ${label(g.group)}`);
-    const left = now.filter((n) => page.gaps.some((g) => g.group === n.group)).map((n) => `still ${n.target - n.have} short on ${label(n.group)}`);
-    const fresh = now.filter((n) => !page.gaps.some((g) => g.group === n.group)).map((n) => `now ${n.target - n.have} short on ${label(n.group)}`);
-    const gaps = a.short ? [...closed, ...left, ...fresh] : [];
+    const word = GROUP_WORD;
+    const missed = (g: { have: number; target: number }) => g.target - g.have;
+    const closed = page.gaps.filter((g) => !now.some((n) => n.group === g.group)).map((g) => `no longer short on ${word(g.group)}`);
+    const left = now.flatMap((n) => {
+      const was = page.gaps.find((g) => g.group === n.group);
+      if (!was) return [`now ${missed(n)} short on ${word(n.group)}`];
+      if (missed(n) === missed(was)) return [`still ${missed(n)} short on ${word(n.group)}`];
+      return [`${missed(n) > missed(was) ? "now " : ""}${missed(n)} short on ${word(n.group)}, was ${missed(was)}`];
+    });
+    const gaps = a.short ? [...closed, ...left] : [];
     parts.push(`${head}${gaps.length ? `; ${gaps.join(", ")}` : ""}.`);
   }
 

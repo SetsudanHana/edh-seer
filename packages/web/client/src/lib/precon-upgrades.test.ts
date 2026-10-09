@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { UpgradePackage } from "@edh-seer/matcher/upgrade-package";
-import { afterLine, heroUpgradesLine, REPORT_DIFFERS, sameAsBelow, TARGET_MEANING, whatTheSwapsDo } from "./precon-upgrades.js";
+import { GROUP_WORD, afterLine, heroUpgradesLine, REPORT_DIFFERS, sameAsBelow, TARGET_MEANING, whatTheSwapsDo } from "./precon-upgrades.js";
 
 const pkg = (target: 2 | 3 | 4): UpgradePackage => ({
   target, from: "3", bringDown: [],
@@ -61,12 +61,13 @@ test("synergy: the same figure is said unchanged", () => {
 
 test("build: a rise across a band, with a shortfall closed and one left", () => {
   const s = whatTheSwapsDo(
-    withAfter({ build: 4.2, short: [{ group: "Card draw", have: 7, target: 8 }] }),
-    before({ build: 3.6, gaps: [{ group: "Ramp", have: 9, target: 11 }, { group: "Card draw", have: 5, target: 8 }] }),
+    withAfter({ build: 4.2, short: [{ group: "Consistency", have: 7, target: 8 }] }),
+    before({ build: 3.6, gaps: [{ group: "Ramp", have: 9, target: 11 }, { group: "Consistency", have: 5, target: 8 }] }),
   );
   expect(s).toContain("It is more consistent: Build 3.6 → 4.2 of 5, from close to on target");
   expect(s).toContain("no longer short on ramp");
-  expect(s).toContain("still 1 short on card draw");
+  expect(s).toContain("1 short on card draw, was 3");
+  expect(s).not.toMatch(/consistency[,.;]|short on consistency/);
 });
 
 test("build: a fall is said honestly, and a new shortfall is named", () => {
@@ -75,6 +76,28 @@ test("build: a fall is said honestly, and a new shortfall is named", () => {
   expect(s).toContain("now 3 short on ramp");
 });
 
+test("a gap that got worse says so, one that stayed says still, one that shrank says was", () => {
+  const gaps = [{ group: "Ramp", have: 9, target: 11 }, { group: "Interaction", have: 8, target: 10 }, { group: "Board wipes", have: 1, target: 3 }];
+  const s = whatTheSwapsDo(withAfter({ build: 3.0, short: [{ group: "Ramp", have: 8, target: 11 }, { group: "Interaction", have: 8, target: 10 }, { group: "Board wipes", have: 2, target: 3 }] }), before({ gaps }));
+  expect(s).toContain("now 3 short on ramp, was 2");
+  expect(s).toContain("still 2 short on interaction");
+  expect(s).toContain("1 short on board wipes, was 2");
+});
+
+test("one label map names the engine's groups for every surface", () => {
+  expect(GROUP_WORD("Consistency")).toBe("card draw");
+  expect(GROUP_WORD("Board wipes")).toBe("board wipes");
+  expect(GROUP_WORD("Something New")).toBe("something new");
+});
+
+test("'a little' is judged on the printed figures, so one printed delta gets one word", () => {
+  // 3.8 -> 4.2 printed, however the raw figures round.
+  expect(whatTheSwapsDo(withAfter({ synergy: 4.2 }), before({ synergy: 3.8 }))).toContain("a little more");
+  expect(whatTheSwapsDo(withAfter({ synergy: 4.16 }), before({ synergy: 3.84 }))).toContain("a little more");
+  expect(whatTheSwapsDo(withAfter({ synergy: 4.24 }), before({ synergy: 3.76 }))).toContain("a little more");
+  // 3.7 -> 4.2 printed is 0.5: not "a little", even though the raw figures differ by 0.46.
+  expect(whatTheSwapsDo(withAfter({ synergy: 4.24 }), before({ synergy: 3.74 }))).toContain("work together more:");
+});
 test("build: absent on an old page's package, and nothing is made up", () => {
   const s = whatTheSwapsDo(withAfter({ synergy: 3.3 }), before());
   expect(s).not.toMatch(/Build|consistent/);

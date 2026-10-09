@@ -1,7 +1,7 @@
 import { slugOf } from "@edh-seer/matcher/slug";
 import { TARGET_LABEL } from "@edh-seer/matcher/upgrade-package";
 import type { PreconPage } from "./precon-page.js";
-import { afterLine, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_MEANING, whatTheSwapsDo } from "./precon-upgrades.js";
+import { afterLine, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_MEANING, whatTheSwapsDo, GROUP_WORD } from "./precon-upgrades.js";
 
 /** THE PRECON PAGES AS A CRAWLER READS THEM (and a reader, for the moment before the app boots):
  *  the same facts the React page draws, as plain HTML inside `.prerendered`, which the app hides
@@ -65,7 +65,7 @@ export function preconPageHtml(p: PreconPage, siblings: readonly PreconIndexEntr
   }
   for (const t of p.unreachable ?? []) lines.push(`    <p>No swaps bring this deck to bracket ${TARGET_LABEL[t]}: what keeps it above is its commander, or a combo made with its commander.</p>`);
   if (p.route) lines.push(`    <p>Opens a route: <a href="/cards/${esc(p.route.slug)}">${esc(p.route.name)}</a>. ${p.route.reach} of its cards reach ${esc(p.route.to)} through it.</p>`);
-  if (p.gaps.length) lines.push(`    <p>Also short, against a typical Commander deck: ${p.gaps.map((g) => `${esc(g.group.toLowerCase())} ${g.have} of ${g.target}`).join(", ")}.</p>`);
+  if (p.gaps.length) lines.push(`    <p>Also short, against a typical Commander deck: ${p.gaps.map((g) => `${esc(GROUP_WORD(g.group))} ${g.have} of ${g.target}`).join(", ")}.</p>`);
   lines.push(`    <h2>The decklist</h2>`);
   for (const g of p.decklist) {
     lines.push(`    <h3>${esc(g.group)}</h3>`);
