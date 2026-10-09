@@ -92,13 +92,37 @@ const coveredButThin = {
 /** THE RANKING IS PRINTED, because a ranked list whose order the reader cannot check from the screen
  *  it appears on is the skeptic persona's standing test. Not an arrow and not a predicted new score
  *  -- the figure the row is ranked BY. */
-test("each scored row prints what fixing it is worth", () => {
-  const { container } = render(<Findings report={buildOnly} />);
+test("each scored row prints what fixing it is worth, and with no score to start from, its scale", () => {
+  const { container } = render(<Findings report={{ ...buildOnly, buildScore: undefined } as typeof report} />);
   // The figure sits in its own `stat-num` span, so the sentence is split across elements -- match the
   // paragraph's text rather than a single text node.
   const worth = [...container.querySelectorAll("p")].map((el) => el.textContent);
   // 0.635 prints as +0.64: two decimals, rounded, which is what the row shows.
-  expect(worth).toContain("Raises your Build score by at least 0.64");
+  expect(worth).toContain("Raises your Build score by at least 0.64 out of 5");
+});
+
+/** A NUMBER WITH A SCALE AND A STARTING POINT (#1055): "by at least 0.26" left two seats unable to
+ *  weigh it beside a 4.5 they were told was on target. With the score known, the row says where it
+ *  goes from and to, in the same one decimal the Build dial prints. */
+test("a scored row says where the Build score goes from and to, out of 5", () => {
+  const { container } = render(<Findings report={{ ...buildOnly, buildScore: 4 } as typeof report} />);
+  const worth = [...container.querySelectorAll("p")].map((el) => el.textContent);
+  // 4 + 0.635 = 4.635, printed as the dial prints it.
+  expect(worth).toContain("Filling it takes your Build score from 4.0 to at least 4.6 out of 5");
+});
+
+test("a gain too small to show at one decimal says so rather than printing the same number twice", () => {
+  const tiny = { ...buildOnly, buildScore: 4.5, buildParents: [{ ...buildOnly.buildParents![0]!, impact: 0.03 }] } as typeof report;
+  const { container } = render(<Findings report={tiny} />);
+  const worth = [...container.querySelectorAll("p")].map((el) => el.textContent);
+  expect(worth).toContain("Filling it raises your Build score by less than 0.1 out of 5");
+});
+
+/** WHAT BUILD IS, ONCE, where the ranking by it starts: "I do not know what the Build score is made
+ *  of" (clunky-deck seat, #1055). */
+test("the list says what the Build score measures", () => {
+  render(<Findings report={buildOnly} />);
+  expect(screen.getByText(/Build, out of 5, is how close your card draw, ramp, interaction, board wipes and lands are to their targets/)).toBeInTheDocument();
 });
 
 test("the heading says what the order is by", () => {
