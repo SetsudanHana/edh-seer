@@ -2671,16 +2671,17 @@ export function deriveAbilities(
       // A SPEED GRANT TOO (#1079): haste and double strike share `speed-increase`, and without its
       // keywords Chocobo Knights' double strike read "grants haste".
       if (abilities[i].effect?.kind === "keyword-grant" || abilities[i].effect?.kind === "speed-increase") {
-        const grants = grantedKeywords((clause.actions ?? []).filter((a) => a.verb === "grant-ability").map((a) => a.object ?? ""));
-        if (grants.length > 0) abilities[i] = { ...abilities[i], grants };
+        const granted = grantedKeywords((clause.actions ?? []).filter((a) => a.verb === "grant-ability").map((a) => a.object ?? ""));
         // A "gains double strike" the normalizer filed as the verb `double` (#1141) has no grant-ability
-        // action to read, so the speed keywords come off the clause text. CEILING: haste and double
-        // strike only, and only when effect-kind routed a `double` action here.
-        else if (abilities[i].effect?.kind === "speed-increase" && /\bdouble strike\b/i.test(text ?? "")
-          && (clause.actions ?? []).some((a) => a.verb === "double" || a.verb === "triple")) {
-          const speed = grantedKeywords([text ?? ""]).filter((k) => k === "haste" || k === "double strike");
-          if (speed.length > 0) abilities[i] = { ...abilities[i], grants: speed };
-        }
+        // action to read, so the speed keywords come off the clause text -- and are ADDED to any the
+        // clause's grant-ability actions name: Assault on Osgiliath stores `double` + grant-ability
+        // (haste), and reading the actions alone kept haste and lost the double strike it prints.
+        // CEILING: haste and double strike only, and only when effect-kind routed a `double` action here.
+        const doubled = abilities[i].effect?.kind === "speed-increase" && /\bdouble strike\b/i.test(text ?? "")
+          && (clause.actions ?? []).some((a) => a.verb === "double" || a.verb === "triple")
+          ? grantedKeywords([text ?? ""]).filter((k) => k === "haste" || k === "double strike") : [];
+        const grants = [...new Set([...granted, ...doubled])];
+        if (grants.length > 0) abilities[i] = { ...abilities[i], grants };
       }
       const reduces = abilities[i].effect?.kind === "cost-reduction" ? reductionOf(text ?? "", abilities[i].amount) : undefined;
       if (reduces) abilities[i] = { ...abilities[i], reduces };
