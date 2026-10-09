@@ -11,9 +11,24 @@
 import type { Card, Combo } from "@edh-seer/engine";
 import { fitsTarget, type BringDown } from "./bracket-guard.js";
 import type { DeckBracket } from "./brackets.js";
-import { bringDownInReason, bringDownReason, gameChangerReasons, jobOf, landReasons, roleReasons } from "./upgrade-reasons.js";
-import { ROLE_SECTIONS, type CutOptions, type LandOption, type Replacement, type RoleOption, type RoleSectionId } from "./upgrade-sections.js";
+import { bringDownInReason, bringDownReason, fillReasons, gameChangerReasons, jobOf, landReasons, roleReasons } from "./upgrade-reasons.js";
+import { ROLE_SECTIONS, SECTION_ROLES, type CutOptions, type LandOption, type Replacement, type RoleOption, type RoleSectionId } from "./upgrade-sections.js";
 import { SECTION_MAX, UPGRADE_SECTIONS, type BracketTarget, type UpgradePackage, type UpgradeSection, type UpgradeSwap } from "./upgrade-package.js";
+
+/** A ROLE THE DECK IS SHORT ON, with what the report would do about it (owner 2026-10-09, #1137): the
+ *  cards it suggests for the role, and the cards its cut list would cut, both weakest/best first.
+ *  The package closes the gap, up to `short`, instead of leaving "still 2 short on ramp" beside a
+ *  report that names Fellwar Stone. */
+export interface RoleFill {
+  /** The report's name for the group ("Ramp"): how the add's reason opens. */
+  label: string;
+  /** How many cards short: the most fills taken. */
+  short: number;
+  /** The report's suggested cards for the role, in its order, each with the sentence the report gives. */
+  adds: readonly { name: string; reason: string }[];
+  /** The report's cut list, weakest first, each with its own reason. */
+  cuts: readonly { name: string; why: string }[];
+}
 
 /** A synergy pair as the report's suggestions made it, with both reasons already written. */
 export interface SynergySwap { out: string; in: string; outReason: string; inReason: string }
@@ -35,6 +50,9 @@ export interface GatherInput {
   roles: Record<RoleSectionId, readonly CutOptions<RoleOption>[]>;
   lands: readonly CutOptions<LandOption>[];
   synergy: readonly SynergySwap[];
+  /** Per role section the deck is short on. Taken after the role sections and before synergy, so the
+   *  synergy pairs, which want the same weak cards, take what is left. */
+  fills?: Partial<Record<RoleSectionId, RoleFill>>;
 }
 
 /** One package, or `null` when no cut can bring the deck down to the target (its commander is a Game
@@ -72,8 +90,47 @@ export function gatherPackage(g: GatherInput): UpgradePackage | null {
     });
   }
 
+  const lands = new Set(g.deck.filter((c) => /\bLand\b/.test(c.typeLine)).map((c) => c.name));
+  /** Give a swap's cards back, so a fill can have the room in a full section. */
+  const untake = (w: UpgradeSwap) => {
+    const i = cuts.lastIndexOf(w.out.name);
+    if (i >= 0) cuts.splice(i, 1);
+    cutSet.delete(w.out.name);
+    added.delete(w.in.name);
+    const j = adds.findIndex((c) => c.name === w.in.name);
+    if (j >= 0) adds.splice(j, 1);
+  };
+  /** THE FILLS OF ONE ROLE: its suggested adds in order, each for the first cut-list card still free.
+   *  An add the guard refuses is passed over and the cut stays for the next. */
+  const fillSwaps = (id: RoleSectionId, section: UpgradeSwap[]): void => {
+    const f = g.fills?.[id];
+    if (!f) return;
+    const taken: UpgradeSwap[] = [];
+    for (const a of f.adds) {
+      if (taken.length >= f.short) break;
+      const cut = f.cuts.find((c) => !cutSet.has(c.name) && !lands.has(c.name));
+      if (!cut) break;
+      // A FULL SECTION GIVES UP ITS LAST EFFICIENCY SWAP: a gap closed is worth more than a slightly better card.
+      const full = taken.length + section.length >= SECTION_MAX;
+      const dropAt = full ? section.map((w) => w.kind).lastIndexOf("role") : -1;
+      if (full && dropAt < 0) break;
+      const dropped = full ? section[dropAt]! : undefined;
+      if (dropped) untake(dropped);
+      if (!take(cut.name, a.name)) {
+        // Put the dropped swap back: its cards were free a moment ago, and only the guard could refuse them now.
+        if (dropped) { const card = g.cardOf(dropped.in.name); cuts.push(dropped.out.name); cutSet.add(dropped.out.name); added.add(dropped.in.name); if (card) adds.push(card); }
+        continue;
+      }
+      if (dropped) section.splice(dropAt, 1);
+      const r = fillReasons(f, cut.name, cut.why, a);
+      taken.push({ kind: "fill", role: SECTION_ROLES[id][0], out: { name: cut.name, reason: r.out }, in: { name: a.name, reason: r.in } });
+    }
+    section.unshift(...taken);
+  };
+
   const sections: UpgradeSection[] = [];
   for (const id of UPGRADE_SECTIONS) {
+    if (id === "synergy") for (const s of sections) if ((ROLE_SECTIONS as readonly string[]).includes(s.id)) fillSwaps(s.id as RoleSectionId, s.swaps);
     const swaps: UpgradeSwap[] = [];
     if (id === "lands") {
       // GREEDY, WORST CUT FIRST, ON PURPOSE (owner 2026-10-08, #966): the worst land takes the best add

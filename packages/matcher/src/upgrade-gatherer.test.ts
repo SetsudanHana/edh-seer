@@ -90,3 +90,67 @@ test("a Game Changer upgrade is its own kind: refused at bracket 2, taken to the
   expect(at(4).map((s) => s.kind)).toEqual(["game-changer", "game-changer", "game-changer", "game-changer"]);
   expect(at(4)[0]!.in.reason).toMatch(/Game Changer, which this bracket allows/);
 });
+
+// FILLS (#1137): a short role is closed by the report's own suggestions, for the cut list's weakest cards.
+const fillDeck = [...deck, card("Weak A", 2), card("Weak B", 2), card("Weak C", 2), { ...card("Some Land", 0), typeLine: "Land" } as Card];
+const fillPool = new Map([...pool, ["Fellwar Stone", card("Fellwar Stone", 2)], ["Prismatic Lens", card("Prismatic Lens", 2)], ["The Mind Stone", card("The Mind Stone", 2)], ["Tempting Rock", card("Tempting Rock", 2, true)]]);
+const fillInput = (over: Partial<GatherInput> = {}) => input({
+  deck: fillDeck, cardOf: (n) => fillPool.get(n), inDeck: new Set(fillDeck.map((c) => c.name)),
+  fills: {
+    ramp: {
+      label: "Ramp", short: 2,
+      adds: [{ name: "Tempting Rock", reason: "Tempting Rock is ramp." }, { name: "Fellwar Stone", reason: "Fellwar Stone makes mana." }, { name: "Prismatic Lens", reason: "Prismatic Lens makes mana." }, { name: "The Mind Stone", reason: "The Mind Stone makes mana." }],
+      cuts: [{ name: "Some Land", why: "" }, { name: "Weak A", why: "Works with 1 card." }, { name: "Weak B", why: "Works with 2 cards." }, { name: "Weak C", why: "Works with 3 cards." }],
+    },
+  },
+  ...over,
+});
+
+test("a short role is filled up to the shortfall: the cut list's weakest for the report's suggestions, in order", () => {
+  const p = gatherPackage(fillInput({ target: 3 }))!;
+  const ramp = p.sections.find((s) => s.id === "ramp")!.swaps;
+  // Tempting Rock is a Game Changer, which bracket 3 allows one of.
+  expect(ramp.every((s) => s.kind === "fill")).toBe(true);
+  expect(ramp.length).toBe(2);
+  expect(ramp.map((s) => s.out.name)).toEqual(["Weak A", "Weak B"]);
+  expect(ramp[0]!.out.reason).toContain("weakest");
+  expect(ramp[0]!.in.reason).toContain("Ramp: you were 2 short; ");
+});
+
+test("a fill the guard refuses is skipped and the next suggestion takes its cut; a land is never cut", () => {
+  const p = gatherPackage(fillInput({ target: 2 }))!;
+  const ramp = p.sections.find((s) => s.id === "ramp")!.swaps;
+  expect(ramp.map((s) => [s.out.name, s.in.name])).toEqual([["Weak A", "Fellwar Stone"], ["Weak B", "Prismatic Lens"]]);
+});
+
+test("a fill never reuses a card another swap cut or added", () => {
+  const synergy = [{ out: "Weak A", in: "Fellwar Stone", outReason: "x", inReason: "y" }];
+  const p = gatherPackage(fillInput({ target: 2, synergy }))!;
+  const all = p.sections.flatMap((s) => s.swaps);
+  expect(new Set(all.map((s) => s.out.name)).size).toBe(all.length);
+  expect(new Set(all.map((s) => s.in.name)).size).toBe(all.length);
+  expect(p.sections.find((s) => s.id === "ramp")!.swaps.map((s) => s.out.name)).toEqual(["Weak A", "Weak B"]);
+  // The fill came first, so the synergy pair that wanted Weak A and Fellwar Stone found both taken.
+  expect(p.sections.find((s) => s.id === "synergy")!.swaps.map((s) => s.out.name)).not.toContain("Weak A");
+});
+
+test("fills lead their section and push efficiency swaps out of the cap, never the other way", () => {
+  const many = Array.from({ length: 10 }, (_, i) => card(`Rock ${i}`, 3));
+  const adds = Array.from({ length: 10 }, (_, i) => card(`Better ${i}`, 1));
+  const d = [...fillDeck, ...many];
+  const roles = { ...input().roles, ramp: many.map((c, i) => ({ cut: c.name, options: [roleOpt(`Better ${i}`, { role: "ramp" })] })) };
+  const p = gatherPackage(fillInput({
+    target: 3, roles, deck: d, inDeck: new Set(d.map((c) => c.name)), cardOf: (n) => fillPool.get(n) ?? adds.find((c) => c.name === n),
+  }))!;
+  const ramp = p.sections.find((s) => s.id === "ramp")!.swaps;
+  expect(ramp.length).toBe(10);
+  expect(ramp.slice(0, 2).map((s) => s.kind)).toEqual(["fill", "fill"]);
+  expect(ramp.filter((s) => s.kind === "role").length).toBe(8);
+  // The two efficiency swaps given up are the last two, and their cards are free again.
+  expect(ramp.map((s) => s.out.name)).not.toContain("Rock 9");
+});
+
+test("no shortfall, no fill", () => {
+  const p = gatherPackage(fillInput({ fills: {} }))!;
+  expect(p.sections.flatMap((s) => s.swaps).some((s) => s.kind === "fill")).toBe(false);
+});

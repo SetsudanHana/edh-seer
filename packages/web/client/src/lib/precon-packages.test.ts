@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import type { UpgradePackage, UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import type { AnalyzeResponse } from "../types.js";
-import { keepManaBase } from "./precon-packages.js";
+import { fillsFor, keepManaBase } from "./precon-packages.js";
 
 const swap = (out: string, add: string, kind: UpgradeSwap["kind"]): UpgradeSwap => ({ kind, out: { name: out, reason: "r" }, in: { name: add, reason: "r" } });
 const pkg = (over: Partial<UpgradePackage> = {}): UpgradePackage => ({
@@ -46,4 +46,20 @@ test("land swaps never go, and a package that cannot fit ships without an after 
   const kept = await keepManaBase(pkg(), input(() => ({ band: "1-2", mana: 0.3, synergy: 3 })), () => []);
   expect(names(kept)).toEqual(["Chapel"]);
   expect(kept.after).toBeUndefined();
+});
+
+test("a fill is dropped last: at equal mana base cost the keeper drops an ordinary swap first", async () => {
+  const p = pkg({ sections: [{ id: "synergy", swaps: [swap("A", "Heavy Pips", "synergy"), swap("B", "Fill Rock", "fill")] }] });
+  // Either one alone fixes the mana base; the keeper drops the synergy swap.
+  const kept = await keepManaBase(p, input((l) => ({ band: "1-2", mana: l.includes("Heavy Pips") && l.includes("Fill Rock") ? 0.2 : 0.18, synergy: 3 })), () => []);
+  expect(names(kept)).toEqual(["Fill Rock"]);
+});
+
+test("fills are made for the groups the report is short in, from the report's suggestions", () => {
+  const sug = { build: { Ramp: [{ name: "Fellwar Stone", reasons: [{ text: "Fellwar Stone makes mana.", others: [] }] }], Interaction: [{ name: "Swords", reasons: [] }] } } as unknown as Parameters<typeof fillsFor>[1];
+  const cuts = [{ name: "Weak A", why: "Works with 1 card." }];
+  const f = fillsFor([{ group: "Ramp", have: 9, target: 11 }, { group: "Card draw", have: 1, target: 2 }, { group: "Consistency", have: 1, target: 2 }], sug, cuts);
+  expect(Object.keys(f)).toEqual(["ramp"]);
+  expect(f.ramp).toEqual({ label: "Ramp", short: 2, adds: [{ name: "Fellwar Stone", reason: "Fellwar Stone makes mana." }], cuts });
+  expect(fillsFor([{ group: "Ramp", have: 9, target: 11 }], null, cuts)).toEqual({});
 });

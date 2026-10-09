@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { LandFacts } from "./land-score.js";
-import { REASON_MAX, bringDownReason, gameChangerReasons, landReasons, roleReasons, synergyReasons } from "./upgrade-reasons.js";
+import { REASON_MAX, bringDownReason, fillReasons, gameChangerReasons, landReasons, roleReasons, synergyReasons } from "./upgrade-reasons.js";
 import type { LandOption, RoleOption } from "./upgrade-sections.js";
 
 const roleOpt = (add: string, over: Partial<RoleOption> = {}): RoleOption => ({
@@ -87,4 +87,13 @@ test("a fetch swap that gives up a role says so", () => {
   const r = roleReasons("Mwonvuli Acid-Moss", roleOpt("Farseek", { role: "ramp", gained: [], colour: ["G"], fetch: true, lost: ["targetedRemoval"] }));
   expect(r.out).toBe("Mwonvuli Acid-Moss also does removal, and can't find a land that makes green, which the deck is short of for its spells.");
   expect(r.in).toBe("Farseek can find a land that makes green, which the deck is short of for its spells, but does not do removal.");
+});
+
+test("a fill says how short the deck was and why the cut is the weakest card", () => {
+  const r = fillReasons({ label: "Ramp", short: 2 }, "Weak A", "Works with 1 other card in this deck.", { name: "Fellwar Stone", reason: "Fellwar Stone makes mana for the colours your commander asks for." });
+  expect(r.out).toBe("Weak A is the weakest card here. Works with 1 other card in this deck.");
+  expect(r.in).toBe("Ramp: you were 2 short; Fellwar Stone makes mana for the colours your commander asks for.");
+  const long = fillReasons({ label: "Ramp", short: 2 }, "Weak A", "x".repeat(200), { name: "Fellwar Stone", reason: "y".repeat(200) });
+  expect(long.out.length).toBeLessThanOrEqual(REASON_MAX);
+  expect(long.in).toBe("Ramp: you were 2 short; Fellwar Stone fills the gap.");
 });

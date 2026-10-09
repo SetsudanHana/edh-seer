@@ -160,3 +160,17 @@ export function bringDownInReason(add: string, cut: BringDownCut, job: string | 
   const without = cut.why.kind === "game-changer" ? "without being a Game Changer" : "without the combo";
   return fit(`${add} `, [job ? `does the same ${job} as ${cut.name}, ${without}` : `takes the slot ${without}`]);
 }
+
+/** A FILL SWAP'S REASONS (owner 2026-10-09, #1137): the cut is the weakest card the report would cut,
+ *  said as the cut list says it (`why`); the add is the report's own suggestion for the role the deck
+ *  is short on, opened with how short. */
+export function fillReasons(f: { label: string; short: number }, cutName: string, cutWhy: string, add: { name: string; reason: string }): { out: string; in: string } {
+  const head = `${cutName} is the weakest card here.`;
+  const out = cutWhy.trim() ? `${head} ${cutWhy.trim()}` : head;
+  const open = `${f.label}: you were ${f.short} short; `;
+  const inn = `${open}${add.reason.trim()}`;
+  return {
+    out: out.length <= REASON_MAX ? out : head,
+    in: inn.length <= REASON_MAX ? inn : `${open}${add.name} fills the gap.`,
+  };
+}
