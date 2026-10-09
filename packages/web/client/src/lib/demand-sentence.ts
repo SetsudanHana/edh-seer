@@ -632,7 +632,9 @@ const STATIC_REACH: Record<string, string> = {
   "type-grant": "it grants types to",
   "trigger-doubling": "whose triggers it doubles",
   "damage-multiplier": "whose damage it multiplies",
-  "token-doubling": "whose tokens it doubles",
+  // PER KIND, SO TRUE FOR EVERY MODE (#1136): Xorn adds one, Divine Visitation swaps them at the same
+  // count, and only a Doubling Season doubles. The mode is on the effect, not the key.
+  "token-doubling": "whose tokens it adds to or replaces",
   "protection": "it protects",
 };
 

@@ -451,3 +451,13 @@ test("a token creature still dies", () => {
   expect(eventKeyClause("dies|creature|-|n")).toBe("a nontoken creature dies");
   expect(eventKeyClause("dies|creature|-|-", "this card")).toBe("this card dies");
 });
+
+/** A TOKEN REPLACEMENT'S DEMAND IS TRUE FOR EVERY MODE (#1136 review). The `applies:` key is per kind
+ *  and cannot carry the multiplier: Xorn adds one Treasure, Divine Visitation swaps the tokens for
+ *  Angels at the same count, and only Doubling Season-likes double. "whose tokens it doubles" was
+ *  false for most of them, on the card page and its prerendered HTML. */
+test("a token replacement's demand never claims it doubles", () => {
+  const s = eventKeySentence("applies:token-doubling|-|treasure|-");
+  expect(s).toBe("a Treasure whose tokens it adds to or replaces");
+  expect(s).not.toMatch(/doubles/);
+});
