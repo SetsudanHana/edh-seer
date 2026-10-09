@@ -578,6 +578,16 @@ test("a speed grant names the keyword it grants", () => {
   })).toBe("When Tromell, Seymour's Butler attacks, Hellrider grants haste");
 });
 
+// #1141: Akim's grant, derived from the verb `double`, carries ["double strike"] and must never read haste.
+test("a double-strike grant read from the verb double says double strike, never haste", () => {
+  const sentence = reasonSentence({
+    producer: "Akim, the Soaring Wind", consumer: "Hellrider", eventKey: "attacks:any",
+    effectKind: "speed-increase", keywords: ["double strike"],
+  });
+  expect(sentence).toContain("double strike");
+  expect(sentence).not.toContain("haste");
+});
+
 test("effectPhrase: an intercepted graveyard fill does not bring a card back (#1083)", () => {
   expect(effectPhrase("graveyard-intercept", undefined)).toBe("takes an opponent's cards on the way to the graveyard");
 });
