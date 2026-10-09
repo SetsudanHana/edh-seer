@@ -2152,6 +2152,11 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
             producer: enteringFaceName(p, e0) ?? p.card.name, consumer: c.card.name, eventKey: key,
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true, keywords,
             ...(t.subject.self !== true && sacrificedTo(p, origin, e0) ? { sacrificedTo: sacrificedTo(p, origin, e0) } : {}),
+            // THE PRODUCER IS THE THING SACRIFICED (#729 f): Treasure's "Sacrifice this artifact", an
+            // evoke creature. The player sacrifices it; the card does not sacrifice anything.
+            ...(t.subject.self !== true && e0.verb === "sacrifice" && e0.subject.self === true && e0.subject.control === "you"
+              ? { sacrificedSelf: p.tags?.characteristics.token === true
+                ? `${/^[aeiou]/i.test(p.card.name) ? "an" : "a"} ${p.card.name}` : p.card.name } : {}),
             // A BLANK EFFECT IS READ OFF ITS EMITS (#647 item 5), its clause siblings' too: Displacer
             // Kitten's return is its own ability, and without it the flicker read as an exile.
             ...(a.effect.kind ? {} : { emits: [a, ...c.tags.abilities.filter((x) => x !== a && a.clause !== undefined && x.clause === a.clause && x.face === a.face)].flatMap((x) => x.emits ?? []) }),

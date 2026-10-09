@@ -474,6 +474,8 @@ export function reasonSentence(input: {
    *  cost pays (#799). "When Carrion Feeder dies" was about a card that is the OUTLET, not the thing
    *  dying: the sentence says the owner chose the death, and to which card. */
   sacrificedTo?: string;
+  /** The producer itself, when it is what the event sacrifices ("a Treasure", "Aethersnipe"; #729 f). */
+  sacrificedSelf?: string;
   /** The keywords a `keyword-grant` hands out (`Ability.grants`): "grants flying" over "grants a keyword". */
   keywords?: readonly string[];
 }): string {
@@ -497,7 +499,8 @@ export function reasonSentence(input: {
   // thanks to Krenko, Mob Boss": the token doing the making. MEASURED on the partner artifact
   // 2026-09-04, 7,050 of 91,061 rows (7.7%) across 2,671 cards. The producer takes the subject back
   // and the noun becomes what it always was, the token's own name.
-  const cause = input.sacrificedTo ? `When you sacrifice ${input.sacrificedTo} to ${input.producer}`
+  const cause = input.sacrificedSelf ? `When you sacrifice ${input.sacrificedSelf}`
+    : input.sacrificedTo ? `When you sacrifice ${input.sacrificedTo} to ${input.producer}`
     : input.subjectNoun && input.eventKey.split(":")[0] === "create-token"
     // An untyped emit yields "a permanent", and "a permanent token" says nothing "a token" does not.
     ? `When ${input.producer} makes ${input.subjectNoun === "a permanent" ? "a token" : `${input.subjectNoun} token`}`

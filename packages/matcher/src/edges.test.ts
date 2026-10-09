@@ -6357,3 +6357,23 @@ test("a recursion over an opponent's graveyard joins an opponent mill, not a kil
   expect(rec(kill, reanimate)).toHaveLength(1);
   expect(rec(crab, reanimate)).toHaveLength(1);
 });
+
+// #729 (f): the producer IS the thing sacrificed ("Sacrifice this artifact: add one mana", an evoke
+// creature). The sentence read "When Treasure sacrifices something", which has the Treasure doing the
+// sacrificing; it is the player who sacrifices it.
+test("a producer that sacrifices ITSELF reads 'When you sacrifice <it>', not 'When <it> sacrifices something'", () => {
+  const bats = base("Mirkwood Bats", [{ kind: "triggered", trigger: { verbs: ["sacrifice"], subject: { control: "you", token: null } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } } }]);
+  const emits = [{ verb: "sacrifice", subject: { control: "you", token: null, self: true } }];
+  const treasure = base("Treasure", [{ kind: "activated", cost: "{T}, Sacrifice this artifact", effect: { kind: "mana-generation" }, emits }] as CardTags["abilities"]);
+  treasure.tags.characteristics.token = true;
+  treasure.tags.characteristics.types = ["artifact"];
+  treasure.tags.characteristics.subtypes = ["treasure"];
+  const aethersnipe = base("Aethersnipe", [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } }, effect: { kind: "bounce" }, emits }] as CardTags["abilities"]);
+  const t1 = directedReasons(treasure, bats, H).map((r) => r.text);
+  expect(t1[0]).toMatch(/^When you sacrifice a Treasure, Mirkwood Bats /);
+  const t2 = directedReasons(aethersnipe, bats, H).map((r) => r.text);
+  expect(t2[0]).toMatch(/^When you sacrifice Aethersnipe, Mirkwood Bats /);
+  // An outlet sacrificing ANOTHER creature keeps the cost wording.
+  expect(t1.join() + t2.join()).not.toContain("sacrifices something");
+});
