@@ -32,8 +32,13 @@ const source = arg("--static", join(repo, "static-out"))!;
 const remote = /^https?:\/\//.test(source);
 const baseUrl = remote ? source.replace(/\/$/, "") : STATIC_BASE;
 const fetchImpl: typeof fetch = remote ? fetch : staticFetch(source);
-const version = (await (await fetchImpl(`${baseUrl}/manifest.json`)).json() as { version: string }).version;
-const pagesDir = arg("--pages", remote ? `${baseUrl}/${version}/precons` : join(source, version, "precons"))!;
+const { version, precons: preconsDir } = await (await fetchImpl(`${baseUrl}/manifest.json`)).json() as { version: string; precons?: string };
+// The pages sit in a content-addressed directory the manifest names (#1121).
+if (!preconsDir && !arg("--pages")) {
+  console.error("manifest.json has no `precons` pointer: no precon pages built (run build-precons.mts), or pass --pages.");
+  process.exit(1);
+}
+const pagesDir = arg("--pages", remote ? `${baseUrl}/${version}/precons/${preconsDir}` : join(source, version, "precons", preconsDir!))!;
 /** A page by slug, from a directory or from a deployed site. */
 async function readPage(slug: string): Promise<Page | null> {
   if (/^https?:\/\//.test(pagesDir)) {

@@ -44,7 +44,8 @@ if (!existsSync(join(dist, "index.html"))) {
 }
 
 rmSync(target, { recursive: true, force: true });
-cpSync(staticOut, target, { recursive: true });
+// A leftover `.staging` (a failed or interrupted build-precons) is not shipped.
+cpSync(staticOut, target, { recursive: true, filter: (src) => !src.split(/[\\/]/).includes(".staging") });
 
 // `/how-it-works` IS SERVED, NOT REDIRECTED. Vite emits the second entry as
 // `how-it-works/index.html`, and Pages answers the extensionless URL for a directory index with a

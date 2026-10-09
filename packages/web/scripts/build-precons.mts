@@ -17,7 +17,10 @@
  *  under the same version, and `/static/v-*` is served immutable for a year and cached first by the
  *  service worker: a fixed URL would keep the old bytes in every returning browser. Same principle
  *  as the shards; the manifest is the one revalidated file. The build stamp only decides whether to
- *  rebuild. A failed or `--only` run leaves the manifest on the last good directory. */
+ *  rebuild. A failed or `--only` run promotes nothing and leaves the manifest as it was: on the last
+ *  good directory if one exists, but `build-static` wipes `static-out` (and rewrites the manifest as
+ *  `{version}`), so straight after it there is none. A local failure therefore exits non-zero, so the
+ *  `npm run deploy` chain stops rather than shipping a site with no precon pages. */
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
@@ -80,7 +83,8 @@ if (!onlyIdx && !process.argv.includes("--force") && existsSync(stampPath)) {
   const dir = explicitOut ? "" : saved.dir;
   const index = explicitOut ? join(explicitOut, "index.json") : dir && join(preconsRoot, dir, "index.json");
   if (saved.stamp === stamp && (explicitOut || dir) && index && existsSync(index)) {
-    // `build-static` rewrites the manifest as `{version}`, so a skip has to put the pointer back.
+    // The manifest may have been rewritten without wiping this directory (by hand): put the pointer
+    // back. After `build-static` the directory and the stamp are gone too, so this path is not taken.
     if (dir) pointManifest(dir);
     console.log(`precon pages in ${explicitOut ?? join(preconsRoot, dir!)} are current (${inputs.length} inputs unchanged): skipped, --force to rebuild`);
     process.exit(0);
@@ -156,6 +160,10 @@ if (explicitOut) {
 } else if (failed || onlyIdx) {
   // NOT PROMOTED: the manifest keeps pointing at the last good directory, which is left alone.
   console.log(`${index.length} precon pages in ${outDir}${failed ? `, ${failed} failed` : ""}: staging kept for inspection, manifest and live pages untouched`);
+  if (failed) {
+    console.error(`${failed} precon page(s) failed: nothing promoted, and with no earlier build the site would ship without precon pages. Exiting non-zero.`);
+    process.exitCode = 1;
+  }
 } else {
   // NAME THEN BYTES, SORTED (as `build-static` hashes its shards), so two files swapping contents is a different directory.
   const h = createHash("sha256");

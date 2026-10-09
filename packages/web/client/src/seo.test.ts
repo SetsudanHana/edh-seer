@@ -112,9 +112,10 @@ test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card a
   expect(indexXml).toContain("<sitemapindex");
   const childUrls = [...indexXml.matchAll(/<sitemap><loc>([^<]+)<\/loc>/g)].map((m) => m[1]!);
   // THE PRECON PAGES, when `build-precons` wrote them (2026-09-27): a fourth child, second in order.
-  const preconVersion = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")).version as string;
-  const preconIndex = join(DIST, "static", preconVersion, "precons", "index.json");
-  const precons = existsSync(preconIndex) ? (JSON.parse(readFileSync(preconIndex, "utf8")) as { slug: string }[]) : [];
+  // Found through the manifest's `precons` pointer, as `assemble-deploy` does.
+  const preconManifest = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")) as { version: string; precons?: string };
+  const preconIndex = preconManifest.precons ? join(DIST, "static", preconManifest.version, "precons", preconManifest.precons, "index.json") : null;
+  const precons = preconIndex && existsSync(preconIndex) ? (JSON.parse(readFileSync(preconIndex, "utf8")) as { slug: string }[]) : [];
   expect(childUrls).toEqual([
     `${canonical}sitemap-core.xml`,
     ...(precons.length ? [`${canonical}sitemap-precons.xml`] : []),
