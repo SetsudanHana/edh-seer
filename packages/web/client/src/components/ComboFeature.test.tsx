@@ -122,3 +122,9 @@ test("the drawn combo whose result is the kill says it wins by itself", () => {
   expect(screen.getByText(/The loop wins by itself: Infinite damage\./)).toBeInTheDocument();
   expect(screen.queryByText(/No card here was found/)).toBeNull();
 });
+
+/** THE TRIANGLE SITS BESIDE THE STEPS (#987): a 1fr text column left it ~1,600px away at 3840. */
+test("the text column is capped so the diagram sits beside the steps", () => {
+  render(<ComboFeature parts={comboParts(["A", "B", "C"], m)!} result="Infinite mana" manaValue={9} cheap={false} />);
+  expect(screen.getByTestId("combo-feature").className).toContain("lg:grid-cols-[minmax(0,56rem)_minmax(0,28rem)]");
+});

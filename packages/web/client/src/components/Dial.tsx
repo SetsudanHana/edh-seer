@@ -112,7 +112,7 @@ export const TONE_TEXT: Record<GaugeTone, string> = {
 };
 
 export function Dial({
-  name, value, reading, zones, onOpen, openLabel, size = "input", explain, previous,
+  name, value, reading, zones, onOpen, openLabel, size = "input", explain, previous, footer,
 }: {
   name: string;
   value: string;
@@ -156,6 +156,10 @@ export function Dial({
    *  Absent on the first run and on any run whose diff is null: a mark that is always present marks
    *  nothing, the rule the coverage gate and the bracket pips already follow. */
   previous?: { value: string; reading: GaugeReading };
+  /** A LINE THAT BELONGS TO THIS CARD (#987), drawn inside its border under the reading. With
+   *  `onOpen` the card's border moves to a wrapping div and the button sits inside it, so the
+   *  footer is a sibling of the button, never its child (nested interactive content). */
+  footer?: React.ReactNode;
 }) {
   // The needle reaches the ring's inner edge (RING_INNER, not a second literal) so it points
   // INTO the coloured band it names rather than stopping short of it.
@@ -215,18 +219,27 @@ export function Dial({
       ? <div className="flex flex-col gap-2 min-w-0 w-full">{control}{explain}</div>
       : <>{control}</>);
 
-  if (!onOpen) return wrap(<div className={`${shell} min-w-0`}>{body}</div>);
+  if (!onOpen) return wrap(<div className={`${shell} min-w-0`}>{body}{footer}</div>);
 
   // The 44px target-size floor (WCAG 2.5.8) is stated explicitly on both axes rather than left to
   // inherit from the SVG's content width, which is what `min-w-0` would have done.
-  return wrap(
+  const button = (extra: string) => (
     <button
       type="button"
       onClick={onOpen}
       aria-label={`${name}, ${value}, ${reading.label}${previous ? `, previously ${previous.value}` : ""} — open ${openLabel}`}
-      className={`${shell} min-w-[44px] min-h-[44px] text-left hover:border-(--accent) focus-visible:outline-2 focus-visible:outline-(--accent)`}
+      className={`${extra} min-w-[44px] min-h-[44px] text-left focus-visible:outline-2 focus-visible:outline-(--accent)`}
     >
       {body}
-    </button>,
+    </button>
   );
+  if (footer) {
+    return wrap(
+      <div className={`${shell} min-w-0 hover:border-(--accent)`}>
+        {button("flex flex-col items-center gap-0.5 w-full")}
+        {footer}
+      </div>,
+    );
+  }
+  return wrap(button(`${shell} hover:border-(--accent)`));
 }

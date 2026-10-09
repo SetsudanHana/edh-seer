@@ -241,8 +241,16 @@ async function usedWidth(page: Page): Promise<{ viewport: number; sections: { na
         if (a > runHi) { if (runHi > runLo) filled += runHi - runLo; runLo = a; runHi = z; } else runHi = Math.max(runHi, z);
       }
       if (runHi > runLo) filled += runHi - runLo;
-      const name = el.id || el.getAttribute("aria-label") || el.dataset.chapter
-        || el.querySelector("h1,h2,h3")?.textContent?.trim().slice(0, 40) || el.tagName.toLowerCase();
+      let name = el.id || el.getAttribute("aria-label") || el.dataset.chapter
+        || el.querySelector("h1,h2,h3")?.textContent?.trim().slice(0, 40) || "";
+      if (!name) {
+        // A bare tag names nothing (#987's band printed "section"): say which chapter it is in and
+        // what it starts with. Inline on purpose -- a named helper breaks under tsx's __name in-page.
+        const ch = el.closest("[data-chapter]") as HTMLElement | null;
+        const where = ch ? (ch.id || ch.dataset.chapter || "") : "";
+        const text = (el.textContent || "").replace(/\s+/g, " ").trim().slice(0, 40);
+        name = `${el.tagName.toLowerCase()}${where ? ` in ${where}` : ""}${text ? `: "${text}"` : ""}`;
+      }
       return { name, used: hi > lo ? Math.round(((hi - lo) / vw) * 100) / 100 : 0, filled: Math.round((filled / vw) * 100) / 100 };
     });
     return { viewport: vw, sections, minUsed: sections.length ? Math.min(...sections.map((x) => x.used)) : 1 };

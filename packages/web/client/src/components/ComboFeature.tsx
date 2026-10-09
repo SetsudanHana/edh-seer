@@ -103,7 +103,12 @@ export function ComboFeature({ parts, result, manaValue, cheap, wins }: {
   let shown = 0;
   sides.forEach((l, i) => { stepNo[i] = l && !sides.slice(0, i).some((x) => x?.text === l.text) ? ++shown : undefined; });
   return (
-    <div data-testid="combo-feature" className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:items-start">
+    /* TEXT COLUMN CAPPED, DIAGRAM BESIDE IT (#987): a 1fr text column left the triangle ~1,660px from the
+     * steps at 3840. `minmax(0,Xrem)` tracks grow to Xrem and, in a narrower box, shrink -- the text
+     * track first, since the diagram's 28rem is reached before the text's 56rem. Fit: inside
+     * BracketPanel's 68rem lead column, gap 1rem leaves 67rem; the diagram takes 28rem and the text
+     * 39rem (no overflow); on a page wider than 85rem the pair is 56+1+28 = 85rem and reads as one unit. */
+    <div data-testid="combo-feature" className="grid gap-4 lg:grid-cols-[minmax(0,56rem)_minmax(0,28rem)] lg:items-start">
       <div className="flex flex-col gap-3 text-sm">
         <ol className="flex flex-col gap-2">
           {/* EACH STEP ONCE (#1034): Rani's Dualcaster loop printed ① and ② word for word the same. */}
