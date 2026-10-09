@@ -11,11 +11,11 @@ const page: PreconPage = {
   commanders: ["Nalia de'Arnise"], identity: ["W", "B"], theme: "Cleric tribal", synergy: { score: 2.9, band: "Developing" },
   bracket: { band: "1-2", gameChangers: 0, combos: 0 }, commanderLinks: 19,
   swaps: [{ out: { name: "Stick Together", connections: 13 }, in: { name: "Pious Evangel", slug: "pious-evangel", connections: 42, reason: "Pious Evangel <b>gains</b> life" } }],
-  route: null, gaps: [{ group: "Ramp", have: 9, target: 11 }],
+  route: null, gaps: [{ group: "Ramp", have: 9, target: 11 }], build: { score: 3.6, band: "Close" },
   decklist: [{ group: "Creatures", cards: [{ name: "Burakos, Party Leader", count: 1 }] }, { group: "Lands", cards: [{ name: "Plains", count: 10 }] }],
   report: "/#deck=abc",
   packages: [{
-    target: 2, from: "1-2", bringDown: [],
+    target: 2, from: "1-2", bringDown: [], after: { band: "1-2", synergy: 3.3, mana: 0.1, build: 4.2, short: [] },
     sections: [{ id: "synergy", swaps: [{ kind: "synergy", out: { name: "Stick Together", reason: "Stick Together works with 13 cards in this deck." }, in: { name: "Pious Evangel", reason: "Pious Evangel <b>gains</b> life" } }] }],
   }],
   unreachable: [3],
@@ -50,6 +50,10 @@ test("a precon page is served with its own head, its crawler block and its recor
   expect(html).toContain("<h3>Cards that work together</h3>");
   expect(html).toContain('Take out Stick Together: Stick Together works with 13 cards in this deck. Put in <a href="/cards/pious-evangel">Pious Evangel</a>: Pious Evangel &lt;b&gt;gains&lt;/b&gt; life');
   expect(html).toContain("No swaps bring this deck to bracket 3");
+  // The effect of the swaps, in words, and the synergy change said once.
+  expect(html).toContain("synergy 2.9 → 3.3 of 5, from developing to connected.");
+  expect(html).toContain("Build 3.6 → 4.2 of 5, from close to on target; no longer short on ramp");
+  expect(html).not.toContain("synergy score goes from");
   expect(res.headers.get("x-robots-tag")).toBeNull();
 });
 

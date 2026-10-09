@@ -32,7 +32,11 @@ export interface PreconPackages {
 }
 
 /** The report's reading of a decklist: its band, its mana base total and its synergy score. */
-type Reading = { band: DeckBracket["band"]; mana: number; synergy: number };
+type Reading = {
+  band: DeckBracket["band"]; mana: number; synergy: number;
+  /** Build score, and the groups still short (`gapsOf`): recorded for the page's words, read by no ranking (#893). */
+  build: number; short: { group: string; have: number; target: number }[];
+};
 
 export async function preconPackages(input: {
   lookup: StaticLookup;

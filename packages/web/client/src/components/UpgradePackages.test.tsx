@@ -54,10 +54,19 @@ test("the summary says what the swaps do to the synergy score, and when a higher
   const two = { ...pkg(2, 2), after: { band: "1-2" as const, synergy: 3.4, mana: 0.9 } };
   const three = { ...pkg(3, 2), after: { band: "1-2" as const, synergy: 3.4, mana: 0.9 } };
   show(page({ bracket: { band: "1-2", gameChangers: 0, combos: 0 }, synergy: { score: 3, band: "Connected" }, packages: [two, three] }));
-  expect(screen.getByText(/its synergy score goes from 3.0 to 3.4 of 5/)).toBeInTheDocument();
+  // Said once, in the effect line, not again in the summary.
+  expect(screen.getAllByText(/3\.0 → 3\.4 of 5/)).toHaveLength(1);
+  expect(screen.queryByText(/synergy score goes from/)).toBeNull();
+  expect(screen.getByTestId("precon-effect")).toHaveTextContent(/what this page measures/);
   expect(screen.queryByTestId("precon-same-swaps")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Bracket 3" }));
   expect(screen.getByTestId("precon-same-swaps")).toHaveTextContent("the same swaps as at bracket 1–2");
+});
+
+test("the effect line says Build and the shortfalls when the package carries them", () => {
+  const two = { ...pkg(2, 2), after: { band: "1-2" as const, synergy: 3.4, mana: 0.9, build: 4.2, short: [] } };
+  show(page({ bracket: { band: "1-2", gameChangers: 0, combos: 0 }, synergy: { score: 3, band: "Connected" }, build: { score: 3.6, band: "Close" }, gaps: [{ group: "Ramp", have: 9, target: 11 }], packages: [two] }));
+  expect(screen.getByTestId("precon-effect")).toHaveTextContent(/Build 3\.6 → 4\.2 of 5, from close to on target; no longer short on ramp/);
 });
 
 test("a bracket no swap can reach says why instead of offering a package", () => {

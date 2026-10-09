@@ -52,7 +52,13 @@ export interface UpgradePackage {
   /** THE DECK AFTER THE SWAPS, as the report reads it (#767, persona re-run 2026-09-30: "would I keep
    *  up?"): its band, its synergy score and its mana base total. Absent when the builder had no
    *  analysis to hand. */
-  after?: { band: DeckBracket["band"]; synergy: number; mana: number };
+  after?: {
+    band: DeckBracket["band"]; synergy: number; mana: number;
+    /** The report's Build score (consistency) and the role groups still short, by the same rule as the
+     *  precon page's `gaps` (#893). Absent on a page built before they were recorded. */
+    build?: number;
+    short?: { group: string; have: number; target: number }[];
+  };
 }
 
 export const SECTION_SHOWN = 3;

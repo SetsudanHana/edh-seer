@@ -16,7 +16,7 @@ const input = (analyse: (list: string) => { band: "1-2" | "3" | "4-5"; mana: num
   commanders: ["Commander"],
   cards: ["Temple", "A", "B", "C", "Combo Piece"].map((name) => ({ name, count: 1 })),
   data: { report: { deckMath: { lands: { manaBase: { total: 0.18 } } } } } as unknown as AnalyzeResponse,
-  analyse: async (list: string) => analyse(list),
+  analyse: async (list: string) => ({ build: 4, short: [], ...analyse(list) }),
 });
 const names = (p: UpgradePackage) => p.sections.flatMap((s) => s.swaps).map((s) => s.in.name);
 
@@ -24,7 +24,7 @@ test("the swap whose removal reads best goes, not the one with the most coloured
   // Mono-coloured: the total moves with the curve alone, and only Big Drop raises it.
   const kept = await keepManaBase(pkg(), input((l) => ({ band: "1-2", mana: l.includes("Big Drop") ? 0.2 : 0.18, synergy: 3 })), () => []);
   expect(names(kept)).toEqual(["Chapel", "Heavy Pips", "Cheap"]);
-  expect(kept.after).toEqual({ band: "1-2", mana: 0.18, synergy: 3 });
+  expect(kept.after).toEqual({ band: "1-2", mana: 0.18, synergy: 3, build: 4, short: [] });
 });
 
 test("a package the report reads above its target loses the swap that put it there", async () => {

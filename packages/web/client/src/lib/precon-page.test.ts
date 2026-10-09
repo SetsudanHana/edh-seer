@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import type { DeckSuggestions } from "@edh-seer/matcher/suggest-static";
 import { engineDeck } from "./engine-model.fixture.js";
-import { PRECON_SWAPS, preconPage } from "./precon-page.js";
+import { gapsOf, PRECON_SWAPS, preconPage } from "./precon-page.js";
 
 const meta = { slug: "test-deck-test-set", name: "Test Deck", setCode: "TST", setName: "Test Set", releaseDate: "2026-01-01", commanders: ["Commander"] };
 const add = (name: string, n: number) => ({ name, slug: name.toLowerCase(), identity: [], mv: 2, connections: Array.from({ length: n }, (_, i) => `c${i}`), reasons: [{ text: `${name} works`, others: [] }] });
@@ -28,4 +28,12 @@ test("with no suggestions the page still stands, with no swaps and no route", ()
   const page = preconPage(meta, { report, graph, missing: [], resolvedCount: 0, totalCount: 0, commanderColorIdentity: [] } as never, null);
   expect(page.swaps).toEqual([]);
   expect(page.route).toBeNull();
+});
+
+test("gapsOf is the one derivation of the groups a report is short on, for the page and for a swapped deck", () => {
+  const { report, graph } = engineDeck();
+  const page = preconPage(meta, { report, graph, missing: [], resolvedCount: 0, totalCount: 0, commanderColorIdentity: [] } as never, null);
+  expect(page.gaps).toEqual(gapsOf(report));
+  for (const g of gapsOf(report)) expect(g.target).toBeGreaterThan(g.have);
+  expect(page.build).toEqual(report.buildScore === undefined ? null : { score: report.buildScore, band: expect.any(String) });
 });

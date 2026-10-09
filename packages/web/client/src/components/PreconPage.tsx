@@ -17,7 +17,7 @@ import { useIsNarrow } from "../lib/use-narrow.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { MapKey } from "./MapKey.js";
 import { UpgradePackages } from "./UpgradePackages.js";
-import { defaultTarget, heroUpgradesLine, REPORT_DIFFERS, swapsOf } from "../lib/precon-upgrades.js";
+import { defaultTarget, GROUP_WORD, heroUpgradesLine, REPORT_DIFFERS, swapsOf } from "../lib/precon-upgrades.js";
 
 import { Arrow } from "./icons.js";
 import { Breadcrumb } from "./Breadcrumb.js";
@@ -133,7 +133,7 @@ function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord[
             ) : null}
             {p.gaps.length ? (
               <p className="text-sm text-(--muted)">
-                {p.gaps.map((g, i) => <span key={g.group}>{i === 0 ? "" : i === p.gaps.length - 1 ? " and " : ", "}<b className="text-(--foreground)">{g.target - g.have} short on {g.group.toLowerCase()}</b></span>)}, against a typical Commander deck.
+                {p.gaps.map((g, i) => <span key={g.group}>{i === 0 ? "" : i === p.gaps.length - 1 ? " and " : ", "}<b className="text-(--foreground)">{g.target - g.have} short on {GROUP_WORD(g.group)}</b></span>)}, against a typical Commander deck.
                 {p.report ? <> The <a href={p.report} className="text-(--accent) underline underline-offset-2">full report</a> lists cards for {p.gaps.length === 1 ? "it" : p.gaps.length === 2 ? "both" : "each"}.</> : null}
               </p>
             ) : null}
