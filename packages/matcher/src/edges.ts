@@ -2152,6 +2152,13 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
             producer: enteringFaceName(p, e0) ?? p.card.name, consumer: c.card.name, eventKey: key,
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true, keywords,
             ...(t.subject.self !== true && sacrificedTo(p, origin, e0) ? { sacrificedTo: sacrificedTo(p, origin, e0) } : {}),
+            // THE PRODUCER IS THE THING SACRIFICED (#729 f): Treasure's "Sacrifice this artifact", an
+            // evoke creature. The player sacrifices it; the card does not sacrifice anything. A card
+            // sacrificing ITSELF is sacrificed by its controller, so `any` (Canoptek Wraith's "sacrifice
+            // it") is you too; only an opponent-controlled self is not.
+            ...(t.subject.self !== true && e0.verb === "sacrifice" && e0.subject.self === true && e0.subject.control !== "opp"
+              ? { sacrificedSelf: p.tags?.characteristics.token === true
+                ? `${/^[aeiou]/i.test(p.card.name) ? "an" : "a"} ${p.card.name}` : p.card.name } : {}),
             // A BLANK EFFECT IS READ OFF ITS EMITS (#647 item 5), its clause siblings' too: Displacer
             // Kitten's return is its own ability, and without it the flicker read as an exile.
             ...(a.effect.kind ? {} : { emits: [a, ...c.tags.abilities.filter((x) => x !== a && a.clause !== undefined && x.clause === a.clause && x.face === a.face)].flatMap((x) => x.emits ?? []) }),
@@ -2203,6 +2210,12 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
             // member the trigger watches: Yuna's Decision puts "a creature card and/or a land card"
             // onto the battlefield, and a landfall trigger heard "When a creature enters".
             subjectNoun: fillNoun(e)
+              // A SACRIFICE THE PRODUCER CAUSES IS THE EVENT OF THE THING SACRIFICED (#729 f): Gaius van
+              // Baelsar makes each player sacrifice, and "When Gaius sacrifices something" had the card
+              // doing it. The sentence names the thing, in the passive; its own sacrifice (`self`) is
+              // `sacrificedSelf` above.
+              ?? (e0.verb === "sacrifice" && e.subject.self !== true ? emitSubjectNoun(nounSubject(e.subject, t.subject)) ?? "a permanent"
+              : undefined)
               ?? (t.verb === "counter-added" && e.subject.self !== true ? emitSubjectNoun(e.subject) ?? "a permanent"
               // A COMMANDER IS NEVER WHAT A `notCommander` TRIGGER HEARD (#559): Nalia is a Rogue, but
               // the Rogue Folk Hero's commander ability draws for is one Nalia lets you cast.
@@ -2266,6 +2279,18 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // deleted on the first measurement. Noxious Gearhulk -> Junji (any graveyard, judged FALSE) is
       // the one verdict this rule keeps claiming against; it is flagged for re-judging, not encoded.
       if (e.subject.control === "opp" && a.effect.subject.control === "you") continue;
+      // A RECURSION OVER AN OPPONENT'S GRAVEYARD ONLY (#729, owner ruling 2026-10-09): a card that
+      // takes a card from THEIR graveyard and uses it (Espers to Magicite, Gruesome Encore) joins
+      // only cards that explicitly MILL opponents. Not "dies", discard or removal: every deck kills
+      // creatures and the edge would be noise. `any` and `you` are untouched, and so is an
+      // INTERCEPTED one (Dauthi Voidwalker, Valgavoth), which takes whatever would reach their yard.
+      // CEILING: a mill that is not the opponent's (`you`) never fills their graveyard. A TYPED
+      // NONCREATURE opponent recursion (Flawless Forgery, Saruman of Many Colors, Spelltwine's opponent
+      // half: instant/sorcery cards) therefore joins NOTHING: this gate needs a mill and the #716 rule
+      // below says an untyped mill does not promise a noncreature class. The two rulings meet here, and
+      // they are joinable in tags only. An owner call could open them to opponent mills.
+      if (a.effect.subject.control === "opp" && a.effect.intercepted !== true
+        && !(e.milled === true && e.subject.control !== "you")) continue;
       // Skip if the event-edge loop already credited this fill via a graveyard-entry trigger on the same ability.
       if (a.trigger && a.trigger.verbs.some((v) => {
         const t = normalizeZoneEvent({ verb: v, subject: a.trigger!.subject });

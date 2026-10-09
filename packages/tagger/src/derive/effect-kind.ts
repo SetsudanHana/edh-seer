@@ -305,6 +305,13 @@ function costDirection(object: string, clauseText = ""): EffectKind | null {
 // sacrifice outlet ever fed it. 2 corpus cards; the other 30 "exiled this way" wordings exile from
 // a library, a hand or the battlefield and are not this row's.
 const USES_THE_EXILED_CARD = /\bcopy of (?:it|them|that card|those cards)\b|\bplay (?:it|them|that card|those cards|a card from exile|cards? (?:exiled|from exile))\b|\bcast (?:it|them|that card|those cards)\b|\bputs? (?:it|them|that card|those cards|all cards (?:they|you) exiled this way) onto the battlefield\b/i;
+// #729 (owner ruling 2026-10-09): taking a card OUT of an opponent's graveyard and using it is
+// recursion over their yard. These are the wordings the first regex missed: "Copy that card" /
+// "Copy the exiled card" (Flawless Forgery, Saruman of Many Colors; the imperative, not "a copy of"),
+// and "cast any number of spells from among cards exiled this way" (Kefka). "a copy of THIS CREATURE"
+// (Uchuulon) copies the card itself, uses nothing, and is deliberately not here.
+const PUTS_FROM_YARD_ONTO_BATTLEFIELD = /\bputs? [^.]*?\bgraveyards? onto the battlefield\b/i;
+const USES_THE_EXILED_CARD_2 = /\bcop(?:y|ies) (?:it|them|that card|those cards|the exiled cards?)\b|\b(?:play|cast) [^.]*?\bfrom among cards exiled (?:this way|with)\b/i;
 const YOUR_YARD = /\byour graveyard\b/i;
 const OTHER_YARD = /\b(?:target player'?s?|opponents?'?s?|each player'?s?|their)\s+graveyards?\b/i;
 
@@ -531,6 +538,16 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     // copies what it exiled from your graveyard, Lara Croft plays what she exiled from any. The
     // graveyard is the source of the value, which is the recursion shape, whoever's it was.
     if (r.kind === "graveyard-hate" && USES_THE_EXILED_CARD.test(clauseText.slice(Math.max(0, clauseText.search(/\bexile/i))))) return "graveyard-recursion";
+    // ...and the same exile that PUTS the card onto the battlefield (Gruesome Encore: the normalizer
+    // writes "put target creature card from an opponent's graveyard onto the battlefield" as an
+    // `exile` with toZone battlefield) or copies/casts it (#729).
+    // The grammar's zone alignment can hand this exile the toZone of a LATER exile in the clause
+    // ("Exile it at the beginning of the next end step"), so the printed "put ... from a graveyard
+    // onto the battlefield" is read from the text as well.
+    // NOT YOUR OWN YARD: the ruling is about taking from THEIRS; an own-graveyard exile stays as it
+    // was (null), so this widening moves no card that only ever touched its owner's graveyard.
+    if (r.kind === "graveyard-hate" && !exilesOwnGraveyard(action.object ?? "", clauseText) && (action.toZone === "battlefield" || PUTS_FROM_YARD_ONTO_BATTLEFIELD.test(clauseText)
+      || USES_THE_EXILED_CARD_2.test(clauseText.slice(Math.max(0, clauseText.search(/\bexile/i)))))) return "graveyard-recursion";
     if (r.kind === "graveyard-hate" && exilesOwnGraveyard(action.object ?? "", clauseText)) return null;
     // THE BOTTOM IS NOT THE TOP. `toZone: "library"` says nothing about position and the canonical
     // action has no field for it, so the clause text decides. Of the 359 corpus cards with a

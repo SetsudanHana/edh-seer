@@ -6319,3 +6319,89 @@ describe("face-aware own-entry exclusion (#1101)", () => {
     expect(cardThemeTags(t).has("enters:land")).toBe(false);
   });
 });
+
+// #729 (owner ruling 2026-10-09): a card that uses a card from an OPPONENT's graveyard (Espers to
+// Magicite, Gruesome Encore) joins only cards that explicitly MILL opponents -- never removal or a
+// "dies" fill, because every deck kills creatures and the edge would be noise.
+test("a recursion over an opponent's graveyard joins an opponent mill, not a kill", () => {
+  const oppYard = { control: "opp", token: null, type: "creature", scope: "target", zone: "graveyard" };
+  const espers = base("Espers", [{
+    kind: "on-cast", effect: { kind: "graveyard-recursion", subject: oppYard },
+  }] as CardTags["abilities"]);
+  const crab = base("Ruin Crab", [{
+    kind: "activated", effect: { kind: "mill" },
+    emits: [{ verb: "mill", subject: { control: "opp", token: null, scope: "each" } }],
+  }] as CardTags["abilities"]);
+  const kill = base("Murder", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature", scope: "target" } }],
+  }] as CardTags["abilities"]);
+  const wrath = base("Wrath", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "any", token: null, type: "creature", scope: "all" } }],
+  }] as CardTags["abilities"]);
+  const selfMill = base("Self Mill", [{
+    kind: "activated", effect: { kind: "mill" },
+    emits: [{ verb: "mill", subject: { control: "you", token: null, scope: "each" } }],
+  }] as CardTags["abilities"]);
+  const rec = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) =>
+    pairReasons(p, c, H).map((r) => r.tag).filter((t) => t.startsWith("graveyard-recursion"));
+  expect(rec(crab, espers)).toHaveLength(1);
+  expect(rec(kill, espers)).toEqual([]);
+  expect(rec(wrath, espers)).toEqual([]);
+  expect(rec(selfMill, espers)).toEqual([]);
+  // A recursion over ANY graveyard (Reanimate) still joins a kill, exactly as before.
+  const reanimate = base("Reanimate", [{
+    kind: "on-cast", effect: { kind: "graveyard-recursion", subject: { ...oppYard, control: "any" } },
+  }] as CardTags["abilities"]);
+  expect(rec(kill, reanimate)).toHaveLength(1);
+  expect(rec(crab, reanimate)).toHaveLength(1);
+});
+
+// #729 (f): the producer IS the thing sacrificed ("Sacrifice this artifact: add one mana", an evoke
+// creature). The sentence read "When Treasure sacrifices something", which has the Treasure doing the
+// sacrificing; it is the player who sacrifices it.
+test("a producer that sacrifices ITSELF reads 'When you sacrifice <it>', not 'When <it> sacrifices something'", () => {
+  const bats = base("Mirkwood Bats", [{ kind: "triggered", trigger: { verbs: ["sacrifice"], subject: { control: "you", token: null } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } } }]);
+  const emits = [{ verb: "sacrifice", subject: { control: "you", token: null, self: true } }];
+  const treasure = base("Treasure", [{ kind: "activated", cost: "{T}, Sacrifice this artifact", effect: { kind: "mana-generation" }, emits }] as CardTags["abilities"]);
+  treasure.tags.characteristics.token = true;
+  treasure.tags.characteristics.types = ["artifact"];
+  treasure.tags.characteristics.subtypes = ["treasure"];
+  const aethersnipe = base("Aethersnipe", [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } }, effect: { kind: "bounce" }, emits }] as CardTags["abilities"]);
+  const t1 = directedReasons(treasure, bats, H).map((r) => r.text);
+  expect(t1[0]).toMatch(/^When you sacrifice a Treasure, Mirkwood Bats /);
+  const t2 = directedReasons(aethersnipe, bats, H).map((r) => r.text);
+  expect(t2[0]).toMatch(/^When you sacrifice Aethersnipe, Mirkwood Bats /);
+  // An outlet sacrificing ANOTHER creature keeps the cost wording.
+  expect(t1.join() + t2.join()).not.toContain("sacrifices something");
+  // Canoptek Wraith's "you may pay {3} and sacrifice it" derives the self with control `any`: a card
+  // sacrificing itself is still sacrificed by its controller.
+  const wraith = base("Canoptek Wraith", [{ kind: "triggered", trigger: { verbs: ["attacks"], subject: { control: "you", token: null, self: true } }, effect: { kind: "" },
+    emits: [{ verb: "sacrifice", subject: { control: "any", token: null, self: true } }] }] as CardTags["abilities"]);
+  expect(directedReasons(wraith, bats, H).map((r) => r.text)[0]).toMatch(/^When you sacrifice Canoptek Wraith, Mirkwood Bats /);
+});
+
+// #729 (f) remaining shapes, oracle read from the corpus: Deadly Dispute makes YOU sacrifice an artifact
+// or creature (Smoke Bomb's "when sacrificed" fires); Goblin Welder makes a PLAYER sacrifice an artifact;
+// Gaius van Baelsar makes EACH PLAYER sacrifice. None of them is the card sacrificing "something" -- the
+// event is the thing being sacrificed, and the sentence says that without naming a sacrificer it cannot know.
+test("a sacrifice another card causes reads 'When <thing> is sacrificed thanks to <producer>'", () => {
+  const mayhem = base("Mayhem Devil", [{ kind: "triggered", trigger: { verbs: ["sacrifice"], subject: { control: "any", token: null, type: "permanent" } },
+    effect: { kind: "damage", subject: { control: "any", token: null, scope: "target" } } }] as CardTags["abilities"]);
+  const welder = base("Goblin Welder", [{ kind: "activated", cost: "{T}", effect: { kind: "" },
+    emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "artifact", scope: "target" }, instantSpeed: true }] }] as CardTags["abilities"]);
+  welder.tags.characteristics.types = ["creature"];
+  expect(directedReasons(welder, mayhem, H).map((r) => r.text)[0]).toMatch(/^When an artifact is sacrificed thanks to Goblin Welder, Mayhem Devil /);
+  const gaius = base("Gaius van Baelsar", [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } }, effect: { kind: "" },
+    emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "creature" } }] }] as CardTags["abilities"]);
+  gaius.tags.characteristics.types = ["creature"];
+  expect(directedReasons(gaius, mayhem, H).map((r) => r.text)[0]).toMatch(/^When a creature is sacrificed thanks to Gaius van Baelsar, Mayhem Devil /);
+  const smokeBomb = base("Smoke Bomb", [{ kind: "triggered", trigger: { verbs: ["sacrifice"], subject: { control: "you", token: null, type: "artifact", self: true } }, effect: { kind: "" } }] as CardTags["abilities"]);
+  const dispute = base("Deadly Dispute", [{ kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: ["creature", "artifact"] }, instantSpeed: true }] }] as CardTags["abilities"]);
+  const sb = directedReasons(dispute, smokeBomb, H).map((r) => r.text).join();
+  expect(sb).toContain("When Smoke Bomb is sacrificed thanks to Deadly Dispute");
+  expect(sb).not.toContain("sacrifices something");
+});

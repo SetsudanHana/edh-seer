@@ -403,7 +403,12 @@ import { emblemRecipient } from "../emblem.js";
 // does, so Chocobo Knights' double strike stops reading "grants haste".
 // 287: #1083, the synthesized opponent-graveyard recursion (Dauthi Voidwalker, Valgavoth) carries
 // `intercepted`, so its reason stops saying the card is brought back from a graveyard it never reached.
-export const DERIVE_VERSION = 287;
+// 288: #729, a card that USES a card from an opponent's graveyard (Gruesome Encore, Espers to Magicite,
+// Flawless Forgery, Saruman, Kefka, Hedonist's Trove) derives graveyard-recursion over `opp` (owner
+// ruling 2026-10-09); Uchuulon, which copies itself, stays hate.
+// 289: #729, exile from THEIR graveyard after combat damage to a player is an opponent's graveyard
+// (Soundwave, Froghemoth).
+export const DERIVE_VERSION = 289;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -822,6 +827,11 @@ const ZONE_OWNER: ReadonlyArray<readonly [RegExp, Control]> = [
   [/\bfrom (?:your|their) own\b/i, "you"],
   [/\bfrom your\b/i, "you"],
   [/\bfrom (?:an |each |target )?opponent'?s?\b/i, "opp"],
+  // "THEIR" AFTER COMBAT DAMAGE TO A PLAYER IS THE DAMAGED PLAYER, an opponent (#729): Soundwave and
+  // Froghemoth exile "from their graveyard". Only when the clause EXILES (a taking): "that player returns
+  // a card from their graveyard" (Neyam Shai Murad) gives their own card back to them. Other "their"
+  // wordings (each player, target player) name no one and stay `any`.
+  [/\bcombat damage to a player\b[^.]*?,\s*exile\b[^.]*?\bfrom their/i, "opp"],
 ];
 
 function zoneOwner(clauseText: string, zone: string | null | undefined): Control | undefined {
@@ -2711,6 +2721,20 @@ export function deriveAbilities(
       effect: { kind: "graveyard-recursion", subject: { control: "opp", token: null, zone: "graveyard" }, intercepted: true },
     });
   }
+  // THE USE IN ANOTHER SENTENCE (#729, owner ruling 2026-10-09). Espers to Magicite exiles every
+  // opponent's graveyard in one sentence and copies a creature card "exiled this way" in the next;
+  // Hedonist's Trove exiles one in a trigger and plays "cards exiled with this enchantment" in two
+  // static clauses. `actionEffectKind` sees one clause at a time, so the hate stays and the use is
+  // added here: the card is BOTH, and the recursion over their yard is what joins an opponent mill.
+  // Only when no clause already derived the opponent recursion.
+  if (OPP_YARD_EXILED_THEN_USED.test(cardText)
+    && !abilities.some((a) => a.effect.kind === "graveyard-recursion" && a.effect.subject?.control === "opp")) {
+    const type = cardText.match(/\btarget (\w+) card exiled this way\b/i)?.[1]?.toLowerCase();
+    abilities.push({
+      kind: "static", repeats: "continuous",
+      effect: { kind: "graveyard-recursion", subject: { control: "opp", token: null, ...(type ? { type } : {}), zone: "graveyard" } },
+    });
+  }
   // "THIS CREATURE ENTERS PREPARED" IS ITS OWN ENTRY PREPARING IT (CR 722.3a; owner ruling 2026-09-27:
   // "blink synergizes with creatures that enter prepared"). The clause is static and emits `prepared`
   // on the card itself; read as a self-entry trigger, a flicker re-entering it joins through the same
@@ -2742,6 +2766,7 @@ export function deriveAbilities(
 const POLYMORPH_VERBS: ReadonlySet<string> = new Set(["dies", "exiled", "leaves", "enters"]);
 
 /** "If a card ... would be put into an opponent's graveyard from anywhere, exile it instead." */
+const OPP_YARD_EXILED_THEN_USED = /\bexile (?:each|target) opponent'?s? graveyard\b[\s\S]*?(?:\bcopy of that card\b|\b(?:play|cast) [^.]*?\bfrom among cards exiled with\b)/i;
 const OPP_GRAVEYARD_TAKER = /\bwould be put into an opponent's graveyard\b[^.]*\bexile\b/i;
 /** Valgavoth: "you may play cards exiled with Valgavoth"; Dauthi Voidwalker: "Choose an exiled card
  *  an opponent owns with a void counter on it. You may play it". */
