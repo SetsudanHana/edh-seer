@@ -55,7 +55,14 @@ export function axisEventKeys(tag: string, eventKeys: readonly string[]): string
   // shards, and a tribal anthem's tribe is its own axis tag.
   if (verb === "static") return eventKeys.filter((k) => k.startsWith(`applies:${word}|`) && k.split("|")[2] === "-");
   if (word === "any") return eventKeysForDemand(tag, eventKeys);
+  // THE INVERSE OF `combatSubjectKey` (#1088). A deck's axis `attacks:any` is now `attacks:creature`,
+  // and CR 508.1a / 509.1a make a combat event with no stated class a creature's: the untyped keys
+  // (`attacks|-|-|-`, 110 askers) are the same event, so they stay in the axis' reach. Only combat
+  // verbs: `enters:creature` does not stand for every untyped enter.
+  const untypedCombat = (verb === "attacks" || verb === "blocks") && word === "creature"
+    ? eventKeysForDemand(`${verb}:any`, eventKeys).filter((k) => k.split("|")[1] === "-") : [];
   return [...new Set([
+    ...untypedCombat,
     ...eventKeysForDemand(`${verb}:type:${word}`, eventKeys),
     ...eventKeysForDemand(`${verb}:subtype:${word}`, eventKeys),
   ])];
