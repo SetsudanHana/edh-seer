@@ -209,7 +209,9 @@ async function usedWidth(page: Page): Promise<{ viewport: number; sections: { na
       // precon index's sets side by side, but the last set of the longest column runs on alone once
       // the others have ended, and read as a 31-47% band at 1920-2560 -- a band of the measurement,
       // not of the page, whose columns container fills the width. The container's leaves count as
-      // the section's row whatever their height overlap.
+      // the section's row whatever their height overlap. CEILING: any non-auto column-count/width
+      // counts, so a `columns-1` state (ReportChapters' mana numbers below xl) would over-join;
+      // unmeasured because this gate runs at 1920 and wider only.
       let flow: HTMLElement | null = el.parentElement;
       while (flow && flow.tagName !== "MAIN") {
         const cs = getComputedStyle(flow);
