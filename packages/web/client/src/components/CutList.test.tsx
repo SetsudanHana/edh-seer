@@ -6,7 +6,7 @@ import type { CutChoice } from "../lib/cut-choice.js";
 import { CutList } from "./CutList.js";
 
 const cut = (name: string, extra: Partial<CutChoice> = {}): CutChoice =>
-  ({ name, manaValue: 2, keeps: [], unmet: [], reasons: ["only 1 card connects to it"], twins: [], ...extra });
+  ({ name, manaValue: 2, keeps: [], onPlan: false, unmet: [], reasons: ["only 1 card connects to it"], twins: [], ...extra });
 
 test("a cut says why it is here and what argues it stays", () => {
   render(<CutList cuts={[cut("Sidekick", { keeps: ["its best edge is on your main theme"], unmet: ["its condition needs a Cleric, and nothing in the deck provides that"] })]} slack={[]} />);

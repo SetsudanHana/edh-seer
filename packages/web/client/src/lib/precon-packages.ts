@@ -19,7 +19,7 @@ import type { Card } from "@edh-seer/engine";
 import type { DeckBracket } from "@edh-seer/matcher/brackets";
 import type { AnalyzeResponse } from "../types.js";
 import { chooseCuts, roleSwapCuts } from "./cut-choice.js";
-import { GROUP_WORD } from "./precon-upgrades.js";
+import { GROUP_NOUN, GROUP_WORD } from "./precon-upgrades.js";
 import { mainTheme } from "./main-theme.js";
 import type { EngineModel } from "./engine-model.js";
 import { gapsOf, type PreconCard } from "./precon-page.js";
@@ -38,9 +38,8 @@ const SECTION_OF_GROUP: Record<string, RoleSectionId> = { Ramp: "ramp", Consiste
 
 /** THE CUT LIST A FILL MAY CUT, OFF-PLAN AS RULED (2026-10-09): a row whose keeps name a win plan it
  *  counts for, or a table warning, is never cut by a fill; other keeps ride along into the reason. */
-const ON_PLAN = /^(it is one of the cards your win plan of|you warn the table that it)/;
-export function fillCuts(choices: readonly { name: string; keeps: readonly string[]; reasons: readonly string[]; row?: { why: string } }[], commanders: readonly string[]): { name: string; why: string; keep?: string }[] {
-  return choices.filter((c) => !commanders.includes(c.name) && !c.keeps.some((k) => ON_PLAN.test(k)))
+export function fillCuts(choices: readonly { name: string; onPlan: boolean; keeps: readonly string[]; reasons: readonly string[]; row?: { why: string } }[], commanders: readonly string[]): { name: string; why: string; keep?: string }[] {
+  return choices.filter((c) => !commanders.includes(c.name) && !c.onPlan)
     .map((c) => ({ name: c.name, why: c.row?.why ?? c.reasons[0] ?? "", ...(c.keeps[0] ? { keep: c.keeps[0] } : {}) }));
 }
 
@@ -58,7 +57,7 @@ export function fillsFor(
   for (const gap of gaps) {
     const id = SECTION_OF_GROUP[gap.group];
     const adds = (suggestions?.build[gap.group] ?? []).map((c) => ({ name: c.name, reason: c.reasons[0]?.text ?? "" }));
-    if (id && adds.length) out[id] = { label: GROUP_WORD(gap.group), short: gap.target - gap.have, adds, cuts };
+    if (id && adds.length) out[id] = { label: GROUP_WORD(gap.group), noun: GROUP_NOUN(gap.group), short: gap.target - gap.have, adds, cuts };
   }
   return out;
 }

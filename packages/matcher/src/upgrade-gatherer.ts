@@ -22,6 +22,8 @@ import { SECTION_MAX, UPGRADE_SECTIONS, type BracketTarget, type UpgradePackage,
 export interface RoleFill {
   /** The page's word for the group ("card draw"): how the add's reason opens and what it counts as. */
   label: string;
+  /** What one card of it counts as, singular ("a board wipe"). */
+  noun: string;
   /** How many cards short: the most fills taken. */
   short: number;
   /** The report's suggested cards for the role, in its order, each with the sentence the report gives. */

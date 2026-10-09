@@ -90,7 +90,7 @@ test("swap candidates are role-only cards, weakest first, never cheap ramp or a 
       { name: "Cultivate", rating: 0.4, partners: 2, manaValue: 3, reasons: [], protections: ["fills ramp"] },
     ],
   } as unknown as DeckReport;
-  const cuts = [{ name: "Listed", manaValue: 2, keeps: [], unmet: [], reasons: [], twins: [] }];
+  const cuts = [{ name: "Listed", manaValue: 2, keeps: [], onPlan: false, unmet: [], reasons: [], twins: [] }];
   expect(swapCandidates(report, cuts)).toEqual(["Despark", "Cultivate"]);
 });
 
