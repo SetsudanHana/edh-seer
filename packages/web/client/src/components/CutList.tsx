@@ -101,7 +101,12 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
   // A TOKEN COVER IS GONE WHEN EVERY CARD THAT MAKES IT IS CUT (review): `by` names a token by its own
   // name, which no cut list holds, so it is read through `madeBy`.
   const tokenMakers = new Map<string, readonly string[]>();
-  if (model) for (const t of model.cards.values()) if (t.isToken && t.madeBy?.length) tokenMakers.set(t.physical, t.madeBy);
+  if (model) {
+    // madeBy holds FACE names; the cut list holds physical ones ("Front // Back").
+    const physicalOf = new Map<string, string>();
+    for (const c of model.cards.values()) if (!c.isToken) physicalOf.set(c.name, c.physical);
+    for (const t of model.cards.values()) if (t.isToken && t.madeBy?.length) tokenMakers.set(t.physical, t.madeBy.map((m) => physicalOf.get(m) ?? m));
+  }
   const cutIn = (n: string, set: ReadonlySet<string>): boolean => set.has(n) || (tokenMakers.get(n)?.every((m) => set.has(m)) ?? false);
   const lossIn = (c: CutChoice, set: ReadonlySet<string>): string[] | undefined => c.row
     ? [...c.row.loses, ...c.row.covers.filter((x) => x.by.every((n) => cutIn(n, set))).map((x) => x.link)].map((l) => l.text)
@@ -131,7 +136,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
     // Counted in partner CARDS, the unit of "works with 39 other cards": a link count read 49 beside 39.
     const tally = new Map<string, Set<string>>();
     for (const x of c.row?.covers ?? []) {
-      for (const n of x.by) if (!excluded.has(n)) tally.set(n, (tally.get(n) ?? new Set()).add(x.partner));
+      for (const n of x.by) if (!cutIn(n, excluded)) tally.set(n, (tally.get(n) ?? new Set()).add(x.partner));
     }
     const [name, set] = [...tally].sort((a, b) => b[1].size - a[1].size || (a[0] < b[0] ? -1 : 1))[0] ?? [];
     // THE WHOLE AND THE PART FROM ONE SET (review): the partner cards behind its covered links, so

@@ -236,7 +236,7 @@ test("a loses-nothing verdict folds both cards' text under the line, and without
 test("the fold shows the face the row describes, and the cover's front", () => {
   const link = { from: "Back", to: "Payoff", tag: "t", text: "x", repeat: "static" };
   const ec = (id: string, name: string, text: string, extra = {}) => ({ id, name, typeLine: "Creature", text, isToken: false, isCommander: false, isLand: false, isFace: false, roles: [], score: 1, manaCost: "", physical: name, ...extra });
-  const front = ec("Front", "Front", "Front text.", { physical: "Front // Back" });
+  const front = ec("Front", "Front", "Front text.", { physical: "Front // Back", isFace: true });
   const back = ec("Back", "Back", "Back text.", { physical: "Front // Back", faceOf: "Front", isFace: true });
   const chief = ec("Chief", "Chief", "Chief text.");
   const row = { card: back, partners: 1, why: "w", loses: [], covers: [{ link, by: ["Chief"], partner: "Payoff" }] } as never;
@@ -255,5 +255,18 @@ test("cutting a card and the maker of the token that covers it counts as a loss"
   const rowB = { partners: 1, why: "w", loses: [], covers: [] } as never;
   const model = { cards: new Map([["token:Goblin", tok]]) } as never;
   render(<MemoryRouter><CutList cuts={[cut("A", { row }), cut("B", { row: rowB })]} slack={[]} deckSize={102} model={model} /></MemoryRouter>);
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses no link when cut");
+});
+
+/** A MAKER'S FACE NAME IS NOT ITS CUT NAME (review, #981): madeBy holds "Maker", the cut list "Maker // Flip". */
+test("a token made by a double-faced card goes when that card is cut", () => {
+  const link = { from: "A", to: "Payoff", tag: "t", text: "A pays off", repeat: "static" };
+  const ec = (id: string, name: string, extra = {}) => ({ id, name, typeLine: "Creature", text: "", isToken: false, isCommander: false, isLand: false, isFace: false, roles: [], score: 1, manaCost: "", physical: name, ...extra });
+  const tok = ec("token:Goblin", "Goblin", { isToken: true, physical: "token:Goblin", madeBy: ["Maker"] });
+  const maker = ec("Maker", "Maker", { physical: "Maker // Flip", isFace: true });
+  const row = { partners: 1, why: "w", loses: [], covers: [{ link, by: ["token:Goblin"], partner: "Payoff" }] } as never;
+  const rowM = { partners: 1, why: "w", loses: [], covers: [] } as never;
+  const model = { cards: new Map([["token:Goblin", tok], ["Maker", maker]]) } as never;
+  render(<MemoryRouter><CutList cuts={[cut("A", { row }), cut("Maker // Flip", { row: rowM })]} slack={[]} deckSize={102} model={model} /></MemoryRouter>);
   expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses no link when cut");
 });
