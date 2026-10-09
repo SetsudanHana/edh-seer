@@ -61,12 +61,13 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
   // BY NAME, the way a player cuts: the card, or the front of a double-faced one.
   const textOf = (name: string): EngineCard | undefined => {
     if (!model) return undefined;
-    let face: EngineCard | undefined;
+    let any: EngineCard | undefined;
     for (const c of model.cards.values()) {
-      if (c.name === name) return c;
-      if (!face && c.physical === name) face = c;
+      if (c.name !== name && c.physical !== name) continue;
+      if (!c.isFace && !c.faceOf && !c.isToken) return c;
+      any ??= c;
     }
-    return face;
+    return any;
   };
   const [maybeN, setMaybeN] = useState(MAYBE_STEP);
   // TWO KINDS OF CUT, SAID APART (appeal review 2026-09-26). One list headed "weakest first" whose
@@ -97,8 +98,13 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
   // instead. Those come from the fill below; a costly cut is listed after, as costing something.
   // CUT TOGETHER, TWO CARDS THAT COVER EACH OTHER BOTH GO (review): a link is lost when every card
   // that also gives it is on this list too, so the losses are read against the whole cut.
+  // A TOKEN COVER IS GONE WHEN EVERY CARD THAT MAKES IT IS CUT (review): `by` names a token by its own
+  // name, which no cut list holds, so it is read through `madeBy`.
+  const tokenMakers = new Map<string, readonly string[]>();
+  if (model) for (const t of model.cards.values()) if (t.isToken && t.madeBy?.length) tokenMakers.set(t.physical, t.madeBy);
+  const cutIn = (n: string, set: ReadonlySet<string>): boolean => set.has(n) || (tokenMakers.get(n)?.every((m) => set.has(m)) ?? false);
   const lossIn = (c: CutChoice, set: ReadonlySet<string>): string[] | undefined => c.row
-    ? [...c.row.loses, ...c.row.covers.filter((x) => x.by.every((n) => set.has(n))).map((x) => x.link)].map((l) => l.text)
+    ? [...c.row.loses, ...c.row.covers.filter((x) => x.by.every((n) => cutIn(n, set))).map((x) => x.link)].map((l) => l.text)
     : undefined;
   // PICKED ONE AT A TIME (review): a cut joins the count only while every counted card still loses
   // nothing, so two cards that cover each other never both count and both read "loses a link".
@@ -171,12 +177,12 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
           <p id="cuts-over" className="text-sm max-w-[65ch]" data-testid="cuts-over">
             Your list has <b className="tabular-nums">{deckSize}</b> cards, <b className="tabular-nums">{over}</b> over 100.{" "}
             {toCut.length === over
-              ? <>These {over} can go without losing anything: every link they make, another card makes too. Take them out and it is 100.</>
+              ? <>These {over} lose no link when cut: every link they make, another card makes too. Take them out and it is 100.</>
               // "A ROLE YOU RUN MORE OF THAN YOU NEED" ONLY WHEN ONE IS (persona round 2026-09-27: the
               // first-cuts seat looked below for a role over its target and every role was short or
               // on target, a dead end).
               : toCut.length
-                ? <>{toCut.length === 1 ? "This one can go" : `These ${toCut.length} can go`} without losing anything: every link {toCut.length === 1 ? "it makes" : "they make"}, another card makes too. The other {rest} {rest === 1 ? "has" : "have"} to come from {elsewhere}.</>
+                ? <>{toCut.length === 1 ? "This one loses" : `These ${toCut.length} lose`} no link when cut: every link {toCut.length === 1 ? "it makes" : "they make"}, another card makes too. The other {rest} {rest === 1 ? "has" : "have"} to come from {elsewhere}.</>
                 : <>Every card here fills a role or works with your themes, so the {over} have to come from {elsewhere}.</>}
           </p>
           {toCut.length ? (
@@ -385,7 +391,7 @@ function CutCard({ c, swap, loses, cover, textOf }: { c: CutChoice; textOf?: (na
             {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
           </div>
           {r && r.partners > 0
-            ? <Verdict links={loses ?? r.loses.map((l) => l.text)} cover={cover} keeps={realKeeps(c)} cut={c.name} textOf={textOf} />
+            ? <Verdict links={loses ?? r.loses.map((l) => l.text)} cover={cover} keeps={realKeeps(c)} cut={c.name} own={r?.card} textOf={textOf} />
             : realKeeps(c).length ? <p><span className="font-medium text-(--success)">Why you might keep it:</span> {realKeeps(c).join(" · ")}</p> : null}
           {c.twins.length ? (
             <p className="text-(--muted)">Stands in for {listNames(c.twins)}: the same cards use {c.twins.length === 1 ? "both" : "all of them"}.</p>
@@ -402,13 +408,13 @@ function CutCard({ c, swap, loses, cover, textOf }: { c: CutChoice; textOf?: (na
  *  the reason to keep it; when it loses nothing, its strongest link and its score argue nothing (the
  *  link is covered, the score is the ranking), and only a real argument -- a win plan, a table
  *  warning -- still shows as one. Two lost links are named; the rest open. */
-function Verdict({ links, cover, keeps, cut, textOf }: { cut?: string; textOf?: (name: string) => EngineCard | undefined; links: string[]; cover?: { name: string; n: number; of: number }; keeps: string[] }) {
+function Verdict({ links, cover, keeps, cut, own, textOf }: { cut?: string; own?: EngineCard; textOf?: (name: string) => EngineCard | undefined; links: string[]; cover?: { name: string; n: number; of: number }; keeps: string[] }) {
   const keepLabel = <span className="font-medium text-(--success)">Why you might keep it:</span>;
   const also = keeps.length ? <p>{links.length ? "Also: " : <>{keepLabel} </>}{keeps.join(" · ")}</p> : null;
   if (!links.length) {
     // THE COVER'S TEXT BESIDE THE CUT'S (persona round 2026-10-09): "Beetleback Chief alone covers all
     // 28" could not be checked without leaving the page.
-    const pair = cover && cut ? [textOf?.(cut), textOf?.(cover.name)] : [];
+    const pair = cover && cut ? [own ?? textOf?.(cut), textOf?.(cover.name)] : [];
     const both = pair.every((x): x is EngineCard => !!x) && pair.length === 2 ? pair as EngineCard[] : undefined;
     return (
       <div className="flex flex-col gap-2" data-testid="cut-loses">
