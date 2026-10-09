@@ -122,3 +122,15 @@ test("a timed combo whose result is not a loop says it can win, not go infinite"
   expect(d).toHaveTextContent("Can win around turn 3, with Demonic Consultation + Thassa's Oracle");
   expect(d).not.toHaveTextContent("Can go infinite");
 });
+
+/** A COMBO THAT KILLS BUT HAS NO TURN SAYS WHY ON ITS TILE (#1139): the phone seat read Inalla's
+ *  "A combo · speed not modelled" beside the Say-this box's "its pieces cost 14 mana together", and
+ *  could not say how fast the deck's real plan wins. The tile carries the reason, as the box does. */
+test("an untimed combo that kills shows the mana its pieces cost, not 'speed not modelled'", () => {
+  const wincons = { focus: 0.5, primary: "combo", classes: [{ class: "combo", count: 3, share: 1, cards: ["A", "B", "C"] }] } as never;
+  const routes = [{ kind: "combo", label: "a combo: A + B + C", mana: 14, cards: ["A", "B", "C"], payoffs: ["P"], caveat: "not timed: its pieces cost 14 mana together, which half our test games have not reached by turn 8" }] as never;
+  render(<WinPlans wincons={wincons} routes={routes} />);
+  const tile = screen.getByTestId("win-plan");
+  expect(tile).toHaveTextContent("14 mana, not timed");
+  expect(tile).not.toHaveTextContent("speed not modelled");
+});
