@@ -1,5 +1,4 @@
 import type { CardTags } from "@edh-seer/tagger";
-import { combatTag } from "./zones.js";
 import type { CardSignal } from "./archetypes.js";
 import { cardCaresTags, cardThemeTags, isPolymorph, POLYMORPH_HIT_MV } from "./edges.js";
 
@@ -13,8 +12,8 @@ export function cardSignalOf(card: { name: string; oracleText: string }, tags: C
   const ch = tags.characteristics;
   return {
     name: card.name,
-    themeTags: [...cardThemeTags(tags), ...tags.abilities.flatMap((a) => (a.conditionCares ?? []).map(combatTag))],
-    caresTags: [...cardCaresTags(tags), ...tags.abilities.flatMap((a) => (a.conditionCares ?? []).map(combatTag))],
+    themeTags: [...cardThemeTags(tags), ...tags.abilities.flatMap((a) => a.conditionCares ?? [])],
+    caresTags: [...cardCaresTags(tags), ...tags.abilities.flatMap((a) => a.conditionCares ?? [])],
     // An intercepted graveyard fill (Dauthi Voidwalker) exiles the card and plays it from exile: it
     // signals exile-processing, not reanimation (owner 2026-10-08, #1083).
     effectKinds: tags.abilities.map((a) => (a.effect.kind === "graveyard-recursion" && a.effect.intercepted === true ? "exile-processing" : a.effect.kind)),

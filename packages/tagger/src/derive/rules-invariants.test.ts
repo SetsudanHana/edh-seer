@@ -19,6 +19,7 @@ const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2"
 const TESTED: Record<string, string> = {
   "113.6": "derive.test.ts — a card whose own static says it isn't a creature under a condition is marked creatureOnlyIf (#797)",
   "608.2c": "derive.test.ts — an unnamed draw is yours; a named one is the player it names (#697)",
+  "508.1a": "derive/intervening-if.test.ts — only a creature attacks, so \"if you attacked this turn\" cares about attacks:creature (#1088)",
   "701.47a": "grammar/action.test.ts + derive/emits.test.ts — amass reads as your 0/0 black Army token of its subtype, and emits it with a +1/+1 counter (#971)",
   "701.16a": "derive/emits.test.ts — investigate's token is an artifact Clue (#794)",
   "903.5b": "derive.test.ts — Guardian Project's 'doesn't have the same name' is uniqueName: a singleton printed card, never a token or an any-number card (#896 task 5)",

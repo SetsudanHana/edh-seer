@@ -7,7 +7,7 @@ import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
-import { combatSubjectKey, combatTag, normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import { combatSubjectKey, normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
@@ -382,12 +382,12 @@ export function cardCaresTags(tags: CardTags): Set<string> {
     //
     // A cares tag forms NO edge, so this can only move the ranking layer: the acceptance test is
     // that population and panel stay byte-identical while themes and ratings move.
-    for (const tag of a.conditionCares ?? []) out.add(combatTag(tag));
+    for (const tag of a.conditionCares ?? []) out.add(tag);
   }
   // A PRINTED KEYWORD CAN CARRY A DEMAND TOO: delve's graveyard (`keywordAbilities`). Only the
   // condition tags are read here -- a keyword's TRIGGER (prowess, extort) still does not reach the
   // theme layer, the ceiling `keywordAbilities` states.
-  for (const a of keywordAbilities(tags.characteristics)) for (const tag of a.conditionCares ?? []) out.add(combatTag(tag));
+  for (const a of keywordAbilities(tags.characteristics)) for (const tag of a.conditionCares ?? []) out.add(tag);
   // THE RE-FIRER IS THE PAYOFF THAT WATCHES: a flicker, a copy or a trigger doubler is worth nothing
   // beside vanilla creatures and everything beside a deck full of entry triggers.
   if (refiresEntries(tags)) out.add(ETB_REFIRE);

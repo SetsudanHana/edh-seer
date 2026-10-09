@@ -6453,9 +6453,4 @@ describe("attack tags are one event (CR 508.1a)", () => {
     }
     expect([...cardCaresTags(untyped.tags)]).toContain("attacks:creature");
   });
-  test("a condition recorded before #1088 as attacks:any reads as attacks:creature", () => {
-    const alesha = base("Alesha", [{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["attacks:any"], effect: { kind: "graveyard-recursion" } }] as CardTags["abilities"]);
-    expect([...cardCaresTags(alesha.tags)]).toContain("attacks:creature");
-    expect([...cardCaresTags(alesha.tags)]).not.toContain("attacks:any");
-  });
 });

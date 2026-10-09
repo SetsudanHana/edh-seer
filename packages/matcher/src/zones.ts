@@ -37,12 +37,6 @@ export function combatSubjectKey(verb: string, subjectKey: string): string {
   return (verb === "attacks" || verb === "blocks") && subjectKey === "any" ? "creature" : subjectKey;
 }
 
-/** A persisted theme tag (`conditionCares`, derived before #1088) with the same canon applied. */
-export function combatTag(tag: string): string {
-  const i = tag.indexOf(":");
-  return i < 0 ? tag : `${tag.slice(0, i)}:${combatSubjectKey(tag.slice(0, i), tag.slice(i + 1))}`;
-}
-
 /** The reason-tag grouping key for a canonical zone event, kept in legacy spelling so the
  *  CATEGORY_MATCH table and theme labels don't change: enters@battlefield -> enters:key,
  *  enters@graveyard -> enters-graveyard:key, leaves@graveyard -> leaves-graveyard:key. `dies` and a
