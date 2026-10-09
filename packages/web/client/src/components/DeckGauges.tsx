@@ -241,9 +241,10 @@ export function DeckGauges({ data, diff, bars = true }: {
                   How your number of ramp (cards that give extra mana), card draw, removal (cards that
                   destroy or exile an opponent&rsquo;s things) and other cards compares with similar
                   decks: the typical count across ten EDHREC decks with the same plan. That is what those decks
-                  play, not a minimum you need. It does not look at how your cards work together or
-                  what your removal can hit. The suggestions below do, so a high Build score can sit
-                  next to a &ldquo;thin answers&rdquo; suggestion.
+                  play, not a minimum you need. It also checks that your removal can hit each kind of
+                  permanent at all, but not how many answers you have for each, or how your cards work
+                  together. The suggestions below do, so a high Build score can sit next to a
+                  &ldquo;thin answers&rdquo; suggestion.
                 </Explain>
                 </>
               }

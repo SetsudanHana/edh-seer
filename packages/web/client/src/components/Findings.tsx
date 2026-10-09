@@ -125,7 +125,7 @@ export function Findings({ report, diff, suggestions }: {
           *  know what the Build score is made of"). The five are `BUILD_PARENTS` plus lands. */}
         {all.length > 0 ? (
           <span className="text-xs text-(--muted)">
-            Build, out of 5, is how close your card draw, ramp, interaction, board wipes and lands are to their targets.
+            Build, out of 5, is how close your card draw, ramp, interaction, board wipes and lands are to their targets, and whether your removal can hit every kind of permanent.
           </span>
         ) : null}
       </div>
@@ -268,16 +268,18 @@ export function Findings({ report, diff, suggestions }: {
   );
 }
 
-/** WHAT FILLING A GAP DOES TO BUILD, ON ITS OWN SCALE (#1055). "Raises your Build score by at least
+/** WHAT FIXING A FINDING DOES TO BUILD, ON ITS OWN SCALE (#1055). "Raises your Build score by at least
  *  0.26" left two persona seats unable to weigh it beside a 4.5 already called on target: a delta
  *  with no scale and no starting point. With the score known, the row says where it goes from and
  *  to, at the one decimal the Build dial prints; a gain that rounds away says it is under 0.1 rather
- *  than printing the same number twice. "At least" stays: every impact is a lower bound (a card often
+ *  than printing the same number twice. "Fixing", not "filling": the lands finding fires on BOTH sides
+ *  of its target, and "filling" an over-target land count reads as "add more" (review of #1055).
+ *  "At least" stays: every impact is a lower bound (a card often
  *  carries two of a parent's leaves). */
 function BuildGain({ from, impact }: { from?: number; impact: number }) {
   const num = (n: string) => <span className="text-(--foreground) stat-num">{n}</span>;
   if (from === undefined) return <>Raises your Build score by at least {num(impact.toFixed(2))} out of 5</>;
   const to = Math.min(5, from + impact);
-  if (to.toFixed(1) === from.toFixed(1)) return <>Filling it raises your Build score by less than {num("0.1")} out of 5</>;
-  return <>Filling it takes your Build score from {num(from.toFixed(1))} to at least {num(to.toFixed(1))} out of 5</>;
+  if (to.toFixed(1) === from.toFixed(1)) return <>Fixing it raises your Build score by less than {num("0.1")} out of 5</>;
+  return <>Fixing it takes your Build score from {num(from.toFixed(1))} to at least {num(to.toFixed(1))} out of 5</>;
 }
