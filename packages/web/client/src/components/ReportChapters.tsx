@@ -1,3 +1,4 @@
+import { offThemeSplit } from "../lib/off-theme.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { AnalyzeResponse } from "../types.js";
 import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
@@ -283,19 +284,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     return none.filter((n) => !skip.has(n));
   }, [report.archetypes, cuts, report.cards, nonlandNames]);
 
-  // WHERE THE REST OF AN OVERAGE COMES FROM (persona round 2026-09-29, first-cuts: 8 over, 7 cuts,
-  // and the eighth found by hand in "Fits no theme", skipping the removal and protection that line
-  // itself warns about). The cards that fit no theme, are neither removal nor protection, and fill
-  // no role that is at or under its target -- Arcane Signet in a deck with Ramp at exactly 11 of 11
-  // opens the gap the cut was meant to avoid.
-  const offThemeCuttable = useMemo(() => {
-    const keep = new Set(["targetedRemoval", "stackInteraction", "boardWipe", "graveyardHate", "protection"]);
-    const spare = new Set((report.slack ?? []).flatMap((s) => report.buildParents?.find((p) => p.name === s.category)?.leaves ?? [s.category]));
-    const guarded = new Set(report.cards
-      .filter((r) => r.roles?.some((x) => keep.has(x) || (x !== "lands" && !spare.has(x))))
-      .map((r) => r.cardName ?? r.name));
-    return offTheme.filter((n) => !guarded.has(n));
-  }, [offTheme, report.cards, report.slack, report.buildParents]);
+  // WHERE THE REST OF AN OVERAGE COMES FROM, and what the "Fits no theme" line lists: see `offThemeSplit`.
+  const { free: offThemeCuttable, held: offThemeHeld } = useMemo(
+    () => offThemeSplit(offTheme, report), [offTheme, report]);
   const over100 = data.totalCount > 100;
 
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
@@ -587,7 +578,8 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               unjudged={report.unjudged}
               coverage={report.coverage}
               slack={report.slack}
-              offTheme={offTheme}
+              offTheme={offThemeCuttable}
+              offThemeHeld={offThemeHeld.length}
               surplus={surplus}
               // EACH CUT CARRIES THE CARD THAT TAKES ITS SLOT, whatever the job (spec §3).
               pairs={suggestions.value?.pairs}

@@ -195,3 +195,22 @@ test("at deck size, a swap for a role card sits under the cuts; over 100 it does
   render(<MemoryRouter><CutList cuts={[cut("Listed")]} slack={[]} deckSize={101} pairs={pairs} /></MemoryRouter>);
   expect(screen.queryByRole("region", { name: "Better cards for the same job" })).toBeNull();
 });
+
+// #1085: the line lists only the cards a slot can come from; the rest are counted, not named.
+test("fits-no-theme names the free cards and counts the held ones", () => {
+  const { unmount } = render(<CutList cuts={[]} slack={[]} offTheme={["Crib Swap"]} offThemeHeld={1} />);
+  const line = screen.getByText(/Fits no theme:/).closest("p")!;
+  expect(line).toHaveTextContent("Fits no theme: Crib Swap. The next place to look for a slot.");
+  expect(line).not.toHaveTextContent(/unless/);
+  expect(screen.getByText("1 more fits no theme but fills a role you are at or under target on, or is removal or protection, so it is not listed.")).toBeInTheDocument();
+  unmount();
+  render(<CutList cuts={[]} slack={[]} offTheme={["Crib Swap"]} offThemeHeld={3} />);
+  expect(screen.getByText("3 more fit no theme but fill a role you are at or under target on, or are removal or protection, so they are not listed.")).toBeInTheDocument();
+});
+
+test("fits-no-theme with nothing free says only the held sentence", () => {
+  render(<CutList cuts={[]} slack={[]} offTheme={[]} offThemeHeld={3} />);
+  expect(screen.queryByText(/Fits no theme:/)).toBeNull();
+  expect(screen.getByText("3 cards fit no theme, but each fills a role you are at or under target on, or is removal or protection.")).toBeInTheDocument();
+  expect(screen.queryByTestId("cut-list")).not.toBeNull();
+});

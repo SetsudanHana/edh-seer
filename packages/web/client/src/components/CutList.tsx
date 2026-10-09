@@ -30,7 +30,7 @@ export interface Surplus {
   shelf?: string;
 }
 
-export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pairs, deckSize, fillFrom }:
+export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHeld, surplus, pairs, deckSize, fillFrom }:
   {
     /** The one cut list: the report's eligibility, the Overview's reading. See `chooseCuts`. */
     cuts: readonly CutChoice[];
@@ -44,6 +44,8 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
     slack: DeckReport["slack"];
     /** Read cards that no theme group claims and that are not already cut candidates. */
     offTheme?: readonly string[];
+    /** How many cards fit no theme but are left off that line (see OFF-THEME below). */
+    offThemeHeld?: number;
     /** The over-target role groups with their cards. Replaces the bare slack chips where present. */
     surplus?: readonly Surplus[];
     /** The card that could take each cut's slot, by cut name. Shown on the cut's own card. */
@@ -147,7 +149,8 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
   const hasUnjudged = !!unjudged && unjudged.length > 0;
   const hasSlack = !!slack && slack.length > 0;
   const hasOffTheme = !!offTheme && offTheme.length > 0;
-  if (!hasCuts && !hasSlack && !hasUnjudged && !hasOffTheme && !over) return null;
+  const held = offThemeHeld ?? 0;
+  if (!hasCuts && !hasSlack && !hasUnjudged && !hasOffTheme && held === 0 && !over) return null;
   return (
     <div className="flex flex-col gap-2" data-testid="cut-list">
       <h3 className="eyebrow">Possible cuts</h3>
@@ -265,14 +268,27 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
       )}
       {/* OFF-THEME, NOT DEAD (owner, 2026-09-24). These connect to something or fill a role, so they
         *  are not cut candidates -- but no theme uses them, which is the second place a player looks
-        *  for a slot. Said with the usual exception, because removal routinely lands here. */}
+        *  for a slot.
+        *
+        *  ONLY THE CARDS A SLOT CAN COME FROM (#1085). The line used to list every card no theme
+        *  claims with a hand-written "unless removal or protection", and the first-cuts seat skipped
+        *  Sol Ring, Arcane Signet and Patriar's Seal by hand while the Roles page said Ramp 11 of 11.
+        *  `offThemeSplit` now does that job: `offTheme` is the free cards, `offThemeHeld` counts the
+        *  ones left out (removal, protection, or a role at or under its target). */}
       {hasOffTheme && (
         <p className="text-sm text-(--muted) max-w-[65ch]">
           <span className="text-(--foreground)">Fits no theme:</span>{" "}
           {offTheme!.map((n, i) => (
             <span key={n}>{i > 0 && ", "}<CardName name={n} /></span>
           ))}
-          . The next place to look for a slot, unless {offTheme!.length === 1 ? "it is" : "they are"} removal or protection.
+          . The next place to look for a slot.
+        </p>
+      )}
+      {held > 0 && (
+        <p className="text-sm text-(--muted) max-w-[65ch]">
+          {hasOffTheme
+            ? `${held} more ${held === 1 ? "fits" : "fit"} no theme but ${held === 1 ? "fills" : "fill"} a role you are at or under target on, or ${held === 1 ? "is" : "are"} removal or protection, so ${held === 1 ? "it is" : "they are"} not listed.`
+            : `${held} ${held === 1 ? "card fits" : "cards fit"} no theme, but ${held === 1 ? "it fills" : "each fills"} a role you are at or under target on, or is removal or protection.`}
         </p>
       )}
       {/* AN EMPTY CUT LIST IS AN ANSWER AND HAS TO SAY SO. It used to render nothing at all, which
