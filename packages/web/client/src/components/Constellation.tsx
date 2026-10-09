@@ -70,6 +70,11 @@ export function drawnPartners(list: MapPartner[], narrow: boolean): MapPartner[]
   return narrow ? list.filter((x) => !x.minor) : list;
 }
 
+/** How drawn a placed card is that is neither the middle, walked through, nor a partner now: faint
+ *  context on a wide map; on a phone it would be an unnamed disc that still takes taps, so it is
+ *  not drawn (its lines go with it, and it takes no taps below 0.05). */
+export const idleOpacity = (narrow: boolean) => (narrow ? 0 : 0.35);
+
 export interface LabelBox { x0: number; x1: number; y0: number; y1: number }
 export interface LabelSpot { box: LabelBox; x: number; y: number; anchor: "middle" | "start" | "end" }
 const boxesHit = (a: LabelBox, b: LabelBox) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
@@ -290,7 +295,7 @@ class Sky {
       n.homeR = isF ? G.focusR : isV ? G.visitedR : n.minor ? G.minorR : isP ? G.partnerR : G.otherR;
       n.tglow = isF ? 0.5 : isV ? 0.18 : 0;
       const on = isF || isV || isP;
-      const to = { x: pos.x, y: pos.y, r: n.homeR, o: on ? 1 : 0.35, lo: on && !n.minor ? 1 : 0 };
+      const to = { x: pos.x, y: pos.y, r: n.homeR, o: on ? 1 : idleOpacity(G === NARROW), lo: on && !n.minor ? 1 : 0 };
       if (n.o < 0.05) {
         // New to the map: grow out of the card you walked to, one after another.
         n.x = here.x; n.y = here.y; n.r = 4;
@@ -468,6 +473,9 @@ class Sky {
    *  are; a partner whose disc one of those covers yields. Each other partner's name tries below,
    *  above, then beside its disc; if none is clear, the card is left off the map (its disc and
    *  lines too) -- it is still in the sector list below and on the key. */
+  // CEILING: greedy and order-dependent. Blockers include the discs of partners hidden later in the
+  // same pass, so it can drop more cards than needed; a name's width is guessed from its character
+  // count x 0.56 of the font size, not measured.
   cullStrict(px: number) {
     const font = 12 * px;
     const rank = (n: Node) => (n.id === this.focus ? 0 : n.id === this.lit ? 1 : this.visited.includes(n.id) ? 2 : 3);
