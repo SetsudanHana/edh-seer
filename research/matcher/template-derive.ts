@@ -34,9 +34,9 @@ interface Req { k: number; turn: number; p: number; why: string }
 /** The generic requirement per parent, and the strategy-conditioned one where the owner named a
  *  strategy that wants more. `minCopies` inverts P(X >= k | 99, K, seen(turn)) >= p. */
 const GENERIC: Record<string, Req> = {
-  Ramp: { k: 1, turn: 3, p: 0.8, why: "a ramp piece by turn 3, 80%" },
-  Consistency: { k: 1, turn: 4, p: 0.85, why: "a draw piece by turn 4, 85%" },
-  Interaction: { k: 1, turn: 4, p: 0.8, why: "an answer by turn 4, 80%" },
+  ramp: { k: 1, turn: 3, p: 0.8, why: "a ramp piece by turn 3, 80%" },
+  consistency: { k: 1, turn: 4, p: 0.85, why: "a draw piece by turn 4, 85%" },
+  interaction: { k: 1, turn: 4, p: 0.8, why: "an answer by turn 4, 80%" },
   // 3-by-3 at 90% is the requirement the population builds to: 37 lands hits it under the mulligan,
   // and 37 is the median. 4-by-4 overshoots because ramp and land-fetch substitute for the fourth drop.
   lands: { k: 3, turn: 3, p: 0.9, why: "three land drops by turn 3, 90%" },
@@ -77,8 +77,8 @@ for (const { file, group } of deckFiles()) {
     // A wipe is not a by-turn requirement (owner, 2026-09-06): "one by turn 7 at 60%" priced to six
     // per deck, and the population runs two. It stays doctrine -- 3, and 6 for superfriends -- so
     // the row carries the flat target in every column and measures nothing.
-    if (p.name === "Board wipes") { rows.push({ deck: name, parent: p.name, actual: p.count, flat: p.target, hyper: p.target, mull: p.target, req: "wipes: doctrine, not derived", strategies, group }); continue; }
-    const req = requirementFor(p.name, strategies, theme);
+    if (p.key === "boardWipes") { rows.push({ deck: name, parent: p.name, actual: p.count, flat: p.target, hyper: p.target, mull: p.target, req: "wipes: doctrine, not derived", strategies, group }); continue; }
+    const req = requirementFor(p.key ?? "", strategies, theme);
     rows.push({ deck: name, parent: p.name, actual: p.count, flat: p.target, hyper: minCopies(req.k, req.turn, req.p), mull: minSources(req.k, req.turn, req.p) ?? -1, req: req.why, strategies, group });
   }
   const lands = r.deckMath?.lands;

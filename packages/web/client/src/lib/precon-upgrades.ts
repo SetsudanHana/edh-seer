@@ -4,6 +4,7 @@
 import { TARGET_LABEL, type BracketTarget, type UpgradePackage, type UpgradeSectionId, type UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import type { PreconPage } from "./precon-page.js";
 import { scoreBand } from "./score-band.js";
+import { groupKey } from "./role-group.js";
 
 export const SECTION_TITLE: Record<UpgradeSectionId, string> = {
   lands: "Lands", ramp: "Ramp", consistency: "Card advantage", interaction: "Removal and protection",
@@ -65,11 +66,11 @@ export function afterLine(p: UpgradePackage): string {
 /** THE WORDS FOR A ROLE GROUP, one map for the effect line and the gaps line (#893). The engine names
  *  the group "Card advantage" (draw, selection and tutors); said bare beside "It is more consistent" it would
  *  mean two things. An unknown group falls back to its lowercased name. */
-const GROUP_WORDS: Record<string, string> = { "Card advantage": "card advantage", Ramp: "ramp", Interaction: "interaction", "Board wipes": "board wipes" };
+export const WORD_BY_KEY: Record<string, string> = { consistency: "card advantage", ramp: "ramp", interaction: "interaction", boardWipes: "board wipes" };
 /** ONE CARD OF THE GROUP, for "X counts as ...": the plural "board wipes" says "Wrath counts as board wipes". */
-const GROUP_NOUNS: Record<string, string> = { "Card advantage": "card advantage", Ramp: "ramp", Interaction: "interaction", "Board wipes": "a board wipe" };
-export const GROUP_NOUN = (group: string): string => GROUP_NOUNS[group] ?? group.toLowerCase();
-export const GROUP_WORD = (group: string): string => GROUP_WORDS[group] ?? group.toLowerCase();
+export const NOUN_BY_KEY: Record<string, string> = { consistency: "card advantage", ramp: "ramp", interaction: "interaction", boardWipes: "a board wipe" };
+export const GROUP_NOUN = (group: string): string => NOUN_BY_KEY[groupKey(group) ?? ""] ?? group.toLowerCase();
+export const GROUP_WORD = (group: string): string => WORD_BY_KEY[groupKey(group) ?? ""] ?? group.toLowerCase();
 
 export function whatTheSwapsDo(p: UpgradePackage, page: Pick<PreconPage, "synergy" | "build" | "gaps">): string {
   const a = p.after;

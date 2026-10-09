@@ -28,9 +28,9 @@ test("every value sits inside the population's observed range, and every row say
       expect(row[k], `${name}.${k}`).toBeGreaterThanOrEqual(lo);
       expect(row[k], `${name}.${k}`).toBeLessThanOrEqual(hi);
     }
-    for (const k of ["consistency", "ramp", "interaction"] as const) expect(row[k], `${name}.${k} missing`).toBeDefined();
+    for (const k of ["consistency", "ramp", "interaction"] as const) expect(Number.isFinite(row[k]), `${name}.${k} is not a finite number`).toBe(true);
   }
-  for (const k of KEYS) expect(TEMPLATE.population[k]).toBeGreaterThan(0);
+  for (const k of KEYS) { expect(Number.isFinite(TEMPLATE.population[k]), `population. is not a finite number`).toBe(true); expect(TEMPLATE.population[k]).toBeGreaterThan(0); }
 });
 
 test("a boardWipes row is present only where the theme leans by more than one (owner ruling: wipes stay doctrine)", () => {

@@ -19,6 +19,7 @@ import type { Card } from "@edh-seer/engine";
 import type { DeckBracket } from "@edh-seer/matcher/brackets";
 import type { AnalyzeResponse } from "../types.js";
 import { chooseCuts, roleSwapCuts } from "./cut-choice.js";
+import { groupKey } from "./role-group.js";
 import { GROUP_NOUN, GROUP_WORD } from "./precon-upgrades.js";
 import { mainTheme } from "./main-theme.js";
 import type { EngineModel } from "./engine-model.js";
@@ -34,7 +35,7 @@ export interface PreconPackages {
 
 /** The report's group name for each role section: how `DeckSuggestions.build` is keyed, and what
  *  `gapsOf` calls a group. Answers have no section and are not filled. */
-const SECTION_OF_GROUP: Record<string, RoleSectionId> = { Ramp: "ramp", "Card advantage": "consistency", Interaction: "interaction", "Board wipes": "wipes" };
+export const SECTION_BY_KEY: Record<string, RoleSectionId> = { consistency: "consistency", ramp: "ramp", interaction: "interaction", boardWipes: "wipes" };
 
 /** THE CUT LIST A FILL MAY CUT, OFF-PLAN AS RULED (2026-10-09): a row whose keeps name a win plan it
  *  counts for, or a table warning, is never cut by a fill; other keeps ride along into the reason. */
@@ -55,7 +56,8 @@ export function fillsFor(
 ): Partial<Record<RoleSectionId, RoleFill>> {
   const out: Partial<Record<RoleSectionId, RoleFill>> = {};
   for (const gap of gaps) {
-    const id = SECTION_OF_GROUP[gap.group];
+    const key = groupKey(gap.group);
+    const id = key ? SECTION_BY_KEY[key] : undefined;
     const adds = (suggestions?.build[gap.group] ?? []).map((c) => ({ name: c.name, reason: c.reasons[0]?.text ?? "" }));
     if (id && adds.length) out[id] = { label: GROUP_WORD(gap.group), noun: GROUP_NOUN(gap.group), short: gap.target - gap.have, adds, cuts };
   }

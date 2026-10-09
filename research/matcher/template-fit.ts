@@ -22,7 +22,7 @@ import { computeBuild } from "../../packages/matcher/src/build.js";
 const argv = process.argv;
 const DIR = argv.includes("--dir") ? argv[argv.indexOf("--dir") + 1]! : EDHREC_DECKS;
 const FIT = argv.includes("--fit");
-const PARENTS = { Consistency: "consistency", Ramp: "ramp", Interaction: "interaction", "Board wipes": "boardWipes" } as const;
+const PARENTS = { consistency: "consistency", ramp: "ramp", interaction: "interaction", boardWipes: "boardWipes" } as const;
 type Key = (typeof PARENTS)[keyof typeof PARENTS];
 const KEYS = Object.values(PARENTS) as Key[];
 const FLAT: Record<Key, number> = { consistency: 14, ramp: 10, interaction: 10, boardWipes: 3 };
@@ -38,7 +38,7 @@ for (const theme of readdirSync(DIR, { withFileTypes: true }).filter((e) => e.is
     const { cards } = await resolveNames([...commanders, ...deck], lookup);
     const dcs = await buildDeckCards(cards, lookup, tags);
     const c = {} as Record<Key, number>;
-    for (const p of computeBuild(dcs, undefined).buildParents) c[PARENTS[p.name as keyof typeof PARENTS]] = p.count;
+    for (const p of computeBuild(dcs, undefined).buildParents) c[PARENTS[p.key as keyof typeof PARENTS]] = p.count;
     (counts.get(theme) ?? counts.set(theme, []).get(theme)!).push({ file: f, c });
   }
 }
