@@ -6319,3 +6319,41 @@ describe("face-aware own-entry exclusion (#1101)", () => {
     expect(cardThemeTags(t).has("enters:land")).toBe(false);
   });
 });
+
+// #729 (owner ruling 2026-10-09): a card that uses a card from an OPPONENT's graveyard (Espers to
+// Magicite, Gruesome Encore) joins only cards that explicitly MILL opponents -- never removal or a
+// "dies" fill, because every deck kills creatures and the edge would be noise.
+test("a recursion over an opponent's graveyard joins an opponent mill, not a kill", () => {
+  const oppYard = { control: "opp", token: null, type: "creature", scope: "target", zone: "graveyard" };
+  const espers = base("Espers", [{
+    kind: "on-cast", effect: { kind: "graveyard-recursion", subject: oppYard },
+  }] as CardTags["abilities"]);
+  const crab = base("Ruin Crab", [{
+    kind: "activated", effect: { kind: "mill" },
+    emits: [{ verb: "mill", subject: { control: "opp", token: null, scope: "each" } }],
+  }] as CardTags["abilities"]);
+  const kill = base("Murder", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature", scope: "target" } }],
+  }] as CardTags["abilities"]);
+  const wrath = base("Wrath", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "any", token: null, type: "creature", scope: "all" } }],
+  }] as CardTags["abilities"]);
+  const selfMill = base("Self Mill", [{
+    kind: "activated", effect: { kind: "mill" },
+    emits: [{ verb: "mill", subject: { control: "you", token: null, scope: "each" } }],
+  }] as CardTags["abilities"]);
+  const rec = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) =>
+    pairReasons(p, c, H).map((r) => r.tag).filter((t) => t.startsWith("graveyard-recursion"));
+  expect(rec(crab, espers)).toHaveLength(1);
+  expect(rec(kill, espers)).toEqual([]);
+  expect(rec(wrath, espers)).toEqual([]);
+  expect(rec(selfMill, espers)).toEqual([]);
+  // A recursion over ANY graveyard (Reanimate) still joins a kill, exactly as before.
+  const reanimate = base("Reanimate", [{
+    kind: "on-cast", effect: { kind: "graveyard-recursion", subject: { ...oppYard, control: "any" } },
+  }] as CardTags["abilities"]);
+  expect(rec(kill, reanimate)).toHaveLength(1);
+  expect(rec(crab, reanimate)).toHaveLength(1);
+});

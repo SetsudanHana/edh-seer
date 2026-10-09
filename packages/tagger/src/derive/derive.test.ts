@@ -1425,6 +1425,85 @@ test("an exile from a graveyard that you may then play is recursion over any gra
   expect(rec?.effect.subject?.control).toBe("any");
 });
 
+// #729 (owner ruling 2026-10-09): a card that USES a card from an OPPONENT's graveyard derives as
+// recursion over their yard -- Gruesome Encore, Espers to Magicite -- so it joins the cards that
+// mill opponents. Clause shapes below are the stored `cardClauses` answers, not hand-made ones.
+const oppRecursion = (abilities: { effect: { kind?: string; subject?: { control?: string; type?: unknown; zone?: string } } }[]) =>
+  abilities.find((a) => a.effect.kind === "graveyard-recursion")?.effect.subject;
+
+test("Gruesome Encore puts a creature from an opponent's graveyard onto the battlefield: recursion over opp", () => {
+  const text = "Put target creature card from an opponent's graveyard onto the battlefield under your control. It gains haste. Exile it at the beginning of the next end step. If that creature would leave the battlefield, exile it instead of putting it anywhere else.";
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "spell",
+    actions: [
+      { verb: "exile", object: "target creature card from an opponent's graveyard", fromZone: "graveyard", toZone: "battlefield" },
+      { verb: "grant-ability", object: "haste" },
+      { verb: "exile", object: "it", fromZone: "battlefield", toZone: "exile" },
+    ],
+  }], "Gruesome Encore", { 1: text }, undefined, text);
+  const s = oppRecursion(abilities);
+  expect(s?.control).toBe("opp");
+  expect(s?.type).toBe("creature");
+  expect(s?.zone).toBe("graveyard");
+});
+
+test("Espers to Magicite exiles every opponent graveyard AND copies a creature from it: hate and recursion", () => {
+  const text = "Exile each opponent's graveyard. When you do, choose up to one target creature card exiled this way. Create a token that's a copy of that card, except it's an artifact and it loses all other card types.";
+  const { abilities } = deriveAbilities([
+    { id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "each opponent's graveyard" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "reflexive", subject: "exile each opponent's graveyard", control: "you" },
+      actions: [{ verb: "create", object: "a token that's a copy of target creature card exiled this way, except it's an artifact and it loses all other card types", amount: "1" }] },
+  ], "Espers to Magicite", { 1: "Exile each opponent's graveyard.", 2: "When you do, choose up to one target creature card exiled this way. Create a token that's a copy of that card, except it's an artifact and it loses all other card types." }, undefined, text);
+  const s = oppRecursion(abilities);
+  expect(s?.control).toBe("opp");
+  expect(s?.type).toBe("creature");
+  expect(abilities.some((a) => a.effect.kind === "graveyard-hate")).toBe(true);
+});
+
+test("Hedonist's Trove and Kefka play or cast what they exiled from an opponent's graveyard: recursion over opp", () => {
+  const trove = "When this enchantment enters, exile target opponent's graveyard.\nYou may play lands from among cards exiled with this enchantment.\nYou may cast spells from among cards exiled with this enchantment. You can't cast more than one spell this way each turn.";
+  const a = deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this", control: "you" }, actions: [{ verb: "exile", object: "target opponent's graveyard", fromZone: "graveyard", toZone: "exile" }] },
+    { id: 2, abilityType: "static", actions: [{ verb: "play", object: "lands from among cards exiled with this enchantment", optional: true }] },
+    { id: 3, abilityType: "static", actions: [{ verb: "cast", object: "spells from among cards exiled with this enchantment", optional: true }] },
+  ], "Hedonist's Trove", { 1: "When this enchantment enters, exile target opponent's graveyard.", 2: "You may play lands from among cards exiled with this enchantment.", 3: "You may cast spells from among cards exiled with this enchantment." }, undefined, trove).abilities;
+  expect(oppRecursion(a)?.control).toBe("opp");
+  const kefka = "At the beginning of your end step, exile a card at random from each opponent's graveyard. You may cast any number of spells from among cards exiled this way without paying their mana costs. Then each player who owns a spell you cast this way loses life equal to its mana value.";
+  const b = deriveAbilities([
+    { id: 2, abilityType: "triggered", trigger: { event: "end-step", subject: "your turn", control: "you" }, actions: [
+      { verb: "exile", object: "a card at random from each opponent's graveyard", fromZone: "graveyard", toZone: "exile" },
+      { verb: "cast", object: "any number of spells from among cards exiled this way", fromZone: "exile", toZone: "stack", optional: true },
+    ] },
+  ], "Kefka, Dancing Mad", { 2: kefka }, undefined, kefka).abilities;
+  expect(oppRecursion(b)?.control).toBe("opp");
+});
+
+test("Flawless Forgery and Saruman copy and cast the exiled card: recursion over opp, typed", () => {
+  const ff = "Exile target instant or sorcery card from an opponent's graveyard. Copy that card. You may cast the copy without paying its mana cost.";
+  const a = deriveAbilities([{ id: 2, abilityType: "spell", actions: [
+    { verb: "exile", object: "target instant or sorcery card from an opponent's graveyard", fromZone: "graveyard", toZone: "exile" },
+    { verb: "copy", object: "that card" }, { verb: "cast", object: "the copy", optional: true },
+  ] }], "Flawless Forgery", { 2: ff }, undefined, ff).abilities;
+  expect(oppRecursion(a)?.control).toBe("opp");
+  expect(oppRecursion(a)?.type).toEqual(["instant", "sorcery"]);
+  const sar = "When one or more cards are milled this way, exile target enchantment, instant, or sorcery card with equal or lesser mana value than that spell from an opponent's graveyard. Copy the exiled card. You may cast the copy without paying its mana cost.";
+  const b = deriveAbilities([{ id: 3, abilityType: "triggered", trigger: { event: "milled", subject: "one or more cards", control: "any" }, actions: [
+    { verb: "exile", object: "target enchantment, instant, or sorcery card with equal or lesser mana value than that spell from an opponent's graveyard", fromZone: "graveyard", toZone: "exile" },
+    { verb: "copy", object: "the exiled card" }, { verb: "cast", object: "the copy", optional: true },
+  ] }], "Saruman of Many Colors", { 3: sar }, undefined, sar).abilities;
+  expect(oppRecursion(b)?.control).toBe("opp");
+});
+
+test("Uchuulon exiles a creature card as a cost of copying ITSELF: stays hate, uses nothing", () => {
+  const text = "At the beginning of your end step, exile up to one target creature card from an opponent's graveyard. If you do, create a token that's a copy of this creature.";
+  const { abilities } = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "end-step", subject: "you", control: "you" }, actions: [
+    { verb: "exile", object: "up to one target creature card", fromZone: "graveyard", toZone: "exile", optional: true },
+    { verb: "create", object: "a token that's a copy of this creature", amount: "1" },
+  ] }], "Uchuulon", { 2: text }, undefined, text);
+  expect(oppRecursion(abilities)).toBeUndefined();
+  expect(abilities.some((a) => a.effect.kind === "graveyard-hate")).toBe(true);
+});
+
 test("an exile from a graveyard that uses nothing stays hate", () => {
   const { abilities } = deriveAbilities([{
     id: 1, abilityType: "activated",

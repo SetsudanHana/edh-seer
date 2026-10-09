@@ -2266,6 +2266,14 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // deleted on the first measurement. Noxious Gearhulk -> Junji (any graveyard, judged FALSE) is
       // the one verdict this rule keeps claiming against; it is flagged for re-judging, not encoded.
       if (e.subject.control === "opp" && a.effect.subject.control === "you") continue;
+      // A RECURSION OVER AN OPPONENT'S GRAVEYARD ONLY (#729, owner ruling 2026-10-09): a card that
+      // takes a card from THEIR graveyard and uses it (Espers to Magicite, Gruesome Encore) joins
+      // only cards that explicitly MILL opponents. Not "dies", discard or removal: every deck kills
+      // creatures and the edge would be noise. `any` and `you` are untouched, and so is an
+      // INTERCEPTED one (Dauthi Voidwalker, Valgavoth), which takes whatever would reach their yard.
+      // CEILING: a mill that is not the opponent's (`you`) never fills their graveyard.
+      if (a.effect.subject.control === "opp" && a.effect.intercepted !== true
+        && !(e.milled === true && e.subject.control !== "you")) continue;
       // Skip if the event-edge loop already credited this fill via a graveyard-entry trigger on the same ability.
       if (a.trigger && a.trigger.verbs.some((v) => {
         const t = normalizeZoneEvent({ verb: v, subject: a.trigger!.subject });
