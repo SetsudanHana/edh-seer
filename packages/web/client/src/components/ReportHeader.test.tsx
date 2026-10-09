@@ -30,3 +30,18 @@ test("two short roles say the first and count the rest, in findings order", () =
   ] });
   expect(gap(c)).toBe("· 2 short on board wipes and 1 more");
 });
+
+/** #1087 review: the header says the role by the Roles shelf's heading, not the verdict's word. */
+test("the gap uses the shelf's word for the role", () => {
+  const c = header({ buildParents: [{ name: "Interaction", key: "interaction", count: 7, target: 10, leaves: [] }] });
+  expect(gap(c)).toBe("\u00b7 3 short on interaction");
+});
+
+/** AND LEADS WITH THE ONE IMPROVE LEADS WITH: rankedFindings orders by impact, findings() by shortfall. */
+test("the first role is the one Improve leads with, by impact", () => {
+  const c = header({ buildParents: [
+    { name: "Board wipes", count: 1, target: 3, leaves: [], impact: 0.1 },
+    { name: "Card advantage", key: "consistency", count: 8, target: 15, leaves: [], impact: 0.4 },
+  ] });
+  expect(gap(c)).toBe("\u00b7 7 short on card advantage and 1 more");
+});

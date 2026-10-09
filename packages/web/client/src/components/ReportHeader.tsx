@@ -6,7 +6,7 @@ import { scoreState } from "../lib/deck-gauge.js";
 import { TONE_TEXT } from "./Dial.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { findings } from "../lib/findings.js";
-import { shortRoles, type ShortRole } from "../lib/verdict.js";
+import { headerGaps, type ShortRole } from "../lib/verdict.js";
 import { useAdded } from "./card-drawer.js";
 import { SurfaceLink } from "./ReportShell.js";
 import { identityKey } from "../lib/color-identity.js";
@@ -111,7 +111,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
           // `buildScore` counts roles off printed text, which an unread card still has, so it keeps
           // its band where synergy loses its own. The split is the gate's, not a new one.
           <HeaderScore
-            name="Build" value={report.buildScore} kind="build" gaps={shortRoles(report).filter((g) => g.short > 0)}
+            name="Build" value={report.buildScore} kind="build" gaps={headerGaps(report).filter((g) => g.short > 0)}
             delta={diff?.build ? signed(diff.build.from, diff.build.to) : undefined}
           />
         ) : null}
@@ -233,7 +233,7 @@ function HeaderScore({ name, value, partial, delta, kind, gaps }: {
     {first ? (
       // The Roles shelf's own tone for a shortfall, `--warning`, and its words: "3 short".
       <span data-build-gap className="text-xs whitespace-nowrap text-(--warning)">
-        <span className="max-sm:hidden">· </span>{first.short} short on {first.word}{gaps!.length > 1 ? ` and ${gaps!.length - 1} more` : ""}
+        <span className="max-sm:hidden">· </span>{first.short} short on {first.shelfWord}{gaps!.length > 1 ? ` and ${gaps!.length - 1} more` : ""}
       </span>
     ) : null}
     </span>
