@@ -3089,7 +3089,8 @@ test("the cut list names the cards no theme claims, without calling them dead", 
   render(<CutList cuts={[]} slack={[]} offTheme={["Crib Swap", "Despark"]} />);
   expect(screen.getByText(/Fits no theme:/)).toBeInTheDocument();
   expect(screen.getByText("Crib Swap")).toBeInTheDocument();
-  expect(screen.getByText(/unless they are removal or protection/)).toBeInTheDocument();
+  expect(screen.getByText(/Fits no theme:/).closest("p")).toHaveTextContent("Fits no theme: Crib Swap, Despark. The next place to look for a slot.");
+  expect(screen.queryByText(/unless/)).toBeNull();
   expect(screen.queryByText("Nothing here is an easy cut.")).toBeNull();
 });
 
