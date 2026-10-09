@@ -26,6 +26,8 @@ export interface PreconPage {
   identity: string[];
   theme: string | null;
   synergy: { score: number; band: string } | null;
+  /** The report's Build score (consistency), with its band word; absent on a page built before it was recorded. */
+  build?: { score: number; band: string } | null;
   bracket: { band: "1-2" | "3" | "4-5"; gameChangers: number; combos: number } | null;
   /** Cards the commander works with, as the commander's map counts them. */
   commanderLinks: number;
@@ -51,6 +53,15 @@ export interface PreconPage {
   unreachable?: BracketTarget[];
   /** Slug and art for every card a package adds, by name. */
   packageCards?: Record<string, PreconCard>;
+}
+/** THE ROLE GROUPS A REPORT IS SHORT IN, against a typical Commander deck. One rule for the precon
+ *  as printed and for each package's swapped deck, so "short before" and "short after" are the same
+ *  measure (#893). */
+export function gapsOf(report: DeckReport): { group: string; have: number; target: number }[] {
+  return findings(report).filter((f) => f.kind === "build" && f.shortfall > 0).map((f) => {
+    const [have, target] = f.figure.split("/").map(Number);
+    return { group: f.figureLabel, have: have ?? 0, target: target ?? 0 };
+  }).filter((g) => g.target > g.have);
 }
 export interface PreconCard { name: string; slug: string; art?: string }
 
@@ -99,10 +110,8 @@ export function preconPage(meta: Pick<PreconPage, "slug" | "name" | "setCode" | 
       in: { ...card(p.add), connections: p.add.connections.length, reason: p.add.reasons[0]?.text ?? null },
     })),
     route: route?.route ? { ...card(route), reach: route.route.from.length, to: route.route.to } : null,
-    gaps: findings(report).filter((f) => f.kind === "build" && f.shortfall > 0).map((f) => {
-      const [have, target] = f.figure.split("/").map(Number);
-      return { group: f.figureLabel, have: have ?? 0, target: target ?? 0 };
-    }).filter((g) => g.target > g.have),
+    gaps: gapsOf(report),
+    build: report.buildScore !== undefined ? { score: report.buildScore, band: scoreBand(report.buildScore, "build").label } : null,
     decklist: GROUP_ORDER.filter((g) => byGroup.has(g)).map((g) => ({ group: g, cards: byGroup.get(g)!.sort((a, b) => a.name.localeCompare(b.name)) })),
   };
 }

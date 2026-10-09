@@ -2,7 +2,7 @@ import { useState } from "react";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { SECTION_MAX, SECTION_SHOWN, TARGET_LABEL, type BracketTarget, type UpgradePackage, type UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import type { PreconCard, PreconPage } from "../lib/precon-page.js";
-import { afterLine, defaultTarget, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_MEANING } from "../lib/precon-upgrades.js";
+import { afterLine, defaultTarget, GAME_CHANGER, sameAsBelow, SECTION_TITLE, startsAbove, TARGET_MEANING, whatTheSwapsDo } from "../lib/precon-upgrades.js";
 import { cardImageUrl } from "./card-node.js";
 
 import { ReasonText } from "./card-drawer.js";
@@ -36,7 +36,7 @@ export function UpgradePackages({ page, children }: { page: PreconPage; children
         </div>
         {target ? <p className="max-w-[70ch] text-(--muted)">{TARGET_MEANING[target]} {GAME_CHANGER}</p> : null}
       </div>
-      {pkg ? <Package pkg={pkg} all={page.packages ?? []} before={page.synergy?.score ?? null} cards={cards} extra={children} /> : target ? (
+      {pkg ? <Package pkg={pkg} all={page.packages ?? []} before={{ synergy: page.synergy, build: page.build ?? null, gaps: page.gaps }} cards={cards} extra={children} /> : target ? (
         <p className="max-w-[70ch]" data-testid="precon-unreachable">
           No swaps bring this deck to bracket {TARGET_LABEL[target]}: what keeps it above is its commander, or a combo made with its commander, and a commander can&rsquo;t be swapped out.
         </p>
@@ -45,8 +45,9 @@ export function UpgradePackages({ page, children }: { page: PreconPage; children
   );
 }
 
-function Package({ pkg, all, before, cards, extra }: { pkg: UpgradePackage; all: readonly UpgradePackage[]; before: number | null; cards: Record<string, PreconCard>; extra?: React.ReactNode }) {
+function Package({ pkg, all, before, cards, extra }: { pkg: UpgradePackage; all: readonly UpgradePackage[]; before: Pick<PreconPage, "synergy" | "build" | "gaps">; cards: Record<string, PreconCard>; extra?: React.ReactNode }) {
   const same = sameAsBelow(pkg, all);
+  const effect = whatTheSwapsDo(pkg, before);
   const sections = [
     ...(pkg.bringDown.length ? [{ id: "bring-down", title: `First, to reach bracket ${TARGET_LABEL[pkg.target]}`, swaps: pkg.bringDown }] : []),
     ...pkg.sections.filter((s) => s.swaps.length).map((s) => ({ id: s.id, title: SECTION_TITLE[s.id], swaps: s.swaps })),
@@ -54,9 +55,10 @@ function Package({ pkg, all, before, cards, extra }: { pkg: UpgradePackage; all:
   return (
     <div className="flex flex-col gap-4" data-testid="precon-package">
       <p className="max-w-[70ch] text-lg">
-        {afterLine(pkg, before)} {startsAbove(pkg)}
+        {afterLine(pkg)} {startsAbove(pkg)}
         {" "}Each one says why the card goes and why its replacement is better.
       </p>
+      {effect ? <p className="max-w-[70ch]" data-testid="precon-effect">{effect}</p> : null}
       {same ? <p className="max-w-[70ch] text-(--muted)" data-testid="precon-same-swaps">{same}</p> : null}
       {/* SECTIONS SIDE BY SIDE AS THE WIDTH ALLOWS: a section is a short column of swaps, and one per
         *  row at 3840 would leave most of the screen empty (#770). */}

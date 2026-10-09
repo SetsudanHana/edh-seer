@@ -32,7 +32,7 @@ import { suggestForDeck } from "@edh-seer/matcher/suggest-static";
 import { analyzeDeckStatic, readDeckStatic } from "../client/src/api.static.ts";
 import { buildEngineModel } from "../client/src/lib/engine-model.ts";
 import { chooseCuts, swapCandidates } from "../client/src/lib/cut-choice.ts";
-import { preconPage, type PreconPage } from "../client/src/lib/precon-page.ts";
+import { gapsOf, preconPage, type PreconPage } from "../client/src/lib/precon-page.ts";
 import { encodeShare, shareUrl } from "../client/src/lib/share-link.ts";
 import { preconPackages } from "../client/src/lib/precon-packages.ts";
 import { StaticLookup } from "@edh-seer/matcher/static-lookup";
@@ -127,7 +127,7 @@ for (const p of precons) {
         // WITHOUT THE MANA SIMULATION OR THE GRAPH (P1): none of the three numbers reads them, and
         // they were about half of every one of the ~36 readings a precon takes.
         const r = await readDeckStatic(list, p.commanders.join("\n"), baseUrl, fetchImpl);
-        return { band: r.bracket?.band ?? "1-2", mana: r.deckMath?.lands.manaBase?.total ?? 0, synergy: r.synergyOverall ?? 0 };
+        return { band: r.bracket?.band ?? "1-2", mana: r.deckMath?.lands.manaBase?.total ?? 0, synergy: r.synergyOverall ?? 0, build: r.buildScore ?? 0, short: gapsOf(r) };
       },
     });
     page.packages = pk.packages;

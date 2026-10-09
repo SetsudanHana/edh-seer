@@ -3,6 +3,7 @@
  *  precon seat does not know "Game Changer" unexplained, so the one place it is named says what it is. */
 import { TARGET_LABEL, type BracketTarget, type UpgradePackage, type UpgradeSectionId, type UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import type { PreconPage } from "./precon-page.js";
+import { scoreBand } from "./score-band.js";
 
 export const SECTION_TITLE: Record<UpgradeSectionId, string> = {
   lands: "Lands", ramp: "Ramp", consistency: "Card draw", interaction: "Removal and protection",
@@ -44,20 +45,55 @@ export function startsAbove(p: UpgradePackage): string {
   return `It starts at bracket ${p.from.replace("-", "–")}, so the first ${n === 1 ? "swap brings" : `${n} swaps bring`} it down.`;
 }
 
-/** THE ANSWER TO "WOULD I KEEP UP?" THE PAGE CAN GIVE (persona re-run 2026-09-30): the bracket the deck
- *  still fits, and what the swaps do to its synergy score, as the report reads the swapped list. */
-export function afterLine(p: UpgradePackage, before: number | null): string {
+/** THE BRACKET THE DECK STILL FITS, as the report reads the swapped list. What the swaps do to the
+ *  deck's synergy and consistency is `whatTheSwapsDo`, so the figure is said once. */
+export function afterLine(p: UpgradePackage): string {
   const n = swapsOf(p).length;
   // THE BAND THE REPORT READS THE SWAPPED DECK AT, not the target: a target-4 package only has to fit
   // "any band", and 102 of 197 shipped ones end at 3 or 1-2 (#991 review).
   const head = p.after
     ? `${n} ${n === 1 ? "swap" : "swaps"}, and after them the report reads the deck at bracket ${p.after.band.replace("-", "–")}`
     : `${n} ${n === 1 ? "swap" : "swaps"}, and after them the deck still fits bracket ${TARGET_LABEL[p.target]}`;
-  const s = p.after?.synergy;
-  if (s === undefined || before === null) return `${head}.`;
-  const from = before.toFixed(1);
-  const to = s.toFixed(1);
-  return to === from ? `${head}, and its synergy score stays at ${from} of 5.` : `${head}, and its synergy score goes from ${from} to ${to} of 5.`;
+  return `${head}.`;
+}
+
+/** WHAT THE SWAPS DO TO THE DECK, IN WORDS (#893, owner ruling 2026-10-06: edhseer is not a power-level
+ *  site; it judges consistency and synergy, either of which a swap set can move either way). Two
+ *  figures, each with the report's own band words: synergy, and consistency = the Build score, with
+ *  the shortfalls the swaps close or leave. Never a power word. A package from before `build` was
+ *  recorded says nothing about Build rather than make it up. "" when there is nothing to compare. */
+export function whatTheSwapsDo(p: UpgradePackage, page: Pick<PreconPage, "synergy" | "build" | "gaps">): string {
+  const a = p.after;
+  if (!a) return "";
+  const parts: string[] = [];
+  const one = (n: number) => n.toFixed(1);
+  const size = (d: number) => (Math.abs(d) < 0.5 ? "a little " : "");
+  const bandOf = (n: number, kind: "synergy" | "build") => scoreBand(n, kind).label.toLowerCase();
+
+  if (page.synergy && a.synergy !== undefined) {
+    const from = page.synergy.score, to = a.synergy;
+    const [f, t] = [bandOf(from, "synergy"), bandOf(to, "synergy")];
+    if (one(from) === one(to)) parts.push(`Its cards work together as before: synergy stays at ${one(to)} of 5, ${t}.`);
+    else parts.push(`Its cards work together ${size(to - from)}${to > from ? "more" : "less"}: synergy ${one(from)} → ${one(to)} of 5, ${f === t ? `still ${t}` : `from ${f} to ${t}`}.`);
+  }
+
+  if (page.build && a.build !== undefined) {
+    const from = page.build.score, to = a.build;
+    const [f, t] = [bandOf(from, "build"), bandOf(to, "build")];
+    const head = one(from) === one(to)
+      ? `Its consistency is unchanged: Build stays at ${one(to)} of 5, ${t}`
+      : `It is ${size(to - from)}${to > from ? "more" : "less"} consistent: Build ${one(from)} → ${one(to)} of 5, ${f === t ? `still ${t}` : `from ${f} to ${t}`}`;
+    // THE SHORTFALLS, before and after, by the group names the gaps line already uses.
+    const now = a.short ?? [];
+    const label = (g: string) => g.toLowerCase();
+    const closed = page.gaps.filter((g) => !now.some((n) => n.group === g.group)).map((g) => `no longer short on ${label(g.group)}`);
+    const left = now.filter((n) => page.gaps.some((g) => g.group === n.group)).map((n) => `still ${n.target - n.have} short on ${label(n.group)}`);
+    const fresh = now.filter((n) => !page.gaps.some((g) => g.group === n.group)).map((n) => `now ${n.target - n.have} short on ${label(n.group)}`);
+    const gaps = a.short ? [...closed, ...left, ...fresh] : [];
+    parts.push(`${head}${gaps.length ? `; ${gaps.join(", ")}` : ""}.`);
+  }
+
+  return parts.length ? `${parts.join(" ")} That is what this page measures: how well the deck holds together, not how strong it is.` : "";
 }
 
 /** THE SAME SWAPS AS THE BRACKET BELOW, said, so a reader who switches up does not think the page
