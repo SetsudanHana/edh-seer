@@ -11,7 +11,7 @@ import { offThemeSplit } from "../../packages/web/client/src/lib/off-theme.js";
 
 /** "FITS NO THEME", MEASURED (#1085). For the calibration decks plus the first-cuts seat's Krenko
  *  108: the cards the line offered before (every off-theme card) and how many of them fill a role at
- *  or under its target, or are removal or protection (`held`, no longer offered). Mirrors
+ *  or under its target, or are interaction or protection (`held`, no longer offered). Mirrors
  *  `ReportChapters`' own derivation of the list.
  *
  *    STATIC=https://edhseer.cards/static npx tsx research/web/off-theme-census.ts
@@ -36,4 +36,4 @@ for (const file of files) {
   decks++; offered += offTheme.length; held += split.held.length; if (split.held.length) decksWithHeld++;
   if (file.includes("first-deck-108")) console.log(`krenko-108: before ${offTheme.join(", ")} | free ${split.free.join(", ") || "-"} | held ${split.held.join(", ")}`);
 }
-console.log(`${decks} decks: ${offered} off-theme cards offered before; ${held} of them held (role at/under target, or removal/protection) in ${decksWithHeld} decks; ${offered - held} still offered`);
+console.log(`${decks} decks: ${offered} off-theme cards offered before; ${held} of them held (role at/under target, or interaction/protection) in ${decksWithHeld} decks; ${offered - held} still offered`);
