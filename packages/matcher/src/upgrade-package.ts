@@ -9,6 +9,10 @@
 import type { DeckBracket } from "./brackets.js";
 
 export type BracketTarget = 2 | 3 | 4;
+/** THE ONE BRACKET LABEL SET, the report's (#991). A target is the band the package keeps the deck
+ *  inside: `bandFits` below reads target 2 as band 1-2, 3 as band 3 or lower, 4 as any band. Display
+ *  only: the `BracketTarget` numbers stay as data. */
+export const TARGET_LABEL: Record<BracketTarget, string> = { 2: "1–2", 3: "3", 4: "4–5" };
 export const BRACKET_TARGETS: readonly BracketTarget[] = [2, 3, 4];
 
 export type UpgradeSectionId = "lands" | "ramp" | "consistency" | "interaction" | "wipes" | "synergy";

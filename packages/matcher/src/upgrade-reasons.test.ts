@@ -31,7 +31,7 @@ test("draw reasons count the cards, and card search is said in player words", ()
 
 test("a bring-down cut says what the bracket allows, and explains the Game Changer list", () => {
   expect(bringDownReason({ name: "Smothering Tithe", why: { kind: "game-changer", limit: 0, count: 1 } }, 2))
-    .toBe("Smothering Tithe is on the official Game Changer list, which raises a deck's bracket; bracket 2 allows none, and this deck has 1.");
+    .toBe("Smothering Tithe is on the official Game Changer list, which raises a deck's bracket; bracket 1–2 allows none, and this deck has 1.");
   expect(bringDownReason({ name: "Isochron Scepter", why: { kind: "combo", with: ["Dramatic Reversal"], result: "Infinite mana" } }, 3))
     .toBe("With Dramatic Reversal, Isochron Scepter makes an infinite combo, which bracket 3 doesn't allow.");
 });

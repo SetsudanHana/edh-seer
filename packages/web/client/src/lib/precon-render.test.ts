@@ -46,7 +46,7 @@ test("a precon page is served with its own head, its crawler block and its recor
   expect(html).toContain(`data-slug="${preconDataSlug(page.slug)}"`);
   expect(html).toContain('<a href="/precons/draconic-dissent-baldurs-gate">Draconic Dissent</a>');
   // The package is there, by bracket and section, and the engine's sentence is escaped, never markup.
-  expect(html).toContain("<h2>Upgrades at bracket 2</h2>");
+  expect(html).toContain("<h2>Upgrades at bracket 1–2</h2>");
   expect(html).toContain("<h3>Cards that work together</h3>");
   expect(html).toContain('Take out Stick Together: Stick Together works with 13 cards in this deck. Put in <a href="/cards/pious-evangel">Pious Evangel</a>: Pious Evangel &lt;b&gt;gains&lt;/b&gt; life');
   expect(html).toContain("No swaps bring this deck to bracket 3");

@@ -17,7 +17,7 @@ import { useIsNarrow } from "../lib/use-narrow.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { MapKey } from "./MapKey.js";
 import { UpgradePackages } from "./UpgradePackages.js";
-import { defaultTarget, swapsOf } from "../lib/precon-upgrades.js";
+import { defaultTarget, heroUpgradesLine, REPORT_DIFFERS, swapsOf } from "../lib/precon-upgrades.js";
 
 import { Arrow } from "./icons.js";
 import { Breadcrumb } from "./Breadcrumb.js";
@@ -109,12 +109,13 @@ function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord[
           <p className="max-w-[60ch] text-lg">
             {/* SAID AS WHAT IT IS: an engine that reads no link is not a deck with none (Yidris, Zedruu). */}
             {p.commanderLinks > 0 ? `${p.commanders[0]} works with ${p.commanderLinks} of its cards.` : `No card in it links to ${p.commanders[0]} in a way the engine reads yet.`}
-            {upgrades ? ` ${spell(upgrades)} swaps below upgrade it, at the bracket you play at.` : ""}
+            {upgrades && opening ? ` ${heroUpgradesLine(spell(upgrades), upgrades, opening)}` : ""}
           </p>
           <div className="flex flex-wrap gap-2">
             {upgrades ? <a href="#upgrades" className="btn-primary gap-1.5">See the upgrades <Arrow dir="down" /></a> : null}
             {p.report ? <a href={p.report} className="btn-secondary">Open the full report</a> : null}
           </div>
+          {upgrades && p.report ? <p className="max-w-[60ch] text-sm text-(--muted)">{REPORT_DIFFERS}</p> : null}
         </div>
         <div className="min-w-0 w-full justify-self-center lg:max-w-[calc(55svh*1.2222)] min-[100rem]:max-w-[calc(55svh*1.7778)]">
           <PreconMap data={data} commanders={p.commanders} />
