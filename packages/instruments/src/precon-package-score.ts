@@ -38,7 +38,8 @@ if (!preconsDir && !arg("--pages")) {
   console.error("manifest.json has no `precons` pointer: no precon pages built (run build-precons.mts), or pass --pages.");
   process.exit(1);
 }
-const pagesDir = arg("--pages", remote ? `${baseUrl}/${version}/precons/${preconsDir}` : join(source, version, "precons", preconsDir!))!;
+// The default only once the guard has passed: `join` throws on an absent pointer even when `--pages` is given.
+const pagesDir = arg("--pages") ?? (remote ? `${baseUrl}/${version}/precons/${preconsDir}` : join(source, version, "precons", preconsDir!));
 /** A page by slug, from a directory or from a deployed site. */
 async function readPage(slug: string): Promise<Page | null> {
   if (/^https?:\/\//.test(pagesDir)) {
