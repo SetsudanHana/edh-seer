@@ -7,7 +7,7 @@ const row = (turn: number, p25: number, median: number, p75: number) =>
 const rows = [row(1, 1, 1, 1), row(2, 2, 2, 3), row(3, 2, 3, 4), row(4, 3, 4, 6), row(5, 4, 5, 7), row(6, 5, 6, 8), row(7, 6, 7, 9), row(8, 6, 8, 10)];
 
 type DrainSpeed = { turn?: number; perTurn: number[]; cards: string[]; unbounded: string[] };
-function deck(wincons: { class: string; cards?: string[]; drain?: { cards: number; life: number } }[], clock?: number, combos: { cards: string[]; result: string }[] = [], drain?: DrainSpeed, table?: number) {
+function deck(wincons: { class: string; cards?: string[]; drain?: { cards: number; life: number } }[], clock?: number, combos: { cards: string[]; result: string; payoffs?: { name: string; on: string[]; effect: string }[] }[] = [], drain?: DrainSpeed, table?: number) {
   return {
     combos,
     manaAvailability: { trials: 2000, accelerants: 10, rows, headline: { mana: 6, turn: 6, low: 0.4, high: 0.6 } },
@@ -26,7 +26,7 @@ test("every win route gets a line, and combat is only one of them", () => {
   const routes = speedRoutes(deck(
     [{ class: "go-wide", cards: ["Goblin Rabblemaster"] }, { class: "burn", cards: ["Impact Tremors"] }, { class: "alt-win", cards: ["Simic Ascendancy"] }],
     7,
-    [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB" }, { cards: ["Sol Ring", "Arcane Signet"], result: "Mana" }],
+    [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB", payoffs: [{ name: "Impact Tremors", on: ["Dualcaster Mage"], effect: "damage" }] }, { cards: ["Sol Ring", "Arcane Signet"], result: "Mana" }],
     undefined, 11,
   ), (n) => mv[n]);
   expect(routes.map((r) => r.kind)).toEqual(["combo", "alt-win", "combat", "burn"]);
@@ -142,4 +142,51 @@ test("the combat route carries the fast and slow quarters of the simulated games
   const [slow] = speedRoutes(r, () => undefined);
   expect(slow!.turn).toBeUndefined();
   expect(slow!.caveat).toBe("not timed: most of our test games never deal 120 by turn 20, though the fastest quarter do by turn 18");
+});
+
+/** A COMBO IS TIMED ONLY IF IT KILLS (#1084): twelve of 27 decks led "How you win" with a loop nothing
+ *  in the deck turns into a win. */
+const pay = [{ name: "Impact Tremors", on: ["A"], effect: "damage" }];
+const comboMv: Record<string, number> = { A: 1, B: 1, C: 3, D: 3, Big1: 6, Big2: 6 };
+const mvOf = (n: string) => comboMv[n];
+
+test("the combo route times the cheapest combo that kills, not the cheapest combo", () => {
+  const routes = speedRoutes(deck([], undefined, [
+    { cards: ["A", "B"], result: "Infinite lifegain" },
+    { cards: ["C", "D"], result: "Infinite ETB", payoffs: pay },
+  ]), mvOf);
+  expect(routes[0]).toMatchObject({ kind: "combo", label: "a combo: C + D", mana: 6, turn: 6 });
+  expect(routes[0]!.needsFinisher).toBeUndefined();
+});
+
+test("a deck whose only combos kill nothing lists the route with no turn, and it never leads", () => {
+  const routes = speedRoutes(deck([], undefined, [{ cards: ["A", "B"], result: "Infinite lifegain, Infinite turns" }]), mvOf);
+  expect(routes).toHaveLength(1);
+  expect(routes[0]).toMatchObject({ kind: "combo", label: "a combo: A + B", needsFinisher: true, caveat: "the loop needs a finisher: no card here was found to turn what it repeats into a win" });
+  expect(routes[0]!.turn).toBeUndefined();
+  expect(fastestRoute(routes)).toBeUndefined();
+});
+
+test("a payoff-less combo that wins by itself is timed and names the phrase", () => {
+  const routes = speedRoutes(deck([], undefined, [{ cards: ["A", "B"], result: "Infinite mana, Infinite damage" }]), mvOf);
+  expect(routes[0]).toMatchObject({ turn: 2, winsBy: "Infinite damage" });
+  expect(routes[0]!.needsFinisher).toBeUndefined();
+  expect(fastestRoute(routes)?.kind).toBe("combo");
+});
+
+test("a killing combo past the simulated rows is untimed and says what it costs", () => {
+  const routes = speedRoutes(deck([], undefined, [{ cards: ["Big1", "Big2"], result: "Infinite mana, Win the game" }]), mvOf);
+  expect(routes[0]!.turn).toBeUndefined();
+  expect(routes[0]!.needsFinisher).toBeUndefined();
+  expect(routes[0]!.caveat).toBe("not timed: its pieces cost 12 mana together, which half our test games have not reached by turn 8");
+});
+
+test("a win-the-game combo with no \"infinite\" in its result is a candidate, and beats a no-kill loop", () => {
+  const m: Record<string, number> = { "Demonic Consultation": 1, "Thassa's Oracle": 2, A: 1, B: 1 };
+  const routes = speedRoutes(deck([], undefined, [
+    { cards: ["A", "B"], result: "Infinite lifegain" },
+    { cards: ["Demonic Consultation", "Thassa's Oracle"], result: "Exile your library, Win the game" },
+  ]), (n) => m[n]);
+  expect(routes[0]).toMatchObject({ label: "a combo: Demonic Consultation + Thassa's Oracle", mana: 3, turn: 3, winsBy: "Win the game" });
+  expect(routes[0]!.needsFinisher).toBeUndefined();
 });

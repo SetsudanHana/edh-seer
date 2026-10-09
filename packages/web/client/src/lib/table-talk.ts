@@ -1,3 +1,4 @@
+import { comboWinsItself } from "@edh-seer/matcher/brackets";
 import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
 import type { CardGraph, DeckReport } from "../types.js";
 import { infiniteCombos } from "./bracket-why.js";
@@ -50,8 +51,10 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
   const cheap = combos.find((c) => c.cheap);
   // WHAT KILLS (#1034): "an infinite combo that needs 3 cards" left the phone seat asking whether it
   // wins by itself; the report's own payoffs (`combo.payoffs`) answer it.
-  const kill = (c: { payoffs?: { name: string }[] }, joiner: "that" | "and") => (c.payoffs?.length
+  const kill = (c: { payoffs?: { name: string }[]; result: string }, joiner: "that" | "and") => (c.payoffs?.length
     ? ` ${joiner} wins through ${list(c.payoffs.map((x) => front(x.name)))}`
+    // A loop whose result is the kill (Infinite damage) needs nothing else (#1084).
+    : comboWinsItself(c.result) ? ` ${joiner} wins by itself`
     // "needs 3 cards (…) and needs another card" said "needs" twice for two different things.
     : joiner === "and" ? " and another card to win" : " that needs another card to win");
   if (cheap) why.push(`a cheap two-card combo (${cheap.cards.map(front).join(" + ")})${kill(cheap, "that")}`);
@@ -64,7 +67,16 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
   const classes = report.deckMath?.wincons.classes ?? [];
   const primary = classes[0];
   const second = classes[1];
-  const fastest = fastestRoute(speedRoutes(report, manaValueOf));
+  const routes = speedRoutes(report, manaValueOf);
+  const fastest = fastestRoute(routes);
+  // A COMBO THAT KILLS BUT IS NOT TIMED (#1084): its pieces cost more mana than the simulated games
+  // reach. Saying only another route's turn would read as "the combo is slower than that".
+  const timedCombo = routes.find((r) => r.kind === "combo" && r.turn !== undefined);
+  const bracketCombo = cheap ?? allowed;
+  // The bracket sentence may name a different loop (a cheap one nothing wins with): say which one is timed.
+  const slowCombo = routes.find((r) => r.kind === "combo" && !r.needsFinisher && r.turn === undefined && r.mana !== undefined);
+  const namedIfOther = (r: { cards: string[] } | undefined) => r && (!bracketCombo || bracketCombo.cards.join() !== r.cards.join()) ? ` (${r.cards.map(front).join(" + ")})` : "";
+  const whichCombo = namedIfOther(timedCombo);
   // "MOSTLY" ONLY WHEN THE DECK LEANS (persona round 2026-09-27: "It wins mostly by …" beside How
   // you win's "Spread about evenly across 4 plans"). The lean test is the one `WinPlans` prints.
   const focus = report.deckMath?.wincons.focus ?? 1;
@@ -75,11 +87,14 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
       ? `It wins mostly by ${phrase(primary)}${second ? `, or ${phrase(second)}` : ""}`
       : `It spreads its wins across ${classes.length} plans: ${list([...classes.slice(0, 3).map(phrase), ...(classes.length > 3 ? [`${classes.length - 3} more`] : [])])}`)
       + (fastest?.turn === undefined ? ""
-        : fastest.kind === "combo" ? `, and can combo as early as turn ${fastest.turn}`
+        : fastest.kind === "combo" ? `, and can combo as early as turn ${fastest.turn}${whichCombo}`
         // THE WHOLE TABLE (#1056): every timed route is now the turn all three opponents can be dead.
         : fastest.kind === "mill" ? `, and can mill the table out around turn ${fastest.turn}`
         : fastest.kind === "poison" ? `, and can poison the table out around turn ${fastest.turn}`
         : `, and its ${fastest.kind === "burn" ? "drains" : fastest.kind === "commander" ? "commander" : "creatures"} can kill the table around turn ${fastest.turn}`)
+      + (slowCombo && fastest?.kind !== "combo"
+        ? (fastest?.turn !== undefined ? "; the combo's own speed is not timed" : ", and the combo's speed is not timed") + namedIfOther(slowCombo) + `: its pieces cost ${slowCombo.mana} mana together`
+        : "")
       + "."
     : undefined;
 

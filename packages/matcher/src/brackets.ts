@@ -28,6 +28,24 @@ const INFINITE = /\binfinite\b/i;
  *  and the band can never disagree. */
 export const isInfiniteCombo = (result: string | undefined): boolean => INFINITE.test(result ?? "");
 
+/** Which combos KILL THE TABLE with no card beyond the loop (owner ruling 2026-10-06: a route's speed
+ *  is the turn all three opponents can be dead; 2026-09-29: a loop's payoff is its win condition).
+ *  Read off Commander Spellbook's comma-separated RESULT phrases, whole-phrase, so a phrase that
+ *  kills ONE opponent ("Infinite damage to one opponent", "Target opponent loses the game") or kills
+ *  you too ("Infinite damage to all players", "Infinite self-mill") does not count. Corpus counts of
+ *  the result phrases (static-out shards): Infinite damage 9,547, Win the game 909, Each opponent
+ *  loses the game 693.
+ *  CEILING: "Infinite turns" is not a kill by itself (it needs something to do with the turns) and is
+ *  left out, though a deck that attacks each of them may well win; it reads as needing a finisher. */
+// Forced draw: a player who draws from an empty library loses (CR 704.5b). "for any number of players"
+// is the player's own choice of who, so it can leave them out; "for all players" / "for each player"
+// kills them too and is not here.
+// CEILING: "any number of players" is read as "you may leave yourself out" and "opponents" as all of
+// them; a phrase with a tail ("opponents that control a Wedding Ring") is not matched.
+const SELF_WINNING = /^(?:win the game\b.*|each opponent loses the game\b.*|(?:near-)?infinite damage|(?:near-)?infinite combat damage|(?:near-)?infinite lifeloss|(?:near-)?infinite mill|(?:near-)?infinite card draw for (?:each opponent|opponents|any number of opponents|any number of players))$/;
+export const comboWinsItself = (result: string | undefined): boolean =>
+  (result ?? "").split(",").some((p) => SELF_WINNING.test(p.trim().toLowerCase()));
+
 /** Every piece a combo needs: its named cards plus the unnamed ones it requires (#568). */
 export const comboPieces = (c: { cards: readonly string[]; requires?: readonly string[] }): number =>
   c.cards.length + (c.requires?.length ?? 0);

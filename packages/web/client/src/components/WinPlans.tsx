@@ -86,7 +86,7 @@ function Tile({ plan, route, picked, onPick }: { plan: Wincons["classes"][number
           ? <span className="text-xs text-(--muted)">wins on its own condition</span>
           // AN UNTIMED ROUTE SAYS WHY ON ITS FACE (persona round 2026-09-29, four seats): "no turn
           // estimate" read as a hole, where it is a limit the report states.
-          : <span className="stat-num text-lg leading-none">{route?.turn !== undefined ? `turn ${route.turn}` : <span className="text-xs text-(--muted)">speed not modelled</span>}</span>
+          : <span className="stat-num text-lg leading-none">{route?.turn !== undefined ? `turn ${route.turn}` : <span className="text-xs text-(--muted)">{route?.needsFinisher ? "needs a finisher" : "speed not modelled"}</span>}</span>
       ) : null}
       <span className="text-xs stat-num text-(--muted)">{plural(plan.count, "card")}</span>
     </>
@@ -128,12 +128,14 @@ function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][num
         <p className="text-sm">
           {/* A LOOP GOES INFINITE; ITS PAYOFF WINS (persona round 2026-09-29). "Can win" beside "no card
             *  here turns the loop into a win" said both. */}
-          {route.kind === "combo" ? "Can go infinite" : "Can win"} around <b>turn {route.turn}</b>{spread}
+          {route.kind === "combo" && route.infinite !== false ? "Can go infinite" : "Can win"} around <b>turn {route.turn}</b>{spread}
           {route.kind === "combo" ? <>, with {route.cards.join(" + ")}</> : null}
           {pressure !== undefined ? <span className="text-(--muted)">; about {Math.round(pressure)} power of creatures in play by turn 5</span> : null}.
         </p>
       ) : route ? <p className="text-xs text-(--muted)">No turn: {route.caveat}.</p> : null}
-      {wins.length ? <Names lead="Turns it into a win" names={wins} art={art} /> : route?.kind === "combo" ? (
+      {wins.length ? <Names lead="Turns it into a win" names={wins} art={art} /> : route?.kind === "combo" && route.winsBy ? (
+        <p className="text-sm">The loop wins by itself: {route.winsBy}.</p>
+      ) : route?.kind === "combo" && !route.needsFinisher ? (
         <p className="text-xs text-(--muted)">No card here was found that turns what the loop repeats into a win.</p>
       ) : null}
       {setup.length ? <Names lead={wins.length ? (plan.class === "combo" ? "The loop" : "Makes the board") : undefined} names={setup} art={art} /> : null}

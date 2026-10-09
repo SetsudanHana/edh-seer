@@ -91,3 +91,34 @@ test("a combat plan shows the turn its fast and slow games get there", () => {
   render(<WinPlans wincons={WINCONS} routes={routes} />);
   expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Can win around turn 16 (turn 14 in fast games, turn 17 in slow ones)");
 });
+
+/** A LOOP THAT NOTHING WINS WITH IS NOT TIMED (#1084): its tile says so, and a loop that wins by
+ *  itself is not told it has no win. */
+test("a combo no card here finishes says it needs a finisher, not that its speed is unmodelled", () => {
+  const wincons = { focus: 0.5, primary: "combo", classes: [{ class: "combo", count: 2, share: 1, cards: ["A", "B"] }] } as never;
+  const routes = [{ kind: "combo", label: "a combo: A + B", cards: ["A", "B"], needsFinisher: true, caveat: "the loop needs a finisher: no card here was found to turn what it repeats into a win" }] as never;
+  render(<WinPlans wincons={wincons} routes={routes} />);
+  expect(screen.getByTestId("win-plan")).toHaveTextContent("needs a finisher");
+  expect(screen.getByTestId("win-plan")).not.toHaveTextContent("speed not modelled");
+  // The caveat already says so; the detail does not print the "No card here was found" line as well.
+  expect(screen.getByTestId("win-plan-detail")).not.toHaveTextContent("No card here was found that turns");
+});
+
+test("a combo that wins by itself says so, naming the result, and is not told it has no win", () => {
+  const wincons = { focus: 0.5, primary: "combo", classes: [{ class: "combo", count: 2, share: 1, cards: ["A", "B"] }] } as never;
+  const routes = [{ kind: "combo", label: "a combo: A + B", turn: 4, mana: 2, cards: ["A", "B"], winsBy: "Infinite damage", caveat: "x" }] as never;
+  render(<WinPlans wincons={wincons} routes={routes} />);
+  const d = screen.getByTestId("win-plan-detail");
+  expect(d).toHaveTextContent("The loop wins by itself: Infinite damage.");
+  expect(d).not.toHaveTextContent("No card here was found");
+  expect(d).toHaveTextContent("Can go infinite around turn 4");
+});
+
+test("a timed combo whose result is not a loop says it can win, not go infinite", () => {
+  const wincons = { focus: 0.5, primary: "combo", classes: [{ class: "combo", count: 2, share: 1, cards: ["Demonic Consultation", "Thassa's Oracle"] }] } as never;
+  const routes = [{ kind: "combo", label: "a combo: Demonic Consultation + Thassa's Oracle", turn: 3, early: 3, late: 3, mana: 3, cards: ["Demonic Consultation", "Thassa's Oracle"], winsBy: "Win the game", infinite: false, caveat: "x" }] as never;
+  render(<WinPlans wincons={wincons} routes={routes} />);
+  const d = screen.getByTestId("win-plan-detail");
+  expect(d).toHaveTextContent("Can win around turn 3, with Demonic Consultation + Thassa's Oracle");
+  expect(d).not.toHaveTextContent("Can go infinite");
+});

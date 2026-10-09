@@ -1,5 +1,5 @@
 import type { DeckReport } from "../types.js";
-import { infiniteCombos } from "./bracket-why.js";
+import { comboWinsItself, isInfiniteCombo } from "@edh-seer/matcher/brackets";
 
 /** HOW FAST THE DECK CAN WIN, BY EVERY ROUTE IT HAS (owner, 2026-09-26: "we should be able to assess
  *  deck speed", and "remember that combat is not the only way to win"). The report timed one route:
@@ -9,8 +9,10 @@ import { infiniteCombos } from "./bracket-why.js";
  *
  *  So each win route the report already found gets its own line, and each says exactly what it
  *  measures:
- *  - combo: the turn the deck has the MANA for its cheapest infinite combo (from the goldfish's own
- *    mana-by-turn rows), which is a floor: drawing both pieces is not counted;
+ *  - combo: the turn the deck has the MANA for its cheapest infinite combo THAT KILLS (it has a payoff
+ *    card, or its result wins by itself: `comboWinsItself`), from the goldfish's own mana-by-turn rows,
+ *    which is a floor: drawing both pieces is not counted. A loop nothing turns into a win is listed
+ *    with no turn and `needsFinisher`, and never leads;
  *  - alternate win: the turn it can cast its cheapest alt-win card, before that card's condition;
  *  - combat (go-wide, big creatures, one big creature): the turn the board has dealt 120, all three
  *    opponents (#1056 R1, `deckMath.speed.combat`) -- not the one-opponent clock;
@@ -37,6 +39,12 @@ export interface SpeedRoute {
   card?: string;
   /** A combo's payoffs: the deck's cards that turn what the loop repeats into a win. */
   payoffs?: string[];
+  /** A combo route whose loop nothing in the deck turns into a win: listed, never timed. */
+  needsFinisher?: boolean;
+  /** False when the combo's result is not a loop ("Win the game" alone): it wins, it does not go infinite. */
+  infinite?: boolean;
+  /** A combo that wins by itself with no payoff card: the Commander Spellbook result phrase that says so. */
+  winsBy?: string;
   /** What the number does and does not count. */
   caveat: string;
 }
@@ -70,14 +78,32 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   const has = (cls: string) => classes.some((c) => c.class === cls);
   const routes: SpeedRoute[] = [];
 
-  const combos = infiniteCombos(report.combos, manaValueOf);
-  const cheapest = [...combos].sort((a, b) => a.manaValue - b.manaValue)[0];
+  // CANDIDATES ARE WIDER THAN `infiniteCombos` (which the bracket reads): "Exile your library, Win the
+  // game" (Demonic Consultation + Thassa's Oracle) says nothing infinite and is the surest kill there is.
+  const byCost = (report.combos ?? [])
+    .filter((c) => isInfiniteCombo(c.result) || comboWinsItself(c.result))
+    .map((c) => ({ ...c, manaValue: c.cards.reduce((t, n) => t + (manaValueOf(n) ?? 0), 0) }))
+    .sort((a, b) => a.manaValue - b.manaValue || a.cards.join().localeCompare(b.cards.join()));
+  // A combo KILLS when a card here turns its loop into a win, or its result wins by itself.
+  const cheapest = byCost.find((c) => c.payoffs?.length || comboWinsItself(c.result));
   if (cheapest) {
+    const timing = manaTurn(rows, cheapest.manaValue);
+    const lastTurn = rows?.at(-1)?.turn;
+    const phrase = cheapest.payoffs?.length ? undefined : cheapest.result.split(",").map((x) => x.trim()).find((x) => comboWinsItself(x));
     routes.push({
       kind: "combo", label: `a combo: ${cheapest.cards.join(" + ")}`, mana: cheapest.manaValue,
-      ...manaTurn(rows, cheapest.manaValue), cards: cheapest.cards,
+      ...timing, cards: cheapest.cards,
       ...(cheapest.payoffs?.length ? { payoffs: cheapest.payoffs.map((p) => p.name) } : {}),
-      caveat: "when the deck has the mana for both pieces; drawing or finding them is not counted, so this is the earliest it can happen, not a typical kill",
+      ...(phrase ? { winsBy: phrase } : {}),
+      infinite: isInfiniteCombo(cheapest.result),
+      caveat: timing.turn !== undefined
+        ? "when the deck has the mana for both pieces; drawing or finding them is not counted, so this is the earliest it can happen, not a typical kill"
+        : `not timed: its pieces cost ${cheapest.manaValue} mana together, which half our test games have not reached${lastTurn !== undefined ? ` by turn ${lastTurn}` : ""}`,
+    });
+  } else if (byCost[0]) {
+    routes.push({
+      kind: "combo", label: `a combo: ${byCost[0].cards.join(" + ")}`, cards: byCost[0].cards, needsFinisher: true,
+      caveat: "the loop needs a finisher: no card here was found to turn what it repeats into a win",
     });
   }
 

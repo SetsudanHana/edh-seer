@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { comboWinsItself } from "@edh-seer/matcher/brackets";
 import { CardName, useCardDrawer } from "./card-drawer.js";
 
 /** Results a loop leads with; the rest are counted. */
@@ -29,6 +30,8 @@ export function ComboLoop({ cards, result, manaValue, cheap, artOf, wins }: {
   const ax = cx + Math.cos(t0) * R, ay = cy + Math.sin(t0) * R;
   const deg = (t0 * 180) / Math.PI + 90;
   const results = result.split(", ").filter(Boolean);
+  // A loop whose result is the kill needs no payoff card (#1084).
+  const selfWin = results.find((x) => comboWinsItself(x));
   return (
     <li data-testid="bracket-combo" className="flex items-center gap-3 rounded-(--radius) border border-(--separator) p-2">
       <svg viewBox={`0 0 ${W} ${W}`} width={W} height={W} className="shrink-0" aria-hidden="true">
@@ -57,6 +60,7 @@ export function ComboLoop({ cards, result, manaValue, cheap, artOf, wins }: {
         {/* WHAT KILLS (#1034): the row said what repeats and never what turns it into a win. */}
         {wins ? (wins.length
           ? <span className="text-xs">Wins through {wins.map((n, i) => <span key={n}>{i === 0 ? "" : i === wins.length - 1 ? " and " : ", "}<CardName name={n} /></span>)}</span>
+          : selfWin ? <span className="text-xs">Wins by itself: {selfWin}</span>
           : <span className="text-xs text-(--muted)">No card here turns it into a win</span>) : null}
         <span className="flex flex-wrap items-baseline gap-x-2 text-xs">
           <span className="stat-num text-(--muted)">{manaValue} mana together</span>

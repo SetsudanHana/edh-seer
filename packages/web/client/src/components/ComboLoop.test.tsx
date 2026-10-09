@@ -26,3 +26,9 @@ test("a combo row names what wins through it, or says nothing here does", () => 
   render(<ul><ComboLoop cards={["A", "B"]} result="Infinite ETB" manaValue={4} cheap wins={[]} /></ul>);
   expect(screen.getByTestId("bracket-combo")).toHaveTextContent("No card here turns it into a win");
 });
+
+test("a combo row whose result is the kill says it wins by itself, not that nothing wins", () => {
+  render(<ul><ComboLoop cards={["A", "B"]} result="Infinite mana, Infinite damage" manaValue={4} cheap wins={[]} /></ul>);
+  expect(screen.getByTestId("bracket-combo")).toHaveTextContent("Wins by itself: Infinite damage");
+  expect(screen.getByTestId("bracket-combo")).not.toHaveTextContent("No card here");
+});

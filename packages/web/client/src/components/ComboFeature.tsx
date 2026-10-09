@@ -1,5 +1,6 @@
 import { useId, useState } from "react";
 import { menuExtras } from "./pop-menu.js";
+import { comboWinsItself } from "@edh-seer/matcher/brackets";
 import type { EngineCard, EngineModel, Link } from "../lib/engine-model.js";
 import { displayName } from "../lib/engine-model.js";
 import { CardName, ReasonText, useCardDrawer } from "./card-drawer.js";
@@ -71,6 +72,8 @@ export function ComboFeature({ parts, result, manaValue, cheap, wins }: {
   });
   const payAt = payoffs.map((_, i) => ({ x: (W / (payoffs.length + 1)) * (i + 1), y: H - 62 }));
   const results = result.split(", ").filter(Boolean);
+  // A loop whose result is the kill needs no payoff card (#1084).
+  const selfWin = results.find((x) => comboWinsItself(x));
   const openable = (c: EngineCard) => (known.has(c.name) ? c.name : known.has(c.physical) ? c.physical : null);
   const disc = (c: EngineCard, x: number, y: number, rad: number, key: string, ring: string) => {
     const name = openable(c);
@@ -122,6 +125,8 @@ export function ComboFeature({ parts, result, manaValue, cheap, wins }: {
         {/* WHAT KILLS (#1034): "what it repeats" never said which card turns the loop into a win. */}
         {wins?.length ? (
           <p>Wins through {wins.map((n, i) => <span key={n}>{i === 0 ? "" : i === wins.length - 1 ? " and " : ", "}<CardName name={n} /></span>)}</p>
+        ) : wins && selfWin ? (
+          <p>The loop wins by itself: {selfWin}.</p>
         ) : wins ? (
           <p className="text-(--muted)">No card here was found that turns what the loop repeats into a win.</p>
         ) : null}
