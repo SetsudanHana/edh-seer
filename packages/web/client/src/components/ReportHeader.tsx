@@ -6,6 +6,7 @@ import { scoreState } from "../lib/deck-gauge.js";
 import { TONE_TEXT } from "./Dial.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { findings } from "../lib/findings.js";
+import { shortRoles, type ShortRole } from "../lib/verdict.js";
 import { useAdded } from "./card-drawer.js";
 import { SurfaceLink } from "./ReportShell.js";
 import { identityKey } from "../lib/color-identity.js";
@@ -110,7 +111,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
           // `buildScore` counts roles off printed text, which an unread card still has, so it keeps
           // its band where synergy loses its own. The split is the gate's, not a new one.
           <HeaderScore
-            name="Build" value={report.buildScore} kind="build"
+            name="Build" value={report.buildScore} kind="build" gaps={shortRoles(report).filter((g) => g.short > 0)}
             delta={diff?.build ? signed(diff.build.from, diff.build.to) : undefined}
           />
         ) : null}
@@ -189,7 +190,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
 /** One score, one line: the name, the number and the word `scoreState` gives it. The tone colour is
  *  `Dial`'s own `TONE_TEXT` map rather than a second table, so the header and the dial two screens
  *  down cannot come to disagree about what 3.4 is called. */
-function HeaderScore({ name, value, partial, delta, kind }: {
+function HeaderScore({ name, value, partial, delta, kind, gaps }: {
   name: string;
   /** Which band words the reading uses; see `ScoreKind`. */
   kind?: ScoreKind;
@@ -198,9 +199,17 @@ function HeaderScore({ name, value, partial, delta, kind }: {
   /** ALREADY FORMATTED, by `RunDiffLine`'s `signed` -- one formatter, so the header and the line
    *  under it cannot come to print the same move two ways. */
   delta?: string;
+  /** THE BUILD SCORE'S GAP (#1087): the band word stays the score's, and when a role is short the
+   *  gap follows it in the Roles shelf's own words. Absent when nothing is short. */
+  gaps?: ShortRole[];
 }) {
   const reading = scoreState(value, partial, kind);
+  const first = gaps?.[0];
   return (
+    // ON A PHONE THE GAP TAKES ITS OWN LINE UNDER THE SCORE (`max-sm:flex-col`), and only the gap
+    // moves: the score's own row stays `whitespace-nowrap`, the bar is static below `sm`, and the
+    // gap is one short line, not a wrapping sentence.
+    <span className="flex items-baseline gap-x-1.5 max-sm:flex-col max-sm:items-start">
     <span className="flex items-baseline gap-1.5 whitespace-nowrap">
       <span className="eyebrow text-(--muted)">{name}</span>
       {/* THE SCALE IS PART OF THE NUMBER. A phone judge followed these two figures down fourteen
@@ -220,6 +229,13 @@ function HeaderScore({ name, value, partial, delta, kind }: {
         </span>
       ) : null}
       <span data-tone={reading.tone} className={`text-xs ${TONE_TEXT[reading.tone]}`}>{reading.label}</span>
+    </span>
+    {first ? (
+      // The Roles shelf's own tone for a shortfall, `--warning`, and its words: "3 short".
+      <span data-build-gap className="text-xs whitespace-nowrap text-(--warning)">
+        <span className="max-sm:hidden">· </span>{first.short} short on {first.word}{gaps!.length > 1 ? ` and ${gaps!.length - 1} more` : ""}
+      </span>
+    ) : null}
     </span>
   );
 }

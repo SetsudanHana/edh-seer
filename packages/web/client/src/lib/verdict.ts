@@ -11,9 +11,17 @@ const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1
  *  ramp, draw and answers a deck needs" sat above "You will run out of cards" and "3 short on
  *  interaction" on three seats' reports, and read as a pass the page then took back). Read off the
  *  same findings the suggestions are, so the two can never disagree. */
-/** Each gap as the page says it, with its numbers where the role has them. */
-function gaps(report: DeckReport): string[] {
-  const out: string[] = [];
+/** A basic the deck is short on: the word the page says it in, the figures the role's own tile
+ *  shows, and how many cards short. */
+export interface ShortRole { word: string; count: number; target: number; short: number }
+
+/** THE ONE READ OF "WHICH ROLES ARE SHORT, AND BY HOW MUCH", in findings order. The Glance verdict
+ *  and the report header (#1087) both read it, so the two can never name different gaps. */
+export function shortRoles(report: DeckReport): ShortRole[] {
+  const out: ShortRole[] = [];
+  const add = (word: string, count: number, target: number): void => {
+    if (!out.some((o) => o.word === word)) out.push({ word, count, target, short: target - count });
+  };
   for (const f of findings(report)) {
     if (f.kind === "build") {
       const name = f.id.replace(/^build:/, ""); const key = groupKey(name); const w = key ? GAP_WORD_BY_KEY[key] : undefined;
@@ -21,17 +29,20 @@ function gaps(report: DeckReport): string[] {
       // Roles shelf that says "Draw 11", because the count it names is the one the shelf's group shows.
       // Read from the build parent the finding was made from, never from the headline's words.
       const parent = report.buildParents?.find((p) => p.name === name);
-      const said = w && parent ? `${w} (${parent.count} of ${parent.target})` : w;
-      if (said && !out.includes(said)) out.push(said);
+      if (w) add(w, parent?.count ?? NaN, parent?.target ?? NaN);
     }
     else if (f.kind === "lands" && /short|under/i.test(f.headline)) {
       // The Lands tile's own figures: what is run, against the modelled target.
       const l = report.deckMath?.lands;
-      const said = l ? `lands (${l.actual} of ${l.target})` : "lands";
-      if (!out.includes(said)) out.push(said);
+      add("lands", l?.actual ?? NaN, l?.target ?? NaN);
     }
   }
   return out;
+}
+
+/** Each gap as the verdict says it, with its numbers where the role has them. */
+function gaps(report: DeckReport): string[] {
+  return shortRoles(report).map((g) => (Number.isNaN(g.target) ? g.word : `${g.word} (${g.count} of ${g.target})`));
 }
 
 /** "IS MY DECK GOOD?" IN ONE SENTENCE (appeal review 2026-09-26). The top of the report showed
