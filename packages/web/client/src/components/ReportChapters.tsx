@@ -1,4 +1,3 @@
-import { offThemeSplit } from "../lib/off-theme.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { AnalyzeResponse } from "../types.js";
 import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
@@ -38,6 +37,7 @@ import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
+import { offThemeSplit } from "../lib/off-theme.js";
 import { useCardDrawer } from "./card-drawer.js";
 import { ReportRailSummaries } from "./ReportRail.js";
 import { createPortal } from "react-dom";
