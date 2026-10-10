@@ -6,7 +6,7 @@ import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-la
 import { fixedColours } from "./mana-lines.js";
 import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import type { DeckCard } from "./types.js";
-import { BASIC_LAND_TYPES } from "./typeline.js";
+import { BASIC_LAND_TYPES, countsAsLand } from "./typeline.js";
 
 /** The five colours, in WUBRG order. Colourless is deliberately absent HERE, and the reason the old
  *  one gave was false as a statement of the rules: "every deck can pay generic and colourless costs
@@ -39,7 +39,7 @@ const EMPTY_TYPES: ReadonlySet<string> = new Set<string>();
 export function deckBasicTypes(library: readonly DeckCard[]): Set<string> {
   const out = new Set<string>();
   for (const dc of library) {
-    if (!/\bland\b/i.test(dc.card.typeLine)) continue;
+    if (!countsAsLand(dc.card)) continue;
     for (const t of BASIC_LAND_TYPES) if (dc.card.typeLine.toLowerCase().includes(t)) out.add(t);
   }
   return out;
@@ -289,7 +289,7 @@ export function manaAuditFull(
   // asked `landOnlineBy`; a SPELL's fetch is already on the rock clock, and charging it for the
   // tapped arrival as well made it a source on no turn at all.
   const sourceOnline = (dc: DeckCard, turn: number): boolean =>
-    /\bland\b/i.test(dc.card.typeLine) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
+    countsAsLand(dc.card) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
   const availability = (sources: readonly DeckCard[]) => {
     const availableAt = new Map<number, number>();
     return (turn: number): number => {
@@ -319,8 +319,8 @@ export function manaAuditFull(
   // when `landOnlineBy` says it taps, a nonland the turn after its mana value (the rock clock above).
   const fixers = libraryFixers(library);
   const fixerOut = (dc: DeckCard, turn: number): boolean =>
-    /\bland\b/i.test(dc.card.typeLine) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
-  const lands = library.filter((dc) => /\bland\b/i.test(dc.card.typeLine));
+    countsAsLand(dc.card) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
+  const lands = library.filter((dc) => countsAsLand(dc.card));
   const credit = (color: Color, sources: readonly DeckCard[], turn: number, available: number): { extra: number; by: string[] } => {
     if (fixers.length === 0) return { extra: 0, by: [] };
     const have = new Set(sources);
@@ -452,7 +452,7 @@ export function landTypeDemand(deck: readonly DeckCard[], commanderNames: readon
   const commanders = new Set(commanderNames);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const libraryCards = library.map((dc) => dc.card);
-  const has = (c: { typeLine: string }) => /\bland\b/i.test(c.typeLine) && c.typeLine.toLowerCase().includes(landType);
+  const has = (c: { typeLine: string }) => countsAsLand(c) && c.typeLine.toLowerCase().includes(landType);
   const types = deckBasicTypes(library);
   const direct = library.filter((dc) => has(dc.card));
   const fetches = library.filter((dc) => !direct.includes(dc) && isLandFetch(dc.card.oracleText ?? "")
@@ -460,7 +460,7 @@ export function landTypeDemand(deck: readonly DeckCard[], commanderNames: readon
   const reachable = new Set(fetches.flatMap((f) => fetchableLands(f.card.oracleText ?? "", libraryCards)));
   const targets = [...reachable].filter(has).length;
   const sources = [...direct, ...[...fetches].sort((a, b) => a.card.manaValue - b.card.manaValue).slice(0, targets)];
-  const available = sources.filter((dc) => (/\bland\b/i.test(dc.card.typeLine) ? landOnlineBy(dc, turn, types) : dc.card.manaValue < turn)).length;
+  const available = sources.filter((dc) => (countsAsLand(dc.card) ? landOnlineBy(dc, turn, types) : dc.card.manaValue < turn)).length;
   const requiredRaw = minCopies(1, turn, SOURCE_CONFIDENCE, library.length);
   return { required: Math.min(requiredRaw, minSources(1, turn, SOURCE_CONFIDENCE) ?? requiredRaw), available };
 }

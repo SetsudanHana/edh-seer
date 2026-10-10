@@ -25,8 +25,8 @@ test("expands copies, so the grid is the deck's own size", () => {
 test("a two-faced card is one square, not two", () => {
   const squares = waffleSquares(
     [
-      node({ id: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", types: ["sorcery"] }),
-      node({ id: "face:1:Fell Mire", cardName: "Fell the Profane // Fell Mire", face: 1, types: ["land"] }),
+      node({ id: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", types: ["sorcery"], layout: "modal_dfc" }),
+      node({ id: "face:1:Fell Mire", cardName: "Fell the Profane // Fell Mire", face: 1, types: ["land"], layout: "modal_dfc" }),
     ],
     [card({ name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire" })],
     [],

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { parseTypeLine, parseTypeLineAllFaces } from "./typeline.js";
+import { countsAsLand, isLandCard, parseTypeLine, parseTypeLineAllFaces } from "./typeline.js";
 
 test("separates supertypes from types", () => {
   expect(parseTypeLine("Legendary Creature — Human Wizard")).toEqual({
@@ -82,4 +82,48 @@ describe("parseTypeLineAllFaces", () => {
       .toEqual(parseTypeLine("Legendary Creature — Human Wizard"));
   });
 
+});
+
+describe("countsAsLand: is this CARD a land in the deck (issue #1167)", () => {
+  const t = (typeLine: string, layout?: string) => ({ typeLine, layout });
+  test.each([
+    ["Treasure Map // Treasure Cove", "Artifact // Land"],
+    ["Search for Azcanta // Azcanta, the Sunken Ruin", "Enchantment // Legendary Land"],
+    ["Legion's Landing // Adanto, the First Fort", "Legendary Enchantment // Land"],
+    ["Growing Rites of Itlimoc // Itlimoc, Cradle of the Sun", "Legendary Enchantment // Legendary Land"],
+    ["Azor's Gateway // Sanctum of the Sun", "Legendary Artifact // Legendary Land"],
+    ["Hadana's Climb // Winged Temple of Orazca", "Enchantment // Land"],
+  ])("transform card with only a land back is a spell: %s", (_n, typeLine) => {
+    expect(countsAsLand(t(typeLine, "transform"))).toBe(false);
+    expect(countsAsLand(t(typeLine, "flip"))).toBe(false);
+  });
+  test("a modal DFC with a land back counts, either face", () => {
+    expect(countsAsLand(t("Instant // Land", "modal_dfc"))).toBe(true);
+    expect(countsAsLand(t("Land // Creature — Elf", "modal_dfc"))).toBe(true);
+    expect(countsAsLand(t("Sorcery // Creature", "modal_dfc"))).toBe(false);
+  });
+  test("front face rules for split, adventure and unknown layouts", () => {
+    expect(countsAsLand(t("Creature — Elf // Sorcery — Adventure", "adventure"))).toBe(false);
+    expect(countsAsLand(t("Instant // Instant", "split"))).toBe(false);
+    expect(countsAsLand(t("Land // Land", "reversible_card"))).toBe(true);
+  });
+  test("single faces, no layout", () => {
+    expect(countsAsLand(t("Basic Land — Forest"))).toBe(true);
+    expect(countsAsLand(t("Land Creature — Forest Dryad", "normal"))).toBe(true);
+    expect(countsAsLand(t("Legendary Creature — Human Wizard", "normal"))).toBe(false);
+    expect(countsAsLand(t("Artifact"))).toBe(false);
+    expect(countsAsLand({})).toBe(false);
+  });
+});
+
+describe("isLandCard: the rules question, front face only (CR 712.8a)", () => {
+  test("a modal DFC with a land back is a NONLAND card, a land front is a land", () => {
+    expect(isLandCard({ typeLine: "Sorcery // Land", layout: "modal_dfc" })).toBe(false);
+    expect(isLandCard({ typeLine: "Land // Creature", layout: "modal_dfc" })).toBe(true);
+  });
+  test("transform, plain land, plain spell", () => {
+    expect(isLandCard({ typeLine: "Artifact // Land", layout: "transform" })).toBe(false);
+    expect(isLandCard({ typeLine: "Basic Land — Forest", layout: "normal" })).toBe(true);
+    expect(isLandCard({ typeLine: "Legendary Creature — Elf" })).toBe(false);
+  });
 });

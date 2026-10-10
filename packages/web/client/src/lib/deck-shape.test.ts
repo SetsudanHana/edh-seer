@@ -98,18 +98,27 @@ describe("landCount", () => {
   // a spell here is what made this figure disagree with `deckMath.lands.actual` on every deck that
   // runs one (roadmap T3). Counted once, on the land side, and absent from the slices.
   test("a modal DFC counts once, as a land, not as the spell on its front", () => {
-    const spellFront = node({ id: "m", cardName: "M", copies: 1, types: ["sorcery"] });
-    const landBack = node({ id: "m-back", cardName: "M", face: 1, copies: 1, types: ["land"] });
+    const spellFront = node({ id: "m", cardName: "M", copies: 1, types: ["sorcery"], layout: "modal_dfc" });
+    const landBack = node({ id: "m-back", cardName: "M", face: 1, copies: 1, types: ["land"], layout: "modal_dfc" });
     const realLand = node({ id: "l", types: ["land"], copies: 33 });
     expect(landCount([spellFront, landBack, realLand])).toBe(34);
     expect(typeSlices([spellFront, landBack, realLand])).toEqual([]);
   });
 
+  // #1167: a TRANSFORM card's land back (Treasure Map // Treasure Cove) is reached by transforming
+  // a permanent in play and is never played as a land, so it is a spell here as everywhere else.
+  test("a transform card with a land back stays a spell", () => {
+    const front = node({ id: "t", cardName: "T", copies: 1, types: ["artifact"], layout: "transform" });
+    const back = node({ id: "t-back", cardName: "T", face: 1, copies: 1, types: ["land"], layout: "transform" });
+    expect(landCount([front, back])).toBe(0);
+    expect(typeSlices([front, back]).reduce((a, x) => a + x.count, 0)).toBe(1);
+  });
+
   // A PATHWAY IS LAND // LAND, and `landBackCards` collects it like any other back face -- so this
   // pins that a card already counted by its own front face is not counted twice by its back.
   test("a land // land card counts once, not twice", () => {
-    const front = node({ id: "p", cardName: "P", copies: 1, types: ["land"] });
-    const back = node({ id: "p-back", cardName: "P", face: 1, copies: 1, types: ["land"] });
+    const front = node({ id: "p", cardName: "P", copies: 1, types: ["land"], layout: "modal_dfc" });
+    const back = node({ id: "p-back", cardName: "P", face: 1, copies: 1, types: ["land"], layout: "modal_dfc" });
     expect(landCount([front, back])).toBe(1);
   });
 
@@ -120,8 +129,8 @@ describe("landCount", () => {
       node({ id: "c", copies: 66 }),
       node({ id: "l", types: ["land"], copies: 34 }),
       node({ id: "t", isToken: true, copies: 9 }),
-      node({ id: "m", cardName: "M", copies: 4, types: ["sorcery"] }),
-      node({ id: "m-back", cardName: "M", face: 1, copies: 4, types: ["land"] }),
+      node({ id: "m", cardName: "M", copies: 4, types: ["sorcery"], layout: "modal_dfc" }),
+      node({ id: "m-back", cardName: "M", face: 1, copies: 4, types: ["land"], layout: "modal_dfc" }),
     ];
     const nonlandTotal = typeSlices(nodes).reduce((a, s) => a + s.count, 0);
     // The 4 MDFCs are lands on both halves now (roadmap T3): 66 nonland / 38 land. The fixture

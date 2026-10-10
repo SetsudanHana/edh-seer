@@ -2,8 +2,9 @@
  *  the same `*-core.ts` split `panel-score.ts` and `eval-pairs.ts` already use. */
 import { classifyAccelerant, quantiles, type SimulateResult } from "../goldfish.js";
 import type { DeckCard } from "../types.js";
+import { countsAsLand } from "../typeline.js";
 
-const isLand = (dc: DeckCard): boolean => /\bland\b/i.test(dc.card.typeLine ?? "");
+const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 
 /** Per trial, the first turn the board could tap `mv` mana — or null if it never did.
  *

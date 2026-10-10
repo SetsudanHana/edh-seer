@@ -750,3 +750,33 @@ test("a neutralising Aura is targeted removal for the classes it can enchant", (
   // A plain Aura on its own creature is not removal.
   expect(detectBuildCategories([mk("Pump Aura", "Enchant creature\nEnchanted creature gets +2/+2.", "Enchantment — Aura")]).get("targetedRemoval")).toBeUndefined();
 });
+
+// #1167: the rule table reads a card as the DECK holds it. Same printed text, two layouts.
+const tapAdd = (face: number) => [{ kind: "activated", effect: { kind: "mana-generation" }, cost: "{T}", amount: "1", repeats: "per-cycle", face }] as never;
+const layoutCard = (layout: string, face: number, typeLine = "Artifact // Land"): DeckCard => ({
+  card: { name: "Probe // Cave", oracleText: "Scry 1.\n//\n{T}: Add {C}.", typeLine, layout } as Card,
+  tags: { abilities: tapAdd(face), characteristics: { types: ["artifact"] } } as never,
+});
+
+test("countsAsLand op: a modal DFC with a land face is a land to the guards, a transform card is a spell", () => {
+  const modal = detectBuildCategories([layoutCard("modal_dfc", 1)]);
+  expect(modal.get("lands")).toEqual(new Set(["Probe // Cave"]));
+  expect(modal.get("ramp") ?? new Set()).toEqual(new Set());
+  const transform = detectBuildCategories([layoutCard("transform", 1)]);
+  expect(transform.get("lands") ?? new Set()).toEqual(new Set());
+});
+
+test("ramp reads the FRONT face outside modal DFCs: a mana ability only on the land back is no ramp", () => {
+  expect(detectBuildCategories([layoutCard("transform", 1)]).get("ramp") ?? new Set()).toEqual(new Set());
+  // Control: the same ability on the front face is ramp.
+  expect(detectBuildCategories([layoutCard("transform", 0)]).get("ramp")).toEqual(new Set(["Probe // Cave"]));
+});
+
+// The narrowing, pinned: the front-face view is for transform/flip cards with a LAND back only.
+test("an adventure half's mana ability is still ramp (it is cast from hand)", () => {
+  expect(detectBuildCategories([layoutCard("adventure", 1, "Creature // Sorcery — Adventure")]).get("ramp")).toEqual(new Set(["Probe // Cave"]));
+});
+
+test("a transform card whose back is not a land keeps its back-face ramp", () => {
+  expect(detectBuildCategories([layoutCard("transform", 1, "Creature // Creature")]).get("ramp")).toEqual(new Set(["Probe // Cave"]));
+});

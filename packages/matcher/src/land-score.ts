@@ -15,9 +15,10 @@ import { rolesOfCard } from "./quality.js";
 import { costedFixedColours, fixedColours } from "./mana-lines.js";
 import { creatureSubtypes, isFetchSpell, isPlainDork, netPositiveMana, netYield } from "./same-job.js";
 import type { DeckCard } from "./types.js";
+import { countsAsLand } from "./typeline.js";
 
 /** The same test `mana-base.ts` uses, so a land here is a land there. */
-const isLand = (dc: DeckCard): boolean => /\bland\b/i.test(dc.card.typeLine);
+const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 
 /** 0 never, 1 some turns (a check, slow, fast or battle land), 2 every time. */
 export type Tapped = 0 | 1 | 2;
@@ -158,7 +159,7 @@ export function landFacts(dc: DeckCard, needed: ReadonlySet<Color>, library: rea
   return {
     name: dc.card.name, colours, tapped, hurts, utility,
     basic: /\bbasic\b/i.test(dc.card.typeLine ?? ""),
-    front: /\bland\b/i.test((dc.card.typeLine ?? "").split("//")[0]!),
+    front: isLand(dc),
   };
 }
 

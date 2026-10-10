@@ -1,5 +1,5 @@
 {
-  "version": 17,
+  "version": 18,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -77,20 +77,20 @@
     {
       "id": "lands.nonbasic",
       "category": "lands",
-      "match": [{ "op": "typeLine", "contains": "land" }],
+      "match": [{ "op": "countsAsLand" }],
       "not": [{ "op": "typeLine", "contains": "basic" }],
       "why": "Only utility lands fill a land ROLE, so a basic never reads as double duty. The build LAND COUNT is separate -- computeBuild counts every land copy itself."
     },
     {
       "id": "ramp.land.fetchesTwo",
       "category": "ramp",
-      "match": [{ "op": "typeLine", "contains": "land" }, { "op": "oracle", "pattern": "rampLand" }],
+      "match": [{ "op": "countsAsLand" }, { "op": "oracle", "pattern": "rampLand" }],
       "why": "A land that sacrifices itself for TWO+ lands nets +1 mana. A fetchland gets one (net 0), which is fixing, not ramp."
     },
     {
       "id": "ramp.land.bigMana",
       "category": "ramp",
-      "match": [{ "op": "typeLine", "contains": "land" }, { "op": "oracle", "pattern": "bigManaLand" }],
+      "match": [{ "op": "countsAsLand" }, { "op": "oracle", "pattern": "bigManaLand" }],
       "not": [{ "op": "oracle", "pattern": "entersTapped" }],
       "why": "2+ mana from a bare {T} is a net extra mana per land drop -- unless it enters tapped, which makes it unusable the turn it lands."
     },
@@ -98,7 +98,7 @@
       "id": "removal.land",
       "category": "targetedRemoval",
       "match": [
-        { "op": "typeLine", "contains": "land" },
+        { "op": "countsAsLand" },
         { "op": "anyOf", "clauses": [
           { "op": "oracle", "pattern": "targetedRemoval" },
           { "op": "oracle", "pattern": "damageRemoval" }
@@ -115,21 +115,21 @@
         { "op": "effectKind", "in": ["mana-generation", "fast-mana", "ritual"] },
         { "op": "oneShotNetsMana", "atLeast": 1 }
       ],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "RAMP IS A NET GAIN (owner's rule, roadmap I4): Dark Ritual is {B} for {B}{B}{B} and Manamorphose is two mana for two mana plus a cantrip. The net test judges ONE-SHOTS ONLY -- a permanent mana source repeats, so a dork nets 0 the turn it lands and is ramp anyway."
     },
     {
       "id": "draw.effect",
       "category": "draw",
       "match": [{ "op": "effectKind", "in": ["draw-card"], "control": ["you", "any"] }],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "YOUR DRAW, OR EVERYONE'S (#977): Baleful Mastery's \"an opponent draws a card\" is the opponent's card, not yours, and it sat on Gisa's Draw shelf. A symmetric draw (Howling Mine, control any) still draws you a card and stays."
     },
     {
       "id": "draw.engine",
       "facet": { "of": "draw", "name": "engines" },
       "match": [{ "op": "effectKind", "in": ["draw-card"], "control": ["you", "any"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] }],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "A DRAW THAT COMES BACK (owner, 2026-09-05): ten Rhystic Studies are not ten Divinations, and the count said they were. Anything above `once` on the SAME ability; per-cycle ({T}: draw, once a round) counts as an engine by the owner's ruling. Measured on the 71 decks before this rule: 400 engine cards, 470 one-shots, 104 unlabelled."
     },
     {
@@ -137,7 +137,7 @@
       "facet": { "of": "draw", "name": "unlabelled" },
       "match": [{ "op": "effectKind", "in": ["draw-card"], "control": ["you", "any"], "repeats": [null] }],
       "not": [
-        { "op": "typeLine", "contains": "land" },
+        { "op": "countsAsLand" },
         { "op": "effectKind", "in": ["draw-card"], "control": ["you", "any"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] }
       ],
       "why": "A draw `repeats.ts` REFUSED to label, on a card with no labelled engine draw beside it. Shown, not hidden: unlabelled beats mislabelled, and a reader who sees 3 unlabelled knows the engine count is a floor."
@@ -146,7 +146,7 @@
       "id": "draw.dig",
       "category": "draw",
       "match": [{ "op": "oracle", "pattern": "digToHand" }],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "CARDS TO HAND OFF THE TOP, two or a pile (owner, 2026-10-02: \"fact or fiction has a role, it is a draw spell\"). Its derived tags hold only the mill half, so no draw-card effect reaches draw.effect. One card to hand (Impulse) stays card selection."
     },
     {
@@ -155,7 +155,7 @@
       "match": [{ "op": "anyOf", "clauses": [
         {"op": "effectKind", "in": ["mana-generation", "fast-mana"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
         {"op": "effectKind", "in": ["token-generation"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
-        { "op": "typeLine", "contains": "land" }
+        { "op": "countsAsLand" }
       ] }],
       "why": "A MANA SOURCE THAT COMES BACK (owner, 2026-09-05: 'do the same for ramp'). A rock or a dork taps every round, a Treasure ENGINE makes one every turn, and a ramp land is itself the source; a ritual or a one-off pair of Treasures is spent once and is neither facet. The land-fetch half of this facet is the rule below, because a facet rule cannot AND two clauses inside anyOf."
     },
@@ -163,7 +163,7 @@
       "id": "ramp.engine.land",
       "facet": { "of": "ramp", "name": "engines" },
       "match": [{ "op": "oracle", "pattern": "landFetch" }, { "op": "oracle", "pattern": "ontoBattlefield" }],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "A fetched land taps every turn from then on: the spell resolves once, the acceleration repeats. Same two patterns as `ramp.landFetchSpell`, by name, so the two cannot drift."
     },
     {
@@ -173,7 +173,7 @@
       "not": [
         {"op": "effectKind", "in": ["mana-generation", "fast-mana"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
         {"op": "effectKind", "in": ["token-generation"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
-        { "op": "typeLine", "contains": "land" },
+        { "op": "countsAsLand" },
         { "op": "oracle", "pattern": "landFetch" }
       ],
       "why": "A mana ability `repeats.ts` refused to label, on a card with no labelled engine beside it and no land to fall back on. Shown, not hidden."
@@ -205,14 +205,14 @@
       "id": "burn.effect",
       "category": "burn",
       "match": [{ "op": "effectKind", "in": ["non-combat-damage", "noncombat-damage", "player-damage", "drain"] }],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "Noncombat life reduction of PLAYERS. Damage aimed at a creature is removal, and has its own rule."
     },
     {
       "id": "stax.effect",
       "category": "stax",
       "match": [{ "op": "effectKind", "in": ["tax"] }],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "`forced-sacrifice` is deliberately excluded: the tagger labels edict removal with that kind too, so including it flags Generous Gift as stax."
     },
     {
@@ -222,53 +222,53 @@
         { "op": "oracle", "pattern": "landFetch" },
         { "op": "oracle", "pattern": "ontoBattlefield" }
       ],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "Cultivate/Farseek net +1 land. Fetch-to-hand only is card advantage, not ramp."
     },
     {
       "id": "ramp.landPut",
       "category": "ramp",
       "match": [{ "op": "oracle", "pattern": "landPut" }],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "Putting a land card onto the battlefield from hand (Growth Spiral), from among cards looked at (Planar Genesis) or from a graveyard is an extra land drop, which is ramp (owner ruling 2026-09-27, #512)."
     },
     {
       "id": "ramp.manaToken",
       "category": "ramp",
       "match": [{ "op": "oracle", "pattern": "manaToken" }],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "Treasure/Gold and Eldrazi Spawn/Scion are acceleration. ONE TREASURE BOUGHT BY A SACRIFICE STILL COUNTS (owner ruling 2026-09-27, #534): The Sackville-Bagginses and Ruthless Technomancer, the only two of 419 matching cards whose Treasure waits on sacrificing another permanent, stay ramp -- the Treasure is mana you did not have. Not staple-grade (`rampGrade` 0): a suggestion list offers it only through a synergy."
     },
     {
       "id": "cardSelection.text",
       "category": "cardSelection",
       "match": [{ "op": "oracle", "pattern": "selection" }],
-      "not": [{ "op": "typeLine", "contains": "land" }]
+      "not": [{ "op": "countsAsLand" }]
     },
     {
       "id": "impulseDraw.text",
       "category": "impulseDraw",
       "match": [{ "op": "oracle", "pattern": "impulseDraw" }],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "SELECTION REORDERS WHAT YOU WILL DRAW; IMPULSE DRAW ADDS CARDS YOU MAY CAST, usually only this turn. The `selection` pattern's third alternative was literally the impulse template, so Light Up the Stage and Jeska's Will were filed as scry. Nearer draw, and carrying a DEADLINE draw does not have, so it is its own leaf rather than folded into either -- inside Consistency, where both neighbours already sit, so the parent count cannot move."
     },
     {
       "id": "stackInteraction.text",
       "category": "stackInteraction",
       "match": [{ "op": "oracle", "pattern": "stack" }],
-      "not": [{ "op": "typeLine", "contains": "land" }]
+      "not": [{ "op": "countsAsLand" }]
     },
     {
       "id": "burn.text",
       "category": "burn",
       "match": [{ "op": "oracle", "pattern": "burn" }],
-      "not": [{ "op": "typeLine", "contains": "land" }]
+      "not": [{ "op": "countsAsLand" }]
     },
     {
       "id": "boardWipe.text",
       "category": "boardWipe",
       "match": [{ "op": "oracle", "pattern": "boardWipe" }],
-      "not": [{ "op": "typeLine", "contains": "land" }]
+      "not": [{ "op": "countsAsLand" }]
     },
     {
       "id": "removal.targeted",
@@ -280,7 +280,7 @@
         ] }
       ],
       "not": [
-        { "op": "typeLine", "contains": "land" },
+        { "op": "countsAsLand" },
         { "op": "oracle", "pattern": "graveyardHate" },
         { "op": "oracle", "pattern": "boardWipe" },
         { "op": "oracle", "pattern": "controllerGetsCopies" }
@@ -304,7 +304,7 @@
       "id": "protection.text",
       "category": "protection",
       "match": [{ "op": "oracle", "pattern": "protection" }],
-      "not": [{ "op": "typeLine", "contains": "land" }, { "op": "protectionIsOwnKeyword" }],
+      "not": [{ "op": "countsAsLand" }, { "op": "protectionIsOwnKeyword" }],
       "why": "A CREATURE WITH HEXPROOF PROTECTS ITSELF, NOT THE BOARD (roadmap I1). Granted to other permanents (Lightning Greaves, Heroic Intervention) is Interaction; printed on the card's own body is a stat. Only the cases the printed KEYWORD list settles outright are refused -- see the op, and the 41-card residue it deliberately leaves alone."
     },
     {
@@ -315,7 +315,7 @@
         { "op": "oracle", "pattern": "exileReturnsToBattlefield" },
         { "op": "anyOf", "clauses": [{ "op": "typeLine", "contains": "instant" }, { "op": "oracle", "pattern": "flashKeyword" }] }
       ],
-      "not": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "countsAsLand" }],
       "why": "A FLICKER IS PROTECTION (owner ruling 2026-09-25). Exiling your own permanent and returning it makes a new object (CR 400.7), so the removal aimed at it loses its target (CR 608.2b). Only at instant speed -- an instant, or a card with flash -- since protection has to answer a spell on the stack; Flicker (a sorcery), Flickerwisp and Brago cannot. A target an opponent controls is refused: that is a blink, not a shield."
     },
     {
@@ -323,7 +323,7 @@
       "category": "tutor",
       "match": [{ "op": "oracle", "pattern": "tutor" }],
       "not": [
-        { "op": "typeLine", "contains": "land" },
+        { "op": "countsAsLand" },
         { "op": "oracle", "pattern": "landFetch" }
       ],
       "why": "A search that only fetches lands is fixing, not a tutor."
@@ -332,7 +332,7 @@
       "id": "stax.text",
       "category": "stax",
       "match": [{ "op": "oracle", "pattern": "stax" }],
-      "not": [{ "op": "typeLine", "contains": "land" }]
+      "not": [{ "op": "countsAsLand" }]
     },
 
     {

@@ -28,6 +28,7 @@ import { decodeIndex, deckCards } from "./suggest-static.js";
 import type { DeckCard } from "./types.js";
 import type { UpgradeSectionId } from "./upgrade-package.js";
 import { CONDITIONS, isCreature, netPositiveMana, sameGroup, creatureSubtypes, landAuraType, isFetchSpell, landsToBattlefield, singleLandFetch, sameDorkAnyColour, sameFetchAnyColour, sameJob, sameRockAnyColour, themedSubjects, shape } from "./same-job.js";
+import { countsAsLand } from "./typeline.js";
 export { answerCovers, newConditions, sameGroup, sameJob } from "./same-job.js";
 
 export type RoleSectionId = Exclude<UpgradeSectionId, "lands" | "synergy">;
@@ -467,7 +468,7 @@ export async function upgradeOptions(input: {
   const needed = neededColours(deck);
   const library = deck.map((d) => d.card);
   const commanders = new Set(input.commanders);
-  const deckLands = deck.filter((d) => !commanders.has(d.card.name) && /\bland\b/i.test(d.card.typeLine))
+  const deckLands = deck.filter((d) => !commanders.has(d.card.name) && countsAsLand(d.card))
     .map((dc) => ({ facts: landFacts(dc, needed, library), dc, gameChanger: dc.card.gameChanger === true }));
   // EVERY LAND, NOT ONLY THE INDEXED ONES: the name index skips a land with no emit and no trigger,
   // which is every plain dual. `lands.json` has them all; a build from before it existed falls back.
@@ -478,7 +479,7 @@ export async function upgradeOptions(input: {
   const landCandidates: LandCandidate[] = [];
   for (const c of wantedLands) {
     const dc = await dcOf(c.name);
-    if (dc && /\bland\b/i.test(dc.card.typeLine)) landCandidates.push({ facts: landFacts(dc, needed, library), dc, gameChanger: dc.card.gameChanger === true });
+    if (dc && countsAsLand(dc.card)) landCandidates.push({ facts: landFacts(dc, needed, library), dc, gameChanger: dc.card.gameChanger === true });
   }
   return { roles, lands: landOptions(deckLands, landCandidates, basicsFloor(deck), deficit, closes), replacements: replaced };
 }

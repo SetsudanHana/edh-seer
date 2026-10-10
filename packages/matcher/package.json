@@ -40,6 +40,7 @@
     "./types": "./src/types.ts",
     "./wincon": "./src/wincon.ts",
     "./zones": "./src/zones.ts",
+    "./typeline": "./src/typeline.ts",
     "./eval-pairs-core": "./src/eval-pairs-core.ts",
     "./event-pattern": "./src/event-pattern.ts",
     "./theme-stats": "./src/theme-stats.ts",

@@ -1,4 +1,5 @@
 import type { GraphNode } from "../types.js";
+import { countsAsLand } from "@edh-seer/matcher/typeline";
 
 /** THE SLICE ORDER, FIXED, AND IT IS THE VALIDATED COLOUR ORDER.
  *
@@ -60,16 +61,29 @@ export function primaryType(types: readonly string[]): string | null {
  *  `docs/engineering-log/2026-08-31.md`, "the other half of the double count". A census that keeps
  *  it as a spell is the last reader disagreeing with that.
  *
- *  READ OFF THE BACK-FACE NODE'S OWN `types`, not a regex over a printed type line: a multi-face
- *  card is one node per face and the back carries `face: 1` plus its real types, which is the same
- *  field `primaryType` reads. A Pathway is land // land and lands in here too -- harmless, its
+ *  READ OFF THE FACE NODES, through the shared `isLand` (#1167): a multi-face card is one node per
+ *  face, the printed line is rebuilt from them and `layout` says whether a land back is playable. A
+ *  TRANSFORM card's land back (Treasure Map) is NOT in this set any more. A Pathway is land // land and lands in here too -- harmless, its
  *  front is already a land, and a Set cannot count it twice. */
 export function landBackCards(nodes: readonly GraphNode[]): ReadonlySet<string> {
-  const names = new Set<string>();
+  // THE SHARED LAND TEST, applied to the card rather than to one face (#1167): a card's faces are
+  // separate nodes, so the printed line is rebuilt from them (front first) and `layout` -- which
+  // rides on every face node -- decides whether a land BACK counts. A modal DFC's does; a transform
+  // card's (Treasure Map // Treasure Cove) is reached by transforming and never played as a land.
+  const faces = new Map<string, { face: number; line: string; layout?: string }[]>();
   for (const n of nodes) {
-    if (n.face === undefined) continue;
-    if (!n.types.some((t) => t.toLowerCase() === "land")) continue;
-    if (n.cardName !== undefined) names.add(n.cardName);
+    if (n.face === undefined || n.cardName === undefined) continue;
+    const list = faces.get(n.cardName) ?? [];
+    list.push({ face: n.face, line: n.typeLine ?? n.types.join(" "), layout: n.layout });
+    faces.set(n.cardName, list);
+  }
+  const fronts = new Map(nodes.filter((n) => n.face === undefined && n.cardName !== undefined)
+    .map((n) => [n.cardName!, n.typeLine ?? n.types.join(" ")] as const));
+  const names = new Set<string>();
+  for (const [name, backs] of faces) {
+    backs.sort((x, y) => x.face - y.face);
+    const line = [fronts.get(name) ?? "", ...backs.map((f) => f.line)].join(" // ");
+    if (countsAsLand({ typeLine: line, layout: backs[0]!.layout })) names.add(name);
   }
   return names;
 }

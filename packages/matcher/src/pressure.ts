@@ -1,6 +1,6 @@
-import { frontTypeLine } from "./goldfish.js";
 import { seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
+import { countsAsLand } from "./typeline.js";
 
 /** A Commander player's starting life. The CLOCK is measured against ONE opponent, and it is the
  *  horizon every availability figure is priced at, so it stays one opponent. The whole table is a
@@ -12,7 +12,7 @@ export const STARTING_LIFE = 40;
  *  well past any real EDH game, so a deck with no clock inside it has no clock at all. */
 export const HORIZON = 20;
 
-const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");
+const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 const isCreature = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("creature");
 
 /** Expected attacking power on the board at `turn`.
@@ -148,7 +148,7 @@ export function drawnBy(dc: DeckCard, turn: number, library: number, seenShare?:
   if (library === 0) return 0;
   // THE SIMULATION'S OWN KIND TEST: a land by its FRONT face, as `simulate` reads it -- a spell with a
   // land back face is a spell there, and reading every face here gave it the land share (review).
-  const land = /\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout));
+  const land = isLand(dc);
   const col = seenShare?.[land ? "land" : dc.card.manaValue <= 3 ? "cheap" : "dear"];
   if (!col || col.length === 0) return Math.min(1, seen(turn) / library);
   if (turn <= col.length) return col[turn - 1]!;

@@ -154,8 +154,9 @@ test("a transform card with a land back is NOT a modal DFC", () => {
   ];
   const rec = recommendedLands(deck);
   expect(rec.mdfcTapped + rec.mdfcUntapped).toBe(0);
-  // Still a land by the type-line test everywhere else in the repo, so it stays in the count.
-  expect(rec.actual).toBe(31);
+  // Nor is it a land in the count (#1167): this test used to pin 31 -- the whole-line type test
+  // counted it while the goldfish did not. One `isLand` now: front face, so a spell.
+  expect(rec.actual).toBe(30);
 });
 
 /** `producedMana` carries the BACK face's colour, so a cheap MDFC reaches the accelerant net. It is

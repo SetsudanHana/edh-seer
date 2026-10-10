@@ -3,6 +3,7 @@ import { ARCHETYPE_FLOOR, ARCHETYPE_LABELS, ARCHETYPE_LEAD_FLOOR, type Archetype
 import TEMPLATE from "./template-targets.json" with { type: "json" };
 import { answerClassesOf, loadRules, ruleMatches } from "./rules.js";
 import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
+import { countsAsLand } from "./typeline.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
 export type BuildCategory =
@@ -26,7 +27,7 @@ export const BUILD_CATEGORIES: BuildCategory[] = [
   "ramp", "draw", "cardSelection", "impulseDraw", "targetedRemoval", "stackInteraction", "boardWipe", "burn", "stax", "protection", "tutor", "graveyardHate", "lands",
 ];
 
-const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");
+const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 
 /** For each card, the set of functional categories it fills. A card may fill several (that's how
  *  double-duty in Stage D is found). Counts derive from set sizes.
@@ -596,15 +597,19 @@ const TAP_COST = /^(?:\{(\d+)\},\s*)?\{T\}$/;
  *  CEILING: a land-fetch spell (Cultivate), a ritual and a Treasure maker score 0. They are ramp,
  *  and staples in green, but "taps for mana" cannot see them; a grade for them is its own tier. */
 export function rampGrade(dc: DeckCard): number {
-  if (/\bland\b/i.test(dc.card.typeLine)) return 0;
-  const tapRamp = (dc.tags?.abilities ?? []).some((a) => {
+  if (isLand(dc)) return 0;
+  // A CARD IN THE DECK IS ITS FRONT FACE (CR 712.8a), so for every layout but a modal DFC (whose back
+  // you can cast) a back face's "{T}: Add" is not a rock you hold: Treasure Map's Treasure Cove is
+  // reached by transforming. It graded 16 on the back's ability and text before (#1167).
+  const frontOnly = dc.card.layout !== "modal_dfc";
+  const tapRamp = (dc.tags?.abilities ?? []).filter((a) => !frontOnly || (a.face ?? 0) === 0).some((a) => {
     if (a.kind !== "activated" || a.effect?.kind !== "mana-generation" || a.repeats !== "per-cycle") return false;
     const m = TAP_COST.exec(String(a.cost ?? ""));
     return m !== null && Number(a.amount ?? 0) > Number(m[1] ?? 0);
   });
   if (!tapRamp) return 0;
   const { patterns } = loadRules();
-  const o = dc.card.oracleText ?? "";
+  const o = frontOnly ? (dc.card.oracleText ?? "").split("\n//\n")[0]! : dc.card.oracleText ?? "";
   const has = (p: string, text = o) => new RegExp(patterns[p]!, "i").test(text);
   // A CONDITION ON THE ABILITY is not a rock: Flywheel Racer taps only while crewed, Mox Jasper only
   // beside a Dragon. The tags carry no condition on an activated ability, so the printed text does.

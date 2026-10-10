@@ -75,3 +75,6 @@ export function parseTypeLineAllFaces(typeLine: string): ParsedTypeLine {
   }
   return out;
 }
+
+/** The two land tests, see `@edh-seer/engine`'s `is-land.ts` for the rule and why it lives there. */
+export { countsAsLand, isLandCard } from "@edh-seer/engine/is-land";

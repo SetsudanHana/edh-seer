@@ -251,6 +251,9 @@ writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify({
 // substantive cards, and a plain dual -- Godless Shrine, an untapped check land -- has no emit and no
 // trigger, so it is not there; the precon upgrade package reads this to find a better land. Front
 // faces only: a spell that transforms into a land is not played as one.
+// DELIBERATELY NOT `isLand` (#1167): that counts a modal DFC's land back, and this pool is the
+// swap-in lands for the upgrade package -- adding the modal DFCs' land backs to it is a separate
+// decision (and a static rebuild), not part of making the deck's own count agree.
 const lands = [...new Map(cards
   .filter((c) => /\bland\b/i.test((c.typeLine ?? "").split("//")[0]!) && c.legalities?.commander !== "not_legal" && c.legalities?.commander !== "banned")
   .map((c) => [c.name, { name: c.name, identity: c.colorIdentity ?? [] }] as const)).values()]
