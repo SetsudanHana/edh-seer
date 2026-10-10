@@ -3,7 +3,7 @@ import { BUILD_PARENTS, detectBuildCategories } from "./build.js";
 import { classifyAccelerant } from "./goldfish.js";
 import { RAMP_RESILIENCE, drawCredit, landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
-import { countsAsLand } from "./typeline.js";
+import { countsAsLand, transformsIntoLand } from "./typeline.js";
 
 /** The mana value at or below which acceleration counts for Karsten's 0.28 bucket. Cheap ramp
  *  shortens the turns the regression is about; a four-mana ramp spell needs the lands you were
@@ -91,9 +91,12 @@ export function landInputs(
   // pool and `producedMana` carries the BACK face's colour, so Silundi Vision looked like cheap
   // ramp and was paid for twice. Counting it as a land removes the guard's reason to exist rather
   // than the guard's effect: a land is not ramp under either convention.
+  // A CARD THAT TRANSFORMS INTO A LAND IS NOT RAMP (owner 2026-10-10, #1174), and its
+  // `producedMana` is its land BACK's -- the same trap as an MDFC's above: Treasure Map read as a
+  // cheap rock here while the Ramp role had dropped it.
   const rampPlusDraw = nonland.filter(
     (dc) => accelerants.has(dc.card.name) && dc.card.manaValue <= CHEAP
-      && !fastNames.has(dc.card.name),
+      && !fastNames.has(dc.card.name) && !transformsIntoLand(dc.card),
   ).length;
 
   return {

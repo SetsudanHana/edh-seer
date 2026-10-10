@@ -1,6 +1,6 @@
 import ruleSet from "./rules.json" with { type: "json" };
 import type { DeckCard } from "./types.js";
-import { countsAsLand } from "./typeline.js";
+import { countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
 
 /** A single test against one card. The operator set is CLOSED on purpose: `oracle`, `effectKind`,
  *  `typeLine` and an `anyOf` combinator cover every classifier that exists, and keeping it closed
@@ -335,14 +335,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
   }
 }
 
-/** A transform or flip card whose back is a land: an adventure or split half is cast from hand
- *  (Studious First-Year // Rampant Growth IS ramp), and a modal DFC's back is playable. #1167 read
- *  such a card's ramp from its front face only; the owner's ruling (#1174) takes it off Ramp
- *  altogether, so the front-face view that read it is gone. */
-function transformsIntoLand(dc: DeckCard): boolean {
-  const backs = (dc.card.typeLine ?? "").split("//").slice(1);
-  return (dc.card.layout === "transform" || dc.card.layout === "flip") && backs.some((b) => /\bland\b/i.test(b));
-}
+const transformsIntoLand = (dc: DeckCard): boolean => transformsIntoLandCard(dc.card);
 
 export function ruleMatches(rule: Rule, dc: DeckCard, set: RuleSet = loadRules()): boolean {
   // A CARD THAT TRANSFORMS INTO A LAND IS NEVER RAMP (owner 2026-10-10, #1174): "things that do

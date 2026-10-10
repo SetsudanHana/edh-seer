@@ -27,3 +27,12 @@ export function isLandCard(card: LandProbe): boolean {
 export function countsAsLand(card: LandProbe): boolean {
   return card.layout === "modal_dfc" ? /\bland\b/i.test(card.typeLine ?? "") : isLandCard(card);
 }
+
+/** A transform or flip card whose back is a land (owner ruling 2026-10-10, #1174: "things that do
+ *  transform are not ramp"). It is a spell by both predicates above, and it is never ramp: not its
+ *  land back's mana ability, not its front's Treasures on transforming. An adventure or split half
+ *  is cast from hand and a modal DFC's back is playable, so neither is one. */
+export function transformsIntoLand(card: LandProbe): boolean {
+  return (card.layout === "transform" || card.layout === "flip")
+    && (card.typeLine ?? "").split("//").slice(1).some((b) => /\bland\b/i.test(b));
+}
