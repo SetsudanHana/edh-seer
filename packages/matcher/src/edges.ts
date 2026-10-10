@@ -306,23 +306,29 @@ export function cardSupplyTags(tags: CardTags): Set<string> {
 }
 
 /** THE TAG KEY OF ONE TRIGGER OR EMIT, with the verb's implied class filled in (`zoneEventKey`) EXCEPT
- *  where the fill would be a lie (#1166 review). Only a creature or a planeswalker dies (CR 700.4 and
- *  the glossary; owner), so an untyped `dies` that is the card ITSELF (or its `ref`) keys on the card's
- *  own death class, and a card that is neither -- a fetch land's "sacrifice this land", Mindslaver,
- *  an Expedition -- has NO dies event: null. A class-less TOKEN a card makes dies as the token's type,
- *  which is unknown here, so as SUPPLY it keys nothing; as a trigger ("whenever a token dies") it is
- *  the creature the ruling names. The other verbs' fill needs no card type and is unchanged. */
-export function eventTagKey(e: GameEvent, ownTypes: readonly string[] | undefined, supply: boolean): string | null {
+ *  where the fill would be a lie (#1166 review). An untyped `dies` that is the card ITSELF (`self`, or
+ *  the `trigger` ref -- The Falcon's "sacrifice it", Cabaretti Courtyard) keys on the card's OWN type:
+ *  `dies:creature`, `dies:planeswalker`, else the first of its other types (`dies:land` for a fetch
+ *  land or Flagstones of Trokair). Never the creature fill: a land is not a creature. Another ref
+ *  (`sentence`: Turn Inside Out's "when IT dies" about a target creature) names some other object and
+ *  keeps the fill. A class-less TOKEN an emit makes dies as the token's type, which is unknown here,
+ *  so as SUPPLY it keys nothing; as a trigger it is the creature the ruling names. The other verbs'
+ *  fill needs no card type and is unchanged. */
+export function eventTagKey(e: GameEvent, ownTypes: readonly string[] | undefined): string {
   const key = themeSubjectKey(e.subject);
-  if (e.verb === "dies" && key === "any") {
-    if (e.subject.self === true || e.subject.ref !== undefined) {
-      const own = (ownTypes ?? []).map((t) => t.toLowerCase());
-      const k = own.includes("creature") ? "creature" : own.includes("planeswalker") ? "planeswalker" : null;
-      return k === null ? null : zoneEventKey(e.verb, e.subject.zone, k);
-    }
-    if (supply && e.subject.token === true) return null;
+  if (e.verb === "dies" && key === "any" && (e.subject.self === true || e.subject.ref === "trigger")) {
+    const own = (ownTypes ?? []).map((t) => t.toLowerCase()).filter((t) => (CARD_TYPES_DIES as readonly string[]).includes(t));
+    const k = own.includes("creature") ? "creature" : own.includes("planeswalker") ? "planeswalker" : own[0];
+    if (k !== undefined) return zoneEventKey(e.verb, e.subject.zone, k);
   }
   return zoneEventKey(e.verb, e.subject.zone, key);
+}
+const CARD_TYPES_DIES = ["creature", "planeswalker", "land", "artifact", "enchantment", "battle"] as const;
+
+/** `eventTagKey` as SUPPLY drops a class-less token's death (see above). */
+export function supplyTagKey(e: GameEvent, ownTypes: readonly string[] | undefined): string | null {
+  if (e.verb === "dies" && themeSubjectKey(e.subject) === "any" && e.subject.self !== true && e.subject.ref === undefined && e.subject.token === true) return null;
+  return eventTagKey(e, ownTypes);
 }
 
 function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
@@ -351,13 +357,12 @@ function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
       if (!keepRockEntry && v === "enters" && a.trigger.subject?.self === true && ownEntryExcluded(tags, false)
         && (isManaRock(tags) || selfSubjectIsLand(a.trigger.subject))) continue;
       const t = normalizeZoneEvent({ verb: v, subject: a.trigger.subject });
-      const k = eventTagKey(t, tags.characteristics?.types, false);
-      if (k !== null) out.add(k);
+      out.add(eventTagKey(t, tags.characteristics?.types));
     }
     for (const e of a.emits ?? []) {
       if (opponentsPermanent(e.subject)) continue;
       const t = normalizeZoneEvent(e);
-      const k = eventTagKey(t, tags.characteristics?.types, true);
+      const k = supplyTagKey(t, tags.characteristics?.types);
       if (k !== null) out.add(k);
     }
     // No subject requirement here, unlike the static EDGE below. Membership asks "is this card a
@@ -396,8 +401,7 @@ export function cardCaresTags(tags: CardTags): Set<string> {
       for (const v of a.trigger.verbs) {
         // The zone is passed only so a graveyard leave/enter (a CARD, not a permanent) is not given
         // the permanent class; the key keeps its legacy spelling (`leaves:`, no `-graveyard`) here.
-        const key = eventTagKey({ verb: v, subject: a.trigger.subject } as GameEvent, tags.characteristics?.types, false);
-        if (key === null) continue;
+        const key = eventTagKey({ verb: v, subject: a.trigger.subject } as GameEvent, tags.characteristics?.types);
         out.add(key.startsWith(`${v}-graveyard:`) ? `${v}:${key.slice(key.indexOf(":") + 1)}` : key);
       }
     }
@@ -2149,7 +2153,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
           && p.tags && !canCarryCounters(p.tags)) continue;
         // Keyed on the type the producer's event HAS (issue #507): "an instant or sorcery spell" cast
         // as Mizzix's Mastery is `cast:sorcery`, not the first of the list.
-        const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(keyedOn(t.subject, e.subject)));
+        const key = eventTagKey({ ...t, subject: keyedOn(t.subject, e.subject) }, c.tags?.characteristics?.types);
         // A PROLIFERATE DEMAND NEEDS ITS OWN PROSE. The generic grammar below would render this as
         // "When <producer> gets a counter, <consumer> triggers" — the producer does not get the
         // counter, it MAKES one, and a sorcery that proliferates never triggers. See
@@ -3689,7 +3693,7 @@ function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
           const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
           const byLegendRule = rawVerb === "dies" && legendary;
           if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) continue;
-          const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
+          const key = eventTagKey(t, c.tags?.characteristics?.types);
           reasons.push({
             tag: key,
             text: departs && !byLegendRule

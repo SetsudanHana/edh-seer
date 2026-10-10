@@ -1113,6 +1113,21 @@ test("a card that casts OTHER cards does supply a self-cast trigger", () => {
   expect(directedReasons(enabler, selfCast, H).some((r) => r.tag.startsWith("cast"))).toBe(true);
 });
 
+// #1166 review: an untyped SELF dies keys on the card's OWN type, never the creature fill.
+const asType = (c: ReturnType<typeof base>, types: string[]) => ({ ...c, tags: { ...c.tags, characteristics: { ...c.tags.characteristics!, types } } });
+test("Armageddon -> Flagstones of Trokair: the dying land is dies:land, not dies:creature", () => {
+  const armageddon = asType(base("Armageddon", [{ kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "dies", subject: { type: "land", control: "any", token: null } }] }]), ["sorcery"]);
+  const flagstones = asType(base("Flagstones of Trokair", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { self: true, control: "you", token: null } }, effect: { kind: "search" } }]), ["land"]);
+  const tags = directedReasons(armageddon, flagstones, H).map((r) => r.tag);
+  expect(tags).toContain("dies:land");
+  expect(tags).not.toContain("dies:creature");
+});
+test("Turn Inside Out: 'when IT dies' about a target creature is still the creature's death", () => {
+  const spell = asType(base("Turn Inside Out", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { ref: "sentence", control: "any", token: null } }, effect: { kind: "" } }]), ["instant"]);
+  expect(cardCaresTags(spell.tags).has("dies:creature")).toBe(true);
+  expect(cardThemeTags(spell.tags).has("dies:creature")).toBe(true);
+});
+
 test("a payoff watching OTHER casts is untouched", () => {
   // The bound in the other direction. `base` gives every fixture card types: ["creature"], so the
   // payoff here watches creature casts -- Bontu's Monument's shape rather than Talrand's.

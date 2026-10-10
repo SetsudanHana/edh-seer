@@ -10,7 +10,7 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
-import { POLYMORPH_HIT_MV, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { keywordAbilities } from "./implied.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
@@ -21,7 +21,7 @@ import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } 
  *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
 export { effectPhrase } from "./sentence.js";
 import { phraseKindOf } from "./sentence.js";
-import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import { normalizeZoneEvent } from "./zones.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 /** PURE, AND IT HAS TO STAY THAT WAY. `build-partners.ts` is the Mongo and fs wiring; everything
@@ -716,7 +716,7 @@ export function partnersFor(
           // `eventKey` drops the zone, and a verb-only test cannot tell `enters:goblin` from
           // `enters:creature`, so a generic sentence would be priced at the rare demand's rate.
           const t = normalizeZoneEvent({ verb, subject: a.trigger!.subject } as GameEvent);
-          const tag = eventReasonTag(zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject)), t.verb, a);
+          const tag = eventReasonTag(eventTagKey(t, c.tags?.characteristics?.types), t.verb, a);
           const e = events.get(key) ?? { score: specificity(key, freq), tags: new Set<string>(), width: split.length };
           e.tags.add(tag);
           e.width = Math.min(e.width, split.length);
