@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { AnalyzeResponse } from "../types.js";
 import { typeSlices, landCount } from "../lib/deck-shape.js";
 import { DeckWaffle } from "./DeckWaffle.js";
@@ -19,7 +20,7 @@ import { Arrow } from "./icons.js";
  *
  *  NO SCORE AND NO TARGET LIVES HERE. A tool that grades a deck before showing it understood it
  *  has not earned the criticism. Everything on this panel is a description. */
-export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inline, verdictAbove = false }: {
+export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inline, verdictAbove = false, afterVerdict }: {
   data: AnalyzeResponse;
   /** THE THEME ON ONE LINE WITH ITS LABEL, for the report rail, where the chapter's own name heads
    *  the column: a "main theme" kicker stacked under that heading is the two-label stack the
@@ -32,6 +33,8 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inli
   /** THE VERDICT RIDES IN THE CHAPTER'S HEADING ROW ("verdict"), so "rest" leaves it out (designer
    *  review 2026-09-30, #770: under a 16:9 map it sat below the fold at 1920 and 2560). */
   verdictAbove?: boolean;
+  /** Rendered directly after the verdict and its suggestions button, where the verdict is in this panel. */
+  afterVerdict?: ReactNode;
   /** The game-state controls (speed, the monarch…), folded here rather than above everything:
    *  "the initiative" was the first thing a beginner met, before any answer (appeal review
    *  2026-09-26). */
@@ -181,6 +184,7 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet, part, inli
               </button>
             </p>
           ) : null}
+          {afterVerdict}
         </div>
       {assumptions ? (
         <details className="text-sm" open={!!assumptionsSet}>
