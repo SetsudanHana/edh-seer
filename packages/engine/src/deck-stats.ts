@@ -1,5 +1,5 @@
 import type { Card } from "./card.js";
-import { isLand } from "./is-land.js";
+import { countsAsLand } from "./is-land.js";
 
 export interface ManaCurveBucket {
   /** 0-6 exact mana value, or 7 meaning "7 or more". */
@@ -18,7 +18,7 @@ export interface DeckStats {
  *  is over the full card list. Shared by both `analyzeDeck` and `analyzeDeckStructured`
  *  so the two report shapes never drift on this computation. */
 export function computeDeckStats(cards: Card[]): DeckStats {
-  const nonland = cards.filter((c) => !isLand(c));
+  const nonland = cards.filter((c) => !countsAsLand(c));
   const landCount = cards.length - nonland.length;
 
   const manaCurve: ManaCurveBucket[] = Array.from({ length: 8 }, (_, value) => ({ value, count: 0 }));

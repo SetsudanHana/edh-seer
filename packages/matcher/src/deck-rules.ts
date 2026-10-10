@@ -1,5 +1,5 @@
 import type { Card } from "@edh-seer/engine";
-import { isLand as isLandCard } from "./typeline.js";
+import { isLandCard } from "./typeline.js";
 
 /** CARDS THAT CHANGE HOW A DECK IS BUILT, AS DATA (owner, 2026-09-22).
  *

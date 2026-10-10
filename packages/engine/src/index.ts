@@ -1,6 +1,6 @@
 export const ENGINE_VERSION = "0.0.0";
 export type { Card, CardFace } from "./card.js";
-export { isLand } from "./is-land.js";
+export { countsAsLand, isLandCard } from "./is-land.js";
 export type { Tag } from "./tags.js";
 export { extractTags, tagFamily, describeTag } from "./tags.js";
 export { themeName, THEME_NAMES } from "./theme-names.js";

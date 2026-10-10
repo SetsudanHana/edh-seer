@@ -3,7 +3,7 @@ import { ARCHETYPE_FLOOR, ARCHETYPE_LABELS, ARCHETYPE_LEAD_FLOOR, type Archetype
 import TEMPLATE from "./template-targets.json" with { type: "json" };
 import { answerClassesOf, loadRules, ruleMatches } from "./rules.js";
 import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
-import { isLand as isLandCard } from "./typeline.js";
+import { countsAsLand } from "./typeline.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
 export type BuildCategory =
@@ -27,7 +27,7 @@ export const BUILD_CATEGORIES: BuildCategory[] = [
   "ramp", "draw", "cardSelection", "impulseDraw", "targetedRemoval", "stackInteraction", "boardWipe", "burn", "stax", "protection", "tutor", "graveyardHate", "lands",
 ];
 
-const isLand = (dc: DeckCard): boolean => isLandCard(dc.card);
+const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 
 /** For each card, the set of functional categories it fills. A card may fill several (that's how
  *  double-duty in Stage D is found). Counts derive from set sizes.
@@ -47,6 +47,16 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
     let s = m.get(cat);
     if (!s) { s = new Set(); m.set(cat, s); }
     for (const n of names) s.add(n);
+  }
+  // THE `lands` ROLE AGREES WITH THE LAND COUNT (#1167). The rule table's `typeLine contains land`
+  // reads the WHOLE "A // B" line, so a transform card with a land back (Treasure Map) got the role
+  // while `countsAsLand` -- what the count, the goldfish and `firstTurns` use -- calls it a spell.
+  // Intersected here rather than adding a layout-aware op to the rule table: one line, and every
+  // other typeLine rule keeps its documented whole-line reading.
+  const lands = m.get("lands");
+  if (lands) {
+    const counted = new Set(cards.filter((dc) => countsAsLand(dc.card)).map((dc) => dc.card.name));
+    for (const n of [...lands]) if (!counted.has(n)) lands.delete(n);
   }
   return m;
 }
@@ -598,14 +608,18 @@ const TAP_COST = /^(?:\{(\d+)\},\s*)?\{T\}$/;
  *  and staples in green, but "taps for mana" cannot see them; a grade for them is its own tier. */
 export function rampGrade(dc: DeckCard): number {
   if (isLand(dc)) return 0;
-  const tapRamp = (dc.tags?.abilities ?? []).some((a) => {
+  // A CARD IN THE DECK IS ITS FRONT FACE (CR 712.8a), so for every layout but a modal DFC (whose back
+  // you can cast) a back face's "{T}: Add" is not a rock you hold: Treasure Map's Treasure Cove is
+  // reached by transforming. It graded 16 on the back's ability and text before (#1167).
+  const frontOnly = dc.card.layout !== "modal_dfc";
+  const tapRamp = (dc.tags?.abilities ?? []).filter((a) => !frontOnly || (a.face ?? 0) === 0).some((a) => {
     if (a.kind !== "activated" || a.effect?.kind !== "mana-generation" || a.repeats !== "per-cycle") return false;
     const m = TAP_COST.exec(String(a.cost ?? ""));
     return m !== null && Number(a.amount ?? 0) > Number(m[1] ?? 0);
   });
   if (!tapRamp) return 0;
   const { patterns } = loadRules();
-  const o = dc.card.oracleText ?? "";
+  const o = frontOnly ? (dc.card.oracleText ?? "").split("\n//\n")[0]! : dc.card.oracleText ?? "";
   const has = (p: string, text = o) => new RegExp(patterns[p]!, "i").test(text);
   // A CONDITION ON THE ABILITY is not a rock: Flywheel Racer taps only while crewed, Mox Jasper only
   // beside a Dragon. The tags carry no condition on an activated ability, so the printed text does.

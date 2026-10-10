@@ -1,5 +1,5 @@
 import type { GraphNode } from "../types.js";
-import { isLand as isLandCard } from "@edh-seer/matcher/typeline";
+import { countsAsLand } from "@edh-seer/matcher/typeline";
 
 /** THE SLICE ORDER, FIXED, AND IT IS THE VALIDATED COLOUR ORDER.
  *
@@ -83,7 +83,7 @@ export function landBackCards(nodes: readonly GraphNode[]): ReadonlySet<string> 
   for (const [name, backs] of faces) {
     backs.sort((x, y) => x.face - y.face);
     const line = [fronts.get(name) ?? "", ...backs.map((f) => f.line)].join(" // ");
-    if (isLandCard({ typeLine: line, layout: backs[0]!.layout })) names.add(name);
+    if (countsAsLand({ typeLine: line, layout: backs[0]!.layout })) names.add(name);
   }
   return names;
 }

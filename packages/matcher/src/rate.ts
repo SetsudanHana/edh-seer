@@ -1,5 +1,5 @@
 import type { DeckCard } from "./types.js";
-import { isLand as isLandCard } from "./typeline.js";
+import { countsAsLand } from "./typeline.js";
 
 /** THE COST-TO-EFFECT RATE, AS AN INTERVAL PER FAMILY (roadmap X2; owner 2026-09-17).
  *
@@ -153,7 +153,7 @@ export function ratesOf(d: DeckCard): Rate[] {
   const out: Rate[] = [];
   const types = d.tags?.characteristics.types ?? [];
   const creature = types.includes("creature") || /\bCreature\b/.test(d.card.typeLine ?? "");
-  const land = types.includes("land") || isLandCard(d.card);
+  const land = types.includes("land") || countsAsLand(d.card);
   const equipment = /\bEquipment\b/.test(d.card.typeLine ?? "");
   const creatureAura = /\bAura\b/.test(d.card.typeLine ?? "") && /^Enchant creature\b/m.test(d.card.oracleText ?? "");
   /** The cheapest printed "Equip {N}"; `null` when every Equip line charges something other than

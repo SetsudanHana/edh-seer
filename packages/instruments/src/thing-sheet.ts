@@ -31,7 +31,7 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "@edh-seer/matcher";
-import { isLand as isLandCard } from "@edh-seer/matcher/typeline";
+import { countsAsLand } from "@edh-seer/matcher/typeline";
 import { renderThingSheet } from "./thing-sheet-html.js";
 
 const arg = (f: string): string | undefined => {
@@ -135,7 +135,7 @@ for (const file of take(files, files.length, rand)) {
   if (!thing) { abstained++; continue; }
 
   const inSet = new Set(thing.cards);
-  const isLand = (dc: typeof deckCards[number]) => isLandCard(dc.card);
+  const isLand = (dc: typeof deckCards[number]) => countsAsLand(dc.card);
   const outPool = deckCards.filter((dc) => !isLand(dc) && !inSet.has(dc.card.name) && !cmdNorm.has(normalizeName(dc.card.name)));
   const byName = new Map(deckCards.map((dc) => [dc.card.name, dc.card]));
   const row = (name: string, stratum: "in" | "out"): ThingClaim | null => {

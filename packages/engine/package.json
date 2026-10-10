@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./hypergeometric": "./src/hypergeometric.ts",
+    "./is-land": "./src/is-land.ts",
     "./percent": "./src/percent.ts"
   },
   "scripts": {

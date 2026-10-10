@@ -1,6 +1,6 @@
 import { seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
-import { isLand as isLandCard } from "./typeline.js";
+import { countsAsLand } from "./typeline.js";
 
 /** A Commander player's starting life. The CLOCK is measured against ONE opponent, and it is the
  *  horizon every availability figure is priced at, so it stays one opponent. The whole table is a
@@ -12,7 +12,7 @@ export const STARTING_LIFE = 40;
  *  well past any real EDH game, so a deck with no clock inside it has no clock at all. */
 export const HORIZON = 20;
 
-const isLand = (dc: DeckCard): boolean => isLandCard(dc.card);
+const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 const isCreature = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("creature");
 
 /** Expected attacking power on the board at `turn`.

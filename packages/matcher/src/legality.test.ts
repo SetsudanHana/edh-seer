@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { choosesColour, deckLegality } from "./legality.js";
+import { companionFindings } from "./deck-rules.js";
 import { commanderDamage } from "./commander-damage.js";
 
 const card = (name: string, typeLine = "Creature — Bear", opts: Partial<Card> = {}): Card => ({
@@ -390,4 +391,13 @@ test("a copy cap this cannot read is reported, never read as ONE (which would fl
   }));
   expect(deckLegality({ cards: deckOf(cmd, eleven(11)), commanders: [cmd] })).toEqual([]);
   expect(deckLegality({ cards: deckOf(cmd, eleven(12)), commanders: [cmd] }).map((f) => f.rule)).toEqual(["duplicate"]);
+});
+
+test("companions read the FRONT face: a Sorcery // Land modal DFC is a nonland card for Keruga (#1167)", () => {
+  const keruga = card("Keruga, the Macrosage", "Legendary Creature — Dragon", {
+    colorIdentity: ["G", "U"], oracleText: "Companion — Your starting deck contains only cards with mana value 3 or greater and land cards.",
+  });
+  const mdfc = card("Shatterskull Smashing // Shatterskull, the Hammer Pass", "Sorcery // Land", { layout: "modal_dfc", manaValue: 2 });
+  const out = companionFindings(keruga, { cards: [mdfc, ...filler(3)], commanders: [] } as never);
+  expect(out.map((f) => f.cards)).toEqual([[mdfc.name]]);
 });

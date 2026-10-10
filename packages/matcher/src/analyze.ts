@@ -56,7 +56,7 @@ import { commanderDamage } from "./commander-damage.js";
 import { manaModel } from "./goldfish.js";
 import { deckLegality } from "./legality.js";
 import { COMMANDER_TAX_CAVEAT, COMMANDER_TAX_PER_CAST } from "./format.js";
-import { isLand as isLandCard } from "./typeline.js";
+import { countsAsLand } from "./typeline.js";
 
 /**
  * Structured-engine counterpart of `@edh-seer/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -71,7 +71,7 @@ const REMOVAL_EFFECT_KINDS = new Set(["damage", "forced-sacrifice"]);
 
 /** Type-line land detection, shared by the nonland-card map and the nonland count so both stay
  *  in sync. */
-const isLand = (dc: DeckCard): boolean => isLandCard(dc.card);
+const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 
 /** Best-effort structured proxy for the flat engine's ramp/draw/removal role counts. Counts
  *  distinct cards, not abilities. Removal is approximated as damage/forced-sacrifice effects

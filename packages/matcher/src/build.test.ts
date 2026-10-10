@@ -883,6 +883,16 @@ describe("rampGrade (#534)", () => {
   const elf = mk("Llanowar Elves", "{T}: Add {G}.", "Creature — Elf Druid", tap("{T}", "1"));
   const mindStone = mk("Mind Stone", "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.", "Artifact", tap("{T}", "1"));
 
+  it("a transform card's back-face tap ability is not a rock you hold (#1167)", () => {
+    const back = (tap("{T}", "1")[0] as object);
+    const treasureMap = { ...mk("Treasure Map // Treasure Cove", "{1}, {T}: Scry 1.\n//\n{T}: Add one mana of any color.", "Artifact // Land",
+      [{ ...back, face: 1 } as never]), };
+    expect(rampGrade({ ...treasureMap, card: { ...treasureMap.card, layout: "transform" } as never })).toBe(0);
+    // Control: the same card as a modal DFC non-land (a castable back) keeps the whole-card reading.
+    const control = { ...treasureMap, card: { ...treasureMap.card, typeLine: "Artifact // Artifact", layout: "modal_dfc" } as never };
+    expect(rampGrade(control)).toBeGreaterThan(0);
+  });
+
   it("staple-grade is a per-cycle tap ability that nets mana; anything else is 0", () => {
     expect(rampGrade(mk("Ashnod's Altar", "Sacrifice a creature: Add {C}{C}.", "Artifact", tap("Sacrifice a creature", "2", "repeatable")))).toBe(0);
     expect(rampGrade(mk("Akki Rockspeaker", "When this creature enters, add {R}.", "Creature — Goblin Shaman",
@@ -937,4 +947,15 @@ test("Build counts a modal DFC's land back and not a transform card's (#1167)", 
   ];
   const lands = computeBuild(cards, "goodstuff").buildCategories.find((c) => c.category === "lands");
   expect(lands?.count).toBe(2);
+});
+
+test("the lands ROLE agrees with the land count: a transform land-back has none, an MDFC land does (#1167)", () => {
+  const withLayout = (dc: DeckCard, layout: string): DeckCard => ({ ...dc, card: { ...dc.card, layout } as never });
+  const m = detectBuildCategories([
+    withLayout(mk("Treasure Map // Treasure Cove", "", "Artifact // Land"), "transform"),
+    withLayout(mk("Shatterskull Smashing // Shatterskull, the Hammer Pass", "", "Sorcery // Land"), "modal_dfc"),
+    mk("Bojuka Bog", "", "Land"),
+  ]);
+  expect(m.get("lands")).toEqual(new Set(["Shatterskull Smashing // Shatterskull, the Hammer Pass", "Bojuka Bog"]));
+  expect(rolesByCard(m).get("Treasure Map // Treasure Cove") ?? []).not.toContain("lands");
 });

@@ -6,7 +6,7 @@ import { COLORS, deckBasicTypes, isManaSource, landOnlineBy, type Color } from "
 import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import { fixedColours } from "./mana-lines.js";
 import type { DeckCard } from "./types.js";
-import { isLand as isLandCard } from "./typeline.js";
+import { countsAsLand } from "./typeline.js";
 
 /** ONE MANA-BASE MODEL, IN ONE UNIT (owner, 2026-09-29: "you have to account for finding golden
  *  center between: do not skip land a turn, mana requirements and mana flood where you just draw
@@ -156,7 +156,7 @@ function pipOptions(manaCost: string | undefined): Color[][] {
   return out;
 }
 
-const isLand = (dc: DeckCard): boolean => isLandCard(dc.card);
+const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 
 /** A `{T}: Add` ability whose cost does not sacrifice the card, read line by line with string
  *  searches: a regex over the cost ran in polynomial time on hostile text (CodeQL). */
