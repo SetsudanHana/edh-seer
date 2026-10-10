@@ -41,8 +41,10 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
   const medianLine = m.rows
     .map((r, i) => `${i === 0 ? "M" : "L"}${mid(r.turn)},${y(r.payableShare.median)}`)
     .join(" ");
-  // The headline's turn is the default readout: the number the panel leads with, on the chart.
-  const shownTurn = pick ?? (m.rows.some((r) => r.turn === m.headline.turn) ? m.headline.turn : m.rows[m.rows.length - 1]?.turn);
+  // The deck's own need turn is the default readout (#1151); a report saved before it falls back to
+  // the headline's turn.
+  const defaultTurn = m.need?.turn ?? m.headline.turn;
+  const shownTurn = pick ?? (m.rows.some((r) => r.turn === defaultTurn) ? defaultTurn : m.rows[m.rows.length - 1]?.turn);
   const shown = m.rows.find((r) => r.turn === shownTurn);
   const describe = (r: (typeof m.rows)[number]) =>
     `turn ${r.turn}: ${pct(r.payableShare.median)} of the deck payable (${pct(r.payableShare.p25)}–${pct(r.payableShare.p75)})`;
@@ -54,6 +56,7 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
           *  `castability.ts`'s own range, which collapses on 18.9% of rows and prints a single
           *  number there: a range whose ends are equal is not a range, and printing it as one makes
           *  a reader look for a difference that is not there. */}
+        <span className="text-xs text-(--muted)">Ramp:</span>
         <span className="stat-num text-2xl">
           {policyBand(m.headline.low, m.headline.high)}
         </span>

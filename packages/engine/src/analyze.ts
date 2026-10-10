@@ -539,6 +539,8 @@ export interface DeckReport {
     accelerants: number;
     rows: { turn: number; mana: { median: number; p25: number; p75: number }; payableShare: { median: number; p25: number; p75: number } }[];
     headline: { mana: number; turn: number; low: number; high: number };
+    /** The deck's own need (#1151): on-curve mana for the cost 90% of its nonlands fit under. */
+    need?: { mana: number; turn: number; share: number; low: number; high: number };
     /** Decks with rituals: per commander, the share of games it can come down BY each turn, turn 1
      *  first, counting one turn's burst of rituals in hand (colour-blind). */
     fastStart?: { name: string; byTurn: number[] }[];

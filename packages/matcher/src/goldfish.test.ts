@@ -1302,3 +1302,33 @@ test("a creature fixer is fielded and attacks like its vanilla twin", () => {
   expect(med(twin)).toBeLessThan(Infinity);
   expect(med(fixer)).toBeLessThanOrEqual(med(twin));
 });
+
+/** #1151, owner ruling 2026-10-10 ("the deck's own need"): the Glance tile asks whether the player
+ *  can pay for THEIR spells on time, so `need` is the on-curve mana of the cost 90% of the deck's
+ *  nonlands sit at or under, and the fixed 6-by-6 `headline` is untouched. */
+describe("manaModel need (#1151)", () => {
+  const plains = (n: number): DeckCard[] => Array.from({ length: n }, (_, i) => card(`Plains ${i}`, "Basic Land — Plains", 0, "", ["W"]));
+  const mixed = (): DeckCard[] => [
+    ...plains(36),
+    ...Array.from({ length: 20 }, (_, i) => card(`Two ${i}`, "Creature — Bear", 2)),
+    ...Array.from({ length: 20 }, (_, i) => card(`Three ${i}`, "Creature — Bear", 3)),
+    ...Array.from({ length: 3 }, (_, i) => card(`Six ${i}`, "Creature — Giant", 6)),
+  ];
+  test("sits at the cost 90% of the nonlands fit under, and leaves the headline alone", async () => {
+    const { manaModel } = await import("./goldfish.js");
+    const a = manaModel(mixed(), { trials: 300, seed: 3 }).availability; const n = a.need!;
+    expect(n.mana).toBe(3);
+    expect(n.turn).toBe(3);
+    expect(n.share).toBeGreaterThanOrEqual(0.9);
+    expect(n.low).toBeLessThanOrEqual(n.high);
+    for (const v of [n.low, n.high]) { expect(v).toBeGreaterThanOrEqual(0); expect(v).toBeLessThanOrEqual(1); }
+    expect(a.headline).toMatchObject({ mana: 6, turn: 6 });
+  });
+  test("clamps to two for a deck of nothing but cheap drops", async () => {
+    const { manaModel } = await import("./goldfish.js");
+    const cheap = [...plains(36), ...Array.from({ length: 30 }, (_, i) => card(`Zero ${i}`, "Artifact", i % 2))];
+    const a = manaModel(cheap, { trials: 200, seed: 3 }).availability; const n = a.need!;
+    expect(n.mana).toBe(2);
+    expect(n.turn).toBe(2);
+  });
+});

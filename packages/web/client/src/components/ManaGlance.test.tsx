@@ -61,3 +61,14 @@ test("when some sources come too late, the tile says how many of the deck's are 
   // ENOUGH, BUT NOT IN TIME (persona round 2026-10-07): the verdict the Improve finding gives.
   expect(screen.getAllByTestId("mana-tile")[1]).toHaveTextContent(/30 of 37 neededEnough black, but not in time: you run 38 black sources and only 30 can tap by turn 3 \(tapped lands, and rocks you couldn't have cast yet, don't count\)\. 2 cards wanting.*need 37 by turn 3\.$/);
 });
+
+/** #1151, owner ruling 2026-10-10: the tile asks what the player asks -- can I pay for MY spells on
+ *  time -- so it leads with the deck's own need; the 6-by-6 benchmark lives in the fold. */
+test("the mana tile reads the deck's own need, and falls back to the headline for an old report", () => {
+  const withNeed = { headline: { mana: 6, turn: 6, low: 0.59, high: 0.7 }, need: { mana: 4, turn: 4, share: 0.94, low: 0.8, high: 0.8 } } as never;
+  const { unmount } = render(<ManaGlance manaAvailability={withNeed} landCount={0} deckSize={0} />);
+  expect(screen.getByTestId("mana-tile")).toHaveTextContent("Mana80%to make 4 mana by turn 4, enough for 94% of your spells");
+  unmount();
+  render(<ManaGlance manaAvailability={manaAvailability} landCount={0} deckSize={0} />);
+  expect(screen.getByTestId("mana-tile")).toHaveTextContent("Mana52%to make 6 mana by turn 6");
+});

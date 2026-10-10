@@ -277,7 +277,10 @@ export function formatReport(report: DeckReport, trim = 0): string {
     // plain hyphen where the rest of the report prints an en dash and it never learned the 8pp rule.
     // THIRD copy of a sentence-shaped rule found in this file; found by reading real output.
     const odds = policyBand(m.headline.low, m.headline.high);
-    lines.push(`  by turn ${m.headline.turn} you can make ${m.headline.mana} mana ${odds} of the time`);
+    if (m.need) {
+      lines.push(`  by turn ${m.need.turn} you can make ${m.need.mana} mana ${policyBand(m.need.low, m.need.high)} of the time, enough for ${Math.round(m.need.share * 100)}% of your spells`);
+    }
+    lines.push(`  ${m.need ? "ramp: " : ""}by turn ${m.headline.turn} you can make ${m.headline.mana} mana ${odds} of the time`);
     lines.push("    (the range is the PLAY POLICY: the low end holds up two mana, the high end spends");
     lines.push("     everything on acceleration and is a CEILING no real deck plays to)");
     lines.push("");
