@@ -38,9 +38,15 @@ test("nothing renders with no pairs", () => {
   expect(container).toBeEmptyDOMElement();
 });
 
-test("Glance renders the block above the map, from the engine model", () => {
+test("Glance: the strip follows the verdict in both branches", () => {
   const src = readFileSync(join(__dirname, "ReportChapters.tsx"), "utf8");
   const read = src.slice(src.indexOf('<Chapter id="read"'), src.indexOf('<Chapter id="stand"'));
-  expect(read).toContain("<StrongestPairs");
-  expect(read.indexOf("<StrongestPairs")).toBeLessThan(read.indexOf("<OrbitView"));
+  // Rail up: the verdict is in the heading row, so the strip leads the chapter, above the map.
+  expect(read).toMatch(/verdictAbove \? <StrongestPairs[^\n]*\/> : null/);
+  expect(read.search(/verdictAbove \? <StrongestPairs/)).toBeLessThan(read.indexOf("<OrbitView"));
+  // No rail: the verdict is in the "rest" part, and the strip is handed to it, to follow it.
+  expect(read).toMatch(/part="rest"[^\n]*afterVerdict=\{!verdictAbove \? <StrongestPairs/);
+  const panel = readFileSync(join(__dirname, "RecognitionPanel.tsx"), "utf8");
+  const at = panel.indexOf("See the {suggestions === 1", panel.indexOf("!verdictAbove ? ("));
+  expect(panel.indexOf("{afterVerdict}")).toBeGreaterThan(at);
 });

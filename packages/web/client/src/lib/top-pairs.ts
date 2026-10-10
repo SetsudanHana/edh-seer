@@ -12,11 +12,18 @@ export type TopPair =
 
 const front = (name: string) => name.split(" // ")[0]!;
 
+/** The kill clause, capped for a card-sized entry: two payoffs named, the rest counted ("and 8 more").
+ *  Three are all named -- "and 1 more" would hide a name to save nothing. */
+function killHere(c: Parameters<typeof comboKill>[0]): string {
+  const p = c.payoffs ?? [];
+  return p.length > 3 ? `wins through ${front(p[0]!.name)}, ${front(p[1]!.name)} and ${p.length - 2} more` : comboKill(c);
+}
+
 export function topPairs(report: DeckReport, model: EngineModel, manaValueOf: (name: string) => number | undefined): TopPair[] {
   const out: TopPair[] = [];
   // Two named cards and nothing required: a combo that needs a third piece is not a pair.
   const c = infiniteCombos(report.combos, manaValueOf).find((x) => x.cards.length === 2 && !x.requires?.length);
-  if (c) out.push({ kind: "combo", cards: [front(c.cards[0]!), front(c.cards[1]!)], manaTogether: c.manaValue, result: c.result, kill: comboKill(c) });
+  if (c) out.push({ kind: "combo", cards: [front(c.cards[0]!), front(c.cards[1]!)], manaTogether: c.manaValue, result: c.result, kill: killHere(c) });
   const taken = c ? new Set(c.cards.map(front)) : undefined;
   for (const s of model.strongest) {
     if (out.length >= 3) break;

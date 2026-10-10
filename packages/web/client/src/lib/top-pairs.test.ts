@@ -47,3 +47,11 @@ test("an empty model with no combos is empty", () => {
   expect(topPairs(report([]), m([]), mvOf)).toEqual([]);
   expect(topPairs({} as DeckReport, m([]), mvOf)).toEqual([]);
 });
+
+test("a long payoff list names two and counts the rest; three are all named", () => {
+  const pay = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `P${i}`, on: [], effect: "" }));
+  const kill = (n: number) => (topPairs(report([combo(["A", "B"], { result: "Infinite mana", payoffs: pay(n) })]), m([]), mvOf)[0] as { kill: string }).kill;
+  expect(kill(3)).toBe("wins through P0, P1 and P2");
+  expect(kill(4)).toBe("wins through P0, P1 and 2 more");
+  expect(kill(10)).toBe("wins through P0, P1 and 8 more");
+});

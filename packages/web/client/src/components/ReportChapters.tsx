@@ -344,7 +344,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  commander's map on the right. The line for the table, the verdict and the card counts
             *  follow it; the commander's face is the middle of the map. */}
           {/* THE STRONGEST PAIRS, NAMED (#1159), directly under the verdict row and above the map. */}
-          <StrongestPairs pairs={pairs} model={themes} />
+          {verdictAbove ? <StrongestPairs pairs={pairs} model={themes} /> : null}
           {themes && commanderId ? (
             <section aria-labelledby="commander-map-title" className="flex flex-col">
               <h3 id="commander-map-title" className="sr-only">What your commander works with</h3>
@@ -367,7 +367,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  left two-thirds of the row empty. On a phone and a laptop they still stack. */}
           <div className={`grid gap-6 items-start ${talk && !talkFirst && !talkInRail ? "lg:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]" : ""}`}>
             {talk && !talkFirst && !talkInRail ? <TableTalkLine talk={talk} /> : null}
-            <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" verdictAbove={verdictAbove} />
+            <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" verdictAbove={verdictAbove} afterVerdict={!verdictAbove ? <StrongestPairs pairs={pairs} model={themes} /> : undefined} />
           </div>
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one
