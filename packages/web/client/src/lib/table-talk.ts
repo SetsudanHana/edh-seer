@@ -41,6 +41,13 @@ export function warnsAbout(text: string): string[] {
 const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
 const front = (name: string) => name.split(" // ")[0]!;
 
+/** WHAT KILLS (#1034), bare: "wins through X", "wins by itself" or "needs another card to win". */
+export function comboKill(c: { payoffs?: { name: string }[]; result: string }): string {
+  if (c.payoffs?.length) return `wins through ${list(c.payoffs.map((x) => front(x.name)))}`;
+  // A loop whose result is the kill (Infinite damage) needs nothing else (#1084).
+  return comboWinsItself(c.result) ? "wins by itself" : "needs another card to win";
+}
+
 export function tableTalk(report: DeckReport, graph: CardGraph | undefined, manaValueOf: (name: string) => number | undefined): TableTalk | null {
   const b = report.bracket;
   if (!b) return null;
@@ -51,12 +58,11 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
   const cheap = combos.find((c) => c.cheap);
   // WHAT KILLS (#1034): "an infinite combo that needs 3 cards" left the phone seat asking whether it
   // wins by itself; the report's own payoffs (`combo.payoffs`) answer it.
-  const kill = (c: { payoffs?: { name: string }[]; result: string }, joiner: "that" | "and") => (c.payoffs?.length
-    ? ` ${joiner} wins through ${list(c.payoffs.map((x) => front(x.name)))}`
-    // A loop whose result is the kill (Infinite damage) needs nothing else (#1084).
-    : comboWinsItself(c.result) ? ` ${joiner} wins by itself`
+  const kill = (c: { payoffs?: { name: string }[]; result: string }, joiner: "that" | "and") => {
+    const k = comboKill(c);
     // "needs 3 cards (…) and needs another card" said "needs" twice for two different things.
-    : joiner === "and" ? " and another card to win" : " that needs another card to win");
+    return k.startsWith("needs") && joiner === "and" ? " and another card to win" : ` ${joiner} ${k}`;
+  };
   if (cheap) why.push(`a cheap two-card combo (${cheap.cards.map(front).join(" + ")})${kill(cheap, "that")}`);
   // A COMBO BRACKET 3 STILL ALLOWS is still the thing a stranger asks about: named here, and then
   // not a second time in the heads-up.
