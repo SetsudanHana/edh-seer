@@ -223,14 +223,18 @@ function antecedentCost(text: string, what: RegExp, cost: Cost, selfNames: reado
   const ss = sentencesOf(text);
   const i = ss.findIndex((x) => /\bif (?:you|they|that player) do\b/i.test(x) && what.test(x));
   if (i <= 0) return null;
-  const prev = ss[i - 1]!.replace(/[.!?]+$/, "").trim();
-  const cond = /\bif ([^,]*)$/i.exec(prev)?.[1];
-  if (cond) return cond.trim().toLowerCase();
-  const act = (/\b(?:you|they|that player) may (.+)$/i.exec(prev)?.[1] ?? prev.replace(/^(?:when|whenever|at the beginning of)\b[^,]*,\s*/i, "")).trim();
+  const prev = ss[i - 1]!.replace(/[.!?]+$/, "").replace(/^then\s+/i, "").trim();
+  // "Then if there are three or more counters on it, sacrifice it. If you do, ..." (Charitable Levy): the if-part is the gate and
+  // the part after the comma is the cost. "You may reveal that card if it has ..." (Omnath) has no comma: the whole tail is the gate.
+  const split = /^if ([^,]*),\s*(.+)$/i.exec(prev);
+  const cond = split?.[1] ?? /\bif ([^,]*)$/i.exec(prev)?.[1];
+  if (cond && !split) return cond.trim().toLowerCase();
+  const tail = split?.[2] ?? prev;
+  const act = (/\b(?:you|they|that player) may (.+)$/i.exec(tail)?.[1] ?? tail.replace(/^(?:when|whenever|at the beginning of)\b[^,]*,\s*/i, "")).trim();
   const got = parseCost(act, selfNames);
   cost.mana += got.mana; cost.tap ||= got.tap; cost.life += got.life; cost.sacrificeSelf ||= got.sacrificeSelf;
   cost.sacrificeOther ||= got.sacrificeOther; cost.tapOther ||= got.tapOther; cost.counters ??= got.counters; cost.other.push(...got.other);
-  return null;
+  return split ? split[1]!.trim().toLowerCase() : null;
 }
 
 /** Why a fetched land may not arrive: "If an opponent controls more lands than you, put it onto the battlefield" (Stoic Farmer),

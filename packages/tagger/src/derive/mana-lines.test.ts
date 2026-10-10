@@ -293,7 +293,7 @@ describe("review round 3 (#1169 task 1)", () => {
     expect(linesOf("Purestrain Genestealer", "fetch")[0]!.cost).toMatchObject({ counters: "remove" });
     expect(linesOf("Charitable Levy", "fetch")[0]!.cost).toMatchObject({ sacrificeSelf: true });
     for (const fx of Object.keys(fixtures)) for (const l of tagsOf(fx.split(" // ")[0]!).manaLines ?? []) expect(l.gate ?? "", fx).not.toMatch(/^(?:you|they|that player) do$/);
-    for (const n of ["Yavimaya Bloomsage", "Energy Tap", "Fire Lord Ozai", "Springbloom Druid", "Charitable Levy"]) expect(linesOf(n)[0]!.gate, n).toBeNull();
+    for (const n of ["Yavimaya Bloomsage", "Energy Tap", "Fire Lord Ozai", "Springbloom Druid"]) expect(linesOf(n)[0]!.gate, n).toBeNull();
   });
   it("'for as long as' is a duration, not a gate", () => {
     expect(linesOf("Ultima, Origin of Oblivion").every((l) => l.gate === null)).toBe(true);
@@ -301,5 +301,13 @@ describe("review round 3 (#1169 task 1)", () => {
   });
   it("Ashling's one printed add is one line, not one per cast/copy twin", () => {
     expect(linesOf("Ashling, Flame Dancer")).toHaveLength(1);
+  });
+});
+
+describe("review round 4 (#1169 task 1)", () => {
+  it("Charitable Levy: the 'if' before the comma is the gate, the sacrifice after it is the cost", () => {
+    const l = linesOf("Charitable Levy", "fetch")[0]!;
+    expect(l.gate).toBe("there are three or more collection counters on it");
+    expect(l.cost).toMatchObject({ sacrificeSelf: true, other: [] });
   });
 });

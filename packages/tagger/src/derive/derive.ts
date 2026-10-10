@@ -425,7 +425,8 @@ import { emblemRecipient } from "../emblem.js";
 // lines, `cost.counters` / `cost.tapOther`, `unread`, `tap-ability` renamed `activated`.
 // 296: #1169 review 2: number words are fixed amounts, "instead" / "as long as" / conditional-fetch gates, each-player fetches.
 // 297: #1169 review 3: "if you do" is a cost not a gate, intervening-if and "instead add" gates, "for as long as" is no gate, one trigger add read once.
-export const DERIVE_VERSION = 297;
+// 298: #1169 review 4: "Then if <cond>, <cost>. If you do, ..." gates on the condition and takes the cost after the comma.
+export const DERIVE_VERSION = 298;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
