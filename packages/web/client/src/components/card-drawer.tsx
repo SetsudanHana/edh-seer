@@ -9,6 +9,7 @@ import { buildOrbit, countText } from "../lib/orbit-model.js";
 import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
 import { SuggestionPanel } from "./SuggestionPanel.js";
 import { slugOf } from "@edh-seer/matcher/slug";
+import { faceLabels, indexByLabel } from "../lib/label-index.js";
 import { isPlainClick } from "./peek.js";
 
 /** WHAT A REPORT ADDS TO THE DRAWER: the deck's links, to know which cards are on the commander's
@@ -57,6 +58,9 @@ interface CardDrawerApi {
   live: boolean;
   /** Names the graph carries, so a caller can ask BEFORE rendering an affordance. */
   known: ReadonlySet<string>;
+  /** A report row keyed `faceKey(face, card)` (a face named like another deck card) -> the printed
+   *  face name it displays as. Absent for every other name. */
+  labels: ReadonlyMap<string, string>;
   /** Token names this deck's cards make, each mapped to the card that makes it (the first such
    *  card, when several do). A token is NOT in `known` -- the drawer indexes card nodes only, and
    *  deliberately so -- but a reason sentence naming one has to be able to say what it is. */
@@ -88,7 +92,7 @@ interface CardDrawerApi {
 }
 
 const CardDrawerContext = createContext<CardDrawerApi>({
-  open: () => {}, openToken: () => {}, canOpenToken: () => false, close: () => {}, openSuggestion: () => {}, live: false, known: new Set(), tokens: new Map(),
+  open: () => {}, openToken: () => {}, canOpenToken: () => false, close: () => {}, openSuggestion: () => {}, live: false, known: new Set(), labels: new Map(), tokens: new Map(),
   added: new Set(), isAdded: () => false, setExtras: () => {},
   setRailOn: () => {}, railHost: null, setRailBack: () => {}, pairOf: () => null, walkFrom: () => null,
 });
@@ -147,8 +151,8 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   // naming a card from the DECK — so index the card nodes and let a token be reached by clicking
   // it on the board, which is the only place a token appears as itself.
   const byName = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const n of graph?.nodes ?? []) if (!n.isToken && !m.has(n.label)) m.set(n.label, n.id);
+    // Standalone cards win their label; a face is also reachable as `faceKey(label, cardName)`.
+    const m = indexByLabel(graph?.nodes ?? [], (n) => n.id);
     // THE PHYSICAL CARD OPENS ITS FRONT FACE. A node's label is one printed FACE's name
     // (faces-as-nodes), so a caller naming the whole card — the cut list and the trim order, which
     // merge a card's faces back together because you cannot cut half a card — asked for a name no
@@ -163,6 +167,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
     }
     return m;
   }, [graph]);
+  const labels = useMemo(() => faceLabels(graph?.nodes ?? []), [graph]);
   // Set by `open`, read by the outside-click rule below: a click that opened (or switched to) a card
   // is not a click away from the drawer.
   const opened = useRef(false);
@@ -278,7 +283,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   }, [extras, setOpenId]);
   const api = useMemo<CardDrawerApi>(
     () => ({
-      open, openToken, canOpenToken, close: () => setOpenId(null), openSuggestion, live: true, known: new Set(byName.keys()), tokens, added, isAdded, setExtras,
+      open, openToken, canOpenToken, close: () => setOpenId(null), openSuggestion, live: true, known: new Set(byName.keys()), labels, tokens, added, isAdded, setExtras,
       setRailOn, railHost: railShown ? railEl : null, setRailBack, pairOf, walkFrom,
     }),
     [open, openToken, canOpenToken, openSuggestion, setOpenId, byName, tokens, added, isAdded, railShown, railEl, pairOf, walkFrom],
@@ -476,7 +481,7 @@ export function ReasonText({ text, className }: { text: string; className?: stri
         <span className="text-xs text-(--muted) mr-2">what it does isn't read yet ·</span>
       ) : null}
       {segments.map((seg, i) =>
-        seg.kind === "card" ? <CardName key={i} name={seg.text} />
+        seg.kind === "card" ? <CardName key={i} name={seg.text} verbatim />
           : seg.kind === "token" ? (
             // WRAPS, INSIDE ITS MAKER'S NAME IF IT HAS TO: kept on one line, "Zombie (token from
             // Aphemia, the Cacophony)" ran off a phone screen (appeal review 2026-09-26).
@@ -508,9 +513,12 @@ export function ReasonText({ text, className }: { text: string; className?: stri
  *  rows and list items where a button chrome would fight the row. A LINK, NOT A BUTTON (#1003
  *  review): a plain click opens the drawer, a modifier or middle click opens the card's page in a
  *  new tab, as every other card on the site does. */
-export function CardName({ name, className }: { name: string; className?: string }) {
-  const { open, known } = useCardDrawer();
-  if (!known.has(name)) return <>{name}</>;
+/** `verbatim`: print the key as given. A row shows a renamed face by its printed name; a SENTENCE keeps
+ *  the full "<face> (<card>)" so the reader can tell the face from the real card of the same name. */
+export function CardName({ name, className, verbatim }: { name: string; className?: string; verbatim?: boolean }) {
+  const { open, known, labels } = useCardDrawer();
+  const shown = verbatim ? name : labels.get(name) ?? name;
+  if (!known.has(name)) return <>{shown}</>;
   return (
     <a
       href={`/cards/${slugOf(name)}`}
@@ -522,7 +530,7 @@ export function CardName({ name, className }: { name: string; className?: string
       // move. WCAG 2.5.8 exempts inline links in prose; this is a button, in tables as often as not.
       className={`py-1 -my-1 text-left hover:text-(--accent) hover:underline underline-offset-2 ${className ?? ""}`}
     >
-      {name}
+      {shown}
     </a>
   );
 }

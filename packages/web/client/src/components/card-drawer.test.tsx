@@ -327,3 +327,35 @@ test("a name that is both a deck card and a token opens the card", () => {
   );
   expect(screen.getByRole("link", { name: "Sol Ring" })).toBeInTheDocument();
 });
+
+/** A FACE NAMED LIKE ANOTHER DECK CARD (#1176). The report keys the face's row "<face> (<card>)"; the
+ *  row shows the printed face name, opens the face (not the real card), and a standalone card wins
+ *  its printed label even when the face is listed first. */
+const collide = {
+  nodes: [
+    { id: "face:1:Studious First-Year // Rampant Growth", label: "Rampant Growth", cardName: "Studious First-Year // Rampant Growth", face: 1, typeLine: "Sorcery — Adventure", copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 2 },
+    { id: "Studious First-Year", label: "Studious First-Year", cardName: "Studious First-Year // Rampant Growth", typeLine: "Creature — Bear Wizard", copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 1 },
+    { id: "Rampant Growth", label: "Rampant Growth", typeLine: "Sorcery", copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 2 },
+  ],
+  edges: [],
+} as never;
+const FACE_ROW = "Rampant Growth (Studious First-Year // Rampant Growth)";
+
+test("a renamed face row shows the printed face name and opens the FACE", async () => {
+  render(<CardDrawerProvider graph={collide}><CardName name={FACE_ROW} /></CardDrawerProvider>);
+  await userEvent.click(screen.getByRole("link", { name: "Rampant Growth" }));
+  expect(within(screen.getByTestId("card-inspector")).getAllByText(/Adventure/).length).toBeGreaterThan(0);
+});
+
+test("a standalone card wins its printed label over a face listed first", async () => {
+  render(<CardDrawerProvider graph={collide}><CardName name="Rampant Growth" /></CardDrawerProvider>);
+  await userEvent.click(screen.getByRole("link", { name: "Rampant Growth" }));
+  const card = screen.getByTestId("card-inspector");
+  expect(within(card).queryAllByText(/Adventure/)).toHaveLength(0);
+});
+
+test("a sentence naming the renamed label links the whole label to the face", async () => {
+  render(<CardDrawerProvider graph={collide}><ReasonText text={`${FACE_ROW} fetches a land`} /></CardDrawerProvider>);
+  await userEvent.click(screen.getByRole("link", { name: FACE_ROW }));
+  expect(within(screen.getByTestId("card-inspector")).getAllByText(/Adventure/).length).toBeGreaterThan(0);
+});

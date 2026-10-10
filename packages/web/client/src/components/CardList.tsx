@@ -94,14 +94,15 @@ function useTableColumns(): number {
 function GridCard({
   name, art, count, dim, onOpen,
 }: { name: string; art?: string; count?: number; dim?: boolean; onOpen: () => void }) {
+  const shown = useCardDrawer().labels.get(name) ?? name;
   const src = art === undefined ? null : cardImageUrl(art);
   return (
     <figure className="relative m-0 rounded-[7px] overflow-hidden border border-(--separator) bg-(--surface-secondary) aspect-[488/680]">
-      <button type="button" onClick={onOpen} data-card={name} className="block w-full h-full text-left" aria-label={name}>
+      <button type="button" onClick={onOpen} data-card={name} className="block w-full h-full text-left" aria-label={shown}>
         {src ? (
           <img
             src={src}
-            alt={name}
+            alt={shown}
             loading="lazy"
             className={`w-full h-full object-cover transition-[opacity,filter] duration-200 ${
               dim ? "opacity-40 saturate-50 hover:opacity-90 hover:saturate-100" : ""}`}

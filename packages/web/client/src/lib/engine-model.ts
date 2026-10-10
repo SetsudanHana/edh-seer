@@ -273,7 +273,9 @@ const asRepeat = (r: string | undefined): Repeat => (r === "static" || r === "ac
 const pairKey = (x: string, y: string) => (x < y ? `${x}\u0001${y}` : `${y}\u0001${x}`);
 
 export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineModel {
-  const scoreByName = new Map(report.cards.map((c) => [c.name, c.score ?? 0]));
+  // KEYED BY THE ROW'S EXACT NODE ID: a face named like another deck card has its own row and its own
+  // score (#1176), and a label lookup handed it the standalone card's.
+  const scoreById = new Map(report.cards.map((c) => [nodeId(c.cardName ?? c.name, false, c.face), c.score ?? 0]));
   const costByName = new Map(report.cards.map((c) => [c.name, c.manaCost ?? ""]));
   const commanders = new Set(report.commanders);
   const cards = new Map<string, EngineCard>();
@@ -283,7 +285,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
       id: n.id, name: n.label, typeLine: n.typeLine ?? "", text: n.oracleText ?? "", art: n.artCrop,
       isToken: n.isToken === true, isCommander: commanders.has(n.cardName ?? n.id),
       isLand: (n.types ?? []).includes("land"), isFace: n.cardName !== undefined && n.cardName !== n.id,
-      roles: n.roles ?? [], score: scoreByName.get(n.label) ?? 0,
+      roles: n.roles ?? [], score: scoreById.get(n.id) ?? 0,
       manaCost: n.isToken ? "" : costByName.get(n.cardName ?? n.label) ?? "",
       physical: n.cardName ?? n.id,
       ...(n.isToken && makers.get(n.label)?.length ? { madeBy: makers.get(n.label) } : {}),

@@ -24,6 +24,7 @@
     "./sentence": "./src/sentence.ts",
     "./deck-sentence": "./src/deck-sentence.ts",
     "./slug": "./src/slug.ts",
+    "./face-key": "./src/face-key.ts",
     "./rate": "./src/rate.ts",
     "./quality": "./src/quality.ts",
     "./same-job": "./src/same-job.ts",

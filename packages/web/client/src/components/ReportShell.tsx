@@ -1,4 +1,5 @@
 import type { GameState } from "@edh-seer/engine";
+import { indexByLabel } from "../lib/label-index.js";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types.js";
@@ -65,9 +66,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   // every consumer of this map is naming a card from the DECK. Same rule `CardDrawerProvider`
   // keeps two files over.
   const artByName = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const n of data.graph?.nodes ?? []) if (!n.isToken && n.artCrop && !m.has(n.label)) m.set(n.label, n.artCrop);
-    return m;
+    return indexByLabel(data.graph?.nodes ?? [], (n) => (n as { artCrop?: string }).artCrop || undefined);
   }, [data.graph]);
   const artLoaderRef = useRef<ArtLoader>(undefined);
   artLoaderRef.current ??= createArtLoader({ load: cachedImageLoad() });

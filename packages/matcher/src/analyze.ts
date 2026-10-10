@@ -57,6 +57,7 @@ import { manaModel } from "./goldfish.js";
 import { deckLegality } from "./legality.js";
 import { COMMANDER_TAX_CAVEAT, COMMANDER_TAX_PER_CAST } from "./format.js";
 import { countsAsLand } from "./typeline.js";
+import { faceKey } from "./face-key.js";
 
 /**
  * Structured-engine counterpart of `@edh-seer/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -203,7 +204,7 @@ export function collectTokenNodes(
       // THE NODE EXISTS FOR THE CARD AND THE CREATION BELONGS TO A FACE. A token the deck can make
       // is on the graph whichever face makes it, so node building above is card-scoped; only the
       // maker relation below asks which face.
-      if (!facesCreating(siblings, ref).some((f) => f.card.name === dc.card.name)) continue;
+      if (!facesCreating(siblings, ref).some((f) => f.face === dc.face)) continue;
       let oracles = producerTokenOracles.get(dc.card.name);
       if (!oracles) producerTokenOracles.set(dc.card.name, (oracles = new Set()));
       oracles.add(tags.oracleId);
@@ -1221,9 +1222,10 @@ export function provisionalRatings(edges: readonly { reasons: readonly Reason[] 
 /** NO TWO OBJECTS SHARE A KEY (#1176). Everything in `analyzeDeckStructured` after the face split is
  *  keyed on `card.name`: `dir`, the rated rows, the edge endpoints. A standalone card and another
  *  card's FACE with the same name (Rampant Growth beside "Studious First-Year // Rampant Growth";
- *  split cards such as Bind or Armed) collapsed to one entry, and the real card then read its
+ *  18 corpus collisions, per the branch review: all faces of adventure/prepare cards -- Swords to
+ *  Plowshares, Demonic Tutor, Lightning Bolt, Reanimate, Brainstorm, Rampant Growth ...) collapsed to one entry, and the real card then read its
  *  roles, cost and flags under the other card's physical name. A colliding face is therefore renamed
- *  to "<face> (<card>)", which names it as it is printed and collides with nothing; the graph keys a
+ *  to `faceKey(face, card)` ("<face> (<card>)"), which names it as it is printed and collides with nothing; the graph keys a
  *  face by `cardName` + `face`, not by this string, so nothing on screen changes but the row's
  *  label. A name no other object shares is untouched, so a deck with no collision is byte-identical. */
 export function disambiguateFaceNames(cards: DeckCard[]): DeckCard[] {
@@ -1235,6 +1237,6 @@ export function disambiguateFaceNames(cards: DeckCard[]): DeckCard[] {
   }
   return cards.map((dc) =>
     dc.parentName !== undefined && (physicalOwners.get(dc.card.name)?.size ?? 0) > 1
-      ? { ...dc, card: { ...dc.card, name: `${dc.card.name} (${dc.parentName})` } }
+      ? { ...dc, card: { ...dc.card, name: faceKey(dc.card.name, dc.parentName) } }
       : dc);
 }

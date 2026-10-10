@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { analyzeDeckStructured, collectTokenNodes, provisionalRatings } from "./analyze.js";
+import { analyzeDeckStructured, collectTokenNodes, disambiguateFaceNames, provisionalRatings } from "./analyze.js";
 import { faceDeckCards } from "./faces.js";
 import { SEED_IMPACT_WEIGHTS, loadImpactWeights } from "@edh-seer/engine";
 import type { TagStats } from "@edh-seer/engine";
@@ -1869,4 +1869,14 @@ test("a standalone card and another card's face with the same name each keep the
     expect(face.face).toBe(1);
     expect(report.roles.ramp).toBe(2);
   }
+});
+
+test("a renamed colliding face is still the maker of the token it prints (face index, not name)", () => {
+  const split = faceDeckCards(twoFacedNamedMaker("When this creature enters, create a Treasure token.", "Sacrifice an artifact: draw a card."));
+  // a different deck card named like the FRONT face forces that face's rename
+  const deck = disambiguateFaceNames([dc("Named Front", []), ...split]);
+  const front = deck.find((d) => d.face === 0)!;
+  expect(front.card.name).toBe("Named Front (Named Front // Named Back)");
+  const { producerTokenOracles } = collectTokenNodes(deck, (ref) => (ref.printingId === "treasure-printing-id" ? treasureTags : null));
+  expect(producerTokenOracles.get(front.card.name)).toEqual(new Set(["token-treasure-oracle"]));
 });
