@@ -1825,3 +1825,48 @@ test("a double-faced Role token becomes the role each maker names", () => {
     (ref) => (ref.printingId === "role-printing" ? roleTags : null));
   expect(both.nodes.map((n) => n.card.name)).toEqual(["Wicked // Cursed"]);
 });
+
+// ============================================================================
+// A FACE WHOSE NAME IS A DIFFERENT DECK CARD'S NAME (#1176)
+// ============================================================================
+
+const adventureRampFace = (): DeckCard => ({
+  card: {
+    name: "Studious First-Year // Rampant Growth",
+    typeLine: "Creature — Bear Wizard // Sorcery — Adventure",
+    oracleText: "",
+    keywords: [], colors: [], manaValue: 1,
+    faces: [
+      { name: "Studious First-Year", typeLine: "Creature — Bear Wizard", oracleText: "", manaCost: "{G/U}", colors: [] },
+      { name: "Rampant Growth", typeLine: "Sorcery — Adventure", oracleText: "", manaCost: "{1}{G}", colors: [] },
+    ],
+  } as never,
+  tags: {
+    oracleId: "studious", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: {
+      types: ["creature"], subtypes: ["bear", "wizard"], colors: [], identity: [], cmc: 1,
+      power: null, toughness: null, token: false, keywords: [],
+      faces: [{ types: ["creature"], subtypes: [] }, { types: ["sorcery"], subtypes: [] }],
+    },
+    abilities: [{ ...rampAbility[0], face: 1 }] as unknown as CardTags["abilities"],
+  } as CardTags,
+});
+
+test("a standalone card and another card's face with the same name each keep their own row and roles", () => {
+  for (const order of [0, 1]) {
+    const standalone = dc("Rampant Growth", rampAbility, [], "Sorcery");
+    const adv = adventureRampFace();
+    const report = analyzeDeckStructured(order ? [adv, standalone] : [standalone, adv], undefined, H);
+    const rows = report.cards.filter((c) => c.name.includes("Rampant Growth"));
+    // two rows, one per object; their NAMES differ so no join by name can merge them
+    expect(rows).toHaveLength(2);
+    expect(new Set(rows.map((r) => r.name)).size).toBe(2);
+    const real = rows.find((r) => r.cardName === undefined)!;
+    const face = rows.find((r) => r.cardName === "Studious First-Year // Rampant Growth")!;
+    expect(real.name).toBe("Rampant Growth");
+    expect(real.roles).toContain("ramp");
+    expect(face.roles).toContain("ramp");
+    expect(face.face).toBe(1);
+    expect(report.roles.ramp).toBe(2);
+  }
+});
