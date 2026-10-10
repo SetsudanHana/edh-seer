@@ -27,6 +27,14 @@ export function headerGaps(report: DeckReport): ShortRole[] {
   return rolesOf(report, rankedFindings(report).scored);
 }
 
+/** THE BUILD SCORE'S GAP IN WORDS ("3 short on card advantage and 1 more"), said by the report
+ *  header and the Scores chapter's Build dial alike (#1160, #1164) so the two cannot drift. Empty
+ *  when nothing is short. */
+export function gapText(gaps: readonly ShortRole[]): string {
+  const first = gaps[0];
+  return first ? `${first.short} short on ${first.shelfWord}${gaps.length > 1 ? ` and ${gaps.length - 1} more` : ""}` : "";
+}
+
 function rolesOf(report: DeckReport, list: readonly Finding[]): ShortRole[] {
   const out: ShortRole[] = [];
   const add = (word: string, shelfWord: string, count: number, target: number, findingId: string): void => {

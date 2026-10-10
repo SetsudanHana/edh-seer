@@ -6,7 +6,7 @@ import { scoreState } from "../lib/deck-gauge.js";
 import { TONE_TEXT } from "./Dial.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { findings } from "../lib/findings.js";
-import { headerGaps, type ShortRole } from "../lib/verdict.js";
+import { gapText, headerGaps, type ShortRole } from "../lib/verdict.js";
 import { useAdded } from "./card-drawer.js";
 import { SurfaceLink } from "./ReportShell.js";
 import { identityKey } from "../lib/color-identity.js";
@@ -228,7 +228,7 @@ function HeaderScore({ name, value, partial, delta, kind, gaps }: {
         {first ? (
           // The Roles shelf's own tone for a shortfall, `--warning`, and its words: "3 short".
           <span data-build-gap className="text-xs text-(--warning)">
-            {first.short} short on {first.shelfWord}{gaps!.length > 1 ? ` and ${gaps!.length - 1} more` : ""}
+            {gapText(gaps!)}
           </span>
         ) : (
           <>

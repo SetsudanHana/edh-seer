@@ -244,3 +244,26 @@ test("with the bars off, the roles link is once, inside the Build card", () => {
   expect(card).not.toBeNull();
   expect(card.textContent).toContain("Build");
 });
+
+/** #1164: when a role is short the Build dial names the gap in the header's words, never a band word. */
+const short = (parents: object[]) => ({ report: { cards: [], ...DATA.report, buildParents: parents } });
+test("a short role replaces the Build dial's band word with the gap", () => {
+  const { container } = render(<DeckGauges data={short([{ name: "Card advantage", key: "consistency", count: 12, target: 15, leaves: [] }]) as never} />);
+  const build = screen.getByRole("group", { name: "Build, and the five measures behind it" });
+  expect(build.textContent).toContain("3 short on card advantage");
+  expect(screen.getByText("3 short on card advantage").getAttribute("data-tone")).toBe("warning");
+  expect(build.textContent).toContain("3.4");
+  expect(container.textContent).toContain("3 short on card advantage");
+});
+test("two short roles say 'and 1 more'", () => {
+  render(<DeckGauges data={short([
+    { name: "Board wipes", key: "boardWipes", count: 1, target: 3, leaves: [] },
+    { name: "Ramp", key: "ramp", count: 9, target: 10, leaves: [] },
+  ]) as never} />);
+  expect(screen.getByText(/short on .* and 1 more/)).toBeInTheDocument();
+});
+test("nothing short keeps the band word and Synergy keeps its own", () => {
+  render(<DeckGauges data={short([{ name: "Ramp", key: "ramp", count: 11, target: 11, leaves: [] }]) as never} />);
+  expect(screen.queryByText(/\d+ short on/)).toBeNull();
+  expect(screen.getByText("close")).toBeInTheDocument();
+});

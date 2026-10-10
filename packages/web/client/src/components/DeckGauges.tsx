@@ -4,6 +4,7 @@ import { Bullet, TARGET_MARK } from "./Bullet.js";
 import { floorState, bandState, scoreState } from "../lib/deck-gauge.js";
 import { bandScale, type ScoreKind } from "../lib/score-band.js";
 import { Explain } from "./Explain.js";
+import { gapText, headerGaps } from "../lib/verdict.js";
 import type { RunDiff } from "../lib/run-diff.js";
 
 /** A COUNT AGAINST ITS REFERENCE, AS A FRACTION OF THE TRACK. The target parks at `TARGET_MARK`,
@@ -121,6 +122,7 @@ export function DeckGauges({ data, diff, bars = true }: {
   // tick. An older report without `template` keeps the pre-ruling sentence rather than guessing.
   const hasSynergy = report.synergyOverall !== undefined;
   const hasBuild = report.buildScore !== undefined;
+  const buildGap = hasBuild ? gapText(headerGaps(report).filter((g) => g.short > 0)) : "";
   if (parents.length === 0 && !lands && !hasSynergy && !hasBuild) return null;
 
   // THE SAME PARTLY-READ TEST `HeadlineScores` APPLIES, read from the same field and by the same rule:
@@ -225,6 +227,8 @@ export function DeckGauges({ data, diff, bars = true }: {
                * has, so it keeps its band on a partly-read deck where synergy loses its own. The split
                * is the one the coverage gate already draws; no threshold is invented here. */
               reading={scoreState(report.buildScore!, false, "build")}
+              /* #1164: a short role replaces the band word, as in the report header. */
+              gap={buildGap || undefined}
               /* No `partial`, matching the live reading immediately above and for its reason. */
               previous={diff?.build
                 ? { value: diff.build.from.toFixed(1), reading: scoreState(diff.build.from, false, "build") }
