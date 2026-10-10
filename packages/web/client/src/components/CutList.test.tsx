@@ -208,6 +208,38 @@ test("a card left out because it would break a picked card says whose link, not 
   expect(v).toHaveTextContent("Why you might keep it: cut with the cards above, A loses the one link no other card makes: A pays off.");
 });
 
+/** A TOKEN TWO CARDS MAKE (#1153): cutting C with M takes the Goblin from every card it covers. */
+function tokenDeck(covered: { name: string; links: string[] }[], deckSize: number) {
+  const lk = (text: string) => ({ from: "x", to: "y", tag: "t", text, repeat: "static" });
+  const ec = (id: string, extra = {}) => ({ id, name: id, typeLine: "Creature", text: "", isToken: false, isCommander: false, isLand: false, isFace: false, roles: [], score: 1, manaCost: "", physical: id, ...extra });
+  const model = { cards: new Map([["token:Goblin", ec("token:Goblin", { isToken: true, madeBy: ["M", "C"] })], ["M", ec("M")], ["C", ec("C")]]) } as never;
+  const plain = { partners: 1, why: "w", loses: [], covers: [] } as never;
+  const cuts = [...covered.map((x) => cut(x.name, { row: { partners: 1, why: "w", loses: [], covers: x.links.map((text) => ({ link: lk(text), by: ["token:Goblin"], partner: "P" })) } as never })), cut("M", { row: plain }), cut("C", { row: plain })];
+  return render(<MemoryRouter><CutList cuts={cuts} slack={[]} deckSize={deckSize} model={model} /></MemoryRouter>);
+}
+const verdictOf = (name: RegExp) => within(screen.getByRole("heading", { name }).closest("li")!).getByTestId("cut-loses");
+
+test("over 100, a card that would break a counted card is not a free spare: it costs, and says whose link", () => {
+  tokenDeck([{ name: "A", links: ["A pays off"] }], 102);
+  expect(screen.queryByText(/If you would rather keep one of these,/)).toBeNull();
+  expect(screen.getByRole("region", { name: /something to cut/ })).toContainElement(screen.getByRole("heading", { name: /^C/ }));
+  expect(verdictOf(/^C/)).toHaveTextContent("cut with the cards above, A loses the one link no other card makes: A pays off.");
+});
+
+test("a card that breaks three picked cards says 3 of them lose, and two say both names", () => {
+  const { unmount } = tokenDeck([{ name: "A1", links: ["l1"] }, { name: "A2", links: ["l2"] }, { name: "A3", links: ["l3"] }], 100);
+  expect(verdictOf(/^C/)).toHaveTextContent("cut with the cards above, 3 of them lose 3 links no other card makes: l1; l2");
+  unmount();
+  tokenDeck([{ name: "A", links: ["l1"] }, { name: "B", links: ["l2"] }], 100);
+  expect(verdictOf(/^C/)).toHaveTextContent("cut with the cards above, A and B lose 2 links no other card makes: l1; l2.");
+});
+
+test("a breaks verdict with more than two links opens the rest", () => {
+  tokenDeck([{ name: "A", links: ["l1", "l2"] }, { name: "B", links: ["l3"] }], 100);
+  expect(verdictOf(/^C/)).toHaveTextContent("A and B lose 3 links no other card makes: l1; l2");
+  expect(within(verdictOf(/^C/)).getByText("and 1 more")).toBeInTheDocument();
+});
+
 test("over 100, 'even all together' is not said of cuts the graph has not read", () => {
   render(<CutList cuts={[cut("A"), cut("B")]} slack={[]} deckSize={102} />);
   expect(screen.getByTestId("cuts-over")).not.toHaveTextContent("even all together");

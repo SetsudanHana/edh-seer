@@ -138,7 +138,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
   };
   // What else could be cut for free alongside the count (the "next weakest" line), and what would
   // cost something -- alone, or only cut together with the counted ones.
-  const alsoFree = (c: CutChoice) => !chosen.has(c.name) && !costs(c) && !lossIn(c, new Set([...chosen, c.name]), makers)?.length && !breaks(c, chosen);
+  const alsoFree = (c: CutChoice) => !chosen.has(c.name) && !costs(c) && !lossIn(c, new Set([...chosen, c.name]), makers)?.length && !(c.row && c.row.partners > 0 && breaks(c, chosen));
   const costly = over ? ordered.filter((c) => !chosen.has(c.name) && !alsoFree(c)) : [];
   const losesWith = (c: CutChoice): string[] | undefined => lossIn(c, chosen, makers);
   const costsTogether = (c: CutChoice) => Number((losesWith(c)?.length ?? 0) > 0);
@@ -439,9 +439,16 @@ function Verdict({ breaks, links, withCut, also: alsoLost, cover, keeps, cut, ow
   if (!links.length && breaks) {
     const n = breaks.names.length;
     const who = n > 2 ? `${n} of them lose` : `${breaks.names.join(" and ")} ${n === 1 ? "loses" : "lose"}`;
+    const bhead = breaks.links.slice(0, 2), brest = breaks.links.slice(2);
     return (
       <div className="flex flex-col gap-2" data-testid="cut-loses">
-        <p>{keepLabel} cut with the cards above, {who} {breaks.links.length === 1 ? "the one link" : `${breaks.links.length} links`} no other card makes: {breaks.links.join("; ")}.</p>
+        <p>{keepLabel} cut with the cards above, {who} {breaks.links.length === 1 ? "the one link" : `${breaks.links.length} links`} no other card makes: {bhead.join("; ")}{brest.length ? "" : "."}</p>
+        {brest.length ? (
+          <details>
+            <summary className="cursor-pointer py-1 text-(--muted)">and {brest.length} more</summary>
+            <ul className="list-disc pl-5">{brest.map((t) => <li key={t}>{t}</li>)}</ul>
+          </details>
+        ) : null}
         {also}
       </div>
     );
