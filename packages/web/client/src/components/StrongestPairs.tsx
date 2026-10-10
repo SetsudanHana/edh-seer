@@ -1,7 +1,7 @@
 import type { EngineCard, EngineModel } from "../lib/engine-model.js";
 import type { TopPair } from "../lib/top-pairs.js";
 import { CardName } from "./card-drawer.js";
-import { ReadCards } from "./engine-parts.js";
+import { Lines, ReadCards } from "./engine-parts.js";
 
 /** THE PAIRS THAT WORK BEST TOGETHER, named on Glance (owner ruling 2026-10-10, #1159): the persona
  *  task "the two cards that work together most strongly" had no answer on the page. The only figures
@@ -21,7 +21,7 @@ export function StrongestPairs({ pairs, model }: { pairs: TopPair[]; model: Engi
   return (
     <section aria-labelledby="strongest-pairs-title" className="flex flex-col gap-3">
       <h3 id="strongest-pairs-title" className="eyebrow">Cards that work best together</h3>
-      <ul className="grid gap-3 md:grid-cols-3">
+      <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,16rem),1fr))]">
         {pairs.map((p) => {
           const both = p.cards.map(find);
           const read = both.every((c): c is EngineCard => !!c) ? both as EngineCard[] : undefined;
@@ -33,7 +33,7 @@ export function StrongestPairs({ pairs, model }: { pairs: TopPair[]; model: Engi
               ) : (
                 <>
                   <p className="text-(--muted)">Work together in {p.ways.length} {p.ways.length === 1 ? "way" : "ways"}{p.both ? " · each helps the other" : ""}</p>
-                  {p.lines.map((l) => <p key={l}>{l}</p>)}
+                  {p.lines.length ? <Lines links={p.lines} /> : null}
                 </>
               )}
               {read ? <ReadCards cards={read} /> : null}

@@ -1,6 +1,6 @@
 import type { DeckReport } from "../types.js";
 import { infiniteCombos } from "./bracket-why.js";
-import type { EngineModel } from "./engine-model.js";
+import type { EngineModel, Link } from "./engine-model.js";
 import { comboKill } from "./table-talk.js";
 
 /** THE DECK'S STRONGEST PAIRS, for Glance (owner ruling 2026-10-10, #1159): the cheapest two-card
@@ -8,7 +8,7 @@ import { comboKill } from "./table-talk.js";
  *  At most three, the combo's own two cards never repeated as a synergy. */
 export type TopPair =
   | { kind: "combo"; cards: [string, string]; manaTogether: number; result: string; kill: string }
-  | { kind: "synergy"; cards: [string, string]; ways: string[]; both: boolean; lines: string[] };
+  | { kind: "synergy"; cards: [string, string]; ways: string[]; both: boolean; lines: Link[] };
 
 const front = (name: string) => name.split(" // ")[0]!;
 
@@ -25,13 +25,17 @@ export function topPairs(report: DeckReport, model: EngineModel, manaValueOf: (n
   const c = infiniteCombos(report.combos, manaValueOf).find((x) => x.cards.length === 2 && !x.requires?.length);
   if (c) out.push({ kind: "combo", cards: [front(c.cards[0]!), front(c.cards[1]!)], manaTogether: c.manaValue, result: c.result, kill: killHere(c) });
   const taken = c ? new Set(c.cards.map(front)) : undefined;
+  // The same cap `strongestPairs` keeps (no card in more than two pairs): the combo is one pair for each of its cards.
+  const used = new Map<string, number>(c ? c.cards.map((n) => [front(n), 1] as [string, number]) : []);
   for (const s of model.strongest) {
     if (out.length >= 3) break;
     const a = model.cards.get(s.pair.a), b = model.cards.get(s.pair.b);
     if (!a || !b) continue;
     const cards: [string, string] = [front(a.name), front(b.name)];
     if (taken && cards.every((n) => taken.has(n))) continue;
-    out.push({ kind: "synergy", cards, ways: s.ways, both: s.both, lines: s.lines.slice(0, 2).map((l) => l.text) });
+    if (cards.some((n) => (used.get(n) ?? 0) >= 2)) continue;
+    for (const n of cards) used.set(n, (used.get(n) ?? 0) + 1);
+    out.push({ kind: "synergy", cards, ways: s.ways, both: s.both, lines: s.lines.slice(0, 2) });
   }
   return out;
 }

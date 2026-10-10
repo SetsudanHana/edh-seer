@@ -30,7 +30,7 @@ test("no combo gives three synergy pairs, two lines each at most", () => {
   const out = topPairs(report([]), m([sp("a", "b"), sp("c", "d"), sp("e", "f"), sp("a", "f")]), mvOf);
   expect(out).toHaveLength(3);
   expect(out.every((p) => p.kind === "synergy")).toBe(true);
-  expect(out[0]!.kind === "synergy" && out[0]!.lines).toEqual(["one", "two"]);
+  expect(out[0]!.kind === "synergy" && out[0]!.lines.map((l) => l.text)).toEqual(["one", "two"]);
 });
 
 test("a three-piece combo is not a pair", () => {
@@ -54,4 +54,9 @@ test("a long payoff list names two and counts the rest; three are all named", ()
   expect(kill(3)).toBe("wins through P0, P1 and P2");
   expect(kill(4)).toBe("wins through P0, P1 and 2 more");
   expect(kill(10)).toBe("wins through P0, P1 and 8 more");
+});
+
+test("the combo's cards count against the cap of two pairs per card", () => {
+  const out = topPairs(report([combo(["A", "B"])]), m([sp("a", "c"), sp("a", "d"), sp("e", "f")]), mvOf);
+  expect(out.map((p) => p.cards.join("+"))).toEqual(["A+B", "A+C", "E+F"]);
 });
