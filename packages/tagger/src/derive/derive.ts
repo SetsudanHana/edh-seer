@@ -424,7 +424,8 @@ import { emblemRecipient } from "../emblem.js";
 // 295: #1169 review: scaling read from `action.amount`, fetches need a printed "search your library", `gate` for conditional
 // lines, `cost.counters` / `cost.tapOther`, `unread`, `tap-ability` renamed `activated`.
 // 296: #1169 review 2: number words are fixed amounts, "instead" / "as long as" / conditional-fetch gates, each-player fetches.
-export const DERIVE_VERSION = 296;
+// 297: #1169 review 3: "if you do" is a cost not a gate, intervening-if and "instead add" gates, "for as long as" is no gate, one trigger add read once.
+export const DERIVE_VERSION = 297;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

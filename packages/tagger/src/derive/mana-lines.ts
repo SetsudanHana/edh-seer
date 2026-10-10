@@ -109,7 +109,7 @@ export function parseCost(cost: string | undefined, selfNames: readonly string[]
     // are structured so no consumer has to read `other`.
     const counter = /^(remove|put)\b[^.]*\bcounters?\b/i.exec(piece);
     if (counter) { out.counters = counter[1]!.toLowerCase() as "remove" | "put"; continue; }
-    if (/^tap (?:an?|one|two|three|\d+|x|any number of)\b[^.]*\buntapped\b/i.test(piece)) { out.tapOther = true; continue; }
+    if (/^tap (?:an?|one|two|three|\d+|x|any number of|target)\b[^.]*\buntapped\b/i.test(piece)) { out.tapOther = true; continue; }
     out.other.push(piece);
   }
   return out;
@@ -189,29 +189,62 @@ function colonHead(text: string): string {
 }
 
 const GATE = /\bactivate (?:this ability )?only (?:if|when|while) ([^.]*)/i;
+const sentencesOf = (text: string): string[] => text.split(/(?<=[.!?])\s+/).filter((x) => x.trim() !== "");
+/** A sentence that adds mana (a symbol or the word "mana" after "add"), as opposed to "add a +1/+1 counter". */
+const ADDS_MANA = /\badd\b[^.]*(?:\{[WUBRGCX]|\bmana\b)/i;
+const YOU_DO = /^(?:you|they|that player) do$/i;
 // A CONDITIONAL LINE holds only under its condition, so it is gated, never credited as guaranteed: Cabal Ritual's "Add {B}{B}{B}{B}{B}
 // instead if there are seven or more cards in your graveyard", Urza's Tower's "If you control an Urza's Mine and an Urza's
-// Power-Plant, add {C}{C}{C} instead", "Add {G}{G} if you control a Forest". Read on the sentence that holds THIS add (one clause can
-// hold the plain line and its instead line), after the "Activate only if" clause of the whole text.
-const CONDITIONS = [/^if ([^,]+), (?:you may )?add\b/i, /\binstead if ([^.]*)/i, /\badd\b[^.]*?\bif ([^.]*)/i];
+// Power-Plant, add {C}{C}{C} instead", Gemstone Caverns' "If ~ has a luck counter on it, instead add one mana of any color", an
+// intervening if ("When this creature enters, if you attacked this turn, add {R}{W}{B}"), "Add {G}{G} if you control a Forest".
+// Read on the sentence that holds THIS add (one clause can hold the plain line and its instead line), after the "Activate only
+// if" clause of the whole text. "If you do" is never a gate: it points back at a cost (see `antecedentCost`).
+const CONDITIONS = [
+  /\bif ([^,]+),\s*(?:instead,?\s*)?(?:you may )?add\b/i,
+  // "If you win, at the beginning of your next main phase, you may add ..." (Scattering Stroke)
+  /\bif ([^,]+),\s[^,]*,\s(?:you (?:may )?)?add\b/i,
+  /\binstead if ([^.]*)/i,
+  /\badd\b[^.]*?\bif ([^.]*)/i,
+];
 const gateOf = (text: string, sentence: string, thresholdAbility: boolean): string | null => {
-  const g = GATE.exec(text)?.[1] ?? CONDITIONS.map((r) => r.exec(sentence)?.[1]).find((x) => x !== undefined);
+  const g = GATE.exec(text)?.[1] ?? CONDITIONS.map((r) => r.exec(sentence)?.[1]).find((x) => x !== undefined && !YOU_DO.test(x.trim()));
   return g ? g.trim().toLowerCase() : thresholdAbility ? "threshold" : null;
 };
-/** The sentence holding the k-th add, when the text has one add-sentence per add; else the whole text. */
-const sentenceOf = (text: string, k: number, adds: number): string => {
-  const sentences = text.split(/(?<=[.!?])\s+/).filter((x) => /\badd\b/i.test(x));
-  return sentences.length === adds ? sentences[k]! : text;
-};
-/** "As long as <condition>, this creature has that ability" (Honored Hierarch, Mul Daya Channelers): the grant's condition. */
-const AS_LONG_AS = /\bas long as ([^,]*),/i;
+/** "As long as <condition>, this creature has that ability" (Honored Hierarch, Mul Daya Channelers): the grant's condition.
+ *  "FOR as long as <duration>" (Ultima, Kitesail Larcenist) is a duration of a grant, not a condition on the line: excluded. */
+const AS_LONG_AS = /(?<!\bfor )\bas long as ([^,]*),/i;
+
+/** "You may <do something>. If you do, add {C}" (Yavimaya Bloomsage "you may pay 1 life", Fire Lord Ozai "you may sacrifice another
+ *  creature", Energy Tap "Tap target untapped creature you control"): what comes before "if you do" is the COST of the line, so it
+ *  fills `cost` (parsed like a printed cost: life, sacrifice, counters, tapOther, the rest in `other`) and gates nothing. An
+ *  antecedent that is itself conditional ("You may reveal that card if it has three or more colored mana symbols", Omnath) is a
+ *  genuine condition and is returned as the gate. `what` picks the sentence that follows ("add" / "search"). */
+function antecedentCost(text: string, what: RegExp, cost: Cost, selfNames: readonly string[]): string | null {
+  const ss = sentencesOf(text);
+  const i = ss.findIndex((x) => /\bif (?:you|they|that player) do\b/i.test(x) && what.test(x));
+  if (i <= 0) return null;
+  const prev = ss[i - 1]!.replace(/[.!?]+$/, "").trim();
+  const cond = /\bif ([^,]*)$/i.exec(prev)?.[1];
+  if (cond) return cond.trim().toLowerCase();
+  const act = (/\b(?:you|they|that player) may (.+)$/i.exec(prev)?.[1] ?? prev.replace(/^(?:when|whenever|at the beginning of)\b[^,]*,\s*/i, "")).trim();
+  const got = parseCost(act, selfNames);
+  cost.mana += got.mana; cost.tap ||= got.tap; cost.life += got.life; cost.sacrificeSelf ||= got.sacrificeSelf;
+  cost.sacrificeOther ||= got.sacrificeOther; cost.tapOther ||= got.tapOther; cost.counters ??= got.counters; cost.other.push(...got.other);
+  return null;
+}
+
 /** Why a fetched land may not arrive: "If an opponent controls more lands than you, put it onto the battlefield" (Stoic Farmer),
  *  "... onto the battlefield tapped if you control a land named Wastes" (Ruin in Their Wake), "Each player who controls four or
- *  fewer lands may search" (Natural Balance), "An opponent chooses two of those cards" (Elemental Teachings). */
+ *  fewer lands may search" (Natural Balance), "An opponent chooses two of those cards" (Elemental Teachings).
+ *  Only the put sentence under YOUR control counts: Verdant Mastery's "under an opponent's control if the {3}{G} cost was paid" is
+ *  the opponent's land, not yours.
+ *  CEILING: a heuristic over four printed shapes. The first put sentence wins, so a card with two conditional puts reads one; a
+ *  condition split across sentences is missed; "if you do" is a cost (`antecedentCost`), never read here. */
 function fetchGate(text: string): string | null {
-  const put = text.split(/(?<=[.!?])\s+/).find((x) => /\bonto the battlefield\b/i.test(x)) ?? "";
-  const g = /^if ([^,]+), /i.exec(put)?.[1] ?? /\bonto the battlefield\b[^.]*?\bif ([^.]*)/i.exec(put)?.[1]
-    ?? /\beach player who ([^,.]*?) (?:may )?search/i.exec(text)?.[1] ?? /(an opponent chooses [^.]*)/i.exec(text)?.[1];
+  const put = sentencesOf(text).find((x) => /\bonto the battlefield\b/i.test(x) && !/\bunder an opponent'?s? control\b/i.test(x)) ?? "";
+  const g = [/^if ([^,]+), /i.exec(put)?.[1], /\bonto the battlefield\b[^.]*?\bif ([^.]*)/i.exec(put)?.[1],
+    /\beach player who ([^,.]*?) (?:may )?search/i.exec(text)?.[1], /(an opponent chooses [^.]*)/i.exec(text)?.[1]]
+    .find((x) => x !== undefined && !YOU_DO.test(x.trim()));
   return g ? g.trim().toLowerCase() : null;
 }
 const DELAYED = /\b(?:at the beginning of|on) (?:your |the )?next [^,.]*,?[^.]*\badd\b|\badd\b[^.]*\bat the beginning of (?:your |the )?next\b/i;
@@ -287,7 +320,24 @@ export function deriveMana(input: ManaInput): ManaResult {
     const activated = clause.abilityType === "activated" || (clause.abilityType === "static" && costText !== "");
     const parent = granted ? clauses.find((c) => c.id === input.clauseGrants?.[id as number]) : undefined;
     const grantGate = parent ? AS_LONG_AS.exec(input.textOf(parent))?.[1]?.trim().toLowerCase() ?? null : null;
+    // One entry per add. The model path sometimes keeps only the LAST of several printed adds (Gemstone Caverns: "Add {C}. If ~ has a
+    // luck counter on it, instead add one mana of any color." is one action): the actions then align to the last mana-adding
+    // sentences, and the leading ones ("Add {C}.") are read from their own text.
+    // CEILING: when the text has fewer mana-adding sentences than actions, or the counts otherwise do not line up, every line is
+    // given the WHOLE text as its sentence, so a condition printed on one of them may be read on all.
+    const addSentences = sentencesOf(text).filter((x) => ADDS_MANA.test(x));
+    const lead = addSentences.length > adds.length ? addSentences.length - adds.length : 0;
+    const aligned = addSentences.length === adds.length + lead;
+    const entries: { object: string; amountText: string; sentence: string; ability: Ability | undefined }[] = [];
+    for (const sentence of addSentences.slice(0, lead)) {
+      const m = /^add\s+((?:\{[^}]+\})+|(?:one|two|three|four|five|six|seven)\s+mana\b[^.]*)\.?$/i.exec(sentence.trim());
+      if (m) entries.push({ object: m[1]!, amountText: "", sentence, ability: matching[0] });
+    }
     for (const [k, action] of adds.entries()) {
+      entries.push({ object: action.object ?? "", amountText: typeof action.amount === "string" ? action.amount : "",
+        sentence: aligned ? addSentences[lead + k]! : text, ability: matching[k] });
+    }
+    for (const { object, amountText, sentence, ability } of entries) {
       const source: ManaLineSource | null =
         tokenGrant ? "token-maker"
         : granted ? "static-grant"
@@ -298,22 +348,26 @@ export function deriveMana(input: ManaInput): ManaResult {
           // CEILING: a static ability that adds mana is printed by no card the corpus holds; refused, not guessed.
           : null;
       if (source === null) continue;
-      const made = production(action.object ?? "", typeof action.amount === "string" ? action.amount : "");
-      const ability = matching[k];
+      const made = production(object, amountText);
       const cost = source === "activated" || source === "static-grant" || source === "token-maker"
         ? parseCost(costText, selfNames)
         : noCost();
       if (source === "one-shot-spell") cost.mana = faceMV(face);
+      const afterCost = antecedentCost(text, ADDS_MANA, cost, selfNames);
       const produced = made.amount.fixed ?? 1;
-      lines.push({
+      const line: ManaLine = {
         face, source, repeats: ability?.repeats ?? null, cost, ...made,
         unread: made.colours.length === 0 && made.colourless === 0 && made.anyColour === null,
         net: produced - cost.mana,
-        gate: grantGate ?? gateOf(text, sentenceOf(text, k, adds.length), ability?.threshold !== undefined),
+        gate: grantGate ?? afterCost ?? gateOf(text, sentence, ability?.threshold !== undefined),
         restriction: restrictionOf(texts),
         timing: source === "trigger" || source === "aura-trigger" ? "on-trigger" : DELAYED.test(text) ? "next-turn" : "now",
         producesToken: tokenGrant ? "granted" : null,
-      });
+      };
+      // ONE PRINTED ADD, TWO CLAUSES: "Whenever you cast or copy ..." (Ashling) arrives as a cast clause and a copy clause, each with the
+      // same add. An identical trigger line is the same add read twice. CEILING: a card printing two identical trigger adds would merge.
+      if ((source === "trigger" || source === "aura-trigger") && lines.some((l) => JSON.stringify(l) === JSON.stringify(line))) continue;
+      lines.push(line);
     }
   }
 
@@ -376,13 +430,14 @@ export function deriveMana(input: ManaInput): ManaResult {
       const lands = a.amount !== undefined && /^\d+$/.test(a.amount) ? Number(a.amount) : 1;
       const cost = a.kind === "activated" ? parseCost(a.cost, selfNames) : noCost();
       if (a.kind === "on-cast") cost.mana = faceMV(face);
+      const afterCost = antecedentCost(clauseText, /\bsearch\b/i, cost, selfNames);
       const colours = reachOf({ ...found, ...subject, subtype: subject.subtype ?? found?.subtype } as SubjectFilter);
       // CEILING: a search for a non-basic type alone (Desert, Gate, Cave) reaches nothing here, and a fetch with no reach is not
       // emitted at all. A creature-or-land search (Archdruid's Charm) puts the land only conditionally and is not read.
       if (colours.length === 0 || (Array.isArray(subject.type) ? subject.type : [subject.type]).includes("creature")) continue;
       lines.push({
         face, source: "fetch", repeats: a.repeats ?? null, cost, colours, colourless: 0, anyColour: null, unread: false,
-        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: fetchGate(clauseText), restriction: null, timing: "now", producesToken: null,
+        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: afterCost ?? fetchGate(clauseText), restriction: null, timing: "now", producesToken: null,
       });
       fetchKind = a.kind === "on-cast" || fetchKind === "spell" ? "spell" : "permanent";
       fetchTapped = fetchTapped && tapped;

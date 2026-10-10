@@ -266,3 +266,40 @@ describe("review round 2 (#1169 task 1)", () => {
     for (const n of ["Turtle Tracks", "Restorative Technique", "Fertilid's Favor"]) expect(tagsOf(n).landFetch, n).toBeUndefined();
   });
 });
+
+describe("review round 3 (#1169 task 1)", () => {
+  it("Verdant Mastery: the opponent's land is the conditional one, your two lands are not", () => {
+    expect(linesOf("Verdant Mastery", "fetch")[0]!.gate).toBeNull();
+  });
+  it("Gemstone Caverns: a plain {C} line and a gated any-colour line", () => {
+    const [plain, any] = linesOf("Gemstone Caverns");
+    expect(plain).toMatchObject({ colourless: 1, anyColour: null, gate: null });
+    expect(any).toMatchObject({ anyColour: "any", gate: "gemstone caverns has a luck counter on it" });
+  });
+  it("an intervening if gates the trigger", () => {
+    expect(only("Mardu Warshrieker").gate).toBe("you attacked this turn");
+    expect(only("Coal Stoker").gate).toBe("you cast it from your hand");
+    expect(only("Realm-Scorcher Hellkite").gate).toBe("it was bargained");
+    expect(only("Scattering Stroke").gate).toBe("you win");
+  });
+  it("'you may <cost>. If you do, add' is a cost, and 'you do' is never a gate", () => {
+    expect(only("Yavimaya Bloomsage").cost).toMatchObject({ life: 1 });
+    expect(only("Energy Tap").cost).toMatchObject({ tapOther: true });
+    expect(only("Fire Lord Ozai").cost).toMatchObject({ sacrificeOther: true });
+    expect(only("Cheering Crowd").cost).toMatchObject({ counters: "put" });
+    expect(only("Neheb, Dreadhorde Champion").cost.other).toEqual(["discard any number of cards"]);
+    expect(linesOf("Springbloom Druid", "fetch")[0]!.cost).toMatchObject({ sacrificeOther: true });
+    expect(linesOf("Cartographer's Hawk", "fetch")[0]!.cost.other).toEqual(["return it to its owner's hand"]);
+    expect(linesOf("Purestrain Genestealer", "fetch")[0]!.cost).toMatchObject({ counters: "remove" });
+    expect(linesOf("Charitable Levy", "fetch")[0]!.cost).toMatchObject({ sacrificeSelf: true });
+    for (const fx of Object.keys(fixtures)) for (const l of tagsOf(fx.split(" // ")[0]!).manaLines ?? []) expect(l.gate ?? "", fx).not.toMatch(/^(?:you|they|that player) do$/);
+    for (const n of ["Yavimaya Bloomsage", "Energy Tap", "Fire Lord Ozai", "Springbloom Druid", "Charitable Levy"]) expect(linesOf(n)[0]!.gate, n).toBeNull();
+  });
+  it("'for as long as' is a duration, not a gate", () => {
+    expect(linesOf("Ultima, Origin of Oblivion").every((l) => l.gate === null)).toBe(true);
+    expect(only("Kitesail Larcenist").gate).toBeNull();
+  });
+  it("Ashling's one printed add is one line, not one per cast/copy twin", () => {
+    expect(linesOf("Ashling, Flame Dancer")).toHaveLength(1);
+  });
+});
