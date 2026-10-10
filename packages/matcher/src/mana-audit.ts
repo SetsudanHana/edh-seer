@@ -3,7 +3,7 @@ import { castableManaCost } from "./split-cost.js";
 import { minSources, pCanPayByTurn } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
-import { colourSourceCards, withFetches } from "./colour-sources.js";
+import { colourSourceCards } from "./colour-sources.js";
 import { deckIdentity, makesAnyMana, unreadSourceNames } from "./mana-lines.js";
 import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import type { DeckCard } from "./types.js";
@@ -416,20 +416,4 @@ export function colourDeficit(deck: readonly DeckCard[], commanderNames: readonl
     if (gap > 0) out[row.color] = gap;
   }
   return out;
-}
-
-/** THE DEMAND AN "ENCHANT FOREST" AURA MAKES (owner, 2026-10-08): one source of that land type by the
- *  Aura's turn, priced like a colour pip -- the same mulligan-corrected requirement `manaAudit` asks of
- *  `{G}` on that turn -- against the lands the deck has of the type, counted as the audit counts a colour's
- *  sources: lands carrying the type that are online by the turn, plus the fetches that can find one,
- *  capped at what there is to find. Returns both figures; the caller compares. */
-export function landTypeDemand(deck: readonly DeckCard[], commanderNames: readonly string[], landType: string, turn: number): { required: number; available: number } {
-  const commanders = new Set(commanderNames);
-  const library = deck.filter((dc) => !commanders.has(dc.card.name));
-  const has = (c: { typeLine: string }) => countsAsLand(c) && c.typeLine.toLowerCase().includes(landType);
-  const types = deckBasicTypes(library);
-  const sources = withFetches(library, library.filter((dc) => has(dc.card)), has);
-  const available = sources.filter((dc) => (countsAsLand(dc.card) ? landOnlineBy(dc, turn, types) : dc.card.manaValue < turn)).length;
-  const requiredRaw = minCopies(1, turn, SOURCE_CONFIDENCE, library.length);
-  return { required: Math.min(requiredRaw, minSources(1, turn, SOURCE_CONFIDENCE) ?? requiredRaw), available };
 }

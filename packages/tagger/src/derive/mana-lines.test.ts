@@ -224,8 +224,8 @@ describe("review fixes (#1169 task 1)", () => {
     expect(linesOf("Springleaf Drum")[0]!.cost).toMatchObject({ tap: true, tapOther: true, other: [] });
   });
   it("a line whose production cannot be read says so", () => {
-    // Chrome Mox and Bloom Tender are bounded (`among`, task 2a review); "choose a color of a permanent you control" is still unread.
-    for (const n of ["Meteor Crater"]) expect(only(n).unread, n).toBe(true);
+    // Chrome Mox, Bloom Tender and Meteor Crater are bounded now (`among`, task 2a review); a mill-for-colours line is still unread.
+    for (const n of ["Charmed Pendant"]) expect(only(n).unread, n).toBe(true);
     expect(only("Sol Ring").unread).toBe(false);
     expect(only("Arcane Signet").unread).toBe(false);
   });
@@ -339,5 +339,21 @@ describe("review of task 2a (#1169): 'among', unread, self-exile", () => {
     for (const n of ["Plaza of Heroes", "The Grey Havens", "Mox Amber", "Faeburrow Elder", "Bloom Tender", "Chrome Mox", "Guild Globe", "Pit of Offerings"]) {
       for (const l of linesOf(n)) expect(l.unread, n).toBe(false);
     }
+  });
+});
+
+describe("review 2 of task 2a (#1169): colours bounded by what you own, a free colour choice, circled colours", () => {
+  it("'any of this creature's colors', 'a color of a permanent you control / a card in your graveyard' are bounded by what you own", () => {
+    for (const n of ["Tazri, Stalwart Survivor", "Katilda, Dawnhart Prime", "Meteor Crater", "Corrupted Grafstone"]) {
+      expect(only(n), n).toMatchObject({ anyColour: "among", unread: false });
+    }
+  });
+  it("'Choose a color. Add one mana of that color for each ...' is any colour with a scaling amount (Selvala, Astral Cornucopia, Three Tree City)", () => {
+    expect(only("Selvala, Eager Trailblazer")).toMatchObject({ anyColour: "any", unread: false });
+    expect(only("Astral Cornucopia")).toMatchObject({ anyColour: "any", unread: false, amount: { fixed: null } });
+    expect(linesOf("Three Tree City").find((l) => l.cost.mana === 2)).toMatchObject({ anyColour: "any", unread: false, amount: { fixed: null } });
+  });
+  it("Cryptic Spires' circled colours are chosen outside the card", () => {
+    expect(linesOf("Cryptic Spires").find((l) => l.cost.tap && l.unread === false && l.anyColour === "chosen")).toBeDefined();
   });
 });

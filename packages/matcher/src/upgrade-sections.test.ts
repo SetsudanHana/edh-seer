@@ -4,9 +4,9 @@ import { landFacts } from "./land-score.js";
 import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
-import { colourDeficit, landTypeDemand } from "./mana-audit.js";
+import { colourDeficit } from "./mana-audit.js";
 import { colouredNetYield, jobOf, landsToBattlefield, netYield, themedSubjects, sameFetchAnyColour } from "./same-job.js";
-import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, auraSupport, sameJob, strictlyBetter, swapCloser, watchedTypes } from "./upgrade-sections.js";
+import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, sameJob, strictlyBetter, swapCloser } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
 import { manaTags, tapFor } from "./mana-test-support.js";
 
@@ -316,82 +316,25 @@ describe("an Aura is a rock the job reader sees", () => {
   });
 });
 
-describe("a colour swap may cross card types, toward the type the deck's payoffs watch", () => {
-  const swap = (cut: DeckCard, adds: DeckCard[], watched: string[]) =>
-    roleOptions("ramp", [cut], adds.map(candidate), undefined, { G: 4, U: 4 }, () => 1, new Set(watched)).flatMap((o) => o.options.map((x) => [x.add, x.crossType]));
-
-  test("a type is watched only when the deck's THEMES say so: an incidental payoff is not a theme", () => {
-    expect([...watchedTypes(["enters:enchantment", "cast:artifact"])].sort()).toEqual(["artifact", "enchantment"]);
-    expect([...watchedTypes(["lifegain:any", "enters:creature"])]).toEqual(["creature"]);
-    expect([...watchedTypes([])]).toEqual([]);
-    expect([...watchedTypes(undefined)]).toEqual([]);
+// 2a review (owner, 2026-10-10): trigger mana is ramp, not a colour source, so no deck is offered an Aura (or a rock for an Aura) FOR A COLOUR -- the
+// audit could not see it closing the gap. The cross-type path, `watchedTypes`, `auraSupport` and `landTypeDemand` were deleted with it.
+describe("no Aura is offered for a colour", () => {
+  const mind4 = { ...rock("Mind Stone"), card: { ...rock("Mind Stone").card, manaValue: 4 } } as unknown as DeckCard;
+  const offered = (add: DeckCard) => roleOptions("ramp", [mind4], [candidate(add)], undefined, { G: 4, U: 4 }, () => 1).flatMap((o) => o.options.map((x) => x.add));
+  test("the growth Auras make no colour and are never offered", () => {
+    for (const n of ["Fertile Ground", "Wild Growth", "Overgrowth", "Trace of Abundance", "Utopia Sprawl", "Cryptolith Rite", "Abundant Growth", "Urban Utopia"] as const) expect(offered(rock(n)), n).toEqual([]);
   });
-
-  // 2a review (owner, 2026-10-10): trigger mana is ramp, not a colour source, so no deck is offered an Aura FOR A COLOUR -- the audit could not
-  // see it closing the gap. Before, an enchantress deck got the growth Auras here.
-  test("a growth Aura is offered for a colour to no deck, whatever its payoffs watch", () => {
-    const adds = [rock("Fertile Ground"), rock("Utopia Sprawl")];
-    expect(swap(rock("Mind Stone"), adds, ["enchantment"])).toEqual([]);
-    expect(swap(rock("Mind Stone"), adds, [])).toEqual([]);
-    expect(swap(rock("Mind Stone"), adds, ["artifact"])).toEqual([]);
-  });
-
-  test("never the other way: an Aura is not swapped for a Signet, and not when the cut's type is watched too", () => {
-    expect(swap(rock("Wild Growth"), [rock("Arcane Signet")], ["enchantment"])).toEqual([]);
-    expect(swap(rock("Mind Stone"), [rock("Fertile Ground")], ["enchantment", "artifact"])).toEqual([]);
-  });
-
-  test("an Aura's extra mana is yield: a growth Aura nets what a Signet does", () => {
+  test("an Aura's extra mana is still yield: a growth Aura nets what a Signet does", () => {
     expect(netYield(rock("Wild Growth"))).toBe(1);
     expect(netYield(rock("Overgrowth"))).toBe(2);
     expect(colouredNetYield(rock("Utopia Sprawl"))).toBe(1);
   });
 });
 
-describe("the cross-type path takes only an Aura that enchants a land and adds mana by trigger", () => {
-  const mind4 = { ...rock("Mind Stone"), card: { ...rock("Mind Stone").card, manaValue: 4 } } as unknown as DeckCard;
-  const offered = (add: DeckCard) => roleOptions("ramp", [mind4], [candidate(add)], undefined, { G: 4 }, () => 1, new Set(["enchantment"])).flatMap((o) => o.options.map((x) => x.add));
-  const karametra = (() => {
-    const fg = rock("Fertile Ground");
-    return { ...fg, card: { ...fg.card, name: "Karametra's Favor", oracleText: fg.card.oracleText!.replace("Enchant land", "Enchant creature").replace("enchanted land", "enchanted creature") } } as unknown as DeckCard;
-  })();
-  test("what is not a land Aura with an 'adds an additional' trigger is refused", () => {
-    expect(offered(karametra)).toEqual([]);
-    expect(offered(rock("Cryptolith Rite"))).toEqual([]);
-    expect(offered(rock("Abundant Growth"))).toEqual([]);
-    expect(offered(rock("Urban Utopia"))).toEqual([]);
-  });
-  test("the growth Auras are no longer offered: trigger mana is not a colour source (2a review)", () => {
-    for (const n of ["Fertile Ground", "Wild Growth", "Overgrowth", "Trace of Abundance", "Utopia Sprawl"] as const) expect(offered(rock(n)), n).toEqual([]);
-  });
-});
-
-describe("'Enchant Forest' is a demand for Forests, judged like a colour pip", () => {
-  const spell = (name: string): DeckCard => ({ ...card(name, "Sorcery", ""), card: { ...card(name, "Sorcery", "").card, manaCost: "{1}", manaValue: 1 } });
-  const forest = () => card("Forest", "Basic Land — Forest", "({T}: Add {G}.)", ["G"]);
-  const deckWith = (forests: number) => [...Array.from({ length: forests }, forest), ...Array.from({ length: 100 - forests }, (_, i) => spell(`Filler ${i}`))];
-  test("the model's own number: required Forests by the Aura's turn against the deck's Forests", () => {
-    const few = landTypeDemand(deckWith(5), [], "forest", 1);
-    const many = landTypeDemand(deckWith(40), [], "forest", 1);
-    expect(few.available).toBe(5);
-    expect(few.required).toBeGreaterThan(5);
-    expect(many.available).toBe(40);
-    expect(many.required).toBeLessThanOrEqual(40);
-  });
-  test("Utopia Sprawl is refused for a deck with few Forests and offered for one with many; an 'Enchant land' Aura needs neither", () => {
-    const run = (forests: number, add: DeckCard) => roleOptions("ramp", [rock("Mind Stone")], [candidate(add)], undefined, { G: 4 }, () => 1, new Set(["enchantment"]),
-      auraSupport(deckWith(forests), [])).flatMap((o) => o.options.map((x) => x.add));
-    // The Aura path is closed (2a review): neither is offered, whatever the Forests. `landTypeDemand` above is still the Forest model.
-    expect(run(5, rock("Utopia Sprawl"))).toEqual([]);
-    expect(run(40, rock("Utopia Sprawl"))).toEqual([]);
-    expect(run(5, rock("Fertile Ground"))).toEqual([]);
-  });
-});
-
-test("a Game Changer upgrade is untouched by the colour and cross-type paths (Enduring Enchantments: Arcane Signet to a Game Changer, enchantment watched, colours short)", () => {
+test("a Game Changer upgrade is untouched by the colour path (Enduring Enchantments: Arcane Signet to a Game Changer, colours short)", () => {
   const quality = rated({ "Arcane Signet": 92, "Mana Vault": 98 });
   const out = roleOptions("ramp", [real("Arcane Signet")], [candidate(rock("Fertile Ground")), candidate(rock("Wild Growth"))], { pool: [candidate(real("Mana Vault"))], quality },
-    { W: 5, B: 7, G: 5 }, () => 2, new Set(["enchantment"]), () => true);
+    { W: 5, B: 7, G: 5 }, () => 2);
   expect(out.map((o) => [o.cut, o.options.map((x) => [x.add, x.upgrade ?? null])])).toEqual([["Arcane Signet", [["Mana Vault", "game-changer"]]]]);
 });
 
@@ -403,7 +346,7 @@ describe("a dork for a dork, to close a colour shortfall", () => {
     return { ...m, card: { ...m.card, name, oracleText: oracle, producedMana: produced, ...over }, tags: { ...m.tags, manaLines: [line] } } as unknown as DeckCard;
   };
   const swap = (cut: DeckCard, adds: DeckCard[], themed: string[]) =>
-    roleOptions("ramp", [cut], adds.map(candidate), undefined, { U: 4 }, () => 1, new Set(), undefined, themedSubjects(themed)).flatMap((o) => o.options.map((x) => [x.add, x.keptType ?? null]));
+    roleOptions("ramp", [cut], adds.map(candidate), undefined, { U: 4 }, () => 1, themedSubjects(themed)).flatMap((o) => o.options.map((x) => [x.add, x.keptType ?? null]));
 
   test("a deck with no tribe: Llanowar Elves gives way to Birds of Paradise when blue is short", () => {
     expect(swap(rock("Llanowar Elves"), [rock("Birds of Paradise")], [])).toEqual([["Birds of Paradise", null]]);
@@ -434,18 +377,18 @@ describe("a dork for a dork, to close a colour shortfall", () => {
 
 describe("a land-fetch spell, swapped for a colour", () => {
   const reachOf = (m: Record<string, ("W" | "U" | "B" | "R" | "G")[]>) => (d: DeckCard) => new Set(m[d.card.name] ?? []);
-  const swap = (cut: DeckCard, adds: DeckCard[], o: { watched?: string[]; closes?: number; reach?: Record<string, ("W" | "U" | "B" | "R" | "G")[]> } = {}) =>
-    roleOptions("ramp", [cut], adds.map(candidate), undefined, { G: 4 }, () => o.closes ?? 1, new Set(o.watched ?? []), () => true, undefined, reachOf(o.reach ?? {}))
-      .flatMap((x) => x.options.map((y) => [y.add, y.crossType ?? null, y.fetch ?? false]));
+  const swap = (cut: DeckCard, adds: DeckCard[], o: { closes?: number; reach?: Record<string, ("W" | "U" | "B" | "R" | "G")[]> } = {}) =>
+    roleOptions("ramp", [cut], adds.map(candidate), undefined, { G: 4 }, () => o.closes ?? 1, undefined, reachOf(o.reach ?? {}))
+      .flatMap((x) => x.options.map((y) => [y.add, y.fetch ?? false]));
 
   test("no deck takes Fertile Ground for Rampant Growth any more (2a review: an Aura's trigger is not a colour source)", () => {
-    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { "Rampant Growth": ["R"] } })).toEqual([]);
     expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { reach: { "Rampant Growth": ["R"] } })).toEqual([]);
-    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { watched: ["artifact"] })).toEqual([]);
+    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { reach: { "Rampant Growth": ["R"] } })).toEqual([]);
+    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], {})).toEqual([]);
   });
   test("a fetch spell for a fetch spell needs the shortfall closed, and no fewer lands onto the battlefield", () => {
     const reach = { "Rampant Growth": ["R"] as ("R")[], Farseek: ["R", "G"] as ("R" | "G")[], Cultivate: ["R", "G"] as ("R" | "G")[] };
-    expect(swap(rock("Rampant Growth"), [rock("Farseek")], { reach })).toEqual([["Farseek", null, true]]);
+    expect(swap(rock("Rampant Growth"), [rock("Farseek")], { reach })).toEqual([["Farseek", true]]);
     expect(swap(rock("Rampant Growth"), [rock("Cultivate")], { reach, closes: 0 })).toEqual([]);
     expect(swap(rock("Explosive Vegetation"), [rock("Cultivate")], { reach: { "Explosive Vegetation": ["R"], Cultivate: ["R", "G"] } })).toEqual([]);
     // An untapped fetch is never traded for a tapped one for colour (Three Visits -> Farseek).
@@ -471,9 +414,9 @@ describe("a land-fetch spell, swapped for a colour", () => {
   });
   test("no fetch becomes a land Aura any more (2a review); Explosive Vegetation, Skyshroud Claim, Circuitous Route and Cultivate stay as before", () => {
     for (const n of ["Explosive Vegetation", "Skyshroud Claim", "Circuitous Route", "Cultivate"] as const) {
-      expect(swap(rock(n), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { [n]: ["R"] } }), n).toEqual([]);
+      expect(swap(rock(n), [rock("Fertile Ground")], { reach: { [n]: ["R"] } }), n).toEqual([]);
     }
-    expect(swap(rock("Three Visits"), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { "Three Visits": ["R"] } })).toEqual([]);
+    expect(swap(rock("Three Visits"), [rock("Fertile Ground")], { reach: { "Three Visits": ["R"] } })).toEqual([]);
   });
   test("a creature fetcher is never cut, and never added", () => {
     expect(swap(rock("Wood Elves"), [rock("Rampant Growth"), rock("Farseek")], { reach: { Farseek: ["G"] } })).toEqual([]);

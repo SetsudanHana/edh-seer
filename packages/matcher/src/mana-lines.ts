@@ -33,10 +33,11 @@ export function deckIdentity(deck: readonly DeckCard[], commanderNames: readonly
   return found.length === 0 ? null : new Set(found.flatMap((dc) => dc.card.colorIdentity!));
 }
 
-/** COST PIECES THAT CONSUME NOTHING: exerting a creature (it skips an untap, Arena of Glory, Oasis Ritualist) and untapping a permanent
- *  (Benthic Explorers). Every other entry in `cost.other` is a consumed resource: energy, a discard, a mill, collect evidence, forage,
- *  an exile from a graveyard (owner rulings 2026-10-10 and the 2a review). The list is the whole of what the corpus holds (2026-10-11). */
-const NON_CONSUMING_COST = /^(?:exert|untap)\b/i;
+/** COST PIECES THAT CONSUME NOTHING: exerting a creature (it skips an untap, Arena of Glory, Oasis Ritualist), untapping a permanent
+ *  (Benthic Explorers) and milling yourself (Millikin: the card is not a resource the deck plays). Every other entry in `cost.other` is a
+ *  consumed resource: energy, a discard, collect evidence, forage, an exile from a graveyard (owner rulings 2026-10-10 and 2026-10-11).
+ *  The list is the whole of what the corpus holds. */
+const NON_CONSUMING_COST = /^(?:exert|untap|mill)\b/i;
 
 /** The shape of a colour source -- everything `isColourSource` asks except that the production could be read. */
 const sourceShaped = (line: ManaLine): boolean =>

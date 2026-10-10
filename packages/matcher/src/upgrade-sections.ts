@@ -20,14 +20,14 @@ import type { BuildCategory } from "./build.js";
 import { basicsFloor, betterLand, landFacts, neededColours, unusualText, type LandFacts } from "./land-score.js";
 import { fetchedColours } from "./colour-sources.js";
 import { colourSourceColours } from "./mana-lines.js";
-import { COLORS, colourDeficit, landTypeDemand, type Color } from "./mana-audit.js";
+import { COLORS, colourDeficit, type Color } from "./mana-audit.js";
 import { ingredients, rolesOfCard, type Ingredient, type Ingredients, type Role } from "./quality.js";
 import type { StaticLookup } from "./static-lookup.js";
 import { candidatePool, type IndexCard } from "./suggest.js";
 import { decodeIndex, deckCards } from "./suggest-static.js";
 import type { DeckCard } from "./types.js";
 import type { UpgradeSectionId } from "./upgrade-package.js";
-import { CONDITIONS, isCreature, netPositiveMana, sameGroup, creatureSubtypes, landAuraType, isFetchSpell, landsToBattlefield, singleLandFetch, sameDorkAnyColour, sameFetchAnyColour, sameJob, sameRockAnyColour, themedSubjects, shape } from "./same-job.js";
+import { CONDITIONS, isCreature, netPositiveMana, sameGroup, creatureSubtypes, isFetchSpell, sameDorkAnyColour, sameFetchAnyColour, sameJob, sameRockAnyColour, themedSubjects, shape } from "./same-job.js";
 import { countsAsLand } from "./typeline.js";
 export { answerCovers, newConditions, sameGroup, sameJob } from "./same-job.js";
 
@@ -97,8 +97,6 @@ export interface RoleOption {
   lost?: Role[];
   /** The shortfall this colour swap closes by the yardstick itself: the deficit before less the deficit after. */
   closed?: number;
-  /** A swap that changes card type, toward a type the deck's payoffs watch (an enchantress's Aura for a rock). */
-  crossType?: string;
   /** A dork swap that keeps a creature type the deck's themes name (Elf): the reason says it is still one. */
   keptType?: string;
   /** The add is a land-fetch spell: the reason says it can find a land of the colour. */
@@ -136,7 +134,7 @@ const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => colourSource
  *  gain is the colour, not a measure, so `gained` is empty. A rock that prints more mana than it costs
  *  is never the cut. CEILING: rocks and plain dorks; a land fetcher makes no colour of its own. Where the payoff type matters (an enchantress wants
  *  enchantment ramp) shape blocks every cross-type pair here, so there is nothing to prefer. */
-export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Record<Color, number>>, closes?: Closes, watched: ReadonlySet<string> = new Set(), auraOk?: (add: DeckCard) => boolean, themed: ReadonlySet<string> = new Set(), fetchReach?: (d: DeckCard) => ReadonlySet<Color>): RoleOption | null {
+export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Record<Color, number>>, closes?: Closes, themed: ReadonlySet<string> = new Set(), fetchReach?: (d: DeckCard) => ReadonlySet<Color>): RoleOption | null {
   if (!rolesOfCard(cut).includes("ramp") || !add.roles.includes("ramp") || netPositiveMana(cut)) return null;
   // A LAND-FETCH SPELL MAKES NO COLOUR OF ITS OWN: its colours are those of the deck's lands it can find.
   const fetchCut = isFetchSpell(cut);
@@ -146,12 +144,6 @@ export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Rec
   const colour = COLORS.filter((c) => made.includes(c) && !had.includes(c) && (deficit[c] ?? 0) > 0);
   // NO DEARER THAN THE CUT: `roleOption` gets this from `strictlyBetter`, a colour swap has to ask.
   if (colour.length === 0 || (add.dc.card.manaValue ?? 0) > (cut.card.manaValue ?? 0)) return null;
-  // ANOTHER CARD TYPE ONLY TOWARD THE ONE THE DECK'S PAYOFFS WATCH (owner, 2026-10-08: an enchantress
-  // wants enchantment ramp), never away from it, and never when the cut's type is watched too.
-  // CEILING: across types the only add is an Aura that enchants a land (or a basic land type) and adds mana
-  // by trigger. Enchant-creature Auras, 'Creatures you control have {T}: Add' enchantments and cross-type
-  // non-Auras (an artifact for an enchantment) are left out: no measure here reads what else they do.
-  let crossType: string | undefined;
   let keptType: string | undefined;
   if (isCreature(cut) || isCreature(add.dc)) {
     // A DORK FOR A DORK (owner, 2026-10-08), keeping every creature type the deck's themes name: an Elf deck's
@@ -162,54 +154,16 @@ export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Rec
     if (!kept.every((t) => addTypes.includes(t))) return null;
     keptType = kept[0];
   } else if (fetchCut) {
-    // A FETCH SPELL FOR A FETCH SPELL, or (toward a watched type only) for a land Aura. CEILING: creature
-    // fetchers (Wood Elves) are never swapped.
-    if (isFetchSpell(add.dc)) {
-      if (!sameFetchAnyColour(cut, add.dc)) return null;
-    } else {
-      crossType = typesOf(add.dc).find((t) => watched.has(t));
-      if (!crossType || typesOf(cut).some((t) => watched.has(t)) || landAuraType(add.dc) === null) return null;
-      // ONLY A SINGLE PLAIN FETCH becomes an Aura: two lands (Explosive Vegetation), or one in hand too
-      // (Cultivate), would be thrown away.
-      if (landsToBattlefield(cut) !== 1 || !singleLandFetch(cut)) return null;
-    }
-  } else if (!sameRockAnyColour(cut, add.dc)) {
-    const cutWatched = typesOf(cut).some((t) => watched.has(t));
-    crossType = typesOf(add.dc).find((t) => watched.has(t));
-    if (cutWatched || !crossType || !sameRockAnyColour(cut, add.dc, true)) return null;
-  }
-  if (auraOk && !auraOk(add.dc)) return null;
+    // A FETCH SPELL FOR A FETCH SPELL ONLY. CEILING: creature fetchers (Wood Elves) are never swapped, and no fetch becomes an Aura
+    // (trigger mana is not a colour source, owner 2026-10-10).
+    if (!isFetchSpell(add.dc) || !sameFetchAnyColour(cut, add.dc)) return null;
+  } else if (!sameRockAnyColour(cut, add.dc)) return null;
   // CLOSED BY THE YARDSTICK, NOT BY THE COLOUR'S NAME: the audit counts a rock only for a demand due
   // after its mana value, so a Talisman can make the colour and still move nothing (review of #966 T2).
   const closed = closes ? closes(cut.card.name, add.dc) : colour.reduce((n, c) => n + (deficit[c] ?? 0), 0);
   if (closed <= 0) return null;
   const lost = rolesOfCard(cut).filter((r) => !add.roles.includes(r));
-  return { add: add.dc.card.name, role: "ramp", gained: [], cut: ingredients(cut, "ramp"), addIngredients: ingredients(add.dc, "ramp"), gameChanger: add.dc.card.gameChanger === true, links: add.links, colour, closed, ...(crossType ? { crossType } : {}), ...(keptType ? { keptType } : {}), ...(isFetchSpell(add.dc) ? { fetch: true } : {}), ...(lost.length ? { lost } : {}) };
-}
-/** A CARD'S TYPES as a payoff names them: its front-face card types, and Aura or Equipment. */
-const typesOf = (d: DeckCard): string[] => [...shape(d).split(" "), ...(/\baura\b/i.test(d.card.typeLine ?? "") ? ["aura"] : []), ...(/\bequipment\b/i.test(d.card.typeLine ?? "") ? ["equipment"] : [])].filter(Boolean);
-/** THE CARD TYPES THE DECK IS BUILT AROUND (owner, 2026-10-08): a type is watched only when
- *  `enters:<type>` or `cast:<type>` is among the deck's detected THEMES (the headline and the second
- *  the report names), never because one card happens to care. */
-export function watchedTypes(themes: readonly string[] | undefined): Set<string> {
-  const out = new Set<string>();
-  for (const t of themes ?? []) {
-    const m = /^(?:enters|cast):(artifact|enchantment|aura|equipment|creature|land|planeswalker)$/.exec(t);
-    if (m) out.add(m[1]!);
-  }
-  return out;
-}
-/** "ENCHANT FOREST" IS A DEMAND FOR FORESTS (owner, 2026-10-08): the Aura needs a Forest to enchant, so it
- *  is judged as one more demand for that land type by its own mana value's turn, with `manaAudit`'s model
- *  (`landTypeDemand`). "Enchant land" needs no such check. CEILING: the demand is judged alone, against
- *  the deck's sources of the type as they stand, not against the Auras already in the deck. */
-export function auraSupport(deck: readonly DeckCard[], commanders: readonly string[]): (add: DeckCard) => boolean {
-  return (add) => {
-    const type = landAuraType(add);
-    if (!type || type === "land") return true;
-    const { required, available } = landTypeDemand(deck, commanders, type, Math.max(1, Math.round(add.card.manaValue ?? 1)));
-    return available >= required;
-  };
+  return { add: add.dc.card.name, role: "ramp", gained: [], cut: ingredients(cut, "ramp"), addIngredients: ingredients(add.dc, "ramp"), gameChanger: add.dc.card.gameChanger === true, links: add.links, colour, closed, ...(keptType ? { keptType } : {}), ...(isFetchSpell(add.dc) ? { fetch: true } : {}), ...(lost.length ? { lost } : {}) };
 }
 /** The total colour shortfall a swap of the named deck card for `add` closes (`swapCloser`). */
 export type Closes = (cutName: string, add: DeckCard) => number;
@@ -269,8 +223,6 @@ export function roleOptions(
   gameChangers: { pool: readonly Candidate[]; quality: QualityOf } = { pool: [], quality: () => -1 },
   deficit: Partial<Record<Color, number>> = {},
   closes?: Closes,
-  watched?: ReadonlySet<string>,
-  auraOk?: (add: DeckCard) => boolean,
   themed?: ReadonlySet<string>,
   fetchReach?: (d: DeckCard) => ReadonlySet<Color>,
 ): CutOptions<RoleOption>[] {
@@ -281,7 +233,7 @@ export function roleOptions(
     // WHERE NO STRICT OPTION EXISTS FOR A PAIR, a rock may still close the deck's colour shortfall. Best
     // first: the most shortfall closed, then the deck's own links, then name.
     const strictAdds = new Set(strict.map((o) => o.add));
-    const colour = section !== "ramp" ? [] : pool.filter((c) => !strictAdds.has(c.dc.card.name)).map((c) => colourOption(cut, c, deficit, closes, watched, auraOk, themed, fetchReach))
+    const colour = section !== "ramp" ? [] : pool.filter((c) => !strictAdds.has(c.dc.card.name)).map((c) => colourOption(cut, c, deficit, closes, themed, fetchReach))
       .filter((o): o is RoleOption => o !== null)
       .sort((a, b) => closedBy(b) - closedBy(a) || b.links - a.links || a.add.localeCompare(b.add));
     const upgrades = gameChangers.pool.map((c) => gameChangerOption(section, cut, c, gameChangers.quality)).filter((o): o is RoleOption => o !== null)
@@ -432,7 +384,6 @@ export async function upgradeOptions(input: {
   }
   const deficit = colourDeficit(deck, input.commanders);
   const closes = swapCloser(deck, input.commanders);
-  const watched = watchedTypes(input.themes);
   const libraryLands = deck.filter((d) => !input.commanders.includes(d.card.name));
   const fetchReach = (d: DeckCard): ReadonlySet<Color> => new Set([...fetchedColours(d.card.oracleText ?? "", libraryLands, null)].filter((c): c is Color => (COLORS as readonly string[]).includes(c)));
   const roles = {} as Record<RoleSectionId, CutOptions<RoleOption>[]>;
@@ -448,7 +399,7 @@ export async function upgradeOptions(input: {
       const dc = await dcOf(c.name);
       if (dc && (section === "ramp" || !isCreature(dc))) candidates.push({ dc, roles: rolesOfCard(dc), links: linksOf.get(c.name) ?? 0 });
     }
-    roles[section] = roleOptions(section, cuts, candidates, { pool: gameChangers, quality }, deficit, closes, watched, auraSupport(deck, input.commanders), themedSubjects(input.themes), fetchReach);
+    roles[section] = roleOptions(section, cuts, candidates, { pool: gameChangers, quality }, deficit, closes, themedSubjects(input.themes), fetchReach);
   }
 
   // THE BRING-DOWN CUTS' REPLACEMENTS, from every card sharing a role with them, as cheap or cheaper.

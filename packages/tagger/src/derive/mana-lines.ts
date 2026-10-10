@@ -130,7 +130,7 @@ const SCALES = /\b(for each|equal to|that (?:many|much)|number of|where x)\b[^.]
 
 /** What `object` ("one mana of any color", "{U}{U}, {U}{R}, or {R}{R}", "five mana in any combination of colors")
  *  makes, alternative by alternative. */
-function production(object: string, amountText = ""): Pick<ManaLine, "colours" | "colourless" | "anyColour" | "amount"> {
+function production(object: string, amountText = "", context = ""): Pick<ManaLine, "colours" | "colourless" | "anyColour" | "amount"> {
   const text = object.trim();
   const lower = text.toLowerCase();
   const alts = text.split(/\s*,\s*or\s+|\s*,\s+|\s+or\s+/i).filter((a) => a.trim() !== "");
@@ -149,6 +149,14 @@ function production(object: string, amountText = ""): Pick<ManaLine, "colours" |
   // BOUNDED BY WHAT YOU CONTROL OR HAVE EXILED, not by the card: "any color among legendary permanents you control" (Plaza of Heroes,
   // Mox Amber), "for each color among permanents you control" (Faeburrow Elder, Bloom Tender), "any of the exiled card's colors" (Chrome Mox).
   else if (/\bcolou?rs? among\b|\bexiled cards?'?s?'? colou?rs?\b/.test(lower)) anyColour = "among";
+  // ...or by something you own: "any of this creature's colors" (Tazri, Katilda), "Choose a color of a permanent you control" (Meteor Crater),
+  // "Choose a color of a card in your graveyard" (Corrupted Grafstone). Read on the whole sentence, since the choice is printed before the add.
+  else if (/\bany of this creature'?s colou?rs\b|\bcolou?r of (?:a|an) (?:permanent|card|creature)s? (?:you control|in your graveyard)\b/.test(`${lower} ${context.toLowerCase()}`)) anyColour = "among";
+  // "As you create your deck, circle two of the colors" (Cryptic Spires): chosen outside the card, like a chosen colour.
+  else if (/\bcircled colou?rs\b/.test(lower)) anyColour = "chosen";
+  // "Choose a color. Add one mana of that color for each ..." (Selvala, Astral Cornucopia, Three Tree City): any colour, the amount scales.
+  else if (/\bof that colou?r\b/.test(lower) && /\bchoose a colou?r\b(?! of)/.test(context.toLowerCase())) anyColour = "any";
+  else if (/\ba chosen colou?r\b/.test(lower)) anyColour = "any";
   else if (/\bthe chosen (?:color|type)\b|\bcolor of your choice\b/.test(lower)) anyColour = "chosen";
   else if (/\bcould produce\b/.test(lower)) anyColour = /\bopponents?\b/.test(lower) ? "opponent-lands" : /\b(?:lands?|gates?)\b/.test(lower) ? "lands-you-could" : null;
   else if (/\bany (?:one )?(?:color|type)\b|\bany combination of colou?rs\b|\bany colou?r\b|\bdifferent colou?rs\b/.test(lower)) anyColour = "any";
@@ -362,7 +370,7 @@ export function deriveMana(input: ManaInput): ManaResult {
           // CEILING: a static ability that adds mana is printed by no card the corpus holds; refused, not guessed.
           : null;
       if (source === null) continue;
-      const made = production(object, amountText);
+      const made = production(object, amountText, text);
       const cost = source === "activated" || source === "static-grant" || source === "token-maker"
         ? parseCost(costText, selfNames)
         : noCost();

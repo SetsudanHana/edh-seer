@@ -7,7 +7,7 @@
 import { grammarClauseRecords } from "@edh-seer/tagger/clause-record";
 import { detectBuildRules } from "./build.js";
 import { roleAbilities, rolesOfCard, type Role } from "./quality.js";
-import { ADD_LINE, ADDITIONAL, manaLines, printedText } from "./legacy-mana-lines.js";
+import { manaLines, printedText } from "./legacy-mana-lines.js";
 import type { DeckCard } from "./types.js";
 
 /** THE SAME KIND OF CARD: the same card types on its front face, supertypes and Kindred aside. */
@@ -321,19 +321,17 @@ export function netPositiveMana(d: DeckCard): boolean {
  *  Stone's draw) is not kept, by owner ruling (2026-10-08, #966): a minor extra ability does not
  *  protect a source; only net-positive fast mana does (`netPositiveMana`). The reason names what is lost.
  *  CEILING: creatures (dorks) are out, as for `sameJob`: a body does other work no measure reads. */
-export function sameRockAnyColour(cut: DeckCard, add: DeckCard, crossType = false): boolean {
+export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
   if (isCreature(cut) || isCreature(add)) return false;
   const c = readJob(cut, "ramp");
   const a = readJob(add, "ramp");
-  if (!c || !a || rampKind(cut) !== "rock" || (crossType ? rampKind(add) !== "rock" || landAuraType(add) === null : c.kind !== a.kind)) return false;
+  if (!c || !a || rampKind(cut) !== "rock" || c.kind !== a.kind) return false;
   const isMana = (x: string) => x.startsWith('["add-mana"');
   if (![...c.parts].filter((x) => !isMana(x)).every((x) => a.parts.has(x))) return false;
   if (![...a.parts].some(isMana)) return false;
   const selfDamage = (x: string) => x.startsWith('["deal-damage"') && !damagesOthers(printed(add));
   if (![...a.drawbacks].every((x) => c.drawbacks.has(x) || selfDamage(x))) return false;
-  // AN AURA'S "ENCHANTED LAND" AND ITS COLOUR CHOICE are what it is, not a condition on the swap.
-  const auraOk = crossType && /\baura\b/i.test(add.card.typeLine ?? "") ? [/\benchanted\b/.source, /\bchooses?\b/.source] : [];
-  if (newConditions(cut, add, false, [...(damagesOthers(printed(add)) ? [] : SELF_DAMAGE), ...auraOk])) return false;
+  if (newConditions(cut, add, false, damagesOthers(printed(add)) ? [] : SELF_DAMAGE)) return false;
   const cy = netYield(cut);
   // THE ADD IS HELD TO WHAT IT NETS IN COLOUR (Prismatic Lens makes {C} free and a colour for {1}).
   const ay = colouredNetYield(add);
@@ -385,11 +383,6 @@ export function landsToBattlefield(d: DeckCard): number {
   }
   return total;
 }
-/** A FETCH THAT IS NOTHING BUT "SEARCH, PUT ONE ONTO THE BATTLEFIELD, SHUFFLE": no extra land in hand
- *  (Cultivate), no sacrifice, no second sentence. */
-export function singleLandFetch(d: DeckCard): boolean {
-  return /^search your library for an? [^.]*? card, put (?:it|that card) onto the battlefield(?: tapped)?, then shuffle\.?$/.test(printed(d).trim());
-}
 /** THE SAME FETCH, ANY LANDS: both fetch spells, the cut's count is known (a fetch-X spell is never
  *  replaced for colour), the add puts at least as many lands onto the battlefield and prints no
  *  condition the cut does not. Which colours it can reach is the yardstick's to judge. */
@@ -434,19 +427,6 @@ export function sameDorkAnyColour(cut: DeckCard, add: DeckCard): boolean {
   const cy = netYield(cut);
   const ay = colouredNetYield(add);
   return cy !== null && ay !== null && ay >= cy;
-}
-
-/** THE LAND AN AURA OF MANA ENCHANTS, when it is the kind a colour swap may take: an Aura that enchants a
- *  land ("land") or a basic land type ("forest"), whose mana is the "adds an additional ..." trigger and
- *  nothing else (no "{T}: Add" line, and no granted ability: Abundant Growth gives the land an ability it
- *  already has). Null for anything else. */
-const ENCHANT_LAND = /^enchant (land|plains|island|swamp|mountain|forest)\b/im;
-export function landAuraType(d: DeckCard): string | null {
-  const t = printed(d);
-  if (!/\baura\b/i.test(d.card.typeLine ?? "")) return null;
-  const type = ENCHANT_LAND.exec(t)?.[1];
-  if (!type || !new RegExp(ADDITIONAL.source).test(t) || [...t.matchAll(ADD_LINE)].length > 0 || /["“][^"”]*\{t\}/.test(t)) return null;
-  return type;
 }
 
 /** THE OLD TEST, KEPT ONLY FOR THE BEFORE NUMBER while S-T2 is measured; not called by the product. */

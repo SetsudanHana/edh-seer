@@ -167,6 +167,10 @@ describe("a consumed resource in the cost is not a colour source (review of 2a)"
     expect(makesAnyMana(get("Aether Hub"))).toBe(true);
     expect(colours("Thornvault Forager")).toEqual(["G"]);
   });
+  test("self-mill is not a consumed resource: Millikin ({T}, Mill a card: Add {C}) stays a source; exert and untap likewise", () => {
+    expect(cardLines(get("Millikin")).some(isColourSource)).toBe(true);
+    expect(makesAnyMana(get("Millikin"))).toBe(true);
+  });
   test("a self-exile is a one-shot: Ether is no source", () => {
     expect(colours("Ether")).toEqual([]);
   });
@@ -175,7 +179,8 @@ describe("a consumed resource in the cost is not a colour source (review of 2a)"
 describe("'among' is bounded by the commander's colours (a CEILING), unread is never a silent zero", () => {
   test("Plaza of Heroes, Mox Amber, Chrome Mox and Faeburrow Elder make the identity's colours", () => {
     const id = new Set(["B", "R"]);
-    for (const n of ["Mox Amber", "Chrome Mox", "Faeburrow Elder"]) expect(colours(n, id), n).toEqual(["B", "R"]);
+    for (const n of ["Mox Amber", "Chrome Mox", "Faeburrow Elder", "Meteor Crater", "Corrupted Grafstone", "Katilda, Dawnhart Prime"]) expect(colours(n, id), n).toEqual(["B", "R"]);
+    expect(colours("Tazri, Stalwart Survivor", id), "restricted").toEqual([]);
     expect(colours("Plaza of Heroes", id)).toEqual(["B", "R"]);
   });
   test("for land swaps an 'among' land is conditional and makes no colour: Plaza of Heroes, The Grey Havens", () => {
@@ -186,11 +191,11 @@ describe("'among' is bounded by the commander's colours (a CEILING), unread is n
     }
   });
   test("a line derive could not read is no colour, and the audit names the card", () => {
-    expect(colours("Meteor Crater")).toEqual([]);
-    expect(unreadSourceNames([get("Meteor Crater"), get("Sol Ring")])).toEqual(["Meteor Crater"]);
+    expect(colours("Charmed Pendant")).toEqual([]);
+    expect(unreadSourceNames([get("Charmed Pendant"), get("Sol Ring")])).toEqual(["Charmed Pendant"]);
     const spell = { card: { name: "x", typeLine: "Instant", manaCost: "{B}", manaValue: 1, keywords: [], colors: [], oracleText: "" }, tags: null } as unknown as DeckCard;
-    const out = manaAuditFull([get("Meteor Crater"), get("Sol Ring"), spell]);
-    expect(out.unreadSources).toEqual(["Meteor Crater"]);
+    const out = manaAuditFull([get("Charmed Pendant"), get("Sol Ring"), spell]);
+    expect(out.unreadSources).toEqual(["Charmed Pendant"]);
     expect(manaAuditFull([get("Sol Ring"), spell]).unreadSources).toBeUndefined();
   });
 });

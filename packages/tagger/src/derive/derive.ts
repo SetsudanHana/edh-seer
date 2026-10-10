@@ -428,7 +428,9 @@ import { emblemRecipient } from "../emblem.js";
 // 298: #1169 review 4: "Then if <cond>, <cost>. If you do, ..." gates on the condition and takes the cost after the comma.
 // 299: #1169 task 2a review: anyColour `among` (colours among what you control / the exiled card's colours), "different colors" is any colour,
 // exiling the card itself in a cost is `sacrificeSelf`.
-export const DERIVE_VERSION = 299;
+// 300: #1169 task 2a review 2: `among` also covers "any of this creature's colors" and "a color of a permanent you control / a card in your graveyard";
+// "Choose a color. Add ... of that color" is any colour; "circled colors" is chosen.
+export const DERIVE_VERSION = 300;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

@@ -1,5 +1,5 @@
 /** LEGACY (#1169 task 2a): THE REGEX READER OF A CARD'S MANA LINES, kept ONLY for the ramp side that task 2b moves -- `same-job.ts`
- *  (`manaLines`, `ADD_LINE`, `ADDITIONAL`, `printedText`) and `goldfish.ts` (`fixedColours`, colour masks). Every colour-source
+ *  (`manaLines`, `printedText`) and `goldfish.ts` (`fixedColours`, colour masks). Every colour-source
  *  consumer (mana-audit, mana-base, land-score, static-fixers, upgrade-sections) reads the DERIVED lines through `mana-lines.ts`
  *  instead. DELETE THIS FILE WITH 2b.
  *
@@ -16,10 +16,10 @@ import type { DeckCard } from "./types.js";
 const REMINDER = /\([^()]*\)/g;
 export const printedText = (d: DeckCard): string => (d.card.oracleText ?? "").replace(REMINDER, "").toLowerCase();
 
-export const ADD_LINE = /^([^:\n]*):\s*add ([^\n]*)/gm;
+const ADD_LINE = /^([^:\n]*):\s*add ([^\n]*)/gm;
 const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7 };
 const WORDS = "one|two|three|four|five|six|seven";
-export const ADDITIONAL = new RegExp(`\\badds? an additional ((?:\\{[^}]+\\})+|(${WORDS}) mana of (?:any|the chosen) (?:color|type))`, "g");
+const ADDITIONAL = new RegExp(`\\badds? an additional ((?:\\{[^}]+\\})+|(${WORDS}) mana of (?:any|the chosen) (?:color|type))`, "g");
 // CEILING: "three mana of any ONE color" (Pyramid of the Pantheon) is not matched here, so its line reads no
 // production and is not judged either way; "in any combination of colors" is.
 const ANY_COLOUR = new RegExp(`^(${WORDS}) mana (?:of (?:any|the chosen) (?:color|type)|in any combination of colou?rs)`);
