@@ -77,7 +77,7 @@ export function manaValueOf(cost: string | undefined): number {
 // ---------------------------------------------------------------------------------------------------------------
 
 type Cost = ManaLine["cost"];
-const noCost = (): Cost => ({ mana: 0, tap: false, sacrificeSelf: false, sacrificeOther: false, life: 0, other: [] });
+const noCost = (): Cost => ({ mana: 0, tap: false, sacrificeSelf: false, sacrificeOther: false, life: 0, counters: null, tapOther: false, other: [] });
 
 /** The pieces of an activation cost, comma-separated outside braces: "{1}, {T}", "{T}, Sacrifice two other
  *  creatures", "Pay 1 life". Mana symbols hold no comma, so a plain split is right. */
@@ -105,6 +105,11 @@ export function parseCost(cost: string | undefined, selfNames: readonly string[]
       if (itself) out.sacrificeSelf = true; else out.sacrificeOther = true;
       continue;
     }
+    // A counter removed or put as the cost (Cryptic Trilobite, Wall of Roots), and other permanents tapped (Springleaf Drum),
+    // are structured so no consumer has to read `other`.
+    const counter = /^(remove|put)\b[^.]*\bcounters?\b/i.exec(piece);
+    if (counter) { out.counters = counter[1]!.toLowerCase() as "remove" | "put"; continue; }
+    if (/^tap (?:an?|one|two|three|\d+|x|any number of)\b[^.]*\buntapped\b/i.test(piece)) { out.tapOther = true; continue; }
     out.other.push(piece);
   }
   return out;
@@ -118,7 +123,7 @@ const SCALES = /\b(for each|equal to|that (?:many|much)|number of|where x)\b[^.]
 
 /** What `object` ("one mana of any color", "{U}{U}, {U}{R}, or {R}{R}", "five mana in any combination of colors")
  *  makes, alternative by alternative. */
-function production(object: string): Pick<ManaLine, "colours" | "colourless" | "anyColour" | "amount"> {
+function production(object: string, amountText = ""): Pick<ManaLine, "colours" | "colourless" | "anyColour" | "amount"> {
   const text = object.trim();
   const lower = text.toLowerCase();
   const alts = text.split(/\s*,\s*or\s+|\s*,\s+|\s+or\s+/i).filter((a) => a.trim() !== "");
@@ -138,7 +143,10 @@ function production(object: string): Pick<ManaLine, "colours" | "colourless" | "
   else if (/\bcould produce\b/.test(lower)) anyColour = /\bopponents?\b/.test(lower) ? "opponent-lands" : /\b(?:lands?|gates?)\b/.test(lower) ? "lands-you-could" : null;
   else if (/\bany (?:one )?(?:color|type)\b|\bany combination of colou?rs\b|\bany colou?r\b/.test(lower)) anyColour = "any";
   if (anyColour === "any") for (const c of WUBRG) colours.add(c);
-  const scale = SCALES.exec(text);
+  // The grammar path keeps "for each creature you control" on `action.amount`, the model path in the object.
+  // A non-numeric amount that names no "for each" is still a count of something ("the greatest power among creatures you
+  // control", Bighorner Rancher): it scales.
+  const scale = SCALES.exec(`${text} ${amountText}`.trim()) ?? (amountText !== "" && !/^\d+$/.test(amountText.trim()) ? ([amountText] as RegExpExecArray) : null);
   const known = counts.length > 0 && counts.every((n) => n !== undefined);
   return {
     colours: inWubrgOrder(colours), colourless, anyColour,
@@ -175,6 +183,13 @@ function colonHead(text: string): string {
 }
 
 const GATE = /\bactivate (?:this ability )?only (?:if|when|while) ([^.]*)/i;
+// "Add {B}{B}{B}{B}{B} instead if there are seven or more cards in your graveyard" (Cabal Ritual's threshold line) and
+// "Add {G}{G} if you control a Forest": the amount holds only under the condition, so it is a gate, not a guarantee.
+const CONDITION = /\binstead if ([^.]*)|\badd\b[^.]*?\bif ([^.]*)/i;
+const gateOf = (text: string, thresholdAbility: boolean): string | null => {
+  const g = GATE.exec(text)?.[1] ?? (() => { const c = CONDITION.exec(text); return c?.[1] ?? c?.[2]; })();
+  return g ? g.trim().toLowerCase() : thresholdAbility ? "threshold" : null;
+};
 const DELAYED = /\b(?:at the beginning of|on) (?:your |the )?next [^,.]*,?[^.]*\badd\b|\badd\b[^.]*\bat the beginning of (?:your |the )?next\b/i;
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -250,24 +265,25 @@ export function deriveMana(input: ManaInput): ManaResult {
       const source: ManaLineSource | null =
         tokenGrant ? "token-maker"
         : granted ? "static-grant"
-        : activated ? "tap-ability"
+        : activated ? "activated"
         : clause.abilityType === "spell" ? "one-shot-spell"
         : clause.abilityType === "triggered"
           ? (trigger?.event === "tapped-for-mana" && /^(?:enchanted|equipped)\b/i.test(trigger.subject ?? "") ? "aura-trigger" : "trigger")
           // CEILING: a static ability that adds mana is printed by no card the corpus holds; refused, not guessed.
           : null;
       if (source === null) continue;
-      const made = production(action.object ?? "");
+      const made = production(action.object ?? "", typeof action.amount === "string" ? action.amount : "");
       const ability = matching[k];
-      const cost = source === "tap-ability" || source === "static-grant" || source === "token-maker"
+      const cost = source === "activated" || source === "static-grant" || source === "token-maker"
         ? parseCost(costText, selfNames)
         : noCost();
       if (source === "one-shot-spell") cost.mana = faceMV(face);
       const produced = made.amount.fixed ?? 1;
       lines.push({
         face, source, repeats: ability?.repeats ?? null, cost, ...made,
+        unread: made.colours.length === 0 && made.colourless === 0 && made.anyColour === null,
         net: produced - cost.mana,
-        gate: GATE.exec(text)?.[1]?.trim().toLowerCase() ?? null,
+        gate: gateOf(text, ability?.threshold !== undefined),
         restriction: restrictionOf(texts),
         timing: source === "trigger" || source === "aura-trigger" ? "on-trigger" : DELAYED.test(text) ? "next-turn" : "now",
         producesToken: tokenGrant ? "granted" : null,
@@ -293,34 +309,55 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (a.kind === "on-cast") cost.mana = faceMV(face);
       const make = MANA_TOKENS[key]!;
       lines.push({
-        face, source: "token-maker", repeats: a.repeats ?? null, cost, ...make,
+        face, source: "token-maker", repeats: a.repeats ?? null, cost, ...make, unread: false,
         // Each token is one use of mana when it is spent; a token count that scales is unknown.
         amount: tokens !== null ? { fixed: tokens, scales: null } : { fixed: null, scales: a.amount ?? null },
         net: (tokens ?? 1) - cost.mana, gate: null, timing: "now", producesToken: key,
       });
       continue;
     }
-    // A land SEARCHED out of the library onto the battlefield under your control: an `enters` emit (from the library, or with no origin
-    // stated: the grammar path drops it) beside a land `search` in the same clause (the model path leaves the type off the emit; the search carries it). A
-    // "look at the top N, put a land onto the battlefield" is a dig, not a fetch: no colour is promised.
+    // A land SEARCHED out of the library by YOU onto the battlefield. The printed clause must say "search your library": that
+    // refuses a dig ("look at the top six", Zimone's Experiment, Bounty of Skemfar) and a search by someone else ("target
+    // opponent may search their library", Hired Giant; "each opponent", Old-Growth Dryads; "target player", Turtle Tracks,
+    // Restorative Technique, Fertilid's Favor, which you could be the only searcher of but the text does not promise it).
+    // The `enters` emit says where the land goes (the grammar path drops its library origin); the derived `search` carries the
+    // type the model path leaves off the emit.
+    const clauseText = input.textOf(clauses.find((c) => c.id === a.clause) ?? { id: -1 } as ClauseRecord);
+    if (!/\bsearch your library\b/i.test(clauseText)) continue;
     const search = abilities.find((x) => x.clause === a.clause && x.effect.kind === "search");
+    const found = search?.effect.subject;
+    // Where the land goes: an `enters` emit; or, when the clause derives none (Myriad Landscape, Travel Through Caradhras), the
+    // search itself with the printed "onto the battlefield".
+    const landings: { subject: SubjectFilter; tapped: boolean }[] = [];
     for (const e of a.emits ?? []) {
-      if (e.verb !== "enters" || (e.subject.fromZone !== undefined && e.subject.fromZone !== "library") || e.subject.control === "opp" || !search) continue;
-      const found = search.effect.subject;
-      if (!(e.subject.type === "land" || found?.type === "land" || found?.basic === true)) continue;
-      const dedupe = `fetch:${a.clause}:${JSON.stringify(e.subject)}`;
+      if (e.verb !== "enters" || (e.subject.fromZone !== undefined && e.subject.fromZone !== "library") || e.subject.control === "opp") continue;
+      landings.push({ subject: e.subject, tapped: e.subject.entersTapped === true });
+    }
+    const hasEnters = abilities.some((x) => x.clause === a.clause && (x.emits ?? []).some((e) => e.verb === "enters" && e.subject.fromZone !== "battlefield"));
+    if (landings.length === 0 && a.effect.kind === "search" && !hasEnters && /\bonto the battlefield\b/i.test(clauseText) && a.effect.subject?.control !== "opp") {
+      landings.push({ subject: a.effect.subject ?? ({} as SubjectFilter), tapped: /\bonto the battlefield tapped\b/i.test(clauseText) });
+    }
+    for (const { subject, tapped } of landings) {
+      const named = [subject.subtype, found?.subtype].flat().filter((x): x is string => typeof x === "string").map((x) => x.toLowerCase());
+      // A land: typed so, a basic, an "X or Desert card" (anyOf), or a basic land TYPE ("a Mountain card", Alpine Guide).
+      const landish = (f?: SubjectFilter) => f !== undefined && (f.type === "land" || f.basic === true || (f.anyOf ?? []).some((o) => o.type === "land"));
+      if (!(landish(subject) || landish(found) || named.some((n) => n in BASIC_COLOUR))) continue;
+      const dedupe = `fetch:${a.clause}:${JSON.stringify(subject)}`;
       if (seenClauses.has(dedupe)) continue;
       seenClauses.add(dedupe);
       const lands = a.amount !== undefined && /^\d+$/.test(a.amount) ? Number(a.amount) : 1;
       const cost = a.kind === "activated" ? parseCost(a.cost, selfNames) : noCost();
       if (a.kind === "on-cast") cost.mana = faceMV(face);
-      const colours = reachOf({ ...found, ...e.subject, subtype: e.subject.subtype ?? found?.subtype } as SubjectFilter);
+      const colours = reachOf({ ...found, ...subject, subtype: subject.subtype ?? found?.subtype } as SubjectFilter);
+      // CEILING: a search for a non-basic type alone (Desert, Gate, Cave) reaches nothing here, and a fetch with no reach is not
+      // emitted at all. A creature-or-land search (Archdruid's Charm) puts the land only conditionally and is not read.
+      if (colours.length === 0 || (Array.isArray(subject.type) ? subject.type : [subject.type]).includes("creature")) continue;
       lines.push({
-        face, source: "fetch", repeats: a.repeats ?? null, cost, colours, colourless: 0, anyColour: null,
+        face, source: "fetch", repeats: a.repeats ?? null, cost, colours, colourless: 0, anyColour: null, unread: false,
         amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: null, restriction: null, timing: "now", producesToken: null,
       });
       fetchKind = a.kind === "on-cast" || fetchKind === "spell" ? "spell" : "permanent";
-      fetchTapped = fetchTapped && e.subject.entersTapped === true;
+      fetchTapped = fetchTapped && tapped;
       for (const c of colours) reach.add(c);
     }
   }
@@ -333,7 +370,7 @@ export function deriveMana(input: ManaInput): ManaResult {
   // A one-shot: every line is spent in the using, an instant or sorcery's mana or a source that sacrifices itself.
   // The mana lines only: a fetch or a Treasure-maker beside them does not make the card repeatable.
   const manaOnly = lines.filter((l) => l.source !== "fetch" && l.source !== "token-maker");
-  if (manaOnly.length > 0 && manaOnly.every((l) => l.source === "one-shot-spell" || (l.source === "tap-ability" && l.cost.sacrificeSelf))) result.isOneShot = true;
+  if (manaOnly.length > 0 && manaOnly.every((l) => l.source === "one-shot-spell" || (l.source === "activated" && l.cost.sacrificeSelf))) result.isOneShot = true;
 
   // Suspend and no mana cost: only suspend puts it into play (Mox Tantalite, Lotus Bloom).
   if (input.manaCosts && (input.manaCosts[0] ?? "") === "" && (chars.keywords ?? []).some((k) => k.toLowerCase() === "suspend")

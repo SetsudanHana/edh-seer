@@ -22,20 +22,20 @@ const only = (name: string, source?: ManaLine["source"]): ManaLine => {
   expect(ls, `${name} lines`).toHaveLength(1);
   return ls[0]!;
 };
-const FREE_TAP = { mana: 0, tap: true, sacrificeSelf: false, sacrificeOther: false, life: 0, other: [] };
+const FREE_TAP = { mana: 0, tap: true, sacrificeSelf: false, sacrificeOther: false, life: 0, counters: null, tapOther: false, other: [] };
 
 describe("tap abilities: cost, colours and amount", () => {
   it("Sol Ring taps for two colourless, free", () => {
-    expect(only("Sol Ring")).toMatchObject({ face: 0, source: "tap-ability", repeats: "per-cycle", cost: FREE_TAP, colours: [], colourless: 2,
+    expect(only("Sol Ring")).toMatchObject({ face: 0, source: "activated", repeats: "per-cycle", cost: FREE_TAP, colours: [], colourless: 2,
       anyColour: null, amount: { fixed: 2, scales: null }, net: 2, gate: null, restriction: null, timing: "now", producesToken: null });
   });
   it("Arcane Signet chooses within the commander's identity, which the text does not name", () => {
-    expect(only("Arcane Signet")).toMatchObject({ source: "tap-ability", anyColour: "identity", colours: [], amount: { fixed: 1, scales: null }, net: 1 });
+    expect(only("Arcane Signet")).toMatchObject({ source: "activated", anyColour: "identity", colours: [], amount: { fixed: 1, scales: null }, net: 1 });
   });
   it("Cascade Bluffs: the filter line pays 1 and makes 2 of its two colours, the plain line is colourless", () => {
     const [plain, filter] = linesOf("Cascade Bluffs");
     expect(plain).toMatchObject({ colours: [], colourless: 1, cost: FREE_TAP, net: 1 });
-    expect(filter).toMatchObject({ source: "tap-ability", cost: { mana: 1, tap: true }, colours: ["U", "R"], amount: { fixed: 2, scales: null }, net: 1, restriction: null });
+    expect(filter).toMatchObject({ source: "activated", cost: { mana: 1, tap: true }, colours: ["U", "R"], amount: { fixed: 2, scales: null }, net: 1, restriction: null });
   });
   it("Cascading Cataracts: five mana in any colour for {5} nets nothing", () => {
     const [plain, five] = linesOf("Cascading Cataracts");
@@ -55,7 +55,7 @@ describe("tap abilities: cost, colours and amount", () => {
 
 describe("a cost the segmenter did not split", () => {
   it("Wall of Roots pays with a counter (typed static by the model); Contamination's replacement is no line", () => {
-    expect(only("Wall of Roots")).toMatchObject({ source: "tap-ability", colours: ["G"], cost: { mana: 0, tap: false, other: ["Put a -0/-1 counter on this creature"] } });
+    expect(only("Wall of Roots")).toMatchObject({ source: "activated", colours: ["G"], cost: { mana: 0, tap: false, counters: "put", other: [] } });
     expect(tagsOf("Contamination").manaLines).toBeUndefined();
   });
   it("Aether Hub's second line pays {E} beside the tap", () => {
@@ -85,16 +85,16 @@ describe("restricted mana", () => {
 
 describe("what using the line consumes", () => {
   it("Phyrexian Altar sacrifices something else, not itself, and does not tap", () => {
-    expect(only("Phyrexian Altar")).toMatchObject({ source: "tap-ability", repeats: "repeatable", anyColour: "any",
-      cost: { mana: 0, tap: false, sacrificeSelf: false, sacrificeOther: true, life: 0, other: [] } });
+    expect(only("Phyrexian Altar")).toMatchObject({ source: "activated", repeats: "repeatable", anyColour: "any",
+      cost: { mana: 0, tap: false, sacrificeSelf: false, sacrificeOther: true, life: 0, counters: null, tapOther: false, other: [] } });
   });
   it("Priest of Forgotten Gods taps and sacrifices two others for {B}{B}", () => {
-    expect(only("Priest of Forgotten Gods")).toMatchObject({ source: "tap-ability", colours: ["B"], amount: { fixed: 2, scales: null },
+    expect(only("Priest of Forgotten Gods")).toMatchObject({ source: "activated", colours: ["B"], amount: { fixed: 2, scales: null },
       cost: { tap: true, sacrificeSelf: false, sacrificeOther: true } });
   });
   it("Cryptic Trilobite pays with a counter, and the mana only activates abilities", () => {
     const l = only("Cryptic Trilobite");
-    expect(l).toMatchObject({ colourless: 2, repeats: "repeatable", cost: { mana: 0, tap: false, other: ["Remove a +1/+1 counter from this creature"] } });
+    expect(l).toMatchObject({ colourless: 2, repeats: "repeatable", cost: { mana: 0, tap: false, counters: "remove", tapOther: false, other: [] } });
     expect(l.restriction).toEqual({ spend: "to activate abilities" });
   });
   it("Lotus Petal sacrifices itself: a one-shot", () => {
@@ -124,7 +124,7 @@ describe("triggers, auras and spells", () => {
 
 describe("faces", () => {
   it("Treasure Map // Treasure Cove: the land back's {T}: Add {C} is on face 1, the front makes Treasures", () => {
-    const tap = only("Treasure Map", "tap-ability");
+    const tap = only("Treasure Map", "activated");
     expect(tap).toMatchObject({ face: 1, colourless: 1, cost: FREE_TAP });
     expect(only("Treasure Map", "token-maker")).toMatchObject({ face: 0, producesToken: "treasure", cost: { mana: 1, tap: true } });
   });
@@ -159,7 +159,7 @@ describe("tokens that are mana sources, and fetches", () => {
 describe("static fixers and suspend", () => {
   it("Chromatic Lantern gives lands the ability; its own tap is a second line", () => {
     expect(tagsOf("Chromatic Lantern").staticFixer).toEqual({ covers: "lands", colours: WUBRG });
-    expect(linesOf("Chromatic Lantern").map((l) => l.source)).toEqual(["static-grant", "tap-ability"]);
+    expect(linesOf("Chromatic Lantern").map((l) => l.source)).toEqual(["static-grant", "activated"]);
   });
   it("Chromatic Orrery lets any mana be spent as any colour; Prismatic Omen makes lands every type", () => {
     expect(tagsOf("Chromatic Orrery").staticFixer).toEqual({ covers: "all", colours: WUBRG });
@@ -180,5 +180,52 @@ describe("a card with no mana carries none of it", () => {
     expect(tagsOf("Urborg, Tomb of Yawgmoth").manaLines).toBeUndefined();
     expect(Object.keys(tagsOf("Urborg, Tomb of Yawgmoth")).sort()).toEqual(
       ["abilities", "characteristics", "model", "oracleId", "promptVersion", "schemaVersion", "staticFixer"]);
+  });
+});
+
+describe("review fixes (#1169 task 1)", () => {
+  it("a scaling amount the grammar path puts in action.amount is still a scaling amount", () => {
+    expect(only("Gaea's Cradle").amount).toEqual({ fixed: null, scales: "for each creature you control" });
+    expect(only("Priest of Titania").amount).toEqual({ fixed: null, scales: "for each elf on the battlefield" });
+    // and the model path, which keeps it in the object
+    expect(only("Selvala, Eager Trailblazer").amount.fixed).toBeNull();
+    for (const n of ["Overgrown Battlement", "Cloudpost", "Gyre Sage", "Bighorner Rancher", "Karametra's Acolyte", "Rite of Flame", "Inner Fire"]) {
+      expect(linesOf(n).some((l) => l.amount.scales !== null), n).toBe(true);
+    }
+  });
+  it("a land fetch needs the printed 'search your library' and you as the searcher", () => {
+    for (const n of ["Zimone's Experiment", "Bounty of Skemfar", "Old-Growth Dryads", "Hired Giant", "Turtle Tracks"]) {
+      expect(tagsOf(n).landFetch, n).toBeUndefined();
+      expect(linesOf(n, "fetch"), n).toHaveLength(0);
+    }
+    expect(tagsOf("Alpine Guide").landFetch).toMatchObject({ reach: ["R"] });
+  });
+  it("the misses are closed: Myriad Landscape, Shefet Monitor, Dance of the Tumbleweeds, Titania's Command, Travel Through Caradhras", () => {
+    for (const n of ["Myriad Landscape", "Shefet Monitor", "Dance of the Tumbleweeds", "Titania's Command", "Travel Through Caradhras", "Space Marine Scout", "Deep Gnome Terramancer"]) {
+      expect(tagsOf(n).landFetch, n).toBeDefined();
+    }
+    // KNOWN GAP: a creature-or-land search that puts the land only conditionally.
+    expect(tagsOf("Archdruid's Charm").landFetch).toBeUndefined();
+  });
+  it("a fetch never carries an empty reach", () => {
+    for (const fx of Object.keys(fixtures)) {
+      const t = tagsOf(fx.split(" // ")[0]!);
+      for (const l of t.manaLines ?? []) if (l.source === "fetch") expect(l.colours.length, fx).toBeGreaterThan(0);
+      if (t.landFetch) expect(t.landFetch.reach.length, fx).toBeGreaterThan(0);
+    }
+  });
+  it("Cabal Ritual's threshold line is gated, the plain line is not", () => {
+    const [plain, threshold] = linesOf("Cabal Ritual");
+    expect(plain.gate).toBeNull();
+    expect(threshold).toMatchObject({ amount: { fixed: 5 }, gate: "there are seven or more cards in your graveyard" });
+  });
+  it("counters and tapping other permanents are structured", () => {
+    expect(only("Cryptic Trilobite").cost).toMatchObject({ counters: "remove", other: [] });
+    expect(linesOf("Springleaf Drum")[0]!.cost).toMatchObject({ tap: true, tapOther: true, other: [] });
+  });
+  it("a line whose production cannot be read says so", () => {
+    for (const n of ["Chrome Mox", "Bloom Tender", "Meteor Crater"]) expect(only(n).unread, n).toBe(true);
+    expect(only("Sol Ring").unread).toBe(false);
+    expect(only("Arcane Signet").unread).toBe(false);
   });
 });

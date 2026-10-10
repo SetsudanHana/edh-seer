@@ -12,7 +12,11 @@ const NAMES = ["Sol Ring", "Arcane Signet", "Cascade Bluffs", "Cascading Catarac
   "Priest of Forgotten Gods", "Birgi, God of Storytelling", "Utopia Sprawl", "Wild Growth", "Exotic Orchard", "Tainted Peak", "Cavern of Souls",
   "Ancient Ziggurat", "Dark Ritual", "Mox Tantalite", "Cryptic Trilobite", "Treasure Map", "Pitiless Plunderer", "Cultivate", "Chromatic Lantern",
   "Chromatic Orrery", "Lotus Petal", "Prismatic Omen", "Evolving Wilds", "Lotus Bloom", "Farseek", "Urborg, Tomb of Yawgmoth", "Llanowar Elves",
-  "Wall of Roots", "Aether Hub", "Expand the Sphere", "Path to the Festival", "Kodama's Reach", "Contamination"];
+  "Wall of Roots", "Aether Hub", "Expand the Sphere", "Path to the Festival", "Kodama's Reach", "Contamination",
+  "Gaea's Cradle", "Priest of Titania", "Overgrown Battlement", "Cloudpost", "Gyre Sage", "Rite of Flame", "Cabal Ritual", "Zimone's Experiment",
+  "Bounty of Skemfar", "Old-Growth Dryads", "Hired Giant", "Alpine Guide", "Myriad Landscape", "Shefet Monitor", "Space Marine Scout",
+  "Deep Gnome Terramancer", "Dance of the Tumbleweeds", "Archdruid's Charm", "Titania's Command", "Travel Through Caradhras", "Turtle Tracks",
+  "Springleaf Drum", "Chrome Mox", "Bloom Tender", "Meteor Crater", "Bighorner Rancher", "Karametra's Acolyte", "Inner Fire", "Selvala, Eager Trailblazer"];
 const out: Record<string, unknown> = {};
 for (const n of NAMES) {
   const card: any = await store.cards.findOne({ name: n } as never) ?? await store.cards.findOne({ name: new RegExp("^" + n + " //") } as never);

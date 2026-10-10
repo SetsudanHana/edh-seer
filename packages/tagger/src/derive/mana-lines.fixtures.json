@@ -2187,5 +2187,1914 @@
    }
   ],
   "source": "model"
+ },
+ "Gaea's Cradle": {
+  "card": {
+   "_id": "7c427c3d-ecd8-45ef-bebd-8f10f4a311db",
+   "name": "Gaea's Cradle",
+   "typeLine": "Legendary Land",
+   "oracleText": "{T}: Add {G} for each creature you control.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each creature you control",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Priest of Titania": {
+  "card": {
+   "_id": "3a198a16-17b9-481e-b516-5bc945c7e247",
+   "name": "Priest of Titania",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add {G} for each Elf on the battlefield.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each Elf on the battlefield",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Overgrown Battlement": {
+  "card": {
+   "_id": "585f62dc-4461-42f1-a3a4-b19a1e550d2d",
+   "name": "Overgrown Battlement",
+   "typeLine": "Creature — Wall",
+   "oracleText": "Defender\n{T}: Add {G} for each creature you control with defender.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "0",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each creature you control with defender",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Cloudpost": {
+  "card": {
+   "_id": "f705c0eb-9c6c-4315-a860-208ed0c5d93e",
+   "name": "Cloudpost",
+   "typeLine": "Land — Locus",
+   "oracleText": "This land enters tapped.\n{T}: Add {C} for each Locus on the battlefield.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "C"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "This land",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each Locus on the battlefield",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Gyre Sage": {
+  "card": {
+   "_id": "e3aa16cf-079b-4737-9ffd-7bfdffef0cb2",
+   "name": "Gyre Sage",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "Evolve (Whenever a creature you control enters, if that creature has greater power or toughness than this creature, put a +1/+1 counter on this creature.)\n{T}: Add {G} for each +1/+1 counter on this creature.",
+   "keywords": [
+    "Evolve"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Evolve"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each +1/+1 counter on this creature",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Rite of Flame": {
+  "card": {
+   "_id": "8a2e53f9-8100-488f-8504-b59e9bd1cc29",
+   "name": "Rite of Flame",
+   "typeLine": "Sorcery",
+   "oracleText": "Add {R}{R}, then add {R} for each card named Rite of Flame in each graveyard.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{R}",
+   "producedMana": [
+    "R"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Salacinder and Soot, Rascals",
+     "typeLine": "Legendary Creature — Elemental",
+     "printingId": "240374d3-6a10-487d-8e2f-3fa79c262895"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}{R}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each card named ~ in each graveyard",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Cabal Ritual": {
+  "card": {
+   "_id": "5b5bf1fa-6502-4790-b66b-f0f8504ebc7c",
+   "name": "Cabal Ritual",
+   "typeLine": "Instant",
+   "oracleText": "Add {B}{B}{B}.\nThreshold — Add {B}{B}{B}{B}{B} instead if there are seven or more cards in your graveyard.",
+   "keywords": [
+    "Threshold"
+   ],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{B}",
+   "producedMana": [
+    "B"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{B}{B}{B}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{B}{B}{B}{B}{B}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Zimone's Experiment": {
+  "card": {
+   "_id": "5faa9e54-1cc4-48c0-bbfa-a495087c36d6",
+   "name": "Zimone's Experiment",
+   "typeLine": "Sorcery",
+   "oracleText": "Look at the top five cards of your library. You may reveal up to two creature and/or land cards from among them, then put the rest on the bottom of your library in a random order. Put all land cards revealed this way onto the battlefield tapped and put all creature cards revealed this way into your hand.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "scry",
+      "object": "top five cards of your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "all land cards revealed this way",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "all land cards revealed this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "all creature cards revealed this way",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Bounty of Skemfar": {
+  "card": {
+   "_id": "e4bfe005-7c4e-4178-ae41-a28eb2352ad1",
+   "name": "Bounty of Skemfar",
+   "typeLine": "Sorcery",
+   "oracleText": "Reveal the top six cards of your library. You may put up to one land card from among them onto the battlefield tapped and up to one Elf card from among them into your hand. Put the rest on the bottom of your library in a random order.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "up to one land card from among them",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "tap",
+      "object": "up to one land card from among them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "up to one Elf card from among them",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Old-Growth Dryads": {
+  "card": {
+   "_id": "aa125d1c-ab8f-48ff-a6eb-d8fc2154322c",
+   "name": "Old-Growth Dryads",
+   "typeLine": "Creature — Dryad",
+   "oracleText": "When this creature enters, each opponent may search their library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Hired Giant": {
+  "card": {
+   "_id": "79c9a963-a428-45f1-a647-5a91ef64286e",
+   "name": "Hired Giant",
+   "typeLine": "Creature — Giant",
+   "oracleText": "When this creature enters, each other player may search their library for a land card and put that card onto the battlefield. Then each player who searched their library this way shuffles.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 4,
+   "power": "4",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{3}{R}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Alpine Guide": {
+  "card": {
+   "_id": "55b12241-2495-45e6-b618-3746d5521291",
+   "name": "Alpine Guide",
+   "typeLine": "Snow Creature — Human Scout",
+   "oracleText": "When this creature enters, you may search your library for a Mountain card, put that card onto the battlefield tapped, then shuffle.\nThis creature attacks each combat if able.\nWhen this creature leaves the battlefield, sacrifice a Mountain.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 3,
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{2}{R}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a Mountain card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "that card onto the battlefield tapped",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "not attack each combat if able",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a Mountain",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Myriad Landscape": {
+  "card": {
+   "_id": "2549bc57-9ffb-4053-9f10-f2a5f792b845",
+   "name": "Myriad Landscape",
+   "typeLine": "Land",
+   "oracleText": "This land enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "C"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "search",
+      "object": "up to two basic land cards that share a land type",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "cards searched this way",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Shefet Monitor": {
+  "card": {
+   "_id": "14f081bb-dd7a-4419-af9b-f75d91e1a6d0",
+   "name": "Shefet Monitor",
+   "typeLine": "Creature — Lizard",
+   "oracleText": "Cycling {3}{G} ({3}{G}, Discard this card: Draw a card.)\nWhen you cycle this card, you may search your library for a basic land card or a Desert card, put it onto the battlefield, then shuffle. (Do this before you draw.)",
+   "keywords": [
+    "Cycling"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 6,
+   "power": "6",
+   "toughness": "5",
+   "layout": "normal",
+   "manaCost": "{5}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Cycling {3}{G}"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a basic land card or a Desert card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "cycled",
+     "subject": "this card",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Space Marine Scout": {
+  "card": {
+   "_id": "6b7fb630-79eb-4337-a698-626e585a495f",
+   "name": "Space Marine Scout",
+   "typeLine": "Creature — Astartes Scout",
+   "oracleText": "First strike, vigilance\nConcealed Position — When this creature enters, if an opponent controls more lands than you, you may search your library for a Plains card, put it onto the battlefield tapped, then shuffle.",
+   "keywords": [
+    "Vigilance",
+    "First strike",
+    "Concealed Position"
+   ],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 3,
+   "power": "2",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{2}{W}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "First strike, vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a Plains card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it onto the battlefield tapped",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Deep Gnome Terramancer": {
+  "card": {
+   "_id": "d4e3440d-4e34-40d7-8a42-c673225c0332",
+   "name": "Deep Gnome Terramancer",
+   "typeLine": "Creature — Gnome Wizard",
+   "oracleText": "Flash\nMold Earth — Whenever one or more lands enter under an opponent's control without being played, you may search your library for a Plains card, put it onto the battlefield tapped, then shuffle. Do this only once each turn.",
+   "keywords": [
+    "Mold Earth",
+    "Flash"
+   ],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{W}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "one or more lands without being played",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a Plains card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it onto the battlefield tapped",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Dance of the Tumbleweeds": {
+  "card": {
+   "_id": "7c57d4aa-d221-4b36-a544-9fa89d63ffbe",
+   "name": "Dance of the Tumbleweeds",
+   "typeLine": "Sorcery",
+   "oracleText": "Spree (Choose one or more additional costs.)\n+ {1} — Search your library for a basic land card or a Desert card, put it onto the battlefield, then shuffle.\n+ {3} — Create an X/X green Elemental creature token, where X is the number of lands you control.",
+   "keywords": [
+    "Spree"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Elemental",
+     "typeLine": "Token Creature — Elemental",
+     "printingId": "008695e6-6d6f-4c16-bf05-377e8cc5f5ff"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Spree"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a basic land card or a Desert card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "an X/X green Elemental creature token, where X is the number of lands you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Archdruid's Charm": {
+  "card": {
+   "_id": "3c1ef404-e2c6-486d-a5a2-d5779c71d498",
+   "name": "Archdruid's Charm",
+   "typeLine": "Instant",
+   "oracleText": "Choose one —\n• Search your library for a creature or land card and reveal it. Put it onto the battlefield tapped if it's a land card. Otherwise, put it into your hand. Then shuffle.\n• Put a +1/+1 counter on target creature you control. It deals damage equal to its power to target creature you don't control.\n• Exile target artifact or enchantment.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{G}{G}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a creature or land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it onto the battlefield tapped",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it into your hand",
+      "fromZone": null,
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "target creature you don't control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to its power",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target artifact or enchantment",
+      "fromZone": null,
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Titania's Command": {
+  "card": {
+   "_id": "7aae0a3d-8882-4485-a126-f06ea6593dcb",
+   "name": "Titania's Command",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose two —\n• Exile target player's graveyard. You gain 1 life for each card exiled this way.\n• Search your library for up to two land cards, put them onto the battlefield tapped, then shuffle.\n• Create two 2/2 green Bear creature tokens.\n• Put two +1/+1 counters on each creature you control.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 6,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}{G}{G}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Titania's Command",
+     "typeLine": "Sorcery",
+     "printingId": "854c29a0-b7ea-433f-b342-a3228de0e092"
+    },
+    {
+     "component": "token",
+     "name": "Bear",
+     "typeLine": "Token Creature — Bear",
+     "printingId": "772dac39-269b-4a35-aad3-320279af833f"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target player's graveyard",
+      "fromZone": null,
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1 for each card exiled this way",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "up to two land cards",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "up to two land cards",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "up to two land cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "two 2/2 green Bear creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1 counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Travel Through Caradhras": {
+  "card": {
+   "_id": "2d47a98b-5700-4096-b080-32df4d79910c",
+   "name": "Travel Through Caradhras",
+   "typeLine": "Sorcery",
+   "oracleText": "Council's dilemma — Starting with you, each player votes for Redhorn Pass or Mines of Moria. For each Redhorn Pass vote, search your library for a basic land card and put it onto the battlefield tapped. If you search your library this way, shuffle. For each Mines of Moria vote, return a card from your graveyard to your hand.\nExile Travel Through Caradhras.",
+   "keywords": [
+    "Council's dilemma"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 6,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{5}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "vote",
+      "object": "Redhorn Pass or Mines of Moria",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "search",
+      "object": "a basic land card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "a basic land card",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "return",
+      "object": "a card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "Travel Through Caradhras",
+      "fromZone": "stack",
+      "toZone": "exile",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Turtle Tracks": {
+  "card": {
+   "_id": "4921dac2-4adf-4ac4-b1f4-d53385afd802",
+   "name": "Turtle Tracks",
+   "typeLine": "Sorcery",
+   "oracleText": "Any number of target players may each search their library for a basic land card, put it onto the battlefield under their control, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "a basic land card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "their library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Springleaf Drum": {
+  "card": {
+   "_id": "bdeb440d-a714-40e8-9038-f651e6ae45fb",
+   "name": "Springleaf Drum",
+   "typeLine": "Artifact",
+   "oracleText": "{T}, Tap an untapped creature you control: Add one mana of any color.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "an untapped creature you control",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Chrome Mox": {
+  "card": {
+   "_id": "ec3d4466-547c-4e02-b1b5-a156ec4637e9",
+   "name": "Chrome Mox",
+   "typeLine": "Artifact",
+   "oracleText": "Imprint — When this artifact enters, you may exile a nonartifact, nonland card from your hand.\n{T}: Add one mana of any of the exiled card's colors.",
+   "keywords": [
+    "Imprint"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{0}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a nonartifact, nonland card from your hand",
+      "fromZone": "hand",
+      "toZone": "exile",
+      "optional": true
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "this artifact",
+     "control": "you"
+    }
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any of the exiled card's colors",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Bloom Tender": {
+  "card": {
+   "_id": "0c23fefe-9891-4dd8-9bb1-eebdb3274e31",
+   "name": "Bloom Tender",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "Vivid — {T}: For each color among permanents you control, add one mana of that color.",
+   "keywords": [
+    "Vivid"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of each color among permanents you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Meteor Crater": {
+  "card": {
+   "_id": "ebddf68c-1b22-4313-83e1-13a5c1aec19e",
+   "name": "Meteor Crater",
+   "typeLine": "Land",
+   "oracleText": "{T}: Choose a color of a permanent you control. Add one mana of that color.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of a color of a permanent you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Bighorner Rancher": {
+  "card": {
+   "_id": "826e6a6f-3b66-4225-87ee-04e345e047b3",
+   "name": "Bighorner Rancher",
+   "typeLine": "Creature — Human Ranger",
+   "oracleText": "Vigilance\n{T}: Add an amount of {G} equal to the greatest power among creatures you control.\nSacrifice this creature: You gain life equal to the greatest toughness among other creatures you control.",
+   "keywords": [
+    "Vigilance"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 5,
+   "power": "2",
+   "toughness": "5",
+   "layout": "normal",
+   "manaCost": "{4}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the greatest power among creatures you control",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the greatest toughness among other creatures you control",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Karametra's Acolyte": {
+  "card": {
+   "_id": "e8cf80a1-6908-4adb-88e7-2015672d4905",
+   "name": "Karametra's Acolyte",
+   "typeLine": "Creature — Human Druid",
+   "oracleText": "{T}: Add an amount of {G} equal to your devotion to green. (Each {G} in the mana costs of permanents you control counts toward your devotion to green.)",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": "1",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{3}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "your devotion to green",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Inner Fire": {
+  "card": {
+   "_id": "27348fe5-21d4-40f7-9feb-bba2c2321008",
+   "name": "Inner Fire",
+   "typeLine": "Sorcery",
+   "oracleText": "Add {R} for each card in your hand.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}{R}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each card in your hand",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Selvala, Eager Trailblazer": {
+  "card": {
+   "_id": "95b20721-1af9-4f3f-a39b-7cd1d4ce0b20",
+   "name": "Selvala, Eager Trailblazer",
+   "typeLine": "Legendary Creature — Elf Scout",
+   "oracleText": "Vigilance\nWhenever you cast a creature spell, create a 1/1 red Mercenary creature token with \"{T}: Target creature you control gets +1/+0 until end of turn. Activate only as a sorcery.\"\n{T}: Choose a color. Add one mana of that color for each different power among creatures you control.",
+   "keywords": [
+    "Vigilance"
+   ],
+   "colors": [
+    "G",
+    "W"
+   ],
+   "colorIdentity": [
+    "G",
+    "W"
+   ],
+   "manaValue": 4,
+   "power": "4",
+   "toughness": "5",
+   "layout": "normal",
+   "manaCost": "{2}{G}{W}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Selvala, Eager Trailblazer",
+     "typeLine": "Legendary Creature — Elf Scout",
+     "printingId": "e523de28-b2d5-4be9-be78-883cef2499e9"
+    },
+    {
+     "component": "token",
+     "name": "Mercenary",
+     "typeLine": "Token Creature — Mercenary",
+     "printingId": "5f04607f-eed2-462e-897f-82e41e5f7049"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a creature spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 red Mercenary creature token with that ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "target creature you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+0",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of that color for each different power among creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
  }
 }

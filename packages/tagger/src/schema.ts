@@ -1359,7 +1359,7 @@ export interface Characteristics {
 }
 
 /** WHERE A MANA LINE COMES FROM (#1169). One word per way a card puts mana, or a land, in front of you:
- *  - `tap-ability`: an activated ability ("{T}: Add {G}", "Sacrifice a creature: Add one mana of any color").
+ *  - `activated`: an activated ability ("{T}: Add {G}", "Sacrifice a creature: Add one mana of any color").
  *    The COST says what it consumes, so the source is the same for a Sol Ring and a Phyrexian Altar.
  *  - `trigger`: a triggered ability that adds mana (Birgi's "Whenever you cast a spell, add {R}", an enters
  *    trigger). Mana for a moment, not a source you tap.
@@ -1372,7 +1372,7 @@ export interface Characteristics {
  *    card adds no mana of its own.
  *  - `fetch`: puts lands onto the battlefield from the library (Cultivate, Evolving Wilds); `colours` is what it
  *    can reach. */
-export type ManaLineSource = "tap-ability" | "trigger" | "static-grant" | "aura-trigger" | "one-shot-spell" | "token-maker" | "fetch";
+export type ManaLineSource = "activated" | "trigger" | "static-grant" | "aura-trigger" | "one-shot-spell" | "token-maker" | "fetch";
 
 /** WHICH COLOURS A LINE CHOOSES FROM when it does not print them (#1169). `any` is "one mana of any color" (and
  *  "in any combination of colors"); the rest are bounded by something outside the card: `identity` your
@@ -1385,6 +1385,11 @@ export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "
  *  oracle text again (#1169; the inventory found ten detectors disagreeing on real cards). A card carries
  *  one per `add-mana` action of every face, plus one per token-making and land-fetching ability. Absent on a card
  *  that has none, so a card that makes no mana stays byte-identical.
+ *
+ *  A COLOUR SOURCE needs more than a `source` label: `!cost.sacrificeSelf && !cost.sacrificeOther && cost.counters === null &&
+ *  !cost.tapOther && restriction === null && gate === null && !unread && (cost.tap || source === "static-grant")`. Phyrexian
+ *  Altar is an `activated` line with no tap, a Treasure-maker is `token-maker`, Birgi is `trigger`. (Aura triggers and the
+ *  card-level flags are the consumer's call.)
  *
  *  THE LINE STATES; THE CONSUMER JUDGES. A colour audit, a land count, a goldfish each ask a different question
  *  (is this a colour SOURCE; is this CHEAP ramp; does it play on turn two), and each answers it by filtering
@@ -1409,7 +1414,12 @@ export interface ManaLine {
     sacrificeOther: boolean;
     /** Life paid ("Pay 1 life"). */
     life: number;
-    /** Every other cost piece, verbatim: a counter removed, a discard, an untap, a tap of other creatures, a loyalty change. */
+    /** A counter removed from or put on the card as the cost ("Remove a +1/+1 counter", Cryptic Trilobite; "Put a -0/-1 counter",
+     *  Wall of Roots): the mana is paid for by a resource that runs out. */
+    counters: "remove" | "put" | null;
+    /** Taps other permanents ("Tap an untapped creature you control", Springleaf Drum). */
+    tapOther: boolean;
+    /** Every other cost piece, verbatim: a discard, an untap, a loyalty change, `{E}`. */
     other: string[];
   };
   /** The WUBRG colours the printed text names, as a set. `any` names all five; a BOUNDED `anyColour` names none
@@ -1425,7 +1435,13 @@ export interface ManaLine {
   /** Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as 1 (its floor
    *  would be 0; a consumer that cares reads `amount.scales`). */
   net: number;
-  /** An "Activate only if ..." condition, verbatim lowercase (Tainted Peak: "you control a swamp"), else null. */
+  /** TRUE when the production could not be read: no colour, no colourless, no choice named ("any of the exiled card's colors",
+   *  Chrome Mox; "for each color among permanents you control", Bloom Tender). Consumers treat it as UNKNOWN, never as a
+   *  source of no colours. Always false on a `fetch` and a `token-maker`, which state theirs. */
+  unread: boolean;
+  /** The condition the amount or the activation holds under, verbatim lowercase: "Activate only if ..." (Tainted Peak: "you
+   *  control a swamp"), "... instead if there are seven or more cards in your graveyard" (Cabal Ritual's threshold line), or
+   *  "threshold" when only the ability's numeric threshold is known. A consumer must not credit a gated line as guaranteed. Else null. */
   gate: string | null;
   /** "Spend this mana only ..." (Smokebraider, Cavern of Souls, Ancient Ziggurat) or "this mana can't be spent ...":
    *  `spend` is the printed limit, `typeName` the one type it names, lowercase ("elemental", "creature", "chosen"). Mana with

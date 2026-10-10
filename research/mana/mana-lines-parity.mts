@@ -27,7 +27,7 @@ for await (const c of store.cards.find({ "legalities.commander": "legal" } as ne
   if (oldFetch !== newFetch) diffFetch.push(`${card.name} old=${oldFetch} new=${newFetch} :: ${(card.oracleText ?? "").replace(/\n/g, " / ").slice(0, 230)}`);
   // plain tap lines: the printed reader's colours (qualifying lines) against the derived tap lines with no sacrifice / restriction
   const oldLines = ml.manaLines(dc);
-  const newLines = (t.manaLines ?? []).filter((l: any) => l.source === "tap-ability" && !l.cost.sacrificeSelf && !l.restriction && l.colours.length > 0);
+  const newLines = (t.manaLines ?? []).filter((l: any) => l.source === "activated" && !l.cost.sacrificeSelf && !l.restriction && l.colours.length > 0);
   const oc = new Set(oldLines.flatMap((l: any) => l.colours)); const nc = new Set(newLines.flatMap((l: any) => l.colours));
   if ([...oc].sort().join("") !== [...nc].sort().join("")) diffLines.push(`${card.name} old=${[...oc].sort().join("")} new=${[...nc].sort().join("")}`);
 }

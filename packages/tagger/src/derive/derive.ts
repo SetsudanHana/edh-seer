@@ -421,7 +421,9 @@ import { emblemRecipient } from "../emblem.js";
 // stored tag for those verbs is `:any`.
 // 294: #1169, a card's mana production is read once: `manaLines` (per face: source, cost, colours, amount, net,
 // restriction, gate, timing) plus `staticFixer`, `landFetch`, `isOneShot`, `suspendOnly`. Additive; no consumer reads it yet.
-export const DERIVE_VERSION = 294;
+// 295: #1169 review: scaling read from `action.amount`, fetches need a printed "search your library", `gate` for conditional
+// lines, `cost.counters` / `cost.tapOther`, `unread`, `tap-ability` renamed `activated`.
+export const DERIVE_VERSION = 295;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
