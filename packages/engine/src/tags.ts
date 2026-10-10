@@ -116,11 +116,16 @@ export function isPutIntoGraveyardClass(value: string): boolean {
 }
 
 /** The class a `dies` tag is subsumed by (`rankThemes`): the most specific one that CONTAINS the value.
- *  A creature subtype is inside `dies:creature`; a non-creature class is only inside `dies:permanent`. */
+ *  It follows the label (`isPutIntoGraveyardClass`) so a key never reads "dying" while ranking as a
+ *  non-creature: a value that is put into a graveyard, or is itself creature/planeswalker, sits under
+ *  `dies:permanent`; a planeswalker subtype under `dies:planeswalker`; anything else that "dies" -- a
+ *  creature subtype, a crewed Vehicle, or a creature token's name the hierarchy does not know
+ *  (Festering Newt, Hornet) -- under `dies:creature`. */
 export function diesGeneralClass(value: string): string {
+  if (DIES_ONLY.has(value) || isPutIntoGraveyardClass(value)) return "permanent";
   const types = SUBTYPE_TYPES[value];
-  return value !== "creature" && value !== "planeswalker" && types !== undefined && types.length > 0 && types.every((t) => t === "creature")
-    ? "creature" : "permanent";
+  if (types !== undefined && types.length > 0 && types.every((t) => t === "planeswalker")) return "planeswalker";
+  return "creature";
 }
 
 function subjectPhrase(value: string): string | null {

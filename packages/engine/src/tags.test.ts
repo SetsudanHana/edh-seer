@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { extractTags, tag, describeTag } from "./tags.js";
+import { extractTags, tag, describeTag, diesGeneralClass, isPutIntoGraveyardClass } from "./tags.js";
 import { FIXTURES } from "./fixtures.js";
 
 test("treasure maker produces artifact, token, mana, sacrifice-fodder", () => {
@@ -109,4 +109,16 @@ test.each([
   const label = describeTag(`dies:${value}`);
   if (kind === "dying") expect(label.endsWith(" dying")).toBe(true);
   else expect(label.endsWith(" put into a graveyard")).toBe(true);
+});
+
+test("a dies key ranks under the class its label says it is in (#1166): a 'dying' value is never filed under permanent", () => {
+  // Creature subtypes, a crewed Vehicle, and creature-token names the hierarchy does not know.
+  for (const v of ["zombie", "goblin", "vehicle", "festering newt", "hornet"]) {
+    expect(isPutIntoGraveyardClass(v)).toBe(false);
+    expect(diesGeneralClass(v)).toBe("creature");
+  }
+  for (const v of ["land", "forest", "food", "treasure", "artifact", "-land", "-creature", "permanent", "creature", "planeswalker"]) {
+    expect(diesGeneralClass(v)).toBe("permanent");
+  }
+  expect(diesGeneralClass("jace")).toBe("planeswalker");
 });
