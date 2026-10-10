@@ -75,3 +75,23 @@ test("a token with a role sits on the shelf by its maker's name, outside the cou
   render(<RoleShelves report={withToken} graph={graph} />);
   expect(screen.getByText("Wizard token from Mage's Attendant")).toBeTruthy();
 });
+
+test("a renamed FRONT face (Bind // Liberate beside Bind) finds its own node and shows the printed name", () => {
+  const report = {
+    commanders: [],
+    cards: [
+      { name: "Bind (Bind // Liberate)", cardName: "Bind // Liberate", isCommander: false, manaValue: 3, roles: ["stackInteraction"] },
+      { name: "Bind", isCommander: false, manaValue: 2, roles: ["stackInteraction"] },
+    ],
+    buildParents: [], buildCategories: [],
+  } as unknown as DeckReport;
+  const graph = { nodes: [
+    { id: "Bind", label: "Bind", cardName: "Bind // Liberate", typeLine: "Instant", cmc: 3 },
+    { id: "Bind", label: "Bind", typeLine: "Sorcery", cmc: 2 },
+  ], edges: [] } as unknown as CardGraph;
+  const cards = roleShelves(report, graph).flatMap((s) => s.cards);
+  const front = cards.find((c) => c.id === "Bind (Bind // Liberate)")!;
+  expect(front.name).toBe("Bind");
+  expect(front.typeLine).toBe("Instant");
+  expect(cards.find((c) => c.id === "Bind")!.typeLine).toBe("Sorcery");
+});

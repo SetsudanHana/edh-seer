@@ -92,16 +92,17 @@ function useTableColumns(): number {
  *  ONE DATUM SURVIVES: the connection count, as a corner pill. Not the name — the card prints its
  *  own — so the caption strip exists only because a 107px card's printed name is illegible. */
 function GridCard({
-  name, art, count, dim, onOpen,
-}: { name: string; art?: string; count?: number; dim?: boolean; onOpen: () => void }) {
+  name, physical, art, count, dim, onOpen,
+}: { name: string; physical: string; art?: string; count?: number; dim?: boolean; onOpen: () => void }) {
+  const shown = useCardDrawer().labels.get(name) ?? name;
   const src = art === undefined ? null : cardImageUrl(art);
   return (
     <figure className="relative m-0 rounded-[7px] overflow-hidden border border-(--separator) bg-(--surface-secondary) aspect-[488/680]">
-      <button type="button" onClick={onOpen} data-card={name} className="block w-full h-full text-left" aria-label={name}>
+      <button type="button" onClick={onOpen} data-card={name} className="block w-full h-full text-left" aria-label={shown}>
         {src ? (
           <img
             src={src}
-            alt={name}
+            alt={shown}
             loading="lazy"
             className={`w-full h-full object-cover transition-[opacity,filter] duration-200 ${
               dim ? "opacity-40 saturate-50 hover:opacity-90 hover:saturate-100" : ""}`}
@@ -114,7 +115,7 @@ function GridCard({
           // A BARE NUMBER IN A CORNER IS NOT A DATUM. Every persona who reached the grid on
           // 2026-08-27 asked what it counted, because the only legend sat BELOW the grid where
           // nobody scrolled to it. The label travels with the badge now, and the legend moved above.
-          title={`${count} other ${count === 1 ? "card connects" : "cards connect"} to ${name}`}
+          title={`${count} other ${count === 1 ? "card connects" : "cards connect"} to ${shown}`}
           aria-label={`${count} connected cards`}
           className={`absolute top-1.5 right-1.5 min-w-[22px] h-[22px] px-1.5 grid place-items-center
           rounded-full border stat-num text-[11px] bg-(--background)/80 backdrop-blur-[2px] ${
@@ -125,10 +126,10 @@ function GridCard({
       ) : null}
       <figcaption className="absolute inset-x-0 bottom-0 px-2 pt-5 pb-1.5 pointer-events-none
         bg-gradient-to-t from-(--background) to-transparent">
-        <span className="block truncate stat-num text-[11px]">{name}</span>
+        <span className="block truncate stat-num text-[11px]">{shown}</span>
       </figcaption>
       {/* Top left: the count holds the other corner, the name the foot. */}
-      <CardMenuButton name={name} className="absolute top-1.5 left-1.5 min-h-7 min-w-7 bg-(--background)/80 backdrop-blur-[2px] border border-(--separator)" />
+      <CardMenuButton name={physical} className="absolute top-1.5 left-1.5 min-h-7 min-w-7 bg-(--background)/80 backdrop-blur-[2px] border border-(--separator)" />
     </figure>
   );
 }
@@ -372,6 +373,7 @@ export function CardList({ cards, artByName, coverage }: {
               <GridCard
                 key={c.name}
                 name={c.name}
+                physical={c.cardName ?? c.name}
                 art={artByName?.get(c.name)}
                 count={c.partnerCount}
                 onOpen={() => openCard(c.name)}
@@ -553,7 +555,7 @@ export function CardList({ cards, artByName, coverage }: {
           </p>
           <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))" }}>
             {unreadCards.map((c) => (
-              <GridCard key={c.name} name={c.name} art={artByName?.get(c.name)} dim onOpen={() => openCard(c.name)} />
+              <GridCard key={c.name} name={c.name} physical={c.cardName ?? c.name} art={artByName?.get(c.name)} dim onOpen={() => openCard(c.name)} />
             ))}
           </div>
         </section>

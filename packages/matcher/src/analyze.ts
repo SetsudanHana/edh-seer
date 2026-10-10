@@ -57,6 +57,7 @@ import { manaModel } from "./goldfish.js";
 import { deckLegality } from "./legality.js";
 import { COMMANDER_TAX_CAVEAT, COMMANDER_TAX_PER_CAST } from "./format.js";
 import { countsAsLand } from "./typeline.js";
+import { faceKey } from "./face-key.js";
 
 /**
  * Structured-engine counterpart of `@edh-seer/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -203,7 +204,7 @@ export function collectTokenNodes(
       // THE NODE EXISTS FOR THE CARD AND THE CREATION BELONGS TO A FACE. A token the deck can make
       // is on the graph whichever face makes it, so node building above is card-scoped; only the
       // maker relation below asks which face.
-      if (!facesCreating(siblings, ref).some((f) => f.card.name === dc.card.name)) continue;
+      if (!facesCreating(siblings, ref).some((f) => f.face === dc.face)) continue;
       let oracles = producerTokenOracles.get(dc.card.name);
       if (!oracles) producerTokenOracles.set(dc.card.name, (oracles = new Set()));
       oracles.add(tags.oracleId);
@@ -319,19 +320,16 @@ export function analyzeDeckStructured(
   // `land-count.ts` keep counting a two-faced card once. E4 already prices an "Instant // Land" as a
   // FRACTION of a land; turning 100 slots into 105 entries there would break `lands 37/36`, the mana
   // simulation and castability at once.
-  const unique = [...[...byName.values()].flatMap((v) => faceDeckCards(v.card)), ...companionResolved.flatMap(faceDeckCards)];
+  const unique = disambiguateFaceNames([...[...byName.values()].flatMap((v) => faceDeckCards(v.card)), ...companionResolved.flatMap(faceDeckCards)]);
   const quantities = Object.fromEntries([...byName].filter(([, v]) => v.copies > 1).map(([n, v]) => [n, v.copies]));
   // A rated row / an edge endpoint / a two-hop maker name is keyed by FACE name once `unique` is
   // face-split; every join below that reads `resolved` (built from PHYSICAL cards, one entry per
   // copy, never split) needs a way back. `derived` in particular defaults TRUE on a miss, so an
   // UNDERIVED two-faced card would silently report as read without this -- "a silent wrong answer
   // is worse than a missing one" (review fix, 2026-08-27).
-  // CEILING: a face name can collide with a real, unrelated card's name (CLAUDE.md's I3 family --
-  // split cards whose front face equals a whole card's own name, e.g. Bind, Smelt, Armed). `byName`
-  // dedupes on the PHYSICAL name and never checks a face name against a different real card's, so
-  // this Map (keyed on the post-split face name) silently keeps whichever of the two was built
-  // last. Left as a known ceiling rather than guarded -- narrow (3 corpus cards per the 2026-08-25
-  // sweep) and every reader here already treats a name collision as "the same node" by design.
+  // A face name can equal a different deck card's name (Rampant Growth beside "Studious First-Year //
+  // Rampant Growth", #1176); `disambiguateFaceNames` above gives such a face a name no card has, so
+  // every Map keyed on the post-split name holds one entry per object.
   const uniqueByName = new Map(unique.map((dc) => [dc.card.name, dc] as const));
   const physicalName = (n: string): string => uniqueByName.get(n)?.parentName ?? n;
 
@@ -1219,4 +1217,28 @@ export function provisionalRatings(edges: readonly { reasons: readonly Reason[] 
     if (r.consumer && !r.effectKind) unreadPayoff.set(r.consumer, (unreadPayoff.get(r.consumer) ?? 0) + 1);
   }
   return new Set([...unreadPayoff].filter(([n, k]) => 2 * k > (touching.get(n) ?? 0)).map(([n]) => n));
+}
+
+/** NO TWO OBJECTS SHARE A KEY (#1176). Everything in `analyzeDeckStructured` after the face split is
+ *  keyed on `card.name`: `dir`, the rated rows, the edge endpoints. A standalone card and another
+ *  card's FACE with the same name (Rampant Growth beside "Studious First-Year // Rampant Growth")
+ *  collapsed to one entry, and the real card then read its roles, cost and flags under the other
+ *  card's physical name. Measured over static-out (v-c51bc17e6a5c): mostly back faces of
+ *  adventure/prepare cards (Rampant Growth, Brainstorm, Reanimate …) and one FRONT face, Bind of
+ *  Bind // Liberate beside a standalone Bind. A colliding face is therefore renamed to
+ *  `faceKey(face, card)` ("<face> (<card>)"), which collides with nothing; the graph keys a face by
+ *  `cardName` + `face`, not by this string, and the web shows the printed face name (label-index,
+ *  CardName) and keeps the full key only inside reason sentences, where it says which card is
+ *  meant. A name no other object shares is untouched, so a deck with no collision is byte-identical. */
+export function disambiguateFaceNames(cards: DeckCard[]): DeckCard[] {
+  const physicalOwners = new Map<string, Set<string>>();
+  for (const dc of cards) {
+    const owners = physicalOwners.get(dc.card.name) ?? new Set<string>();
+    owners.add(dc.parentName ?? dc.card.name);
+    physicalOwners.set(dc.card.name, owners);
+  }
+  return cards.map((dc) =>
+    dc.parentName !== undefined && (physicalOwners.get(dc.card.name)?.size ?? 0) > 1
+      ? { ...dc, card: { ...dc.card, name: faceKey(dc.card.name, dc.parentName) } }
+      : dc);
 }

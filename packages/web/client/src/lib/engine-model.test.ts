@@ -298,3 +298,22 @@ test("a one-time link does not cover a repeating one, and the partner's side mus
   // The partner it covers is named as a card, for the cut list's "does the same with N of them".
   expect(m.cutRows.find((c) => c.card.name === "Once")!.covers.map((x) => x.partner)).toEqual(["Payoff"]);
 });
+
+describe("a face named like another deck card (#1176)", () => {
+  test("the face node takes the face row's score, the standalone node its own", () => {
+    const node = (id: string, label: string, cardName?: string, face?: number) =>
+      ({ id, label, ...(cardName ? { cardName } : {}), ...(face ? { face } : {}), copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 1 });
+    const graph = { nodes: [node("face:1:S // Rampant Growth", "Rampant Growth", "S // Rampant Growth", 1), node("Rampant Growth", "Rampant Growth")], edges: [] } as unknown as CardGraph;
+    const report = {
+      commanders: [],
+      cards: [
+        { name: "Rampant Growth (S // Rampant Growth)", cardName: "S // Rampant Growth", face: 1, score: 7 },
+        { name: "Rampant Growth", score: 3 },
+      ],
+      edges: [],
+    } as unknown as DeckReport;
+    const m = buildEngineModel(report, graph);
+    expect(m.cards.get("face:1:S // Rampant Growth")!.score).toBe(7);
+    expect(m.cards.get("Rampant Growth")!.score).toBe(3);
+  });
+});
