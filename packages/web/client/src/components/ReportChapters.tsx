@@ -21,6 +21,8 @@ import { ManaTimeline } from "./ManaTimeline.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { PlanThemes } from "./PlanThemes.js";
+import { StrongestPairs } from "./StrongestPairs.js";
+import { topPairs } from "../lib/top-pairs.js";
 import { OrbitView, type PairAsk } from "./OrbitView.js";
 import { RoleShelves, roleShelves } from "./RoleShelves.js";
 import { buildEngineModel } from "../lib/engine-model.js";
@@ -158,6 +160,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     const m = buildEngineModel(report, data.graph);
     return m.totalLinks ? m : null;
   }, [report, data.graph]);
+  const pairs = useMemo(() => (themes ? topPairs(report, themes, manaValueOf) : []), [report, themes, manaValueOf]);
   /** THE GRAPH PAGE'S LAST PIECE, IN THE REPORT (owner, 2026-09-26: retire the Graph page and reach
    *  its pieces from here). The commander's orbit sits in Game plan, re-centred in place; "See
    *  links" on any card opens that card's orbit over the report, and Close returns to the line
@@ -340,6 +343,8 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  from the screens you mocked up"): the theme and the map's key on the left, the
             *  commander's map on the right. The line for the table, the verdict and the card counts
             *  follow it; the commander's face is the middle of the map. */}
+          {/* THE STRONGEST PAIRS, NAMED (#1159), directly under the verdict row and above the map. */}
+          <StrongestPairs pairs={pairs} model={themes} />
           {themes && commanderId ? (
             <section aria-labelledby="commander-map-title" className="flex flex-col">
               <h3 id="commander-map-title" className="sr-only">What your commander works with</h3>
