@@ -26,15 +26,14 @@ export function subcategoryLabel(category: string): string {
   return PLAIN[category] ?? category;
 }
 
-/** THE SIX CARD TYPES, IN SEGMENT ORDER. Not `TYPE_HUE`: that table is correct for the board,
- *  where a node carries card art, a label and a position and colour is one cue among four. A bar
- *  segment has colour and an in-place label, and `TYPE_HUE` fails the categorical validator
- *  outright -- `artifact #8d949f` has chroma 0.018 and reads grey.
+/** THE SIX CARD TYPES, IN SEGMENT ORDER, for the deck waffle (`DeckWaffle`, `lib/waffle.ts`).
+ *  Chosen for segments that carry colour and an in-place label; the old board palette failed the
+ *  categorical validator here (its artifact grey had chroma 0.018).
  *
  *  THE ORDER IS PART OF THE PALETTE. `enchantment` and `sorcery` are both blues at dE 12.5 in
  *  normal vision, below the floor; they pass only because nothing places them adjacent. Sorting
- *  segments by value at runtime would break that silently, so `TypeBar` renders `TYPE_ORDER` and
- *  a test pins it. Verified all five checks on adjacent pairs, dark, surface #16111f. */
+ *  segments by value at runtime would break that silently. Verified all five checks on adjacent
+ *  pairs, dark, surface #16111f. */
 export const TYPE_SEGMENT_HUE: Record<string, string> = {
   creature: "#277310",
   enchantment: "#1c8db7",
