@@ -1,0 +1,184 @@
+/** `manaLines` (#1169): the mana production of a card, read once in derive. EVERY CARD HERE IS REAL INPUT:
+ *  `mana-lines.fixtures.json` holds the card document fields and the clause records derive used, dumped from Mongo
+ *  by `research/mana/dump-mana-fixtures.mts`, so an assertion is about what the corpus carries and not about a card
+ *  as remembered. The fixtures are not the production tags (no Mongo in the suite); they are its input. */
+import { describe, expect, it } from "vitest";
+import { deriveInputOf } from "../derive-input.js";
+import { deriveCardTags } from "./derive.js";
+import type { CardTags, ManaLine } from "../schema.js";
+import fixtures from "./mana-lines.fixtures.json" with { type: "json" };
+
+const WUBRG = ["W", "U", "B", "R", "G"];
+const tagsOf = (name: string): CardTags => {
+  const fx = (fixtures as unknown as Record<string, { card: Record<string, unknown> & { _id: string; name: string }; clauses: never[] }>)[
+    Object.keys(fixtures).find((k) => k === name || k.startsWith(`${name} //`)) ?? name]!;
+  expect(fx, `fixture for ${name}`).toBeDefined();
+  return deriveCardTags(deriveInputOf(fx.card as never, fx.card._id, fx.card.name, fx.clauses));
+};
+const linesOf = (name: string, source?: ManaLine["source"]): ManaLine[] =>
+  (tagsOf(name).manaLines ?? []).filter((l) => source === undefined || l.source === source);
+const only = (name: string, source?: ManaLine["source"]): ManaLine => {
+  const ls = linesOf(name, source);
+  expect(ls, `${name} lines`).toHaveLength(1);
+  return ls[0]!;
+};
+const FREE_TAP = { mana: 0, tap: true, sacrificeSelf: false, sacrificeOther: false, life: 0, other: [] };
+
+describe("tap abilities: cost, colours and amount", () => {
+  it("Sol Ring taps for two colourless, free", () => {
+    expect(only("Sol Ring")).toMatchObject({ face: 0, source: "tap-ability", repeats: "per-cycle", cost: FREE_TAP, colours: [], colourless: 2,
+      anyColour: null, amount: { fixed: 2, scales: null }, net: 2, gate: null, restriction: null, timing: "now", producesToken: null });
+  });
+  it("Arcane Signet chooses within the commander's identity, which the text does not name", () => {
+    expect(only("Arcane Signet")).toMatchObject({ source: "tap-ability", anyColour: "identity", colours: [], amount: { fixed: 1, scales: null }, net: 1 });
+  });
+  it("Cascade Bluffs: the filter line pays 1 and makes 2 of its two colours, the plain line is colourless", () => {
+    const [plain, filter] = linesOf("Cascade Bluffs");
+    expect(plain).toMatchObject({ colours: [], colourless: 1, cost: FREE_TAP, net: 1 });
+    expect(filter).toMatchObject({ source: "tap-ability", cost: { mana: 1, tap: true }, colours: ["U", "R"], amount: { fixed: 2, scales: null }, net: 1, restriction: null });
+  });
+  it("Cascading Cataracts: five mana in any colour for {5} nets nothing", () => {
+    const [plain, five] = linesOf("Cascading Cataracts");
+    expect(plain).toMatchObject({ colourless: 1, net: 1 });
+    expect(five).toMatchObject({ cost: { mana: 5, tap: true }, anyColour: "any", colours: WUBRG, amount: { fixed: 5, scales: null }, net: 0 });
+  });
+  it("Tainted Peak: the coloured line is gated on a Swamp; Exotic Orchard is bounded by the opponents' lands", () => {
+    const [plain, gated] = linesOf("Tainted Peak");
+    expect(plain.gate).toBeNull();
+    expect(gated).toMatchObject({ colours: ["B", "R"], gate: "you control a swamp", amount: { fixed: 1, scales: null } });
+    expect(only("Exotic Orchard")).toMatchObject({ anyColour: "opponent-lands", colours: [], face: 0 });
+  });
+  it("Llanowar Elves is a one-colour tap", () => {
+    expect(only("Llanowar Elves")).toMatchObject({ colours: ["G"], colourless: 0, cost: FREE_TAP, net: 1 });
+  });
+});
+
+describe("a cost the segmenter did not split", () => {
+  it("Wall of Roots pays with a counter (typed static by the model); Contamination's replacement is no line", () => {
+    expect(only("Wall of Roots")).toMatchObject({ source: "tap-ability", colours: ["G"], cost: { mana: 0, tap: false, other: ["Put a -0/-1 counter on this creature"] } });
+    expect(tagsOf("Contamination").manaLines).toBeUndefined();
+  });
+  it("Aether Hub's second line pays {E} beside the tap", () => {
+    const [plain, energy] = linesOf("Aether Hub");
+    expect(plain).toMatchObject({ colourless: 1, cost: { other: [] } });
+    expect(energy).toMatchObject({ anyColour: "any", cost: { tap: true, other: ["Pay {E}"] } });
+  });
+});
+
+describe("restricted mana", () => {
+  it("Smokebraider: two mana of any colour, spent only on Elementals", () => {
+    expect(only("Smokebraider")).toMatchObject({ anyColour: "any", amount: { fixed: 2, scales: null },
+      restriction: { spend: "to cast elemental spells or activate abilities of elementals", typeName: "elemental" } });
+  });
+  it("Omen Hawker: {C}{U} that only activates abilities", () => {
+    const l = only("Omen Hawker");
+    expect(l).toMatchObject({ colours: ["U"], colourless: 1, amount: { fixed: 2, scales: null } });
+    expect(l.restriction).toEqual({ spend: "to activate abilities" });
+  });
+  it("Cavern of Souls: the coloured line spends on the chosen type; Ancient Ziggurat on creature spells", () => {
+    const [plain, coloured] = linesOf("Cavern of Souls");
+    expect(plain.restriction).toBeNull();
+    expect(coloured).toMatchObject({ anyColour: "any", restriction: { typeName: "chosen" } });
+    expect(only("Ancient Ziggurat").restriction).toMatchObject({ spend: "to cast a creature spell", typeName: "creature" });
+  });
+});
+
+describe("what using the line consumes", () => {
+  it("Phyrexian Altar sacrifices something else, not itself, and does not tap", () => {
+    expect(only("Phyrexian Altar")).toMatchObject({ source: "tap-ability", repeats: "repeatable", anyColour: "any",
+      cost: { mana: 0, tap: false, sacrificeSelf: false, sacrificeOther: true, life: 0, other: [] } });
+  });
+  it("Priest of Forgotten Gods taps and sacrifices two others for {B}{B}", () => {
+    expect(only("Priest of Forgotten Gods")).toMatchObject({ source: "tap-ability", colours: ["B"], amount: { fixed: 2, scales: null },
+      cost: { tap: true, sacrificeSelf: false, sacrificeOther: true } });
+  });
+  it("Cryptic Trilobite pays with a counter, and the mana only activates abilities", () => {
+    const l = only("Cryptic Trilobite");
+    expect(l).toMatchObject({ colourless: 2, repeats: "repeatable", cost: { mana: 0, tap: false, other: ["Remove a +1/+1 counter from this creature"] } });
+    expect(l.restriction).toEqual({ spend: "to activate abilities" });
+  });
+  it("Lotus Petal sacrifices itself: a one-shot", () => {
+    expect(only("Lotus Petal")).toMatchObject({ cost: { tap: true, sacrificeSelf: true, sacrificeOther: false }, repeats: "once" });
+    expect(tagsOf("Lotus Petal").isOneShot).toBe(true);
+    expect(tagsOf("Phyrexian Altar").isOneShot).toBeUndefined();
+    expect(tagsOf("Sol Ring").isOneShot).toBeUndefined();
+  });
+});
+
+describe("triggers, auras and spells", () => {
+  it("Birgi's front face adds {R} when you cast a spell: trigger mana, no tap line; the back face has no line", () => {
+    const ls = linesOf("Birgi, God of Storytelling");
+    expect(ls).toHaveLength(1);
+    expect(ls[0]).toMatchObject({ face: 0, source: "trigger", timing: "on-trigger", colours: ["R"], cost: { mana: 0, tap: false }, repeats: "repeatable" });
+  });
+  it("Utopia Sprawl adds one of the chosen colour, Wild Growth {G}, each time the land taps", () => {
+    expect(only("Utopia Sprawl")).toMatchObject({ source: "aura-trigger", anyColour: "chosen", colours: [], amount: { fixed: 1, scales: null }, timing: "on-trigger", cost: { mana: 0, tap: false } });
+    expect(only("Wild Growth")).toMatchObject({ source: "aura-trigger", colours: ["G"], amount: { fixed: 1, scales: null } });
+  });
+  it("Dark Ritual is a one-shot spell: {B}{B}{B} for its {B}, net +2", () => {
+    expect(only("Dark Ritual")).toMatchObject({ source: "one-shot-spell", repeats: "once", colours: ["B"], amount: { fixed: 3, scales: null },
+      cost: { mana: 1, tap: false }, net: 2, timing: "now" });
+    expect(tagsOf("Dark Ritual").isOneShot).toBe(true);
+  });
+});
+
+describe("faces", () => {
+  it("Treasure Map // Treasure Cove: the land back's {T}: Add {C} is on face 1, the front makes Treasures", () => {
+    const tap = only("Treasure Map", "tap-ability");
+    expect(tap).toMatchObject({ face: 1, colourless: 1, cost: FREE_TAP });
+    expect(only("Treasure Map", "token-maker")).toMatchObject({ face: 0, producesToken: "treasure", cost: { mana: 1, tap: true } });
+  });
+});
+
+describe("tokens that are mana sources, and fetches", () => {
+  it("Pitiless Plunderer makes Treasures and taps for nothing", () => {
+    const ls = linesOf("Pitiless Plunderer");
+    expect(ls).toHaveLength(1);
+    expect(ls[0]).toMatchObject({ source: "token-maker", producesToken: "treasure", repeats: "repeatable", anyColour: "any", amount: { fixed: 1, scales: null } });
+  });
+  it("Cultivate fetches two lands, one onto the battlefield tapped", () => {
+    expect(tagsOf("Cultivate").landFetch).toEqual({ kind: "spell", tapped: true, reach: WUBRG });
+    expect(only("Cultivate")).toMatchObject({ source: "fetch", repeats: "once", colours: WUBRG, amount: { fixed: 1, scales: null }, cost: { mana: 3 } });
+    expect(tagsOf("Cultivate").isOneShot).toBeUndefined();
+  });
+  it("Farseek reaches four colours; Evolving Wilds is a permanent that fetches", () => {
+    expect(tagsOf("Farseek").landFetch).toEqual({ kind: "spell", tapped: true, reach: ["W", "U", "B", "R"] });
+    expect(tagsOf("Evolving Wilds").landFetch).toEqual({ kind: "permanent", tapped: true, reach: WUBRG });
+  });
+  it("Kodama's Reach and Path to the Festival fetch (the grammar path drops the library origin); Expand the Sphere digs and does not", () => {
+    expect(tagsOf("Kodama's Reach").landFetch).toEqual({ kind: "spell", tapped: true, reach: WUBRG });
+    expect(tagsOf("Path to the Festival").landFetch).toEqual({ kind: "spell", tapped: true, reach: WUBRG });
+    expect(tagsOf("Expand the Sphere").landFetch).toBeUndefined();
+    expect(tagsOf("Expand the Sphere").manaLines).toBeUndefined();
+  });
+  it("a card that fetches nothing carries none", () => {
+    expect(tagsOf("Sol Ring").landFetch).toBeUndefined();
+  });
+});
+
+describe("static fixers and suspend", () => {
+  it("Chromatic Lantern gives lands the ability; its own tap is a second line", () => {
+    expect(tagsOf("Chromatic Lantern").staticFixer).toEqual({ covers: "lands", colours: WUBRG });
+    expect(linesOf("Chromatic Lantern").map((l) => l.source)).toEqual(["static-grant", "tap-ability"]);
+  });
+  it("Chromatic Orrery lets any mana be spent as any colour; Prismatic Omen makes lands every type", () => {
+    expect(tagsOf("Chromatic Orrery").staticFixer).toEqual({ covers: "all", colours: WUBRG });
+    expect(tagsOf("Prismatic Omen").staticFixer).toEqual({ covers: "lands", colours: WUBRG });
+    expect(tagsOf("Urborg, Tomb of Yawgmoth").staticFixer).toEqual({ covers: "lands", colours: ["B"] });
+    expect(tagsOf("Sol Ring").staticFixer).toBeUndefined();
+  });
+  it("Mox Tantalite and Lotus Bloom are suspend-only; a Mox with a cost is not", () => {
+    expect(tagsOf("Mox Tantalite").suspendOnly).toBe(true);
+    expect(tagsOf("Lotus Bloom").suspendOnly).toBe(true);
+    expect(only("Mox Tantalite")).toMatchObject({ anyColour: "any", cost: FREE_TAP });
+    expect(tagsOf("Sol Ring").suspendOnly).toBeUndefined();
+  });
+});
+
+describe("a card with no mana carries none of it", () => {
+  it("writes nothing for Urborg's lines and nothing at all on a card that has none", () => {
+    expect(tagsOf("Urborg, Tomb of Yawgmoth").manaLines).toBeUndefined();
+    expect(Object.keys(tagsOf("Urborg, Tomb of Yawgmoth")).sort()).toEqual(
+      ["abilities", "characteristics", "model", "oracleId", "promptVersion", "schemaVersion", "staticFixer"]);
+  });
+});

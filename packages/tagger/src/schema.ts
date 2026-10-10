@@ -1358,6 +1358,98 @@ export interface Characteristics {
   enchants?: SubjectFilter;
 }
 
+/** WHERE A MANA LINE COMES FROM (#1169). One word per way a card puts mana, or a land, in front of you:
+ *  - `tap-ability`: an activated ability ("{T}: Add {G}", "Sacrifice a creature: Add one mana of any color").
+ *    The COST says what it consumes, so the source is the same for a Sol Ring and a Phyrexian Altar.
+ *  - `trigger`: a triggered ability that adds mana (Birgi's "Whenever you cast a spell, add {R}", an enters
+ *    trigger). Mana for a moment, not a source you tap.
+ *  - `static-grant`: the card GIVES the ability to other permanents ("Lands you control have '{T}: Add one mana
+ *    of any color.'", Chromatic Lantern), so the line is the one granted, not one the card taps for itself.
+ *  - `aura-trigger`: the enchanted permanent's tap adds more ("Whenever enchanted land is tapped for mana, its
+ *    controller adds an additional {G}", Wild Growth, Utopia Sprawl).
+ *  - `one-shot-spell`: an instant or sorcery that adds mana as it resolves (Dark Ritual).
+ *  - `token-maker`: makes a token that is itself a mana source (Treasure, Gold, Powerstone, Eldrazi Spawn); the
+ *    card adds no mana of its own.
+ *  - `fetch`: puts lands onto the battlefield from the library (Cultivate, Evolving Wilds); `colours` is what it
+ *    can reach. */
+export type ManaLineSource = "tap-ability" | "trigger" | "static-grant" | "aura-trigger" | "one-shot-spell" | "token-maker" | "fetch";
+
+/** WHICH COLOURS A LINE CHOOSES FROM when it does not print them (#1169). `any` is "one mana of any color" (and
+ *  "in any combination of colors"); the rest are bounded by something outside the card: `identity` your
+ *  commander's colour identity (Arcane Signet), `chosen` the colour chosen as the permanent entered (Utopia
+ *  Sprawl), `opponent-lands` colours a land an opponent controls could produce (Exotic Orchard), and
+ *  `lands-you-could` colours a land you control could produce (Reflecting Pool). */
+export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "lands-you-could";
+
+/** ONE WAY A CARD PRODUCES MANA (or a mana source, or a land), read once at derive time so no consumer parses
+ *  oracle text again (#1169; the inventory found ten detectors disagreeing on real cards). A card carries
+ *  one per `add-mana` action of every face, plus one per token-making and land-fetching ability. Absent on a card
+ *  that has none, so a card that makes no mana stays byte-identical.
+ *
+ *  THE LINE STATES; THE CONSUMER JUDGES. A colour audit, a land count, a goldfish each ask a different question
+ *  (is this a colour SOURCE; is this CHEAP ramp; does it play on turn two), and each answers it by filtering
+ *  these fields -- the line itself decides none of it. */
+export interface ManaLine {
+  /** The face that prints it: 0 the front, 1 the back of a transform / modal card (Treasure Cove's `{T}: Add {C}`). */
+  face: 0 | 1;
+  source: ManaLineSource;
+  /** How often it can be used: the `repeats` of the ability the line was read from (`null` when that ability
+   *  states none -- most triggers -- or no derived ability matches the clause). A dork is `per-cycle`, a spell `once`. */
+  repeats: Repeats | null;
+  /** WHAT USING IT CONSUMES, read off the printed activation cost (a trigger, a spell and an aura pay none here). */
+  cost: {
+    /** Mana symbols paid: a number is that many, a coloured / hybrid / Phyrexian symbol is 1, `{X}` is 0. For a
+     *  `one-shot-spell` and a spell-speed `fetch` it is the mana value of the face that prints it. */
+    mana: number;
+    /** `{T}` is in the cost. The tap is NOT subtracted in `net`. */
+    tap: boolean;
+    /** Sacrifices the card itself ("{T}, Sacrifice this artifact: Add ..."): a one-shot (Lotus Petal, a Treasure). */
+    sacrificeSelf: boolean;
+    /** Sacrifices something else ("Sacrifice a creature: ...", Phyrexian Altar, Priest of Forgotten Gods). */
+    sacrificeOther: boolean;
+    /** Life paid ("Pay 1 life"). */
+    life: number;
+    /** Every other cost piece, verbatim: a counter removed, a discard, an untap, a tap of other creatures, a loyalty change. */
+    other: string[];
+  };
+  /** The WUBRG colours the printed text names, as a set. `any` names all five; a BOUNDED `anyColour` names none
+   *  (the bound is outside the card), so the consumer resolves it from `anyColour`. */
+  colours: string[];
+  /** The `{C}` mana of one use (the largest across the alternatives printed). */
+  colourless: number;
+  /** Set when the line chooses a colour instead of printing it. See `ManaAnyColour`. */
+  anyColour: ManaAnyColour | null;
+  /** How much one use adds. `fixed` is the number (the smallest across the printed alternatives), `null` when it
+   *  scales; `scales` then names what it counts ("for each Forest you control", "equal to ...", "X"). */
+  amount: { fixed: number | null; scales: string | null };
+  /** Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as 1 (its floor
+   *  would be 0; a consumer that cares reads `amount.scales`). */
+  net: number;
+  /** An "Activate only if ..." condition, verbatim lowercase (Tainted Peak: "you control a swamp"), else null. */
+  gate: string | null;
+  /** "Spend this mana only ..." (Smokebraider, Cavern of Souls, Ancient Ziggurat) or "this mana can't be spent ...":
+   *  `spend` is the printed limit, `typeName` the one type it names, lowercase ("elemental", "creature", "chosen"). Mana with
+   *  a restriction is not mana for the deck's spells. */
+  restriction: { spend: string; typeName?: string } | null;
+  /** WHEN the mana arrives: `now`, `next-turn` (a delayed addition), `on-trigger` (when a trigger fires). */
+  timing: "now" | "next-turn" | "on-trigger";
+  /** The token a `token-maker` line makes that is itself a mana source ("treasure", "gold", "powerstone",
+   *  "eldrazi-spawn"); null on every other line. */
+  producesToken: string | null;
+}
+
+/** A card that makes OTHER mana sources produce colours (#1115), read from its static text: Chromatic Lantern
+ *  (lands gain "{T}: Add one mana of any color"), Prismatic Omen (lands are every basic land type), Urborg (every
+ *  land is a Swamp), Chromatic Orrery (spend mana as though it were mana of any color). `covers` is `lands` when
+ *  only lands you control gain the colours and `all` when any mana you spend does. Front face only. */
+export interface StaticFixer { covers: "lands" | "all"; colours: string[] }
+
+/** A card that puts lands onto the battlefield from the library (#1169). `kind` is `spell` for an instant or
+ *  sorcery (Cultivate, Farseek) and `permanent` for one that stays (a fetchland, Wood Elves, Sakura-Tribe Elder);
+ *  `tapped` when the land arrives tapped; `reach` the WUBRG colours the lands it can find make (a basic land
+ *  reaches all five, "a Forest card" only G). */
+export interface LandFetch { kind: "spell" | "permanent"; tapped: boolean; reach: string[] }
+
 export interface CardTags {
   oracleId: string;
   schemaVersion: number;
@@ -1365,6 +1457,19 @@ export interface CardTags {
   model: string;
   characteristics: Characteristics;
   abilities: Ability[];
+  /** Every way this card puts mana in front of you, per face (#1169). See `ManaLine`. Absent when it has none. */
+  manaLines?: ManaLine[];
+  /** Makes other sources produce colours (Chromatic Lantern). Absent on every other card. */
+  staticFixer?: StaticFixer;
+  /** Puts lands onto the battlefield from the library (Cultivate, Evolving Wilds). Absent on every other card. */
+  landFetch?: LandFetch;
+  /** Every mana line the card has is spent in the using: an instant or sorcery's mana (Dark Ritual), or a source
+   *  that sacrifices itself for it (Lotus Petal, a Treasure). Only `true` is written. A card with a permanent face
+   *  that taps for mana as well is not a one-shot. */
+  isOneShot?: true;
+  /** The card has no mana cost and is only ever put into play by Suspend (Mox Tantalite, Lotus Bloom): not fast
+   *  mana, however much it taps for. Only `true` is written. */
+  suspendOnly?: true;
   /** Trigger events the clause layer named and derivation could not turn into a verb -- the
    *  "surface, never swallow" channel. Computed by `deriveAbilities` since 2026-08 and DROPPED by
    *  `deriveCardTags` until 2026-09-05, so every reader of it (`isolated-cards.ts`, the census)

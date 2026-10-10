@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **293** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **294** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -292,6 +292,11 @@ Defined in [`CardTags`](../../packages/tagger/src/schema.ts).
 | `model` | `string` | **required** |  |
 | `characteristics` | `Characteristics` | **required** |  |
 | `abilities` | `Ability[]` | **required** |  |
+| `manaLines` | `ManaLine[]` | optional | Every way this card puts mana in front of you, per face (#1169). See `ManaLine`. Absent when it has none. |
+| `staticFixer` | `StaticFixer` | optional | Makes other sources produce colours (Chromatic Lantern). Absent on every other card. |
+| `landFetch` | `LandFetch` | optional | Puts lands onto the battlefield from the library (Cultivate, Evolving Wilds). Absent on every other card. |
+| `isOneShot` | `true` | optional | Every mana line the card has is spent in the using: an instant or sorcery's mana (Dark Ritual), or a source that sacrifices itself for it (Lotus Petal, a Treasure). Only `true` is written. A card with a permanent face that taps for mana as well is not a one-shot. |
+| `suspendOnly` | `true` | optional | The card has no mana cost and is only ever put into play by Suspend (Mox Tantalite, Lotus Bloom): not fast mana, however much it taps for. Only `true` is written. |
 | `unknownTriggers` | `string[]` | optional | Trigger events the clause layer named and derivation could not turn into a verb -- the "surface, never swallow" channel. Computed by `deriveAbilities` since 2026-08 and DROPPED by `deriveCardTags` until 2026-09-05, so every reader of it (`isolated-cards.ts`, the census) saw an empty list and the eerie "fully unlock a Room" half vanished without a trace. Absent when empty. |
 | `pinned` | `boolean` | optional | True for a hand-verified tag that must survive automated re-tagging (e.g. a prompt-version bump). needsRetag short-circuits to false for a pinned tag regardless of version drift — set this only for cards where the LLM has demonstrably gotten the shape wrong and a human fixed it directly (see docs/superpowers/plans/2026-07-28-strategy-gap-fixes.md Task 2). |
 

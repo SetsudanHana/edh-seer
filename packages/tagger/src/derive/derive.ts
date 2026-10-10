@@ -29,6 +29,7 @@ import crKeywords from "./cr-keywords.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
+import { deriveMana } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.js";
@@ -418,7 +419,9 @@ import { emblemRecipient } from "../emblem.js";
 // 293: #1166, "if you descended this turn" cares about `dies:permanent` (CR 700.11: a permanent card), not `dies:any`.
 // An untyped trigger subject now keys as the class its verb implies (`VERB_IMPLIED_CLASS`) at read time, so no
 // stored tag for those verbs is `:any`.
-export const DERIVE_VERSION = 293;
+// 294: #1169, a card's mana production is read once: `manaLines` (per face: source, cost, colours, amount, net,
+// restriction, gate, timing) plus `staticFixer`, `landFetch`, `isOneShot`, `suspendOnly`. Additive; no consumer reads it yet.
+export const DERIVE_VERSION = 294;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2825,6 +2828,12 @@ export interface DeriveInput {
    *  and `grammarTriggersOf` use the entry for a clause instead of calling `parseActions` /
    *  `parseTrigger` again when it is present; absent (the model path) parses as before. */
   readings?: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }>;
+  /** Granted clause id -> the clause that grants it (`segment()`'s `parentId` on a `granted` clause): Chromatic Lantern's
+   *  quoted "{T}: Add one mana of any color" -> "Lands you control have that ability". Read by `manaLines`. */
+  clauseGrants?: Record<number, number>;
+  /** The printed mana cost of each face, index = face, "" when it prints none (Mox Tantalite). Read by `manaLines` for the
+   *  cost of a spell and for `suspendOnly`. Absent: only `characteristics.cmc` is known. */
+  manaCosts?: string[];
 }
 
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
@@ -2927,6 +2936,16 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     model: "derived",
     characteristics: creatureOnlyIf ? { ...input.characteristics, creatureOnlyIf: true } : input.characteristics,
     abilities: spellOnce,
+    // MANA PRODUCTION, read once (#1169). Each key is written only when the card has it.
+    ...deriveMana({
+      clauses: input.clauses, abilities: spellOnce, chars, name: input.name,
+      textOf: (clause) => withoutAbilityWord(textForClause(clause, input.clauseTexts)),
+      ...(input.clauseCosts ? { clauseCosts: input.clauseCosts } : {}),
+      ...(input.clauseFaces ? { clauseFaces: input.clauseFaces } : {}),
+      ...(input.clauseGrants ? { clauseGrants: input.clauseGrants } : {}),
+      ...(input.grantedToken ? { grantedToken: input.grantedToken } : {}),
+      ...(input.manaCosts ? { manaCosts: input.manaCosts } : {}),
+    }),
     // Written only when there is something to surface, so a clean card stays byte-identical.
     ...(unknownTriggers.length ? { unknownTriggers } : {}),
   };

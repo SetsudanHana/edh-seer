@@ -48,6 +48,19 @@ export function grantedTokenClauses(doc: { oracleText?: string; keywords?: strin
   return out;
 }
 
+/** Granted clause id -> the clause that grants it, from the same `segment()` call: a `granted` clause carries `parentId`.
+ *  Chromatic Lantern's quoted "{T}: Add one mana of any color" is granted by "Lands you control have that ability". */
+export function clauseGrants(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, number> {
+  const out: Record<number, number> = {};
+  for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) if (c.kind === "granted" && c.parentId !== undefined) out[c.id] = c.parentId;
+  return out;
+}
+
+/** The printed mana cost of each face (index = face), "" for a face that prints none. */
+export function faceManaCosts(doc: { manaCost?: string; faces?: { manaCost?: string }[] }): string[] {
+  return doc.faces && doc.faces.length > 0 ? doc.faces.map((f) => f.manaCost ?? "") : [doc.manaCost ?? ""];
+}
+
 /** Clause id -> the game-state requirement its ability word carries ("Max speed —"), from the same
  *  `segment()` call, matched by line tail because the segmenter strips the word (roadmap W18). */
 export function clauseRequires(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, Requirement> {
@@ -95,7 +108,7 @@ export function charsFrom(doc: {
   } as never) as DerivedTagsDoc["characteristics"];
 }
 
-type CardDocLike = Parameters<typeof charsFrom>[0] & { oracleText?: string; keywords?: string[]; typeLine?: string; allParts?: { component?: string; typeLine?: string }[] };
+type CardDocLike = Parameters<typeof charsFrom>[0] & { oracleText?: string; keywords?: string[]; typeLine?: string; allParts?: { component?: string; typeLine?: string }[]; manaCost?: string; faces?: { manaCost?: string }[] };
 
 /** EVERYTHING DERIVE READS BESIDE THE CLAUSES, from the card document: the one construction
  *  `derive-corpus` and the grammar-only measurement (#896 task 7) share, so the two derive the same
@@ -114,6 +127,8 @@ export function deriveInputOf(card: CardDocLike, oracleId: string, name: string,
     clauseRequires: clauseRequires(card),
     clauseCosts: clauseCosts(card),
     clauseFaces: clauseFaces(card),
+    clauseGrants: clauseGrants(card),
+    manaCosts: faceManaCosts(card),
     oracleText: card.oracleText,
     grantedToken: grantedTokenClauses(card),
     ...(readings ? { readings } : {}),
