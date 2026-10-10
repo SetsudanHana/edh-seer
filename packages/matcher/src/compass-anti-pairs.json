@@ -2,15 +2,6 @@
   "why": "THE COMPASS ONLY EVER ASKED 'DID WE FIND THE EDGE'. compass-pairs.json is 55 positive representatives and reads 55/55, which an engine that joined EVERY pair would also score. These are the negative half: one representative per CLASS of false edge, keyed on the TAG the panel judged (not on a mechanism category, which is what the positive compass uses), chosen from the panel's 579 FALSE verdicts so each carries a judged argument rather than an invented one. The class names are the panel's own `cause` values.",
   "pairs": [
     {
-      "a": "Abstruse Appropriation",
-      "b": "Nulldrifter",
-      "class": "false-care",
-      "why": "Nulldrifter triggers on casting ITSELF, not on you casting a spell. The consumer does not care about the event it was credited with.",
-      "source": "panel verdict, owner-judged (blind agreement draw 2026-08-07)",
-      "verified": true,
-      "tag": "cast:spell"
-    },
-    {
       "a": "Amarant Coral",
       "b": "Leyline of Resonance",
       "class": "subject-mismatch",
