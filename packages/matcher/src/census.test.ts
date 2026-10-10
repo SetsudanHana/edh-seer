@@ -130,7 +130,7 @@ test("implied combat supplies a typal attack payoff but not a generic one", () =
   const c = buildCensus([samurai, typalPayoff, genericPayoff, vacuousPayoff], { ...H, samurai: ["creature"] });
   expect(row(c.consumers, "combat-damage:subtype:samurai")).toMatchObject({ counterpart: 1, selfSupplied: false });
   // `type: creature` narrows nothing on an attack trigger — only creatures attack.
-  expect(row(c.consumers, "combat-damage:any")).toMatchObject({ counterpart: 0, selfSupplied: true });
+  expect(row(c.consumers, "combat-damage:*")).toMatchObject({ counterpart: 0, selfSupplied: true });
   expect(row(c.consumers, "combat-damage:type:creature")).toMatchObject({ counterpart: 0, selfSupplied: true });
 });
 
@@ -175,7 +175,7 @@ test("an authored attacks emit supplies a generic combat consumer even though an
   const c = buildCensus([goader, genericPayoff2], H);
   // The row is still (by design) one an implied producer alone could satisfy -- selfSupplied
   // reflects that hypothetical, independent of the authored supply this producer also provides.
-  expect(row(c.consumers, "combat-damage:any")).toMatchObject({ counterpart: 1, selfSupplied: true });
+  expect(row(c.consumers, "combat-damage:*")).toMatchObject({ counterpart: 1, selfSupplied: true });
 });
 
 test("producer rows report dead emissions — an emit no trigger in the corpus matches", () => {
@@ -220,7 +220,7 @@ test("zone-transition aliases are normalized on both sides", () => {
 /** `censusSubjectKey` encodes only type/subtype, but `combatSelfSupplied` also reads stats, counter,
  *  chosenType, colors and token. Two shapes sharing a key while disagreeing on selfSupplied get
  *  AND-merged by rollUp, so ONE narrowed shape flipped the whole row -- which on the live corpus
- *  emptied the SELF-SUPPLIED table, reporting 1463 correctly self-supplied `attacks:any` listeners
+ *  emptied the SELF-SUPPLIED table, reporting 1463 correctly self-supplied `attacks:*` listeners
  *  as a dense low-information edge class. The narrowed shape must get its own row. */
 // On combat damage since #561: attacks no longer self-supply (owner ruling 2026-09-27).
 test("a narrowed combat trigger does not drag its bare siblings out of SELF-SUPPLIED", () => {
@@ -246,8 +246,8 @@ test("a narrowed combat trigger does not drag its bare siblings out of SELF-SUPP
   const attacker = card("attacker", [], ["creature"], [], "5");
 
   const c = buildCensus([bare, alsoBare, narrowed, attacker], H);
-  expect(row(c.consumers, "combat-damage:any")).toMatchObject({ cards: 2, selfSupplied: true, counterpart: 0 });
-  const narrowedRow = row(c.consumers, "combat-damage:any (narrowed)")!;
+  expect(row(c.consumers, "combat-damage:*")).toMatchObject({ cards: 2, selfSupplied: true, counterpart: 0 });
+  const narrowedRow = row(c.consumers, "combat-damage:* (narrowed)")!;
   expect(narrowedRow).toMatchObject({ cards: 1, selfSupplied: false });
   expect(narrowedRow.counterpart).toBeGreaterThan(0);
 });
@@ -324,7 +324,7 @@ test("a generic attack payoff counts every creature as a supplier (#561)", () =>
 
 // #1088: the census keeps an untyped combat subject as `:any` (zoneEventKeyRaw), not `:creature`, because
 // `eventKeysForDemand` reads `:any` as every key of the verb and has no reading for `attacks:creature`.
-test("an untyped attacks consumer rows as attacks:any, and that row translates to event keys", async () => {
+test("an untyped attacks consumer rows as attacks:*, and that row translates to event keys", async () => {
   const { eventKeysForDemand } = await import("./suggest-keys.js");
   const payoff = card("untypedAttack", [{
     kind: "triggered",
@@ -332,6 +332,6 @@ test("an untyped attacks consumer rows as attacks:any, and that row translates t
     effect: { kind: "pump" },
   }]);
   const c = buildCensus([payoff], H);
-  expect(row(c.consumers, "attacks:any")).toBeDefined();
-  expect(eventKeysForDemand("attacks:any", ["attacks|-|-|-"])).not.toEqual([]);
+  expect(row(c.consumers, "attacks:*")).toBeDefined();
+  expect(eventKeysForDemand("attacks:*", ["attacks|-|-|-"])).not.toEqual([]);
 });

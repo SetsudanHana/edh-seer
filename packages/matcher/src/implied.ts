@@ -380,7 +380,7 @@ function keywordAbilitiesUncached(chars: Characteristics): Ability[] {
     // cares about (`intervening-if.ts`), and the same standing: a DEMAND the theme and rating
     // layers read, not an edge. An edge from a fill to a delve spell is the owner's to rule, as
     // descend's was (2026-08-20 / 2026-09-10). 30 commander-legal cards.
-    if (whole === "delve") out.push({ kind: "static", effect: { kind: "" }, conditionCares: ["dies:any", "mill:any", "discard:any", "enters-graveyard:any"] });
+    if (whole === "delve") out.push({ kind: "static", effect: { kind: "" }, conditionCares: ["dies:permanent", "mill:any", "discard:any", "enters-graveyard:any"] });
     // EVOLVE, NOW EXPRESSIBLE (owner ruling 2026-09-28, #715: Twenty-Toed Toad, a 3/3, evolves Gyre
     // Sage, a 1/2). The intervening if (CR 603.4) compares the entering creature with THIS card's own stats,
     // and this function holds them: "greater power OR toughness" is an `anyOf` of two stat gates

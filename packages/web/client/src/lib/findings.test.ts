@@ -275,7 +275,7 @@ test("one idle card ranks below a large build shortfall", () => {
   const rows = findings(report({
     cards: Array.from({ length: 100 }, (_, i) => ({ name: `c${i}` })) as DeckReport["cards"],
     buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: [] }],
-    deckMath: demand([{ key: "attacks:any", consumers: 1, suppliers: 0, available: 0.1 }]),
+    deckMath: demand([{ key: "attacks:*", consumers: 1, suppliers: 0, available: 0.1 }]),
   }));
   expect(rows.map((r) => r.kind)).toEqual(["build", "synergy"]);
 });

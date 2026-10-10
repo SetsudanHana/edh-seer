@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { VERB_VOCAB, VERB_ALIASES, SCHEMA_VERSION, SCALING_BASES, SCALING_ALIASES, EFFECT_KINDS } from "./schema.js";
+import { VERB_VOCAB, VERB_IMPLIED_CLASS, impliedSubjectKey, VERB_ALIASES, SCHEMA_VERSION, SCALING_BASES, SCALING_ALIASES, EFFECT_KINDS } from "./schema.js";
 
 test("VERB_VOCAB is a closed, unique verb list", () => {
   // A COUNT RATCHET: every engine verb is a matching surface, so growing this list must be a
@@ -105,4 +105,25 @@ test("common phase-trigger spellings alias onto the canonical verbs", () => {
   expect(VERB_ALIASES["beginning-of-upkeep"]).toBe("upkeep");
   expect(VERB_ALIASES["beginning-of-combat"]).toBe("begin-combat");
   expect(VERB_ALIASES["end-of-turn"]).toBe("end-step");
+});
+
+// #1166 (owner 2026-10-10): a trigger subject that names no class keys as the class its verb implies.
+test("VERB_IMPLIED_CLASS is the owner's ruling, one table", () => {
+  expect(VERB_IMPLIED_CLASS).toEqual({
+    cast: "spell", // CR 601
+    enters: "permanent", leaves: "permanent", sacrifice: "permanent", // CR 603.6a, 701.21a
+    "combat-damage": "creature", // CR 510.1a: the dealer
+    dies: "creature", // owner: only a creature dies (a typed planeswalker subject keeps its own class)
+    attacks: "creature", // CR 508.1a
+  });
+  for (const v of Object.keys(VERB_IMPLIED_CLASS)) expect(VERB_VOCAB).toContain(v);
+});
+
+test("impliedSubjectKey fills only an untyped subject", () => {
+  expect(impliedSubjectKey("cast", "any")).toBe("spell");
+  expect(impliedSubjectKey("dies", "any")).toBe("creature");
+  expect(impliedSubjectKey("dies", "planeswalker")).toBe("planeswalker");
+  expect(impliedSubjectKey("enters", "artifact")).toBe("artifact");
+  // a verb with no implied class keeps `any` (draw: nothing to imply)
+  expect(impliedSubjectKey("draw", "any")).toBe("any");
 });

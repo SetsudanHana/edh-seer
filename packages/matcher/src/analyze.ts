@@ -22,7 +22,7 @@ import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
 import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
-import { pairReasons, cardThemeTags, cardSupplyTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
+import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { GETS_AN_EMBLEM } from "@edh-seer/tagger/emblem";
 import { flipPerspective } from "./perspective.js";
@@ -34,6 +34,7 @@ import { cardSignalOf } from "./card-signal.js";
 import { buildAxis, maxAxisWeight } from "./axis.js";
 import { AXIS_ON_THRESHOLD, FEEDER_SHARE, edgeWeight } from "./card-strength.js";
 import { makeFold } from "./theme-fold.js";
+import { unmetConditionTags } from "./deck-fit.js";
 import { magnitudeMultipliers } from "./magnitude.js";
 import { buildSupplyDemand } from "./supply-demand.js";
 import { detectArchetypes, detectPolymorph } from "./archetypes.js";
@@ -450,28 +451,7 @@ export function analyzeDeckStructured(
   //
   // The card's OWN tags are excluded: Warlock Class must not satisfy its own demand for a creature
   // dying. A card with no condition, or one whose demand the deck meets, reports nothing.
-  const foldFit = makeFold(hierarchy);
-  const suppliedTags = new Map<string, Set<string>>();
-  for (const dc of resolved) {
-    if (!dc.tags) continue;
-    for (const tag of cardSupplyTags(dc.tags)) {
-      for (const key of new Set([tag, foldFit(tag)])) {
-        const set = suppliedTags.get(key) ?? new Set<string>();
-        set.add(dc.card.name);
-        suppliedTags.set(key, set);
-      }
-    }
-  }
-  const unmetByCard = new Map<string, string[]>();
-  for (const dc of resolved) {
-    if (!dc.tags) continue;
-    const wants = [...new Set(dc.tags.abilities.flatMap((a) => a.conditionCares ?? []))];
-    const unmet = wants.filter((w) => {
-      const suppliers = suppliedTags.get(w);
-      return !suppliers || [...suppliers].every((n) => n === dc.card.name);
-    });
-    if (unmet.length > 0) unmetByCard.set(dc.card.name, unmet);
-  }
+  const unmetByCard = unmetConditionTags(resolved, hierarchy);
 
   // The deck's strategy axis — commander theme tags (anchor) widened by dominant deck themes.
   const commanderThemeTags = new Set<string>();

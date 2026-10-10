@@ -1182,9 +1182,9 @@ const DECK_MATH = {
     { color: "U", supplied: 30 },
   ],
   demand: [
-    { key: "enters:any", consumers: 20, suppliers: 84, available: 1, fromCommandZone: false },
-    { key: "dies:any", consumers: 2, suppliers: 2, available: 0.227, fromCommandZone: false },
-    { key: "attacks:any", consumers: 3, suppliers: 0, available: null, fromCommandZone: false },
+    { key: "enters:*", consumers: 20, suppliers: 84, available: 1, fromCommandZone: false },
+    { key: "dies:*", consumers: 2, suppliers: 2, available: 0.227, fromCommandZone: false },
+    { key: "attacks:*", consumers: 3, suppliers: 0, available: null, fromCommandZone: false },
   ],
 };
 
@@ -1543,7 +1543,7 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   // No availability column: it is derived from the two counts beside it and reads 100% on every
   // row that has a supplier, which is a column with no variance.
   expect(screen.queryByText("23%")).not.toBeInTheDocument();
-  expect(screen.getByTitle("dies:any")).toBeInTheDocument();
+  expect(screen.getByTitle("dies:*")).toBeInTheDocument();
   // The game supplies a combat trigger: 0% would invent a hole, 100% would claim a board state
   // this layer does not model. And the VISIBLE row must not say "0 supply" either -- a zero next
   // to a dash reads as a hole in the deck.
@@ -1560,7 +1560,7 @@ test("demandSentence says the true ugly thing rather than a plausible wrong one"
   expect(demandSentence("cast:type:artifact+enchantment+instant")).toBe(
     "an artifact, enchantment or instant being cast",
   );
-  expect(demandSentence("end-step:any")).toBe("an end step");
+  expect(demandSentence("end-step:*")).toBe("an end step");
   // An unknown verb is NOT dressed up in a phrase it never earned, but the "true ugly thing" is now
   // de-slugified rather than the bare key -- a colon-separated identifier read as evidence of a
   // template to four separate player reviews (task 8 brief), and de-slugifying is still honest
@@ -1588,26 +1588,26 @@ test("combat-damage reads as an event with a subject, not a phase", () => {
 // (`draw` is; `draw-step` is not a `VERB_VOCAB` member at all), so it did nothing but risk masking
 // a future bug the same way `combat-damage` masked this one.
 test("begin-combat is a phase, and phases match availability.ts's own PHASE_VERBS", () => {
-  expect(demandSentence("begin-combat:any")).toBe("the beginning of combat");
+  expect(demandSentence("begin-combat:*")).toBe("the beginning of combat");
 });
 
 // The rest of task 8's measured 53 raw rows: every verb this brief named, plus the two DEMAND_VERB
 // wrote a comment about (`proliferate`, `counter-added`) rather than a plain lookup.
 test("every verb the controller measured reaching the demand list as a raw key now reads as English", () => {
-  expect(demandSentence("draw:any")).toBe("a card being drawn");
+  expect(demandSentence("draw:*")).toBe("a card being drawn");
   expect(demandSentence("counter-added:type:creature")).toBe("a creature getting a counter");
   expect(demandSentence("non-combat-damage:type:permanent")).toBe("a permanent dealing noncombat damage");
-  expect(demandSentence("leaves:any")).toBe("anything leaving the battlefield");
+  expect(demandSentence("leaves:*")).toBe("anything leaving the battlefield");
   expect(demandSentence("leaves:type:creature")).toBe("a creature leaving the battlefield");
   expect(demandSentence("leaves:type:artifact")).toBe("an artifact leaving the battlefield");
-  expect(demandSentence("dice-rolled:any")).toBe("a die being rolled");
-  expect(demandSentence("discard:any")).toBe("anything being discarded");
-  expect(demandSentence("gain-life:any")).toBe("life being gained");
+  expect(demandSentence("dice-rolled:*")).toBe("a die being rolled");
+  expect(demandSentence("discard:*")).toBe("anything being discarded");
+  expect(demandSentence("gain-life:*")).toBe("life being gained");
   // proliferate names no card type in the corpus (it is a player action over "any number" of
   // permanents/players with counters, never scoped to a card type) -- but unlike `attacks:any`,
   // where "anything attacking" is TRUE of a permanent, nothing but a PLAYER proliferates, so it no
   // longer glues "anything" onto the front (review finding F1, fix round 1).
-  expect(demandSentence("proliferate:any")).toBe("proliferating");
+  expect(demandSentence("proliferate:*")).toBe("proliferating");
   // None of these may contain the raw separators a reader mistook for a template.
   for (const key of [
     "draw:any", "counter-added:type:creature", "non-combat-damage:type:permanent", "leaves:any",
@@ -1625,11 +1625,11 @@ test("every verb the controller measured reaching the demand list as a raw key n
 // proliferating"); passes once each reads as the whole demand with no subject glued on, the same
 // structural move `DEMAND_PHASE` already makes for a phase.
 test("draw, gain-life, lose-life, dice-rolled and proliferate read as their true sentence, not a false one glued to a subject", () => {
-  expect(demandSentence("draw:any")).toBe("a card being drawn");
-  expect(demandSentence("gain-life:any")).toBe("life being gained");
-  expect(demandSentence("lose-life:any")).toBe("life being lost");
-  expect(demandSentence("dice-rolled:any")).toBe("a die being rolled");
-  expect(demandSentence("proliferate:any")).toBe("proliferating");
+  expect(demandSentence("draw:*")).toBe("a card being drawn");
+  expect(demandSentence("gain-life:*")).toBe("life being gained");
+  expect(demandSentence("lose-life:*")).toBe("life being lost");
+  expect(demandSentence("dice-rolled:*")).toBe("a die being rolled");
+  expect(demandSentence("proliferate:*")).toBe("proliferating");
 });
 
 // STEP 5: no output of `demandSentence`, mapped or not, may contain a raw census separator -- fed
@@ -2389,8 +2389,8 @@ test("wants vs supplies leads with the unmet ones and folds the rest", () => {
   const unmet = {
     ...DECK_MATH,
     demand: [
-      { key: "enters:any", consumers: 20, suppliers: 84, available: 1, fromCommandZone: false },
-      { key: "dies:any", consumers: 4, suppliers: 0, available: 0, fromCommandZone: false },
+      { key: "enters:*", consumers: 20, suppliers: 84, available: 1, fromCommandZone: false },
+      { key: "dies:*", consumers: 4, suppliers: 0, available: 0, fromCommandZone: false },
     ],
   };
   const { unmount } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={unmet} />);

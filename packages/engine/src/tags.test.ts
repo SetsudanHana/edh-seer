@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { extractTags, tag, describeTag } from "./tags.js";
+import { extractTags, tag, describeTag, diesGeneralClass, isPutIntoGraveyardClass } from "./tags.js";
 import { FIXTURES } from "./fixtures.js";
 
 test("treasure maker produces artifact, token, mana, sacrifice-fodder", () => {
@@ -61,7 +61,7 @@ test("an `any` subject renders the bare mechanism", () => {
  *  "-creatures". */
 test("a negated subject renders as `non<type>`", () => {
   expect(describeTag("cast:-creature")).toBe("noncreature spells");
-  expect(describeTag("dies:-token")).toBe("nontokens dying");
+  expect(describeTag("dies:-token")).toBe("nontokens put into a graveyard");
 });
 
 /** `static:` is the exception: its value is an EFFECT KIND, not a subject (`edges.ts` writes
@@ -84,4 +84,41 @@ test("a supertype and the same-plural creature types read as English", () => {
   expect(describeTag("enters:eldrazi")).toBe("Eldrazi entering");
   // The ordinary case is untouched.
   expect(describeTag("enters:wizard")).toBe("wizards entering");
+});
+
+// #1166 review: only a creature or planeswalker DIES (owner). A non-creature class put into a graveyard
+// is said that way; the key is unchanged.
+test("a non-creature dies tag reads 'put into a graveyard', a creature one 'dying'", () => {
+  expect(describeTag("dies:creature")).toBe("creatures dying");
+  expect(describeTag("dies:planeswalker")).toBe("planeswalkers dying");
+  expect(describeTag("dies:zombie")).toBe("zombies dying");
+  expect(describeTag("dies:land")).toBe("lands put into a graveyard");
+  expect(describeTag("dies:permanent")).toBe("permanents put into a graveyard");
+  expect(describeTag("dies:artifact")).toBe("artifacts put into a graveyard");
+});
+
+// The dies label is decided by the TYPE HIERARCHY (SUBTYPE_TYPES), not a list: it reads "dying" only
+// when everything the value denotes is a creature or planeswalker.
+test.each([
+  ["creature", "dying"], ["zombie", "dying"], ["planeswalker", "dying"], ["goblin", "dying"], ["jace", "dying"],
+  ["vehicle", "dying"], // a crewed Vehicle is an artifact creature: "When this Vehicle dies" (Fire Nation Warship)
+  ["land", "gy"], ["forest", "gy"], ["food", "gy"], ["treasure", "gy"], ["artifact", "gy"], ["enchantment", "gy"],
+  ["aura", "gy"], ["case", "gy"], ["room", "gy"], ["desert", "gy"], ["clue", "gy"], ["blood", "gy"],
+  ["-land", "gy"], ["-creature", "gy"], ["-artifact", "gy"], ["-token", "gy"], ["permanent", "gy"],
+])("dies:%s reads %s", (value, kind) => {
+  const label = describeTag(`dies:${value}`);
+  if (kind === "dying") expect(label.endsWith(" dying")).toBe(true);
+  else expect(label.endsWith(" put into a graveyard")).toBe(true);
+});
+
+test("a dies key ranks under the class its label says it is in (#1166): a 'dying' value is never filed under permanent", () => {
+  // Creature subtypes, a crewed Vehicle, and creature-token names the hierarchy does not know.
+  for (const v of ["zombie", "goblin", "vehicle", "festering newt", "hornet"]) {
+    expect(isPutIntoGraveyardClass(v)).toBe(false);
+    expect(diesGeneralClass(v)).toBe("creature");
+  }
+  for (const v of ["land", "forest", "food", "treasure", "artifact", "-land", "-creature", "permanent", "creature", "planeswalker"]) {
+    expect(diesGeneralClass(v)).toBe("permanent");
+  }
+  expect(diesGeneralClass("jace")).toBe("planeswalker");
 });

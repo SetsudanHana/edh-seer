@@ -1,7 +1,7 @@
 import type { CardTags, GameEvent, SubjectFilter, Verb } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
 import { COMBAT_VERBS, combatNarrowsByType, combatSelfSupplied, eventMatches, producerEvents } from "./edges.js";
-import { normalizeZoneEvent, zoneEventKeyRaw } from "./zones.js";
+import { WILDCARD_SUBJECT, normalizeZoneEvent, zoneEventKeyRaw } from "./zones.js";
 import { ALSO_SUPPLIED_BY } from "./suggest-keys.js";
 
 const list = (v: string | string[] | undefined): string[] =>
@@ -16,7 +16,7 @@ const list = (v: string | string[] | undefined): string[] =>
  *  matching 10096 cards, which inflated that row to 19277 suppliers. Sorted so member order
  *  cannot split a row.
  *
- *  Prefixed with `subtype:`/`type:`/`any` so the two dimensions can never collide: a subject with
+ *  Prefixed with `subtype:`/`type:`, or the `*` wildcard, so the two dimensions can never collide: a subject with
  *  `subtype: "creature"` (a tagger mis-extraction) and one with `type: "creature"` are different
  *  shapes and must not roll up into the same row -- one bad subtype-keyed shape merging into 17
  *  correctly self-supplied `type:creature` shapes previously dragged 287 correct listeners into
@@ -26,7 +26,7 @@ function censusSubjectKey(s: SubjectFilter): string {
   if (subtypes.length > 0) return "subtype:" + [...subtypes].sort().join("+");
   const types = list(s.type);
   if (types.length > 0) return "type:" + [...types].sort().join("+");
-  return "any";
+  return WILDCARD_SUBJECT;
 }
 
 const censusKey = (e: GameEvent): string => zoneEventKeyRaw(e.verb, e.subject.zone, censusSubjectKey(e.subject));

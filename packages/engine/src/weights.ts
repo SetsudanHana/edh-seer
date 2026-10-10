@@ -1,5 +1,6 @@
+import { VERB_GENERAL_CLASS } from "@edh-seer/tagger/schema";
 import { themeName } from "./theme-names.js";
-import { describeTag, tagFamily, type Tag } from "./tags.js";
+import { describeTag, diesGeneralClass, tagFamily, type Tag } from "./tags.js";
 
 // Re-exported for callers that historically imported it from here (e.g. this file's own test)
 // and for parity with globalIDF/rankThemes/etc. below — tagFamily itself now lives in tags.js,
@@ -127,11 +128,16 @@ export function rankThemes(deckFreq: Map<Tag, number>, stats: TagStats, opts?: T
     .map(([tag, freq]) => ({ tag, key: freq * globalIDF(stats, tag) }));
   const keyByTag = new Map(scored.map((s) => [s.tag, s.key]));
 
-  // Subsumption key: a tag's own strength, plus its ":any" sibling's strength if the deck has
-  // one. NOT the whole family's sum — `tribe:goblin` gets no credit from `tribe:wizard`, and
+  // Subsumption key: a tag's own strength, plus its general sibling's strength if the deck has
+  // one. The general sibling is `:any`, except for a verb with a general class (#1166): there the
+  // untyped form is stored as a class (`enters:permanent`), `:any` no longer exists, and a tag whose
+  // sibling is itself (or no wider) takes nothing. `dies:creature` is NOT dies' general class. NOT the whole family's sum — `tribe:goblin` gets no credit from `tribe:wizard`, and
   // `:any` doesn't add a second copy of itself.
   const subsumedKey = (tag: string): number => {
-    const anyTag = `${tagFamily(tag)}:any`;
+    const family = tagFamily(tag);
+    const general = family === "dies" ? diesGeneralClass(tag.slice(family.length + 1))
+      : (VERB_GENERAL_CLASS as Readonly<Record<string, string>>)[family] ?? "any";
+    const anyTag = `${family}:${general}`;
     const own = keyByTag.get(tag) ?? 0;
     return anyTag === tag ? own : own + (keyByTag.get(anyTag) ?? 0);
   };

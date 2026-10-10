@@ -33,7 +33,7 @@ test("the condition phrase is read off the clause, and non-conditions are refuse
 // permanent card was put into their graveyard FROM ANYWHERE this turn, so every fill family is the
 // demand: a death from the battlefield, a mill, a discard, and enters-graveyard for the rest.
 test("'you descended this turn' cares about permanents hitting your graveyard from anywhere (CR 700.11)", () => {
-  const all = ["dies:any", "mill:any", "discard:any", "enters-graveyard:any"];
+  const all = ["dies:permanent", "mill:any", "discard:any", "enters-graveyard:any"];
   expect(conditionCares("you descended this turn")).toEqual(all);
   expect(conditionCares("you've descended this turn")).toEqual(all);
   expect(conditionCares("you descended four or more times this turn")).toEqual(all);

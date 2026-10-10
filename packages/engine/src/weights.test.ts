@@ -303,3 +303,34 @@ test("cohesion declines to name the deck below THEME_NAME_FLOOR", () => {
   const thick = computeCohesion(["proliferate:permanent", "draw:any"], new Map([["proliferate:permanent", 20]]), 50);
   expect(thick!.dominant).toBe(true);
 });
+
+// #1166: for a verb that implies a class the untyped form is stored AS that class, so the general
+// sibling a specific tag folds with is `enters:permanent`, not the `enters:any` that no longer exists.
+test("a specific tag folds with its verb's implied-class sibling", () => {
+  const deckFreq = new Map([["enters:creature", 17], ["enters:permanent", 16], ["draw:any", 18]]);
+  const stats = { N: 1000, counts: { "enters:creature": 100, "enters:permanent": 100, "draw:any": 100 } };
+  expect(tagFamily(rankThemes(deckFreq, stats)[0])).toBe("enters");
+});
+
+// #1166 review: the general class of `dies` is permanent, NOT the creature that an untyped dies implies;
+// a non-creature dies tag must not borrow dies:creature's strength and outrank it.
+test("dies:land does not take dies:creature's strength", () => {
+  const deckFreq = new Map([["dies:creature", 12], ["dies:land", 3], ["sacrifice:creature", 6]]);
+  const stats = { N: 1000, counts: { "dies:creature": 100, "dies:land": 100, "sacrifice:creature": 100 } };
+  expect(rankThemes(deckFreq, stats)[0]).toBe("dies:creature");
+});
+
+// A creature SUBTYPE is inside dies:creature; a non-creature class is only inside dies:permanent.
+test("the general sibling of a dies tag is the most specific class that contains it", () => {
+  const stats = { N: 1000, counts: { "dies:zombie": 100, "dies:creature": 100, "dies:permanent": 100, "dies:land": 100, "draw:any": 100 } };
+  // dies:zombie (3) + dies:creature (10) = 13 beats draw:any (12); alone, 3 would not.
+  const z = rankThemes(new Map([["dies:zombie", 3], ["dies:creature", 10], ["draw:any", 12]]), stats);
+  expect(tagFamily(z[0])).toBe("dies");
+  // dies:land (3) + dies:creature (10) are NOT summed: draw:any leads, and dies:creature outranks dies:land.
+  const l = rankThemes(new Map([["dies:land", 3], ["dies:creature", 10], ["draw:any", 12]]), stats);
+  expect(l[0]).toBe("draw:any");
+  expect(l.indexOf("dies:creature")).toBeLessThan(l.indexOf("dies:land"));
+  // dies:land takes dies:permanent
+  const p = rankThemes(new Map([["dies:land", 3], ["dies:permanent", 10], ["draw:any", 12]]), stats);
+  expect(tagFamily(p[0])).toBe("dies");
+});

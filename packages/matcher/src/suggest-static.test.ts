@@ -307,9 +307,9 @@ test("a route the deck already has is not opened", async () => {
 test("a card a finding names is not listed again as a route", async () => {
   const { f, deck } = ghyrsonWitness();
   // Ghyrson waits on 1 damage and nothing in the deck causes it: the synergy finding's card IS the bridge.
-  const withFinding = { ...deck, deckMath: { demand: [{ key: "non-combat-damage:any", available: 0, suppliers: 0, consumers: 1 }] } } as unknown as DeckReport;
+  const withFinding = { ...deck, deckMath: { demand: [{ key: "non-combat-damage:*", available: 0, suppliers: 0, consumers: 1 }] } } as unknown as DeckReport;
   const s = await quietly(() => suggestForDeck({ report: withFinding, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
-  expect(s.synergy["non-combat-damage:any"]!.map((c) => c.name)).toEqual(["Impact Tremors"]);
+  expect(s.synergy["non-combat-damage:*"]!.map((c) => c.name)).toEqual(["Impact Tremors"]);
   expect(s.routes.map((c) => c.name)).toEqual([]);
 });
 

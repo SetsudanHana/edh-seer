@@ -111,7 +111,7 @@ export function conditionCares(condition: string): string[] {
   // an intervening if forms none (owner, 2026-08-20), so that pair stays refused by design.
   // "Descend 4" / "descend 8" cards word their condition as "N or more permanent cards in your
   // graveyard" and never say "descended"; they are a count-threshold, not covered here.
-  if (/\bdescended\b/i.test(condition)) out.push("dies:any", "mill:any", "discard:any", "enters-graveyard:any");
+  if (/\bdescended\b/i.test(condition)) out.push("dies:permanent", "mill:any", "discard:any", "enters-graveyard:any");
   // THE LIFE YOU GAINED IS SUPPLIED (owner, 2026-09-29: Resplendent Angel, in the Hatsune Miku
   // precon, never appeared among token makers that care about lifegain). "If you gained 5 or more
   // life this turn", "if you have at least 7 life more than your starting life total", "if you have

@@ -1113,6 +1113,21 @@ test("a card that casts OTHER cards does supply a self-cast trigger", () => {
   expect(directedReasons(enabler, selfCast, H).some((r) => r.tag.startsWith("cast"))).toBe(true);
 });
 
+// #1166 review: an untyped SELF dies keys on the card's OWN type, never the creature fill.
+const asType = (c: ReturnType<typeof base>, types: string[]) => ({ ...c, tags: { ...c.tags, characteristics: { ...c.tags.characteristics!, types } } });
+test("Armageddon -> Flagstones of Trokair: the dying land is dies:land, not dies:creature", () => {
+  const armageddon = asType(base("Armageddon", [{ kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "dies", subject: { type: "land", control: "any", token: null } }] }]), ["sorcery"]);
+  const flagstones = asType(base("Flagstones of Trokair", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { self: true, control: "you", token: null } }, effect: { kind: "search" } }]), ["land"]);
+  const tags = directedReasons(armageddon, flagstones, H).map((r) => r.tag);
+  expect(tags).toContain("dies:land");
+  expect(tags).not.toContain("dies:creature");
+});
+test("Turn Inside Out: 'when IT dies' about a target creature is still the creature's death", () => {
+  const spell = asType(base("Turn Inside Out", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { ref: "sentence", control: "any", token: null } }, effect: { kind: "" } }]), ["instant"]);
+  expect(cardCaresTags(spell.tags).has("dies:creature")).toBe(true);
+  expect(cardThemeTags(spell.tags).has("dies:creature")).toBe(true);
+});
+
 test("a payoff watching OTHER casts is untouched", () => {
   // The bound in the other direction. `base` gives every fixture card types: ["creature"], so the
   // payoff here watches creature casts -- Bontu's Monument's shape rather than Talrand's.
@@ -2055,7 +2070,7 @@ test("a self trigger says whose entry it is, without moving the tag", () => {
     emits: [{ verb: "enters", subject: { control: "you", token: null, subtype: ["plains", "swamp"] } }],
   }]);
   const etb = pairReasons(fetch, land, H).find((r) => r.tag.startsWith("enters"))!;
-  expect(etb.tag).toBe("enters:any");
+  expect(etb.tag).toBe("enters:permanent");
   expect(etb.text).toBe(// The land's effect kind is `surveil`, and the sentence now names THAT rather than stopping at
     // "triggers" -- see the nine kinds added to PHRASES, and the five that replaced one of them.
     "When Shadowy Backstreet enters thanks to Marsh Flats, it surveils");
@@ -2623,7 +2638,7 @@ describe("token mediation only suppresses when a usable token node exists", () =
       maker([{ component: "token", name: "Copy", typeLine: "Token" }]),
       payoff as unknown as DeckCard, H,
     );
-    expect(reasons.map((r: Reason) => r.tag)).toContain("enters:any");
+    expect(reasons.map((r: Reason) => r.tag)).toContain("enters:permanent");
   });
 
   test("a typed part suppresses, because the token node carries the fact instead", () => {
@@ -2631,12 +2646,12 @@ describe("token mediation only suppresses when a usable token node exists", () =
       maker([{ component: "token", name: "Saproling", typeLine: "Token Creature — Saproling" }]),
       payoff as unknown as DeckCard, H,
     );
-    expect(reasons.map((r: Reason) => r.tag)).not.toContain("enters:any");
+    expect(reasons.map((r: Reason) => r.tag)).not.toContain("enters:permanent");
   });
 
   test("no token parts at all does not suppress either", () => {
     const reasons = directedReasons(maker([]), payoff as unknown as DeckCard, H);
-    expect(reasons.map((r: Reason) => r.tag)).toContain("enters:any");
+    expect(reasons.map((r: Reason) => r.tag)).toContain("enters:permanent");
   });
 });
 
@@ -2899,20 +2914,20 @@ const selfTriggerLegend = (name: string, legendary = true) => ({
 
 test("copy: a token copy of a legend fires its entry trigger AND its death trigger", () => {
   const r = directedReasons(copyFixture("Rite of Replication", "Create a token that's a copy of target creature."), selfTriggerLegend("Hidetsugu and Kairi"), H);
-  expect(r.some((x) => x.tag === "enters:any" && /copies it/.test(x.text))).toBe(true);
-  expect(r.some((x) => x.tag === "dies:any" && /legend rule/.test(x.text))).toBe(true);
+  expect(r.some((x) => x.tag === "enters:permanent" && /copies it/.test(x.text))).toBe(true);
+  expect(r.some((x) => x.tag === "dies:creature" && /legend rule/.test(x.text))).toBe(true);
 });
 
 test("copy: a NONLEGENDARY consumer gets the entry and never the legend rule", () => {
   const r = directedReasons(copyFixture("Rite of Replication", "Create a token that's a copy of target creature."), selfTriggerLegend("Solemn Simulacrum", false), H);
-  expect(r.some((x) => x.tag === "enters:any")).toBe(true);
-  expect(r.some((x) => x.tag === "dies:any")).toBe(false);
+  expect(r.some((x) => x.tag === "enters:permanent")).toBe(true);
+  expect(r.some((x) => x.tag === "dies:creature")).toBe(false);
 });
 
 test("copy: 'becomes a copy' makes no entry — the permanent is already on the battlefield", () => {
   const r = directedReasons(copyFixture("Sakashima's Will", "Choose a creature you control. Each other creature you control becomes a copy of that creature until end of turn.", { type: "creature" }), selfTriggerLegend("Hidetsugu and Kairi"), H);
-  expect(r.some((x) => x.tag === "enters:any")).toBe(false);
-  expect(r.some((x) => x.tag === "dies:any")).toBe(true);
+  expect(r.some((x) => x.tag === "enters:permanent")).toBe(false);
+  expect(r.some((x) => x.tag === "dies:creature")).toBe(true);
 });
 
 test("copy: a populate effect copies a TOKEN and claims nothing", () => {
@@ -2990,12 +3005,12 @@ test("copy: 'a copy of that creature' takes its class from the trigger, and a st
     { control: "you", token: true, type: "creature", subtype: "nightmare", stats: [{ metric: "power", op: "eq", value: 1 }] });
   shepherd.tags.abilities[0] = { ...shepherd.tags.abilities[0], kind: "triggered",
     trigger: { verbs: ["dies"], subject: { control: "you", token: false, other: true, type: "creature" } } } as never;
-  expect(directedReasons(shepherd, selfTriggerLegend("Baleful Strix", false), H).some((x) => x.tag === "enters:any" && /copies it/.test(x.text))).toBe(true);
+  expect(directedReasons(shepherd, selfTriggerLegend("Baleful Strix", false), H).some((x) => x.tag === "enters:permanent" && /copies it/.test(x.text))).toBe(true);
   const ratadrabik = copyFixture("Ratadrabik of Urborg", "Whenever another legendary creature you control dies, create a token that's a copy of that creature, except it's not legendary and it's a 2/2 black Zombie in addition to its other colors and types.",
     { control: "you", token: true, type: "creature", subtype: "zombie", legendary: true });
   ratadrabik.tags.abilities[0] = { ...ratadrabik.tags.abilities[0], kind: "triggered",
     trigger: { verbs: ["dies"], subject: { control: "you", token: null, other: true, legendary: true, type: "creature" } } } as never;
-  expect(directedReasons(ratadrabik, selfTriggerLegend("Kardur, Doomscourge", true), H).some((x) => x.tag === "enters:any")).toBe(true);
+  expect(directedReasons(ratadrabik, selfTriggerLegend("Kardur, Doomscourge", true), H).some((x) => x.tag === "enters:permanent")).toBe(true);
   expect(directedReasons(ratadrabik, selfTriggerLegend("Solemn Simulacrum", false), H).length).toBe(0);
 });
 
@@ -3012,7 +3027,7 @@ test("copy: an untyped token-generation ability does not widen a card that also 
 test("copy: a NONLEGENDARY-restricted copy ability never reaches a legendary consumer, and still reaches a nonlegendary one", () => {
   const p = copyFixture("Reflection of Kiki-Jiki", "Create a token that's a copy of another target nonlegendary creature you control, except it has haste.");
   expect(directedReasons(p, selfTriggerLegend("Kardur, Doomscourge", true), H).length).toBe(0);
-  expect(directedReasons(p, selfTriggerLegend("Solemn Simulacrum", false), H).some((x) => x.tag === "enters:any")).toBe(true);
+  expect(directedReasons(p, selfTriggerLegend("Solemn Simulacrum", false), H).some((x) => x.tag === "enters:permanent")).toBe(true);
 });
 
 // #896 task 3: the grammar reads a copy's exceptions onto what it CREATES ("except it has haste") and
@@ -3023,7 +3038,7 @@ test("copy: the pass reads what is copied (`copyOf`), not the exceptions the cop
   const created = { type: "creature", token: true, keyword: ["haste"], legendary: false };
   const strix = selfTriggerLegend("Baleful Strix", false);
   expect(directedReasons(copyFixture("Reflection of Kiki-Jiki", oracle, { ...created, copyOf: { type: "creature", legendary: false, control: "you" } }), strix, H)
-    .some((x) => x.tag === "enters:any" && /copies it/.test(x.text))).toBe(true);
+    .some((x) => x.tag === "enters:permanent" && /copies it/.test(x.text))).toBe(true);
   expect(directedReasons(copyFixture("Reflection of Kiki-Jiki", oracle, created), strix, H).some((x) => /copies it/.test(x.text))).toBe(false);
 });
 
@@ -4690,7 +4705,7 @@ test("a fill feeds a delve spell, an opponent's fill and a token's death do not"
   expect(directedReasons(oppOnly, dig, H).length).toBe(0);
   const outlet = base("Viscera Seer", [{ kind: "activated", effect: { kind: "scry" },
     emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } }, { verb: "dies", subject: { control: "you", token: null, type: "creature" } }] }]);
-  expect(directedReasons(outlet, dig, H).map((r) => r.tag)).toContain("dies:any");
+  expect(directedReasons(outlet, dig, H).map((r) => r.tag)).toContain("dies:permanent");
   const tokenDeath = base("Goblin token", []);
   (tokenDeath as unknown as { isToken: boolean }).isToken = true;
   expect(directedReasons(tokenDeath, dig, H).length).toBe(0);

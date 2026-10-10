@@ -32,6 +32,9 @@
  *  - `counter-added`: the subject is what the counter lands ON ("a creature getting a counter"),
  *    not the counter's own kind — the field this reads is the consumer's demand, and a demand
  *    names a permanent, never a +1/+1. */
+import { isPutIntoGraveyardClass } from "@edh-seer/engine";
+import { WILDCARD_SUBJECT } from "@edh-seer/matcher/zones";
+
 export const DEMAND_VERB: Record<string, string> = {
   enters: "entering the battlefield",
   "enters-graveyard": "going to a graveyard",
@@ -376,13 +379,13 @@ export function demandSentence(key: string): string {
   const subjectKey = rest.join(":");
 
   const phase = DEMAND_PHASE[verb];
-  if (phase && subjectKey === "any") return phase;
+  if (phase && subjectKey === WILDCARD_SUBJECT) return phase;
 
   // A player action has no permanent subject to glue this onto either -- same shape as the phase
   // check above, one rung down (the subject slot always resolves to "any" for these eight, since
   // nothing narrows WHO draws or gains life to a card type).
   const subjectless = DEMAND_SUBJECTLESS[verb];
-  if (subjectless && subjectKey === "any") {
+  if (subjectless && subjectKey === WILDCARD_SUBJECT) {
     return `${subjectless}${narrowed ? " (a real one, not the game's own)" : ""}`;
   }
 
@@ -400,7 +403,7 @@ export function demandSentence(key: string): string {
   };
 
   let subject: string;
-  if (subjectKey === "any") {
+  if (subjectKey === WILDCARD_SUBJECT) {
     subject = "anything";
   } else if (subjectKey.startsWith("subtype:")) {
     // Subtypes are proper nouns in Magic — a Wizard, not a wizard.
@@ -596,9 +599,10 @@ export function mechanismKey(tag: string): string {
  *  `mechanismKey` already encodes, so it correctly yields the bare label. */
 export function tagLabel(tag: string): string {
   const mechanism = mechanismKey(tag);
-  const label = eventLabel(mechanism);
-  if (mechanism === tag) return label;
   const subject = tag.slice(mechanism.length + 1);
+  // ONLY A CREATURE OR PLANESWALKER DIES (owner 2026-10-10): a land, artifact ... is put into a graveyard.
+  const label = mechanism === "dies" && isPutIntoGraveyardClass(subject) ? "Put into a graveyard" : eventLabel(mechanism);
+  if (mechanism === tag) return label;
   return subject && subject !== "any" ? `${label} · ${subject}` : label;
 }
 
