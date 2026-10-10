@@ -335,10 +335,38 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
   }
 }
 
+/** THE FRONT FACE AS A DECK CARD, for a transform or flip card with a land back (#1167). A card in the deck is its
+ *  front face (CR 712.8a); a transform or flip card's back is reached by transforming, so its
+ *  "{T}: Add" is not a mana source you hold -- Primal Amulet, Dowsing Device and Matzalantli were
+ *  ramp ONLY through their land back. Narrower than "every non-modal layout" on purpose: an adventure or split half is cast from hand.
+ *  Scoped to the `ramp` rules rather than the whole evaluator: they are where a land back's mana
+ *  ability lands, and widening it would silently move every other role on every transform card
+ *  (a werewolf's back-face removal, say) in a change that is about lands. Memoised per card because
+ *  `ownText` caches by card object. */
+const frontViewCache = new WeakMap<DeckCard, DeckCard>();
+function frontView(dc: DeckCard): DeckCard {
+  // ONLY A TRANSFORM/FLIP CARD WITH A LAND BACK: an adventure or split half is cast from hand
+  // (Studious First-Year // Rampant Growth IS ramp), and a modal DFC's back is playable.
+  const backs = (dc.card.typeLine ?? "").split("//").slice(1);
+  if ((dc.card.layout !== "transform" && dc.card.layout !== "flip") || !backs.some((b) => /\bland\b/i.test(b))) return dc;
+  const cached = frontViewCache.get(dc);
+  if (cached) return cached;
+  const text = dc.card.oracleText ?? "";
+  const abilities = dc.tags?.abilities;
+  const view: DeckCard = {
+    ...dc,
+    card: { ...dc.card, oracleText: text.split("\n//\n")[0]! },
+    ...(dc.tags && abilities ? { tags: { ...dc.tags, abilities: abilities.filter((a) => (a.face ?? 0) === 0) } } : {}),
+  };
+  frontViewCache.set(dc, view);
+  return view;
+}
+
 export function ruleMatches(rule: Rule, dc: DeckCard, set: RuleSet = loadRules()): boolean {
+  const seen = rule.category === "ramp" ? frontView(dc) : dc;
   return (
-    rule.match.every((c) => clauseHolds(c, dc, set)) &&
-    !(rule.not ?? []).some((c) => clauseHolds(c, dc, set))
+    rule.match.every((c) => clauseHolds(c, seen, set)) &&
+    !(rule.not ?? []).some((c) => clauseHolds(c, seen, set))
   );
 }
 
