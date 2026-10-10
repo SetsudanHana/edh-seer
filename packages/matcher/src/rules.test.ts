@@ -766,13 +766,15 @@ test("countsAsLand op: a modal DFC with a land face is a land to the guards, a t
   expect(transform.get("lands") ?? new Set()).toEqual(new Set());
 });
 
-test("ramp reads the FRONT face outside modal DFCs: a mana ability only on the land back is no ramp", () => {
+test("a card that transforms into a land is never ramp, wherever its mana ability sits (owner 2026-10-10, #1174)", () => {
   expect(detectBuildCategories([layoutCard("transform", 1)]).get("ramp") ?? new Set()).toEqual(new Set());
-  // Control: the same ability on the front face is ramp.
-  expect(detectBuildCategories([layoutCard("transform", 0)]).get("ramp")).toEqual(new Set(["Probe // Cave"]));
+  // Not even on the front: Treasure Map's three Treasures on transforming do not make it ramp.
+  expect(detectBuildCategories([layoutCard("transform", 0)]).get("ramp") ?? new Set()).toEqual(new Set());
+  // A modal DFC is not a transform: a spell front that makes mana is still ramp.
+  expect(detectBuildCategories([layoutCard("modal_dfc", 0, "Artifact // Artifact")]).get("ramp")).toEqual(new Set(["Probe // Cave"]));
 });
 
-// The narrowing, pinned: the front-face view is for transform/flip cards with a LAND back only.
+// The narrowing, pinned: only transform/flip cards with a LAND back lose ramp.
 test("an adventure half's mana ability is still ramp (it is cast from hand)", () => {
   expect(detectBuildCategories([layoutCard("adventure", 1, "Creature // Sorcery — Adventure")]).get("ramp")).toEqual(new Set(["Probe // Cave"]));
 });
