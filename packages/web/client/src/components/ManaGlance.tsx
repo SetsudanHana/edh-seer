@@ -72,7 +72,7 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
     // THE DECK'S OWN NEED (owner 2026-10-10, #1151): can I pay for MY spells on time. The fixed
     // 6-by-6 benchmark is the ramp figure in "Show the numbers".
     tiles.push(<Tile key="mana" label="Mana" big={policyBand(need.low, need.high)}
-      sub={`to make ${need.mana} mana by turn ${need.turn}, enough for ${Math.round(need.share * 100)}% of your spells`} />);
+      sub={`to make ${need.mana} mana by turn ${need.turn}; ${Math.round(need.share * 100)}% of your spells cost ${need.mana} or less`} />);
   } else if (h) {
     tiles.push(<Tile key="mana" label="Mana" big={policyBand(h.low, h.high)} sub={`to make ${h.mana} mana by turn ${h.turn}`} />);
   }

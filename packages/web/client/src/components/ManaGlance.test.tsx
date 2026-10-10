@@ -67,7 +67,7 @@ test("when some sources come too late, the tile says how many of the deck's are 
 test("the mana tile reads the deck's own need, and falls back to the headline for an old report", () => {
   const withNeed = { headline: { mana: 6, turn: 6, low: 0.59, high: 0.7 }, need: { mana: 4, turn: 4, share: 0.94, low: 0.8, high: 0.8 } } as never;
   const { unmount } = render(<ManaGlance manaAvailability={withNeed} landCount={0} deckSize={0} />);
-  expect(screen.getByTestId("mana-tile")).toHaveTextContent("Mana80%to make 4 mana by turn 4, enough for 94% of your spells");
+  expect(screen.getByTestId("mana-tile")).toHaveTextContent("Mana80%to make 4 mana by turn 4; 94% of your spells cost 4 or less");
   unmount();
   render(<ManaGlance manaAvailability={manaAvailability} landCount={0} deckSize={0} />);
   expect(screen.getByTestId("mana-tile")).toHaveTextContent("Mana52%to make 6 mana by turn 6");

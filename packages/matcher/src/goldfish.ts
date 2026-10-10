@@ -1651,15 +1651,17 @@ export function manaModel(
   const lo = pAtLeastMana(held, 6, 6), hi = pAtLeastMana(greedy, 6, 6);
   const band = (a: number, b: number): { low: number; high: number } =>
     ({ low: Math.min(a, b), high: Math.max(a, b) });
-  // CEILING: the 90% cut is one cut, not a sweep. Clamped to [2, turns]: a deck of one-drops still
-  // asks for two mana on turn two, and a table past the simulated turns cannot be asked.
+  // CEILING: the 90% cut is one cut, not a sweep. Clamped to [2, last row turn]: a deck of one-drops still
+  // asks for two mana on turn two, and `rows` stop at ROW_TURNS, so the readout needs a row to land on.
+  // At the cap `share` stays the true value and may be under 0.9.
   const spellCosts = deck
     .filter((dc) => !/\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout)))
     .map((dc) => parseCost(castableManaCost(dc.card))?.total ?? dc.card.manaValue ?? 0)
     .sort((a, b) => a - b);
   const underOf = (m: number): number => spellCosts.length === 0 ? 1 : spellCosts.filter((c) => c <= m).length / spellCosts.length;
   let needMana = 2;
-  while (needMana < turns && underOf(needMana) < 0.9) needMana++;
+  const lastRow = Math.min(ROW_TURNS, turns);
+  while (needMana < lastRow && underOf(needMana) < 0.9) needMana++;
   const nLo = pAtLeastMana(held, needMana, needMana), nHi = pAtLeastMana(greedy, needMana, needMana);
   const curves = new Map<string, CastCurve>();
   for (const [name, g] of greedy.byCardCastable) {

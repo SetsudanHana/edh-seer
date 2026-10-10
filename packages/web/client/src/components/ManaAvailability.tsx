@@ -43,7 +43,8 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
     .join(" ");
   // The deck's own need turn is the default readout (#1151); a report saved before it falls back to
   // the headline's turn.
-  const defaultTurn = m.need?.turn ?? m.headline.turn;
+  const needTurn = m.need && m.rows.some((r) => r.turn === m.need!.turn) ? m.need.turn : undefined;
+  const defaultTurn = needTurn ?? m.headline.turn;
   const shownTurn = pick ?? (m.rows.some((r) => r.turn === defaultTurn) ? defaultTurn : m.rows[m.rows.length - 1]?.turn);
   const shown = m.rows.find((r) => r.turn === shownTurn);
   const describe = (r: (typeof m.rows)[number]) =>

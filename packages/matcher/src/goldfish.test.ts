@@ -1331,4 +1331,11 @@ describe("manaModel need (#1151)", () => {
     expect(n.mana).toBe(2);
     expect(n.turn).toBe(2);
   });
+  test("clamps to the last row turn when the 90% point is beyond it", async () => {
+    const { manaModel } = await import("./goldfish.js");
+    const big = [...plains(36), ...Array.from({ length: 30 }, (_, i) => card(`Nine ${i}`, "Creature — Giant", 9))];
+    const a = manaModel(big, { trials: 200, seed: 3 }).availability;
+    expect(a.need!.mana).toBe(8);
+    expect(a.rows.map((r) => r.turn)).toContain(a.need!.turn);
+  });
 });

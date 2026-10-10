@@ -278,7 +278,7 @@ export function formatReport(report: DeckReport, trim = 0): string {
     // THIRD copy of a sentence-shaped rule found in this file; found by reading real output.
     const odds = policyBand(m.headline.low, m.headline.high);
     if (m.need) {
-      lines.push(`  by turn ${m.need.turn} you can make ${m.need.mana} mana ${policyBand(m.need.low, m.need.high)} of the time, enough for ${Math.round(m.need.share * 100)}% of your spells`);
+      lines.push(`  by turn ${m.need.turn} you can make ${m.need.mana} mana ${policyBand(m.need.low, m.need.high)} of the time; ${Math.round(m.need.share * 100)}% of your spells cost ${m.need.mana} or less`);
     }
     lines.push(`  ${m.need ? "ramp: " : ""}by turn ${m.headline.turn} you can make ${m.headline.mana} mana ${odds} of the time`);
     lines.push("    (the range is the PLAY POLICY: the low end holds up two mana, the high end spends");
