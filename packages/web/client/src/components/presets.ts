@@ -118,7 +118,7 @@ export const FLOW_DASH = { on: 6, off: 6, speed: 30 } as const;
  *  the grouping is what makes "removal" and "counterspells" one answer-shaped fact rather than two
  *  hues a reader has to reconcile. Order is the order the legend lists them in. */
 /** A legend group that stands for a build parent takes its label and leaves from `ROLE_PARENTS`,
- *  the one definition (#1168), so the map legend and the Roles shelf cannot count different sets. */
+ *  the one definition (#1168), so the map legend and the Roles shelf cannot GROUP different categories. (Their counts can still differ: the legend counts graph node roles, a different classifier, #1172.) */
 function parentGroup(id: string, key: string, extra: string[] = []): { id: string; label: string; categories: string[] } {
   const p = ROLE_PARENTS.find((x) => x.key === key)!;
   return { id, label: p.name, categories: [...p.leaves, ...extra] };
@@ -132,10 +132,9 @@ export const ROLE_GROUPS: { id: string; label: string; categories: string[] }[] 
   parentGroup("cardAdvantage", "consistency"),
   parentGroup("ramp", "ramp"),
   { id: "lands", label: "Lands", categories: ["lands"] },
-  // `stax` paints under Interaction on the map though it is no parent leaf: the owner's 2026-10-06
-  // ruling keeps HARD stax out of the Interaction COUNT (and soft stax in), it does not give stax a
-  // hue of its own. Pinned in presets.test.ts so it is the only difference.
-  parentGroup("interaction", "interaction", ["stax"]),
+  // `stax` is in NO group: it is the tax kind, which the owner's 2026-10-06 ruling says is not
+  // interaction, so it paints as Strategy. Pinned in presets.test.ts.
+  parentGroup("interaction", "interaction"),
   parentGroup("boardWipes", "boardWipes"),
   { id: "strategy", label: "Strategy", categories: [] },
 ];
