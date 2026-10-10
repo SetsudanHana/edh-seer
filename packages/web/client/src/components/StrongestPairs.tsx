@@ -21,7 +21,9 @@ export function StrongestPairs({ pairs, model }: { pairs: TopPair[]; model: Engi
   return (
     <section aria-labelledby="strongest-pairs-title" className="flex flex-col gap-3">
       <h3 id="strongest-pairs-title" className="eyebrow">Cards that work best together</h3>
-      <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,16rem),1fr))]">
+      {/* AUTO-FIT, NOT AUTO-FILL: three entries at most, so empty tracks would leave a band beside
+          them (1920: five 275px tracks, two empty); auto-fit stretches the three across the row. */}
+      <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr))]">
         {pairs.map((p) => {
           const both = p.cards.map(find);
           const read = both.every((c): c is EngineCard => !!c) ? both as EngineCard[] : undefined;
