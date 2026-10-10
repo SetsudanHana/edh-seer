@@ -112,11 +112,14 @@ export const TONE_TEXT: Record<GaugeTone, string> = {
 };
 
 export function Dial({
-  name, value, reading, zones, onOpen, openLabel, size = "input", explain, previous, footer,
+  name, value, reading, zones, onOpen, openLabel, size = "input", explain, previous, footer, gap,
 }: {
   name: string;
   value: string;
   reading: GaugeReading;
+  /** A SHORTFALL THAT TAKES THE READING'S PLACE IN WORDS (#1164), in the warning tone. Only the
+   *  label changes: the needle, the zones and the ghost stay the reading's own. */
+  gap?: string;
   zones: "floor" | "band" | "score";
   onOpen?: () => void;
   openLabel?: string;
@@ -200,7 +203,7 @@ export function Dial({
       {/* data-tone: the tone alone, so a test can pin it independent of the wording -- a colour-only
         * flip of `floorState`/`bandState`/`scoreState` would otherwise leave every text assertion
         * on this span passing. Not read at runtime; don't delete it as unused. */}
-      <span data-tone={reading.tone} className={`${size === "lead" ? "text-sm" : "text-xs"} ${TONE_TEXT[reading.tone]}`}>{reading.label}</span>
+      <span data-tone={gap ? "warning" : reading.tone} className={`${size === "lead" ? "text-sm" : "text-xs"} ${TONE_TEXT[gap ? "warning" : reading.tone]}`}>{gap ?? reading.label}</span>
       {/* The tick is inside an `aria-hidden` svg, so the comparison needs saying in words (WCAG
         * 1.4.1). Silent in the button variant below, whose explicit `aria-label` overrides its own
         * contents -- which is why both exist and neither is a duplicate announcement. */}
@@ -227,7 +230,7 @@ export function Dial({
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`${name}, ${value}, ${reading.label}${previous ? `, previously ${previous.value}` : ""} — open ${openLabel}`}
+      aria-label={`${name}, ${value}, ${gap ?? reading.label}${previous ? `, previously ${previous.value}` : ""} — open ${openLabel}`}
       className={`${extra} min-w-[44px] min-h-[44px] text-left focus-visible:outline-2 focus-visible:outline-(--accent)`}
     >
       {body}
