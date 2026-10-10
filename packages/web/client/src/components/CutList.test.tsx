@@ -172,12 +172,35 @@ test("at 100, two cuts that cover each other are not both clear: one is, the oth
   expect(within(li).getByRole("heading", { level: 4 })).toHaveTextContent("0.4 synergy · 2 mana");
 });
 
-test("at 100, 'cut together, these still lose nothing' is said of two or more clear cuts, not one", () => {
-  const { unmount } = render(<MemoryRouter><CutList cuts={[cut("A"), cut("B")]} slack={[]} deckSize={100} /></MemoryRouter>);
-  expect(screen.getByText("Cut together, these still lose nothing: every link they make, another card makes too.")).toBeInTheDocument();
+test("at 100, 'cut together, these still lose nothing' is said of two or more read clear cuts, not one or an unread one", () => {
+  const rowFor = (n: string) => ({ partners: 1, why: "w", loses: [], covers: [{ link: { from: n, to: "P", tag: "t", text: `${n} link`, repeat: "static" }, by: ["Outside"], partner: "P" }] }) as never;
+  const line = "Cut together, these still lose nothing: every link they make, another card makes too.";
+  const { unmount } = render(<MemoryRouter><CutList cuts={[cut("A", { row: rowFor("A") }), cut("B", { row: rowFor("B") })]} slack={[]} deckSize={100} /></MemoryRouter>);
+  expect(screen.getByText(line)).toBeInTheDocument();
   unmount();
-  render(<MemoryRouter><CutList cuts={[cut("A")]} slack={[]} deckSize={100} /></MemoryRouter>);
-  expect(screen.queryByText(/Cut together, these still lose nothing/)).toBeNull();
+  const { unmount: u2 } = render(<MemoryRouter><CutList cuts={[cut("A", { row: rowFor("A") })]} slack={[]} deckSize={100} /></MemoryRouter>);
+  expect(screen.queryByText(line)).toBeNull();
+  u2();
+  render(<MemoryRouter><CutList cuts={[cut("A", { row: rowFor("A") }), cut("B")]} slack={[]} deckSize={100} /></MemoryRouter>);
+  expect(screen.queryByText(line)).toBeNull();
+});
+
+test("with own and together losses, the count is the own losses and a second line adds the rest", () => {
+  const lk = (text: string) => ({ from: "x", to: "y", tag: "t", text, repeat: "static" });
+  const free = { partners: 1, why: "w", loses: [], covers: [{ link: lk("Elf link"), by: ["Outside"], partner: "P" }] } as never;
+  const mixed = { partners: 1, why: "w", loses: [lk("Own link")], covers: [{ link: lk("Together link"), by: ["Elf"], partner: "P" }] } as never;
+  render(<MemoryRouter><CutList cuts={[cut("Elf", { row: free }), cut("Mixed", { row: mixed, keeps: ["rates 1.5 of 5 in this deck"] })]} slack={[]} deckSize={100} /></MemoryRouter>);
+  const v = within(screen.getByRole("heading", { name: /^Mixed/ }).closest("li")!).getByTestId("cut-loses");
+  expect(v).toHaveTextContent("Why you might keep it: cutting it loses the one link no other card makes: Own link.");
+  expect(v).toHaveTextContent("With Elf cut too, it also loses: Together link");
+});
+
+test("a together-loss on two cards names both", () => {
+  const lk = (text: string) => ({ from: "x", to: "y", tag: "t", text, repeat: "static" });
+  const free = (n: string) => cut(n, { row: { partners: 1, why: "w", loses: [], covers: [{ link: lk(`${n} link`), by: ["Outside"], partner: "P" }] } as never });
+  const z = cut("Z", { row: { partners: 1, why: "w", loses: [], covers: ["A", "B"].map((b) => ({ link: lk(`Z via ${b}`), by: [b], partner: "P" })) } as never });
+  render(<MemoryRouter><CutList cuts={[free("A"), free("B"), z]} slack={[]} deckSize={100} /></MemoryRouter>);
+  expect(within(screen.getByRole("heading", { name: /^Z/ }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("with A and B cut too, cutting it loses 2 links");
 });
 
 test("a together-loss names at most two cards, then counts them", () => {

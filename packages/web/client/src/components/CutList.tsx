@@ -112,10 +112,13 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
   const clearShown = over ? clear : clear.filter((c) => clearTogether.has(c.name));
   const maybeShown = over ? maybe : [...maybe, ...clear.filter((c) => !clearTogether.has(c.name))];
   // A card's loss read with the cards cut alongside it, and which of them a together-only loss needs.
-  const readIn = (c: CutChoice, set: ReadonlySet<string>): { links: string[]; withCut?: string[] } | undefined => {
+  const readIn = (c: CutChoice, set: ReadonlySet<string>): CutRead | undefined => {
     const s = lossSplit(c, new Set([...set, c.name]), makers);
     if (!s) return undefined;
-    return { links: [...s.own, ...s.together], withCut: !s.own.length && s.together.length ? s.by : undefined };
+    // A MIXED LOSS KEEPS ITS COUNTS APART: the sentence counts what cutting it alone loses, and what
+    // only the other cuts add is a second line.
+    if (!s.own.length) return { links: s.together, withCut: s.together.length ? s.by : undefined };
+    return { links: s.own, also: s.together.length ? { links: s.together, by: s.by } : undefined };
   };
   // What else could be cut for free alongside the count (the "next weakest" line), and what would
   // cost something -- alone, or only cut together with the counted ones.
@@ -124,6 +127,8 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
   const losesWith = (c: CutChoice): string[] | undefined => lossIn(c, chosen, makers);
   const costsTogether = (c: CutChoice) => Number((losesWith(c)?.length ?? 0) > 0);
   // THE CARD THAT COVERS MOST OF IT (persona round 2026-10-07): "loses nothing" named no card, so
+  // AT 100 THE PLAN IS THE CLEAR GROUP (#1153): a cover can be a trade-off card, as over 100 it can be a
+  // costly one; that card's own row says what cutting it too would lose.
   // the seat could not check it. Never a card this list also proposes cutting (review): over 100
   // that is the cut itself, otherwise every card shown here.
   const listed = new Set(cuts.map((c) => c.name));
@@ -217,7 +222,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
           {clearShown.length ? (
             <section aria-labelledby="cuts-clear" className="flex flex-col gap-2">
               <h4 id="cuts-clear" className="text-base font-semibold">Nothing argues for keeping these</h4>
-              {clearShown.length > 1 ? <p className="text-sm text-(--muted) max-w-[65ch]">Cut together, these still lose nothing: every link they make, another card makes too.</p> : null}
+              {clearShown.length > 1 && clearShown.every((c) => c.row) ? <p className="text-sm text-(--muted) max-w-[65ch]">Cut together, these still lose nothing: every link they make, another card makes too.</p> : null}
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(25rem,calc((100%_-_2.25rem)/4))),1fr))]">
                 {[...clearShown].sort(byShown).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} cover={coverOf(c)} textOf={textOf} />)}
               </ul>
@@ -371,7 +376,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
 const MAYBE_STEP = 4;
 
 /** One cut: the card, why it is here, and what argues it stays. */
-function CutCard({ c, swap, loses, read, cover, textOf }: { c: CutChoice; textOf?: (name: string) => EngineCard | undefined; swap?: SuggestedPair; loses?: string[]; read?: { links: string[]; withCut?: string[] }; cover?: { name: string; n: number; of: number } }) {
+function CutCard({ c, swap, loses, read, cover, textOf }: { c: CutChoice; textOf?: (name: string) => EngineCard | undefined; swap?: SuggestedPair; loses?: string[]; read?: CutRead; cover?: { name: string; n: number; of: number } }) {
   const r = c.row;
   const score = shownScore(c);
   return (
@@ -393,7 +398,7 @@ function CutCard({ c, swap, loses, read, cover, textOf }: { c: CutChoice; textOf
             {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
           </div>
           {r && r.partners > 0
-            ? <Verdict links={read?.links ?? loses ?? r.loses.map((l) => l.text)} withCut={read?.withCut} cover={cover} keeps={realKeeps(c)} cut={c.name} own={r?.card} textOf={textOf} />
+            ? <Verdict links={read?.links ?? loses ?? r.loses.map((l) => l.text)} withCut={read?.withCut} also={read?.also} cover={cover} keeps={realKeeps(c)} cut={c.name} own={r?.card} textOf={textOf} />
             : realKeeps(c).length ? <p><span className="font-medium text-(--success)">Why you might keep it:</span> {realKeeps(c).join(" · ")}</p> : null}
           {c.twins.length ? (
             <p className="text-(--muted)">Stands in for {listNames(c.twins)}: the same cards use {c.twins.length === 1 ? "both" : "all of them"}.</p>
@@ -410,7 +415,7 @@ function CutCard({ c, swap, loses, read, cover, textOf }: { c: CutChoice; textOf
  *  the reason to keep it; when it loses nothing, its strongest link and its score argue nothing (the
  *  link is covered, the score is the ranking), and only a real argument -- a win plan, a table
  *  warning -- still shows as one. Two lost links are named; the rest open. */
-function Verdict({ links, withCut, cover, keeps, cut, own, textOf }: { withCut?: string[]; cut?: string; own?: EngineCard; textOf?: (name: string) => EngineCard | undefined; links: string[]; cover?: { name: string; n: number; of: number }; keeps: string[] }) {
+function Verdict({ links, withCut, also: alsoLost, cover, keeps, cut, own, textOf }: { withCut?: string[]; also?: { links: string[]; by: string[] }; cut?: string; own?: EngineCard; textOf?: (name: string) => EngineCard | undefined; links: string[]; cover?: { name: string; n: number; of: number }; keeps: string[] }) {
   const keepLabel = <span className="font-medium text-(--success)">Why you might keep it:</span>;
   const also = keeps.length ? <p>{links.length ? "Also: " : <>{keepLabel} </>}{keeps.join(" · ")}</p> : null;
   if (!links.length) {
@@ -433,17 +438,24 @@ function Verdict({ links, withCut, cover, keeps, cut, own, textOf }: { withCut?:
   const head = links.slice(0, 2), rest = links.slice(2);
   return (
     <div className="flex flex-col gap-2" data-testid="cut-loses">
-      <p>{keepLabel} {withCut?.length ? `${withCut.length > 2 ? `with ${withCut.length} of these` : `with ${withCut.join(" and ")}`} cut too, ` : ""}cutting it loses {links.length === 1 ? "the one link" : `${links.length} links`} no other card makes: {head.join("; ")}{rest.length ? "" : "."}</p>
+      <p>{keepLabel} {withCut?.length ? `${withWords(withCut)} cut too, ` : ""}cutting it loses {links.length === 1 ? "the one link" : `${links.length} links`} no other card makes: {head.join("; ")}{rest.length ? "" : "."}</p>
       {rest.length ? (
         <details>
           <summary className="cursor-pointer py-1 text-(--muted)">and {rest.length} more</summary>
           <ul className="list-disc pl-5">{rest.map((t) => <li key={t}>{t}</li>)}</ul>
         </details>
       ) : null}
+      {alsoLost ? <p>{capitalFirst(withWords(alsoLost.by))} cut too, it also loses: {alsoLost.links.join("; ")}</p> : null}
       {also}
     </div>
   );
 }
+
+/** A cut's loss as read against the cards cut with it. */
+interface CutRead { links: string[]; withCut?: string[]; also?: { links: string[]; by: string[] } }
+
+/** "with Elf", "with Elf and Druid", "with 3 of these": at most two names. */
+const withWords = (by: string[]): string => by.length > 2 ? `with ${by.length} of these` : `with ${by.join(" and ")}`;
 
 /** The keep reasons that argue for a card on their own: not its strongest link (the loss line says
  *  what goes) and not its score (the header shows it, and it is the ranking itself). */
