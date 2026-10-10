@@ -32,6 +32,17 @@ test("fast mana is a 0-cost repeatable source, and it is NOT cheap ramp", () => 
 
 /** The correction the stub asks for and the spec calls the one most implementations get wrong. A
  *  Mox counted as cheap ramp is 0.72 of a land lost, every time. */
+test("a card that transforms into a land is not cheap ramp, though its land back produces mana (#1174)", () => {
+  const deck = [
+    mk("Sol Ring", 1, "{T}: Add {C}{C}.", "Artifact", { producedMana: ["C"] }),
+    // Treasure Map's `producedMana` is its Treasure Cove BACK's colours.
+    mk("Treasure Map // Treasure Cove", 2, "{1}, {T}: Scry 1. …\n//\n{T}: Add {C}.", "Artifact // Land",
+      { producedMana: ["C"], layout: "transform" } as Partial<Card>),
+    land("Swamp"),
+  ];
+  expect(landInputs(deck).rampPlusDraw).toBe(1); // Sol Ring only
+});
+
 test("counting a Mox as cheap ramp would change the answer", () => {
   const deck = [
     ...Array.from({ length: 5 }, (_, i) => mk(`Mox-${i}`, 0, "{T}: Add {W}.", "Artifact", { producedMana: ["W"] })),

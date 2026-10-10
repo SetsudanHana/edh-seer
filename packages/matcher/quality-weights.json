@@ -1,19 +1,19 @@
 {
   "deriveVersion": 292,
-  "rulesVersion": 18,
+  "rulesVersion": 19,
   "roles": {
     "ramp": {
       "weights": {
-        "manaValue": -0.18529965153311606,
-        "frequency": 0.3692637160976022,
-        "timing": 0.07393272853287586,
-        "extraValue": 0.3493667824231127,
-        "restriction": -0.03196386877514887,
-        "amount": 0.000010196327954092865,
-        "rateFloor": 0.2781521290947507,
-        "rateCeiling": 0.35843006528682725
+        "manaValue": -0.18586306937052363,
+        "frequency": 0.3634305796022358,
+        "timing": 0.07365041303765177,
+        "extraValue": 0.35549882320823195,
+        "restriction": -0.03205505181132212,
+        "amount": 0.000009929554461834967,
+        "rateFloor": 0.27867718756849785,
+        "rateCeiling": 0.3596488292642446
       },
-      "pairs": 435,
+      "pairs": 432,
       "heldOutAccuracy": 0.6374993688155491,
       "baselineAccuracy": 0.60952184718181,
       "fallbackAccuracy": 0.5312009325985348,
