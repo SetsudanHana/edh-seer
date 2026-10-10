@@ -48,16 +48,6 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
     if (!s) { s = new Set(); m.set(cat, s); }
     for (const n of names) s.add(n);
   }
-  // THE `lands` ROLE AGREES WITH THE LAND COUNT (#1167). The rule table's `typeLine contains land`
-  // reads the WHOLE "A // B" line, so a transform card with a land back (Treasure Map) got the role
-  // while `countsAsLand` -- what the count, the goldfish and `firstTurns` use -- calls it a spell.
-  // Intersected here rather than adding a layout-aware op to the rule table: one line, and every
-  // other typeLine rule keeps its documented whole-line reading.
-  const lands = m.get("lands");
-  if (lands) {
-    const counted = new Set(cards.filter((dc) => countsAsLand(dc.card)).map((dc) => dc.card.name));
-    for (const n of [...lands]) if (!counted.has(n)) lands.delete(n);
-  }
   return m;
 }
 

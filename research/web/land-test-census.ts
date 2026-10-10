@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { CALIBRATION_DECKS } from "@edh-seer/data";
+import { CALIBRATION_DECKS } from "../../packages/data/src/deck-paths.js";
 import { analyzeDeckStatic } from "../../packages/web/client/src/api.static.js";
 import { landCount as shapeLandCount } from "../../packages/web/client/src/lib/deck-shape.js";
 
@@ -9,7 +9,7 @@ import { landCount as shapeLandCount } from "../../packages/web/client/src/lib/d
  *  (`report.deckMath.lands.actual`, the land-count target's own tally) and the DECK SHAPE chart's
  *  (`deck-shape.ts landCount` over the graph nodes). The goldfish's own land count is not exposed on
  *  the report; its land test is the `isLand` slot flag in `manaModel`, so the three here are what
- *  can be read. Prints only decks where the three disagree, then totals (ALL=1 prints every deck; ROLES=1 also dumps each card's roles, to count role changes by diff). Run at two commits and diff.
+ *  can be read. Prints only decks where the three disagree, then totals (ALL=1 prints every deck; ROLES=1 also dumps each card's roles (ROLE rows) and the cut list (CUT rows), to count gained/lost roles and changed cuts by diff). Run at two commits and diff.
  *
  *    STATIC=https://edhseer.cards/static npx tsx research/web/land-test-census.ts
  */
@@ -27,6 +27,7 @@ for (const file of files) {
   const math = r.deckMath?.lands?.actual ?? -1;
   const shape = graph ? shapeLandCount(graph.nodes) : -1;
   if (process.env.ROLES) for (const c of (report as unknown as { cards?: { name: string; roles?: string[] }[] }).cards ?? []) console.log(`ROLE ${file.split("/").pop()} | ${c.name} | ${(c.roles ?? []).join(",")}`);
+  if (process.env.ROLES) for (const c of (report as unknown as { cutList?: { name: string }[] }).cutList ?? []) console.log(`CUT ${file.split("/").pop()} | ${c.name}`);
   decks++; sum.build += build; sum.math += math; sum.shape += shape;
   if (process.env.ALL) console.log(`${file.split("/").pop()}: ${build} ${math} ${shape}`);
   if (new Set([build, math, shape]).size > 1) { disagree++; console.log(`${file.split("/").pop()}: build ${build} | deckMath ${math} | shape ${shape}`); }

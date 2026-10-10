@@ -1,5 +1,6 @@
 import ruleSet from "./rules.json" with { type: "json" };
 import type { DeckCard } from "./types.js";
+import { countsAsLand } from "./typeline.js";
 
 /** A single test against one card. The operator set is CLOSED on purpose: `oracle`, `effectKind`,
  *  `typeLine` and an `anyOf` combinator cover every classifier that exists, and keeping it closed
@@ -57,6 +58,11 @@ export type RuleClause =
    *  for the residue is a derive-side read of the grant's SUBJECT, which is its own item; this
    *  clause takes only the cases the printed keyword list settles outright. */
   | { op: "protectionIsOwnKeyword" }
+  /** The card is a land FOR THE DECK COUNT (`countsAsLand`, #1167): a modal DFC with a land face, else
+   *  the front face. Replaces `typeLine contains land`, which read the whole "A // B" line and made
+   *  a transform card with a land back (Treasure Map) a land to every `not` guard, so it earned no
+   *  role while the land count called it a spell. */
+  | { op: "countsAsLand" }
   | { op: "anyOf"; clauses: RuleClause[] };
 
 export interface Rule {
@@ -257,6 +263,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
   switch (clause.op) {
     case "oracle":
       return pattern(set, clause.pattern).test(ownText(dc.card));
+    case "countsAsLand":
+      return countsAsLand(dc.card);
     case "typeLine":
       return (dc.card.typeLine ?? "").toLowerCase().includes(clause.contains);
     case "effectKind":

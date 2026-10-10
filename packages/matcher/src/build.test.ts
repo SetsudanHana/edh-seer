@@ -959,3 +959,11 @@ test("the lands ROLE agrees with the land count: a transform land-back has none,
   expect(m.get("lands")).toEqual(new Set(["Shatterskull Smashing // Shatterskull, the Hammer Pass", "Bojuka Bog"]));
   expect(rolesByCard(m).get("Treasure Map // Treasure Cove") ?? []).not.toContain("lands");
 });
+
+test("a transform card with a land back is a spell to the rule table: it earns its front-face roles (#1167)", () => {
+  const withLayout = (dc: DeckCard, layout: string): DeckCard => ({ ...dc, card: { ...dc.card, layout } as never });
+  const map = withLayout(mk("Treasure Map // Treasure Cove", "{1}, {T}: Draw a card.", "Artifact // Land", drawAbility), "transform");
+  const m = detectBuildCategories([map]);
+  expect(m.get("draw")).toEqual(new Set([map.card.name]));
+  expect(m.get("lands") ?? new Set()).toEqual(new Set());
+});
