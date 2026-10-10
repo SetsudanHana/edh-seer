@@ -139,8 +139,8 @@ export function nodeId(name: string, isToken?: boolean, face?: number, isEmblem?
   return face ? `face:${face}:${name}` : name;
 }
 
-/** The categorical order the board already validated for colour-vision separation (`ROLE_HUE`,
- *  presets.ts), six deck groups at most. Helpers are drawn neutral. */
+/** The categorical order the board already validated for colour-vision separation (the retired
+ *  `ROLE_HUE` palette), six deck groups at most. Helpers are drawn neutral. */
 // "#d9622b", NOT THE OCHRE IT REPLACED (persona round, 2026-09-27): an ochre theme read as the gold
 // of a walked route.
 const GROUP_HUES = ["#1c8db7", "#d9622b", "#5b40f6", "#21a28f", "#277310", "#6b89f9"];
