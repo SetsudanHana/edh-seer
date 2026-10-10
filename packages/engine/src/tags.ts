@@ -1,3 +1,4 @@
+import { SUBTYPE_TYPES } from "@edh-seer/tagger/subtypes";
 import type { Card } from "./card.js";
 import { PATTERNS } from "./patterns.js";
 import { toCardView, type CardView } from "./cardview.js";
@@ -95,13 +96,32 @@ const IRREGULAR_PLURAL: Record<string, string> = {
   spirit: "Spirits",
 };
 
-/** CLASSES THAT NEVER "DIE" (owner 2026-10-10, #1166: only a creature or a planeswalker dies; CR 700.4
- *  defines dies as "put into a graveyard from the battlefield", the glossary limits it to those two).
- *  A `dies:` tag naming one of these is a permanent put into a graveyard, and says so. Keys unchanged. */
-const PUT_INTO_GRAVEYARD_CLASSES: ReadonlySet<string> = new Set([
-  "land", "artifact", "enchantment", "battle", "permanent", "aura", "equipment", "vehicle", "saga", "curse",
-]);
-export const isPutIntoGraveyardClass = (value: string): boolean => PUT_INTO_GRAVEYARD_CLASSES.has(value);
+/** WHO DIES (owner 2026-10-10, #1166): only a creature or a planeswalker. CR 700.4 defines dies as "put
+ *  into a graveyard from the battlefield", and the glossary limits it to those two. A `dies:` value
+ *  therefore reads "dying" only when EVERYTHING it denotes is a creature or planeswalker, decided by
+ *  the type hierarchy (`SUBTYPE_TYPES`: zombie -> creature, food -> artifact, forest -> land), not by a
+ *  list. A negation ("-land") denotes creatures AND non-creatures, so it is not a death. Keys are
+ *  unchanged; this is wording.
+ *  A VEHICLE is the stated exception: a crewed one is an artifact creature, and its own text says
+ *  "When this Vehicle dies" (Fire Nation Warship).
+ *  A value the hierarchy knows nothing of (a card name, `party`, `legendary`) keeps "dying". */
+const DIES_ONLY = new Set(["creature", "planeswalker"]);
+const NON_CREATURE_TYPES = new Set(["land", "artifact", "enchantment", "battle", "permanent", "instant", "sorcery", "spell"]);
+export function isPutIntoGraveyardClass(value: string): boolean {
+  if (value.startsWith("-")) return true;
+  if (DIES_ONLY.has(value) || value === "vehicle") return false;
+  if (NON_CREATURE_TYPES.has(value)) return true;
+  const types = SUBTYPE_TYPES[value];
+  return types !== undefined && !types.every((t) => DIES_ONLY.has(t));
+}
+
+/** The class a `dies` tag is subsumed by (`rankThemes`): the most specific one that CONTAINS the value.
+ *  A creature subtype is inside `dies:creature`; a non-creature class is only inside `dies:permanent`. */
+export function diesGeneralClass(value: string): string {
+  const types = SUBTYPE_TYPES[value];
+  return value !== "creature" && value !== "planeswalker" && types !== undefined && types.length > 0 && types.every((t) => t === "creature")
+    ? "creature" : "permanent";
+}
 
 function subjectPhrase(value: string): string | null {
   if (value === "any") return null;

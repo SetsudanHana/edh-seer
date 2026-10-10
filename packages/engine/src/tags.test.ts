@@ -61,7 +61,7 @@ test("an `any` subject renders the bare mechanism", () => {
  *  "-creatures". */
 test("a negated subject renders as `non<type>`", () => {
   expect(describeTag("cast:-creature")).toBe("noncreature spells");
-  expect(describeTag("dies:-token")).toBe("nontokens dying");
+  expect(describeTag("dies:-token")).toBe("nontokens put into a graveyard");
 });
 
 /** `static:` is the exception: its value is an EFFECT KIND, not a subject (`edges.ts` writes
@@ -95,4 +95,18 @@ test("a non-creature dies tag reads 'put into a graveyard', a creature one 'dyin
   expect(describeTag("dies:land")).toBe("lands put into a graveyard");
   expect(describeTag("dies:permanent")).toBe("permanents put into a graveyard");
   expect(describeTag("dies:artifact")).toBe("artifacts put into a graveyard");
+});
+
+// The dies label is decided by the TYPE HIERARCHY (SUBTYPE_TYPES), not a list: it reads "dying" only
+// when everything the value denotes is a creature or planeswalker.
+test.each([
+  ["creature", "dying"], ["zombie", "dying"], ["planeswalker", "dying"], ["goblin", "dying"], ["jace", "dying"],
+  ["vehicle", "dying"], // a crewed Vehicle is an artifact creature: "When this Vehicle dies" (Fire Nation Warship)
+  ["land", "gy"], ["forest", "gy"], ["food", "gy"], ["treasure", "gy"], ["artifact", "gy"], ["enchantment", "gy"],
+  ["aura", "gy"], ["case", "gy"], ["room", "gy"], ["desert", "gy"], ["clue", "gy"], ["blood", "gy"],
+  ["-land", "gy"], ["-creature", "gy"], ["-artifact", "gy"], ["-token", "gy"], ["permanent", "gy"],
+])("dies:%s reads %s", (value, kind) => {
+  const label = describeTag(`dies:${value}`);
+  if (kind === "dying") expect(label.endsWith(" dying")).toBe(true);
+  else expect(label.endsWith(" put into a graveyard")).toBe(true);
 });

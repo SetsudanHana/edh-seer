@@ -1,6 +1,6 @@
 import { VERB_GENERAL_CLASS } from "@edh-seer/tagger/schema";
 import { themeName } from "./theme-names.js";
-import { describeTag, tagFamily, type Tag } from "./tags.js";
+import { describeTag, diesGeneralClass, tagFamily, type Tag } from "./tags.js";
 
 // Re-exported for callers that historically imported it from here (e.g. this file's own test)
 // and for parity with globalIDF/rankThemes/etc. below — tagFamily itself now lives in tags.js,
@@ -135,7 +135,9 @@ export function rankThemes(deckFreq: Map<Tag, number>, stats: TagStats, opts?: T
   // `:any` doesn't add a second copy of itself.
   const subsumedKey = (tag: string): number => {
     const family = tagFamily(tag);
-    const anyTag = `${family}:${(VERB_GENERAL_CLASS as Readonly<Record<string, string>>)[family] ?? "any"}`;
+    const general = family === "dies" ? diesGeneralClass(tag.slice(family.length + 1))
+      : (VERB_GENERAL_CLASS as Readonly<Record<string, string>>)[family] ?? "any";
+    const anyTag = `${family}:${general}`;
     const own = keyByTag.get(tag) ?? 0;
     return anyTag === tag ? own : own + (keyByTag.get(anyTag) ?? 0);
   };

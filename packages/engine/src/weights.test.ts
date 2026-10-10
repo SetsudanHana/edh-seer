@@ -319,3 +319,18 @@ test("dies:land does not take dies:creature's strength", () => {
   const stats = { N: 1000, counts: { "dies:creature": 100, "dies:land": 100, "sacrifice:creature": 100 } };
   expect(rankThemes(deckFreq, stats)[0]).toBe("dies:creature");
 });
+
+// A creature SUBTYPE is inside dies:creature; a non-creature class is only inside dies:permanent.
+test("the general sibling of a dies tag is the most specific class that contains it", () => {
+  const stats = { N: 1000, counts: { "dies:zombie": 100, "dies:creature": 100, "dies:permanent": 100, "dies:land": 100, "draw:any": 100 } };
+  // dies:zombie (3) + dies:creature (10) = 13 beats draw:any (12); alone, 3 would not.
+  const z = rankThemes(new Map([["dies:zombie", 3], ["dies:creature", 10], ["draw:any", 12]]), stats);
+  expect(tagFamily(z[0])).toBe("dies");
+  // dies:land (3) + dies:creature (10) are NOT summed: draw:any leads, and dies:creature outranks dies:land.
+  const l = rankThemes(new Map([["dies:land", 3], ["dies:creature", 10], ["draw:any", 12]]), stats);
+  expect(l[0]).toBe("draw:any");
+  expect(l.indexOf("dies:creature")).toBeLessThan(l.indexOf("dies:land"));
+  // dies:land takes dies:permanent
+  const p = rankThemes(new Map([["dies:land", 3], ["dies:permanent", 10], ["draw:any", 12]]), stats);
+  expect(tagFamily(p[0])).toBe("dies");
+});
