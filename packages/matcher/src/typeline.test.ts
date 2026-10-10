@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { parseTypeLine, parseTypeLineAllFaces } from "./typeline.js";
+import { isLand, parseTypeLine, parseTypeLineAllFaces } from "./typeline.js";
 
 test("separates supertypes from types", () => {
   expect(parseTypeLine("Legendary Creature — Human Wizard")).toEqual({
@@ -82,4 +82,36 @@ describe("parseTypeLineAllFaces", () => {
       .toEqual(parseTypeLine("Legendary Creature — Human Wizard"));
   });
 
+});
+
+describe("isLand: is this CARD a land in the deck (issue #1167)", () => {
+  const t = (typeLine: string, layout?: string) => ({ typeLine, layout });
+  test.each([
+    ["Treasure Map // Treasure Cove", "Artifact // Land"],
+    ["Search for Azcanta // Azcanta, the Sunken Ruin", "Enchantment // Legendary Land"],
+    ["Legion's Landing // Adanto, the First Fort", "Legendary Enchantment // Land"],
+    ["Growing Rites of Itlimoc // Itlimoc, Cradle of the Sun", "Legendary Enchantment // Legendary Land"],
+    ["Azor's Gateway // Sanctum of the Sun", "Legendary Artifact // Legendary Land"],
+    ["Hadana's Climb // Winged Temple of Orazca", "Enchantment // Land"],
+  ])("transform card with only a land back is a spell: %s", (_n, typeLine) => {
+    expect(isLand(t(typeLine, "transform"))).toBe(false);
+    expect(isLand(t(typeLine, "flip"))).toBe(false);
+  });
+  test("a modal DFC with a land back counts, either face", () => {
+    expect(isLand(t("Instant // Land", "modal_dfc"))).toBe(true);
+    expect(isLand(t("Land // Creature — Elf", "modal_dfc"))).toBe(true);
+    expect(isLand(t("Sorcery // Creature", "modal_dfc"))).toBe(false);
+  });
+  test("front face rules for split, adventure and unknown layouts", () => {
+    expect(isLand(t("Creature — Elf // Sorcery — Adventure", "adventure"))).toBe(false);
+    expect(isLand(t("Instant // Instant", "split"))).toBe(false);
+    expect(isLand(t("Land // Land", "reversible_card"))).toBe(true);
+  });
+  test("single faces, no layout", () => {
+    expect(isLand(t("Basic Land — Forest"))).toBe(true);
+    expect(isLand(t("Land Creature — Forest Dryad", "normal"))).toBe(true);
+    expect(isLand(t("Legendary Creature — Human Wizard", "normal"))).toBe(false);
+    expect(isLand(t("Artifact"))).toBe(false);
+    expect(isLand({})).toBe(false);
+  });
 });
