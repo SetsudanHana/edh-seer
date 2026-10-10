@@ -107,6 +107,13 @@ export function parseCost(cost: string | undefined, selfNames: readonly string[]
     }
     // A counter removed or put as the cost (Cryptic Trilobite, Wall of Roots), and other permanents tapped (Springleaf Drum),
     // are structured so no consumer has to read `other`.
+    // EXILING THE CARD ITSELF IS SACRIFICING IT (Ether: "{T}, Exile this artifact: Add {U}"): the mana source is gone, a one-shot.
+    // Exiling OTHER cards (a card from a graveyard, Molt Tender) is a consumed resource and stays in `other`.
+    if (/^exile\b/i.test(piece)) {
+      const target = piece.replace(/^exile\s+/i, "").toLowerCase();
+      const itself = /^(?:this\b(?!\s+card from)|it$|itself$|~)/.test(target) || selfNames.some((n) => n !== "" && target.startsWith(n));
+      if (itself) { out.sacrificeSelf = true; continue; }
+    }
     const counter = /^(remove|put)\b[^.]*\bcounters?\b/i.exec(piece);
     if (counter) { out.counters = counter[1]!.toLowerCase() as "remove" | "put"; continue; }
     if (/^tap (?:an?|one|two|three|\d+|x|any number of|target)\b[^.]*\buntapped\b/i.test(piece)) { out.tapOther = true; continue; }
@@ -139,9 +146,12 @@ function production(object: string, amountText = ""): Pick<ManaLine, "colours" |
   }
   let anyColour: ManaAnyColour | null = null;
   if (/commander'?s color identity/.test(lower)) anyColour = "identity";
+  // BOUNDED BY WHAT YOU CONTROL OR HAVE EXILED, not by the card: "any color among legendary permanents you control" (Plaza of Heroes,
+  // Mox Amber), "for each color among permanents you control" (Faeburrow Elder, Bloom Tender), "any of the exiled card's colors" (Chrome Mox).
+  else if (/\bcolou?rs? among\b|\bexiled cards?'?s?'? colou?rs?\b/.test(lower)) anyColour = "among";
   else if (/\bthe chosen (?:color|type)\b|\bcolor of your choice\b/.test(lower)) anyColour = "chosen";
   else if (/\bcould produce\b/.test(lower)) anyColour = /\bopponents?\b/.test(lower) ? "opponent-lands" : /\b(?:lands?|gates?)\b/.test(lower) ? "lands-you-could" : null;
-  else if (/\bany (?:one )?(?:color|type)\b|\bany combination of colou?rs\b|\bany colou?r\b/.test(lower)) anyColour = "any";
+  else if (/\bany (?:one )?(?:color|type)\b|\bany combination of colou?rs\b|\bany colou?r\b|\bdifferent colou?rs\b/.test(lower)) anyColour = "any";
   if (anyColour === "any") for (const c of WUBRG) colours.add(c);
   // The grammar path keeps "for each creature you control" on `action.amount`, the model path in the object. A number word or
   // digit there ("four", Cosmic Crucible) is a fixed amount; any other non-symbol text ("the greatest power among creatures you

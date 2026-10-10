@@ -1378,8 +1378,10 @@ export type ManaLineSource = "activated" | "trigger" | "static-grant" | "aura-tr
  *  "in any combination of colors"); the rest are bounded by something outside the card: `identity` your
  *  commander's colour identity (Arcane Signet), `chosen` the colour chosen as the permanent entered (Utopia
  *  Sprawl), `opponent-lands` colours a land an opponent controls could produce (Exotic Orchard), and
- *  `lands-you-could` colours a land you control could produce (Reflecting Pool). */
-export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "lands-you-could";
+ *  `lands-you-could` colours a land you control could produce (Reflecting Pool), and `among` the colours among things you control or have
+ *  exiled ("any color among legendary permanents you control", Plaza of Heroes; "for each color among permanents you control", Faeburrow
+ *  Elder; Chrome Mox's imprint). Two more read as `any`: "N mana in any combination of colors" and "two mana of different colors". */
+export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "lands-you-could" | "among";
 
 /** ONE WAY A CARD PRODUCES MANA (or a mana source, or a land), read once at derive time so no consumer parses
  *  oracle text again (#1169; the inventory found ten detectors disagreeing on real cards). A card carries

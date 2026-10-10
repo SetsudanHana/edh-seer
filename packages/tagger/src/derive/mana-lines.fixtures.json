@@ -7891,5 +7891,872 @@
    }
   ],
   "source": "model"
+ },
+ "Plaza of Heroes": {
+  "card": {
+   "_id": "9c58d241-4d9f-4b46-b8ee-f4587f9acfd6",
+   "name": "Plaza of Heroes",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a legendary spell.\n{T}: Add one mana of any color among legendary permanents you control.\n{3}, {T}, Exile this land: Target legendary creature gains hexproof and indestructible until end of turn.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "spend this mana only to cast a legendary spell",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color among legendary permanents you control",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "this land",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "hexproof",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "indestructible",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "The Grey Havens": {
+  "card": {
+   "_id": "a1a9695e-073b-4a65-b3ec-2cfddc23202a",
+   "name": "The Grey Havens",
+   "typeLine": "Legendary Land",
+   "oracleText": "When The Grey Havens enters, scry 1.\n{T}: Add {C}.\n{T}: Add one mana of any color among legendary creature cards in your graveyard.",
+   "keywords": [
+    "Scry"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "scry",
+      "object": "1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "~",
+     "control": "you"
+    }
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color among legendary creature cards in your graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Mox Amber": {
+  "card": {
+   "_id": "7a43bd27-fdd8-41f0-9bc4-92568f3408f1",
+   "name": "Mox Amber",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "{T}: Add one mana of any color among legendary creatures and planeswalkers you control.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{0}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color among legendary creatures and planeswalkers you control",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Faeburrow Elder": {
+  "card": {
+   "_id": "70a6f08e-854d-4e2f-9d8c-c45ec3231157",
+   "name": "Faeburrow Elder",
+   "typeLine": "Creature — Treefolk Druid",
+   "oracleText": "Vigilance\nThis creature gets +1/+1 for each color among permanents you control.\n{T}: For each color among permanents you control, add one mana of that color.",
+   "keywords": [
+    "Vigilance"
+   ],
+   "colors": [
+    "G",
+    "W"
+   ],
+   "colorIdentity": [
+    "G",
+    "W"
+   ],
+   "manaValue": 3,
+   "power": "0",
+   "toughness": "0",
+   "layout": "normal",
+   "manaCost": "{1}{G}{W}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "amount": "+1/+1 for each color among permanents you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of each color among permanents you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Guild Globe": {
+  "card": {
+   "_id": "a7e7cacf-cc2f-45ce-abb1-7b66d1e2fabc",
+   "name": "Guild Globe",
+   "typeLine": "Artifact",
+   "oracleText": "When this artifact enters, draw a card.\n{2}, {T}, Sacrifice this artifact: Add two mana of different colors.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "this artifact",
+     "control": "you"
+    }
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "two mana of different colors",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Ether": {
+  "card": {
+   "_id": "566533af-5e67-463f-ac33-dfcf1ec735c9",
+   "name": "Ether",
+   "typeLine": "Artifact",
+   "oracleText": "{T}, Exile this artifact: Add {U}. When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}{U}",
+   "producedMana": [
+    "U"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{U}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "that spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Pit of Offerings": {
+  "card": {
+   "_id": "044d2788-6daa-4849-a813-1f577eef9295",
+   "name": "Pit of Offerings",
+   "typeLine": "Land — Cave",
+   "oracleText": "This land enters tapped.\nWhen this land enters, exile up to three target cards from graveyards.\n{T}: Add {C}.\n{T}: Add one mana of any of the exiled cards' colors.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "This land",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "up to three target cards from graveyards",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "optional": true
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "this land",
+     "control": "you"
+    }
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any of the exiled cards' colors",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Servant of the Conduit": {
+  "card": {
+   "_id": "df1a8846-b4da-4e9b-8cf3-ee687e4c606b",
+   "name": "Servant of the Conduit",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "When this creature enters, you get {E}{E} (two energy counters).\n{T}, Pay {E}: Add one mana of any color.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "energy",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Bog Witch": {
+  "card": {
+   "_id": "85573cba-07ae-4421-a167-a8569f85c0f7",
+   "name": "Bog Witch",
+   "typeLine": "Creature — Human Spellshaper",
+   "oracleText": "{B}, {T}, Discard a card: Add {B}{B}{B}.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 3,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{2}{B}",
+   "producedMana": [
+    "B"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{B}{B}{B}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Cryptex": {
+  "card": {
+   "_id": "8186a992-9065-4a7f-bb00-1c20e01e8fb6",
+   "name": "Cryptex",
+   "typeLine": "Artifact",
+   "oracleText": "{T}, Collect evidence 3: Add one mana of any color. Put an unlock counter on this artifact. (To collect evidence 3, exile cards with total mana value 3 or greater from your graveyard.)\nSacrifice this artifact: Surveil 3, then draw three cards. Activate only if this artifact has five or more unlock counters on it.",
+   "keywords": [
+    "Collect evidence",
+    "Surveil"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "unlock",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "surveil",
+      "object": "3",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "three cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Molt Tender": {
+  "card": {
+   "_id": "9a39ca64-e1a9-42ef-8efd-6aa3edde3d93",
+   "name": "Molt Tender",
+   "typeLine": "Creature — Insect Druid",
+   "oracleText": "{T}: Mill a card. (Put the top card of your library into your graveyard.)\n{T}, Exile a card from your graveyard: Add one mana of any color.",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Thornvault Forager": {
+  "card": {
+   "_id": "7b18cfad-a1cf-46c2-bcdd-7762c13d50e5",
+   "name": "Thornvault Forager",
+   "typeLine": "Creature — Squirrel Ranger",
+   "oracleText": "{T}: Add {G}.\n{T}, Forage: Add two mana in any combination of colors. (To forage, exile three cards from your graveyard or sacrifice a Food.)\n{3}{G}, {T}: Search your library for a Squirrel card, reveal it, put it into your hand, then shuffle.",
+   "keywords": [
+    "Forage"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "forage",
+      "object": "",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "two mana in any combination of colors",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a Squirrel card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
  }
 }

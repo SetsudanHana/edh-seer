@@ -426,7 +426,9 @@ import { emblemRecipient } from "../emblem.js";
 // 296: #1169 review 2: number words are fixed amounts, "instead" / "as long as" / conditional-fetch gates, each-player fetches.
 // 297: #1169 review 3: "if you do" is a cost not a gate, intervening-if and "instead add" gates, "for as long as" is no gate, one trigger add read once.
 // 298: #1169 review 4: "Then if <cond>, <cost>. If you do, ..." gates on the condition and takes the cost after the comma.
-export const DERIVE_VERSION = 298;
+// 299: #1169 task 2a review: anyColour `among` (colours among what you control / the exiled card's colours), "different colors" is any colour,
+// exiling the card itself in a cost is `sacrificeSelf`.
+export const DERIVE_VERSION = 299;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

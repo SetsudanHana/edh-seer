@@ -224,7 +224,8 @@ describe("review fixes (#1169 task 1)", () => {
     expect(linesOf("Springleaf Drum")[0]!.cost).toMatchObject({ tap: true, tapOther: true, other: [] });
   });
   it("a line whose production cannot be read says so", () => {
-    for (const n of ["Chrome Mox", "Bloom Tender", "Meteor Crater"]) expect(only(n).unread, n).toBe(true);
+    // Chrome Mox and Bloom Tender are bounded (`among`, task 2a review); "choose a color of a permanent you control" is still unread.
+    for (const n of ["Meteor Crater"]) expect(only(n).unread, n).toBe(true);
     expect(only("Sol Ring").unread).toBe(false);
     expect(only("Arcane Signet").unread).toBe(false);
   });
@@ -309,5 +310,34 @@ describe("review round 4 (#1169 task 1)", () => {
     const l = linesOf("Charitable Levy", "fetch")[0]!;
     expect(l.gate).toBe("there are three or more collection counters on it");
     expect(l.cost).toMatchObject({ sacrificeSelf: true, other: [] });
+  });
+});
+
+describe("review of task 2a (#1169): 'among', unread, self-exile", () => {
+  it("'any color among <things you control>' is bounded by the board (anyColour 'among'), and is not unread", () => {
+    for (const n of ["Plaza of Heroes", "The Grey Havens", "Mox Amber"]) {
+      const ls = linesOf(n).filter((l) => l.anyColour === "among");
+      expect(ls.length, n).toBeGreaterThan(0);
+      for (const l of ls) expect(l, n).toMatchObject({ unread: false, colours: [] });
+    }
+    for (const n of ["Faeburrow Elder", "Bloom Tender"]) expect(only(n), n).toMatchObject({ anyColour: "among", unread: false });
+  });
+  it("Chrome Mox: the imprinted card's colours are a bound, not an unread line", () => {
+    expect(only("Chrome Mox")).toMatchObject({ anyColour: "among", unread: false });
+  });
+  it("'two mana of different colors' (Guild Globe) is any colour", () => {
+    expect(only("Guild Globe")).toMatchObject({ anyColour: "any", unread: false, amount: { fixed: 2, scales: null } });
+  });
+  it("Plaza of Heroes' unbounded 'any color' line is still any", () => {
+    expect(linesOf("Plaza of Heroes").some((l) => l.anyColour === "any" && l.restriction !== null)).toBe(true);
+  });
+  it("exiling the card itself is a sacrifice of it (Ether), exiling other cards is not", () => {
+    expect(linesOf("Ether").find((l) => l.source === "activated")!.cost).toMatchObject({ sacrificeSelf: true, other: [] });
+    expect(only("Molt Tender").cost.other).toEqual(["Exile a card from your graveyard"]);
+  });
+  it("no mana line in the fixtures keeps an unread flag the new reads should have resolved", () => {
+    for (const n of ["Plaza of Heroes", "The Grey Havens", "Mox Amber", "Faeburrow Elder", "Bloom Tender", "Chrome Mox", "Guild Globe", "Pit of Offerings"]) {
+      for (const l of linesOf(n)) expect(l.unread, n).toBe(false);
+    }
   });
 });
