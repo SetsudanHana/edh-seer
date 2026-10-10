@@ -365,8 +365,9 @@ test("a token made by a double-faced card goes when that card is cut", () => {
 
 // THE LAND COUNT IS FOR THE FINISHED 100 (#1152): the cuts are all spells, so the page says where
 // the land count lands once they are out.
-const landsLine = (deckSize: number, lands?: { actual: number; target: number }) => {
-  render(<MemoryRouter><CutList cuts={[cut("A"), cut("B")]} slack={[]} deckSize={deckSize} lands={lands} /></MemoryRouter>);
+const landsLine = (deckSize: number, lands?: { actual: number; target: number }, listed = Math.max(0, deckSize - 100)) => {
+  const free = { partners: 1, why: "w", loses: [], covers: [] } as never;
+  render(<MemoryRouter><CutList cuts={Array.from({ length: listed }, (_, i) => cut(`C${i}`, { row: free }))} slack={[]} deckSize={deckSize} lands={lands} /></MemoryRouter>);
   return screen.queryByTestId("cuts-lands");
 };
 
@@ -407,4 +408,16 @@ test("under the land band, the loss-free sentence does not promise 100 and the l
   render(<MemoryRouter><CutList cuts={Array.from({ length: 8 }, (_, i) => cut(`C${i}`, { row: free }))} slack={[]} deckSize={108} lands={{ actual: 30, target: 36 }} /></MemoryRouter>);
   expect(screen.getByTestId("cuts-over").textContent).not.toContain("it is 100");
   expect(screen.getByTestId("cuts-lands")).toHaveTextContent("14 cards come out in all");
+});
+
+test("lands stay is claimed only when the listed cuts cover the whole overage", () => {
+  expect(landsLine(108, { actual: 35, target: 36 }, 6)!.textContent).toBe("Take the other 2 from spells too and your 35 lands stay. A 100-card deck of this curve wants 36, and you are 1 under, within the normal ±3.");
+});
+
+test("with no cut listed, the in-band line asks for all of them from spells", () => {
+  expect(landsLine(108, { actual: 35, target: 36 }, 0)!.textContent).toBe("Take all 8 from spells and your 35 lands stay. A 100-card deck of this curve wants 36, and you are 1 under, within the normal ±3.");
+});
+
+test("one over 100 and over the land band, it says cut 1, not cut all 1", () => {
+  expect(landsLine(101, { actual: 40, target: 36 })).toHaveTextContent("Your 40 lands are 4 over the 36 this deck wants: cut 1 from your lands to reach 100, and 3 are still over.");
 });

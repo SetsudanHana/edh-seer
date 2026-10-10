@@ -201,12 +201,16 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
     const d = actual - target, n = Math.abs(d);
     if (n <= LAND_BAND) {
       const r = bandState(actual, target);
-      return `The cut list's cards are all spells, so your ${actual} lands stay. A 100-card deck of this curve wants ${target}, and you are ${r.label}.`;
+      // ONLY WHEN THE LISTED CUTS COVER THE OVERAGE: the rest comes from `elsewhere`, which can hold land cards.
+      const lead = toCut.length === over ? `The cut list's cards are all spells, so your ${actual} lands stay.`
+        : toCut.length ? `Take the other ${over - toCut.length} from spells too and your ${actual} lands stay.`
+          : `Take all ${over} from spells and your ${actual} lands stay.`;
+      return `${lead} A 100-card deck of this curve wants ${target}, and you are ${r.label}.`;
     }
     if (d < 0) return `Your ${actual} lands are ${n} under the ${target} this deck wants: cut ${n} more spells and add ${n} lands, so ${over + n} cards come out in all.`;
     return n <= over
       ? `Your ${actual} lands are ${n} over the ${target} this deck wants: cutting ${n} of them counts toward the ${over}.`
-      : `Your ${actual} lands are ${n} over the ${target} this deck wants: cut all ${over} from your lands to reach 100, and ${n - over} ${n - over === 1 ? "is" : "are"} still over.`;
+      : `Your ${actual} lands are ${n} over the ${target} this deck wants: cut ${over === 1 ? "1" : `all ${over}`} from your lands to reach 100, and ${n - over} ${n - over === 1 ? "is" : "are"} still over.`;
   })();
   const hasCuts = cuts.length > 0;
   const hasUnjudged = !!unjudged && unjudged.length > 0;
