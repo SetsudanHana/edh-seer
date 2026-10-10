@@ -20,3 +20,10 @@ test("it draws a share axis and a readout that follows hover and focus", () => {
   fireEvent.focus(screen.getByTestId("availability-col-1"));
   expect(screen.getByTestId("availability-readout")).toHaveTextContent("Turn 1 · 10%");
 });
+
+/** #1151: the readout opens on the deck's own need turn; the fixed 6-by-6 is labelled as ramp. */
+test("the readout defaults to the need turn and the headline is labelled Ramp", () => {
+  render(<ManaAvailability manaAvailability={{ ...MA, need: { mana: 3, turn: 3, share: 0.92, low: 0.9, high: 0.9 } }} />);
+  expect(screen.getByTestId("availability-readout")).toHaveTextContent("Turn 3 · 30% of the deck payable");
+  expect(screen.getByText("Ramp:").parentElement).toHaveTextContent(/Ramp:.*40%.*to make 6 mana by turn 6/);
+});

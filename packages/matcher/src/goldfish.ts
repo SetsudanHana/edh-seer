@@ -1534,6 +1534,16 @@ export interface ManaAvailability {
    *  could tap `mana` by `turn`), from the hold-up-2 policy to the spend-everything ceiling. This is
    *  the cell the whole-item falsifier was measured on. */
   headline: { mana: number; turn: number; low: number; high: number };
+  /** THE DECK'S OWN NEED (owner ruling 2026-10-10, #1151). `headline` is a FIXED benchmark -- six
+   *  mana by turn six -- and the chart's readout is the share of the deck the board can pay; they
+   *  measured different things and clashed on 46 of 71 calibration decks (readout >= 95% at the
+   *  headline turn while the tile's high end was under 80%). The Glance tile asks what the player
+   *  asks, can I pay for MY spells on time: `mana` is the smallest value at or under which 90% of the
+   *  deck's nonland spells (the `payableShareAt` denominator) sit, `share` is the true fraction at or
+   *  under it, and `turn` is `mana` (on curve). `low`/`high` are the same two-policy interval as the
+   *  headline. The 6-by-6 stays, as the ramp figure in the fold. Always emitted; optional in the type
+   *  only so reports saved before it still load. */
+  need?: { mana: number; turn: number; share: number; low: number; high: number };
 }
 
 /** THE REPORT SHAPE, and it is an INTERVAL because the point readout was WITHDRAWN.
@@ -1641,6 +1651,18 @@ export function manaModel(
   const lo = pAtLeastMana(held, 6, 6), hi = pAtLeastMana(greedy, 6, 6);
   const band = (a: number, b: number): { low: number; high: number } =>
     ({ low: Math.min(a, b), high: Math.max(a, b) });
+  // CEILING: the 90% cut is one cut, not a sweep. Clamped to [2, last row turn]: a deck of one-drops still
+  // asks for two mana on turn two, and `rows` stop at ROW_TURNS, so the readout needs a row to land on.
+  // At the cap `share` stays the true value and may be under 0.9.
+  const spellCosts = deck
+    .filter((dc) => !/\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout)))
+    .map((dc) => parseCost(castableManaCost(dc.card))?.total ?? dc.card.manaValue ?? 0)
+    .sort((a, b) => a - b);
+  const underOf = (m: number): number => spellCosts.length === 0 ? 1 : spellCosts.filter((c) => c <= m).length / spellCosts.length;
+  let needMana = 2;
+  const lastRow = Math.min(ROW_TURNS, turns);
+  while (needMana < lastRow && underOf(needMana) < 0.9) needMana++;
+  const nLo = pAtLeastMana(held, needMana, needMana), nHi = pAtLeastMana(greedy, needMana, needMana);
   const curves = new Map<string, CastCurve>();
   for (const [name, g] of greedy.byCardCastable) {
     const h = held.byCardCastable.get(name) ?? g;
@@ -1726,6 +1748,7 @@ export function manaModel(
       accelerants: deck.map(classifyAccelerant).filter((a) => a !== null).length,
       rows,
       headline: { mana: 6, turn: 6, low: Math.min(lo, hi), high: Math.max(lo, hi) },
+      need: { mana: needMana, turn: needMana, share: underOf(needMana), low: Math.min(nLo, nHi), high: Math.max(nLo, nHi) },
       // FAST STARTS, only for a deck that runs rituals: without one the burst is the board's own mana,
       // which the commander's castability row already prices with colours (owner 2026-10-06).
       ...(deck.some((dc) => ritualAdds(dc) > 0 || opponentHandRitual(dc) > 0) && greedy.fastStart.size > 0

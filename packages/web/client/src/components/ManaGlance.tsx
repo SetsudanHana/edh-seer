@@ -67,7 +67,13 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
     tiles.push(<Tile key="hands" label="Opening hands" warn={keep < 0.7} big={`${Math.round(keep * 100)}%`} sub="have 2 to 4 lands" />);
   }
   const h = manaAvailability?.headline;
-  if (h) {
+  const need = manaAvailability?.need;
+  if (need) {
+    // THE DECK'S OWN NEED (owner 2026-10-10, #1151): can I pay for MY spells on time. The fixed
+    // 6-by-6 benchmark is the ramp figure in "Show the numbers".
+    tiles.push(<Tile key="mana" label="Mana" big={policyBand(need.low, need.high)}
+      sub={`to make ${need.mana} mana by turn ${need.turn}; ${Math.round(need.share * 100)}% of your spells cost ${need.mana} or less`} />);
+  } else if (h) {
     tiles.push(<Tile key="mana" label="Mana" big={policyBand(h.low, h.high)} sub={`to make ${h.mana} mana by turn ${h.turn}`} />);
   }
   const hardest = [...(deckMath?.castability.cards ?? [])].sort((a, b) => a.castable.high - b.castable.high)[0];
