@@ -20,6 +20,8 @@ import type { DeckCard } from "./types.js";
  *  (CR 903.6) and cannot be fetched.
  *
  *  `finds` says which lands satisfy the requirement (a colour, or a basic land type); `direct` are the cards that satisfy it themselves. */
+// CEILING: a fetch is credited for every colour of a land it COULD find in this deck, capped at how many such lands there are; it ignores that
+// the lands may already be on the battlefield or drawn, and a costed permanent fetch (Myriad Landscape) is not credited at all.
 export function withFetches(library: readonly DeckCard[], direct: readonly DeckCard[], finds: (land: Card) => boolean): DeckCard[] {
   const cards = library.map((dc) => dc.card);
   const fetches = library.filter((dc) => !direct.includes(dc) && isFetchSource(dc)

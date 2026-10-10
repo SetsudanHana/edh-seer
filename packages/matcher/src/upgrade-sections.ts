@@ -19,7 +19,7 @@ import { normalizeName } from "@edh-seer/data/names";
 import type { BuildCategory } from "./build.js";
 import { basicsFloor, betterLand, landFacts, neededColours, unusualText, type LandFacts } from "./land-score.js";
 import { fetchedColours } from "./colour-sources.js";
-import { auraTriggerColours, colourSourceColours } from "./mana-lines.js";
+import { colourSourceColours } from "./mana-lines.js";
 import { COLORS, colourDeficit, landTypeDemand, type Color } from "./mana-audit.js";
 import { ingredients, rolesOfCard, type Ingredient, type Ingredients, type Role } from "./quality.js";
 import type { StaticLookup } from "./static-lookup.js";
@@ -126,9 +126,9 @@ export function roleOption(section: RoleSectionId, cut: DeckCard, add: Candidate
   return best;
 }
 
-// A colour swap's `made` is what the card is a colour source of, and for the Aura path (an Aura that enchants a land and adds mana by trigger) what its
-// trigger adds: the audit counts no Aura as a source (it is not a tap you control), the swap offers one for a colour all the same (owner, 2026-10-08).
-const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => colourSourceColours(d).includes(c) || auraTriggerColours(d).includes(c));
+// A colour swap's `made` is what the card is a colour source of -- the audit's own test, so a swap the audit cannot see closing the gap is never
+// offered. An Aura's trigger (Wild Growth, Fertile Ground) is not one: trigger mana is ramp, not a colour source (owner, 2026-10-10).
+const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => colourSourceColours(d).includes(c));
 
 /** A COLOUR SWAP FOR A ROCK (owner, 2026-10-08, #966): the same rock in everything but its colours, and
  *  the add makes a colour the deck is short of (`colourDeficit`) that the cut does not, keeping every

@@ -9,6 +9,7 @@ import { colourSourceCards } from "./colour-sources.js";
 import { deckIdentity, isColourSource, colourSourceColours, makesAnyMana, isFetchSource, cardLines, hasConditionalMana } from "./mana-lines.js";
 import { staticFixer } from "./static-fixers.js";
 import { landFacts, neededColours } from "./land-score.js";
+import { unreadSourceNames } from "./mana-lines.js";
 import type { DeckCard } from "./types.js";
 
 const all = fx as unknown as { cards: DeckCard[]; gisa: { deck: DeckCard[] } };
@@ -154,5 +155,49 @@ describe("land swaps read the same lines", () => {
     expect(landFacts(get("Exotic Orchard"), need, []).colours).toEqual([]);
     expect(landFacts(get("Exotic Orchard"), need, []).utility).toContain("conditional-mana");
     expect(landFacts(get("Overgrown Tomb"), need, []).colours).toEqual(["B", "G"]);
+  });
+});
+
+describe("a consumed resource in the cost is not a colour source (review of 2a)", () => {
+  test("energy, discard, collect evidence, exile from a graveyard, forage: only the free lines count", () => {
+    for (const n of ["Aether Hub", "Servant of the Conduit", "Bog Witch", "Cryptex", "Molt Tender"]) {
+      expect(colours(n), n).toEqual([]);
+    }
+    // Aether Hub and Thornvault Forager keep their free lines: {C} and {G}.
+    expect(makesAnyMana(get("Aether Hub"))).toBe(true);
+    expect(colours("Thornvault Forager")).toEqual(["G"]);
+  });
+  test("a self-exile is a one-shot: Ether is no source", () => {
+    expect(colours("Ether")).toEqual([]);
+  });
+});
+
+describe("'among' is bounded by the commander's colours (a CEILING), unread is never a silent zero", () => {
+  test("Plaza of Heroes, Mox Amber, Chrome Mox and Faeburrow Elder make the identity's colours", () => {
+    const id = new Set(["B", "R"]);
+    for (const n of ["Mox Amber", "Chrome Mox", "Faeburrow Elder"]) expect(colours(n, id), n).toEqual(["B", "R"]);
+    expect(colours("Plaza of Heroes", id)).toEqual(["B", "R"]);
+  });
+  test("for land swaps an 'among' land is conditional and makes no colour: Plaza of Heroes, The Grey Havens", () => {
+    const need = new Set(["W", "U", "B", "R", "G"] as const);
+    for (const n of ["Plaza of Heroes", "The Grey Havens"]) {
+      expect(landFacts(get(n), need, []).colours, n).toEqual([]);
+      expect(landFacts(get(n), need, []).utility, n).toContain("conditional-mana");
+    }
+  });
+  test("a line derive could not read is no colour, and the audit names the card", () => {
+    expect(colours("Meteor Crater")).toEqual([]);
+    expect(unreadSourceNames([get("Meteor Crater"), get("Sol Ring")])).toEqual(["Meteor Crater"]);
+    const spell = { card: { name: "x", typeLine: "Instant", manaCost: "{B}", manaValue: 1, keywords: [], colors: [], oracleText: "" }, tags: null } as unknown as DeckCard;
+    const out = manaAuditFull([get("Meteor Crater"), get("Sol Ring"), spell]);
+    expect(out.unreadSources).toEqual(["Meteor Crater"]);
+    expect(manaAuditFull([get("Sol Ring"), spell]).unreadSources).toBeUndefined();
+  });
+});
+
+describe("an Aura's trigger is not a colour source, so it is no colour swap either", () => {
+  test("Fertile Ground makes no colour for a swap", () => {
+    expect(colours("Fertile Ground")).toEqual([]);
+    expect(cardLines(get("Fertile Ground")).some((l) => l.source === "aura-trigger")).toBe(true);
   });
 });

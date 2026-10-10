@@ -4,7 +4,7 @@ import { minSources, pCanPayByTurn } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
 import { colourSourceCards, withFetches } from "./colour-sources.js";
-import { deckIdentity, makesAnyMana } from "./mana-lines.js";
+import { deckIdentity, makesAnyMana, unreadSourceNames } from "./mana-lines.js";
 import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import type { DeckCard } from "./types.js";
 import { BASIC_LAND_TYPES, countsAsLand } from "./typeline.js";
@@ -232,7 +232,7 @@ export function plainPips(manaCost: string | undefined): Partial<Record<Color, n
 export function manaAuditFull(
   deck: readonly DeckCard[],
   opts: { commanderNames?: readonly string[] } = {},
-): { rows: ManaAuditRow[]; gold?: GoldJoint } {
+): { rows: ManaAuditRow[]; gold?: GoldJoint; unreadSources?: string[] } {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const basicTypes = deckBasicTypes(library);
@@ -400,7 +400,9 @@ export function manaAuditFull(
     if (pJoint >= GOLD_CONFIDENCE) continue;
     if (!worstGold || pJoint < worstGold.pJoint) worstGold = { ...g, cards: g.names.length, pJoint, pEach };
   }
-  return { rows, ...(worstGold ? { gold: worstGold } : {}) };
+  // CARDS WHOSE MANA DERIVE COULD NOT READ count as no colour above, and are named here so the count is never a silent zero.
+  const unreadSources = unreadSourceNames(library);
+  return { rows, ...(worstGold ? { gold: worstGold } : {}), ...(unreadSources.length > 0 ? { unreadSources } : {}) };
 }
 
 /** THE DECK-WIDE COLOUR SHORTFALL (owner, 2026-10-08, #966): per colour, how many more sources the

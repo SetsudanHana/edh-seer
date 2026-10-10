@@ -225,7 +225,7 @@ export function computeDeckMath(
       fromCommandZone: r.fromCommandZone,
     }));
 
-  const { rows: audit, gold } = manaAuditFull(deck, { commanderNames });
+  const { rows: audit, gold, unreadSources } = manaAuditFull(deck, { commanderNames });
   const deficit: Partial<Record<Color, number>> = {};
   // ONLY THE ROWS THE FINDING SHOWS: a single pip is hidden as "a fault every deck has" (findings.ts), so
   // it must not rule out the sources that would be traded.
@@ -390,6 +390,8 @@ export function computeDeckMath(
     turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,
     // THE JOINT DEMAND THE PER-COLOUR ROWS HIDE (#1116): present only when it fails with every colour passing alone.
     ...(gold ? { gold: { ...gold, names: gold.names.slice(0, 2) } } : {}),
+    // Mana sources derive could not read, counted as no colour (`manaAuditFull`). No renderer shows it yet.
+    ...(unreadSources ? { unreadSources } : {}),
     castability, demand, topdeck: topdeckPayoffs(deck, commanderNames), fetchShortfalls,
     speed,
   };

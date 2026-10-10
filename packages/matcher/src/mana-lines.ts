@@ -33,16 +33,37 @@ export function deckIdentity(deck: readonly DeckCard[], commanderNames: readonly
   return found.length === 0 ? null : new Set(found.flatMap((dc) => dc.card.colorIdentity!));
 }
 
-/** THE SCHEMA'S COLOUR-SOURCE RULE (`ManaLine` in tagger/schema.ts), plus the source label it implies: an activated ability the
- *  card itself taps, or the line a static ability grants. A trigger, an aura trigger, a token maker, a one-shot spell and a fetch
- *  are never one, whatever their cost says. */
-export const isColourSource = (line: ManaLine): boolean =>
+/** COST PIECES THAT CONSUME NOTHING: exerting a creature (it skips an untap, Arena of Glory, Oasis Ritualist) and untapping a permanent
+ *  (Benthic Explorers). Every other entry in `cost.other` is a consumed resource: energy, a discard, a mill, collect evidence, forage,
+ *  an exile from a graveyard (owner rulings 2026-10-10 and the 2a review). The list is the whole of what the corpus holds (2026-10-11). */
+const NON_CONSUMING_COST = /^(?:exert|untap)\b/i;
+
+/** The shape of a colour source -- everything `isColourSource` asks except that the production could be read. */
+const sourceShaped = (line: ManaLine): boolean =>
   (line.source === "activated" || line.source === "static-grant")
-  && !line.unread && line.gate === null && line.restriction === null
+  && line.gate === null && line.restriction === null
   && !line.cost.sacrificeSelf && !line.cost.sacrificeOther && line.cost.counters === null && !line.cost.tapOther
+  && line.cost.other.every((o) => NON_CONSUMING_COST.test(o))
   && (line.cost.tap || line.source === "static-grant");
 
-/** THE COST RULE: the line makes at least what it costs plus its tap. */
+/** THE SCHEMA'S COLOUR-SOURCE RULE (`ManaLine` in tagger/schema.ts), plus the source label it implies: an activated ability the
+ *  card itself taps, or the line a static ability grants. A trigger, an aura trigger, a token maker, a one-shot spell and a fetch
+ *  are never one, whatever their cost says. A non-empty `cost.other` is a consumed resource unless it is on the list above.
+ *  CEILING: a GATED line (Tainted Peak's B/R needs a Swamp, Honored Hierarch's needs renown) is not credited at all, though it holds
+ *  in most games; the audit under-claims rather than counts a source that may be dead. */
+export const isColourSource = (line: ManaLine): boolean => sourceShaped(line) && !line.unread;
+
+/** THE NAMES OF CARDS WITH A LINE THAT WOULD BE A COLOUR SOURCE BUT WHOSE PRODUCTION DERIVE COULD NOT READ ("choose a color of a permanent
+ *  you control", Meteor Crater; "the type a land could produce" with a counter clause, Incubation Druid). They count as NO colour --
+ *  never a silent zero: the colour audit lists them (`unreadSources`) so the report can say its count may be short.
+ *  CEILING: counted as none, not guessed; 28 mana lines in the corpus are unread (2026-10-11), about half not mana at all. */
+export function unreadSourceNames(cards: readonly DeckCard[]): string[] {
+  return [...new Set(cards.filter((dc) => cardLines(dc).some((l) => l.unread && sourceShaped(l))).map((dc) => dc.card.name))].sort();
+}
+
+/** THE COST RULE: the line makes at least what it costs plus its tap.
+ *  CEILING: a SCALING amount ("{B} for each Swamp", Cabal Coffers, Gaea's Cradle) skips the rule -- its amount cannot be judged from the
+ *  line, so it is credited; Baldur's Gate ({2},{T}: X mana of one colour, X = other Gates) is the edge. */
 export const paysItsWay = (line: ManaLine): boolean => line.amount.scales !== null || line.net >= 1;
 
 /** THE FACES WHOSE LINES COUNT. A face node is its own face. A whole card counts its front, and its back only when the back can be
@@ -74,38 +95,36 @@ function intrinsicColours(dc: DeckCard): string[] {
 
 /** HOW A LINE THAT CHOOSES A COLOUR RESOLVES (`ManaAnyColour`):
  *  - `any` is every colour the commander's identity allows; `identity` is the identity itself. With no identity known, all five.
+ *  - `among` is bounded by what you control or have exiled and is counted as the identity (CEILING, in the switch).
  *  - `chosen`, `opponent-lands`, `lands-you-could` are bounded by something that is not on the card. `five` keeps what the colour
  *    audit and the mana base always did with them (Scryfall listed all five: Exotic Orchard, Reflecting Pool, Caged Sun); `none`
  *    keeps what the land score did (the colours are conditional, so the land is never "upgraded" or cut for them). */
 export type BoundedColours = "five" | "none";
 
+// CEILING: a bounded colour that is not the identity counts as FIVE for the audit and the mana base (what Scryfall listed: Exotic Orchard,
+// Reflecting Pool, Caged Sun) and as NONE for the land swaps; neither is the colours the board really offers.
 function lineColours(line: ManaLine, identity: DeckIdentity, bounded: BoundedColours): string[] {
   const out = new Set(line.colours);
   switch (line.anyColour) {
     case "any": for (const c of WUBRG) if (!identity || identity.has(c)) out.add(c); break;
+    // CEILING: `among` ("any color among legendary permanents you control", Chrome Mox's imprint) is bounded by what is on the board or
+    // exiled, which this approximates by the commander's identity: the colours a deck can have. A Mox Amber with no legendary on the
+    // battlefield makes nothing; here it makes the deck's colours.
     case "identity": for (const c of WUBRG) if (!identity || identity.has(c)) out.add(c); break;
+    case "among": if (bounded === "five") for (const c of WUBRG) if (!identity || identity.has(c)) out.add(c); break;
     case "chosen": case "opponent-lands": case "lands-you-could": if (bounded === "five") for (const c of WUBRG) out.add(c); break;
     case null: break;
   }
   return WUBRG.filter((c) => out.has(c));
 }
 
+// CEILING: a line derive could not read (`unread`) is not a colour source -- it counts as none, and `unreadSourceNames` lists the cards.
 /** THE COLOURS A CARD IS A COLOUR SOURCE OF, by its own tap or static production: its colour-source lines that pay their way, a
  *  land's intrinsic basic types. Empty for a card with no derived tags: it contributes nothing, and `coverage.ts` already lists it among the underived cards. A fetch is
  *  NOT counted here: what it finds is the deck's to say (`colour-sources.ts`). */
 export function colourSourceColours(dc: DeckCard, identity: DeckIdentity = null, bounded: BoundedColours = "five"): string[] {
   const out = new Set<string>(intrinsicColours(dc));
   for (const l of cardLines(dc)) if (isColourSource(l) && paysItsWay(l)) for (const c of lineColours(l, identity, bounded)) out.add(c);
-  return WUBRG.filter((c) => out.has(c));
-}
-
-/** THE COLOURS AN AURA'S TRIGGER ADDS to the land it enchants (Wild Growth, Utopia Sprawl, Fertile Ground: "whenever enchanted land is
- *  tapped for mana, its controller adds an additional ..."). An aura trigger is NOT a colour source (the audit and the mana base count
- *  none); it is the swap suggestions' call (`upgrade-sections.ts`: a colour swap may cross card types toward an Aura that enchants a
- *  land), which is why the schema leaves aura triggers to the consumer. */
-export function auraTriggerColours(dc: DeckCard, identity: DeckIdentity = null): string[] {
-  const out = new Set<string>();
-  for (const l of cardLines(dc)) if (l.source === "aura-trigger" && !l.unread && l.gate === null && l.restriction === null) for (const c of lineColours(l, identity, "five")) out.add(c);
   return WUBRG.filter((c) => out.has(c));
 }
 
@@ -130,5 +149,5 @@ export function isFetchSource(dc: DeckCard): boolean {
 export function hasConditionalMana(dc: DeckCard): boolean {
   return cardLines(dc).some((l) => (l.source === "activated" || l.source === "static-grant") && l.cost.tap && l.cost.mana === 0
     && (l.gate !== null || l.restriction !== null || l.unread || l.amount.scales !== null
-      || l.anyColour === "chosen" || l.anyColour === "opponent-lands" || l.anyColour === "lands-you-could"));
+      || l.anyColour === "chosen" || l.anyColour === "opponent-lands" || l.anyColour === "lands-you-could" || l.anyColour === "among"));
 }

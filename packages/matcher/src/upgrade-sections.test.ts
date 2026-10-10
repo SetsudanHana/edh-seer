@@ -327,9 +327,11 @@ describe("a colour swap may cross card types, toward the type the deck's payoffs
     expect([...watchedTypes(undefined)]).toEqual([]);
   });
 
-  test("an enchantress deck gets the growth Auras for a colour; with no enchantment payoff, or an artifact one, it does not", () => {
+  // 2a review (owner, 2026-10-10): trigger mana is ramp, not a colour source, so no deck is offered an Aura FOR A COLOUR -- the audit could not
+  // see it closing the gap. Before, an enchantress deck got the growth Auras here.
+  test("a growth Aura is offered for a colour to no deck, whatever its payoffs watch", () => {
     const adds = [rock("Fertile Ground"), rock("Utopia Sprawl")];
-    expect(swap(rock("Mind Stone"), adds, ["enchantment"])).toEqual([["Fertile Ground", "enchantment"], ["Utopia Sprawl", "enchantment"]]);
+    expect(swap(rock("Mind Stone"), adds, ["enchantment"])).toEqual([]);
     expect(swap(rock("Mind Stone"), adds, [])).toEqual([]);
     expect(swap(rock("Mind Stone"), adds, ["artifact"])).toEqual([]);
   });
@@ -359,8 +361,8 @@ describe("the cross-type path takes only an Aura that enchants a land and adds m
     expect(offered(rock("Abundant Growth"))).toEqual([]);
     expect(offered(rock("Urban Utopia"))).toEqual([]);
   });
-  test("the growth Auras stay", () => {
-    for (const n of ["Fertile Ground", "Wild Growth", "Overgrowth", "Trace of Abundance", "Utopia Sprawl"] as const) expect(offered(rock(n)), n).toEqual([n]);
+  test("the growth Auras are no longer offered: trigger mana is not a colour source (2a review)", () => {
+    for (const n of ["Fertile Ground", "Wild Growth", "Overgrowth", "Trace of Abundance", "Utopia Sprawl"] as const) expect(offered(rock(n)), n).toEqual([]);
   });
 });
 
@@ -379,9 +381,10 @@ describe("'Enchant Forest' is a demand for Forests, judged like a colour pip", (
   test("Utopia Sprawl is refused for a deck with few Forests and offered for one with many; an 'Enchant land' Aura needs neither", () => {
     const run = (forests: number, add: DeckCard) => roleOptions("ramp", [rock("Mind Stone")], [candidate(add)], undefined, { G: 4 }, () => 1, new Set(["enchantment"]),
       auraSupport(deckWith(forests), [])).flatMap((o) => o.options.map((x) => x.add));
+    // The Aura path is closed (2a review): neither is offered, whatever the Forests. `landTypeDemand` above is still the Forest model.
     expect(run(5, rock("Utopia Sprawl"))).toEqual([]);
-    expect(run(40, rock("Utopia Sprawl"))).toEqual(["Utopia Sprawl"]);
-    expect(run(5, rock("Fertile Ground"))).toEqual(["Fertile Ground"]);
+    expect(run(40, rock("Utopia Sprawl"))).toEqual([]);
+    expect(run(5, rock("Fertile Ground"))).toEqual([]);
   });
 });
 
@@ -435,8 +438,8 @@ describe("a land-fetch spell, swapped for a colour", () => {
     roleOptions("ramp", [cut], adds.map(candidate), undefined, { G: 4 }, () => o.closes ?? 1, new Set(o.watched ?? []), () => true, undefined, reachOf(o.reach ?? {}))
       .flatMap((x) => x.options.map((y) => [y.add, y.crossType ?? null, y.fetch ?? false]));
 
-  test("an enchantment deck takes Fertile Ground for Rampant Growth; any other deck does not", () => {
-    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { "Rampant Growth": ["R"] } })).toEqual([["Fertile Ground", "enchantment", false]]);
+  test("no deck takes Fertile Ground for Rampant Growth any more (2a review: an Aura's trigger is not a colour source)", () => {
+    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { "Rampant Growth": ["R"] } })).toEqual([]);
     expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { reach: { "Rampant Growth": ["R"] } })).toEqual([]);
     expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { watched: ["artifact"] })).toEqual([]);
   });
@@ -466,11 +469,11 @@ describe("a land-fetch spell, swapped for a colour", () => {
       expect(swap(rock("Rampant Growth"), [rock(n)], { reach: { [n]: ["G"] } }), n).toEqual([]);
     }
   });
-  test("only a single plain fetch becomes a land Aura: Explosive Vegetation, Skyshroud Claim, Circuitous Route and Cultivate stay", () => {
+  test("no fetch becomes a land Aura any more (2a review); Explosive Vegetation, Skyshroud Claim, Circuitous Route and Cultivate stay as before", () => {
     for (const n of ["Explosive Vegetation", "Skyshroud Claim", "Circuitous Route", "Cultivate"] as const) {
       expect(swap(rock(n), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { [n]: ["R"] } }), n).toEqual([]);
     }
-    expect(swap(rock("Three Visits"), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { "Three Visits": ["R"] } })).toEqual([["Fertile Ground", "enchantment", false]]);
+    expect(swap(rock("Three Visits"), [rock("Fertile Ground")], { watched: ["enchantment"], reach: { "Three Visits": ["R"] } })).toEqual([]);
   });
   test("a creature fetcher is never cut, and never added", () => {
     expect(swap(rock("Wood Elves"), [rock("Rampant Growth"), rock("Farseek")], { reach: { Farseek: ["G"] } })).toEqual([]);
