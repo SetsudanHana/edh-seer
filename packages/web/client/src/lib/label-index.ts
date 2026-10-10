@@ -12,15 +12,23 @@ interface LabelNode { id: string; label: string; cardName?: string; isToken?: bo
  *      face row whose name collides, and the form reason sentences print.
  *  A token never wins (see the callers). `pick` returns the value stored; a node it returns
  *  undefined for is skipped, as the art map skips a node with no art. */
-export function indexByLabel<T>(nodes: readonly LabelNode[], pick: (n: LabelNode) => T | undefined): Map<string, T> {
+export function indexByLabel<N extends LabelNode, T>(nodes: readonly N[], pick: (n: N) => T | undefined): Map<string, T> {
   const m = new Map<string, T>();
+  // A label is CLAIMED by a standalone card BEFORE `pick` is asked: a standalone with no art (or
+  // whatever `pick` refuses) leaves the label unset rather than handing it to a colliding face.
+  const claimed = new Set<string>();
   const cards = nodes.filter((n) => !n.isToken);
-  for (const n of cards) if (n.cardName === undefined) { const v = pick(n); if (v !== undefined && !m.has(n.label)) m.set(n.label, v); }
+  for (const n of cards) {
+    if (n.cardName !== undefined || claimed.has(n.label)) continue;
+    claimed.add(n.label);
+    const v = pick(n);
+    if (v !== undefined) m.set(n.label, v);
+  }
   for (const n of cards) {
     if (n.cardName === undefined) continue;
     const v = pick(n);
     if (v === undefined) continue;
-    if (!m.has(n.label)) m.set(n.label, v);
+    if (!claimed.has(n.label)) { claimed.add(n.label); m.set(n.label, v); }
     m.set(faceKey(n.label, n.cardName), v);
   }
   return m;

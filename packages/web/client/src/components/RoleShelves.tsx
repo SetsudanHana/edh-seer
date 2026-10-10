@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { indexByLabel } from "../lib/label-index.js";
 import type { CardGraph, DeckReport } from "../types.js";
 import type { EngineCard } from "../lib/engine-model.js";
 import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
@@ -100,7 +101,10 @@ function Against({ count, target, oneShots }: { count: number; target: number; o
  *  roles in no group. Empty roles and lands are left out. */
 export function roleShelves(report: DeckReport, graph?: CardGraph): { category: string; cards: EngineCard[]; tokens: { card: EngineCard; madeBy: string[] }[] }[] {
   // By what the board prints: a two-faced card's front node is keyed by the whole card's name.
-  const nodes = new Map((graph?.nodes ?? []).filter((n) => !n.isToken && !n.face).map((n) => [n.label, n]));
+  // Back faces are skipped (`row.face` below), but a FRONT face can be renamed to `faceKey` when its
+  // name is another card's (Bind // Liberate beside Bind: 1 of 46 corpus collisions, the rest back
+  // faces, static-out cards shards 2026-10-10), so the lookup goes through `indexByLabel`.
+  const nodes = indexByLabel((graph?.nodes ?? []).filter((n) => !n.face), (n) => n);
   const commanders = new Set(report.commanders ?? []);
   const byRole = new Map<string, { card: EngineCard; mv: number }[]>();
   const seen = new Set<string>();
@@ -112,7 +116,7 @@ export function roleShelves(report: DeckReport, graph?: CardGraph): { category: 
     seen.add(physical);
     const n = nodes.get(row.name);
     const card: EngineCard = {
-      id: row.name, name: row.name, typeLine: n?.typeLine ?? "", text: n?.oracleText ?? "", art: n?.artCrop ?? n?.faces?.[0]?.artCrop,
+      id: row.name, name: n?.label ?? row.name, typeLine: n?.typeLine ?? "", text: n?.oracleText ?? "", art: n?.artCrop ?? n?.faces?.[0]?.artCrop,
       isToken: false, isCommander: row.isCommander || commanders.has(physical),
       isLand: (n?.types ?? []).includes("land"), isFace: false,
       roles: row.roles, score: row.score ?? 0, manaCost: row.manaCost ?? "", physical,
