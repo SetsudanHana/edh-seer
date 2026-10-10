@@ -315,20 +315,26 @@ export function cardSupplyTags(tags: CardTags): Set<string> {
  *  so as SUPPLY it keys nothing; as a trigger it is the creature the ruling names. The other verbs'
  *  fill needs no card type and is unchanged. */
 export function eventTagKey(e: GameEvent, ownTypes: readonly string[] | undefined): string {
+  return eventTagKeys(e, ownTypes)[0]!;
+}
+/** Every key of the event: a card's own death is one per qualifying OWN type (Treasure Vault, an
+ *  artifact land, is `dies:artifact` and `dies:land`), so the theme sets carry both. A reason keeps
+ *  the single `eventTagKey`. */
+export function eventTagKeys(e: GameEvent, ownTypes: readonly string[] | undefined): string[] {
   const key = themeSubjectKey(e.subject);
   if (e.verb === "dies" && key === "any" && (e.subject.self === true || e.subject.ref === "trigger")) {
-    const own = (ownTypes ?? []).map((t) => t.toLowerCase()).filter((t) => (CARD_TYPES_DIES as readonly string[]).includes(t));
-    const k = own.includes("creature") ? "creature" : own.includes("planeswalker") ? "planeswalker" : own[0];
-    if (k !== undefined) return zoneEventKey(e.verb, e.subject.zone, k);
+    const own = [...new Set((ownTypes ?? []).map((t) => t.toLowerCase()).filter((t) => (CARD_TYPES_DIES as readonly string[]).includes(t)))];
+    const ks = own.includes("creature") ? ["creature"] : own.includes("planeswalker") ? ["planeswalker"] : own;
+    if (ks.length > 0) return ks.map((k) => zoneEventKey(e.verb, e.subject.zone, k));
   }
-  return zoneEventKey(e.verb, e.subject.zone, key);
+  return [zoneEventKey(e.verb, e.subject.zone, key)];
 }
 const CARD_TYPES_DIES = ["creature", "planeswalker", "land", "artifact", "enchantment", "battle"] as const;
 
-/** `eventTagKey` as SUPPLY drops a class-less token's death (see above). */
-export function supplyTagKey(e: GameEvent, ownTypes: readonly string[] | undefined): string | null {
-  if (e.verb === "dies" && themeSubjectKey(e.subject) === "any" && e.subject.self !== true && e.subject.ref === undefined && e.subject.token === true) return null;
-  return eventTagKey(e, ownTypes);
+/** `eventTagKeys` as SUPPLY drops a class-less token's death (see above). */
+export function supplyTagKeys(e: GameEvent, ownTypes: readonly string[] | undefined): string[] {
+  if (e.verb === "dies" && themeSubjectKey(e.subject) === "any" && e.subject.self !== true && e.subject.ref === undefined && e.subject.token === true) return [];
+  return eventTagKeys(e, ownTypes);
 }
 
 function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
@@ -357,13 +363,12 @@ function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
       if (!keepRockEntry && v === "enters" && a.trigger.subject?.self === true && ownEntryExcluded(tags, false)
         && (isManaRock(tags) || selfSubjectIsLand(a.trigger.subject))) continue;
       const t = normalizeZoneEvent({ verb: v, subject: a.trigger.subject });
-      out.add(eventTagKey(t, tags.characteristics?.types));
+      for (const k of eventTagKeys(t, tags.characteristics?.types)) out.add(k);
     }
     for (const e of a.emits ?? []) {
       if (opponentsPermanent(e.subject)) continue;
       const t = normalizeZoneEvent(e);
-      const k = supplyTagKey(t, tags.characteristics?.types);
-      if (k !== null) out.add(k);
+      for (const k of supplyTagKeys(t, tags.characteristics?.types)) out.add(k);
     }
     // No subject requirement here, unlike the static EDGE below. Membership asks "is this card a
     // <kind> card?", which does not depend on knowing WHICH permanents it applies to. Requiring a

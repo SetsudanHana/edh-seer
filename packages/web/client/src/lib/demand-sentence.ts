@@ -32,6 +32,7 @@
  *  - `counter-added`: the subject is what the counter lands ON ("a creature getting a counter"),
  *    not the counter's own kind — the field this reads is the consumer's demand, and a demand
  *    names a permanent, never a +1/+1. */
+import { isPutIntoGraveyardClass } from "@edh-seer/engine";
 import { WILDCARD_SUBJECT } from "@edh-seer/matcher/zones";
 
 export const DEMAND_VERB: Record<string, string> = {
@@ -598,9 +599,10 @@ export function mechanismKey(tag: string): string {
  *  `mechanismKey` already encodes, so it correctly yields the bare label. */
 export function tagLabel(tag: string): string {
   const mechanism = mechanismKey(tag);
-  const label = eventLabel(mechanism);
-  if (mechanism === tag) return label;
   const subject = tag.slice(mechanism.length + 1);
+  // ONLY A CREATURE OR PLANESWALKER DIES (owner 2026-10-10): a land, artifact ... is put into a graveyard.
+  const label = mechanism === "dies" && isPutIntoGraveyardClass(subject) ? "Put into a graveyard" : eventLabel(mechanism);
+  if (mechanism === tag) return label;
   return subject && subject !== "any" ? `${label} · ${subject}` : label;
 }
 

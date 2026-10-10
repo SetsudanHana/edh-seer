@@ -85,3 +85,14 @@ test("a supertype and the same-plural creature types read as English", () => {
   // The ordinary case is untouched.
   expect(describeTag("enters:wizard")).toBe("wizards entering");
 });
+
+// #1166 review: only a creature or planeswalker DIES (owner). A non-creature class put into a graveyard
+// is said that way; the key is unchanged.
+test("a non-creature dies tag reads 'put into a graveyard', a creature one 'dying'", () => {
+  expect(describeTag("dies:creature")).toBe("creatures dying");
+  expect(describeTag("dies:planeswalker")).toBe("planeswalkers dying");
+  expect(describeTag("dies:zombie")).toBe("zombies dying");
+  expect(describeTag("dies:land")).toBe("lands put into a graveyard");
+  expect(describeTag("dies:permanent")).toBe("permanents put into a graveyard");
+  expect(describeTag("dies:artifact")).toBe("artifacts put into a graveyard");
+});

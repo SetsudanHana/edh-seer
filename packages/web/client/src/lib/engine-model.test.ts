@@ -13,6 +13,12 @@ describe("nodeId", () => {
 });
 
 describe("groupName", () => {
+  test("a creature's death is a death, anything else is put into a graveyard (#1166)", () => {
+    expect(groupName("dies:creature")).toBe("Aristocrats");
+    expect(groupName("dies:planeswalker")).toBe("Planeswalker deaths");
+    expect(groupName("dies:land")).toBe("Lands to the graveyard");
+    expect(groupName("dies:permanent")).toBe("Permanents to the graveyard");
+  });
   test("says what the sentences say, in a player's words", () => {
     expect(groupName("scales:cleric")).toBe("Cleric tribal");
     expect(groupName("cast:-creature")).toBe("Noncreature spells");

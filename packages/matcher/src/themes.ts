@@ -1,6 +1,6 @@
 import type { Reason } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
-import { supplyTagKey, themeSubjectKey } from "./edges.js";
+import { supplyTagKeys, themeSubjectKey } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { BASIC_LAND_TYPE_SET } from "./typeline.js";
 import type { DeckCard } from "./types.js";
@@ -23,8 +23,7 @@ function authoredSurplusTags(tags: CardTags): Set<string> {
   for (const a of tags.abilities) {
     for (const emit of a.emits ?? []) {
       const e = normalizeZoneEvent(emit);
-      const k = supplyTagKey(e, tags.characteristics?.types);
-      if (k !== null) out.add(k);
+      for (const k of supplyTagKeys(e, tags.characteristics?.types)) out.add(k);
     }
   }
   return out;

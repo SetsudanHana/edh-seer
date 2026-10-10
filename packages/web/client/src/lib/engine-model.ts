@@ -1,3 +1,4 @@
+import { isPutIntoGraveyardClass } from "@edh-seer/engine";
 import type { CardGraph, DeckReport } from "../types.js";
 
 /** THE DECK AS THE FEW THINGS IT DOES, NOT AS 800 LINES (graph evaluation 2026-09-25).
@@ -228,7 +229,7 @@ export function groupName(tag: string): string {
     case "scales": return tribe ? `${T} tribal` : none ? "Cards matter" : `${P} matter`;
     case "enters": return sub === "permanent" ? "ETB triggers" : `${S} ETBs`;
     case "cast": return sub === "spell" ? "Cast triggers" : `${S} spells`;
-    case "dies": return `${S} deaths`;
+    case "dies": return isPutIntoGraveyardClass(sub) ? `${P} to the graveyard` : `${S} deaths`;
     case "attacks": return sub === "creature" ? "Attack triggers" : `${S} attacks`;
     case "combat-damage": return sub === "creature" ? "Combat damage triggers" : `${S} combat damage`;
     case "non-combat-damage": return "Burn";

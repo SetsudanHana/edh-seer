@@ -73,6 +73,8 @@ test("a whole reason tag reads as English, keeping the subject that narrows it",
   // The subject is what discriminates: same mechanism, two different claims.
   expect(tagLabel("enters:creature")).toBe("Entering the battlefield · creature");
   expect(tagLabel("enters:land")).toBe("Entering the battlefield · land");
+  expect(tagLabel("dies:creature")).toBe("Dying · creature");
+  expect(tagLabel("dies:land")).toBe("Put into a graveyard · land");
   expect(tagLabel("enters:creature")).not.toBe(tagLabel("enters:land"));
   // `any` narrows nothing, so printing it would add a word and no fact.
   expect(tagLabel("graveyard-recursion:any")).toBe("Bringing cards back from a graveyard");

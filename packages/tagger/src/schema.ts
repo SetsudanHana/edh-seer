@@ -736,6 +736,15 @@ export const VERB_IMPLIED_CLASS: Readonly<Partial<Record<Verb, string>>> = {
   attacks: "creature",
 };
 
+/** THE GENERAL CLASS OF A VERB'S TAG FAMILY: the widest subject its tags are ranked under, which a
+ *  narrower tag of the family is subsumed by (`rankThemes`). It is NOT the implied class: what an
+ *  UNTYPED subject means (`dies` -> creature) is not the hierarchy's general case (`dies` also takes
+ *  lands, artifacts: `dies:permanent`). Same as `VERB_IMPLIED_CLASS` except where those differ. */
+export const VERB_GENERAL_CLASS: Readonly<Partial<Record<Verb, string>>> = {
+  ...VERB_IMPLIED_CLASS,
+  dies: "permanent",
+};
+
 /** A subject key with the verb's implied class filled in when it is the untyped `any`. */
 export function impliedSubjectKey(verb: string, subjectKey: string): string {
   return subjectKey === "any" ? (VERB_IMPLIED_CLASS as Readonly<Record<string, string>>)[verb] ?? "any" : subjectKey;

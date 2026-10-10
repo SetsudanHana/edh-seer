@@ -311,3 +311,11 @@ test("a specific tag folds with its verb's implied-class sibling", () => {
   const stats = { N: 1000, counts: { "enters:creature": 100, "enters:permanent": 100, "draw:any": 100 } };
   expect(tagFamily(rankThemes(deckFreq, stats)[0])).toBe("enters");
 });
+
+// #1166 review: the general class of `dies` is permanent, NOT the creature that an untyped dies implies;
+// a non-creature dies tag must not borrow dies:creature's strength and outrank it.
+test("dies:land does not take dies:creature's strength", () => {
+  const deckFreq = new Map([["dies:creature", 12], ["dies:land", 3], ["sacrifice:creature", 6]]);
+  const stats = { N: 1000, counts: { "dies:creature": 100, "dies:land": 100, "sacrifice:creature": 100 } };
+  expect(rankThemes(deckFreq, stats)[0]).toBe("dies:creature");
+});

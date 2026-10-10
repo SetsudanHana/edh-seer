@@ -95,6 +95,14 @@ const IRREGULAR_PLURAL: Record<string, string> = {
   spirit: "Spirits",
 };
 
+/** CLASSES THAT NEVER "DIE" (owner 2026-10-10, #1166: only a creature or a planeswalker dies; CR 700.4
+ *  defines dies as "put into a graveyard from the battlefield", the glossary limits it to those two).
+ *  A `dies:` tag naming one of these is a permanent put into a graveyard, and says so. Keys unchanged. */
+const PUT_INTO_GRAVEYARD_CLASSES: ReadonlySet<string> = new Set([
+  "land", "artifact", "enchantment", "battle", "permanent", "aura", "equipment", "vehicle", "saga", "curse",
+]);
+export const isPutIntoGraveyardClass = (value: string): boolean => PUT_INTO_GRAVEYARD_CLASSES.has(value);
+
 function subjectPhrase(value: string): string | null {
   if (value === "any") return null;
   const irregular = IRREGULAR_PLURAL[value];
@@ -129,7 +137,8 @@ export function describeTag(t: Tag): string {
     case "static":
       return value ? `${value.replace(/-/g, " ")} effects` : "static effects";
     default: {
-      const phrase = MECHANISM_PHRASE[family];
+      const phrase = family === "dies" && value !== undefined && isPutIntoGraveyardClass(value)
+        ? "put into a graveyard" : MECHANISM_PHRASE[family];
       if (value === undefined || phrase === undefined) return bare();
       const subject = subjectPhrase(value);
       return subject === null ? bare() : `${subject} ${phrase}`;
