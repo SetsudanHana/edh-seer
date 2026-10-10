@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
 import type { DeckReport } from "../types.js";
+import { rankedFindings } from "../lib/findings.js";
 import { SAMPLE } from "../fixtures.js";
 import { PanelVerdict } from "./PanelVerdict.js";
 
@@ -28,6 +29,34 @@ test("nothing renders with no scored finding", () => {
   expect(container).toBeEmptyDOMElement();
 });
 
+const overLands = (impact: number) => ({
+  ...SAMPLE.report,
+  buildParents: [{ name: "Ramp", key: "ramp", count: 8, target: 10, impact, leaves: ["Ramp"] }],
+  suggestions: ["Ramp 8/10 — add ~2 ramp"],
+  slack: [],
+  deckMath: { lands: { actual: 41, target: 36, avgManaValue: 3 } },
+  landsImpact: 20,
+}) as unknown as DeckReport;
+
+test("a short role leads even when another scored finding outranks it", () => {
+  const r = overLands(2);
+  expect(rankedFindings(r).scored[0]!.kind).toBe("lands");
+  render(<PanelVerdict report={r} />);
+  expect(screen.getByText("You are 2 short on ramp.")).toBeInTheDocument();
+  expect(screen.queryByText(/more lands than this curve needs/)).toBeNull();
+});
+
+test("no short role: the top scored finding", () => {
+  const r = { ...overLands(2), buildParents: [] } as unknown as DeckReport;
+  render(<PanelVerdict report={r} />);
+  expect(screen.getByText(/more lands than this curve needs/)).toBeInTheDocument();
+});
+
+test("no button by default", () => {
+  render(<PanelVerdict report={gisa} />);
+  expect(screen.queryByRole("button")).toBeNull();
+});
+
 test("the button scrolls to Improve and leaves the hash alone", () => {
   const target = document.createElement("div");
   target.id = "fix";
@@ -35,7 +64,7 @@ test("the button scrolls to Improve and leaves the hash alone", () => {
   target.scrollIntoView = spy;
   document.body.appendChild(target);
   const hash = window.location.hash;
-  render(<PanelVerdict report={gisa} />);
+  render(<PanelVerdict report={gisa} withButton />);
   fireEvent.click(screen.getByRole("button", { name: /See all 1 suggestion/ }));
   expect(spy).toHaveBeenCalled();
   expect(window.location.hash).toBe(hash);

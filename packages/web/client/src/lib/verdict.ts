@@ -13,7 +13,7 @@ const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1
  *  same findings the suggestions are, so the two can never disagree. */
 /** A basic the deck is short on: the word the page says it in, the figures the role's own tile
  *  shows, and how many cards short. */
-export interface ShortRole { word: string; /** The Roles shelf's own heading, lowercased; the header says this. */ shelfWord: string; count: number; target: number; short: number }
+export interface ShortRole { word: string; /** The Roles shelf's own heading, lowercased; the header says this. */ shelfWord: string; count: number; target: number; short: number; /** The id of the finding the role was read from (`build:<parent>` or `lands`). */ findingId: string }
 
 /** THE ONE READ OF "WHICH ROLES ARE SHORT, AND BY HOW MUCH", in findings order. The Glance verdict
  *  and the report header (#1087) both read it, so the two can never name different gaps. */
@@ -29,8 +29,8 @@ export function headerGaps(report: DeckReport): ShortRole[] {
 
 function rolesOf(report: DeckReport, list: readonly Finding[]): ShortRole[] {
   const out: ShortRole[] = [];
-  const add = (word: string, shelfWord: string, count: number, target: number): void => {
-    if (!out.some((o) => o.word === word)) out.push({ word, shelfWord, count, target, short: target - count });
+  const add = (word: string, shelfWord: string, count: number, target: number, findingId: string): void => {
+    if (!out.some((o) => o.word === word)) out.push({ word, shelfWord, count, target, short: target - count, findingId });
   };
   for (const f of list) {
     if (f.kind === "build") {
@@ -39,12 +39,12 @@ function rolesOf(report: DeckReport, list: readonly Finding[]): ShortRole[] {
       // Roles shelf that says "Draw 11", because the count it names is the one the shelf's group shows.
       // Read from the build parent the finding was made from, never from the headline's words.
       const parent = report.buildParents?.find((p) => p.name === name);
-      if (w) add(w, name.toLowerCase(), parent?.count ?? NaN, parent?.target ?? NaN);
+      if (w) add(w, name.toLowerCase(), parent?.count ?? NaN, parent?.target ?? NaN, f.id);
     }
     else if (f.kind === "lands" && /short|under/i.test(f.headline)) {
       // The Lands tile's own figures: what is run, against the modelled target.
       const l = report.deckMath?.lands;
-      add("lands", "lands", l?.actual ?? NaN, l?.target ?? NaN);
+      add("lands", "lands", l?.actual ?? NaN, l?.target ?? NaN, f.id);
     }
   }
   return out;

@@ -353,7 +353,8 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre} ask={pairAsk}
                 lead={talkFirst ? (
                   <div className="flex flex-col gap-4">
-                    <PanelVerdict report={report} />
+                    {/* Narrow: the heading row's own button is ~1,800px down the page, so this is the only one near. */}
+                    <PanelVerdict report={report} withButton />
                     <TableTalkLine talk={talk!} />
                     <RecognitionPanel data={data} part="identity" />
                   </div>
