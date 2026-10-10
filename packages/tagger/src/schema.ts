@@ -714,6 +714,33 @@ export const VERB_VOCAB: readonly Verb[] = [
   "prepared",
 ];
 
+/** THE CLASS A VERB IMPLIES (owner ruling 2026-10-10, #1166). A trigger or condition subject that
+ *  names no class is not "anything": the verb already says what can do it.
+ *   - cast -> spell (CR 601: a spell is cast);
+ *   - enters, leaves, sacrifice -> permanent (CR 603.6a, 701.21a: only a permanent enters, leaves or
+ *     is sacrificed);
+ *   - combat-damage -> creature, the DEALER (CR 510.1a);
+ *   - attacks -> creature (CR 508.1a; folds in #1088's special case);
+ *   - dies -> creature (owner: only a creature dies; the CR glossary says "a creature or planeswalker
+ *     dies", so a subject TYPED planeswalker keeps planeswalker -- this fills the untyped one only).
+ *  A subject that does name a class keeps it, and a token is the class plus the token flag. `any` is
+ *  therefore never a stored subject key for these verbs. `blocks` is not an engine verb, so it has
+ *  no row. */
+export const VERB_IMPLIED_CLASS: Readonly<Partial<Record<Verb, string>>> = {
+  cast: "spell",
+  enters: "permanent",
+  leaves: "permanent",
+  sacrifice: "permanent",
+  "combat-damage": "creature",
+  dies: "creature",
+  attacks: "creature",
+};
+
+/** A subject key with the verb's implied class filled in when it is the untyped `any`. */
+export function impliedSubjectKey(verb: string, subjectKey: string): string {
+  return subjectKey === "any" ? (VERB_IMPLIED_CLASS as Readonly<Record<string, string>>)[verb] ?? "any" : subjectKey;
+}
+
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */
 export const VERB_ALIASES: Readonly<Record<string, Verb>> = {
   die: "dies",
