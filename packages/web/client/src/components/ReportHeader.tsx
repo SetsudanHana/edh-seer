@@ -205,37 +205,47 @@ function HeaderScore({ name, value, partial, delta, kind, gaps }: {
 }) {
   const reading = scoreState(value, partial, kind);
   const first = gaps?.[0];
+  // #1160 (reverses #1087's form): a short role LEADS and the number follows muted; the band word
+  // is shown only when nothing is short, so the header never says "on target" beside a shortfall.
+  const number = (
+    <span className={`text-base font-semibold stat-num leading-none ${first ? "text-(--muted)" : ""}`}>
+      {value.toFixed(1)}<span className="text-(--muted) text-xs font-normal">/5</span>
+    </span>
+  );
+  const deltaEl = delta ? (
+    // THE DIRECTION IS THE SIGN, and the tone only agrees with it (WCAG 1.4.1). Higher is better,
+    // so up is success and down is danger -- never `--muted`, which would repeat the number.
+    <span className={`text-xs stat-num ${delta.startsWith("+") ? "text-(--success)" : "text-(--danger)"}`}>
+      {delta}
+    </span>
+  ) : null;
   return (
-    // ON A PHONE THE GAP TAKES ITS OWN LINE UNDER THE SCORE (`max-sm:flex-col`), and only the gap
-    // moves: the score's own row stays `whitespace-nowrap`, the bar is static below `sm`, and the
-    // gap is one short line, not a wrapping sentence.
+    // ON A PHONE THE SCORE TAKES ITS OWN LINE UNDER THE GAP (`max-sm:flex-col`): each row stays
+    // `whitespace-nowrap`, the bar is static below `sm`, and the gap is one short line.
     <span className="flex items-baseline gap-x-1.5 max-sm:flex-col max-sm:items-start">
-    <span className="flex items-baseline gap-1.5 whitespace-nowrap">
-      <span className="eyebrow text-(--muted)">{name}</span>
-      {/* THE SCALE IS PART OF THE NUMBER. A phone judge followed these two figures down fourteen
-        *  screens and said "nothing I can reach tells me what scale 3.3 and 5.0 are on … I would
-        *  just ignore both numbers" -- and the one place that says so, `HeadlineScores`' own
-        *  `/5`, is a chapter away and off screen for most of the report. Two characters, no new
-        *  claim: the bound is the same one the dial and the tile already print. */}
-      <span className="text-base font-semibold stat-num leading-none">
-        {value.toFixed(1)}<span className="text-(--muted) text-xs font-normal">/5</span>
+      <span className="flex items-baseline gap-1.5 whitespace-nowrap">
+        <span className="eyebrow text-(--muted)">{name}</span>
+        {first ? (
+          // The Roles shelf's own tone for a shortfall, `--warning`, and its words: "3 short".
+          <span data-build-gap className="text-xs text-(--warning)">
+            {first.short} short on {first.shelfWord}{gaps!.length > 1 ? ` and ${gaps!.length - 1} more` : ""}
+          </span>
+        ) : (
+          <>
+            {/* THE SCALE IS PART OF THE NUMBER: the `/5` is a chapter away otherwise. */}
+            {number}
+            {deltaEl}
+            <span data-tone={reading.tone} className={`text-xs ${TONE_TEXT[reading.tone]}`}>{reading.label}</span>
+          </>
+        )}
       </span>
-      {/* THE DIRECTION IS THE SIGN, and the tone only agrees with it (WCAG 1.4.1). Both of these
-        *  scores are ones where higher is better, so up is success and down is danger -- never
-        *  `--muted`, which would make the delta the number a second time. */}
-      {delta ? (
-        <span className={`text-xs stat-num ${delta.startsWith("+") ? "text-(--success)" : "text-(--danger)"}`}>
-          {delta}
+      {first ? (
+        <span className="flex items-baseline gap-1.5 whitespace-nowrap">
+          <span aria-hidden="true" className="text-xs text-(--muted) max-sm:hidden">·</span>
+          {number}
+          {deltaEl}
         </span>
       ) : null}
-      <span data-tone={reading.tone} className={`text-xs ${TONE_TEXT[reading.tone]}`}>{reading.label}</span>
-    </span>
-    {first ? (
-      // The Roles shelf's own tone for a shortfall, `--warning`, and its words: "3 short".
-      <span data-build-gap className="text-xs whitespace-nowrap text-(--warning)">
-        <span className="max-sm:hidden">· </span>{first.short} short on {first.shelfWord}{gaps!.length > 1 ? ` and ${gaps!.length - 1} more` : ""}
-      </span>
-    ) : null}
     </span>
   );
 }
