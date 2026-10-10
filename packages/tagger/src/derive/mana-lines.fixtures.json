@@ -4096,5 +4096,1826 @@
    }
   ],
   "source": "model"
+ },
+ "Cosmic Crucible": {
+  "card": {
+   "_id": "2469c0b7-a045-4733-bf53-28f3fdbe3797",
+   "name": "Cosmic Crucible",
+   "typeLine": "Enchantment",
+   "oracleText": "At the beginning of your first main phase, add four mana in any combination of colors.\nWhenever you cast a noncreature spell, you may copy it. You may choose new targets for the copy. Do this only once each turn. (A copy of a permanent spell becomes a token.)",
+   "keywords": [],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "manaValue": 6,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}{G}{U}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "main-phase",
+     "subject": "your first main phase",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "four mana in any combination of colors",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "four",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a noncreature spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Omnath, Locus of All": {
+  "card": {
+   "_id": "26445dc7-8363-4205-aee8-1cafeb4ba4c0",
+   "name": "Omnath, Locus of All",
+   "typeLine": "Legendary Creature — Phyrexian Elemental",
+   "oracleText": "If you would lose unspent mana, that mana becomes black instead.\nAt the beginning of your first main phase, look at the top card of your library. You may reveal that card if it has three or more colored mana symbols in its mana cost. If you do, add three mana in any combination of its colors and put it into your hand. If you don't reveal it, put it into your hand.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 5,
+   "power": "4",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{W}{U}{B/P}{R}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "unspent mana becomes black instead",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "main-phase",
+     "subject": "your first main phase",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "three mana in any combination of its colors",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "three",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Halo Forager": {
+  "card": {
+   "_id": "210d1077-6e60-4f06-a8a4-10b842979ac5",
+   "name": "Halo Forager",
+   "typeLine": "Creature — Faerie Rogue",
+   "oracleText": "Flying\nWhen this creature enters, you may pay {X}. When you do, you may cast target instant or sorcery card with mana value X from a graveyard without paying its mana cost. If that spell would be put into a graveyard, exile it instead.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "manaValue": 3,
+   "power": "3",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{U}{B}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{X}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "other",
+     "subject": "you pay {X}",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "target instant or sorcery card with mana value X",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "exile",
+      "object": "that spell",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Urza's Tower": {
+  "card": {
+   "_id": "32fbb638-ab14-4e8b-a07a-d4c44e3496f2",
+   "name": "Urza's Tower",
+   "typeLine": "Land — Urza's Tower",
+   "oracleText": "{T}: Add {C}. If you control an Urza's Mine and an Urza's Power-Plant, add {C}{C}{C} instead.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "C"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Urza's Construction Drone",
+     "typeLine": "Artifact Creature — Construct",
+     "printingId": "bfa6bfa2-0aee-4623-a17e-a77898deb16d"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Urza's Mine",
+     "typeLine": "Land — Urza's Mine",
+     "printingId": "396bbb7d-ae61-4d8d-b931-9ed2f712832e"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Urza's Power Plant",
+     "typeLine": "Land — Urza's Power-Plant",
+     "printingId": "b0449a19-37f7-4169-9e32-928db5ec76fe"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Leafkin Druid": {
+  "card": {
+   "_id": "55eb9310-f24b-410b-850b-a7d0d5117946",
+   "name": "Leafkin Druid",
+   "typeLine": "Creature — Elemental Druid",
+   "oracleText": "{T}: Add {G}. If you control four or more creatures, add {G}{G} instead.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "0",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{G}{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Raucous Audience": {
+  "card": {
+   "_id": "5be6f245-31cf-4294-ace0-ca6ce3463fed",
+   "name": "Raucous Audience",
+   "typeLine": "Creature — Human Citizen",
+   "oracleText": "{T}: Add {G}. If you control a creature with power 4 or greater, add {G}{G} instead.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{G}{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Ilysian Caryatid": {
+  "card": {
+   "_id": "5f2be3c2-060a-43e1-b63b-9cd3c78ffcb0",
+   "name": "Ilysian Caryatid",
+   "typeLine": "Creature — Plant",
+   "oracleText": "{T}: Add one mana of any color. If you control a creature with power 4 or greater, add two mana of any one color instead.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "two mana of any one color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Sarevok's Tome": {
+  "card": {
+   "_id": "6ec54d84-7026-45a3-a7d7-37cd5c9a8463",
+   "name": "Sarevok's Tome",
+   "typeLine": "Artifact — Book",
+   "oracleText": "When this artifact enters, you take the initiative.\n{T}: Add {C}. If you have the initiative, add {C}{C} instead.\n{3}, {T}: Exile cards from the top of your library until you exile a nonland card. You may cast that card without paying its mana cost. Activate only if you've completed a dungeon.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "producedMana": [
+    "C"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Undercity // The Initiative",
+     "typeLine": "Dungeon — Undercity // Card",
+     "printingId": "2c65185b-6cf0-451d-985e-56aa45d9a57d"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "initiative",
+      "object": "you",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "cards from the top of your library until you exile a nonland card",
+      "fromZone": "library",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Tower Worker": {
+  "card": {
+   "_id": "2f995678-c315-4afe-845b-8c8ae863de6e",
+   "name": "Tower Worker",
+   "typeLine": "Artifact Creature — Assembly-Worker",
+   "oracleText": "Reach\n{T}: Add {C}. If you control creatures named Mine Worker and Power Plant Worker, add {C}{C}{C} instead.",
+   "keywords": [
+    "Reach"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 3,
+   "power": "1",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{3}",
+   "producedMana": [
+    "C"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Power Plant Worker",
+     "typeLine": "Artifact Creature — Assembly-Worker",
+     "printingId": "99965310-e4bd-40d9-80f5-3fd1754c61c5"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Mine Worker",
+     "typeLine": "Artifact Creature — Assembly-Worker",
+     "printingId": "5aa63321-aa28-449d-a31f-869a98c5a6be"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Reach"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Undermountain Adventurer": {
+  "card": {
+   "_id": "2e5e0abd-38a6-46ca-b922-556db52f1332",
+   "name": "Undermountain Adventurer",
+   "typeLine": "Creature — Giant Warrior",
+   "oracleText": "Vigilance\nWhen this creature enters, you take the initiative.\n{T}: Add {G}{G}. If you've completed a dungeon, add six {G} instead.",
+   "keywords": [
+    "Vigilance"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": "3",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{3}{G}",
+   "producedMana": [
+    "G"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Undermountain Adventurer",
+     "typeLine": "Creature — Giant Warrior",
+     "printingId": "5c5f3d5a-2d94-4765-bf51-192d7f6021b1"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Undercity // The Initiative",
+     "typeLine": "Dungeon — Undercity // Card",
+     "printingId": "2c65185b-6cf0-451d-985e-56aa45d9a57d"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "initiative",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    }
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "six {G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Incubation Druid": {
+  "card": {
+   "_id": "34428f42-03ac-4795-8286-6cbea796df2b",
+   "name": "Incubation Druid",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add one mana of any type that a land you control could produce. If this creature has a +1/+1 counter on it, add three mana of that type instead.\n{3}{G}{G}: Adapt 3. (If this creature has no +1/+1 counters on it, put three +1/+1 counters on it.)",
+   "keywords": [
+    "Adapt"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "0",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any type that a land you control could produce",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "three mana of that type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "adapt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Orochi Merge-Keeper": {
+  "card": {
+   "_id": "53e39011-3d77-4883-9c8e-4707f6fc5c47",
+   "name": "Orochi Merge-Keeper",
+   "typeLine": "Creature — Snake Druid",
+   "oracleText": "{T}: Add {G}.\nAs long as this creature is modified, it has \"{T}: Add {G}{G}.\" (Equipment, Auras you control, and counters are modifications.)",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "that ability",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Honored Hierarch": {
+  "card": {
+   "_id": "ae42fa8a-b0f6-43dc-a4c6-e2531890ca3a",
+   "name": "Honored Hierarch",
+   "typeLine": "Creature — Human Druid",
+   "oracleText": "Renown 1 (When this creature deals combat damage to a player, if it isn't renowned, put a +1/+1 counter on it and it becomes renowned.)\nAs long as this creature is renowned, it has vigilance and \"{T}: Add one mana of any color.\"",
+   "keywords": [
+    "Renown"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Renown 1"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "vigilance",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "that ability",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Mul Daya Channelers": {
+  "card": {
+   "_id": "d3daca53-d40e-4537-a16a-f1e97333bc87",
+   "name": "Mul Daya Channelers",
+   "typeLine": "Creature — Elf Druid Shaman",
+   "oracleText": "Play with the top card of your library revealed.\nAs long as the top card of your library is a creature card, this creature gets +3/+3.\nAs long as the top card of your library is a land card, this creature has \"{T}: Add two mana of any one color.\"",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{G}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+3/+3",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "this creature gains that ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "two mana of any one color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Nature's Embrace": {
+  "card": {
+   "_id": "9ab101c2-215b-4736-873a-4a1ef6666b6d",
+   "name": "Nature's Embrace",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature or land\nAs long as enchanted permanent is a creature, it gets +2/+2.\nAs long as enchanted permanent is a land, it has \"{T}: Add two mana of any one color.\"",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature or land"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "that ability",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "two mana of any one color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Embermouth Sentinel": {
+  "card": {
+   "_id": "b5208c2c-b839-42f6-8717-ee4bbaf1385b",
+   "name": "Embermouth Sentinel",
+   "typeLine": "Artifact Creature — Chimera",
+   "oracleText": "When this creature enters, you may search your library for a basic land card, reveal it, then shuffle and put that card on top. If you control a Dragon, put that card onto the battlefield tapped instead.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{2}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "that card on top of your library",
+      "fromZone": "library",
+      "toZone": "library",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Ruin in Their Wake": {
+  "card": {
+   "_id": "68adbc52-34dd-47c4-bb1c-0c51033fe7cc",
+   "name": "Ruin in Their Wake",
+   "typeLine": "Sorcery",
+   "oracleText": "Devoid (This card has no color.)\nSearch your library for a basic land card and reveal it. You may put that card onto the battlefield tapped if you control a land named Wastes. Otherwise, put that card into your hand. Then shuffle.",
+   "keywords": [
+    "Devoid"
+   ],
+   "colors": [],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Devoid"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": true
+     },
+     {
+      "verb": "tap",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "hand",
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Scholar of New Horizons": {
+  "card": {
+   "_id": "3c7ea603-c985-4107-806b-a467b5fcca36",
+   "name": "Scholar of New Horizons",
+   "typeLine": "Creature — Human Scout",
+   "oracleText": "This creature enters with a +1/+1 counter on it.\n{T}, Remove a counter from a permanent you control: Search your library for a Plains card and reveal it. If an opponent controls more lands than you, you may put that card onto the battlefield tapped. If you don't put the card onto the battlefield, put it into your hand. Then shuffle.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{W}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "a counter from a permanent you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "your library for a Plains card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "that card onto the battlefield tapped",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it into your hand",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Stoic Farmer": {
+  "card": {
+   "_id": "42820e09-f817-4485-a96a-ac2b0b798269",
+   "name": "Stoic Farmer",
+   "typeLine": "Creature — Dwarf Peasant",
+   "oracleText": "When this creature enters, search your library for a basic Plains card and reveal it. If an opponent controls more lands than you, put it onto the battlefield tapped. Otherwise, put it into your hand. Then shuffle.\nForetell {1}{W} (During your turn, you may pay {2} and exile this card from your hand face down. Cast it on a later turn for its foretell cost.)",
+   "keywords": [
+    "Foretell"
+   ],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 4,
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{3}{W}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Foretell",
+     "typeLine": "Card",
+     "printingId": "fb02637f-1385-4d3d-8dc0-de513db7633a"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a basic Plains card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    }
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Foretell {1}{W}"
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "New Frontiers": {
+  "card": {
+   "_id": "71362163-2ac3-4f8b-86b9-34fe083e2095",
+   "name": "New Frontiers",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player may search their library for up to X basic land cards and put them onto the battlefield tapped. Then each player who searched their library this way shuffles.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{X}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "up to X basic land cards",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "up to X basic land cards",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "up to X basic land cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Collective Voyage": {
+  "card": {
+   "_id": "00f82f84-81a5-45e5-9c35-9d627a180950",
+   "name": "Collective Voyage",
+   "typeLine": "Sorcery",
+   "oracleText": "Join forces — Starting with you, each player may pay any amount of mana. Each player searches their library for up to X basic land cards, where X is the total amount of mana paid this way, puts them onto the battlefield tapped, then shuffles.",
+   "keywords": [
+    "Join forces"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "up to X basic land cards",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "searched cards",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "put cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Veteran Explorer": {
+  "card": {
+   "_id": "fa9677d2-1535-4c57-baa8-c0408e15da47",
+   "name": "Veteran Explorer",
+   "typeLine": "Creature — Human Soldier Scout",
+   "oracleText": "When this creature dies, each player may search their library for up to two basic land cards, put them onto the battlefield, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "their library for up to two basic land cards",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "up to two basic land cards",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "their library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Natural Balance": {
+  "card": {
+   "_id": "69acaa6f-3ba2-420c-9069-02958f844121",
+   "name": "Natural Balance",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player who controls six or more lands chooses five lands they control and sacrifices the rest. Each player who controls four or fewer lands may search their library for up to X basic land cards and put them onto the battlefield, where X is five minus the number of lands they control. Then each player who searched their library this way shuffles.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{G}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "lands they control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "their library for up to X basic land cards",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": "five minus the number of lands they control",
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "basic land cards",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "their library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Elemental Teachings": {
+  "card": {
+   "_id": "7255705c-b788-4bb1-824a-9262f4a0864e",
+   "name": "Elemental Teachings",
+   "typeLine": "Instant — Lesson",
+   "oracleText": "Search your library for up to four land cards with different names and reveal them. An opponent chooses two of those cards. Put the chosen cards into your graveyard and the rest onto the battlefield tapped, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 5,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "up to four land cards with different names",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the chosen cards",
+      "fromZone": null,
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "the rest",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Restorative Technique": {
+  "card": {
+   "_id": "f7b2606c-42b8-46d6-bcaa-8d4506b348eb",
+   "name": "Restorative Technique",
+   "typeLine": "Sorcery",
+   "oracleText": "Target player gains 2 life, then searches their library for a basic land card, puts it onto the battlefield tapped, then shuffles. Put a +1/+1 counter on up to one target creature.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "up to one target creature, +1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Fertilid's Favor": {
+  "card": {
+   "_id": "e2da8c3e-6ffc-41dd-a68a-62e64f7e9c60",
+   "name": "Fertilid's Favor",
+   "typeLine": "Instant",
+   "oracleText": "Target player searches their library for a basic land card, puts it onto the battlefield tapped, then shuffles. Put two +1/+1 counters on up to one target artifact or creature.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "up to one target artifact or creature, +1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
  }
 }

@@ -143,14 +143,20 @@ function production(object: string, amountText = ""): Pick<ManaLine, "colours" |
   else if (/\bcould produce\b/.test(lower)) anyColour = /\bopponents?\b/.test(lower) ? "opponent-lands" : /\b(?:lands?|gates?)\b/.test(lower) ? "lands-you-could" : null;
   else if (/\bany (?:one )?(?:color|type)\b|\bany combination of colou?rs\b|\bany colou?r\b/.test(lower)) anyColour = "any";
   if (anyColour === "any") for (const c of WUBRG) colours.add(c);
-  // The grammar path keeps "for each creature you control" on `action.amount`, the model path in the object.
-  // A non-numeric amount that names no "for each" is still a count of something ("the greatest power among creatures you
-  // control", Bighorner Rancher): it scales.
-  const scale = SCALES.exec(`${text} ${amountText}`.trim()) ?? (amountText !== "" && !/^\d+$/.test(amountText.trim()) ? ([amountText] as RegExpExecArray) : null);
+  // The grammar path keeps "for each creature you control" on `action.amount`, the model path in the object. A number word or
+  // digit there ("four", Cosmic Crucible) is a fixed amount; any other non-symbol text ("the greatest power among creatures you
+  // control", Bighorner Rancher) is a count of something. `{X}` (Halo Forager) scales deliberately: X is chosen when it is paid,
+  // so the line is named `scales: "x"` and never given a fixed number.
+  const at = amountText.trim().toLowerCase();
+  const amountNum = /^\d+$/.test(at) ? Number(at) : NUMBER_WORD[at];
+  const found = SCALES.exec(`${text} ${amountText}`.trim());
+  const scale = found
+    ? ([found[0].toLowerCase() === "{x}" ? "x" : found[0]] as RegExpExecArray)
+    : at !== "" && amountNum === undefined && !/^(?:\{[^}]+\})+$/.test(at) ? ([at] as RegExpExecArray) : null;
   const known = counts.length > 0 && counts.every((n) => n !== undefined);
   return {
     colours: inWubrgOrder(colours), colourless, anyColour,
-    amount: scale ? { fixed: null, scales: scale[0].trim().toLowerCase() } : { fixed: known ? Math.min(...(counts as number[])) : null, scales: null },
+    amount: scale ? { fixed: null, scales: scale[0].trim().toLowerCase() } : { fixed: known ? Math.min(...(counts as number[])) : amountNum ?? null, scales: null },
   };
 }
 
@@ -183,13 +189,31 @@ function colonHead(text: string): string {
 }
 
 const GATE = /\bactivate (?:this ability )?only (?:if|when|while) ([^.]*)/i;
-// "Add {B}{B}{B}{B}{B} instead if there are seven or more cards in your graveyard" (Cabal Ritual's threshold line) and
-// "Add {G}{G} if you control a Forest": the amount holds only under the condition, so it is a gate, not a guarantee.
-const CONDITION = /\binstead if ([^.]*)|\badd\b[^.]*?\bif ([^.]*)/i;
-const gateOf = (text: string, thresholdAbility: boolean): string | null => {
-  const g = GATE.exec(text)?.[1] ?? (() => { const c = CONDITION.exec(text); return c?.[1] ?? c?.[2]; })();
+// A CONDITIONAL LINE holds only under its condition, so it is gated, never credited as guaranteed: Cabal Ritual's "Add {B}{B}{B}{B}{B}
+// instead if there are seven or more cards in your graveyard", Urza's Tower's "If you control an Urza's Mine and an Urza's
+// Power-Plant, add {C}{C}{C} instead", "Add {G}{G} if you control a Forest". Read on the sentence that holds THIS add (one clause can
+// hold the plain line and its instead line), after the "Activate only if" clause of the whole text.
+const CONDITIONS = [/^if ([^,]+), (?:you may )?add\b/i, /\binstead if ([^.]*)/i, /\badd\b[^.]*?\bif ([^.]*)/i];
+const gateOf = (text: string, sentence: string, thresholdAbility: boolean): string | null => {
+  const g = GATE.exec(text)?.[1] ?? CONDITIONS.map((r) => r.exec(sentence)?.[1]).find((x) => x !== undefined);
   return g ? g.trim().toLowerCase() : thresholdAbility ? "threshold" : null;
 };
+/** The sentence holding the k-th add, when the text has one add-sentence per add; else the whole text. */
+const sentenceOf = (text: string, k: number, adds: number): string => {
+  const sentences = text.split(/(?<=[.!?])\s+/).filter((x) => /\badd\b/i.test(x));
+  return sentences.length === adds ? sentences[k]! : text;
+};
+/** "As long as <condition>, this creature has that ability" (Honored Hierarch, Mul Daya Channelers): the grant's condition. */
+const AS_LONG_AS = /\bas long as ([^,]*),/i;
+/** Why a fetched land may not arrive: "If an opponent controls more lands than you, put it onto the battlefield" (Stoic Farmer),
+ *  "... onto the battlefield tapped if you control a land named Wastes" (Ruin in Their Wake), "Each player who controls four or
+ *  fewer lands may search" (Natural Balance), "An opponent chooses two of those cards" (Elemental Teachings). */
+function fetchGate(text: string): string | null {
+  const put = text.split(/(?<=[.!?])\s+/).find((x) => /\bonto the battlefield\b/i.test(x)) ?? "";
+  const g = /^if ([^,]+), /i.exec(put)?.[1] ?? /\bonto the battlefield\b[^.]*?\bif ([^.]*)/i.exec(put)?.[1]
+    ?? /\beach player who ([^,.]*?) (?:may )?search/i.exec(text)?.[1] ?? /(an opponent chooses [^.]*)/i.exec(text)?.[1];
+  return g ? g.trim().toLowerCase() : null;
+}
 const DELAYED = /\b(?:at the beginning of|on) (?:your |the )?next [^,.]*,?[^.]*\badd\b|\badd\b[^.]*\bat the beginning of (?:your |the )?next\b/i;
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -261,6 +285,8 @@ export function deriveMana(input: ManaInput): ManaResult {
     // then the text before the colon. A static with no colon stays refused (Contamination: "it produces {B} instead").
     const costText = input.clauseCosts?.[id as number] ?? colonHead(text);
     const activated = clause.abilityType === "activated" || (clause.abilityType === "static" && costText !== "");
+    const parent = granted ? clauses.find((c) => c.id === input.clauseGrants?.[id as number]) : undefined;
+    const grantGate = parent ? AS_LONG_AS.exec(input.textOf(parent))?.[1]?.trim().toLowerCase() ?? null : null;
     for (const [k, action] of adds.entries()) {
       const source: ManaLineSource | null =
         tokenGrant ? "token-maker"
@@ -283,7 +309,7 @@ export function deriveMana(input: ManaInput): ManaResult {
         face, source, repeats: ability?.repeats ?? null, cost, ...made,
         unread: made.colours.length === 0 && made.colourless === 0 && made.anyColour === null,
         net: produced - cost.mana,
-        gate: gateOf(text, ability?.threshold !== undefined),
+        gate: grantGate ?? gateOf(text, sentenceOf(text, k, adds.length), ability?.threshold !== undefined),
         restriction: restrictionOf(texts),
         timing: source === "trigger" || source === "aura-trigger" ? "on-trigger" : DELAYED.test(text) ? "next-turn" : "now",
         producesToken: tokenGrant ? "granted" : null,
@@ -323,7 +349,9 @@ export function deriveMana(input: ManaInput): ManaResult {
     // The `enters` emit says where the land goes (the grammar path drops its library origin); the derived `search` carries the
     // type the model path leaves off the emit.
     const clauseText = input.textOf(clauses.find((c) => c.id === a.clause) ?? { id: -1 } as ClauseRecord);
-    if (!/\bsearch your library\b/i.test(clauseText)) continue;
+    // YOU search, alone ("search your library") or with everyone ("each player may search their library": you get a land too).
+    // "Target player" does not promise you the search and stays out.
+    if (!/\bsearch your library\b|\beach player\b[^.]*?\bsearch(?:es)? their library\b/i.test(clauseText)) continue;
     const search = abilities.find((x) => x.clause === a.clause && x.effect.kind === "search");
     const found = search?.effect.subject;
     // Where the land goes: an `enters` emit; or, when the clause derives none (Myriad Landscape, Travel Through Caradhras), the
@@ -354,7 +382,7 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (colours.length === 0 || (Array.isArray(subject.type) ? subject.type : [subject.type]).includes("creature")) continue;
       lines.push({
         face, source: "fetch", repeats: a.repeats ?? null, cost, colours, colourless: 0, anyColour: null, unread: false,
-        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: null, restriction: null, timing: "now", producesToken: null,
+        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: fetchGate(clauseText), restriction: null, timing: "now", producesToken: null,
       });
       fetchKind = a.kind === "on-cast" || fetchKind === "spell" ? "spell" : "permanent";
       fetchTapped = fetchTapped && tapped;

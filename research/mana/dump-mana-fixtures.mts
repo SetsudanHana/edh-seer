@@ -16,7 +16,11 @@ const NAMES = ["Sol Ring", "Arcane Signet", "Cascade Bluffs", "Cascading Catarac
   "Gaea's Cradle", "Priest of Titania", "Overgrown Battlement", "Cloudpost", "Gyre Sage", "Rite of Flame", "Cabal Ritual", "Zimone's Experiment",
   "Bounty of Skemfar", "Old-Growth Dryads", "Hired Giant", "Alpine Guide", "Myriad Landscape", "Shefet Monitor", "Space Marine Scout",
   "Deep Gnome Terramancer", "Dance of the Tumbleweeds", "Archdruid's Charm", "Titania's Command", "Travel Through Caradhras", "Turtle Tracks",
-  "Springleaf Drum", "Chrome Mox", "Bloom Tender", "Meteor Crater", "Bighorner Rancher", "Karametra's Acolyte", "Inner Fire", "Selvala, Eager Trailblazer"];
+  "Springleaf Drum", "Chrome Mox", "Bloom Tender", "Meteor Crater", "Bighorner Rancher", "Karametra's Acolyte", "Inner Fire", "Selvala, Eager Trailblazer",
+  "Cosmic Crucible", "Omnath, Locus of All", "Halo Forager", "Urza's Tower", "Leafkin Druid", "Raucous Audience", "Ilysian Caryatid", "Sarevok's Tome",
+  "Tower Worker", "Undermountain Adventurer", "Incubation Druid", "Orochi Merge-Keeper", "Honored Hierarch", "Mul Daya Channelers", "Nature's Embrace",
+  "Embermouth Sentinel", "Ruin in Their Wake", "Scholar of New Horizons", "Stoic Farmer", "New Frontiers", "Collective Voyage", "Veteran Explorer",
+  "Natural Balance", "Elemental Teachings", "Restorative Technique", "Fertilid's Favor"];
 const out: Record<string, unknown> = {};
 for (const n of NAMES) {
   const card: any = await store.cards.findOne({ name: n } as never) ?? await store.cards.findOne({ name: new RegExp("^" + n + " //") } as never);

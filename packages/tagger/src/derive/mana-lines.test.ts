@@ -229,3 +229,40 @@ describe("review fixes (#1169 task 1)", () => {
     expect(only("Arcane Signet").unread).toBe(false);
   });
 });
+
+describe("review round 2 (#1169 task 1)", () => {
+  it("a number word on action.amount is a fixed amount, not a scaling one", () => {
+    expect(only("Cosmic Crucible").amount).toEqual({ fixed: 4, scales: null });
+    expect(only("Cosmic Crucible").net).toBe(4);
+    expect(only("Omnath, Locus of All").amount).toEqual({ fixed: 3, scales: null });
+  });
+  it("Halo Forager's {X} is deliberately a scaling amount named x (chosen when paid)", () => {
+    expect(only("Halo Forager").amount).toEqual({ fixed: null, scales: "x" });
+  });
+  it("'If <condition>, add Y instead' gates the instead line and leaves the plain line alone", () => {
+    for (const n of ["Urza's Tower", "Leafkin Druid", "Raucous Audience", "Ilysian Caryatid", "Incubation Druid", "Orochi Merge-Keeper"]) {
+      const ls = linesOf(n);
+      const last = ls[ls.length - 1]!;
+      expect(last.gate, n).not.toBeNull();
+      expect(ls[0]!.gate, n).toBeNull();
+    }
+    expect(linesOf("Urza's Tower")[1]).toMatchObject({ colourless: 3, gate: "you control an urza's mine and an urza's power-plant" });
+  });
+  it("'as long as ...' on a granted ability gates the grant", () => {
+    expect(only("Honored Hierarch").gate).toBe("this creature is renowned");
+    expect(only("Mul Daya Channelers").gate).toBe("the top card of your library is a land card");
+  });
+  it("a fetch that lands only under a condition keeps its line and carries the condition", () => {
+    for (const n of ["Embermouth Sentinel", "Ruin in Their Wake", "Scholar of New Horizons", "Stoic Farmer", "Natural Balance", "Elemental Teachings"]) {
+      expect(tagsOf(n).landFetch, n).toBeDefined();
+      expect(linesOf(n, "fetch")[0]!.gate, n).not.toBeNull();
+    }
+    expect(linesOf("Stoic Farmer", "fetch")[0]!.gate).toBe("an opponent controls more lands than you");
+    expect(linesOf("Cultivate", "fetch")[0]!.gate).toBeNull();
+  });
+  it("every player searching includes you; a target player may not", () => {
+    for (const n of ["New Frontiers", "Collective Voyage", "Veteran Explorer"]) expect(tagsOf(n).landFetch, n).toBeDefined();
+    expect(tagsOf("Veteran Explorer").landFetch?.kind).toBe("permanent");
+    for (const n of ["Turtle Tracks", "Restorative Technique", "Fertilid's Favor"]) expect(tagsOf(n).landFetch, n).toBeUndefined();
+  });
+});
