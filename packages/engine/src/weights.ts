@@ -1,3 +1,4 @@
+import { VERB_IMPLIED_CLASS } from "@edh-seer/tagger/schema";
 import { themeName } from "./theme-names.js";
 import { describeTag, tagFamily, type Tag } from "./tags.js";
 
@@ -127,11 +128,13 @@ export function rankThemes(deckFreq: Map<Tag, number>, stats: TagStats, opts?: T
     .map(([tag, freq]) => ({ tag, key: freq * globalIDF(stats, tag) }));
   const keyByTag = new Map(scored.map((s) => [s.tag, s.key]));
 
-  // Subsumption key: a tag's own strength, plus its ":any" sibling's strength if the deck has
-  // one. NOT the whole family's sum — `tribe:goblin` gets no credit from `tribe:wizard`, and
+  // Subsumption key: a tag's own strength, plus its general sibling's strength if the deck has
+  // one. The general sibling is `:any`, except for a verb that implies a class (#1166): there the
+  // untyped form is stored as that class (`enters:permanent`), and `:any` no longer exists. NOT the whole family's sum — `tribe:goblin` gets no credit from `tribe:wizard`, and
   // `:any` doesn't add a second copy of itself.
   const subsumedKey = (tag: string): number => {
-    const anyTag = `${tagFamily(tag)}:any`;
+    const family = tagFamily(tag);
+    const anyTag = `${family}:${(VERB_IMPLIED_CLASS as Readonly<Record<string, string>>)[family] ?? "any"}`;
     const own = keyByTag.get(tag) ?? 0;
     return anyTag === tag ? own : own + (keyByTag.get(anyTag) ?? 0);
   };

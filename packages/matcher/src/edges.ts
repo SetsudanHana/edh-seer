@@ -305,6 +305,26 @@ export function cardSupplyTags(tags: CardTags): Set<string> {
   return themeTags(tags, true);
 }
 
+/** THE TAG KEY OF ONE TRIGGER OR EMIT, with the verb's implied class filled in (`zoneEventKey`) EXCEPT
+ *  where the fill would be a lie (#1166 review). Only a creature or a planeswalker dies (CR 700.4 and
+ *  the glossary; owner), so an untyped `dies` that is the card ITSELF (or its `ref`) keys on the card's
+ *  own death class, and a card that is neither -- a fetch land's "sacrifice this land", Mindslaver,
+ *  an Expedition -- has NO dies event: null. A class-less TOKEN a card makes dies as the token's type,
+ *  which is unknown here, so as SUPPLY it keys nothing; as a trigger ("whenever a token dies") it is
+ *  the creature the ruling names. The other verbs' fill needs no card type and is unchanged. */
+export function eventTagKey(e: GameEvent, ownTypes: readonly string[] | undefined, supply: boolean): string | null {
+  const key = themeSubjectKey(e.subject);
+  if (e.verb === "dies" && key === "any") {
+    if (e.subject.self === true || e.subject.ref !== undefined) {
+      const own = (ownTypes ?? []).map((t) => t.toLowerCase());
+      const k = own.includes("creature") ? "creature" : own.includes("planeswalker") ? "planeswalker" : null;
+      return k === null ? null : zoneEventKey(e.verb, e.subject.zone, k);
+    }
+    if (supply && e.subject.token === true) return null;
+  }
+  return zoneEventKey(e.verb, e.subject.zone, key);
+}
+
 function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
   const out = new Set<string>();
   for (const t of impliedEntryThemeTags(tags, keepRockEntry)) out.add(t);
@@ -331,12 +351,14 @@ function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
       if (!keepRockEntry && v === "enters" && a.trigger.subject?.self === true && ownEntryExcluded(tags, false)
         && (isManaRock(tags) || selfSubjectIsLand(a.trigger.subject))) continue;
       const t = normalizeZoneEvent({ verb: v, subject: a.trigger.subject });
-      out.add(zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject)));
+      const k = eventTagKey(t, tags.characteristics?.types, false);
+      if (k !== null) out.add(k);
     }
     for (const e of a.emits ?? []) {
       if (opponentsPermanent(e.subject)) continue;
       const t = normalizeZoneEvent(e);
-      out.add(zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject)));
+      const k = eventTagKey(t, tags.characteristics?.types, true);
+      if (k !== null) out.add(k);
     }
     // No subject requirement here, unlike the static EDGE below. Membership asks "is this card a
     // <kind> card?", which does not depend on knowing WHICH permanents it applies to. Requiring a
@@ -374,8 +396,8 @@ export function cardCaresTags(tags: CardTags): Set<string> {
       for (const v of a.trigger.verbs) {
         // The zone is passed only so a graveyard leave/enter (a CARD, not a permanent) is not given
         // the permanent class; the key keeps its legacy spelling (`leaves:`, no `-graveyard`) here.
-        const zone = a.trigger.subject?.zone;
-        const key = zoneEventKey(v, zone, themeSubjectKey(a.trigger.subject));
+        const key = eventTagKey({ verb: v, subject: a.trigger.subject } as GameEvent, tags.characteristics?.types, false);
+        if (key === null) continue;
         out.add(key.startsWith(`${v}-graveyard:`) ? `${v}:${key.slice(key.indexOf(":") + 1)}` : key);
       }
     }

@@ -303,3 +303,11 @@ test("cohesion declines to name the deck below THEME_NAME_FLOOR", () => {
   const thick = computeCohesion(["proliferate:permanent", "draw:any"], new Map([["proliferate:permanent", 20]]), 50);
   expect(thick!.dominant).toBe(true);
 });
+
+// #1166: for a verb that implies a class the untyped form is stored AS that class, so the general
+// sibling a specific tag folds with is `enters:permanent`, not the `enters:any` that no longer exists.
+test("a specific tag folds with its verb's implied-class sibling", () => {
+  const deckFreq = new Map([["enters:creature", 17], ["enters:permanent", 16], ["draw:any", 18]]);
+  const stats = { N: 1000, counts: { "enters:creature": 100, "enters:permanent": 100, "draw:any": 100 } };
+  expect(tagFamily(rankThemes(deckFreq, stats)[0])).toBe("enters");
+});
