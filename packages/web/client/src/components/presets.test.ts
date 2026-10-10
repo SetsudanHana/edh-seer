@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   FLOW_HUE, IDENTITY_HUE, OVERFLOW_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE, cmcBucket, cmcRamp, paintHues,
   paintLegend, rimArcs, rimHues, subcategoryLabel, relativeLuminance, segmentInk,
-  TYPE_SEGMENT_HUE, type PaintMode,
+  TYPE_SEGMENT_HUE, ROLE_GROUPS, type PaintMode,
 } from "./presets.js";
+import { BUILD_PARENTS } from "@edh-seer/matcher/build";
 import type { GraphNode } from "../types.js";
 
 const node = (over: Partial<GraphNode>): GraphNode => ({
@@ -229,5 +230,27 @@ describe("segmentInk", () => {
   it("measures luminance on the WCAG curve", () => {
     expect(relativeLuminance("#ffffff")).toBeCloseTo(1, 5);
     expect(relativeLuminance("#000000")).toBeCloseTo(0, 5);
+  });
+});
+
+/** #1168: THE MAP LEGEND AND THE ROLES SHELF COUNT ONE THING. A legend group that stands for a build
+ *  parent takes its label and categories from BUILD_PARENTS, so the two cannot drift. The only
+ *  differences are pinned here: `stax` also paints under Interaction (a map hue for a category no
+ *  parent owns; the owner's 2026-10-06 ruling keeps hard stax out of the Interaction COUNT, not off
+ *  the map), and `burn` stands alone as Win conditions. */
+describe("ROLE_GROUPS follow BUILD_PARENTS", () => {
+  const GROUP_OF_PARENT: Record<string, string> = { consistency: "cardAdvantage", ramp: "ramp", interaction: "interaction", boardWipes: "boardWipes" };
+  const EXTRA: Record<string, string[]> = { interaction: ["stax"] };
+  for (const p of BUILD_PARENTS) {
+    it(`${p.name}: the legend group is the parent's leaves${EXTRA[p.key] ? ` plus ${EXTRA[p.key]!.join(", ")}` : ""}`, () => {
+      const g = ROLE_GROUPS.find((x) => x.id === GROUP_OF_PARENT[p.key])!;
+      expect(g.label).toBe(p.name);
+      expect([...g.categories].sort()).toEqual([...p.leaves, ...(EXTRA[p.key] ?? [])].sort());
+    });
+  }
+  it("no category sits in two groups, and the non-parent groups are exactly burn and lands", () => {
+    const all = ROLE_GROUPS.flatMap((g) => g.categories);
+    expect(new Set(all).size).toBe(all.length);
+    expect(ROLE_GROUPS.find((g) => g.id === "wincons")!.categories).toEqual(["burn"]);
   });
 });

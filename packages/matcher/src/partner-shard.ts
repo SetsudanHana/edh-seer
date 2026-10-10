@@ -7,6 +7,8 @@
  *  definition either way: a second copy of the hash in the Function is a URL that works until the
  *  day the two disagree, and then works for exactly half the corpus. */
 
+import { parentOfRole } from "./role-parents.js";
+
 /** SMALLER THAN THE CARD SHARDS ON PURPOSE. The deploy is 18,457 files against a 20,000 cap, so the
  *  partner artifact has room for a few thousand; 2,048 leaves headroom at ~7 records per shard. */
 export const PARTNER_SHARD_COUNT = 2_048;
@@ -45,18 +47,20 @@ export function partnerShardOf(slug: string): string {
  *  ORDERED: a card with several roles is named by the first one here. `tally` is the row the deck
  *  report counts it under, so the sentence points at a number the reader can go and find. `burn`
  *  and `stax` are build categories with no tally row, so they name no job. */
-const JOBS: readonly { role: string; noun: string; tally: string }[] = [
-  { role: "ramp", noun: "ramp", tally: "Ramp" },
-  { role: "boardWipe", noun: "a board wipe", tally: "Board wipes" },
-  { role: "targetedRemoval", noun: "removal", tally: "Interaction" },
-  { role: "stackInteraction", noun: "interaction", tally: "Interaction" },
-  { role: "protection", noun: "protection", tally: "Interaction" },
-  { role: "graveyardHate", noun: "graveyard hate", tally: "Interaction" },
-  { role: "tutor", noun: "a tutor", tally: "Card advantage" },
-  { role: "draw", noun: "card draw", tally: "Card advantage" },
-  { role: "cardSelection", noun: "card selection", tally: "Card advantage" },
-  { role: "impulseDraw", noun: "card draw", tally: "Card advantage" },
+const JOB_SPECS: readonly { role: string; noun: string }[] = [
+  { role: "ramp", noun: "ramp" },
+  { role: "boardWipe", noun: "a board wipe" },
+  { role: "targetedRemoval", noun: "removal" },
+  { role: "stackInteraction", noun: "interaction" },
+  { role: "protection", noun: "protection" },
+  { role: "graveyardHate", noun: "graveyard hate" },
+  { role: "tutor", noun: "a tutor" },
+  { role: "draw", noun: "card draw" },
+  { role: "cardSelection", noun: "card selection" },
+  { role: "impulseDraw", noun: "card draw" },
 ];
+/** `tally` is the NAME of the build parent whose leaves hold the role (#1168), never a typed string. */
+const JOBS: readonly { role: string; noun: string; tally: string }[] = JOB_SPECS.map((j) => ({ ...j, tally: parentOfRole(j.role)!.name }));
 // NOT `lands`: every land carries that role, and "X is a land" would promise a search engine
 // thousands of pages that say nothing a type line does not.
 

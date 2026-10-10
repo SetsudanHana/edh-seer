@@ -4,6 +4,7 @@ import TEMPLATE from "./template-targets.json" with { type: "json" };
 import { answerClassesOf, loadRules, ruleMatches } from "./rules.js";
 import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
 import { countsAsLand } from "./typeline.js";
+import { ROLE_PARENTS } from "./role-parents.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
 export type BuildCategory =
@@ -216,11 +217,15 @@ export interface BuildParentSpec {
  *  replaces it with the deck's own theme row(s) when the detector names one strongly enough. The
  *  14/10/10/3 doctrine these carried before is gone: it measured nothing (67 of 71 owner decks hit
  *  it outright) and the per-theme spread it hid is the whole finding (Interaction 9 to 21 by theme). */
+const PARENT_ID = (key: string) => {
+  const p = ROLE_PARENTS.find((x) => x.key === key)!;
+  return { name: p.name, key: p.key, leaves: [...p.leaves] };
+};
 export const BUILD_PARENTS: BuildParentSpec[] = [
-  { name: "Card advantage", key: "consistency", leaves: ["draw", "cardSelection", "impulseDraw", "tutor"], target: TEMPLATE.population.consistency, weight: 1, costBand: [2, 4] },
-  { name: "Ramp", key: "ramp", leaves: ["ramp"], target: TEMPLATE.population.ramp, weight: 1, costBand: [2, 3] },
-  { name: "Interaction", key: "interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], target: TEMPLATE.population.interaction, weight: 1, coverageWeighted: true, costBand: [2, 4] },
-  { name: "Board wipes", key: "boardWipes", leaves: ["boardWipe"], target: TEMPLATE.population.boardWipes, weight: 0.5, costBand: [3, 5] },
+  { ...PARENT_ID("consistency"), target: TEMPLATE.population.consistency, weight: 1, costBand: [2, 4] },
+  { ...PARENT_ID("ramp"), target: TEMPLATE.population.ramp, weight: 1, costBand: [2, 3] },
+  { ...PARENT_ID("interaction"), target: TEMPLATE.population.interaction, weight: 1, coverageWeighted: true, costBand: [2, 4] },
+  { ...PARENT_ID("boardWipes"), target: TEMPLATE.population.boardWipes, weight: 0.5, costBand: [3, 5] },
 ];
 
 /** Per-archetype target shifts on the categories OUTSIDE every parent. Only `lands` is left: the

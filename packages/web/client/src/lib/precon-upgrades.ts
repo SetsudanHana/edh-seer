@@ -4,11 +4,17 @@
 import { TARGET_LABEL, type BracketTarget, type UpgradePackage, type UpgradeSectionId, type UpgradeSwap } from "@edh-seer/matcher/upgrade-package";
 import type { PreconPage } from "./precon-page.js";
 import { scoreBand } from "./score-band.js";
+import { ROLE_PARENTS } from "@edh-seer/matcher/role-parents";
 import { groupKey } from "./role-group.js";
 
+/** The four role sections take the parent's NAME from `ROLE_PARENTS` (#1168). "Removal and protection"
+ *  was typed here in #889 with no ruling behind it, and named fewer jobs than the parent counts
+ *  (counterspells, graveyard hate): the same narrower-than-what-it-counts defect #1086 removed from
+ *  "card draw". */
+const parentName = (key: string): string => ROLE_PARENTS.find((p) => p.key === key)!.name;
 export const SECTION_TITLE: Record<UpgradeSectionId, string> = {
-  lands: "Lands", ramp: "Ramp", consistency: "Card advantage", interaction: "Removal and protection",
-  wipes: "Board wipes", synergy: "Cards that work together",
+  lands: "Lands", ramp: parentName("ramp"), consistency: parentName("consistency"), interaction: parentName("interaction"),
+  wipes: parentName("boardWipes"), synergy: "Cards that work together",
 };
 
 /** WHAT EACH TARGET MEANS AT THE TABLE, as WotC's published limits read (`brackets.ts`). */
