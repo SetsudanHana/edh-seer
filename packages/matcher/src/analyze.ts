@@ -1221,13 +1221,15 @@ export function provisionalRatings(edges: readonly { reasons: readonly Reason[] 
 
 /** NO TWO OBJECTS SHARE A KEY (#1176). Everything in `analyzeDeckStructured` after the face split is
  *  keyed on `card.name`: `dir`, the rated rows, the edge endpoints. A standalone card and another
- *  card's FACE with the same name (Rampant Growth beside "Studious First-Year // Rampant Growth";
- *  18 corpus collisions, per the branch review: all faces of adventure/prepare cards -- Swords to
- *  Plowshares, Demonic Tutor, Lightning Bolt, Reanimate, Brainstorm, Rampant Growth ...) collapsed to one entry, and the real card then read its
- *  roles, cost and flags under the other card's physical name. A colliding face is therefore renamed
- *  to `faceKey(face, card)` ("<face> (<card>)"), which names it as it is printed and collides with nothing; the graph keys a
- *  face by `cardName` + `face`, not by this string, so nothing on screen changes but the row's
- *  label. A name no other object shares is untouched, so a deck with no collision is byte-identical. */
+ *  card's FACE with the same name (Rampant Growth beside "Studious First-Year // Rampant Growth")
+ *  collapsed to one entry, and the real card then read its roles, cost and flags under the other
+ *  card's physical name. Measured over static-out (v-c51bc17e6a5c): mostly back faces of
+ *  adventure/prepare cards (Rampant Growth, Brainstorm, Reanimate …) and one FRONT face, Bind of
+ *  Bind // Liberate beside a standalone Bind. A colliding face is therefore renamed to
+ *  `faceKey(face, card)` ("<face> (<card>)"), which collides with nothing; the graph keys a face by
+ *  `cardName` + `face`, not by this string, and the web shows the printed face name (label-index,
+ *  CardName) and keeps the full key only inside reason sentences, where it says which card is
+ *  meant. A name no other object shares is untouched, so a deck with no collision is byte-identical. */
 export function disambiguateFaceNames(cards: DeckCard[]): DeckCard[] {
   const physicalOwners = new Map<string, Set<string>>();
   for (const dc of cards) {
