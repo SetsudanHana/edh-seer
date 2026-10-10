@@ -194,19 +194,19 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
   // THE LAND TARGET IS FOR THE FINISHED 100 AND THE CUTS ARE ALL SPELLS (#1152): the first-cuts seat
   // could not tell whether "wants 36" came out of the 8 or on top of them. Band read by `bandState`,
   // the one reading of the land count (#759).
+  const landsShort = !!over && !!lands && lands.target > 0 && lands.target - lands.actual > LAND_BAND;
   const landsLine = ((): string | undefined => {
     if (!over || !lands || lands.target <= 0) return undefined;
     const { actual, target } = lands;
     const d = actual - target, n = Math.abs(d);
     if (n <= LAND_BAND) {
       const r = bandState(actual, target);
-      return d === 0
-        ? `The cuts are all spells, so your ${actual} lands stay, right on the ${target} this deck wants.`
-        : `The cuts are all spells, so your ${actual} lands stay: ${r.label} of the ${target} a 100-card deck of this curve wants.`;
+      return `The cut list's cards are all spells, so your ${actual} lands stay. A 100-card deck of this curve wants ${target}, and you are ${r.label}.`;
     }
-    return d < 0
-      ? `Your ${actual} lands are ${n} under the ${target} this deck wants: cut ${n} more spells and add ${n} lands, so ${over + n} cards come out in all.`
-      : `Your ${actual} lands are ${n} over the ${target} this deck wants: cutting ${n} of them counts toward the ${over}.`;
+    if (d < 0) return `Your ${actual} lands are ${n} under the ${target} this deck wants: cut ${n} more spells and add ${n} lands, so ${over + n} cards come out in all.`;
+    return n <= over
+      ? `Your ${actual} lands are ${n} over the ${target} this deck wants: cutting ${n} of them counts toward the ${over}.`
+      : `Your ${actual} lands are ${n} over the ${target} this deck wants: cut all ${over} from your lands to reach 100, and ${n - over} ${n - over === 1 ? "is" : "are"} still over.`;
   })();
   const hasCuts = cuts.length > 0;
   const hasUnjudged = !!unjudged && unjudged.length > 0;
@@ -222,7 +222,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
           <p id="cuts-over" className="text-sm max-w-[65ch]" data-testid="cuts-over">
             Your list has <b className="tabular-nums">{deckSize}</b> cards, <b className="tabular-nums">{over}</b> over 100.{" "}
             {toCut.length === over
-              ? <>{over === 1 ? "This one loses" : `These ${over} lose`} no link when cut{over > 1 && holds ? ", even all together" : ""}: every link {over === 1 ? "it makes" : "they make"}, another card makes too. Take {over === 1 ? "it" : "them"} out and it is 100.</>
+              ? <>{over === 1 ? "This one loses" : `These ${over} lose`} no link when cut{over > 1 && holds ? ", even all together" : ""}: every link {over === 1 ? "it makes" : "they make"}, another card makes too.{landsShort ? "" : <> Take {over === 1 ? "it" : "them"} out and it is 100.</>}</>
               // "A ROLE YOU RUN MORE OF THAN YOU NEED" ONLY WHEN ONE IS (persona round 2026-09-27: the
               // first-cuts seat looked below for a role over its target and every role was short or
               // on target, a dead end).

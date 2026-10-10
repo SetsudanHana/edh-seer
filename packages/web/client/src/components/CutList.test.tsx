@@ -372,12 +372,11 @@ const landsLine = (deckSize: number, lands?: { actual: number; target: number })
 
 test("over 100 and inside the land band, the lands stay and the line says how far off the target they are", () => {
   const t = landsLine(108, { actual: 35, target: 36 })!.textContent!;
-  expect(t).toContain("The cuts are all spells, so your 35 lands stay: 1 under, within the normal ±3");
-  expect(t).toContain("36");
+  expect(t).toBe("The cut list's cards are all spells, so your 35 lands stay. A 100-card deck of this curve wants 36, and you are 1 under, within the normal ±3.");
 });
 
 test("over 100 and right on the land target, the line reads as English", () => {
-  expect(landsLine(108, { actual: 36, target: 36 })).toHaveTextContent("your 36 lands stay, right on the 36 this deck wants");
+  expect(landsLine(108, { actual: 36, target: 36 })).toHaveTextContent("The cut list's cards are all spells, so your 36 lands stay. A 100-card deck of this curve wants 36, and you are right on target.");
 });
 
 test("over 100 and under the land band, the line asks for more cuts and the lands", () => {
@@ -396,5 +395,16 @@ test("at 100, or without a land reading, there is no lands line", () => {
 
 test("ReportChapters hands the report's land reading to the cut list", () => {
   const src = readFileSync(join(import.meta.dirname, "ReportChapters.tsx"), "utf8");
-  expect(src).toMatch(/<CutList[\s\S]*?lands=\{report\.deckMath\?\.lands\}/);
+  expect(src).toMatch(/<CutList(?:(?!\/>)[\s\S])*?lands=\{report\.deckMath\?\.lands\}/);
+});
+
+test("over the land band by more than the overage, the line says what is left over", () => {
+  expect(landsLine(102, { actual: 40, target: 36 })).toHaveTextContent("Your 40 lands are 4 over the 36 this deck wants: cut all 2 from your lands to reach 100, and 2 are still over.");
+});
+
+test("under the land band, the loss-free sentence does not promise 100 and the lands line carries the total", () => {
+  const free = { partners: 1, why: "w", loses: [], covers: [] } as never;
+  render(<MemoryRouter><CutList cuts={Array.from({ length: 8 }, (_, i) => cut(`C${i}`, { row: free }))} slack={[]} deckSize={108} lands={{ actual: 30, target: 36 }} /></MemoryRouter>);
+  expect(screen.getByTestId("cuts-over").textContent).not.toContain("it is 100");
+  expect(screen.getByTestId("cuts-lands")).toHaveTextContent("14 cards come out in all");
 });
