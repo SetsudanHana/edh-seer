@@ -50,6 +50,10 @@ export interface ProjectedNode {
    *  single-face card. The view marks the faces of one card with a matching rim; nothing is drawn
    *  between them (owner's ruling -- no new edge kind in the legend or in any count). */
   face?: number;
+  /** The card's Scryfall layout, on a node that is a face of a multi-face card (and only there).
+   *  What says whether a land BACK is playable as a land (modal_dfc) or reached by transforming
+   *  (transform, flip) -- the face type lines alone cannot (#1167). */
+  layout?: string;
   /** The PHYSICAL card this node is a face of, present only when it is one. The rim pairs on this,
    *  and the cut list names it, because you cannot cut half a card. */
   cardName?: string;
@@ -165,6 +169,7 @@ export function projectDeckGraph(
       cmc: d.card.manaValue,
       ...(d.face ? { face: d.face } : {}),
       ...(d.parentName ? { cardName: d.parentName } : {}),
+      ...(d.parentName && d.card.layout ? { layout: d.card.layout } : {}),
     });
   }
 

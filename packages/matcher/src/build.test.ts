@@ -927,3 +927,14 @@ test("the Draw role counts your draws and everyone's, never only an opponent's",
   ]);
   expect([...(m.get("draw") ?? [])].sort()).toEqual(["Cremate", "Howling Mine"]);
 });
+
+test("Build counts a modal DFC's land back and not a transform card's (#1167)", () => {
+  const withLayout = (dc: DeckCard, layout: string): DeckCard => ({ ...dc, card: { ...dc.card, layout } as never });
+  const cards = [
+    mk("Forest", "", "Basic Land — Forest"),
+    withLayout(mk("Treasure Map // Treasure Cove", "", "Artifact // Land"), "transform"),
+    withLayout(mk("Shatterskull Smashing // Shatterskull, the Hammer Pass", "", "Sorcery // Land"), "modal_dfc"),
+  ];
+  const lands = computeBuild(cards, "goodstuff").buildCategories.find((c) => c.category === "lands");
+  expect(lands?.count).toBe(2);
+});

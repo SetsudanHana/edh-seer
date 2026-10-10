@@ -3,13 +3,14 @@ import { BUILD_PARENTS, detectBuildCategories } from "./build.js";
 import { classifyAccelerant } from "./goldfish.js";
 import { RAMP_RESILIENCE, drawCredit, landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
+import { isLand as isLandCard } from "./typeline.js";
 
 /** The mana value at or below which acceleration counts for Karsten's 0.28 bucket. Cheap ramp
  *  shortens the turns the regression is about; a four-mana ramp spell needs the lands you were
  *  trying to count. */
 const CHEAP = 2;
 
-const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");
+const isLand = (dc: DeckCard): boolean => isLandCard(dc.card);
 
 /** A modal double-faced card with a LAND back, and whether that land enters untapped -- Karsten
  *  prices the two differently (0.74 of a land against 0.38), because a tapped one costs you the

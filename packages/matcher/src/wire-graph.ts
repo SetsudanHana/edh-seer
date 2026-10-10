@@ -24,6 +24,8 @@ export interface WireGraphNode {
    *  is the field the front lacks: absent there, 1 or more on a back face. A name is not an
    *  identity for a face node -- its own `id`/`label` are the face's, `cardName` is the card's. */
   cardName?: string;
+  /** The card's layout, on the faces of a multi-face card; see `ProjectedNode.layout`. */
+  layout?: string;
   /** How many copies the deck holds. Every copy collapses into one node, so a deck's 24 basic
    *  Mountains are one disc; this is where the count survives so the node can say so. */
   copies: number;
@@ -143,6 +145,9 @@ export function attachRolesAndArt(
     // Review fix, 2026-08-27: `face` is already resolved three lines up for exactly this reason.
     // The card-level line stays the fallback for a node with no face row (a token, a single-faced
     // card, or a stale doc carrying no `faces`).
+    // NOT THE SHARED `isLand` (#1167), ON PURPOSE: this labels ONE FACE NODE for the lands room
+    // ("does THIS face's line say Land"), so a transform card's land back is rightly a land here.
+    // Whether the CARD is a land in the deck is `typeline.ts isLand`.
     const isLand = (face?.typeLine ?? n.typeLine ?? doc?.typeLine ?? "").toLowerCase().includes("land");
     const base = rolesByNormalizedName.get(key);
     const roles = isLand && !(base ?? []).includes("lands") ? [...(base ?? []), "lands"] : base;
@@ -174,6 +179,7 @@ export function attachRolesAndArt(
       // client, not just here where the doc join uses them.
       ...(n.face !== undefined ? { face: n.face } : {}),
       ...(n.cardName !== undefined ? { cardName: n.cardName } : {}),
+      ...(n.layout !== undefined ? { layout: n.layout } : {}),
       copies: n.copies,
       types: n.types,
       subtypes: n.subtypes,

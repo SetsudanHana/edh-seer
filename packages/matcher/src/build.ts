@@ -3,6 +3,7 @@ import { ARCHETYPE_FLOOR, ARCHETYPE_LABELS, ARCHETYPE_LEAD_FLOOR, type Archetype
 import TEMPLATE from "./template-targets.json" with { type: "json" };
 import { answerClassesOf, loadRules, ruleMatches } from "./rules.js";
 import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
+import { isLand as isLandCard } from "./typeline.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
 export type BuildCategory =
@@ -26,7 +27,7 @@ export const BUILD_CATEGORIES: BuildCategory[] = [
   "ramp", "draw", "cardSelection", "impulseDraw", "targetedRemoval", "stackInteraction", "boardWipe", "burn", "stax", "protection", "tutor", "graveyardHate", "lands",
 ];
 
-const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");
+const isLand = (dc: DeckCard): boolean => isLandCard(dc.card);
 
 /** For each card, the set of functional categories it fills. A card may fill several (that's how
  *  double-duty in Stage D is found). Counts derive from set sizes.
@@ -596,7 +597,7 @@ const TAP_COST = /^(?:\{(\d+)\},\s*)?\{T\}$/;
  *  CEILING: a land-fetch spell (Cultivate), a ritual and a Treasure maker score 0. They are ramp,
  *  and staples in green, but "taps for mana" cannot see them; a grade for them is its own tier. */
 export function rampGrade(dc: DeckCard): number {
-  if (/\bland\b/i.test(dc.card.typeLine)) return 0;
+  if (isLand(dc)) return 0;
   const tapRamp = (dc.tags?.abilities ?? []).some((a) => {
     if (a.kind !== "activated" || a.effect?.kind !== "mana-generation" || a.repeats !== "per-cycle") return false;
     const m = TAP_COST.exec(String(a.cost ?? ""));

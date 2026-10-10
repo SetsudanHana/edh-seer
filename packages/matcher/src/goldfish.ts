@@ -12,6 +12,7 @@ import { ratesOf } from "./rate.js";
 import { characteristicsSubject } from "./edges.js";
 import { subjectMatches } from "./subject.js";
 import { buildHierarchy } from "./hierarchy.js";
+import { isLand as isLandCard } from "./typeline.js";
 
 /** THE MANA AVAILABILITY MODEL — a seeded goldfish simulation with a WRITTEN PLAY POLICY, because
  *  the policy IS the model (roadmap I11, `specs/2026-08-22-mana-availability-model-design.md`).
@@ -827,10 +828,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   // THE CHEAPEST NONLAND settles every mana-value restriction at once: mana that may be spent only at
   // value N or greater is worth its face in a deck holding nothing below N (roadmap O1).
   const cheapest = Math.min(Infinity, ...deck
-    .filter((dc) => !/\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout)))
+    .filter((dc) => !isLandCard(dc.card))
     .map((dc) => dc.card.manaValue ?? 0));
   const slots: DeckSlot[] = deck.map((dc) => {
-    const isLand = /\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout));
+    const isLand = isLandCard(dc.card);
     const text = dc.card.oracleText ?? "";
     // A land-fetch SPELL searches the library too, so it fixes colours and thins by the same fact.
     const fetches = isLandFetch(text);
@@ -1655,7 +1656,7 @@ export function manaModel(
   // asks for two mana on turn two, and `rows` stop at ROW_TURNS, so the readout needs a row to land on.
   // At the cap `share` stays the true value and may be under 0.9.
   const spellCosts = deck
-    .filter((dc) => !/\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout)))
+    .filter((dc) => !isLandCard(dc.card))
     .map((dc) => parseCost(castableManaCost(dc.card))?.total ?? dc.card.manaValue ?? 0)
     .sort((a, b) => a - b);
   const underOf = (m: number): number => spellCosts.length === 0 ? 1 : spellCosts.filter((c) => c <= m).length / spellCosts.length;
@@ -1694,7 +1695,7 @@ export function manaModel(
     if (seenTop.has(name)) continue;
     seenTop.add(name);
     if ((copies.get(name) ?? 0) > 1) continue; // multi-copy names are never thin
-    if (/\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) continue;
+    if (isLandCard(dc.card)) continue;
     const turn = Math.max(1, Math.round(dc.card.manaValue ?? 0));
     if (turn > turns) continue;
     const curve = curves.get(name);

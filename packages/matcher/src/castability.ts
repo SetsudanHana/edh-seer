@@ -1,5 +1,6 @@
 import { MAX_PRICED_TURN, MIN_HELD_TRIALS, REPORT_TRIALS, type CastCurve } from "./goldfish.js";
 import type { DeckCard } from "./types.js";
+import { isLand as isLandCard } from "./typeline.js";
 
 /** Costs this model cannot represent, and the reason each is refused.
  *
@@ -211,7 +212,7 @@ export function deckCastability(
   minHeld: number = MIN_HELD_TRIALS,
 ): DeckCastability {
   const rows = deck
-    .filter((dc) => !dc.card.typeLine.toLowerCase().includes("land"))
+    .filter((dc) => !isLandCard(dc.card))
     .map((dc) => cardCastability(dc, curves, minHeld));
 
   // Deduped by name: a decklist that names its commander in both the commander section and the

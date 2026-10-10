@@ -1,4 +1,5 @@
 import type { Card } from "@edh-seer/engine";
+import { isLand as isLandCard } from "./typeline.js";
 
 /** CARDS THAT CHANGE HOW A DECK IS BUILT, AS DATA (owner, 2026-09-22).
  *
@@ -31,7 +32,7 @@ const CONSTRUCTION_WORDING = /starting deck|a deck can have|a deck may have|your
 
 /** The front face's type line -- a card in a library is its front face (CR 712.8a). */
 const frontType = (c: Card): string => (c.typeLine ?? "").split(" // ")[0]!.toLowerCase();
-const isLand = (c: Card): boolean => frontType(c).includes("land");
+const isLand = (c: Card): boolean => isLandCard(c);
 const PERMANENT_TYPES = ["artifact", "battle", "creature", "enchantment", "land", "planeswalker"];
 const isPermanent = (c: Card): boolean => PERMANENT_TYPES.some((t) => frontType(c).includes(t));
 const CARD_TYPES = ["artifact", "battle", "creature", "enchantment", "instant", "kindred", "land", "planeswalker", "sorcery", "tribal"];

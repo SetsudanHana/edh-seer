@@ -18,6 +18,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { topdeckPayoffs } from "./topdeck.js";
 import { loadRules, ownText } from "./rules.js";
+import { isLand as isLandCard } from "./typeline.js";
 
 /** The classes the doctrine says every deck should be able to answer (design §12.3), in the order
  *  they are reported. Derived from `POOL_CLASSES` (whole-branch review MINOR 2) rather than a
@@ -272,7 +273,7 @@ export function computeDeckMath(
   // audit. The 1-of-75 figure still holds, and it is still Inalla.
   const COMMAND_ZONE_CUE = /from the command zone|eminence|commander ninjutsu|in the command zone/i;
   const commanderRows = deck
-    .filter((dc) => commanders.has(dc.card.name) && !dc.card.typeLine.toLowerCase().includes("land"))
+    .filter((dc) => commanders.has(dc.card.name) && !isLandCard(dc.card))
     .map((dc) => cardCastability(dc, castCurves))
     .map((c) => ({
       name: c.name, turn: c.turn, castable: c.castable, mana: c.mana,

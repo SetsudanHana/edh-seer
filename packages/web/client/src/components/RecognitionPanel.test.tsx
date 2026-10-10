@@ -68,8 +68,8 @@ test("the nonland and land totals sum to the deck, and the land figure is the re
     { id: "l", label: "L", copies: 34, types: ["land"], subtypes: [], supertypes: [] },
     // Four modal DFCs: a spell front and a land back (`face: 1`). The back is skipped by both
     // traversals, and the FRONT counts as a land because the back is one -- roadmap T3.
-    { id: "m", label: "M", cardName: "M", copies: 4, types: ["sorcery"], subtypes: [], supertypes: [] },
-    { id: "m-back", label: "M //", cardName: "M", face: 1, copies: 4, types: ["land"], subtypes: [], supertypes: [] },
+    { id: "m", label: "M", cardName: "M", copies: 4, types: ["sorcery"], subtypes: [], supertypes: [], layout: "modal_dfc" },
+    { id: "m-back", label: "M //", cardName: "M", face: 1, copies: 4, types: ["land"], subtypes: [], supertypes: [], layout: "modal_dfc" },
   ];
   const data = {
     ...DATA,

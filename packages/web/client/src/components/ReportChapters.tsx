@@ -38,7 +38,7 @@ import { StrengthenLists } from "./SuggestedCards.js";
 import { useSuggestions } from "../lib/suggestions.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
-import { primaryType } from "../lib/deck-shape.js";
+import { landBackCards, primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
 import { offThemeSplit } from "../lib/off-theme.js";
 import { useCardDrawer } from "./card-drawer.js";
@@ -145,13 +145,15 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     for (const r of report.cards) { if (r.manaValue !== undefined) { m.set(r.name, r.manaValue); if (r.cardName) m.set(r.cardName, r.manaValue); } }
     return (n: string) => m.get(n);
   }, [report.cards]);
-  // WHAT THE DECK DOES ON TURNS 1-5, read off the report (lib/first-turns.ts). Lands by the graph's
-  // type line, front face only: a basic has no role on the report, and an MDFC with a land back is
-  // still a spell.
+  // WHAT THE DECK DOES ON TURNS 1-5, read off the report (lib/first-turns.ts). Lands by the shared
+  // `isLand` (#1167): a basic has no role on the report, and an MDFC with a land back is a land
+  // (owner 2026-08-31) while a transform card's land back is not. This used to read each node's
+  // FACE line, which made a back-face node's land count for any layout.
   const turns = useMemo(() => {
-    const lands = new Set<string>();
-    for (const n of data.graph?.nodes ?? []) {
-      if (/\bland\b/i.test((n.typeLine ?? "").split("//")[0]!)) lands.add(n.cardName ?? n.id);
+    const nodes = data.graph?.nodes ?? [];
+    const lands = new Set<string>(landBackCards(nodes));
+    for (const n of nodes) {
+      if (n.face === undefined && n.types.includes("land")) lands.add(n.cardName ?? n.id);
     }
     return firstTurns(report, (name) => lands.has(name));
   }, [report, data.graph]);

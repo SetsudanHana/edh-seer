@@ -1,5 +1,6 @@
 import tagWeights from "./tag-weights.json" with { type: "json" };
 import type { Card } from "./card.js";
+import { isLand } from "./is-land.js";
 import { synergyScore, type Reason } from "./synergy.js";
 import { extractTags, type Tag } from "./tags.js";
 import type { Combo, ComboIndex } from "./combos.js";
@@ -783,7 +784,7 @@ export function analyzeDeck(
   // {tag,count} shape and values untouched while removing the raw-count-vs-weighted mismatch.
   const themes = rankThemes(themeCounts, TAG_STATS).map((tag) => ({ tag, count: themeCounts.get(tag)! }));
 
-  const nonlandCount = cards.filter((c) => !c.typeLine.toLowerCase().includes("land")).length;
+  const nonlandCount = cards.filter((c) => !isLand(c)).length;
   const cohesion = computeCohesion(rankThemes(deckFreq, TAG_STATS), deckFreq, nonlandCount);
 
   const deckStats = computeDeckStats(cards);

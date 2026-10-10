@@ -1,4 +1,5 @@
 import type { Card } from "./card.js";
+import { isLand } from "./is-land.js";
 
 export interface ManaCurveBucket {
   /** 0-6 exact mana value, or 7 meaning "7 or more". */
@@ -11,10 +12,6 @@ export interface DeckStats {
   landCount: number;
   avgManaValue: number;
   medianManaValue: number;
-}
-
-function isLand(card: Card): boolean {
-  return card.typeLine.toLowerCase().includes("land");
 }
 
 /** Nonland-only mana curve/avg/median (the conventional MTG-curve scope); land count
