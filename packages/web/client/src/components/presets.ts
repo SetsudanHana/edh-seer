@@ -1,3 +1,4 @@
+import { ROLE_PARENTS } from "@edh-seer/matcher/role-parents";
 import type { GraphNode } from "../types.js";
 
 /** Position means synergy and nothing else now (board-force.ts), so a card's FACETS -- what it is,
@@ -116,13 +117,25 @@ export const FLOW_DASH = { on: 6, off: 6, speed: 30 } as const;
  *  the `strategy` fallback for a card with no role at all. Carried over from the retired ROOMS:
  *  the grouping is what makes "removal" and "counterspells" one answer-shaped fact rather than two
  *  hues a reader has to reconcile. Order is the order the legend lists them in. */
+/** A legend group that stands for a build parent takes its label and leaves from `ROLE_PARENTS`,
+ *  the one definition (#1168), so the map legend and the Roles shelf cannot GROUP different categories. (Their counts can still differ: the legend counts graph node roles, a different classifier, #1172.) */
+function parentGroup(id: string, key: string, extra: string[] = []): { id: string; label: string; categories: string[] } {
+  const p = ROLE_PARENTS.find((x) => x.key === key)!;
+  return { id, label: p.name, categories: [...p.leaves, ...extra] };
+}
+
 export const ROLE_GROUPS: { id: string; label: string; categories: string[] }[] = [
-  { id: "wincons", label: "Win conditions", categories: ["burn", "tutor"] },
-  { id: "cardAdvantage", label: "Card advantage", categories: ["draw", "cardSelection", "impulseDraw"] },
-  { id: "ramp", label: "Ramp", categories: ["ramp"] },
+  // `burn` alone: it is in no build parent. `tutor` is NOT here (#1168): it is a Card advantage leaf,
+  // and the legend now counts what the Roles shelf counts. Nothing in the owner rulings put it under
+  // Win conditions; it was grouped so in the Aug-13 rooms retirement, before the parents existed.
+  { id: "wincons", label: "Win conditions", categories: ["burn"] },
+  parentGroup("cardAdvantage", "consistency"),
+  parentGroup("ramp", "ramp"),
   { id: "lands", label: "Lands", categories: ["lands"] },
-  { id: "interaction", label: "Interaction", categories: ["targetedRemoval", "stackInteraction", "protection", "stax"] },
-  { id: "boardWipes", label: "Board wipes", categories: ["boardWipe"] },
+  // `stax` is in NO group: it is the tax kind, which the owner's 2026-10-06 ruling says is not
+  // interaction, so it paints as Strategy. Pinned in presets.test.ts.
+  parentGroup("interaction", "interaction"),
+  parentGroup("boardWipes", "boardWipes"),
   { id: "strategy", label: "Strategy", categories: [] },
 ];
 

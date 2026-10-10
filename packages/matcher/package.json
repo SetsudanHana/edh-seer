@@ -9,6 +9,7 @@
     "./analyze": "./src/analyze.ts",
     "./axis": "./src/axis.ts",
     "./build": "./src/build.ts",
+    "./role-parents": "./src/role-parents.ts",
     "./graph-projection": "./src/graph-projection.ts",
     "./faces": "./src/faces.ts",
     "./deck-cards": "./src/deck-cards.ts",

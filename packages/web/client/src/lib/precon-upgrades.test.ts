@@ -114,3 +114,12 @@ test("the closing clause is said once, and no sentence uses a power word", () =>
 test("with nothing to compare there is nothing to say", () => {
   expect(whatTheSwapsDo(pkg(3), before())).toBe("");
 });
+
+/** #1168: the precon page's four role sections are named by the build parents, not by a second list. */
+test("the role section titles are the build parents' names", async () => {
+  const { BUILD_PARENTS } = await import("@edh-seer/matcher/build");
+  const { SECTION_TITLE } = await import("./precon-upgrades.js");
+  const byKey = (k: string) => BUILD_PARENTS.find((p) => p.key === k)!.name;
+  expect([SECTION_TITLE.ramp, SECTION_TITLE.consistency, SECTION_TITLE.interaction, SECTION_TITLE.wipes])
+    .toEqual([byKey("ramp"), byKey("consistency"), byKey("interaction"), byKey("boardWipes")]);
+});

@@ -286,7 +286,7 @@ test("one idle card ranks below a large build shortfall", () => {
  *  the count is fine and what those cards can answer is not, so it is a swap inside the category. */
 test("the slot trade says so when the surplus is the category a finding asks for", () => {
   const withAnswers = report({
-    slack: [{ category: "Interaction", count: 19, target: 10, over: 9 }] as DeckReport["slack"],
+    slack: [{ category: "Interaction", key: "interaction", count: 19, target: 10, over: 9 }] as DeckReport["slack"],
     deckMath: {
       turn: 8,
       answers: [
@@ -475,4 +475,25 @@ test("a three-colour gold finding says all three colours, and one card reads in 
   expect(f.headline).toBe("Your white-blue-black card due by turn 3 (Corrupting Influence) needs all three colours in the same hand.");
   expect(f.detail).toBe("Each colour alone is there 93% of the time, all together 64%.");
   expect(f.action).toBe("Trade a single-colour source for a land that makes more than one of them, or cast it later.");
+});
+
+/** #1168: THE ASK IS MATCHED TO THE SURPLUS BY THE PARENT'S KEY, never its display name. Rename the
+ *  parent and the "swap inside the category" clause must still fire. */
+test("the slot trade finds the interaction surplus by key, whatever the parent is called", () => {
+  const renamed = report({
+    slack: [{ category: "Board control", key: "interaction", count: 19, target: 10, over: 9 }] as DeckReport["slack"],
+    deckMath: {
+      turn: 8,
+      answers: [
+        { class: "creature", count: 4, required: 5, available: 0.5, exiling: 0, recurring: 0, fromCommandZone: false, pool: 1 },
+        { class: "artifact", count: 0, required: 5, available: 0, exiling: 0, recurring: 0, fromCommandZone: false, pool: 1 },
+      ],
+    } as DeckReport["deckMath"],
+  });
+  expect(slotTrade(renamed, findings(renamed))!).toContain("take the slots from the cards that answer the same things");
+  const namedOnly = report({
+    slack: [{ category: "Interaction", count: 19, target: 10, over: 9 }] as DeckReport["slack"],
+    deckMath: renamed.deckMath,
+  });
+  expect(slotTrade(namedOnly, findings(namedOnly))!).not.toContain("take the slots from the cards that answer the same things");
 });
