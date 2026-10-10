@@ -585,6 +585,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               // EACH CUT CARRIES THE CARD THAT TAKES ITS SLOT, whatever the job (spec §3).
               pairs={suggestions.value?.pairs}
               deckSize={data.totalCount}
+              lands={report.deckMath?.lands}
               fillFrom={offThemeCuttable}
             />
             </div>

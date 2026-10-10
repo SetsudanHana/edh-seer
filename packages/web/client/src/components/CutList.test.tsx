@@ -1,4 +1,6 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
@@ -359,4 +361,63 @@ test("a token made by a double-faced card goes when that card is cut", () => {
   const model = { cards: new Map([["token:Goblin", tok], ["Maker", maker]]) } as never;
   render(<MemoryRouter><CutList cuts={[cut("A", { row }), cut("Maker // Flip", { row: rowM })]} slack={[]} deckSize={102} model={model} /></MemoryRouter>);
   expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses no link when cut");
+});
+
+// THE LAND COUNT IS FOR THE FINISHED 100 (#1152): the cuts are all spells, so the page says where
+// the land count lands once they are out.
+const landsLine = (deckSize: number, lands?: { actual: number; target: number }, listed = Math.max(0, deckSize - 100)) => {
+  const free = { partners: 1, why: "w", loses: [], covers: [] } as never;
+  render(<MemoryRouter><CutList cuts={Array.from({ length: listed }, (_, i) => cut(`C${i}`, { row: free }))} slack={[]} deckSize={deckSize} lands={lands} /></MemoryRouter>);
+  return screen.queryByTestId("cuts-lands");
+};
+
+test("over 100 and inside the land band, the lands stay and the line says how far off the target they are", () => {
+  const t = landsLine(108, { actual: 35, target: 36 })!.textContent!;
+  expect(t).toBe("The cut list's cards are all spells, so your 35 lands stay. A 100-card deck of this curve wants 36, and you are 1 under, within the normal ±3.");
+});
+
+test("over 100 and right on the land target, the line reads as English", () => {
+  expect(landsLine(108, { actual: 36, target: 36 })).toHaveTextContent("The cut list's cards are all spells, so your 36 lands stay. A 100-card deck of this curve wants 36, and you are right on target.");
+});
+
+test("over 100 and under the land band, the line asks for more cuts and the lands", () => {
+  expect(landsLine(108, { actual: 30, target: 36 })).toHaveTextContent("Your 30 lands are 6 under the 36 this deck wants: cut 6 more spells and add 6 lands, so 14 cards come out in all.");
+});
+
+test("over 100 and over the land band, cutting lands counts toward the overage", () => {
+  expect(landsLine(108, { actual: 42, target: 36 })).toHaveTextContent("Your 42 lands are 6 over the 36 this deck wants: cutting 6 of them counts toward the 8.");
+});
+
+test("at 100, or without a land reading, there is no lands line", () => {
+  expect(landsLine(100, { actual: 35, target: 36 })).toBeNull();
+  cleanup();
+  expect(landsLine(108)).toBeNull();
+});
+
+test("ReportChapters hands the report's land reading to the cut list", () => {
+  const src = readFileSync(join(import.meta.dirname, "ReportChapters.tsx"), "utf8");
+  expect(src).toMatch(/<CutList(?:(?!\/>)[\s\S])*?lands=\{report\.deckMath\?\.lands\}/);
+});
+
+test("over the land band by more than the overage, the line says what is left over", () => {
+  expect(landsLine(102, { actual: 40, target: 36 })).toHaveTextContent("Your 40 lands are 4 over the 36 this deck wants: cut all 2 from your lands to reach 100, and 2 are still over.");
+});
+
+test("under the land band, the loss-free sentence does not promise 100 and the lands line carries the total", () => {
+  const free = { partners: 1, why: "w", loses: [], covers: [] } as never;
+  render(<MemoryRouter><CutList cuts={Array.from({ length: 8 }, (_, i) => cut(`C${i}`, { row: free }))} slack={[]} deckSize={108} lands={{ actual: 30, target: 36 }} /></MemoryRouter>);
+  expect(screen.getByTestId("cuts-over").textContent).not.toContain("it is 100");
+  expect(screen.getByTestId("cuts-lands")).toHaveTextContent("14 cards come out in all");
+});
+
+test("lands stay is claimed only when the listed cuts cover the whole overage", () => {
+  expect(landsLine(108, { actual: 35, target: 36 }, 6)!.textContent).toBe("Take the other 2 from spells too and your 35 lands stay. A 100-card deck of this curve wants 36, and you are 1 under, within the normal ±3.");
+});
+
+test("with no cut listed, the in-band line asks for all of them from spells", () => {
+  expect(landsLine(108, { actual: 35, target: 36 }, 0)!.textContent).toBe("Take all 8 from spells and your 35 lands stay. A 100-card deck of this curve wants 36, and you are 1 under, within the normal ±3.");
+});
+
+test("one over 100 and over the land band, it says cut 1, not cut all 1", () => {
+  expect(landsLine(101, { actual: 40, target: 36 })).toHaveTextContent("Your 40 lands are 4 over the 36 this deck wants: cut 1 from your lands to reach 100, and 3 are still over.");
 });

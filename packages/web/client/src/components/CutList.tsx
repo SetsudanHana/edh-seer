@@ -11,6 +11,8 @@ import { SwapLine } from "./SuggestedPairs.js";
 import { cutIn, lossIn, lossSplit, pickTogether, tokenMakersOf } from "../lib/cut-together.js";
 
 import { Arrow } from "./icons.js";
+import { bandState } from "../lib/deck-gauge.js";
+import { LAND_BAND } from "@edh-seer/matcher/build";
 /** THE CUT LIST — "which cards is the deck not using?" — and the deck-level slack beside it.
  *
  *  Every row states its own argument, because the engine's three failure directions all point the
@@ -31,7 +33,7 @@ export interface Surplus {
   shelf?: string;
 }
 
-export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHeld, surplus, pairs, deckSize, fillFrom, model }:
+export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHeld, surplus, pairs, deckSize, fillFrom, model, lands }:
   {
     /** The one cut list: the report's eligibility, the Overview's reading. See `chooseCuts`. */
     cuts: readonly CutChoice[];
@@ -58,6 +60,8 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
     fillFrom?: readonly string[];
     /** The engine's cards, to put a cut card's text beside the card that covers it. */
     model?: EngineModel | null;
+    /** The land count and its target (`deckMath.lands`), to say where the lands stand once an overage is cut. */
+    lands?: { actual: number; target: number };
   }) {
   // BY NAME, the way a player cuts: the card, or the front of a double-faced one.
   const textOf = (name: string): EngineCard | undefined => {
@@ -187,6 +191,27 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
       {fill.length || hasSurplus || costly.length ? "or " : ""}the cards you like least
     </>
   );
+  // THE LAND TARGET IS FOR THE FINISHED 100 AND THE CUTS ARE ALL SPELLS (#1152): the first-cuts seat
+  // could not tell whether "wants 36" came out of the 8 or on top of them. Band read by `bandState`,
+  // the one reading of the land count (#759).
+  const landsShort = !!over && !!lands && lands.target > 0 && lands.target - lands.actual > LAND_BAND;
+  const landsLine = ((): string | undefined => {
+    if (!over || !lands || lands.target <= 0) return undefined;
+    const { actual, target } = lands;
+    const d = actual - target, n = Math.abs(d);
+    if (n <= LAND_BAND) {
+      const r = bandState(actual, target);
+      // ONLY WHEN THE LISTED CUTS COVER THE OVERAGE: the rest comes from `elsewhere`, which can hold land cards.
+      const lead = toCut.length === over ? `The cut list's cards are all spells, so your ${actual} lands stay.`
+        : toCut.length ? `Take the other ${over - toCut.length} from spells too and your ${actual} lands stay.`
+          : `Take all ${over} from spells and your ${actual} lands stay.`;
+      return `${lead} A 100-card deck of this curve wants ${target}, and you are ${r.label}.`;
+    }
+    if (d < 0) return `Your ${actual} lands are ${n} under the ${target} this deck wants: cut ${n} more spells and add ${n} lands, so ${over + n} cards come out in all.`;
+    return n <= over
+      ? `Your ${actual} lands are ${n} over the ${target} this deck wants: cutting ${n} of them counts toward the ${over}.`
+      : `Your ${actual} lands are ${n} over the ${target} this deck wants: cut ${over === 1 ? "1" : `all ${over}`} from your lands to reach 100, and ${n - over} ${n - over === 1 ? "is" : "are"} still over.`;
+  })();
   const hasCuts = cuts.length > 0;
   const hasUnjudged = !!unjudged && unjudged.length > 0;
   const hasSlack = !!slack && slack.length > 0;
@@ -201,7 +226,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
           <p id="cuts-over" className="text-sm max-w-[65ch]" data-testid="cuts-over">
             Your list has <b className="tabular-nums">{deckSize}</b> cards, <b className="tabular-nums">{over}</b> over 100.{" "}
             {toCut.length === over
-              ? <>{over === 1 ? "This one loses" : `These ${over} lose`} no link when cut{over > 1 && holds ? ", even all together" : ""}: every link {over === 1 ? "it makes" : "they make"}, another card makes too. Take {over === 1 ? "it" : "them"} out and it is 100.</>
+              ? <>{over === 1 ? "This one loses" : `These ${over} lose`} no link when cut{over > 1 && holds ? ", even all together" : ""}: every link {over === 1 ? "it makes" : "they make"}, another card makes too.{landsShort ? "" : <> Take {over === 1 ? "it" : "them"} out and it is 100.</>}</>
               // "A ROLE YOU RUN MORE OF THAN YOU NEED" ONLY WHEN ONE IS (persona round 2026-09-27: the
               // first-cuts seat looked below for a role over its target and every role was short or
               // on target, a dead end).
@@ -209,6 +234,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
                 ? <>{toCut.length === 1 ? "This one loses" : `These ${toCut.length} lose`} no link when cut{toCut.length > 1 && holds ? ", even all together" : ""}: every link {toCut.length === 1 ? "it makes" : "they make"}, another card makes too. The other {rest} {rest === 1 ? "has" : "have"} to come from {elsewhere}.</>
                 : <>Every card here fills a role or works with your themes, so the {over} have to come from {elsewhere}.</>}
           </p>
+          {landsLine ? <p className="text-sm max-w-[65ch]" data-testid="cuts-lands">{landsLine}</p> : null}
           {toCut.length ? (
             <ol className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(25rem,calc((100%_-_2.25rem)/4))),1fr))]">
               {toCut.map((c) => <CutCard key={c.name} c={c} loses={losesWith(c)} cover={coverOf(c)} textOf={textOf} />)}
