@@ -21,6 +21,7 @@ import { ManaTimeline } from "./ManaTimeline.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { PlanThemes } from "./PlanThemes.js";
+import { PanelVerdict } from "./PanelVerdict.js";
 import { StrongestPairs } from "./StrongestPairs.js";
 import { topPairs } from "../lib/top-pairs.js";
 import { OrbitView, type PairAsk } from "./OrbitView.js";
@@ -352,13 +353,16 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre} ask={pairAsk}
                 lead={talkFirst ? (
                   <div className="flex flex-col gap-4">
-                    <RecognitionPanel data={data} part="identity" />
+                    {/* Narrow: the heading row's own button is ~1,800px down the page, so this is the only one near. */}
+                    <PanelVerdict report={report} withButton />
                     <TableTalkLine talk={talk!} />
+                    <RecognitionPanel data={data} part="identity" />
                   </div>
                 ) : talkInRail ? (
                   <div className="flex flex-col gap-4">
-                    <RecognitionPanel data={data} part="identity" inline />
+                    <PanelVerdict report={report} />
                     <TableTalkLine talk={talk!} />
+                    <RecognitionPanel data={data} part="identity" inline />
                   </div>
                 ) : <RecognitionPanel data={data} part="identity" inline={!!railHost} />} leadTarget={railHost ? readSlot : null} />
             </section>
@@ -366,7 +370,12 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
           {/* THE LINE FOR THE TABLE BESIDE THE VERDICT (#770): a 48rem card alone under a 2560 map
             *  left two-thirds of the row empty. On a phone and a laptop they still stack. */}
           <div className={`grid gap-6 items-start ${talk && !talkFirst && !talkInRail ? "lg:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]" : ""}`}>
-            {talk && !talkFirst && !talkInRail ? <TableTalkLine talk={talk} /> : null}
+            {!talkFirst && !talkInRail ? (
+              <div className="flex flex-col gap-4">
+                <PanelVerdict report={report} />
+                {talk ? <TableTalkLine talk={talk} /> : null}
+              </div>
+            ) : null}
             <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" verdictAbove={verdictAbove} afterVerdict={!verdictAbove ? <StrongestPairs pairs={pairs} model={themes} /> : undefined} />
           </div>
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
