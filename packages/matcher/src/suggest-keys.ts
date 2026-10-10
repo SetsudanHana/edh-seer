@@ -1,3 +1,6 @@
+import { VERB_IMPLIED_CLASS } from "@edh-seer/tagger/schema";
+import { WILDCARD_SUBJECT } from "./zones.js";
+
 /** A DEMAND ROW'S KEY, AS CANDIDATE EVENT KEYS (spec 2026-09-24 deck suggestions, §3, "The demand
  *  key is not an `events/` key").
  *
@@ -29,7 +32,7 @@ export function eventKeysForDemand(censusKey: string, eventKeys: readonly string
   const subject = key.slice(colon + 1);
   let slot: 1 | 2 | null;
   let want: string[] = [];
-  if (subject === "any") slot = null;
+  if (subject === WILDCARD_SUBJECT) slot = null;
   else if (subject.startsWith("type:")) { slot = 1; want = subject.slice("type:".length).split("+"); }
   else if (subject.startsWith("subtype:")) { slot = 2; want = subject.slice("subtype:".length).split("+"); }
   else return [];
@@ -54,15 +57,22 @@ export function axisEventKeys(tag: string, eventKeys: readonly string[]): string
   // `applies:<kind>|type|subtype|token`. Type-level keys only: the subtype keys run to hundreds of
   // shards, and a tribal anthem's tribe is its own axis tag.
   if (verb === "static") return eventKeys.filter((k) => k.startsWith(`applies:${word}|`) && k.split("|")[2] === "-");
-  if (word === "any") return eventKeysForDemand(tag, eventKeys);
-  // THE INVERSE OF `combatSubjectKey` (#1088). A deck's axis `attacks:any` is now `attacks:creature`,
-  // and CR 508.1a / 509.1a make a combat event with no stated class a creature's: the untyped keys
-  // (`attacks|-|-|-`, 110 askers) are the same event, so they stay in the axis' reach. Only combat
-  // verbs: `enters:creature` does not stand for every untyped enter.
-  const untypedCombat = (verb === "attacks" || verb === "blocks") && word === "creature"
-    ? eventKeysForDemand(`${verb}:any`, eventKeys).filter((k) => k.split("|")[1] === "-") : [];
+  // A STORED `:any` (draw, gain-life ... a verb with no implied class) names no class: every key of the verb.
+  if (word === "any") return eventKeysForDemand(`${verb}:${WILDCARD_SUBJECT}`, eventKeys);
+  // THE VERB'S IMPLIED CLASS (#1166; was #1088's combat special case). A subject that names no class
+  // IS the class its verb implies (`VERB_IMPLIED_CLASS`), so the axis `enters:permanent` /
+  // `attacks:creature` stands for the untyped keys (`enters|-|-|-`) too. The wide classes
+  // (permanent, spell) take every key of the verb, as the untyped axis did before; a creature takes
+  // the keys that name no type beside its own.
+  const implied = (VERB_IMPLIED_CLASS as Readonly<Record<string, string>>)[verb];
+  if (implied !== undefined && word === implied) {
+    const all = eventKeysForDemand(`${verb}:${WILDCARD_SUBJECT}`, eventKeys);
+    if (word === "permanent" || word === "spell") return all;
+  }
+  const untyped = implied !== undefined && word === implied
+    ? eventKeysForDemand(`${verb}:${WILDCARD_SUBJECT}`, eventKeys).filter((k) => k.split("|")[1] === "-") : [];
   return [...new Set([
-    ...untypedCombat,
+    ...untyped,
     ...eventKeysForDemand(`${verb}:type:${word}`, eventKeys),
     ...eventKeysForDemand(`${verb}:subtype:${word}`, eventKeys),
   ])];

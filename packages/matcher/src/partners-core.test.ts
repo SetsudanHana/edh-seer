@@ -1496,7 +1496,7 @@ test("fillDemandsOf: a recursion, a per-graveyard payoff, a graveyard count and 
   expect(feederKeysOf(monument)).toEqual([]);
   const dig = { card: { name: "Dig Through Time" }, tags: { characteristics: { types: ["instant"], subtypes: [], keywords: ["Delve"] }, abilities: [] } } as unknown as DeckCard;
   expect(feederKeysOf(dig)).toEqual(["fills|-|-|-"]);
-  expect(fillDemandsOf(dig)[0]!.tags).toEqual(["mill:any", "discard:any", "dies:any", "enters-graveyard:any"]);
+  expect(fillDemandsOf(dig)[0]!.tags).toEqual(["mill:any", "discard:any", "dies:permanent", "enters-graveyard:any"]);
   // A battlefield count is not a fill.
   expect(fillDemandsOf(krenkoCounting())).toEqual([]);
 });

@@ -415,7 +415,10 @@ import { emblemRecipient } from "../emblem.js";
 // "gains double strike" is a speed-increase (as on the grant path), not the verb double (Akim and 20 more).
 // 292: #1088, "if you attacked this turn" cares about `attacks:creature` (CR 508.1a: only creatures attack), not
 // `attacks:any`, which named the same event twice.
-export const DERIVE_VERSION = 292;
+// 293: #1166, "if you descended this turn" cares about `dies:permanent` (CR 700.11: a permanent card), not `dies:any`.
+// An untyped trigger subject now keys as the class its verb implies (`VERB_IMPLIED_CLASS`) at read time, so no
+// stored tag for those verbs is `:any`.
+export const DERIVE_VERSION = 293;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

@@ -45,11 +45,18 @@ test("zoneEventKey keeps legacy tag spellings, and a graveyard leave is its own 
   expect(zoneEventKey("mill", undefined, "any")).toBe("mill:any");
 });
 
-test("a combat verb with no class is the creature (CR 508.1a, 509.1a; #1088)", () => {
+// #1166 (owner 2026-10-10): an untyped subject keys as the class its verb implies, never `:any`.
+test("an untyped subject keys as the class the verb implies; a named class keeps its own", () => {
   expect(zoneEventKey("attacks", undefined, "any")).toBe("attacks:creature");
-  expect(zoneEventKey("blocks", undefined, "any")).toBe("blocks:creature");
-  expect(zoneEventKey("attacks", undefined, "goblin")).toBe("attacks:goblin");
+  expect(zoneEventKey("cast", undefined, "any")).toBe("cast:spell");
+  expect(zoneEventKey("enters", "battlefield", "any")).toBe("enters:permanent");
+  expect(zoneEventKey("enters", "graveyard", "any")).toBe("enters-graveyard:any");
+  expect(zoneEventKey("leaves", "battlefield", "any")).toBe("leaves:permanent");
+  expect(zoneEventKey("sacrifice", undefined, "any")).toBe("sacrifice:permanent");
+  expect(zoneEventKey("dies", "battlefield", "any")).toBe("dies:creature");
+  expect(zoneEventKey("combat-damage", undefined, "any")).toBe("combat-damage:creature");
+  expect(zoneEventKey("dies", "battlefield", "planeswalker")).toBe("dies:planeswalker");
+  expect(zoneEventKey("enters", "battlefield", "artifact")).toBe("enters:artifact");
   expect(zoneEventKey("attacks", undefined, "-token")).toBe("attacks:-token");
-  expect(zoneEventKey("enters", "battlefield", "any")).toBe("enters:any");
-  expect(zoneEventKey("combat-damage", undefined, "any")).toBe("combat-damage:any");
 });
+

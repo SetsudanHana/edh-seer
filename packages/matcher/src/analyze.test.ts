@@ -755,7 +755,7 @@ test("themes rank by corpus rarity, not raw frequency", () => {
     dc("Bolt A", damageAbility), dc("Bolt B", damageAbility),
   ];
   // draw is in nearly every card in the corpus; the damage trigger is rare.
-  const stats: TagStats = { N: 1000, counts: { "draw:any": 900, "enters:any": 900, "cast:instant": 5, "non-combat-damage:opp": 5 } };
+  const stats: TagStats = { N: 1000, counts: { "draw:any": 900, "enters:permanent": 900, "cast:instant": 5, "non-combat-damage:opp": 5 } };
   const report = analyzeDeckStructured(deck, undefined, H, SEED_IMPACT_WEIGHTS, undefined, stats);
   expect(report.cohesion).not.toBeNull();
   expect(report.cohesion!.tag).not.toBe("draw:any");
@@ -787,7 +787,7 @@ test("theme ranking weighs what a card cares about above what it merely does", (
     dc("Mentor A", caresAboutCasting), dc("Mentor B", caresAboutCasting),
   ];
   // Equally rare in the corpus, so rarity cannot decide it — only the cares/does split can.
-  const stats: TagStats = { N: 1000, counts: { "non-combat-damage:opp": 20, "cast:instant": 20, "enters:any": 900 } };
+  const stats: TagStats = { N: 1000, counts: { "non-combat-damage:opp": 20, "cast:instant": 20, "enters:permanent": 900 } };
   const report = analyzeDeckStructured(deck, undefined, H, SEED_IMPACT_WEIGHTS, undefined, stats);
   expect(report.cohesion!.tag).toBe("cast:instant");
 });

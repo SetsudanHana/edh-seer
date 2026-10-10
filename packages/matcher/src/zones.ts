@@ -1,4 +1,10 @@
 import type { GameEvent } from "@edh-seer/tagger";
+import { impliedSubjectKey } from "@edh-seer/tagger/schema";
+
+/** THE CENSUS AND SUGGESTIONS' WILDCARD: "a subject of any kind". It is a string no stored tag can be,
+ *  so a demand row that matches everything and a tag that names no class are never the same thing
+ *  (#1166; before it both were `:any`). */
+export const WILDCARD_SUBJECT = "*";
 
 /** Canonicalize a zone-transition event. The `enters` verb ALWAYS means "enters the battlefield",
  *  so its zone is forced to battlefield (some tags erroneously put a source zone on an enters
@@ -27,28 +33,21 @@ export function normalizeZoneEvent(e: GameEvent): GameEvent {
   }
 }
 
-/** ONLY A CREATURE ATTACKS OR BLOCKS (#1088). CR 508.1a: the active player chooses which creatures
- *  they control will attack; CR 509.1a: the defending player chooses which creatures they control
- *  will block. So "whenever you attack" (a subject naming no class) and "whenever a creature
- *  attacks" are ONE event, and a key that says `attacks:any` beside `attacks:creature` is the same
- *  event twice: Enchanting Rani's report listed two "Attack triggers" bars of 27 cards. The untyped
- *  fallback of a combat verb is therefore the creature. A subtype or a "non-" class keeps its key. */
-export function combatSubjectKey(verb: string, subjectKey: string): string {
-  return (verb === "attacks" || verb === "blocks") && subjectKey === "any" ? "creature" : subjectKey;
-}
-
 /** The reason-tag grouping key for a canonical zone event, kept in legacy spelling so the
  *  CATEGORY_MATCH table and theme labels don't change: enters@battlefield -> enters:key,
  *  enters@graveyard -> enters-graveyard:key, leaves@graveyard -> leaves-graveyard:key. `dies` and a
  *  battlefield `leaves` key on their own verb -- the same strings every cached panel verdict was
  *  written against. */
 export function zoneEventKey(verb: string, zone: string | undefined, subjectKey: string): string {
-  return zoneEventKeyRaw(verb, zone, combatSubjectKey(verb, subjectKey));
+  // A MOVE FROM OR TO ANOTHER ZONE IS A CARD'S, NOT A PERMANENT'S: "leaves your graveyard" and
+  // `enters-graveyard` name cards, so only the battlefield zone (or none stated) implies a permanent.
+  const offBattlefield = (verb === "enters" || verb === "leaves") && zone !== undefined && zone !== "battlefield";
+  return zoneEventKeyRaw(verb, zone, offBattlefield ? subjectKey : impliedSubjectKey(verb, subjectKey));
 }
 
-/** `zoneEventKey` without the combat canon: the census's own row keys, which keep an untyped subject
- *  (`attacks:any`) apart from a creature-typed one because they COUNT shapes and `suggest-keys.ts`
- *  reads `:any` as "every subject". Tags a player sees use `zoneEventKey`. */
+/** `zoneEventKey` without the implied class: the census's own row keys, whose untyped subject is
+ *  `WILDCARD_SUBJECT`, because they COUNT shapes and `suggest-keys.ts` reads the wildcard as "every
+ *  subject". Tags a player sees use `zoneEventKey`, which fills `VERB_IMPLIED_CLASS` (#1166). */
 export function zoneEventKeyRaw(verb: string, zone: string | undefined, subjectKey: string): string {
   if (verb === "enters" && zone === "graveyard") return `enters-graveyard:${subjectKey}`;
   if (verb === "leaves" && zone === "graveyard") return `leaves-graveyard:${subjectKey}`;

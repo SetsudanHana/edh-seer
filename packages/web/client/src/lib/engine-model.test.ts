@@ -18,7 +18,7 @@ describe("groupName", () => {
     expect(groupName("cast:-creature")).toBe("Noncreature spells");
     expect(groupName("fodder:goblin")).toBe("Goblin fodder");
     expect(groupName("static:pump")).toBe("Anthems");
-    expect(groupName("enters:any")).toBe("ETB triggers");
+    expect(groupName("enters:permanent")).toBe("ETB triggers");
   });
   test("plurals", () => {
     expect(plural("sorcery")).toBe("sorceries");

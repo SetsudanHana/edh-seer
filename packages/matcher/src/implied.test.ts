@@ -552,7 +552,7 @@ test("extort watches casting, and the argument form is matched too", () => {
   // RECALL v7 #114 (2026-09-16): delve is a graveyard DEMAND -- the descend tags, no edge.
   const delve = keywordAbilities(kw(["Delve"]));
   expect(delve).toHaveLength(1);
-  expect(delve[0].conditionCares).toEqual(["dies:any", "mill:any", "discard:any", "enters-graveyard:any"]);
+  expect(delve[0].conditionCares).toEqual(["dies:permanent", "mill:any", "discard:any", "enters-graveyard:any"]);
   expect(delve[0].trigger).toBeUndefined();
   expect(keywordAbilities(kw(["Ward {2}"]))).toHaveLength(0);
 });

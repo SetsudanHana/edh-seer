@@ -7,7 +7,7 @@ import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
-import { combatSubjectKey, normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
@@ -371,7 +371,13 @@ export function cardCaresTags(tags: CardTags): Set<string> {
     // wants, so they are dropped rather than re-keyed. Left deliberately narrow: an extra combat is
     // the analogous supply for a self `attacks` trigger and is its own item.
     if (a.trigger && a.trigger.subject?.self !== true) {
-      for (const v of a.trigger.verbs) out.add(`${v}:${combatSubjectKey(v, themeSubjectKey(a.trigger.subject))}`);
+      for (const v of a.trigger.verbs) {
+        // The zone is passed only so a graveyard leave/enter (a CARD, not a permanent) is not given
+        // the permanent class; the key keeps its legacy spelling (`leaves:`, no `-graveyard`) here.
+        const zone = a.trigger.subject?.zone;
+        const key = zoneEventKey(v, zone, themeSubjectKey(a.trigger.subject));
+        out.add(key.startsWith(`${v}-graveyard:`) ? `${v}:${key.slice(key.indexOf(":") + 1)}` : key);
+      }
     }
     // AN INTERVENING-IF CONDITION IS A DEMAND EVEN WHEN NO SINGLE CARD SATISFIES IT (owner,
     // 2026-08-20). "Whenever a permanent you control is put into a graveyard, IF IT HAD COUNTERS ON
@@ -3253,7 +3259,7 @@ function delveEdges({ p, c, pEvents, reasons }: PairScope): void {
       // a death at `any` ("each player sacrifices", a wrath) kills yours too and always counts.
       const yours = s.control === "you" || (s.control === "any" && !fillsOnlyOpponents(p.card.oracleText));
       const key = e.verb === "mill" && yours ? "mill:any" : e.verb === "discard" && yours ? "discard:any"
-        : e.verb === "dies" && s.control !== "opp" ? "dies:any"
+        : e.verb === "dies" && s.control !== "opp" ? "dies:permanent"
         : (e.verb === "enters-graveyard" || (e.verb === "enters" && s.zone === "graveyard" && !e.implied)) && yours ? "enters-graveyard:any"
         : undefined;
       if (!key) continue;

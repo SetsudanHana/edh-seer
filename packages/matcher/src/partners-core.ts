@@ -1204,7 +1204,7 @@ export const fillDemandsOf = (d: DeckCard): { key: string; tag: string; tags: st
     if (gated?.zone === "graveyard" && a.threshold) push(keyOf(gated), [`threshold:${themeSubjectKey(gated)}`]);
   }
   if ((d.tags?.characteristics.keywords ?? []).some((k) => String(k).toLowerCase().trim() === "delve")) {
-    push("fills|-|-|-", ["mill:any", "discard:any", "dies:any", "enters-graveyard:any"]);
+    push("fills|-|-|-", ["mill:any", "discard:any", "dies:permanent", "enters-graveyard:any"]);
   }
   return out;
 };

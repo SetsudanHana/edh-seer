@@ -226,11 +226,11 @@ export function groupName(tag: string): string {
   const S = sub === "instant-sorcery" ? "Instant and sorcery" : sub.startsWith("-") ? `Non${sub.slice(1)}` : T;
   switch (kind) {
     case "scales": return tribe ? `${T} tribal` : none ? "Cards matter" : `${P} matter`;
-    case "enters": return none ? "ETB triggers" : `${S} ETBs`;
-    case "cast": return none || sub === "spell" ? "Cast triggers" : `${S} spells`;
-    case "dies": return none ? "Death triggers" : `${S} deaths`;
-    case "attacks": return none || sub === "creature" ? "Attack triggers" : `${S} attacks`;
-    case "combat-damage": return none || sub === "creature" ? "Combat damage triggers" : `${S} combat damage`;
+    case "enters": return sub === "permanent" ? "ETB triggers" : `${S} ETBs`;
+    case "cast": return sub === "spell" ? "Cast triggers" : `${S} spells`;
+    case "dies": return `${S} deaths`;
+    case "attacks": return sub === "creature" ? "Attack triggers" : `${S} attacks`;
+    case "combat-damage": return sub === "creature" ? "Combat damage triggers" : `${S} combat damage`;
     case "non-combat-damage": return "Burn";
     case "counter-added": return none ? "Counters matter" : `Counters on ${p}`;
     case "graveyard-recursion": return none ? "Recursion" : tribe ? `${T} reanimation` : `${S} recursion`;
