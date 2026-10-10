@@ -171,6 +171,30 @@ describe("paintLegend", () => {
   });
 });
 
+/** #1172: THE LEGEND COUNTS CARDS, AS THE ROLES SHELF DOES. A two-faced card is two graph nodes (a
+ *  face is a node) and both carry the physical card's roles, so a per-node count read every
+ *  double-faced removal spell twice: 104 parent-cells over the 74 decks, no other cause. */
+describe("paintLegend role counts follow the shelf", () => {
+  const FRONT = "Sundering Eruption // Volcanic Fissure";
+  const deck = [
+    node({ id: FRONT, cardName: FRONT, roles: ["targetedRemoval"] }),
+    node({ id: `face:1:${FRONT}`, cardName: FRONT, face: 1, roles: ["targetedRemoval"] }),
+    node({ id: "Swords to Plowshares", roles: ["targetedRemoval"] }),
+    node({ id: "Kozilek's Return", roles: ["boardWipe", "targetedRemoval"] }),
+  ];
+  it("counts a two-faced card once under the parent its roles fill", () => {
+    const row = paintLegend(mode("role"), deck).find((r) => r.value === "interaction")!;
+    expect(row.count).toBe(3);
+  });
+  it("still counts a card under every parent its roles fill", () => {
+    expect(paintLegend(mode("role"), deck).find((r) => r.value === "boardWipes")!.count).toBe(1);
+  });
+  it("counts a back face whose card has no front node row once, under its own role", () => {
+    const land = [node({ id: "face:1:X // Y", cardName: "X // Y", face: 1, roles: ["lands"] }), node({ id: "X // Y", cardName: "X // Y" })];
+    expect(paintLegend(mode("role"), land).find((r) => r.value === "lands")!.count).toBe(1);
+  });
+});
+
 describe("subcategoryLabel", () => {
   it("translates the categories whose engine key is jargon", () => {
     expect(subcategoryLabel("cardSelection")).toBe("digging");
@@ -235,7 +259,7 @@ describe("segmentInk", () => {
 
 /** #1168: THE MAP LEGEND AND THE ROLES SHELF GROUP THE SAME CATEGORIES. A legend group that stands for
  *  a build parent takes its label and categories from ROLE_PARENTS, so the two cannot drift. The
- *  COUNTS still differ because the legend counts graph node roles, a different classifier (#1172).
+ *  COUNTS agree as well, pinned below (#1172).
  *  `stax` is the tax kind, which the owner's 2026-10-06 ruling says is not interaction, so it is in
  *  no parent group and paints as Strategy. `burn` stands alone as Win conditions. */
 describe("ROLE_GROUPS follow BUILD_PARENTS", () => {

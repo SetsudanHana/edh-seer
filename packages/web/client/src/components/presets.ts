@@ -118,7 +118,7 @@ export const FLOW_DASH = { on: 6, off: 6, speed: 30 } as const;
  *  the grouping is what makes "removal" and "counterspells" one answer-shaped fact rather than two
  *  hues a reader has to reconcile. Order is the order the legend lists them in. */
 /** A legend group that stands for a build parent takes its label and leaves from `ROLE_PARENTS`,
- *  the one definition (#1168), so the map legend and the Roles shelf cannot GROUP different categories. (Their counts can still differ: the legend counts graph node roles, a different classifier, #1172.) */
+ *  the one definition (#1168), so the map legend and the Roles shelf cannot GROUP different categories. Their counts agree too (#1172): `paintLegend` counts a card once however many face nodes it paints. */
 function parentGroup(id: string, key: string, extra: string[] = []): { id: string; label: string; categories: string[] } {
   const p = ROLE_PARENTS.find((x) => x.key === key)!;
   return { id, label: p.name, categories: [...p.leaves, ...extra] };
@@ -322,8 +322,21 @@ export interface LegendRow { value: string; label: string; hue: string; count: n
  *  sorting either by popularity would make the legend jump between decks. */
 export function paintLegend(mode: PaintMode, nodes: readonly GraphNode[]): LegendRow[] {
   const count = new Map<string, number>();
+  // ROLES BELONG TO THE PHYSICAL CARD, not the face node (#1172): a two-faced card is two nodes that
+  // both carry its roles, and the Roles shelf counts the card once, so the role legend counts a
+  // card once per value however many face nodes it paints. Hues are untouched -- each node still
+  // paints by its own roles. Every other mode paints per face on purpose (a back face has its own
+  // type line and colours), so they keep counting nodes.
+  const seen = new Set<string>();
   for (const n of nodes) {
-    for (const v of mode.values(n)) count.set(v, (count.get(v) ?? 0) + (n.copies ?? 1));
+    for (const v of mode.values(n)) {
+      if (mode.id === "role") {
+        const key = `${v}\0${n.cardName ?? n.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+      }
+      count.set(v, (count.get(v) ?? 0) + (n.copies ?? 1));
+    }
   }
   const rows = [...count].map(([value, c]) => ({
     value, label: mode.valueLabel(value), hue: mode.hue(value), count: c,
