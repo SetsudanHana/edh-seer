@@ -1276,7 +1276,7 @@ test("Prismatic Lens is not a blue source in the simulation: it pays {U}{U} no b
 // only that line.
 test("Chromatic Lantern makes the lands blue in the simulation, beyond its own tap", () => {
   const lantern = rocks["Chromatic Lantern"] as unknown as DeckCard;
-  const twin: DeckCard = { ...lantern, card: { ...lantern.card, name: "Lantern Twin", oracleText: "{T}: Add one mana of any color." } as never };
+  const twin: DeckCard = { ...lantern, card: { ...lantern.card, name: "Lantern Twin", oracleText: "{T}: Add one mana of any color." } as never, tags: { ...lantern.tags, staticFixer: undefined } as never };
   const island = (i: number) => card(`Island ${i}`, "Basic Land — Island", 0, "({T}: Add {U}.)", ["U"]);
   const mountain = (i: number) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "({T}: Add {R}.)", ["R"]);
   const counterspell: DeckCard = { ...card("Counterspell", "Instant", 4), card: { ...card("Counterspell", "Instant", 4).card, manaCost: "{2}{U}{U}" } };

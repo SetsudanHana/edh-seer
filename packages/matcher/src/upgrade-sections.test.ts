@@ -8,6 +8,7 @@ import { colourDeficit, landTypeDemand } from "./mana-audit.js";
 import { colouredNetYield, jobOf, landsToBattlefield, netYield, themedSubjects, sameFetchAnyColour } from "./same-job.js";
 import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, auraSupport, sameJob, strictlyBetter, swapCloser, watchedTypes } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
+import { manaTags, tapFor } from "./mana-test-support.js";
 
 /** Cards as printed (oracle text read 2026-09-30); the text rules read nothing else. */
 const card = (name: string, typeLine: string, oracleText: string, producedMana?: string[]): DeckCard => ({
@@ -100,7 +101,9 @@ test("an answer covers the cut's card types with no new limit", () => {
 
 const needed = new Set(["W", "B"] as const);
 const land = (name: string, typeLine: string, oracleText: string, producedMana: string[]) => {
-  const dc = card(name, typeLine, oracleText, producedMana);
+  // The derived line these specs stand for: one free tap for the colours (Exotic Orchard's colours come from the opponents' lands).
+  const line = name === "Exotic Orchard" ? tapFor([], { anyColour: "opponent-lands" }) : tapFor(producedMana);
+  const dc = { ...card(name, typeLine, oracleText, producedMana), tags: manaTags([line]) };
   return { facts: landFacts(dc, needed, []), dc, gameChanger: false };
 };
 const temple = land("Temple of Silence", "Land", "Temple of Silence enters tapped.\nWhen Temple of Silence enters, scry 1.\n{T}: Add {W} or {B}.", ["W", "B"]);
@@ -392,7 +395,9 @@ test("a Game Changer upgrade is untouched by the colour and cross-type paths (En
 describe("a dork for a dork, to close a colour shortfall", () => {
   const elf = (name: string, oracle: string, produced: string[], over: Record<string, unknown> = {}) => {
     const m = rock("Elvish Mystic");
-    return { ...m, card: { ...m.card, name, oracleText: oracle, producedMana: produced, ...over } } as unknown as DeckCard;
+    // The tags carry the line this spec stands for: a free tap for `produced`, restricted when the text says "spend this mana only".
+    const line = tapFor(produced, /spend this mana only/i.test(oracle) ? { restriction: { spend: "only to cast angel spells" } } : {});
+    return { ...m, card: { ...m.card, name, oracleText: oracle, producedMana: produced, ...over }, tags: { ...m.tags, manaLines: [line] } } as unknown as DeckCard;
   };
   const swap = (cut: DeckCard, adds: DeckCard[], themed: string[]) =>
     roleOptions("ramp", [cut], adds.map(candidate), undefined, { U: 4 }, () => 1, new Set(), undefined, themedSubjects(themed)).flatMap((o) => o.options.map((x) => [x.add, x.keptType ?? null]));

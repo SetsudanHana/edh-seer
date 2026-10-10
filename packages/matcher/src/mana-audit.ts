@@ -2,8 +2,9 @@ import { minCopies } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { minSources, pCanPayByTurn } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
-import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
-import { fixedColours } from "./mana-lines.js";
+import { fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
+import { colourSourceCards, withFetches } from "./colour-sources.js";
+import { deckIdentity, makesAnyMana } from "./mana-lines.js";
 import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import type { DeckCard } from "./types.js";
 import { BASIC_LAND_TYPES, countsAsLand } from "./typeline.js";
@@ -62,9 +63,6 @@ export function landOnlineBy(dc: DeckCard, turn: number, basicTypes: ReadonlySet
   const text = dc.card.oracleText ?? "";
   return !isLandFetch(text) || !fetchedLandEntersTapped(text, board.lands);
 }
-
-const produces = (card: { producedMana?: readonly string[] }, color: Color | "C"): boolean =>
-  (card.producedMana ?? []).includes(color);
 
 /** Coloured pips per colour in a mana cost, e.g. `{2}{B}{B}` -> `{ B: 2 }`.
  *
@@ -178,8 +176,9 @@ export interface ManaAuditRow {
  *    turn one, and a nonland source now counts only for a demand due later than its own mana value.
  *
  *  ONE REMAINS, and it is the one no turn number fixes:
- *  - **Conditional production.** `producedMana` is what a card CAN add: "any color" lists all five,
- *    and a source gated behind a condition counts the same as a basic.
+ *  - **Conditional production.** A line gated behind a condition (Tainted Peak's B/R needs a Swamp) or restricted to some spells is no
+ *    source at all (#1169: sources are read off the derived `manaLines`, not Scryfall's `producedMana`), which under-claims; a line that
+ *    needs a board the deck might not have (Gaea's Cradle's scaling) still counts as one.
  *
  *  ONE THING IT NO LONGER GETS WRONG: the requirement is priced WITH the free mulligan. `required`
  *  was `minCopies` alone until 2026-08-25 -- raw hypergeometric, the same model that read 37 lands
@@ -236,42 +235,16 @@ export function manaAuditFull(
 ): { rows: ManaAuditRow[]; gold?: GoldJoint } {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
-  const libraryCards = library.map((dc) => dc.card);
-
   const basicTypes = deckBasicTypes(library);
 
-  const coloredSources = (color: Color): DeckCard[] => {
-    // A FETCHLAND PRODUCES THE COLOUR IT FINDS. `producedMana` is empty on a real fetch and that is
-    // correct -- Polluted Delta taps for nothing -- so the printed field alone told a MONO-BLUE deck
-    // with six fetchlands that blue was short at the top of its curve. The simulator has counted
-    // them since N2 (`fetchMask`), which made the colour panel and the goldfish disagree about the
-    // same six cards on the same screen: the T18b defect again, one model over.
-    //
-    // A LAND-FETCH SPELL COUNTS TOO, and is the one place `isManaSource` is deliberately bypassed.
-    // That gate refuses instants and sorceries because a RITUAL is a one-shot; Cultivate is not one.
-    // It leaves a Forest on the battlefield permanently, which is the whole definition of a source,
-    // and `availableBy` already prices the delay the same way it prices a rock.
-    // BY WHAT IT FIXES, NOT WHAT IT CAN ADD (owner, 2026-10-08, #1114): a colour only a line that costs more than it
-    // makes can produce (Cascading Cataracts, Prismatic Lens) is not a source of it.
-    const direct = library.filter((dc) => isManaSource(dc) && fixedColours(dc).includes(color));
-    // Asked of the LIBRARY: a commander is not in it (CR 903.6) and cannot be fetched.
-    const fetches = library.filter((dc) => !direct.includes(dc)
-      && isLandFetch(dc.card.oracleText ?? "")
-      && fetchableLands(dc.card.oracleText ?? "", libraryCards).some((c) => produces(c, color)));
-
-    // CAPPED AT WHAT THERE IS TO FIND. Every fetch is a wildcard for its own fetchable set, but the
-    // sets overlap and the library is finite: `codie` runs 15 fetches over 5 white-producing lands,
-    // so calling all 15 white sources claims ten cards that can never produce white. Measured over
-    // the 71 calibration decks the cap binds on 31 of 153 colour rows across 8 decks -- not a
-    // degenerate corner, so it is a cap and not a comment. The CHEAPEST fetches survive it: a fetch
-    // that is a land beats one that costs {2}, which is the same order `availableBy` prices.
-    const reachable = new Set(fetches.flatMap((f) => fetchableLands(f.card.oracleText ?? "", libraryCards)));
-    const targets = [...reachable].filter((c) => produces(c, color)).length;
-    return [
-      ...direct,
-      ...[...fetches].sort((a, b) => a.card.manaValue - b.card.manaValue).slice(0, targets),
-    ];
-  };
+  // THE SOURCES OF EACH COLOUR, the one count the mana base reads too (`colour-sources.ts`, #1169): a card whose own tap or static line
+  // makes the colour, and the fetches that can find a land of it -- a fetchland, and a land-fetch SPELL (Cultivate), which leaves a
+  // land on the battlefield permanently and is on the rock clock below. BY WHAT IT FIXES, NOT WHAT IT CAN ADD (owner, 2026-10-08,
+  // #1114): a colour only a line that costs more than it makes can produce (Cascading Cataracts, Prismatic Lens) is not a source of it.
+  // A one-shot (Dark Ritual), a Treasure maker, a sacrifice outlet, a trigger and restricted or gated mana are lines that are not colour
+  // sources at all (`isColourSource`), so none of them needs a card-type gate here.
+  const identity = deckIdentity(deck, opts.commanderNames ?? []);
+  const byColour = colourSourceCards(library, identity);
 
   // WHAT COULD BE PRODUCING BY TURN N, for one set of sources, asked once per deadline and cached,
   // because a deck's demands share very few distinct turns.
@@ -303,12 +276,12 @@ export function manaAuditFull(
     };
   };
 
-  const sourcesByColor = new Map(COLORS.map((color) => [color, coloredSources(color)]));
+  const sourcesByColor = new Map(COLORS.map((color) => [color, byColour.get(color)!]));
   // EVERY SOURCE OF ANY MANA, coloured or not: what the deck could hold of one colour if it
   // recoloured its whole mana base without adding a single card to it.
   const anyAvailableBy = availability([...new Set([
     ...[...sourcesByColor.values()].flat(),
-    ...library.filter((dc) => isManaSource(dc) && produces(dc.card, "C")),
+    ...library.filter(makesAnyMana),
   ])]);
 
   // STATIC COLOUR FIXERS (owner, 2026-10-08, #1115): "after you play cards like Chromatic Lantern your color
@@ -451,15 +424,9 @@ export function colourDeficit(deck: readonly DeckCard[], commanderNames: readonl
 export function landTypeDemand(deck: readonly DeckCard[], commanderNames: readonly string[], landType: string, turn: number): { required: number; available: number } {
   const commanders = new Set(commanderNames);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
-  const libraryCards = library.map((dc) => dc.card);
   const has = (c: { typeLine: string }) => countsAsLand(c) && c.typeLine.toLowerCase().includes(landType);
   const types = deckBasicTypes(library);
-  const direct = library.filter((dc) => has(dc.card));
-  const fetches = library.filter((dc) => !direct.includes(dc) && isLandFetch(dc.card.oracleText ?? "")
-    && fetchableLands(dc.card.oracleText ?? "", libraryCards).some(has));
-  const reachable = new Set(fetches.flatMap((f) => fetchableLands(f.card.oracleText ?? "", libraryCards)));
-  const targets = [...reachable].filter(has).length;
-  const sources = [...direct, ...[...fetches].sort((a, b) => a.card.manaValue - b.card.manaValue).slice(0, targets)];
+  const sources = withFetches(library, library.filter((dc) => has(dc.card)), has);
   const available = sources.filter((dc) => (countsAsLand(dc.card) ? landOnlineBy(dc, turn, types) : dc.card.manaValue < turn)).length;
   const requiredRaw = minCopies(1, turn, SOURCE_CONFIDENCE, library.length);
   return { required: Math.min(requiredRaw, minSources(1, turn, SOURCE_CONFIDENCE) ?? requiredRaw), available };

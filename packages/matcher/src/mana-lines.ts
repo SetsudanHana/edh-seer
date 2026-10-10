@@ -1,91 +1,134 @@
-/** THE MANA LINES A CARD PRINTS, read once (extracted from same-job.ts for the colour audit, #1114).
- *  Leaf module: imports nothing but a type, so `mana-audit` and `same-job` can both use it.
+/** WHICH OF A CARD'S DERIVED MANA LINES ARE COLOUR SOURCES (#1169, task 2a). Derive reads a card's mana production ONCE
+ *  (`CardTags.manaLines`, `staticFixer`, `landFetch`); this module is the matcher's only question of it: "does this line
+ *  make mana the deck's spells can use, repeatably, without consuming anything?" The colour audit, the mana base, the land
+ *  score and the swap suggestions all ask it here, so they cannot disagree about a card (they did: Gisa's black was 38 by
+ *  one and 33 by the other). No oracle text is read and Scryfall's `producedMana` is not consulted.
  *
- *  COST AGAINST PRODUCTION (owner, 2026-10-08, #1114): a mana ability counts as COLOUR FIXING only when it
- *  produces at least its mana cost plus the source's own tap. Cascade Bluffs ("{U/R}, {T}: Add {U}{U}, {U}{R},
- *  or {R}{R}") pays 1 and taps for 2: a full U and R source. Cascading Cataracts ("{5}, {T}: Add five mana in
- *  any combination of colors") and Prismatic Lens ("{1}, {T}: Add one mana of any color") produce less than
- *  they cost to use: colourless only. A hybrid or coloured symbol in the cost counts as 1, like a generic one. */
+ *  A COLOUR SOURCE (owner, 2026-10-08 and 2026-10-10) is a repeatable tap or static production you control without
+ *  consuming a resource. Treasure makers, sacrifice outlets and counter-fuelled mana are ramp; trigger mana (Birgi) is ramp;
+ *  restricted mana ("spend only ...", Smokebraider) is never a source; a GATED line (Tainted Peak's B/R needs a Swamp) is not
+ *  credited as guaranteed. `isColourSource` is the schema's own predicate, stated on `ManaLine`.
+ *
+ *  COST AGAINST PRODUCTION (owner, 2026-10-08, #1114): a costed line is FIXING only when it produces at least its mana cost
+ *  plus the source's own tap. Cascade Bluffs ("{U/R}, {T}: Add {U}{U}, {U}{R}, or {R}{R}") pays 1 and makes 2: a full U and
+ *  R source. Cascading Cataracts ("{5}, {T}: Add five mana in any combination of colors") and Prismatic Lens ("{1}, {T}: Add
+ *  one mana of any color") make less than they cost: colourless only (`makesAnyMana` still holds, `colourSourceColours` is
+ *  empty). `ManaLine.net` is the production less `cost.mana`, so the rule is `net >= 1`. A scaling amount ("{B} for each
+ *  Swamp") cannot be judged from the line and is not struck, as before. */
+import type { ManaLine } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
+import { parseTypeLine } from "./typeline.js";
 
-const REMINDER = /\([^()]*\)/g;
-export const printedText = (d: DeckCard): string => (d.card.oracleText ?? "").replace(REMINDER, "").toLowerCase();
+export const WUBRG = ["W", "U", "B", "R", "G"] as const;
+const BASIC_COLOUR: Record<string, string> = { plains: "W", island: "U", swamp: "B", mountain: "R", forest: "G" };
 
-export const ADD_LINE = /^([^:\n]*):\s*add ([^\n]*)/gm;
-const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7 };
-const WORDS = "one|two|three|four|five|six|seven";
-export const ADDITIONAL = new RegExp(`\\badds? an additional ((?:\\{[^}]+\\})+|(${WORDS}) mana of (?:any|the chosen) (?:color|type))`, "g");
-// CEILING: "three mana of any ONE color" (Pyramid of the Pantheon) is not matched here, so its line reads no
-// production and is not judged either way; "in any combination of colors" is.
-const ANY_COLOUR = new RegExp(`^(${WORDS}) mana (?:of (?:any|the chosen) (?:color|type)|in any combination of colou?rs)`);
-const WUBRG = ["W", "U", "B", "R", "G"];
+/** The colours of the deck's commanders: what "your commander's colour identity" resolves to. `null` is unknown (a deck with no
+ *  commander named, or commanders carrying no identity field), and an unknown identity restricts nothing. */
+export type DeckIdentity = ReadonlySet<string> | null;
 
-export interface ManaLine {
-  /** Mana produced less the mana its cost asks (a source's own tap aside). */
-  net: number;
-  /** Makes a WUBRG colour AND passes the cost rule: the only lines that fix. */
-  coloured: boolean;
-  /** The WUBRG colours the line can make (all five for "any color"), whether or not it passes the cost rule. */
-  colours: string[];
-  /** Produces at least its cost plus its own tap. */
-  qualifies: boolean;
-  /** Mana its cost asks (tap aside): 0 for a plain tap. */
-  paid: number;
+export function deckIdentity(deck: readonly DeckCard[], commanderNames: readonly string[]): DeckIdentity {
+  if (commanderNames.length === 0) return null;
+  const names = new Set(commanderNames);
+  const found = deck.filter((dc) => names.has(dc.card.name) && dc.card.colorIdentity !== undefined);
+  return found.length === 0 ? null : new Set(found.flatMap((dc) => dc.card.colorIdentity!));
 }
 
-const coloursOf = (symbols: string): string[] => [...new Set([...symbols.matchAll(/\{([^}]+)\}/g)].flatMap((m) => m[1]!.toUpperCase().split("/")).filter((c) => WUBRG.includes(c)))];
+/** THE SCHEMA'S COLOUR-SOURCE RULE (`ManaLine` in tagger/schema.ts), plus the source label it implies: an activated ability the
+ *  card itself taps, or the line a static ability grants. A trigger, an aura trigger, a token maker, a one-shot spell and a fetch
+ *  are never one, whatever their cost says. */
+export const isColourSource = (line: ManaLine): boolean =>
+  (line.source === "activated" || line.source === "static-grant")
+  && !line.unread && line.gate === null && line.restriction === null
+  && !line.cost.sacrificeSelf && !line.cost.sacrificeOther && line.cost.counters === null && !line.cost.tapOther
+  && (line.cost.tap || line.source === "static-grant");
 
-/** The repeatable mana lines of a card. A line that sacrifices the card is a one-shot (Lotus Petal, Dire
- *  Mimic), and a line whose mana is restricted ("Spend this mana only to cast ...") is not mana for the
- *  deck's spells (#966 T2 review): neither is read. */
-export function manaLines(d: DeckCard): ManaLine[] {
-  const out: ManaLine[] = [];
-  const text = printedText(d);
-  for (const m of text.matchAll(ADD_LINE)) {
-    const cost = m[1]!;
-    const rest = m[2]!;
-    if (/\bsacrifice\b/.test(cost) || /\bspend this mana only\b/.test(rest)) continue;
-    const any = ANY_COLOUR.exec(rest);
-    const run = /^(?:\{[^}]+\})+/.exec(rest)?.[0];
-    if (!any && !run) continue;
-    const made = any ? NUMBER_WORDS[any[1]!]! : (run!.match(/\{/g) ?? []).length;
-    // WHAT THE COST ASKS: a number is that many, any other symbol (coloured, hybrid) is one; {T} is the tap.
-    // CEILING: only MANA symbols are costs. A discard (Bog Witch), a forage or an energy payment is counted free,
-    // and a Phyrexian {W/P} counts as 1 whichever way it is paid.
-    const symbols = [...cost.matchAll(/\{([^}]+)\}/g)].map((x) => x[1]!);
-    const paid = symbols.filter((s) => !/^[tqe]$/.test(s)).reduce((n, s) => n + (/^\d+$/.test(s) ? Number(s) : s === "x" ? 0 : 1), 0);
-    const tap = symbols.includes("t") ? 1 : 0;
-    const colours = any ? WUBRG : coloursOf(rest.split(/\.\s/)[0]!);
-    // CEILING: AN AMOUNT THAT SCALES ("{B} for each Swamp", Cabal Coffers) CANNOT BE JUDGED FROM THE LINE, so it
-    // is not struck. Read on the produced-mana clause only: a later sentence (Study Hall's "where X is") is no
-    // part of the amount.
-    const qualifies = made >= paid + tap || /\bfor each\b|\bwhere x\b|\bequal to\b|\{x\}/.test(rest.split(/\.\s/)[0]!);
-    out.push({ net: made - paid, coloured: colours.length > 0 && qualifies, colours, qualifies, paid });
+/** THE COST RULE: the line makes at least what it costs plus its tap. */
+export const paysItsWay = (line: ManaLine): boolean => line.amount.scales !== null || line.net >= 1;
+
+/** THE FACES WHOSE LINES COUNT. A face node is its own face. A whole card counts its front, and its back only when the back can be
+ *  played: a modal DFC's back, which can be played. A transform card's back is never a source from the deck (`transformsIntoLand`,
+ *  owner 2026-10-10, #1174: things that transform are not ramp). */
+const faceCounts = (dc: DeckCard, face: 0 | 1): boolean =>
+  dc.face !== undefined ? dc.face === face : face === 0 || dc.card.layout === "modal_dfc";
+
+/** Every derived line of the card that is in play from the deck, a land's or not. */
+export const cardLines = (dc: DeckCard): ManaLine[] => (dc.tags?.manaLines ?? []).filter((l) => faceCounts(dc, l.face));
+
+/** A BASIC LAND TYPE IS A MANA ABILITY (CR 305.6), printed only as reminder text, which derive does not read: a land card with
+ *  Plains, Island, Swamp, Mountain or Forest in its types taps for that colour whatever its text box says. Read off the type
+ *  line of the faces that count. Also a land that makes EVERY land a basic type (Urborg, Yavimaya, Cradle of Growth): it is one of
+ *  the lands, so it has the type itself (CR 305.7), read from the derived `staticFixer`. */
+function intrinsicColours(dc: DeckCard): string[] {
+  const out = new Set<string>();
+  const faces = (dc.card.typeLine ?? "").split(" // ");
+  faces.forEach((typeLine, i) => {
+    if (!faceCounts(dc, (i === 0 ? 0 : 1) as 0 | 1)) return;
+    const p = parseTypeLine(typeLine);
+    if (!p.types.includes("land")) return;
+    for (const t of p.subtypes) if (BASIC_COLOUR[t]) out.add(BASIC_COLOUR[t]!);
+  });
+  const fixer = dc.tags?.staticFixer;
+  if (fixer?.covers === "lands" && /\bland\b/i.test(faces[0] ?? "")) for (const c of fixer.colours) out.add(c);
+  return [...out];
+}
+
+/** HOW A LINE THAT CHOOSES A COLOUR RESOLVES (`ManaAnyColour`):
+ *  - `any` is every colour the commander's identity allows; `identity` is the identity itself. With no identity known, all five.
+ *  - `chosen`, `opponent-lands`, `lands-you-could` are bounded by something that is not on the card. `five` keeps what the colour
+ *    audit and the mana base always did with them (Scryfall listed all five: Exotic Orchard, Reflecting Pool, Caged Sun); `none`
+ *    keeps what the land score did (the colours are conditional, so the land is never "upgraded" or cut for them). */
+export type BoundedColours = "five" | "none";
+
+function lineColours(line: ManaLine, identity: DeckIdentity, bounded: BoundedColours): string[] {
+  const out = new Set(line.colours);
+  switch (line.anyColour) {
+    case "any": for (const c of WUBRG) if (!identity || identity.has(c)) out.add(c); break;
+    case "identity": for (const c of WUBRG) if (!identity || identity.has(c)) out.add(c); break;
+    case "chosen": case "opponent-lands": case "lands-you-could": if (bounded === "five") for (const c of WUBRG) out.add(c); break;
+    case null: break;
   }
-  // AN AURA'S MANA IS A TRIGGER, not a "{T}: Add" line (Wild Growth, Utopia Sprawl): "adds an additional
-  // {G}" / "one mana of the chosen color" is that many, free, every time the land taps.
-  for (const m of text.matchAll(ADDITIONAL)) {
-    const any = m[2];
-    const colours = any ? WUBRG : coloursOf(m[1]!);
-    out.push({ net: any ? NUMBER_WORDS[any]! : (m[1]!.match(/\{/g) ?? []).length, coloured: colours.length > 0, colours, qualifies: true, paid: 0 });
-  }
-  return out;
+  return WUBRG.filter((c) => out.has(c));
 }
 
-/** THE COLOURS A SOURCE REALLY FIXES, from the card's `producedMana`: a colour only a failing line can make
- *  (Cascading Cataracts' five, Prismatic Lens' any colour) is struck; one a passing line also makes stays.
- *  A card with no line this reads (a basic's reminder text, a fetch, a trigger) keeps `producedMana`. */
-export function fixedColours(d: DeckCard): readonly string[] {
-  const produced = d.card.producedMana ?? [];
-  const lines = manaLines(d);
-  if (lines.every((l) => l.qualifies)) return produced;
-  const failing = new Set(lines.filter((l) => !l.qualifies).flatMap((l) => l.colours));
-  const passing = new Set(lines.filter((l) => l.qualifies).flatMap((l) => l.colours));
-  return produced.filter((c) => !failing.has(c) || passing.has(c));
+/** THE COLOURS A CARD IS A COLOUR SOURCE OF, by its own tap or static production: its colour-source lines that pay their way, a
+ *  land's intrinsic basic types. Empty for a card with no derived tags: it contributes nothing, and `coverage.ts` already lists it among the underived cards. A fetch is
+ *  NOT counted here: what it finds is the deck's to say (`colour-sources.ts`). */
+export function colourSourceColours(dc: DeckCard, identity: DeckIdentity = null, bounded: BoundedColours = "five"): string[] {
+  const out = new Set<string>(intrinsicColours(dc));
+  for (const l of cardLines(dc)) if (isColourSource(l) && paysItsWay(l)) for (const c of lineColours(l, identity, bounded)) out.add(c);
+  return WUBRG.filter((c) => out.has(c));
 }
 
-/** THE COLOURS A SOURCE MAKES ONLY THROUGH A COSTED LINE THAT PASSES THE RULE: a filter land's pair
- *  (Cascade Bluffs' {U} and {R}), a Signet's. `landFacts` reads a land's plain lines itself and adds these. */
-export function costedFixedColours(d: DeckCard): string[] {
-  return [...new Set(manaLines(d).filter((l) => l.paid > 0 && l.qualifies).flatMap((l) => l.colours))];
+/** THE COLOURS AN AURA'S TRIGGER ADDS to the land it enchants (Wild Growth, Utopia Sprawl, Fertile Ground: "whenever enchanted land is
+ *  tapped for mana, its controller adds an additional ..."). An aura trigger is NOT a colour source (the audit and the mana base count
+ *  none); it is the swap suggestions' call (`upgrade-sections.ts`: a colour swap may cross card types toward an Aura that enchants a
+ *  land), which is why the schema leaves aura triggers to the consumer. */
+export function auraTriggerColours(dc: DeckCard, identity: DeckIdentity = null): string[] {
+  const out = new Set<string>();
+  for (const l of cardLines(dc)) if (l.source === "aura-trigger" && !l.unread && l.gate === null && l.restriction === null) for (const c of lineColours(l, identity, "five")) out.add(c);
+  return WUBRG.filter((c) => out.has(c));
+}
+
+/** DOES THE CARD ITSELF MAKE MANA you can use on demand, of any colour or none? A costed line that makes less than it costs still
+ *  does (colourless, by the ruling). A plain fetch land does not: it makes mana only through what it finds. */
+export function makesAnyMana(dc: DeckCard): boolean {
+  return intrinsicColours(dc).length > 0 || cardLines(dc).some(isColourSource);
+}
+
+/** A LAND-FETCH THAT COUNTS AS A SOURCE OF WHAT IT FINDS (owner, 2026-10-10): the card carries `landFetch`, and one of its fetch lines
+ *  is ungated. A fetch SPELL (Cultivate) is paid once and its cost is not held against it; a permanent's activation (Myriad
+ *  Landscape's {2}) must make more than it costs, as any costed line must. */
+export function isFetchSource(dc: DeckCard): boolean {
+  const fetch = dc.tags?.landFetch;
+  if (!fetch) return false;
+  return cardLines(dc).some((l) => l.source === "fetch" && l.gate === null && (fetch.kind === "spell" || l.net >= 1));
+}
+
+/** The lines on which a land's mana is conditional, for the land score (never cut or upgraded for what it cannot be weighed on): a
+ *  gate (Tainted Peak), a restriction (Cavern of Souls), a colour bounded outside the card (Exotic Orchard), a scaling amount
+ *  (Gaea's Cradle), or a production derive could not read. A filter land's costed line is not one (it is read by cost). */
+export function hasConditionalMana(dc: DeckCard): boolean {
+  return cardLines(dc).some((l) => (l.source === "activated" || l.source === "static-grant") && l.cost.tap && l.cost.mana === 0
+    && (l.gate !== null || l.restriction !== null || l.unread || l.amount.scales !== null
+      || l.anyColour === "chosen" || l.anyColour === "opponent-lands" || l.anyColour === "lands-you-could"));
 }

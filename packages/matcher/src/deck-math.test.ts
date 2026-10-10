@@ -6,6 +6,7 @@ import { expectedPower } from "./pressure.js";
 import { computeBuild } from "./build.js";
 import type { LandRecommendation } from "./land-count.js";
 import type { DeckCard, Hierarchy } from "./types.js";
+import { manaTags, tapFor } from "./mana-test-support.js";
 
 const H: Hierarchy = {};
 
@@ -262,7 +263,7 @@ test("a commander that exiles what dies makes every creature answer an exile (#6
  *  then a source of a colour the deck uses only otherwise. */
 const izzetDeck = (colourless: boolean): DeckCard[] => {
   const land = (name: string, typeLine: string, text: string, made: string[]): DeckCard => ({
-    card: { name, typeLine, oracleText: text, keywords: [], colors: [], manaValue: 0, producedMana: made } as Card, tags: null,
+    card: { name, typeLine, oracleText: text, keywords: [], colors: [], manaValue: 0, producedMana: made } as Card, tags: manaTags([tapFor(made)]),
   });
   const cast = (name: string, cost: string, mv: number): DeckCard => ({
     card: { name, typeLine: "Instant", manaCost: cost, oracleText: "", keywords: [], colors: [], manaValue: mv } as Card, tags: null,
@@ -273,7 +274,7 @@ const izzetDeck = (colourless: boolean): DeckCard[] => {
     ...Array.from({ length: 4 }, (_, i) => land(`Izzet Gate ${i}`, "Land — Gate", "Izzet Gate enters tapped.\n{T}: Add {U} or {R}.", ["U", "R"])),
     ...(colourless ? [
       land("Wastes", "Basic Land", "{T}: Add {C}.", ["C"]),
-      { card: { name: "Mind Stone", typeLine: "Artifact", oracleText: "{T}: Add {C}.", keywords: [], colors: [], manaValue: 2, producedMana: ["C"] } as Card, tags: null } as DeckCard,
+      { card: { name: "Mind Stone", typeLine: "Artifact", oracleText: "{T}: Add {C}.", keywords: [], colors: [], manaValue: 2, producedMana: ["C"] } as Card, tags: manaTags([tapFor(["C"])]) } as DeckCard,
     ] : []),
     ...Array.from({ length: 10 }, (_, i) => cast(`Counterspell ${i}`, "{U}{U}", 2)),
     ...Array.from({ length: 6 }, (_, i) => cast(`Bolt ${i}`, "{R}", 1)),

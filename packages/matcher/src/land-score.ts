@@ -7,12 +7,12 @@
  *  is strictly better than another (owner, 2026-09-30) when it makes every needed colour the other
  *  makes, enters tapped no more often, does everything else the other does, and gains on colours or
  *  on tapped. */
-import type { Card } from "@edh-seer/engine";
-import { fetchableLands, fetchDemand, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
+import { fetchDemand, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
+import { fetchedColours } from "./colour-sources.js";
 import { classifyLand } from "./land-conditions.js";
 import { COLORS, deckBasicTypes, landOnlineBy, pipsByColor, type Color } from "./mana-audit.js";
 import { rolesOfCard } from "./quality.js";
-import { costedFixedColours, fixedColours } from "./mana-lines.js";
+import { colourSourceColours, deckIdentity, hasConditionalMana, makesAnyMana } from "./mana-lines.js";
 import { creatureSubtypes, isFetchSpell, isPlainDork, netPositiveMana, netYield } from "./same-job.js";
 import type { DeckCard } from "./types.js";
 import { countsAsLand } from "./typeline.js";
@@ -50,33 +50,11 @@ const PLAIN: readonly RegExp[] = [
   /^when ~ enters, (?:you gain 1 life|scry 1|return a land you control to its owner['’]s hand)\.$/,
   /\bsearch your library for\b/,
 ];
-const MANA_LINE = /^\{t\}(?:, pay \d+ life)?: add ([^.]*)\./;
-/** THE COLOURS IT MAKES FOR A TAP ALONE. A filter land's second colour needs coloured mana in (Mystic
- *  Gate), and Tainted Wood's needs a Swamp ("activate only"), so neither counts: only a plain "{T}:
- *  Add" line with nothing after it but a painland's damage does. */
-/** WHAT THE LINE ADDS, WITH NOTHING ATTACHED: symbols joined by "or", or one mana of any colour
- *  (your commander's included). "{W} for each enchantment you control" can add nothing. */
-// A SEPARATOR BETWEEN EVERY GROUP, never optional: with it optional the groups could split one run of
-// symbols many ways, which backtracks exponentially on a long one (CodeQL, 2026-09-30).
-const PLAIN_YIELD = /^(?:\{[wubrgc]\})+(?:(?:,? or |, )(?:\{[wubrgc]\})+)*$|^one mana of any colou?r(?: in your commander['’]s colou?r identity)?$/;
-/** A MANA LINE WITH A STRING ATTACHED: an "activate only" (Tainted Wood needs a Swamp), or mana
- *  spendable only on some spells (Tournament Grounds, Cavern of Souls, Ancient Ziggurat: 45 lands in
- *  the corpus). Either way its colours are not the deck's to spend. */
-const conditionalLine = (line: string) => /\b(?:activate|spend this mana) only\b/.test(line);
-const BASIC_TYPES: Record<string, string> = { plains: "W", island: "U", swamp: "B", mountain: "R", forest: "G" };
-function tapColours(dc: DeckCard): string[] {
-  const out = new Set<string>();
-  // A BASIC LAND TYPE IS A MANA ABILITY (CR 305.6), printed only as reminder text, which is not read.
-  const subtypes = ((dc.card.typeLine ?? "").split("//")[0]!.split(/—/)[1] ?? "").toLowerCase();
-  for (const [t, c] of Object.entries(BASIC_TYPES)) if (new RegExp(`\\b${t}\\b`).test(subtypes)) out.add(c);
-  for (const line of printedLines(dc)) {
-    const m = MANA_LINE.exec(line);
-    if (!m || conditionalLine(line) || !PLAIN_YIELD.test(m[1]!.trim())) continue;
-    if (/\bany colou?r\b/.test(m[1]!)) for (const c of COLORS) out.add(c);
-    for (const sym of m[1]!.matchAll(/\{([wubrg])\}/g)) out.add(sym[1]!.toUpperCase());
-  }
-  return [...out];
-}
+/** THE COLOURS A LAND MAKES FOR A TAP, from the derived mana lines (#1169): its colour-source lines that pay their way (a filter land's
+ *  costed line counts when it makes more than it costs, #1114: Cascade Bluffs {U} and {R}, Cascading Cataracts nothing), and a basic
+ *  land type's intrinsic ability (CR 305.6). A line bounded outside the card (Exotic Orchard's colours are the opponents' lands') names
+ *  none: the land is flagged `conditional-mana` and never cut or upgraded for them. */
+const tapColours = (dc: DeckCard): string[] => colourSourceColours(dc, null, "none");
 
 /** The printed lines that are not a land's ordinary business, joined: what else it does or asks. */
 export function unusualText(dc: DeckCard): string {
@@ -108,20 +86,20 @@ export function neededColours(deck: readonly DeckCard[]): Set<Color> {
   return out;
 }
 
-export function landFacts(dc: DeckCard, needed: ReadonlySet<Color>, library: readonly Card[]): LandFacts {
+export function landFacts(dc: DeckCard, needed: ReadonlySet<Color>, library: readonly DeckCard[]): LandFacts {
   const text = dc.card.oracleText ?? "";
   const fetches = isLandFetch(text);
   // AS `colourSources` COUNTS IT: a land that makes mana makes its own colours; only a land that makes
   // none (a fetch) takes the colours of what it fetches. Flagstones of Trokair makes {W}, whatever it
   // finds when it dies.
-  const own = dc.card.producedMana ?? [];
+  const own = makesAnyMana(dc);
   // A FILTER LAND'S COSTED LINE IS A FIX TOO when it makes at least what it costs plus its tap (#1114): Cascade
-  // Bluffs makes {U} and {R}, Cascading Cataracts nothing. Plain lines are read as before.
-  const produced = own.length > 0 || !fetches ? [...tapColours(dc), ...costedFixedColours(dc)] : fetchableLands(text, library).flatMap((c) => c.producedMana ?? []);
+  // Bluffs makes {U} and {R}, Cascading Cataracts nothing. `tapColours` reads both.
+  const produced = own || !fetches ? tapColours(dc) : [...fetchedColours(text, library, null)];
   const colours = COLORS.filter((c) => needed.has(c) && produced.includes(c));
   const template = classifyLand(dc.card).template;
   // A FETCH THAT MAKES NO MANA ITSELF TAKES ITS LAND'S TIMING, as `tappedLandCount` reads it.
-  const tapped: Tapped = (dc.card.producedMana ?? []).length === 0 && fetches
+  const tapped: Tapped = !own && fetches
     ? (fetchedLandEntersTapped(text, 3) ? 2 : 0)
     : template === "unconditional" || template === "unclassified" || template === "reveal" ? 2
       : template === "check" || template === "bfz" || template === "slow" || template === "fast" ? 1
@@ -146,7 +124,7 @@ export function landFacts(dc: DeckCard, needed: ReadonlySet<Color>, library: rea
   if (printedLines(dc).some((l) => !PLAIN.some((re) => re.test(l)))) kinds.push("printed");
   // MANA ON A CONDITION CANNOT BE WEIGHED: Exotic Orchard's colours are the opponents' lands', Tainted
   // Field's need a Swamp. Read as colourless, either would be "upgraded" to a one-colour land.
-  if (printedLines(dc).some((l) => { const m = MANA_LINE.exec(l); return m && (conditionalLine(l) || !PLAIN_YIELD.test(m[1]!.trim())); })) kinds.push("conditional-mana");
+  if (hasConditionalMana(dc)) kinds.push("conditional-mana");
   const utility = [...new Set(kinds)].filter((k) => !NOT_UTILITY.has(k) && !(tapped === 2 && CONSOLATION.has(k))
     && k !== "damage" && k !== "lose-life" && k !== "non-combat-damage").sort();
   // WHAT IT COSTS YOU TO USE: a painland's damage, a horizon land's life. Paid every time, unlike a
@@ -234,7 +212,8 @@ export function colourReplacements(
   themed: ReadonlySet<string> = new Set(),
 ): string[] {
   const commanders = new Set(commanderNames);
-  const library = deck.filter((dc) => !commanders.has(dc.card.name)).map((dc) => dc.card);
+  const library = deck.filter((dc) => !commanders.has(dc.card.name));
+  const identity = deckIdentity(deck, commanderNames);
   const needed = neededColours(deck);
   const otherShort = COLORS.filter((c) => c !== colour && (deficit[c] ?? 0) > 0);
   // CEILING: creature fetchers (Wood Elves) are never named; lands, artifact rocks, plain dorks and land-fetch spells are.
@@ -245,27 +224,27 @@ export function colourReplacements(
     if (isLand(dc)) {
       const f = landFacts(dc, needed, library);
       if (!f.front || f.utility.length > 0 || f.colours.some((c) => otherShort.includes(c))) continue;
-      if (f.colours.length === 0 && (dc.card.producedMana ?? []).length === 0) continue;
+      if (f.colours.length === 0 && !makesAnyMana(dc)) continue;
       const makes = f.colours.includes(colour);
       // TIER 2 READS THE AUDIT'S OWN TEST: a land of the colour that `manaAudit` would not count as
       // tapping for mana by `turn` (always tapped, or a check/slow/fast land on an early board).
       if (makes && landOnlineBy(dc, turn, basicTypes)) continue;
       ranked.push({ name: f.name, tier: f.colours.length === 0 ? 1 : makes ? 2 : 3, land: true, tapped: f.tapped, colours: f.colours.length, hidden: f.colours.filter((c) => (anyShort[c] ?? 0) > 0).length });
     } else {
-      const made = fixedColours(dc);
-      // MANA SPENT "AS THOUGH IT WERE MANA OF ANY COLOR" (Chromatic Orrery) is not derived and is every
-      // colour: refused like Arcane Signet.
-      if (/as though it were mana of any colou?r/i.test(dc.card.oracleText ?? "")) continue;
+      const made = colourSourceColours(dc, identity);
+      // MANA SPENT "AS THOUGH IT WERE MANA OF ANY COLOR" (Chromatic Orrery) is every colour, whatever makes it: a derived static
+      // fixer that covers all mana, refused like Arcane Signet.
+      if (dc.tags?.staticFixer?.covers === "all") continue;
       // A LAND-FETCH SPELL (Rampant Growth): its colours are those of the deck's lands it can reach, and one
       // that can reach the short colour is a source of it, never named.
       if (isFetchSpell(dc)) {
-        const reach = [...new Set(fetchableLands(dc.card.oracleText ?? "", library).flatMap((c) => c.producedMana ?? []))].filter((c): c is Color => (COLORS as readonly string[]).includes(c));
+        const reach = [...fetchedColours(dc.card.oracleText ?? "", library, identity)].filter((c): c is Color => (COLORS as readonly string[]).includes(c));
         if (reach.includes(colour) || reach.some((c) => otherShort.includes(c))) continue;
         ranked.push({ name: dc.card.name, tier: reach.some((c) => needed.has(c)) ? 3 : 1, land: false, tapped: 0, colours: reach.filter((c) => needed.has(c)).length, hidden: reach.filter((c) => (anyShort[c] ?? 0) > 0).length });
         continue;
       }
       const dork = /\bcreature\b/i.test(dc.card.typeLine);
-      if (made.length === 0 || (dork ? !isPlainDork(dc) || creatureSubtypes(dc).some((t) => themed.has(t)) : !/\bartifact\b/i.test(dc.card.typeLine))) continue;
+      if (!makesAnyMana(dc) || (dork ? !isPlainDork(dc) || creatureSubtypes(dc).some((t) => themed.has(t)) : !/\bartifact\b/i.test(dc.card.typeLine))) continue;
       // A ROCK THAT MAKES THE COLOUR IS NEVER NAMED, and only a PLAIN rock is (coordinator, 2026-10-08):
       // trading ramp that makes the colour for a land is not a colour fix, and an artifact that does
       // something else is a utility card.

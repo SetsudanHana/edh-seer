@@ -3,10 +3,16 @@ import type { Card } from "@edh-seer/engine";
 import { basicsFloor, betterLand, colourReplacements, landFacts, neededColours } from "./land-score.js";
 import type { DeckCard } from "./types.js";
 import fetches from "./ramp-colour.fixtures.json" with { type: "json" };
+import { FREE_TAP, manaTags, tapFor } from "./mana-test-support.js";
+
+/** The synthetic cards here carry the derived mana line their `producedMana` spec stands for: one free tap for those colours. A card whose
+ *  line is anything else says so with `withLines`. */
+const linesOf = (made: string[]) => (made.length > 0 ? [tapFor(made)] : []);
+const withLines = (d: DeckCard, lines: ReturnType<typeof tapFor>[], extra: Record<string, unknown> = {}): DeckCard => ({ ...d, tags: { ...d.tags, ...manaTags(lines), ...extra } as DeckCard["tags"] });
 
 const dc = (name: string, typeLine: string, oracleText: string, producedMana: string[] = [], kinds: string[] = [], manaCost?: string): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue: 0, producedMana, ...(manaCost ? { manaCost } : {}) } as Card,
-  tags: { abilities: kinds.map((k) => ({ kind: "activated", effect: { kind: k } })) } as unknown as DeckCard["tags"],
+  tags: { abilities: kinds.map((k) => ({ kind: "activated", effect: { kind: k } })), ...(producedMana.length ? { manaLines: linesOf(producedMana) } : {}) } as unknown as DeckCard["tags"],
 });
 
 const shrine = dc("Godless Shrine", "Land — Plains Swamp", "({T}: Add {W} or {B}.)\nAs Godless Shrine enters, you may pay 2 life. If you don't, it enters tapped.", ["W", "B"]);
@@ -14,7 +20,7 @@ const barrens = dc("Scoured Barrens", "Land", "Scoured Barrens enters tapped.\nW
 const plains = dc("Plains", "Basic Land — Plains", "({T}: Add {W}.)", ["W"]);
 const locthwain = dc("Castle Locthwain", "Legendary Land", "Castle Locthwain enters tapped unless you control a Swamp.\n{T}: Add {B}.\n{1}{B}{B}, {T}: Draw a card, then you lose life equal to the number of cards in your hand.", ["B"], ["mana-generation", "draw-card"]);
 const temple = dc("Temple of Silence", "Land", "Temple of Silence enters tapped.\nWhen Temple of Silence enters, scry 1.\n{T}: Add {W} or {B}.", ["W", "B"], ["scry", "mana-generation"]);
-const tower = dc("Command Tower", "Land", "{T}: Add one mana of any color in your commander's color identity.", ["W", "U", "B", "R", "G"], ["mana-generation"]);
+const tower = withLines(dc("Command Tower", "Land", "{T}: Add one mana of any color in your commander's color identity.", ["W", "U", "B", "R", "G"], ["mana-generation"]), [tapFor([], { anyColour: "identity" })]);
 const spells = [dc("Swords to Plowshares", "Instant", "", [], [], "{W}"), dc("Doom Blade", "Instant", "", [], [], "{1}{B}")];
 const needed = neededColours([...spells, shrine]);
 
@@ -62,8 +68,9 @@ test("a tapped land is never better than an untapped one, whatever its colours",
 // tapped and makes white, black or red" was offered on 27 precon pages. The restriction is the sentence
 // after the mana line, so the colours were read as free.
 test("mana spendable only on some spells makes no colour, and marks the land conditional", () => {
-  const grounds = dc("Tournament Grounds", "Land", "{T}: Add {C}.\n{T}: Add {R}, {W}, or {B}. Spend this mana only to cast a Knight or Equipment spell.", ["C", "R", "W", "B"]);
-  const forge = dc("Battlefield Forge", "Land", "{T}: Add {C}.\n{T}: Add {R} or {W}. Battlefield Forge deals 1 damage to you.", ["C", "R", "W"]);
+  const grounds = withLines(dc("Tournament Grounds", "Land", "{T}: Add {C}.\n{T}: Add {R}, {W}, or {B}. Spend this mana only to cast a Knight or Equipment spell.", ["C", "R", "W", "B"]),
+    [tapFor(["C"]), tapFor(["R", "W", "B"], { restriction: { spend: "only to cast a knight or equipment spell" } })]);
+  const forge = withLines(dc("Battlefield Forge", "Land", "{T}: Add {C}.\n{T}: Add {R} or {W}. Battlefield Forge deals 1 damage to you.", ["C", "R", "W"]), [tapFor(["C"]), tapFor(["R", "W"])]);
   const rw = new Set(["R", "W"] as const);
   expect(landFacts(grounds, rw, []).colours).toEqual([]);
   expect(landFacts(grounds, rw, []).utility).toContain("conditional-mana");
@@ -81,7 +88,7 @@ test("the basics floor is what the deck's own cards search for", () => {
 // then what makes it but is not online in time; never fast mana, a utility land, or a commander.
 const rock = (name: string, mv: number, text: string, made: string[]): DeckCard => ({
   card: { name, typeLine: "Artifact", oracleText: text, keywords: [], colors: [], manaValue: mv, producedMana: made } as Card,
-  tags: null,
+  tags: manaTags(linesOf(made)),
 });
 const izzetSpells = [dc("Counterspell", "Instant", "", [], [], "{U}{U}"), dc("Lightning Bolt", "Instant", "", [], [], "{R}")];
 const mountain = dc("Mountain", "Basic Land — Mountain", "({T}: Add {R}.)", ["R"]);
@@ -108,11 +115,12 @@ test("a rock that makes the colour is never named, however late it is: Arcane Si
 });
 
 const withTags = (d: DeckCard, kinds: [string, string][]): DeckCard => ({
-  ...d, tags: { abilities: kinds.map(([kind, k]) => ({ kind, effect: { kind: k } })) } as unknown as DeckCard["tags"],
+  ...d, tags: { ...d.tags, abilities: kinds.map(([kind, k]) => ({ kind, effect: { kind: k } })) } as unknown as DeckCard["tags"],
 });
 
 test("only plain rocks are named: a sacrifice outlet, a win condition and a play-from-top artifact are refused; a Mind Stone is not", () => {
-  const altar = withTags(rock("Ashnod's Altar", 3, "Sacrifice a creature: Add {C}{C}.", ["C"]), [["activated", ""], ["activated", "mana-generation"]]);
+  const altar = withLines(withTags(rock("Ashnod's Altar", 3, "Sacrifice a creature: Add {C}{C}.", ["C"]), [["activated", ""], ["activated", "mana-generation"]]),
+    [tapFor(["C"], { cost: { ...FREE_TAP, tap: false, sacrificeOther: true } })]);
   const stadium = withTags(rock("Strixhaven Stadium", 3, "{T}: Add {C}. Put a point counter on this artifact.\nWhenever a creature deals combat damage to you, remove a point counter from this artifact.", ["C"]),
     [["activated", "mana-generation"], ["activated", "counter-placement"], ["triggered", ""]]);
   const skull = withTags(rock("Crystal Skull, Isu Spyglass", 2, "You may look at the top card of your library any time.\n{T}: Add {C}.", ["C"]),
@@ -148,7 +156,8 @@ test("among lands of other deck colours, fewer colours made go first: a Mountain
 });
 
 test("a rock that lets mana be spent as any colour is every colour and is never named (Chromatic Orrery)", () => {
-  const orrery = rock("Chromatic Orrery", 7, "You may spend mana as though it were mana of any color.\n{T}: Add {C}{C}{C}{C}{C}.\n{5}, {T}: Draw a card for each color among permanents you control.", ["C"]);
+  const orrery = withLines(rock("Chromatic Orrery", 7, "You may spend mana as though it were mana of any color.\n{T}: Add {C}{C}{C}{C}{C}.\n{5}, {T}: Draw a card for each color among permanents you control.", ["C"]),
+    [tapFor(["C"])], { staticFixer: { covers: "all", colours: ["W", "U", "B", "R", "G"] } });
   expect(colourReplacements(deckOf(orrery), "U", 2, { U: 4 })).toEqual([]);
 });
 
@@ -179,7 +188,8 @@ test("a plain dork is named like a plain rock, unless its creature type is the d
   const mv1 = (d: DeckCard): DeckCard => ({ ...d, card: { ...d.card, manaValue: 1 } });
   const elfDork = mv1(dc("Elvish Mystic", "Creature — Elf Druid", "{T}: Add {G}.", ["G"], ["mana-generation"]));
   const bird = mv1(dc("Birds of Paradise", "Creature — Bird", "Flying\n{T}: Add one mana of any color.", ["W", "U", "B", "R", "G"], ["mana-generation"]));
-  const giada = mv1(dc("Giada Alike", "Creature — Angel", "{T}: Add {W}. Spend this mana only to cast Angel spells.", ["W"], ["mana-generation"]));
+  const giada = mv1(withLines(dc("Giada Alike", "Creature — Angel", "{T}: Add {W}. Spend this mana only to cast Angel spells.", ["W"], ["mana-generation"]),
+    [tapFor(["W"], { restriction: { spend: "only to cast angel spells", typeName: "angel" } })]));
   const lord = mv1(withTags(dc("Elf Lord", "Creature — Elf Druid", "Other Elves get +1/+1.\n{T}: Add {G}.", ["G"]), [["static", ""], ["activated", "mana-generation"]]));
   const deck = (...more: DeckCard[]) => deckOf(...more);
   expect(colourReplacements(deck(elfDork), "U", 2, { U: 4 })).toEqual(["Elvish Mystic"]);

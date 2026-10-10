@@ -713,7 +713,37 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "a5bdbd76c92bbec716e23f708265d7f4410962e10435c0d27b9b8d241cc8df4a",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 0,
+     "anyColour": "identity",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null
+    }
+   ]
   }
  },
  "Mana Vault": {
@@ -892,7 +922,37 @@
    "unknownTriggers": [
     "draw-step"
    ],
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 3,
+     "anyColour": null,
+     "amount": {
+      "fixed": 3,
+      "scales": null
+     },
+     "unread": false,
+     "net": 3,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null
+    }
+   ]
   }
  },
  "Mox Diamond": {
@@ -1072,7 +1132,43 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "f3c115a1fd8f1d42798445af28f6d39d4b5a6ec40df2e856215a2ebc561833b1",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null
+    }
+   ]
   }
  },
  "Painful Truths": {
@@ -1958,7 +2054,46 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "63c096b7edf250836f323aebcb1c8b2679be5ec487bd36ae39f8282a3dd78cde",
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "once",
+     "cost": {
+      "mana": 0,
+      "tap": false,
+      "sacrificeSelf": true,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": [
+       "Discard your hand"
+      ]
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 3,
+      "scales": null
+     },
+     "unread": false,
+     "net": 3,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null
+    }
+   ],
+   "isOneShot": true
   }
  },
  "Jeska's Will": {
@@ -2095,7 +2230,40 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "a9af93c59de9df5f7f21b8ae895ec5b49cf154ef9cae19abb595b1073c96c930",
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "one-shot-spell",
+     "repeats": "once",
+     "cost": {
+      "mana": 3,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": null,
+      "scales": "each card in target opponent's hand"
+     },
+     "unread": false,
+     "net": -2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null
+    }
+   ],
+   "isOneShot": true
   }
  },
  "Crop Rotation": {
@@ -2295,7 +2463,54 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "03da36c7911690170a6fdcbc5d839ffea720e3f063bb9ac7f68d267ce44c2773",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 1,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": 0,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": false,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Cultivate": {
@@ -2463,7 +2678,54 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 3,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  }
 }

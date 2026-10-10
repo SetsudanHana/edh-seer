@@ -1,8 +1,8 @@
 /** STATIC COLOUR FIXERS (owner, 2026-10-08, #1115): "after you play cards like Chromatic Lantern your color
  *  issues disappear, you are only bounded by the landcount". A card whose STATIC text makes OTHER mana sources
- *  produce colours, read once. Leaf module: imports only the engine's hypergeometric and a type.
+ *  produce colours. Leaf module: imports only the engine's hypergeometric and a type.
  *
- *  Read from the printed FRONT FACE, one whole line at a time, anchored at both ends. A line is a fixer only when
+ *  Read by derive from the printed FRONT FACE, one whole line at a time, anchored at both ends. A line is a fixer only when
  *  it is the entire ability: that is what refuses a granted ability inside quotes (Lae'zel's "perpetually gains
  *  ..."), a condition ("As long as you control six or more lands, ..." The World Tree), a duration ("Until end of
  *  turn ..." Divergent Growth), a restriction ("... to cast creature spells" Emissary's Ploy, Vizier of the
@@ -37,28 +37,12 @@ export interface StaticFixer {
   covers: "lands" | "all-mana";
 }
 
-const WUBRG: FixerColour[] = ["W", "U", "B", "R", "G"];
-const BASIC: Record<string, FixerColour> = { plains: "W", island: "U", swamp: "B", mountain: "R", forest: "G" };
-
-// A card that is never in a legal Commander decklist, so its static is never on a board we audit.
-const NOT_IN_A_DECK = /\b(vanguard|plane|phenomenon|conspiracy|scheme|ongoing scheme)\b/i;
-
-const LANTERN = /^lands you control have "\{t\}: add one mana of any color\."$/;
-const EVERY_TYPE = /^lands you control are every basic land type in addition to their other types\.$/;
-const ONE_TYPE = /^(?:each land is|all lands are|lands you control are) (?:an? )?(plains|island|swamp|mountain|forest)(?:s|es)? in addition to (?:its|their) other (?:land )?types\.$/;
-const SPEND = /^(?:you|players) may spend mana as though it were mana of any (?:color|type)\.$/;
-
+/** Read from the derived `CardTags.staticFixer` (#1169, task 2a); derive's `static-fixer` reader owns the line patterns and the refusals
+ *  listed above, and its census is identical to the printed-text detector this replaced (15 cards, 0 differences). `covers: "all"` is
+ *  `all-mana` here. */
 export function staticFixer(dc: DeckCard): StaticFixer | null {
-  if (NOT_IN_A_DECK.test(dc.card.typeLine ?? "")) return null;
-  const front = (dc.card.oracleText ?? "").split(/^\/\/$/m)[0]!;
-  for (const raw of front.replace(/\([^()]*\)/g, "").toLowerCase().split("\n")) {
-    const line = raw.trim();
-    if (LANTERN.test(line) || EVERY_TYPE.test(line)) return { colours: WUBRG, covers: "lands" };
-    const one = ONE_TYPE.exec(line);
-    if (one) return { colours: [BASIC[one[1]!]!], covers: "lands" };
-    if (SPEND.test(line)) return { colours: WUBRG, covers: "all-mana" };
-  }
-  return null;
+  const f = dc.tags?.staticFixer;
+  return f ? { colours: f.colours as FixerColour[], covers: f.covers === "all" ? "all-mana" : "lands" } : null;
 }
 
 export interface LibraryFixer extends StaticFixer { dc: DeckCard }

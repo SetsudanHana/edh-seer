@@ -3,7 +3,7 @@ import type { SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
-import { fixedColours } from "./mana-lines.js";
+import { fixedColours } from "./legacy-mana-lines.js";
 import { staticFixer } from "./static-fixers.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { FETCHES_TAPPED, FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands, isLandFetch } from "./fetch-land.js";

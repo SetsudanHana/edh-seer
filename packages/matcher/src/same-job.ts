@@ -7,7 +7,7 @@
 import { grammarClauseRecords } from "@edh-seer/tagger/clause-record";
 import { detectBuildRules } from "./build.js";
 import { roleAbilities, rolesOfCard, type Role } from "./quality.js";
-import { ADD_LINE, ADDITIONAL, manaLines, printedText } from "./mana-lines.js";
+import { ADD_LINE, ADDITIONAL, manaLines, printedText } from "./legacy-mana-lines.js";
 import type { DeckCard } from "./types.js";
 
 /** THE SAME KIND OF CARD: the same card types on its front face, supertypes and Kindred aside. */

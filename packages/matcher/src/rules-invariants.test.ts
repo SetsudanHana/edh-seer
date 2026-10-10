@@ -64,6 +64,7 @@ const TESTED: Record<string, string> = {
   "603.2c": "edge-magnitude.test.ts — a batched ('one or more') consumer hears the whole batch once, so the magnitude caps at one",
   "202.3": "stats.test.ts — mana value is a whole number, so a mana-value parity test holds and 0 is even (#713)",
   "712.14": "faces.test.ts — a card putting itself back onto the battlefield enters FRONT face up unless transformed (#715)",
+  "305.7": "mana-colour-sources.test.ts — a land that makes every land a Swamp or a Forest (Urborg, Yavimaya) is one itself: it taps for that colour (#1169)",
   "305.6": "land-score.test.ts — a basic land type is a mana ability: a shock land printed with reminder text only makes both its colours (#767)",
 };
 const PROSE: Record<string, string> = {

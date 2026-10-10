@@ -4,6 +4,7 @@ const data = await import(`${R}/data/src/index.ts`);
 const tagger = await import(`${R}/tagger/src/index.ts`);
 const m = await import(`${R}/matcher/src/index.ts`);
 const ml = await import(`${R}/matcher/src/mana-lines.ts`);
+const leg = await import(`${R}/matcher/src/legacy-mana-lines.ts`); // the regex reader: kept for the ramp side (task 2b)
 const ma = await import(`${R}/matcher/src/mana-audit.ts`);
 const mb = await import(`${R}/matcher/src/mana-base.ts`);
 const ls = await import(`${R}/matcher/src/land-score.ts`);
@@ -32,11 +33,14 @@ const ALLC = new Set(["W","U","B","R","G"]);
 for (const [name, dc] of all) {
   const abil = (dc.tags?.abilities ?? []).filter((a: any) => ["mana-generation","fast-mana","ritual"].includes(a.effect?.kind));
   const isLand = /\bland\b/i.test(dc.card.typeLine ?? "");
-  const lines = ml.manaLines(dc);
-  const fx = [...ml.fixedColours(dc)];
-  const audit = ma.isManaSource(dc) ? fx : [];
+  const lines = leg.manaLines(dc);
+  const legacyFx = [...leg.fixedColours(dc)];
+  // D1 (task 2a): the derived colour-source lines. D2: the colour audit's own `supplied` for a deck of this card and five one-pip spells.
+  const fx = ml.colourSourceColours(dc);
+  const demand = ["W", "U", "B", "R", "G"].map((c) => ({ card: { name: `demand ${c}`, typeLine: "Instant", manaCost: `{${c}}`, manaValue: 1, oracleText: "", keywords: [], colors: [] }, tags: null }));
+  const audit = ma.manaAuditFull([dc, ...demand] as any).rows.filter((r: any) => r.supplied > 0).map((r: any) => r.color);
   let cs: string[] = []; try { cs = [...mb.colourSources([dc]).entries()].filter(([, n]: any) => n > 0).map(([c]: any) => c); } catch {}
-  let lf: string[] | null = null; if (isLand) { try { lf = ls.landFacts(dc, ALLC as any, [dc.card]).colours; } catch {} }
+  let lf: string[] | null = null; if (isLand) { try { lf = ls.landFacts(dc, ALLC as any, [dc]).colours; } catch {} }
   const acc = gf.classifyAccelerant(dc);
   const li = m.landInputs([dc]);
   const ramp = m.detectBuildCategories([dc]).get("ramp")?.has(name) ?? false;
@@ -44,7 +48,7 @@ for (const [name, dc] of all) {
     name, type: dc.card.typeLine, mv: dc.card.manaValue, produced: [...(dc.card.producedMana ?? [])].join(""),
     tag: abil.map((a: any) => `${a.effect.kind}/${a.repeats ?? "-"}/${a.cost ?? ""}`).join("|"),
     ml: lines.map((l: any) => `${l.colours.join("")}${l.qualifies ? "" : "!q"}n${l.net}`).join("|"),
-    fixed: fx.join(""), audit: audit.join(""), cs: cs.join(""), lf: lf === null ? null : lf.join(""),
+    legacyFixed: legacyFx.join(""), fixed: fx.join(""), audit: audit.join(""), cs: cs.join(""), lf: lf === null ? null : lf.join(""),
     acc: acc?.kind ?? null, out: acc ? gf.manaOutput(dc.card.oracleText).amount : null, ritual: gf.ritualAdds(dc),
     fast: li.fastMana, cheap: li.rampPlusDraw, ramp, grade: bd.rampGrade(dc),
     ny: sj.netYield(dc), dork: sj.isPlainDork(dc), sfix: sf.staticFixer(dc)?.covers ?? null, land: isLand,

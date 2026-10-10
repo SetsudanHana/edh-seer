@@ -1,10 +1,11 @@
 import { pAtLeast, seen } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { classifyLand } from "./land-conditions.js";
-import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
-import { COLORS, deckBasicTypes, isManaSource, landOnlineBy, type Color } from "./mana-audit.js";
+import { fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
+import { COLORS, deckBasicTypes, landOnlineBy, type Color } from "./mana-audit.js";
 import { fixerCredit, libraryFixers } from "./static-fixers.js";
-import { fixedColours } from "./mana-lines.js";
+import { colourSourceCards } from "./colour-sources.js";
+import { deckIdentity, makesAnyMana } from "./mana-lines.js";
 import type { DeckCard } from "./types.js";
 import { countsAsLand } from "./typeline.js";
 
@@ -158,49 +159,19 @@ function pipOptions(manaCost: string | undefined): Color[][] {
 
 const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 
-/** A `{T}: Add` ability whose cost does not sacrifice the card, read line by line with string
- *  searches: a regex over the cost ran in polynomial time on hostile text (CodeQL). */
-function tapsForMana(oracleText: string): boolean {
-  return oracleText.split("\n").some((line) => {
-    const colon = line.indexOf(":");
-    if (colon < 0) return false;
-    const cost = line.slice(0, colon).toLowerCase();
-    return cost.includes("{t}") && !cost.includes("sacrifice") && /^\s*add\b/i.test(line.slice(colon + 1));
-  });
-}
-
-/** THE SOURCES OF EACH COLOUR, COUNTED THE WAY THE GOLDFISH COULD USE THEM: a land by what it taps
- *  for, a fetch by what it can find, and a nonland permanent only when it has a `{T}: Add` ability
- *  that does not sacrifice it. The library only: a commander is never drawn.
+/** THE SOURCES OF EACH COLOUR: the audit's own count (`colourSourceCards`, #1169), read off the derived mana lines. A land by what it
+ *  taps for, a fetch by what it can find, a nonland permanent only when a colour-source line of it makes the colour (a repeatable tap
+ *  or static production, nothing consumed: not a Treasure maker, a sacrifice outlet, a trigger like Birgi's, or restricted or gated
+ *  mana), a land-fetch spell by what it fetches. The library only: a commander is never drawn.
  *
- *  NOT `manaAudit`'s `supplied`, deliberately. That counts every permanent whose `producedMana` names
- *  the colour, and its own documentation names the cost: conditional production counts the same as a
- *  basic. Measured on the 268 decks, it read Amarant's red at 38 sources against 26 here (Birgi,
- *  Urabrask and The Great Work add red only on a trigger), and as the input to `colourMiss` it
- *  explained 54% of what the goldfish measured against 71% for this count, falling apart when fitted
- *  on the precons and tested on the calibration decks. The coefficient is only valid against the
- *  count it was fitted on. */
+ *  THE SAME NUMBER AS `manaAudit`'s `supplied`, deliberately. Until 2026-10-10 this was a different count (Amarant's red: 38 sources
+ *  by the audit against 26 here; Gisa's black 38 against 33; Fairdrazi 16-17 against 9-10, because only the audit counted land-fetch
+ *  spells), and `colourMiss`'s coefficient was fitted on this one. Unifying them moves it: task 3 of #1169 refits it. */
 export function colourSources(deck: readonly DeckCard[], commanderNames: readonly string[] = []): Map<Color, number> {
   const commanders = new Set(commanderNames);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
-  const libraryCards = library.map((dc) => dc.card);
-  const out = new Map<Color, number>(COLORS.map((c) => [c, 0]));
-  for (const dc of library) {
-    for (const c of new Set(coloursOf(dc, libraryCards))) if (out.has(c as Color)) out.set(c as Color, out.get(c as Color)! + 1);
-  }
-  return out;
-}
-
-/** What one library card counts as a source of, by `colourSources`' rule. */
-function coloursOf(dc: DeckCard, libraryCards: readonly DeckCard["card"][]): readonly string[] {
-  const text = dc.card.oracleText ?? "";
-  const produced = dc.card.producedMana ?? [];
-  if (isLand(dc)) {
-    return produced.length > 0 || !isLandFetch(text)
-      ? fixedColours(dc)
-      : [...new Set(fetchableLands(text, libraryCards).flatMap((c) => c.producedMana ?? []))];
-  }
-  return isManaSource(dc) && tapsForMana(text) ? fixedColours(dc) : [];
+  const byColour = colourSourceCards(library, deckIdentity(deck, commanderNames));
+  return new Map<Color, number>(COLORS.map((c) => [c, byColour.get(c)!.length]));
 }
 
 /** THE STATIC-FIXER CREDIT `colourMiss` ADDS to a colour's supply at a card's deadline (#1115): the colour audit's own
@@ -213,9 +184,9 @@ export function fixerSupply(deck: readonly DeckCard[], commanderNames: readonly 
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const fixers = libraryFixers(library);
   if (fixers.length === 0) return () => 0;
-  const cards = library.map((dc) => dc.card);
   const types = deckBasicTypes(library);
-  const per = library.map((dc) => ({ dc, colours: new Set(coloursOf(dc, cards)) }));
+  const byColour = colourSourceCards(library, deckIdentity(deck, commanderNames));
+  const per = library.map((dc) => ({ dc, colours: new Set(COLORS.filter((c) => byColour.get(c)!.includes(dc))) }));
   const anySources = per.filter((x) => x.colours.size > 0).length;
   const isOut = (dc: DeckCard, turn: number): boolean => (isLand(dc) ? landOnlineBy(dc, turn, types) : dc.card.manaValue < turn);
   return (colour, turn) => {
@@ -266,7 +237,7 @@ export function tappedLandCount(deck: readonly DeckCard[], commanderNames: reado
     const template = classifyLand(dc.card).template;
     if (template === "unconditional" || template === "unclassified") return true;
     const text = dc.card.oracleText ?? "";
-    return (dc.card.producedMana ?? []).length === 0 && isLandFetch(text) && fetchedLandEntersTapped(text, 3);
+    return !makesAnyMana(dc) && isLandFetch(text) && fetchedLandEntersTapped(text, 3);
   }).length;
 }
 

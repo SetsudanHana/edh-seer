@@ -1,0 +1,158 @@
+/** WHICH CARDS ARE A COLOUR SOURCE, on REAL derived tags (#1169, task 2a). `fixtures/mana-colour-sources.json` holds each named card's
+ *  Card document and the mana keys of its production tags, and the whole Gisa deck, dumped from Mongo by
+ *  `research/mana/dump-colour-fixtures.mts`: an assertion here is about what the corpus carries and not about a card as remembered. */
+import { describe, expect, test } from "vitest";
+import fx from "./fixtures/mana-colour-sources.json" with { type: "json" };
+import { colourSources } from "./mana-base.js";
+import { colourDeficit, manaAuditFull, type Color } from "./mana-audit.js";
+import { colourSourceCards } from "./colour-sources.js";
+import { deckIdentity, isColourSource, colourSourceColours, makesAnyMana, isFetchSource, cardLines, hasConditionalMana } from "./mana-lines.js";
+import { staticFixer } from "./static-fixers.js";
+import { landFacts, neededColours } from "./land-score.js";
+import type { DeckCard } from "./types.js";
+
+const all = fx as unknown as { cards: DeckCard[]; gisa: { deck: DeckCard[] } };
+const get = (name: string): DeckCard => {
+  const dc = all.cards.find((c) => c.card.name === name || c.card.name.startsWith(`${name} //`));
+  expect(dc, `fixture for ${name}`).toBeDefined();
+  return dc!;
+};
+const colours = (name: string, identity: ReadonlySet<string> | null = null) => colourSourceColours(get(name), identity);
+
+describe("a colour source is a repeatable tap or static production you control without consuming anything", () => {
+  test("ramp that is not a colour source: Treasure makers, sacrifice, counters, triggers, restrictions, auras", () => {
+    for (const n of ["Pitiless Plunderer", "Phyrexian Altar", "Priest of Forgotten Gods", "Birgi, God of Storytelling", "Smokebraider", "Omen Hawker",
+      "Cryptic Trilobite", "Utopia Sprawl", "Wild Growth", "Lotus Petal", "Dark Ritual", "Treasure Map"]) {
+      expect(colours(n), n).toEqual([]);
+      expect(cardLines(get(n)).some(isColourSource), `${n} has a colour-source line`).toBe(false);
+    }
+    // ...and none of them is a source of any mana either, but for Smokebraider's and Omen Hawker's restricted lines, which are not mana
+    // for the deck's spells.
+    expect(makesAnyMana(get("Pitiless Plunderer"))).toBe(false);
+    expect(makesAnyMana(get("Smokebraider"))).toBe(false);
+  });
+
+  test("Honored Hierarch: whatever the corpus says its ungated line makes is all it is credited with", () => {
+    const hierarchy = get("Honored Hierarch");
+    const ungated = cardLines(hierarchy).filter((l) => l.gate === null && isColourSource(l));
+    expect(colours("Honored Hierarch").sort()).toEqual([...new Set(ungated.flatMap((l) => l.colours))].sort());
+  });
+
+  test("Sol Ring is colourless: it makes mana and no colour", () => {
+    expect(colours("Sol Ring")).toEqual([]);
+    expect(makesAnyMana(get("Sol Ring"))).toBe(true);
+  });
+
+  test("Arcane Signet makes the commander's colours; with none known, any", () => {
+    expect(colours("Arcane Signet", new Set(["B", "R"]))).toEqual(["B", "R"]);
+    expect(colours("Arcane Signet")).toEqual(["W", "U", "B", "R", "G"]);
+  });
+
+  test("Exotic Orchard: all five for a count, none for a land swap (its colours are the opponents' lands')", () => {
+    expect(colours("Exotic Orchard")).toEqual(["W", "U", "B", "R", "G"]);
+    expect(colourSourceColours(get("Exotic Orchard"), null, "none")).toEqual([]);
+    expect(hasConditionalMana(get("Exotic Orchard"))).toBe(true);
+  });
+
+  test("Tainted Peak: the gated line is not credited, only the ungated ones", () => {
+    const peak = get("Tainted Peak");
+    expect(cardLines(peak).some((l) => l.gate !== null)).toBe(true);
+    expect(colours("Tainted Peak")).toEqual([]);
+    expect(makesAnyMana(peak)).toBe(true);
+  });
+
+  test("Cavern of Souls: the coloured line is restricted, so only the colourless one counts", () => {
+    expect(colours("Cavern of Souls")).toEqual([]);
+    expect(makesAnyMana(get("Cavern of Souls"))).toBe(true);
+  });
+
+  test("a filter land is a full source of both its colours (Cascade Bluffs); Cascading Cataracts is colourless only", () => {
+    expect(colours("Cascade Bluffs")).toEqual(["U", "R"]);
+    expect(colours("Cascading Cataracts")).toEqual([]);
+    expect(makesAnyMana(get("Cascading Cataracts"))).toBe(true);
+  });
+
+  test("a basic land type is a mana ability (CR 305.6); a land that makes every land a basic type is one itself (CR 305.7)", () => {
+    expect(colours("Plains")).toEqual(["W"]);
+    expect(colours("Overgrown Tomb")).toEqual(["B", "G"]);
+    expect(colours("Urborg, Tomb of Yawgmoth")).toEqual(["B"]);
+    expect(colours("Yavimaya, Cradle of Growth")).toEqual(["G"]);
+  });
+
+  test("Chromatic Lantern is a static fixer for lands and also taps for any colour itself", () => {
+    expect(staticFixer(get("Chromatic Lantern"))).toEqual({ colours: ["W", "U", "B", "R", "G"], covers: "lands" });
+    expect(staticFixer(get("Chromatic Orrery"))).toMatchObject({ covers: "all-mana" });
+    expect(colours("Chromatic Lantern")).toEqual(["W", "U", "B", "R", "G"]);
+    expect(staticFixer(get("Sol Ring"))).toBeNull();
+  });
+
+  test("a transform card's land back never taps for mana from the deck: Treasure Map", () => {
+    expect(makesAnyMana(get("Treasure Map"))).toBe(false);
+  });
+});
+
+describe("a land-fetch counts as a source of what it finds", () => {
+  const forest = (n: number): DeckCard[] => Array.from({ length: n }, () => get("Plains"))
+    .map((dc, i) => ({ ...dc, card: { ...dc.card, name: `Forest ${i}`, typeLine: "Basic Land — Forest" } }));
+  const island = (n: number): DeckCard[] => Array.from({ length: n }, () => get("Plains"))
+    .map((dc, i) => ({ ...dc, card: { ...dc.card, name: `Island ${i}`, typeLine: "Basic Land — Island" } }));
+
+  test("Cultivate is a source of every colour the deck's basics can reach, and of none the deck has no basic for", () => {
+    const cultivate = get("Cultivate");
+    expect(cultivate.tags!.landFetch!.kind).toBe("spell");
+    expect(isFetchSource(cultivate)).toBe(true);
+    const by = colourSourceCards([cultivate, ...forest(2), ...island(2)], null);
+    expect(by.get("G")!.map((d) => d.card.name)).toContain("Cultivate");
+    expect(by.get("U")!.map((d) => d.card.name)).toContain("Cultivate");
+    expect(by.get("W")!.map((d) => d.card.name)).not.toContain("Cultivate");
+  });
+
+  test("a fetch spell is capped at what the deck gives it to find", () => {
+    const by = colourSourceCards([get("Cultivate"), get("Cultivate"), get("Cultivate"), ...forest(1)], null);
+    // one Forest to find: the three Cultivates are one green source between them, plus the Forest.
+    expect(by.get("G")!).toHaveLength(2);
+  });
+
+  test("a costed permanent fetch that makes no more than it costs does not count (Myriad Landscape); Wood Elves does", () => {
+    expect(isFetchSource(get("Myriad Landscape"))).toBe(false);
+    expect(isFetchSource(get("Wood Elves"))).toBe(true);
+    expect(isFetchSource(get("Polluted Delta"))).toBe(true);
+    expect(isFetchSource(get("Sol Ring"))).toBe(false);
+  });
+});
+
+describe("the colour audit and the mana base count the same sources (Gisa)", () => {
+  const deck = all.gisa.deck;
+  const commanders = ["Gisa, the Hellraiser"];
+
+  test("every colour: audit `supplied` equals the mana base's source count", () => {
+    expect(deck.some((d) => d.card.name === commanders[0])).toBe(true);
+    const base = colourSources(deck, commanders);
+    const rows = manaAuditFull(deck, { commanderNames: commanders }).rows;
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) expect(row.supplied, `${row.color}`).toBe(base.get(row.color as Color));
+    // Black is the commander's colour and the deck's: a real figure, not a pair of zeroes.
+    expect(base.get("B")!).toBeGreaterThan(20);
+  });
+
+  test("Gisa's commander identity is black, and Pitiless Plunderer, Phyrexian Altar, Priest and Crypt Ghast's Treasure are no black source", () => {
+    expect([...deckIdentity(deck, commanders)!]).toEqual(["B"]);
+    const black = colourSourceCards(deck.filter((d) => d.card.name !== commanders[0]), deckIdentity(deck, commanders)).get("B")!.map((d) => d.card.name);
+    for (const n of ["Pitiless Plunderer", "Phyrexian Altar", "Priest of Forgotten Gods"]) expect(black, n).not.toContain(n);
+  });
+
+  test("a deficit is still a per-colour number", () => {
+    expect(Object.keys(colourDeficit(deck, commanders)).every((k) => "WUBRG".includes(k))).toBe(true);
+  });
+});
+
+describe("land swaps read the same lines", () => {
+  test("a filter land is a source of both colours, Cavern of Souls and Exotic Orchard of none", () => {
+    const need = neededColours([{ card: { name: "x", typeLine: "Instant", manaCost: "{U}{R}{W}{B}{G}", manaValue: 5, keywords: [], colors: [], oracleText: "" } as never, tags: null }]);
+    expect(landFacts(get("Cascade Bluffs"), need, []).colours).toEqual(["U", "R"]);
+    expect(landFacts(get("Cavern of Souls"), need, []).colours).toEqual([]);
+    expect(landFacts(get("Exotic Orchard"), need, []).colours).toEqual([]);
+    expect(landFacts(get("Exotic Orchard"), need, []).utility).toContain("conditional-mana");
+    expect(landFacts(get("Overgrown Tomb"), need, []).colours).toEqual(["B", "G"]);
+  });
+});

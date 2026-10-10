@@ -18,8 +18,8 @@
 import { normalizeName } from "@edh-seer/data/names";
 import type { BuildCategory } from "./build.js";
 import { basicsFloor, betterLand, landFacts, neededColours, unusualText, type LandFacts } from "./land-score.js";
-import { fetchableLands } from "./fetch-land.js";
-import { fixedColours } from "./mana-lines.js";
+import { fetchedColours } from "./colour-sources.js";
+import { auraTriggerColours, colourSourceColours } from "./mana-lines.js";
 import { COLORS, colourDeficit, landTypeDemand, type Color } from "./mana-audit.js";
 import { ingredients, rolesOfCard, type Ingredient, type Ingredients, type Role } from "./quality.js";
 import type { StaticLookup } from "./static-lookup.js";
@@ -126,7 +126,9 @@ export function roleOption(section: RoleSectionId, cut: DeckCard, add: Candidate
   return best;
 }
 
-const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => fixedColours(d).includes(c));
+// A colour swap's `made` is what the card is a colour source of, and for the Aura path (an Aura that enchants a land and adds mana by trigger) what its
+// trigger adds: the audit counts no Aura as a source (it is not a tap you control), the swap offers one for a colour all the same (owner, 2026-10-08).
+const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => colourSourceColours(d).includes(c) || auraTriggerColours(d).includes(c));
 
 /** A COLOUR SWAP FOR A ROCK (owner, 2026-10-08, #966): the same rock in everything but its colours, and
  *  the add makes a colour the deck is short of (`colourDeficit`) that the cut does not, keeping every
@@ -431,8 +433,8 @@ export async function upgradeOptions(input: {
   const deficit = colourDeficit(deck, input.commanders);
   const closes = swapCloser(deck, input.commanders);
   const watched = watchedTypes(input.themes);
-  const libraryLands = deck.filter((d) => !input.commanders.includes(d.card.name)).map((d) => d.card);
-  const fetchReach = (d: DeckCard): ReadonlySet<Color> => new Set(fetchableLands(d.card.oracleText ?? "", libraryLands).flatMap((c) => c.producedMana ?? []).filter((c): c is Color => (COLORS as readonly string[]).includes(c)));
+  const libraryLands = deck.filter((d) => !input.commanders.includes(d.card.name));
+  const fetchReach = (d: DeckCard): ReadonlySet<Color> => new Set([...fetchedColours(d.card.oracleText ?? "", libraryLands, null)].filter((c): c is Color => (COLORS as readonly string[]).includes(c)));
   const roles = {} as Record<RoleSectionId, CutOptions<RoleOption>[]>;
   for (const section of ROLE_SECTIONS) {
     const sectionRoles = SECTION_ROLES[section] as readonly BuildCategory[];
@@ -466,7 +468,7 @@ export async function upgradeOptions(input: {
   }
 
   const needed = neededColours(deck);
-  const library = deck.map((d) => d.card);
+  const library = deck;
   const commanders = new Set(input.commanders);
   const deckLands = deck.filter((d) => !commanders.has(d.card.name) && countsAsLand(d.card))
     .map((dc) => ({ facts: landFacts(dc, needed, library), dc, gameChanger: dc.card.gameChanger === true }));

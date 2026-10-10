@@ -6,6 +6,7 @@ import {
 } from "./mana-base.js";
 import type { Color } from "./mana-audit.js";
 import type { DeckCard } from "./types.js";
+import { FREE_TAP, fetchTags, filterLine, manaTags, mkLine, tapFor } from "./mana-test-support.js";
 
 const mk = (name: string, typeLine: string, extra: Partial<Card> = {}): DeckCard => ({
   card: { name, manaValue: 0, oracleText: "", typeLine, keywords: [], colors: [], ...extra } as Card,
@@ -70,16 +71,20 @@ test("tapped lands: always-tapped and slow fetches count, shocks, checks and com
 test("sources are what the goldfish could tap: lands, fetches by what they find, {T}: Add permanents", () => {
   const deck = [
     land("Plains", "({T}: Add {W}.)"),
-    land("Evolving Wilds", "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."),
-    mk("Arcane Signet", "Artifact", { oracleText: "{T}: Add one mana of any color in your commander's color identity.", producedMana: ["W", "U"] }),
+    { ...land("Evolving Wilds", "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."),
+      tags: fetchTags({ kind: "permanent", tapped: true, reach: ["W", "U", "B", "R", "G"] }, { cost: { ...FREE_TAP, sacrificeSelf: true } }) },
+    { ...mk("Arcane Signet", "Artifact", { oracleText: "{T}: Add one mana of any color in your commander's color identity.", producedMana: ["W", "U"] }),
+      tags: manaTags([mkLine({ anyColour: "identity" })]) },
     // Adds red only on a trigger: `producedMana` names it, and the goldfish could never tap it.
-    mk("Birgi", "Legendary Creature", { oracleText: "Whenever you cast a spell, add {R}.", producedMana: ["R"] }),
+    { ...mk("Birgi", "Legendary Creature", { oracleText: "Whenever you cast a spell, add {R}.", producedMana: ["R"] }),
+      tags: manaTags([mkLine({ source: "trigger", repeats: null, cost: { ...FREE_TAP, tap: false }, colours: ["R"], timing: "on-trigger" })]) },
     // A one-shot is never a source.
-    mk("Dark Ritual", "Instant", { oracleText: "Add {B}{B}{B}.", producedMana: ["B"] }),
-    mk("Commander Rock", "Artifact", { oracleText: "{T}: Add {U}.", producedMana: ["U"] }),
+    { ...mk("Dark Ritual", "Instant", { oracleText: "Add {B}{B}{B}.", producedMana: ["B"] }),
+      tags: manaTags([mkLine({ source: "one-shot-spell", repeats: "once", cost: { ...FREE_TAP, tap: false, mana: 1 }, colours: ["B"], amount: { fixed: 3, scales: null }, net: 2 })], { isOneShot: true }) },
+    { ...mk("Commander Rock", "Artifact", { oracleText: "{T}: Add {U}.", producedMana: ["U"], colorIdentity: ["W", "U"] }), tags: manaTags([tapFor(["U"])]) },
   ].map((dc) => (dc.card.name === "Plains" ? { ...dc, card: { ...dc.card, typeLine: "Basic Land — Plains", producedMana: ["W"] } } : dc));
   const s = colourSources(deck, ["Commander Rock"]);
-  // Plains, the Wilds (it finds the Plains) and the Signet.
+  // Plains, the Wilds (it finds the Plains) and the Signet, which makes the commander's colours: W and U.
   expect(s.get("W")).toBe(3);
   expect(s.get("U")).toBe(1);
   expect(s.get("R")).toBe(0);
@@ -103,16 +108,16 @@ test("the score is the three parts in one unit, and a short land count costs mor
 });
 
 test("a source's {T}: Add is read per line, and a sacrifice in the cost is not a source", () => {
-  const rock = (name: string, oracleText: string) => mk(name, "Artifact", { oracleText, producedMana: ["G"] });
+  const rock = (name: string, oracleText: string, line = tapFor(["G"])) => ({ ...mk(name, "Artifact", { oracleText, producedMana: ["G"] }), tags: manaTags([line]) });
   const s = colourSources([
     rock("Rock", "{T}: Add {G}."),
     rock("Two Lines", "Flying\n{T}: Add {G}."),
-    rock("Sac", "{T}, Sacrifice this artifact: Add {G}."),
-    rock("Other Line", "{T}: Draw a card.\nWhenever you cast a spell, add {G}."),
+    rock("Sac", "{T}, Sacrifice this artifact: Add {G}.", tapFor(["G"], { cost: { ...FREE_TAP, sacrificeSelf: true } })),
+    rock("Other Line", "{T}: Draw a card.\nWhenever you cast a spell, add {G}.", mkLine({ source: "trigger", repeats: null, cost: { ...FREE_TAP, tap: false }, colours: ["G"], timing: "on-trigger" })),
   ]);
   expect(s.get("G")).toBe(2);
   // COST AGAINST PRODUCTION (owner, 2026-10-08, #1114): paying {2} to tap for one mana is not a source.
-  expect(colourSources([rock("Dear Rock", "{2}, {T}: Add {G}.")]).get("G")).toBe(0);
+  expect(colourSources([rock("Dear Rock", "{2}, {T}: Add {G}.", filterLine(2, 1, ["G"]))]).get("G")).toBe(0);
 });
 
 // Owner, 2026-09-29: cantrips help find lands, a six-mana draw spell does not. Measured in the goldfish.
@@ -128,7 +133,7 @@ test("a draw card's credit follows its cost, at half the goldfish rate", () => {
 import rocksFx from "./ramp-colour.fixtures.json" with { type: "json" };
 test("a blue-short deck's colour cost drops with Chromatic Lantern, beyond Lantern's own tap", () => {
   const lantern = rocksFx["Chromatic Lantern"] as unknown as DeckCard;
-  const twin: DeckCard = { ...lantern, card: { ...lantern.card, name: "Lantern Twin", oracleText: "{T}: Add one mana of any color." } as never };
+  const twin: DeckCard = { ...lantern, card: { ...lantern.card, name: "Lantern Twin", oracleText: "{T}: Add one mana of any color." } as never, tags: { ...lantern.tags, staticFixer: undefined } as never };
   const basic = (n: number, t: string, c: string) => Array.from({ length: n }, (_, i) => mk(`${t} ${i}`, `Basic Land — ${t}`, { oracleText: `({T}: Add {${c}}.)`, producedMana: [c] }));
   const deck = (x: DeckCard) => [...basic(30, "Mountain", "R"), ...basic(4, "Island", "U"), x, spell("Cancel", "{2}{U}{U}", 4), spell("Hex", "{2}{U}{U}", 4)];
   const score = (x: DeckCard) => manaBaseScore(deck(x), { target: 35, actual: 35 }).colourMiss;
