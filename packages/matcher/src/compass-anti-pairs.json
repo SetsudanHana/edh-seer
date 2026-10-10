@@ -8,7 +8,7 @@
       "why": "Nulldrifter triggers on casting ITSELF, not on you casting a spell. The consumer does not care about the event it was credited with.",
       "source": "panel verdict, owner-judged (blind agreement draw 2026-08-07)",
       "verified": true,
-      "tag": "cast:any"
+      "tag": "cast:spell"
     },
     {
       "a": "Amarant Coral",
@@ -26,7 +26,7 @@
       "why": "Arjun triggers on ANY spell you cast, so pairing him with each of 60 spells is a mesh, not a synergy. The 2026-08-16 ruling: a deck role is not a pairwise edge.",
       "source": "panel verdict (2026-08-07)",
       "verified": true,
-      "tag": "cast:any"
+      "tag": "cast:spell"
     },
     {
       "a": "Uthros Research Craft",

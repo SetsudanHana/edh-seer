@@ -57,16 +57,16 @@ const anti = (tag: string, cls = "false-care"): AntiPair => ({ a: "A", b: "B", t
 
 test("an anti-pair is clean only when the engine makes no claim in that category", () => {
   const r = (tag: string): Reason => ({ tag, text: "" });
-  expect(classifyAntiPair(anti("cast:any"), [])).toBe("clean");
-  expect(classifyAntiPair(anti("cast:any"), [r("cast:any")])).toBe("false-edge");
+  expect(classifyAntiPair(anti("cast:spell"), [])).toBe("clean");
+  expect(classifyAntiPair(anti("cast:spell"), [r("cast:spell")])).toBe("false-edge");
 });
 
 // NARROWER THAN "ANY REASON AT ALL", ON PURPOSE. Two cards can legitimately relate through some
 // other mechanism, and failing on that would make the guard un-satisfiable: Abstruse Appropriation
-// and Nulldrifter DO join under another tag today, and only the `cast:any` claim is the false one.
+// and Nulldrifter DO join under another tag today, and only the `cast:spell` claim is the false one.
 test("an anti-pair tolerates a relation through a different mechanism", () => {
   const other: Reason = { tag: "enters:creature", text: "" };
-  expect(classifyAntiPair(anti("cast:any"), [other])).toBe("clean");
+  expect(classifyAntiPair(anti("cast:spell"), [other])).toBe("clean");
 });
 
 /** A TAGGED PAIR PASSES ON ITS EXACT TAG (owner 2026-09-28: a fix the compass cannot see is a case

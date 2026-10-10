@@ -24,7 +24,7 @@ export function engineDeck(): { report: DeckReport; graph: CardGraph } {
   reasons.push({ producer: "Payoff B", consumer: "Payoff A", tag: "dies:creature", text: "When Payoff B dies, Payoff A drains" });
   reasons.push({ producer: "Commander", consumer: "Payoff A", tag: "cast:creature", text: "When Commander is cast, Payoff A scries" });
   reasons.push({ producer: "Sidekick", consumer: "Commander", tag: "enters:creature", text: "When Sidekick enters, Commander makes a token" });
-  reasons.push({ producer: "Sidekick", consumer: "Cleric 3", tag: "attacks:any", text: "Whenever Sidekick attacks, Cleric 3 triggers" });
+  reasons.push({ producer: "Sidekick", consumer: "Cleric 3", tag: "attacks:creature", text: "Whenever Sidekick attacks, Cleric 3 triggers" });
   reasons.push({ producer: "Cleric 3", consumer: "Sidekick", tag: "lifegain:any", text: "When Cleric 3 gains you life, Sidekick grows" });
   for (const c of ["Cleric 4", "Cleric 5", "Cleric 6"]) reasons.push({ producer: "Digger", consumer: c, tag: "recursion-target:creature", text: `Digger can bring back ${c}`, repeatability: "oneshot" });
   reasons.push({ producer: "Treasure", consumer: "Payoff A", tag: "creates:treasure", text: "Treasure feeds Payoff A", producerIsToken: true });
