@@ -543,7 +543,7 @@ export function slotTrade(report: DeckReport, shortfalls: readonly Finding[]): s
    *  answers finding is the interaction one — `detectBuildRules` counts removal under Interaction —
    *  and a build finding names its own category in `figureLabel`. */
   const asksForSame = shortfalls.some((f) =>
-    (f.kind === "answers" && top.category === "Interaction") || f.figureLabel === top.category);
+    (f.kind === "answers" && top.key === "interaction") || f.figureLabel === top.category);
   // "N of those slots are the ones you need" said the OPPOSITE of what it meant — the N are the
   // SURPLUS, which is where the room comes from. The skeptic persona read it three times and stayed
   // unsure (2026-08-27). It names the surplus as a surplus now.

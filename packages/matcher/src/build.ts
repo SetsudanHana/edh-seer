@@ -797,7 +797,7 @@ function buildSuggestions(
     // and those are three different edits. The band describes what the cards COST.
     const band = `; most cost ${p.costBand[0]}–${p.costBand[1]} mana`;
     const text =
-      p.count === 0 && p.name === "Board wipes"
+      p.count === 0 && p.key === "boardWipes"
         ? `No board wipe (target ${p.target})${band}`
         : `${p.name} ${p.count}/${p.target} — add ~${Math.ceil(p.target - p.count)}${band}`;
     gaps.push({ gap: p.target - p.count, text });

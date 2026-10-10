@@ -1198,7 +1198,7 @@ export function analyzeDeckStructured(
     identity: deckSentence(
       cohesion,
       deckMath?.wincons,
-      buildParents.find((p) => p.name === "Interaction"),
+      buildParents.find((p) => p.key === "interaction"),
       // The SAME archetype the build score and the land target already read (`strategies[0]`), so
       // the win slot's combo gate cannot disagree with the rest of the report about what the deck is.
       strategies[0]?.name,

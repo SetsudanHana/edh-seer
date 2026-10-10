@@ -660,7 +660,7 @@ export interface DeckReport {
   /** Build categories the deck carries MORE of than its target, biggest surplus first — where the
    *  deck has room. Names the CATEGORY and never a member: nothing in this engine ranks two ramp
    *  cards against each other, which is exactly why the cut list protects any card with a role. */
-  slack?: { category: string; count: number; target: number; over: number }[];
+  slack?: { category: string; key?: string; count: number; target: number; over: number }[];
   /** Deck math: what the deck demands of itself and what it can answer, priced by when you draw
    *  it. Matcher-only, and structural here for the same reason `buildCategories` is -- this package
    *  must not depend on @edh-seer/matcher. */

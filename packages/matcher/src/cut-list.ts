@@ -111,7 +111,7 @@ export interface CutCandidate {
 /** A PARENT row, the shape `computeBuild` reports as `BuildResult.buildParents` -- the same
  *  interface repeated here (not imported) because `cut-list.ts`, like `build.ts` itself, must not
  *  create a circular dependency; the two are kept structurally identical on purpose. */
-export interface SlackParent { name: string; count: number; target: number; leaves: readonly string[] }
+export interface SlackParent { name: string; key?: string; count: number; target: number; leaves: readonly string[] }
 
 /** Groups the deck carries MORE of than their (archetype-adjusted) PARENT target, biggest surplus
  *  first. This is where a deck has room, stated at the level the engine can actually defend: it
@@ -127,14 +127,14 @@ export interface SlackParent { name: string; count: number; target: number; leav
  *  no exclusion any more because it was never a `BUILD_PARENTS` member to begin with. */
 export function deckSlack(
   parents: readonly SlackParent[],
-): { category: string; count: number; target: number; over: number }[] {
+): { category: string; key?: string; count: number; target: number; over: number }[] {
   return parents
     .filter((p) => p.target > 0 && p.count > p.target)
     // `category` is the field name every reader of `report.slack` already expects
     // (`CutList.tsx`'s `BUILD_CATEGORY_LABEL[s.category] ?? s.category`); a parent's NAME
     // ("Interaction", "Board wipes") is already plain English, so the same fallback renders it
     // correctly with no client change.
-    .map((p) => ({ category: p.name, count: p.count, target: p.target, over: p.count - p.target }))
+    .map((p) => ({ category: p.name, key: p.key, count: p.count, target: p.target, over: p.count - p.target }))
     .sort((a, b) => b.over - a.over || a.category.localeCompare(b.category));
 }
 
