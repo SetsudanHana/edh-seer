@@ -39,12 +39,18 @@ export function deckIdentity(deck: readonly DeckCard[], commanderNames: readonly
  *  The list is the whole of what the corpus holds. */
 const NON_CONSUMING_COST = /^(?:exert|untap|mill)\b/i;
 
+/** A COST THE LINE'S HOLDER CANNOT PAY FROM NOTHING: sacrificing another permanent, a counter removed or put, another permanent tapped (Springleaf
+ *  Drum), or any `cost.other` piece off the allow-list above -- a consumed resource (energy, a discard, forage, an exile from a graveyard). The
+ *  colour audit and the goldfish both refuse a line paid this way: the first because the mana is not a source you control, the second because it
+ *  models no board to pay from. */
+export const paidWithResource = (line: ManaLine): boolean =>
+  line.cost.sacrificeOther || line.cost.counters !== null || line.cost.tapOther || !line.cost.other.every((o) => NON_CONSUMING_COST.test(o));
+
 /** The shape of a colour source -- everything `isColourSource` asks except that the production could be read. */
 const sourceShaped = (line: ManaLine): boolean =>
   (line.source === "activated" || line.source === "static-grant")
   && line.gate === null && line.restriction === null
-  && !line.cost.sacrificeSelf && !line.cost.sacrificeOther && line.cost.counters === null && !line.cost.tapOther
-  && line.cost.other.every((o) => NON_CONSUMING_COST.test(o))
+  && !line.cost.sacrificeSelf && !paidWithResource(line)
   && (line.cost.tap || line.source === "static-grant");
 
 /** THE SCHEMA'S COLOUR-SOURCE RULE (`ManaLine` in tagger/schema.ts), plus the source label it implies: an activated ability the
@@ -68,14 +74,25 @@ export function unreadSourceNames(cards: readonly DeckCard[]): string[] {
  *  line, so it is credited; Baldur's Gate ({2},{T}: X mana of one colour, X = other Gates) is the edge. */
 export const paysItsWay = (line: ManaLine): boolean => line.amount.scales !== null || line.net >= 1;
 
-/** THE FACES WHOSE LINES COUNT. A face node is its own face. A whole card counts its front, and its back only when the back can be
- *  played: a modal DFC's back, which can be played. A transform card's back is never a source from the deck (`transformsIntoLand`,
- *  owner 2026-10-10, #1174: things that transform are not ramp). */
-const faceCounts = (dc: DeckCard, face: 0 | 1): boolean =>
-  dc.face !== undefined ? dc.face === face : face === 0 || dc.card.layout === "modal_dfc";
+/** THE FACES WHOSE LINES COUNT. A face node is its own face. A whole card counts its front, and its other face only when that face can be
+ *  played from the deck: a modal DFC's back (a land you play), an Adventure's or a prepare card's spell half and a split card's second half
+ *  (Rampant Growth on Studious First-Year, Seasonal Ritual on Rosethorn Acolyte, which you cast). A transform or flip card's back is never a
+ *  source from the deck (`transformsIntoLand`, owner 2026-10-10, #1174: things that transform are not ramp) -- the same allow-list of
+ *  FRONT-FACE-ONLY layouts `goldfish.ts` keeps for the type line, never a reject-list of the playable ones. */
+const FRONT_FACE_ONLY = new Set(["transform", "flip"]);
+const faceCounts = (dc: DeckCard, face: 0 | 1, nonLandBacks = false): boolean => {
+  if (dc.face !== undefined) return dc.face === face;
+  if (face === 0) return true;
+  const layout = dc.card.layout ?? "";
+  if (!FRONT_FACE_ONLY.has(layout)) return true;
+  // The #1174 ruling is about a back that is a LAND (Treasure Map // Treasure Cove). A consumer that prices a back which is not (Ashling, Rimebound's
+  // phase trigger: the goldfish's O1 model of a mana commander) asks for it.
+  return nonLandBacks && !/\bland\b/i.test((dc.card.typeLine ?? "").split(" // ")[1] ?? "");
+};
 
-/** Every derived line of the card that is in play from the deck, a land's or not. */
-export const cardLines = (dc: DeckCard): ManaLine[] => (dc.tags?.manaLines ?? []).filter((l) => faceCounts(dc, l.face));
+/** Every derived line of the card that is in play from the deck, a land's or not. `nonLandBacks`: also the lines of a transform or flip card's
+ *  back when that back is not a land (only the goldfish asks, to keep pricing Ashling, Rimebound's trigger as it always has). */
+export const cardLines = (dc: DeckCard, nonLandBacks = false): ManaLine[] => (dc.tags?.manaLines ?? []).filter((l) => faceCounts(dc, l.face, nonLandBacks));
 
 /** A BASIC LAND TYPE IS A MANA ABILITY (CR 305.6), printed only as reminder text, which derive does not read: a land card with
  *  Plains, Island, Swamp, Mountain or Forest in its types taps for that colour whatever its text box says. Read off the type
@@ -106,7 +123,7 @@ export type BoundedColours = "five" | "none" | "no-among";
 
 // CEILING: a bounded colour that is not the identity counts as FIVE for the audit and the mana base (what Scryfall listed: Exotic Orchard,
 // Reflecting Pool, Caged Sun) and as NONE for the land swaps; neither is the colours the board really offers.
-function lineColours(line: ManaLine, identity: DeckIdentity, bounded: BoundedColours): string[] {
+export function lineColours(line: ManaLine, identity: DeckIdentity, bounded: BoundedColours): string[] {
   const out = new Set(line.colours);
   switch (line.anyColour) {
     case "any": for (const c of WUBRG) if (!identity || identity.has(c)) out.add(c); break;
@@ -157,3 +174,23 @@ export function hasConditionalMana(dc: DeckCard): boolean {
     && (l.gate !== null || l.restriction !== null || l.unread || l.amount.scales !== null
       || l.anyColour === "chosen" || l.anyColour === "opponent-lands" || l.anyColour === "lands-you-could" || l.anyColour === "among" || l.anyColour === "grantee"));
 }
+
+/** THE MANA-VALUE FLOOR OF A RESTRICTED LINE, or null when the line is unrestricted or restricted some other way: "Spend this mana only to cast
+ *  spells with mana value 4 or greater" (Ashling, Rimebound). The one restriction a consumer that knows every card's mana value can settle against
+ *  the deck (the goldfish); every other restriction ("to activate abilities", "elemental spells") is a limit on what the mana is FOR. */
+export function minManaValue(line: ManaLine): number | null {
+  const m = /^to cast spells with mana value (\d+) or greater$/.exec(line.restriction?.spend ?? "");
+  return m ? Number(m[1]) : null;
+}
+
+/** The lines whose mana arrives when a land enters (Lotus Cobra: "Whenever a land you control enters, add one mana of any color"). Landfall is not
+ *  an event of its own: it is `enters` with a land `triggerSubject`; `enters` with "this creature" is the card's own enters trigger (Burning-Tree
+ *  Emissary), which makes mana once and is no source. CEILING: the subject is read as the one printed shape the corpus holds ("a land you control"). */
+export const isLandfall = (line: ManaLine): boolean =>
+  line.source === "trigger" && line.trigger === "enters" && /^an?(?:other)? land you control$/i.test(line.triggerSubject ?? "");
+
+/** The lines whose mana arrives at the beginning of a phase (Coalition Relic's first main phase, Chaos Moon's upkeep, Go-Shintai's end step).
+ *  CEILING: "your NEXT main phase" (Mana Drain, Plasm Capture) is a one-shot wearing a trigger, and its derived subject says only "you"; both scale
+ *  their amount, which every consumer refuses, so nothing reads the difference. */
+export const isPhaseTrigger = (line: ManaLine): boolean =>
+  line.source === "trigger" && (line.trigger === "main-phase" || line.trigger === "upkeep" || line.trigger === "end-step");

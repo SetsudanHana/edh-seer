@@ -7892,6 +7892,651 @@
   ],
   "source": "model"
  },
+ "Lotus Cobra": {
+  "card": {
+   "_id": "8ad91f64-ccab-4edc-bd54-b2ee9267d614",
+   "name": "Lotus Cobra",
+   "typeLine": "Creature — Snake",
+   "oracleText": "Landfall — Whenever a land you control enters, add one mana of any color.",
+   "keywords": [
+    "Landfall"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "a land you control",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Hulking Raptor": {
+  "card": {
+   "_id": "9f2e7533-cfc1-4dd8-a9b8-09cdc712ef2f",
+   "name": "Hulking Raptor",
+   "typeLine": "Creature — Dinosaur",
+   "oracleText": "Ward {2}\nAt the beginning of your first main phase, add {G}{G}.",
+   "keywords": [
+    "Ward"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": "5",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{2}{G}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Ward {2}"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "main-phase",
+     "subject": "you",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Burning-Tree Emissary": {
+  "card": {
+   "_id": "327d9679-0049-4401-8dab-e0fb362306bd",
+   "name": "Burning-Tree Emissary",
+   "typeLine": "Creature — Human Shaman",
+   "oracleText": "When this creature enters, add {R}{G}.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "R"
+   ],
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{R/G}{R/G}",
+   "producedMana": [
+    "G",
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Eladamri's Vineyard": {
+  "card": {
+   "_id": "faa085c3-705f-465d-9290-0e22276ad06d",
+   "name": "Eladamri's Vineyard",
+   "typeLine": "Enchantment",
+   "oracleText": "At the beginning of each player's first main phase, that player adds {G}{G}.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "main-phase",
+     "subject": "each player",
+     "control": "any"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Forsaken Monument": {
+  "card": {
+   "_id": "7777fab1-df3f-467f-b9e2-46dd2bd2166e",
+   "name": "Forsaken Monument",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "Colorless creatures you control get +2/+2.\nWhenever you tap a permanent for {C}, add an additional {C}.\nWhenever you cast a colorless spell, you gain 2 life.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 5,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{5}",
+   "producedMana": [
+    "C"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "colorless creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "an additional {C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "tapped-for-mana",
+     "subject": "a permanent for {C}",
+     "control": "you"
+    }
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "cast",
+     "subject": "a colorless spell",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Coalition Relic": {
+  "card": {
+   "_id": "008cb342-79f5-4df6-a6b7-0e9e22ed693f",
+   "name": "Coalition Relic",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add one mana of any color.\n{T}: Put a charge counter on this artifact.\nAt the beginning of your first main phase, remove all charge counters from this artifact. Add one mana of any color for each charge counter removed this way.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "all",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each charge counter removed this way",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "main-phase",
+     "subject": "you",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Muraganda Raceway": {
+  "card": {
+   "_id": "b5fa5651-d714-44d6-867b-be0e3224b7ed",
+   "name": "Muraganda Raceway",
+   "typeLine": "Land",
+   "oracleText": "Start your engines! (If you have no speed, it starts at 1. It increases once on each of your turns when an opponent loses life. Max speed is 4.)\n{T}: Add {C}.\nMax speed — {T}: Add {C}{C}.",
+   "keywords": [
+    "Max speed",
+    "Start your engines!"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "C"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Start Your Engines! // Max Speed",
+     "typeLine": "Card // Card",
+     "printingId": "82613de6-ed37-48c1-8d2f-d91a3f496794"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Muraganda Raceway",
+     "typeLine": "Land",
+     "printingId": "b6457d47-8e68-42db-85c9-e0f981c53aa4"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Start your engines!"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Relic of Sauron": {
+  "card": {
+   "_id": "b3a81bb1-cbd5-41a0-8dd4-faea06593f84",
+   "name": "Relic of Sauron",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add two mana in any combination of {U}, {B}, and/or {R}.\n{3}, {T}: Draw two cards, then discard a card.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [
+    "B",
+    "R",
+    "U"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "producedMana": [
+    "B",
+    "R",
+    "U"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "two mana in any combination of {U}, {B}, and/or {R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "two cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Ashling, Rekindled // Ashling, Rimebound": {
+  "card": {
+   "_id": "31fc5d8b-94bc-4688-8a84-f15800e717a8",
+   "name": "Ashling, Rekindled // Ashling, Rimebound",
+   "typeLine": "Legendary Creature — Elemental Sorcerer // Legendary Creature — Elemental Wizard",
+   "oracleText": "Whenever this creature enters or transforms into Ashling, Rekindled, you may discard a card. If you do, draw a card.\nAt the beginning of your first main phase, you may pay {U}. If you do, transform Ashling.\n//\nWhenever this creature transforms into Ashling, Rimebound and at the beginning of your first main phase, add two mana of any one color. Spend this mana only to cast spells with mana value 4 or greater.\nAt the beginning of your first main phase, you may pay {R}. If you do, transform Ashling.",
+   "keywords": [
+    "Transform"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "faces": [
+    {
+     "name": "Ashling, Rekindled",
+     "typeLine": "Legendary Creature — Elemental Sorcerer",
+     "manaCost": "{1}{R}"
+    },
+    {
+     "name": "Ashling, Rimebound",
+     "typeLine": "Legendary Creature — Elemental Wizard",
+     "manaCost": ""
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "main-phase",
+     "subject": "your first main phase",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "Ashling",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "transform",
+     "subject": "this creature into Ashling, Rimebound",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "two mana of any one color. Spend this mana only to cast spells with mana value 4 or greater",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "main-phase",
+     "subject": "your first main phase",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "Ashling",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 1000001,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "transform",
+     "subject": "this creature into Ashling, Rekindled",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
  "Plaza of Heroes": {
   "card": {
    "_id": "9c58d241-4d9f-4b46-b8ee-f4587f9acfd6",

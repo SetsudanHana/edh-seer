@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import type { DeckCard } from "./types.js";
+import { fetchTags, withTap } from "./mana-test-support.js";
 import { pAtLeastMana, simulate } from "./goldfish.js";
 
 /** N16. AN EXACT ANCHOR FOR THE RAMP ARM, which had none.
@@ -116,7 +117,7 @@ test("N16: the exact DP is cheap enough to run in the suite", () => {
 });
 
 test("N16: the ramp arm agrees with an exact DP — rocks, which pay the turn they land", () => {
-  const rock = (i: number) => card(`Signet ${i}`, "Artifact", 2, "{T}: Add {C}.", ["C"]);
+  const rock = (i: number) => withTap(card(`Signet ${i}`, "Artifact", 2, "{T}: Add {C}."), ["C"]);
   const deck = build(36, 10, rock);
   const exact = exactCurve(36, 10, 0, 8);
   const sim = simulate(deck, { trials: TRIALS, turns: 8, seed: 20260826, mulligan: false });
@@ -128,7 +129,7 @@ test("N16: the ramp arm agrees with an exact DP — rocks, which pay the turn th
 });
 
 test("N16: the ramp arm agrees with an exact DP — dorks, which wait a turn", () => {
-  const dork = (i: number) => card(`Bird ${i}`, "Creature — Bird", 2, "{T}: Add {C}.", ["C"]);
+  const dork = (i: number) => withTap(card(`Bird ${i}`, "Creature — Bird", 2, "{T}: Add {C}."), ["C"]);
   const deck = build(36, 10, dork);
   const exact = exactCurve(36, 10, 1, 8);
   const sim = simulate(deck, { trials: TRIALS, turns: 8, seed: 20260826, mulligan: false });
@@ -205,7 +206,7 @@ function exactFetchCurve(lands: number, fetches: number, turns: number): number[
 
 test("N16: a land-fetch agrees with an exact DP, which is the check N15 did not have", () => {
   const FETCH = "Search your library for a basic land card, put it onto the battlefield, then shuffle.";
-  const deck = build(30, 12, (i) => card(`Lore ${i}`, "Sorcery", 2, FETCH));
+  const deck = build(30, 12, (i) => ({ ...card(`Lore ${i}`, "Sorcery", 2, FETCH), tags: fetchTags({ kind: "spell", tapped: false, reach: ["G"] }) }));
   const exact = exactFetchCurve(30, 12, 8);
   const sim = simulate(deck, { trials: TRIALS, turns: 8, seed: 20260826, mulligan: false });
   for (let t = 1; t <= 8; t++) {

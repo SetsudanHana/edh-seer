@@ -1,6 +1,7 @@
 import type { KarstenInputs } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectBuildCategories } from "./build.js";
-import { classifyAccelerant } from "./goldfish.js";
+import { classifyAccelerant, playableLines } from "./goldfish.js";
+import { isManaSource } from "./mana-audit.js";
 import { RAMP_RESILIENCE, drawCredit, landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
 import { countsAsLand, transformsIntoLand } from "./typeline.js";
@@ -11,6 +12,16 @@ import { countsAsLand, transformsIntoLand } from "./typeline.js";
 const CHEAP = 2;
 
 const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
+
+/** DOES THE CARD MAKE MANA THAT KEEPS COMING? A derived line the goldfish can play (`playableLines`: an unrestricted tap, a grant, an Aura's or a
+ *  phase's or a landfall trigger), on a card that is neither a one-shot (`isOneShot`: Dark Ritual, Lotus Petal), nor suspend-only (`suspendOnly`:
+ *  Mox Tantalite, never cast from hand). A line paid for with a counter ("Remove a +1/+1 counter: Add {C}", Cryptic Trilobite) is not a playable line:
+ *  the mana runs out (owner, 2026-10-10). */
+function makesRepeatableMana(dc: DeckCard): boolean {
+  if (dc.tags === null || dc.tags.isOneShot || dc.tags.suspendOnly || !isManaSource(dc)) return false;
+  // `playableLines` already refuses a line paid with a counter (and every other consumed resource): what is left is mana that keeps coming.
+  return playableLines(dc).length > 0;
+}
 
 /** A modal double-faced card with a LAND back, and whether that land enters untapped -- Karsten
  *  prices the two differently (0.74 of a land against 0.38), because a tapped one costs you the
@@ -43,9 +54,9 @@ const mdfcLandBack = (dc: DeckCard): "untapped" | "tapped" | null => {
  *  error most implementations make.
  *
  *  Fast mana is identified by the spec's own definition -- a NONLAND card costing 0 that produces
- *  mana -- rather than by the tagger's `fast-mana` effect kind. The definition is about the card's
- *  printed cost, `producedMana` now reaches `Card`, and a definition beats a label when the label
- *  was assigned for a different purpose. */
+ *  mana -- rather than by the tagger's `fast-mana` effect kind. The cost is the card's printed mana value; whether it PRODUCES mana is
+ *  the derived mana lines' answer (`makesRepeatableMana`), not Scryfall's `producedMana` (#1169 task 2b-1), and a definition beats a label
+ *  when the label was assigned for a different purpose. */
 export function landInputs(
   deck: readonly DeckCard[],
   opts: { commanderNames?: readonly string[] } = {},
@@ -65,9 +76,7 @@ export function landInputs(
     ? nonland.reduce((sum, dc) => sum + dc.card.manaValue, 0) / nonland.length
     : 0;
 
-  const fast = nonland.filter(
-    (dc) => dc.card.manaValue === 0 && (dc.card.producedMana ?? []).length > 0,
-  );
+  const fast = nonland.filter((dc) => dc.card.manaValue === 0 && makesRepeatableMana(dc));
   const fastNames = new Set(fast.map((dc) => dc.card.name));
 
   // Ramp and draw membership come from the same rules every other readout uses, so a rules edit
@@ -76,16 +85,19 @@ export function landInputs(
   const accelerants = new Set([
     ...(members.get("ramp") ?? []),
     ...(members.get("draw") ?? []),
-    // A cheap nonland that produces mana is a rock, whatever the tagger made of it. `ramp` reaches
-    // rocks through the `mana-generation` effect kind, which needs the card to have been TAGGED --
-    // so an untagged Sol Ring would leave the regression thinking the deck has no acceleration at
-    // all. `producedMana` is printed data and cannot go missing that way.
+    // A cheap nonland that makes repeatable mana is a rock, whatever role the rules gave it: `ramp` reaches rocks through the `mana-generation`
+    // effect kind, so a rock the role rules miss would leave the regression thinking the deck has no acceleration. The derived mana lines
+    // are read for EVERY card derive covers, so this cannot go missing the way a tag could.
+    // CEILING: a card with NO derived tags at all (`dc.tags === null`) counts as nothing here, and `landInputs` has no channel to say so.
+    // `coverage.ts` already lists the underived cards of a deck; the Karsten inputs are not the place that names them.
     ...nonland
-      .filter((dc) => dc.card.manaValue <= CHEAP && (dc.card.producedMana ?? []).length > 0)
+      .filter((dc) => dc.card.manaValue <= CHEAP && makesRepeatableMana(dc))
       .map((dc) => dc.card.name),
   ]);
   const mdfc = library.map(mdfcLandBack);
 
+  // A RITUAL IS NOT CHEAP RAMP (owner, 2026-10-10): it is a one-shot, spent in the using. The Ramp role includes rituals; Karsten's 0.28 is
+  // for acceleration that keeps producing (`isOneShot`: Dark Ritual, Lotus Petal).
   // An MDFC cannot reach this filter at all now -- `nonland` excludes every land, and an MDFC is
   // one. It used to need an explicit `!mdfcNames.has(...)` guard here, because it sat in the spell
   // pool and `producedMana` carries the BACK face's colour, so Silundi Vision looked like cheap
@@ -96,7 +108,7 @@ export function landInputs(
   // cheap rock here while the Ramp role had dropped it.
   const rampPlusDraw = nonland.filter(
     (dc) => accelerants.has(dc.card.name) && dc.card.manaValue <= CHEAP
-      && !fastNames.has(dc.card.name) && !transformsIntoLand(dc.card),
+      && !fastNames.has(dc.card.name) && !transformsIntoLand(dc.card) && dc.tags?.isOneShot !== true,
   ).length;
 
   return {

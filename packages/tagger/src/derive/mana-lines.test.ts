@@ -122,6 +122,57 @@ describe("triggers, auras and spells", () => {
   });
 });
 
+describe("amounts and gates the goldfish reads (DERIVE_VERSION 302)", () => {
+  it("Relic of Sauron: two mana in any combination of three colours is an amount of 2, not 1", () => {
+    expect(only("Relic of Sauron")).toMatchObject({ colours: ["U", "B", "R"], anyColour: null, amount: { fixed: 2, scales: null }, net: 2 });
+  });
+  it("Muraganda Raceway: the Max speed line is gated, the plain one is not", () => {
+    const [plain, speed] = linesOf("Muraganda Raceway");
+    expect(plain).toMatchObject({ amount: { fixed: 1, scales: null }, gate: null });
+    expect(speed).toMatchObject({ amount: { fixed: 2, scales: null }, gate: "speed 4" });
+  });
+});
+
+describe("what fires a trigger line (DERIVE_VERSION 302)", () => {
+  it("Lotus Cobra is landfall: `enters` on a land you control", () => {
+    expect(only("Lotus Cobra", "trigger")).toMatchObject({ trigger: "enters", triggerSubject: "a land you control", anyColour: "any", amount: { fixed: 1, scales: null } });
+  });
+  it("Burning-Tree Emissary's enters trigger is `enters` on the card itself, not landfall", () => {
+    const l = only("Burning-Tree Emissary", "trigger");
+    expect(l.trigger).toBe("enters");
+    expect(l.triggerSubject).not.toMatch(/\bland\b/);
+  });
+  it("a beginning-of-phase adder names the phase: Hulking Raptor and Eladamri's Vineyard `main-phase`", () => {
+    expect(only("Hulking Raptor", "trigger")).toMatchObject({ trigger: "main-phase", amount: { fixed: 2, scales: null }, gate: null, restriction: null });
+    expect(only("Eladamri's Vineyard", "trigger")).toMatchObject({ trigger: "main-phase", amount: { fixed: 2, scales: null } });
+  });
+  it("Birgi's cast trigger is `cast`", () => {
+    expect(only("Birgi, God of Storytelling", "trigger")).toMatchObject({ trigger: "cast", triggerSubject: "a spell" });
+  });
+  it("an Aura's line is `tapped-for-mana` on the enchanted land; so is Forsaken Monument's, which is no Aura", () => {
+    expect(only("Wild Growth", "aura-trigger")).toMatchObject({ trigger: "tapped-for-mana", triggerSubject: "enchanted land" });
+    expect(only("Forsaken Monument", "trigger")).toMatchObject({ trigger: "tapped-for-mana" });
+  });
+  it("only a trigger or aura-trigger line names an event", () => {
+    for (const n of ["Sol Ring", "Dark Ritual", "Pitiless Plunderer", "Cultivate", "Chromatic Lantern"]) {
+      for (const l of linesOf(n)) expect([l.source, l.trigger, l.triggerSubject]).toEqual([l.source, null, null]);
+    }
+  });
+  it("Ashling, Rimebound: one add fired by a transform AND the first main phase is named for the phase, and its two mana are read through the restriction sentence", () => {
+    const ls = linesOf("Ashling, Rekindled", "trigger");
+    expect(ls).toHaveLength(1);
+    expect(ls[0]).toMatchObject({ face: 1, trigger: "main-phase", triggerSubject: "your first main phase", anyColour: "any", amount: { fixed: 2, scales: null },
+      restriction: { spend: "to cast spells with mana value 4 or greater" } });
+  });
+  it("a transform trigger alone stays a transform trigger (Alluring Suitor's back)", () => {
+    expect(linesOf("Ashling, Flame Dancer", "trigger").every((l) => l.trigger === "cast" || l.trigger === "copy")).toBe(true);
+  });
+  it("Ashling's two clauses (cast, copy) are one printed add and keep the first event", () => {
+    const ls = linesOf("Ashling, Flame Dancer", "trigger");
+    expect(new Set(ls.map((l) => JSON.stringify({ ...l, trigger: null, triggerSubject: null }))).size).toBe(ls.length);
+  });
+});
+
 describe("faces", () => {
   it("Treasure Map // Treasure Cove: the land back's {T}: Add {C} is on face 1, the front makes Treasures", () => {
     const tap = only("Treasure Map", "activated");

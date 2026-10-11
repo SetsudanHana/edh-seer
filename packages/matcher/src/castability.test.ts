@@ -5,19 +5,21 @@ import {
 } from "./castability.js";
 import { REPORT_TRIALS, type CastCurve, manaModel } from "./goldfish.js";
 import type { DeckCard } from "./types.js";
+import { withTap } from "./mana-test-support.js";
 
 const spell = (name: string, manaCost: string, manaValue: number, oracleText = ""): DeckCard => ({
   card: { name, manaCost, manaValue, typeLine: "Sorcery", oracleText, keywords: [], colors: [] } as Card,
   tags: null,
 });
 
-const land = (name: string, produces: string[] = ["B"]): DeckCard => ({
+// A land that taps for these colours: the goldfish reads the derived mana line (#1169 task 2b-1), not `producedMana`.
+const land = (name: string, produces: string[] = ["B"]): DeckCard => withTap({
   card: {
     name, typeLine: "Land", oracleText: "", keywords: [], colors: [], manaValue: 0,
     producedMana: produces,
   } as Card,
   tags: null,
-});
+}, produces);
 
 const deckOf = (spells: DeckCard[], lands: number) => [
   ...spells,

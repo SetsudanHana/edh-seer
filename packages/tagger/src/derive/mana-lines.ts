@@ -134,9 +134,14 @@ const SCALES = /\b(for each|equal to|that (?:many|much)|number of|where x)\b[^.]
 /** What `object` ("one mana of any color", "{U}{U}, {U}{R}, or {R}{R}", "five mana in any combination of colors")
  *  makes, alternative by alternative. */
 function production(object: string, amountText = "", context = ""): Pick<ManaLine, "colours" | "colourless" | "anyColour" | "amount"> {
-  const text = object.trim();
+  // A RESTRICTION SENTENCE THE MODEL LEFT ON THE OBJECT ("two mana of any one color. Spend this mana only to cast spells with mana value 4 or greater",
+  // Ashling, Rimebound) is read by `restrictionOf`, not here: its "or" split the alternatives and left the amount unknown.
+  const text = object.replace(/\.\s*(?:spend (?:this|that|the) mana only|this mana can'?t be spent)\b.*$/is, "").trim();
   const lower = text.toLowerCase();
-  const alts = text.split(/\s*,\s*or\s+|\s*,\s+|\s+or\s+/i).filter((a) => a.trim() !== "");
+  // "two mana in any combination of {U}, {B}, and/or {R}" (Relic of Sauron) is ONE alternative of that many mana: the commas list the colours it may
+  // be made of, not separate alternatives, and splitting on them read an amount of 1.
+  const combination = new RegExp(`^(${WORD})\\s+mana\\s+in\\s+any\\s+combination\\s+of\\s+(?:\\{[^}]+\\}[\\s,/]*|and/or\\s*|or\\s*|and\\s*)+$`, "i").exec(text);
+  const alts = combination ? [text] : text.split(/\s*,\s*or\s+|\s*,\s+|\s+or\s+/i).filter((a) => a.trim() !== "");
   const colours = new Set<string>();
   let colourless = 0;
   const counts: (number | undefined)[] = [];
@@ -145,7 +150,7 @@ function production(object: string, amountText = "", context = ""): Pick<ManaLin
     for (const s of symbols) for (const c of s.split("/")) if ((WUBRG as readonly string[]).includes(c)) colours.add(c);
     colourless = Math.max(colourless, symbols.filter((s) => s === "C").length);
     const word = new RegExp(`\\b(${WORD})\\s+mana\\b`, "i").exec(alt)?.[1]?.toLowerCase();
-    counts.push(symbols.length > 0 ? symbols.length : word ? NUMBER_WORD[word] : /^(?:an? )?(?:additional )?mana\b/i.test(alt) ? 1 : undefined);
+    counts.push(combination ? NUMBER_WORD[combination[1]!.toLowerCase()] : symbols.length > 0 ? symbols.length : word ? NUMBER_WORD[word] : /^(?:an? )?(?:additional )?mana\b/i.test(alt) ? 1 : undefined);
   }
   let anyColour: ManaAnyColour | null = null;
   if (/commander'?s color identity/.test(lower)) anyColour = "identity";
@@ -234,6 +239,21 @@ const CONDITIONS = [
 const gateOf = (text: string, sentence: string, thresholdAbility: boolean): string | null => {
   const g = GATE.exec(text)?.[1] ?? CONDITIONS.map((r) => r.exec(sentence)?.[1]).find((x) => x !== undefined && !YOU_DO.test(x.trim()));
   return g ? g.trim().toLowerCase() : thresholdAbility ? "threshold" : null;
+};
+/** A GAME-STATE REQUIREMENT THE ABILITY WORD CARRIES (`Ability.requires`): "Max speed — {T}: Add {C}{C}" (Muraganda Raceway) holds only at speed 4, so the line is gated
+ *  ("speed 4"), never credited as guaranteed. The segmenter strips the word from the clause text, which is why it is not in `gateOf`'s reach. */
+const requiresGate = (ability: Ability | undefined): string | null => ability?.requires ? `${ability.requires.marker} ${ability.requires.min}` : null;
+/** WHAT FIRES A TRIGGER LINE (`ManaLine.trigger`, `triggerSubject`): the clause's own event. ONE EXCEPTION, for a printed add the model split across two
+ *  events and kept on the first: "Whenever this creature transforms into Ashling, Rimebound AND AT THE BEGINNING OF YOUR FIRST MAIN PHASE, add two mana
+ *  of any one color" arrives as a transform clause carrying the add and a main-phase clause carrying only the flip, so the add would be named for the one
+ *  flip. The beginning of a phase recurs, so the line is named for it. CEILING: read off the clause text, for the one printed shape ("... and at the
+ *  beginning of <your ...> <upkeep | end step | main phase>, add"); a card printing it otherwise keeps its first event. */
+const AND_AT_PHASE = /\band at the beginning of ((?:your|each|the)\b[^,]*?\b(upkeep|end step|main phase)\b[^,]*),\s*(?:you may )?add\b/i;
+const firedBy = (trigger: { event?: string; subject?: string } | undefined, text: string): Pick<ManaLine, "trigger" | "triggerSubject"> => {
+  const phase = trigger?.event && !["main-phase", "upkeep", "end-step"].includes(trigger.event) ? AND_AT_PHASE.exec(text) : null;
+  if (!phase) return { trigger: trigger?.event ?? null, triggerSubject: trigger?.subject ?? null };
+  const event = phase[2]!.toLowerCase() === "main phase" ? "main-phase" : phase[2]!.toLowerCase() === "end step" ? "end-step" : "upkeep";
+  return { trigger: event, triggerSubject: phase[1]!.toLowerCase() };
 };
 /** "As long as <condition>, this creature has that ability" (Honored Hierarch, Mul Daya Channelers): the grant's condition.
  *  "FOR as long as <duration>" (Ultima, Kitesail Larcenist) is a duration of a grant, not a condition on the line: excluded. */
@@ -391,14 +411,17 @@ export function deriveMana(input: ManaInput): ManaResult {
         face, source, repeats: ability?.repeats ?? null, cost, ...made,
         unread: made.colours.length === 0 && made.colourless === 0 && made.anyColour === null,
         net: produced - cost.mana,
-        gate: grantGate ?? afterCost ?? gateOf(text, sentence, ability?.threshold !== undefined),
+        gate: grantGate ?? afterCost ?? requiresGate(ability) ?? gateOf(text, sentence, ability?.threshold !== undefined),
         restriction: restrictionOf(texts),
         timing: source === "trigger" || source === "aura-trigger" ? "on-trigger" : DELAYED.test(text) ? "next-turn" : "now",
         producesToken: tokenGrant ? "granted" : null,
+        ...(source === "trigger" || source === "aura-trigger" ? firedBy(trigger, text) : { trigger: null, triggerSubject: null }),
       };
       // ONE PRINTED ADD, TWO CLAUSES: "Whenever you cast or copy ..." (Ashling) arrives as a cast clause and a copy clause, each with the
-      // same add. An identical trigger line is the same add read twice. CEILING: a card printing two identical trigger adds would merge.
-      if ((source === "trigger" || source === "aura-trigger") && lines.some((l) => JSON.stringify(l) === JSON.stringify(line))) continue;
+      // same add. An identical trigger line is the same add read twice. CEILING: a card printing two identical trigger adds would merge; the
+      // merged line keeps the first clause's `trigger` and `triggerSubject`.
+      const sameAdd = (l: ManaLine): boolean => JSON.stringify({ ...l, trigger: null, triggerSubject: null }) === JSON.stringify({ ...line, trigger: null, triggerSubject: null });
+      if ((source === "trigger" || source === "aura-trigger") && lines.some(sameAdd)) continue;
       lines.push(line);
     }
   }
@@ -424,7 +447,7 @@ export function deriveMana(input: ManaInput): ManaResult {
         face, source: "token-maker", repeats: a.repeats ?? null, cost, ...make, unread: false,
         // Each token is one use of mana when it is spent; a token count that scales is unknown.
         amount: tokens !== null ? { fixed: tokens, scales: null } : { fixed: null, scales: a.amount ?? null },
-        net: (tokens ?? 1) - cost.mana, gate: null, timing: "now", producesToken: key,
+        net: (tokens ?? 1) - cost.mana, gate: null, timing: "now", producesToken: key, trigger: null, triggerSubject: null,
       });
       continue;
     }
@@ -469,7 +492,7 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (colours.length === 0 || (Array.isArray(subject.type) ? subject.type : [subject.type]).includes("creature")) continue;
       lines.push({
         face, source: "fetch", repeats: a.repeats ?? null, cost, colours, colourless: 0, anyColour: null, unread: false,
-        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: afterCost ?? fetchGate(clauseText), restriction: null, timing: "now", producesToken: null,
+        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: afterCost ?? fetchGate(clauseText), restriction: null, timing: "now", producesToken: null, trigger: null, triggerSubject: null,
       });
       fetchKind = a.kind === "on-cast" || fetchKind === "spell" ? "spell" : "permanent";
       fetchTapped = fetchTapped && tapped;

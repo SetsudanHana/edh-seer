@@ -432,7 +432,10 @@ import { emblemRecipient } from "../emblem.js";
 // "Choose a color. Add ... of that color" is any colour; "circled colors" is chosen.
 // 301: #1169 task 2a review 3: a colour chosen in the same clause ("{T}: Choose a color. Add one mana of that color") is any colour; a granted
 // "this creature's colors" (Katilda) is `grantee`, no colour of the deck's.
-export const DERIVE_VERSION = 301;
+// 302: #1169 task 2b-1: a `trigger` / `aura-trigger` mana line names the event that fires it (`ManaLine.trigger`, `triggerSubject`), so the goldfish can tell
+// landfall and beginning-of-phase mana (priced) from a cast trigger (Birgi: ramp, not a dork) without reading oracle text. "N mana in any combination
+// of {U}, {B}, and/or {R}" (Relic of Sauron) is an amount of N, not 1; an ability word's requirement ("Max speed — {T}: Add {C}{C}", Muraganda Raceway) gates the line.
+export const DERIVE_VERSION = 302;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

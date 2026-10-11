@@ -11,9 +11,10 @@
  *  EVERY FIGURE IS A CEILING UNDER A MANA-MAXIMISING POLICY, not an expectation — rule 3 casts every
  *  accelerant it can afford and the owner's own decks hold mana up for interaction. Read the policy
  *  in `goldfish.ts` before quoting any number here. */
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS, DECKS_DIR } from "@edh-seer/data";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { classifyAccelerant, pAtLeastMana, quantiles, simulate } from "../../packages/matcher/src/goldfish.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
 
@@ -37,6 +38,8 @@ const HEADLINE_TURN = 6;
 
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
+// THE GOLDFISH READS THE DERIVED MANA LINES (#1169, task 2b-1), so a card is loaded WITH its derived tags; a card without them is priced as a land-less blank.
+const cardTags = createTagsLookup(store.db, "derived");
 
 async function loadDeck(file: string, dir: string = DECK_DIR): Promise<DeckCard[]> {
   const s = parseDecklistSections(readFileSync(join(dir, file), "utf8"));
@@ -46,7 +49,7 @@ async function loadDeck(file: string, dir: string = DECK_DIR): Promise<DeckCard[
     // A COMMANDER IS NOT IN THE LIBRARY (CR 903.6) and this model draws from the library, so it is
     // excluded here exactly as `deck-math.ts` excludes it — including one from the shuffle would
     // both dilute the draw and pretend it can be drawn.
-    if (doc && !s.commanders.map(normalizeName).includes(normalizeName(n))) out.push({ card: docToCard(doc), tags: null });
+    if (doc && !s.commanders.map(normalizeName).includes(normalizeName(n))) out.push({ card: docToCard(doc), tags: await cardTags.findOne(String(doc._id)) });
   }
   return out;
 }
@@ -103,6 +106,10 @@ for (const file of files) {
     landsOnly: pAtLeastMana(bare, HEADLINE_MANA, HEADLINE_TURN),
   });
 }
+
+// `--json <file>` keeps EVERY deck row (the printed report shows the top ten only), for a before/after diff.
+const jsonOut = arg("--json");
+if (jsonOut) writeFileSync(jsonOut, JSON.stringify(rows, null, 1));
 
 const deltas = rows.map((r) => r.headline - r.landsOnly).sort((a, b) => a - b);
 const q = quantiles(deltas);

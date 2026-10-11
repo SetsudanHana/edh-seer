@@ -49,7 +49,7 @@ for (const [name, dc] of all) {
     tag: abil.map((a: any) => `${a.effect.kind}/${a.repeats ?? "-"}/${a.cost ?? ""}`).join("|"),
     ml: lines.map((l: any) => `${l.colours.join("")}${l.qualifies ? "" : "!q"}n${l.net}`).join("|"),
     legacyFixed: legacyFx.join(""), fixed: fx.join(""), audit: audit.join(""), cs: cs.join(""), lf: lf === null ? null : lf.join(""),
-    acc: acc?.kind ?? null, out: acc ? gf.manaOutput(dc.card.oracleText).amount : null, ritual: gf.ritualAdds(dc),
+    acc: acc?.kind ?? null, out: acc ? gf.manaOutput(dc).amount : null, ritual: gf.ritualAdds(dc),
     fast: li.fastMana, cheap: li.rampPlusDraw, ramp, grade: bd.rampGrade(dc),
     ny: sj.netYield(dc), dork: sj.isPlainDork(dc), sfix: sf.staticFixer(dc)?.covers ?? null, land: isLand,
     decks: deckOf.get(name)!.length, text: (dc.card.oracleText ?? "").replace(/\n/g, " / "),

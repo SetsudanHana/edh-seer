@@ -24,7 +24,7 @@ const NAMES = ["Sol Ring", "Arcane Signet", "Cascade Bluffs", "Cascading Catarac
   "Verdant Mastery", "Gemstone Caverns", "Mardu Warshrieker", "Coal Stoker", "Flamecache Gecko", "Famished Foragers", "Hidden Herbalists", "Realm-Scorcher Hellkite",
   "Iridescent Tiger", "Scattering Stroke", "Neheb, Dreadhorde Champion", "Cheering Crowd", "Pygmy Hippo", "Yavimaya Bloomsage", "Energy Tap", "Fire Lord Ozai",
   "Megatron, Tyrant", "Cartographer's Hawk", "Springbloom Druid", "Purestrain Genestealer", "Larval Scoutlander", "Charitable Levy", "Ultima, Origin of Oblivion",
-  "Kitesail Larcenist", "Ashling, Flame Dancer",
+  "Kitesail Larcenist", "Ashling, Flame Dancer", "Lotus Cobra", "Hulking Raptor", "Burning-Tree Emissary", "Eladamri's Vineyard", "Forsaken Monument", "Coalition Relic", "Muraganda Raceway", "Relic of Sauron", "Ashling, Rekindled",
   "Plaza of Heroes", "The Grey Havens", "Mox Amber", "Faeburrow Elder", "Guild Globe", "Ether", "Pit of Offerings", "Aether Hub", "Servant of the Conduit",
   "Bog Witch", "Cryptex", "Molt Tender", "Thornvault Forager",
   "Tazri, Stalwart Survivor", "Katilda, Dawnhart Prime", "Corrupted Grafstone", "Three Tree City", "Cryptic Spires", "Astral Cornucopia", "Millikin", "Charmed Pendant",

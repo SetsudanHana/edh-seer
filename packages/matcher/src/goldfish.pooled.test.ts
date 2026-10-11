@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { classifyAccelerant, simulate } from "./goldfish.js";
 import type { DeckCard } from "./types.js";
+import { withTap } from "./mana-test-support.js";
 
 /** THE SENTINEL FOR POOLING, which is the one claim in `goldfish.ts` that nothing else can contradict.
  *
@@ -32,7 +33,7 @@ const basics = (n: number, type: string, name: string): DeckCard[] =>
   Array.from({ length: n }, (_, i) => card(`${name} ${i}`, `Basic Land — ${type}`, 0));
 
 const rock = (name: string, manaValue: number, cost: string, adds: string, produced: string[]) =>
-  card(name, "Artifact", manaValue, cost, `{T}: Add ${adds}.`, produced);
+  withTap(card(name, "Artifact", manaValue, cost, `{T}: Add ${adds}.`, produced), produced, (adds.match(/\{/g) ?? []).length);
 
 /** Two colours so `pickLand` has a real choice to make, three accelerants that produce DIFFERENT
  *  amounts on different turns, and four pip patterns so pooling has classes to build. */
@@ -48,7 +49,11 @@ const SPELLS = [
 const DECK = [...basics(19, "Swamp", "Swamp"), ...basics(18, "Forest", "Forest"), ...ROCKS, ...SPELLS];
 const COMMANDER = card("Atraxa", "Legendary Creature — Angel", 4, "{2}{B}{G}");
 
-const TRIALS = 20_000;
+// 60,000, NOT 20,000 (#1169 task 2b-1): the basics used to carry no `producedMana`, so this deck's lands made no colour and the cells were nearly
+// deterministic. They carry their colours now (a basic land type is a mana ability), the cells are real binomials, and at 20,000 trials the widest of
+// the ~280 pooled-vs-unpooled comparisons read 3.33pp (S{1}{B}{B}-1, turn 3) -- about 2.7 standard errors, the maximum of 280 draws. Trials, not
+// the 3pp bound, are what noise is bought down with.
+const TRIALS = 60_000;
 const OPTS = { trials: TRIALS, turns: 6, seed: 11, alsoPrice: [COMMANDER] } as const;
 const pooled = simulate(DECK, OPTS);
 const unpooled = simulate(DECK, { ...OPTS, pooled: false });

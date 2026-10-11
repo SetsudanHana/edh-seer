@@ -1,9 +1,12 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { karstenLands } from "@edh-seer/engine";
+import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
+import { detectBuildCategories } from "./build.js";
 import { landInputs, recommendedLands } from "./land-count.js";
 import { landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
+import { tapFor, withLines, withTap } from "./mana-test-support.js";
 
 const mk = (
   name: string, manaValue: number, oracleText = "", typeLine = "Artifact",
@@ -13,14 +16,14 @@ const mk = (
   tags: null,
 });
 
-const land = (name: string) => mk(name, 0, "{T}: Add {B}.", "Land", { producedMana: ["B"] });
+const land = (name: string) => withTap(mk(name, 0, "{T}: Add {B}.", "Land", { producedMana: ["B"] }), ["B"]);
 
 test("fast mana is a 0-cost repeatable source, and it is NOT cheap ramp", () => {
   const deck = [
-    mk("Mox Diamond", 0, "{T}: Add one mana of any color.", "Artifact", { producedMana: ["W", "U", "B", "R", "G"] }),
-    mk("Mana Crypt", 0, "{T}: Add {C}{C}.", "Artifact", { producedMana: ["C"] }),
+    withTap(mk("Mox Diamond", 0, "{T}: Add one mana of any color.", "Artifact"), ["W", "U", "B", "R", "G"]),
+    withTap(mk("Mana Crypt", 0, "{T}: Add {C}{C}.", "Artifact"), ["C"], 2),
     // Sol Ring costs 1, so by the spec's own definition it is cheap ramp, not fast mana.
-    mk("Sol Ring", 1, "{T}: Add {C}{C}.", "Artifact", { producedMana: ["C"] }),
+    withTap(mk("Sol Ring", 1, "{T}: Add {C}{C}.", "Artifact"), ["C"], 2),
     // A 0-cost card that produces nothing is neither.
     mk("Ornithopter", 0, "Flying", "Artifact Creature"),
     land("Swamp"),
@@ -34,10 +37,10 @@ test("fast mana is a 0-cost repeatable source, and it is NOT cheap ramp", () => 
  *  Mox counted as cheap ramp is 0.72 of a land lost, every time. */
 test("a card that transforms into a land is not cheap ramp, though its land back produces mana (#1174)", () => {
   const deck = [
-    mk("Sol Ring", 1, "{T}: Add {C}{C}.", "Artifact", { producedMana: ["C"] }),
-    // Treasure Map's `producedMana` is its Treasure Cove BACK's colours.
-    mk("Treasure Map // Treasure Cove", 2, "{1}, {T}: Scry 1. …\n//\n{T}: Add {C}.", "Artifact // Land",
-      { producedMana: ["C"], layout: "transform" } as Partial<Card>),
+    withTap(mk("Sol Ring", 1, "{T}: Add {C}{C}.", "Artifact"), ["C"], 2),
+    // Treasure Map's only mana line is its Treasure Cove BACK's (face 1), and a transform card's back is never a source from the deck.
+    withLines(mk("Treasure Map // Treasure Cove", 2, "{1}, {T}: Scry 1. …\n//\n{T}: Add {C}.", "Artifact // Land",
+      { producedMana: ["C"], layout: "transform" } as Partial<Card>), [tapFor(["C"], { face: 1 })]),
     land("Swamp"),
   ];
   expect(landInputs(deck).rampPlusDraw).toBe(1); // Sol Ring only
@@ -45,7 +48,7 @@ test("a card that transforms into a land is not cheap ramp, though its land back
 
 test("counting a Mox as cheap ramp would change the answer", () => {
   const deck = [
-    ...Array.from({ length: 5 }, (_, i) => mk(`Mox-${i}`, 0, "{T}: Add {W}.", "Artifact", { producedMana: ["W"] })),
+    ...Array.from({ length: 5 }, (_, i) => withTap(mk(`Mox-${i}`, 0, "{T}: Add {W}.", "Artifact"), ["W"])),
     ...Array.from({ length: 30 }, (_, i) => mk(`Spell-${i}`, 3)),
   ];
   const inputs = landInputs(deck);
@@ -170,12 +173,12 @@ test("a transform card with a land back is NOT a modal DFC", () => {
   expect(rec.actual).toBe(30);
 });
 
-/** `producedMana` carries the BACK face's colour, so a cheap MDFC reaches the accelerant net. It is
- *  already paid for by its own coefficient; counting it as cheap ramp as well is the Mox error. */
+/** A cheap MDFC's land back makes mana (face 1 of a modal DFC counts). It is already paid for by its own coefficient, and it is a land, not a
+ *  spell: counting it as cheap ramp as well is the Mox error. */
 test("an MDFC is not also counted as cheap ramp", () => {
   const cheap = mk("Silundi Vision", 2, "Look at the top seven cards.\n//\nThis land enters tapped. {T}: Add {U}.",
-    "Instant // Land", { layout: "modal_dfc", producedMana: ["U"] });
-  const deck = [cheap, ...Array.from({ length: 30 }, (_, i) => land(`Swamp-${i}`))];
+    "Instant // Land", { layout: "modal_dfc" });
+  const deck = [withLines(cheap, [tapFor(["U"], { face: 1 })]), ...Array.from({ length: 30 }, (_, i) => land(`Swamp-${i}`))];
   const inputs = landInputs(deck);
   expect(inputs.mdfcTapped).toBe(1);
   expect(inputs.rampPlusDraw).toBe(0);
@@ -194,10 +197,10 @@ test("ramp past its role target does not lower the land target, and a trim cuts 
     },
     abilities: [{ kind: "activated" as const, effect: { kind: "mana-generation" as const } }],
   });
-  const rock = (i: number): DeckCard => ({
-    ...mk(`Rock-${i}`, 2, "{T}: Add {C}.", "Artifact", { producedMana: ["C"] }),
+  const rock = (i: number): DeckCard => withTap({
+    ...mk(`Rock-${i}`, 2, "{T}: Add {C}.", "Artifact"),
     tags: rampTags(`rock-${i}`),
-  });
+  }, ["C"]);
   const deck = [
     ...Array.from({ length: 12 }, (_, i) => rock(i)),
     ...Array.from({ length: 48 }, (_, i) => mk(`Spell-${i}`, 3)),
@@ -222,10 +225,54 @@ test("ramp is weighted by what survives, draw by what it costs", () => {
   } as never });
   const filler = (n: number) => Array.from({ length: n }, (_, i) => mk(`Spell-${i}`, 3));
   const lands = Array.from({ length: 37 }, (_, i) => land(`Swamp-${i}`));
-  const rocks = Array.from({ length: 12 }, (_, i) => withTags(mk(`Rock-${i}`, 2, "{T}: Add {C}.", "Artifact", { producedMana: ["C"] }), "mana-generation", ["artifact"]));
-  const dorks = Array.from({ length: 12 }, (_, i) => withTags(mk(`Dork-${i}`, 2, "{T}: Add {G}.", "Creature — Elf", { producedMana: ["G"] }), "mana-generation", ["creature"]));
+  const rocks = Array.from({ length: 12 }, (_, i) => withTap(withTags(mk(`Rock-${i}`, 2, "{T}: Add {C}.", "Artifact"), "mana-generation", ["artifact"]), ["C"]));
+  const dorks = Array.from({ length: 12 }, (_, i) => withTap(withTags(mk(`Dork-${i}`, 2, "{T}: Add {G}.", "Creature — Elf"), "mana-generation", ["creature"]), ["G"]));
   // Twelve rocks are worth more lands than twelve dorks: a rock outlives a creature wipe.
   expect(recommendedLands([...rocks, ...filler(50), ...lands]).target)
     .toBeLessThan(recommendedLands([...dorks, ...filler(50), ...lands]).target);
 
+});
+
+// --- THE KARSTEN INPUTS READ THE DERIVED MANA LINES (#1169 task 2b-1; owner rulings 2026-10-10) ---
+
+/** A REAL CARD, as production derived it (`fixtures/goldfish-cards.json`, dumped by `research/mana/dump-goldfish-fixtures.mts`). */
+const real = (name: string): DeckCard => {
+  const hit = (goldfish as unknown as DeckCard[]).find((c) => c.card.name === name || c.card.name.startsWith(`${name} //`));
+  expect(hit, `fixture for ${name}`).toBeDefined();
+  return structuredClone(hit!);
+};
+/** The ramp role reads effect kinds, which the fixture's mana keys do not carry: give the card the one a tagger would. */
+const asRamp = (dc: DeckCard, kind: string): DeckCard => ({ ...dc, tags: { ...dc.tags!, abilities: [{ kind: "activated", effect: { kind } }] } as never });
+
+test("a ritual is NOT cheap ramp, though the Ramp role holds it (owner, 2026-10-10)", () => {
+  const ritual = asRamp(real("Dark Ritual"), "ritual");
+  // The control: the role really does hold it, so the exclusion below is doing the work.
+  expect(detectBuildCategories([ritual]).get("ramp")?.has("Dark Ritual")).toBe(true);
+  expect(ritual.tags!.isOneShot).toBe(true);
+  expect(landInputs([ritual, land("Swamp")]).rampPlusDraw).toBe(0);
+  // Lotus Petal (mana value 0, taps for mana once) is a one-shot too: neither fast mana nor cheap ramp.
+  const petal = real("Lotus Petal");
+  expect(landInputs([petal, land("Swamp")])).toMatchObject({ fastMana: 0, rampPlusDraw: 0 });
+});
+
+test("a suspend-only Mox and a counter-fuelled source are NOT fast mana (owner, 2026-10-10)", () => {
+  const tantalite = real("Mox Tantalite");
+  const trilobite = real("Cryptic Trilobite");
+  expect(tantalite.tags!.suspendOnly).toBe(true);
+  expect(trilobite.tags!.manaLines![0]!.cost.counters).toBe("remove");
+  expect(landInputs([tantalite, trilobite, land("Swamp")]).fastMana).toBe(0);
+  // ...and a Mox that is cast for nothing and taps for mana is: the control, on a real card.
+  expect(landInputs([real("Mox Diamond"), land("Swamp")]).fastMana).toBe(1);
+});
+
+test("cheap ramp is a derived line you can use, not Scryfall's producedMana; a card with no derived tags counts as nothing", () => {
+  // Sol Ring costs 1: cheap ramp -- by its derived line.
+  expect(landInputs([real("Sol Ring"), land("Swamp")])).toMatchObject({ rampPlusDraw: 1, fastMana: 0 });
+  // The same card carrying Scryfall's producedMana and NO derived tags is nothing here (CEILING in landInputs: `coverage.ts` lists it).
+  const untagged: DeckCard = { ...real("Sol Ring"), tags: null };
+  expect(untagged.card.producedMana).toBeDefined();
+  expect(landInputs([untagged, land("Swamp")])).toMatchObject({ rampPlusDraw: 0, fastMana: 0 });
+  // A Treasure maker is not a line the model plays; a restricted tap (Smokebraider-like) is not mana for the deck's spells.
+  expect(landInputs([real("Pitiless Plunderer"), land("Swamp")]).rampPlusDraw).toBe(0);
+  expect(landInputs([real("Jegantha, the Wellspring"), land("Swamp")]).rampPlusDraw).toBe(0);
 });

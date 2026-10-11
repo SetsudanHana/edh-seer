@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { castTurnStats, castTurns, silenceRamp } from "./commander-ramp-core.js";
 import type { SimulateResult } from "../goldfish.js";
 import type { DeckCard } from "../types.js";
+import { manaTags, mkLine } from "../mana-test-support.js";
 
 /** `manaAt[turn - 1][trial]` — three trials, four turns. */
 const result = (manaAt: number[][]): SimulateResult =>
@@ -40,11 +41,10 @@ describe("silenceRamp", () => {
   const ramp = new Set(["Sol Ring", "Cultivate", "Bad Ramp", "Ramp Land"]);
 
   it("silences a classifiable nonland ramp card and leaves the slot in place", () => {
-    // ORACLE TEXT VERBATIM FROM THE CORPUS. The fixture used to carry an empty string, and after N9
-    // a card whose own text never says "add" is not a mana source however its `producedMana` reads --
-    // which is the whole point of that rule, and a fixture that does not resemble a real card cannot
-    // exercise it.
-    const lib = [card({ name: "Sol Ring", producedMana: ["C"], oracleText: "{T}: Add {C}{C}." }), card({ name: "Other" })];
+    // THE GOLDFISH READS THE DERIVED MANA LINES (#1169 task 2b-1): a card with none is no mana source however its `producedMana` reads, which is the
+    // whole point of reading them, so the fixture carries Sol Ring's line (`{T}: Add {C}{C}`).
+    const sol = { ...card({ name: "Sol Ring", producedMana: ["C"], oracleText: "{T}: Add {C}{C}." }), tags: manaTags([mkLine({ colourless: 2, amount: { fixed: 2, scales: null }, net: 2 })]) };
+    const lib = [sol, card({ name: "Other" })];
     const out = silenceRamp(lib, ramp);
     expect(out.silenced).toBe(1);
     expect(out.deck).toHaveLength(2);

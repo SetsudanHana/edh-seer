@@ -35,7 +35,7 @@ export function castTurnStats(turns: readonly (number | null)[], horizon: number
 }
 
 /** The counterfactual deck: every `ramp` build-category member the simulator can classify is made
- *  INERT in place. Library size, land count and mana curve all stay fixed, so the two arms differ in
+ *  INERT in place -- its derived tags are dropped, which is what the goldfish reads its mana from (#1169 task 2b-1), and its printed mana with them. Library size, land count and mana curve all stay fixed, so the two arms differ in
  *  exactly one thing. Lands are never silenced — that would change the land count too. */
 export function silenceRamp(library: readonly DeckCard[], rampNames: ReadonlySet<string>): {
   deck: DeckCard[]; silenced: number; blind: number;

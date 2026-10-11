@@ -1458,6 +1458,19 @@ export interface ManaLine {
   /** The token a `token-maker` line makes that is itself a mana source ("treasure", "gold", "powerstone",
    *  "eldrazi-spawn"); null on every other line. */
   producesToken: string | null;
+  /** WHAT FIRES a `trigger` or `aura-trigger` line: the clause's trigger event, verbatim. Null on every other line, and on a trigger line
+   *  whose own clause names none (a mode of a modal trigger, Zuko, Conflicted). Census of the 171 trigger / aura-trigger mana lines in the derived corpus
+   *  (DERIVE_VERSION 302, 2026-10-11), by count of lines: `tapped-for-mana` 46 (the Auras' "whenever enchanted land is tapped for mana", and
+   *  Forsaken Monument / Leyline of Abundance / Mana Flare: a tap-replacement), `main-phase` 30 and `upkeep` 5 and `end-step` 1 (the
+   *  beginning of a phase: Coalition Relic, Abstract Paintmage), `enters` 27, `attacks` 17, `chapter` 14, `cast` 8 (Birgi: "whenever you
+   *  cast a spell"), `dies` 6, `discarded` 3, `damage-dealt` 3, `transform` 2, `sacrificed` 2, `turned-face-up` 2, and one each of
+   *  `life-gained`, `damaged`, `counter-added`. LANDFALL IS NOT AN EVENT OF ITS OWN: it is `enters` with a land `triggerSubject` (Lotus
+   *  Cobra "a land you control"); `enters` with "this creature" is the card's own enters trigger (Burning-Tree Emissary). One printed add that the model split
+   *  across two events (Ashling, Rimebound: "transforms into ... and at the beginning of your first main phase") is named for the phase. */
+  trigger: string | null;
+  /** The subject of that trigger, verbatim as the clause names it ("a land you control", "your first main phase", "enchanted land",
+   *  "a spell", "this creature"). Null wherever `trigger` is. Read with `trigger`: `enters` alone does not say whose. */
+  triggerSubject: string | null;
 }
 
 /** A card that makes OTHER mana sources produce colours (#1115), read from its static text: Chromatic Lantern

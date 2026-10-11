@@ -3,6 +3,7 @@ import { manaModel } from "./goldfish.js";
 import { computeDeckMath } from "./deck-math.js";
 import type { Card } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
+import { withTap } from "./mana-test-support.js";
 
 const card = (name: string, over: Partial<Card> = {}): DeckCard => ({
   card: {
@@ -14,7 +15,7 @@ const card = (name: string, over: Partial<Card> = {}): DeckCard => ({
 // A Command Tower, not a Forest: the fixture commander costs {3}{R}{G}{W} and castability is
 // COLOUR-AWARE now, so a mono-green land base correctly reads 0% and would make this test measure
 // the fixture rather than the row. The mono-colour case is asserted on purpose below.
-const land = (i: number) => card(`Land ${i}`, { typeLine: "Land", manaValue: 0, manaCost: undefined, producedMana: ["R", "G", "W"] });
+const land = (i: number) => withTap(card(`Land ${i}`, { typeLine: "Land", manaValue: 0, manaCost: undefined, producedMana: ["R", "G", "W"] }), ["R", "G", "W"]);
 const deckOf = (commander: DeckCard, lands = 37): DeckCard[] => [
   commander,
   ...Array.from({ length: lands }, (_, i) => land(i)),
