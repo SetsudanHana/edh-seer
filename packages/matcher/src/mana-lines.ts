@@ -100,8 +100,9 @@ function intrinsicColours(dc: DeckCard): string[] {
  *  - `among` is bounded by what you control or have exiled and is counted as the identity (CEILING, in the switch).
  *  - `chosen`, `opponent-lands`, `lands-you-could` are bounded by something that is not on the card. `five` keeps what the colour
  *    audit and the mana base always did with them (Scryfall listed all five: Exotic Orchard, Reflecting Pool, Caged Sun); `none`
- *    keeps what the land score did (the colours are conditional, so the land is never "upgraded" or cut for them). */
-export type BoundedColours = "five" | "none";
+ *    keeps what the land score did (the colours are conditional, so the land is never "upgraded" or cut for them). `no-among` is the
+ *    audit's count except that `among` (bounded by the board: Chrome Mox, Mox Amber) makes no claim: the rock swaps. */
+export type BoundedColours = "five" | "none" | "no-among";
 
 // CEILING: a bounded colour that is not the identity counts as FIVE for the audit and the mana base (what Scryfall listed: Exotic Orchard,
 // Reflecting Pool, Caged Sun) and as NONE for the land swaps; neither is the colours the board really offers.
@@ -117,7 +118,7 @@ function lineColours(line: ManaLine, identity: DeckIdentity, bounded: BoundedCol
     // `grantee` ("{T}: Add one mana of any of this creature's colors", Katilda): the colours are each GRANTEE's own, neither the deck's nor
     // the card's. CEILING: the grantees are each their own source and are not read, so the line credits no colour.
     case "grantee": break;
-    case "chosen": case "opponent-lands": case "lands-you-could": if (bounded === "five") for (const c of WUBRG) out.add(c); break;
+    case "chosen": case "opponent-lands": case "lands-you-could": if (bounded !== "none") for (const c of WUBRG) out.add(c); break;
     case null: break;
   }
   return WUBRG.filter((c) => out.has(c));

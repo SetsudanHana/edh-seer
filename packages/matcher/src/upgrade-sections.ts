@@ -124,11 +124,10 @@ export function roleOption(section: RoleSectionId, cut: DeckCard, add: Candidate
   return best;
 }
 
-// A colour swap's `made` is what the card is a colour source of -- the audit's own test, so a swap the audit cannot see closing the gap is never
-// offered. An Aura's trigger (Wild Growth, Fertile Ground) is not one: trigger mana is ramp, not a colour source (owner, 2026-10-10).
-// `bounded: "none"`: a colour bounded by the board or by something outside the card (`among`, Chrome Mox / Mox Amber) is no claim a swap can make -- it
-// would name a Mox as "makes red" -- and the commander's identity is irrelevant to swap text.
-const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => colourSourceColours(d, null, "none").includes(c));
+// A colour swap's `made` is what the audit counts the card as a colour source of (`colourSourceColours`), except that an `among` line (Chrome Mox, Mox Amber:
+// bounded by the board) makes no claim: a swap would name a Mox as "makes red". `chosen`, `opponent-lands` and `lands-you-could` stay what the audit counts
+// (five), so a chosen-colour rock (Coldsteel Heart) is still a fixer and a cut it protects. Trigger mana (an Aura) is not a colour source (owner, 2026-10-10).
+const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => colourSourceColours(d, null, "no-among").includes(c));
 
 /** A COLOUR SWAP FOR A ROCK (owner, 2026-10-08, #966): the same rock in everything but its colours, and
  *  the add makes a colour the deck is short of (`colourDeficit`) that the cut does not, keeping every

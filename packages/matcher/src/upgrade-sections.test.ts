@@ -338,6 +338,16 @@ describe("a rock bounded by the board is not described as making a colour", () =
     const body = rock("Izzet Signet");
     return { card: { ...body.card, name }, tags: { ...body.tags!, manaLines: m.tags!.manaLines } } as DeckCard;
   };
+  test("a chosen-colour rock (Coldsteel Heart, Sol Grail) is still a fixer, and a cut it protects: swaps count `chosen` as the audit does", () => {
+    for (const n of ["Coldsteel Heart", "Sol Grail"]) {
+      const chosen = real(n);
+      expect(chosen.tags!.manaLines!.some((l) => l.anyColour === "chosen"), n).toBe(true);
+      // offered as the add for a colour the deck is short of
+      expect(roleOptions("ramp", [mind4], [{ dc: chosen, roles: ["ramp"], links: 0 }], undefined, { R: 4 }, () => 1).flatMap((o) => o.options.map((x) => [x.add, x.colour])), n).toEqual([[n, ["R"]]]);
+      // ...and as the cut, it makes every colour, so a Signet that makes two of them keeps none the cut has: nothing is offered
+      expect(roleOptions("ramp", [chosen], [candidate(rock("Izzet Signet"))], undefined, { R: 4 }, () => 1), n).toEqual([]);
+    }
+  });
   test("Chrome Mox and Mox Amber are never offered for a colour the deck is short of", () => {
     // The control: the same body with its own lines IS offered, so the refusal below is the colours'.
     expect(roleOptions("ramp", [mind4], [candidate(rock("Izzet Signet"))], undefined, { R: 4, G: 4 }, () => 1).flatMap((o) => o.options.map((x) => x.add))).toEqual(["Izzet Signet"]);
