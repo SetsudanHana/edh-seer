@@ -3,6 +3,7 @@ import type { Card } from "@edh-seer/engine";
 import { landFacts } from "./land-score.js";
 import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
+import moxes from "./fixtures/mana-colour-sources.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
 import { colourDeficit } from "./mana-audit.js";
 import { colouredNetYield, jobOf, landsToBattlefield, netYield, themedSubjects, sameFetchAnyColour } from "./same-job.js";
@@ -316,18 +317,34 @@ describe("an Aura is a rock the job reader sees", () => {
   });
 });
 
-// 2a review (owner, 2026-10-10): trigger mana is ramp, not a colour source, so no deck is offered an Aura (or a rock for an Aura) FOR A COLOUR -- the
-// audit could not see it closing the gap. The cross-type path, `watchedTypes`, `auraSupport` and `landTypeDemand` were deleted with it.
-describe("no Aura is offered for a colour", () => {
-  const mind4 = { ...rock("Mind Stone"), card: { ...rock("Mind Stone").card, manaValue: 4 } } as unknown as DeckCard;
-  const offered = (add: DeckCard) => roleOptions("ramp", [mind4], [candidate(add)], undefined, { G: 4, U: 4 }, () => 1).flatMap((o) => o.options.map((x) => x.add));
-  test("the growth Auras make no colour and are never offered", () => {
-    for (const n of ["Fertile Ground", "Wild Growth", "Overgrowth", "Trace of Abundance", "Utopia Sprawl", "Cryptolith Rite", "Abundant Growth", "Urban Utopia"] as const) expect(offered(rock(n)), n).toEqual([]);
-  });
-  test("an Aura's extra mana is still yield: a growth Aura nets what a Signet does", () => {
+// 2a review (owner, 2026-10-10): trigger mana is ramp, not a colour source, so no deck is offered an Aura FOR A COLOUR. (The assertion that an Aura
+// makes no colour is `colours("Fertile Ground") == []` in mana-colour-sources.test.ts; an offer test here could not fail, Auras fail `sameRockAnyColour`
+// on kind alone.)
+describe("an Aura's extra mana is still yield", () => {
+  test("a growth Aura nets what a Signet does", () => {
     expect(netYield(rock("Wild Growth"))).toBe(1);
     expect(netYield(rock("Overgrowth"))).toBe(2);
     expect(colouredNetYield(rock("Utopia Sprawl"))).toBe(1);
+  });
+});
+
+// 2a review 3: a swap's `made` colours use `bounded: "none"`, so an `among` line (Chrome Mox, Mox Amber: bounded by the board) makes no colour claim.
+describe("a rock bounded by the board is not described as making a colour", () => {
+  const mind4 = { ...rock("Mind Stone"), card: { ...rock("Mind Stone").card, manaValue: 4 } } as unknown as DeckCard;
+  // The REAL derived mana lines of Chrome Mox / Mox Amber on an Izzet Signet body (its printed text and job): the printed imprint / legendary
+  // condition would stop the swap in `newConditions` whatever the colours, so only the colours can differ here.
+  const real = (name: string): DeckCard => {
+    const m = (moxes.cards as unknown as DeckCard[]).find((c) => c.card.name === name)!;
+    const body = rock("Izzet Signet");
+    return { card: { ...body.card, name }, tags: { ...body.tags!, manaLines: m.tags!.manaLines } } as DeckCard;
+  };
+  test("Chrome Mox and Mox Amber are never offered for a colour the deck is short of", () => {
+    // The control: the same body with its own lines IS offered, so the refusal below is the colours'.
+    expect(roleOptions("ramp", [mind4], [candidate(rock("Izzet Signet"))], undefined, { R: 4, G: 4 }, () => 1).flatMap((o) => o.options.map((x) => x.add))).toEqual(["Izzet Signet"]);
+    for (const n of ["Chrome Mox", "Mox Amber"]) {
+      expect(real(n).tags!.manaLines!.some((l) => l.anyColour === "among"), n).toBe(true);
+      expect(roleOptions("ramp", [mind4], [{ dc: real(n), roles: ["ramp"], links: 0 }], undefined, { R: 4, G: 4 }, () => 1).flatMap((o) => o.options.map((x) => [x.add, x.colour])), n).toEqual([]);
+    }
   });
 });
 
@@ -382,7 +399,6 @@ describe("a land-fetch spell, swapped for a colour", () => {
       .flatMap((x) => x.options.map((y) => [y.add, y.fetch ?? false]));
 
   test("no deck takes Fertile Ground for Rampant Growth any more (2a review: an Aura's trigger is not a colour source)", () => {
-    expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { reach: { "Rampant Growth": ["R"] } })).toEqual([]);
     expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], { reach: { "Rampant Growth": ["R"] } })).toEqual([]);
     expect(swap(rock("Rampant Growth"), [rock("Fertile Ground")], {})).toEqual([]);
   });

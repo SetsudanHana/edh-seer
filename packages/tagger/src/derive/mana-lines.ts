@@ -108,6 +108,9 @@ export function parseCost(cost: string | undefined, selfNames: readonly string[]
     // A counter removed or put as the cost (Cryptic Trilobite, Wall of Roots), and other permanents tapped (Springleaf Drum),
     // are structured so no consumer has to read `other`.
     // EXILING THE CARD ITSELF IS SACRIFICING IT (Ether: "{T}, Exile this artifact: Add {U}"): the mana source is gone, a one-shot.
+    // CEILING: "itself" is four printed shapes -- "this ..." not followed by "card from" ("this artifact", "this creature"; "this card from your
+    // graveyard" is another card), a bare "it" or "itself", the "~" placeholder, or the card's own name (full or the part before a comma) as a
+    // prefix. "Exile the top card of your library", "exile target ..." and every other phrasing stay in `other`, a consumed resource.
     // Exiling OTHER cards (a card from a graveyard, Molt Tender) is a consumed resource and stays in `other`.
     if (/^exile\b/i.test(piece)) {
       const target = piece.replace(/^exile\s+/i, "").toLowerCase();
@@ -157,6 +160,10 @@ function production(object: string, amountText = "", context = ""): Pick<ManaLin
   // "Choose a color. Add one mana of that color for each ..." (Selvala, Astral Cornucopia, Three Tree City): any colour, the amount scales.
   else if (/\bof that colou?r\b/.test(lower) && /\bchoose a colou?r\b(?! of)/.test(context.toLowerCase())) anyColour = "any";
   else if (/\ba chosen colou?r\b/.test(lower)) anyColour = "any";
+  // The colour is chosen AS PART OF THE ABILITY, in the same clause ("{T}: Choose a color. Add one mana of that color ...", Loot the Nexus,
+  // Rhystic Cave, Nyx Lotus, Nykthos): a free choice each time, any colour. "As ~ enters, choose a color" is another clause and stays `chosen`.
+  // The sentence must be exactly "Choose a color.", which refuses "choose a color other than white" (Thriving lands).
+  else if (/\bthe chosen colou?r\b|\bcolou?r of your choice\b|\bthat colou?r\b/.test(lower) && /(?:^|[.:]\s*)choose a colou?r\s*\./.test(context.toLowerCase())) anyColour = "any";
   else if (/\bthe chosen (?:color|type)\b|\bcolor of your choice\b/.test(lower)) anyColour = "chosen";
   else if (/\bcould produce\b/.test(lower)) anyColour = /\bopponents?\b/.test(lower) ? "opponent-lands" : /\b(?:lands?|gates?)\b/.test(lower) ? "lands-you-could" : null;
   else if (/\bany (?:one )?(?:color|type)\b|\bany combination of colou?rs\b|\bany colou?r\b|\bdifferent colou?rs\b/.test(lower)) anyColour = "any";
@@ -371,6 +378,9 @@ export function deriveMana(input: ManaInput): ManaResult {
           : null;
       if (source === null) continue;
       const made = production(object, amountText, text);
+      // A GRANTED "{T}: Add one mana of any of this creature's colors" (Katilda) names the colours of each creature that has it. They are
+      // neither the deck's nor the card's. CEILING: the grantees are each their own source and are not read; no colour is credited.
+      if (source === "static-grant" && made.anyColour === "among" && /\bthis creature'?s colou?rs\b/i.test(object)) made.anyColour = "grantee";
       const cost = source === "activated" || source === "static-grant" || source === "token-maker"
         ? parseCost(costText, selfNames)
         : noCost();

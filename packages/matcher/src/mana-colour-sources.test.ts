@@ -167,9 +167,19 @@ describe("a consumed resource in the cost is not a colour source (review of 2a)"
     expect(makesAnyMana(get("Aether Hub"))).toBe(true);
     expect(colours("Thornvault Forager")).toEqual(["G"]);
   });
-  test("self-mill is not a consumed resource: Millikin ({T}, Mill a card: Add {C}) stays a source; exert and untap likewise", () => {
+  test("self-mill, exert and untap are not consumed resources: Millikin, Oasis Ritualist's exert line and Benthic Explorers stay sources", () => {
     expect(cardLines(get("Millikin")).some(isColourSource)).toBe(true);
     expect(makesAnyMana(get("Millikin"))).toBe(true);
+    // the LINE with the piece in its cost, not the card's other free line
+    const exert = cardLines(get("Oasis Ritualist")).find((l) => l.cost.other.some((o) => /^exert\b/i.test(o)));
+    expect(exert, "Oasis Ritualist exert line").toBeDefined();
+    expect(isColourSource(exert!)).toBe(true);
+    const untap = cardLines(get("Benthic Explorers")).find((l) => l.cost.other.some((o) => /^untap\b/i.test(o)));
+    expect(untap, "Benthic Explorers untap line").toBeDefined();
+    expect(isColourSource(untap!)).toBe(true);
+    expect(makesAnyMana(get("Benthic Explorers"))).toBe(true);
+    // ...and a piece off the list is a consumed resource on the same shape of line
+    expect(isColourSource({ ...exert!, cost: { ...exert!.cost, other: ["Discard a card"] } })).toBe(false);
   });
   test("a self-exile is a one-shot: Ether is no source", () => {
     expect(colours("Ether")).toEqual([]);
@@ -179,9 +189,22 @@ describe("a consumed resource in the cost is not a colour source (review of 2a)"
 describe("'among' is bounded by the commander's colours (a CEILING), unread is never a silent zero", () => {
   test("Plaza of Heroes, Mox Amber, Chrome Mox and Faeburrow Elder make the identity's colours", () => {
     const id = new Set(["B", "R"]);
-    for (const n of ["Mox Amber", "Chrome Mox", "Faeburrow Elder", "Meteor Crater", "Corrupted Grafstone", "Katilda, Dawnhart Prime"]) expect(colours(n, id), n).toEqual(["B", "R"]);
+    for (const n of ["Mox Amber", "Chrome Mox", "Faeburrow Elder", "Meteor Crater", "Corrupted Grafstone"]) expect(colours(n, id), n).toEqual(["B", "R"]);
     expect(colours("Tazri, Stalwart Survivor", id), "restricted").toEqual([]);
     expect(colours("Plaza of Heroes", id)).toEqual(["B", "R"]);
+  });
+  test("Katilda grants 'any of this creature's colors' to each Human: the colours are the grantee's, so she credits none, in any identity", () => {
+    const five = new Set(["W", "U", "B", "R", "G"]);
+    for (const id of [null, five, new Set(["B", "R"])]) expect(colours("Katilda, Dawnhart Prime", id)).toEqual([]);
+    expect(colourSourceColours(get("Katilda, Dawnhart Prime"), five, "none")).toEqual([]);
+    expect(cardLines(get("Katilda, Dawnhart Prime")).some((l) => l.anyColour === "grantee")).toBe(true);
+    expect(cardLines(get("Katilda, Dawnhart Prime")).some(isColourSource)).toBe(false);
+  });
+  test("a colour chosen as part of the ability is any colour, like Birds of Paradise's (Loot, the Nexus, Nyx Lotus)", () => {
+    for (const n of ["Loot, the Nexus", "Nyx Lotus"]) {
+      expect(colours(n), n).toEqual(["W", "U", "B", "R", "G"]);
+      expect(cardLines(get(n)).some((l) => l.anyColour === "any"), n).toBe(true);
+    }
   });
   test("for land swaps an 'among' land is conditional and makes no colour: Plaza of Heroes, The Grey Havens", () => {
     const need = new Set(["W", "U", "B", "R", "G"] as const);

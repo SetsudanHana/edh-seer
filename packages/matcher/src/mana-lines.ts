@@ -50,14 +50,15 @@ const sourceShaped = (line: ManaLine): boolean =>
 /** THE SCHEMA'S COLOUR-SOURCE RULE (`ManaLine` in tagger/schema.ts), plus the source label it implies: an activated ability the
  *  card itself taps, or the line a static ability grants. A trigger, an aura trigger, a token maker, a one-shot spell and a fetch
  *  are never one, whatever their cost says. A non-empty `cost.other` is a consumed resource unless it is on the list above.
+ *  A `grantee` line (Katilda: the grantee's own colours) is not one: the card grants the ability and does not tap for it.
  *  CEILING: a GATED line (Tainted Peak's B/R needs a Swamp, Honored Hierarch's needs renown) is not credited at all, though it holds
  *  in most games; the audit under-claims rather than counts a source that may be dead. */
-export const isColourSource = (line: ManaLine): boolean => sourceShaped(line) && !line.unread;
+export const isColourSource = (line: ManaLine): boolean => sourceShaped(line) && !line.unread && line.anyColour !== "grantee";
 
 /** THE NAMES OF CARDS WITH A LINE THAT WOULD BE A COLOUR SOURCE BUT WHOSE PRODUCTION DERIVE COULD NOT READ ("choose a color of a permanent
  *  you control", Meteor Crater; "the type a land could produce" with a counter clause, Incubation Druid). They count as NO colour --
  *  never a silent zero: the colour audit lists them (`unreadSources`) so the report can say its count may be short.
- *  CEILING: counted as none, not guessed; 28 mana lines in the corpus are unread (2026-10-11), about half not mana at all. */
+ *  CEILING: counted as none, not guessed; 20 mana lines in the corpus are unread (research/mana/unread.mts, 2026-10-11, DERIVE_VERSION 301), most of them not mana at all. */
 export function unreadSourceNames(cards: readonly DeckCard[]): string[] {
   return [...new Set(cards.filter((dc) => cardLines(dc).some((l) => l.unread && sourceShaped(l))).map((dc) => dc.card.name))].sort();
 }
@@ -113,6 +114,9 @@ function lineColours(line: ManaLine, identity: DeckIdentity, bounded: BoundedCol
     // battlefield makes nothing; here it makes the deck's colours.
     case "identity": for (const c of WUBRG) if (!identity || identity.has(c)) out.add(c); break;
     case "among": if (bounded === "five") for (const c of WUBRG) if (!identity || identity.has(c)) out.add(c); break;
+    // `grantee` ("{T}: Add one mana of any of this creature's colors", Katilda): the colours are each GRANTEE's own, neither the deck's nor
+    // the card's. CEILING: the grantees are each their own source and are not read, so the line credits no colour.
+    case "grantee": break;
     case "chosen": case "opponent-lands": case "lands-you-could": if (bounded === "five") for (const c of WUBRG) out.add(c); break;
     case null: break;
   }
@@ -150,5 +154,5 @@ export function isFetchSource(dc: DeckCard): boolean {
 export function hasConditionalMana(dc: DeckCard): boolean {
   return cardLines(dc).some((l) => (l.source === "activated" || l.source === "static-grant") && l.cost.tap && l.cost.mana === 0
     && (l.gate !== null || l.restriction !== null || l.unread || l.amount.scales !== null
-      || l.anyColour === "chosen" || l.anyColour === "opponent-lands" || l.anyColour === "lands-you-could" || l.anyColour === "among"));
+      || l.anyColour === "chosen" || l.anyColour === "opponent-lands" || l.anyColour === "lands-you-could" || l.anyColour === "among" || l.anyColour === "grantee"));
 }

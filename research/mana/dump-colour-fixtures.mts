@@ -25,7 +25,8 @@ const NAMES = ["Pitiless Plunderer", "Phyrexian Altar", "Priest of Forgotten God
   "Plains", "Treasure Map", "Cavern of Souls", "Polluted Delta", "Myriad Landscape", "Wood Elves", "Lotus Petal", "Dark Ritual", "Mox Tantalite",
   "Command Tower", "Flagstones of Trokair", "Reflecting Pool", "Cabal Coffers", "Chromatic Orrery", "Overgrown Tomb", "Mystic Sanctuary", "Blightstep Pathway",
   "Plaza of Heroes", "The Grey Havens", "Mox Amber", "Chrome Mox", "Faeburrow Elder", "Guild Globe", "Ether", "Meteor Crater", "Aether Hub",
-  "Servant of the Conduit", "Bog Witch", "Cryptex", "Molt Tender", "Thornvault Forager", "Fertile Ground", "Millikin", "Tazri, Stalwart Survivor", "Katilda, Dawnhart Prime", "Corrupted Grafstone", "Charmed Pendant"];
+  "Servant of the Conduit", "Bog Witch", "Cryptex", "Molt Tender", "Thornvault Forager", "Fertile Ground", "Millikin", "Tazri, Stalwart Survivor", "Katilda, Dawnhart Prime", "Corrupted Grafstone", "Charmed Pendant",
+  "Oasis Ritualist", "Arena of Glory", "Benthic Explorers", "Loot, the Nexus", "Nyx Lotus"];
 const out: any = { cards: await dump(NAMES) };
 const s = parseDecklistSections(readFileSync(`${DECKS_DIR}/gisa.txt`, "utf8"));
 out.gisa = { commanders: s.commanders.map((c: string) => normalizeName(c)), deck: await dump([...s.commanders, ...s.deck]) };

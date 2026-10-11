@@ -1380,8 +1380,11 @@ export type ManaLineSource = "activated" | "trigger" | "static-grant" | "aura-tr
  *  Sprawl), `opponent-lands` colours a land an opponent controls could produce (Exotic Orchard), and
  *  `lands-you-could` colours a land you control could produce (Reflecting Pool), and `among` the colours among things you control or have
  *  exiled ("any color among legendary permanents you control", Plaza of Heroes; "for each color among permanents you control", Faeburrow
- *  Elder; Chrome Mox's imprint). Two more read as `any`: "N mana in any combination of colors" and "two mana of different colors". */
-export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "lands-you-could" | "among";
+ *  Elder; Chrome Mox's imprint). `grantee` is a GRANTED ability naming its holder's colours ("Human creatures you control have '{T}: Add one mana of
+ *  any of this creature's colors'", Katilda): each grantee is its own source, so the line is not read as a colour of the deck. Three more read
+ *  as `any`: "N mana in any combination of colors", "two mana of different colors", and a colour chosen in the same clause ("{T}: Choose a color.
+ *  Add one mana of that color", Loot, the Nexus). */
+export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "lands-you-could" | "among" | "grantee";
 
 /** ONE WAY A CARD PRODUCES MANA (or a mana source, or a land), read once at derive time so no consumer parses
  *  oracle text again (#1169; the inventory found ten detectors disagreeing on real cards). A card carries
@@ -1389,9 +1392,10 @@ export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "
  *  that has none, so a card that makes no mana stays byte-identical.
  *
  *  A COLOUR SOURCE needs more than a `source` label: `!cost.sacrificeSelf && !cost.sacrificeOther && cost.counters === null &&
- *  !cost.tapOther && restriction === null && gate === null && !unread && (cost.tap || source === "static-grant")`. Phyrexian
- *  Altar is an `activated` line with no tap, a Treasure-maker is `token-maker`, Birgi is `trigger`. (Aura triggers and the
- *  card-level flags are the consumer's call.)
+ *  !cost.tapOther && restriction === null && gate === null && !unread && anyColour !== "grantee" && (cost.tap || source === "static-grant")`,
+ *  and every entry of `cost.other` is on the allow-list of pieces that consume nothing: exert, untap, mill (a consumed resource is no
+ *  source: energy, a discard, collect evidence, forage, an exile from a graveyard). Phyrexian Altar is an `activated` line with no tap,
+ *  a Treasure-maker is `token-maker`, Birgi is `trigger`, and an Aura's trigger (`aura-trigger`) is never one.
  *
  *  THE LINE STATES; THE CONSUMER JUDGES. A colour audit, a land count, a goldfish each ask a different question
  *  (is this a colour SOURCE; is this CHEAP ramp; does it play on turn two), and each answers it by filtering

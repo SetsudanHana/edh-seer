@@ -344,7 +344,7 @@ describe("review of task 2a (#1169): 'among', unread, self-exile", () => {
 
 describe("review 2 of task 2a (#1169): colours bounded by what you own, a free colour choice, circled colours", () => {
   it("'any of this creature's colors', 'a color of a permanent you control / a card in your graveyard' are bounded by what you own", () => {
-    for (const n of ["Tazri, Stalwart Survivor", "Katilda, Dawnhart Prime", "Meteor Crater", "Corrupted Grafstone"]) {
+    for (const n of ["Meteor Crater", "Corrupted Grafstone"]) {
       expect(only(n), n).toMatchObject({ anyColour: "among", unread: false });
     }
   });
@@ -355,5 +355,23 @@ describe("review 2 of task 2a (#1169): colours bounded by what you own, a free c
   });
   it("Cryptic Spires' circled colours are chosen outside the card", () => {
     expect(linesOf("Cryptic Spires").find((l) => l.cost.tap && l.unread === false && l.anyColour === "chosen")).toBeDefined();
+  });
+});
+
+describe("review 3 of task 2a (#1169): a grantee's colours, a colour chosen as part of the ability", () => {
+  it("Katilda's granted 'any of this creature's colors' belongs to each grantee, not to a deck: anyColour 'grantee'", () => {
+    expect(only("Katilda, Dawnhart Prime")).toMatchObject({ source: "static-grant", anyColour: "grantee", unread: false });
+    expect(only("Tazri, Stalwart Survivor")).toMatchObject({ source: "static-grant", anyColour: "grantee", unread: false });
+  });
+  it("'Choose a color. Add ... of that color' in the SAME clause is a free choice: any (Loot, Rhystic Cave, Nyx Lotus, Nykthos)", () => {
+    expect(only("Loot, the Nexus")).toMatchObject({ anyColour: "any", unread: false });
+    expect(only("Rhystic Cave")).toMatchObject({ anyColour: "any", unread: false });
+    expect(only("Nyx Lotus")).toMatchObject({ anyColour: "any", unread: false });
+    expect(linesOf("Nykthos, Shrine to Nyx").find((l) => l.cost.mana === 2)).toMatchObject({ anyColour: "any", unread: false });
+  });
+  it("a colour chosen as the permanent enters (a separate clause) stays chosen: Thriving Heath, Utopia Sprawl; circled colours too", () => {
+    expect(linesOf("Thriving Heath").find((l) => l.cost.tap)).toMatchObject({ anyColour: "chosen", colours: ["W"] });
+    expect(only("Utopia Sprawl")).toMatchObject({ anyColour: "chosen" });
+    expect(linesOf("Cryptic Spires").find((l) => l.cost.tap && l.anyColour !== null)).toMatchObject({ anyColour: "chosen" });
   });
 });

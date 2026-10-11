@@ -430,7 +430,9 @@ import { emblemRecipient } from "../emblem.js";
 // exiling the card itself in a cost is `sacrificeSelf`.
 // 300: #1169 task 2a review 2: `among` also covers "any of this creature's colors" and "a color of a permanent you control / a card in your graveyard";
 // "Choose a color. Add ... of that color" is any colour; "circled colors" is chosen.
-export const DERIVE_VERSION = 300;
+// 301: #1169 task 2a review 3: a colour chosen in the same clause ("{T}: Choose a color. Add one mana of that color") is any colour; a granted
+// "this creature's colors" (Katilda) is `grantee`, no colour of the deck's.
+export const DERIVE_VERSION = 301;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

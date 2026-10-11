@@ -27,7 +27,8 @@ const NAMES = ["Sol Ring", "Arcane Signet", "Cascade Bluffs", "Cascading Catarac
   "Kitesail Larcenist", "Ashling, Flame Dancer",
   "Plaza of Heroes", "The Grey Havens", "Mox Amber", "Faeburrow Elder", "Guild Globe", "Ether", "Pit of Offerings", "Aether Hub", "Servant of the Conduit",
   "Bog Witch", "Cryptex", "Molt Tender", "Thornvault Forager",
-  "Tazri, Stalwart Survivor", "Katilda, Dawnhart Prime", "Corrupted Grafstone", "Three Tree City", "Cryptic Spires", "Astral Cornucopia", "Millikin", "Charmed Pendant"];
+  "Tazri, Stalwart Survivor", "Katilda, Dawnhart Prime", "Corrupted Grafstone", "Three Tree City", "Cryptic Spires", "Astral Cornucopia", "Millikin", "Charmed Pendant",
+  "Loot, the Nexus", "Rhystic Cave", "Nyx Lotus", "Nykthos, Shrine to Nyx", "Thriving Heath", "Oasis Ritualist", "Arena of Glory", "Benthic Explorers"];
 const out: Record<string, unknown> = {};
 for (const n of NAMES) {
   const card: any = await store.cards.findOne({ name: n } as never) ?? await store.cards.findOne({ name: new RegExp("^" + n + " //") } as never);
