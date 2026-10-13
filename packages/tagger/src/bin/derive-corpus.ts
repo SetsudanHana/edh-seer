@@ -144,5 +144,5 @@ try {
 
 console.log(`derived ${written} (${tokenWritten} token), up-to-date ${skipped}, wrote ${empty} card(s)/token(s) with clauses but zero abilities`);
 console.log(`from the printed text alone (task 7): ${grammarSwitched} of ${written - tokenWritten} cards derived this run`);
-console.log(`loyalty-cost mana lines with no starting loyalty on the card document: ${unpricedLoyalty.length}${unpricedLoyalty.length ? ` (${[...new Set(unpricedLoyalty)].join(", ")})` : ""}`);
+console.log(`loyalty-cost mana lines with no starting loyalty on the card document (rows derived this run; complete only under --force): ${unpricedLoyalty.length}${unpricedLoyalty.length ? ` (${[...new Set(unpricedLoyalty)].join(", ")})` : ""}`);
 await store.close();
