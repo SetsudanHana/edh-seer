@@ -13183,5 +13183,444 @@
    }
   ],
   "source": "grammar"
+ },
+ "High Tide": {
+  "card": {
+   "_id": "dc671205-f2fa-454f-9957-921a6069ad53",
+   "name": "High Tide",
+   "typeLine": "Instant",
+   "oracleText": "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{U}",
+   "producedMana": [
+    "U"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "an additional {U}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Bubbling Muck": {
+  "card": {
+   "_id": "3c7f2b29-9f42-41ab-a2d4-7a450fb0242d",
+   "name": "Bubbling Muck",
+   "typeLine": "Sorcery",
+   "oracleText": "Until end of turn, whenever a player taps a Swamp for mana, that player adds an additional {B}.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{B}",
+   "producedMana": [
+    "B"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "an additional {B}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Eldrazi Confluence": {
+  "card": {
+   "_id": "01160cb5-6d83-4317-9522-74083b3a83bb",
+   "name": "Eldrazi Confluence",
+   "typeLine": "Instant",
+   "oracleText": "Choose three. You may choose the same mode more than once.\n• Target creature gets +3/-3 until end of turn.\n• Exile target nonland permanent, then return it to the battlefield tapped under its owner's control.\n• Create a 1/1 colorless Eldrazi Scion creature token with \"Sacrifice this token: Add {C}.\"",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{C}{C}",
+   "producedMana": [
+    "C"
+   ],
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Eldrazi Scion",
+     "typeLine": "Token Creature — Eldrazi Scion",
+     "printingId": "c6ee5e2c-d98b-434e-9175-d20f7f713b88"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+3/-3",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target nonland permanent",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 colorless Eldrazi Scion creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "this token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Reckless Blaze": {
+  "card": {
+   "_id": "75137acb-dc8e-439b-8d84-c5cf682ff6bc",
+   "name": "Reckless Blaze",
+   "typeLine": "Sorcery — Lesson",
+   "oracleText": "Reckless Blaze deals 5 damage to each creature. Whenever a creature you control dealt damage this way dies this turn, add {R}.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 5,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}{R}{R}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "dies",
+     "subject": "a creature you control dealt damage this way",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Divergent Growth": {
+  "card": {
+   "_id": "0123b162-0413-4022-acc0-e5bd061d3fb4",
+   "name": "Divergent Growth",
+   "typeLine": "Instant",
+   "oracleText": "Until end of turn, lands you control gain \"{T}: Add one mana of any color.\"",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "that ability",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Mana Flare": {
+  "card": {
+   "_id": "97159138-c34b-416e-b079-5c952383a243",
+   "name": "Mana Flare",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a player taps a land for mana, that player adds one mana of any type that land produced.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{R}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any type that land produced",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "tapped-for-mana",
+     "subject": "a land for mana",
+     "control": "any"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Pyre Rhymer // Molten Tide": {
+  "card": {
+   "_id": "8940f503-fc6d-4fae-be74-22c660cae1a7",
+   "name": "Pyre Rhymer // Molten Tide",
+   "typeLine": "Creature — Elemental Sorcerer // Instant",
+   "oracleText": "Prowess\nThis creature enters prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)\n//\nUntil end of turn, whenever you tap a Mountain for mana, add an additional {R}.",
+   "keywords": [
+    "Prowess",
+    "Prepared"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 3,
+   "power": "3",
+   "toughness": "3",
+   "layout": "prepare",
+   "manaCost": "{1}{R}{R} // {R}",
+   "producedMana": [
+    "R"
+   ],
+   "faces": [
+    {
+     "name": "Pyre Rhymer",
+     "typeLine": "Creature — Elemental Sorcerer",
+     "manaCost": "{1}{R}{R}"
+    },
+    {
+     "name": "Molten Tide",
+     "typeLine": "Instant",
+     "manaCost": "{R}"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Prowess",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "prepare",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "trigger": {
+     "event": "tapped-for-mana",
+     "subject": "a Mountain",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
  }
 }

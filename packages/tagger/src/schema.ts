@@ -1475,6 +1475,11 @@ export interface ManaLine {
    *  "−1"): the walker enters with that many counters (CR 306.5b) and a loyalty cost needs that many (CR 606.6), so "−1: Add {R}{R}" is playable the turn
    *  the walker is cast iff this is at least 1. From the card document's `loyalty` (Scryfall, per face), carried by ingest (owner 2026-10-13). */
   startLoyalty?: number;
+  /** TRUE on a TAP BONUS THAT LASTS ONE TURN, the line of a spell (`source: "one-shot-spell"`, `trigger: "tapped-for-mana"`, `triggerSubject` the filter): High Tide's
+   *  "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}" (owner 2026-10-13: ramp). `amount` is the bonus PER TAP and `net` is
+   *  that one mana less the spell's cost, which says nothing: the yield is `amount` times the matching sources tapped that turn. Absent on a permanent's standing bonus
+   *  (Forsaken Monument, Mana Flare, Vernal Bloom), which has no end. */
+  untilEndOfTurn?: true;
 }
 
 /** A card that makes OTHER mana sources produce colours (#1115), read from its static text: Chromatic Lantern

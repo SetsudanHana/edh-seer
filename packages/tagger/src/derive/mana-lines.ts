@@ -319,6 +319,14 @@ function fetchGate(text: string): string | null {
     .find((x) => x !== undefined && !YOU_DO.test(x.trim()));
   return g ? g.trim().toLowerCase() : null;
 }
+/** A TAP BONUS FOR ONE TURN (High Tide, Bubbling Muck): "Until end of turn, whenever <a player | you> taps <a land filter> for mana, <that player | you> adds an additional {U}".
+ *  Read off the clause TEXT because the grammar path keeps the tap as a condition of the add and the model path as a trigger -- the same card, two records. Group 1 is the
+ *  filter ("an Island"). CEILING: the one printed shape; a spell that waits for a tap in any other words (Pyre Rhymer // Molten Tide, whose add the model filed under
+ *  `effectActions`) is not read, and banks no line. */
+const ONE_TURN_TAP_BONUS = /^until end of turn, whenever (?:a player|you) taps? (an? [^,]*?) for mana, (?:that player|you)? ?adds? an additional\b/i;
+const QUOTED = /"[^"]*"/g;
+/** `ADDS_MANA`, also for "that player ADDS an additional {U}". */
+const ADDS_MANA_OR_S = /\badds?\b[^.]*(?:\{[WUBRGCX]|\bmana\b)/i;
 const DELAYED = /\b(?:at the beginning of|on) (?:your |the )?next [^,.]*,?[^.]*\badd\b|\badd\b[^.]*\bat the beginning of (?:your |the )?next\b/i;
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -432,6 +440,13 @@ export function deriveMana(input: ManaInput): ManaResult {
           // CEILING: a static ability that adds mana is printed by no card the corpus holds; refused, not guessed.
           : null;
       if (source === null) continue;
+      // A SPELL'S ADD IS ITS OWN: an add that sits only inside a quoted ability belongs to the token or permanent the spell makes (Eldrazi Confluence's Scion: "Sacrifice this
+      // token: Add {C}"). The token-maker line states it.
+      if (source === "one-shot-spell" && !ADDS_MANA_OR_S.test(text.replace(QUOTED, ""))) continue;
+      // A SPELL THAT WAITS FOR A TAP is a tap bonus for the turn when it says so, and otherwise an unread trigger: banking its add as a plain one-shot (High Tide read as
+      // "adds {U}, costs {U}, nets 0") is a guess where a refusal belongs.
+      const oneTurn = source === "one-shot-spell" ? ONE_TURN_TAP_BONUS.exec(text.trim()) : null;
+      if (source === "one-shot-spell" && trigger?.event === "tapped-for-mana" && oneTurn === null) continue;
       // A GRANT IS NOT ALWAYS A TAP ABILITY OR RAMP. A granted TRIGGER ("Enchanted creature has 'Whenever this creature deals combat damage to a player, add that
       // much {G}'", Mark of Sakiko) is no tap source, and an Aura that removes what it enchants is not mana for the deck.
       if (source === "static-grant" && ((clause.abilityType === "triggered" && trigger !== undefined) || removalAura)) continue;
@@ -451,9 +466,9 @@ export function deriveMana(input: ManaInput): ManaResult {
         net: produced - cost.mana,
         gate: grantGate ?? afterCost ?? requiresGate(ability) ?? gateOf(text, sentence, ability?.threshold !== undefined),
         restriction: restrictionOf(texts),
-        timing: source === "trigger" || source === "aura-trigger" ? "on-trigger" : DELAYED.test(text) ? "next-turn" : "now",
+        timing: source === "trigger" || source === "aura-trigger" || oneTurn ? "on-trigger" : DELAYED.test(text) ? "next-turn" : "now",
         producesToken: tokenGrant ? "granted" : null,
-        ...(source === "trigger" || source === "aura-trigger" ? firedBy(trigger, text) : { trigger: null, triggerSubject: null }),
+        ...(source === "trigger" || source === "aura-trigger" ? firedBy(trigger, text) : oneTurn ? { trigger: "tapped-for-mana", triggerSubject: oneTurn[1]!.trim(), untilEndOfTurn: true as const } : { trigger: null, triggerSubject: null }),
       };
       // ONE PRINTED ADD, TWO CLAUSES: "Whenever you cast or copy ..." (Ashling) arrives as a cast clause and a copy clause, each with the
       // same add. An identical trigger line is the same add read twice. CEILING: a card printing two identical trigger adds would merge; the

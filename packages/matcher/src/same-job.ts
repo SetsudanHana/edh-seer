@@ -224,7 +224,10 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
     }
   }
   if (job.length === 0) return null;
-  const ramp = role === "ramp" ? [rampKind(d), producedManaTypes(d).join("")] : [];
+  // A CARD THAT ADDS NO MANA TYPE (a Treasure or Spawn maker, a grantee engine like Cryptolith Rite) is not one bucket: the empty string merged Path of Annihilation with
+  // Cryptolith Rite and Growth Spasm with Scout the Wilderness. It keys on what it does instead, so only a card doing the same thing shares the group.
+  const none = () => "~" + [...new Set(cardLines(d).map((l) => `${l.source}:${l.producesToken ?? ""}:${l.anyColour ?? ""}`))].sort().join("+");
+  const ramp = role === "ramp" ? [rampKind(d), producedManaTypes(d).join("") || none()] : [];
   const head = JSON.stringify([role, delivery(d), ...ramp]);
   const kind = JSON.stringify([role, delivery(d), ...ramp.slice(0, 1)]);
   return { key: JSON.stringify([role, delivery(d), ...ramp, [...new Set(job)].sort()]), head, kind, parts: new Set(job), drawbacks, upsides, all };
@@ -294,7 +297,8 @@ const damagesOthers = (t: string) => /\bdeals? (?:\d+|x) damage to (?!you\b)/.te
  *  line's own cost, so production is `net + cost.mana`. Every line counts but a token maker's (a Treasure is a later sacrifice, not mana now),
  *  as the text did: a ritual (Dark Ritual adds 3 for 1), a land fetch (Evolving Wilds finds 1 for 0) and a trigger. A scaling amount reads as 1. */
 export function netPositiveMana(d: DeckCard): boolean {
-  const made = cardLines(d).filter((l) => l.source !== "token-maker" && !l.unread).map((l) => l.net + l.cost.mana);
+  // A GATED line is a condition, not a guarantee (Pyramid of the Pantheon's counters): it never protects a card from a swap.
+  const made = cardLines(d).filter((l) => l.source !== "token-maker" && !l.unread && l.gate === null).map((l) => l.net + l.cost.mana);
   return made.length > 0 && Math.max(...made) > (d.card.manaValue ?? 0);
 }
 
@@ -331,11 +335,13 @@ export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
  *  ability is one only when it can be activated the turn the walker is cast (`usableLoyalty`, owner 2026-10-13).
  *  CEILING: a line paid by tapping ANOTHER permanent (Springleaf Drum), a counter (Wall of Roots) or a discard still yields, as the text reader let it: the colour
  *  audit refuses those as a SOURCE (`paidWithResource`) because the mana is not one you control, but a rock swap compares two rocks' yield and the Drum is a rock.
- *  A GATED line stays too: a net yield is a net yield, and `isColourSource` is what refuses it as a source. */
+ *  A GATED line does NOT (owner rulings: a gate is a condition, and a conditional line is never credited as guaranteed -- Tower Worker's 3 needs two other Workers,
+ *  Glistening Sphere's and Sceptre of Eternal Glory's need lands, Pyramid of the Pantheon's needs counters): a rock swap compares what two rocks reliably yield, and the text reader
+ *  that counted them credited the best branch. A card whose only yield is gated has none (`netYield` null: no colour swap is offered for it). */
 function yieldLines(d: DeckCard): ManaLine[] {
   return cardLines(d).filter((l) =>
     (l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger")
-    && !l.unread && l.restriction === null && l.anyColour !== "grantee" && !l.cost.sacrificeSelf && !l.cost.sacrificeOther
+    && !l.unread && l.restriction === null && l.gate === null && l.anyColour !== "grantee" && !l.cost.sacrificeSelf && !l.cost.sacrificeOther
     && (!isLoyaltyAbility(l) || usableLoyalty(l)));
 }
 /** A COLOUR SET AN OPPONENT DECIDES IS NOT A FIX (Fellwar Stone: "...that a land an opponent controls

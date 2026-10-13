@@ -444,7 +444,10 @@ import { emblemRecipient } from "../emblem.js";
 // 305: #1169 task 2b-1 review round 3: `startLoyalty` is read from the card document (Scryfall `loyalty`, carried by ingest) and not from a checked-in MTGJSON table
 // (the same numbers, plus the six walkers the table lacked); an Aura whose text says the enchanted creature "can't attack or block" is removal and makes no
 // static-grant line (Utopia Vow, owner 2026-10-13).
-export const DERIVE_VERSION = 305;
+// 306: #1169 task 2b-2 follow-up: "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}" (High Tide, Bubbling Muck) is a one-turn
+// tap-bonus line (`untilEndOfTurn`, trigger `tapped-for-mana`), not a net-0 add; a spell whose tap trigger is not that shape banks no line; an add inside a token's quoted
+// ability is not the spell's own (Eldrazi Confluence).
+export const DERIVE_VERSION = 306;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

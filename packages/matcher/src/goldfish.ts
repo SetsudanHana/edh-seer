@@ -257,6 +257,9 @@ function ritualLine(dc: DeckCard): ManaLine | null {
   if (lines.some((l) => l.amount.scales !== null)) return null;
   // A RITUAL NETS MANA (owner's rule, roadmap I4: ramp is a net gain): High Tide's "adds an additional {U}" for {U} and Eldrazi Confluence's
   // Scion mode are one-shot lines that gain nothing, and a burst toward the commander that costs what it makes is no burst.
+  // CEILING: HIGH TIDE IS NOT PRICED (owner 2026-10-13: it is ramp, a one-turn tap bonus whose yield is the Islands tapped that turn; derive carries it as a line with
+  // `untilEndOfTurn`, net 0, so this refuses it with Eldrazi Confluence). Pricing it honestly needs the burst below to know WHICH untapped sources are Islands and which one
+  // pays its {U} (the units carry colours, not land types), and the burst feeds `fastStart` only; the number it would move is a commander-cast turn for decks that run it.
   return lines.find((l) => l.gate === null && l.restriction === null && !l.unread && l.anyColour === null && l.net >= 1) ?? null;
 }
 

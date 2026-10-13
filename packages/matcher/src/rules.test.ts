@@ -5,7 +5,8 @@ import { detectWincons } from "./wincon.js";
 import { answerClassesOf, loadRules, ownText, ruleMatches, RULES_VERSION, tokenQuotes, type Rule } from "./rules.js";
 import type { DeckCard } from "./types.js";
 import type { ManaLine } from "@edh-seer/tagger";
-import { FREE_TAP, manaTags, ritualLine, tapFor } from "./mana-test-support.js";
+import { FREE_TAP, manaTags, mkLine, ritualLine, tapFor, triggerLine } from "./mana-test-support.js";
+import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 
 const mk = (name: string, oracleText: string, typeLine = "Instant"): DeckCard => ({
   card: { name, oracleText, typeLine } as Card,
@@ -483,6 +484,30 @@ test("a one-shot mana spell is ramp only when it nets, and a permanent mana sour
   // …including one whose OTHER face is a sorcery. Bramble Familiar // Fetch Quest's `{T}: Add {G}`
   // is a mana dork, and the type-line union carries "Sorcery" from the Adventure half.
   expect(cats(spell("Bramble Familiar // Fetch Quest", [tapFor(["G"])], 2, "Creature — Elemental Raccoon // Sorcery — Adventure"))).toContain("ramp");
+});
+
+// OWNER 2026-10-13 (#1169 2b-2 follow-up): High Tide IS ramp -- a tap bonus for the turn whose yield is the Islands tapped, not a net-0 one-shot -- while a spell whose mana arrives on a
+// trigger or a grant is judged against its mana value (Reckless Blaze, mana value 5, "add {R}" when a creature dies; Divergent Growth, mana value 1, a tap ability until end of turn).
+test("High Tide's real derived line (a one-turn tap bonus) keeps the Ramp role; a trigger or grant that cannot pay for its spell does not", () => {
+  const cats = (dc: DeckCard) => [...detectBuildCategories([dc]).keys()];
+  // The REAL card and the REAL derived mana lines (goldfish-cards.json is dumped from the production derive); the ability list is the one the on-cast mana spells carry.
+  const real = (name: string): DeckCard => {
+    const dc = structuredClone((goldfish as unknown as DeckCard[]).find((c) => c.card.name === name)!);
+    return { ...dc, tags: { ...manaTags(dc.tags!.manaLines!, { abilities: [{ kind: "on-cast", effect: { kind: "mana-generation" } }] as never }) } };
+  };
+  for (const name of ["High Tide", "Bubbling Muck"]) {
+    const dc = real(name);
+    expect(dc.tags?.manaLines?.[0], name).toMatchObject({ untilEndOfTurn: true, trigger: "tapped-for-mana" });
+    expect(cats(dc), name).toContain("ramp");
+  }
+  const spell = (name: string, lines: ManaLine[], manaValue: number, typeLine: string): DeckCard => ({
+    card: { name, oracleText: "", typeLine, manaValue } as Card,
+    tags: manaTags(lines, { abilities: [{ kind: "on-cast", effect: { kind: "mana-generation" } }] as never }),
+  });
+  expect(cats(spell("Reckless Blaze", [triggerLine("dies", "a creature you control dealt damage this way", ["R"], 1)], 5, "Sorcery"))).not.toContain("ramp");
+  expect(cats(spell("Divergent Growth", [mkLine({ source: "static-grant", colours: ["W", "U", "B", "R", "G"], anyColour: "any" })], 1, "Instant"))).not.toContain("ramp");
+  // ...and a trigger that DOES out-produce the spell's mana value stays ramp.
+  expect(cats(spell("Big Trigger", [triggerLine("dies", "a creature", ["R"], 3)], 2, "Instant"))).toContain("ramp");
 });
 
 // --- self-protection in words that are not a printed keyword (roadmap I1) ---

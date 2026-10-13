@@ -485,3 +485,29 @@ describe("a planeswalker's starting loyalty rides on its loyalty-cost lines (CR 
     expect(only("Llanowar Elves")).not.toHaveProperty("startLoyalty");
   });
 });
+
+describe("a one-turn tap bonus is a tap-bonus line, not a net-0 add (owner 2026-10-13, #1169 2b-2 follow-up)", () => {
+  it("High Tide: a one-shot spell whose line is the Island tap bonus for the turn", () => {
+    const l = only("High Tide");
+    expect(l).toMatchObject({ source: "one-shot-spell", trigger: "tapped-for-mana", triggerSubject: "an Island", timing: "on-trigger", untilEndOfTurn: true,
+      colours: ["U"], amount: { fixed: 1, scales: null }, cost: { mana: 1 } });
+    expect(tagsOf("High Tide").isOneShot).toBe(true);
+  });
+  it("Bubbling Muck reads the same, for Swamps", () => {
+    expect(only("Bubbling Muck")).toMatchObject({ source: "one-shot-spell", trigger: "tapped-for-mana", triggerSubject: "a Swamp", untilEndOfTurn: true, colours: ["B"] });
+  });
+  it("a permanent's standing tap bonus is no one-turn line", () => {
+    expect(only("Mana Flare", "trigger")).not.toHaveProperty("untilEndOfTurn");
+    expect(only("Forsaken Monument", "trigger")).not.toHaveProperty("untilEndOfTurn");
+  });
+  it("a spell whose tap trigger the reader does not recognise banks NO add line (a guess is worse than a refusal)", () => {
+    const fx = (fixtures as unknown as Record<string, { card: Record<string, unknown> & { _id: string; name: string; oracleText: string }; clauses: { trigger?: unknown }[] }>)["Bubbling Muck"]!;
+    const card = { ...fx.card, oracleText: "Whenever a player taps a Swamp for mana, that player adds an additional {B}." };
+    const clauses = fx.clauses.map((c) => ({ ...c, trigger: { event: "tapped-for-mana", subject: "a Swamp", control: "any" } }));
+    expect(deriveCardTags(deriveInputOf(card as never, card._id, card.name, clauses as never)).manaLines).toBeUndefined();
+  });
+  it("a token's quoted 'Sacrifice this token: Add {C}' is not the spell's own add (Eldrazi Confluence)", () => {
+    expect(linesOf("Eldrazi Confluence", "one-shot-spell")).toHaveLength(0);
+    expect(linesOf("Eldrazi Confluence", "token-maker")).toHaveLength(1);
+  });
+});

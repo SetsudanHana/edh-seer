@@ -3,7 +3,9 @@ import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import labelCards from "./same-job.labels.cards.json" with { type: "json" };
 import labelSet from "./same-job.labels.json" with { type: "json" };
 import { ingredients, rolesOfCard } from "./quality.js";
-import { effectsOf, groupKey, sameGroup, sameJob } from "./same-job.js";
+import { effectsOf, groupKey, netPositiveMana, netYield, sameGroup, sameJob } from "./same-job.js";
+import { manaTags, mkLine } from "./mana-test-support.js";
+import type { ManaLine } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 
 /** Cards as the corpus derives them (tags read 2026-10-02). */
@@ -78,4 +80,25 @@ test("G1: the pairs the group key puts together are the owner's same pairs", () 
   expect(together.filter((p) => p.label === "different").map((p) => `${p.out} -> ${p.in}`)).toEqual([]);
   expect(same / together.length).toBeGreaterThanOrEqual(0.9);
   expect(same).toBeGreaterThanOrEqual(9);
+});
+
+// #1169 2b-2 follow-up: a card that adds no mana TYPE (a Treasure / Spawn maker, a grantee engine) was one bucket in the ramp key (the empty string). It keys on what it does
+// instead, so a land fetch that also makes an Eldrazi Spawn is not the plain land fetch of the same cost.
+test("two ramp cards that add no mana type do not share a group because of it (Growth Spasm is not Scout the Wilderness)", () => {
+  const spasm = card("Growth Spasm");
+  const scout = card("Scout the Wilderness");
+  expect(groupKey(spasm, "ramp")).not.toBeNull();
+  expect(groupKey(spasm, "ramp")).not.toBe(groupKey(scout, "ramp"));
+  expect(sameJob(scout, spasm, "ramp")).toBe(false);
+});
+
+// #1169 2b-2 follow-up (owner rulings: a gate is a condition, never credited as guaranteed): a gated line is no yield and protects nothing from a swap.
+test("a gated line counts toward neither a rock's net yield nor net-positive mana (Glistening Sphere's 3 needs lands, Pyramid's needs counters)", () => {
+  const rock = (lines: ManaLine[]): DeckCard => ({ card: { name: "Rock", typeLine: "Artifact", oracleText: "", manaValue: 1 } as never, tags: manaTags(lines) });
+  const plain = mkLine({ colours: ["G"], net: 1 });
+  const gated = mkLine({ colours: ["G"], amount: { fixed: 3, scales: null }, net: 3, gate: "you control three or more lands" });
+  expect(netYield(rock([plain, gated]))).toBe(1);
+  expect(netYield(rock([gated]))).toBeNull();
+  expect(netPositiveMana(rock([plain, gated]))).toBe(false);
+  expect(netPositiveMana(rock([mkLine({ colours: ["C"], colourless: 2, amount: { fixed: 2, scales: null }, net: 2 })]))).toBe(true);
 });

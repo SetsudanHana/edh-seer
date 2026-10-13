@@ -185,17 +185,23 @@ const GRANTS_PROTECTION =
   /\b(?:gains?|have|has|get|grants?)\b[^.]{0,70}?(?:hexproof|indestructible|shroud|protection from|phases? out)/i;
 
 /** THE MOST A ONE-SHOT SPELL NETS, from its DERIVED MANA LINES (`CardTags.manaLines`, #1169 task 2b-2; it was a regex over the oracle text), or
- *  `undefined` when the card states no number to judge: no mana line at all, a line derive could not read, or an amount that scales ("Add {R} for
- *  each card in target opponent's hand", Jeska's Will, Rite of Flame's second sentence). `ManaLine.net` is the production less the mana value of the face
- *  that prints it, so it is exactly the "added - mana value" this rule asks.
+ *  `undefined` when the card states no number to judge: no mana line at all, a line derive could not read, an amount that scales ("Add {R} for
+ *  each card in target opponent's hand", Jeska's Will, Rite of Flame's second sentence), or a TAP BONUS FOR THE TURN (High Tide: "Until end of turn, whenever a
+ *  player taps an Island for mana, that player adds an additional {U}", owner 2026-10-13: ramp). That bonus is one mana PER TAP, so its yield is the sources tapped that
+ *  turn and no number on the line says it; `ManaLine.untilEndOfTurn` names it.
+ *
+ *  THE NET IS PRODUCTION LESS THE CARD'S MANA VALUE, for every line: `ManaLine.net` is production less the line's OWN cost, which is the face's mana value only on a
+ *  `one-shot-spell` line (a spell pays its cost on the line); a trigger or a grant pays none there, so its `net` is its raw production (Reckless Blaze, mana value 5,
+ *  "add {R}" when a creature dies; Divergent Growth, mana value 1, lands tap for a colour until end of turn: neither nets). So a line that is not a spell's is
+ *  `net + cost.mana - manaValue`.
  *
  *  THE MAXIMUM, not the sum: Cabal Ritual's second sentence is "Add {B}{B}{B}{B}{B} INSTEAD" and is a gated line of its own. Taking the largest
  *  keeps the card whenever any branch of it accelerates, which is the lenient direction a refusal-shaped rule wants. Token makers and land fetches are
  *  not "added" mana (a Treasure maker, Cultivate): they state no number here, as before. */
 function oneShotNet(dc: DeckCard): number | undefined {
   const adds = cardLines(dc).filter((l) => l.source !== "token-maker" && l.source !== "fetch");
-  if (adds.length === 0 || adds.some((l) => l.unread || l.amount.scales !== null)) return undefined;
-  return Math.max(...adds.map((l) => l.net));
+  if (adds.length === 0 || adds.some((l) => l.unread || l.amount.scales !== null || l.untilEndOfTurn === true)) return undefined;
+  return Math.max(...adds.map((l) => (l.source === "one-shot-spell" ? l.net : l.net + l.cost.mana - dc.card.manaValue)));
 }
 
 /** THE CARD'S OWN TEXT: an ability quoted inside a sentence that creates a token is the TOKEN'S

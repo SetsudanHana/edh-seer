@@ -13,7 +13,7 @@ const tags = tagger.createTagsLookup(store.db, "derived");
 const KEYS = ["manaLines", "staticFixer", "landFetch", "isOneShot", "suspendOnly"] as const;
 const slim = (t: any) => (t ? Object.fromEntries(KEYS.filter((k) => t[k] !== undefined).map((k) => [k, t[k]])) : null);
 const NAMES = ["Sol Ring", "Llanowar Elves", "Nature's Lore", "Kodama's Reach", "Dark Ritual", "Desperate Ritual", "Seething Song", "Rite of Flame", "Culling the Weak",
-  "Cabal Ritual", "Jeska's Will", "High Tide", "Eldrazi Confluence", "Forest", "Temple of the False God", "Urza's Mine", "Urza's Power Plant", "Urza's Tower", "Planar Nexus", "Rakdos Carnarium",
+  "Cabal Ritual", "Jeska's Will", "High Tide", "Bubbling Muck", "Eldrazi Confluence", "Forest", "Temple of the False God", "Urza's Mine", "Urza's Power Plant", "Urza's Tower", "Planar Nexus", "Rakdos Carnarium",
   "Jegantha, the Wellspring", "Prismatic Lens", "Cascade Bluffs", "Sceptre of Eternal Glory", "Wild Growth", "Utopia Sprawl", "Overgrowth", "Fertile Ground",
   "Lotus Cobra", "Omnath, Locus of the Void", "Birgi, God of Storytelling", "Burning-Tree Emissary", "Pitiless Plunderer", "Chromatic Lantern", "Enduring Vitality",
   "Muerra, Trash Tactician", "Abstract Paintmage", "Eladamri's Vineyard", "Coalition Relic", "Forsaken Monument", "Leyline of Abundance", "Fabled Passage",
