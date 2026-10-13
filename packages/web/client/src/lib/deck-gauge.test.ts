@@ -115,9 +115,9 @@ test("the tile and the shelf say the same thing about a small overshoot", () => 
 
 /** WHERE THE RAMP ROOM IS (#1033): "Ramp 17, 4 over: room to cut" beside "8 of your 17 ramp cards
  *  that keep producing mana" read as spare ramp the land count never relied on. */
-test("a ramp overshoot points at the one-shots, not the rocks the land count leans on", () => {
-  expect(overNote(17, 13, 9)).toBe("4 over: cut from the 9 one-shots first; the land count relies on the other 8");
+test("a ramp overshoot points at the cards that add little, not the rocks the land count leans on", () => {
+  expect(overNote(17, 13, 9)).toBe("4 over: cut from the 9 that add little to the land count first; the land count relies on the other 8");
   expect(overNote(17, 13, 0)).toBe("4 over: room to cut");
   expect(overNote(14, 13, 9)).toBe("1 over, on target");
-  expect(overNote(17, 13, 1)).toBe("4 over: cut from the 1 one-shot first; the land count relies on the other 16");
+  expect(overNote(17, 13, 1)).toBe("4 over: cut from the 1 that adds little to the land count first; the land count relies on the other 16");
 });

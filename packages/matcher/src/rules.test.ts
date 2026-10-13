@@ -555,6 +555,38 @@ describe("the Ramp role is read from the derived mana record (#1190)", () => {
   });
 });
 
+// #1190 follow-ups (owner rulings 2026-10-13).
+describe("the Ramp role, second round (#1190)", () => {
+  const ruleIds = (dc: DeckCard) => loadRules().rules.filter((r) => (r.category === "ramp" || r.facet?.of === "ramp") && ruleMatches(r, dc)).map((r) => r.id);
+  const real = (name: string): DeckCard => structuredClone((goldfish as unknown as DeckCard[]).find((c) => c.card.name === name)!);
+
+  test("a loyalty ability the walker cannot use the turn it is cast is not the Role either (Nissa, Worldwaker's -7 at loyalty 3)", () => {
+    expect(ruleIds(real("Nissa, Worldwaker"))).toEqual([]);
+    // Nissa, Who Shakes the World keeps the Role through her Forest trigger; her -8 fetch at loyalty 5 adds no engine.
+    expect(ruleIds(real("Nissa, Who Shakes the World"))).toContain("ramp.effect");
+    expect(ruleIds(real("Nissa, Who Shakes the World"))).not.toContain("ramp.landFetchSpell");
+    // "-1: Add {R}{R}" at loyalty 5 is usable on the cast turn.
+    expect(ruleIds(real("Chandra, Novice Pyromancer"))).toContain("ramp.effect");
+  });
+
+  test("cost reduction IS ramp (owner 2026-08-06 and 2026-10-13): a discount for OTHER spells, not a cheaper self", () => {
+    const withAbility = (name: string, subject: object, kind = "static"): DeckCard => ({
+      card: { name, oracleText: "", typeLine: "Artifact", manaValue: 3 } as Card,
+      tags: manaTags([], { abilities: [{ kind, effect: { kind: "cost-reduction", subject } }] as never }),
+    });
+    // Sapphire Medallion: "Blue spells you cast cost {1} less" -- control you, spells, all of them
+    expect(ruleIds(withAbility("Sapphire Medallion", { control: "you", type: "spell", scope: "all" }))).toEqual(["ramp.costReduction"]);
+    expect(ruleIds(withAbility("Zimone", { control: "any", type: "spell", scope: "each" }))).toEqual(["ramp.costReduction"]);
+    // "This spell costs {1} less to cast ..." and a self-discount with no subject are a cheaper card, not ramp
+    expect(ruleIds(withAbility("Blasphemous Act", { control: "any", type: "spell", self: true }, "on-cast"))).toEqual([]);
+    expect(ruleIds(withAbility("Sunderflock", {}))).toEqual([]);
+    // Trinisphere ("each spell that would cost less than three mana costs three") is a tax the derive typed as a reduction; Accursed Witch cheapens OPPONENTS' spells
+    const texted = (name: string, oracleText: string): DeckCard => ({ ...withAbility(name, { control: "any", type: "spell", scope: "all" }), card: { name, oracleText, typeLine: "Artifact", manaValue: 3 } as Card });
+    expect(ruleIds(texted("Trinisphere", "As long as this artifact is untapped, each spell that would cost less than three mana to cast costs three mana to cast."))).toEqual([]);
+    expect(ruleIds(texted("Accursed Witch", "Spells your opponents cast that target this creature cost {1} less to cast."))).toEqual([]);
+  });
+});
+
 // --- self-protection in words that are not a printed keyword (roadmap I1) ---
 
 const protectionRule = () => loadRules().rules.find((r) => r.id.startsWith("protection"))!;

@@ -51,15 +51,15 @@ export const FLOOR_SLACK = 2;
 /** The shelf's words for an overshoot, from the same rule as `floorState`: null when not over, "N
  *  over, on target" inside the slack, "N over: room to cut" past it.
  *
- *  `oneShots`, for Ramp (#1033): the land target counts only the ramp that keeps producing mana, so
- *  the room is in the rituals and Treasure makers. Said, or "4 over: room to cut" read as spare ramp
+ *  `oneShots`, for Ramp (#1033; named by class since #1190): the land target counts only the ramp that keeps producing mana, so
+ *  the room is in the cards that make mana once or under a condition, and the cost reducers. A ramp LAND cannot be cut for room and is not counted in it. Said, or "4 over: room to cut" read as spare ramp
  *  beside "8 of your 17 ramp cards that keep producing mana". */
 export function overNote(count: number, target: number, oneShots = 0): string | null {
   const d = count - target;
   if (target <= 0 || d <= 0) return null;
   if (d <= FLOOR_SLACK) return `${d} over, on target`;
   return oneShots > 0 && oneShots < count
-    ? `${d} over: cut from the ${oneShots} one-shot${oneShots === 1 ? "" : "s"} first; the land count relies on the other ${count - oneShots}`
+    ? `${d} over: cut from the ${oneShots} that add${oneShots === 1 ? "s" : ""} little to the land count first; the land count relies on the other ${count - oneShots}`
     : `${d} over: room to cut`;
 }
 

@@ -1066,7 +1066,8 @@ test("the index flags a page below the partner floor, per surface", () => {
   const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Samut, the Driving Force")!;
   expect(rec.partners.length).toBeLessThan(MIN_INDEXABLE_PARTNERS);
   expect(rec.partners.length).toBeGreaterThan(0);
-  expect(at("Samut, the Driving Force").thin).toBe(true);
+  // Samut's cost reduction is ramp since #1190 (owner 2026-10-13), a job the page can explain ("is ramp"), so her CARD page is indexable on that alone; the commander surface has no job to fall back on.
+  expect(at("Samut, the Driving Force").thin).toBeUndefined();
   expect(at("Samut, the Driving Force").thinCommander).toBe(true);
   // Nothing to rank on either surface: both URLs are withheld from the sitemap and both are still
   // served, because a page with nothing to say is reachable and merely not promised.

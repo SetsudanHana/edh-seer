@@ -39,6 +39,13 @@ describe("the class of a Ramp-role card that is not an accelerant", () => {
     expect(nonAccelerantRamp(jasper, [jasper])).toBe("gated-off");
   });
 
+  test("a Lander maker is a land-drop; a cost reducer is its own class", () => {
+    const lander: DeckCard = { ...real("Pitiless Plunderer"), tags: { ...real("Pitiless Plunderer").tags!, manaLines: [{ ...real("Pitiless Plunderer").tags!.manaLines![0]!, producesToken: "lander" }] } };
+    expect(nonAccelerantRamp(lander, [lander])).toBe("land-drop");
+    const medallion: DeckCard = { card: { name: "Sapphire Medallion", oracleText: "", typeLine: "Artifact", manaValue: 3 } as never, tags: { abilities: [{ kind: "static", effect: { kind: "cost-reduction", subject: { control: "you", type: "spell", scope: "all" } } }] } as never };
+    expect(nonAccelerantRamp(medallion, [medallion])).toBe("cost-reducer");
+  });
+
   test("the weight per class is the one every non-accelerant has had (0.15); a land is no ramp piece", () => {
     for (const [cls, w] of Object.entries(NON_ACCELERANT_WEIGHT)) {
       if (cls === "land") expect(w, cls).toBeNull();

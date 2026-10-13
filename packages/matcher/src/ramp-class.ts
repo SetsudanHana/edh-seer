@@ -9,7 +9,7 @@ import type { DeckCard } from "./types.js";
  *  mana lines (`CardTags.manaLines`, `landFetch`, `isOneShot`), the same record every other mana reader asks.
  *
  *  - `land`: a land in the Ramp role (Myriad Landscape, Temple of the False God). The land count holds it; it is no ramp PIECE.
- *  - `land-drop`: puts a land onto the battlefield once (Wayfarer's Bauble, Growth Spiral): the land it finds keeps producing, the card does not.
+ *  - `land-drop`: puts a land onto the battlefield once (Wayfarer's Bauble, Growth Spiral, a Lander token's maker): the land it finds keeps producing, the card does not.
  *  - `one-shot`: spent in the using -- a ritual, a Lotus Petal, a Treasure or Gold or Spawn maker.
  *  - `sacrifice`: mana for sacrificing another permanent (Phyrexian Altar, Priest of Forgotten Gods: owner 2026-10-10, ramp and not a colour source).
  *  - `trigger-mana`: mana when something happens (Birgi: owner 2026-10-10, ramp and not a dork).
@@ -18,16 +18,15 @@ import type { DeckCard } from "./types.js";
  *  - `paid`: mana bought with a counter, a tapped permanent or another resource (Cryptic Trilobite, Springleaf Drum).
  *  - `other`: what none of those names (Mox Tantalite: suspend only).
  *
- *  NO COST-REDUCER CLASS: the brief for this change listed one, but the Ramp role holds no cost reducer (`rules.json` has no ramp rule for "costs {1} less", so Sapphire Medallion is not Ramp
- *  even though the 2026-08-06 ruling files cost reduction under ramp). A class nobody can be in is dead code; if that ruling is wired into the rules, it joins here.
+ *  - `cost-reducer`: a discount for OTHER spells (Sapphire Medallion, owner 2026-08-06 and 2026-10-13: cost reduction is ramp). It makes no mana, it saves some; the land target gives it the same 0.15.
  *
  *  ASK ONLY OF A RAMP-ROLE CARD THAT `classifyAccelerant` returned null for. The first match wins, in the order below: a card with two reasons is named by the more telling one. */
-export type NonAccelerantRamp = "land" | "land-drop" | "one-shot" | "sacrifice" | "trigger-mana" | "gated-off" | "restricted" | "paid" | "other";
+export type NonAccelerantRamp = "land" | "land-drop" | "cost-reducer" | "one-shot" | "sacrifice" | "trigger-mana" | "gated-off" | "restricted" | "paid" | "other";
 
 /** THE WEIGHT EACH CLASS CARRIES IN THE LAND TARGET: 0.15 for every one that is a piece (`RAMP_RESILIENCE.oneShot`), exactly what every non-accelerant has carried. NOT A RULING ON THE
  *  CLASSES: no owner ruling has priced them apart, so they share a number and a land is no piece (`null`, as the fallback always skipped a land). A weight change needs an owner ruling. */
 export const NON_ACCELERANT_WEIGHT: Record<NonAccelerantRamp, number | null> = {
-  land: null, "land-drop": RAMP_RESILIENCE.oneShot, "one-shot": RAMP_RESILIENCE.oneShot, sacrifice: RAMP_RESILIENCE.oneShot, "trigger-mana": RAMP_RESILIENCE.oneShot,
+  land: null, "land-drop": RAMP_RESILIENCE.oneShot, "cost-reducer": RAMP_RESILIENCE.oneShot, "one-shot": RAMP_RESILIENCE.oneShot, sacrifice: RAMP_RESILIENCE.oneShot, "trigger-mana": RAMP_RESILIENCE.oneShot,
   "gated-off": RAMP_RESILIENCE.oneShot, restricted: RAMP_RESILIENCE.oneShot, paid: RAMP_RESILIENCE.oneShot, other: RAMP_RESILIENCE.oneShot,
 };
 
@@ -39,12 +38,15 @@ export function nonAccelerantRamp(dc: DeckCard, _deck?: readonly DeckCard[]): No
   const lines = cardLines(dc, true);
   // CEILING: "puts a land from hand / from among the cards looked at" (Growth Spiral, Planar Genesis) has no derived field -- `landFetch` is a fetch from the library -- so it is the
   // `ramp.landPut` rule's own printed-text pattern, the one rule the Ramp role still reads from the oracle text.
-  if (tags?.landFetch !== undefined || ruleMatches(landPutRule(), dc)) return "land-drop";
+  // A LANDER TOKEN (owner 2026-10-13) is a land-fetch token: its maker puts a land onto the battlefield later, once.
+  if (tags?.landFetch !== undefined || ruleMatches(landPutRule(), dc) || lines.some((l) => l.producesToken === "lander")) return "land-drop";
   if (tags?.isOneShot || lines.some((l) => l.source === "one-shot-spell" || l.source === "token-maker" || l.cost.sacrificeSelf)) return "one-shot";
   if (lines.some((l) => l.cost.sacrificeOther)) return "sacrifice";
   if (lines.some((l) => l.source === "trigger" || l.source === "aura-trigger")) return "trigger-mana";
   if (lines.length > 0 && lines.every((l) => l.gate !== null)) return "gated-off";
   if (lines.some((l) => l.restriction !== null)) return "restricted";
   if (lines.some((l) => paidWithResource(l))) return "paid";
+  // A COST REDUCER has no mana line at all: it saves mana for the other spells (owner 2026-10-13). Last of the named classes because a card with a line is named by it first.
+  if ((tags?.abilities ?? []).some((a) => a.effect.kind === "cost-reduction" && (a.effect.subject?.scope === "all" || a.effect.subject?.scope === "each"))) return "cost-reducer";
   return "other";
 }

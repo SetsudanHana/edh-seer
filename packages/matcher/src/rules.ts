@@ -1,7 +1,7 @@
 import ruleSet from "./rules.json" with { type: "json" };
 import type { ManaLineSource } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
-import { cardLines } from "./mana-lines.js";
+import { cardLines, isLoyaltyAbility, usableLoyalty } from "./mana-lines.js";
 import { countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
 
 /** A single test against one card. The operator set is CLOSED on purpose: `oracle`, `effectKind`,
@@ -17,7 +17,10 @@ export type RuleClause =
    *  sac outlet is not a draw engine. `null` names an ability `repeats.ts` refused to label. Owner,
    *  2026-09-05: "we count the one-off instant that draws 1 card the same way as Rhystic Study".
    *  `Ability.repeats` had sat on every derived ability since 2026-08-11 with no count reading it. */
-  | { op: "effectKind"; in: string[]; repeats?: (string | null)[]; control?: string[] }
+  | { op: "effectKind"; in: string[]; repeats?: (string | null)[]; control?: string[];
+      /** The effect's SUBJECT scope (`all`, `each`, `target`): present on the effect and in this list. An effect that names none does not match -- `cost-reduction` with scope `all`/`each` is a discount
+       *  for OTHER spells (Sapphire Medallion), and one with no scope is the card's own cost ("This spell costs {1} less", Sunderflock). */
+      scope?: string[] }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -255,11 +258,17 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       return countsAsLand(dc.card);
     case "manaLine":
       return cardLines(dc, true).some((l) =>
-        (clause.source === undefined || clause.source.includes(l.source))
+        // A LOYALTY ABILITY THE WALKER CANNOT USE THE TURN IT IS CAST is no line of the Role (owner 2026-10-13, #1190: the loyalty test of the accelerants and the colour sources governs the role).
+        (!isLoyaltyAbility(l) || usableLoyalty(l))
+        && (clause.source === undefined || clause.source.includes(l.source))
         && (clause.repeats === undefined || clause.repeats.includes(l.repeats))
         && (clause.producesToken === undefined || l.producesToken !== null));
     case "landFetch":
-      return dc.tags?.landFetch !== undefined;
+      // ...and the same for a walker's land fetch (Nissa, Worldwaker's -7 from loyalty 3): a fetch line that is a loyalty ability counts only if usable on the cast turn.
+      return dc.tags?.landFetch !== undefined && (() => {
+        const fetches = cardLines(dc, true).filter((l) => l.source === "fetch");
+        return fetches.length === 0 || fetches.some((l) => !isLoyaltyAbility(l) || usableLoyalty(l));
+      })();
     case "typeLine":
       return (dc.card.typeLine ?? "").toLowerCase().includes(clause.contains);
     case "effectKind":
@@ -268,7 +277,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null))
         // WHO IT HAPPENS TO, when the effect names one (#574): The Chain Veil's "you lose 2 life" is
         // `player-life-loss` too. An effect with no subject is not refused -- nothing says who.
-        && (clause.control === undefined || a.effect.subject?.control === undefined || clause.control.includes(a.effect.subject.control)));
+        && (clause.control === undefined || a.effect.subject?.control === undefined || clause.control.includes(a.effect.subject.control))
+        && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope))));
     case "emits":
       return (dc.tags?.abilities ?? []).some((a) =>
         (a.emits ?? []).some((e) =>

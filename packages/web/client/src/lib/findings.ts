@@ -408,16 +408,16 @@ export function lastingRamp(accelerants: number, rampCards: number | undefined, 
   if (rampCards === undefined || rampCards <= accelerants) return `${accelerants} rocks, dorks and land ramp`;
   const rest = rampCards - accelerants;
   const n = (cls: string): number => others?.[cls] ?? 0;
-  // THE REST, NAMED BY WHAT IT IS (#1190): it was "one-shots, like a ritual or a Treasure", which Birgi (trigger mana) and Phyrexian Altar (a sacrifice outlet) are not, and which a
-  // ramp LAND in the role (Myriad Landscape) is not either. The land target gives every one of them the same little weight; the sentence says why in the card's own terms.
-  const lands = n("land");
+  // THE REST, NAMED BY WHAT IT IS (#1190): it was "one-shots, like a ritual or a Treasure", which Birgi (trigger mana), Phyrexian Altar (a sacrifice outlet), a Medallion (a cost reducer) and a ramp
+  // LAND in the role (Myriad Landscape) are not. The land target gives every one of them the same little weight; the sentence says why in the card's own terms.
   const conditional = CONDITIONAL_RAMP.map(([cls, words]) => [n(cls), words] as const).filter(([k]) => k > 0).sort((a, b) => b[0] - a[0]).slice(0, 3).map(([, words]) => words);
-  const like = conditional.length === 0 ? "" : `, like ${conditional.length === 1 ? conditional[0] : `${conditional.slice(0, -1).join(", ")} and ${conditional.at(-1)}`}`;
-  const makes = `make${rest === 1 ? "s" : ""} mana only once or under a condition`;
-  const what = lands === 0 ? `${makes}${like}`
-    : lands >= rest ? `${rest === 1 ? "is a land" : "are lands"} the land count already holds`
-    : `are lands the land count already holds, or make mana only once or under a condition${like}`;
-  return `${accelerants} of your ${rampCards} ramp cards that keep producing mana (rocks, dorks and land ramp; the other ${rest} ${what}, and count for little)`;
+  const like = conditional.length === 1 ? conditional[0] : `${conditional.slice(0, -1).join(", ")} and ${conditional.at(-1)}`;
+  const parts: string[] = [];
+  if (n("land") > 0) parts.push("lands the land count already holds");
+  if (n("cost-reducer") > 0) parts.push("cost reducers, which save mana rather than make it");
+  if (conditional.length > 0) parts.push(`mana made only once or under a condition, like ${like}`);
+  const what = parts.length === 0 ? "they make mana only once or under a condition" : parts.join("; ");
+  return `${accelerants} of your ${rampCards} ramp cards that keep producing mana (rocks, dorks and land ramp; ${rest === 1 ? "the other one counts" : `the other ${rest} count`} for little: ${what})`;
 }
 
 /** The classes of a Ramp-role card that makes mana only once or under a condition (`NonAccelerantRamp` in the matcher), with the words the sentence uses, in the order a tie resolves. */
