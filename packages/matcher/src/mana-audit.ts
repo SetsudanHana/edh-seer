@@ -265,6 +265,9 @@ export function manaAuditFull(
   // A GATED SOURCE IS ONLINE FOR A COLOUR ON THE TURN ITS GATE IS MET BY (owner 2026-10-13: the audit follows the gate check, and the gate is timed turn by turn): Tainted Peak's red
   // waits on a Swamp being likely out, Mox Jasper's on a Dragon that the mana could have cast. The same closed form the colour source count used to let the card in (`gate.ts`), asked of
   // the turn. A fetch that is also a source keeps the fetch's clock.
+  // CEILING (owner 2026-10-13, "keep the 0.5 bar"): the source counts WHOLE from the first turn P(gate met) >= 0.5 and not at all before it -- no fractional source. The goldfish credits it per game, and
+  // a rock or dork up to a turn earlier (it counts an accelerant the turn it lands; the closed form, a spell at mana value < turn). Tainted Peak in judith-tokens-connoiseur and mishra-claimed-by-tokens
+  // is a Swamp source from turn 6 at p = .509 (.480 on turn 5). Detail on `colourSourceLine`.
   const gatedAt = new Map<string, readonly string[]>();
   const coloursBy = (dc: DeckCard, turn: number): readonly string[] => {
     const key = `${turn}\0${dc.card.name}\0${dc.face ?? ""}`;

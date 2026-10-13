@@ -83,11 +83,12 @@ async function rowsFor(file: string, dir: string): Promise<Row[]> {
   if (cmdrCards.length === 0) return [];
 
   const rampNames = detectBuildCategories([...library]).get("ramp") ?? new Set<string>();
-  const { deck: bare, silenced, blind } = silenceRamp(library, rampNames);
+  const { deck: bare, silenced, blind } = silenceRamp(library, rampNames, cmdrCards);
 
   const sims = (d: readonly DeckCard[]): [SimulateResult, SimulateResult] => [
-    simulate(d, { trials: TRIALS, turns: TURNS, seed: SEED }),
-    simulate(d, { trials: TRIALS, turns: TURNS, seed: SEED, holdUp: HOLD_UP }),
+    // The commander counts toward a gate (owner 2026-10-13, #1169): it is priced (`alsoPrice`), never shuffled in (CR 903.6).
+    simulate(d, { trials: TRIALS, turns: TURNS, seed: SEED, alsoPrice: cmdrCards }),
+    simulate(d, { trials: TRIALS, turns: TURNS, seed: SEED, holdUp: HOLD_UP, alsoPrice: cmdrCards }),
   ];
   const [withA, withB] = sims(library);
   const [woA, woB] = sims(bare);

@@ -111,3 +111,12 @@ test("a count of lands cannot exceed the land drops: 'five or more lands' is not
   expect(gateMetBy("you control three or more lands with the same name", deckOf(copies(36, () => dc("Forest", "Basic Land \u2014 Forest"))), 2)).toBe(false);
   expect(gateMetBy("you control three or more lands with the same name", deckOf(copies(36, () => dc("Forest", "Basic Land \u2014 Forest"))), 3)).toBe(true);
 });
+
+test("a 0-mana-value spell that holds a gate counts from turn 2, as the goldfish counts it (cast at the end of turn 1, on the board from the next); a land counts at turn 1", () => {
+  const free = copies(30, (i) => ({ card: { name: `Free ${i}`, typeLine: "Artifact", oracleText: "", manaValue: 0 } as never, tags: null }) as DeckCard);
+  const deck = deckOf(free);
+  expect(gateProbability("you control an artifact", deck, 1)).toBe(0);
+  expect(gateProbability("you control an artifact", deck, 2)!).toBeGreaterThan(0.3);
+  // a land is played on turn 1 and counts then
+  expect(gateProbability("you control a swamp", deckOf(copies(30, () => dc("Swamp", "Basic Land — Swamp"))), 1)!).toBeGreaterThan(0.3);
+});

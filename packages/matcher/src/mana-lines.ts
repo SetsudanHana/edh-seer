@@ -90,6 +90,10 @@ export const isColourSource = (line: ManaLine): boolean => sourceShaped(line) &&
 /** THE COLOUR-SOURCE RULE FOR A LINE IN A DECK (owner 2026-10-13: the colour audit follows the gate check, one answer for the audit and castability). An ungated line is one by
  *  `isColourSource`; a gated line is one when the deck meets its gate -- over the deck (`gateMet`, the median clock) with no `turn`, or by `turn` (`gateMetBy`, the closed form of the
  *  goldfish's timing), the same answer the goldfish gives. With no deck a gated line is none, as before; a gate no decklist settles (renown, speed, counters) is none, always.
+ *  CEILING: A GATED SOURCE IS CREDITED WHOLE FROM THE TURN P(GATE MET) >= 0.5 (owner 2026-10-13: "keep the 0.5 bar", `gateVerdict`'s bar, deck-math's REQUIRED_CONFIDENCE), as one full integer source;
+ *  there are no fractional sources here. The goldfish credits it PER GAME instead, and for a rock or dork up to a TURN EARLIER than this closed form (the closed form counts a spell at mana
+ *  value < turn; the simulation counts an accelerant the turn it lands). So the audit and the goldfish agree on average, not game by game. Tainted Peak in judith-tokens-connoiseur and
+ *  mishra-claimed-by-tokens counts from turn 6, where its Swamp gate is met at p = .51: a coin flip is a whole source from there on, and half a source before it.
  *  CEILING: the deck is judged whole, so a gated Verge in a deck with two basics of its type counts only when `gate.ts` says the type is likely out; the colour audit's clock reads that likelihood
  *  per turn, the flat count (`supplied`, the mana base) reads it at the median clock. */
 export function colourSourceLine(line: ManaLine, deck?: readonly DeckCard[], turn?: number, holderIsLand = false): boolean {

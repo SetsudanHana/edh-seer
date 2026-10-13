@@ -36,14 +36,18 @@ export function castTurnStats(turns: readonly (number | null)[], horizon: number
 
 /** The counterfactual deck: every `ramp` build-category member the simulator can classify is made
  *  INERT in place -- its derived tags are dropped, which is what the goldfish reads its mana from (#1169 task 2b-1; nothing reads Scryfall's `producedMana` any more, so it is left alone), and its printed text with them. Library size, land count and mana curve all stay fixed, so the two arms differ in
- *  exactly one thing. Lands are never silenced — that would change the land count too. */
-export function silenceRamp(library: readonly DeckCard[], rampNames: ReadonlySet<string>): {
+ *  exactly one thing. Lands are never silenced — that would change the land count too.
+ *
+ *  `commanders` COUNT TOWARD A GATE (owner 2026-10-13, #1169): a card is classified against library + commanders, the way the product path judges it (Mox Jasper with a Dragon
+ *  commander). They are never silenced and never part of the returned library. */
+export function silenceRamp(library: readonly DeckCard[], rampNames: ReadonlySet<string>, commanders: readonly DeckCard[] = []): {
   deck: DeckCard[]; silenced: number; blind: number;
 } {
   let silenced = 0, blind = 0;
+  const gateDeck = commanders.length > 0 ? [...library, ...commanders] : library;
   const deck = library.map((dc) => {
     if (isLand(dc) || !rampNames.has(dc.card.name)) return dc;
-    if (!classifyAccelerant(dc, library)) { blind++; return dc; }
+    if (!classifyAccelerant(dc, gateDeck)) { blind++; return dc; }
     silenced++;
     return { card: { ...dc.card, oracleText: "" }, tags: null } as DeckCard;
   });

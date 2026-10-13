@@ -379,6 +379,11 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[]): ManaOutput
   // UNGATED: the best plain line. A mana-value floor is RECORDED rather than refused, because the deck can settle it; it only wins by beating the
   // plain amount.
   for (const l of lines.filter((x) => open(x) && x.restriction === null)) if (l.amount.fixed! > out.amount) out = { amount: l.amount.fixed! };
+  // CEILING: THE RESTRICTED + OPEN LINE IS NO LONGER ONE THAT HOLDS A BOARD GATE. A line with both a board-count gate and a restriction (`timed(l) !== null && l.restriction !== null`) is in neither
+  // this loop (`open` is false for a board gate) nor `boardGated` (restriction must be null): it is not priced, an under-claim. NOTHING IN THE CORPUS HAS ONE THE GOLDFISH WOULD PLAY
+  // (2026-10-13, cardTagsDerived with gate and restriction both set: 2 lines, Shrine of the Forsaken Gods -- "seven or more lands", a colourless-spells restriction -- and Tazri, Stalwart
+  // Survivor -- "another activated ability", an ability-only restriction); `playableLines` refuses both, as it refuses every restriction but a mana-value floor, and neither gate is a board count.
+  // A future card with a mana-value floor AND a board gate would need `boardGated` to carry `needsMinMV`.
   for (const l of lines.filter((x) => open(x) && x.restriction !== null)) {
     if (l.amount.fixed! > out.amount) out = { amount: l.amount.fixed!, needsMinMV: minManaValue(l)! };
   }
@@ -1361,6 +1366,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         else if (cast.tapBonus !== undefined) {
           bonuses.push({ turn: a.kind === "rock" ? turn : turn + 1, need: cast.tapBonus, colors: cast.colors });
         }
+        // CEILING: a GATED rock's pool credit (`pool += mana`) is priced ONCE, at the moment it is cast, from the permanents on the board then (`produced`). An enabler cast LATER THE SAME
+        // TURN (a Dragon after Mox Jasper) does not add that turn's mana to the pool: the rock pays from the next turn on, when `produced` is asked again. An under-claim by at most
+        // the rock's amount on its cast turn, the safe direction. Karsten and the audit never see it (their closed form counts it from the turn after).
         else if (a.kind === "rock") { rocks.push({ turn, mana, colors: cast.colors, ...gated, ...(cast.output.turns !== undefined ? { until: turn + cast.output.turns - 1 } : {}) }); pool += mana; }
         else if (a.kind === "dork") dorks.push({ turn, mana, colors: cast.colors, ...gated, ...(cast.output.turns !== undefined ? { until: turn + cast.output.turns } : {}) });
         else {

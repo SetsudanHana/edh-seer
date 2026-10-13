@@ -41,17 +41,22 @@ const lookup = mongoLookup(store);
 // THE GOLDFISH READS THE DERIVED MANA LINES (#1169, task 2b-1), so a card is loaded WITH its derived tags; a card without them is priced as a land-less blank.
 const cardTags = createTagsLookup(store.db, "derived");
 
-async function loadDeck(file: string, dir: string = DECK_DIR): Promise<DeckCard[]> {
+async function loadDeck(file: string, dir: string = DECK_DIR): Promise<{ deck: DeckCard[]; commanders: DeckCard[] }> {
   const s = parseDecklistSections(readFileSync(join(dir, file), "utf8"));
   const out: DeckCard[] = [];
+  const commanders: DeckCard[] = [];
+  const cmdrNames = new Set(s.commanders.map(normalizeName));
   for (const n of [...s.commanders, ...s.deck]) {
     const doc = await lookup.findByName(normalizeName(n));
     // A COMMANDER IS NOT IN THE LIBRARY (CR 903.6) and this model draws from the library, so it is
     // excluded here exactly as `deck-math.ts` excludes it — including one from the shuffle would
     // both dilute the draw and pretend it can be drawn.
-    if (doc && !s.commanders.map(normalizeName).includes(normalizeName(n))) out.push({ card: docToCard(doc), tags: await cardTags.findOne(String(doc._id)) });
+    if (!doc) continue;
+    const dc = { card: docToCard(doc), tags: await cardTags.findOne(String(doc._id)) };
+    // The commander still COUNTS TOWARD A GATE (owner 2026-10-13, #1169), as in the product path: it is handed to `classifyAccelerant` and priced via `alsoPrice`, never shuffled in.
+    if (cmdrNames.has(normalizeName(n))) { if (!commanders.some((c) => c.card.name === dc.card.name)) commanders.push(dc); } else out.push(dc);
   }
-  return out;
+  return { deck: out, commanders };
 }
 
 const files = readdirSync(DECK_DIR).filter((f) => f.endsWith(".txt")).sort();
@@ -63,9 +68,10 @@ if (one) {
   const altFiles = readdirSync(DECK_DIR_ALT).filter((f) => f.endsWith(".txt"));
   const alt = file ? undefined : altFiles.find((f) => f === `${one}.txt` || f === one);
   if (!file && !alt) { console.log(`no such deck: ${one}`); await store.close(); process.exit(1); }
-  const deck = await loadDeck((file ?? alt)!, file ? DECK_DIR : DECK_DIR_ALT);
-  const accel = deck.map((dc) => classifyAccelerant(dc, deck)).filter((a) => a !== null);
-  const r = simulate(deck, { trials: TRIALS, turns: TURNS, seed: SEED });
+  const { deck, commanders } = await loadDeck((file ?? alt)!, file ? DECK_DIR : DECK_DIR_ALT);
+  const gateDeck = [...deck, ...commanders];
+  const accel = deck.map((dc) => classifyAccelerant(dc, gateDeck)).filter((a) => a !== null);
+  const r = simulate(deck, { trials: TRIALS, turns: TURNS, seed: SEED, alsoPrice: commanders });
   console.log(`${file ?? alt} — ${deck.length} library cards, ${accel.length} accelerants (${TRIALS} trials, seed ${SEED})`);
   console.log(`  accelerants: ${accel.map((a) => `${a!.name} [${a!.kind} ${a!.manaValue}]`).join(" · ")}`);
   console.log("\n  turn   mana p25/median/p75   payable share p25/median/p75   P(>=6 mana)");
@@ -86,18 +92,19 @@ const criteria = process.argv.includes("--criteria");
 
 const rows: { deck: string; accelerants: number; headline: number; held: number; landsOnly: number }[] = [];
 for (const file of files) {
-  const deck = await loadDeck(file);
-  const accelerants = deck.map((dc) => classifyAccelerant(dc, deck)).filter((a) => a !== null).length;
-  const r = simulate(deck, { trials: TRIALS, turns: TURNS, seed: SEED });
+  const { deck, commanders } = await loadDeck(file);
+  const gateDeck = [...deck, ...commanders];
+  const accelerants = deck.map((dc) => classifyAccelerant(dc, gateDeck)).filter((a) => a !== null).length;
+  const r = simulate(deck, { trials: TRIALS, turns: TURNS, seed: SEED, alsoPrice: commanders });
   // THE ALTERNATIVE POLICY IS RUN FOR EVERY DECK, NOT ONLY UNDER `--criteria`, because the point
   // readout is WITHDRAWN (the whole-item falsifier fired) and the pair of policies IS the output.
-  const held = simulate(deck, { trials: TRIALS, turns: TURNS, seed: SEED, holdUp: 2 });
+  const held = simulate(deck, { trials: TRIALS, turns: TURNS, seed: SEED, holdUp: 2, alsoPrice: commanders });
   // THE COUNTERFACTUAL IS THE SAME DECK WITH THE ACCELERANTS INERT, not a different deck: swapping
   // them out would change the library size and measure that instead. This is the mechanism test.
-  const inert: DeckCard[] = deck.map((dc) => classifyAccelerant(dc, deck)
+  const inert: DeckCard[] = deck.map((dc) => classifyAccelerant(dc, gateDeck)
     ? { card: { ...dc.card, oracleText: "" }, tags: null }
     : dc);
-  const bare = simulate(inert, { trials: TRIALS, turns: TURNS, seed: SEED });
+  const bare = simulate(inert, { trials: TRIALS, turns: TURNS, seed: SEED, alsoPrice: commanders });
   rows.push({
     deck: file.replace(/\.txt$/, ""),
     accelerants,

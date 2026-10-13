@@ -119,7 +119,10 @@ export function boardGateProbability(b: BoardGate, deck: readonly DeckCard[], by
   const f = factsOf(deck);
   const counted = f.permanents.filter((p) => permCounts(b, p));
   if (by !== undefined && counted.every((p) => p.land) && b.need + (holderIsLand ? 1 : 0) > by) return 0;
-  return pAtLeast(b.need, counted.filter((p) => by === undefined || p.land || p.manaValue < by).length, seen(by ?? GATE_TURN), f.size);
+  // A SPELL COUNTS FROM THE TURN AFTER IT CAN BE CAST, and never on turn 1: the goldfish casts a permanent it has no use for as a proxy at the END of the first turn whose leftover mana pays
+  // its mana value and counts it from the NEXT turn, so a 0-mana artifact is out on turn 2, not 1 (`manaValue < by` alone said turn 1).
+  // CEILING: this applies to a free ACCELERANT too (a Mox is cast and counted on turn 1 in the goldfish, turn 2 here): an under-claim, the safe direction.
+  return pAtLeast(b.need, counted.filter((p) => by === undefined || p.land || (p.manaValue < by && by >= 2)).length, seen(by ?? GATE_TURN), f.size);
 }
 
 /** MET BY THIS TURN, in closed form: the same gate, the same bar (`GATE_CONFIDENCE`), the deck's chance of having the permanents on the battlefield by `turn` (`gateProbability`'s `by`).
