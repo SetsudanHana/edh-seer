@@ -186,9 +186,7 @@ test("the board-count gates stay priced turn by turn whatever the deck: Sceptre 
 
 // WHAT THE DERIVED READING DROPS, AND WHY (#1169 task 2b-1). Each card below was an accelerant when the goldfish read printed text and `producedMana`.
 test("derived lines the goldfish cannot play are not accelerants: a gate it cannot check, a cost it cannot pay, a trigger it has no event for", () => {
-  // A GATE NO DECKLIST SETTLES: Howlsquad Heavy needs max speed (a game state), in any deck. Mox Jasper's Dragon IS a decklist's: see the next test.
-  expect(classifyAccelerant(real("Howlsquad Heavy"))).toBeNull();
-  expect(classifyAccelerant(real("Howlsquad Heavy"), deckOfDragons())).toBeNull();
+  // (Howlsquad Heavy's max-speed gate is met from turn 4 in any deck: see the max-speed test below. Mox Jasper's Dragon IS a decklist's: see the next test.)
   // A COST WITH NO BOARD TO PAY FROM: another creature sacrificed (Phyrexian Altar), another permanent tapped (Springleaf Drum), a counter (Wall of Roots),
   // or exiling the card from hand (Simian Spirit Guide) is not a tap this model can pay. (A planeswalker's "+N: Add" IS playable -- see the loyalty test.)
   for (const n of ["Phyrexian Altar", "Springleaf Drum", "Wall of Roots", "Simian Spirit Guide"]) {
@@ -329,6 +327,32 @@ test("a planeswalker's loyalty mana lands in the simulation the turn it is cast 
   expect(maxAt("Chandra, Heart of Fire", 4)).toBe(4);
 });
 
+// MAX SPEED IS TURN 4 (owner 2026-10-13; CR 702.179a, 702.179d via gate.ts `MAX_SPEED_TURN`): a "speed 4" line is priced from turn 4, not from the turn it lands.
+describe("a max-speed gate is priced from turn 4", () => {
+  const meanAt = (d: DeckCard[], turn: number): number => {
+    const r = simulate(d, { trials: 400, turns: 6, seed: 7 });
+    const xs = r.manaAt[turn - 1]!;
+    return xs.reduce((a, b) => a + b, 0) / xs.length;
+  };
+  /** Sixty Muraganda Raceways whose max-speed line is edited: kept ("speed 4"), ungated (`null`, two from the start) or removed (the plain {C} alone). */
+  const raceways = (edit: "kept" | "ungated" | "removed"): DeckCard[] => [...Array.from({ length: 60 }, (_, i) => {
+    const c = real("Muraganda Raceway", `Raceway ${i}`);
+    const lines = c.tags!.manaLines!;
+    c.tags!.manaLines = edit === "kept" ? lines : edit === "removed" ? lines.filter((l) => l.gate !== "speed 4") : lines.map((l) => (l.gate === "speed 4" ? { ...l, gate: null } : l));
+    return c;
+  }), ...spells(39, 3)];
+  test("Howlsquad Heavy is an accelerant in any deck; Muraganda Raceway taps for two from turn 4 and for one before", () => {
+    expect(classifyAccelerant(real("Howlsquad Heavy"))?.kind).toBe("dork");
+    expect(classifyAccelerant(real("Howlsquad Heavy"), deckOfDragons())?.kind).toBe("dork");
+    const kept = raceways("kept"), removed = raceways("removed"), ungated = raceways("ungated");
+    for (const t of [1, 2, 3]) {
+      expect(meanAt(kept, t), `turn ${t} = the plain line`).toBe(meanAt(removed, t));
+      expect(meanAt(kept, t), `turn ${t} < the ungated two`).toBeLessThan(meanAt(ungated, t));
+    }
+    expect(meanAt(kept, 5)).toBeGreaterThan(meanAt(removed, 5));
+  });
+});
+
 test("an Adventure or prepare card's spell half is a face you play: Rampant Growth on Studious First-Year is a land-fetch", () => {
   expect(classifyAccelerant(real("Studious First-Year"))?.kind).toBe("land-fetch");
 });
@@ -336,6 +360,8 @@ test("an Adventure or prepare card's spell half is a face you play: Rampant Grow
 test("a derived amount is what the line says: Relic of Sauron taps for two, Muraganda Raceway for one until max speed, Ancient Ziggurat's mana pays generic only", () => {
   expect(manaOutput(real("Relic of Sauron")).amount).toBe(2);
   expect(manaOutput(real("Muraganda Raceway")).amount).toBe(1);
+  // ...and for two from turn 4 (owner 2026-10-13, CR 702.179d: speed 4 is turn 4 at the earliest).
+  expect(manaOutput(real("Muraganda Raceway")).speed).toEqual({ turn: 4, amount: 2 });
   // RESTRICTED MANA IS NEVER A COLOUR SOURCE (owner, 2026-10-10): the creature-only mana of Ancient Ziggurat pays no coloured pip.
   expect(colourMaskOf(real("Ancient Ziggurat"))).toBe(0);
   // A gated line is not credited a colour (Tainted Peak's B/R needs a Swamp) but its plain {C} stays; Temple's gated {C}{C} keeps the colourless bit.

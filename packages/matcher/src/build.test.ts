@@ -6,6 +6,7 @@ import type { DeckCard } from "./types.js";
 import type { CardTags, ManaLine } from "@edh-seer/tagger";
 import { FREE_TAP, filterLine, mkLine, tapFor, triggerLine } from "./mana-test-support.js";
 import { COVERAGE_CLASSES } from "./answer-coverage.js";
+import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 
 /** Minimal DeckCard: oracleText + typeLine drive the heuristics; abilities drive ramp/draw. */
 const mk = (
@@ -925,6 +926,18 @@ describe("rampGrade (#534, on manaLines since #1169)", () => {
     const racer = rock("Flywheel Racer", "Vigilance\n{T}: Add one mana of any color. Activate only if this permanent is a creature.\nCrew 1", "Artifact — Vehicle",
       [tapFor(["W", "U", "B", "R", "G"], { gate: "this permanent is a creature" })]);
     expect(rampGrade(racer, [racer, ...dragons])).toBe(0);
+  });
+
+  it("a max-speed gate is met in any deck, so the partner index grades the line (owner 2026-10-13; CR 702.179d: speed 4 from turn 4)", () => {
+    const catalyzer = rock("Gated Rock", "Max speed -- {T}: Add {C}{C}.", "Artifact", [tapFor(["C"], { gate: "speed 4", amount: { fixed: 2, scales: null }, net: 2 })]);
+    expect(rampGrade(catalyzer)).toBe(rampGrade(rock("Ungated", "{T}: Add {C}{C}.", "Artifact", [tapFor(["C"], { amount: { fixed: 2, scales: null }, net: 2 })])));
+    expect(rampGrade(catalyzer)).toBeGreaterThan(0);
+  });
+
+  it("COLOURED needs a coloured tap line that nets at least one: Prismatic Lens's {1},{T} any-colour line nets 0, so the card is a colourless rock; a Signet keeps the bit (owner 2026-10-13)", () => {
+    const lens = (rocks as unknown as Record<string, DeckCard>)["Prismatic Lens"]!;
+    expect(rampGrade(lens)).toBe(rampGrade(rock("Colourless rock", "{T}: Add {C}.", "Artifact", [tapFor(["C"])])));
+    expect(rampGrade(lens)).toBe(rampGrade(signet) - 1);
   });
 
   it("reads every restriction and every conditional tap (review 2026-09-27)", () => {

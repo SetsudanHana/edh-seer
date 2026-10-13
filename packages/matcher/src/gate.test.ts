@@ -52,9 +52,9 @@ test("'you have the initiative' is met by a deck with a card that takes it (Sare
   expect(gateVerdict("you have the initiative", deckOf([]))).toBe("unmet");
 });
 
-test("a gate that is a game state, the card's own state or a trigger is unknown, never met (Yue's trigger, speed, counters, 'entered this turn')", () => {
+test("a gate that is a game state, the card's own state or a trigger is unknown, never met (Yue's trigger, counters, 'entered this turn')", () => {
   const deck = deckOf(copies(40, (i) => dc(`Rock ${i}`, "Artifact")));
-  for (const g of ["when princess yue dies", "speed 4", "an opponent has three or more poison counters", "this land entered this turn",
+  for (const g of ["when princess yue dies", "an opponent has three or more poison counters", "this land entered this turn",
     "there are three or more brick counters on this artifact", "this creature has a +1/+1 counter on it", "there are seven or more cards in your graveyard", "it was bargained",
     "you control a legendary creature", "you control an urza's mine and an urza's tower"]) {
     expect(gateVerdict(g, deck), g).toBe("unknown");
@@ -96,7 +96,23 @@ test("a gate is met BY a turn when enough of what it names could be on the battl
   expect(lineGateMetBy(mkLine({ gate: "you control a dragon" }), undefined, 9)).toBe(false);
   expect(lineGateMetBy(mkLine(), undefined, 1)).toBe(true);
   // a gate no decklist settles is never met by any turn
-  expect(gateMetBy("speed 4", light, 9)).toBe(false);
+  expect(gateMetBy("an opponent has three or more poison counters", light, 9)).toBe(false);
+});
+
+// CR 702.179a: speed starts at 1; CR 702.179d: it rises by 1, once each turn, while under 4 -- so "speed 4" is the earliest turn 4 (owner 2026-10-13), in any deck.
+test("a max-speed gate is met from turn 4 in any deck, and with no deck at all (CR 702.179a, 702.179d)", () => {
+  const deck = deckOf(copies(40, (i) => dc(`Rock ${i}`, "Artifact")));
+  for (const turn of [1, 2, 3]) expect(gateMetBy("speed 4", deck, turn), `turn ${turn}`).toBe(false);
+  for (const turn of [4, 5, 9]) expect(gateMetBy("speed 4", deck, turn), `turn ${turn}`).toBe(true);
+  expect(gateMetBy("speed 4", [], 4)).toBe(true);
+  expect(gateVerdict("speed 4", deck)).toBe("met");
+  expect(gateVerdict("speed 4", [])).toBe("met");
+  const line = mkLine({ gate: "speed 4" });
+  expect(lineGateVerdict(line, undefined)).toBe("met");
+  expect(lineGateMetBy(line, undefined, 3)).toBe(false);
+  expect(lineGateMetBy(line, undefined, 4)).toBe(true);
+  expect(gateProbability("speed 4", deck, 3)).toBe(0);
+  expect(gateProbability("speed 4", deck)).toBe(1);
 });
 
 test("a count of lands cannot exceed the land drops: 'five or more lands' is not met by turn 4 whatever the deck", () => {

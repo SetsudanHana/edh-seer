@@ -18,7 +18,7 @@
  *  Swamp") cannot be judged from the line and is not struck, as before. */
 import type { ManaLine } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
-import { gateMet, gateMetBy } from "./gate.js";
+import { gateMet, gateMetBy, isSpeedGate } from "./gate.js";
 import { countsAsLand, parseTypeLine } from "./typeline.js";
 
 export const WUBRG = ["W", "U", "B", "R", "G"] as const;
@@ -89,7 +89,7 @@ export const isColourSource = (line: ManaLine): boolean => sourceShaped(line) &&
 
 /** THE COLOUR-SOURCE RULE FOR A LINE IN A DECK (owner 2026-10-13: the colour audit follows the gate check, one answer for the audit and castability). An ungated line is one by
  *  `isColourSource`; a gated line is one when the deck meets its gate -- over the deck (`gateMet`, the median clock) with no `turn`, or by `turn` (`gateMetBy`, the closed form of the
- *  goldfish's timing), the same answer the goldfish gives. With no deck a gated line is none, as before; a gate no decklist settles (renown, speed, counters) is none, always.
+ *  goldfish's timing), the same answer the goldfish gives. With no deck a gated line is none, as before; a gate no decklist settles (renown, counters) is none, always; a max-speed gate needs no deck and holds from turn 4 (`isSpeedGate`).
  *  CEILING: A GATED SOURCE IS CREDITED WHOLE FROM THE TURN P(GATE MET) >= 0.5 (owner 2026-10-13: "keep the 0.5 bar", `gateVerdict`'s bar, deck-math's REQUIRED_CONFIDENCE), as one full integer source;
  *  there are no fractional sources here. The goldfish credits it PER GAME instead, and for a rock or dork up to a TURN EARLIER than this closed form (the closed form counts a spell at mana
  *  value < turn; the simulation counts an accelerant the turn it lands). So the audit and the goldfish agree on average, not game by game. Tainted Peak in judith-tokens-connoiseur and
@@ -98,7 +98,7 @@ export const isColourSource = (line: ManaLine): boolean => sourceShaped(line) &&
  *  per turn, the flat count (`supplied`, the mana base) reads it at the median clock. */
 export function colourSourceLine(line: ManaLine, deck?: readonly DeckCard[], turn?: number, holderIsLand = false): boolean {
   if (line.gate === null) return isColourSource(line);
-  const holds = deck !== undefined && (turn === undefined ? gateMet(line, deck) : gateMetBy(line.gate, deck, turn, holderIsLand));
+  const holds = (deck !== undefined || isSpeedGate(line.gate)) && (turn === undefined ? gateMet(line, deck) : gateMetBy(line.gate, deck ?? [], turn, holderIsLand));
   return holds && sourceShaped(line, true) && !line.unread && line.anyColour !== "grantee";
 }
 

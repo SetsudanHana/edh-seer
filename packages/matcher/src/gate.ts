@@ -3,9 +3,9 @@
  *  plays Dragons and a blank in one that does not. Derive stores the condition as a lowercase string (`ManaLine.gate`, verbatim from the card); this module is the ONE place
  *  that reads it against a decklist, so the goldfish, the rock swaps and the ramp weight cannot disagree about whether a deck meets a card's gate.
  *
- *  THREE VERDICTS. `met`: the deck has enough of what the gate asks for. `unmet`: it does not. `unknown`: the gate is not a property of a decklist (a game state: "speed 4",
+ *  THREE VERDICTS. `met`: the deck has enough of what the gate asks for. `unmet`: it does not. `unknown`: the gate is not a property of a decklist (a game state:
  *  "an opponent has three or more poison counters"; the card's own state: counters on it, "it was bargained"; a trigger: Princess Yue's "when princess yue dies"), or this reader does not
- *  parse it. UNKNOWN IS TREATED AS UNMET by every consumer, never as met: a silent wrong answer is worse than a missing one.
+ *  parse it. A MAX-SPEED GATE IS NONE OF THESE: it is met from turn 4 in any deck (`isSpeedGate`). UNKNOWN IS TREATED AS UNMET by every consumer, never as met: a silent wrong answer is worse than a missing one.
  *
  *  "ENOUGH" (CEILING): a gate that asks for N permanents of a kind ("you control a dragon", "three or more artifacts", "a swamp") is met when the chance of having N of them among the cards seen
  *  by the corpus median clock is at least the repo's own confidence bar (`pAtLeast`, `GATE_TURN`, `GATE_CONFIDENCE`: the same turn and bar `deck-math.ts` asks "does the deck have enough of X"
@@ -26,6 +26,14 @@ import type { DeckCard } from "./types.js";
 import { countsAsLand, parseTypeLine } from "./typeline.js";
 
 export type GateVerdict = "met" | "unmet" | "unknown";
+
+/** A MAX-SPEED GATE ("speed 4": `ManaLine.gate` of Muraganda Raceway's "Max speed" line, Howlsquad Heavy, Endrider Catalyzer) IS MET FROM TURN 4, IN ANY DECK (owner 2026-10-13). CR 702.179a: a player
+ *  with a permanent with start your engines! and no speed has speed 1, and CR 702.179d ("Start Your Engines!"): the speed trigger fires "only once each turn" and raises speed by 1 while it is under 4,
+ *  so speed 4 is reached on turn 4 at the earliest. The gate needs no deck, so a consumer with none (the partner index's `rampGrade`) counts it too.
+ *  CEILING: speed rises only on a turn an opponent loses life (CR 702.179d), and this assumes it does on every turn from the first: turn 4 is the EARLIEST, so an over-claim by however many
+ *  turns the player's opponents keep their life. The card carrying the gate is itself a start your engines! permanent in the corpus (all three), so speed exists once it is out; the model does not price the turn it is cast. */
+export const MAX_SPEED_TURN = 4;
+export const isSpeedGate = (gate: string): boolean => gate.trim().toLowerCase() === "speed 4";
 
 /** The turn the deck is asked at: `CORPUS_MEDIAN_CLOCK` in `deck-math.ts`, and the confidence bar is its `REQUIRED_CONFIDENCE`. Not imported: deck-math reaches this module through
  *  land-score and same-job. `gate.test.ts` pins both. */
@@ -98,6 +106,7 @@ export const boardCount = (g: BoardGate, perms: readonly Perm[]): number => perm
  *  (a Tainted land beside its Swamp) -- needs one more. */
 export function gateProbability(gate: string, deck: readonly DeckCard[], by?: number, holderIsLand = false): number | null {
   const g = gate.trim().toLowerCase();
+  if (isSpeedGate(g)) return by === undefined || by >= MAX_SPEED_TURN ? 1 : 0;
   const f = factsOf(deck);
   if (g === "you have the initiative") return f.initiative ? 1 : 0;
   const n = seen(by ?? GATE_TURN);
@@ -134,7 +143,7 @@ export function gateMetBy(gate: string, deck: readonly DeckCard[], turn: number,
 
 /** THE LINE'S GATE HOLDS BY THIS TURN (an ungated line always does; a gated one with no deck to judge it against never does). */
 export const lineGateMetBy = (line: ManaLine, deck: readonly DeckCard[] | undefined, turn: number): boolean =>
-  line.gate === null || (deck !== undefined && gateMetBy(line.gate, deck, turn));
+  line.gate === null || ((deck !== undefined || isSpeedGate(line.gate)) && gateMetBy(line.gate, deck ?? [], turn));
 
 /** MET, UNMET OR UNKNOWN: whether the deck meets a gate string (`ManaLine.gate`). */
 export function gateVerdict(gate: string, deck: readonly DeckCard[]): GateVerdict {
@@ -146,6 +155,8 @@ export function gateVerdict(gate: string, deck: readonly DeckCard[]): GateVerdic
  *  only what is unconditional, as before the gate was read at all). */
 export function lineGateVerdict(line: ManaLine, deck: readonly DeckCard[] | undefined): GateVerdict {
   if (line.gate === null) return "met";
+  // A max-speed gate needs no deck (`isSpeedGate`).
+  if (isSpeedGate(line.gate)) return "met";
   return deck ? gateVerdict(line.gate, deck) : "unknown";
 }
 /** The line's gate holds in this deck (an ungated line always does). */

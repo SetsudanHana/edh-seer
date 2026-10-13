@@ -599,6 +599,9 @@ export function rampResilience(cards: DeckCard[]): RampResilience {
  *  untapped on entry, not a creature (`rampResilience`'s reason), coloured. Measured on Grixis MV
  *  2-3: 8 of the top 10 are top-list staples. EDHREC is the LABEL, never an input (owner: derive it).
  *
+ *  CEILING: A TAP WHOSE MANA DEPENDS ON SOMETHING DERIVE DOES NOT READ GRADES AS A PLAIN ROCK (#1188; oracle text read from Mongo 2026-10-13): Selvala, Explorer Returned ("add {G} for each nonland
+ *  card revealed"), Deathrite Shaman (the tap needs a target land card in a graveyard), Red Death, Shipwrecker (the mana rides on a goad of a target creature) and Corrupted Grafstone (the colour
+ *  is one of a card in your graveyard) carry a net-1 line with no gate and no `scales` for the grade to refuse, so each grades like a Llanowar Elves or a Mind Stone.
  *  CEILING: a land-fetch spell (Cultivate), a ritual and a Treasure maker score 0. They are ramp,
  *  and staples in green, but "taps for mana" cannot see them; a grade for them is its own tier. */
 export function rampGrade(dc: DeckCard, deck?: readonly DeckCard[]): number {
@@ -628,9 +631,9 @@ export function rampGrade(dc: DeckCard, deck?: readonly DeckCard[]): number {
   const entersTapped = new RegExp(patterns.entersTappedEver!, "i").test(o);
   // Restricted mana ("spend only ...", Powerstone) is `restriction`; the grade asks that the rock make some unrestricted mana.
   const free = rockLines.filter((l) => l.restriction === null);
-  // COLOURED is the card's own production, filter lines included: Prismatic Lens's "{1}, {T}: any color" nets nothing and is no staple line, but
-  // it is a coloured card (the printed-text reading it replaces asked the same of every "add" line of the card).
-  const coloured = faceLines.some((l) => l.source === "activated" && l.cost.tap && (l.colours.length > 0 || l.anyColour !== null));
+  // COLOURED is a coloured tap line that NETS AT LEAST ONE (owner 2026-10-13): a filter that returns no more than it costs (Prismatic Lens's "{1}, {T}: any color", Mana Prism) makes the card
+  // a colourless rock, and a Signet's "{1}, {T}: {B}{R}" (net 1) keeps the bit.
+  const coloured = faceLines.some((l) => l.source === "activated" && l.cost.tap && l.net >= 1 && (l.colours.length > 0 || l.anyColour !== null));
   return 1 + 8 * Number(free.length > 0) + 4 * Number(!entersTapped)
     + 2 * Number(!/\bcreature\b/i.test(dc.card.typeLine)) + Number(coloured);
 }

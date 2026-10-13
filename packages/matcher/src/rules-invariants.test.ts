@@ -59,6 +59,8 @@ const TESTED: Record<string, string> = {
   "702.139b": "legality.test.ts — 702.139b: a companion's condition counts the COMMANDER as part of the starting deck",
   "903.11a": "legality.test.ts — 903.11a: a companion may not share a name with the deck nor leave the commander's identity",
   "903.5a": "legality.test.ts — 903.5a counts COPIES; Yorion can never be met in a 100-card format",
+  "702.179a": "gate.test.ts — a player with start your engines! and no speed has speed 1: a max-speed gate is never met before turn 4",
+  "702.179d": "gate.test.ts — speed rises once each turn while under 4: a max-speed gate is met from turn 4, in any deck (owner 2026-10-13)",
   "702.73a": "legality.test.ts — 702.73a: Kaheera accepts a changeling as every creature type",
   "712.8a": "legality.test.ts — 712.8a: Umori reads a double-faced card by its FRONT face",
   "603.2c": "edge-magnitude.test.ts — a batched ('one or more') consumer hears the whole batch once, so the magnitude caps at one",

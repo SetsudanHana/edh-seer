@@ -4,7 +4,7 @@ import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
 import { cardLines, colourSourceColours, isFetchSource, isLandfall, isLoyaltyAbility, isPhaseTrigger, loyaltyActivations, lineColours, minManaValue, paidWithResource, paysItsWay, usableLoyalty } from "./mana-lines.js";
-import { boardCount, boardGateOf, gateMet, permCounts, permOf, type BoardGate, type Perm } from "./gate.js";
+import { boardCount, boardGateOf, gateMet, isSpeedGate, MAX_SPEED_TURN, permCounts, permOf, type BoardGate, type Perm } from "./gate.js";
 import { staticFixer } from "./static-fixers.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands } from "./fetch-land.js";
@@ -162,8 +162,8 @@ export function playableLines(dc: DeckCard, deck?: readonly DeckCard[]): ManaLin
     if (l.unread || l.cost.sacrificeSelf || paidWithResource(l)) return false;
     if (l.restriction !== null && minManaValue(l) === null) return false;
     // A GATE IS A CONDITION ON THE DECK (owner 2026-10-13: a gated source is still a source, conditioned on the deck). Mox Jasper ("Activate only if you control a Dragon")
-    // is mana in a deck that plays Dragons (`gateMet`, gate.ts) and a blank in one that does not; Howlsquad Heavy ("Max speed") is a game state the deck cannot settle, so
-    // it stays out (unknown is unmet). The two gates `manaOutput` prices against the board turn by turn (lands counted, the tron pair) stay.
+    // is mana in a deck that plays Dragons (`gateMet`, gate.ts) and a blank in one that does not; Howlsquad Heavy's "Max speed" is met in any deck (`isSpeedGate`) and
+    // priced from turn 4 (`ManaOutput.speed`). The two gates `manaOutput` prices against the board turn by turn (lands counted, the tron pair) stay.
     const checkable = l.gate === null || dynamicGate(l) || gateMet(l, deck);
     switch (l.source) {
       // A LOYALTY ABILITY ("+1: Add {R}{R}") is a source too (owner, 2026-10-13): once per turn at sorcery timing (CR 606.3), so it pays every turn the walker
@@ -243,6 +243,12 @@ export interface ManaOutput {
    *  control a Dragon" (Mox Jasper, `amount` 0 until then). The source taps for `gated.amount` on the turns its controller has `gate.need` of the permanents the gate names on the
    *  battlefield, and for `amount` otherwise. Present even when it adds nothing to the mana (Tainted Peak's {B}/{R} line makes one, as its {C} does): the COLOURS wait on it too. */
   gated?: { gate: BoardGate; amount: number };
+  /** A MAX-SPEED LINE (owner 2026-10-13; CR 702.179d, `MAX_SPEED_TURN`): Muraganda Raceway's "Max speed -- {T}: Add {C}{C}", Howlsquad Heavy, Endrider Catalyzer. The source taps for
+   *  `speed.amount` from turn `speed.turn` on (4: speed starts at 1 and rises once a turn), and for `amount` before (0 when the speed line is the card's only mana). Present whether or not
+   *  it beats `amount`. A scaling speed line (Howlsquad Heavy) is the incumbent 1. CEILING: speed rises only on a turn an opponent loses life, assumed to happen every turn (gate.ts
+   *  `MAX_SPEED_TURN`). A speed line's COLOURS are in `colourMaskOf` from the start, like any gated colour that is not a board count, but they ride with the source's mana, which is 0 until turn 4
+   *  when the speed line is the card's only one (Endrider Catalyzer, Howlsquad Heavy) and colourless on the card that has a plain line beside it (Muraganda Raceway: the three speed-gated lines of the corpus, 2026-10-13). */
+  speed?: { turn: number; amount: number };
 }
 
 /** THE ONE-SHOT-SPELL LINE OF A RITUAL, or null: an instant or sorcery whose derived line adds a FIXED run of mana -- Dark Ritual's "Add {B}{B}{B}."
@@ -372,10 +378,13 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[]): ManaOutput
   // gate ("you control a Dragon", metalcraft, four or more creatures) is priced turn by turn against the permanents the simulation puts onto the battlefield (`gated`, `produced`);
   // anything else the deck met at `gateMet` ("you have the initiative", Sarevok's Tome: CEILING in gate.ts) is no gate here -- the line is credited whole.
   const timed = (l: ManaLine): BoardGate | null => (l.gate !== null && !dynamicGate(l) ? boardGateOf(l.gate) : null);
-  const open = (l: ManaLine): boolean => l.gate === null || (!dynamicGate(l) && timed(l) === null);
+  const speedGated = (l: ManaLine): boolean => l.gate !== null && isSpeedGate(l.gate);
+  const open = (l: ManaLine): boolean => l.gate === null || (!dynamicGate(l) && !speedGated(l) && timed(l) === null);
+  // A SCALING speed line (Howlsquad Heavy: "{R} for each Goblin you control") is a rate, not an amount: it keeps the incumbent 1, as a scaling tap does everywhere in this module.
+  const speedLines = playableLines(dc, deck).filter((x) => speedGated(x) && x.source === "activated" && tapOnly(x) && x.restriction === null);
   const boardGated = lines.filter((x) => timed(x) !== null && x.restriction === null);
-  // A CARD WHOSE ONLY PRICED MANA WAITS ON THE BOARD makes none until it is met (Mox Jasper); every other source starts at the incumbent 1.
-  let out: ManaOutput = { amount: boardGated.length > 0 && !lines.some(open) ? 0 : 1 };
+  // A CARD WHOSE ONLY PRICED MANA WAITS ON THE BOARD (Mox Jasper) OR ON MAX SPEED (Howlsquad Heavy) makes none until it is met; every other source starts at the incumbent 1.
+  let out: ManaOutput = { amount: (boardGated.length > 0 || speedLines.length > 0) && !lines.some(open) ? 0 : 1 };
   // UNGATED: the best plain line. A mana-value floor is RECORDED rather than refused, because the deck can settle it; it only wins by beating the
   // plain amount.
   for (const l of lines.filter((x) => open(x) && x.restriction === null)) if (l.amount.fixed! > out.amount) out = { amount: l.amount.fixed! };
@@ -401,6 +410,8 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[]): ManaOutput
   let best: ManaLine | undefined;
   for (const l of boardGated) if (best === undefined || l.amount.fixed! > best.amount.fixed!) best = l;
   if (best) out = { ...out, gated: { gate: timed(best)!, amount: best.amount.fixed! } };
+  // THE MAX-SPEED LINE: from turn 4, whether or not it beats the plain amount. CEILING: one speed line per card, the best.
+  if (speedLines.length > 0) out = { ...out, speed: { turn: MAX_SPEED_TURN, amount: Math.max(...speedLines.map((l) => l.amount.fixed ?? 1)) } };
   // A WALKER WHOSE MANA IS ALL LOYALTY ABILITIES pays for as long as its priced ability can be activated. The priced ability is the best amount (a scaling one is
   // the incumbent 1, Koth), the longest-lasting of equals. CEILING: that is the only ability the walker plays, so a "+N" mana ability beside a minus one is not
   // carried on with after the minus one runs out.
@@ -434,7 +445,7 @@ function spendable(o: ManaOutput, cheapestNonland: number): ManaOutput {
 const gateHolds = (o: ManaOutput, perms: readonly Perm[]): boolean => o.gated !== undefined && holds(o.gated.gate, perms);
 const holds = (g: BoardGate, perms: readonly Perm[]): boolean => boardCount(g, perms) >= g.need;
 
-function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly Perm[]): number {
+function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly Perm[], turn: number): number {
   if (o.tron) {
     const has = (s: string): boolean =>
       lands.some((l) => l.everyLandType || l.typeLine.toLowerCase().includes(s.toLowerCase()));
@@ -445,7 +456,9 @@ function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly 
   // exist for the first four turns of every game.
   if (o.needsLands !== undefined && lands.length < o.needsLands) return 0;
   // A BOARD-COUNT GATE: the better amount once the permanents it names are out (Leafkin Druid's two, Mox Jasper's one), the plain one before.
-  return o.gated !== undefined && o.gated.amount > o.amount && gateHolds(o, perms) ? o.gated.amount : o.amount;
+  const board = o.gated !== undefined && o.gated.amount > o.amount && gateHolds(o, perms) ? o.gated.amount : o.amount;
+  // MAX SPEED: the better amount from turn 4 on (`ManaOutput.speed`).
+  return o.speed !== undefined && turn >= o.speed.turn && o.speed.amount > board ? o.speed.amount : board;
 }
 
 /** COLOURS AS A BITMASK over `COLORS`. Colourless is the EMPTY mask, not a sixth bit: `{C}` pays
@@ -1312,11 +1325,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         fixLands |= fixAll;
         for (const l of lands) {
           if (l.enteredTapped && l.enteredTurn === turn) continue;
-          const m = produced(l.output, lands, perms);
+          const m = produced(l.output, lands, perms, turn);
           if (m > 0) push(m, (l.colourGate && l.baseColors !== undefined && !holds(l.colourGate, perms) ? l.baseColors : l.colors) | fixLands, false, l);
         }
         const now = (r: Mana): { mana: number; colors: number } => ({
-          mana: r.out ? produced(r.out, lands, perms) : r.mana,
+          mana: r.out ? produced(r.out, lands, perms, turn) : r.mana,
           colors: r.colourGate && r.baseColors !== undefined && !holds(r.colourGate, perms) ? r.baseColors : r.colors,
         });
         for (const r of rocks) if (r.turn <= turn && (r.until === undefined || turn <= r.until)) { const x = now(r); if (x.mana > 0) push(x.mana, x.colors | fixAll, false); }
@@ -1381,9 +1394,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         const a = cast.accelerant!;
         if (cast.fixer) statics.push({ turn, fixer: cast.fixer });
         if (cast.perm) perms.push(cast.perm);
-        const mana = produced(cast.output, lands, perms);
+        const mana = produced(cast.output, lands, perms, turn);
         const gated = {
-          ...(cast.output.gated ? { out: cast.output } : {}),
+          ...(cast.output.gated || cast.output.speed ? { out: cast.output } : {}),
           ...(cast.colourGate && cast.baseColors !== undefined ? { colourGate: cast.colourGate, baseColors: cast.baseColors } : {}),
         };
         // A PER-SOURCE BONUS BRINGS NO MANA OF ITS OWN, so it goes to `bonuses` INSTEAD of the source
