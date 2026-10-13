@@ -312,7 +312,7 @@ const popcount = (m: number): number => { let n = 0; for (let x = m; x; x &= x -
 /** SPEND FROM A POOL OF ONE-MANA UNITS, each carrying the colours it can be: a coloured pip takes the
  *  least flexible unit that pays it, generic takes the least flexible left. Mutates `units`; false
  *  (and untouched) when the cost does not fit. */
-function spendUnits(units: number[], cost: Cost): boolean {
+export function spendUnits(units: number[], cost: Cost): boolean {
   if (!payable(units.map((colors) => ({ mana: 1, colors })), cost)) return false;
   const take = (fits: (u: number) => boolean): void => {
     let best = -1;
@@ -747,7 +747,7 @@ const TO_GRAVEYARD = /\b(?:it|that card|them|those cards) into your graveyard\b/
  *  activation that costs only mana. CEILING: a draw on any other event (Rhystic Study, "whenever a
  *  creature enters") never fires, because there is no opponent and no event board; a conditional
  *  draw, one an opponent can pay to stop, and one whose cost is more than mana are left out too. */
-function drawOf(dc: DeckCard): CardDraw | null {
+export function drawOf(dc: DeckCard): CardDraw | null {
   const abilities = dc.tags?.abilities ?? [];
   const out: CardDraw = { once: 0, upkeep: 0 };
   for (const a of abilities) {
@@ -809,6 +809,32 @@ export interface SimulateOptions {
    *  ~0.1-0.3% of held trials where a later card was advanced in -- sized in the harness. */
   forceName?: string;
   forceTurn?: number;
+  /** THE MANA-BASE FIT'S HOOKS (research/matcher/mana-base-fit.ts; #1169 task 3). All three are observation or a what-if arm and are OFF in every product call, so the
+   *  trajectory (and the random stream) is the one it was. `observe` sees each priced turn after the turn's land, accelerants and draw; `landColours` makes every land (a fetch
+   *  too) tap for exactly this colour mask; `landsUntapped` enters every land, and every land a spell fetches, untapped. */
+  observe?: (view: TurnView) => void;
+  landColours?: number;
+  landsUntapped?: boolean;
+}
+
+/** WHAT THE MANA-BASE FIT READS OF ONE TURN OF ONE GAME. `hand` is the live array (cards the fit casts are its own business; the goldfish never casts a plain spell). */
+export interface TurnView {
+  trial: number;
+  turn: number;
+  /** A land was played this turn. */
+  landDrop: boolean;
+  /** The turn's draw step took a land. */
+  drewLand: boolean;
+  hand: readonly { name: string; manaValue: number; isLand: boolean; cost: Cost | null; accelerant?: unknown; draw?: unknown; fixer?: unknown }[];
+  /** The command zone: priced cards that are not in the library. */
+  commanders: readonly { name: string; manaValue: number; cost: Cost | null; accelerant?: unknown }[];
+  /** What the board taps for this turn, and what is still unspent after the turn's accelerants and draw. */
+  sources: readonly { mana: number; colors: number }[];
+  made: number;
+  pool: number;
+  landsOnBoard: number;
+  /** Lands that entered tapped this turn. */
+  tappedNow: number;
 }
 
 export interface SimulateResult {
@@ -949,12 +975,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       isLand,
       output,
       everyLandType: isEveryLandType(dc.card.typeLine, dc.card.oracleText),
-      colors: fetches ? fetchMaskOf(dc, deck) : colourMaskOf(dc, gateDeck),
-      ...(!fetches ? colourGateFields(dc, gateDeck) : {}),
+      colors: isLand && opts.landColours !== undefined ? opts.landColours : fetches ? fetchMaskOf(dc, deck) : colourMaskOf(dc, gateDeck),
+      ...(!fetches && !(isLand && opts.landColours !== undefined) ? colourGateFields(dc, gateDeck) : {}),
       perm: permOf(dc),
       ...fixerOf(dc),
       fetches,
-      fetchTapped: fetches && fetchTappedOf(dc),
+      fetchTapped: fetches && fetchTappedOf(dc) && opts.landsUntapped !== true,
       ...(tapBonus ? { tapBonus } : {}),
       ...(landfall > 0 ? { landfall } : {}),
       ...(fetches && fetchUntapsOf(dc) ? { fetchUntapsAt: FETCH_UNTAP_LANDS } : {}),
@@ -1198,6 +1224,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     for (let turn = 1; turn <= playTo; turn++) {
       // Rule 1: one card per turn, INCLUDING turn 1. On the play there is no turn-1 draw; modelling
       // the draw is the flattering direction by one card and is stated rather than hidden.
+      const drewLand = library[0]?.isLand === true;
       drawCards(1);
       // An end-step draw lands before the next turn's decisions, so it is read here with the upkeep's.
       for (const e of engines) if (e.turn < turn) drawCards(e.slot.draw!.upkeep);
@@ -1219,7 +1246,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // cannot make wins; ties keep hand order, so a deck with no colour tension is unchanged.
       const untappedIdx: number[] = [];
       for (let i = 0; i < hand.length; i++) {
-        if (live(hand[i]) && hand[i].land !== undefined && !entersTapped(hand[i].land!, board)) untappedIdx.push(i);
+        if (live(hand[i]) && hand[i].land !== undefined && (opts.landsUntapped === true || !entersTapped(hand[i].land!, board))) untappedIdx.push(i);
       }
       // THE COLOURS A SOURCE MAKES WITH THE BOARD AS IT STANDS: a gated source (Thornspire Verge's green) makes its gated colours only once its gate holds, and the player choosing a land
       // knows it -- a land whose colour is not yet there is not the colour it was credited for.
@@ -1246,7 +1273,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           enteredTapped: played.fetches
             ? played.fetchTapped === true
               && !(played.fetchUntapsAt !== undefined && board.lands >= played.fetchUntapsAt)
-            : entersTapped(played.land!, board),
+            : opts.landsUntapped !== true && entersTapped(played.land!, board),
           typeLine: played.typeLine,
           output: played.output,
           everyLandType: played.everyLandType,
@@ -1380,10 +1407,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           // board: fewer suppliers means more of them enter tapped. Stated rather than guessed.
           // A FETCHED LAND'S IDENTITY IS UNKNOWN, but its COLOUR is not: the spell names what it may
           // find, and `fetchMask` reads that against the lands this deck actually holds.
-          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true, typeLine: "", output: { amount: 1 }, everyLandType: false, colors: cast.colors });
+          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true && opts.landsUntapped !== true, typeLine: "", output: { amount: 1 }, everyLandType: false, colors: cast.colors });
           perms.push(FETCHED_LAND);
           takeRandomLand(library, turn > turns ? spill : random);
-          if (a.fetchTapped !== true) pool += 1;
+          if (a.fetchTapped !== true || opts.landsUntapped === true) pool += 1;
         }
       } };
       castAccelerants();
@@ -1472,6 +1499,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
 
       const untapped = untappedSources();
       const made = untapped.reduce((n, x) => n + x.mana, 0);
+      if (opts.observe && turn <= turns) {
+        opts.observe({ trial: t, turn, landDrop: idx >= 0, drewLand, hand, commanders: extras, sources: untapped, made, pool, landsOnBoard: lands.length,
+          tappedNow: lands.filter((l) => l.enteredTurn === turn && l.enteredTapped).length });
+      }
       // THE PROXIES (see `boardGates`): what the mana left after this turn's plays could have cast, counted from the next turn.
       if (boardGates.length > 0) {
         let room = pool - holdUp;

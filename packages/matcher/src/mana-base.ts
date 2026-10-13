@@ -131,16 +131,27 @@ export function landTarget(inputs: LandFormulaInputs): number {
  *    every deck's own curve against the formula's target: 1-3 lands off costs about 0.03, 3-6 about
  *    0.1, 6-10 about 0.3. Flat near the target and steep past it, which is why a two-land miss is
  *    not a finding (`LAND_BAND`) and a seven-land one is.
- *  - COLOUR: 0.133 per `colourMiss` card, against what the same deck saves with every land making
- *    every colour (R^2 0.70 over the 268 decks; fitted on the precons alone it still explains 37%
- *    of the calibration decks' own).
+ *  - COLOUR: 0.146 per `colourMiss` card, against what the same deck saves with every land making
+ *    every colour (R^2 0.55 over the 268 decks, 0.78 through the origin; fitted on the precons alone it
+ *    still explains 13% of the calibration decks' own at that slope). REFIT 2026-10-13 (#1169, task 3)
+ *    on the unified colour-source count (`colourSources` is the audit's: land-fetch spells and gated
+ *    sources count), which moved the mean `colourMiss` over the 268 decks from 4.60 to 4.22. It was
+ *    0.133 on the old count. The generator is `research/matcher/mana-base-fit.ts`, a REBUILD (the
+ *    original was never committed): its simulated lost turns regressed on the old count give 0.137
+ *    where 0.133 is recorded, so the refit is 0.133 x (0.151 / 0.137) = 0.146, not the raw 0.151.
+ *    Bootstrap over decks: slope [0.135, 0.165], ratio [1.005, 1.192]. The mean colour cost stays
+ *    where it was (0.146 x 4.22 = 0.62, against 0.133 x 4.60 = 0.61).
  *  - TAPPED: 0.025 per land that always enters tapped, against the same deck with every land
  *    untapped (R^2 0.48: a tapped land costs most when it arrives early, which a count cannot see).
+ *    The tapped count did not move in #1169 (268 of 268 decks identical), so it keeps the original fit;
+ *    the rebuild gives 0.021, inside its 12% shortfall on the recorded 0.19.
  *
- *  WHERE THE LOST TURNS WERE, as built: colours 0.62 on average (0.08 in a mono-colour deck, 0.87
- *  in a three-colour one), tapped lands 0.19, the land count 0.08. The count is the smallest lever
- *  on most real decks, and the report should say so rather than lead with it. */
-export const MANA_BASE_COST = { short: 0.005, over: 0.004, colourMiss: 0.133, tapped: 0.025 } as const;
+ *  WHERE THE LOST TURNS WERE, as rebuilt 2026-10-13 (recorded then: 0.62, 0.08, 0.87, 0.19, 0.08):
+ *  colours 0.61 on average (0.12 in a mono-colour deck, 0.86 in a three-colour one), tapped lands 0.17.
+ *  The land count is not re-measured: the rebuilt arm that trades lands for spells reads 0.01, not the
+ *  recorded 0.08, so `short` and `over` stay as fitted. The count is the smallest lever on most real
+ *  decks, and the report should say so rather than lead with it. */
+export const MANA_BASE_COST = { short: 0.005, over: 0.004, colourMiss: 0.146, tapped: 0.025 } as const;
 
 const PIP_COLOURS = new Set<string>(COLORS);
 
@@ -166,7 +177,7 @@ const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
  *
  *  THE SAME NUMBER AS `manaAudit`'s `supplied`, deliberately. Until 2026-10-10 this was a different count (Amarant's red: 38 sources
  *  by the audit against 26 here; Gisa's black 38 against 33; Fairdrazi 16-17 against 9-10, because only the audit counted land-fetch
- *  spells), and `colourMiss`'s coefficient was fitted on this one. Unifying them moves it: task 3 of #1169 refits it. */
+ *  spells), and `colourMiss`'s coefficient was fitted on this one. Unifying them moved it: refit 0.133 -> 0.146 (#1169, task 3). */
 export function colourSources(deck: readonly DeckCard[], commanderNames: readonly string[] = []): Map<Color, number> {
   const commanders = new Set(commanderNames);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
@@ -202,7 +213,7 @@ export function fixerSupply(deck: readonly DeckCard[], commanderNames: readonly 
  *
  *  The same draw model the colour audit uses (`seen(turn)` cards from a 99-card library), over
  *  `colourSources`. Colours are multiplied as if independent, which they are not
- *  quite; the coefficient in `MANA_BASE_COST` was fitted on this exact figure. A hybrid pip is
+ *  quite; the coefficient in `MANA_BASE_COST` is fitted on this exact figure (refit on the unified count 2026-10-13). A hybrid pip is
  *  charged to its better-supplied colour, since that is the one a player pays it with. */
 export function colourMiss(deck: readonly DeckCard[], supplied: ReadonlyMap<Color, number>, fixed: (colour: Color, turn: number) => number = () => 0): number {
   let total = 0;
@@ -248,7 +259,7 @@ export interface ManaBaseScore {
   /** Lost turns per ten turns each part of the mana base costs, against a perfect one of the same deck. */
   costs: { count: number; colour: number; tapped: number };
   /** Their sum: the mana base's one quality number. 0 is a perfect mana base; the 268 decks run
-   *  0.1-2.9, a median of 0.76 and 1.37 at the 90th percentile. */
+   *  0.1-2.5, a median of 0.75 and 1.35 at the 90th percentile. */
   total: number;
   /** The expected number of cards whose colours are missing on their own turn (`colourMiss`). */
   colourMiss: number;
