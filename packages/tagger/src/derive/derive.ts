@@ -449,7 +449,10 @@ import { emblemRecipient } from "../emblem.js";
 // ability is not the spell's own (Eldrazi Confluence).
 // 307: #1169 task 2b-2 fix round 2: the one-turn tap bonus is also read when the model filed its add under `effectActions` (which the canonical clause record drops): Pyre Rhymer //
 // Molten Tide, "Until end of turn, whenever you tap a Mountain for mana, add an additional {R}" (owner 2026-10-13: High Tide-shape cards are ramp).
-export const DERIVE_VERSION = 307;
+// 308: #1190 (owner 2026-10-13): a Lander token is a land-fetch token line; a Treasure in a choice of tokens, beside another token, in a clause the abilities mistyped, or made by "that attacking player"
+// is a token-maker line; a token only an OPPONENT creates is none (Ingenious Mastery, Erestor of the Council); a land put onto the battlefield in a LATER clause (Caravan Vigil, Druid of the Emerald
+// Grove, Omenpath Journey) is a fetch; Piracy's "tap lands you don't control for mana" is an unread one-shot line.
+export const DERIVE_VERSION = 308;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

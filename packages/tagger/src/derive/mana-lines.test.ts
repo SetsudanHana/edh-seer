@@ -518,3 +518,64 @@ describe("a one-turn tap bonus is a tap-bonus line, not a net-0 add (owner 2026-
     expect(linesOf("Eldrazi Confluence", "token-maker")).toHaveLength(1);
   });
 });
+
+// #1190 (owner rulings 2026-10-13): the Ramp role reads these lines, so a Treasure or Lander the card makes must be one, and a token an OPPONENT makes must not.
+describe("token makers: the Treasure a card really makes, and the one it does not", () => {
+  const tokens = (name: string) => linesOf(name, "token-maker").map((l) => l.producesToken);
+  it("a CHOICE of tokens that includes a Treasure (Ant-Man's Army, The Third Doctor, Tireless Provisioner) is a Treasure maker", () => {
+    for (const n of ["Ant-Man's Army", "The Third Doctor", "Tireless Provisioner"]) expect(tokens(n), n).toEqual(["treasure"]);
+  });
+  it("a Treasure beside another token (Song of Eärendil chapter II) and one a misread clause hides (Spiked Pit Trap, Smoke Spirits' Aid) are read off the clause", () => {
+    for (const n of ["Song of Eärendil", "Spiked Pit Trap", "Smoke Spirits' Aid"]) expect(tokens(n), n).toEqual(["treasure"]);
+  });
+  it("Tempting Contract (each opponent MAY, and you create one too) and Jolene (that attacking player) make Treasures for you", () => {
+    expect(tokens("Tempting Contract")).toEqual(["treasure"]);
+    expect(tokens("Jolene, the Plunder Queen")).toEqual(["treasure"]);
+  });
+  it("a Treasure only an opponent gets is no mana of yours (Ingenious Mastery, Erestor of the Council); a gift is the opponent's too", () => {
+    for (const n of ["Ingenious Mastery", "Erestor of the Council", "Bilbo's Gambit"]) expect(tokens(n), n).toEqual([]);
+  });
+  it("a token the clause's segmenter cut off from \"Its controller creates\" is still the opponent's (Cityscape Leveler's attack trigger, Emergency Eject's Lander)", () => {
+    for (const n of ["Cityscape Leveler", "Emergency Eject"]) expect(tokens(n), n).toEqual([]);
+  });
+  it("a card that makes a Treasure for itself AND hands one to an opponent keeps exactly its own (Generous Plunderer); one that only gives it away has none (Vazi)", () => {
+    expect(tokens("Generous Plunderer")).toEqual(["treasure"]);
+    expect(tokens("Vazi, Keen Negotiator")).toEqual([]);
+  });
+  it("a Treasure shared with a table you are at (Marching Duodrone, Thran Spider's Powerstone, Prismari Command's target player) stays", () => {
+    expect(tokens("Marching Duodrone")).toEqual(["treasure"]);
+    expect(tokens("Thran Spider")).toEqual(["powerstone"]);
+    expect(tokens("Prismari Command")).toEqual(["treasure"]);
+  });
+  it("a Treasure DOUBLER makes none (Academy Manufactor)", () => {
+    expect(tokens("Academy Manufactor")).toEqual([]);
+  });
+  it("a Lander token is a land-fetch token, the way a Treasure is a mana token (Beamsaw Prospector, Divert Disaster)", () => {
+    expect(only("Beamsaw Prospector", "token-maker")).toMatchObject({ producesToken: "lander", source: "token-maker", unread: false, colourless: 0 });
+    expect(tokens("Divert Disaster")).toEqual(["lander"]);
+  });
+});
+
+describe("a land fetch whose landing is printed in a LATER clause", () => {
+  it("Caravan Vigil puts the land onto the battlefield only if a creature died; Druid of the Emerald Grove only on a high roll", () => {
+    expect(tagsOf("Caravan Vigil").landFetch).toMatchObject({ kind: "spell", reach: WUBRG });
+    expect(only("Caravan Vigil", "fetch").gate).toMatch(/creature died/);
+    expect(tagsOf("Druid of the Emerald Grove").landFetch).toMatchObject({ kind: "permanent", tapped: true });
+    expect(only("Druid of the Emerald Grove", "fetch").gate).not.toBeNull();
+  });
+  it("Omenpath Journey puts a land it exiled onto the battlefield each end step", () => {
+    expect(tagsOf("Omenpath Journey").landFetch).toMatchObject({ kind: "permanent", tapped: true });
+    expect(only("Omenpath Journey", "fetch").gate).toBeNull();
+  });
+  it("the ordinary fetches still read (Kodama's Reach, Scholar of New Horizons)", () => {
+    expect(tagsOf("Kodama's Reach").landFetch).toBeDefined();
+    expect(tagsOf("Scholar of New Horizons").landFetch).toBeDefined();
+  });
+});
+
+describe("Piracy: mana from lands you do not control", () => {
+  it("is a one-shot spell line whose amount derive cannot read, so it is unread rather than a colour", () => {
+    expect(only("Piracy")).toMatchObject({ source: "one-shot-spell", unread: true, repeats: "once" });
+    expect(tagsOf("Piracy").isOneShot).toBe(true);
+  });
+});

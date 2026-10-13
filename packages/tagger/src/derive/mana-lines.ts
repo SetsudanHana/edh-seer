@@ -341,13 +341,53 @@ const MANA_TOKENS: Record<string, Pick<ManaLine, "colours" | "colourless" | "any
   powerstone: { colours: [], colourless: 1, anyColour: null, restriction: { spend: "can't be spent to cast a nonartifact spell", typeName: "artifact" } },
   "eldrazi-spawn": { colours: [], colourless: 1, anyColour: null, restriction: null },
   "eldrazi-scion": { colours: [], colourless: 1, anyColour: null, restriction: null },
+  // A LANDER IS A LAND-FETCH TOKEN, not a mana one (owner 2026-10-13, #1190: "a land-fetch token like Treasure is a mana token; its makers keep the Ramp role"): "{2}, {T}, Sacrifice this token:
+  // Search your library for a basic land card, put it onto the battlefield tapped". It states no mana, so its colours are empty and the line is no colour source (a token-maker never is).
+  lander: { colours: [], colourless: 0, anyColour: null, restriction: null },
 };
-const tokenKey = (sub: SubjectFilter["subtype"]): string | null => {
-  const key = (Array.isArray(sub) ? sub.join("-") : sub ?? "").toLowerCase();
+const tokenKeyOne = (sub: string): string | null => {
+  const key = sub.toLowerCase();
   if (key === "eldrazi-spawn" || key === "spawn-eldrazi") return "eldrazi-spawn";
   if (key === "eldrazi-scion" || key === "scion-eldrazi") return "eldrazi-scion";
   return key in MANA_TOKENS ? key : null;
 };
+/** THE MANA (OR LAND-FETCH) TOKEN A TOKEN-GENERATION SUBJECT NAMES. A single subtype, a CHOICE ("a Food token or a Treasure token", Tireless Provisioner: the subtype is the list ["food","treasure"]), or a
+ *  token beside another (Song of Eärendil's Treasure and Bird: `anyOf`). A choice that includes a mana token counts (owner 2026-10-13, #1190: "read their Treasure as a token-maker line").
+ *  CEILING: the first mana token found; a choice of Treasure or Gold names one line. */
+const tokenKey = (sub: SubjectFilter["subtype"], anyOf?: readonly Partial<SubjectFilter>[]): string | null => {
+  const names = [Array.isArray(sub) ? sub : sub ? [sub] : [], ...(anyOf ?? []).map((o) => (Array.isArray(o.subtype) ? o.subtype : o.subtype ? [o.subtype] : []))].flat();
+  const joined = Array.isArray(sub) ? tokenKeyOne(sub.join("-")) : null;
+  return joined ?? names.map(tokenKeyOne).find((k): k is string => k !== null) ?? null;
+};
+
+/** WHO GETS THE TOKEN, from the printed words (a token-maker line carries no recipient of its own, and the grammar types "an opponent creates" as `any`): "an opponent creates two Treasure tokens"
+ *  (Ingenious Mastery), "each opponent who voted ... creates a Treasure token" (Erestor of the Council) hand the mana to the OTHER side of the table, and an opponent's Treasure is not your ramp
+ *  (owner 2026-10-13, #1190). `YOU_CREATE` is the other half: "you create" (Tempting Contract's second sentence), "you and target opponent each create" (Thran Spider), "each player creates"
+ *  (Marching Duodrone), "that attacking player creates" (Jolene: any player attacking your opponents, you included), "target player creates" (Prismari Command: you may name yourself). */
+const OPP_RECIPIENT = /\b(?:an?|each|target|defending|those) opponents?(?:\s+who\s+[^.,]*?|\s+may)?\s+creates?\b|\b(?:its|their|that (?:creature|permanent|spell)'s) controller(?:\s+may)?\s+creates?\b/i;
+const YOU_CREATE = /\byou (?:may )?create\b|\byou and [^.]*\bcreate\b|\beach player (?:may )?creates?\b|\b(?:that|target|each) (?:attacking )?player (?:may )?creates?\b/i;
+/** A sentence about TOKEN CREATION being replaced or doubled makes none (Academy Manufactor, Xorn, Jolene's "plus an additional Treasure token"). */
+const REPLACES_CREATION = /\bif you would create\b|\binstead create\b|\bthose tokens plus\b/i;
+const handsTokenToOpponentOnly = (text: string, abilityControl: string | undefined): boolean =>
+  (abilityControl === "opp" || OPP_RECIPIENT.test(text)) && !YOU_CREATE.test(text);
+/** THE WHOLE CARD'S SENTENCES THAT NAME THE TOKEN decide first (reminder text stripped): a clause the segmenter cut short (Cityscape Leveler's attack trigger loses "Its controller creates a tapped Powerstone")
+ *  would read as yours. The token is the opponent's only when EVERY sentence naming it hands it to an opponent. With no such sentence the clause's own words decide. */
+const TOKEN_WORD: Record<string, string> = { treasure: "treasure", gold: "gold", powerstone: "powerstone", lander: "lander", "eldrazi-spawn": "eldrazi", "eldrazi-scion": "eldrazi" };
+function opponentOnlyToken(oracleText: string, key: string, clauseText: string, abilityControl: string | undefined): boolean {
+  const word = TOKEN_WORD[key];
+  const named = word === undefined ? [] : sentencesOf(oracleText.replace(/\([^)]*\)/g, " ")).filter((x) => new RegExp(`\\b${word}`, "i").test(x) && /\bcreates?\b/i.test(x));
+  // ...or the clause's own words say so (Generous Plunderer's "When you do, target opponent creates a tapped Treasure token" beside its own).
+  if (handsTokenToOpponentOnly(clauseText, abilityControl)) return true;
+  if (named.length > 0) return named.every((x) => OPP_RECIPIENT.test(x) && !YOU_CREATE.test(x));
+  return false;
+}
+/** A "create" action in a clause the abilities did not turn into a token-generation of a mana token: the Treasure a Saga chapter makes beside a Bird, the one inside an Aura token's quoted trigger, one
+ *  the model typed `static` with no subtype (Spiked Pit Trap). */
+const CREATES_MANA_TOKEN = /\bcreates?\b[^.]*?\b(treasure|gold|powerstone|lander|eldrazi spawn|eldrazi scion)\b/i;
+const LATER_LANDING = /\bput\b[^.]*?\b(?:that card|those cards?|one of those cards|it|them)\b[^.]*?\bonto the battlefield\b/i;
+const landishSearch = (f?: SubjectFilter): boolean => f !== undefined && (f.type === "land" || f.basic === true);
+/** "Until end of turn, you may tap lands you don't control for mana" (Piracy): mana with no "add" in the text, a spell's own. */
+const TAPS_FOR_MANA = /\byou may tap [^.]*?\bfor mana\b/i;
 
 const BASIC_COLOUR: Record<string, string> = { plains: "W", island: "U", swamp: "B", mountain: "R", forest: "G" };
 
@@ -450,7 +490,7 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (source === null) continue;
       // A SPELL'S ADD IS ITS OWN: an add that sits only inside a quoted ability belongs to the token or permanent the spell makes (Eldrazi Confluence's Scion: "Sacrifice this
       // token: Add {C}"). The token-maker line states it.
-      if (source === "one-shot-spell" && !ADDS_MANA_OR_S.test(text.replace(QUOTED, ""))) continue;
+      if (source === "one-shot-spell" && !ADDS_MANA_OR_S.test(text.replace(QUOTED, "")) && !TAPS_FOR_MANA.test(text)) continue;
       // A SPELL THAT WAITS FOR A TAP is a tap bonus for the turn when it says so, and otherwise an unread trigger: banking its add as a plain one-shot (High Tide read as
       // "adds {U}, costs {U}, nets 0") is a guess where a refusal belongs.
       const oneTurn = source === "one-shot-spell" ? ONE_TURN_TAP_BONUS.exec(text.trim()) : null;
@@ -494,9 +534,10 @@ export function deriveMana(input: ManaInput): ManaResult {
   const reach = new Set<string>();
   for (const a of abilities) {
     const face = (a.face ?? 0) > 0 ? 1 : 0;
-    if (a.effect.kind === "token-generation" && a.effect.subject?.control !== "opp") {
-      const key = tokenKey(a.effect.subject?.subtype);
+    if (a.effect.kind === "token-generation") {
+      const key = tokenKey(a.effect.subject?.subtype, a.effect.subject?.anyOf);
       if (key === null) continue;
+      if (opponentOnlyToken(input.oracleText ?? "", key, input.textOf(clauses.find((c) => c.id === a.clause) ?? ({ id: -1 } as ClauseRecord)), a.effect.subject?.control)) continue;
       const dedupe = `token:${a.clause}:${key}`;
       if (seenClauses.has(dedupe)) continue;
       seenClauses.add(dedupe);
@@ -535,6 +576,19 @@ export function deriveMana(input: ManaInput): ManaResult {
     if (landings.length === 0 && a.effect.kind === "search" && !hasEnters && /\bonto the battlefield\b/i.test(clauseText) && a.effect.subject?.control !== "opp") {
       landings.push({ subject: a.effect.subject ?? ({} as SubjectFilter), tapped: /\bonto the battlefield tapped\b/i.test(clauseText) });
     }
+    // THE LAND IS PUT ONTO THE BATTLEFIELD IN A LATER CLAUSE (#1190): "search ..., put it into your hand. Morbid -- You may put that card onto the battlefield instead" (Caravan Vigil), the d20 table's
+    // "Put one of those cards onto the battlefield tapped" (Druid of the Emerald Grove), "At the beginning of your end step, choose a card at random exiled with this enchantment and put it onto the
+    // battlefield tapped" (Omenpath Journey). The later clause's own condition is the gate; a d20 table is gated on the roll.
+    // CEILING: a later clause that puts "that card / those cards / it / them" onto the battlefield after YOUR land search; one that puts a different object there is not read.
+    let laterGate: string | null | undefined;
+    if (landings.length === 0 && a.effect.kind === "search" && !hasEnters && landishSearch(a.effect.subject) && a.effect.subject?.control !== "opp") {
+      const later = clauses.find((c) => Number(c.id) > Number(a.clause) && faceOf(c.id, input.clauseFaces) === face && LATER_LANDING.test(input.textOf(c)));
+      if (later) {
+        const laterText = input.textOf(later);
+        landings.push({ subject: a.effect.subject ?? ({} as SubjectFilter), tapped: /\bonto the battlefield tapped\b/i.test(laterText) });
+        laterGate = fetchGate(laterText) ?? (/\broll(?:s)? an? d\d+\b/i.test(clauseText) ? "the d20 roll lets it onto the battlefield" : null);
+      }
+    }
     for (const { subject, tapped } of landings) {
       const named = [subject.subtype, found?.subtype].flat().filter((x): x is string => typeof x === "string").map((x) => x.toLowerCase());
       // A land: typed so, a basic, an "X or Desert card" (anyOf), or a basic land TYPE ("a Mountain card", Alpine Guide).
@@ -553,11 +607,39 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (colours.length === 0 || (Array.isArray(subject.type) ? subject.type : [subject.type]).includes("creature")) continue;
       lines.push({
         face, source: "fetch", repeats: a.repeats ?? null, cost, colours, colourless: 0, anyColour: null, unread: false,
-        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: afterCost ?? fetchGate(clauseText), restriction: null, timing: "now", producesToken: null, trigger: null, triggerSubject: null,
+        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: afterCost ?? (laterGate !== undefined ? laterGate : fetchGate(clauseText)), restriction: null, timing: "now", producesToken: null, trigger: null, triggerSubject: null,
       });
       fetchKind = a.kind === "on-cast" || fetchKind === "spell" ? "spell" : "permanent";
       fetchTapped = fetchTapped && tapped;
       for (const c of colours) reach.add(c);
+    }
+  }
+
+  // --- a mana token a CLAUSE creates that no ability named (#1190) ---------------------------------------------
+  // The Treasure beside a Bird in a Saga chapter (when the ability's subject is read as the Bird), the one inside an Aura token's quoted trigger (Smoke Spirits' Aid), one a misread clause typed `static`
+  // with no subtype (Spiked Pit Trap's 10-20 roll). Read off the clause's own "create" action, under the same recipient and replacement tests as the abilities above.
+  // CEILING: a Treasure inside any quoted ability of a token the clause makes is credited to the card that makes the token, as the Aura's is.
+  for (const c of clauses) {
+    const text = input.textOf(c);
+    if (REPLACES_CREATION.test(text)) continue;
+    for (const action of c.actions ?? []) {
+      if (action.verb !== "create") continue;
+      const m = CREATES_MANA_TOKEN.exec(`create ${action.object ?? ""}`);
+      if (!m) continue;
+      const key = tokenKeyOne(m[1]!.toLowerCase().replace(/\s+/g, "-"));
+      if (key !== null && opponentOnlyToken(input.oracleText ?? "", key, text, abilities.find((ab) => ab.clause === c.id && ab.effect.kind === "token-generation")?.effect.subject?.control)) continue;
+      if (key === null || seenClauses.has(`token:${c.id}:${key}`)) continue;
+      // A token whose own quoted ability adds the mana is already a "granted" line (Vraska, Soul of Stone): the Treasure-subtyped creature is one token, not two.
+      if (lines.some((l) => l.source === "token-maker" && l.producesToken === "granted" && l.face === faceOf(c.id, input.clauseFaces))) continue;
+      seenClauses.add(`token:${c.id}:${key}`);
+      const face = faceOf(c.id, input.clauseFaces);
+      const own = abilities.find((ab) => ab.clause === c.id);
+      const cost = c.abilityType === "activated" ? parseCost(input.clauseCosts?.[c.id as number] ?? colonHead(text), selfNames) : noCost();
+      if (c.abilityType === "spell") cost.mana = faceMV(face);
+      lines.push({
+        face, source: "token-maker", repeats: own?.repeats ?? null, cost, ...MANA_TOKENS[key]!, unread: false,
+        amount: { fixed: 1, scales: null }, net: 1 - cost.mana, gate: null, timing: "now", producesToken: key, trigger: null, triggerSubject: null,
+      });
     }
   }
 
