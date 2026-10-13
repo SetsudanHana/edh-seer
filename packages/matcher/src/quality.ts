@@ -5,6 +5,7 @@
 import type { Ability, SubjectFilter } from "@edh-seer/tagger";
 import { BUILD_CATEGORIES, detectBuildCategories, type BuildCategory } from "./build.js";
 import { bestPerFamily, manaOf, ratesOf, spanOf, type RateFamily, type RateSpan } from "./rate.js";
+import { cardLines } from "./mana-lines.js";
 import { ratePercentile } from "./rate-stats.js";
 import type { QualityWeights, RoleWeights } from "./quality-fit.js";
 import weightsJson from "../quality-weights.json" with { type: "json" };
@@ -198,7 +199,10 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
     && !(a.emits ?? []).some((e) => e.subject.control === "opp"));
   const types = (d.tags?.characteristics.types ?? []).map((t) => t.toLowerCase());
   out.extraValue = (types.includes("creature") ? 1 : 0) + (others.length > 0 ? 1 : 0);
-  if (role === "ramp") out.restriction = /can.t be spent|spend this mana only/i.test(d.card.oracleText ?? "") ? 1 : 0;
+  // A GATED MANA LINE IS A RESTRICTION TOO (owner 2026-10-13, #1169: "gated is conditional same as lands, so it should impact the card quality"): Mox Jasper makes mana only with a Dragon, Sceptre
+  // of Eternal Glory's three needs three lands of one name. The ingredient is deck-free, like the rest: it rates the gated source below the ungated one everywhere, and `gate.ts` is what
+  // credits it in a deck that meets the gate (goldfish, Karsten, the swaps' protection).
+  if (role === "ramp") out.restriction = /can.t be spent|spend this mana only/i.test(d.card.oracleText ?? "") || cardLines(d).some((l) => l.gate !== null) ? 1 : 0;
   if (ANSWERS.has(role)) {
     const subjects = abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.subject.control !== "you").map((e) => e.subject));
     if (subjects.length > 0) out.breadth = Math.max(...subjects.map(breadthOf));

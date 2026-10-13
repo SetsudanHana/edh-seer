@@ -447,7 +447,9 @@ import { emblemRecipient } from "../emblem.js";
 // 306: #1169 task 2b-2 follow-up: "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}" (High Tide, Bubbling Muck) is a one-turn
 // tap-bonus line (`untilEndOfTurn`, trigger `tapped-for-mana`), not a net-0 add; a spell whose tap trigger is not that shape banks no line; an add inside a token's quoted
 // ability is not the spell's own (Eldrazi Confluence).
-export const DERIVE_VERSION = 306;
+// 307: #1169 task 2b-2 fix round 2: the one-turn tap bonus is also read when the model filed its add under `effectActions` (which the canonical clause record drops): Pyre Rhymer //
+// Molten Tide, "Until end of turn, whenever you tap a Mountain for mana, add an additional {R}" (owner 2026-10-13: High Tide-shape cards are ramp).
+export const DERIVE_VERSION = 307;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

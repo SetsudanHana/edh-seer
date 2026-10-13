@@ -496,6 +496,13 @@ describe("a one-turn tap bonus is a tap-bonus line, not a net-0 add (owner 2026-
   it("Bubbling Muck reads the same, for Swamps", () => {
     expect(only("Bubbling Muck")).toMatchObject({ source: "one-shot-spell", trigger: "tapped-for-mana", triggerSubject: "a Swamp", untilEndOfTurn: true, colours: ["B"] });
   });
+  it("Molten Tide (Pyre Rhymer // Molten Tide): the add the model filed under effectActions, which the canonical record drops, is read off the printed text", () => {
+    expect(only("Pyre Rhymer")).toMatchObject({ face: 1, source: "one-shot-spell", trigger: "tapped-for-mana", triggerSubject: "a Mountain", timing: "on-trigger", untilEndOfTurn: true,
+      colours: ["R"], amount: { fixed: 1, scales: null }, cost: { mana: 1 }, net: 0, gate: null });
+  });
+  it("a spell whose own text is not the tap bonus gets no line from the fallback (the front face's Prowess and prepare)", () => {
+    expect(linesOf("Pyre Rhymer")).toHaveLength(1);
+  });
   it("a permanent's standing tap bonus is no one-turn line", () => {
     expect(only("Mana Flare", "trigger")).not.toHaveProperty("untilEndOfTurn");
     expect(only("Forsaken Monument", "trigger")).not.toHaveProperty("untilEndOfTurn");

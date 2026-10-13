@@ -157,11 +157,38 @@ test("classifyAccelerant reads the derived mana lines and refuses a one-shot", (
   expect(classifyAccelerant(card("Sol Ring", "Artifact", 1, "{T}: Add {C}{C}.", ["C"]))).toBeNull();
 });
 
+/** A hundred-card deck with a dozen Dragons: Mox Jasper's gate is met (gate.ts). */
+const deckOfDragons = (extra: DeckCard[] = []): DeckCard[] => [...extra, ...Array.from({ length: 12 }, (_, i) => card(`Dragon ${i}`, "Creature — Dragon", 5)), ...spells(88 - extra.length, 3)];
+
+// A GATED SOURCE IS STILL A SOURCE, CONDITIONED ON THE DECK (owner 2026-10-13, #1169 2b-2): "it matches only specific themes, like in this case dragons".
+test("a gated mana line plays in a deck that meets its gate and not in one that does not: Mox Jasper is a rock among Dragons", () => {
+  const jasper = real("Mox Jasper");
+  const dragons = deckOfDragons([jasper]);
+  const none = [jasper, ...spells(99, 3)];
+  expect(classifyAccelerant(jasper)).toBeNull();
+  expect(classifyAccelerant(jasper, none)).toBeNull();
+  expect(classifyAccelerant(jasper, dragons)).toEqual({ name: "Mox Jasper", manaValue: 0, kind: "rock" });
+  expect(manaOutput(jasper, dragons)).toEqual({ amount: 1 });
+  // any colour, once the gate is met: the model plays the line's colours
+  expect(colourMaskOf(jasper, none)).toBe(0);
+  expect(colourMaskOf(jasper, dragons)).toBe(colorMask(WUBRG));
+  // and the simulation sees it: the same deck prices one more accelerant with the Dragons than without
+  expect(manaAvailability(dragons, { trials: 50 }).accelerants).toBe(1);
+  expect(manaAvailability([jasper, ...spells(11, 5), ...basics(36), ...spells(51, 3)], { trials: 50 }).accelerants).toBe(0);
+});
+
+test("the board-count gates stay priced turn by turn whatever the deck: Sceptre of Eternal Glory still waits on its three lands (not 'met' from the first land)", () => {
+  const sceptre = real("Sceptre of Eternal Glory");
+  const forests = [sceptre, ...basics(40, "Forest").map((d) => ({ ...d, card: { ...d.card, name: "Forest" } })), ...spells(59, 3)];
+  expect(manaOutput(sceptre, forests)).toEqual({ amount: 3, needsLands: 3 });
+  expect(manaOutput(sceptre, forests)).toEqual(manaOutput(sceptre));
+});
+
 // WHAT THE DERIVED READING DROPS, AND WHY (#1169 task 2b-1). Each card below was an accelerant when the goldfish read printed text and `producedMana`.
 test("derived lines the goldfish cannot play are not accelerants: a gate it cannot check, a cost it cannot pay, a trigger it has no event for", () => {
-  // A GATE THE MODEL CANNOT CHECK: Mox Jasper needs a Dragon, Howlsquad Heavy needs max speed.
-  expect(classifyAccelerant(real("Mox Jasper"))).toBeNull();
+  // A GATE NO DECKLIST SETTLES: Howlsquad Heavy needs max speed (a game state), in any deck. Mox Jasper's Dragon IS a decklist's: see the next test.
   expect(classifyAccelerant(real("Howlsquad Heavy"))).toBeNull();
+  expect(classifyAccelerant(real("Howlsquad Heavy"), deckOfDragons())).toBeNull();
   // A COST WITH NO BOARD TO PAY FROM: another creature sacrificed (Phyrexian Altar), another permanent tapped (Springleaf Drum), a counter (Wall of Roots),
   // or exiling the card from hand (Simian Spirit Guide) is not a tap this model can pay. (A planeswalker's "+N: Add" IS playable -- see the loyalty test.)
   for (const n of ["Phyrexian Altar", "Springleaf Drum", "Wall of Roots", "Simian Spirit Guide"]) {

@@ -23,6 +23,8 @@ const data = await import(`${R}/data/src/index.ts`);
 const tagger = await import(`${R}/tagger/src/index.ts`);
 const m = await import(`${R}/matcher/src/index.ts`);
 const eng = await import(`${R}/engine/src/index.ts`);
+// classifyAccelerant is not on the matcher index: reading it from there left every `accel` empty until 2026-10-13.
+const gf = await import(`${R}/matcher/src/goldfish.ts`);
 const { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, CALIBRATION_DECKS, DECKS_DIR } = data;
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
@@ -39,7 +41,7 @@ for (const f of files) {
   const rep: any = m.analyzeDeckStructured(dcs, cn, undefined, undefined, new eng.ComboIndex(combos));
   const ramp = [...(m.detectBuildCategories(dcs).get("ramp") ?? [])].sort();
   const accel: Record<string, any> = {};
-  for (const dc of dcs) { const a = m.classifyAccelerant?.(dc); if (a) accel[dc.card.name] = a.kind; }
+  for (const dc of dcs) { const a = gf.classifyAccelerant(dc, dcs); if (a) accel[dc.card.name] = a.kind; }
   out[f.split("/").pop()!.replace(".txt", "")] = { rep, ramp, accel };
 }
 writeFileSync(process.argv[2]!, JSON.stringify(out));

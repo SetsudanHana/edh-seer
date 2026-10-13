@@ -34,7 +34,7 @@ for (const p of parsed) {
   const pool = dcs.filter((d: any) => !inDeck.has(d.card.name) && ramp(d) && (d.card.colorIdentity ?? []).every((c: string) => identity.has(c)))
     .map((d: any) => ({ dc: d, roles: q.rolesOfCard(d), links: 0 }));
   const cuts = deck.filter((d: any) => !cn.includes(d.card.name) && ramp(d));
-  const res = us.roleOptions("ramp", cuts, pool, undefined, ma.colourDeficit(deck, cn), us.swapCloser(deck, cn));
+  const res = us.roleOptions("ramp", cuts, pool, undefined, ma.colourDeficit(deck, cn), us.swapCloser(deck, cn), undefined, undefined, deck);
   out[p.f.split("/").pop()!] = res.flatMap((r: any) => r.options.filter((o: any) => o.colour).map((o: any) => `${r.cut} -> ${o.add} [${o.colour.join("")}]`)).sort();
 }
 void byName;

@@ -43,7 +43,7 @@ export function silenceRamp(library: readonly DeckCard[], rampNames: ReadonlySet
   let silenced = 0, blind = 0;
   const deck = library.map((dc) => {
     if (isLand(dc) || !rampNames.has(dc.card.name)) return dc;
-    if (!classifyAccelerant(dc)) { blind++; return dc; }
+    if (!classifyAccelerant(dc, library)) { blind++; return dc; }
     silenced++;
     return { card: { ...dc.card, oracleText: "" }, tags: null } as DeckCard;
   });

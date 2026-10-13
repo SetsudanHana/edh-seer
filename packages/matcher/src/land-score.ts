@@ -178,8 +178,8 @@ export function basicsFloor(deck: readonly DeckCard[]): number {
  *  card's primary job is not mana. CARDS ARE READ BY PRIMARY USE (owner, 2026-10-08): an extra
  *  ACTIVATED ability is an upside, not the card's job, so Mind Stone's draw and Ring of the Lucii's
  *  tapper stay nameable. */
-function plainRock(dc: DeckCard): boolean {
-  if (netYield(dc) === null) return false;
+function plainRock(dc: DeckCard, deck: readonly DeckCard[]): boolean {
+  if (netYield(dc, deck) === null) return false;
   return (dc.tags?.abilities ?? []).every((a) => a.kind === "activated");
 }
 
@@ -244,11 +244,11 @@ export function colourReplacements(
         continue;
       }
       const dork = /\bcreature\b/i.test(dc.card.typeLine);
-      if (!makesAnyMana(dc) || (dork ? !isPlainDork(dc) || creatureSubtypes(dc).some((t) => themed.has(t)) : !/\bartifact\b/i.test(dc.card.typeLine))) continue;
+      if (!makesAnyMana(dc) || (dork ? !isPlainDork(dc, deck) || creatureSubtypes(dc).some((t) => themed.has(t)) : !/\bartifact\b/i.test(dc.card.typeLine))) continue;
       // A ROCK THAT MAKES THE COLOUR IS NEVER NAMED, and only a PLAIN rock is (coordinator, 2026-10-08):
       // trading ramp that makes the colour for a land is not a colour fix, and an artifact that does
       // something else is a utility card.
-      if (made.includes(colour) || (!dork && !plainRock(dc)) || netPositiveMana(dc) || made.some((c) => otherShort.includes(c as Color))) continue;
+      if (made.includes(colour) || (!dork && !plainRock(dc, deck)) || netPositiveMana(dc, deck) || made.some((c) => otherShort.includes(c as Color))) continue;
       ranked.push({ name: dc.card.name, tier: made.some((c) => needed.has(c as Color)) ? 3 : 1, land: false, tapped: 0, colours: made.filter((c) => needed.has(c as Color)).length, hidden: made.filter((c) => (anyShort[c as Color] ?? 0) > 0).length });
     }
   }

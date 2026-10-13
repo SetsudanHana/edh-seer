@@ -321,8 +321,8 @@ function fetchGate(text: string): string | null {
 }
 /** A TAP BONUS FOR ONE TURN (High Tide, Bubbling Muck): "Until end of turn, whenever <a player | you> taps <a land filter> for mana, <that player | you> adds an additional {U}".
  *  Read off the clause TEXT because the grammar path keeps the tap as a condition of the add and the model path as a trigger -- the same card, two records. Group 1 is the
- *  filter ("an Island"). CEILING: the one printed shape; a spell that waits for a tap in any other words (Pyre Rhymer // Molten Tide, whose add the model filed under
- *  `effectActions`) is not read, and banks no line. */
+ *  filter ("an Island"). CEILING: the one printed shape; a spell that waits for a tap in any other words is not read, and banks no line. Pyre Rhymer // Molten Tide, whose add the
+ *  model filed under `effectActions` (which the canonical record drops), has its add read off this same text. */
 const ONE_TURN_TAP_BONUS = /^until end of turn, whenever (?:a player|you) taps? (an? [^,]*?) for mana, (?:that player|you)? ?adds? an additional\b/i;
 const QUOTED = /"[^"]*"/g;
 /** `ADDS_MANA`, also for "that player ADDS an additional {U}". */
@@ -384,10 +384,17 @@ export function deriveMana(input: ManaInput): ManaResult {
   for (const clause of clauses) {
     // "one energy" / "an amount of {E} ..." is the clause layer reading an energy counter as mana (Roil Cartographer,
     // Aetherflux Conduit); `isEnergyObject` refuses the bare `{E}` and these two are the other spellings.
-    const adds = (clause.actions ?? []).filter((a) => a.verb === "add-mana" && !isEnergyObject(a.object ?? "") && !/\{E\}|\benergy\b/i.test(a.object ?? ""));
+    const text = input.textOf(clause);
+    let adds = (clause.actions ?? []).filter((a) => a.verb === "add-mana" && !isEnergyObject(a.object ?? "") && !/\{E\}|\benergy\b/i.test(a.object ?? ""));
+    // THE MODEL FILES A SPELL'S TAP BONUS UNDER `effectActions` (Pyre Rhymer // Molten Tide: `actions` = [tap this], `effectActions` = [add-mana {R}]), which the canonical record
+    // drops, so the clause arrives with no add at all. The one-turn tap bonus is read off its printed text instead, as it is for High Tide: the symbols after "an additional".
+    // CEILING: that one printed shape only; any other add the model filed under `effectActions` is still unseen.
+    if (adds.length === 0 && clause.abilityType === "spell" && ONE_TURN_TAP_BONUS.test(text.trim())) {
+      const symbols = /\badditional\s+((?:\{[^}]+\})+)/i.exec(text)?.[1];
+      if (symbols) adds = [{ verb: "add-mana", object: symbols }];
+    }
     if (adds.length === 0) continue;
     const id = clause.id;
-    const text = input.textOf(clause);
     const texts = [text, ...(clause.actions ?? []).filter((a) => a.verb === "other").map((a) => a.object ?? "")].filter(Boolean);
     const matching = abilities.filter((a) => a.clause === id && a.effect.kind === "mana-generation");
     const face = faceOf(id, input.clauseFaces);

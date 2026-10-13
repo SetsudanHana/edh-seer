@@ -3287,5 +3287,1711 @@
     }
    ]
   }
+ },
+ "Path of Annihilation": {
+  "card": {
+   "name": "Path of Annihilation",
+   "typeLine": "Enchantment",
+   "manaValue": 4,
+   "oracleText": "Devoid (This card has no color.)\nWhen this enchantment enters, create two 0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"\nEldrazi you control have \"{T}: Add one mana of any color.\"\nWhenever you cast a creature spell with mana value 7 or greater, you gain 4 life.",
+   "keywords": [
+    "Devoid"
+   ],
+   "colors": [],
+   "colorIdentity": [
+    "G"
+   ],
+   "layout": "normal",
+   "manaCost": "{3}{G}"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af1222ee3",
+   "oracleId": "eca6ffeb-463c-40b0-90b4-7e09e5579c10",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "token-generation",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "creature",
+       "subtype": [
+        "eldrazi",
+        "spawn"
+       ],
+       "scope": "all",
+       "colors": [
+        "C"
+       ],
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 0
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "enchantment",
+       "self": true
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "create-token",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "colors": [
+         "C"
+        ],
+        "type": "creature",
+        "subtype": [
+         "eldrazi",
+         "spawn"
+        ],
+        "scope": "all",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 0
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       }
+      },
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "colors": [
+         "C"
+        ],
+        "type": "creature",
+        "subtype": [
+         "eldrazi",
+         "spawn"
+        ],
+        "scope": "all",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 0
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "keyword-grant"
+     },
+     "clause": 3,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 4,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "stats": [
+        {
+         "metric": "mana-value",
+         "op": "gte",
+         "value": 7
+        }
+       ]
+      }
+     },
+     "amount": "4",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 5,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 4,
+      "ceiling": 4
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [
+     "G"
+    ],
+    "cmc": 4,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "devoid"
+    ]
+   },
+   "deriveVersion": 306,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "6b04b719a91876fb3508640d2a0114f4359fabdb912dec3c5fb44a3fe935520e",
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "static-grant",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "token-maker",
+     "repeats": "once",
+     "cost": {
+      "mana": 0,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "restriction": null,
+     "unread": false,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "net": 2,
+     "gate": null,
+     "timing": "now",
+     "producesToken": "eldrazi-spawn",
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
+ },
+ "Cryptolith Rite": {
+  "card": {
+   "name": "Cryptolith Rite",
+   "typeLine": "Enchantment",
+   "manaValue": 2,
+   "oracleText": "Creatures you control have \"{T}: Add one mana of any color.\"",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "layout": "normal",
+   "manaCost": "{1}{G}"
+  },
+  "tags": {
+   "_id": "6a932a51f6eb344af1938924",
+   "oracleId": "043f869d-b11c-4c0d-9591-2bf0df7bde55",
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "keyword-grant",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     },
+     "clause": 1,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 306,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "67f3cb4199a3b02cf285ec35d977789d1e76ce979634f5014e82680aa8f0d7b3",
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "static-grant",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
+ },
+ "Mox Jasper": {
+  "card": {
+   "name": "Mox Jasper",
+   "typeLine": "Legendary Artifact",
+   "manaValue": 0,
+   "oracleText": "{T}: Add one mana of any color. Activate only if you control a Dragon.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "layout": "normal",
+   "manaCost": "{0}"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af1222c47",
+   "oracleId": "d5fca77c-377f-41b4-a9e9-e91a89d351cc",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "legendary",
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 306,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "6821deadcba25077968411786dcc4575c53b60db754ebbc05c6c8e9493d07eef",
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": "you control a dragon",
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
+ },
+ "Mox Opal": {
+  "card": {
+   "name": "Mox Opal",
+   "typeLine": "Legendary Artifact",
+   "manaValue": 0,
+   "oracleText": "Metalcraft — {T}: Add one mana of any color. Activate only if you control three or more artifacts.",
+   "keywords": [
+    "Metalcraft"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "layout": "normal",
+   "manaCost": "{0}"
+  },
+  "tags": {
+   "_id": "6a932a57f6eb344af193fd4e",
+   "oracleId": "de2440de-e948-4811-903c-0bbe376ff64d",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "threshold": {
+      "atLeast": 3
+     },
+     "thresholdSubject": {
+      "control": "you",
+      "token": null,
+      "type": "artifact",
+      "scope": "all"
+     },
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "legendary",
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "metalcraft"
+    ]
+   },
+   "deriveVersion": 306,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "1d913b17ff3afd4ba863747e145f319c8bae66a12bc74d703cc2bbc2d9bcc1cc",
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": "you control three or more artifacts",
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
+ },
+ "Sceptre of Eternal Glory": {
+  "card": {
+   "name": "Sceptre of Eternal Glory",
+   "typeLine": "Legendary Artifact",
+   "manaValue": 4,
+   "oracleText": "{T}: Add one mana of any color.\n{T}: Add three mana of any one color. Activate only if you control three or more lands with the same name.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "layout": "normal",
+   "manaCost": "{4}"
+  },
+  "tags": {
+   "_id": "6a736ac8f6eb344af1221dbe",
+   "oracleId": "ce08aff3-efe6-4186-9557-274e00a7ca38",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "3",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "threshold": {
+      "atLeast": 3
+     },
+     "thresholdSubject": {
+      "control": "you",
+      "token": null,
+      "type": "land",
+      "scope": "all"
+     },
+     "count": {
+      "floor": 3,
+      "ceiling": 3
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "legendary",
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 4,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 306,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "2cfe5e9e9cb150c959fbd2c2266296d1a6414cc779cb9ff996eeeb3d018fe84b",
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 3,
+      "scales": null
+     },
+     "unread": false,
+     "net": 3,
+     "gate": "you control three or more lands with the same name",
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
+ },
+ "Sarevok's Tome": {
+  "card": {
+   "name": "Sarevok's Tome",
+   "typeLine": "Artifact — Book",
+   "manaValue": 4,
+   "oracleText": "When this artifact enters, you take the initiative.\n{T}: Add {C}. If you have the initiative, add {C}{C} instead.\n{3}, {T}: Exile cards from the top of your library until you exile a nonland card. You may cast that card without paying its mana cost. Activate only if you've completed a dungeon.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "layout": "normal",
+   "manaCost": "{4}"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af1222b97",
+   "oracleId": "6ec54d84-7026-45a3-a7d7-37cd5c9a8463",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      }
+     },
+     "emits": [
+      {
+       "verb": "initiative",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "2",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{3}, {T}",
+     "emits": [
+      {
+       "verb": "exiled",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": [
+         "creature",
+         "artifact",
+         "enchantment",
+         "instant",
+         "sorcery",
+         "planeswalker",
+         "battle"
+        ],
+        "notType": [
+         "land"
+        ],
+        "fromZone": "library"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 3,
+     "repeats": "per-cycle",
+     "payment": {
+      "mana": "{3}",
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{3}, {T}",
+     "emits": [
+      {
+       "verb": "cast",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": [
+         "creature",
+         "artifact",
+         "enchantment",
+         "instant",
+         "sorcery",
+         "planeswalker",
+         "battle"
+        ],
+        "notType": [
+         "land"
+        ],
+        "fromZone": "exile"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 3,
+     "repeats": "per-cycle",
+     "payment": {
+      "mana": "{3}",
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [
+     "book"
+    ],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 4,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 306,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "97766310d2de3ae9ca2587f3a1a18a25264b989c5e552ce8b3ba5a8d2d04cac0",
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 2,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 2,
+     "gate": "you have the initiative",
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
+ },
+ "Glistening Sphere": {
+  "card": {
+   "name": "Glistening Sphere",
+   "typeLine": "Artifact",
+   "manaValue": 3,
+   "oracleText": "This artifact enters tapped.\nWhen this artifact enters, proliferate.\n{T}: Add one mana of any color.\nCorrupted — {T}: Add three mana of any one color. Activate only if an opponent has three or more poison counters.",
+   "keywords": [
+    "Corrupted",
+    "Proliferate"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "layout": "normal",
+   "manaCost": "{3}"
+  },
+  "tags": {
+   "_id": "6a736acaf6eb344af1223f36",
+   "oracleId": "15679808-baba-4a11-b111-f313ce24197f",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "proliferate",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      }
+     },
+     "emits": [
+      {
+       "verb": "proliferate",
+       "subject": {
+        "control": "any",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 3,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "3",
+     "clause": 4,
+     "repeats": "per-cycle",
+     "threshold": {
+      "atLeast": 3
+     },
+     "count": {
+      "floor": 3,
+      "ceiling": 3
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "corrupted",
+     "proliferate"
+    ]
+   },
+   "deriveVersion": 306,
+   "model": "derived",
+   "normalizeVersion": 13,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "43c7014e9f88348292fcb862446c84f926832dd89816ece97f043468d4c29f3d",
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 3,
+      "scales": null
+     },
+     "unread": false,
+     "net": 3,
+     "gate": "an opponent has three or more poison counters",
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
+ },
+ "Pyramid of the Pantheon": {
+  "card": {
+   "name": "Pyramid of the Pantheon",
+   "typeLine": "Artifact",
+   "manaValue": 1,
+   "oracleText": "{2}, {T}: Add one mana of any color. Put a brick counter on this artifact.\n{T}: Add three mana of any one color. Activate only if there are three or more brick counters on this artifact.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "layout": "normal",
+   "manaCost": "{1}"
+  },
+  "tags": {
+   "_id": "6a932a52f6eb344af1939c1c",
+   "oracleId": "efc66685-94cf-4d3f-82e0-9967c6ab2e5c",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{2}, {T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{2}",
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "counter-placement",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{2}, {T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "counter": "brick",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{2}",
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "3",
+     "clause": 2,
+     "repeats": "per-cycle",
+     "threshold": {
+      "atLeast": 3
+     },
+     "count": {
+      "floor": 3,
+      "ceiling": 3
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 306,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "465410824be09f3a2e1e0c794b6e9876322f73060300c08637db2106a96deadb",
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 2,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": -1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 3,
+      "scales": null
+     },
+     "unread": false,
+     "net": 3,
+     "gate": "there are three or more brick counters on this artifact",
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
+ },
+ "Mind Stone": {
+  "card": {
+   "name": "Mind Stone",
+   "typeLine": "Artifact",
+   "manaValue": 2,
+   "oracleText": "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "layout": "normal",
+   "manaCost": "{2}"
+  },
+  "tags": {
+   "_id": "6a736ac8f6eb344af1221e9a",
+   "oracleId": "c97361b5-af16-4a7b-af85-a429dbaf4ad2",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{1}, {T}, Sacrifice this artifact",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{1}",
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "cost": "{1}, {T}, Sacrifice this artifact",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{1}",
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 306,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "e22aee7112fea29fb1d74b186fc3e950a955e905b1932cbe624aaee46bd1cf5e",
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
+ },
+ "Sol Ring": {
+  "card": {
+   "name": "Sol Ring",
+   "typeLine": "Artifact",
+   "manaValue": 1,
+   "oracleText": "{T}: Add {C}{C}.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "layout": "normal",
+   "manaCost": "{1}"
+  },
+  "tags": {
+   "_id": "6a736ac8f6eb344af1221c32",
+   "oracleId": "6ad8011d-3471-4369-9d68-b264cc027487",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "2",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "deriveVersion": 306,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "17632accec9769553f4e43cfe11a932c81a8cc736f9d74c13d2af1c0166c4b97",
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 2,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
  }
 }

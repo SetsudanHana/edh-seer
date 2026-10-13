@@ -16,11 +16,11 @@ const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 /** DOES THE CARD MAKE MANA THAT KEEPS COMING? A derived line the goldfish can play (`playableLines`: an unrestricted tap, a grant, an Aura's or a
  *  phase's or a landfall trigger), on a card that is neither a one-shot (`isOneShot`: Dark Ritual, Lotus Petal), nor suspend-only (`suspendOnly`:
  *  Mox Tantalite, never cast from hand). A line paid for with a counter ("Remove a +1/+1 counter: Add {C}", Cryptic Trilobite) is not a playable line:
- *  the mana runs out (owner, 2026-10-10). */
-function makesRepeatableMana(dc: DeckCard): boolean {
+ *  the mana runs out (owner, 2026-10-10). A GATED line counts in a deck that meets its gate (owner 2026-10-13, `gate.ts`): Mox Jasper is fast mana in a deck of Dragons. */
+function makesRepeatableMana(dc: DeckCard, deck: readonly DeckCard[]): boolean {
   if (dc.tags === null || dc.tags.isOneShot || dc.tags.suspendOnly || !isManaSource(dc)) return false;
   // `playableLines` already refuses a line paid with a counter (and every other consumed resource): what is left is mana that keeps coming.
-  return playableLines(dc).length > 0;
+  return playableLines(dc, deck).length > 0;
 }
 
 /** A modal double-faced card with a LAND back, and whether that land enters untapped -- Karsten
@@ -76,7 +76,7 @@ export function landInputs(
     ? nonland.reduce((sum, dc) => sum + dc.card.manaValue, 0) / nonland.length
     : 0;
 
-  const fast = nonland.filter((dc) => dc.card.manaValue === 0 && makesRepeatableMana(dc));
+  const fast = nonland.filter((dc) => dc.card.manaValue === 0 && makesRepeatableMana(dc, library));
   const fastNames = new Set(fast.map((dc) => dc.card.name));
 
   // Ramp and draw membership come from the same rules every other readout uses, so a rules edit
@@ -91,7 +91,7 @@ export function landInputs(
     // CEILING: a card with NO derived tags at all (`dc.tags === null`) counts as nothing here, and `landInputs` has no channel to say so.
     // `coverage.ts` already lists the underived cards of a deck; the Karsten inputs are not the place that names them.
     ...nonland
-      .filter((dc) => dc.card.manaValue <= CHEAP && makesRepeatableMana(dc))
+      .filter((dc) => dc.card.manaValue <= CHEAP && makesRepeatableMana(dc, library))
       .map((dc) => dc.card.name),
   ]);
   const mdfc = library.map(mdfcLandBack);
@@ -155,10 +155,10 @@ export interface RoleTargets { ramp?: number; consistency?: number }
 /** WHAT AN ACCELERANT KEEPS OF THE ROCK'S 0.57 (`RAMP_RESILIENCE`), or null for a card the goldfish does not play as one. A planeswalker whose mana runs out after ONE
  *  activation (`ManaOutput.turns` 1: Koth's "-2: Add {R}{R}{R}{R}" from loyalty 3) is a one-shot to this weight -- how long a piece keeps producing is exactly what the
  *  table prices; one that lasts longer ("+1", or five turns of a "-1") keeps its kind's. The count of accelerants (`LandRecommendation.accelerants`) is unchanged. */
-export function rampWeight(dc: DeckCard): number | null {
-  const a = classifyAccelerant(dc);
+export function rampWeight(dc: DeckCard, deck?: readonly DeckCard[]): number | null {
+  const a = classifyAccelerant(dc, deck);
   if (!a) return null;
-  return manaOutput(dc).turns === 1 ? RAMP_RESILIENCE.oneShot : RAMP_RESILIENCE[a.kind];
+  return manaOutput(dc, deck).turns === 1 ? RAMP_RESILIENCE.oneShot : RAMP_RESILIENCE[a.kind];
 }
 
 /** Target vs actual land count for a deck.
@@ -178,7 +178,7 @@ export function recommendedLands(
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const commanderManaValue = Math.max(0, ...deck.filter((dc) => commanders.has(dc.card.name)).map((dc) => dc.card.manaValue));
-  const accelerants = library.filter((dc) => classifyAccelerant(dc) !== null).length;
+  const accelerants = library.filter((dc) => classifyAccelerant(dc, library) !== null).length;
   const drawCards = detectBuildCategories([...library]).get("draw") ?? new Set<string>();
   const drawPieces = drawCards.size;
 
@@ -197,7 +197,7 @@ export function recommendedLands(
   // maker -- 0.15. Copies count, as `accelerants` always has.
   const rampRoleNames = roleMembers("ramp");
   const rampWeights = library.flatMap((dc): number[] => {
-    const w = rampWeight(dc);
+    const w = rampWeight(dc, library);
     if (w !== null) return [w];
     return rampRoleNames.has(dc.card.name) && !isLand(dc) ? [RAMP_RESILIENCE.oneShot] : [];
   }).sort((x, y) => y - x);

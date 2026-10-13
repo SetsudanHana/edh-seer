@@ -8,6 +8,7 @@ import { grammarClauseRecords } from "@edh-seer/tagger/clause-record";
 import { detectBuildRules } from "./build.js";
 import { roleAbilities, rolesOfCard, type Role } from "./quality.js";
 import type { ManaLine } from "@edh-seer/tagger";
+import { gateMet } from "./gate.js";
 import { cardLines, isLoyaltyAbility, paysItsWay, producedManaTypes, usableLoyalty } from "./mana-lines.js";
 import type { DeckCard } from "./types.js";
 
@@ -224,10 +225,11 @@ function readJobOnce(d: DeckCard, role: Role): Job | null {
     }
   }
   if (job.length === 0) return null;
-  // A CARD THAT ADDS NO MANA TYPE (a Treasure or Spawn maker, a grantee engine like Cryptolith Rite) is not one bucket: the empty string merged Path of Annihilation with
-  // Cryptolith Rite and Growth Spasm with Scout the Wilderness. It keys on what it does instead, so only a card doing the same thing shares the group.
-  const none = () => "~" + [...new Set(cardLines(d).map((l) => `${l.source}:${l.producesToken ?? ""}:${l.anyColour ?? ""}`))].sort().join("+");
-  const ramp = role === "ramp" ? [rampKind(d), producedManaTypes(d).join("") || none()] : [];
+  // THE SHAPE OF WHAT THE CARD DOES RIDES BESIDE THE MANA TYPES it adds: the source of each line and the token it makes. A card that adds no type at all (a Treasure or Spawn maker) was
+  // one bucket (the empty string merged Growth Spasm with Scout the Wilderness), and two that add the SAME types were one group whatever else they did: Path of Annihilation (a grant
+  // of any colour AND two Eldrazi Spawn) and Cryptolith Rite (only a grant) both add WUBRG. Only a card doing the same thing shares a group.
+  const shape_ = "~" + [...new Set(cardLines(d).map((l) => `${l.source}:${l.producesToken ?? ""}`))].sort().join("+");
+  const ramp = role === "ramp" ? [rampKind(d), producedManaTypes(d).join(""), shape_] : [];
   const head = JSON.stringify([role, delivery(d), ...ramp]);
   const kind = JSON.stringify([role, delivery(d), ...ramp.slice(0, 1)]);
   return { key: JSON.stringify([role, delivery(d), ...ramp, [...new Set(job)].sort()]), head, kind, parts: new Set(job), drawbacks, upsides, all };
@@ -296,9 +298,10 @@ const damagesOthers = (t: string) => /\bdeals? (?:\d+|x) damage to (?!you\b)/.te
  *  Read from `CardTags.manaLines` (#1169 task 2b-2; it was the oracle text's "add" run): `ManaLine.net` is the production less the
  *  line's own cost, so production is `net + cost.mana`. Every line counts but a token maker's (a Treasure is a later sacrifice, not mana now),
  *  as the text did: a ritual (Dark Ritual adds 3 for 1), a land fetch (Evolving Wilds finds 1 for 0) and a trigger. A scaling amount reads as 1. */
-export function netPositiveMana(d: DeckCard): boolean {
-  // A GATED line is a condition, not a guarantee (Pyramid of the Pantheon's counters): it never protects a card from a swap.
-  const made = cardLines(d).filter((l) => l.source !== "token-maker" && !l.unread && l.gate === null).map((l) => l.net + l.cost.mana);
+export function netPositiveMana(d: DeckCard, deck?: readonly DeckCard[]): boolean {
+  // A GATED line protects a card from a swap only in a deck that MEETS the gate (owner 2026-10-13: Mox Jasper is a rock in a deck of Dragons and nothing in one without). With no deck, or
+  // a gate no decklist settles (Pyramid of the Pantheon's counters on itself), it protects nothing.
+  const made = cardLines(d).filter((l) => l.source !== "token-maker" && !l.unread && gateMet(l, deck)).map((l) => l.net + l.cost.mana);
   return made.length > 0 && Math.max(...made) > (d.card.manaValue ?? 0);
 }
 
@@ -310,8 +313,10 @@ export function netPositiveMana(d: DeckCard): boolean {
  *  Stone's draw) is not kept, by owner ruling (2026-10-08, #966): a minor extra ability does not
  *  protect a source; only net-positive fast mana does (`netPositiveMana`). The reason names what is lost.
  *  CEILING: creatures (dorks) are out, as for `sameJob`: a body does other work no measure reads. */
-export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
+export function sameRockAnyColour(cut: DeckCard, add: DeckCard, deck?: readonly DeckCard[]): boolean {
   if (isCreature(cut) || isCreature(add)) return false;
+  // A GATED ROCK IS NOT AN UNGATED ONE (owner 2026-10-13): it makes its mana only where the deck meets a condition, so neither is a like-for-like swap for the other.
+  if (hasGatedYield(cut) !== hasGatedYield(add)) return false;
   const c = readJob(cut, "ramp");
   const a = readJob(add, "ramp");
   if (!c || !a || rampKind(cut) !== "rock" || c.kind !== a.kind) return false;
@@ -321,9 +326,9 @@ export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
   const selfDamage = (x: string) => x.startsWith('["deal-damage"') && !damagesOthers(printed(add));
   if (![...a.drawbacks].every((x) => c.drawbacks.has(x) || selfDamage(x))) return false;
   if (newConditions(cut, add, false, damagesOthers(printed(add)) ? [] : SELF_DAMAGE)) return false;
-  const cy = netYield(cut);
+  const cy = netYield(cut, deck);
   // THE ADD IS HELD TO WHAT IT NETS IN COLOUR (Prismatic Lens makes {C} free and a colour for {1}).
-  const ay = colouredNetYield(add);
+  const ay = colouredNetYield(add, deck);
   return cy !== null && ay !== null && ay >= cy;
 }
 
@@ -335,15 +340,19 @@ export function sameRockAnyColour(cut: DeckCard, add: DeckCard): boolean {
  *  ability is one only when it can be activated the turn the walker is cast (`usableLoyalty`, owner 2026-10-13).
  *  CEILING: a line paid by tapping ANOTHER permanent (Springleaf Drum), a counter (Wall of Roots) or a discard still yields, as the text reader let it: the colour
  *  audit refuses those as a SOURCE (`paidWithResource`) because the mana is not one you control, but a rock swap compares two rocks' yield and the Drum is a rock.
- *  A GATED line does NOT (owner rulings: a gate is a condition, and a conditional line is never credited as guaranteed -- Tower Worker's 3 needs two other Workers,
- *  Glistening Sphere's and Sceptre of Eternal Glory's need lands, Pyramid of the Pantheon's needs counters): a rock swap compares what two rocks reliably yield, and the text reader
- *  that counted them credited the best branch. A card whose only yield is gated has none (`netYield` null: no colour swap is offered for it). */
-function yieldLines(d: DeckCard): ManaLine[] {
-  return cardLines(d).filter((l) =>
-    (l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger")
-    && !l.unread && l.restriction === null && l.gate === null && l.anyColour !== "grantee" && !l.cost.sacrificeSelf && !l.cost.sacrificeOther
-    && (!isLoyaltyAbility(l) || usableLoyalty(l)));
+ *  A GATED line yields where the DECK meets its gate (owner 2026-10-13, `gate.ts`): Mox Jasper is a rock in a deck of Dragons, Sceptre of Eternal Glory's 3 counts in a deck of basics. With no deck to
+ *  judge it against, or a gate no decklist settles (Glistening Sphere's poison counters, Pyramid of the Pantheon's counters on itself, Princess Yue's trigger), it yields nothing, as before
+ *  (unknown is unmet). A card whose only yield is gated has none until a deck meets it (`netYield` null). The card stays a different one from an ungated rock (`hasGatedYield`). */
+const yieldShaped = (l: ManaLine): boolean =>
+  (l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger")
+  && !l.unread && l.restriction === null && l.anyColour !== "grantee" && !l.cost.sacrificeSelf && !l.cost.sacrificeOther
+  && (!isLoyaltyAbility(l) || usableLoyalty(l));
+function yieldLines(d: DeckCard, deck?: readonly DeckCard[]): ManaLine[] {
+  return cardLines(d).filter((l) => yieldShaped(l) && gateMet(l, deck));
 }
+/** THE CARD'S YIELD DEPENDS ON A GATE somewhere: it has a repeatable line that waits on a condition (Mox Jasper's Dragon, Sceptre of Eternal Glory's three lands with one name, Glistening
+ *  Sphere's poison), whether or not any deck meets it. Deck-independent on purpose: a gated rock is a different card from an ungated one for a swap, in every deck. */
+export const hasGatedYield = (d: DeckCard): boolean => cardLines(d).some((l) => yieldShaped(l) && l.gate !== null);
 /** A COLOUR SET AN OPPONENT DECIDES IS NOT A FIX (Fellwar Stone: "...that a land an opponent controls
  *  could produce"): the audit counts it as every colour, so reading it would bank a guess as a closed
  *  shortfall. A missing answer instead. */
@@ -352,15 +361,15 @@ const opponentDecides = (lines: readonly ManaLine[]) => lines.some((l) => l.anyC
  *  less the generic mana its activation costs, so a Signet ("{1}, {T}: Add {U}{R}") nets 1 where Worn
  *  Powerstone nets 2. "One mana of any color / the chosen color / any type" is one mana (`ManaLine.amount.fixed`).
  *  What it nets overall (the best repeatable line), null when none reads. */
-export function netYield(d: DeckCard): number | null {
-  const lines = yieldLines(d);
+export function netYield(d: DeckCard, deck?: readonly DeckCard[]): number | null {
+  const lines = yieldLines(d, deck);
   if (opponentDecides(lines)) return null;
   return lines.length ? Math.max(...lines.map((l) => l.net)) : null;
 }
 /** What its COLOURED lines net: Prismatic Lens makes {C} for free but a colour only for {1} (it costs 1 and makes 1, the cost rule `paysItsWay`), so no line
  *  qualifies and the answer is null. A line makes a colour when it names one or chooses one (`anyColour`). */
-export function colouredNetYield(d: DeckCard): number | null {
-  const all = yieldLines(d);
+export function colouredNetYield(d: DeckCard, deck?: readonly DeckCard[]): number | null {
+  const all = yieldLines(d, deck);
   if (opponentDecides(all)) return null;
   const lines = all.filter((l) => (l.colours.length > 0 || l.anyColour !== null) && paysItsWay(l));
   return lines.length ? Math.max(...lines.map((l) => l.net)) : null;
@@ -420,9 +429,9 @@ export function themedSubjects(themes: readonly string[] | undefined): Set<strin
  *  repeatable, unrestricted, fixed "{T}: Add" line. A static or triggered ability is the body's other job
  *  (a lord, a payoff), an amount "for each" something scales with the board, and a mana line that
  *  sacrifices or restricts the mana (Giada: "spend this mana only to cast Angel spells") is not a colour. */
-export function isPlainDork(d: DeckCard): boolean {
-  if (!isCreature(d) || (d.card.faces?.length ?? 0) > 1 || netYield(d) === null) return false;
-  const lines = yieldLines(d);
+export function isPlainDork(d: DeckCard, deck?: readonly DeckCard[]): boolean {
+  if (!isCreature(d) || (d.card.faces?.length ?? 0) > 1 || netYield(d, deck) === null) return false;
+  const lines = yieldLines(d, deck);
   if (lines.some((l) => l.amount.scales !== null)) return false;
   // ITS OWN TAP PAYS FOR THE MANA: Birchlore Rangers' "Tap two untapped Elves you control: Add …" taps
   // other creatures (`cost.tapOther`, no `{T}` of its own), so it is a tribal engine, not a dork (precon measurement, 2026-10-08).
@@ -431,11 +440,11 @@ export function isPlainDork(d: DeckCard): boolean {
 }
 /** THE SAME DORK, ANY COLOURS: both plain dorks, the add prints nothing the cut does not (self-damage aside)
  *  and nets as much in colour as the cut nets. Summoning sickness is the same for both. */
-export function sameDorkAnyColour(cut: DeckCard, add: DeckCard): boolean {
-  if (!isPlainDork(cut) || !isPlainDork(add)) return false;
+export function sameDorkAnyColour(cut: DeckCard, add: DeckCard, deck?: readonly DeckCard[]): boolean {
+  if (!isPlainDork(cut, deck) || !isPlainDork(add, deck) || hasGatedYield(cut) !== hasGatedYield(add)) return false;
   if (newConditions(cut, add, false, damagesOthers(printed(add)) ? [] : SELF_DAMAGE)) return false;
-  const cy = netYield(cut);
-  const ay = colouredNetYield(add);
+  const cy = netYield(cut, deck);
+  const ay = colouredNetYield(add, deck);
   return cy !== null && ay !== null && ay >= cy;
 }
 
