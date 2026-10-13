@@ -152,7 +152,7 @@ export function aliasPairs(src: string, name: string): [string, string][] {
 /** THE FIELDS OF AN INTERFACE: name, whether it is optional, its type, and its first doc paragraph.
  *  Nested object literals are skipped rather than flattened -- the schema has few and they read
  *  better in the source than as a table row with a brace in it. */
-export function fields(src: string, name: string): { name: string; optional: boolean; type: string; doc: string }[] {
+export function fields(src: string, name: string, flatten: readonly string[] = []): { name: string; optional: boolean; type: string; doc: string }[] {
   const lines = src.split("\n");
   const code = stripComments(lines);
   const start = code.findIndex((l) => l.startsWith(`export interface ${name} {`));
@@ -161,13 +161,22 @@ export function fields(src: string, name: string): { name: string; optional: boo
   for (let i = start + 1; i < code.length && !code[i]!.startsWith("}"); i++) {
     const m = /^ {2}(\w+)(\??): (.+);$/.exec(code[i]!);
     if (m) out.push({ name: m[1]!, optional: m[2] === "?", type: m[3]!, doc: docAbove(lines, i) });
+    // A NESTED OBJECT NAMED IN `flatten` (ManaLine's `cost`) gets a row of its own and one row per member, `cost.tap`. Every other nested object stays skipped.
+    const open = /^ {2}(\w+)(\??): \{$/.exec(code[i]!);
+    if (open && flatten.includes(open[1]!)) {
+      out.push({ name: open[1]!, optional: open[2] === "?", type: "object", doc: docAbove(lines, i) });
+      for (i++; i < code.length && !/^ {2}\};?$/.test(code[i]!); i++) {
+        const c = /^ {4}(\w+)(\??): (.+);$/.exec(code[i]!);
+        if (c) out.push({ name: `${open[1]}.${c[1]}`, optional: c[2] === "?", type: c[3]!, doc: docAbove(lines, i) });
+      }
+    }
   }
   if (out.length === 0) throw new Error(`gen-schema-docs: interface ${name} came back empty`);
   return out;
 }
 
-function fieldTable(src: string, file: string, name: string): string {
-  const rows = fields(src, name).map((f) =>
+function fieldTable(src: string, file: string, name: string, flatten: readonly string[] = []): string {
+  const rows = fields(src, name, flatten).map((f) =>
     `| \`${f.name}\` | \`${cell(f.type)}\` | ${f.optional ? "optional" : "**required**"} | ${cell(f.doc)} |`);
   return `### ${name}\n\nDefined in ${link(file, name)}.\n\n`
     + `| field | type | | what it carries |\n|---|---|---|---|\n${rows.join("\n")}\n`;
@@ -273,6 +282,9 @@ ${fieldTable(schema, SCHEMA, "GameEvent")}
 ${fieldTable(schema, SCHEMA, "Effect")}
 ${fieldTable(schema, SCHEMA, "Ability")}
 ${fieldTable(schema, SCHEMA, "Characteristics")}
+${fieldTable(schema, SCHEMA, "ManaLine", ["cost"])}
+${fieldTable(schema, SCHEMA, "StaticFixer")}
+${fieldTable(schema, SCHEMA, "LandFetch")}
 ${fieldTable(schema, SCHEMA, "CardTags")}
 
 ---

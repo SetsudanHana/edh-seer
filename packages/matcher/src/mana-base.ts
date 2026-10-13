@@ -1,10 +1,11 @@
 import { pAtLeast, seen } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { classifyLand } from "./land-conditions.js";
-import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
-import { COLORS, deckBasicTypes, isManaSource, landOnlineBy, type Color } from "./mana-audit.js";
+import { fetchedLandEntersTapped } from "./fetch-land.js";
+import { COLORS, deckBasicTypes, landOnlineBy, type Color } from "./mana-audit.js";
 import { fixerCredit, libraryFixers } from "./static-fixers.js";
-import { fixedColours } from "./mana-lines.js";
+import { colourSourceCards } from "./colour-sources.js";
+import { deckIdentity, isFetchSource, makesAnyMana } from "./mana-lines.js";
 import type { DeckCard } from "./types.js";
 import { countsAsLand } from "./typeline.js";
 
@@ -130,16 +131,33 @@ export function landTarget(inputs: LandFormulaInputs): number {
  *    every deck's own curve against the formula's target: 1-3 lands off costs about 0.03, 3-6 about
  *    0.1, 6-10 about 0.3. Flat near the target and steep past it, which is why a two-land miss is
  *    not a finding (`LAND_BAND`) and a seven-land one is.
- *  - COLOUR: 0.133 per `colourMiss` card, against what the same deck saves with every land making
- *    every colour (R^2 0.70 over the 268 decks; fitted on the precons alone it still explains 37%
- *    of the calibration decks' own).
+ *  - COLOUR: 0.151 per `colourMiss` card, against what the same deck saves with every land making
+ *    every colour. It is the RAW least-squares slope through the origin of `research/matcher/mana-base-fit.ts` (owner ruling
+ *    2026-10-13, #1169 task 3): 268 decks (197 precons + 71 calibration), 2,000 games each, ten turns, seed 20261013, 4 shards;
+ *    R^2 0.55 centred / 0.78 through the origin; fitted on the precons alone the slope is 0.163 and explains 13% of the
+ *    calibration decks' own. The record is the rows fixture `packages/instruments/data/mana-base-fit-rows.json` and a test
+ *    (`mana-base-fit-core.test.ts`) pinning this constant to its slope. The fit is reproducible ONLY at that fixed seed: other
+ *    seeds move the slope by +-0.001-0.002 (seeds 11 and 22 gave 0.149 and 0.150). It depends on Mongo `cardTagsDerived` at
+ *    DERIVE_VERSION 307, `packages/data/precons.json`, the 71 calibration decks and the `colourSources` / `colourMiss` code, so
+ *    RUN `npx tsx research/matcher/mana-base-fit.ts --check` AFTER ANY CHANGE TO `colourSources`, `colourMiss`, `fixerSupply` OR
+ *    DERIVE: it re-derives the 268 `colourMiss` values and exits non-zero when they no longer match the fixture.
+ *    History: 0.133 on the old, narrower colour count (the original script was never committed); the unified count moved the
+ *    mean `colourMiss` over the 268 from 4.60 to 4.22 (mean x now 4.223), and the refit is this raw slope, not 0.133 scaled.
  *  - TAPPED: 0.025 per land that always enters tapped, against the same deck with every land
  *    untapped (R^2 0.48: a tapped land costs most when it arrives early, which a count cannot see).
+ *    The tapped count did not move in #1169 (268 of 268 decks identical), so it keeps the original fit;
+ *    the rebuild gives 0.021, inside its 12% shortfall on the recorded 0.19.
  *
- *  WHERE THE LOST TURNS WERE, as built: colours 0.62 on average (0.08 in a mono-colour deck, 0.87
- *  in a three-colour one), tapped lands 0.19, the land count 0.08. The count is the smallest lever
- *  on most real decks, and the report should say so rather than lead with it. */
-export const MANA_BASE_COST = { short: 0.005, over: 0.004, colourMiss: 0.133, tapped: 0.025 } as const;
+ *  WHERE THE LOST TURNS WERE, as rebuilt 2026-10-13 (recorded then: 0.62, 0.08, 0.87, 0.19, 0.08):
+ *  colours 0.61 on average (0.12 in a mono-colour deck, 0.86 in a three-colour one), tapped lands 0.17.
+ *  The land count is not re-measured: the rebuilt arm that trades lands for spells reads 0.01, not the
+ *  recorded 0.08, so `short` and `over` stay as fitted. The count is the smallest lever on most real
+ *  decks, and the report should say so rather than lead with it.
+ *
+ *  CEILING: only `colourMiss` comes from a committed script. `short` / `over` (0.005 / 0.004) and `tapped` (0.025) are the ORIGINAL
+ *  fit's, unrecoverable. The script's tapped slope is 0.021 (shipped 0.025), and its count arm does not reproduce the record
+ *  (slope -0.185, R^2 0.003; the 6-10 lands-off band reads 0.062 measured against 0.216 modelled), so neither is refit from it. */
+export const MANA_BASE_COST = { short: 0.005, over: 0.004, colourMiss: 0.151, tapped: 0.025 } as const;
 
 const PIP_COLOURS = new Set<string>(COLORS);
 
@@ -158,49 +176,19 @@ function pipOptions(manaCost: string | undefined): Color[][] {
 
 const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 
-/** A `{T}: Add` ability whose cost does not sacrifice the card, read line by line with string
- *  searches: a regex over the cost ran in polynomial time on hostile text (CodeQL). */
-function tapsForMana(oracleText: string): boolean {
-  return oracleText.split("\n").some((line) => {
-    const colon = line.indexOf(":");
-    if (colon < 0) return false;
-    const cost = line.slice(0, colon).toLowerCase();
-    return cost.includes("{t}") && !cost.includes("sacrifice") && /^\s*add\b/i.test(line.slice(colon + 1));
-  });
-}
-
-/** THE SOURCES OF EACH COLOUR, COUNTED THE WAY THE GOLDFISH COULD USE THEM: a land by what it taps
- *  for, a fetch by what it can find, and a nonland permanent only when it has a `{T}: Add` ability
- *  that does not sacrifice it. The library only: a commander is never drawn.
+/** THE SOURCES OF EACH COLOUR: the audit's own count (`colourSourceCards`, #1169), read off the derived mana lines. A land by what it
+ *  taps for, a fetch by what it can find, a nonland permanent only when a colour-source line of it makes the colour (a repeatable tap
+ *  or static production, nothing consumed: not a Treasure maker, a sacrifice outlet, a trigger like Birgi's, or restricted mana; a gated
+ *  line only where the deck meets its gate, `colourSourceLine`, owner 2026-10-13), a land-fetch spell by what it fetches. The library only: a commander is never drawn.
  *
- *  NOT `manaAudit`'s `supplied`, deliberately. That counts every permanent whose `producedMana` names
- *  the colour, and its own documentation names the cost: conditional production counts the same as a
- *  basic. Measured on the 268 decks, it read Amarant's red at 38 sources against 26 here (Birgi,
- *  Urabrask and The Great Work add red only on a trigger), and as the input to `colourMiss` it
- *  explained 54% of what the goldfish measured against 71% for this count, falling apart when fitted
- *  on the precons and tested on the calibration decks. The coefficient is only valid against the
- *  count it was fitted on. */
+ *  THE SAME NUMBER AS `manaAudit`'s `supplied`, deliberately. Until 2026-10-10 this was a different count (Amarant's red: 38 sources
+ *  by the audit against 26 here; Gisa's black 38 against 33; Fairdrazi 16-17 against 9-10, because only the audit counted land-fetch
+ *  spells), and `colourMiss`'s coefficient was fitted on this one. Unifying them moved it: refit 0.133 -> 0.151 (#1169, task 3). */
 export function colourSources(deck: readonly DeckCard[], commanderNames: readonly string[] = []): Map<Color, number> {
   const commanders = new Set(commanderNames);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
-  const libraryCards = library.map((dc) => dc.card);
-  const out = new Map<Color, number>(COLORS.map((c) => [c, 0]));
-  for (const dc of library) {
-    for (const c of new Set(coloursOf(dc, libraryCards))) if (out.has(c as Color)) out.set(c as Color, out.get(c as Color)! + 1);
-  }
-  return out;
-}
-
-/** What one library card counts as a source of, by `colourSources`' rule. */
-function coloursOf(dc: DeckCard, libraryCards: readonly DeckCard["card"][]): readonly string[] {
-  const text = dc.card.oracleText ?? "";
-  const produced = dc.card.producedMana ?? [];
-  if (isLand(dc)) {
-    return produced.length > 0 || !isLandFetch(text)
-      ? fixedColours(dc)
-      : [...new Set(fetchableLands(text, libraryCards).flatMap((c) => c.producedMana ?? []))];
-  }
-  return isManaSource(dc) && tapsForMana(text) ? fixedColours(dc) : [];
+  const byColour = colourSourceCards(library, deckIdentity(deck, commanderNames), deck);
+  return new Map<Color, number>(COLORS.map((c) => [c, byColour.get(c)!.length]));
 }
 
 /** THE STATIC-FIXER CREDIT `colourMiss` ADDS to a colour's supply at a card's deadline (#1115): the colour audit's own
@@ -213,9 +201,9 @@ export function fixerSupply(deck: readonly DeckCard[], commanderNames: readonly 
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const fixers = libraryFixers(library);
   if (fixers.length === 0) return () => 0;
-  const cards = library.map((dc) => dc.card);
   const types = deckBasicTypes(library);
-  const per = library.map((dc) => ({ dc, colours: new Set(coloursOf(dc, cards)) }));
+  const byColour = colourSourceCards(library, deckIdentity(deck, commanderNames), deck);
+  const per = library.map((dc) => ({ dc, colours: new Set(COLORS.filter((c) => byColour.get(c)!.includes(dc))) }));
   const anySources = per.filter((x) => x.colours.size > 0).length;
   const isOut = (dc: DeckCard, turn: number): boolean => (isLand(dc) ? landOnlineBy(dc, turn, types) : dc.card.manaValue < turn);
   return (colour, turn) => {
@@ -231,7 +219,7 @@ export function fixerSupply(deck: readonly DeckCard[], commanderNames: readonly 
  *
  *  The same draw model the colour audit uses (`seen(turn)` cards from a 99-card library), over
  *  `colourSources`. Colours are multiplied as if independent, which they are not
- *  quite; the coefficient in `MANA_BASE_COST` was fitted on this exact figure. A hybrid pip is
+ *  quite; the coefficient in `MANA_BASE_COST` is fitted on this exact figure (refit on the unified count 2026-10-13). A hybrid pip is
  *  charged to its better-supplied colour, since that is the one a player pays it with. */
 export function colourMiss(deck: readonly DeckCard[], supplied: ReadonlyMap<Color, number>, fixed: (colour: Color, turn: number) => number = () => 0): number {
   let total = 0;
@@ -265,8 +253,7 @@ export function tappedLandCount(deck: readonly DeckCard[], commanderNames: reado
     if (commanders.has(dc.card.name) || !isLand(dc)) return false;
     const template = classifyLand(dc.card).template;
     if (template === "unconditional" || template === "unclassified") return true;
-    const text = dc.card.oracleText ?? "";
-    return (dc.card.producedMana ?? []).length === 0 && isLandFetch(text) && fetchedLandEntersTapped(text, 3);
+    return !makesAnyMana(dc) && isFetchSource(dc) && fetchedLandEntersTapped(dc, 3);
   }).length;
 }
 
@@ -278,7 +265,7 @@ export interface ManaBaseScore {
   /** Lost turns per ten turns each part of the mana base costs, against a perfect one of the same deck. */
   costs: { count: number; colour: number; tapped: number };
   /** Their sum: the mana base's one quality number. 0 is a perfect mana base; the 268 decks run
-   *  0.1-2.9, a median of 0.76 and 1.37 at the 90th percentile. */
+   *  0.1-2.6 (at colourMiss 0.151), a median of 0.78 and 1.39 at the 90th percentile. */
   total: number;
   /** The expected number of cards whose colours are missing on their own turn (`colourMiss`). */
   colourMiss: number;

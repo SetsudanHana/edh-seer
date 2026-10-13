@@ -237,7 +237,12 @@
       }
      },
      "clause": 2,
-     "repeats": "once"
+     "repeats": "once",
+     "grants": [
+      "double strike",
+      "flying",
+      "vigilance"
+     ]
     },
     {
      "kind": "on-cast",
@@ -600,13 +605,6 @@
    "manaCost": "{2}",
    "oracleText": "{T}: Add one mana of any color in your commander's color identity.",
    "keywords": [],
-   "producedMana": [
-    "B",
-    "G",
-    "R",
-    "U",
-    "W"
-   ],
    "layout": "normal",
    "colors": [],
    "colorIdentity": []
@@ -649,6 +647,38 @@
      "payment": {
       "tap": true
      }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 0,
+     "anyColour": "identity",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -2850,7 +2880,56 @@
      "clause": 1,
      "repeats": "once"
     }
-   ]
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 3,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Damnation": {
@@ -3001,13 +3080,6 @@
    "keywords": [
     "Indestructible"
    ],
-   "producedMana": [
-    "B",
-    "G",
-    "R",
-    "U",
-    "W"
-   ],
    "layout": "normal",
    "colors": [],
    "colorIdentity": []
@@ -3051,6 +3123,44 @@
      "payment": {
       "tap": true
      }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -3532,10 +3642,6 @@
    "manaCost": "{2}",
    "oracleText": "{1}, {T}: Add {U}{B}.",
    "keywords": [],
-   "producedMana": [
-    "B",
-    "U"
-   ],
    "layout": "normal",
    "colors": [],
    "colorIdentity": [
@@ -3584,6 +3690,41 @@
       "mana": "{1}",
       "tap": true
      }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 1,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "U",
+      "B"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -4475,13 +4616,6 @@
    "manaCost": "{2}",
    "oracleText": "{T}: Add one mana of any color that a land an opponent controls could produce.",
    "keywords": [],
-   "producedMana": [
-    "B",
-    "G",
-    "R",
-    "U",
-    "W"
-   ],
    "layout": "normal",
    "colors": [],
    "colorIdentity": []
@@ -4524,6 +4658,38 @@
      "payment": {
       "tap": true
      }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 0,
+     "anyColour": "opponent-lands",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -5691,7 +5857,56 @@
      "clause": 1,
      "repeats": "once"
     }
-   ]
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 3,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Laquatus's Disdain": {
@@ -5823,7 +6038,11 @@
       "kind": "speed-increase"
      },
      "clause": 1,
-     "repeats": "continuous"
+     "repeats": "continuous",
+     "grants": [
+      "haste",
+      "shroud"
+     ]
     },
     {
      "kind": "static",
@@ -6096,9 +6315,6 @@
    "manaCost": "{U}{U}",
    "oracleText": "Counter target spell. At the beginning of your next main phase, add an amount of {C} equal to that spell's mana value.",
    "keywords": [],
-   "producedMana": [
-    "C"
-   ],
    "layout": "normal",
    "colors": [
     "U"
@@ -6161,6 +6377,38 @@
      "clause": 2,
      "repeats": "once"
     }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "trigger",
+     "repeats": "once",
+     "cost": {
+      "mana": 0,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": null,
+      "scales": "that spell's mana value"
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "on-trigger",
+     "producesToken": null,
+     "trigger": "main-phase",
+     "triggerSubject": "you"
+    }
    ]
   }
  },
@@ -6172,9 +6420,6 @@
    "manaCost": "{3}{R}{R}",
    "oracleText": "Add {R} for each tapped land your opponents control.",
    "keywords": [],
-   "producedMana": [
-    "R"
-   ],
    "layout": "normal",
    "colors": [
     "R"
@@ -6227,7 +6472,42 @@
       }
      }
     }
-   ]
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "one-shot-spell",
+     "repeats": "once",
+     "cost": {
+      "mana": 5,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": null,
+      "scales": "for each tapped land your opponents control"
+     },
+     "unread": false,
+     "net": -4,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "isOneShot": true
   }
  },
  "Misguided Rage": {
@@ -6640,7 +6920,48 @@
      "clause": 1,
      "repeats": "once"
     }
-   ]
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 2,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": false,
+    "reach": [
+     "G"
+    ]
+   }
   }
  },
  "Nausea": {
@@ -7406,7 +7727,56 @@
      "clause": 1,
      "repeats": "once"
     }
-   ]
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 2,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Rapid Hybridization": {
@@ -7746,9 +8116,6 @@
    "manaCost": "{R}",
    "oracleText": "Add {R}{R}, then add {R} for each card named Rite of Flame in each graveyard.",
    "keywords": [],
-   "producedMana": [
-    "R"
-   ],
    "layout": "normal",
    "colors": [
     "R"
@@ -7825,7 +8192,74 @@
       }
      }
     }
-   ]
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "one-shot-spell",
+     "repeats": "once",
+     "cost": {
+      "mana": 1,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "one-shot-spell",
+     "repeats": "once",
+     "cost": {
+      "mana": 1,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": null,
+      "scales": "for each card named ~ in each graveyard"
+     },
+     "unread": false,
+     "net": 0,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "isOneShot": true
   }
  },
  "Rob the Archives": {
@@ -8447,7 +8881,11 @@
       "kind": "speed-increase"
      },
      "clause": 1,
-     "repeats": "continuous"
+     "repeats": "continuous",
+     "grants": [
+      "haste",
+      "hexproof"
+     ]
     }
    ]
   }
@@ -8654,11 +9092,6 @@
    "manaCost": "{2}",
    "oracleText": "{T}: Add {C}.\n{T}: Add {U} or {B}. This artifact deals 1 damage to you.",
    "keywords": [],
-   "producedMana": [
-    "B",
-    "C",
-    "U"
-   ],
    "layout": "normal",
    "colors": [],
    "colorIdentity": [
@@ -8762,6 +9195,71 @@
      "payment": {
       "tap": true
      }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "U",
+      "B"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }

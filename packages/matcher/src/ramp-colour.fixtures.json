@@ -77,7 +77,41 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "05aa624dc7e700ef6dc60410ae9f9f47a9d084f78773efdd905178b517de2005",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Talisman of Creativity": {
@@ -218,7 +252,72 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "19f48fdb7308506e242039a6d31b580f60977c8a1995d112eba9a2f591607807",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "U",
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Mind Stone": {
@@ -384,7 +483,39 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "e22aee7112fea29fb1d74b186fc3e950a955e905b1932cbe624aaee46bd1cf5e",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Sol Ring": {
@@ -461,7 +592,39 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "17632accec9769553f4e43cfe11a932c81a8cc736f9d74c13d2af1c0166c4b97",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 2,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Izzet Signet": {
@@ -546,7 +709,42 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "39c745f7cdb616052523f9ad88ca775c9f82ebef046746f7769b37c872e2d190",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 1,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "U",
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Orzhov Signet": {
@@ -631,7 +829,42 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "9374101e533ef003a393b65bc7c3b776f52c7ba5b578e13b9b2d884e4745c440",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 1,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "B"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Wild Growth": {
@@ -726,7 +959,41 @@
    "unknownTriggers": [
     "taps-for-mana"
    ],
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "aura-trigger",
+     "repeats": null,
+     "cost": {
+      "mana": 0,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "on-trigger",
+     "producesToken": null,
+     "trigger": "tapped-for-mana",
+     "triggerSubject": "enchanted land"
+    }
+   ]
   }
  },
  "Worn Powerstone": {
@@ -803,7 +1070,39 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "6f6ec1494fb5f6da3cf980fdb1b3e06ace4d0654b70352791ed18d8717dbfbae",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 2,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Hedron Archive": {
@@ -969,7 +1268,39 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "c2cc89604ab91d2e8550efc0200fc513762165b9e8cf124b54ce786049229e94",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 2,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Arcane Signet": {
@@ -1051,7 +1382,39 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "a5bdbd76c92bbec716e23f708265d7f4410962e10435c0d27b9b8d241cc8df4a",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 0,
+     "anyColour": "identity",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Fellwar Stone": {
@@ -1133,7 +1496,39 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "62a75bef0ed53c2e1167e73f1d600c8f8b6c698a57e1799ceca38c27d175e5ec",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 0,
+     "anyColour": "opponent-lands",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Coldsteel Heart": {
@@ -1216,7 +1611,39 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "0be5a431d1cbc88c42ed2f1a2121103feaf3bac9325f8ed017c2d92f475a6951",
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 0,
+     "anyColour": "chosen",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Chromatic Lantern": {
@@ -1332,7 +1759,91 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "2f011529c6071d6135d38d4737734b8921574ded0f0cc31f5b52ae004bbf36ee",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "static-grant",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "staticFixer": {
+    "covers": "lands",
+    "colours": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Dire Mimic": {
@@ -1464,7 +1975,46 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "d0715ab6bd41d6ef4bda95b3dc233b5fec50b035469cfe75aa06166d662669d8",
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "once",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": true,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "isOneShot": true
   }
  },
  "Lotus Petal": {
@@ -1600,7 +2150,46 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "4ab141d3791e4ae5ad588ef24ccf94bc4ac89c6fba3e791290b1ab18bcef512c",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "once",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": true,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "isOneShot": true
   }
  },
  "Prismatic Lens": {
@@ -1704,7 +2293,75 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "b4d3e96472e76f361f26514cce7c1e0fa5d4e0a6b74bd9c5ace2ffee96dca86d",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 1,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 0,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Tablet of Discovery": {
@@ -1855,7 +2512,76 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "590aa8528e01f62ce8e195e180524e62b106b99f1d5cf0d24023df3b758da73e",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 2,
+     "gate": null,
+     "restriction": {
+      "spend": "to cast instant and sorcery spells",
+      "typeName": "sorcery"
+     },
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Talisman of Dominance": {
@@ -1996,7 +2722,72 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "1fe94399ec483b7c8b02de2be64b3b0580beb73a60582bc280e4a059188c0965",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "U",
+      "B"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Utopia Sprawl": {
@@ -2096,7 +2887,39 @@
    "unknownTriggers": [
     "taps-for-mana"
    ],
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "aura-trigger",
+     "repeats": null,
+     "cost": {
+      "mana": 0,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 0,
+     "anyColour": "chosen",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "on-trigger",
+     "producesToken": null,
+     "trigger": "tapped-for-mana",
+     "triggerSubject": "enchanted Forest"
+    }
+   ]
   }
  },
  "Fertile Ground": {
@@ -2195,7 +3018,45 @@
    "unknownTriggers": [
     "taps-for-mana"
    ],
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "aura-trigger",
+     "repeats": null,
+     "cost": {
+      "mana": 0,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "on-trigger",
+     "producesToken": null,
+     "trigger": "tapped-for-mana",
+     "triggerSubject": "enchanted land"
+    }
+   ]
   }
  },
  "Overgrowth": {
@@ -2290,7 +3151,41 @@
    "unknownTriggers": [
     "taps-for-mana"
    ],
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "aura-trigger",
+     "repeats": null,
+     "cost": {
+      "mana": 0,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 2,
+     "gate": null,
+     "restriction": null,
+     "timing": "on-trigger",
+     "producesToken": null,
+     "trigger": "tapped-for-mana",
+     "triggerSubject": "enchanted land"
+    }
+   ]
   }
  },
  "Argothian Enchantress": {
@@ -3112,7 +4007,45 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "67f3cb4199a3b02cf285ec35d977789d1e76ce979634f5014e82680aa8f0d7b3",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "static-grant",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Abundant Growth": {
@@ -3260,7 +4193,45 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "b9ac68c7ebe2d1f6ae466fe6297d0f34871a1b77155fec88f86d9bf6bf9631e8",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "static-grant",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Trace of Abundance": {
@@ -3378,7 +4349,45 @@
    "unknownTriggers": [
     "taps-for-mana"
    ],
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "aura-trigger",
+     "repeats": null,
+     "cost": {
+      "mana": 0,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "on-trigger",
+     "producesToken": null,
+     "trigger": "tapped-for-mana",
+     "triggerSubject": "enchanted land"
+    }
+   ]
   }
  },
  "Urban Utopia": {
@@ -3526,7 +4535,45 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "b9ac68c7ebe2d1f6ae466fe6297d0f34871a1b77155fec88f86d9bf6bf9631e8",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "static-grant",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Llanowar Elves": {
@@ -3632,7 +4679,41 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "02ab38ff881cfe07df0fbf730a861bd9aa196da25f2561fc0633d67ee78c3edd",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Birds of Paradise": {
@@ -3729,7 +4810,45 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "1e118b32cc8e191202e45e591688fbedffb548982c6371e43e97d6fe85b3b053",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Elvish Mystic": {
@@ -3821,7 +4940,41 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "02ab38ff881cfe07df0fbf730a861bd9aa196da25f2561fc0633d67ee78c3edd",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Fyndhorn Elves": {
@@ -3913,7 +5066,41 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "02ab38ff881cfe07df0fbf730a861bd9aa196da25f2561fc0633d67ee78c3edd",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Noble Hierarch": {
@@ -4018,7 +5205,43 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "fcb6ddfaff4353a7ee67591f7774921a71f6c63fd544d5d0cf2cc1358dd0f357",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Priest of Titania": {
@@ -4123,7 +5346,41 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "b6d340ef7ae12d8ab64418cda4efcca2670002c4efab39c7b4a1044ba3aab6f3",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": null,
+      "scales": "for each elf on the battlefield"
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Elvish Archdruid": {
@@ -4246,7 +5503,41 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "f6bd25fa244d91e4a56be5232295b93296cab8c2c112426d41a766349c57654a",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": null,
+      "scales": "for each elf you control"
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Joraga Warcaller": {
@@ -4802,7 +6093,78 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "9f940e186646ec382e45d4f57cea5e3c18192fbb4be91d5a0e33c7503cb87efa",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": {
+      "spend": "to cast a legendary spell",
+      "typeName": "legendary"
+     },
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Deathrite Shaman": {
@@ -5131,7 +6493,45 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "0245626db86c1afdc0bc665b11ab90baf6abcdf65b23f0297e778e5e968f97ef",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Rampant Growth": {
@@ -5269,7 +6669,56 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "e516baa5854eee966674c7f611c6860d389f03ee473345e77a4393be59c65201",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 2,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Cultivate": {
@@ -5407,7 +6856,56 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 3,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Farseek": {
@@ -5559,7 +7057,54 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "3fed79c656e0ee417eeff1b4bed0a0bec40ee9741d8b35a0d4d92ef818559cf3",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 2,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R"
+    ]
+   }
   }
  },
  "Wood Elves": {
@@ -5731,7 +7276,48 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "18864bd45942aa2b0fb7de08ebc80039e3870c3f2294139390fa8d8b25b5f49f",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 0,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "permanent",
+    "tapped": false,
+    "reach": [
+     "G"
+    ]
+   }
   }
  },
  "Explosive Vegetation": {
@@ -5869,7 +7455,56 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "d55860ea4665c449f16e4d7455136cd0329fe2ee44480573af31e9b24e0031f3",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 4,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -3,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Three Visits": {
@@ -6002,7 +7637,48 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "c2f1c8e42a995533f1a0cb0611440f836ea1d9d52e5c57e799ffc269641c38e3",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 2,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": false,
+    "reach": [
+     "G"
+    ]
+   }
   }
  },
  "Skyshroud Claim": {
@@ -6135,7 +7811,48 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "e7fea2af8ca886eab4132982ac363e939849c138cfb8547e28ce5f0825a7212e",
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 4,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "net": -2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": false,
+    "reach": [
+     "G"
+    ]
+   }
   }
  },
  "Boundless Realms": {
@@ -6290,7 +8007,56 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "d87777ea13444de6034c71b9b32417ab7f3aa98b5e56ca95ae736ae8c084517c",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 7,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -6,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Verdant Mastery": {
@@ -6452,7 +8218,56 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "79974d6b04857d21cdd9cd8b217a7b25fbeab1afe51a4e54366f140b3166abcd",
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 6,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "net": -4,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Deathsprout": {
@@ -6623,7 +8438,56 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "53ef57c4ff702ef6525e883be779f03bad2d2d42d70ec4e875360dc78eb8a8d9",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 4,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -3,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Circuitous Route": {
@@ -6782,7 +8646,56 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "d572ef54a34bbb7d877fa316e34cc3ac456449d51e43732614439462a5417cbb",
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 4,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "net": -2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Horizon Boughs": {
@@ -7007,7 +8920,48 @@
     "chapter",
     "chapter"
    ],
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 0,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "permanent",
+    "tapped": true,
+    "reach": [
+     "G"
+    ]
+   }
   }
  },
  "Renewal": {
@@ -7202,7 +9156,56 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "3c8d57f3f21d507048c6cdf038dcd671911bcaff1984855fe33e0ed3af3d0e4c",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 3,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": false,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Frenzied Tilling": {
@@ -7368,7 +9371,56 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "2c9e104149fe4022edf92b3fe1179d72f52f3b21d271c4e6812604e4d7cfb31e",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 5,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -4,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Viewpoint Synchronization": {
@@ -7507,7 +9559,56 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "41d78ba5fd0a1db7f9c19c5b70d7b415021a77c5e6e97a58880dfc159ebe333a",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 5,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "net": -3,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Elemental Teachings": {
@@ -7666,7 +9767,56 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "676d55ed58c2531e3f60fe139876cdc29fd6219f5d7217d3a088291d7929852d",
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 5,
+      "tap": false,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": -4,
+     "gate": "an opponent chooses two of those cards",
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Cascade Bluffs": {
@@ -7773,7 +9923,72 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "a6384b0b2d37da8d3251077ed97406ea4b55c414f42acd93fcb19686094f67c8",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 1,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "U",
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Cascading Cataracts": {
@@ -7881,7 +10096,75 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "dff54f18c94ede15083739e0c5faef382f96990ee15a1bd1c52c337eae9dc687",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 5,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 5,
+      "scales": null
+     },
+     "unread": false,
+     "net": 0,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Darkwater Catacombs": {
@@ -7966,7 +10249,42 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "01bea8aa79ad17c9268c16167d602809e1a129261cce6a9e831a825845fc7169",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 1,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "U",
+      "B"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Sunken Ruins": {
@@ -8073,7 +10391,72 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "41ed2fe3d11952374181204c1840f5cd8dbbba76d6e6e5002d02e7c9d72d7fd3",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 1,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "U",
+      "B"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Cabal Coffers": {
@@ -8167,7 +10550,41 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "5a8725878b0b17820906673ea0b488b75203a510245f5d4d8ea4468da7ecbb7f",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 2,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "B"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": null,
+      "scales": "for each swamp you control"
+     },
+     "unread": false,
+     "net": -1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Study Hall": {
@@ -8307,7 +10724,75 @@
    "unknownTriggers": [
     "mana-spent"
    ],
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 1,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 0,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Opal Palace": {
@@ -8449,7 +10934,69 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "a7f024249fc77a17d2ed5a7bf68a484ad7521f274aa9a1a3f6460a8ef9e201cb",
-   "clauseSource": "model"
+   "clauseSource": "model",
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 1,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 0,
+     "anyColour": "identity",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 0,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
   }
  },
  "Prismatic Omen": {
@@ -8480,7 +11027,18 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "staticFixer": {
+    "covers": "lands",
+    "colours": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
+  }
  },
  "Urborg, Tomb of Yawgmoth": {
   "card": {
@@ -8507,7 +11065,14 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "staticFixer": {
+    "covers": "lands",
+    "colours": [
+     "B"
+    ]
+   }
+  }
  },
  "Chromatic Orrery": {
   "card": {
@@ -8539,7 +11104,50 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [],
+     "colourless": 5,
+     "anyColour": null,
+     "amount": {
+      "fixed": 5,
+      "scales": null
+     },
+     "unread": false,
+     "net": 5,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "staticFixer": {
+    "covers": "all",
+    "colours": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
+  }
  },
  "Joiner Adept": {
   "card": {
@@ -8580,7 +11188,56 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "static-grant",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "staticFixer": {
+    "covers": "lands",
+    "colours": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
+  }
  },
  "Yavimaya, Cradle of Growth": {
   "card": {
@@ -8607,7 +11264,14 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "staticFixer": {
+    "covers": "lands",
+    "colours": [
+     "G"
+    ]
+   }
+  }
  },
  "Emissary's Ploy": {
   "card": {
@@ -8664,7 +11328,7 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {}
  },
  "Mystic Skull // Mystic Monstrosity": {
   "card": {
@@ -8700,7 +11364,82 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 1,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 0,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 1,
+     "source": "static-grant",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
  },
  "Greenhouse // Rickety Gazebo": {
   "card": {
@@ -8743,7 +11482,56 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "static-grant",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ],
+   "staticFixer": {
+    "covers": "lands",
+    "colours": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
+  }
  },
  "The World Tree": {
   "card": {
@@ -8784,7 +11572,78 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    },
+    {
+     "face": 0,
+     "source": "static-grant",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": "you control six or more lands",
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
  },
  "Celestial Dawn": {
   "card": {
@@ -8814,7 +11673,7 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {}
  },
  "Divergent Growth": {
   "card": {
@@ -8852,7 +11711,46 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "static-grant",
+     "repeats": "once",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
+    }
+   ]
+  }
  },
  "Mycosynth Lattice": {
   "card": {
@@ -8878,7 +11776,18 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "staticFixer": {
+    "covers": "all",
+    "colours": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
+  }
  },
  "Island": {
   "card": {
@@ -8909,7 +11818,7 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {}
  },
  "Mountain": {
   "card": {
@@ -8940,7 +11849,7 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {}
  },
  "Swamp": {
   "card": {
@@ -8971,7 +11880,7 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {}
  },
  "Oath of Nissa": {
   "card": {
@@ -9001,7 +11910,7 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {}
  },
  "Agatha's Soul Cauldron": {
   "card": {
@@ -9029,7 +11938,7 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {}
  },
  "Stormtide Leviathan": {
   "card": {
@@ -9065,7 +11974,14 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "staticFixer": {
+    "covers": "lands",
+    "colours": [
+     "U"
+    ]
+   }
+  }
  },
  "Swampbenders": {
   "card": {
@@ -9102,6 +12018,13 @@
    "gameChanger": false,
    "reserved": false
   },
-  "tags": null
+  "tags": {
+   "staticFixer": {
+    "covers": "lands",
+    "colours": [
+     "B"
+    ]
+   }
+  }
  }
 }

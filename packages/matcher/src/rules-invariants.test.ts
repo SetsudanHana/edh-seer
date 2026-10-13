@@ -59,11 +59,14 @@ const TESTED: Record<string, string> = {
   "702.139b": "legality.test.ts — 702.139b: a companion's condition counts the COMMANDER as part of the starting deck",
   "903.11a": "legality.test.ts — 903.11a: a companion may not share a name with the deck nor leave the commander's identity",
   "903.5a": "legality.test.ts — 903.5a counts COPIES; Yorion can never be met in a 100-card format",
+  "702.179a": "gate.test.ts — a player with start your engines! and no speed has speed 1: a max-speed gate is never met before turn 4",
+  "702.179d": "gate.test.ts — speed rises once each turn while under 4: a max-speed gate is met from turn 4, in any deck (owner 2026-10-13)",
   "702.73a": "legality.test.ts — 702.73a: Kaheera accepts a changeling as every creature type",
   "712.8a": "legality.test.ts — 712.8a: Umori reads a double-faced card by its FRONT face",
   "603.2c": "edge-magnitude.test.ts — a batched ('one or more') consumer hears the whole batch once, so the magnitude caps at one",
   "202.3": "stats.test.ts — mana value is a whole number, so a mana-value parity test holds and 0 is even (#713)",
   "712.14": "faces.test.ts — a card putting itself back onto the battlefield enters FRONT face up unless transformed (#715)",
+  "305.7": "mana-colour-sources.test.ts — a land that makes every land a Swamp or a Forest (Urborg, Yavimaya) is one itself: it taps for that colour (#1169)",
   "305.6": "land-score.test.ts — a basic land type is a mana ability: a shock land printed with reminder text only makes both its colours (#767)",
 };
 const PROSE: Record<string, string> = {
@@ -78,11 +81,12 @@ const PROSE: Record<string, string> = {
   "903.8": "commander tax is a caveat, not a number",
   "113.3": "edges: the copy-ability pass reads the other card's ability kinds (AC12; edges.test asserts Strionic, Gogo, Tawnos)",
   "605.3b": "edges: 'activated' excludes mana abilities in the copy-ability pass (AC12)",
-  "306.5b": "edges: a planeswalker's loyalty is a counter (canCarryCounters, AL4)",
+  "306.5b": "edges: a planeswalker's loyalty is a counter (canCarryCounters, AL4); goldfish/mana-lines: it enters with its printed loyalty, which the first activation spends from (goldfish.test.ts)",
   "310.6": "edges: a battle's defence is a counter (canCarryCounters, AL4)",
   "702.63": "edges: vanishing puts time counters on (canCarryCounters, AL4)",
   "702.32": "edges: fading puts fade counters on (canCarryCounters, AL4)",
   "606.3": "partners-core effectOrder: a loyalty ability is once a round, so it ranks with the taps (AN3)",
+  "606.6": "goldfish/mana-lines: a negative loyalty cost needs that many counters, so a \"-N\" mana ability is played iff the starting loyalty covers it, for floor(loyalty / N) turns (asserted in goldfish.test.ts)",
   "301.7a": "partners-core: a Vehicle prints power and toughness without being a creature, so it carries `pow`/`tou` in the index and answers a Power range -- printed, not \"is a creature\"",
 };
 

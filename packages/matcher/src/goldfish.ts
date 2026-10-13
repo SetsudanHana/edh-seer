@@ -1,12 +1,13 @@
 import { POLICY_COLLAPSE } from "@edh-seer/engine/percent";
-import type { SubjectFilter } from "@edh-seer/tagger";
+import type { ManaLine, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
-import { fixedColours } from "./mana-lines.js";
+import { cardLines, colourSourceColours, isFetchSource, isLandfall, isLoyaltyAbility, isPhaseTrigger, loyaltyActivations, lineColours, minManaValue, paidWithResource, paysItsWay, usableLoyalty } from "./mana-lines.js";
+import { boardCount, boardGateOf, gateMet, isSpeedGate, MAX_SPEED_TURN, permCounts, permOf, type BoardGate, type Perm } from "./gate.js";
 import { staticFixer } from "./static-fixers.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
-import { FETCHES_TAPPED, FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands, isLandFetch } from "./fetch-land.js";
+import { FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands } from "./fetch-land.js";
 import { DEFAULT_POD_SIZE, opponents } from "./format.js";
 import { ratesOf } from "./rate.js";
 import { characteristicsSubject } from "./edges.js";
@@ -107,76 +108,108 @@ export interface Accelerant {
   fetchTapped?: boolean;
 }
 
-const SUSPEND = /\bsuspend \d/i;
+/** WHICH SOURCES A PER-SOURCE TAP BONUS PAYS FOR: `colorless` (anything tapped for {C}), `creature` (a creature tapped for mana) or `land:<type>` (a land of that
+ *  basic type tapped for mana: `land:forest`, Nissa, Who Shakes the World; `land:swamp`, Crypt Ghast). */
+export type TapBonus = "colorless" | "creature" | `land:${string}`;
+
 /** A TAP-REPLACEMENT: mana that arrives when some OTHER permanent is tapped (roadmap O2). Two shapes,
  *  and they are not the same size -- a land AURA is bounded at what its one enchanted land adds,
  *  while Forsaken Monument pays for EVERY permanent tapped for {C} and is worth as much as the board
  *  is wide. High Tide prints the same shape and is refused elsewhere for being an Instant. */
-const TAP_REPLACEMENT = /is tapped for mana|tap a (?:permanent|creature|land)\b[^.]*\bfor\b/i;
+const TAP_REPLACEMENT = /is tapped for mana|tap an? (?:permanent|creature|land|plains|island|swamp|mountain|forest)\b[^.]*\bfor\b/i;
 /** Which sources a per-source bonus reads. `colorless` is checkable only because `{C}` became a real
  *  mask bit (N11); before that a colourless source and a colourless COST were the same empty mask. */
 const BONUS_COLORLESS = /tap a permanent for \{c\}|tap a land for \{c\}/i;
 const BONUS_CREATURE = /tap a creature for mana/i;
+/** "Whenever you tap a Forest for mana, add an additional {G}" (Nissa, Who Shakes the World), "a Swamp" (Crypt Ghast, Nirkana Revenant). The "is tapped for mana"
+ *  shape (Vernal Bloom, Gauntlet of Might) is not read: it names no `you`, and it is every player's. A STANDING bonus only: the sentence opens a line and adds at once, so
+ *  Rikala's "..., if there are three or more tide counters on Rikala, add an additional {U}" (an intervening if) and Pyre Rhymer // Molten Tide's "Until end of turn, whenever
+ *  you tap a Mountain ..." (one turn) are refused rather than priced as always on (owner 2026-10-13 rulings name Nissa, Crypt Ghast and Nirkana Revenant). */
+const BONUS_LAND_TYPE = /^whenever you tap an? (plains|island|swamp|mountain|forest) for mana, add an additional\b/im;
 
-/** DOES THIS CARD MAKE MANA, or does Scryfall merely think so? `producedMana` is stamped from QUOTED
- *  TOKEN TEXT as well as the card's own abilities, so **Pitiless Plunderer** — which taps for nothing
- *  and makes Treasures — arrived carrying five colours and was priced as a four-mana dork adding one
- *  every turn from the turn after it lands (roadmap N9). Treasure mana is a ONE-SHOT resource, and
- *  `isManaSource` already refuses one-shots on exactly that ground: the same rule, one layer over.
- *
- *  TWO WAYS TO REALLY MAKE MANA, and both are printed. The card says "add" in its OWN text, or it
- *  GRANTS a mana ability to permanents you control — Enduring Vitality's *"Creatures you control have
- *  '{T}: Add one mana of any color'"* is a genuine engine and is one of the three accelerants the old
- *  hypergeometric model could see at all. **A grant whose quoted ability SACRIFICES the permanent is
- *  the one-shot again wearing a grant's sentence** (Goldspan Dragon grants to Treasures), so it is
- *  refused with the rest. */
-function makesItsOwnMana(text: string): boolean {
-  // Quotes hold OTHER objects' abilities -- a token's, an enchanted permanent's -- so the card's own
-  // claim is what is left when they are stripped.
-  if (/\badds?\b/i.test(text.replace(/"[^"]*"/g, " "))) return true;
-  for (const m of text.matchAll(/\b(?:has|have) "([^"]*)"/gi)) {
-    if (/\badds?\b/i.test(m[1]) && !/sacrifice this/i.test(m[1])) return true;
-  }
-  return false;
+/** WHICH SOURCES A PER-SOURCE TAP BONUS PAYS FOR (Forsaken Monument: "tap a permanent for {C}", Leyline of Abundance: "tap a creature for mana", Nissa, Who Shakes the World: "tap a Forest for mana"),
+ *  or undefined. Read from the PRINTED text. CEILING: derive carries the bonus as a `trigger` line (event `tapped-for-mana`), but the subject it names is not one reading:
+ *  the grammar path says "a permanent for {C}" (Forsaken Monument) where the model path says "a creature" (Leyline of Abundance) or "a land"
+ *  (Ultima), so WHICH taps count is not derived yet; this stays the one printed check in the module. It is no mana detector: whether the card makes mana at all is its derived lines' answer (`classifyAccelerant`). */
+export function tapBonusOf(dc: DeckCard): TapBonus | undefined {
+  const text = dc.card.oracleText ?? "";
+  if (!TAP_REPLACEMENT.test(text)) return undefined;
+  if (BONUS_CREATURE.test(text)) return "creature";
+  if (BONUS_COLORLESS.test(text)) return "colorless";
+  const land = BONUS_LAND_TYPE.exec(text);
+  return land ? `land:${land[1]!.toLowerCase()}` : undefined;
 }
 
-/** What kind of accelerant a card is, or null. Read from PRINTED data only — `producedMana` and the
- *  type line — because a play policy that depends on derivation would move whenever derivation did. */
-export function classifyAccelerant(dc: DeckCard): Accelerant | null {
+/** THE DERIVED LINES THE GOLDFISH CAN PLAY (#1169 task 2b-1): one derive reading of a card's mana (`CardTags.manaLines`), filtered by this model's
+ *  own policy. A line the goldfish can use is repeatable and costs nothing it cannot pay, and it is mana for the deck's spells:
+ *  - not a SELF-SACRIFICE (Lotus Petal, a Treasure: a one-shot, `isOneShot`), not PAID WITH A RESOURCE the model has no board to pay from (another
+ *    permanent sacrificed or tapped, Phyrexian Altar, Springleaf Drum; a counter, energy or a discard: `paidWithResource`), not UNREAD, and not RESTRICTED -- the model is colour-blind (C10), so mana
+ *    it cannot check ("spend this mana only to activate abilities", Jegantha) is refused. The one restriction it CAN check is a mana-value floor
+ *    (`minManaValue`), which `manaOutput` settles against the deck;
+ *  - an activated ability that taps the card, or a line a static ability GRANTS (Chromatic Lantern, Enduring Vitality), or an Aura's trigger (Wild Growth),
+ *    whose gate (if it has one) is a board count this model can check;
+ *  - a trigger only if it is one this model can PRODUCE the event of: a land entering (`isLandfall`, rule 2) or the beginning of a phase
+ *    (`isPhaseTrigger`), ungated. TRIGGER MANA FROM A SPELL CAST IS RAMP, NOT A DORK (owner, 2026-10-10: Birgi, "Whenever you cast a spell, add {R}"):
+ *    rule 3 casts only accelerants, so pricing off that stream would read a fraction of a real deck's spells and feed back into the casting loop it
+ *    came from. Every other trigger (the card's own enters trigger, combat, an opponent's discard) is refused for the same reason, as is a Treasure maker.
+ *    The exception is the tap-replacement a card prints (`tapBonusOf`), which the simulation prices as a per-source bonus. */
+export function playableLines(dc: DeckCard, deck?: readonly DeckCard[]): ManaLine[] {
+  const taps = tapBonusOf(dc) !== undefined;
+  // THE LINES OF THE FACES IN PLAY FROM THE DECK: a transform card's back is not (owner 2026-10-10, #1174: things that transform are not ramp), so Arlinn, the Moon's
+  // Fury's "+2: Add {R}{G}" is no accelerant of Arlinn, the Pack's Hope. Ashling's phase trigger asks for the back (`cardLines(dc, true)`) and keeps it.
+  const fromDeck = new Set(cardLines(dc));
+  return cardLines(dc, true).filter((l) => {
+    if (l.unread || l.cost.sacrificeSelf || paidWithResource(l)) return false;
+    if (l.restriction !== null && minManaValue(l) === null) return false;
+    // A GATE IS A CONDITION ON THE DECK (owner 2026-10-13: a gated source is still a source, conditioned on the deck). Mox Jasper ("Activate only if you control a Dragon")
+    // is mana in a deck that plays Dragons (`gateMet`, gate.ts) and a blank in one that does not; Howlsquad Heavy's "Max speed" is met in any deck (`isSpeedGate`) and
+    // priced from turn 4 (`ManaOutput.speed`). The two gates `manaOutput` prices against the board turn by turn (lands counted, the tron pair) stay.
+    const checkable = l.gate === null || dynamicGate(l) || gateMet(l, deck);
+    switch (l.source) {
+      // A LOYALTY ABILITY ("+1: Add {R}{R}") is a source too (owner, 2026-10-13): once per turn at sorcery timing (CR 606.3), so it pays every turn the walker
+      // is out and the turn it is cast (no summoning sickness: it is no creature). A "+N" or "0" always; a "−N" (Chandra, Novice Pyromancer's −1: Add
+      // {R}{R}) iff the walker's STARTING loyalty covers it, so it can be activated the turn it is cast (`usableLoyalty`, owner 2026-10-13), and then for as many
+      // turns as the loyalty lasts (`ManaOutput.turns`). Only the walker's face in play from the deck.
+      // CEILING: the walker never dies (the goldfish has no opponent to attack it), and a walker with two mana abilities is priced at its best one
+      // (`manaOutput`), which is one activation a turn as the rules allow; when that is a minus ability the walker stops after its last, though a lesser
+      // "+N" ability could carry on.
+      case "activated": return (l.cost.tap || (usableLoyalty(l) && fromDeck.has(l))) && checkable;
+      case "static-grant": case "aura-trigger": return checkable;
+      case "trigger": return l.gate === null && (isLandfall(l) || isPhaseTrigger(l) || (l.trigger === "tapped-for-mana" && taps));
+      default: return false;
+    }
+  });
+}
+
+/** What kind of accelerant a card is, or null. Read from the DERIVED mana lines (`CardTags.manaLines`, `landFetch`, `isOneShot`, `suspendOnly`) and the
+ *  type line, since #1169 task 2b-1 -- it was printed text and Scryfall's `producedMana`, which stamped Pitiless Plunderer (a Treasure maker) with
+ *  five colours and priced Birgi as a dork. A card with no derived tags is none: derive covers every card in a deck, so that is an underived card and
+ *  `coverage.ts` lists it. */
+export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[]): Accelerant | null {
   const line = (dc.card.typeLine ?? "").toLowerCase();
   const name = dc.card.name;
   const manaValue = dc.card.manaValue ?? 0;
   // A land is a land drop, never an accelerant cast -- and this reads the JOINED type line ON PURPOSE
-  // where `simulate` reads the FRONT face (N3): a transform card's `producedMana` carries its BACK
-  // face's mana, so a front-face read here would price Ojer Axonil as a recurring red source, which
-  // it is not until it dies and transforms.
+  // where `simulate` reads the FRONT face (N3): a transform card's land back would otherwise price Ojer
+  // Axonil as a recurring red source, which it is not until it dies and transforms.
   if (/\bland\b/.test(line)) return null;
-  const text = dc.card.oracleText ?? "";
-  if (isLandFetch(text)) {
-    return { name, manaValue, kind: "land-fetch", fetchTapped: FETCHES_TAPPED.test(text) };
-  }
-  // A ONE-SHOT IS NOT A SOURCE at any confidence — `isManaSource`'s own ruling, and the measured
-  // reason it exists (139 of 3,197 `producedMana` library cards are rituals). Dark Ritual really
-  // does enable a turn, which is a stated ceiling and not an oversight.
-  // A SUSPENDED CARD IS NEVER CAST FROM HAND FOR ITS PRINTED COST (CR 702.62), and rule 3 casts by
-  // mana value alone -- so Sol Talisman and Mox Tantalite, both mana value 0, were deployed FREE on
-  // turn one and taps for two from turn two. The real sequence is a cost plus a three-turn wait.
-  // The same shape `castability.ts` REFUSES rather than prices (roadmap N9).
-  if (SUSPEND.test(text) && (dc.card.manaValue ?? 0) === 0) return null;
-  if (!isManaSource(dc) || (dc.card.producedMana ?? []).length === 0 || !makesItsOwnMana(text)) return null;
-  // A LAND AURA WAITS A TURN, because the land it enchants is what pays for it: you tap the Forest
-  // for {G}, cast Wild Growth on it, and the Forest is tapped. That is a DORK's timing, and pricing
-  // it as a rock gave the deck a mana it does not have on the turn it matters most (roadmap O2).
-  const tapReplacement = TAP_REPLACEMENT.test(text);
-  if (tapReplacement && /\baura\b/.test(line)) return { name, manaValue, kind: "dork" };
-  // A PHASE TRIGGER PAYS FROM THE NEXT TURN, whatever its type line says: you cast it DURING your
-  // first main phase, so that turn's trigger has already happened. Dork timing, for the same reason
-  // a land aura has it (roadmap O2).
-  if (PHASE_ADD.test(text) && !PHASE_ONE_SHOT.test(text)) return { name, manaValue, kind: "dork" };
-  // LANDFALL MANA MISSES THE TURN IT LANDS: rule 2 plays the land BEFORE rule 3 casts anything, so
-  // the land drop that turn has already happened. Dork timing, same as the others.
-  if (landfallMana(text) > 0) return { name, manaValue, kind: "dork" };
-  return { name, manaValue, kind: /\bcreature\b/.test(line) ? "dork" : "rock" };
+  const tags = dc.tags;
+  if (!tags) return null;
+  // A SPELL OR CREATURE THAT FINDS A LAND (`landFetch`, an ungated fetch that pays its way: `isFetchSource`). Whether the land arrives tapped is the
+  // fetch's own fact.
+  if (isFetchSource(dc)) return { name, manaValue, kind: "land-fetch", fetchTapped: tags.landFetch!.tapped };
+  // A ONE-SHOT IS NOT A SOURCE at any confidence -- `isManaSource`'s own ruling, and the measured
+  // reason it exists. Dark Ritual really does enable a turn, which is a stated ceiling and not an oversight.
+  // A SUSPEND-ONLY CARD IS NEVER CAST FROM HAND (CR 702.62), and rule 3 casts by mana value alone -- so Mox Tantalite, mana value 0, would be deployed
+  // FREE on turn one. The real sequence is a cost plus a three-turn wait: the same shape `castability.ts` REFUSES rather than prices (roadmap N9).
+  if (tags.isOneShot || tags.suspendOnly || !isManaSource(dc)) return null;
+  const lines = playableLines(dc, deck);
+  if (lines.length === 0) return null;
+  // A LAND AURA WAITS A TURN, because the land it enchants is what pays for it: you tap the Forest for {G}, cast Wild Growth on it, and the Forest is
+  // tapped. That is a DORK's timing (roadmap O2). A PHASE TRIGGER PAYS FROM THE NEXT TURN, whatever the type line says: you cast it DURING your first main
+  // phase, so that turn's trigger has already happened. LANDFALL MANA MISSES THE TURN IT LANDS: rule 2 plays the land BEFORE rule 3 casts anything.
+  const late = lines.some((l) => l.source === "aura-trigger" || isPhaseTrigger(l) || isLandfall(l));
+  return { name, manaValue, kind: late || /\bcreature\b/.test(line) ? "dork" : "rock" };
 }
 
 /** How much mana ONE activation nets, and the board condition it is gated on. Every source in this
@@ -184,8 +217,8 @@ export function classifyAccelerant(dc: DeckCard): Accelerant | null {
  *  Tower alike — so the whole ramp curve was priced off the COUNT of sources rather than their
  *  output. Sol Ring alone sits in 52 of the 71 decks.
  *
- *  READ FROM PRINTED TEXT, like `classifyAccelerant` beside it, so the play policy never moves when
- *  derivation does. */
+ *  READ FROM THE DERIVED MANA LINES, like `classifyAccelerant` beside it (#1169 task 2b-1; it was printed text, "so the play policy never moves when
+ *  derivation does" -- superseded: the policy IS a reading of the derived lines, and a derive change that moves it is a change to be measured). */
 export interface ManaOutput {
   /** The unconditional amount. 1 for an ordinary source. */
   amount: number;
@@ -203,21 +236,60 @@ export interface ManaOutput {
    *  `everyLandType` is what makes the branch reachable. Prismatic Omen is deliberately NOT it:
    *  every BASIC land type does not include Urza's. */
   tron?: { subtypes: [string, string]; amount: number };
+  /** A PLANESWALKER'S MINUS ABILITY RUNS OUT: it can be activated this many turns, from the turn the walker is cast (`loyaltyActivations`: loyalty / cost, rounded
+   *  down, CR 606.6). Absent for a source that never does (every tap, and a "+N" or "0" loyalty ability). */
+  turns?: number;
+  /** A BOARD-COUNT GATE ON A BETTER AMOUNT (owner 2026-10-13: timed turn by turn): "If you control four or more creatures, add {G}{G} instead" (Leafkin Druid), "Activate only if you
+   *  control a Dragon" (Mox Jasper, `amount` 0 until then). The source taps for `gated.amount` on the turns its controller has `gate.need` of the permanents the gate names on the
+   *  battlefield, and for `amount` otherwise. Present even when it adds nothing to the mana (Tainted Peak's {B}/{R} line makes one, as its {C} does): the COLOURS wait on it too. */
+  gated?: { gate: BoardGate; amount: number };
+  /** A MAX-SPEED LINE (owner 2026-10-13; CR 702.179d, `MAX_SPEED_TURN`): Muraganda Raceway's "Max speed -- {T}: Add {C}{C}", Howlsquad Heavy, Endrider Catalyzer. The source taps for
+   *  `speed.amount` from turn `speed.turn` on (4 by owner ruling 2026-10-13; the rule gives entry turn + 2 at the earliest (702.179a, 702.179d), which the model does not price: it over-claims a source cast after turn 2 and under-claims a turn-1 Raceway by one turn), and for `amount` before (0 when the speed line is the card's only mana). Present whether or not
+   *  it beats `amount`. A scaling speed line (Howlsquad Heavy) is the incumbent 1. CEILING: speed rises only on a turn an opponent loses life, assumed to happen every turn (gate.ts
+   *  `MAX_SPEED_TURN`). A speed line's COLOURS are in `colourMaskOf` from the start, like any gated colour that is not a board count, but they ride with the source's mana, which is 0 until turn 4
+   *  when the speed line is the card's only one (Endrider Catalyzer, Howlsquad Heavy) and colourless on the card that has a plain line beside it (Muraganda Raceway: the three speed-gated lines of the corpus, 2026-10-13). */
+  speed?: { turn: number; amount: number };
 }
 
-/** A RITUAL'S MANA: an instant or sorcery whose text adds a FIXED run of mana -- Dark Ritual's
- *  "Add {B}{B}{B}." -- and nothing that counts ("for each", Jeska's Will; "then add", Rite of Flame).
- *  0 for anything else. One-shot mana is no SOURCE (`isManaSource`'s ruling stands); it is read only
- *  for a single turn's burst, `SimulateResult.fastStart`. */
-export function ritualAdds(dc: DeckCard): number {
+/** THE ONE-SHOT-SPELL LINE OF A RITUAL, or null: an instant or sorcery whose derived line adds a FIXED run of mana -- Dark Ritual's "Add {B}{B}{B}."
+ *  -- and nothing that counts ("for each", Jeska's Will; "then add", Rite of Flame), and that is not gated (Cabal Ritual's threshold line),
+ *  restricted ("spend this mana only", not a free burst toward the commander) or a choice of colour. One-shot mana is no SOURCE (`isManaSource`'s
+ *  ruling stands); it is read only for a single turn's burst, `SimulateResult.fastStart`. */
+function ritualLine(dc: DeckCard): ManaLine | null {
   // A split or Adventure card is priced at a mana value that is not the ritual half's (review).
-  if ((dc.card.typeLine ?? "").includes("//")) return 0;
-  if (!/\b(?:instant|sorcery)\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) return 0;
-  const text = dc.card.oracleText ?? "";
-  // An extra cost (Culling the Weak's creature) or mana that pays only for some spells is not a free
-  // burst toward the commander (review).
-  if (/additional cost|spend this mana only/i.test(text)) return 0;
-  return ritualMana(dc.card.oracleText ?? "").length;
+  if ((dc.card.typeLine ?? "").includes("//")) return null;
+  if (!/\b(?:instant|sorcery)\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) return null;
+  // An extra COST (Culling the Weak's creature) is not on the line: `cost` is an activation cost, and a spell's additional cost is printed text.
+  // CEILING: this stays a printed check -- derive does not carry a spell's additional cost.
+  if (/additional cost/i.test(dc.card.oracleText ?? "")) return null;
+  const lines = cardLines(dc).filter((l) => l.source === "one-shot-spell");
+  // "Add {R}{R}, then add {R} for each card named ~ in each graveyard" (Rite of Flame) is a fixed run AND a count: derive reads two lines, and the
+  // count has been refused since the ritual was first read ("nothing that counts"), so a card with one is no ritual. The opponent's-hand count is the
+  // one the owner ruled on (`opponentHandRitual`), and it is a card of its own.
+  if (lines.some((l) => l.amount.scales !== null)) return null;
+  // A RITUAL NETS MANA (owner's rule, roadmap I4: ramp is a net gain): High Tide's "adds an additional {U}" for {U} and Eldrazi Confluence's
+  // Scion mode are one-shot lines that gain nothing, and a burst toward the commander that costs what it makes is no burst.
+  // CEILING: HIGH TIDE IS NOT PRICED (owner 2026-10-13: it is ramp, a one-turn tap bonus whose yield is the Islands tapped that turn; derive carries it as a line with
+  // `untilEndOfTurn`, net 0, so this refuses it with Eldrazi Confluence). Pricing it honestly needs the burst below to know WHICH untapped sources are Islands and which one
+  // pays its {U} (the units carry colours, not land types), and the burst feeds `fastStart` only; the number it would move is a commander-cast turn for decks that run it.
+  return lines.find((l) => l.gate === null && l.restriction === null && !l.unread && l.anyColour === null && l.net >= 1) ?? null;
+}
+
+/** The colour mask of each mana a ritual adds, one entry per mana ("Add {R}{R}{R}" is three red). A line of one colour (or only colourless) is that
+ *  many units of it; a line with one distinct colour per mana ("Add {B}{R}") is one of each. Any other mix cannot be told apart per unit from the line,
+ *  so it is refused (CEILING: no ritual in the corpus is one -- 2b-1 parity). */
+export function ritualUnits(dc: DeckCard): number[] {
+  const line = ritualLine(dc);
+  if (!line || line.amount.fixed === null || line.amount.fixed <= 0) return [];
+  const kinds = line.colours.length + (line.colourless > 0 ? 1 : 0);
+  if (kinds === 1) return Array.from({ length: line.amount.fixed }, () => colorMask(line.colours.length > 0 ? line.colours : ["C"]));
+  if (line.colourless === 0 && line.colours.length === line.amount.fixed) return line.colours.map((c) => colorMask([c]));
+  return [];
+}
+
+/** A RITUAL'S MANA: how many mana `ritualUnits` adds. 0 for anything else. */
+export function ritualAdds(dc: DeckCard): number {
+  return ritualUnits(dc).length;
 }
 
 /** AN OPPONENT'S HAND ON OUR TURN t, ASSUMED (owner 2026-10-06, for Jeska's Will): 7 on turns 1-2, 6
@@ -229,22 +301,16 @@ export function opponentHandSize(turn: number): number {
 
 /** A RITUAL THAT COUNTS THE OPPONENT'S HAND (Jeska's Will, "Add {R} for each card in target opponent's
  *  hand"): the colour mask of that one symbol, or 0. Read beside `ritualAdds`, which refuses every
- *  "for each"; this is the one count the owner ruled on. Anchored per line (no `(?:^|\n)\s*`). */
+ *  "for each"; this is the one count the owner ruled on. It is the derived line whose amount SCALES with exactly that
+ *  ("each card in target opponent's hand"), of one colour. */
 export function opponentHandRitual(dc: DeckCard): number {
   if ((dc.card.typeLine ?? "").includes("//")) return 0;
   if (!/\b(?:instant|sorcery)\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) return 0;
-  const text = dc.card.oracleText ?? "";
-  if (/additional cost|spend this mana only/i.test(text)) return 0;
-  const m = /^(?:• )?Add (\{[WUBRGC]\}) for each card in target opponent's hand\./m.exec(text);
-  return m ? colorMask([m[1]!.slice(1, -1)]) : 0;
-}
-
-/** The colour mask of each mana a ritual adds, one entry per symbol ("{R}{R}{R}" is three red). */
-function ritualMana(text: string): number[] {
-  // ANCHORED PER LINE (`m`), never `(?:^|\n)\s*`: the newline and the whitespace overlap, and CodeQL's
-  // polynomial-ReDoS check fails the PR on it (js/polynomial-redos, #1063).
-  const m = /^Add ((?:\{[WUBRGC]\})+)\.(?:\s|$)/m.exec(text);
-  return m ? (m[1]!.match(/\{[WUBRGC]\}/g) ?? []).map((sym) => colorMask([sym.slice(1, -1)])) : [];
+  // CEILING: a spell's additional cost is PRINTED text -- derive's `cost` is an activation cost and carries none. Not modelled: what the extra cost
+  // is (a discard, a sacrifice, life) or whether the deck can pay it; any card printing one is refused rather than priced as a free ritual.
+  if (/additional cost/i.test(dc.card.oracleText ?? "")) return 0;
+  const line = cardLines(dc).find((l) => l.source === "one-shot-spell" && l.restriction === null && l.amount.scales === "each card in target opponent's hand");
+  return line && line.colours.length === 1 && line.colourless === 0 && line.anyColour === null ? colorMask(line.colours) : 0;
 }
 
 const popcount = (m: number): number => { let n = 0; for (let x = m; x; x &= x - 1) n++; return n; };
@@ -252,7 +318,7 @@ const popcount = (m: number): number => { let n = 0; for (let x = m; x; x &= x -
 /** SPEND FROM A POOL OF ONE-MANA UNITS, each carrying the colours it can be: a coloured pip takes the
  *  least flexible unit that pays it, generic takes the least flexible left. Mutates `units`; false
  *  (and untouched) when the cost does not fit. */
-function spendUnits(units: number[], cost: Cost): boolean {
+export function spendUnits(units: number[], cost: Cost): boolean {
   if (!payable(units.map((colors) => ({ mana: 1, colors })), cost)) return false;
   const take = (fits: (u: number) => boolean): void => {
     let best = -1;
@@ -264,60 +330,23 @@ function spendUnits(units: number[], cost: Cost): boolean {
   return true;
 }
 
-/** MANA IN A COST STRING. `{2}` is two, `{U}` is one, `{T}` is none — because "{1}, {T}: Add {U}{B}"
- *  is ONE mana and reading the Add run alone prices it at two. The first count over this corpus made
- *  exactly that mistake and reported 27 lands where the answer is 9. */
-const TAP_ONLY = /^\{t\}:\s*add\s/i;
-const ADD_RUN = /add ((?:\{[^{}]+\}\s*)+)/i;
-/** THE SAME AMOUNT IN WORDS, which the symbol reader cannot see: "Add three mana of any one color"
- *  (roadmap N10). **Sceptre of Eternal Glory is in 11 decks and was priced at one.** `X` is
- *  deliberately absent -- it is a RATE and not an amount, the ruling I4 already made one subsystem
- *  over -- so a card that adds X keeps the incumbent 1 rather than a guess. */
-const ADD_WORDS = /add (one|two|three|four|five|six|seven|eight|nine|ten) mana\b/i;
-/** A TAP-REPLACEMENT: the mana arrives when some OTHER permanent is tapped, so there is no `{T}:` to
- *  read and the amount sits in a sentence the tap reader never looks at (roadmap O2). Overgrowth adds
- *  `{G}{G}`, Wild Growth one, Fertile Ground "an additional one mana of any color". */
-const ADD_ADDITIONAL = /adds? an additional (?:((?:\{[^{}]+\}\s*)+)|(one|two|three) mana)/i;
-/** A PHASE TRIGGER: mana that arrives every turn without tapping anything, so again there is no
- *  `{T}:` to read (roadmap O2). **The GUARDS are most of this rule.** Of 32 corpus cards printing the
- *  shape, nearly all add a RATE -- "for each Raccoon you control", "for each charge counter" -- which
- *  the "a rate is not an amount" ruling refuses (I4, one subsystem over); six RESTRICT the mana, which
- *  this model cannot check; and two are ONE-SHOTS wearing a trigger, where "your NEXT main phase"
- *  (Mana Drain) and "first main phase OF THE GAME" (Chancellor of the Tangle) each fire once. A
- *  one-shot is not a source at any confidence -- `isManaSource`'s own ruling. */
-const PHASE_ADD = /at the beginning of[^.]{0,80}?\badds? ((?:\{[^{}]+\}\s*)+|(?:one|two|three|four) mana)/i;
-/** THE ONE RESTRICTION THIS MODEL CAN CHECK (roadmap O1). Every other "spend this mana only to cast
- *  X" names a colour or a type the module is blind to, so it refuses them; a MANA VALUE threshold is
- *  different, because it knows every card's. **`iz-it-izzet` is built so it binds nothing -- all 62 of
- *  its nonlands are mana value 4 or greater** -- and that is a construction the report should be able
- *  to see. Settled against the DECK in `simulate`, since a cue alone cannot know it. */
-const MV_RESTRICTION = /spend this mana only to cast spells with mana value (\d+) or greater/i;
-const PHASE_ONE_SHOT = /at the beginning of your next|first main phase of the game/i;
-/** LANDFALL MANA, and it is the ONLY event-triggered mana this simulator can price (roadmap O2).
- *  Classified corpus-wide by whether the model PRODUCES the event: a land entering is rule 2 and
- *  happens every turn a land drop does, plus every fetch. The other buckets are refused because the
- *  event does not exist here -- COMBAT (the Azulas, Fire Nation Occupation), an OPPONENT (Waste Not),
- *  a BOARD EVENT (Carnival of Souls, Rose), and YOU CAST A SPELL (Birgi), where rule 3 casts only
- *  ACCELERANTS, so pricing off that stream would read a fraction of a real deck's spells AND feed
- *  back into the casting loop it came from. */
-const LANDFALL_ADD = /whenever a land (?:you control |)enters(?: the battlefield under your control|)[^.]{0,30}?adds? ((?:\{[^{}]+\}\s*)+|one mana|two mana)/i;
-const PHASE_RATE = /\bfor each\b|\bwhere x is\b|equal to/i;
-/** UNREACHABLE ON TODAY'S CORPUS AND KEPT ANYWAY, recorded rather than quietly shipped as decoration:
- *  `PHASE_ADD` demands a symbol run, and NO corpus card prints a multi-symbol rate ("add {G}{G} for
- *  each Elf"). Every rate in the family adds ONE symbol per unit, so refusing it changes no number
- *  today -- the guard exists because the shape is printable and the failure would be an over-claim. */
-const SYMBOLS = /\{[^{}]+\}/g;
-/** Mana this model cannot spend correctly. It is COLOUR-BLIND (C10), so a restriction it cannot
- *  check must not be counted at face value — Jegantha taps for five that pay no generic cost. */
-const RESTRICTED = /spend this mana only|can't be spent|this mana can't/i;
 /** A karoo returns a land as it enters, so tapping for two off one fewer land is NET NEUTRAL and
- *  the incumbent 1 is already right. Counting it 2 without modelling the bounce over-claims. */
+ *  the incumbent 1 is already right. Counting it 2 without modelling the bounce over-claims.
+ *  CEILING: PRINTED, AND NOT A MANA DETECTOR: the bounce is an ENTERS fact (a trigger that moves a land), which no derived mana line carries; whether the
+ *  card makes mana is its lines' answer. Not modelled: a karoo's real net (it replays the bounced land, and a bounced fetch or utility land is worth
+ *  more than one mana), and a bounce phrased any other way than the one sentence below -- such a card is priced at its full tap. */
 const BOUNCES = /return a land you control to its owner's hand/i;
-const LAND_GATE = /activate only if you control (\w+) or more lands/i;
-/** "If you control an Urza's Power-Plant and an Urza's Tower, add {C}{C}{C} instead." Matched on the
- *  SUBTYPE as printed inside the sentence, which is what the board carries — and the subtype is
- *  `Urza's Power-Plant` with a hyphen while the CARD is `Urza's Power Plant` without one. */
-const TRON = /if you control (?:an?|the) ([^,]{1,40}?) and (?:an?|the) ([^,]{1,40}?), add ((?:\{[^{}]+\})+) instead/i;
+/** A GATE ON A LINE'S AMOUNT, read from the derived gate string (lowercase, verbatim): "you control five or more lands" (Temple of the False God).
+ *  The wording of a gate is derived data; what this model does with it is this module's policy. Any other gate leaves the line uncounted.
+ *  CEILING: "three or more lands WITH THE SAME NAME" (Sceptre of Eternal Glory) is read as its floor, three lands: the name is uncheckable here, and
+ *  the gate under-claims rather than counting three from turn one (roadmap N10). */
+const LANDS_GATE = /^you control (\w+) or more lands(?: with the same name)?$/;
+/** "you control an urza's power-plant and an urza's tower" -- the tron shape: two named other lands on the board upgrade the amount. Matched on the
+ *  SUBTYPE as printed inside the gate, which is what the board carries -- and the subtype is `Urza's Power-Plant` with a hyphen while the CARD is
+ *  `Urza's Power Plant` without one. */
+const TRON_GATE = /^you control (?:an?|the) (.{1,40}?) and (?:an?|the) (.{1,40})$/;
+/** A GATE THIS MODEL PRICES AGAINST THE BOARD, turn by turn (`manaOutput`'s `needsLands` and `tron`), rather than against the decklist (`gate.ts`). */
+const dynamicGate = (l: ManaLine): boolean => l.gate !== null && (LANDS_GATE.test(l.gate) || TRON_GATE.test(l.gate));
 /** A land that IS every land type, so it answers any subtype check on the board by itself — Planar
  *  Nexus, and Omo's everything counter one layer out of reach. BASIC-ONLY IS REFUSED: Prismatic
  *  Omen's "every basic land type" does not include Urza's, which is the whole point of the check. */
@@ -330,60 +359,76 @@ const WORD_NUMBER: Record<string, number> = {
   one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
 };
 
-export function manaOutput(oracleText: string | undefined): ManaOutput {
-  const text = oracleText ?? "";
-  if (BOUNCES.test(text)) return { amount: 1 };
-  let out: ManaOutput = { amount: 1 };
-  // A TAP-REPLACEMENT has no `{T}:` line to find, so it is read before the loop and never inside it.
-  const extra = ADD_ADDITIONAL.exec(text);
-  if (extra && !RESTRICTED.test(text)) {
-    out = { amount: extra[1] ? (extra[1].match(SYMBOLS) ?? []).length : WORD_NUMBER[extra[2].toLowerCase()] };
+/** A LINE THAT PAYS NOTHING BUT THE TAP: a filter land's costed line ("{1}, {T}: Add {U}{U}"), a payment land, a sacrifice or a
+ *  counter-spending line is not a tap this model can pay, so it is not priced and the source stays at its NET one on purpose. A loyalty cost (a
+ *  planeswalker's "+2: Add {R}{R}{R}", "−1: Add {R}{R}") counts as the tap: the walker's one activation a turn, CR 606.3 (`playableLines` has already
+ *  refused the ones the starting loyalty does not cover). */
+const tapOnly = (l: ManaLine): boolean => l.cost.mana === 0 && l.cost.life === 0 && l.cost.counters === null && !l.cost.sacrificeOther && !l.cost.tapOther
+  && (l.cost.other.length === 0 || isLoyaltyAbility(l));
+
+export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[]): ManaOutput {
+  if (BOUNCES.test(dc.card.oracleText ?? "")) return { amount: 1 };
+  // THE LINES THAT HAVE AN AMOUNT TO PRICE: a tap, a grant, an Aura's "an additional" and a phase trigger. Landfall and a tap-replacement bonus are
+  // priced apart (`landfallOf`, `tapBonusOf`) and bring no mana of their own to a tap.
+  // CEILING: a SCALING amount ("{G} for each creature you control", Gaea's Cradle; a phase trigger's "for each Raccoon") is a RATE and not an amount
+  // (ruling I4, one subsystem over): a tap keeps the incumbent 1 and a phase trigger is refused, as before.
+  const lines = playableLines(dc, deck).filter((l) => (l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger" || isPhaseTrigger(l))
+    && tapOnly(l) && l.amount.fixed !== null && l.amount.fixed > 0);
+  // THREE KINDS OF GATE, and `playableLines` let each through for its own reason. The lands-counted and tron gates are priced turn by turn below (`needsLands`, `tron`); a BOARD-COUNT
+  // gate ("you control a Dragon", metalcraft, four or more creatures) is priced turn by turn against the permanents the simulation puts onto the battlefield (`gated`, `produced`);
+  // anything else the deck met at `gateMet` ("you have the initiative", Sarevok's Tome: CEILING in gate.ts) is no gate here -- the line is credited whole.
+  const timed = (l: ManaLine): BoardGate | null => (l.gate !== null && !dynamicGate(l) ? boardGateOf(l.gate) : null);
+  const speedGated = (l: ManaLine): boolean => l.gate !== null && isSpeedGate(l.gate);
+  const open = (l: ManaLine): boolean => l.gate === null || (!dynamicGate(l) && !speedGated(l) && timed(l) === null);
+  // A SCALING speed line (Howlsquad Heavy: "{R} for each Goblin you control") is a rate, not an amount: it keeps the incumbent 1, as a scaling tap does everywhere in this module.
+  const speedLines = playableLines(dc, deck).filter((x) => speedGated(x) && x.source === "activated" && tapOnly(x) && x.restriction === null);
+  const boardGated = lines.filter((x) => timed(x) !== null && x.restriction === null);
+  // A CARD WHOSE ONLY PRICED MANA WAITS ON THE BOARD (Mox Jasper) OR ON MAX SPEED (Howlsquad Heavy) makes none until it is met; every other source starts at the incumbent 1.
+  let out: ManaOutput = { amount: (boardGated.length > 0 || speedLines.length > 0) && !lines.some(open) ? 0 : 1 };
+  // UNGATED: the best plain line. A mana-value floor is RECORDED rather than refused, because the deck can settle it; it only wins by beating the
+  // plain amount.
+  for (const l of lines.filter((x) => open(x) && x.restriction === null)) if (l.amount.fixed! > out.amount) out = { amount: l.amount.fixed! };
+  // CEILING: THE RESTRICTED + OPEN LINE IS NO LONGER ONE THAT HOLDS A BOARD GATE. A line with both a board-count gate and a restriction (`timed(l) !== null && l.restriction !== null`) is in neither
+  // this loop (`open` is false for a board gate) nor `boardGated` (restriction must be null): it is not priced, an under-claim. NOTHING IN THE CORPUS HAS ONE THE GOLDFISH WOULD PLAY
+  // (2026-10-13, cardTagsDerived with gate and restriction both set: 2 lines, Shrine of the Forsaken Gods -- "seven or more lands", a colourless-spells restriction -- and Tazri, Stalwart
+  // Survivor -- "another activated ability", an ability-only restriction); `playableLines` refuses both, as it refuses every restriction but a mana-value floor, and neither gate is a board count.
+  // A future card with a mana-value floor AND a board gate would need `boardGated` to carry `needsMinMV`.
+  for (const l of lines.filter((x) => open(x) && x.restriction !== null)) {
+    if (l.amount.fixed! > out.amount) out = { amount: l.amount.fixed!, needsMinMV: minManaValue(l)! };
   }
-  // A PHASE TRIGGER, on the same footing and behind the same three guards.
-  // THE RATE TEST READS THE WHOLE SENTENCE, not the match: `PHASE_ADD` stops at the symbol run, so
-  // Muerra's "for each Raccoon you control" sits AFTER it and a guard tested on `phase[0]` cannot see
-  // the words it exists for. Caught by a corpus probe, which is the only thing that would have.
-  // A MANA VALUE restriction is RECORDED rather than refused, because the deck can settle it.
-  const phase = PHASE_ADD.exec(text);
-  const sentence = phase ? (text.slice(phase.index).split(/(?<=\.)\s/)[0] ?? "") : "";
-  const mv = MV_RESTRICTION.exec(text);
-  if (phase && !(RESTRICTED.test(text) && !mv) && !PHASE_ONE_SHOT.test(text) && !PHASE_RATE.test(sentence)) {
-    const n = phase[1].startsWith("{")
-      ? (phase[1].match(SYMBOLS) ?? []).length
-      : WORD_NUMBER[phase[1].split(" ")[0].toLowerCase()];
-    if (n > out.amount) out = { amount: n, ...(mv ? { needsMinMV: Number(mv[1]) } : {}) };
+  // GATED: a gated line only wins if it beats what the card already makes unconditionally.
+  const bestOf = (o: ManaOutput): number => Math.max(o.amount, o.tron?.amount ?? 0);
+  for (const l of lines.filter((x) => !open(x) && timed(x) === null && x.restriction === null)) {
+    const lands = LANDS_GATE.exec(l.gate!);
+    const tron = TRON_GATE.exec(l.gate!);
+    const needs = lands ? (WORD_NUMBER[lands[1]!] ?? Number(lands[1])) : 0;
+    const here: ManaOutput | null = needs > 0 ? { amount: l.amount.fixed!, needsLands: needs }
+      : tron ? { amount: out.amount, tron: { subtypes: [tron[1]!.trim(), tron[2]!.trim()], amount: l.amount.fixed! } } : null;
+    if (here && bestOf(here) > bestOf(out)) out = here;
   }
-  for (const raw of text.split("\n")) {
-    const line = raw.trim();
-    // The cost must be EXACTLY {T}. A sacrifice, a counter removal or a loyalty cost is not a tap
-    // this model can pay, and a mana cost is what makes a filter land a one-mana land.
-    if (!TAP_ONLY.test(line) || RESTRICTED.test(line)) continue;
-    const run = ADD_RUN.exec(line);
-    const words = ADD_WORDS.exec(line);
-    if (!run && !words) continue;
-    const amount = run
-      ? (run[1].match(SYMBOLS) ?? []).length
-      : WORD_NUMBER[words![1].toLowerCase()];
-    const gate = LAND_GATE.exec(line);
-    const tron = TRON.exec(line);
-    const here: ManaOutput = {
-      amount,
-      ...(gate && WORD_NUMBER[gate[1].toLowerCase()] ? { needsLands: WORD_NUMBER[gate[1].toLowerCase()] } : {}),
-      ...(tron ? { tron: { subtypes: [tron[1].trim(), tron[2].trim()], amount: (tron[3].match(SYMBOLS) ?? []).length } } : {}),
-    };
-    // A gated line only wins if it beats what the card already makes unconditionally.
-    const bestOf = (o: ManaOutput): number => Math.max(o.amount, o.tron?.amount ?? 0);
-    if (bestOf(here) > bestOf(out)) out = here;
+  // THE BOARD-COUNT GATE: the best gated line, taken whether or not it beats the plain amount (a colour waits on it too). CEILING: one board gate per card; a second, lesser one is ignored.
+  let best: ManaLine | undefined;
+  for (const l of boardGated) if (best === undefined || l.amount.fixed! > best.amount.fixed!) best = l;
+  if (best) out = { ...out, gated: { gate: timed(best)!, amount: best.amount.fixed! } };
+  // THE MAX-SPEED LINE: from turn 4, whether or not it beats the plain amount. CEILING: one speed line per card, the best.
+  if (speedLines.length > 0) out = { ...out, speed: { turn: MAX_SPEED_TURN, amount: Math.max(...speedLines.map((l) => l.amount.fixed ?? 1)) } };
+  // A WALKER WHOSE MANA IS ALL LOYALTY ABILITIES pays for as long as its priced ability can be activated. The priced ability is the best amount (a scaling one is
+  // the incumbent 1, Koth), the longest-lasting of equals. CEILING: that is the only ability the walker plays, so a "+N" mana ability beside a minus one is not
+  // carried on with after the minus one runs out.
+  const pays = playableLines(dc, deck).filter((l) => l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger" || isPhaseTrigger(l));
+  if (pays.length > 0 && pays.every(isLoyaltyAbility)) {
+    const price = (l: ManaLine): number => l.amount.fixed ?? 1;
+    const best = pays.reduce((b, l) => price(l) > price(b) || (price(l) === price(b) && loyaltyActivations(l) > loyaltyActivations(b)) ? l : b);
+    const n = loyaltyActivations(best);
+    if (n !== Infinity) out = { ...out, turns: n };
   }
   return out;
 }
 
-/** Mana a card adds per LAND ENTERING, or 0. Refused when the mana is restricted, for the same
+/** Mana a card adds per LAND ENTERING, or 0: the best ungated landfall line it plays. Restricted mana is refused (`playableLines`), for the same
  *  reason every other restricted source is: this model cannot check what mana is spent on. */
-function landfallMana(text: string): number {
-  const m = LANDFALL_ADD.exec(text);
-  if (!m || RESTRICTED.test(text)) return 0;
-  return m[1].startsWith("{") ? (m[1].match(SYMBOLS) ?? []).length : (m[1].startsWith("two") ? 2 : 1);
+export function landfallOf(dc: DeckCard, deck?: readonly DeckCard[]): number {
+  return Math.max(0, ...playableLines(dc, deck).filter(isLandfall).map((l) => l.amount.fixed ?? 1));
 }
 
 /** A source whose mana carries a mana-value restriction the DECK does not make vacuous is worth what
@@ -396,7 +441,11 @@ function spendable(o: ManaOutput, cheapestNonland: number): ManaOutput {
 }
 
 /** What a source taps for right now. */
-function produced(o: ManaOutput, lands: readonly OnBoardLand[]): number {
+/** The board-count gate on this source holds on the battlefield as it stands: `gate.need` of the permanents the gate names. */
+const gateHolds = (o: ManaOutput, perms: readonly Perm[]): boolean => o.gated !== undefined && holds(o.gated.gate, perms);
+const holds = (g: BoardGate, perms: readonly Perm[]): boolean => boardCount(g, perms) >= g.need;
+
+function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly Perm[], turn: number): number {
   if (o.tron) {
     const has = (s: string): boolean =>
       lands.some((l) => l.everyLandType || l.typeLine.toLowerCase().includes(s.toLowerCase()));
@@ -406,7 +455,10 @@ function produced(o: ManaOutput, lands: readonly OnBoardLand[]): number {
   // taps for NOTHING below the gate — the incumbent priced it at one, which is a land that does not
   // exist for the first four turns of every game.
   if (o.needsLands !== undefined && lands.length < o.needsLands) return 0;
-  return o.amount;
+  // A BOARD-COUNT GATE: the better amount once the permanents it names are out (Leafkin Druid's two, Mox Jasper's one), the plain one before.
+  const board = o.gated !== undefined && o.gated.amount > o.amount && gateHolds(o, perms) ? o.gated.amount : o.amount;
+  // MAX SPEED: the better amount from turn 4 on (`ManaOutput.speed`).
+  return o.speed !== undefined && turn >= o.speed.turn && o.speed.amount > board ? o.speed.amount : board;
 }
 
 /** COLOURS AS A BITMASK over `COLORS`. Colourless is the EMPTY mask, not a sixth bit: `{C}` pays
@@ -421,9 +473,10 @@ function produced(o: ManaOutput, lands: readonly OnBoardLand[]): number {
  *  table counts. */
 const COLORLESS = 1 << COLORS.length;
 
-export function colorMask(producedMana: readonly string[] | undefined): number {
+// The argument is a list of mana types (WUBRG, `C`) the caller read off DERIVED mana lines or a land's colour identity; this does not read Scryfall's `producedMana`.
+export function colorMask(manaTypes: readonly string[] | undefined): number {
   let m = 0;
-  for (const c of producedMana ?? []) {
+  for (const c of manaTypes ?? []) {
     const u = c.toUpperCase();
     if (u === "C") { m |= COLORLESS; continue; }
     const i = COLORS.indexOf(u as Color);
@@ -436,19 +489,67 @@ export function colorMask(producedMana: readonly string[] | undefined): number {
  *  so two facts follow that a plain land does not have: you CHOOSE which land, so the fetch is a
  *  wildcard for whatever its fetchable set covers; and the fetched land LEAVES the library.
  *
- *  It is why `producedMana` looks incomplete on lands and is not: 2,500 of the 2,646 land slots in
- *  the 71 decks carry one, and the entire remainder is fetchlands, which correctly produce nothing
- *  of their own.
+ *  It is why a fetchland has no mana line of its own and is not missing one: it produces nothing
+ *  until it finds a land (a derived `fetch` line is not a tap).
  *
  *  WHAT it can find is `fetch-land.ts`'s question, shared with `mana-audit.ts`; the MASK is this
- *  module's currency, so only the last line is here.
+ *  module's currency (`colourMaskOf` of each land it can find, so a fetched Wastes is a colourless source and a fetched Tainted Peak is not a
+ *  coloured one), so only the loop is here.
  *
  *  CEILING: computed once off the whole deck, not per trial off the remaining library, so it
  *  over-claims slightly as the library empties. The alternative is recomputing a mask every crack. */
-export function fetchMask(oracleText: string, deck: readonly { typeLine: string; producedMana?: readonly string[] }[]): number {
+export function fetchMaskOf(dc: DeckCard, deck: readonly DeckCard[]): number {
   let m = 0;
-  for (const c of fetchableLands(oracleText, deck)) m |= colorMask(c.producedMana);
+  for (const land of fetchableLands(dc.card.oracleText ?? "", deck.map((d) => ({ typeLine: d.card.typeLine ?? "", dc: d })))) m |= colourMaskOf(land.dc, deck);
   return m;
+}
+
+/** DOES THIS CARD FIND A LAND AT A COST THIS MODEL CAN PAY? The derived `landFetch` and an ungated fetch line that pays its way (`isFetchSource`):
+ *  a fetchland, a land-fetch spell, a creature that searches when it enters. Myriad Landscape's {2} and Wayfarer's Bauble's cost are not free just
+ *  because a model performs them (roadmap N12), so neither is one. */
+export const fetchesLand = (dc: DeckCard): boolean => isFetchSource(dc);
+
+/** The fetched land's own tapped state, which the fetch states ("put it onto the battlefield TAPPED"): Evolving Wilds and the Landscape cycle. */
+export const fetchTappedOf = (dc: DeckCard): boolean => dc.tags?.landFetch?.tapped === true;
+
+/** ...unless you already control this many lands: Fabled Passage's "Then if you control four or more lands, untap that land". CEILING: PRINTED --
+ *  `landFetch` carries whether the land arrives tapped, not the clause that untaps it afterwards. */
+export const fetchUntapsOf = (dc: DeckCard): boolean => FETCH_UNTAPS.test(dc.card.oracleText ?? "");
+
+/** THE COLOURS A SOURCE MAKES, as the simulation's mask, for a card that is not a fetch (`fetchMaskOf`):
+ *  - the colours it is a COLOUR SOURCE of (`colourSourceColours`: its ungated, unrestricted tap and static production, and a land's basic types),
+ *    bounded by no commander identity. The goldfish casts the deck's own spells, so the identity bound would change nothing it can pay, and an
+ *    unbounded `any` is what Scryfall's list gave (Command Tower, Arcane Signet);
+ *  - the colours of an Aura's trigger, a phase trigger and a landfall (Wild Growth, Lotus Cobra), which are mana but never a COLOUR SOURCE in the
+ *    audit's sense (a source is a tap or a grant you control);
+ *  - the colourless bit when any line the model plays makes {C} (Sol Ring, a gated Temple), since {C} pays only a colourless cost (CR 107.4c).
+ *  Mana the audit refuses stays refused: a RESTRICTED line (Cavern of Souls' coloured one) and a costed line that makes less than it costs (Prismatic Lens'
+ *  coloured one). A GATED line (Tainted Peak's) is judged as the audit judges it (owner 2026-10-13: one gate check for both), except that this model plays it
+ *  per game and the audit credits it whole from the turn P(gate met) >= 0.5. */
+/** THE GATED TAPS WHOSE COLOURS THIS MODEL PLAYS (the deck met the gate, `playableLines`): not a lands-counted or tron gate (priced by `manaOutput`), not a loyalty ability, not a
+ *  grantee's colours, not a costed line that makes less than it costs. */
+function gatedColourLines(dc: DeckCard, deck?: readonly DeckCard[]): ManaLine[] {
+  return playableLines(dc, deck).filter((l) => l.gate !== null && !dynamicGate(l) && (l.source === "activated" || l.source === "static-grant")
+    && !isLoyaltyAbility(l) && l.anyColour !== "grantee" && paysItsWay(l));
+}
+
+/** THE BOARD-COUNT GATE THE SOURCE'S GATED COLOURS WAIT ON, or null (Tainted Peak: a Swamp; Mox Jasper: a Dragon; Spire of Industry: an artifact -- whose line also costs a life, so
+ *  `manaOutput` prices no amount for it and the colours are the whole of what the gate changes). CEILING: one gate per card, the first. */
+export function colourGateOf(dc: DeckCard, deck?: readonly DeckCard[]): BoardGate | null {
+  for (const l of gatedColourLines(dc, deck)) { const g = boardGateOf(l.gate!); if (g && lineColours(l, null, "five").length > 0) return g; }
+  return null;
+}
+
+export function colourMaskOf(dc: DeckCard, deck?: readonly DeckCard[], withBoardGated = true): number {
+  const triggerColours = playableLines(dc, deck).filter((l) => (l.source !== "activated" && l.source !== "static-grant") || isLoyaltyAbility(l)).flatMap((l) => lineColours(l, null, "five"));
+  // A GATE does not take the colourless bit away: Temple of the False God's {C}{C} waits on five lands, which `manaOutput` prices as zero below the gate.
+  const colourless = playableLines(dc, deck).some((l) => l.colourless > 0 && paysItsWay(l));
+  // A GATED TAP THE DECK MEETS IS A COLOUR HERE (owner 2026-10-13): Mox Jasper's any colour in a deck of Dragons, Tainted Peak's {B} or {R} in a deck of Swamps. The AUDIT counts them
+  // too, where the deck meets the gate (`colourSourceLine`, whole from P >= 0.5); this model plays the line per game, so it plays its colours. The deck's verdict (`gate.ts`) lets the line in; WHEN the gate holds is the board's
+  // (`simulate`: `baseColors` is this mask without the board-gated colours, and a source makes the full one only on the turns `gateHolds`).
+  // `withBoardGated` false leaves out the colours of a line that waits on the BOARD (`colourGateOf`): the colours the source makes before its gate is met.
+  const gatedColours = gatedColourLines(dc, deck).filter((l) => withBoardGated || boardGateOf(l.gate!) === null).flatMap((l) => lineColours(l, null, "five"));
+  return colorMask([...colourSourceColours(dc), ...triggerColours, ...gatedColours, ...(colourless ? ["C"] : [])]);
 }
 
 /** CR 712.8a: A CARD IN HAND IS ITS FRONT FACE, so a transform card's land back can never be played
@@ -591,6 +692,12 @@ interface DeckSlot {
   everyLandType: boolean;
   /** Colours this source can make, as a mask. A fetchland carries what it can FIND. */
   colors: number;
+  /** ...before its board-count gate is met: `colors` less the colours only a gated line makes (Tainted Peak's {B}/{R}, Mox Jasper's any colour). Present only on a source with
+   *  a `colourGate`; the source makes `colors` on the turns the gate holds on the battlefield. */
+  baseColors?: number;
+  colourGate?: BoardGate;
+  /** The permanent this card is once it is on the battlefield, for the board-count gates (`gate.ts`); null for an instant or sorcery. */
+  perm: Perm | null;
   /** The card's own cost, parsed once. `null` for a land or an X cost. */
   cost: Cost | null;
   /** Costs are deduped per trial-turn on this key -- 270 distinct across all 71 decks. */
@@ -620,7 +727,7 @@ interface DeckSlot {
    *  every permanent tapped for {C}, Leyline of Abundance every creature tapped for mana. A land
    *  AURA is deliberately absent -- it enchants ONE land, so its bonus is its own amount and it is
    *  priced as an ordinary dork (roadmap O2). */
-  tapBonus?: "colorless" | "creature";
+  tapBonus?: TapBonus;
   /** Mana per LAND ENTERING, which is one land drop a turn plus anything a fetch puts down. */
   landfall?: number;
   land?: LandCondition;
@@ -654,7 +761,7 @@ const TO_GRAVEYARD = /\b(?:it|that card|them|those cards) into your graveyard\b/
  *  activation that costs only mana. CEILING: a draw on any other event (Rhystic Study, "whenever a
  *  creature enters") never fires, because there is no opponent and no event board; a conditional
  *  draw, one an opponent can pay to stop, and one whose cost is more than mana are left out too. */
-function drawOf(dc: DeckCard): CardDraw | null {
+export function drawOf(dc: DeckCard): CardDraw | null {
   const abilities = dc.tags?.abilities ?? [];
   const out: CardDraw = { once: 0, upkeep: 0 };
   for (const a of abilities) {
@@ -716,6 +823,32 @@ export interface SimulateOptions {
    *  ~0.1-0.3% of held trials where a later card was advanced in -- sized in the harness. */
   forceName?: string;
   forceTurn?: number;
+  /** THE MANA-BASE FIT'S HOOKS (research/matcher/mana-base-fit.ts; #1169 task 3). All three are observation or a what-if arm and are OFF in every product call, so the
+   *  trajectory (and the random stream) is the one it was. `observe` sees each priced turn after the turn's land, accelerants and draw; `landColours` makes every land (a fetch
+   *  too) tap for exactly this colour mask; `landsUntapped` enters every land, and every land a spell fetches, untapped. */
+  observe?: (view: TurnView) => void;
+  landColours?: number;
+  landsUntapped?: boolean;
+}
+
+/** WHAT THE MANA-BASE FIT READS OF ONE TURN OF ONE GAME. `hand` is the live array (cards the fit casts are its own business; the goldfish never casts a plain spell). */
+export interface TurnView {
+  trial: number;
+  turn: number;
+  /** A land was played this turn. */
+  landDrop: boolean;
+  /** The turn's draw step took a land. */
+  drewLand: boolean;
+  hand: readonly { name: string; manaValue: number; isLand: boolean; cost: Cost | null; accelerant?: unknown; draw?: unknown; fixer?: unknown }[];
+  /** The command zone: priced cards that are not in the library. */
+  commanders: readonly { name: string; manaValue: number; cost: Cost | null; accelerant?: unknown }[];
+  /** What the board taps for this turn, and what is still unspent after the turn's accelerants and draw. */
+  sources: readonly { mana: number; colors: number }[];
+  made: number;
+  pool: number;
+  landsOnBoard: number;
+  /** Lands that entered tapped this turn. */
+  tappedNow: number;
 }
 
 export interface SimulateResult {
@@ -794,8 +927,17 @@ export type SeenKind = "land" | "cheap" | "dear";
 /** Which `seenShare` a card reads. */
 export const seenKind = (isLand: boolean, manaValue: number): SeenKind => isLand ? "land" : manaValue <= 3 ? "cheap" : "dear";
 
+/** THE GATE ITS COLOURS WAIT ON and the colours before it (see `DeckSlot.colourGate`), or nothing. */
+function colourGateFields(dc: DeckCard, deck: readonly DeckCard[]): { colourGate?: BoardGate; baseColors?: number } {
+  const colourGate = colourGateOf(dc, deck);
+  return colourGate ? { colourGate, baseColors: colourMaskOf(dc, deck, false) } : {};
+}
+
+/** A land a fetch SPELL put onto the battlefield: a land, and nothing the model knows more of (`lands` types it nothing either). */
+const FETCHED_LAND: Perm = { name: "", types: new Set(["land"]), subtypes: new Set(), land: true, manaValue: 0 };
+
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
-interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean; colors: number; fixer?: FixerMask }
+interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean; colors: number; baseColors?: number; colourGate?: BoardGate; fixer?: FixerMask }
 
 function boardFor(lands: OnBoardLand[], pod: number): { lands: number; basics: number; types: Set<string>; opponents: number } {
   const types = new Set<string>();
@@ -820,11 +962,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   // They are excluded from `payableShareAt`, which is a share OF THE DECK.
   const trials = opts.trials ?? 20_000;
   const turns = opts.turns ?? 8;
+  // THE DECK A GATE IS JUDGED AGAINST (owner 2026-10-13): the library AND the commander, which is a card of the deck (`gate.ts`).
+  const gateDeck: readonly DeckCard[] = opts.alsoPrice && opts.alsoPrice.length > 0 ? [...deck, ...opts.alsoPrice] : deck;
   const pod = opts.podSize ?? DEFAULT_POD_SIZE;
   const random = rng(opts.seed ?? 1);
   const holdUp = opts.holdUp ?? 0;
 
-  const printed = deck.map((dc) => ({ typeLine: dc.card.typeLine ?? "", producedMana: dc.card.producedMana }));
   // THE CHEAPEST NONLAND settles every mana-value restriction at once: mana that may be spent only at
   // value N or greater is worth its face in a deck holding nothing below N (roadmap O1).
   const cheapest = Math.min(Infinity, ...deck
@@ -832,32 +975,37 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     .map((dc) => dc.card.manaValue ?? 0));
   const slots: DeckSlot[] = deck.map((dc) => {
     const isLand = countsAsLand(dc.card);
-    const text = dc.card.oracleText ?? "";
     // A land-fetch SPELL searches the library too, so it fixes colours and thins by the same fact.
-    const fetches = isLandFetch(text);
+    const fetches = fetchesLand(dc);
+    const tapBonus = isLand ? undefined : tapBonusOf(dc);
+    const landfall = isLand ? 0 : landfallOf(dc, gateDeck);
+    const ritual = isLand ? [] : ritualUnits(dc);
+    const output = spendable(manaOutput(dc, gateDeck), cheapest);
+    const oppRitual = isLand ? 0 : opponentHandRitual(dc);
     return {
       name: dc.card.name,
       manaValue: dc.card.manaValue ?? 0,
       typeLine: dc.card.typeLine ?? "",
       isLand,
-      output: spendable(manaOutput(dc.card.oracleText), cheapest),
+      output,
       everyLandType: isEveryLandType(dc.card.typeLine, dc.card.oracleText),
-      colors: fetches ? fetchMask(text, printed) : colorMask(fixedColours(dc)),
+      colors: isLand && opts.landColours !== undefined ? opts.landColours : fetches ? fetchMaskOf(dc, deck) : colourMaskOf(dc, gateDeck),
+      ...(!fetches && !(isLand && opts.landColours !== undefined) ? colourGateFields(dc, gateDeck) : {}),
+      perm: permOf(dc),
       ...fixerOf(dc),
       fetches,
-      fetchTapped: fetches && FETCHES_TAPPED.test(text),
-      ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_COLORLESS.test(text) ? { tapBonus: "colorless" as const } : {}),
-      ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_CREATURE.test(text) ? { tapBonus: "creature" as const } : {}),
-      ...(!isLand && landfallMana(text) > 0 ? { landfall: landfallMana(text) } : {}),
-      ...(fetches && FETCH_UNTAPS.test(text) ? { fetchUntapsAt: FETCH_UNTAP_LANDS } : {}),
+      fetchTapped: fetches && fetchTappedOf(dc) && opts.landsUntapped !== true,
+      ...(tapBonus ? { tapBonus } : {}),
+      ...(landfall > 0 ? { landfall } : {}),
+      ...(fetches && fetchUntapsOf(dc) ? { fetchUntapsAt: FETCH_UNTAP_LANDS } : {}),
       // A SPLIT CARD'S JOINED COST IS NOT A COST ANYONE PAYS — see `split-cost.ts`. Identical to
       // `manaCost` for every other card, and `costKey` follows it so the memo cannot key two
       // different costs to one answer.
       cost: isLand ? null : parseCost(castableManaCost(dc.card)),
       costKey: castableManaCost(dc.card) ?? "",
-      ...(isLand ? { land: classifyLand(dc.card) } : { accelerant: classifyAccelerant(dc) }),
-      ...(!isLand && ritualAdds(dc) > 0 ? { ritual: ritualMana(dc.card.oracleText ?? "") } : {}),
-      ...(!isLand && opponentHandRitual(dc) > 0 ? { ritualPerOppCard: opponentHandRitual(dc) } : {}),
+      ...(isLand ? { land: classifyLand(dc.card) } : { accelerant: classifyAccelerant(dc, gateDeck) }),
+      ...(ritual.length > 0 ? { ritual } : {}),
+      ...(oppRitual > 0 ? { ritualPerOppCard: oppRitual } : {}),
       ...(attackOf(dc) ? { attack: attackOf(dc)! } : {}),
       ...(!isLand && drawOf(dc) ? { draw: drawOf(dc)! } : {}),
     };
@@ -876,31 +1024,43 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   // AN EXTRA IS PRICED, AND IF IT MAKES MANA IT IS ALSO PLAYED. These rows used to be cost-only --
   // `accelerant: null`, `output: 1`, `colors: 0` -- which is why a mana-producing COMMANDER
   // contributed nothing to the board it is guaranteed to be on (roadmap O1). They now read the same
-  // printed facts a library slot does; what stays different is `isExtra`, so the commander never
+  // derived mana lines a library slot does; what stays different is `isExtra`, so the commander never
   // enters the `payableShare` denominator of a deck it is not in.
   const extras: DeckSlot[] = (opts.alsoPrice ?? []).map((dc) => {
-    const text = dc.card.oracleText ?? "";
+    const tapBonus = tapBonusOf(dc);
+    const landfall = landfallOf(dc, gateDeck);
+    const output = spendable(manaOutput(dc, gateDeck), cheapest);
     return {
       name: dc.card.name,
       manaValue: dc.card.manaValue ?? 0,
       typeLine: dc.card.typeLine ?? "",
       isLand: false,
-      output: spendable(manaOutput(text), cheapest),
+      output,
       everyLandType: false,
-      colors: colorMask(fixedColours(dc)),
+      colors: colourMaskOf(dc, gateDeck),
+      ...colourGateFields(dc, gateDeck),
+      perm: permOf(dc),
       fetches: false,
       cost: parseCost(castableManaCost(dc.card)),
       costKey: castableManaCost(dc.card) ?? "",
-      accelerant: classifyAccelerant(dc),
-      ...(TAP_REPLACEMENT.test(text) && BONUS_COLORLESS.test(text) ? { tapBonus: "colorless" as const } : {}),
-      ...(TAP_REPLACEMENT.test(text) && BONUS_CREATURE.test(text) ? { tapBonus: "creature" as const } : {}),
-      ...(landfallMana(text) > 0 ? { landfall: landfallMana(text) } : {}),
+      accelerant: classifyAccelerant(dc, gateDeck),
+      ...(tapBonus ? { tapBonus } : {}),
+      ...(landfall > 0 ? { landfall } : {}),
       // THE COMMANDER ATTACKS TOO: it is cast from the command zone like any creature it holds.
       ...(attackOf(dc) ? { attack: attackOf(dc)! } : {}),
       isExtra: true,
     };
   });
   const priced = [...nonlands, ...extras];
+  // THE BOARD-COUNT GATES IN THIS DECK (owner 2026-10-13: timed turn by turn). The game counts the permanents it puts onto the battlefield -- the lands it plays, the rocks and dorks and
+  // draw spells it casts, a fetched land -- and a source's gate holds on a turn when `need` of the permanents the gate names are out. WHAT THE MODEL DOES NOT CAST IS A PROXY: a drawn card
+  // that is such a permanent (a Dragon for Mox Jasper, any creature for Leafkin Druid, an artifact for metalcraft) is 'cast' at the END of the first turn whose leftover mana (after the
+  // accelerants and draws it did cast, less the hold-up) pays its mana value, cheapest first, and counts from the NEXT turn.
+  // CEILING: the proxy spends nothing (the mana it 'pays' is not taken from the turn's production or from the next turn's, so two Dragons cost the pool one at a time but a Dragon
+  // does not slow the rocks), it never dies (no removal, no opponent), it is not taken out of the hand (the land policy reads the hand's pips), and it counts a turn late so a
+  // gate never feeds the mana that casts its own enabler. A permanent no gate in the deck names is never cast: it would only be spent against.
+  const boardGates = [...new Map([...slots, ...extras].flatMap((x) => [x.output.gated?.gate, x.colourGate]).filter((g): g is BoardGate => g !== undefined).map((g) => [JSON.stringify(g), g] as const)).values()];
+  const isProxy = (c: DeckSlot): boolean => c.perm !== null && !c.isLand && !c.accelerant && !c.draw && !c.tutor && !c.fixer && boardGates.some((g) => permCounts(g, c.perm!));
   // A PROBABILITY IS PER CARD, NOT PER COPY (roadmap N1). `byCardHits` keys on NAME, so a deck
   // running 30 Dragon's Approach accumulated 30 hits per trial-turn and printed 2,934%. The event
   // "this card is castable" is a property of the board and the COST, which every copy shares, so it
@@ -1058,11 +1218,17 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     const take = (c: DeckSlot): void => { hand.push(c); drawn.add(c.name); seenNow[kindOf(c)]++; };
     const drawCards = (n: number): void => { for (let k = 0; k < n && library.length > 0; k++) take(library.shift()!); };
     const lands: OnBoardLand[] = [];
-    const rocks: { turn: number; mana: number; colors: number }[] = [];   // the turn each landed, what it taps for, and in which colours
-    const dorks: { turn: number; mana: number; colors: number }[] = [];
+    // THE PERMANENTS ON THE BATTLEFIELD, as a board-count gate reads them (see `boardGates`), and the proxies already counted in them.
+    const perms: Perm[] = [];
+    const proxied = new Set<DeckSlot>();
+    // the turn each landed, the last turn it pays (a walker's minus ability runs out), what it taps for, and in which colours; a source with a board-count gate carries its
+    // output and is priced again every turn (`out`), the colours it has before the gate in `baseColors`
+    type Mana = { turn: number; until?: number; mana: number; colors: number; out?: ManaOutput; baseColors?: number; colourGate?: BoardGate };
+    const rocks: Mana[] = [];
+    const dorks: Mana[] = [];
     // A PER-SOURCE BONUS, kept beside the sources rather than among them: it makes OTHER permanents
     // produce more, so it has no mana of its own to add (roadmap O2).
-    const bonuses: { turn: number; need: "colorless" | "creature"; colors: number }[] = [];
+    const bonuses: { turn: number; need: TapBonus; colors: number }[] = [];
     // Landfall mana is per EVENT, not per turn: it pays for each land that entered THIS turn, which
     // is the land drop and anything a fetch put down beside it.
     const landfalls: { turn: number; mana: number; colors: number }[] = [];
@@ -1072,6 +1238,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     for (let turn = 1; turn <= playTo; turn++) {
       // Rule 1: one card per turn, INCLUDING turn 1. On the play there is no turn-1 draw; modelling
       // the draw is the flattering direction by one card and is stated rather than hidden.
+      const drewLand = library[0]?.isLand === true;
       drawCards(1);
       // An end-step draw lands before the next turn's decisions, so it is read here with the upkeep's.
       for (const e of engines) if (e.turn < turn) drawCards(e.slot.draw!.upkeep);
@@ -1093,15 +1260,18 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // cannot make wins; ties keep hand order, so a deck with no colour tension is unchanged.
       const untappedIdx: number[] = [];
       for (let i = 0; i < hand.length; i++) {
-        if (live(hand[i]) && hand[i].land !== undefined && !entersTapped(hand[i].land!, board)) untappedIdx.push(i);
+        if (live(hand[i]) && hand[i].land !== undefined && (opts.landsUntapped === true || !entersTapped(hand[i].land!, board))) untappedIdx.push(i);
       }
+      // THE COLOURS A SOURCE MAKES WITH THE BOARD AS IT STANDS: a gated source (Thornspire Verge's green) makes its gated colours only once its gate holds, and the player choosing a land
+      // knows it -- a land whose colour is not yet there is not the colour it was credited for.
+      const nowColors = (x: { colors: number; baseColors?: number; colourGate?: BoardGate }): number => (x.colourGate && x.baseColors !== undefined && !holds(x.colourGate, perms) ? x.baseColors : x.colors);
       let boardColors = 0;
-      for (const l of lands) boardColors |= l.colors;
+      for (const l of lands) boardColors |= nowColors(l);
       const demandPips: number[] = [];
       for (const c of hand) if (!c.isLand && c.cost) demandPips.push(...c.cost.pips);
       const idx = [
         untappedIdx.length > 0
-          ? untappedIdx[pickLand(untappedIdx.map((i) => hand[i]), boardColors, demandPips)]
+          ? untappedIdx[pickLand(untappedIdx.map((i) => ({ colors: nowColors(hand[i]!) })), boardColors, demandPips)]
           : -1,
         hand.findIndex(live),
         hand.findIndex((c) => c.isLand),
@@ -1117,13 +1287,16 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           enteredTapped: played.fetches
             ? played.fetchTapped === true
               && !(played.fetchUntapsAt !== undefined && board.lands >= played.fetchUntapsAt)
-            : entersTapped(played.land!, board),
+            : opts.landsUntapped !== true && entersTapped(played.land!, board),
           typeLine: played.typeLine,
           output: played.output,
           everyLandType: played.everyLandType,
           colors: played.colors,
+          baseColors: played.baseColors,
+          colourGate: played.colourGate,
           fixer: played.fixer,
         });
+        if (played.perm) perms.push(played.perm);
         // A FETCHLAND TAKES ITS LAND OUT OF THE DECK (owner, 2026-08-25). Board +1 land, library -1
         // land, which is what cracking one actually does -- the fetch itself taps for nothing and
         // the land it finds is what is standing there.
@@ -1139,7 +1312,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         // Tracked so a per-source bonus can count what it actually reads: a creature bonus pays for
         // dorks and not for lands, a colourless one for anything that taps for {C}.
         const isCreature: boolean[] = [];
-        const push = (mana: number, colors: number, creature: boolean): void => { out.push({ mana, colors }); isCreature.push(creature); };
+        // ...and the land a source is, for a bonus that reads a land type (Nissa, Who Shakes the World: Forests). CEILING: a fetched land is typed nothing.
+        const landAt: (OnBoardLand | undefined)[] = [];
+        const push = (mana: number, colors: number, creature: boolean, land?: OnBoardLand): void => { out.push({ mana, colors }); isCreature.push(creature); landAt.push(land); };
         // A STATIC FIXER (Chromatic Lantern, Prismatic Omen, Urborg, Chromatic Orrery) makes every source it
         // covers tap for its colours, from the turn AFTER it is cast (the audit's `manaValue < turn` clock) or
         // the turn its land taps. CEILING: a land with no mana ability of its own (a fetch) gains none.
@@ -1150,11 +1325,15 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         fixLands |= fixAll;
         for (const l of lands) {
           if (l.enteredTapped && l.enteredTurn === turn) continue;
-          const m = produced(l.output, lands);
-          if (m > 0) push(m, l.colors | fixLands, false);
+          const m = produced(l.output, lands, perms, turn);
+          if (m > 0) push(m, (l.colourGate && l.baseColors !== undefined && !holds(l.colourGate, perms) ? l.baseColors : l.colors) | fixLands, false, l);
         }
-        for (const r of rocks) if (r.turn <= turn) push(r.mana, r.colors | fixAll, false);
-        for (const d of dorks) if (d.turn < turn) push(d.mana, d.colors | fixAll, true);
+        const now = (r: Mana): { mana: number; colors: number } => ({
+          mana: r.out ? produced(r.out, lands, perms, turn) : r.mana,
+          colors: r.colourGate && r.baseColors !== undefined && !holds(r.colourGate, perms) ? r.baseColors : r.colors,
+        });
+        for (const r of rocks) if (r.turn <= turn && (r.until === undefined || turn <= r.until)) { const x = now(r); if (x.mana > 0) push(x.mana, x.colors | fixAll, false); }
+        for (const d of dorks) if (d.turn < turn && (d.until === undefined || turn <= d.until)) { const x = now(d); if (x.mana > 0) push(x.mana, x.colors | fixAll, true); }
         // A TAP-REPLACEMENT PAYS PER SOURCE, NOT PER MANA: Forsaken Monument adds one {C} for every
         // permanent TAPPED for {C}, so a source making two mana off one tap is still one trigger.
         // Counted after the sources exist and never against another bonus, which is what keeps two
@@ -1167,7 +1346,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           if (b.turn > turn) continue;
           let n = 0;
           for (let i = 0; i < base; i++) {
-            if (b.need === "creature" ? isCreature[i] : (out[i].colors & COLORLESS) !== 0) n++;
+            const hit = b.need === "creature" ? isCreature[i]
+              : b.need.startsWith("land:") ? landAt[i] !== undefined && (landAt[i]!.everyLandType || landAt[i]!.typeLine.toLowerCase().includes(b.need.slice(5)))
+              : (out[i].colors & COLORLESS) !== 0;
+            if (hit) n++;
           }
           if (n > 0) out.push({ mana: n, colors: b.colors });
         }
@@ -1211,7 +1393,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         }
         const a = cast.accelerant!;
         if (cast.fixer) statics.push({ turn, fixer: cast.fixer });
-        const mana = produced(cast.output, lands);
+        if (cast.perm) perms.push(cast.perm);
+        const mana = produced(cast.output, lands, perms, turn);
+        const gated = {
+          ...(cast.output.gated || cast.output.speed ? { out: cast.output } : {}),
+          ...(cast.colourGate && cast.baseColors !== undefined ? { colourGate: cast.colourGate, baseColors: cast.baseColors } : {}),
+        };
         // A PER-SOURCE BONUS BRINGS NO MANA OF ITS OWN, so it goes to `bonuses` INSTEAD of the source
         // lists -- adding it to both would pay it once for existing and once per source.
         if (cast.landfall !== undefined) {
@@ -1220,8 +1407,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         else if (cast.tapBonus !== undefined) {
           bonuses.push({ turn: a.kind === "rock" ? turn : turn + 1, need: cast.tapBonus, colors: cast.colors });
         }
-        else if (a.kind === "rock") { rocks.push({ turn, mana, colors: cast.colors }); pool += mana; }
-        else if (a.kind === "dork") dorks.push({ turn, mana, colors: cast.colors });
+        // CEILING: a GATED rock's pool credit (`pool += mana`) is priced ONCE, at the moment it is cast, from the permanents on the board then (`produced`). An enabler cast LATER THE SAME
+        // TURN (a Dragon after Mox Jasper) does not add that turn's mana to the pool: the rock pays from the next turn on, when `produced` is asked again. An under-claim by at most
+        // the rock's amount on its cast turn, the safe direction. Karsten and the audit never see it (their closed form counts it from the turn after).
+        else if (a.kind === "rock") { rocks.push({ turn, mana, colors: cast.colors, ...gated, ...(cast.output.turns !== undefined ? { until: turn + cast.output.turns - 1 } : {}) }); pool += mana; }
+        else if (a.kind === "dork") dorks.push({ turn, mana, colors: cast.colors, ...gated, ...(cast.output.turns !== undefined ? { until: turn + cast.output.turns } : {}) });
         else {
           // A FETCHED LAND DOES NOT CONSUME THE LAND DROP — it is put onto the battlefield, not
           // played — and it follows its own tapped state, which the spell's text states.
@@ -1230,10 +1420,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           // nor a type, which is the pessimistic direction for every other conditional land on the
           // board: fewer suppliers means more of them enter tapped. Stated rather than guessed.
           // A FETCHED LAND'S IDENTITY IS UNKNOWN, but its COLOUR is not: the spell names what it may
-          // find, and `fetchMask` reads that against the lands this deck actually holds.
-          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true, typeLine: "", output: { amount: 1 }, everyLandType: false, colors: cast.colors });
+          // find, and `fetchMaskOf` reads that against the lands this deck actually holds.
+          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true && opts.landsUntapped !== true, typeLine: "", output: { amount: 1 }, everyLandType: false, colors: cast.colors });
+          perms.push(FETCHED_LAND);
           takeRandomLand(library, turn > turns ? spill : random);
-          if (a.fetchTapped !== true) pool += 1;
+          if (a.fetchTapped !== true || opts.landsUntapped === true) pool += 1;
         }
       } };
       castAccelerants();
@@ -1256,6 +1447,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           if (!cast.attack.infect) boardTable += cast.attack.power;
         }
         statics.push({ turn, fixer: cast.fixer! });
+        if (cast.perm) perms.push(cast.perm);
       }
 
       // Rule 3b: DRAW, after the accelerants and before any creature (owner 2026-10-07: ramp, draw,
@@ -1307,6 +1499,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           boardOne += cast.attack.power;
           if (!cast.attack.infect) boardTable += cast.attack.power;
         }
+        if (cast.perm) perms.push(cast.perm);
         if (cast.draw) {
           drawCards(cast.draw.once);
           if (cast.draw.upkeep > 0 || cast.draw.activated) engines.push({ slot: cast, turn });
@@ -1320,6 +1513,21 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
 
       const untapped = untappedSources();
       const made = untapped.reduce((n, x) => n + x.mana, 0);
+      if (opts.observe && turn <= turns) {
+        opts.observe({ trial: t, turn, landDrop: idx >= 0, drewLand, hand, commanders: extras, sources: untapped, made, pool, landsOnBoard: lands.length,
+          tappedNow: lands.filter((l) => l.enteredTurn === turn && l.enteredTapped).length });
+      }
+      // THE PROXIES (see `boardGates`): what the mana left after this turn's plays could have cast, counted from the next turn.
+      if (boardGates.length > 0) {
+        let room = pool - holdUp;
+        const proxies = [...hand, ...extras].filter((c) => !proxied.has(c) && isProxy(c)).sort((x, y) => x.manaValue - y.manaValue);
+        for (const c of proxies) {
+          if (c.manaValue > room) break;
+          room -= c.manaValue;
+          proxied.add(c);
+          perms.push(c.perm!);
+        }
+      }
       if (fights) {
         let left = pool;
         // DE-DUPED: a mana-making commander is in the hand AND in `extras` (review).
@@ -1625,6 +1833,8 @@ export function manaModel(
   const trials = opts.trials ?? REPORT_TRIALS;
   const seed = opts.seed ?? 20260822;
   const alsoPrice = opts.alsoPrice ?? [];
+  // THE DECK A GATE IS JUDGED AGAINST: the library and the commander (owner 2026-10-13; `simulate` reads the same).
+  const gateDeck = alsoPrice.length > 0 ? [...deck, ...alsoPrice] : deck;
   // EIGHT TURNS UNLESS THE DECK HOLDS SOMETHING BIGGER. A ten-drop priced "by turn 8" would be a
   // different question answered quietly, so the run is extended to reach it — and capped, because
   // past twelve the honest answer is a refusal rather than a longer simulation.
@@ -1746,7 +1956,7 @@ export function manaModel(
     combat: { one: turnQuartiles(greedy.killTurns.one), table: turnQuartiles(greedy.killTurns.table) },
     availability: {
       trials,
-      accelerants: deck.map(classifyAccelerant).filter((a) => a !== null).length,
+      accelerants: deck.filter((dc) => classifyAccelerant(dc, gateDeck) !== null).length,
       rows,
       headline: { mana: 6, turn: 6, low: Math.min(lo, hi), high: Math.max(lo, hi) },
       need: { mana: needMana, turn: needMana, share: underOf(needMana), low: Math.min(nLo, nHi), high: Math.max(nLo, nHi) },

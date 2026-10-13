@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { toCardDoc, docToCard } from "./docs.js";
 import type { NormalizedCard } from "./scryfall.js";
+import { normalizeScryfallCard } from "./scryfall.js";
 
 const treasureMaker: NormalizedCard = {
   oracleId: "dock",
@@ -222,4 +223,18 @@ test("a meld result card has no meld partner", () => {
     ],
   } as unknown as Parameters<typeof docToCard>[0]);
   expect(brisela.meldPartner).toBeUndefined();
+});
+
+test("loyalty reaches the document and the Card, card-level and per face (owner 2026-10-13, #1169)", () => {
+  const n = normalizeScryfallCard({ oracle_id: "c", name: "Chandra, Novice Pyromancer", type_line: "Legendary Planeswalker — Chandra", keywords: [], colors: ["R"], cmc: 4, loyalty: "5" })!;
+  const doc = toCardDoc(n);
+  expect(doc.loyalty).toBe("5");
+  expect(docToCard(doc).loyalty).toBe("5");
+  const dfc = toCardDoc(normalizeScryfallCard({
+    oracle_id: "v", name: "Valki, God of Lies // Tibalt, Cosmic Impostor", type_line: "Legendary Creature — God // Legendary Planeswalker — Tibalt", layout: "modal_dfc", keywords: [],
+    card_faces: [{ name: "Valki, God of Lies", type_line: "Legendary Creature — God", colors: ["B"] }, { name: "Tibalt, Cosmic Impostor", type_line: "Legendary Planeswalker — Tibalt", colors: ["R"], loyalty: "5" }],
+  })!);
+  expect("loyalty" in dfc).toBe(false);
+  expect(docToCard(dfc).faces![1]!.loyalty).toBe("5");
+  expect("loyalty" in docToCard(toCardDoc(normalizeScryfallCard({ oracle_id: "s", name: "Sol Ring", type_line: "Artifact", keywords: [], colors: [], cmc: 1 })!))).toBe(false);
 });

@@ -3,7 +3,9 @@ import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import labelCards from "./same-job.labels.cards.json" with { type: "json" };
 import labelSet from "./same-job.labels.json" with { type: "json" };
 import { ingredients, rolesOfCard } from "./quality.js";
-import { effectsOf, groupKey, sameGroup, sameJob } from "./same-job.js";
+import { effectsOf, groupKey, hasGatedYield, netPositiveMana, netYield, sameGroup, sameJob, sameRockAnyColour } from "./same-job.js";
+import { cardLines, producedManaTypes } from "./mana-lines.js";
+import { withLines } from "./mana-test-support.js";
 import type { DeckCard } from "./types.js";
 
 /** Cards as the corpus derives them (tags read 2026-10-02). */
@@ -78,4 +80,83 @@ test("G1: the pairs the group key puts together are the owner's same pairs", () 
   expect(together.filter((p) => p.label === "different").map((p) => `${p.out} -> ${p.in}`)).toEqual([]);
   expect(same / together.length).toBeGreaterThanOrEqual(0.9);
   expect(same).toBeGreaterThanOrEqual(9);
+});
+
+// THE G1 FIXTURE CARRIES THE DERIVED MANA KEYS (#1169 whole-branch review): without them every ramp card keyed on nothing, and the gate could not see the ramp key at all.
+test("the label fixture's ramp cards key on what they make, so G1 can see the ramp key (Arcane Signet is not Dimir Signet)", () => {
+  const cards = labelCards as unknown as Record<string, DeckCard>;
+  expect(groupKey(cards["Arcane Signet"]!, "ramp")).not.toBe(groupKey(cards["Dimir Signet"]!, "ramp"));
+  expect(JSON.stringify(groupKey(cards["Dimir Signet"]!, "ramp"))).toContain("UB");
+});
+
+// #1169 2b-2 follow-up: a card that adds no mana TYPE (a Treasure / Spawn maker, a grantee engine) was one bucket in the ramp key (the empty string). It keys on what it does
+// instead, so a land fetch that also makes an Eldrazi Spawn is not the plain land fetch of the same cost.
+test("two ramp cards that add no mana type do not share a group because of it (Growth Spasm is not Scout the Wilderness)", () => {
+  const spasm = card("Growth Spasm");
+  const scout = card("Scout the Wilderness");
+  expect(groupKey(spasm, "ramp")).not.toBeNull();
+  expect(groupKey(spasm, "ramp")).not.toBe(groupKey(scout, "ramp"));
+  expect(sameJob(scout, spasm, "ramp")).toBe(false);
+});
+
+// #1169 2b-2 fix round 2 (owner 2026-10-13: a gated source is still a mana source, conditioned on the deck). A gated line counts when the DECK meets its gate, and not otherwise;
+// with no deck to judge it against it is credited as before (never).
+const filler = (n: number): DeckCard[] => Array.from({ length: n }, (_, i) => ({ card: { name: `Spell ${i}`, typeLine: "Instant", oracleText: "", manaValue: 2 } as never, tags: null }));
+const ofType = (n: number, typeLine: string, name = "Piece"): DeckCard[] => Array.from({ length: n }, (_, i) => ({ card: { name: `${name} ${i}`, typeLine, oracleText: "", manaValue: 2 } as never, tags: null }));
+const deckWith = (...own: DeckCard[][]): DeckCard[] => { const cards = own.flat(); return [...cards, ...filler(100 - cards.length)]; };
+
+test("a gated line counts toward net yield and net-positive mana in a deck that meets its gate, and in no other (Mox Jasper, Mox Opal, Sceptre of Eternal Glory)", () => {
+  const jasper = card("Mox Jasper");
+  const dragons = deckWith(ofType(12, "Creature — Dragon", "Dragon"));
+  expect(netYield(jasper)).toBeNull();
+  expect(netYield(jasper, deckWith())).toBeNull();
+  expect(netYield(jasper, dragons)).toBe(1);
+  expect(netPositiveMana(jasper)).toBe(false);
+  expect(netPositiveMana(jasper, deckWith())).toBe(false);
+  expect(netPositiveMana(jasper, dragons)).toBe(true);
+  const opal = card("Mox Opal");
+  expect(netPositiveMana(opal, deckWith(ofType(25, "Artifact", "Rock")))).toBe(true);
+  expect(netPositiveMana(opal, deckWith(ofType(2, "Artifact", "Rock")))).toBe(false);
+  // Sceptre: an ungated 1, and a gated 3 that waits on three lands with one name
+  const sceptre = card("Sceptre of Eternal Glory");
+  expect(netYield(sceptre)).toBe(1);
+  expect(netYield(sceptre, deckWith(ofType(24, "Basic Land — Forest", "Forest").map((d) => ({ ...d, card: { ...d.card, name: "Forest" } }))))).toBe(3);
+  expect(netYield(sceptre, deckWith(ofType(24, "Land", "Land")))).toBe(1);
+  // a gate that is not a property of a decklist stays unmet whatever the deck: Glistening Sphere's poison counters
+  expect(netYield(card("Glistening Sphere"), deckWith(ofType(40, "Artifact")))).toBe(1);
+});
+
+test("a gated rock is not a like-for-like swap for an ungated one, whatever the deck (a rock that needs Dragons is not a Signet)", () => {
+  const dragons = deckWith(ofType(12, "Creature — Dragon", "Dragon"));
+  const signet = card("Arcane Signet");
+  // the same card in every other respect, with its one mana line gated on a Dragon
+  const gated = withLines(signet, cardLines(signet).map((l) => ({ ...l, gate: "you control a dragon" })));
+  const twin = withLines(signet, cardLines(signet));
+  expect(hasGatedYield(gated)).toBe(true);
+  expect(hasGatedYield(twin)).toBe(false);
+  expect(hasGatedYield(card("Mox Jasper"))).toBe(true);
+  expect(hasGatedYield(card("Sceptre of Eternal Glory"))).toBe(true);
+  expect(hasGatedYield(card("Mind Stone"))).toBe(false);
+  expect(hasGatedYield(card("Sol Ring"))).toBe(false);
+  expect(sameRockAnyColour(signet, twin, dragons)).toBe(true);
+  expect(sameRockAnyColour(signet, gated, dragons)).toBe(false);
+  expect(sameRockAnyColour(gated, signet, dragons)).toBe(false);
+  expect(sameRockAnyColour(gated, withLines(signet, cardLines(signet).map((l) => ({ ...l, gate: "you control a dragon" }))), dragons)).toBe(true);
+});
+
+// #1169 2b-2 fix round 2 review: Path of Annihilation (a static grant AND two Eldrazi Spawn) and Cryptolith Rite (a static grant) both add every colour, so the types never fell
+// back to the shape and the two shared a group key. The shape of what the card does rides in the key beside the types.
+test("a card that grants any colour AND makes tokens is not the group of one that only grants (Path of Annihilation, Cryptolith Rite)", () => {
+  const path = card("Path of Annihilation");
+  const rite = card("Cryptolith Rite");
+  expect(producedManaTypes(path)).toEqual(producedManaTypes(rite));
+  expect(groupKey(path, "ramp")).not.toBeNull();
+  expect(groupKey(path, "ramp")).not.toBe(groupKey(rite, "ramp"));
+});
+
+// #1169 2b-2 fix round 2 (owner 2026-10-13: "gated is conditional same as lands, so it should impact the card quality"): the ramp quality's `restriction` ingredient is the conditional
+// penalty a rock already carried ("spend this mana only"); a gated mana line is the same kind of condition, so a gated source rates below the ungated one in every deck.
+test("a gated mana source carries the ramp restriction ingredient, an ungated one does not (Mox Jasper, Mox Opal, Sceptre, Sarevok's Tome against Arcane Signet, Mind Stone, Sol Ring)", () => {
+  for (const n of ["Mox Jasper", "Mox Opal", "Sceptre of Eternal Glory", "Sarevok's Tome", "Glistening Sphere"] as const) expect(ingredients(card(n), "ramp").restriction, n).toBe(1);
+  for (const n of ["Arcane Signet", "Mind Stone", "Sol Ring"] as const) expect(ingredients(card(n), "ramp").restriction, n).toBe(0);
 });

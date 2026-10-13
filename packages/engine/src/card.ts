@@ -12,6 +12,8 @@ export interface CardFace {
   /** Present on faces with no mana cost, where colour cannot be read off the cost. */
   colorIndicator?: string[];
   artCrop?: string;
+  /** A planeswalker face's printed starting loyalty, as printed ("5", "X"). */
+  loyalty?: string;
 }
 
 export interface Card {
@@ -30,6 +32,8 @@ export interface Card {
    *  one lists only the PLAYABLE faces, so a transform back is absent from it by design).
    *  Absent on a single-face card. */
   faces?: CardFace[];
+  /** A single-face planeswalker's printed starting loyalty, as printed ("5", "X"); a double-faced card carries it per face. */
+  loyalty?: string;
   /** Scryfall oracle_text; empty string when the card has none. */
   oracleText: string;
   /** Scryfall keywords, e.g. ["Flying"]. */

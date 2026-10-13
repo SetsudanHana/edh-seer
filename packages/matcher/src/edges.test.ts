@@ -1,8 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
+import { isManaRock, pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import { fixtureDeckCard } from "./fixture-cards.js";
+import { FREE_TAP, mkLine } from "./mana-test-support.js";
 import type { Reason } from "@edh-seer/engine";
 import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -6223,8 +6224,10 @@ describe("a mana rock's own entry is not a theme (#966)", () => {
     (c.tags.characteristics as { types: string[] }).types = types;
     return c.tags;
   };
+  // A rock's derived tags carry the activated mana LINE its ability stands for (#1169 task 2b-2: `isManaRock` reads the lines, not the ability label).
   const mk = (types: string[], abilities: unknown[], subtypes: string[] = []) =>
-    withTypes(base("X", abilities as CardTags["abilities"], subtypes), types);
+    ({ ...withTypes(base("X", abilities as CardTags["abilities"], subtypes), types),
+      ...((abilities as { effect: { kind: string } }[]).some((a) => a.effect.kind === "mana-generation") ? { manaLines: [mkLine()] } : {}) }) as CardTags;
 
   test("a Signet-shaped artifact has no enters:artifact", () => {
     expect(cardThemeTags(mk(["artifact"], [manaAbility])).has("enters:artifact")).toBe(false);
@@ -6266,6 +6269,38 @@ describe("a mana rock's own entry is not a theme (#966)", () => {
   });
 });
 
+/** WHICH ARTIFACT IS A MANA ROCK is read off the DERIVED MANA LINES (#1169 task 2b-2): an activated line the card itself uses. It was "an activated ability derive
+ *  labelled mana-generation", which Doubling Cube ("double the amount of each type of unspent mana") and Resonating Lute (it grants the lands the ability) carry without
+ *  being a rock, and which The Golden Throne ("{T}, Sacrifice a creature: Add three mana ...") lacks. */
+describe("a mana rock is an artifact with an activated mana line (#1169 task 2b-2)", () => {
+  const manaAbility = { kind: "activated", effect: { kind: "mana-generation" } };
+  const tagsOf = (types: string[], abilities: unknown[], lines: ReturnType<typeof mkLine>[], subtypes: string[] = []) => {
+    const c = base("X", abilities as CardTags["abilities"], subtypes);
+    (c.tags.characteristics as { types: string[] }).types = types;
+    return { ...c.tags, ...(lines.length ? { manaLines: lines } : {}) } as CardTags;
+  };
+  test("an artifact whose derived line is an activated tap is a rock, whatever label its ability carries", () => {
+    expect(cardThemeTags(tagsOf(["artifact"], [], [mkLine()])).has("enters:artifact")).toBe(false);
+    // A sacrifice for mana is still a rock (Lotus Petal), and The Golden Throne's line has no mana-generation ability behind it.
+    expect(cardThemeTags(tagsOf(["artifact"], [], [mkLine({ cost: { ...FREE_TAP, sacrificeSelf: true } })])).has("enters:artifact")).toBe(false);
+  });
+  test("a mana-generation LABEL with no mana line is not a rock (Doubling Cube): it keeps its entry", () => {
+    expect(cardThemeTags(tagsOf(["artifact"], [manaAbility], [])).has("enters:artifact")).toBe(true);
+  });
+  test("a static grant, a trigger and a Treasure maker are not an activated line: no rock", () => {
+    for (const l of [mkLine({ source: "static-grant" }), mkLine({ source: "trigger", trigger: "attacks", triggerSubject: "this creature" }), mkLine({ source: "token-maker", producesToken: "treasure" })]) {
+      expect(cardThemeTags(tagsOf(["artifact"], [], [l])).has("enters:artifact"), l.source).toBe(true);
+    }
+  });
+  test("the type exclusions stand: an Equipment, a Vehicle and an artifact creature with an activated line are not rocks", () => {
+    expect(cardThemeTags(tagsOf(["artifact"], [], [mkLine()], ["equipment"])).has("enters:equipment")).toBe(true);
+    expect(cardThemeTags(tagsOf(["artifact"], [], [mkLine()], ["vehicle"])).has("enters:vehicle")).toBe(true);
+    expect(isManaRock(tagsOf(["artifact", "creature"], [], [mkLine()]))).toBe(false);
+    expect(isManaRock(tagsOf(["land"], [], [mkLine()]))).toBe(false);
+    expect(isManaRock(tagsOf(["artifact"], [], [mkLine()]))).toBe(true);
+  });
+});
+
 /** A CARD'S OWN ENTRY TRIGGER IS NOT A THEME (#1097): a Temple's "When this land enters, scry 1"
  *  put `enters:land` on Tinker Time's lands although `impliedEntryThemeTags` deliberately excludes a
  *  land's own entry. Only the THEME path skips it; the SUPPLY path keeps it (a Temple really is a land
@@ -6292,9 +6327,9 @@ describe("a self enters trigger is not a theme (#1097)", () => {
     expect(out.has(ETB_REFIRE)).toBe(true);
   });
   test("a mana rock's self ETB gives no enters:artifact theme, kept in supply", () => {
-    const rock = withTypes(["artifact"], [
+    const rock = { ...withTypes(["artifact"], [
       { kind: "activated", effect: { kind: "mana-generation" } },
-      trig("enters", { self: true, type: "artifact", control: "you" })]);
+      trig("enters", { self: true, type: "artifact", control: "you" })]), manaLines: [mkLine()] } as CardTags;
     expect(cardThemeTags(rock).has("enters:artifact")).toBe(false);
     expect(cardSupplyTags(rock).has("enters:artifact")).toBe(true);
   });
@@ -6344,7 +6379,7 @@ describe("face-aware own-entry exclusion (#1101)", () => {
   });
   test("a plain land and a mana rock still have no own-entry theme", () => {
     expect([...cardThemeTags(withFaces(["land"], ["island"], undefined as never))]).toEqual([]);
-    const rock = withFaces(["artifact"], [], undefined as never, [{ kind: "activated", effect: { kind: "mana-generation" } }]);
+    const rock = { ...withFaces(["artifact"], [], undefined as never, [{ kind: "activated", effect: { kind: "mana-generation" } }]), manaLines: [mkLine()] } as CardTags;
     expect(cardThemeTags(rock).has("enters:artifact")).toBe(false);
   });
   test("the MDFC's land face still supplies enters:land (via its own trigger), not as theme", () => {

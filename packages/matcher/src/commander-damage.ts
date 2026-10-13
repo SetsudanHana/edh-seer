@@ -33,7 +33,7 @@ const COMMANDER_DAMAGE = 21;
  *  pair `ARCHETYPE_SIGNATURE`'s voltron row keys on, and the same "aura only when it enchants a
  *  creature" qualifier — an Aura on a land is not carrying anyone into combat. */
 const ENCHANTS_CREATURE = /enchant creature/i;
-/** A FLAT printed bonus, and A RATE IS NOT AN AMOUNT — the same distinction I4's `manaAdded` needed
+/** A FLAT printed bonus, and A RATE IS NOT AN AMOUNT — the same distinction I4's `oneShotNet` needed
  *  one subsystem over, and it bit here too: Ethereal Armor's *"gets +1/+1 FOR EACH enchantment you
  *  control"* contains the literal `+1/+1` and is not a `+1`. A bonus this cannot put a number on
  *  contributes ZERO, which under-states the ceiling rather than inventing a board state. */

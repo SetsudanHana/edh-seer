@@ -1,9 +1,13 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { minCopies } from "@edh-seer/engine";
 import { colourDeficit, manaAudit, pipsByColor } from "./mana-audit.js";
 import { minSources } from "./mulligan.js";
 import type { DeckCard } from "./types.js";
+import { colourSourceColours, cardLines, makesAnyMana, paysItsWay } from "./mana-lines.js";
+import { FREE_TAP, fetchTags, manaTags, mkLine, tapFor } from "./mana-test-support.js";
+import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
+import { colourSources, fixerSupply } from "./mana-base.js";
 
 const card = (name: string, manaCost: string, manaValue: number, extra: Partial<Card> = {}): DeckCard => ({
   card: { name, manaCost, manaValue, typeLine: "Sorcery", oracleText: "", keywords: [], colors: [] , ...extra } as Card,
@@ -15,7 +19,7 @@ const source = (name: string, produces: string[]): DeckCard => ({
     name, typeLine: "Land", oracleText: "", keywords: [], colors: [], manaValue: 0,
     producedMana: produces,
   } as Card,
-  tags: null,
+  tags: manaTags([tapFor(produces)]),
 });
 
 const filler = (i: number) => card(`filler-${i}`, "{1}", 1);
@@ -214,7 +218,10 @@ test("a card with no mana cost demands nothing", () => {
  *  gone, so it is not a source you can hold to the audit's 90% confidence. Measured over the 71
  *  calibration decks it moved `supplied` on 103 of 153 colour rows. */
 test("a one-shot ritual is not a coloured source", () => {
-  const ritual = (i: number) => card(`Dark Ritual-${i}`, "{B}", 1, { producedMana: ["B"], typeLine: "Instant" });
+  const ritual = (i: number): DeckCard => ({
+    ...card(`Dark Ritual-${i}`, "{B}", 1, { producedMana: ["B"], typeLine: "Instant" }),
+    tags: manaTags([mkLine({ source: "one-shot-spell", repeats: "once", cost: { ...FREE_TAP, tap: false, mana: 1 }, colours: ["B"], amount: { fixed: 3, scales: null }, net: 2 })], { isOneShot: true }),
+  });
   const deck = fillTo(100, [
     card("Damnation", "{2}{B}{B}", 4),
     ...Array.from({ length: 8 }, (_, i) => ritual(i)),
@@ -227,7 +234,7 @@ test("a one-shot ritual is not a coloured source", () => {
 test("a permanent source is still counted", () => {
   const deck = fillTo(100, [
     card("Damnation", "{2}{B}{B}", 4),
-    card("Charcoal Diamond", "{2}", 2, { producedMana: ["B"], typeLine: "Artifact" }),
+    { ...card("Charcoal Diamond", "{2}", 2, { producedMana: ["B"], typeLine: "Artifact" }), tags: manaTags([tapFor(["B"])]) },
     ...Array.from({ length: 20 }, (_, i) => source(`Swamp-${i}`, ["B"])),
   ]);
   expect(manaAudit(deck).find((r) => r.color === "B")!.supplied).toBe(21);
@@ -247,7 +254,7 @@ test("a turn-1 demand does not count a two-mana rock as a source", () => {
       name, typeLine: "Artifact", manaCost: "{2}", manaValue: 2, oracleText: "{T}: Add {R}.",
       keywords: [], colors: [], producedMana: ["R"],
     } as Card,
-    tags: null,
+    tags: manaTags([tapFor(["R"])]),
   });
   const deck = fillTo(100, [
     card("Curse of Opulence", "{R}", 1),
@@ -268,14 +275,14 @@ test("a turn-1 demand does not count a land that enters tapped on turn 1", () =>
       name, typeLine: "Land", manaValue: 0, keywords: [], colors: [], producedMana: ["R"],
       oracleText: `${name} enters the battlefield tapped.`,
     } as Card,
-    tags: null,
+    tags: manaTags([tapFor(["R"])]),
   });
   const slow = (name: string): DeckCard => ({
     card: {
       name, typeLine: "Land", manaValue: 0, keywords: [], colors: [], producedMana: ["R"],
       oracleText: `${name} enters the battlefield tapped unless you control two or more other lands.`,
     } as Card,
-    tags: null,
+    tags: manaTags([tapFor(["R"])]),
   });
   const deck = fillTo(100, [
     card("Curse of Opulence", "{R}", 1),
@@ -299,7 +306,7 @@ test("met and worst read the deadline-aware count, not the deck total", () => {
       name, typeLine: "Artifact", manaCost: "{2}", manaValue: 2, oracleText: "{T}: Add {B}.",
       keywords: [], colors: [], producedMana: ["B"],
     } as Card,
-    tags: null,
+    tags: manaTags([tapFor(["B"])]),
   });
   // Enough sources on paper, none of them able to pay on turn one.
   const deck = fillTo(100, [
@@ -329,11 +336,13 @@ const basic = (name: string, type: string, produces: string[]): DeckCard => ({
   tags: null,
 });
 
+/** The derived `landFetch` of the fetch these texts print: Delta names an Island or Swamp card, the others any basic. */
 const fetchland = (name: string, text: string): DeckCard => ({
   card: {
     name, typeLine: "Land", oracleText: text, keywords: [], colors: [], manaValue: 0,
   } as Card,
-  tags: null,
+  tags: fetchTags({ kind: "permanent", tapped: /tapped/.test(text.split("then shuffle")[0]!), reach: /Island or Swamp/.test(text) ? ["U", "B"] : ["W", "U", "B", "R", "G"] },
+    { cost: { ...FREE_TAP, sacrificeSelf: true, life: /Pay 1 life/.test(text) ? 1 : 0 } }),
 });
 const DELTA = "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle.";
 const WILDS = "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.";
@@ -392,12 +401,31 @@ test("a fetch whose land arrives tapped is not available on its deadline", () =>
   expect(at(PASSAGE, 4)).toBe(34);
 });
 
+/** #1169 task 2b-2: when a fetched land is online comes from the derived `landFetch.tapped`, not the oracle text: these fetches print none. */
+test("a fetch's land is online on its deadline as landFetch says, not as its text says", () => {
+  const bare = (name: string, tapped: boolean): DeckCard => ({
+    ...fetchland(name, ""), tags: fetchTags({ kind: "permanent", tapped, reach: ["W", "U", "B", "R", "G"] }, { cost: { ...FREE_TAP, sacrificeSelf: true } }),
+  });
+  const build = (tapped: boolean) => fillTo(100, [
+    card("Ancestral Recall", "{U}", 1),
+    card("Counterspell", "{U}{U}", 2),
+    ...Array.from({ length: 30 }, (_, i) => basic(`Island-${i}`, "Island", ["U"])),
+    ...Array.from({ length: 4 }, (_, i) => bare(`fetch-${i}`, tapped)),
+  ]);
+  const at = (tapped: boolean, turn: number) => manaAudit(build(tapped)).find((r) => r.color === "U")!.demands.find((d) => d.turn === turn)!.available;
+  expect(at(false, 1)).toBe(34);
+  expect(at(true, 1)).toBe(30);
+});
+
 /** THE ONE PLACE `isManaSource` IS BYPASSED. That gate refuses a sorcery because a RITUAL is a
  *  one-shot; Cultivate is not one -- it leaves a Forest on the battlefield permanently. It is still
  *  on a rock's clock: cast on turn 3, it pays from turn 4. */
 test("a land-fetch sorcery is a source, and a ritual still is not", () => {
-  const cultivate = (i: number) => card(`Cultivate-${i}`, "{2}{G}", 3, {
-    oracleText: "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.",
+  const cultivate = (i: number): DeckCard => ({
+    ...card(`Cultivate-${i}`, "{2}{G}", 3, {
+      oracleText: "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.",
+    }),
+    tags: fetchTags({ kind: "spell", tapped: true, reach: ["W", "U", "B", "R", "G"] }, { cost: { ...FREE_TAP, tap: false, mana: 3 }, net: -2 }),
   });
   const deck = fillTo(100, [
     card("Overrun", "{2}{G}{G}{G}", 5),
@@ -431,23 +459,25 @@ test("the colour deficit is the worst demand's shortfall per colour, and absent 
 /** COST AGAINST PRODUCTION (owner, 2026-10-08, #1114): a colour counts only when a line that makes it produces
  *  at least its cost plus its own tap. Cards as the corpus prints them. */
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
-import { fixedColours, manaLines } from "./mana-lines.js";
 const real = (name: keyof typeof rocks) => rocks[name] as unknown as DeckCard;
 
 test("a filter land is a full source of both its colours; Cascading Cataracts and Prismatic Lens fix none; a Signet still does", () => {
-  expect([...fixedColours(real("Cascade Bluffs"))].sort()).toEqual(["C", "R", "U"]);
-  expect([...fixedColours(real("Sunken Ruins"))].sort()).toEqual(["B", "C", "U"]);
-  expect([...fixedColours(real("Darkwater Catacombs"))].sort()).toEqual(["B", "U"]);
-  expect([...fixedColours(real("Izzet Signet"))].sort()).toEqual(["R", "U"]);
-  expect(fixedColours(real("Cascading Cataracts"))).toEqual(["C"]);
-  expect(fixedColours(real("Prismatic Lens"))).toEqual(["C"]);
+  const colours = (name: keyof typeof rocks) => [...colourSourceColours(real(name))].sort();
+  expect(colours("Cascade Bluffs")).toEqual(["R", "U"]);
+  expect(colours("Sunken Ruins")).toEqual(["B", "U"]);
+  expect(colours("Darkwater Catacombs")).toEqual(["B", "U"]);
+  expect(colours("Izzet Signet")).toEqual(["R", "U"]);
+  // Colourless only: they still make mana, just no colour (the ruling).
+  expect(colours("Cascading Cataracts")).toEqual([]);
+  expect(colours("Prismatic Lens")).toEqual([]);
+  expect(makesAnyMana(real("Cascading Cataracts"))).toBe(true);
   // An amount that scales cannot be judged from the line, so Cabal Coffers keeps its black.
-  expect(fixedColours(real("Cabal Coffers"))).toEqual(["B"]);
+  expect(colours("Cabal Coffers")).toEqual(["B"]);
   // The scaling exemption reads the produced-mana clause only: a later "where X is" / "equal to" sentence
   // (Study Hall, Opal Palace) is no part of the amount, and these are Prismatic Lens lines.
-  expect(fixedColours(real("Study Hall"))).toEqual(["C"]);
-  expect(fixedColours(real("Opal Palace"))).toEqual(["C"]);
-  expect(manaLines(real("Cascading Cataracts")).map((l) => [l.net, l.qualifies])).toEqual([[1, true], [0, false]]);
+  expect(colours("Study Hall")).toEqual([]);
+  expect(colours("Opal Palace")).toEqual([]);
+  expect(cardLines(real("Cascading Cataracts")).map((l) => [l.net, paysItsWay(l)])).toEqual([[1, true], [0, false]]);
 });
 
 test("the audit counts a source only for the colours it fixes", () => {
@@ -504,7 +534,7 @@ test("a fixer that is not out yet by the deadline credits nothing", () => {
 test("Urborg fixes black only", () => {
   const swamps = (n: number) => Array.from({ length: n }, (_, i) => source(`Swamp-${i}`, ["B"]));
   const urborg = real("Urborg, Tomb of Yawgmoth");
-  const inert = { ...urborg, card: { ...urborg.card, oracleText: "" } } as DeckCard;
+  const inert = { ...urborg, tags: { ...urborg.tags, staticFixer: undefined } } as DeckCard;
   const build = (u: DeckCard) => fillTo(100, [card("Cancel", "{2}{U}{U}", 4), card("Doom", "{2}{B}{B}", 4), ...mountains(30), ...islands(6), ...swamps(6), u]);
   const at = (deck: DeckCard[], c: string) => manaAudit(deck).find((r) => r.color === c)!.demands[0]!;
   expect(at(build(urborg), "B").available).toBeGreaterThan(at(build(inert), "B").available);
@@ -512,7 +542,7 @@ test("Urborg fixes black only", () => {
 });
 
 test("an all-mana fixer (Chromatic Orrery) credits rocks and dorks too, once it is out", () => {
-  const rock = (i: number) => ({ card: { name: `Rock-${i}`, typeLine: "Artifact", oracleText: "{T}: Add {C}.", keywords: [], colors: [], manaValue: 1, producedMana: ["C"] }, tags: null }) as unknown as DeckCard;
+  const rock = (i: number) => ({ card: { name: `Rock-${i}`, typeLine: "Artifact", oracleText: "{T}: Add {C}.", keywords: [], colors: [], manaValue: 1, producedMana: ["C"] }, tags: manaTags([tapFor(["C"])]) }) as unknown as DeckCard;
   const rocksN = Array.from({ length: 10 }, (_, i) => rock(i));
   const build = (extra: DeckCard) => fillTo(100, [card("Big Blue", "{6}{U}{U}", 8), ...mountains(30), ...islands(6), ...rocksN, extra]);
   const at = (deck: DeckCard[]) => manaAudit(deck).find((r) => r.color === "U")!.demands[0]!;
@@ -574,4 +604,72 @@ test("a deck with no gold demand has no gold field, and a colour alone short is 
 
 test("manaAudit still returns the rows alone", () => {
   expect(Array.isArray(manaAudit(fillTo(100, [card("Mono", "{W}{W}", 2), ...many(25, ["W"], "Plains")])))).toBe(true);
+});
+
+// THE COLOUR AUDIT FOLLOWS THE GATE (owner 2026-10-13, #1169 2b-2): "one answer for audit and castability: Tainted lands, Verges, Spire of Industry count as colour sources when their gate
+// is met". A gated line is a colour source of its colours in a deck that meets the gate (`supplied`, the flat count the mana base reads too), and it is online for a demand on the turn
+// the gate is met BY (`gate.ts`'s closed form of the goldfish's own timing), not before.
+describe("a gated source in the colour audit", () => {
+  const real = (name: string): DeckCard => {
+    const hit = (goldfish as unknown as DeckCard[]).find((c) => c.card.name === name);
+    expect(hit, `fixture for ${name}`).toBeDefined();
+    return structuredClone(hit!);
+  };
+  const basic = (name: string, type: string, colour: string): DeckCard => ({
+    card: { name, typeLine: `Basic Land \u2014 ${type}`, oracleText: "", keywords: [], colors: [], manaValue: 0 } as Card,
+    tags: manaTags([tapFor([colour])]),
+  });
+  const peaks = Array.from({ length: 4 }, () => real("Tainted Peak"));
+  const mountain = basic("Mountain", "Mountain", "R");
+  const redThree = card("Red Three", "{2}{R}", 3);
+  const redFive = card("Red Five", "{4}{R}", 5);
+  const swamps = (n: number) => Array.from({ length: n }, (_, i) => basic(`Swamp ${i}`, "Swamp", "B"));
+  const forests = (n: number) => Array.from({ length: n }, (_, i) => basic(`Forest ${i}`, "Forest", "G"));
+
+  test("Tainted Peak is a red source in a deck with Swamps, and online when a Swamp is likely out: six Swamps are 48% by turn 3 and 51% by turn 4", () => {
+    const deck = fillTo(100, [...peaks, ...swamps(6), mountain, redThree, redFive]);
+    const red = manaAudit(deck).find((r) => r.color === "R")!;
+    expect(red.supplied).toBe(5);
+    expect(red.demands.find((d) => d.turn === 3)!.available).toBe(1);
+    expect(red.demands.find((d) => d.turn === 5)!.available).toBe(5);
+    // the mana base counts the same sources the audit does
+    expect(colourSources(deck).get("R")).toBe(5);
+  });
+
+  test("a land that holds a land-count gate takes a land drop of its own: Tainted Peak is red from turn 2 in a deck of Swamps, not turn 1", () => {
+    const deck = fillTo(100, [...peaks, ...swamps(40)]);
+    expect(colourSourceColours(peaks[0]!, null, "five", deck, 1)).toEqual([]);
+    expect(colourSourceColours(peaks[0]!, null, "five", deck, 2)).toEqual(["B", "R"]);
+  });
+
+  test("a deck with no Swamp has no red from it, in the audit or the mana base", () => {
+    const deck = fillTo(100, [...peaks, ...forests(6), mountain, redThree, redFive]);
+    const red = manaAudit(deck).find((r) => r.color === "R")!;
+    expect(red.supplied).toBe(1);
+    expect(red.demands.find((d) => d.turn === 5)!.available).toBe(1);
+    expect(colourSources(deck).get("R")).toBe(1);
+  });
+
+  test("the mana base's fixer credit sees the gated source too: with a Lantern, a deck that counts Peak as red has fewer lands left to credit than one that does not", () => {
+    const lanterns = Array.from({ length: 4 }, () => real("Chromatic Lantern"));
+    // green rocks keep the number of sources a Lantern could newly reach well above the number of lands, so it is the lands that bind
+    const greenRocks = Array.from({ length: 20 }, (_, i): DeckCard => ({ card: { name: `Green Rock ${i}`, typeLine: "Artifact", oracleText: "", keywords: [], colors: [], manaValue: 2 } as Card, tags: manaTags([tapFor(["G"])]) }));
+    const withSwamps = fillTo(100, [...lanterns, ...greenRocks, ...peaks, ...swamps(6), mountain, redThree]);
+    const withForests = fillTo(100, [...lanterns, ...greenRocks, ...peaks, ...forests(6), mountain, redThree]);
+    expect(fixerSupply(withSwamps)("R", 6)).toBeLessThan(fixerSupply(withForests)("R", 6));
+  });
+
+  test("Mox Jasper is every colour once a Dragon is likely out, and not before: a five-mana Dragon is cast on turn 5 and out from turn 6", () => {
+    const jasper = real("Mox Jasper");
+    const dragons = Array.from({ length: 12 }, (_, i) => card(`Dragon ${i}`, "{3}{R}{R}", 5, { typeLine: "Creature \u2014 Dragon" }));
+    const deck = fillTo(100, [jasper, ...dragons]);
+    expect(colourSourceColours(jasper, null, "five", deck)).toEqual(["W", "U", "B", "R", "G"]);
+    expect(colourSourceColours(jasper, null, "five", deck, 5)).toEqual([]);
+    expect(colourSourceColours(jasper, null, "five", deck, 6)).toEqual(["W", "U", "B", "R", "G"]);
+    expect(colourSourceColours(jasper)).toEqual([]);
+    expect(makesAnyMana(jasper)).toBe(false);
+    expect(makesAnyMana(jasper, deck)).toBe(true);
+    expect(makesAnyMana(jasper, deck, 5)).toBe(false);
+    expect(makesAnyMana(jasper, deck, 6)).toBe(true);
+  });
 });

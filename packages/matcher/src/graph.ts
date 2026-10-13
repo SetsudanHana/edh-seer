@@ -1,4 +1,7 @@
 import type { CardDoc, CardFace } from "@edh-seer/data";
+import type { Card } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
+import { producedManaTypes } from "./mana-lines.js";
 import { parseTypeLine } from "./typeline.js";
 
 export type NodeKind =
@@ -73,9 +76,13 @@ function manaSymbols(cost: string | undefined): string[] {
  *  nodes only for multi-faced cards -- puts a "does this card have faces" branch in every
  *  traversal that touches a type or a colour, to save ~35k nodes that cost nothing.
  *
+ *  PRODUCES comes from the card's DERIVED mana lines, which `tagsOf` hands in (#1169 task 2b-2); Scryfall's `producedMana` is not read (it lists the five colours
+ *  of a Treasure maker, Pitiless Plunderer, which adds none). A graph built without `tagsOf` draws no PRODUCES edge. See `producedManaTypes`: every mana type the card's
+ *  own lines add, so a ritual's and trigger mana count and a token maker's and a fetch's do not.
+ *
  *  Stage 1 only: no otags, no abilities, no effects, no stat-shifting, and no card-to-card edges
  *  beyond `all_parts`. See docs/superpowers/specs/2026-08-03-card-graph-design.md. */
-export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
+export function buildGraph(cards: Iterable<CardDoc>, tagsOf?: (c: CardDoc) => CardTags | null): CardGraph {
   const nodes = new Map<string, GraphNode>();
   // Keyed, not a list: a shared target can be reached from several cards and re-emit the same edge.
   // Seven Wizard-token makers each re-emitted `token:wizard -SUBTYPE-> subtype:wizard`, which double
@@ -121,7 +128,9 @@ export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
       for (const sym of manaSymbols(c.manaCost)) edge(cardId, node("mana:" + sym, "mana", sym), "MANA_SYMBOL");
     }
     if (c.layout) edge(cardId, node("layout:" + c.layout, "layout", c.layout), "LAYOUT");
-    for (const m of c.producedMana ?? []) edge(cardId, node("mana:" + m, "mana", m), "PRODUCES");
+    // CEILING: `producedManaTypes` reads only the card's type line and layout off the Card, so the document stands in for it.
+    const tags = tagsOf?.(c) ?? null;
+    if (tags) for (const m of producedManaTypes({ card: c as unknown as Card, tags })) edge(cardId, node("mana:" + m, "mana", m), "PRODUCES");
     for (const kw of c.keywords) edge(cardId, node("keyword:" + slug(kw), "keyword", kw), "KEYWORD");
 
     for (const p of c.allParts ?? []) {

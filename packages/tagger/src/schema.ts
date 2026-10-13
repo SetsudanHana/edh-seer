@@ -1358,6 +1358,154 @@ export interface Characteristics {
   enchants?: SubjectFilter;
 }
 
+/** WHERE A MANA LINE COMES FROM (#1169). One word per way a card puts mana, or a land, in front of you:
+ *  - `activated`: an activated ability ("{T}: Add {G}", "Sacrifice a creature: Add one mana of any color").
+ *    The COST says what it consumes, so the source is the same for a Sol Ring and a Phyrexian Altar.
+ *  - `trigger`: a triggered ability that adds mana (Birgi's "Whenever you cast a spell, add {R}", an enters
+ *    trigger). Mana for a moment, not a source you tap.
+ *  - `static-grant`: the card GIVES the ability to other permanents ("Lands you control have '{T}: Add one mana
+ *    of any color.'", Chromatic Lantern), so the line is the one granted, not one the card taps for itself.
+ *  - `aura-trigger`: the enchanted permanent's tap adds more ("Whenever enchanted land is tapped for mana, its
+ *    controller adds an additional {G}", Wild Growth, Utopia Sprawl).
+ *  - `one-shot-spell`: an instant or sorcery that adds mana as it resolves (Dark Ritual).
+ *  - `token-maker`: makes a token that is itself a mana source (Treasure, Gold, Powerstone, Eldrazi Spawn); the
+ *    card adds no mana of its own.
+ *  - `fetch`: puts lands onto the battlefield from the library (Cultivate, Evolving Wilds); `colours` is what it
+ *    can reach. */
+export type ManaLineSource = "activated" | "trigger" | "static-grant" | "aura-trigger" | "one-shot-spell" | "token-maker" | "fetch";
+
+/** WHICH COLOURS A LINE CHOOSES FROM when it does not print them (#1169). `any` is "one mana of any color" (and
+ *  "in any combination of colors"); the rest are bounded by something outside the card: `identity` your
+ *  commander's colour identity (Arcane Signet), `chosen` the colour chosen as the permanent entered (Utopia
+ *  Sprawl), `opponent-lands` colours a land an opponent controls could produce (Exotic Orchard), and
+ *  `lands-you-could` colours a land you control could produce (Reflecting Pool), and `among` the colours among things you control or have
+ *  exiled ("any color among legendary permanents you control", Plaza of Heroes; "for each color among permanents you control", Faeburrow
+ *  Elder; Chrome Mox's imprint). `grantee` is a GRANTED ability naming its holder's colours ("Human creatures you control have '{T}: Add one mana of
+ *  any of this creature's colors'", Katilda): each grantee is its own source, so the line is not read as a colour of the deck. Three more read
+ *  as `any`: "N mana in any combination of colors", "two mana of different colors", and a colour chosen in the same clause ("{T}: Choose a color.
+ *  Add one mana of that color", Loot, the Nexus). */
+export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "lands-you-could" | "among" | "grantee";
+
+/** ONE WAY A CARD PRODUCES MANA (or a mana source, or a land), read once at derive time so no consumer parses
+ *  oracle text again (#1169; the inventory found ten detectors disagreeing on real cards). A card carries
+ *  one per `add-mana` action of every face, plus one per token-making and land-fetching ability. Absent on a card
+ *  that has none, so a card that makes no mana stays byte-identical.
+ *
+ *  A COLOUR SOURCE needs more than a `source` label: `!cost.sacrificeSelf && !cost.sacrificeOther && cost.counters === null &&
+ *  !cost.tapOther && restriction === null && gate === null && !unread && anyColour !== "grantee" && (cost.tap || source === "static-grant")`,
+ *  and every entry of `cost.other` is on the allow-list of pieces that consume nothing: exert, untap, mill (a consumed resource is no
+ *  source: energy, a discard, collect evidence, forage, an exile from a graveyard). Phyrexian Altar is an `activated` line with no tap,
+ *  a Treasure-maker is `token-maker`, Birgi is `trigger`, and an Aura's trigger (`aura-trigger`) is never one.
+ *
+ *  THE LINE STATES; THE CONSUMER JUDGES. A colour audit, a land count, a goldfish each ask a different question
+ *  (is this a colour SOURCE; is this CHEAP ramp; does it play on turn two), and each answers it by filtering
+ *  these fields -- the line itself decides none of it. */
+export interface ManaLine {
+  /** The face that prints it: 0 the front, 1 the back of a transform / modal card (Treasure Cove's `{T}: Add {C}`). */
+  face: 0 | 1;
+  source: ManaLineSource;
+  /** How often it can be used: the `repeats` of the ability the line was read from (`null` when that ability
+   *  states none -- most triggers -- or no derived ability matches the clause). A dork is `per-cycle`, a spell `once`. */
+  repeats: Repeats | null;
+  /** WHAT USING IT CONSUMES, read off the printed activation cost (a trigger, a spell and an aura pay none here). */
+  cost: {
+    /** Mana symbols paid: a number is that many, a coloured / hybrid / Phyrexian symbol is 1, `{X}` is 0. For a
+     *  `one-shot-spell` and a spell-speed `fetch` it is the mana value of the face that prints it. */
+    mana: number;
+    /** `{T}` is in the cost. The tap is NOT subtracted in `net`. */
+    tap: boolean;
+    /** Sacrifices the card itself ("{T}, Sacrifice this artifact: Add ..."): a one-shot (Lotus Petal, a Treasure). */
+    sacrificeSelf: boolean;
+    /** Sacrifices something else ("Sacrifice a creature: ...", Phyrexian Altar, Priest of Forgotten Gods). */
+    sacrificeOther: boolean;
+    /** Life paid ("Pay 1 life"). */
+    life: number;
+    /** A counter removed from or put on the card as the cost ("Remove a +1/+1 counter", Cryptic Trilobite; "Put a -0/-1 counter",
+     *  Wall of Roots): the mana is paid for by a resource that runs out. */
+    counters: "remove" | "put" | null;
+    /** Taps other permanents ("Tap an untapped creature you control", Springleaf Drum). */
+    tapOther: boolean;
+    /** Every other cost piece, verbatim: a discard, an untap, a loyalty change, `{E}`. */
+    other: string[];
+  };
+  /** The WUBRG colours the printed text names, as a set. `any` names all five; a BOUNDED `anyColour` names none
+   *  (the bound is outside the card), so the consumer resolves it from `anyColour`. */
+  colours: string[];
+  /** The `{C}` mana of one use (the largest across the alternatives printed). */
+  colourless: number;
+  /** Set when the line chooses a colour instead of printing it. See `ManaAnyColour`. */
+  anyColour: ManaAnyColour | null;
+  /** How much one use adds. `fixed` is the number (the smallest across the printed alternatives), `null` when it
+   *  scales; `scales` then names what it counts ("for each Forest you control", "equal to ...", "X"). */
+  amount: { fixed: number | null; scales: string | null };
+  /** Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as 1 (its floor
+   *  would be 0; a consumer that cares reads `amount.scales`). */
+  net: number;
+  /** TRUE when the production could not be read: no colour, no colourless, no choice named ("any of the exiled card's colors",
+   *  Chrome Mox; "for each color among permanents you control", Bloom Tender). Consumers treat it as UNKNOWN, never as a
+   *  source of no colours. Always false on a `fetch` and a `token-maker`, which state theirs. */
+  unread: boolean;
+  /** The condition the amount or the activation holds under, verbatim lowercase: "Activate only if ..." (Tainted Peak: "you
+   *  control a swamp"), "... instead if there are seven or more cards in your graveyard" (Cabal Ritual's threshold line), or
+   *  "threshold" when only the ability's numeric threshold is known. A consumer must not credit a gated line as guaranteed. Else null. */
+  gate: string | null;
+  /** "Spend this mana only ..." (Smokebraider, Cavern of Souls, Ancient Ziggurat) or "this mana can't be spent ...":
+   *  `spend` is the printed limit, `typeName` the one type it names, lowercase ("elemental", "creature", "chosen"). Mana with
+   *  a restriction is not mana for the deck's spells. */
+  restriction: { spend: string; typeName?: string } | null;
+  /** WHEN the mana arrives: `now`, `next-turn` (a delayed addition), `on-trigger` (when a trigger fires). */
+  timing: "now" | "next-turn" | "on-trigger";
+  /** The token a `token-maker` line makes that is itself a mana source ("treasure", "gold", "powerstone",
+   *  "eldrazi-spawn"); null on every other line. */
+  producesToken: string | null;
+  /** WHAT FIRES a `trigger` or `aura-trigger` line: the clause's trigger event, verbatim. Null on every other line, and on a trigger line
+   *  whose own clause names none (a mode of a modal trigger, Zuko, Conflicted). Census of the 171 trigger / aura-trigger mana lines in the derived corpus
+   *  (DERIVE_VERSION 302, 2026-10-11), by count of lines: `tapped-for-mana` 46 (the Auras' "whenever enchanted land is tapped for mana", and
+   *  Forsaken Monument / Leyline of Abundance / Mana Flare: a tap-replacement), `main-phase` 30 and `upkeep` 5 and `end-step` 1 (the
+   *  beginning of a phase: Coalition Relic, Abstract Paintmage), `enters` 27, `attacks` 17, `chapter` 14, `cast` 8 (Birgi: "whenever you
+   *  cast a spell"), `dies` 6, `discarded` 3, `damage-dealt` 3, `transform` 2, `sacrificed` 2, `turned-face-up` 2, and one each of
+   *  `life-gained`, `damaged`, `counter-added`. LANDFALL IS NOT AN EVENT OF ITS OWN: it is `enters` with a land `triggerSubject` (Lotus
+   *  Cobra "a land you control"); `enters` with "this creature" is the card's own enters trigger (Burning-Tree Emissary). One printed add that the model split
+   *  across two events (Ashling, Rimebound: "transforms into ... and at the beginning of your first main phase") is named for the phase. */
+  trigger: string | null;
+  /** The subject of that trigger, verbatim as the clause names it ("a land you control", "your first main phase", "enchanted land",
+   *  "a spell", "this creature"). Null wherever `trigger` is. Read with `trigger`: `enters` alone does not say whose. */
+  triggerSubject: string | null;
+  /** The printed STARTING LOYALTY of the planeswalker face that prints this line, present only when the line costs loyalty (`cost.other` holds "+1", "0",
+   *  "−1"): the walker enters with that many counters (CR 306.5b) and a loyalty cost needs that many (CR 606.6), so "−1: Add {R}{R}" is playable the turn
+   *  the walker is cast iff this is at least 1. From the card document's `loyalty` (Scryfall, per face), carried by ingest (owner 2026-10-13). */
+  startLoyalty?: number;
+  /** TRUE on a TAP BONUS THAT LASTS ONE TURN, the line of a spell (`source: "one-shot-spell"`, `trigger: "tapped-for-mana"`, `triggerSubject` the filter): High Tide's
+   *  "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}" (owner 2026-10-13: ramp). `amount` is the bonus PER TAP and `net` is
+   *  that one mana less the spell's cost, which says nothing: the yield is `amount` times the matching sources tapped that turn. Absent on a permanent's standing bonus
+   *  (Forsaken Monument, Mana Flare, Vernal Bloom), which has no end. */
+  untilEndOfTurn?: true;
+}
+
+/** A card that makes OTHER mana sources produce colours (#1115), read from its static text: Chromatic Lantern
+ *  (lands gain "{T}: Add one mana of any color"), Prismatic Omen (lands are every basic land type), Urborg (every
+ *  land is a Swamp), Chromatic Orrery (spend mana as though it were mana of any color). `covers` is `lands` when
+ *  only lands you control gain the colours and `all` when any mana you spend does. Front face only. */
+export interface StaticFixer {
+  /** `lands` when only lands you control gain the colours, `all` when any mana you spend does. */
+  covers: "lands" | "all";
+  /** The WUBRG colours the card makes other sources produce. */
+  colours: string[];
+}
+
+/** A card that puts lands onto the battlefield from the library (#1169). `kind` is `spell` for an instant or
+ *  sorcery (Cultivate, Farseek) and `permanent` for one that stays (a fetchland, Wood Elves, Sakura-Tribe Elder);
+ *  `tapped` when the land arrives tapped; `reach` the WUBRG colours the lands it can find make (a basic land
+ *  reaches all five, "a Forest card" only G). */
+export interface LandFetch {
+  /** `spell` for an instant or sorcery (Cultivate, Farseek), `permanent` for one that stays (a fetchland, Wood Elves, Sakura-Tribe Elder). */
+  kind: "spell" | "permanent";
+  /** The land arrives tapped. */
+  tapped: boolean;
+  /** The WUBRG colours the lands it can find make (a basic land reaches all five, "a Forest card" only G). */
+  reach: string[];
+}
+
 export interface CardTags {
   oracleId: string;
   schemaVersion: number;
@@ -1365,6 +1513,19 @@ export interface CardTags {
   model: string;
   characteristics: Characteristics;
   abilities: Ability[];
+  /** Every way this card puts mana in front of you, per face (#1169). See `ManaLine`. Absent when it has none. */
+  manaLines?: ManaLine[];
+  /** Makes other sources produce colours (Chromatic Lantern). Absent on every other card. */
+  staticFixer?: StaticFixer;
+  /** Puts lands onto the battlefield from the library (Cultivate, Evolving Wilds). Absent on every other card. */
+  landFetch?: LandFetch;
+  /** Every mana line the card has is spent in the using: an instant or sorcery's mana (Dark Ritual), or a source
+   *  that sacrifices itself for it (Lotus Petal, a Treasure). Only `true` is written. A card with a permanent face
+   *  that taps for mana as well is not a one-shot. */
+  isOneShot?: true;
+  /** The card has no mana cost and is only ever put into play by Suspend (Mox Tantalite, Lotus Bloom): not fast
+   *  mana, however much it taps for. Only `true` is written. */
+  suspendOnly?: true;
   /** Trigger events the clause layer named and derivation could not turn into a verb -- the
    *  "surface, never swallow" channel. Computed by `deriveAbilities` since 2026-08 and DROPPED by
    *  `deriveCardTags` until 2026-09-05, so every reader of it (`isolated-cards.ts`, the census)

@@ -1,5 +1,7 @@
 import { expect, test } from "vitest";
-import { fetchDemand, fetchableLands, hasBasicLandType } from "./fetch-land.js";
+import { fetchDemand, fetchableLands, fetchedLandEntersTapped, hasBasicLandType } from "./fetch-land.js";
+import type { DeckCard } from "./types.js";
+import { fetchTags, FREE_TAP, manaTags, tapFor } from "./mana-test-support.js";
 
 const MYRIAD = "This land enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.";
 const WILDS = "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.";
@@ -28,4 +30,24 @@ test("fetchDemand counts what one activation can return", () => {
   expect(fetchDemand(CULTIVATE, [ISLAND])).toEqual({ wants: 2, found: 1, sharedType: false });
   expect(fetchDemand(WILDS, [WASTES])).toEqual({ wants: 1, found: 1, sharedType: false });
   expect(fetchDemand("{T}: Add {G}.", [ISLAND])).toBeNull();
+});
+
+/** #1169 task 2b-2: whether a land arrives tapped is the DERIVED `landFetch`'s (`tapped`), not a regex over the oracle text. The cards here print NO oracle
+ *  text, so a reader of the text sees no fetch at all. The one printed fact kept is Fabled Passage's "Then if you control four or more lands, untap that land"
+ *  (CEILING in fetch-land.ts: `landFetch` carries the arrival, not the untap clause after it). */
+test("a fetched land arrives tapped as landFetch says; Fabled Passage's untap stays printed", () => {
+  const reach = ["W", "U", "B", "R", "G"];
+  const fetch = (tapped: boolean, oracleText = ""): DeckCard => ({
+    card: { name: "Fetch", typeLine: "Land", oracleText } as DeckCard["card"],
+    tags: fetchTags({ kind: "permanent", tapped, reach }, { cost: { ...FREE_TAP, sacrificeSelf: true } }),
+  });
+  expect(fetchedLandEntersTapped(fetch(true), 0)).toBe(true);
+  expect(fetchedLandEntersTapped(fetch(false), 0)).toBe(false);
+  // Fabled Passage: tapped, but untapped once four lands are down (three before the drop it makes itself).
+  const passage = fetch(true, "Then if you control four or more lands, untap that land.");
+  expect(fetchedLandEntersTapped(passage, 2)).toBe(true);
+  expect(fetchedLandEntersTapped(passage, 3)).toBe(false);
+  // A card that fetches nothing has no arrival to be tapped; text alone does not make it one.
+  const text = "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.";
+  expect(fetchedLandEntersTapped({ card: { name: "Plains", typeLine: "Basic Land — Plains", oracleText: text } as DeckCard["card"], tags: manaTags([tapFor(["W"])]) }, 0)).toBe(false);
 });

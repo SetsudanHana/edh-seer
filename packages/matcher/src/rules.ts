@@ -1,5 +1,6 @@
 import ruleSet from "./rules.json" with { type: "json" };
 import type { DeckCard } from "./types.js";
+import { cardLines } from "./mana-lines.js";
 import { countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
 
 /** A single test against one card. The operator set is CLOSED on purpose: `oracle`, `effectKind`,
@@ -183,46 +184,24 @@ function withoutAntiProtection(text: string): string {
 const GRANTS_PROTECTION =
   /\b(?:gains?|have|has|get|grants?)\b[^.]{0,70}?(?:hexproof|indestructible|shroud|protection from|phases? out)/i;
 
-const NUMBER_WORD: Record<string, number> = {
-  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
-};
-
-/** The most mana any one "Add …" sentence on the card states, or `undefined` when none of them
- *  states a fixed number.
+/** THE MOST A ONE-SHOT SPELL NETS, from its DERIVED MANA LINES (`CardTags.manaLines`, #1169 task 2b-2; it was a regex over the oracle text), or
+ *  `undefined` when the card states no number to judge: no mana line at all, a line derive could not read, an amount that scales ("Add {R} for
+ *  each card in target opponent's hand", Jeska's Will, Rite of Flame's second sentence), or a TAP BONUS FOR THE TURN (High Tide: "Until end of turn, whenever a
+ *  player taps an Island for mana, that player adds an additional {U}", owner 2026-10-13: ramp). That bonus is one mana PER TAP, so its yield is the sources tapped that
+ *  turn and no number on the line says it; `ManaLine.untilEndOfTurn` names it.
  *
- *  THE MAXIMUM, not the sum: Cabal Ritual's second sentence is "Add {B}{B}{B}{B}{B} INSTEAD", and
- *  Rite of Flame's fixed `{R}{R}` sits beside a variable "for each card named Rite of Flame". Taking
- *  the largest readable one keeps the card whenever any branch of it accelerates, which is the
- *  lenient direction a refusal-shaped rule wants.
+ *  THE NET IS PRODUCTION LESS THE CARD'S MANA VALUE, for every line: `ManaLine.net` is production less the line's OWN cost, which is the face's mana value only on a
+ *  `one-shot-spell` line (a spell pays its cost on the line); a trigger or a grant pays none there, so its `net` is its raw production (Reckless Blaze, mana value 5,
+ *  "add {R}" when a creature dies; Divergent Growth, mana value 1, lands tap for a colour until end of turn: neither nets). So a line that is not a spell's is
+ *  `net + cost.mana - manaValue`.
  *
- *  Read from ORACLE TEXT and not from the derived ability, deliberately and with a measurement
- *  behind it: `mana-generation` abilities carry NO amount and NO emit — Dark Ritual and Manamorphose
- *  derive BYTE-IDENTICALLY (`{kind: "on-cast", effect: {kind: "mana-generation"}}`) — so the fact
- *  this rule needs does not exist downstream of the clause layer. The clause DOES hold it, in
- *  `action.object` ("{B}{B}{B}", "two mana in any combination of colors", 537 add-mana actions
- *  corpus-wide), so deriving `Ability.amount` for it is the root-cause fix; it is a separate item
- *  because `Ability.amount` is read by `sentence.ts`, `lines.ts` and `supply-demand.ts` and would
- *  move reason text and threshold lines with it. → roadmap I4's own note. */
-function manaAdded(oracle: string): number | undefined {
-  let best: number | undefined;
-  for (const m of oracle.matchAll(/\badd\s+((?:\{[^{}]+\}\s*)+|\w+ mana\b)/gi)) {
-    const frag = m[1];
-    let n: number | undefined;
-    if (frag.trimStart().startsWith("{")) {
-      n = 0;
-      for (const sym of frag.matchAll(/\{([^{}]+)\}/g)) {
-        if (/^\d+$/.test(sym[1])) n += Number(sym[1]);
-        // A chosen amount is not a fixed one, and neither is what follows a "for each".
-        else if (/^[XYZ]$/i.test(sym[1])) return undefined;
-        else n += 1;
-      }
-    } else n = NUMBER_WORD[frag.trim().split(/\s+/)[0].toLowerCase()];
-    if (n === undefined) return undefined;
-    // "Add {R} FOR EACH card in target opponent's hand" states a rate, not an amount.
-    if (/^\s*(?:for each|equal to|where|times)\b/i.test(oracle.slice(m.index + m[0].length))) return undefined;
-    best = Math.max(best ?? 0, n);
-  }
-  return best;
+ *  THE MAXIMUM, not the sum: Cabal Ritual's second sentence is "Add {B}{B}{B}{B}{B} INSTEAD" and is a gated line of its own. Taking the largest
+ *  keeps the card whenever any branch of it accelerates, which is the lenient direction a refusal-shaped rule wants. Token makers and land fetches are
+ *  not "added" mana (a Treasure maker, Cultivate): they state no number here, as before. */
+function oneShotNet(dc: DeckCard): number | undefined {
+  const adds = cardLines(dc).filter((l) => l.source !== "token-maker" && l.source !== "fetch");
+  if (adds.length === 0 || adds.some((l) => l.unread || l.amount.scales !== null || l.untilEndOfTurn === true)) return undefined;
+  return Math.max(...adds.map((l) => (l.source === "one-shot-spell" ? l.net : l.net + l.cost.mana - dc.card.manaValue)));
 }
 
 /** THE CARD'S OWN TEXT: an ability quoted inside a sentence that creates a token is the TOKEN'S
@@ -298,12 +277,12 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       // union alone cut both, which is the `isLand` mistake one card layout over.
       if (!/\b(instant|sorcery)\b/.test(line)) return true;
       if (/\b(creature|artifact|enchantment|land|planeswalker|battle)\b/.test(line)) return true;
-      const added = manaAdded(ownText(dc.card));
+      const net = oneShotNet(dc);
       // Unreadable means the card does not state a fixed number — "Add {R} for each card in target
       // opponent's hand" (Jeska's Will, Rousing Refrain, Path of the Pyromancer). Those are the most
       // explosive rituals in the format, so a missing answer must keep the card rather than cut it.
-      if (added === undefined) return true;
-      return added - (dc.card.manaValue ?? 0) >= clause.atLeast;
+      if (net === undefined) return true;
+      return net >= clause.atLeast;
     }
     case "protectionIsOwnKeyword": {
       const txt = ownText(dc.card);

@@ -29,6 +29,7 @@ import crKeywords from "./cr-keywords.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
+import { deriveMana } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.js";
@@ -418,7 +419,37 @@ import { emblemRecipient } from "../emblem.js";
 // 293: #1166, "if you descended this turn" cares about `dies:permanent` (CR 700.11: a permanent card), not `dies:any`.
 // An untyped trigger subject now keys as the class its verb implies (`VERB_IMPLIED_CLASS`) at read time, so no
 // stored tag for those verbs is `:any`.
-export const DERIVE_VERSION = 293;
+// 294: #1169, a card's mana production is read once: `manaLines` (per face: source, cost, colours, amount, net,
+// restriction, gate, timing) plus `staticFixer`, `landFetch`, `isOneShot`, `suspendOnly`. Additive; no consumer reads it yet.
+// 295: #1169 review: scaling read from `action.amount`, fetches need a printed "search your library", `gate` for conditional
+// lines, `cost.counters` / `cost.tapOther`, `unread`, `tap-ability` renamed `activated`.
+// 296: #1169 review 2: number words are fixed amounts, "instead" / "as long as" / conditional-fetch gates, each-player fetches.
+// 297: #1169 review 3: "if you do" is a cost not a gate, intervening-if and "instead add" gates, "for as long as" is no gate, one trigger add read once.
+// 298: #1169 review 4: "Then if <cond>, <cost>. If you do, ..." gates on the condition and takes the cost after the comma.
+// 299: #1169 task 2a review: anyColour `among` (colours among what you control / the exiled card's colours), "different colors" is any colour,
+// exiling the card itself in a cost is `sacrificeSelf`.
+// 300: #1169 task 2a review 2: `among` also covers "any of this creature's colors" and "a color of a permanent you control / a card in your graveyard";
+// "Choose a color. Add ... of that color" is any colour; "circled colors" is chosen.
+// 301: #1169 task 2a review 3: a colour chosen in the same clause ("{T}: Choose a color. Add one mana of that color") is any colour; a granted
+// "this creature's colors" (Katilda) is `grantee`, no colour of the deck's.
+// 302: #1169 task 2b-1: a `trigger` / `aura-trigger` mana line names the event that fires it (`ManaLine.trigger`, `triggerSubject`), so the goldfish can tell
+// landfall and beginning-of-phase mana (priced) from a cast trigger (Birgi: ramp, not a dork) without reading oracle text. "N mana in any combination
+// of {U}, {B}, and/or {R}" (Relic of Sauron) is an amount of N, not 1; an ability word's requirement ("Max speed — {T}: Add {C}{C}", Muraganda Raceway) gates the line.
+// 303: #1169 task 2b-1 review: a mana grant made by a TRIGGERED parent is gated by that trigger ("when princess yue dies"), not standing: Princess Yue's
+// Moon, Hydro-Man's end step, Song of Freyalise's chapter, Vraska the Silencer's returned Treasure (4 cards). "As long as", a Saga chapter with no
+// duration (Urza's Saga) and a token a trigger creates are unchanged.
+// 304: #1169 task 2b-1 review round 2: `ManaLine.startLoyalty` (a planeswalker's printed loyalty on each line that costs loyalty, so a consumer can tell
+// "−1: Add {R}{R}" is playable the turn the walker is cast); an Aura's mana is dropped when the Aura is removal (enchants an opponent's permanent, or
+// "loses all other card types": Honest Work, Imprisoned in the Moon) and a granted TRIGGER is no static-grant (Mark of Sakiko).
+// 305: #1169 task 2b-1 review round 3: `startLoyalty` is read from the card document (Scryfall `loyalty`, carried by ingest) and not from a checked-in MTGJSON table
+// (the same numbers, plus the six walkers the table lacked); an Aura whose text says the enchanted creature "can't attack or block" is removal and makes no
+// static-grant line (Utopia Vow, owner 2026-10-13).
+// 306: #1169 task 2b-2 follow-up: "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}" (High Tide, Bubbling Muck) is a one-turn
+// tap-bonus line (`untilEndOfTurn`, trigger `tapped-for-mana`), not a net-0 add; a spell whose tap trigger is not that shape banks no line; an add inside a token's quoted
+// ability is not the spell's own (Eldrazi Confluence).
+// 307: #1169 task 2b-2 fix round 2: the one-turn tap bonus is also read when the model filed its add under `effectActions` (which the canonical clause record drops): Pyre Rhymer //
+// Molten Tide, "Until end of turn, whenever you tap a Mountain for mana, add an additional {R}" (owner 2026-10-13: High Tide-shape cards are ramp).
+export const DERIVE_VERSION = 307;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2825,6 +2856,14 @@ export interface DeriveInput {
    *  and `grammarTriggersOf` use the entry for a clause instead of calling `parseActions` /
    *  `parseTrigger` again when it is present; absent (the model path) parses as before. */
   readings?: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }>;
+  /** Granted clause id -> the clause that grants it (`segment()`'s `parentId` on a `granted` clause): Chromatic Lantern's
+   *  quoted "{T}: Add one mana of any color" -> "Lands you control have that ability". Read by `manaLines`. */
+  clauseGrants?: Record<number, number>;
+  /** The printed mana cost of each face, index = face, "" when it prints none (Mox Tantalite). Read by `manaLines` for the
+   *  cost of a spell and for `suspendOnly`. Absent: only `characteristics.cmc` is known. */
+  manaCosts?: string[];
+  /** The printed starting loyalty of each face (index = face, null for a face with none), from the card document (`faceLoyalties`). Read by `manaLines`. */
+  startLoyalty?: (number | null)[];
 }
 
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
@@ -2927,6 +2966,18 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     model: "derived",
     characteristics: creatureOnlyIf ? { ...input.characteristics, creatureOnlyIf: true } : input.characteristics,
     abilities: spellOnce,
+    // MANA PRODUCTION, read once (#1169). Each key is written only when the card has it.
+    ...deriveMana({
+      clauses: input.clauses, abilities: spellOnce, chars, name: input.name,
+      textOf: (clause) => withoutAbilityWord(textForClause(clause, input.clauseTexts)),
+      ...(input.clauseCosts ? { clauseCosts: input.clauseCosts } : {}),
+      ...(input.clauseFaces ? { clauseFaces: input.clauseFaces } : {}),
+      ...(input.clauseGrants ? { clauseGrants: input.clauseGrants } : {}),
+      ...(input.grantedToken ? { grantedToken: input.grantedToken } : {}),
+      ...(input.manaCosts ? { manaCosts: input.manaCosts } : {}),
+      ...(input.oracleText ? { oracleText: input.oracleText } : {}),
+      ...(input.startLoyalty ? { startLoyalty: input.startLoyalty } : {}),
+    }),
     // Written only when there is something to surface, so a clean card stays byte-identical.
     ...(unknownTriggers.length ? { unknownTriggers } : {}),
   };

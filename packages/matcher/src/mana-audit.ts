@@ -2,8 +2,9 @@ import { minCopies } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { minSources, pCanPayByTurn } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
-import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
-import { fixedColours } from "./mana-lines.js";
+import { fetchedLandEntersTapped } from "./fetch-land.js";
+import { colourSourceCards } from "./colour-sources.js";
+import { colourSourceColours, deckIdentity, hasGatedColourLine, isFetchSource, makesAnyMana, unreadSourceNames } from "./mana-lines.js";
 import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import type { DeckCard } from "./types.js";
 import { BASIC_LAND_TYPES, countsAsLand } from "./typeline.js";
@@ -59,12 +60,8 @@ export function landOnlineBy(dc: DeckCard, turn: number, basicTypes: ReadonlySet
   if (entersTapped(classifyLand(dc.card), board)) return false;
   // WHAT IS STANDING THERE IS THE FETCHED LAND, and `classifyLand` cannot see it: Evolving Wilds
   // enters untapped and the basic it finds does not. Same board the simulator reads.
-  const text = dc.card.oracleText ?? "";
-  return !isLandFetch(text) || !fetchedLandEntersTapped(text, board.lands);
+  return !isFetchSource(dc) || !fetchedLandEntersTapped(dc, board.lands);
 }
-
-const produces = (card: { producedMana?: readonly string[] }, color: Color | "C"): boolean =>
-  (card.producedMana ?? []).includes(color);
 
 /** Coloured pips per colour in a mana cost, e.g. `{2}{B}{B}` -> `{ B: 2 }`.
  *
@@ -178,8 +175,11 @@ export interface ManaAuditRow {
  *    turn one, and a nonland source now counts only for a demand due later than its own mana value.
  *
  *  ONE REMAINS, and it is the one no turn number fixes:
- *  - **Conditional production.** `producedMana` is what a card CAN add: "any color" lists all five,
- *    and a source gated behind a condition counts the same as a basic.
+ *  - **Conditional production.** A line restricted to some spells is no source (#1169: sources are read off the derived
+ *    `manaLines`, not Scryfall's `producedMana`), which under-claims. A GATED line (Tainted Peak's B/R needs a Swamp) is a source where the deck meets its
+ *    gate, judged turn by turn and credited WHOLE from the turn P(gate met) >= 0.5 (`colourSourceLine`, owner 2026-10-13: the audit follows the gate check;
+ *    CEILING in `mana-lines.ts`): a coin flip is a full integer source, with no fractional ones. A line that needs a board the deck might not have
+ *    (Gaea's Cradle's scaling) still counts as one.
  *
  *  ONE THING IT NO LONGER GETS WRONG: the requirement is priced WITH the free mulligan. `required`
  *  was `minCopies` alone until 2026-08-25 -- raw hypergeometric, the same model that read 37 lands
@@ -233,45 +233,20 @@ export function plainPips(manaCost: string | undefined): Partial<Record<Color, n
 export function manaAuditFull(
   deck: readonly DeckCard[],
   opts: { commanderNames?: readonly string[] } = {},
-): { rows: ManaAuditRow[]; gold?: GoldJoint } {
+): { rows: ManaAuditRow[]; gold?: GoldJoint; unreadSources?: string[] } {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
-  const libraryCards = library.map((dc) => dc.card);
-
   const basicTypes = deckBasicTypes(library);
 
-  const coloredSources = (color: Color): DeckCard[] => {
-    // A FETCHLAND PRODUCES THE COLOUR IT FINDS. `producedMana` is empty on a real fetch and that is
-    // correct -- Polluted Delta taps for nothing -- so the printed field alone told a MONO-BLUE deck
-    // with six fetchlands that blue was short at the top of its curve. The simulator has counted
-    // them since N2 (`fetchMask`), which made the colour panel and the goldfish disagree about the
-    // same six cards on the same screen: the T18b defect again, one model over.
-    //
-    // A LAND-FETCH SPELL COUNTS TOO, and is the one place `isManaSource` is deliberately bypassed.
-    // That gate refuses instants and sorceries because a RITUAL is a one-shot; Cultivate is not one.
-    // It leaves a Forest on the battlefield permanently, which is the whole definition of a source,
-    // and `availableBy` already prices the delay the same way it prices a rock.
-    // BY WHAT IT FIXES, NOT WHAT IT CAN ADD (owner, 2026-10-08, #1114): a colour only a line that costs more than it
-    // makes can produce (Cascading Cataracts, Prismatic Lens) is not a source of it.
-    const direct = library.filter((dc) => isManaSource(dc) && fixedColours(dc).includes(color));
-    // Asked of the LIBRARY: a commander is not in it (CR 903.6) and cannot be fetched.
-    const fetches = library.filter((dc) => !direct.includes(dc)
-      && isLandFetch(dc.card.oracleText ?? "")
-      && fetchableLands(dc.card.oracleText ?? "", libraryCards).some((c) => produces(c, color)));
-
-    // CAPPED AT WHAT THERE IS TO FIND. Every fetch is a wildcard for its own fetchable set, but the
-    // sets overlap and the library is finite: `codie` runs 15 fetches over 5 white-producing lands,
-    // so calling all 15 white sources claims ten cards that can never produce white. Measured over
-    // the 71 calibration decks the cap binds on 31 of 153 colour rows across 8 decks -- not a
-    // degenerate corner, so it is a cap and not a comment. The CHEAPEST fetches survive it: a fetch
-    // that is a land beats one that costs {2}, which is the same order `availableBy` prices.
-    const reachable = new Set(fetches.flatMap((f) => fetchableLands(f.card.oracleText ?? "", libraryCards)));
-    const targets = [...reachable].filter((c) => produces(c, color)).length;
-    return [
-      ...direct,
-      ...[...fetches].sort((a, b) => a.card.manaValue - b.card.manaValue).slice(0, targets),
-    ];
-  };
+  // THE SOURCES OF EACH COLOUR, the one count the mana base reads too (`colour-sources.ts`, #1169): a card whose own tap or static line
+  // makes the colour, and the fetches that can find a land of it -- a fetchland, and a land-fetch SPELL (Cultivate), which leaves a
+  // land on the battlefield permanently and is on the rock clock below. BY WHAT IT FIXES, NOT WHAT IT CAN ADD (owner, 2026-10-08,
+  // #1114): a colour only a line that costs more than it makes can produce (Cascading Cataracts, Prismatic Lens) is not a source of it.
+  // A one-shot (Dark Ritual), a Treasure maker, a sacrifice outlet, a trigger and restricted mana are lines that are not colour
+  // sources at all (`isColourSource`), so none of them needs a card-type gate here; a GATED line is one only where the deck meets its gate, by the turn it does
+  // (`colourSourceLine`, owner 2026-10-13).
+  const identity = deckIdentity(deck, opts.commanderNames ?? []);
+  const byColour = colourSourceCards(library, identity, deck);
 
   // WHAT COULD BE PRODUCING BY TURN N, for one set of sources, asked once per deadline and cached,
   // because a deck's demands share very few distinct turns.
@@ -290,25 +265,40 @@ export function manaAuditFull(
   // tapped arrival as well made it a source on no turn at all.
   const sourceOnline = (dc: DeckCard, turn: number): boolean =>
     countsAsLand(dc.card) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
-  const availability = (sources: readonly DeckCard[]) => {
+  // A GATED SOURCE IS ONLINE FOR A COLOUR ON THE TURN ITS GATE IS MET BY (owner 2026-10-13: the audit follows the gate check, and the gate is timed turn by turn): Tainted Peak's red
+  // waits on a Swamp being likely out, Mox Jasper's on a Dragon that the mana could have cast. The same closed form the colour source count used to let the card in (`gate.ts`), asked of
+  // the turn. A fetch that is also a source keeps the fetch's clock.
+  // CEILING (owner 2026-10-13, "keep the 0.5 bar"): the source counts WHOLE from the first turn P(gate met) >= 0.5 and not at all before it -- no fractional source. The goldfish credits it per game, and
+  // a rock or dork up to a turn earlier (it counts an accelerant the turn it lands; the closed form, a spell at mana value < turn). Tainted Peak in judith-tokens-connoiseur and mishra-claimed-by-tokens
+  // is a Swamp source from turn 6 at p = .509 (.480 on turn 5). Detail on `colourSourceLine`.
+  const gatedAt = new Map<string, readonly string[]>();
+  const coloursBy = (dc: DeckCard, turn: number): readonly string[] => {
+    const key = `${turn}\0${dc.card.name}\0${dc.face ?? ""}`;
+    let c = gatedAt.get(key);
+    if (!c) gatedAt.set(key, (c = colourSourceColours(dc, identity, "five", deck, turn)));
+    return c;
+  };
+  const availability = (sources: readonly DeckCard[], colour?: Color) => {
     const availableAt = new Map<number, number>();
     return (turn: number): number => {
       const hit = availableAt.get(turn);
       if (hit !== undefined) return hit;
       const n = sources.filter((dc) => {
-        return sourceOnline(dc, turn);
+        if (!sourceOnline(dc, turn)) return false;
+        if (!hasGatedColourLine(dc) || isFetchSource(dc)) return true;
+        return colour === undefined ? coloursBy(dc, turn).length > 0 || makesAnyMana(dc, deck, turn) : coloursBy(dc, turn).includes(colour);
       }).length;
       availableAt.set(turn, n);
       return n;
     };
   };
 
-  const sourcesByColor = new Map(COLORS.map((color) => [color, coloredSources(color)]));
+  const sourcesByColor = new Map(COLORS.map((color) => [color, byColour.get(color)!]));
   // EVERY SOURCE OF ANY MANA, coloured or not: what the deck could hold of one colour if it
   // recoloured its whole mana base without adding a single card to it.
   const anyAvailableBy = availability([...new Set([
     ...[...sourcesByColor.values()].flat(),
-    ...library.filter((dc) => isManaSource(dc) && produces(dc.card, "C")),
+    ...library.filter((dc) => makesAnyMana(dc, deck)),
   ])]);
 
   // STATIC COLOUR FIXERS (owner, 2026-10-08, #1115): "after you play cards like Chromatic Lantern your color
@@ -334,7 +324,7 @@ export function manaAuditFull(
   for (const color of COLORS) {
     const sources = sourcesByColor.get(color)!;
     const supplied = sources.length;
-    const availableBy = availability(sources);
+    const availableBy = availability(sources, color);
     // Group by (pips, deadline): "12 cards want {B}{B} by T3" is one row, not twelve.
     const groups = new Map<string, ColorDemand>();
     for (const dc of library) {
@@ -427,7 +417,9 @@ export function manaAuditFull(
     if (pJoint >= GOLD_CONFIDENCE) continue;
     if (!worstGold || pJoint < worstGold.pJoint) worstGold = { ...g, cards: g.names.length, pJoint, pEach };
   }
-  return { rows, ...(worstGold ? { gold: worstGold } : {}) };
+  // CARDS WHOSE MANA DERIVE COULD NOT READ count as no colour above, and are named here so the count is never a silent zero.
+  const unreadSources = unreadSourceNames(library);
+  return { rows, ...(worstGold ? { gold: worstGold } : {}), ...(unreadSources.length > 0 ? { unreadSources } : {}) };
 }
 
 /** THE DECK-WIDE COLOUR SHORTFALL (owner, 2026-10-08, #966): per colour, how many more sources the
@@ -441,26 +433,4 @@ export function colourDeficit(deck: readonly DeckCard[], commanderNames: readonl
     if (gap > 0) out[row.color] = gap;
   }
   return out;
-}
-
-/** THE DEMAND AN "ENCHANT FOREST" AURA MAKES (owner, 2026-10-08): one source of that land type by the
- *  Aura's turn, priced like a colour pip -- the same mulligan-corrected requirement `manaAudit` asks of
- *  `{G}` on that turn -- against the lands the deck has of the type, counted as the audit counts a colour's
- *  sources: lands carrying the type that are online by the turn, plus the fetches that can find one,
- *  capped at what there is to find. Returns both figures; the caller compares. */
-export function landTypeDemand(deck: readonly DeckCard[], commanderNames: readonly string[], landType: string, turn: number): { required: number; available: number } {
-  const commanders = new Set(commanderNames);
-  const library = deck.filter((dc) => !commanders.has(dc.card.name));
-  const libraryCards = library.map((dc) => dc.card);
-  const has = (c: { typeLine: string }) => countsAsLand(c) && c.typeLine.toLowerCase().includes(landType);
-  const types = deckBasicTypes(library);
-  const direct = library.filter((dc) => has(dc.card));
-  const fetches = library.filter((dc) => !direct.includes(dc) && isLandFetch(dc.card.oracleText ?? "")
-    && fetchableLands(dc.card.oracleText ?? "", libraryCards).some(has));
-  const reachable = new Set(fetches.flatMap((f) => fetchableLands(f.card.oracleText ?? "", libraryCards)));
-  const targets = [...reachable].filter(has).length;
-  const sources = [...direct, ...[...fetches].sort((a, b) => a.card.manaValue - b.card.manaValue).slice(0, targets)];
-  const available = sources.filter((dc) => (countsAsLand(dc.card) ? landOnlineBy(dc, turn, types) : dc.card.manaValue < turn)).length;
-  const requiredRaw = minCopies(1, turn, SOURCE_CONFIDENCE, library.length);
-  return { required: Math.min(requiredRaw, minSources(1, turn, SOURCE_CONFIDENCE) ?? requiredRaw), available };
 }

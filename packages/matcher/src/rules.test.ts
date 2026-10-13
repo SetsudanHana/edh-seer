@@ -4,6 +4,9 @@ import { BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./bui
 import { detectWincons } from "./wincon.js";
 import { answerClassesOf, loadRules, ownText, ruleMatches, RULES_VERSION, tokenQuotes, type Rule } from "./rules.js";
 import type { DeckCard } from "./types.js";
+import type { ManaLine } from "@edh-seer/tagger";
+import { FREE_TAP, manaTags, mkLine, ritualLine, tapFor, triggerLine } from "./mana-test-support.js";
+import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 
 const mk = (name: string, oracleText: string, typeLine = "Instant"): DeckCard => ({
   card: { name, oracleText, typeLine } as Card,
@@ -451,31 +454,60 @@ test("impulse draw is its own category and no longer reads as card selection", (
 
 // I4 (2026-08-25): RAMP IS A NET GAIN. `ramp.effect` matched any mana-generating effect kind with
 // no net test, so Manamorphose — two mana for two mana plus a cantrip — read as acceleration.
+// #1169 task 2b-2: the net is the DERIVED mana line's (`ManaLine.net`: produced less the face's mana value for a spell), not the oracle text's "add" run.
+// The cards below carry NO oracle text at all, so the verdict can only come from the lines.
 test("a one-shot mana spell is ramp only when it nets, and a permanent mana source always is", () => {
   const cats = (dc: DeckCard) => [...detectBuildCategories([dc]).keys()];
-  const spell = (name: string, oracleText: string, manaValue: number, typeLine = "Instant"): DeckCard => ({
-    card: { name, oracleText, typeLine, manaValue } as Card,
-    tags: { oracleId: name, schemaVersion: 1, promptVersion: 0, model: "t",
-      characteristics: { types: [], subtypes: [], colors: [], identity: [], cmc: manaValue, power: null, toughness: null, token: false, keywords: [] },
-      abilities: [{ kind: "on-cast", effect: { kind: "mana-generation" } }] } as never,
+  const spell = (name: string, lines: ManaLine[], manaValue: number, typeLine = "Instant"): DeckCard => ({
+    card: { name, oracleText: "", typeLine, manaValue } as Card,
+    tags: manaTags(lines, { abilities: [{ kind: "on-cast", effect: { kind: "mana-generation" } }] as never, characteristics: { types: [], subtypes: [], colors: [], identity: [], cmc: manaValue, power: null, toughness: null, token: false, keywords: [] } as never }),
   });
+  const anyColour = { colours: ["W", "U", "B", "R", "G"], anyColour: "any" as const };
 
   // Dark Ritual nets +2; Manamorphose nets 0 and is the item's named witness.
-  expect(cats(spell("Dark Ritual", "Add {B}{B}{B}.", 1, "Instant"))).toContain("ramp");
-  expect(cats(spell("Manamorphose", "Add two mana in any combination of colors.\nDraw a card.", 2))).not.toContain("ramp");
+  expect(cats(spell("Dark Ritual", [ritualLine(["B"], 3, { cost: { ...FREE_TAP, tap: false, mana: 1 }, net: 2 })], 1))).toContain("ramp");
+  expect(cats(spell("Manamorphose", [ritualLine([], 2, { ...anyColour, cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 0 })], 2))).not.toContain("ramp");
 
   // A RATE IS NOT AN AMOUNT. Jeska's Will adds one {R} per card in an opponent's hand — the most
   // explosive rituals in the format state no fixed number, so unreadable must KEEP the card.
-  expect(cats(spell("Jeska's Will", "Add {R} for each card in target opponent's hand.", 3, "Sorcery"))).toContain("ramp");
+  expect(cats(spell("Jeska's Will", [ritualLine(["R"], 1, { amount: { fixed: null, scales: "for each card in target opponent's hand" }, cost: { ...FREE_TAP, tap: false, mana: 3 }, net: -2 })], 3, "Sorcery"))).toContain("ramp");
 
-  // THE MAXIMUM, NOT THE SUM: Cabal Ritual's second sentence says "instead".
-  expect(cats(spell("Cabal Ritual", "Add {B}{B}{B}.\nThreshold — Add {B}{B}{B}{B}{B} instead if there are seven or more cards in your graveyard.", 2, "Sorcery"))).toContain("ramp");
+  // THE MAXIMUM, NOT THE SUM: Cabal Ritual's second sentence says "instead" (a gated line of its own).
+  expect(cats(spell("Cabal Ritual", [ritualLine(["B"], 3, { cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 1 }), ritualLine(["B"], 5, { gate: "threshold", cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 3 })], 2, "Sorcery"))).toContain("ramp");
+  // ...and a spell with a line that nets nothing in either reading is not ramp.
+  expect(cats(spell("Net Zero", [ritualLine(["B"], 2, { cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 0 }), ritualLine(["B"], 2, { gate: "threshold", cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 0 })], 2, "Sorcery"))).not.toContain("ramp");
+  // A card with no mana line at all states no number: kept (the lenient direction).
+  expect(cats(spell("No Line", [], 2, "Sorcery"))).toContain("ramp");
 
   // A PERMANENT MANA SOURCE REPEATS, so it is never net-tested — a dork nets 0 the turn it lands.
-  expect(cats(spell("Llanowar Elves", "{T}: Add {G}.", 1, "Creature — Elf Druid"))).toContain("ramp");
+  expect(cats(spell("Llanowar Elves", [tapFor(["G"])], 1, "Creature — Elf Druid"))).toContain("ramp");
   // …including one whose OTHER face is a sorcery. Bramble Familiar // Fetch Quest's `{T}: Add {G}`
   // is a mana dork, and the type-line union carries "Sorcery" from the Adventure half.
-  expect(cats(spell("Bramble Familiar // Fetch Quest", "{T}: Add {G}.\n//\nMill seven cards.", 2, "Creature — Elemental Raccoon // Sorcery — Adventure"))).toContain("ramp");
+  expect(cats(spell("Bramble Familiar // Fetch Quest", [tapFor(["G"])], 2, "Creature — Elemental Raccoon // Sorcery — Adventure"))).toContain("ramp");
+});
+
+// OWNER 2026-10-13 (#1169 2b-2 follow-up): High Tide IS ramp -- a tap bonus for the turn whose yield is the Islands tapped, not a net-0 one-shot -- while a spell whose mana arrives on a
+// trigger or a grant is judged against its mana value (Reckless Blaze, mana value 5, "add {R}" when a creature dies; Divergent Growth, mana value 1, a tap ability until end of turn).
+test("High Tide's real derived line (a one-turn tap bonus) keeps the Ramp role; a trigger or grant that cannot pay for its spell does not", () => {
+  const cats = (dc: DeckCard) => [...detectBuildCategories([dc]).keys()];
+  // The REAL card and the REAL derived mana lines (goldfish-cards.json is dumped from the production derive); the ability list is the one the on-cast mana spells carry.
+  const real = (name: string): DeckCard => {
+    const dc = structuredClone((goldfish as unknown as DeckCard[]).find((c) => c.card.name === name)!);
+    return { ...dc, tags: { ...manaTags(dc.tags!.manaLines!, { abilities: [{ kind: "on-cast", effect: { kind: "mana-generation" } }] as never }) } };
+  };
+  for (const name of ["High Tide", "Bubbling Muck"]) {
+    const dc = real(name);
+    expect(dc.tags?.manaLines?.[0], name).toMatchObject({ untilEndOfTurn: true, trigger: "tapped-for-mana" });
+    expect(cats(dc), name).toContain("ramp");
+  }
+  const spell = (name: string, lines: ManaLine[], manaValue: number, typeLine: string): DeckCard => ({
+    card: { name, oracleText: "", typeLine, manaValue } as Card,
+    tags: manaTags(lines, { abilities: [{ kind: "on-cast", effect: { kind: "mana-generation" } }] as never }),
+  });
+  expect(cats(spell("Reckless Blaze", [triggerLine("dies", "a creature you control dealt damage this way", ["R"], 1)], 5, "Sorcery"))).not.toContain("ramp");
+  expect(cats(spell("Divergent Growth", [mkLine({ source: "static-grant", colours: ["W", "U", "B", "R", "G"], anyColour: "any" })], 1, "Instant"))).not.toContain("ramp");
+  // ...and a trigger that DOES out-produce the spell's mana value stays ramp.
+  expect(cats(spell("Big Trigger", [triggerLine("dies", "a creature", ["R"], 3)], 2, "Instant"))).toContain("ramp");
 });
 
 // --- self-protection in words that are not a printed keyword (roadmap I1) ---

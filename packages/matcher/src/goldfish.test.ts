@@ -2,12 +2,28 @@ import { describe, expect, test } from "vitest";
 import { pAtLeast, seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
-import { classifyAccelerant, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
+import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
+import { FREE_TAP, fetchTags, manaTags, mkLine, ritualLine, tapFor, triggerLine, withLines, withTap } from "./mana-test-support.js";
+import { cardLines, colourSourceColours, isColourSource, isFetchSource } from "./mana-lines.js";
+import { classifyAccelerant, colourMaskOf, tapBonusOf, fetchesLand, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
   tags: null,
 });
+
+/** A REAL CARD, as production derived it: the Card document and the mana keys of its derived tags, dumped from Mongo by
+ *  `research/mana/dump-goldfish-fixtures.mts` (the goldfish reads the derived mana lines, #1169 task 2b-1). `as` renames it, for a deck of copies. */
+const real = (name: string, as?: string): DeckCard => {
+  const hit = (goldfish as unknown as DeckCard[]).find((c) => c.card.name === name || c.card.name.startsWith(`${name} //`));
+  expect(hit, `fixture for ${name}`).toBeDefined();
+  const dc = structuredClone(hit!);
+  if (as) dc.card.name = as;
+  return dc;
+};
+const WUBRG = ["W", "U", "B", "R", "G"];
+/** The same deck with its DRAW and TUTOR abilities gone and its mana lines kept: the control arm for what a draw changes. */
+const untag = (d: DeckCard[]): DeckCard[] => d.map((x) => ({ ...x, tags: x.tags?.manaLines ? manaTags(x.tags.manaLines) : null }));
 
 const basics = (n: number, name = "Forest"): DeckCard[] =>
   Array.from({ length: n }, (_, i) => card(`${name} ${i}`, "Basic Land — Forest"));
@@ -67,8 +83,8 @@ test("A3: an all-tapped deck is the same curve shifted one turn", () => {
 // has no summoning sickness (CR 302.6 restricts creatures) and pays the turn it lands; a dork waits.
 // The two decks are identical but for that one word on the type line.
 test("A2: a rock pays the turn it lands and a dork waits one", () => {
-  const withRock = [...basics(37), card("Sol Ring", "Artifact", 1, "{T}: Add {C}{C}.", ["C"]), ...spells(61, 3)];
-  const withDork = [...basics(37), card("Llanowar Elves", "Creature — Elf Druid", 1, "{T}: Add {G}.", ["G"]), ...spells(61, 3)];
+  const withRock = [...basics(37), real("Sol Ring"), ...spells(61, 3)];
+  const withDork = [...basics(37), real("Llanowar Elves"), ...spells(61, 3)];
   const rock = simulate(withRock, { trials: TRIALS, turns: 4, seed: 17 });
   const dork = simulate(withDork, { trials: TRIALS, turns: 4, seed: 17 });
 
@@ -112,7 +128,7 @@ test("C3: a conditional land is tapped early and untapped later", () => {
 test("accelerants are monotone in count, and three are worth less than thirteen", () => {
   const bare = [...basics(37), ...spells(62, 3)];
   const rocks = (n: number): DeckCard[] =>
-    Array.from({ length: n }, (_, i) => card(`Rock ${i}`, "Artifact", 2, "{T}: Add {C}.", ["C"]));
+    Array.from({ length: n }, (_, i) => withTap(card(`Rock ${i}`, "Artifact", 2, "{T}: Add {C}."), ["C"]));
   const thin = [...basics(37), ...rocks(3), ...spells(59, 3)];
   // Thirteen is the corpus MEDIAN accelerant count, so this is the shape of a real deck's dose.
   const thick = [...basics(37), ...rocks(13), ...spells(49, 3)];
@@ -125,22 +141,239 @@ test("accelerants are monotone in count, and three are worth less than thirteen"
   expect(c - b).toBeGreaterThan(b - a);
 });
 
-test("classifyAccelerant reads the printed data and refuses a one-shot", () => {
-  expect(classifyAccelerant(card("Sol Ring", "Artifact", 1, "{T}: Add {C}{C}.", ["C"]))?.kind).toBe("rock");
-  expect(classifyAccelerant(card("Llanowar Elves", "Creature — Elf Druid", 1, "{T}: Add {G}.", ["G"]))?.kind).toBe("dork");
+test("classifyAccelerant reads the derived mana lines and refuses a one-shot", () => {
+  expect(classifyAccelerant(real("Sol Ring"))?.kind).toBe("rock");
+  expect(classifyAccelerant(real("Llanowar Elves"))?.kind).toBe("dork");
   // A land-fetch spell produces no mana of its own, which is exactly why `manaWithRocks` cannot see
   // it — and it is the biggest term on a green deck.
-  const lore = classifyAccelerant(card("Nature's Lore", "Sorcery", 2,
-    "Search your library for a Forest card, put that card onto the battlefield, then shuffle."));
-  expect(lore).toEqual({ name: "Nature's Lore", manaValue: 2, kind: "land-fetch", fetchTapped: false });
-  const reach = classifyAccelerant(card("Kodama's Reach", "Sorcery", 3,
-    "Search your library for up to two basic land cards, reveal them, put one onto the battlefield tapped and the other into your hand, then shuffle."));
-  expect(reach?.fetchTapped).toBe(true);
+  expect(classifyAccelerant(real("Nature's Lore"))).toEqual({ name: "Nature's Lore", manaValue: 2, kind: "land-fetch", fetchTapped: false });
+  expect(classifyAccelerant(real("Kodama's Reach"))?.fetchTapped).toBe(true);
   // A RITUAL IS NOT A SOURCE at any confidence — `isManaSource`'s ruling, restated here because the
   // ceiling it creates is real: Dark Ritual does enable a turn.
-  expect(classifyAccelerant(card("Dark Ritual", "Instant", 1, "Add {B}{B}{B}.", ["B"]))).toBeNull();
+  expect(classifyAccelerant(real("Dark Ritual"))).toBeNull();
   // A land is a land drop, never an accelerant cast.
-  expect(classifyAccelerant(card("Forest", "Basic Land — Forest", 0, "", ["G"]))).toBeNull();
+  expect(classifyAccelerant(real("Forest"))).toBeNull();
+  // A card with no derived tags is nothing: derive covers every card in a deck, so that is an underived card (`coverage.ts` lists it).
+  expect(classifyAccelerant(card("Sol Ring", "Artifact", 1, "{T}: Add {C}{C}.", ["C"]))).toBeNull();
+});
+
+/** A hundred-card deck with a dozen Dragons: Mox Jasper's gate is met (gate.ts). */
+const deckOfDragons = (extra: DeckCard[] = []): DeckCard[] => [...extra, ...Array.from({ length: 12 }, (_, i) => card(`Dragon ${i}`, "Creature — Dragon", 5)), ...spells(88 - extra.length, 3)];
+
+// A GATED SOURCE IS STILL A SOURCE, CONDITIONED ON THE DECK (owner 2026-10-13, #1169 2b-2): "it matches only specific themes, like in this case dragons".
+test("a gated mana line plays in a deck that meets its gate and not in one that does not: Mox Jasper is a rock among Dragons", () => {
+  const jasper = real("Mox Jasper");
+  const dragons = deckOfDragons([jasper]);
+  const none = [jasper, ...spells(99, 3)];
+  expect(classifyAccelerant(jasper)).toBeNull();
+  expect(classifyAccelerant(jasper, none)).toBeNull();
+  expect(classifyAccelerant(jasper, dragons)).toEqual({ name: "Mox Jasper", manaValue: 0, kind: "rock" });
+  expect(manaOutput(jasper, dragons)).toMatchObject({ amount: 0, gated: { amount: 1 } });
+  // any colour, once the gate is met: the model plays the line's colours
+  expect(colourMaskOf(jasper, none)).toBe(0);
+  expect(colourMaskOf(jasper, dragons)).toBe(colorMask(WUBRG));
+  // and the simulation sees it: the same deck prices one more accelerant with the Dragons than without
+  expect(manaAvailability(dragons, { trials: 50 }).accelerants).toBe(1);
+  expect(manaAvailability([jasper, ...spells(11, 5), ...basics(36), ...spells(51, 3)], { trials: 50 }).accelerants).toBe(0);
+});
+
+test("the board-count gates stay priced turn by turn whatever the deck: Sceptre of Eternal Glory still waits on its three lands (not 'met' from the first land)", () => {
+  const sceptre = real("Sceptre of Eternal Glory");
+  const forests = [sceptre, ...basics(40, "Forest").map((d) => ({ ...d, card: { ...d.card, name: "Forest" } })), ...spells(59, 3)];
+  expect(manaOutput(sceptre, forests)).toEqual({ amount: 3, needsLands: 3 });
+  expect(manaOutput(sceptre, forests)).toEqual(manaOutput(sceptre));
+});
+
+// WHAT THE DERIVED READING DROPS, AND WHY (#1169 task 2b-1). Each card below was an accelerant when the goldfish read printed text and `producedMana`.
+test("derived lines the goldfish cannot play are not accelerants: a gate it cannot check, a cost it cannot pay, a trigger it has no event for", () => {
+  // (Howlsquad Heavy's max-speed gate is met from turn 4 in any deck: see the max-speed test below. Mox Jasper's Dragon IS a decklist's: see the next test.)
+  // A COST WITH NO BOARD TO PAY FROM: another creature sacrificed (Phyrexian Altar), another permanent tapped (Springleaf Drum), a counter (Wall of Roots),
+  // or exiling the card from hand (Simian Spirit Guide) is not a tap this model can pay. (A planeswalker's "+N: Add" IS playable -- see the loyalty test.)
+  for (const n of ["Phyrexian Altar", "Springleaf Drum", "Wall of Roots", "Simian Spirit Guide"]) {
+    expect(classifyAccelerant(real(n)), n).toBeNull();
+  }
+  // A GRANT A TRIGGER STARTS is gated by it (derive 303): Princess Yue's "{T}: Add {C}" is the Moon's, after she dies, and is no mana of the creature in play.
+  expect(classifyAccelerant(real("Princess Yue"))).toBeNull();
+  // A GATED FETCH (Charitable Levy: three noncreature spells first) is not a fetch the model can perform.
+  expect(classifyAccelerant(real("Charitable Levy"))).toBeNull();
+  // The tap-replacements the simulation prices are accelerants, with their bonus: Forsaken Monument and Leyline of Abundance (owner 2026-10-13), and the
+  // same shape for one land type -- Crypt Ghast and Nirkana Revenant (Swamps), Nissa, Who Shakes the World (Forests), a bonus per matching land tapped.
+  expect(classifyAccelerant(real("Forsaken Monument"))?.kind).toBe("rock");
+  expect(classifyAccelerant(real("Leyline of Abundance"))?.kind).toBe("rock");
+  expect(classifyAccelerant(real("Crypt Ghast"))?.kind).toBe("dork");
+  expect(classifyAccelerant(real("Nirkana Revenant"))?.kind).toBe("dork");
+  expect(classifyAccelerant(real("Nissa, Who Shakes the World"))?.kind).toBe("rock");
+  expect([tapBonusOf(real("Forsaken Monument")), tapBonusOf(real("Leyline of Abundance")), tapBonusOf(real("Crypt Ghast")), tapBonusOf(real("Nissa, Who Shakes the World"))])
+    .toEqual(["colorless", "creature", "land:swamp", "land:forest"]);
+});
+
+// A TAP BONUS THAT IS CONDITIONAL, OR LASTS A TURN, IS NOT PRICED AS A STANDING ONE (2b-1 review round 3): Rikala, Homarid King ("..., if there are three or more tide counters
+// on Rikala, add an additional {U}") and Pyre Rhymer // Molten Tide ("Until end of turn, whenever you tap a Mountain for mana, add an additional {R}") name a land type like Nissa and
+// Crypt Ghast do, and are neither unconditional nor permanent. Refused, never priced as always on.
+test("a land-type tap bonus with an intervening if, or only until end of turn, is no standing bonus", () => {
+  const rikala = card("Rikala, Homarid King", "Legendary Creature \u2014 Merfolk Noble", 4, "At the beginning of your upkeep, put a tide counter on Rikala. Then if there are four or more tide counters on Rikala, remove them.\nCreatures you control get +1/+0 for each tide counter on Rikala.\nWhenever you tap an Island for mana, if there are three or more tide counters on Rikala, add an additional {U}.");
+  const rhymer = card("Pyre Rhymer // Molten Tide", "Creature // Sorcery", 3, "Prowess\nThis creature enters prepared.\n//\nUntil end of turn, whenever you tap a Mountain for mana, add an additional {R}.");
+  const crypt = card("Crypt Ghast", "Creature", 4, "Extort\nWhenever you tap a Swamp for mana, add an additional {B}.");
+  expect([tapBonusOf(rikala), tapBonusOf(rhymer), tapBonusOf(crypt)]).toEqual([undefined, undefined, "land:swamp"]);
+});
+
+// AN AURA'S MANA COUNTS ONLY IF MANA IS THE CARD'S PURPOSE (owner 2026-10-13): the removal Auras are no accelerant, the ramp Auras are.
+test("an Aura that removes what it enchants, or grants a trigger, is no accelerant; an Aura that gives a land a tap ability is", () => {
+  for (const n of ["Imprisoned in the Moon", "Honest Work", "Mark of Sakiko"]) expect(classifyAccelerant(real(n)), n).toBeNull();
+  expect(classifyAccelerant(real("Abundant Growth"))?.kind).toBe("rock");
+  expect(classifyAccelerant(real("Lithoform Blight"))?.kind).toBe("rock");
+  expect(manaOutput(real("Abundant Growth")).amount).toBe(1);
+});
+
+// LOYALTY MANA ABILITIES ARE ACCELERANTS (owner 2026-10-13, #1169 2b-1 review). CR 606.3: a loyalty ability is activated at sorcery timing, once per
+// planeswalker per turn, so "+2: Add {R}{R}{R}" is a repeatable source that pays the turn the walker is cast (it is no creature: no summoning sickness).
+test("a planeswalker's non-negative loyalty mana ability is an accelerant priced at its amount; a negative one is not", () => {
+  for (const n of ["Chandra, Torch of Defiance", "Chandra, Flameshaper", "Chandra, Legacy of Fire", "Domri, Anarch of Bolas", "Ugin, Eye of the Storms"]) {
+    expect(classifyAccelerant(real(n))?.kind, n).toBe("rock");
+  }
+  expect(manaOutput(real("Chandra, Torch of Defiance")).amount).toBe(2);
+  expect(manaOutput(real("Chandra, Flameshaper")).amount).toBe(3);
+  expect(manaOutput(real("Ugin, Eye of the Storms")).amount).toBe(3);
+  expect(manaOutput(real("Domri, Anarch of Bolas")).amount).toBe(1);
+  // CEILING in the model: a scaling amount ("+1: Add {R} for each planeswalker you control") is a rate, priced at the incumbent one.
+  expect(manaOutput(real("Chandra, Legacy of Fire")).amount).toBe(1);
+  // The colour it makes is the line's: Chandra's {R}, Ugin's {C}.
+  expect(colourMaskOf(real("Chandra, Torch of Defiance"))).toBe(colorMask(["R"]));
+  expect(colourMaskOf(real("Ugin, Eye of the Storms"))).toBe(colorMask(["C"]));
+  // A NEGATIVE cost counts when the walker's STARTING loyalty covers it (owner 2026-10-13: usable the turn it is cast, CR 606.6): Chandra, Novice Pyromancer
+  // (loyalty 5, -1: Add {R}{R}) and Koth (loyalty 3, -2: Add {R} for each Mountain) are accelerants. One that does not -- Chandra, Heart of Fire's -9 at
+  // loyalty 5, Quintorius' -6 at 4 -- is not, and Jaya's +1 restricts what the mana is for.
+  for (const n of ["Chandra, Novice Pyromancer", "Koth of the Hammer"]) expect(classifyAccelerant(real(n))?.kind, n).toBe("rock");
+  for (const n of ["Chandra, Heart of Fire", "Quintorius Kand", "Jaya Ballard"]) expect(classifyAccelerant(real(n)), n).toBeNull();
+  expect(manaOutput(real("Chandra, Novice Pyromancer"))).toMatchObject({ amount: 2, turns: 5 });
+  // Koth's amount scales (a rate: priced at the incumbent one) and he can pay his -2 once from loyalty 3.
+  expect(manaOutput(real("Koth of the Hammer"))).toMatchObject({ amount: 1, turns: 1 });
+  // A "+N" or "0" never runs out.
+  expect(manaOutput(real("Chandra, Torch of Defiance"))).not.toHaveProperty("turns");
+  // A transform card's BACK face is not ramp (owner 2026-10-10, #1174): Arlinn, the Moon's Fury's "+2: Add {R}{G}" is reached only by transforming.
+  expect(classifyAccelerant(real("Arlinn, the Pack's Hope"))).toBeNull();
+  // Nissa's land fetches cost -7 (Worldwaker, loyalty 3) and -8 (Who Shakes the World, loyalty 5): neither can be activated the turn she is cast.
+  expect(isFetchSource(real("Nissa, Worldwaker"))).toBe(false);
+  expect(isFetchSource(real("Nissa, Who Shakes the World"))).toBe(false);
+  expect(fetchesLand(real("Nissa, Worldwaker"))).toBe(false);
+  expect(classifyAccelerant(real("Nissa, Worldwaker"))).toBeNull();
+});
+
+// PINS THAT LOYALTY NEVER LEAKS INTO COLOUR COUNTING: the colour audit asks for a repeatable TAP or a static grant (`isColourSource`), and a loyalty ability is neither.
+test("a planeswalker's loyalty mana ability is not a colour source", () => {
+  const chandra = real("Chandra, Torch of Defiance");
+  expect(colourSourceColours(chandra)).toEqual([]);
+  expect(cardLines(chandra).some(isColourSource)).toBe(false);
+  expect(colourSourceColours(real("Chandra, Novice Pyromancer"))).toEqual([]);
+});
+
+// A NEGATIVE LOYALTY ABILITY RUNS OUT (CR 606.6): loyalty L and cost c give floor(L/c) activations, one a turn (CR 606.3), and the simulation counts them.
+// The walker is priced at its best-amount ability, and the rest of the turns it adds nothing. Both arms are the SAME shuffle with one slot swapped (the walker
+// against an inert four-drop), so a trial's gap is the walker's own mana on that turn.
+test("a negative loyalty mana ability pays for floor(loyalty / cost) turns, from the turn the walker is cast", () => {
+  const turnsOn = (walker: DeckCard): number => {
+    const arm = (w: DeckCard): number[][] => simulate([w, ...basics(98)], { trials: 3_000, turns: 8, seed: 41, mulligan: false }).manaAt;
+    const a = arm(walker), b = arm(card("Inert four-drop", "Sorcery", 4));
+    let most = 0;
+    for (let i = 0; i < a[0]!.length; i++) {
+      let n = 0;
+      for (let t = 0; t < 8; t++) if (a[t]![i]! - b[t]![i]! === 2) n++;
+      most = Math.max(most, n);
+    }
+    return most;
+  };
+  const withLoyalty = (loyalty: number): DeckCard => {
+    const dc = structuredClone(real("Chandra, Novice Pyromancer"));
+    for (const l of dc.tags!.manaLines!) if (l.cost.other.length > 0) l.startLoyalty = loyalty;
+    return dc;
+  };
+  // Loyalty 1 and a -1 ability: one turn (the turn she is cast). Loyalty 5: five turns, turns four to eight.
+  expect(turnsOn(withLoyalty(1))).toBe(1);
+  expect(turnsOn(real("Chandra, Novice Pyromancer"))).toBe(5);
+  expect(turnsOn(real("Chandra, Torch of Defiance"))).toBe(5);
+});
+
+// NISSA, WHO SHAKES THE WORLD: "Whenever you tap a Forest for mana, add an additional {G}" -- +1 per Forest tapped, so it is worth the Forests on the board.
+test("a land-type tap bonus pays one per matching land tapped, and nothing for another land type", () => {
+  const gaps = (land: string, subtype: string): number[][] => {
+    const arm = (nissa: boolean): number[][] => simulate([nissa ? real("Nissa, Who Shakes the World") : card("Inert five-drop", "Sorcery", 5), ...basics(98, land).map((c) => ({ ...c, card: { ...c.card, typeLine: `Basic Land \u2014 ${subtype}` } }))],
+      { trials: 3_000, turns: 8, seed: 43, mulligan: false }).manaAt;
+    const a = arm(true), b = arm(false);
+    return a.map((turn, t) => turn.map((x, i) => x - b[t]![i]!));
+  };
+  const forests = gaps("Forest", "Forest");
+  // All lands bar one card, so by turn t there are t lands, and once she is out every Forest taps for one more.
+  for (let t = 4; t < 8; t++) for (const g of forests[t]!) expect([0, t + 1], `turn ${t + 1}`).toContain(g);
+  expect(forests[7]!.some((g) => g === 8)).toBe(true);
+  for (const turn of gaps("Plains", "Plains")) for (const g of turn) expect(g).toBe(0);
+});
+
+test("a planeswalker's loyalty mana lands in the simulation the turn it is cast and adds its amount", () => {
+  const maxAt = (name: string, turn: number): number => {
+    const deck = [...basics(60), ...Array.from({ length: 39 }, (_, i) => real(name, `${name} ${i}`))];
+    const r = simulate(deck, { trials: 2_000, turns: turn, seed: 31, mulligan: false });
+    expect(deck.length).toBe(99);
+    return Math.max(...r.manaAt[turn - 1]!);
+  };
+  // Chandra, Torch of Defiance (mana value 4, +1: Add {R}{R}): three lands on turn three, and on turn four four lands plus her two.
+  expect(maxAt("Chandra, Torch of Defiance", 3)).toBe(3);
+  expect(maxAt("Chandra, Torch of Defiance", 4)).toBe(6);
+  // Domri, Anarch of Bolas (mana value 3, +1: Add {R} or {G}): three lands and her one on turn three.
+  expect(maxAt("Domri, Anarch of Bolas", 2)).toBe(2);
+  expect(maxAt("Domri, Anarch of Bolas", 3)).toBe(4);
+  // Her −1 ability (Chandra, Novice Pyromancer, mana value 4, loyalty 5) is playable the turn she is cast: four lands and her two on turn four.
+  expect(maxAt("Chandra, Novice Pyromancer", 4)).toBe(6);
+  // Chandra, Heart of Fire's −9 cannot be paid from loyalty 5: four lands and nothing more.
+  expect(maxAt("Chandra, Heart of Fire", 4)).toBe(4);
+});
+
+// MAX SPEED IS TURN 4 (owner 2026-10-13; CR 702.179a, 702.179d via gate.ts `MAX_SPEED_TURN`): a "speed 4" line is priced from turn 4, not from the turn it lands.
+describe("a max-speed gate is priced from turn 4", () => {
+  const meanAt = (d: DeckCard[], turn: number): number => {
+    const r = simulate(d, { trials: 400, turns: 6, seed: 7 });
+    const xs = r.manaAt[turn - 1]!;
+    return xs.reduce((a, b) => a + b, 0) / xs.length;
+  };
+  /** Sixty Muraganda Raceways whose max-speed line is edited: kept ("speed 4"), ungated (`null`, two from the start) or removed (the plain {C} alone). */
+  const raceways = (edit: "kept" | "ungated" | "removed"): DeckCard[] => [...Array.from({ length: 60 }, (_, i) => {
+    const c = real("Muraganda Raceway", `Raceway ${i}`);
+    const lines = c.tags!.manaLines!;
+    c.tags!.manaLines = edit === "kept" ? lines : edit === "removed" ? lines.filter((l) => l.gate !== "speed 4") : lines.map((l) => (l.gate === "speed 4" ? { ...l, gate: null } : l));
+    return c;
+  }), ...spells(39, 3)];
+  test("Howlsquad Heavy is an accelerant in any deck; Muraganda Raceway taps for two from turn 4 and for one before", () => {
+    expect(classifyAccelerant(real("Howlsquad Heavy"))?.kind).toBe("dork");
+    expect(classifyAccelerant(real("Howlsquad Heavy"), deckOfDragons())?.kind).toBe("dork");
+    const kept = raceways("kept"), removed = raceways("removed"), ungated = raceways("ungated");
+    for (const t of [1, 2, 3]) {
+      expect(meanAt(kept, t), `turn ${t} = the plain line`).toBe(meanAt(removed, t));
+      expect(meanAt(kept, t), `turn ${t} < the ungated two`).toBeLessThan(meanAt(ungated, t));
+    }
+    expect(meanAt(kept, 5)).toBeGreaterThan(meanAt(removed, 5));
+  });
+});
+
+test("an Adventure or prepare card's spell half is a face you play: Rampant Growth on Studious First-Year is a land-fetch", () => {
+  expect(classifyAccelerant(real("Studious First-Year"))?.kind).toBe("land-fetch");
+});
+
+test("a derived amount is what the line says: Relic of Sauron taps for two, Muraganda Raceway for one until max speed, Ancient Ziggurat's mana pays generic only", () => {
+  expect(manaOutput(real("Relic of Sauron")).amount).toBe(2);
+  expect(manaOutput(real("Muraganda Raceway")).amount).toBe(1);
+  // ...and for two from turn 4 (turn 4 by owner ruling 2026-10-13; CR 702.179a/d give entry turn + 2 at the earliest, not priced).
+  expect(manaOutput(real("Muraganda Raceway")).speed).toEqual({ turn: 4, amount: 2 });
+  // A card whose only mana is the speed line taps for nothing before it (Endrider Catalyzer: two at max speed; Howlsquad Heavy: one, the incumbent of its scaling line).
+  expect(manaOutput(real("Endrider Catalyzer")).amount).toBe(0);
+  expect(manaOutput(real("Endrider Catalyzer")).speed?.amount).toBe(2);
+  expect(manaOutput(real("Howlsquad Heavy")).speed?.amount).toBe(1);
+  // RESTRICTED MANA IS NEVER A COLOUR SOURCE (owner, 2026-10-10): the creature-only mana of Ancient Ziggurat pays no coloured pip.
+  expect(colourMaskOf(real("Ancient Ziggurat"))).toBe(0);
+  // A gated line is not credited a colour (Tainted Peak's B/R needs a Swamp) but its plain {C} stays; Temple's gated {C}{C} keeps the colourless bit.
+  expect(colourMaskOf(real("Tainted Peak"))).toBe(colorMask(["C"]));
+  expect(colourMaskOf(real("Temple of the False God"))).toBe(colorMask(["C"]));
+  // Sol Ring is colourless and nothing else; Llanowar Elves is green.
+  expect(colourMaskOf(real("Sol Ring"))).toBe(colorMask(["C"]));
+  expect(colourMaskOf(real("Llanowar Elves"))).toBe(colorMask(["G"]));
 });
 
 // C7. THE SPREAD IS REPORTED, NEVER JUST THE MEDIAN — a median with no p25/p75 beside it invites a
@@ -167,7 +400,7 @@ test("only the colour-aware field may say castable", () => {
 // THE REPORT WIRING (I11 step 5). This is where the refused quantities could leak into a headline,
 // so the shape itself is asserted rather than left to a renderer's good intentions.
 test("the report shape is an INTERVAL on the cell the policy moves, and a median-plus-spread elsewhere", () => {
-  const deck = [...basics(37), card("Sol Ring", "Artifact", 1, "{T}: Add {C}{C}.", ["C"]), ...spells(61, 3)];
+  const deck = [...basics(37), real("Sol Ring"), ...spells(61, 3)];
   const m = manaAvailability(deck, { trials: 2_000, turns: 8 });
 
   // THE HEADLINE IS THE FALSIFIER'S OWN CELL, and it is a range with both ends present.
@@ -199,51 +432,48 @@ test("the report shape is an INTERVAL on the cell the policy moves, and a median
 // 71 decks. Oracle text below is quoted from the corpus, never recalled.
 // ---------------------------------------------------------------------------------------------
 
+/** A synthetic card carrying these derived lines, for the shapes no corpus card prints. */
+const withManaLines = (name: string, typeLine: string, lines: ReturnType<typeof mkLine>[]): DeckCard => withLines(card(name, typeLine, 1), lines);
+const amountOf = (n: number, over: Partial<ReturnType<typeof mkLine>> = {}) => ({ amount: { fixed: n, scales: null }, net: n, ...over });
+
 test("manaOutput reads what one tap nets, and refuses what it cannot price", () => {
   // The whole point: a rock that taps for two.
-  expect(manaOutput("{T}: Add {C}{C}.")).toEqual({ amount: 2 });
-  expect(manaOutput("{T}: Add {C}{C}{C}.")).toEqual({ amount: 3 });
+  expect(manaOutput(real("Sol Ring"))).toEqual({ amount: 2 });
+  expect(manaOutput(real("Thran Dynamo"))).toEqual({ amount: 3 });
   // An ordinary source, and a card with no mana ability at all.
-  expect(manaOutput("({T}: Add {G}.)")).toEqual({ amount: 1 });
-  expect(manaOutput(undefined)).toEqual({ amount: 1 });
+  expect(manaOutput(real("Llanowar Elves"))).toEqual({ amount: 1 });
+  expect(manaOutput(card("Bear", "Creature", 2))).toEqual({ amount: 1 });
 
   // A COST IS NOT FREE. A filter land pays one to make two, and a payment land pays {1} — both are
   // ONE mana. Reading the Add run alone is what took the first count over this corpus from 9 lands
   // to 27.
-  expect(manaOutput("{T}: Add {C}.\n{U/R}, {T}: Add {U}{U}, {U}{R}, or {R}{R}.")).toEqual({ amount: 1 });
-  expect(manaOutput("{1}, {T}: Add {U}{B}.")).toEqual({ amount: 1 });
+  expect(manaOutput(real("Cascade Bluffs"))).toEqual({ amount: 1 });
+  expect(manaOutput(withManaLines("Payment", "Land", [tapFor(["U", "B"], { cost: { ...FREE_TAP, mana: 1 }, ...amountOf(2, { net: 1 }) })]))).toEqual({ amount: 1 });
   // Nor is a sacrifice, a counter or a loyalty cost a tap this model can pay.
-  expect(manaOutput("{T}, Sacrifice a creature: Add {B}{B}.")).toEqual({ amount: 1 });
-  expect(manaOutput("Sacrifice a creature: Add {C}{C}.")).toEqual({ amount: 1 });
-  expect(manaOutput("+1: Add {R}{R}.")).toEqual({ amount: 1 });
+  expect(manaOutput(withManaLines("Altar", "Artifact", [tapFor(["B"], { cost: { ...FREE_TAP, tap: true, sacrificeOther: true }, ...amountOf(2) })]))).toEqual({ amount: 1 });
+  expect(manaOutput(withManaLines("Counters", "Creature", [tapFor(["C"], { cost: { ...FREE_TAP, tap: true, counters: "remove" }, ...amountOf(2) })]))).toEqual({ amount: 1 });
 
   // RESTRICTED MANA IS REFUSED, because this model is colour-blind (C10) and cannot check the
   // restriction. Jegantha taps for five that pay no generic cost.
-  expect(manaOutput("{T}: Add {W}{U}{B}{R}{G}. This mana can't be spent to pay generic mana costs.")).toEqual({ amount: 1 });
-  expect(manaOutput("{T}: Add {C}{U}. Spend this mana only to activate abilities.")).toEqual({ amount: 1 });
+  expect(manaOutput(real("Jegantha, the Wellspring"))).toEqual({ amount: 1 });
+  expect(manaOutput(real("Cryptic Trilobite"))).toEqual({ amount: 1 });
 
   // A KAROO IS NET NEUTRAL — it taps for two off one fewer land, and the bounce is not modelled, so
-  // counting it two over-claims. Rakdos Carnarium, verbatim.
-  expect(manaOutput("This land enters tapped.\nWhen this land enters, return a land you control to its owner's hand.\n{T}: Add {B}{R}.")).toEqual({ amount: 1 });
+  // counting it two over-claims. Rakdos Carnarium, verbatim. The bounce is an ENTERS fact (printed), not a mana detector.
+  expect(manaOutput(real("Rakdos Carnarium"))).toEqual({ amount: 1 });
 
-  // Temple of the False God, verbatim: two mana, and NOTHING below five lands.
-  expect(manaOutput("{T}: Add {C}{C}. Activate only if you control five or more lands.")).toEqual({ amount: 2, needsLands: 5 });
+  // Temple of the False God: two mana, and NOTHING below five lands.
+  expect(manaOutput(real("Temple of the False God"))).toEqual({ amount: 2, needsLands: 5 });
 
   // The tron shape. The SUBTYPE is `Urza's Power-Plant`, hyphenated, while the CARD is `Urza's
   // Power Plant` without one — so the board is matched on the type line and never on the name.
-  expect(manaOutput("{T}: Add {C}. If you control an Urza's Mine and an Urza's Power-Plant, add {C}{C}{C} instead."))
-    .toEqual({ amount: 1, tron: { subtypes: ["Urza's Mine", "Urza's Power-Plant"], amount: 3 } });
+  expect(manaOutput(real("Urza's Mine"))).toEqual({ amount: 1, tron: { subtypes: ["urza's power-plant", "urza's tower"], amount: 2 } });
+  expect(manaOutput(real("Urza's Tower"))).toEqual({ amount: 1, tron: { subtypes: ["urza's mine", "urza's power-plant"], amount: 3 } });
 });
 
 test("a source's output reaches the board: tron assembles, Temple stays dark under five lands", () => {
-  const tron = (n: string, sub: string, others: [string, string], add: string): DeckCard[] =>
-    Array.from({ length: 33 }, (_, i) =>
-      card(`${n} ${i}`, `Land — ${sub}`, 0, `{T}: Add {C}. If you control an ${others[0]} and an ${others[1]}, add ${add} instead.`));
-  const deck = [
-    ...tron("Mine", "Urza's Mine", ["Urza's Power-Plant", "Urza's Tower"], "{C}{C}"),
-    ...tron("Plant", "Urza's Power-Plant", ["Urza's Mine", "Urza's Tower"], "{C}{C}"),
-    ...tron("Tower", "Urza's Tower", ["Urza's Mine", "Urza's Power-Plant"], "{C}{C}{C}"),
-  ];
+  const tron = (n: string, name: string): DeckCard[] => Array.from({ length: 33 }, (_, i) => real(name, `${n} ${i}`));
+  const deck = [...tron("Mine", "Urza's Mine"), ...tron("Plant", "Urza's Power Plant"), ...tron("Tower", "Urza's Tower")];
   const assembled = simulate(deck, { trials: 5_000, turns: 3, seed: 11 });
   // Three land drops cap a plain deck at three mana. Assembled tron taps for seven off the same
   // three drops, which is exactly the fact `manaWithRocks` and this model both used to miss.
@@ -252,8 +482,7 @@ test("a source's output reaches the board: tron assembles, Temple stays dark und
 
   // A GATE IS ZERO BELOW ITS THRESHOLD, not one. A deck of nothing but Temples makes no mana at all
   // for four turns; the incumbent read one per Temple.
-  const temples = Array.from({ length: 99 }, (_, i) =>
-    card(`Temple ${i}`, "Land", 0, "{T}: Add {C}{C}. Activate only if you control five or more lands."));
+  const temples = Array.from({ length: 99 }, (_, i) => real("Temple of the False God", `Temple ${i}`));
   const t = simulate(temples, { trials: 2_000, turns: 6, seed: 11 });
   expect(pAtLeastMana(t, 1, 4)).toBe(0);
   expect(pAtLeastMana(t, 10, 5)).toBe(1);
@@ -272,9 +501,8 @@ test("a land that is every land type answers a subtype check by itself", () => {
 
   // Through the simulator: one Urza's Tower plus one Planar Nexus taps for three, and the same
   // Tower with ordinary lands beside it taps for one.
-  const tower = (i: number): DeckCard =>
-    card(`Urza's Tower ${i}`, "Land — Urza's Tower", 0, "{T}: Add {C}. If you control an Urza's Mine and an Urza's Power-Plant, add {C}{C}{C} instead.");
-  const nexus = (i: number): DeckCard => card(`Planar Nexus ${i}`, "Land", 0, nexusText);
+  const tower = (i: number): DeckCard => real("Urza's Tower", `Urza's Tower ${i}`);
+  const nexus = (i: number): DeckCard => real("Planar Nexus", `Planar Nexus ${i}`);
   const half = (f: (i: number) => DeckCard): DeckCard[] => Array.from({ length: 50 }, (_, i) => f(i));
   const withNexus = simulate([...half(tower), ...half(nexus)], { trials: 5_000, turns: 2, seed: 5 });
   const withBasics = simulate([...half(tower), ...basics(50)], { trials: 5_000, turns: 2, seed: 5 });
@@ -306,10 +534,10 @@ test("a gated land is held until its gate is met, not played as a blank", () => 
 // ---------------------------------------------------------------------------------------------
 
 const dual = (n: number, name: string, colors: string[]): DeckCard[] =>
-  Array.from({ length: n }, (_, i) => ({
+  Array.from({ length: n }, (_, i) => withTap({
     card: { name: `${name} ${i}`, typeLine: `Land — ${name}`, oracleText: "{T}: Add one mana of any color.", keywords: [], colors: [], manaValue: 0, producedMana: colors } as never,
     tags: null,
-  }));
+  }, colors));
 const spell = (n: number, name: string, manaCost: string, manaValue: number): DeckCard[] =>
   Array.from({ length: n }, (_, i) => ({
     card: { name: `${name} ${i}`, typeLine: "Sorcery", oracleText: "", keywords: [], colors: [], manaValue, manaCost } as never,
@@ -381,43 +609,44 @@ test("C1/C2/C3: the colour model is an anchor, a bound and a discriminator", () 
 });
 
 test("C4: a fetchland is a colour fixer AND a thinner", () => {
-  // VERBATIM FROM THE CORPUS. The fixture used to read "an Island or Mountain LAND card" -- a word
-  // no fetchland prints -- so C4 passed against a card this repo had invented (roadmap N2).
-  const tarn = "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Mountain card, put it onto the battlefield, then shuffle.";
-  const deckPrinted = [{ typeLine: "Land — Island", producedMana: ["U"] }, { typeLine: "Land — Mountain", producedMana: ["R"] }, { typeLine: "Land — Forest", producedMana: ["G"] }];
+  // THE REAL FETCHLAND: Scalding Tarn prints "an Island or Mountain card" -- a word no invented fixture should replace (roadmap N2).
+  const tarn = real("Scalding Tarn");
+  const land = (typeLine: string, colours: string[]): DeckCard => withTap(card(typeLine, typeLine), colours);
+  const deck = [land("Land — Island", ["U"]), land("Land — Mountain", ["R"]), land("Land — Forest", ["G"])];
   // It finds what it NAMES, against what this deck actually holds -- so it is a blue and red source
   // and not a green one, and in a deck with no Mountain it would not be a red one either.
-  expect(fetchMask(tarn, deckPrinted)).toBe(colorMask(["U", "R"]));
-  expect(fetchMask(tarn, [{ typeLine: "Land — Island", producedMana: ["U"] }])).toBe(colorMask(["U"]));
+  expect(fetchMaskOf(tarn, deck)).toBe(colorMask(["U", "R"]));
+  expect(fetchMaskOf(tarn, [land("Land — Island", ["U"])])).toBe(colorMask(["U"]));
 
   // "an Island OR Mountain card" IS AN OR, NOT AN AND (owner, 2026-08-25): a plain Island is a legal
   // target, a plain Mountain is, and a land carrying both is. One word (`some` vs `every`) separates
   // this from a fetch that can find almost nothing.
-  expect(fetchMask(tarn, [{ typeLine: "Basic Land — Island", producedMana: ["U"] }])).toBe(colorMask(["U"]));
-  expect(fetchMask(tarn, [{ typeLine: "Basic Land — Mountain", producedMana: ["R"] }])).toBe(colorMask(["R"]));
+  expect(fetchMaskOf(tarn, [land("Basic Land — Island", ["U"])])).toBe(colorMask(["U"]));
+  expect(fetchMaskOf(tarn, [land("Basic Land — Mountain", ["R"])])).toBe(colorMask(["R"]));
   // And a land carrying NEITHER is not a target, however much mana it makes.
-  expect(fetchMask(tarn, [{ typeLine: "Basic Land — Forest", producedMana: ["G"] }])).toBe(0);
+  expect(fetchMaskOf(tarn, [land("Basic Land — Forest", ["G"])])).toBe(0);
 
   // NAMING A TYPE IS NOT DEMANDING A BASIC (owner, 2026-08-25). Scalding Tarn searches for a
   // "card", not a "basic land card", so a SHOCKLAND carrying both types is a legal target -- and in
   // `iz-it-izzet` that is what takes it from 19 lands to 20.
-  const shock = [{ typeLine: "Land — Island Mountain", producedMana: ["U", "R"] }];
-  expect(fetchMask(tarn, shock)).toBe(colorMask(["U", "R"]));
+  const shock = [land("Land — Island Mountain", ["U", "R"])];
+  expect(fetchMaskOf(tarn, shock)).toBe(colorMask(["U", "R"]));
   // The mirror, and the one card in the 71 decks that needs it: Seething Landscape says BASIC, so
-  // the same shockland is NOT a legal target. Verbatim.
-  const landscape = "{T}, Sacrifice this land: Search your library for a basic Island, Swamp, or Mountain card, put it onto the battlefield tapped, then shuffle.";
-  expect(fetchMask(landscape, shock)).toBe(0);
-  expect(fetchMask(landscape, [...shock, { typeLine: "Basic Land — Swamp", producedMana: ["B"] }])).toBe(colorMask(["B"]));
+  // the same shockland is NOT a legal target.
+  const landscape = real("Seething Landscape");
+  expect(fetchMaskOf(landscape, shock)).toBe(0);
+  expect(fetchMaskOf(landscape, [...shock, land("Basic Land — Swamp", ["B"])])).toBe(colorMask(["B"]));
   // `nonbasic` contains `basic`, and reading it as a demand would empty every mask.
-  expect(fetchMask("Search your library for a nonbasic land card.", shock)).toBe(colorMask(["U", "R"]));
+  expect(fetchMaskOf(card("Nonbasic Fetch", "Sorcery", 1, "Search your library for a nonbasic land card."), shock)).toBe(colorMask(["U", "R"]));
+  // A basic fetch that finds Wastes finds {C}: the colourless bit, not only the five colours (Solemn Simulacrum in a colourless deck).
+  expect(fetchMaskOf(card("Basic Fetch", "Sorcery", 2, "Search your library for a basic land card, put it onto the battlefield tapped."),
+    [land("Basic Land — Wastes", ["C"])])).toBe(colorMask(["C"]));
+  // The colours a fetch finds are the colours the land is a COLOUR SOURCE of: a gated line is not credited, as in the audit.
+  expect(fetchMaskOf(real("Scalding Tarn"), [real("Tainted Peak")])).toBe(0);
 
   // THINNING: the land it finds LEAVES the library, so a deck of fetches draws better than the same
   // deck of blanks. Measured through the simulator rather than asserted.
-  const fetch = (i: number): DeckCard => ({
-    card: { name: `Tarn ${i}`, typeLine: "Land", oracleText: tarn, keywords: [], colors: [], manaValue: 0, producedMana: [] } as never,
-    tags: null,
-  });
-  const withFetch = simulate([...Array.from({ length: 20 }, (_, i) => fetch(i)), ...dual(20, "Island", ["U"]), ...spell(59, "Spell", "{U}", 1)], { trials: 4_000, turns: 3, seed: 6 });
+  const withFetch = simulate([...Array.from({ length: 20 }, (_, i) => real("Scalding Tarn", `Tarn ${i}`)), ...dual(20, "Island", ["U"]), ...spell(59, "Spell", "{U}", 1)], { trials: 4_000, turns: 3, seed: 6 });
   // A fetch counts as a blue source through what it finds; without the colour read it would be 0.
   expect(withFetch.byCardCastable.get("Spell 0")![2]).toBeGreaterThan(0.9);
 });
@@ -447,8 +676,9 @@ test("N15: a fetch removes a UNIFORMLY RANDOM land, not the first one in draw or
 
 test("N15: the simulator's fetches read the corrected policy, and it pays on a fetch-heavy deck", () => {
   const FETCH = "{T}, Pay 1 life, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield, then shuffle.";
+  const fetchland = (i: number): DeckCard => ({ ...card(`Fetch ${i}`, "Land", 0, FETCH, []), tags: fetchTags({ kind: "permanent", tapped: false, reach: WUBRG }) });
   const deck: DeckCard[] = [
-    ...Array.from({ length: 20 }, (_, i) => card(`Fetch ${i}`, "Land", 0, FETCH, [])),
+    ...Array.from({ length: 20 }, (_, i) => fetchland(i)),
     ...Array.from({ length: 17 }, (_, i) => card(`Forest ${i}`, "Basic Land — Forest", 0, "", ["G"])),
     ...spells(62, 3),
   ];
@@ -460,9 +690,8 @@ test("N15: the simulator's fetches read the corrected policy, and it pays on a f
   // THE OTHER SITE. A land-fetch SPELL resolves through its own branch, so the fetchland arm above
   // leaves it untested -- verified by mutating one site at a time. Nature's Lore, verbatim, in a
   // deck that can cast it. MEASURED under the old policy at this seed: 60.27%.
-  const LORE = "Search your library for a Forest card, put it onto the battlefield, then shuffle.";
   const ramp: DeckCard[] = [
-    ...Array.from({ length: 20 }, (_, i) => card(`Lore ${i}`, "Sorcery", 2, LORE)),
+    ...Array.from({ length: 20 }, (_, i) => real("Nature's Lore", `Lore ${i}`)),
     ...basics(30),
     ...spells(49, 3),
   ];
@@ -475,8 +704,7 @@ test("N15: the simulator's fetches read the corrected policy, and it pays on a f
 // multicolour decks the colour model was built for -- were an untapped land making one colourless
 // mana and thinning nothing.
 test("N2: the fetch cycle matches the gate, on its own printed text", () => {
-  const TARN = "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Mountain card, put it onto the battlefield, then shuffle.";
-  const tarns = Array.from({ length: 20 }, (_, i) => card(`Tarn ${i}`, "Land", 0, TARN, []));
+  const tarns = Array.from({ length: 20 }, (_, i) => real("Scalding Tarn", `Tarn ${i}`));
   const islands = Array.from({ length: 17 }, (_, i) => card(`Island ${i}`, "Basic Land — Island", 0, "", ["U"]));
   const blue = Array.from({ length: 62 }, (_, i) => card(`Blue ${i}`, "Sorcery", 3, "", undefined));
   // The fetch produces nothing of its own, so without the colour read the deck has 17 blue sources
@@ -548,52 +776,45 @@ test("N1: a card is counted once per trial-turn however many copies the deck run
 // as a permanent that taps for mana every turn. Treasure mana is a ONE-SHOT resource, and this model
 // already refuses one-shots on `isManaSource`'s own ruling -- the same rule, one layer over.
 test("N9: token mana is not a mana source, and a granted mana ability still is", () => {
-  const plunderer = card("Pitiless Plunderer", "Creature — Human Pirate", 4,
-    'Whenever another creature you control dies, create a Treasure token. (It\'s an artifact with "{T}, Sacrifice this token: Add one mana of any color.")',
-    ["B", "G", "R", "U", "W"]);
-  expect(classifyAccelerant(plunderer)).toBeNull();
+  // The Treasure maker has a token-maker line, which is no mana of its own.
+  expect(classifyAccelerant(real("Pitiless Plunderer"))).toBeNull();
 
   // A GRANT TO PERMANENTS YOU CONTROL IS RECURRING MANA and stays: Enduring Vitality is one of the
   // three accelerants on `samut` the old hypergeometric model could see at all.
-  const vitality = card("Enduring Vitality", "Enchantment Creature — Elk Glimmer", 3,
-    'Vigilance\nCreatures you control have "{T}: Add one mana of any color."', ["B", "G", "R", "U", "W"]);
-  expect(classifyAccelerant(vitality)?.kind).toBe("dork");
+  expect(classifyAccelerant(real("Enduring Vitality"))?.kind).toBe("dork");
 
   // THE GRANT IS NOT ENOUGH ON ITS OWN -- Goldspan Dragon grants to TREASURES, and a permanent that
   // sacrifices itself for mana is the one-shot again, in a sentence shaped like a grant.
-  const goldspan = card("Goldspan Dragon", "Creature — Dragon", 5,
-    'Flying, haste\nWhenever this creature attacks, create a Treasure token.\nTreasures you control have "{T}, Sacrifice this artifact: Add two mana of any one color."',
-    ["B", "G", "R", "U", "W"]);
-  expect(classifyAccelerant(goldspan)).toBeNull();
+  expect(classifyAccelerant(real("Goldspan Dragon"))).toBeNull();
 
-  // A SUSPENDED MANA ROCK IS NOT A TURN-ONE ROCK. Mana value 0 and rule 3 casts by mana value, so
-  // Sol Talisman landed free on turn one; the real sequence is {1} and a three-turn wait.
-  const talisman = card("Sol Talisman", "Artifact", 0,
-    "Suspend 3—{1} (Rather than cast this card from your hand, pay {1} and exile it with three time counters on it.)\n{T}: Add {C}{C}.", ["C"]);
-  expect(classifyAccelerant(talisman)).toBeNull();
+  // A SUSPEND-ONLY MANA ROCK IS NOT A TURN-ONE ROCK. Mana value 0 and rule 3 casts by mana value, so
+  // Mox Tantalite landed free on turn one; the real sequence is a cost and a three-turn wait.
+  expect(classifyAccelerant(real("Mox Tantalite"))).toBeNull();
 
-  // The ordinary rock is untouched: it says "Add" in its own text.
-  expect(classifyAccelerant(card("Sol Ring", "Artifact", 1, "{T}: Add {C}{C}.", ["C"]))?.kind).toBe("rock");
+  // The ordinary rock is untouched.
+  expect(classifyAccelerant(real("Sol Ring"))?.kind).toBe("rock");
 });
 
 // N10. "ADD THREE MANA OF ANY ONE COLOR" IS INVISIBLE TO A READER THAT COUNTS `{...}` SYMBOLS.
 // Sceptre of Eternal Glory is in 11 decks and was priced at one mana.
 test("N10: a word-form amount is read, and its gate with it", () => {
-  const sceptre = manaOutput("{T}: Add one mana of any color.\n{T}: Add three mana of any one color. Activate only if you control three or more lands with the same name.");
+  const sceptre = manaOutput(real("Sceptre of Eternal Glory"));
   // The gated line wins because it makes more -- and it is ZERO below the gate, not one.
   expect(sceptre.amount).toBe(3);
   // SAME NAME IS UNCHECKABLE HERE and "three or more lands" is its floor, so the gate under-claims
   // rather than counting three from turn one.
   expect(sceptre.needsLands).toBe(3);
 
-  expect(manaOutput("{T}: Add three mana of any one color.").amount).toBe(3);
-  expect(manaOutput("{T}: Add two mana in any combination of {U}, {B}, and/or {R}.").amount).toBe(2);
+  expect(manaOutput(withManaLines("Three", "Artifact", [tapFor(WUBRG, amountOf(3))])).amount).toBe(3);
+  expect(manaOutput(withManaLines("Two", "Artifact", [tapFor(["U", "B", "R"], amountOf(2))])).amount).toBe(2);
   // Restricted mana stays one: the model is colour-blind, so it cannot check the restriction.
-  expect(manaOutput("{T}: Add two mana in any combination of colors. Spend this mana only to cast Elemental spells.").amount).toBe(1);
+  expect(manaOutput(withManaLines("Smoke", "Creature", [tapFor(WUBRG, { ...amountOf(2), restriction: { spend: "to cast elemental spells", typeName: "elemental" } })])).amount).toBe(1);
   // A cost that is not exactly {T} is not a tap this model can pay.
-  expect(manaOutput("{1}, {T}: Add two mana in any combination of colors.").amount).toBe(1);
+  expect(manaOutput(withManaLines("Costed", "Artifact", [tapFor(WUBRG, { cost: { ...FREE_TAP, mana: 1 }, ...amountOf(2, { net: 1 }) })])).amount).toBe(1);
   // An X amount is a RATE, not an amount -- it stays at one rather than being guessed.
-  expect(manaOutput("{T}: Add X mana of any one color, where X is the number of Elves you control.").amount).toBe(1);
+  expect(manaOutput(withManaLines("Elves", "Creature", [tapFor(WUBRG, { amount: { fixed: null, scales: "x" }, net: 1 })])).amount).toBe(1);
+  // A gate this model cannot check leaves its line uncounted.
+  expect(manaOutput(withManaLines("Gated", "Artifact", [tapFor(["C"], { ...amountOf(3), gate: "you control a swamp" })])).amount).toBe(1);
 });
 
 // N11. `{C}` IS A RULES-REAL DEMAND (CR 107.4c): colourless mana, and no other kind pays it. The
@@ -642,20 +863,14 @@ test("N11: a colourless hybrid is colourless OR its colour, not 'anything'", () 
 test("N12: a crack that costs mana is not a fetch this model can perform", () => {
   // Wayfarer's Bauble, verbatim: cast for {1}, then {2} and a tap and a sacrifice, a turn later.
   // Priced as a cast-time fetch it was a one-mana ramp spell that put a land onto the battlefield.
-  const bauble = card("Wayfarer's Bauble", "Artifact", 1,
-    "{2}, {T}, Sacrifice this artifact: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.");
-  expect(classifyAccelerant(bauble)).toBeNull();
+  expect(classifyAccelerant(real("Wayfarer's Bauble"))).toBeNull();
 
   // Nature's Lore resolves its fetch, so it stays a land-fetch accelerant.
-  const lore = card("Nature's Lore", "Sorcery", 2,
-    "Search your library for a Forest card, put it onto the battlefield, then shuffle.");
-  expect(classifyAccelerant(lore)?.kind).toBe("land-fetch");
+  expect(classifyAccelerant(real("Nature's Lore"))?.kind).toBe("land-fetch");
 
   // A LAND whose crack costs mana is an ordinary land: Myriad Landscape taps for {C} and its two
   // basics cost {2} the model never pays, so it neither fixes colours nor thins.
-  const landscape = (i: number) => card(`Myriad ${i}`, "Land", 0,
-    "This land enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.",
-    ["C"]);
+  const landscape = (i: number) => real("Myriad Landscape", `Myriad ${i}`);
   const green = card("Green", "Sorcery", 1, "");
   (green.card as { manaCost?: string }).manaCost = "{G}";
   const deck = [...Array.from({ length: 20 }, (_, i) => landscape(i)), ...basics(17), ...spells(61, 3), green];
@@ -665,8 +880,7 @@ test("N12: a crack that costs mana is not a fetch this model can perform", () =>
 });
 
 test("N12: a fetch that finds a TAPPED land gives a tapped land", () => {
-  const wilds = (i: number) => card(`Wilds ${i}`, "Land", 0,
-    "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", []);
+  const wilds = (i: number) => real("Evolving Wilds", `Wilds ${i}`);
   const deck = [...Array.from({ length: 37 }, (_, i) => wilds(i)), ...spells(62, 3)];
   const r = simulate(deck, { trials: 4_000, turns: 3, seed: 9 });
   // Every land in this deck arrives tapped, so turn one makes nothing at all.
@@ -674,8 +888,7 @@ test("N12: a fetch that finds a TAPPED land gives a tapped land", () => {
 
   // FABLED PASSAGE UNTAPS ITS LAND once you control four, so it is tapped early and not late -- the
   // `slow` shape, and the one card of the family that prints the clause (21 slots).
-  const passage = (i: number) => card(`Passage ${i}`, "Land", 0,
-    "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle. Then if you control four or more lands, untap that land.", []);
+  const passage = (i: number) => real("Fabled Passage", `Passage ${i}`);
   const late = simulate([...Array.from({ length: 37 }, (_, i) => passage(i)), ...spells(62, 3)], { trials: 4_000, turns: 6, seed: 9 });
   expect(pAtLeastMana(late, 1, 1)).toBe(0);
   // THE CELL THAT SEPARATES THE TWO: on turn four the land played THIS turn is the difference. Every
@@ -708,26 +921,22 @@ test("N14: a Phyrexian pip demands its colour, because this model cannot pay lif
 test("O2: a land aura waits a turn, because the land pays for it", () => {
   // Wild Growth, verbatim. You enchant a land you already control, tapping it to pay -- so it nets
   // nothing the turn it lands and pays from the next, which is a DORK's timing and not a rock's.
-  const growth = card("Wild Growth", "Enchantment — Aura", 1,
-    "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.", ["G"]);
+  const growth = real("Wild Growth");
   expect(classifyAccelerant(growth)?.kind).toBe("dork");
 
-  // Overgrowth adds TWO, and the amount is in the sentence the tap reader never looked at.
-  const over = card("Overgrowth", "Enchantment — Aura", 3,
-    "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}{G}.", ["G"]);
-  expect(manaOutput(over.card.oracleText).amount).toBe(2);
-  expect(manaOutput(growth.card.oracleText).amount).toBe(1);
+  // Overgrowth adds TWO, and the amount is on the aura's trigger line, not on a tap.
+  expect(manaOutput(real("Overgrowth")).amount).toBe(2);
+  expect(manaOutput(growth).amount).toBe(1);
   // "an additional one mana of any color" is one, in words.
-  expect(manaOutput("Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional one mana of any color.").amount).toBe(1);
+  expect(manaOutput(real("Fertile Ground")).amount).toBe(1);
 
   // AN ORDINARY ROCK IS UNTOUCHED: it brings its own mana and pays the turn it lands (CR 302.6).
-  expect(classifyAccelerant(card("Sol Ring", "Artifact", 1, "{T}: Add {C}{C}.", ["C"]))?.kind).toBe("rock");
+  expect(classifyAccelerant(real("Sol Ring"))?.kind).toBe("rock");
 });
 
 test("O2: a per-source bonus scales with the board it reads", () => {
-  const monument = (i: number) => card(`Monument ${i}`, "Legendary Artifact", 5,
-    "Whenever you tap a permanent for {C}, add an additional {C}.", ["C"]);
-  const wastes = (i: number) => card(`Wastes ${i}`, "Basic Land — Wastes", 0, "", ["C"]);
+  const monument = (i: number) => real("Forsaken Monument", `Monument ${i}`);
+  const wastes = (i: number) => withTap(card(`Wastes ${i}`, "Basic Land — Wastes", 0, ""), ["C"]);
   const deck = [...Array.from({ length: 12 }, (_, i) => monument(i)), ...Array.from({ length: 37 }, (_, i) => wastes(i)), ...spells(50, 3)];
   const r = simulate(deck, { trials: 4_000, turns: 8, seed: 12 });
 
@@ -742,6 +951,27 @@ test("O2: a per-source bonus scales with the board it reads", () => {
   expect(pAtLeastMana(none, 10, 8)).toBe(0);
 });
 
+// LEYLINE OF ABUNDANCE (owner, 2026-10-13: Forsaken Monument and Leyline are accelerants; the bonus is +1 per qualifying tap, CR 106.12a). "Whenever you
+// tap a creature for mana, add an additional {G}": the board's CREATURE sources count, a rock or a land does not. Both arms are the SAME shuffle with one
+// slot swapped (Leyline against an inert four-drop), so the difference per trial is the Leyline's own bonus and nothing else.
+test("O2: Leyline of Abundance's bonus counts creature sources only: a rock adds nothing, a dork adds one", () => {
+  const filler = (leyline: boolean): DeckCard[] => [leyline ? real("Leyline of Abundance") : card("Inert four-drop", "Sorcery", 4)];
+  const arm = (leyline: boolean, source: DeckCard): number[] => {
+    const deck = [...filler(leyline), source, ...basics(38), ...spells(59, 3)];
+    expect(deck.length).toBe(99);
+    return simulate(deck, { trials: 3_000, turns: 8, seed: 14 }).manaAt.flatMap((turn) => turn);
+  };
+  const gap = (source: DeckCard): { min: number; max: number } => {
+    const a = arm(true, source), b = arm(false, source);
+    const d = a.map((x, i) => x - b[i]!);
+    return { min: d.reduce((m, x) => Math.min(m, x), 0), max: d.reduce((m, x) => Math.max(m, x), 0) };
+  };
+  // Sol Ring is a rock: the bonus never reads it.
+  expect(gap(real("Sol Ring"))).toEqual({ min: 0, max: 0 });
+  // Llanowar Elves is a creature: in the trials that hold both, every tap of it adds one {G}.
+  expect(gap(real("Llanowar Elves"))).toEqual({ min: 0, max: 1 });
+});
+
 // O2, THE PHASE-TRIGGER HALF. "At the beginning of your first main phase, add {G}{G}" is a recurring
 // source that never taps, so `manaOutput`'s `{T}:` reader sees nothing. The rule is small because the
 // GUARDS take almost the whole family: of 32 corpus cards printing the shape, most add a RATE, six
@@ -749,36 +979,34 @@ test("O2: a per-source bonus scales with the board it reads", () => {
 test("O2: a phase trigger that adds a FIXED amount is a source; the rest are refused", () => {
   // Hulking Raptor, verbatim. It is a creature and pays from the turn after it lands, like any dork:
   // you cast it DURING your main phase, so that turn's trigger has already happened.
-  const raptor = card("Hulking Raptor", "Creature — Dinosaur", 4,
-    "Ward {2}\nAt the beginning of your first main phase, add {G}{G}.", ["G"]);
+  const raptor = real("Hulking Raptor");
   expect(classifyAccelerant(raptor)?.kind).toBe("dork");
-  expect(manaOutput(raptor.card.oracleText).amount).toBe(2);
+  expect(manaOutput(raptor).amount).toBe(2);
 
   // A NON-CREATURE PHASE TRIGGER IS THE SHAPE THE TIMING RULE EXISTS FOR -- Eladamri's Vineyard is an
   // Enchantment, so the generic creature branch would call it a rock and pay it a turn early.
   // 9 of the corpus family are non-creatures.
-  const vineyard = card("Eladamri's Vineyard", "Enchantment", 2,
-    "At the beginning of each upkeep, that player adds {G}{G}.", ["G"]);
+  const vineyard = real("Eladamri's Vineyard");
   expect(classifyAccelerant(vineyard)?.kind).toBe("dork");
+  expect(manaOutput(vineyard).amount).toBe(2);
 
   // A RATE IS NOT AN AMOUNT -- the I4 ruling one subsystem over. Muerra adds one per Raccoon and
   // Black Market one per charge counter; neither is a number this model knows.
-  expect(manaOutput("At the beginning of your first main phase, add {R} or {G} for each Raccoon you control.").amount).toBe(1);
-  expect(manaOutput("At the beginning of your first main phase, add {B} for each charge counter on this enchantment.").amount).toBe(1);
+  expect(manaOutput(real("Muerra, Trash Tactician")).amount).toBe(1);
+  expect(manaOutput(real("Black Market")).amount).toBe(1);
   // NOT A REAL CARD, and the comment says so: no corpus card prints a MULTI-SYMBOL rate, so this is
-  // the one assertion here with no printed witness. It pins the guard against the shape rather than
-  // against a card, because the rate words sit AFTER the symbol run and were invisible to the first
-  // version of the guard.
-  expect(manaOutput("At the beginning of your first main phase, add {G}{G} for each Elf you control.").amount).toBe(1);
+  // the one assertion here with no printed witness.
+  expect(manaOutput(withManaLines("Elf Engine", "Enchantment", [triggerLine("main-phase", "your first main phase", ["G"], 2, { amount: { fixed: null, scales: "for each elf you control" } })])).amount).toBe(1);
 
   // RESTRICTED mana stays refused by the standing rule: Thran Turbine's two colourless cannot cast
   // spells at all, and this model cannot check what mana is spent on.
-  expect(manaOutput("At the beginning of your upkeep, you may add {C}{C}. This mana can't be spent to cast spells.").amount).toBe(1);
+  expect(manaOutput(real("Thran Turbine")).amount).toBe(1);
+  expect(classifyAccelerant(real("Thran Turbine"))).toBeNull();
 
-  // A ONE-SHOT IS NOT A SOURCE, at any confidence. "Your NEXT main phase" fires once (Mana Drain),
-  // and "first main phase OF THE GAME" fires once (Chancellor of the Tangle).
-  expect(manaOutput("Counter target spell. At the beginning of your next main phase, add {C}{C}.").amount).toBe(1);
-  expect(manaOutput("At the beginning of your first main phase of the game, add {G}{G}.").amount).toBe(1);
+  // A ONE-SHOT IS NOT A SOURCE, at any confidence. "Your NEXT main phase" fires once (Mana Drain; the
+  // amount scales, so it is refused as a rate too).
+  expect(manaOutput(real("Mana Drain")).amount).toBe(1);
+  expect(classifyAccelerant(real("Mana Drain"))).toBeNull();
 });
 
 // O2, THE EVENT-TRIGGER HALF. Classified corpus-wide by whether this simulator PRODUCES the event,
@@ -788,8 +1016,9 @@ test("O2: a phase trigger that adds a FIXED amount is a source; the rest are ref
 test("O2: landfall mana pays per land entering, and only that bucket is modellable", () => {
   // Lotus Cobra, verbatim. A creature cast in your main phase misses that turn's land drop, which
   // already happened under rule 2 -- so it pays from the next turn, like every other engine here.
-  const cobra = (i: number) => card(`Lotus Cobra ${i}`, "Creature — Snake", 2,
-    "Landfall — Whenever a land you control enters, add one mana of any color.", ["B", "G", "R", "U", "W"]);
+  const cobra = (i: number) => real("Lotus Cobra", `Lotus Cobra ${i}`);
+  expect(classifyAccelerant(cobra(0))?.kind).toBe("dork");
+  expect(landfallOf(cobra(0))).toBe(1);
   const deck = [...Array.from({ length: 12 }, (_, i) => cobra(i)), ...basics(37), ...spells(50, 3)];
   const r = simulate(deck, { trials: 4_000, turns: 8, seed: 21 });
 
@@ -801,7 +1030,7 @@ test("O2: landfall mana pays per land entering, and only that bucket is modellab
   // AND IT IS WORTH LESS THAN A FLAT DORK, which is the correction rather than an upgrade: the mana
   // arrives only when a land ENTERS, and a deck misses land drops. Priced as an ordinary one-mana
   // dork -- what it was before -- the same board reads HIGHER than the truth.
-  const asDork = [...Array.from({ length: 12 }, (_, i) => card(`Dork ${i}`, "Creature — Snake", 2, "{T}: Add {G}.", ["G"])),
+  const asDork = [...Array.from({ length: 12 }, (_, i) => withTap(card(`Dork ${i}`, "Creature — Snake", 2, "{T}: Add {G}."), ["G"])),
     ...basics(37), ...spells(50, 3)];
   const dorkArm = pAtLeastMana(simulate(asDork, { trials: 4_000, turns: 8, seed: 21 }), 9, 8);
   expect(pAtLeastMana(r, 9, 8)).toBeLessThan(dorkArm);
@@ -809,7 +1038,7 @@ test("O2: landfall mana pays per land entering, and only that bucket is modellab
   // PER EVENT, NOT PER TURN: a land-fetch SPELL puts a second land onto the battlefield in the same
   // turn, and the Cobra is paid for both.
   const withFetch = [...Array.from({ length: 12 }, (_, i) => cobra(i)),
-    ...Array.from({ length: 10 }, (_, i) => card(`Lore ${i}`, "Sorcery", 2, "Search your library for a Forest card, put it onto the battlefield, then shuffle.")),
+    ...Array.from({ length: 10 }, (_, i) => real("Nature's Lore", `Lore ${i}`)),
     ...basics(30), ...spells(47, 3)];
   const fetched = simulate(withFetch, { trials: 4_000, turns: 8, seed: 21 });
   expect(pAtLeastMana(fetched, 6, 5)).toBeGreaterThan(pAtLeastMana(r, 6, 5));
@@ -817,23 +1046,30 @@ test("O2: landfall mana pays per land entering, and only that bucket is modellab
   // A SPELL CAST, COMBAT, AN OPPONENT AND A CREATURE DYING ARE NOT EVENTS THIS MODEL HAS. Birgi is
   // the owner's own card and is deliberately NOT priced off the accelerants rule 3 happens to cast:
   // that stream is a fraction of a real deck's spells and would feed back into the casting loop.
-  const birgi = card("Birgi, God of Storytelling", "Legendary Creature — God", 3,
-    "Whenever you cast a spell, add {R}. Until end of turn, you don't lose this mana as steps and phases end.", ["R"]);
-  expect(manaOutput(birgi.card.oracleText).amount).toBe(1);
+  const birgi = real("Birgi, God of Storytelling");
+  expect(manaOutput(birgi).amount).toBe(1);
+  // TRIGGER MANA FROM A SPELL CAST IS RAMP, NOT A DORK (owner, 2026-10-10): the cast trigger is a line the goldfish refuses.
+  expect(classifyAccelerant(birgi)).toBeNull();
+  expect(landfallOf(birgi)).toBe(0);
+  // ...and neither is a creature's own enters trigger (Burning-Tree Emissary: mana once, no source).
+  expect(classifyAccelerant(real("Burning-Tree Emissary"))).toBeNull();
 
   // NO PRINTED WITNESS, and the comment says so: all three landfall-mana cards in the corpus are
   // unrestricted, so this pins the guard against the SHAPE. It is kept because every other mana
   // reader in this module checks the restriction, and landfall being the one that does not is how a
   // rule quietly diverges from its neighbours.
-  const restricted = card("Not A Real Card", "Creature — Snake", 2,
-    "Whenever a land you control enters, add {G}{G}. Spend this mana only to cast creature spells.", ["G"]);
-  expect(classifyAccelerant(restricted)?.kind).toBe("dork");
+  const restricted = withManaLines("Not A Real Card", "Creature — Snake", [
+    triggerLine("enters", "a land you control", ["G"], 2, { restriction: { spend: "to cast creature spells", typeName: "creature" } })]);
+  // Refused outright, since the restriction cannot be checked: not an accelerant at all.
+  expect(classifyAccelerant(restricted)).toBeNull();
+  expect(landfallOf(restricted)).toBe(0);
   const board = [...Array.from({ length: 12 }, () => restricted), ...basics(37), ...spells(50, 3)];
   const asRestricted = simulate(board, { trials: 4_000, turns: 8, seed: 21 });
-  // REFUSED, so it reads EXACTLY like the ordinary one-mana dork arm above -- same composition, same
-  // seed, same answer. Counted as landfall it would add TWO per land and diverge, which is the cell
-  // that separates the two readings.
-  expect(pAtLeastMana(asRestricted, 9, 8)).toBe(dorkArm);
+  // REFUSED, so it reads EXACTLY like the same dorks with no mana line -- same composition, same seed, same answer.
+  const bare = [...Array.from({ length: 12 }, () => card("Not A Real Card", "Creature — Snake", 2)), ...basics(37), ...spells(50, 3)];
+  expect(pAtLeastMana(asRestricted, 9, 8)).toBe(pAtLeastMana(simulate(bare, { trials: 4_000, turns: 8, seed: 21 }), 9, 8));
+  // A GATED landfall is not credited either (Koth: "that land is a Mountain").
+  expect(classifyAccelerant(withManaLines("Gated Landfall", "Creature", [triggerLine("enters", "a land you control", ["R"], 1, { gate: "that land is a mountain" })]))).toBeNull();
 });
 
 // O1. THE FLIP, AND THE ITEM'S OWN PREMISE SHRANK TWICE UNDER MEASUREMENT. Ashling was ALREADY
@@ -842,18 +1078,28 @@ test("O2: landfall mana pays per land entering, and only that bucket is modellab
 // cast in a main phase and flips at the NEXT one, which is exactly the dork timing the model already
 // has. What was actually missing is the AMOUNT in words and the restriction being checkable.
 test("O1: a restricted phase trigger counts when the deck makes the restriction vacuous", () => {
-  const back = "Whenever this creature transforms into Ashling, Rimebound and at the beginning of your first main phase, add two mana of any one color. Spend this mana only to cast spells with mana value 4 or greater.";
-  // THE AMOUNT IS IN WORDS -- "add two mana of any one color" -- which the symbol reader never saw.
-  expect(manaOutput(back).amount).toBe(2);
+  // Ashling's back face, as the line derive reads it: two mana of any colour at the beginning of your first main phase, spent only on spells at
+  // mana value 4 or greater. (The REAL card transforms, and a transform card's back is never a source from the deck, #1174; this is the shape.)
+  const floor = { restriction: { spend: "to cast spells with mana value 4 or greater" } };
+  const ashling = (i: number) => withLines(card(`Ashling ${i}`, "Legendary Creature — Elemental Sorcerer", 4),
+    [triggerLine("main-phase", "your first main phase", WUBRG, 2, { anyColour: "any", ...floor })]);
+  // THE AMOUNT IS TWO, with its floor recorded for the deck to settle.
+  expect(manaOutput(ashling(0))).toEqual({ amount: 2, needsMinMV: 4 });
+  expect(classifyAccelerant(ashling(0))?.kind).toBe("dork");
+  // THE REAL CARD, as it was priced before the goldfish read derived lines: a transform card's back that is NOT a land (#1174 is about land backs) still
+  // counts here, so the two Ashling decks keep their mana commander.
+  const real_ = real("Ashling, Rekindled");
+  expect(classifyAccelerant(real_)?.kind).toBe("dork");
+  expect(manaOutput(real_)).toEqual({ amount: 2, needsMinMV: 4 });
+  // ...and a transform card whose back IS a land does not (Treasure Map // Treasure Cove).
+  expect(classifyAccelerant(real("Treasure Map"))).toBeNull();
 
   // IN A DECK WITH NOTHING CHEAP, THE RESTRICTION BINDS NOTHING. `iz-it-izzet` is built that way:
   // all 62 of its nonlands are mana value 4 or greater, so "spend only on mana value 4 or greater"
   // costs it exactly nothing -- and mana value is the ONE restriction this model can check, because
   // it knows every card's.
   // THE ENGINE'S OWN MANA VALUE COUNTS, and that is correct rather than awkward: a deck holding a
-  // two-drop has a two-drop to cast, so the restriction binds. Real Ashling is the COMMANDER, outside
-  // the library, which is why `iz-it-izzet` clears it -- the fixture uses a four-drop to stand in.
-  const ashling = (i: number) => card(`Ashling ${i}`, "Legendary Creature — Elemental Sorcerer", 4, back, ["U"]);
+  // two-drop has a two-drop to cast, so the restriction binds.
   const expensive = [...Array.from({ length: 12 }, (_, i) => ashling(i)), ...basics(37), ...spells(50, 6)];
   const cheap = [...Array.from({ length: 12 }, (_, i) => ashling(i)), ...basics(37), ...spells(50, 2)];
   const rich = simulate(expensive, { trials: 4_000, turns: 8, seed: 31 });
@@ -863,9 +1109,11 @@ test("O1: a restricted phase trigger counts when the deck makes the restriction 
   // mana. The deck of six-drops gets it; the deck of two-drops does not.
   expect(pAtLeastMana(rich, 8, 7)).toBeGreaterThan(pAtLeastMana(poor, 8, 7));
 
-  // AND THE REFUSAL IS THE DEFAULT: a restriction this model cannot check still refuses outright.
-  expect(manaOutput("At the beginning of your upkeep, you may add {C}{C}. This mana can't be spent to cast spells.").amount).toBe(1);
-  expect(manaOutput("At the beginning of your first main phase, add two mana of any one color. Spend this mana only to cast Dragon spells.").amount).toBe(1);
+  // AND THE REFUSAL IS THE DEFAULT: a restriction this model cannot check still refuses outright (Thran Turbine's "can't be spent to cast spells",
+  // Abstract Paintmage's instants and sorceries).
+  expect(manaOutput(real("Thran Turbine")).amount).toBe(1);
+  expect(classifyAccelerant(real("Abstract Paintmage"))).toBeNull();
+  expect(manaOutput(real("Abstract Paintmage")).amount).toBe(1);
 });
 
 // O1, THE PIECE THAT UNLOCKS IT. A COMMANDER IS NOT IN THE LIBRARY, so rule 3 never cast it and a
@@ -875,7 +1123,7 @@ test("O1: a restricted phase trigger counts when the deck makes the restriction 
 // the mana is there, like anything else.
 test("O1: a commander that makes mana is deployed, because the command zone always has it", () => {
   const bear = card("Bear", "Creature — Bear", 2, "");
-  const dork = card("Mana Commander", "Legendary Creature — Elf Druid", 2, "{T}: Add {G}.", ["G"]);
+  const dork = withTap(card("Mana Commander", "Legendary Creature — Elf Druid", 2, "{T}: Add {G}."), ["G"]);
   const deck = [...basics(37), ...spells(62, 4)];
 
   // No mulligan: a cheap commander is itself "a play by turn 3", so the keep would differ by commander.
@@ -985,13 +1233,7 @@ test("a split card is gated on the cost it pays, not on its combined mana value"
 test("a card's castability denominator counts the trials that drew it, cast or not", () => {
   // `manaCost` matters here and nowhere else in this file: `parseCost` returns null without it and
   // the card would be skipped by the colour-aware half entirely.
-  const solRing: DeckCard = {
-    card: {
-      name: "Sol Ring", typeLine: "Artifact", manaCost: "{1}", manaValue: 1,
-      oracleText: "{T}: Add {C}{C}.", keywords: [], colors: [], producedMana: ["C"],
-    } as never,
-    tags: null,
-  };
+  const solRing = real("Sol Ring");
   const deck = [...basics(37), solRing, ...spells(61, 3)];
   const r = simulate(deck, { trials: TRIALS, turns: 4, seed: 23 });
 
@@ -1021,20 +1263,34 @@ test("a commander is held in every trial, because the command zone is not the li
  *  3 casting Alania t2"). A ritual never joins the board, so `manaAt` and every castability figure
  *  stay as they were; what it changes is how fast the COMMANDER can come down in one burst. */
 test("a ritual is an instant or sorcery that adds a fixed amount; a rate or a creature is not one", () => {
-  expect(ritualAdds(card("Desperate Ritual", "Instant — Arcane", 2, "Add {R}{R}{R}.\nSplice onto Arcane {1}{R}"))).toBe(3);
-  expect(ritualAdds(card("Seething Song", "Instant", 3, "Add {R}{R}{R}{R}{R}."))).toBe(5);
-  expect(ritualAdds(card("Jeska's Will", "Sorcery", 3, "Choose one or both —\n• Add {R} for each card in target opponent's hand."))).toBe(0);
-  expect(ritualAdds(card("Rite of Flame", "Sorcery", 1, "Add {R}{R}, then add {R} for each card named Rite of Flame in each graveyard."))).toBe(0);
-  expect(ritualAdds(card("Elf", "Creature — Elf", 1, "Add {G}."))).toBe(0);
-  // An extra cost, a spending restriction, or a creature wearing an instant face is not a free ritual.
-  expect(ritualAdds(card("Culling", "Instant", 1, "As an additional cost to cast this spell, sacrifice a creature.\nAdd {B}{B}{B}{B}."))).toBe(0);
-  expect(ritualAdds(card("Bound", "Instant", 1, "Add {R}{R}{R}. Spend this mana only to cast instant or sorcery spells."))).toBe(0);
-  expect(ritualAdds(card("Giant", "Creature — Giant // Instant — Adventure", 4, "Add {R}{R}{R}."))).toBe(0);
+  expect(ritualAdds(real("Desperate Ritual"))).toBe(3);
+  expect(ritualAdds(real("Seething Song"))).toBe(5);
+  expect(ritualAdds(real("Dark Ritual"))).toBe(3);
+  // Cabal Ritual's threshold line is gated; the plain line is the ritual.
+  expect(ritualAdds(real("Cabal Ritual"))).toBe(3);
+  expect(ritualAdds(real("Jeska's Will"))).toBe(0);
+  // "Add {R}{R}, then add {R} for each card named ..." is a fixed run AND a count: derive reads two lines, and a card that counts has never been a ritual here.
+  expect(ritualAdds(real("Rite of Flame"))).toBe(0);
+  // A ritual NETS mana (owner's rule I4): High Tide's "an additional {U}" costs {U}, Eldrazi Confluence's Scion mode costs {2}{R}{R}{R}... -- neither gains.
+  expect(ritualAdds(real("High Tide"))).toBe(0);
+  expect(ritualAdds(real("Eldrazi Confluence"))).toBe(0);
+  expect(ritualAdds(withTap(card("Elf", "Creature — Elf", 1, "Add {G}."), ["G"]))).toBe(0);
+  // An extra cost (printed: a spell's additional cost is not on the line), a spending restriction, or a creature wearing an instant face is not a
+  // free ritual.
+  expect(ritualAdds(real("Culling the Weak"))).toBe(0);
+  expect(ritualAdds(withLines(card("Bound", "Instant", 1, "Add {R}{R}{R}. Spend this mana only to cast instant or sorcery spells."),
+    [ritualLine(["R"], 3, { restriction: { spend: "to cast instant or sorcery spells" } })]))).toBe(0);
+  expect(ritualAdds(withLines(card("Giant", "Creature — Giant // Instant — Adventure", 4, "Add {R}{R}{R}."), [ritualLine(["R"], 3)]))).toBe(0);
+  // Two colours, one mana each: one unit of each. Two colours at three mana cannot be told apart per unit and are refused.
+  expect(ritualAdds(withLines(card("Pair", "Instant", 1), [ritualLine(["R", "G"], 2)]))).toBe(2);
+  expect(ritualAdds(withLines(card("Triple Pair", "Instant", 1), [ritualLine(["R", "G"], 3)]))).toBe(0);
+  // A choice of colour is no fixed colour.
+  expect(ritualAdds(withLines(card("Any", "Instant", 1), [ritualLine(WUBRG, 2, { anyColour: "any" })]))).toBe(0);
 });
 
 test("rituals in hand bring the commander down earlier, and leave the board's mana alone", () => {
   const withCost = (dc: DeckCard, manaCost: string): DeckCard => ({ ...dc, card: { ...dc.card, manaCost } as never });
-  const ritual = (i: number) => withCost(card(`Ritual ${i}`, "Instant", 2, "Add {R}{R}{R}."), "{1}{R}");
+  const ritual = (i: number) => withCost(withLines(card(`Ritual ${i}`, "Instant", 2, "Add {R}{R}{R}."), [ritualLine(["R"], 3)]), "{1}{R}");
   const inert = (i: number) => withCost(card(`Ritual ${i}`, "Instant", 2, "Draw a card."), "{1}{R}");
   const commander = withCost(card("Commander", "Legendary Creature — Otter", 5), "{3}{R}{R}");
   const mountains = Array.from({ length: 40 }, (_, i) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "", ["R"]));
@@ -1048,7 +1304,7 @@ test("rituals in hand bring the commander down earlier, and leave the board's ma
 
 test("the burst starts from the mana left after this turn's accelerants, not from what the board made", () => {
   // Turn 3: three lands pay for a 3-mana rock that taps for three -- six made, three left to spend.
-  const rock = (i: number) => card(`Rock ${i}`, "Artifact", 3, "{T}: Add {C}{C}{C}.", ["C"]);
+  const rock = (i: number) => withTap(card(`Rock ${i}`, "Artifact", 3, "{T}: Add {C}{C}{C}."), ["C"], 3);
   const commander = card("Commander", "Legendary Creature — Human", 6);
   const r = simulate([...basics(40, "Mountain"), ...Array.from({ length: 59 }, (_, i) => rock(i))], { trials: 500, turns: 4, seed: 9, alsoPrice: [commander] });
   expect(r.fastStart.get("Commander")![2]).toBe(0);
@@ -1058,7 +1314,7 @@ test("the burst starts from the mana left after this turn's accelerants, not fro
 /** NOT COLOUR-BLIND (owner 2026-10-06: "we can not be colorblind regarding rituals"). A ritual pays
  *  its own cost in colour and adds its own colour; the commander has to be payable in colour. */
 test("red rituals on Mountains bring down a red commander, never a blue one", () => {
-  const ritual = (i: number) => ({ card: { name: `Ritual ${i}`, typeLine: "Instant", oracleText: "Add {R}{R}{R}.", manaCost: "{1}{R}", keywords: [], colors: ["R"], manaValue: 2 } as never, tags: null });
+  const ritual = (i: number) => withLines({ card: { name: `Ritual ${i}`, typeLine: "Instant", oracleText: "Add {R}{R}{R}.", manaCost: "{1}{R}", keywords: [], colors: ["R"], manaValue: 2 } as never, tags: null }, [ritualLine(["R"], 3)]);
   const mountains = Array.from({ length: 40 }, (_, i) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "", ["R"]));
   const deck = [...mountains, ...Array.from({ length: 59 }, (_, i) => ritual(i))];
   const red = { card: { name: "Red", typeLine: "Legendary Creature — Human", oracleText: "", manaCost: "{3}{R}{R}", keywords: [], colors: ["R"], manaValue: 5 } as never, tags: null };
@@ -1076,7 +1332,7 @@ test("an opponent's hand is assumed 7, 7, 6, 5, 4, then 3", () => {
 });
 
 test("Jeska's Will adds a red for each card in the opponent's assumed hand", () => {
-  const jeska = (i: number) => ({ card: { name: `Will ${i}`, typeLine: "Sorcery", oracleText: "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n• Add {R} for each card in target opponent's hand.\n• Exile the top three cards of your library. You may play them this turn.", manaCost: "{2}{R}", keywords: [], colors: ["R"], manaValue: 3 } as never, tags: null });
+  const jeska = (i: number) => real("Jeska's Will", `Will ${i}`);
   const mountains = Array.from({ length: 40 }, (_, i) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "", ["R"]));
   const commander = { card: { name: "Six", typeLine: "Legendary Creature — Human", oracleText: "", manaCost: "{4}{R}{R}", keywords: [], colors: ["R"], manaValue: 6 } as never, tags: null };
   const r = simulate([...mountains, ...Array.from({ length: 59 }, (_, i) => jeska(i))], { trials: 1_000, turns: 3, seed: 17, alsoPrice: [commander] });
@@ -1141,7 +1397,7 @@ describe("per-game combat kill turns", () => {
   });
 
   test("playing on for combat leaves every priced number exactly as it was, fetchlands and all", () => {
-    const wilds = Array.from({ length: 10 }, (_, i) => card(`Wilds ${i}`, "Land", 0, "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."));
+    const wilds = Array.from({ length: 10 }, (_, i) => real("Evolving Wilds", `Wilds ${i}`));
     const deck = [...mountains.slice(0, 30), ...wilds, ...Array.from({ length: 59 }, (_, i) => creature(i))];
     const priced = simulate(deck, { trials: 300, turns: 8, seed: 37 });
     const fought = simulate(deck, { trials: 300, turns: 8, seed: 37, combatTo: 20 });
@@ -1151,7 +1407,7 @@ describe("per-game combat kill turns", () => {
 
   test("a mana creature attacks too, and a commander that is both is cast and counted once", () => {
     // A 10-power commander that taps for mana: cast turn 1 as a dork, it swings 10 a turn -- 40 by turn 4.
-    const dork = { card: { name: "Titan", typeLine: "Legendary Creature — Elf", oracleText: "{T}: Add {G}.", producedMana: ["G"], manaCost: "{G}", keywords: [], colors: ["G"], manaValue: 1, power: "10" } as never, tags: null };
+    const dork = withTap({ card: { name: "Titan", typeLine: "Legendary Creature — Elf", oracleText: "{T}: Add {G}.", producedMana: ["G"], manaCost: "{G}", keywords: [], colors: ["G"], manaValue: 1, power: "10" } as never, tags: null }, ["G"]);
     const forests = Array.from({ length: 40 }, (_, i) => card(`Forest ${i}`, "Basic Land — Forest", 0, "", ["G"]));
     const deck = [...forests, ...Array.from({ length: 59 }, (_, i) => card(`Spell ${i}`, "Sorcery", 7, "Draw a card."))];
     const r = simulate(deck, { trials: 200, turns: 8, seed: 41, alsoPrice: [dork], combatTo: 20 });
@@ -1182,7 +1438,6 @@ describe("draw and tutors", () => {
   const tutor = (i: number, type?: string) => tagged(`Tutor ${i}`, "Sorcery", "{0}", 0, [{ kind: "on-cast", effect: { kind: "search", subject: { ...you, ...(type ? { type } : {}) } }, amount: "1", repeats: "once" }]);
   const forest = (i: number) => ({ ...tagged(`Forest ${i}`, "Basic Land — Forest", "", 0, [], { types: ["basic", "land"] }), card: { name: `Forest ${i}`, typeLine: "Basic Land — Forest", oracleText: "", keywords: [], colors: [], manaValue: 0, producedMana: ["G"] } as never });
   const forests = (n: number) => Array.from({ length: n }, (_, i) => forest(i));
-  const untag = (d: DeckCard[]): DeckCard[] => d.map((x) => ({ ...x, tags: null }));
   const opts = { trials: 2_000, turns: 6, seed: 5, mulligan: false } as const;
 
   test("a draw spell shows the game more cards than one a turn", () => {
@@ -1205,9 +1460,7 @@ describe("draw and tutors", () => {
   });
 
   test("with land in hand and the commander out of reach, a tutor finds an accelerant", () => {
-    const ring = tagged("Sol Ring", "Artifact", "{1}", 1, [], {});
-    (ring.card as { oracleText: string }).oracleText = "{T}: Add {C}{C}.";
-    (ring.card as { producedMana?: string[] }).producedMana = ["C"];
+    const ring = withTap(tagged("Sol Ring", "Artifact", "{1}", 1, [], {}), ["C"], 2);
     const commander = tagged("Big", "Legendary Creature", "{6}", 6, [], { types: ["legendary", "creature"] });
     const deck = [...forests(40), ring, ...Array.from({ length: 58 }, (_, i) => tutor(i))];
     // Turn 1: Forest, tutor for Sol Ring, cast it off the Forest: three mana on turn 2.
@@ -1216,9 +1469,7 @@ describe("draw and tutors", () => {
   });
 
   test("a tutor never finds what its filter refuses", () => {
-    const ring = tagged("Sol Ring", "Artifact", "{1}", 1, []);
-    (ring.card as { oracleText: string }).oracleText = "{T}: Add {C}{C}.";
-    (ring.card as { producedMana?: string[] }).producedMana = ["C"];
+    const ring = withTap(tagged("Sol Ring", "Artifact", "{1}", 1, []), ["C"], 2);
     const commander = tagged("Big", "Legendary Creature", "{6}", 6, [], { types: ["legendary", "creature"] });
     const deck = [...forests(40), ring, ...Array.from({ length: 58 }, (_, i) => tutor(i, "creature"))];
     const withTutors = simulate(deck, { ...opts, alsoPrice: [commander] });
@@ -1251,7 +1502,8 @@ describe("draw and tutors", () => {
   test("an accelerant that draws still draws", () => {
     const prism = (i: number) => {
       const d = tagged(`Prism ${i}`, "Artifact", "{2}", 2, [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { ...you, self: true } }, effect: { kind: "draw-card", subject: you }, amount: "1", repeats: "once" }]);
-      return { ...d, card: { ...d.card, oracleText: "When this artifact enters, draw a card.\n{1}, {T}: Add one mana of any color.", producedMana: ["W", "U", "B", "R", "G"] } as never };
+      return withLines({ ...d, card: { ...d.card, oracleText: "When this artifact enters, draw a card.\n{1}, {T}: Add one mana of any color." } as never },
+        [tapFor(WUBRG, { cost: { ...FREE_TAP, mana: 1 }, net: 0 })]);
     };
     const deck = [...forests(37), ...Array.from({ length: 62 }, (_, i) => prism(i))];
     expect(simulate(deck, opts).seenShare.land[5]!).toBeGreaterThan(simulate(untag(deck), opts).seenShare.land[5]! + 0.02);
@@ -1262,7 +1514,7 @@ describe("draw and tutors", () => {
 // everything its card can add, so it agrees with the audit and the mana base score.
 test("Prismatic Lens is not a blue source in the simulation: it pays {U}{U} no better than a colourless rock", () => {
   const lens = rocks["Prismatic Lens"] as unknown as DeckCard;
-  const grey = card("Grey Rock", "Artifact", 2, "{T}: Add {C}.", ["C"]);
+  const grey = withTap(card("Grey Rock", "Artifact", 2, "{T}: Add {C}."), ["C"]);
   const island = (i: number) => card(`Island ${i}`, "Basic Land — Island", 0, "({T}: Add {U}.)", ["U"]);
   const mountain = (i: number) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "({T}: Add {R}.)", ["R"]);
   const counterspell: DeckCard = { ...card("Counterspell", "Instant", 2), card: { ...card("Counterspell", "Instant", 2).card, manaCost: "{U}{U}" } };
@@ -1276,7 +1528,7 @@ test("Prismatic Lens is not a blue source in the simulation: it pays {U}{U} no b
 // only that line.
 test("Chromatic Lantern makes the lands blue in the simulation, beyond its own tap", () => {
   const lantern = rocks["Chromatic Lantern"] as unknown as DeckCard;
-  const twin: DeckCard = { ...lantern, card: { ...lantern.card, name: "Lantern Twin", oracleText: "{T}: Add one mana of any color." } as never };
+  const twin: DeckCard = { ...lantern, card: { ...lantern.card, name: "Lantern Twin", oracleText: "{T}: Add one mana of any color." } as never, tags: { ...lantern.tags, staticFixer: undefined } as never };
   const island = (i: number) => card(`Island ${i}`, "Basic Land — Island", 0, "({T}: Add {U}.)", ["U"]);
   const mountain = (i: number) => card(`Mountain ${i}`, "Basic Land — Mountain", 0, "({T}: Add {R}.)", ["R"]);
   const counterspell: DeckCard = { ...card("Counterspell", "Instant", 4), card: { ...card("Counterspell", "Instant", 4).card, manaCost: "{2}{U}{U}" } };
@@ -1337,5 +1589,94 @@ describe("manaModel need (#1151)", () => {
     const a = manaModel(big, { trials: 200, seed: 3 }).availability;
     expect(a.need!.mana).toBe(8);
     expect(a.rows.map((r) => r.turn)).toContain(a.need!.turn);
+  });
+});
+
+// BOARD-COUNT GATES ARE TIMED TURN BY TURN (owner 2026-10-13, #1169 2b-2): "a gate like 'you control a Dragon' / metalcraft / 'four or more creatures' is met from the turn the
+// deck can plausibly have it on board, not from turn one -- the goldfish times it like the lands/tron gates". The decks below are SMALL ON PURPOSE: with 8 cards or fewer every card
+// is in the opening seven plus the turn-1 draw, so the game is deterministic (one land a turn, ties only between identical cards) and each turn's mana is one number.
+describe("board-count gates are met turn by turn on the goldfish's own board", () => {
+  const elf = (i: number): DeckCard => card(`Elf ${i}`, "Creature — Elf", 1);
+  const manaPerTurn = (deck: DeckCard[], turns: number, over: Parameters<typeof simulate>[1] = {}): number[] => {
+    const r = simulate(deck, { trials: 20, turns, seed: 5, mulligan: false, ...over });
+    return r.manaAt.map((col) => { expect(new Set(col).size, "deterministic").toBe(1); return col[0]!; });
+  };
+
+  test("Leafkin Druid taps for one before four creatures are out and for two after (the creatures are the Elves the model 'casts' with the mana it has left, and itself)", () => {
+    const druid = real("Leafkin Druid");
+    const deck = [druid, elf(1), elf(2), elf(3), ...basics(4)];
+    const out = manaOutput(druid, deck);
+    expect(out.amount).toBe(1);
+    expect(out.gated?.amount).toBe(2);
+    // T1 1 land; T2 2 lands, the Druid is cast; T3 3 lands and a Druid that is not yet two (one Elf and itself); T4 four creatures: 4 lands + 2
+    expect(manaPerTurn(deck, 5)).toEqual([1, 2, 4, 6, 6]);
+  });
+
+  test("Mox Jasper makes nothing until a Dragon is on the board, then one mana of any colour: a Dragon the mana could pay for on turn 2 helps from turn 3", () => {
+    const jasper = real("Mox Jasper");
+    const dragon = card("Dragon", "Creature — Dragon", 2);
+    expect(manaPerTurn([jasper, dragon, ...basics(6)], 4)).toEqual([1, 2, 4, 5]);
+    // a Dragon the mana cannot pay for until turn 6 helps from turn 7, and not before
+    expect(manaPerTurn([jasper, card("Big Dragon", "Creature — Dragon", 6), ...basics(6)], 7)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  test("the commander counts toward a gate: a Dragon commander makes Mox Jasper a rock once it could be cast, and the deck without it has no rock at all", () => {
+    const jasper = real("Mox Jasper");
+    const deck = [jasper, ...basics(6)];
+    const commander = card("Dragon Commander", "Legendary Creature — Dragon", 2);
+    expect(classifyAccelerant(jasper, deck)).toBeNull();
+    expect(manaPerTurn(deck, 3)).toEqual([1, 2, 3]);
+    expect(manaPerTurn(deck, 3, { alsoPrice: [commander] })).toEqual([1, 2, 4]);
+  });
+
+  test("a land's gated colours wait on the board too: Spire of Industry makes a colour only with an artifact out, the turn after the model could cast one", () => {
+    const spire = real("Spire of Industry");
+    const trinket = card("Trinket", "Artifact", 0);
+    const bolt: DeckCard = { ...card("Red Spell", "Sorcery", 1), card: { ...card("Red Spell", "Sorcery", 1).card, manaCost: "{R}" } };
+    const r = simulate([spire, trinket, bolt], { trials: 20, turns: 3, seed: 5, mulligan: false });
+    const castable = r.byCardCastable.get("Red Spell")!;
+    // turn 1: the only land taps for {C}; the Trinket is 'cast' at its end and is out from turn 2
+    expect(castable.slice(0, 3)).toEqual([0, 1, 1]);
+  });
+
+  test("the land policy plays the land that makes the colour NOW: a Verge whose green waits on a Forest is not the green land beside a Forest", () => {
+    const verge = real("Thornspire Verge");
+    const green: DeckCard = { ...card("Green Spell", "Sorcery", 1), card: { ...card("Green Spell", "Sorcery", 1).card, manaCost: "{G}" } };
+    const r = simulate([verge, card("Forest", "Basic Land \u2014 Forest"), green], { trials: 60, turns: 2, seed: 9, mulligan: false });
+    // turn 1: the Forest, in every game, whatever order the hand is dealt in
+    expect(r.byCardCastable.get("Green Spell")![0]).toBe(1);
+  });
+
+  test("the availability the report prints counts the commander's Dragon toward Mox Jasper's gate (manaModel hands the gate the whole decklist)", async () => {
+    const { manaModel } = await import("./goldfish.js");
+    const jasper = real("Mox Jasper");
+    const commander = card("Dragon Commander", "Legendary Creature \u2014 Dragon", 2);
+    expect(manaModel([jasper, ...basics(6)], { trials: 10, turns: 3, alsoPrice: [commander] }).availability.accelerants).toBe(1);
+    expect(manaModel([jasper, ...basics(6)], { trials: 10, turns: 3 }).availability.accelerants).toBe(0);
+  });
+
+  test("a commander whose own mana waits on a Dragon plays once the library's Dragon is out, in its colour (the priced extras are judged against the whole decklist too)", () => {
+    const commander = withManaLines("Dragon Elf", "Legendary Creature \u2014 Elf", [tapFor(["G"], { gate: "you control a dragon" })]);
+    const withCmd = { ...commander, card: { ...commander.card, manaValue: 2 } };
+    const islands = Array.from({ length: 5 }, (_, i) => card(`Island ${i}`, "Basic Land \u2014 Island"));
+    const green: DeckCard = { ...card("Green Spell", "Sorcery", 1), card: { ...card("Green Spell", "Sorcery", 1).card, manaCost: "{G}" } };
+    const deck = [card("Small Dragon", "Creature \u2014 Dragon", 3), ...islands, green];
+    // cast on turn 2, a dork taps from turn 3; the Dragon the leftover mana pays for on turn 3 is out from turn 4, and only then does the commander make its {G}
+    expect(manaPerTurn(deck, 4, { alsoPrice: [withCmd] })).toEqual([1, 2, 3, 5]);
+    const r = simulate(deck, { trials: 20, turns: 4, seed: 5, mulligan: false, alsoPrice: [withCmd] });
+    expect(r.byCardCastable.get("Green Spell")).toEqual([0, 0, 0, 1]);
+  });
+
+  test("an unmet board gate stays a blank, and a deck whose cards cannot meet it does not get the line (Mox Jasper beside no Dragon)", () => {
+    const jasper = real("Mox Jasper");
+    expect(manaPerTurn([jasper, ...basics(7)], 4)).toEqual([1, 2, 3, 4]);
+  });
+
+  test("a walker's gated loyalty line is priced against the deck, its turns included (manaOutput's loyalty branch is handed the deck)", () => {
+    const line = mkLine({ gate: "you control a dragon", cost: { ...FREE_TAP, tap: false, other: ["−1"] }, startLoyalty: 3, colours: ["R"], amount: { fixed: 2, scales: null }, net: 2 });
+    const walker = withManaLines("Gated Walker", "Legendary Planeswalker — Test", [line]);
+    const deck = deckOfDragons([walker]);
+    expect(manaOutput(walker, deck).turns).toBe(3);
+    expect(manaOutput(walker, deck).gated?.amount).toBe(2);
   });
 });
