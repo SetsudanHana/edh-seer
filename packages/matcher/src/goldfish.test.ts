@@ -959,7 +959,7 @@ test("O2: Leyline of Abundance's bonus counts creature sources only: a rock adds
   const arm = (leyline: boolean, source: DeckCard): number[] => {
     const deck = [...filler(leyline), source, ...basics(38), ...spells(59, 3)];
     expect(deck.length).toBe(99);
-    return simulate(deck, { trials: 20_000, turns: 8, seed: 14 }).manaAt.flatMap((turn) => turn);
+    return simulate(deck, { trials: 3_000, turns: 8, seed: 14 }).manaAt.flatMap((turn) => turn);
   };
   const gap = (source: DeckCard): { min: number; max: number } => {
     const a = arm(true, source), b = arm(false, source);

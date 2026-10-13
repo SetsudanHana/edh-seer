@@ -164,7 +164,8 @@ function production(object: string, amountText = "", context = ""): Pick<ManaLin
   // "two mana in any combination of {U}, {B}, and/or {R}" (Relic of Sauron) is ONE alternative of that many mana: the commas list the colours it may
   // be made of, not separate alternatives, and splitting on them read an amount of 1.
   const combination = new RegExp(`^(${WORD})\\s+mana\\s+in\\s+any\\s+combination\\s+of\\s+(?:\\{[^}]+\\}[\\s,/]*|and/or\\s*|or\\s*|and\\s*)+$`, "i").exec(text);
-  const alts = combination ? [text] : text.split(/\s*,\s*or\s+|\s*,\s+|\s+or\s+/i).filter((a) => a.trim() !== "");
+  // Whitespace is collapsed first so the split needs no unbounded `\s*` on both sides of a separator (CodeQL js/polynomial-redos on runs of spaces).
+  const alts = combination ? [text] : text.replace(/\s+/g, " ").split(/ ?, ?or | ?, | or /i).filter((a) => a.trim() !== "");
   const colours = new Set<string>();
   let colourless = 0;
   const counts: (number | undefined)[] = [];
@@ -226,7 +227,7 @@ function restrictionOf(texts: readonly string[]): ManaLine["restriction"] {
     const not = only ? null : RESTRICT_NOT.exec(t);
     const raw = only?.[1] ?? (not ? `can't be spent ${not[1]}` : undefined);
     if (!raw) continue;
-    const spend = raw.replace(/,?\s+and (?:that|it|those)\b.*$/i, "").trim().toLowerCase();
+    const spend = raw.replace(/\s+/g, " ").replace(/,? and (?:that|it|those)\b.*$/i, "").trim().toLowerCase();
     const type = /\bof the chosen type\b/.test(spend) ? "chosen" : [...spend.matchAll(/\b([a-z'-]+)\s+spells?\b/g)].map((m) => m[1]!).find((w) => !NOT_A_TYPE.has(w));
     return type ? { spend, typeName: type } : { spend };
   }
