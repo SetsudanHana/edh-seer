@@ -3,7 +3,8 @@ import { analyzeDeckStructured, collectTokenNodes, disambiguateFaceNames, provis
 import { faceDeckCards } from "./faces.js";
 import { SEED_IMPACT_WEIGHTS, loadImpactWeights } from "@edh-seer/engine";
 import type { TagStats } from "@edh-seer/engine";
-import type { CardTags } from "@edh-seer/tagger";
+import type { CardTags, ManaLine } from "@edh-seer/tagger";
+import { FREE_TAP, mkLine, tapFor } from "./mana-test-support.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { directedReasons } from "./edges.js";
 
@@ -14,12 +15,17 @@ const dc = (
   abilities: CardTags["abilities"],
   subtypes: string[] = [],
   typeLine = "Creature",
+  manaLines: ManaLine[] = [],
+  extra: Partial<CardTags> = {},
 ): DeckCard => ({
   card: { name, typeLine, oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
   tags: {
     oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
     characteristics: { types: [typeLine.toLowerCase()], subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
     abilities,
+    // THE RAMP ROLE READS THE DERIVED MANA RECORD (#1190): a fixture that is ramp carries the line derive would write for it.
+    ...(manaLines.length ? { manaLines } : {}),
+    ...extra,
   },
 });
 
@@ -354,7 +360,7 @@ test("combos are empty when the ComboIndex's cards aren't all present", () => {
 });
 
 test("roles counts distinct cards per structured effect-kind bucket", () => {
-  const ramp = dc("Sol Ring", rampAbility, [], "Artifact");
+  const ramp = dc("Sol Ring", rampAbility, [], "Artifact", [tapFor(["C"])]);
   const draw = dc("Phyrexian Arena", drawAbility);
   const removal = dc("Lightning Bolt", removalAbility, [], "Instant");
   const vanilla = dc("Grizzly Bears", []);
@@ -394,7 +400,7 @@ test("toughness-matters static edges with a wall, NOT a beater", () => {
 
 test("bucketScores reflect own-ability classification; unrelated buckets stay 0", () => {
   const drawer = dc("Drawer", drawAbility);
-  const ramper = dc("Ramper", rampAbility);
+  const ramper = dc("Ramper", rampAbility, [], "Creature", [tapFor(["G"])]);
   const report = analyzeDeckStructured([drawer, ramper], undefined, H);
   const drawerCard = report.cards.find((c) => c.name === "Drawer")!;
   const ramperCard = report.cards.find((c) => c.name === "Ramper")!;
@@ -424,7 +430,7 @@ test("combo-piece cards get a win-condition bonus even with no win-condition abi
 
 test("versatility multiplier scales the 3 new bucket scores with qualifying-bucket count, never touching score", () => {
   const single = dc("Single", drawAbility);
-  const versatile = dc("Versatile", [...drawAbility, ...rampAbility]);
+  const versatile = dc("Versatile", [...drawAbility, ...rampAbility], [], "Creature", [tapFor(["G"])]);
   const singleReport = analyzeDeckStructured([single], undefined, H);
   const versatileReport = analyzeDeckStructured([versatile], undefined, H);
   const s = singleReport.cards.find((c) => c.name === "Single")!;
@@ -583,7 +589,7 @@ test("exposes the continuous axisWeight per card and the deck axis, ranked", () 
   // fires on ~half a real deck; the underlying weight is what the board needs.
   const maker = dc("Inalla", inallaAbility, ["wizard"]);
   const payoff = dc("Kindred Discovery", wizardPayoffAbility);
-  const rock = dc("Mana Rock", [{ kind: "static", effect: { kind: "mana-generation" } }], [], "Artifact");
+  const rock = dc("Mana Rock", [{ kind: "static", effect: { kind: "mana-generation" } }], [], "Artifact", [tapFor(["C"])]);
   const report = analyzeDeckStructured([maker, payoff, rock], ["Inalla"], H);
 
   const kd = report.cards.find((c) => c.name === "Kindred Discovery")!;
@@ -603,7 +609,7 @@ test("a card filling a functional role but OFF-axis is NOT double-duty (needs bo
   const maker = dc("Inalla", inallaAbility, ["wizard"]);
   const payoff = dc("Kindred Discovery", kindredDiscoveryAbility); // on-axis draw → double-duty
   // A plain mana rock: has the ramp role but no theme tags, so it forms no on-axis edge.
-  const rock = dc("Mana Rock", [{ kind: "static", effect: { kind: "mana-generation" } }], [], "Artifact");
+  const rock = dc("Mana Rock", [{ kind: "static", effect: { kind: "mana-generation" } }], [], "Artifact", [tapFor(["C"])]);
   const report = analyzeDeckStructured([maker, payoff, rock], ["Inalla"], H);
   const mr = report.cards.find((c) => c.name === "Mana Rock")!;
   expect(mr.doubleDuty).toBeFalsy();       // has a role, but off-axis
@@ -611,7 +617,7 @@ test("a card filling a functional role but OFF-axis is NOT double-duty (needs bo
 });
 
 test("every card carries its functional roles, not just double-duty cards", () => {
-  const ramp = dc("Sol Ring", rampAbility, [], "Artifact");
+  const ramp = dc("Sol Ring", rampAbility, [], "Artifact", [tapFor(["C"])]);
   const draw = dc("Phyrexian Arena", drawAbility);
   const removal = dc("Lightning Bolt", removalAbility, [], "Instant");
   const vanilla = dc("Grizzly Bears", []);
@@ -1849,12 +1855,13 @@ const adventureRampFace = (): DeckCard => ({
       faces: [{ types: ["creature"], subtypes: [] }, { types: ["sorcery"], subtypes: [] }],
     },
     abilities: [{ ...rampAbility[0], face: 1 }] as unknown as CardTags["abilities"],
+    manaLines: [tapFor(["G"], { face: 1 })],
   } as CardTags,
 });
 
 test("a standalone card and another card's face with the same name each keep their own row and roles", () => {
   for (const order of [0, 1]) {
-    const standalone = dc("Rampant Growth", rampAbility, [], "Sorcery");
+    const standalone = dc("Rampant Growth", rampAbility, [], "Sorcery", [mkLine({ source: "fetch", repeats: "once", cost: { ...FREE_TAP, tap: false } })], { landFetch: { kind: "spell", tapped: true, reach: ["W", "U", "B", "R", "G"] } });
     const adv = adventureRampFace();
     const report = analyzeDeckStructured(order ? [adv, standalone] : [standalone, adv], undefined, H);
     const rows = report.cards.filter((c) => c.name.includes("Rampant Growth"));

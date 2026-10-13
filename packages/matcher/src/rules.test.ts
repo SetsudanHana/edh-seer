@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./build.js";
 import { detectWincons } from "./wincon.js";
@@ -476,8 +476,8 @@ test("a one-shot mana spell is ramp only when it nets, and a permanent mana sour
   expect(cats(spell("Cabal Ritual", [ritualLine(["B"], 3, { cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 1 }), ritualLine(["B"], 5, { gate: "threshold", cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 3 })], 2, "Sorcery"))).toContain("ramp");
   // ...and a spell with a line that nets nothing in either reading is not ramp.
   expect(cats(spell("Net Zero", [ritualLine(["B"], 2, { cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 0 }), ritualLine(["B"], 2, { gate: "threshold", cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 0 })], 2, "Sorcery"))).not.toContain("ramp");
-  // A card with no mana line at all states no number: kept (the lenient direction).
-  expect(cats(spell("No Line", [], 2, "Sorcery"))).toContain("ramp");
+  // A card with no mana line at all is not ramp any more (#1190): the mana-generation LABEL on its ability decides nothing, the derived record does.
+  expect(cats(spell("No Line", [], 2, "Sorcery"))).not.toContain("ramp");
 
   // A PERMANENT MANA SOURCE REPEATS, so it is never net-tested — a dork nets 0 the turn it lands.
   expect(cats(spell("Llanowar Elves", [tapFor(["G"])], 1, "Creature — Elf Druid"))).toContain("ramp");
@@ -508,6 +508,51 @@ test("High Tide's real derived line (a one-turn tap bonus) keeps the Ramp role; 
   expect(cats(spell("Divergent Growth", [mkLine({ source: "static-grant", colours: ["W", "U", "B", "R", "G"], anyColour: "any" })], 1, "Instant"))).not.toContain("ramp");
   // ...and a trigger that DOES out-produce the spell's mana value stays ramp.
   expect(cats(spell("Big Trigger", [triggerLine("dies", "a creature", ["R"], 3)], 2, "Instant"))).toContain("ramp");
+});
+
+// #1190 (Fable round 2, finding 1): THE RAMP ROLE READS THE DERIVED MANA RECORD, like every other mana reader since #1169. It read `abilities[].effect.kind` and printed-text patterns, so
+// four Auras that make no mana anywhere else were Ramp (the cards below carry NO abilities: the verdict can only come from `manaLines` / `landFetch`).
+describe("the Ramp role is read from the derived mana record (#1190)", () => {
+  const rampLeaves = (dc: DeckCard) => ruleIds(dc).filter((id) => loadRules().rules.find((r) => r.id === id)?.category === "ramp");
+  const ruleIds = (dc: DeckCard) => loadRules().rules.filter((r) => ruleMatches(r, dc)).map((r) => r.id);
+  const real = (name: string): DeckCard => structuredClone((goldfish as unknown as DeckCard[]).find((c) => c.card.name === name)!);
+  const ramp = (name: string) => rampLeaves(real(name)).length > 0;
+
+  test("an Aura whose mana is a side effect has no mana line and no Ramp role (owner 2026-10-13)", () => {
+    for (const n of ["Honest Work", "Imprisoned in the Moon", "Mark of Sakiko"]) expect(ramp(n), n).toBe(false);
+    // ...and a mana-generation LABEL alone, with no line behind it, decides nothing (the 18 cards that carried one).
+    const label: DeckCard = { card: { name: "Labelled", oracleText: "", typeLine: "Enchantment — Aura", manaValue: 2 } as Card, tags: manaTags([], { abilities: [{ kind: "static", effect: { kind: "mana-generation" }, repeats: "per-cycle" }] as never }) };
+    expect(rampLeaves(label)).toEqual([]);
+    expect(ruleIds(label)).not.toContain("ramp.engine.source");
+  });
+
+  test("the classes the owner ruled ramp stay ramp, each from its own line", () => {
+    for (const n of ["Abundant Growth", "Phyrexian Altar", "Birgi, God of Storytelling // Harnfel, Horn of Bounty", "Pitiless Plunderer", "Dark Ritual", "High Tide", "Lotus Petal",
+      "Sol Ring", "Llanowar Elves", "Black Market"]) expect(ramp(n), n).toBe(true);
+    // land fetch: a spell, a creature that fetches, and a rock that sacrifices to fetch
+    for (const n of ["Nature's Lore", "Wood Elves", "Wayfarer's Bauble"]) expect(rampLeaves(real(n)), n).toContain("ramp.landFetchSpell");
+    expect(rampLeaves(real("Pitiless Plunderer"))).toContain("ramp.manaToken");
+    expect(rampLeaves(real("Sol Ring"))).not.toContain("ramp.manaToken");
+    expect(rampLeaves(real("Dark Ritual"))).toEqual(["ramp.effect"]);
+  });
+
+  test("a line with NO ability behind it is ramp (Molten Tide's shape, #1182)", () => {
+    const tide: DeckCard = { card: { name: "Molten Tide", oracleText: "", typeLine: "Sorcery", manaValue: 3 } as Card, tags: manaTags([mkLine({ source: "one-shot-spell", repeats: "once", trigger: "tapped-for-mana", triggerSubject: "a mountain", untilEndOfTurn: true, cost: { ...FREE_TAP, tap: false, mana: 3 }, net: -2 })], { isOneShot: true }) };
+    expect(rampLeaves(tide)).toEqual(["ramp.effect"]);
+  });
+
+  test("the engines facet reads the line's repeats and the token it makes, not any token-generation ability", () => {
+    const facets = (n: string) => ruleIds(real(n)).filter((id) => id.startsWith("ramp.engine") || id === "ramp.unlabelled");
+    expect(facets("Sol Ring")).toContain("ramp.engine.source");
+    expect(facets("Phyrexian Altar")).toContain("ramp.engine.source");
+    expect(facets("Pitiless Plunderer")).toContain("ramp.engine.source");
+    expect(facets("Birgi, God of Storytelling // Harnfel, Horn of Bounty")).toContain("ramp.engine.source");
+    expect(facets("Dark Ritual")).toEqual([]);
+    expect(facets("Wood Elves")).toContain("ramp.engine.land");
+    // a creature-token engine is no mana engine: it has no mana line at all
+    const soldiers: DeckCard = { card: { name: "Token Engine", oracleText: "", typeLine: "Enchantment", manaValue: 3 } as Card, tags: manaTags([], { abilities: [{ kind: "triggered", effect: { kind: "token-generation" }, repeats: "repeatable" }] as never }) };
+    expect(ruleIds(soldiers)).not.toContain("ramp.engine.source");
+  });
 });
 
 // --- self-protection in words that are not a printed keyword (roadmap I1) ---
@@ -732,7 +777,9 @@ test("a destroy whose controller gets copies back is neither removal nor an answ
   const saw = mk("Saw in Half", "Destroy target creature. If that creature dies this way, its controller creates two tokens that are copies of that creature, except their power is half that creature's power and their toughness is half that creature's toughness. Round up each time.", "Instant");
   const fractured = mk("Fractured Identity", "Exile target nonland permanent. Each player other than its controller creates a token that's a copy of it.", "Sorcery");
   const hireling = mk("Grim Hireling", "Whenever one or more creatures you control deal combat damage to a player, create two Treasure tokens.\n{B}, Sacrifice X Treasures: Target creature gets -X/-X until end of turn. Activate only as a sorcery.", "Creature — Tiefling Rogue");
-  const cats = detectBuildCategories([saw, fractured, hireling]);
+  // The Treasure is the derived mana line's, not the oracle text's (#1190).
+  const treasure = { ...hireling, tags: manaTags([mkLine({ source: "token-maker", repeats: "repeatable", producesToken: "treasure", cost: { ...FREE_TAP, tap: false } })]) };
+  const cats = detectBuildCategories([saw, fractured, treasure]);
   expect(cats.get("targetedRemoval")?.has("Saw in Half") ?? false).toBe(false);
   expect(cats.get("targetedRemoval")?.has("Fractured Identity")).toBe(true);
   expect(cats.get("targetedRemoval")?.has("Grim Hireling")).toBe(true);
@@ -784,10 +831,10 @@ test("a neutralising Aura is targeted removal for the classes it can enchant", (
 });
 
 // #1167: the rule table reads a card as the DECK holds it. Same printed text, two layouts.
-const tapAdd = (face: number) => [{ kind: "activated", effect: { kind: "mana-generation" }, cost: "{T}", amount: "1", repeats: "per-cycle", face }] as never;
-const layoutCard = (layout: string, face: number, typeLine = "Artifact // Land"): DeckCard => ({
+const tapAdd = (face: 0 | 1) => [tapFor(["C"], { face })];
+const layoutCard = (layout: string, face: 0 | 1, typeLine = "Artifact // Land"): DeckCard => ({
   card: { name: "Probe // Cave", oracleText: "Scry 1.\n//\n{T}: Add {C}.", typeLine, layout } as Card,
-  tags: { abilities: tapAdd(face), characteristics: { types: ["artifact"] } } as never,
+  tags: { abilities: [], manaLines: tapAdd(face), characteristics: { types: ["artifact"] } } as never,
 });
 
 test("countsAsLand op: a modal DFC with a land face is a land to the guards, a transform card is a spell", () => {

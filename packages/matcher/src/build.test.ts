@@ -4,7 +4,7 @@ import { ARCHETYPE_LEAD_FLOOR } from "./archetypes.js";
 import TEMPLATE from "./template-targets.json" with { type: "json" };
 import type { DeckCard } from "./types.js";
 import type { CardTags, ManaLine } from "@edh-seer/tagger";
-import { FREE_TAP, filterLine, mkLine, tapFor, triggerLine } from "./mana-test-support.js";
+import { FREE_TAP, filterLine, mkLine, ritualLine, tapFor, triggerLine } from "./mana-test-support.js";
 import { COVERAGE_CLASSES } from "./answer-coverage.js";
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 
@@ -15,6 +15,7 @@ const mk = (
   typeLine = "Creature",
   abilities: CardTags["abilities"] = [],
   manaLines?: ManaLine[],
+  extra: Partial<CardTags> = {},
 ): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue: 0 } as never,
   tags: {
@@ -22,15 +23,21 @@ const mk = (
     characteristics: { types: [typeLine.toLowerCase()], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
     abilities,
     ...(manaLines ? { manaLines } : {}),
+    ...extra,
   },
 });
 
 const rampAbility: CardTags["abilities"] = [{ kind: "static", effect: { kind: "mana-generation" } }];
+// THE RAMP ROLE READS THE DERIVED MANA RECORD (#1190), so a fixture that is ramp carries the lines derive would write for it, not only a mana-generation label.
+const rockLines = [tapFor(["C"])];
+const treasureLine = (repeats: ManaLine["repeats"] = "once", token = "treasure") => mkLine({ source: "token-maker", repeats, producesToken: token, cost: { ...FREE_TAP, tap: false } });
+const fetchLine = mkLine({ source: "fetch", repeats: "once", cost: { ...FREE_TAP, tap: false } });
+const fetched = (kind: "spell" | "permanent", reach = ["W", "U", "B", "R", "G"]): Partial<CardTags> => ({ landFetch: { kind, tapped: true, reach } });
 const drawAbility: CardTags["abilities"] = [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "draw-card" } }];
 
 test("ramp/draw come from structured effect kinds; lands (utility only) from typeline", () => {
   const m = detectBuildCategories([
-    mk("Sol Ring", "Add {C}{C}.", "Artifact", rampAbility),
+    mk("Sol Ring", "Add {C}{C}.", "Artifact", rampAbility, rockLines),
     mk("Divination", "Draw two cards.", "Sorcery", drawAbility),
     mk("Forest", "", "Basic Land — Forest"),
     mk("Bojuka Bog", "", "Land"),
@@ -101,7 +108,7 @@ test("protection is detected; a land-fetch is ramp not a tutor", () => {
 const completeShell = (): DeckCard[] => {
   const cards: DeckCard[] = [];
   const pop = TEMPLATE.population;
-  for (let i = 0; i < pop.ramp; i++) cards.push(mk(`Rock ${i}`, "Add {C}.", "Artifact", rampAbility));
+  for (let i = 0; i < pop.ramp; i++) cards.push(mk(`Rock ${i}`, "Add {C}.", "Artifact", rampAbility, rockLines));
   for (let i = 0; i < pop.consistency - 4; i++) cards.push(mk(`Draw ${i}`, "Draw a card.", "Sorcery", drawAbility));
   for (let i = 0; i < 4; i++) cards.push(mk(`Scry ${i}`, "Scry 2.", "Sorcery"));
   // TASK 3: spread across all five answer classes so this shell also hits full COVERAGE, not just
@@ -365,9 +372,9 @@ test("doubleDutyRating applies a bounded premium capped at 5", () => {
 
 test("land-ramp spells (search a land onto the battlefield) count as ramp", () => {
   const m = detectBuildCategories([
-    mk("Cultivate", "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", "Sorcery"),
-    mk("Farseek", "Search your library for a Plains, Island, Swamp, or Mountain card, put it onto the battlefield tapped, then shuffle.", "Sorcery"),
-    mk("Rampant Growth", "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.", "Sorcery"),
+    mk("Cultivate", "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", "Sorcery", [], [fetchLine], fetched("spell")),
+    mk("Farseek", "Search your library for a Plains, Island, Swamp, or Mountain card, put it onto the battlefield tapped, then shuffle.", "Sorcery", [], [fetchLine], fetched("spell")),
+    mk("Rampant Growth", "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.", "Sorcery", [], [fetchLine], fetched("spell")),
   ]);
   expect(m.get("ramp")).toEqual(new Set(["Cultivate", "Farseek", "Rampant Growth"]));
 });
@@ -383,16 +390,16 @@ test("ramp-lands that sacrifice for two lands are ramp; fetchlands are not", () 
 
 test("treasure makers count as ramp", () => {
   const m = detectBuildCategories([
-    mk("Big Score", "Create three Treasure tokens. Draw two cards.", "Instant"),
-    mk("Unexpected Windfall", "Draw two cards, then discard a card. Create two Treasure tokens.", "Instant"),
+    mk("Big Score", "Create three Treasure tokens. Draw two cards.", "Instant", [], [treasureLine()]),
+    mk("Unexpected Windfall", "Draw two cards, then discard a card. Create two Treasure tokens.", "Instant", [], [treasureLine()]),
   ]);
   expect(m.get("ramp")).toEqual(new Set(["Big Score", "Unexpected Windfall"]));
 });
 
 test("mana-sac token makers (Eldrazi Spawn/Scion, Gold) count as ramp, like Treasure", () => {
   const m = detectBuildCategories([
-    mk("Glimpse the Impossible", "Exile the top three cards of your library. You may play those cards this turn. At the beginning of the next end step, if any of those cards remain exiled, put them into your graveyard, then create a 0/1 colorless Eldrazi Spawn creature token for each of them.", "Sorcery"),
-    mk("Sacrifice the Wastes", "As an additional cost to cast this spell, sacrifice a creature. Create three Gold tokens.", "Sorcery"),
+    mk("Glimpse the Impossible", "Exile the top three cards of your library. You may play those cards this turn. At the beginning of the next end step, if any of those cards remain exiled, put them into your graveyard, then create a 0/1 colorless Eldrazi Spawn creature token for each of them.", "Sorcery", [], [treasureLine("once", "eldrazi-spawn")]),
+    mk("Sacrifice the Wastes", "As an additional cost to cast this spell, sacrifice a creature. Create three Gold tokens.", "Sorcery", [], [treasureLine("once", "gold")]),
   ]);
   expect(m.get("ramp")).toEqual(new Set(["Glimpse the Impossible", "Sacrifice the Wastes"]));
 });
@@ -663,9 +670,9 @@ test("a gap names a cost BAND, and a land gap does not", () => {
 describe("rampResilience", () => {
   // Answer-pool ordering: creature 1,839 answers · artifact 755 · land 306. A tier is only worth
   // separating because those three numbers differ.
-  const dork = mk("Llanowar Elves", "{T}: Add {G}.", "Creature — Elf Druid", rampAbility);
-  const rock = mk("Sol Ring", "Add {C}{C}.", "Artifact", rampAbility);
-  const fetchSpell = mk("Cultivate", "Search your library for up to two basic land cards, reveal them, put one onto the battlefield tapped and the other into your hand.", "Sorcery");
+  const dork = mk("Llanowar Elves", "{T}: Add {G}.", "Creature — Elf Druid", rampAbility, [tapFor(["G"])]);
+  const rock = mk("Sol Ring", "Add {C}{C}.", "Artifact", rampAbility, rockLines);
+  const fetchSpell = mk("Cultivate", "Search your library for up to two basic land cards, reveal them, put one onto the battlefield tapped and the other into your hand.", "Sorcery", [], [fetchLine], fetched("spell"));
 
   it("splits the package three ways", () => {
     const r = rampResilience([dork, rock, fetchSpell]);
@@ -684,6 +691,7 @@ describe("rampResilience", () => {
       "Solemn Simulacrum",
       "When this creature enters, you may search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
       "Artifact Creature — Golem",
+      [], [fetchLine], fetched("permanent"),
     );
     expect(rampResilience([solemn])).toMatchObject({ land: 1, rock: 0, dork: 0 });
   });
@@ -697,6 +705,7 @@ describe("rampResilience", () => {
       "When this creature enters, search your library for a Forest card and put it onto the battlefield.",
       "Creature — Elf Scout",
       rampAbility,
+      [tapFor(["G"]), fetchLine], fetched("permanent", ["G"]),
     );
     const r = rampResilience([both]);
     expect(r.land + r.rock + r.dork).toBe(1);
@@ -818,7 +827,8 @@ test("draw facets: engines are any draw above `once`, unlabelled are refused lab
     mk("Mystery", "Draw a card, maybe.", "Instant", draw()),
     // An unlabelled draw beside a labelled ENGINE draw is an engine, not unlabelled.
     mk("Both", "...", "Enchantment", [...draw("repeatable"), ...draw()]),
-    mk("Sol Ring", "Add {C}{C}.", "Artifact", rampAbility),
+    // an unlabelled mana line: the fixture's static rock has no `repeats` label
+    mk("Sol Ring", "Add {C}{C}.", "Artifact", rampAbility, [tapFor(["C"], { repeats: null })]),
   ];
   const facets = detectBuildFacets(cards).get("draw")!;
   expect(facets.get("engines")).toEqual(new Set(["Rhystic Study", "Arch of Orazca", "Both"]));
@@ -837,13 +847,13 @@ test("ramp facets: a source that comes back is an engine, a ritual is neither, a
   const mana = (repeats?: string, kind = "mana-generation"): CardTags["abilities"] =>
     [{ kind: "activated", effect: { kind }, ...(repeats ? { repeats } : {}) } as never];
   const cards = [
-    mk("Sol Ring", "{T}: Add {C}{C}.", "Artifact", mana("per-cycle")),
-    mk("Dark Ritual", "Add {B}{B}{B}.", "Instant", [{ kind: "on-cast", effect: { kind: "ritual" }, repeats: "once" } as never]),
-    mk("Cultivate", "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", "Sorcery"),
+    mk("Sol Ring", "{T}: Add {C}{C}.", "Artifact", mana("per-cycle"), [tapFor(["C"], { repeats: "per-cycle" })]),
+    mk("Dark Ritual", "Add {B}{B}{B}.", "Instant", [{ kind: "on-cast", effect: { kind: "ritual" }, repeats: "once" } as never], [ritualLine(["B"], 3, { net: 2 })], { isOneShot: true }),
+    mk("Cultivate", "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", "Sorcery", [], [fetchLine], fetched("spell")),
     mk("Myriad Landscape", "{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.", "Land", mana("once")),
-    mk("Crypt Ghast", "Whenever you tap a Swamp for mana, add an additional {B}.", "Creature", mana(undefined)),
+    mk("Crypt Ghast", "Whenever you tap a Swamp for mana, add an additional {B}.", "Creature", mana(undefined), [triggerLine("tapped-for-mana", "a swamp", ["B"], 1, { repeats: null })]),
     mk("Smothering Tithe", "Whenever an opponent draws a card, that player may pay {2}. If they don't, you create a Treasure token.", "Enchantment",
-      [{ kind: "triggered", effect: { kind: "token-generation" }, repeats: "repeatable" } as never]),
+      [{ kind: "triggered", effect: { kind: "token-generation" }, repeats: "repeatable" } as never], [treasureLine("repeatable")]),
   ];
   const members = detectBuildCategories(cards).get("ramp")!;
   const facets = detectBuildFacets(cards).get("ramp")!;

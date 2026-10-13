@@ -1,4 +1,5 @@
 import ruleSet from "./rules.json" with { type: "json" };
+import type { ManaLineSource } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { cardLines } from "./mana-lines.js";
 import { countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
@@ -64,6 +65,14 @@ export type RuleClause =
    *  a transform card with a land back (Treasure Map) a land to every `not` guard, so it earned no
    *  role while the land count called it a spell. */
   | { op: "countsAsLand" }
+  /** A DERIVED MANA LINE (`CardTags.manaLines`, #1169; #1190): the card has at least one line, of the faces in play from the deck (`cardLines(dc, true)`: a transform card's NON-LAND
+   *  back counts, as the Ramp role always read it; a land back never does, `ruleMatches` refuses it), satisfying EVERY filter given, tested on the SAME line. The Ramp role asked the
+   *  ability list and printed text instead until #1190, which is how four Auras that make no mana anywhere else were ramp. `source` names the line's `ManaLineSource`; `repeats` its
+   *  `repeats` label (`null` = the ability the line was read from states none); `producesToken` the lines that make a mana token (Treasure, Gold, Powerstone, Eldrazi Spawn). Closed
+   *  like `effectKind`: a filter on a field of the line, never an expression. */
+  | { op: "manaLine"; source?: ManaLineSource[]; repeats?: (string | null)[]; producesToken?: true }
+  /** The card puts lands onto the battlefield FROM THE LIBRARY (`CardTags.landFetch`: Cultivate, Wood Elves, Wayfarer's Bauble). A fetch to hand only is no `landFetch`. */
+  | { op: "landFetch" }
   | { op: "anyOf"; clauses: RuleClause[] };
 
 export interface Rule {
@@ -244,6 +253,13 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       return pattern(set, clause.pattern).test(ownText(dc.card));
     case "countsAsLand":
       return countsAsLand(dc.card);
+    case "manaLine":
+      return cardLines(dc, true).some((l) =>
+        (clause.source === undefined || clause.source.includes(l.source))
+        && (clause.repeats === undefined || clause.repeats.includes(l.repeats))
+        && (clause.producesToken === undefined || l.producesToken !== null));
+    case "landFetch":
+      return dc.tags?.landFetch !== undefined;
     case "typeLine":
       return (dc.card.typeLine ?? "").toLowerCase().includes(clause.contains);
     case "effectKind":

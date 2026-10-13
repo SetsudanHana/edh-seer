@@ -1,5 +1,5 @@
 {
-  "version": 19,
+  "version": 20,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -112,11 +112,11 @@
       "id": "ramp.effect",
       "category": "ramp",
       "match": [
-        { "op": "effectKind", "in": ["mana-generation", "fast-mana", "ritual"] },
+        { "op": "manaLine", "source": ["activated", "trigger", "static-grant", "aura-trigger", "one-shot-spell"] },
         { "op": "oneShotNetsMana", "atLeast": 1 }
       ],
       "not": [{ "op": "countsAsLand" }],
-      "why": "RAMP IS A NET GAIN (owner's rule, roadmap I4): Dark Ritual is {B} for {B}{B}{B} and Manamorphose is two mana for two mana plus a cantrip. The net test judges ONE-SHOTS ONLY -- a permanent mana source repeats, so a dork nets 0 the turn it lands and is ramp anyway."
+      "why": "A DERIVED MANA LINE that adds mana (#1190; it read the ability list's mana-generation kind): a tap, a trigger (Birgi), a sacrifice outlet (Phyrexian Altar), a grant, an Aura's trigger, a ritual. A mana-generation LABEL with no line behind it (Honest Work, Imprisoned in the Moon, Mark of Sakiko, Utopia Vow: owner 2026-10-13, an Aura counts only if mana is its purpose) is none. RAMP IS A NET GAIN (owner's rule, roadmap I4): Dark Ritual is {B} for {B}{B}{B} and Manamorphose is two mana for two mana plus a cantrip. The net test judges ONE-SHOTS ONLY, from the line's own net -- a permanent mana source repeats, so a dork nets 0 the turn it lands and is ramp anyway."
     },
     {
       "id": "draw.effect",
@@ -153,30 +153,30 @@
       "id": "ramp.engine.source",
       "facet": { "of": "ramp", "name": "engines" },
       "match": [{ "op": "anyOf", "clauses": [
-        {"op": "effectKind", "in": ["mana-generation", "fast-mana"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
-        {"op": "effectKind", "in": ["token-generation"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
+        { "op": "manaLine", "source": ["activated", "trigger", "static-grant", "aura-trigger"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] },
+        { "op": "manaLine", "source": ["token-maker"], "producesToken": true, "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] },
         { "op": "countsAsLand" }
       ] }],
-      "why": "A MANA SOURCE THAT COMES BACK (owner, 2026-09-05: 'do the same for ramp'). A rock or a dork taps every round, a Treasure ENGINE makes one every turn, and a ramp land is itself the source; a ritual or a one-off pair of Treasures is spent once and is neither facet. The land-fetch half of this facet is the rule below, because a facet rule cannot AND two clauses inside anyOf."
+      "why": "A MANA SOURCE THAT COMES BACK (owner, 2026-09-05: 'do the same for ramp'). A rock or a dork taps every round, a Treasure ENGINE makes one every turn (a line that makes a mana TOKEN: #1190 read any token-generation ability, so a creature-token engine was a mana engine), and a ramp land is itself the source; a ritual or a one-off pair of Treasures is spent once and is neither facet. The land-fetch half of this facet is the rule below, because a facet rule cannot AND two clauses inside anyOf."
     },
     {
       "id": "ramp.engine.land",
       "facet": { "of": "ramp", "name": "engines" },
-      "match": [{ "op": "oracle", "pattern": "landFetch" }, { "op": "oracle", "pattern": "ontoBattlefield" }],
+      "match": [{ "op": "landFetch" }],
       "not": [{ "op": "countsAsLand" }],
-      "why": "A fetched land taps every turn from then on: the spell resolves once, the acceleration repeats. Same two patterns as `ramp.landFetchSpell`, by name, so the two cannot drift."
+      "why": "A fetched land taps every turn from then on: the spell resolves once, the acceleration repeats. The same derived `landFetch` as `ramp.landFetchSpell`, so the two cannot drift."
     },
     {
       "id": "ramp.unlabelled",
       "facet": { "of": "ramp", "name": "unlabelled" },
-      "match": [{ "op": "effectKind", "in": ["mana-generation", "fast-mana", "ritual", "token-generation"], "repeats": [null] }],
+      "match": [{ "op": "manaLine", "source": ["activated", "trigger", "static-grant", "aura-trigger", "one-shot-spell", "token-maker"], "repeats": [null] }],
       "not": [
-        {"op": "effectKind", "in": ["mana-generation", "fast-mana"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
-        {"op": "effectKind", "in": ["token-generation"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
+        { "op": "manaLine", "source": ["activated", "trigger", "static-grant", "aura-trigger"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] },
+        { "op": "manaLine", "source": ["token-maker"], "producesToken": true, "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] },
         { "op": "countsAsLand" },
-        { "op": "oracle", "pattern": "landFetch" }
+        { "op": "landFetch" }
       ],
-      "why": "A mana ability `repeats.ts` refused to label, on a card with no labelled engine beside it and no land to fall back on. Shown, not hidden."
+      "why": "A mana line whose ability `repeats.ts` refused to label, on a card with no labelled engine beside it and no land to fall back on. Shown, not hidden."
     },
     {
       "id": "removal.engine",
@@ -218,12 +218,9 @@
     {
       "id": "ramp.landFetchSpell",
       "category": "ramp",
-      "match": [
-        { "op": "oracle", "pattern": "landFetch" },
-        { "op": "oracle", "pattern": "ontoBattlefield" }
-      ],
+      "match": [{ "op": "landFetch" }],
       "not": [{ "op": "countsAsLand" }],
-      "why": "Cultivate/Farseek net +1 land. Fetch-to-hand only is card advantage, not ramp."
+      "why": "Cultivate/Farseek net +1 land: the derived `landFetch` (#1190; it was two printed-text patterns), which is a fetch ONTO THE BATTLEFIELD from the library. Fetch-to-hand only is card advantage, not ramp."
     },
     {
       "id": "ramp.landPut",
@@ -235,9 +232,9 @@
     {
       "id": "ramp.manaToken",
       "category": "ramp",
-      "match": [{ "op": "oracle", "pattern": "manaToken" }],
+      "match": [{ "op": "manaLine", "source": ["token-maker"], "producesToken": true }],
       "not": [{ "op": "countsAsLand" }],
-      "why": "Treasure/Gold and Eldrazi Spawn/Scion are acceleration. ONE TREASURE BOUGHT BY A SACRIFICE STILL COUNTS (owner ruling 2026-09-27, #534): The Sackville-Bagginses and Ruthless Technomancer, the only two of 419 matching cards whose Treasure waits on sacrificing another permanent, stay ramp -- the Treasure is mana you did not have. Not staple-grade (`rampGrade` 0): a suggestion list offers it only through a synergy."
+      "why": "A line that makes a mana TOKEN (#1190; it was a printed-text pattern): Treasure/Gold and Eldrazi Spawn/Scion are acceleration. ONE TREASURE BOUGHT BY A SACRIFICE STILL COUNTS (owner ruling 2026-09-27, #534): The Sackville-Bagginses and Ruthless Technomancer, the only two of 419 matching cards whose Treasure waits on sacrificing another permanent, stay ramp -- the Treasure is mana you did not have. Not staple-grade (`rampGrade` 0): a suggestion list offers it only through a synergy."
     },
     {
       "id": "cardSelection.text",
