@@ -229,3 +229,21 @@ describe("an Aura's trigger is not a colour source, so it is no colour swap eith
     expect(cardLines(get("Fertile Ground")).some((l) => l.source === "aura-trigger")).toBe(true);
   });
 });
+
+// THE LOYALTY TEST APPLIES TO COLOUR SOURCES TOO (owner 2026-10-13): a walker's loyalty ability is a colour source only if the walker can activate it the turn it is
+// cast. Nissa, Worldwaker (-7 from loyalty 3) is NOT a Forest colour source any more -- correct, not a regression: it was counted before 2b-1 only because the
+// loyalty cost was never compared with the loyalty. `paidWithResource` lets a loyalty cost through, so the colour path asks `usableLoyalty` itself.
+describe("a loyalty ability is a colour source only if the walker can activate it the turn it is cast (owner 2026-10-13)", () => {
+  const lantern = cardLines(get("Chromatic Lantern")).find((l) => l.source === "static-grant")!;
+  const withLoyalty = (cost: string, startLoyalty?: number) => ({ ...lantern, cost: { ...lantern.cost, other: [cost] }, ...(startLoyalty !== undefined ? { startLoyalty } : {}) });
+  test("the control: the same static-grant line with no loyalty cost is a colour source", () => {
+    expect(isColourSource(lantern)).toBe(true);
+  });
+  test("a -7 from loyalty 3 (Nissa, Worldwaker's shape) and a -N with no known loyalty are no source; a -2 from 3, a +1 and a 0 are", () => {
+    expect(isColourSource(withLoyalty("−7", 3))).toBe(false);
+    expect(isColourSource(withLoyalty("−2"))).toBe(false);
+    expect(isColourSource(withLoyalty("−2", 3))).toBe(true);
+    expect(isColourSource(withLoyalty("+1", 4))).toBe(true);
+    expect(isColourSource(withLoyalty("0", 3))).toBe(true);
+  });
+});

@@ -1473,7 +1473,7 @@ export interface ManaLine {
   triggerSubject: string | null;
   /** The printed STARTING LOYALTY of the planeswalker face that prints this line, present only when the line costs loyalty (`cost.other` holds "+1", "0",
    *  "−1"): the walker enters with that many counters (CR 306.5b) and a loyalty cost needs that many (CR 606.6), so "−1: Add {R}{R}" is playable the turn
-   *  the walker is cast iff this is at least 1. From `derive/starting-loyalty.json` (MTGJSON), as the `cards` documents carry no loyalty. */
+   *  the walker is cast iff this is at least 1. From the card document's `loyalty` (Scryfall, per face), carried by ingest (owner 2026-10-13). */
   startLoyalty?: number;
 }
 

@@ -26,7 +26,6 @@ import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
 import { reductionOf } from "./reduction.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
-import startingLoyalty from "./starting-loyalty.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
@@ -442,7 +441,10 @@ import { emblemRecipient } from "../emblem.js";
 // 304: #1169 task 2b-1 review round 2: `ManaLine.startLoyalty` (a planeswalker's printed loyalty on each line that costs loyalty, so a consumer can tell
 // "−1: Add {R}{R}" is playable the turn the walker is cast); an Aura's mana is dropped when the Aura is removal (enchants an opponent's permanent, or
 // "loses all other card types": Honest Work, Imprisoned in the Moon) and a granted TRIGGER is no static-grant (Mark of Sakiko).
-export const DERIVE_VERSION = 304;
+// 305: #1169 task 2b-1 review round 3: `startLoyalty` is read from the card document (Scryfall `loyalty`, carried by ingest) and not from a checked-in MTGJSON table
+// (the same numbers, plus the six walkers the table lacked); an Aura whose text says the enchanted creature "can't attack or block" is removal and makes no
+// static-grant line (Utopia Vow, owner 2026-10-13).
+export const DERIVE_VERSION = 305;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2855,6 +2857,8 @@ export interface DeriveInput {
   /** The printed mana cost of each face, index = face, "" when it prints none (Mox Tantalite). Read by `manaLines` for the
    *  cost of a spell and for `suspendOnly`. Absent: only `characteristics.cmc` is known. */
   manaCosts?: string[];
+  /** The printed starting loyalty of each face (index = face, null for a face with none), from the card document (`faceLoyalties`). Read by `manaLines`. */
+  startLoyalty?: (number | null)[];
 }
 
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
@@ -2967,7 +2971,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
       ...(input.grantedToken ? { grantedToken: input.grantedToken } : {}),
       ...(input.manaCosts ? { manaCosts: input.manaCosts } : {}),
       ...(input.oracleText ? { oracleText: input.oracleText } : {}),
-      ...((startingLoyalty as Record<string, (number | null)[]>)[input.oracleId] ? { startLoyalty: (startingLoyalty as Record<string, (number | null)[]>)[input.oracleId]! } : {}),
+      ...(input.startLoyalty ? { startLoyalty: input.startLoyalty } : {}),
     }),
     // Written only when there is something to surface, so a clean card stays byte-identical.
     ...(unknownTriggers.length ? { unknownTriggers } : {}),

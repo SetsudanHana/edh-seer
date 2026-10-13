@@ -108,7 +108,17 @@ export function charsFrom(doc: {
   } as never) as DerivedTagsDoc["characteristics"];
 }
 
-type CardDocLike = Parameters<typeof charsFrom>[0] & { oracleText?: string; keywords?: string[]; typeLine?: string; allParts?: { component?: string; typeLine?: string }[]; manaCost?: string; faces?: { manaCost?: string }[] };
+/** The printed starting loyalty of each face (index = face), a NUMBER where one is printed and null where a face has none or prints "X" / "*" (no counter
+ *  count a loyalty cost can be compared with; CEILING: the corpus holds four, Nissa, Steward of Elements "X", B.O.B. and Personal Decoy "*", Dungeon Master "1d4+1", and none has a
+ *  loyalty-cost mana line, so none is read; one that gains one shows in `derive-corpus`'s count of loyalty-cost lines with no starting loyalty). Undefined for a card with no loyalty at all. From the card document, as ingested from Scryfall (owner 2026-10-13);
+ *  a loyalty cost reads it as `ManaLine.startLoyalty`. */
+export function faceLoyalties(doc: { loyalty?: string; faces?: { loyalty?: string }[] }): (number | null)[] | undefined {
+  const one = (s: string | undefined): number | null => (s !== undefined && /^\d+$/.test(s) ? Number(s) : null);
+  const per = doc.faces && doc.faces.length > 0 ? doc.faces.map((f) => f.loyalty) : [doc.loyalty];
+  return per.some((s) => s !== undefined) ? per.map(one) : undefined;
+}
+
+type CardDocLike = Parameters<typeof charsFrom>[0] & { oracleText?: string; keywords?: string[]; typeLine?: string; allParts?: { component?: string; typeLine?: string }[]; manaCost?: string; loyalty?: string; faces?: { manaCost?: string; loyalty?: string }[] };
 
 /** EVERYTHING DERIVE READS BESIDE THE CLAUSES, from the card document: the one construction
  *  `derive-corpus` and the grammar-only measurement (#896 task 7) share, so the two derive the same
@@ -129,6 +139,7 @@ export function deriveInputOf(card: CardDocLike, oracleId: string, name: string,
     clauseFaces: clauseFaces(card),
     clauseGrants: clauseGrants(card),
     manaCosts: faceManaCosts(card),
+    ...(faceLoyalties(card) ? { startLoyalty: faceLoyalties(card)! } : {}),
     oracleText: card.oracleText,
     grantedToken: grantedTokenClauses(card),
     ...(readings ? { readings } : {}),

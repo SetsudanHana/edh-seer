@@ -121,8 +121,10 @@ const TAP_REPLACEMENT = /is tapped for mana|tap an? (?:permanent|creature|land|p
 const BONUS_COLORLESS = /tap a permanent for \{c\}|tap a land for \{c\}/i;
 const BONUS_CREATURE = /tap a creature for mana/i;
 /** "Whenever you tap a Forest for mana, add an additional {G}" (Nissa, Who Shakes the World), "a Swamp" (Crypt Ghast, Nirkana Revenant). The "is tapped for mana"
- *  shape (Vernal Bloom, Gauntlet of Might) is not read: it names no `you`, and it is every player's. */
-const BONUS_LAND_TYPE = /\btap an? (plains|island|swamp|mountain|forest) for mana\b/i;
+ *  shape (Vernal Bloom, Gauntlet of Might) is not read: it names no `you`, and it is every player's. A STANDING bonus only: the sentence opens a line and adds at once, so
+ *  Rikala's "..., if there are three or more tide counters on Rikala, add an additional {U}" (an intervening if) and Pyre Rhymer // Molten Tide's "Until end of turn, whenever
+ *  you tap a Mountain ..." (one turn) are refused rather than priced as always on (owner 2026-10-13 rulings name Nissa, Crypt Ghast and Nirkana Revenant). */
+const BONUS_LAND_TYPE = /^whenever you tap an? (plains|island|swamp|mountain|forest) for mana, add an additional\b/im;
 
 /** WHICH SOURCES A PER-SOURCE TAP BONUS PAYS FOR (Forsaken Monument: "tap a permanent for {C}", Leyline of Abundance: "tap a creature for mana", Nissa, Who Shakes the World: "tap a Forest for mana"),
  *  or undefined. Read from the PRINTED text. CEILING: derive carries the bonus as a `trigger` line (event `tapped-for-mana`), but the subject it names is not one reading:

@@ -12523,12 +12523,14 @@
     {
      "name": "Arlinn, the Pack's Hope",
      "typeLine": "Legendary Planeswalker — Arlinn",
-     "manaCost": "{2}{R}{G}"
+     "manaCost": "{2}{R}{G}",
+     "loyalty": "4"
     },
     {
      "name": "Arlinn, the Moon's Fury",
      "typeLine": "Legendary Planeswalker — Arlinn",
-     "manaCost": ""
+     "manaCost": "",
+     "loyalty": "4"
     }
    ]
   },
@@ -12652,7 +12654,8 @@
      "typeLine": "Emblem — Nissa",
      "printingId": "56b191fe-7a92-4d08-91a4-036699d08bc4"
     }
-   ]
+   ],
+   "loyalty": "5"
   },
   "clauses": [
    {
@@ -12778,7 +12781,8 @@
    "power": null,
    "toughness": null,
    "layout": "normal",
-   "manaCost": "{3}{G}{G}"
+   "manaCost": "{3}{G}{G}",
+   "loyalty": "3"
   },
   "clauses": [
    {
@@ -12862,7 +12866,8 @@
    "manaCost": "{3}{R}",
    "producedMana": [
     "R"
-   ]
+   ],
+   "loyalty": "5"
   },
   "clauses": [
    {
@@ -12937,7 +12942,8 @@
      "typeLine": "Emblem — Koth",
      "printingId": "89afdaa4-3555-4adf-b3c4-63f905710c76"
     }
-   ]
+   ],
+   "loyalty": "3"
   },
   "clauses": [
    {
@@ -13024,7 +13030,8 @@
      "typeLine": "Emblem — Chandra",
      "printingId": "5fdc53ba-e023-4ee4-bb14-fd8c52955ee9"
     }
-   ]
+   ],
+   "loyalty": "4"
   },
   "clauses": [
    {

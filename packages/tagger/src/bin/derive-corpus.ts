@@ -12,7 +12,7 @@ import type { DeriveItem, DeriveResult } from "../derive-worker.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
-import { MANA_TAG_KEYS } from "../derive/mana-lines.js";
+import { MANA_TAG_KEYS, unpricedLoyaltyLines } from "../derive/mana-lines.js";
 import {
   CLAUSES_COLLECTION, DERIVED_COLLECTION, ensureClauseIndexes, needsDerive, segmentHash,
   type CardClausesDoc, type DerivedTagsDoc,
@@ -51,6 +51,8 @@ console.log(`sticker cards excluded: ${stickers.size} (${removed} derived row(s)
 const answeredHash = new Map(clauseDocs.filter((d) => !(d as { isToken?: boolean }).isToken).map((d) => [d.oracleId, d.segmentHash] as const));
 const grammarOnly = new Set<string>();
 let grammarOnlyWritten = 0;
+// A loyalty-cost mana line whose card document gave no starting loyalty is a source silently dropped downstream (owner 2026-10-13: loyalty comes from ingest): counted and named.
+const unpricedLoyalty: string[] = [];
 for await (const card of store.cards.find({ "legalities.commander": "legal" } as never).project({ _id: 1, oracleText: 1, keywords: 1, typeLine: 1 })) {
   const c = card as unknown as { _id: string; oracleText?: string; keywords?: string[]; typeLine?: string };
   if (stickers.has(c._id)) continue;
@@ -67,6 +69,7 @@ for await (const card of store.cards.find({ "legalities.commander": "legal" } as
   // normalizeVersion 0: no answer was bought, so a later bought one always reads as new.
   await derivedCol.updateOne({ oracleId: c._id }, { $set: { ...tags, deriveVersion: DERIVE_VERSION, normalizeVersion: 0, segmentHash: hash, clauseSource: "grammar" }, ...unsetAbsent(tags) }, { upsert: true });
   grammarOnlyWritten++;
+  unpricedLoyaltyLines(tags.manaLines).forEach(() => unpricedLoyalty.push(source.name));
 }
 console.log(`no answer for the printed text, read completely by the grammar: ${grammarOnly.size} card(s), ${grammarOnlyWritten} derived this run`);
 
@@ -113,6 +116,7 @@ try {
       // counting out loud rather than silently writing a doc that reads as a vanilla bear.
       if (tags.abilities.length === 0 && (doc.canonical.length > 0)) empty++;
       written++;
+      unpricedLoyaltyLines(tags.manaLines).forEach(() => unpricedLoyalty.push(doc.name));
       if (token) tokenWritten++;
       return {
         updateOne: {
@@ -140,4 +144,5 @@ try {
 
 console.log(`derived ${written} (${tokenWritten} token), up-to-date ${skipped}, wrote ${empty} card(s)/token(s) with clauses but zero abilities`);
 console.log(`from the printed text alone (task 7): ${grammarSwitched} of ${written - tokenWritten} cards derived this run`);
+console.log(`loyalty-cost mana lines with no starting loyalty on the card document: ${unpricedLoyalty.length}${unpricedLoyalty.length ? ` (${[...new Set(unpricedLoyalty)].join(", ")})` : ""}`);
 await store.close();

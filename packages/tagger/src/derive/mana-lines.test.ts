@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { deriveInputOf } from "../derive-input.js";
 import { deriveCardTags } from "./derive.js";
 import type { CardTags, ManaLine } from "../schema.js";
+import { unpricedLoyaltyLines } from "./mana-lines.js";
 import fixtures from "./mana-lines.fixtures.json" with { type: "json" };
 
 const WUBRG = ["W", "U", "B", "R", "G"];
@@ -448,8 +449,12 @@ describe("an Aura's mana counts only if mana is the card's purpose (owner 2026-1
     // permanent; the land it leaves is not ramp. Honest Work: "Enchant creature an opponent controls". Mark of Sakiko: the grant is a combat-damage trigger, no tap.
     for (const n of ["Imprisoned in the Moon", "Honest Work", "Mark of Sakiko"]) expect(tagsOf(n).manaLines, n).toBeUndefined();
   });
+  it("a pacifism that also grants a tap ability is removal, not ramp (owner 2026-10-13: Utopia Vow, \"Enchanted creature can't attack or block\"); the plain grants stay", () => {
+    expect(tagsOf("Utopia Vow").manaLines).toBeUndefined();
+    for (const n of ["Karametra's Favor", "Multani's Harmony"]) expect(linesOf(n, "static-grant").length, n).toBeGreaterThan(0);
+  });
   it("an Aura that gives a land (or creature) a tap ability keeps its line: Abundant Growth, Lithoform Blight, Bigger on the Inside, the 'enchanted land' triggers", () => {
-    for (const n of ["Abundant Growth", "Gift of Paradise", "Bigger on the Inside", "Grafted Growth", "Karametra's Favor", "Multani's Harmony", "Utopia Vow"]) {
+    for (const n of ["Abundant Growth", "Gift of Paradise", "Bigger on the Inside", "Grafted Growth", "Karametra's Favor", "Multani's Harmony"]) {
       expect(linesOf(n, "static-grant").length, n).toBeGreaterThan(0);
     }
     expect(linesOf("Lithoform Blight", "static-grant")).toHaveLength(2);
@@ -466,6 +471,14 @@ describe("a planeswalker's starting loyalty rides on its loyalty-cost lines (CR 
     expect(linesOf("Nissa, Who Shakes the World", "fetch")[0]).toMatchObject({ cost: { other: ["\u22128"] }, startLoyalty: 5 });
     // The BACK face's own loyalty (Arlinn, the Moon's Fury), by face.
     expect(linesOf("Arlinn, the Pack's Hope").find((l) => l.face === 1)).toMatchObject({ startLoyalty: 4 });
+  });
+  it("no loyalty-cost mana line in the fixtures is left without its starting loyalty (a silent drop otherwise: derive-corpus prints this count, expected 0)", () => {
+    const bad = Object.keys(fixtures).filter((n) => unpricedLoyaltyLines(tagsOf(n).manaLines).length > 0);
+    expect(bad).toEqual([]);
+    // ...and the check itself fires: the same card derived from a document with no loyalty.
+    const fx = (fixtures as unknown as Record<string, { card: Record<string, unknown> & { _id: string; name: string }; clauses: never[] }>)["Chandra, Novice Pyromancer"]!;
+    const { loyalty: _l, ...bare } = fx.card;
+    expect(unpricedLoyaltyLines(deriveCardTags(deriveInputOf(bare as never, fx.card._id, fx.card.name, fx.clauses)).manaLines).length).toBeGreaterThan(0);
   });
   it("a line with no loyalty cost carries none", () => {
     expect(only("Sol Ring")).not.toHaveProperty("startLoyalty");

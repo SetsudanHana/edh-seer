@@ -1,6 +1,6 @@
 import type { KarstenInputs } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectBuildCategories } from "./build.js";
-import { classifyAccelerant, playableLines } from "./goldfish.js";
+import { classifyAccelerant, manaOutput, playableLines } from "./goldfish.js";
 import { isManaSource } from "./mana-audit.js";
 import { RAMP_RESILIENCE, drawCredit, landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
@@ -152,6 +152,15 @@ export interface LandRecommendation extends Required<KarstenInputs> {
  *  caller that has them. */
 export interface RoleTargets { ramp?: number; consistency?: number }
 
+/** WHAT AN ACCELERANT KEEPS OF THE ROCK'S 0.57 (`RAMP_RESILIENCE`), or null for a card the goldfish does not play as one. A planeswalker whose mana runs out after ONE
+ *  activation (`ManaOutput.turns` 1: Koth's "-2: Add {R}{R}{R}{R}" from loyalty 3) is a one-shot to this weight -- how long a piece keeps producing is exactly what the
+ *  table prices; one that lasts longer ("+1", or five turns of a "-1") keeps its kind's. The count of accelerants (`LandRecommendation.accelerants`) is unchanged. */
+export function rampWeight(dc: DeckCard): number | null {
+  const a = classifyAccelerant(dc);
+  if (!a) return null;
+  return manaOutput(dc).turns === 1 ? RAMP_RESILIENCE.oneShot : RAMP_RESILIENCE[a.kind];
+}
+
 /** Target vs actual land count for a deck.
  *
  *  The target is `mana-base.ts`'s `landTarget`: the curve and the commander, less 0.57 of a land
@@ -188,8 +197,8 @@ export function recommendedLands(
   // maker -- 0.15. Copies count, as `accelerants` always has.
   const rampRoleNames = roleMembers("ramp");
   const rampWeights = library.flatMap((dc): number[] => {
-    const a = classifyAccelerant(dc);
-    if (a) return [RAMP_RESILIENCE[a.kind]];
+    const w = rampWeight(dc);
+    if (w !== null) return [w];
     return rampRoleNames.has(dc.card.name) && !isLand(dc) ? [RAMP_RESILIENCE.oneShot] : [];
   }).sort((x, y) => y - x);
   // EACH DRAW CARD AT WHAT ITS MANA VALUE SAVES (`drawCredit`), best first.

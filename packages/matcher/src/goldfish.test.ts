@@ -182,6 +182,16 @@ test("derived lines the goldfish cannot play are not accelerants: a gate it cann
     .toEqual(["colorless", "creature", "land:swamp", "land:forest"]);
 });
 
+// A TAP BONUS THAT IS CONDITIONAL, OR LASTS A TURN, IS NOT PRICED AS A STANDING ONE (2b-1 review round 3): Rikala, Homarid King ("..., if there are three or more tide counters
+// on Rikala, add an additional {U}") and Pyre Rhymer // Molten Tide ("Until end of turn, whenever you tap a Mountain for mana, add an additional {R}") name a land type like Nissa and
+// Crypt Ghast do, and are neither unconditional nor permanent. Refused, never priced as always on.
+test("a land-type tap bonus with an intervening if, or only until end of turn, is no standing bonus", () => {
+  const rikala = card("Rikala, Homarid King", "Legendary Creature \u2014 Merfolk Noble", 4, "At the beginning of your upkeep, put a tide counter on Rikala. Then if there are four or more tide counters on Rikala, remove them.\nCreatures you control get +1/+0 for each tide counter on Rikala.\nWhenever you tap an Island for mana, if there are three or more tide counters on Rikala, add an additional {U}.");
+  const rhymer = card("Pyre Rhymer // Molten Tide", "Creature // Sorcery", 3, "Prowess\nThis creature enters prepared.\n//\nUntil end of turn, whenever you tap a Mountain for mana, add an additional {R}.");
+  const crypt = card("Crypt Ghast", "Creature", 4, "Extort\nWhenever you tap a Swamp for mana, add an additional {B}.");
+  expect([tapBonusOf(rikala), tapBonusOf(rhymer), tapBonusOf(crypt)]).toEqual([undefined, undefined, "land:swamp"]);
+});
+
 // AN AURA'S MANA COUNTS ONLY IF MANA IS THE CARD'S PURPOSE (owner 2026-10-13): the removal Auras are no accelerant, the ramp Auras are.
 test("an Aura that removes what it enchants, or grants a trigger, is no accelerant; an Aura that gives a land a tap ability is", () => {
   for (const n of ["Imprisoned in the Moon", "Honest Work", "Mark of Sakiko"]) expect(classifyAccelerant(real(n)), n).toBeNull();

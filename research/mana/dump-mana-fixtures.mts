@@ -40,10 +40,10 @@ for (const n of NAMES) {
   const fromGrammar = doc ? dw.deriveRow({ doc, source: card, isToken: false }).fromGrammar : g.grammarClauseRecords(card).complete;
   const clauses = fromGrammar ? g.grammarClauseRecords(card).records : doc?.canonical;
   if (!clauses) { console.log("NO CLAUSES", n); continue; }
-  const keep = ["_id", "name", "typeLine", "oracleText", "keywords", "colors", "colorIdentity", "manaValue", "power", "toughness", "layout", "manaCost", "producedMana", "allParts"];
+  const keep = ["_id", "name", "typeLine", "oracleText", "keywords", "colors", "colorIdentity", "manaValue", "power", "toughness", "layout", "manaCost", "producedMana", "allParts", "loyalty"];
   out[card.name] = {
     card: { ...Object.fromEntries(keep.filter((k) => card[k] !== undefined).map((k) => [k, card[k]])),
-      ...(card.faces ? { faces: card.faces.map((f: any) => ({ name: f.name, typeLine: f.typeLine, manaCost: f.manaCost })) } : {}) },
+      ...(card.faces ? { faces: card.faces.map((f: any) => ({ name: f.name, typeLine: f.typeLine, manaCost: f.manaCost, loyalty: f.loyalty })) } : {}) },
     clauses, source: fromGrammar ? "grammar" : "model",
   };
 }

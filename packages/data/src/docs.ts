@@ -27,6 +27,8 @@ export interface CardDoc {
   allParts?: RelatedPart[];
   faces?: CardFace[];
   artCrop?: string;
+  /** The planeswalker's printed starting loyalty ("5", "X"); a double-faced card carries it on `faces[]` instead. Read by derive for `ManaLine.startLoyalty`. */
+  loyalty?: string;
   /** LEGACY: once written by the deleted `ingest-meld` bin and erased by the next full re-ingest;
    *  `docToCard` derives the relation from `allParts` now. Unused. */
   meldPartner?: string;
@@ -94,6 +96,7 @@ export function toCardDoc(n: NormalizedCard): CardDoc {
     ...(n.allParts !== undefined ? { allParts: n.allParts } : {}),
     ...(n.faces !== undefined ? { faces: n.faces } : {}),
     ...(n.artCrop !== undefined ? { artCrop: n.artCrop } : {}),
+    ...(n.loyalty !== undefined ? { loyalty: n.loyalty } : {}),
   };
 }
 
@@ -161,5 +164,7 @@ export function docToCard(d: CardDoc): Card {
     // FOURTH field found on `CardDoc` and dropped here, after `producedMana`, `allParts` and
     // `gameChanger`. A FACE IS A NODE (2026-08-27) and the graph cannot count faces without it.
     ...(d.faces !== undefined ? { faces: d.faces } : {}),
+    // Starting loyalty comes from ingest (owner 2026-10-13, #1169): derive reads it off the card, not a checked-in table. Faces carry their own, above.
+    ...(d.loyalty !== undefined ? { loyalty: d.loyalty } : {}),
   };
 }

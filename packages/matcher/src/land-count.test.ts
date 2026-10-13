@@ -3,8 +3,9 @@ import type { Card } from "@edh-seer/engine";
 import { karstenLands } from "@edh-seer/engine";
 import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 import { detectBuildCategories } from "./build.js";
-import { landInputs, recommendedLands } from "./land-count.js";
-import { landTarget } from "./mana-base.js";
+import { landInputs, rampWeight, recommendedLands } from "./land-count.js";
+import { classifyAccelerant } from "./goldfish.js";
+import { RAMP_RESILIENCE, landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
 import { tapFor, withLines, withTap } from "./mana-test-support.js";
 
@@ -275,4 +276,16 @@ test("cheap ramp is a derived line you can use, not Scryfall's producedMana; a c
   // A Treasure maker is not a line the model plays; a restricted tap (Smokebraider-like) is not mana for the deck's spells.
   expect(landInputs([real("Pitiless Plunderer"), land("Swamp")]).rampPlusDraw).toBe(0);
   expect(landInputs([real("Jegantha, the Wellspring"), land("Swamp")]).rampPlusDraw).toBe(0);
+});
+
+// A WALKER'S MANA THAT LASTS ONE TURN IS A ONE-SHOT TO THE KARSTEN WEIGHT (2b-1 review round 3): `RAMP_RESILIENCE` is "how long a piece keeps producing", and Koth's
+// "-2: Add {R}{R}{R}{R}" from loyalty 3 is a single activation (`ManaOutput.turns` 1), a ritual's worth. A walker that lasts longer (Chandra, Novice Pyromancer: five turns; a
+// "+1": every turn) keeps the rock weight. The count of accelerants (`classifyAccelerant`) is unchanged: it is still one.
+test("a walker whose mana lasts one turn weighs as a one-shot, one that lasts longer as a rock", () => {
+  expect(classifyAccelerant(real("Koth of the Hammer"))).not.toBeNull();
+  expect(rampWeight(real("Koth of the Hammer"))).toBe(RAMP_RESILIENCE.oneShot);
+  expect(rampWeight(real("Chandra, Novice Pyromancer"))).toBe(RAMP_RESILIENCE.rock);
+  expect(rampWeight(real("Chandra, Torch of Defiance"))).toBe(RAMP_RESILIENCE.rock);
+  expect(rampWeight(real("Chandra, Hope's Beacon"))).toBe(RAMP_RESILIENCE.rock);
+  expect(rampWeight(real("Dark Ritual"))).toBeNull();
 });

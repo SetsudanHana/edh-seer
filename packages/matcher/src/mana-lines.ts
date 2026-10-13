@@ -72,6 +72,10 @@ const sourceShaped = (line: ManaLine): boolean =>
   (line.source === "activated" || line.source === "static-grant")
   && line.gate === null && line.restriction === null
   && !line.cost.sacrificeSelf && !paidWithResource(line)
+  // A LOYALTY COST IS NO RESOURCE (`paidWithResource`), but a walker's ability is a source only if it can be activated the turn the walker is cast (owner 2026-10-13:
+  // "the loyalty test applies to colour sources too"). Nissa, Worldwaker's -7 from loyalty 3 is not a Forest source; that is correct, and was only counted before
+  // because the loyalty cost was never compared with the loyalty.
+  && (!isLoyaltyAbility(line) || usableLoyalty(line))
   && (line.cost.tap || line.source === "static-grant");
 
 /** THE SCHEMA'S COLOUR-SOURCE RULE (`ManaLine` in tagger/schema.ts), plus the source label it implies: an activated ability the

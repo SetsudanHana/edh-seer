@@ -249,3 +249,20 @@ test("captures per-face art_crop for a double-faced card", () => {
   expect(n.faces![0].artCrop).toBe("https://cards.scryfall.io/art_crop/delver.jpg");
   expect(n.faces![1].artCrop).toBe("https://cards.scryfall.io/art_crop/aberration.jpg");
 });
+
+test("carries a planeswalker's starting loyalty, on the card and on each face (owner 2026-10-13, #1169)", () => {
+  const one = normalizeScryfallCard({
+    oracle_id: "chandra", name: "Chandra, Novice Pyromancer", type_line: "Legendary Planeswalker — Chandra", keywords: [], colors: ["R"], cmc: 4, loyalty: "5",
+  })!;
+  expect(one.loyalty).toBe("5");
+  const dfc = normalizeScryfallCard({
+    oracle_id: "valki", name: "Valki, God of Lies // Tibalt, Cosmic Impostor", type_line: "Legendary Creature — God // Legendary Planeswalker — Tibalt", layout: "modal_dfc", keywords: [],
+    card_faces: [
+      { name: "Valki, God of Lies", type_line: "Legendary Creature — God", oracle_text: "front", colors: ["B"] },
+      { name: "Tibalt, Cosmic Impostor", type_line: "Legendary Planeswalker — Tibalt", oracle_text: "back", colors: ["B", "R"], loyalty: "5" },
+    ],
+  })!;
+  expect("loyalty" in dfc).toBe(false);
+  expect("loyalty" in dfc.faces![0]!).toBe(false);
+  expect(dfc.faces![1]!.loyalty).toBe("5");
+});

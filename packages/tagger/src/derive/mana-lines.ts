@@ -48,7 +48,7 @@ export interface ManaInput {
   /** The printed text, for the two facts about an Aura the clause layer does not carry: whom it enchants ("Enchant creature an opponent controls") and
    *  what it takes from the permanent ("loses all other card types"). */
   oracleText?: string;
-  /** The printed STARTING LOYALTY of each face (index = face, null for a face with none): `starting-loyalty.json`. Absent: a card that is no planeswalker. */
+  /** The printed STARTING LOYALTY of each face (index = face, null for a face with none): from the card document, as ingested (owner 2026-10-13). Absent: a card that is no planeswalker. */
   startLoyalty?: (number | null)[];
 }
 
@@ -66,12 +66,21 @@ export interface ManaResult {
 
 /** A LOYALTY COST as the cost piece stores it: "+2", "0", "−1" (U+2212, the printed minus) -- "−X" is a cost no loyalty can be compared with. */
 const LOYALTY_COST = /^(?:\+\d+|0|[\u2212-]\d+)$/;
+/** THE LOYALTY-COST MANA LINES THAT CARRY NO STARTING LOYALTY: a walker whose loyalty the card document does not give (an ingest that predates it, "X" or "*" printed). A
+ *  consumer reads a negative one as unusable (`loyaltyActivations`), so each is a source silently dropped -- `derive-corpus` prints the count (expected 0) and a test fails
+ *  on one in the fixtures. */
+export const unpricedLoyaltyLines = (lines: readonly ManaLine[] | undefined): ManaLine[] =>
+  (lines ?? []).filter((l) => l.cost.other.length === 1 && LOYALTY_COST.test(l.cost.other[0]!) && l.startLoyalty === undefined);
+
 /** THE AURA IS REMOVAL, not ramp (owner, 2026-10-13: "mana counts only if mana is the card's purpose"): it enchants a permanent an opponent controls
  *  (Honest Work: "Enchant creature an opponent controls") or takes the permanent's card types away (Imprisoned in the Moon: "loses all other card types and
- *  abilities", which leaves a land that happens to tap for {C}). The ramp Auras give a permanent YOU control an ability and take nothing but its own land
+ *  abilities", which leaves a land that happens to tap for {C}) or forbids the creature to attack or block (Utopia Vow, a pacifism). The ramp Auras give a permanent YOU control an ability and take nothing but its own land
  *  types (Lithoform Blight: "loses all land types and abilities") or nothing at all. CEILING: a text test, not a reading of what the Aura is for. */
 const ENCHANTS_OPPONENTS = /^enchant [^\n]*\bopponent controls\b/im;
 const STRIPS_CARD_TYPES = /\bloses all (?:other )?card types\b/i;
+/** A PACIFISM beside the grant (owner 2026-10-13: "Utopia Vow ... pacifism purpose", where Karametra's Favor and Multani's Harmony are ramp): the Aura says the enchanted
+ *  creature "can't attack or block". CEILING: a text test for that one sentence, not a reading of every way an Aura can disable its creature. */
+const PACIFISM = /\benchanted creature can't attack or block\b/i;
 
 const inWubrgOrder = (cs: Iterable<string>): string[] => { const s = new Set(cs); return WUBRG.filter((c) => s.has(c)); };
 const faceOf = (id: number | string, faces?: Record<number, number>): 0 | 1 => ((faces?.[Number.parseInt(String(id), 10)] ?? 0) > 0 ? 1 : 0);
@@ -361,7 +370,7 @@ export function deriveMana(input: ManaInput): ManaResult {
   const selfNames = [(input.name ?? "").toLowerCase(), ...(input.name ?? "").split(" // ").map((n) => n.split(",")[0]!.trim().toLowerCase())].filter(Boolean);
   const faceMV = (face: number): number => (input.manaCosts ? manaValueOf(input.manaCosts[face] ?? input.manaCosts[0]) : chars.cmc);
   const lines: ManaLine[] = [];
-  const removalAura = chars.subtypes.some((t) => t.toLowerCase() === "aura") && (ENCHANTS_OPPONENTS.test(input.oracleText ?? "") || STRIPS_CARD_TYPES.test(input.oracleText ?? ""));
+  const removalAura = chars.subtypes.some((t) => t.toLowerCase() === "aura") && (ENCHANTS_OPPONENTS.test(input.oracleText ?? "") || STRIPS_CARD_TYPES.test(input.oracleText ?? "") || PACIFISM.test(input.oracleText ?? ""));
 
   // --- add-mana lines, one per action, in clause order -------------------------------------------------------
   for (const clause of clauses) {

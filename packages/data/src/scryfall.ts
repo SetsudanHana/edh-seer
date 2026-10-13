@@ -25,6 +25,8 @@ export interface CardFace {
   /** Present on faces with no mana cost, where colour cannot be read off the cost. */
   colorIndicator?: string[];
   artCrop?: string;
+  /** A planeswalker face's printed STARTING LOYALTY, as Scryfall prints it ("5", or "X"): the walker enters with that many counters (CR 306.5b). */
+  loyalty?: string;
 }
 
 export interface ScryfallCard {
@@ -52,6 +54,7 @@ export interface ScryfallCard {
     mana_cost?: string;
     power?: string;
     toughness?: string;
+    loyalty?: string;
     colors?: string[];
     color_indicator?: string[];
     image_uris?: { art_crop?: string };
@@ -59,6 +62,7 @@ export interface ScryfallCard {
   color_identity?: string[];
   power?: string;
   toughness?: string;
+  loyalty?: string;
   edhrec_rank?: number;
   image_uris?: { art_crop?: string };
 }
@@ -78,6 +82,7 @@ export interface NormalizedCard {
   allParts?: RelatedPart[];
   faces?: CardFace[];
   artCrop?: string;
+  loyalty?: string;
 }
 
 /** Scryfall layouts that are not real gameplay cards (art cards, tokens, emblems,
@@ -146,6 +151,7 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     ...(f.mana_cost !== undefined ? { manaCost: f.mana_cost } : {}),
     ...(f.power !== undefined ? { power: f.power } : {}),
     ...(f.toughness !== undefined ? { toughness: f.toughness } : {}),
+    ...(f.loyalty !== undefined ? { loyalty: f.loyalty } : {}),
     ...(f.color_indicator !== undefined ? { colorIndicator: f.color_indicator } : {}),
     ...(f.image_uris?.art_crop !== undefined ? { artCrop: f.image_uris.art_crop } : {}),
   }));
@@ -165,6 +171,7 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     ...(allParts !== undefined && allParts.length > 0 ? { allParts } : {}),
     ...(cardFaces !== undefined && cardFaces.length > 0 ? { faces: cardFaces } : {}),
     ...(raw.image_uris?.art_crop !== undefined ? { artCrop: raw.image_uris.art_crop } : {}),
+    ...(raw.loyalty !== undefined ? { loyalty: raw.loyalty } : {}),
   };
 }
 
