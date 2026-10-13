@@ -435,7 +435,10 @@ import { emblemRecipient } from "../emblem.js";
 // 302: #1169 task 2b-1: a `trigger` / `aura-trigger` mana line names the event that fires it (`ManaLine.trigger`, `triggerSubject`), so the goldfish can tell
 // landfall and beginning-of-phase mana (priced) from a cast trigger (Birgi: ramp, not a dork) without reading oracle text. "N mana in any combination
 // of {U}, {B}, and/or {R}" (Relic of Sauron) is an amount of N, not 1; an ability word's requirement ("Max speed — {T}: Add {C}{C}", Muraganda Raceway) gates the line.
-export const DERIVE_VERSION = 302;
+// 303: #1169 task 2b-1 review: a mana grant made by a TRIGGERED parent is gated by that trigger ("when princess yue dies"), not standing: Princess Yue's
+// Moon, Hydro-Man's end step, Song of Freyalise's chapter, Vraska the Silencer's returned Treasure (4 cards). "As long as", a Saga chapter with no
+// duration (Urza's Saga) and a token a trigger creates are unchanged.
+export const DERIVE_VERSION = 303;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

@@ -368,7 +368,18 @@ export function deriveMana(input: ManaInput): ManaResult {
     const costText = input.clauseCosts?.[id as number] ?? colonHead(text);
     const activated = clause.abilityType === "activated" || (clause.abilityType === "static" && costText !== "");
     const parent = granted ? clauses.find((c) => c.id === input.clauseGrants?.[id as number]) : undefined;
-    const grantGate = parent ? AS_LONG_AS.exec(input.textOf(parent))?.[1]?.trim().toLowerCase() ?? null : null;
+    // A GRANT MADE BY A TRIGGERED PARENT exists only once the trigger has happened (Princess Yue: "When ~ dies, ... She gains '{T}: Add {C}.'" -- the
+    // mana is the Moon's, not the creature in play), so the trigger's own words gate the line, up to the first comma ("when princess yue dies").
+    // "As long as" (a condition, or "for as long as", a duration) keeps its own reading above: the grant is then standing, not one a trigger starts.
+    // A SAGA CHAPTER IS THE EXCEPTION unless it names a duration: "I -- This Saga gains '{T}: Add {C}.'" (Urza's Saga) lasts until the Saga goes, and
+    // the chapter fires the turn it enters, so the land taps for {C} as a land would. A token a trigger creates is no grant to this card (`tokenGrant`).
+    // CEILING: the gate says WHAT STARTS the grant, not for how long -- "until your next turn" (Song of Freyalise, Hydro-Man) is gated, never read as standing.
+    const parentText = parent ? input.textOf(parent) : "";
+    const triggeredStart = parent !== undefined && !tokenGrant && parent.abilityType === "triggered" && !/\bas long as\b/i.test(parentText)
+      && !(parent.trigger?.event === "chapter" && !/\buntil\b/i.test(parentText));
+    const grantGate = parent
+      ? AS_LONG_AS.exec(parentText)?.[1]?.trim().toLowerCase() ?? (triggeredStart ? (parentText.split(",")[0]!.trim().toLowerCase() || "its trigger") : null)
+      : null;
     // One entry per add. The model path sometimes keeps only the LAST of several printed adds (Gemstone Caverns: "Add {C}. If ~ has a
     // luck counter on it, instead add one mana of any color." is one action): the actions then align to the last mana-adding
     // sentences, and the leading ones ("Add {C}.") are read from their own text.

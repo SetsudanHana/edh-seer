@@ -3,7 +3,7 @@ import type { ManaLine, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
-import { cardLines, colourSourceColours, isFetchSource, isLandfall, isPhaseTrigger, lineColours, minManaValue, paidWithResource, paysItsWay } from "./mana-lines.js";
+import { cardLines, colourSourceColours, isFetchSource, isLandfall, isPhaseTrigger, isRepeatableLoyalty, lineColours, minManaValue, paidWithResource, paysItsWay } from "./mana-lines.js";
 import { staticFixer } from "./static-fixers.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands } from "./fetch-land.js";
@@ -150,7 +150,12 @@ export function playableLines(dc: DeckCard): ManaLine[] {
     // are not mana on turn one. The two gates `manaOutput` prices against the board (lands counted, the tron pair) stay.
     const checkable = l.gate === null || LANDS_GATE.test(l.gate) || TRON_GATE.test(l.gate);
     switch (l.source) {
-      case "activated": return l.cost.tap && checkable;
+      // A LOYALTY ABILITY ("+1: Add {R}{R}") is a source too (owner, 2026-10-13): once per turn at sorcery timing (CR 606.3), so it pays every turn the walker
+      // is out and the turn it is cast (no summoning sickness: it is no creature). Only a non-negative cost: a "−N" spends loyalty the model does not track.
+      // CEILING: the walker never dies (the goldfish has no opponent to attack it), and a walker with two mana abilities is priced at its best one
+      // (`manaOutput`), which is one activation a turn as the rules allow. A "−N" mana ability (Chandra, Novice Pyromancer; Koth) is refused, not
+      // counted for the turns its loyalty would last.
+      case "activated": return (l.cost.tap || isRepeatableLoyalty(l)) && checkable;
       case "static-grant": case "aura-trigger": return checkable;
       case "trigger": return l.gate === null && (isLandfall(l) || isPhaseTrigger(l) || (l.trigger === "tapped-for-mana" && taps));
       default: return false;
@@ -267,6 +272,8 @@ export function opponentHandSize(turn: number): number {
 export function opponentHandRitual(dc: DeckCard): number {
   if ((dc.card.typeLine ?? "").includes("//")) return 0;
   if (!/\b(?:instant|sorcery)\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) return 0;
+  // CEILING: a spell's additional cost is PRINTED text -- derive's `cost` is an activation cost and carries none. Not modelled: what the extra cost
+  // is (a discard, a sacrifice, life) or whether the deck can pay it; any card printing one is refused rather than priced as a free ritual.
   if (/additional cost/i.test(dc.card.oracleText ?? "")) return 0;
   const line = cardLines(dc).find((l) => l.source === "one-shot-spell" && l.restriction === null && l.amount.scales === "each card in target opponent's hand");
   return line && line.colours.length === 1 && line.colourless === 0 && line.anyColour === null ? colorMask(line.colours) : 0;
@@ -291,8 +298,9 @@ function spendUnits(units: number[], cost: Cost): boolean {
 
 /** A karoo returns a land as it enters, so tapping for two off one fewer land is NET NEUTRAL and
  *  the incumbent 1 is already right. Counting it 2 without modelling the bounce over-claims.
- *  PRINTED, AND NOT A MANA DETECTOR: the bounce is an ENTERS fact (a trigger that moves a land), which no derived mana line carries; whether the
- *  card makes mana is its lines' answer. */
+ *  CEILING: PRINTED, AND NOT A MANA DETECTOR: the bounce is an ENTERS fact (a trigger that moves a land), which no derived mana line carries; whether the
+ *  card makes mana is its lines' answer. Not modelled: a karoo's real net (it replays the bounced land, and a bounced fetch or utility land is worth
+ *  more than one mana), and a bounce phrased any other way than the one sentence below -- such a card is priced at its full tap. */
 const BOUNCES = /return a land you control to its owner's hand/i;
 /** A GATE ON A LINE'S AMOUNT, read from the derived gate string (lowercase, verbatim): "you control five or more lands" (Temple of the False God).
  *  The wording of a gate is derived data; what this model does with it is this module's policy. Any other gate leaves the line uncounted.
@@ -315,9 +323,11 @@ const WORD_NUMBER: Record<string, number> = {
   one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
 };
 
-/** A LINE THAT PAYS NOTHING BUT THE TAP: a filter land's costed line ("{1}, {T}: Add {U}{U}"), a payment land, a sacrifice or a loyalty cost is
- *  not a tap this model can pay, so it is not priced and the source stays at its NET one on purpose. */
-const tapOnly = (l: ManaLine): boolean => l.cost.mana === 0 && l.cost.life === 0 && l.cost.counters === null && !l.cost.sacrificeOther && !l.cost.tapOther && l.cost.other.length === 0;
+/** A LINE THAT PAYS NOTHING BUT THE TAP: a filter land's costed line ("{1}, {T}: Add {U}{U}"), a payment land, a sacrifice or a
+ *  NEGATIVE loyalty cost is not a tap this model can pay, so it is not priced and the source stays at its NET one on purpose. A non-negative loyalty cost
+ *  (a planeswalker's "+2: Add {R}{R}{R}") counts as the tap: the walker's one activation a turn, CR 606.3. */
+const tapOnly = (l: ManaLine): boolean => l.cost.mana === 0 && l.cost.life === 0 && l.cost.counters === null && !l.cost.sacrificeOther && !l.cost.tapOther
+  && (l.cost.other.length === 0 || isRepeatableLoyalty(l));
 
 export function manaOutput(dc: DeckCard): ManaOutput {
   if (BOUNCES.test(dc.card.oracleText ?? "")) return { amount: 1 };
@@ -440,7 +450,7 @@ export const fetchUntapsOf = (dc: DeckCard): boolean => FETCH_UNTAPS.test(dc.car
  *  Mana the audit refuses stays refused: a RESTRICTED line (Cavern of Souls' coloured one), a GATED one (Tainted Peak's), and a costed line that makes
  *  less than it costs (Prismatic Lens' coloured one). */
 export function colourMaskOf(dc: DeckCard): number {
-  const triggerColours = playableLines(dc).filter((l) => l.source !== "activated" && l.source !== "static-grant").flatMap((l) => lineColours(l, null, "five"));
+  const triggerColours = playableLines(dc).filter((l) => (l.source !== "activated" && l.source !== "static-grant") || isRepeatableLoyalty(l)).flatMap((l) => lineColours(l, null, "five"));
   // A GATE does not take the colourless bit away: Temple of the False God's {C}{C} waits on five lands, which `manaOutput` prices as zero below the gate.
   const colourless = playableLines(dc).some((l) => l.colourless > 0 && paysItsWay(l));
   return colorMask([...colourSourceColours(dc), ...triggerColours, ...(colourless ? ["C"] : [])]);

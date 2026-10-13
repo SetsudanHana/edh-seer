@@ -351,6 +351,21 @@ describe("review round 3 (#1169 task 1)", () => {
     expect(linesOf("Ultima, Origin of Oblivion").every((l) => l.gate === null)).toBe(true);
     expect(only("Kitesail Larcenist").gate).toBeNull();
   });
+  it("a grant made by a TRIGGERED parent is gated by that trigger, unless it is a duration (#1169 2b-1 review: Princess Yue)", () => {
+    // "When Princess Yue dies, ... return this card ... She gains '{T}: Add {C}.'": the mana exists only after the death, not from the card in play.
+    const yue = only("Princess Yue");
+    expect(yue).toMatchObject({ source: "static-grant", colourless: 1 });
+    expect(yue.gate).toBe("when princess yue dies");
+    // ...while "for as long as" stays a duration (the test above), and a grant by a STATIC parent has no trigger to gate it.
+    expect(only("Imprisoned in the Moon").gate).toBeNull();
+    expect(linesOf("Chromatic Lantern", "static-grant")[0]!.gate).toBeNull();
+    // A trigger that grants for a while is gated (Hydro-Man's end step, Song of Freyalise's chapter "until your next turn"); a grant to ANOTHER card
+    // (Vraska, the Silencer's returned Treasure) is no mana of Vraska's; a Saga chapter with no duration (Urza's Saga) stands, as a land's tap does.
+    expect(only("Hydro-Man, Fluid Felon", "static-grant").gate).toBe("at the beginning of your end step");
+    expect(only("Song of Freyalise", "static-grant").gate).toBe("until your next turn");
+    expect(only("Vraska, the Silencer", "static-grant").gate).toBe("whenever a nontoken creature an opponent controls dies");
+    expect(only("Urza's Saga", "static-grant").gate).toBeNull();
+  });
   it("Ashling's one printed add is one line, not one per cast/copy twin", () => {
     expect(linesOf("Ashling, Flame Dancer")).toHaveLength(1);
   });

@@ -84,6 +84,7 @@ const PROSE: Record<string, string> = {
   "702.63": "edges: vanishing puts time counters on (canCarryCounters, AL4)",
   "702.32": "edges: fading puts fade counters on (canCarryCounters, AL4)",
   "606.3": "partners-core effectOrder: a loyalty ability is once a round, so it ranks with the taps (AN3)",
+  "606.6": "goldfish/mana-lines: a negative loyalty cost spends loyalty the model does not track, so a \"-N\" mana ability is not played (CEILING; asserted in goldfish.test.ts)",
   "301.7a": "partners-core: a Vehicle prints power and toughness without being a creature, so it carries `pow`/`tou` in the index and answers a Power range -- printed, not \"is a creature\"",
 };
 

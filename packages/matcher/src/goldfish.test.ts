@@ -162,10 +162,12 @@ test("derived lines the goldfish cannot play are not accelerants: a gate it cann
   expect(classifyAccelerant(real("Mox Jasper"))).toBeNull();
   expect(classifyAccelerant(real("Howlsquad Heavy"))).toBeNull();
   // A COST WITH NO BOARD TO PAY FROM: another creature sacrificed (Phyrexian Altar), another permanent tapped (Springleaf Drum), a counter (Wall of Roots),
-  // exiling the card from hand (Simian Spirit Guide) or a loyalty ability (Chandra, Domri) is not a tap this model can pay.
-  for (const n of ["Phyrexian Altar", "Springleaf Drum", "Wall of Roots", "Simian Spirit Guide", "Chandra, Torch of Defiance", "Domri, Anarch of Bolas"]) {
+  // or exiling the card from hand (Simian Spirit Guide) is not a tap this model can pay. (A planeswalker's "+N: Add" IS playable -- see the loyalty test.)
+  for (const n of ["Phyrexian Altar", "Springleaf Drum", "Wall of Roots", "Simian Spirit Guide"]) {
     expect(classifyAccelerant(real(n)), n).toBeNull();
   }
+  // A GRANT A TRIGGER STARTS is gated by it (derive 303): Princess Yue's "{T}: Add {C}" is the Moon's, after she dies, and is no mana of the creature in play.
+  expect(classifyAccelerant(real("Princess Yue"))).toBeNull();
   // A GATED FETCH (Charitable Levy: three noncreature spells first) is not a fetch the model can perform.
   expect(classifyAccelerant(real("Charitable Levy"))).toBeNull();
   // A tap-replacement the card does not print the bonus of (Crypt Ghast: Swamps only) is not priced as a one-mana dork.
@@ -173,6 +175,43 @@ test("derived lines the goldfish cannot play are not accelerants: a gate it cann
   // ...while the two bonuses the simulation prices stay accelerants, with their bonus.
   expect(classifyAccelerant(real("Forsaken Monument"))?.kind).toBe("rock");
   expect(classifyAccelerant(real("Leyline of Abundance"))?.kind).toBe("rock");
+});
+
+// LOYALTY MANA ABILITIES ARE ACCELERANTS (owner 2026-10-13, #1169 2b-1 review). CR 606.3: a loyalty ability is activated at sorcery timing, once per
+// planeswalker per turn, so "+2: Add {R}{R}{R}" is a repeatable source that pays the turn the walker is cast (it is no creature: no summoning sickness).
+test("a planeswalker's non-negative loyalty mana ability is an accelerant priced at its amount; a negative one is not", () => {
+  for (const n of ["Chandra, Torch of Defiance", "Chandra, Flameshaper", "Chandra, Legacy of Fire", "Domri, Anarch of Bolas", "Ugin, Eye of the Storms"]) {
+    expect(classifyAccelerant(real(n))?.kind, n).toBe("rock");
+  }
+  expect(manaOutput(real("Chandra, Torch of Defiance")).amount).toBe(2);
+  expect(manaOutput(real("Chandra, Flameshaper")).amount).toBe(3);
+  expect(manaOutput(real("Ugin, Eye of the Storms")).amount).toBe(3);
+  expect(manaOutput(real("Domri, Anarch of Bolas")).amount).toBe(1);
+  // CEILING in the model: a scaling amount ("+1: Add {R} for each planeswalker you control") is a rate, priced at the incumbent one.
+  expect(manaOutput(real("Chandra, Legacy of Fire")).amount).toBe(1);
+  // The colour it makes is the line's: Chandra's {R}, Ugin's {C}.
+  expect(colourMaskOf(real("Chandra, Torch of Defiance"))).toBe(colorMask(["R"]));
+  expect(colourMaskOf(real("Ugin, Eye of the Storms"))).toBe(colorMask(["C"]));
+  // A NEGATIVE cost spends loyalty the model does not track (Chandra, Novice Pyromancer -1, Koth -2, Chandra, Heart of Fire's -9 ultimate), and Jaya's
+  // +1 restricts what the mana is for.
+  for (const n of ["Chandra, Novice Pyromancer", "Chandra, Heart of Fire", "Koth of the Hammer", "Jaya Ballard"]) expect(classifyAccelerant(real(n)), n).toBeNull();
+});
+
+test("a planeswalker's loyalty mana lands in the simulation the turn it is cast and adds its amount", () => {
+  const maxAt = (name: string, turn: number): number => {
+    const deck = [...basics(60), ...Array.from({ length: 39 }, (_, i) => real(name, `${name} ${i}`))];
+    const r = simulate(deck, { trials: 2_000, turns: turn, seed: 31, mulligan: false });
+    expect(deck.length).toBe(99);
+    return Math.max(...r.manaAt[turn - 1]!);
+  };
+  // Chandra, Torch of Defiance (mana value 4, +1: Add {R}{R}): three lands on turn three, and on turn four four lands plus her two.
+  expect(maxAt("Chandra, Torch of Defiance", 3)).toBe(3);
+  expect(maxAt("Chandra, Torch of Defiance", 4)).toBe(6);
+  // Domri, Anarch of Bolas (mana value 3, +1: Add {R} or {G}): three lands and her one on turn three.
+  expect(maxAt("Domri, Anarch of Bolas", 2)).toBe(2);
+  expect(maxAt("Domri, Anarch of Bolas", 3)).toBe(4);
+  // Her −1 ability (Chandra, Novice Pyromancer, mana value 4) is not played: four lands on turn four and nothing more.
+  expect(maxAt("Chandra, Novice Pyromancer", 4)).toBe(4);
 });
 
 test("an Adventure or prepare card's spell half is a face you play: Rampant Growth on Studious First-Year is a land-fetch", () => {
@@ -765,6 +804,27 @@ test("O2: a per-source bonus scales with the board it reads", () => {
   const green = [...Array.from({ length: 12 }, (_, i) => monument(i)), ...basics(37), ...spells(50, 3)];
   const none = simulate(green, { trials: 4_000, turns: 8, seed: 12 });
   expect(pAtLeastMana(none, 10, 8)).toBe(0);
+});
+
+// LEYLINE OF ABUNDANCE (owner, 2026-10-13: Forsaken Monument and Leyline are accelerants; the bonus is +1 per qualifying tap, CR 106.12a). "Whenever you
+// tap a creature for mana, add an additional {G}": the board's CREATURE sources count, a rock or a land does not. Both arms are the SAME shuffle with one
+// slot swapped (Leyline against an inert four-drop), so the difference per trial is the Leyline's own bonus and nothing else.
+test("O2: Leyline of Abundance's bonus counts creature sources only: a rock adds nothing, a dork adds one", () => {
+  const filler = (leyline: boolean): DeckCard[] => [leyline ? real("Leyline of Abundance") : card("Inert four-drop", "Sorcery", 4)];
+  const arm = (leyline: boolean, source: DeckCard): number[] => {
+    const deck = [...filler(leyline), source, ...basics(38), ...spells(59, 3)];
+    expect(deck.length).toBe(99);
+    return simulate(deck, { trials: 20_000, turns: 8, seed: 14 }).manaAt.flatMap((turn) => turn);
+  };
+  const gap = (source: DeckCard): { min: number; max: number } => {
+    const a = arm(true, source), b = arm(false, source);
+    const d = a.map((x, i) => x - b[i]!);
+    return { min: d.reduce((m, x) => Math.min(m, x), 0), max: d.reduce((m, x) => Math.max(m, x), 0) };
+  };
+  // Sol Ring is a rock: the bonus never reads it.
+  expect(gap(real("Sol Ring"))).toEqual({ min: 0, max: 0 });
+  // Llanowar Elves is a creature: in the trials that hold both, every tap of it adds one {G}.
+  expect(gap(real("Llanowar Elves"))).toEqual({ min: 0, max: 1 });
 });
 
 // O2, THE PHASE-TRIGGER HALF. "At the beginning of your first main phase, add {G}{G}" is a recurring
