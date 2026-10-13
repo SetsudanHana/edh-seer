@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { GATE_CONFIDENCE, GATE_TURN, gateProbability, gateVerdict, lineGateVerdict } from "./gate.js";
+import { GATE_CONFIDENCE, GATE_TURN, boardCount, boardGateOf, gateMetBy, gateProbability, gateVerdict, lineGateMetBy, lineGateVerdict, permOf } from "./gate.js";
 import { CORPUS_MEDIAN_CLOCK, REQUIRED_CONFIDENCE } from "./deck-math.js";
 import { mkLine } from "./mana-test-support.js";
 import type { DeckCard } from "./types.js";
@@ -65,4 +65,49 @@ test("a line with no gate is met; a gated line with no deck to judge it against 
   expect(lineGateVerdict(mkLine(), undefined)).toBe("met");
   expect(lineGateVerdict(mkLine({ gate: "you control a dragon" }), undefined)).toBe("unknown");
   expect(lineGateVerdict(mkLine({ gate: "you control a dragon" }), deckOf(copies(12, (i) => dc(`Dragon ${i}`, "Creature — Dragon"))))).toBe("met");
+});
+
+test("a board-count gate parses to the permanents it names and how many; every other gate is not one", () => {
+  expect(boardGateOf("you control a dragon")).toEqual({ need: 1, nouns: ["dragon"] });
+  expect(boardGateOf("you control four or more creatures")).toEqual({ need: 4, nouns: ["creature"] });
+  expect(boardGateOf("you control three or more artifacts")).toEqual({ need: 3, nouns: ["artifact"] });
+  expect(boardGateOf("you control a mountain or a forest")).toEqual({ need: 1, nouns: ["mountain", "forest"] });
+  expect(boardGateOf("you control an artifact")).toEqual({ need: 1, nouns: ["artifact"] });
+  for (const g of ["you control three or more lands with the same name", "you control an urza's mine and an urza's tower", "you have the initiative", "speed 4", "you control a land named wastes"]) expect(boardGateOf(g), g).toBeNull();
+  const forest = permOf(dc("Forest", "Basic Land \u2014 Forest"))!;
+  const dragon = permOf(dc("Dragon", "Creature \u2014 Dragon"))!;
+  expect(permOf(dc("Bolt", "Instant"))).toBeNull();
+  expect(boardCount(boardGateOf("you control a mountain or a forest")!, [forest, dragon, forest])).toBe(2);
+});
+
+// THE SAME GATE BY A TURN (the colour audit and the Karsten inputs ask it; the goldfish counts the permanents of each game): the cards seen by then, and only the permanents that can be
+// on the battlefield by then -- a land, or a spell whose mana value is at most the turn.
+test("a gate is met BY a turn when enough of what it names could be on the battlefield by then: five-mana Dragons are not castable on turn 4", () => {
+  const dragons = (n: number, mv: number) => copies(n, (i) => ({ ...dc(`Dragon ${i}`, "Creature \u2014 Dragon"), card: { name: `Dragon ${i}`, typeLine: "Creature \u2014 Dragon", oracleText: "", manaValue: mv } as never }));
+  const heavy = deckOf(dragons(12, 5));
+  expect(gateMetBy("you control a dragon", heavy, 5)).toBe(false);
+  expect(gateMetBy("you control a dragon", heavy, 6)).toBe(true);
+  expect(gateProbability("you control a dragon", heavy, 5)).toBe(0);
+  const light = deckOf(dragons(20, 1));
+  expect(gateMetBy("you control a dragon", light, 1)).toBe(false);
+  expect(gateMetBy("you control a dragon", light, 2)).toBe(true);
+  expect(lineGateMetBy(mkLine({ gate: "you control a dragon" }), light, 2)).toBe(true);
+  expect(lineGateMetBy(mkLine({ gate: "you control a dragon" }), heavy, 2)).toBe(false);
+  expect(lineGateMetBy(mkLine({ gate: "you control a dragon" }), undefined, 9)).toBe(false);
+  expect(lineGateMetBy(mkLine(), undefined, 1)).toBe(true);
+  // a gate no decklist settles is never met by any turn
+  expect(gateMetBy("speed 4", light, 9)).toBe(false);
+});
+
+test("a count of lands cannot exceed the land drops: 'five or more lands' is not met by turn 4 whatever the deck", () => {
+  const lands = deckOf(copies(60, (i) => dc(`Land ${i}`, "Land")));
+  expect(gateMetBy("you control five or more lands", lands, 4)).toBe(false);
+  expect(gateMetBy("you control five or more lands", lands, 5)).toBe(true);
+  // ...and a land that is itself the holder of the gate takes a land drop of its own: a Tainted land needs its Swamp AND itself
+  const swamps = deckOf(copies(40, (i) => dc(`Swamp ${i}`, "Basic Land \u2014 Swamp")));
+  expect(gateMetBy("you control a swamp", swamps, 1)).toBe(true);
+  expect(gateMetBy("you control a swamp", swamps, 1, true)).toBe(false);
+  expect(gateMetBy("you control a swamp", swamps, 2, true)).toBe(true);
+  expect(gateMetBy("you control three or more lands with the same name", deckOf(copies(36, () => dc("Forest", "Basic Land \u2014 Forest"))), 2)).toBe(false);
+  expect(gateMetBy("you control three or more lands with the same name", deckOf(copies(36, () => dc("Forest", "Basic Land \u2014 Forest"))), 3)).toBe(true);
 });

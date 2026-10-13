@@ -168,7 +168,7 @@ test("a gated mana line plays in a deck that meets its gate and not in one that 
   expect(classifyAccelerant(jasper)).toBeNull();
   expect(classifyAccelerant(jasper, none)).toBeNull();
   expect(classifyAccelerant(jasper, dragons)).toEqual({ name: "Mox Jasper", manaValue: 0, kind: "rock" });
-  expect(manaOutput(jasper, dragons)).toEqual({ amount: 1 });
+  expect(manaOutput(jasper, dragons)).toMatchObject({ amount: 0, gated: { amount: 1 } });
   // any colour, once the gate is met: the model plays the line's colours
   expect(colourMaskOf(jasper, none)).toBe(0);
   expect(colourMaskOf(jasper, dragons)).toBe(colorMask(WUBRG));
@@ -1559,5 +1559,94 @@ describe("manaModel need (#1151)", () => {
     const a = manaModel(big, { trials: 200, seed: 3 }).availability;
     expect(a.need!.mana).toBe(8);
     expect(a.rows.map((r) => r.turn)).toContain(a.need!.turn);
+  });
+});
+
+// BOARD-COUNT GATES ARE TIMED TURN BY TURN (owner 2026-10-13, #1169 2b-2): "a gate like 'you control a Dragon' / metalcraft / 'four or more creatures' is met from the turn the
+// deck can plausibly have it on board, not from turn one -- the goldfish times it like the lands/tron gates". The decks below are SMALL ON PURPOSE: with 8 cards or fewer every card
+// is in the opening seven plus the turn-1 draw, so the game is deterministic (one land a turn, ties only between identical cards) and each turn's mana is one number.
+describe("board-count gates are met turn by turn on the goldfish's own board", () => {
+  const elf = (i: number): DeckCard => card(`Elf ${i}`, "Creature — Elf", 1);
+  const manaPerTurn = (deck: DeckCard[], turns: number, over: Parameters<typeof simulate>[1] = {}): number[] => {
+    const r = simulate(deck, { trials: 20, turns, seed: 5, mulligan: false, ...over });
+    return r.manaAt.map((col) => { expect(new Set(col).size, "deterministic").toBe(1); return col[0]!; });
+  };
+
+  test("Leafkin Druid taps for one before four creatures are out and for two after (the creatures are the Elves the model 'casts' with the mana it has left, and itself)", () => {
+    const druid = real("Leafkin Druid");
+    const deck = [druid, elf(1), elf(2), elf(3), ...basics(4)];
+    const out = manaOutput(druid, deck);
+    expect(out.amount).toBe(1);
+    expect(out.gated?.amount).toBe(2);
+    // T1 1 land; T2 2 lands, the Druid is cast; T3 3 lands and a Druid that is not yet two (one Elf and itself); T4 four creatures: 4 lands + 2
+    expect(manaPerTurn(deck, 5)).toEqual([1, 2, 4, 6, 6]);
+  });
+
+  test("Mox Jasper makes nothing until a Dragon is on the board, then one mana of any colour: a Dragon the mana could pay for on turn 2 helps from turn 3", () => {
+    const jasper = real("Mox Jasper");
+    const dragon = card("Dragon", "Creature — Dragon", 2);
+    expect(manaPerTurn([jasper, dragon, ...basics(6)], 4)).toEqual([1, 2, 4, 5]);
+    // a Dragon the mana cannot pay for until turn 6 helps from turn 7, and not before
+    expect(manaPerTurn([jasper, card("Big Dragon", "Creature — Dragon", 6), ...basics(6)], 7)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  test("the commander counts toward a gate: a Dragon commander makes Mox Jasper a rock once it could be cast, and the deck without it has no rock at all", () => {
+    const jasper = real("Mox Jasper");
+    const deck = [jasper, ...basics(6)];
+    const commander = card("Dragon Commander", "Legendary Creature — Dragon", 2);
+    expect(classifyAccelerant(jasper, deck)).toBeNull();
+    expect(manaPerTurn(deck, 3)).toEqual([1, 2, 3]);
+    expect(manaPerTurn(deck, 3, { alsoPrice: [commander] })).toEqual([1, 2, 4]);
+  });
+
+  test("a land's gated colours wait on the board too: Spire of Industry makes a colour only with an artifact out, the turn after the model could cast one", () => {
+    const spire = real("Spire of Industry");
+    const trinket = card("Trinket", "Artifact", 0);
+    const bolt: DeckCard = { ...card("Red Spell", "Sorcery", 1), card: { ...card("Red Spell", "Sorcery", 1).card, manaCost: "{R}" } };
+    const r = simulate([spire, trinket, bolt], { trials: 20, turns: 3, seed: 5, mulligan: false });
+    const castable = r.byCardCastable.get("Red Spell")!;
+    // turn 1: the only land taps for {C}; the Trinket is 'cast' at its end and is out from turn 2
+    expect(castable.slice(0, 3)).toEqual([0, 1, 1]);
+  });
+
+  test("the land policy plays the land that makes the colour NOW: a Verge whose green waits on a Forest is not the green land beside a Forest", () => {
+    const verge = real("Thornspire Verge");
+    const green: DeckCard = { ...card("Green Spell", "Sorcery", 1), card: { ...card("Green Spell", "Sorcery", 1).card, manaCost: "{G}" } };
+    const r = simulate([verge, card("Forest", "Basic Land \u2014 Forest"), green], { trials: 60, turns: 2, seed: 9, mulligan: false });
+    // turn 1: the Forest, in every game, whatever order the hand is dealt in
+    expect(r.byCardCastable.get("Green Spell")![0]).toBe(1);
+  });
+
+  test("the availability the report prints counts the commander's Dragon toward Mox Jasper's gate (manaModel hands the gate the whole decklist)", async () => {
+    const { manaModel } = await import("./goldfish.js");
+    const jasper = real("Mox Jasper");
+    const commander = card("Dragon Commander", "Legendary Creature \u2014 Dragon", 2);
+    expect(manaModel([jasper, ...basics(6)], { trials: 10, turns: 3, alsoPrice: [commander] }).availability.accelerants).toBe(1);
+    expect(manaModel([jasper, ...basics(6)], { trials: 10, turns: 3 }).availability.accelerants).toBe(0);
+  });
+
+  test("a commander whose own mana waits on a Dragon plays once the library's Dragon is out, in its colour (the priced extras are judged against the whole decklist too)", () => {
+    const commander = withManaLines("Dragon Elf", "Legendary Creature \u2014 Elf", [tapFor(["G"], { gate: "you control a dragon" })]);
+    const withCmd = { ...commander, card: { ...commander.card, manaValue: 2 } };
+    const islands = Array.from({ length: 5 }, (_, i) => card(`Island ${i}`, "Basic Land \u2014 Island"));
+    const green: DeckCard = { ...card("Green Spell", "Sorcery", 1), card: { ...card("Green Spell", "Sorcery", 1).card, manaCost: "{G}" } };
+    const deck = [card("Small Dragon", "Creature \u2014 Dragon", 3), ...islands, green];
+    // cast on turn 2, a dork taps from turn 3; the Dragon the leftover mana pays for on turn 3 is out from turn 4, and only then does the commander make its {G}
+    expect(manaPerTurn(deck, 4, { alsoPrice: [withCmd] })).toEqual([1, 2, 3, 5]);
+    const r = simulate(deck, { trials: 20, turns: 4, seed: 5, mulligan: false, alsoPrice: [withCmd] });
+    expect(r.byCardCastable.get("Green Spell")).toEqual([0, 0, 0, 1]);
+  });
+
+  test("an unmet board gate stays a blank, and a deck whose cards cannot meet it does not get the line (Mox Jasper beside no Dragon)", () => {
+    const jasper = real("Mox Jasper");
+    expect(manaPerTurn([jasper, ...basics(7)], 4)).toEqual([1, 2, 3, 4]);
+  });
+
+  test("a walker's gated loyalty line is priced against the deck, its turns included (manaOutput's loyalty branch is handed the deck)", () => {
+    const line = mkLine({ gate: "you control a dragon", cost: { ...FREE_TAP, tap: false, other: ["−1"] }, startLoyalty: 3, colours: ["R"], amount: { fixed: 2, scales: null }, net: 2 });
+    const walker = withManaLines("Gated Walker", "Legendary Planeswalker — Test", [line]);
+    const deck = deckOfDragons([walker]);
+    expect(manaOutput(walker, deck).turns).toBe(3);
+    expect(manaOutput(walker, deck).gated?.amount).toBe(2);
   });
 });

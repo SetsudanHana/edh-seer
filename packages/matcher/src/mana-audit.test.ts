@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { minCopies } from "@edh-seer/engine";
 import { colourDeficit, manaAudit, pipsByColor } from "./mana-audit.js";
@@ -6,6 +6,8 @@ import { minSources } from "./mulligan.js";
 import type { DeckCard } from "./types.js";
 import { colourSourceColours, cardLines, makesAnyMana, paysItsWay } from "./mana-lines.js";
 import { FREE_TAP, fetchTags, manaTags, mkLine, tapFor } from "./mana-test-support.js";
+import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
+import { colourSources, fixerSupply } from "./mana-base.js";
 
 const card = (name: string, manaCost: string, manaValue: number, extra: Partial<Card> = {}): DeckCard => ({
   card: { name, manaCost, manaValue, typeLine: "Sorcery", oracleText: "", keywords: [], colors: [] , ...extra } as Card,
@@ -602,4 +604,72 @@ test("a deck with no gold demand has no gold field, and a colour alone short is 
 
 test("manaAudit still returns the rows alone", () => {
   expect(Array.isArray(manaAudit(fillTo(100, [card("Mono", "{W}{W}", 2), ...many(25, ["W"], "Plains")])))).toBe(true);
+});
+
+// THE COLOUR AUDIT FOLLOWS THE GATE (owner 2026-10-13, #1169 2b-2): "one answer for audit and castability: Tainted lands, Verges, Spire of Industry count as colour sources when their gate
+// is met". A gated line is a colour source of its colours in a deck that meets the gate (`supplied`, the flat count the mana base reads too), and it is online for a demand on the turn
+// the gate is met BY (`gate.ts`'s closed form of the goldfish's own timing), not before.
+describe("a gated source in the colour audit", () => {
+  const real = (name: string): DeckCard => {
+    const hit = (goldfish as unknown as DeckCard[]).find((c) => c.card.name === name);
+    expect(hit, `fixture for ${name}`).toBeDefined();
+    return structuredClone(hit!);
+  };
+  const basic = (name: string, type: string, colour: string): DeckCard => ({
+    card: { name, typeLine: `Basic Land \u2014 ${type}`, oracleText: "", keywords: [], colors: [], manaValue: 0 } as Card,
+    tags: manaTags([tapFor([colour])]),
+  });
+  const peaks = Array.from({ length: 4 }, () => real("Tainted Peak"));
+  const mountain = basic("Mountain", "Mountain", "R");
+  const redThree = card("Red Three", "{2}{R}", 3);
+  const redFive = card("Red Five", "{4}{R}", 5);
+  const swamps = (n: number) => Array.from({ length: n }, (_, i) => basic(`Swamp ${i}`, "Swamp", "B"));
+  const forests = (n: number) => Array.from({ length: n }, (_, i) => basic(`Forest ${i}`, "Forest", "G"));
+
+  test("Tainted Peak is a red source in a deck with Swamps, and online when a Swamp is likely out: six Swamps are 48% by turn 3 and 51% by turn 4", () => {
+    const deck = fillTo(100, [...peaks, ...swamps(6), mountain, redThree, redFive]);
+    const red = manaAudit(deck).find((r) => r.color === "R")!;
+    expect(red.supplied).toBe(5);
+    expect(red.demands.find((d) => d.turn === 3)!.available).toBe(1);
+    expect(red.demands.find((d) => d.turn === 5)!.available).toBe(5);
+    // the mana base counts the same sources the audit does
+    expect(colourSources(deck).get("R")).toBe(5);
+  });
+
+  test("a land that holds a land-count gate takes a land drop of its own: Tainted Peak is red from turn 2 in a deck of Swamps, not turn 1", () => {
+    const deck = fillTo(100, [...peaks, ...swamps(40)]);
+    expect(colourSourceColours(peaks[0]!, null, "five", deck, 1)).toEqual([]);
+    expect(colourSourceColours(peaks[0]!, null, "five", deck, 2)).toEqual(["B", "R"]);
+  });
+
+  test("a deck with no Swamp has no red from it, in the audit or the mana base", () => {
+    const deck = fillTo(100, [...peaks, ...forests(6), mountain, redThree, redFive]);
+    const red = manaAudit(deck).find((r) => r.color === "R")!;
+    expect(red.supplied).toBe(1);
+    expect(red.demands.find((d) => d.turn === 5)!.available).toBe(1);
+    expect(colourSources(deck).get("R")).toBe(1);
+  });
+
+  test("the mana base's fixer credit sees the gated source too: with a Lantern, a deck that counts Peak as red has fewer lands left to credit than one that does not", () => {
+    const lanterns = Array.from({ length: 4 }, () => real("Chromatic Lantern"));
+    // green rocks keep the number of sources a Lantern could newly reach well above the number of lands, so it is the lands that bind
+    const greenRocks = Array.from({ length: 20 }, (_, i): DeckCard => ({ card: { name: `Green Rock ${i}`, typeLine: "Artifact", oracleText: "", keywords: [], colors: [], manaValue: 2 } as Card, tags: manaTags([tapFor(["G"])]) }));
+    const withSwamps = fillTo(100, [...lanterns, ...greenRocks, ...peaks, ...swamps(6), mountain, redThree]);
+    const withForests = fillTo(100, [...lanterns, ...greenRocks, ...peaks, ...forests(6), mountain, redThree]);
+    expect(fixerSupply(withSwamps)("R", 6)).toBeLessThan(fixerSupply(withForests)("R", 6));
+  });
+
+  test("Mox Jasper is every colour once a Dragon is likely out, and not before: a five-mana Dragon is cast on turn 5 and out from turn 6", () => {
+    const jasper = real("Mox Jasper");
+    const dragons = Array.from({ length: 12 }, (_, i) => card(`Dragon ${i}`, "{3}{R}{R}", 5, { typeLine: "Creature \u2014 Dragon" }));
+    const deck = fillTo(100, [jasper, ...dragons]);
+    expect(colourSourceColours(jasper, null, "five", deck)).toEqual(["W", "U", "B", "R", "G"]);
+    expect(colourSourceColours(jasper, null, "five", deck, 5)).toEqual([]);
+    expect(colourSourceColours(jasper, null, "five", deck, 6)).toEqual(["W", "U", "B", "R", "G"]);
+    expect(colourSourceColours(jasper)).toEqual([]);
+    expect(makesAnyMana(jasper)).toBe(false);
+    expect(makesAnyMana(jasper, deck)).toBe(true);
+    expect(makesAnyMana(jasper, deck, 5)).toBe(false);
+    expect(makesAnyMana(jasper, deck, 6)).toBe(true);
+  });
 });

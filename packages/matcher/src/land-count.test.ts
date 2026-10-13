@@ -1,10 +1,11 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { karstenLands } from "@edh-seer/engine";
 import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 import { detectBuildCategories } from "./build.js";
 import { landInputs, rampWeight, recommendedLands } from "./land-count.js";
 import { classifyAccelerant } from "./goldfish.js";
+import { boardGateOf, boardGateProbability } from "./gate.js";
 import { RAMP_RESILIENCE, landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
 import { tapFor, withLines, withTap } from "./mana-test-support.js";
@@ -288,4 +289,76 @@ test("a walker whose mana lasts one turn weighs as a one-shot, one that lasts lo
   expect(rampWeight(real("Chandra, Torch of Defiance"))).toBe(RAMP_RESILIENCE.rock);
   expect(rampWeight(real("Chandra, Hope's Beacon"))).toBe(RAMP_RESILIENCE.rock);
   expect(rampWeight(real("Dark Ritual"))).toBeNull();
+});
+
+// A GATED SOURCE IS FAST MANA ONLY IF ITS GATE CAN BE MET ON TURN 1 OR 2 (owner 2026-10-13, #1169 2b-2: board-count gates are timed turn by turn). Mox Jasper costs nothing, but a
+// Mox that waits on a Dragon is not a Mox on turn one in a deck whose Dragons cost five.
+describe("a gated source in the Karsten inputs", () => {
+  const filler = (n: number): DeckCard[] => Array.from({ length: n }, (_, i) => mk(`Spell ${i}`, 3, "", "Sorcery"));
+  const dragons = (n: number, manaValue: number): DeckCard[] => Array.from({ length: n }, (_, i) => mk(`Dragon ${i}`, manaValue, "", "Creature — Dragon"));
+  const jasper = real("Mox Jasper");
+
+  test("Mox Jasper in a deck of five-mana Dragons is not fast mana and not cheap ramp; in a deck of one-mana Dragons it is fast mana", () => {
+    const heavy = [jasper, ...dragons(12, 5), ...filler(87)];
+    // the gate IS met in the deck (a rock for the swaps and the goldfish): it is just not met by turn 2
+    expect(classifyAccelerant(jasper, heavy)).not.toBeNull();
+    expect(landInputs(heavy)).toMatchObject({ fastMana: 0, rampPlusDraw: 0 });
+    // ...and the Ramp role, which holds it in every deck, does not make it cheap ramp either
+    const inRole = asRamp(jasper, "mana-generation");
+    expect(detectBuildCategories([inRole]).get("ramp")?.has("Mox Jasper")).toBe(true);
+    expect(landInputs([inRole, ...dragons(12, 5), ...filler(87)])).toMatchObject({ fastMana: 0, rampPlusDraw: 0 });
+    expect(landInputs([inRole, ...dragons(20, 1), ...filler(79)])).toMatchObject({ fastMana: 1, rampPlusDraw: 0 });
+    const light = [jasper, ...dragons(20, 1), ...filler(79)];
+    expect(landInputs(light)).toMatchObject({ fastMana: 1, rampPlusDraw: 0 });
+  });
+
+  test("the accelerant count asks the deck, and the commander is a card of it", () => {
+    const deck = [jasper, ...dragons(12, 5), ...filler(87)];
+    expect(recommendedLands(deck).accelerants).toBe(1);
+    expect(recommendedLands(deck.filter((d) => d !== jasper)).accelerants).toBe(0);
+    // a Dragon COMMANDER meets the gate of a small deck: not one of the hundred to be drawn, but the card it is
+    const commander = mk("Dragon Commander", 5, "", "Legendary Creature — Dragon");
+    const small = [jasper, commander, ...filler(18)];
+    expect(recommendedLands(small, { commanderNames: ["Dragon Commander"] }).accelerants).toBe(1);
+    expect(recommendedLands(small.filter((d) => d !== commander), {}).accelerants).toBe(0);
+  });
+
+  // 8 one-mana Dragons in a hundred are the first count that meets Mox Jasper's gate by turn 2 (49.8% of seven in 99 cards, 54.3% of eight in 100): only the COMMANDER tips it
+  test("a Dragon commander tips the gate into a deck's fast mana and weighs its Jasper, which the library alone would not", () => {
+    const commander = mk("Dragon Commander", 1, "", "Legendary Creature \u2014 Dragon");
+    const deck = [jasper, ...dragons(7, 1), ...filler(91), commander];
+    expect(landInputs(deck, { commanderNames: ["Dragon Commander"] })).toMatchObject({ fastMana: 1 });
+    expect(landInputs(deck.filter((d) => d !== commander))).toMatchObject({ fastMana: 0 });
+    // 3 Dragons in 99 are 41% by the median clock, a Dragon commander makes them 4 in 100 and 51%
+    const small = (cmd: DeckCard[]) => [...Array.from({ length: 8 }, () => jasper), ...dragons(3, 2), ...filler(88), ...cmd];
+    const withCommander = recommendedLands(small([commander]), { commanderNames: ["Dragon Commander"] });
+    const without = recommendedLands(small([mk("Plain Commander", 1, "", "Legendary Creature \u2014 Human")]), { commanderNames: ["Plain Commander"] });
+    expect(withCommander.accelerants).toBe(8);
+    expect(without.accelerants).toBe(0);
+    expect(withCommander.target).toBeLessThan(without.target);
+  });
+
+  test("a source that makes mana only once its gate is met weighs what it keeps producing times the share of the first eight turns it is met in", () => {
+    const deck = [jasper, ...dragons(12, 5), ...filler(87)];
+    const w = rampWeight(jasper, deck)!;
+    const share = [1, 2, 3, 4, 5, 6, 7, 8].reduce((n, t) => n + boardGateProbability(boardGateOf("you control a dragon")!, deck, t), 0) / 8;
+    expect(w).toBeCloseTo(RAMP_RESILIENCE.rock * share, 10);
+    expect(w).toBeGreaterThan(0);
+    expect(w).toBeLessThan(RAMP_RESILIENCE.rock);
+    // Leafkin Druid makes mana whatever the board is: its weight is a dork's, whole
+    const druid = real("Leafkin Druid");
+    expect(rampWeight(druid, [druid, ...filler(99)])).toBe(RAMP_RESILIENCE.dork);
+  });
+});
+
+test("the land target is lowered by a gated source's weight, judged against the deck (rampWeight is handed the deck)", () => {
+  const jasper = real("Mox Jasper");
+  const dragons = Array.from({ length: 20 }, (_, i) => mk(`Dragon ${i}`, 2, "", "Creature — Dragon"));
+  const spells = Array.from({ length: 36 }, (_, i) => mk(`Spell ${i}`, 4, "", "Sorcery"));
+  const lands = Array.from({ length: 36 }, (_, i) => land(`Swamp ${i}`));
+  const moxen = Array.from({ length: 8 }, () => jasper);
+  const withJasper = recommendedLands([...moxen, ...dragons, ...spells, ...lands]);
+  const without = recommendedLands([...moxen.map((d) => ({ ...d, tags: null })), ...dragons, ...spells, ...lands]);
+  expect(withJasper.accelerants).toBe(8);
+  expect(withJasper.target).toBeLessThan(without.target);
 });

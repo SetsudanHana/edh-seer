@@ -127,7 +127,9 @@ export function roleOption(section: RoleSectionId, cut: DeckCard, add: Candidate
 // A colour swap's `made` is what the audit counts the card as a colour source of (`colourSourceColours`), except that an `among` line (Chrome Mox, Mox Amber:
 // bounded by the board) makes no claim: a swap would name a Mox as "makes red". `chosen`, `opponent-lands` and `lands-you-could` stay what the audit counts
 // (five), so a chosen-colour rock (Coldsteel Heart) is still a fixer and a cut it protects. Trigger mana (an Aura) is not a colour source (owner, 2026-10-10).
-const MADE_COLOURS = (d: DeckCard): Color[] => COLORS.filter((c) => colourSourceColours(d, null, "no-among").includes(c));
+// A gated line counts where the DECK meets its gate (owner 2026-10-13: the audit follows the gate check). CEILING: no swap changes today -- a gated rock has no readable ramp job
+// (`readJob`), so `sameRockAnyColour` refuses it either way and an ungated one has no gate to read; the deck is threaded so the colours stay the audit's, not to move an offer.
+const MADE_COLOURS = (d: DeckCard, deck?: readonly DeckCard[]): Color[] => COLORS.filter((c) => colourSourceColours(d, null, "no-among", deck).includes(c));
 
 /** A COLOUR SWAP FOR A ROCK (owner, 2026-10-08, #966): the same rock in everything but its colours, and
  *  the add makes a colour the deck is short of (`colourDeficit`) that the cut does not, keeping every
@@ -139,8 +141,8 @@ export function colourOption(cut: DeckCard, add: Candidate, deficit: Partial<Rec
   if (!rolesOfCard(cut).includes("ramp") || !add.roles.includes("ramp") || netPositiveMana(cut, deck)) return null;
   // A LAND-FETCH SPELL MAKES NO COLOUR OF ITS OWN: its colours are those of the deck's lands it can find.
   const fetchCut = isFetchSpell(cut);
-  const had = fetchCut && fetchReach ? [...fetchReach(cut)] : MADE_COLOURS(cut);
-  const made = isFetchSpell(add.dc) && fetchReach ? [...fetchReach(add.dc)] : MADE_COLOURS(add.dc);
+  const had = fetchCut && fetchReach ? [...fetchReach(cut)] : MADE_COLOURS(cut, deck);
+  const made = isFetchSpell(add.dc) && fetchReach ? [...fetchReach(add.dc)] : MADE_COLOURS(add.dc, deck);
   if (!had.every((c) => made.includes(c))) return null;
   const colour = COLORS.filter((c) => made.includes(c) && !had.includes(c) && (deficit[c] ?? 0) > 0);
   // NO DEARER THAN THE CUT: `roleOption` gets this from `strictlyBetter`, a colour swap has to ask.
@@ -242,7 +244,7 @@ export function roleOptions(
     const upgrades = gameChangers.pool.map((c) => gameChangerOption(section, cut, c, gameChangers.quality)).filter((o): o is RoleOption => o !== null)
       .sort((a, b) => gameChangers.quality(b.add, b.role) - gameChangers.quality(a.add, a.role) || a.add.localeCompare(b.add));
     if (strict.length + upgrades.length + colour.length === 0) continue;
-    const shortMade = MADE_COLOURS(cut).reduce((n, c) => n + (deficit[c] ?? 0), 0);
+    const shortMade = MADE_COLOURS(cut, deck).reduce((n, c) => n + (deficit[c] ?? 0), 0);
     out.push({ cut: cut.card.name, options: [...upgrades, ...strict, ...colour], shortMade, ...(strict[0] ? { strict: strict[0] } : {}), ...(colour[0] ? { colour: colour[0] } : {}) });
   }
   // CUTS: those with a strict option first as before; then those that only close a colour shortfall,
@@ -388,7 +390,7 @@ export async function upgradeOptions(input: {
   const deficit = colourDeficit(deck, input.commanders);
   const closes = swapCloser(deck, input.commanders);
   const libraryLands = deck.filter((d) => !input.commanders.includes(d.card.name));
-  const fetchReach = (d: DeckCard): ReadonlySet<Color> => new Set([...fetchedColours(d.card.oracleText ?? "", libraryLands, null)].filter((c): c is Color => (COLORS as readonly string[]).includes(c)));
+  const fetchReach = (d: DeckCard): ReadonlySet<Color> => new Set([...fetchedColours(d.card.oracleText ?? "", libraryLands, null, deck)].filter((c): c is Color => (COLORS as readonly string[]).includes(c)));
   const roles = {} as Record<RoleSectionId, CutOptions<RoleOption>[]>;
   for (const section of ROLE_SECTIONS) {
     const sectionRoles = SECTION_ROLES[section] as readonly BuildCategory[];

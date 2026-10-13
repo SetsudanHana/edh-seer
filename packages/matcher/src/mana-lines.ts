@@ -6,8 +6,9 @@
  *
  *  A COLOUR SOURCE (owner, 2026-10-08 and 2026-10-10) is a repeatable tap or static production you control without
  *  consuming a resource. Treasure makers, sacrifice outlets and counter-fuelled mana are ramp; trigger mana (Birgi) is ramp;
- *  restricted mana ("spend only ...", Smokebraider) is never a source; a GATED line (Tainted Peak's B/R needs a Swamp) is not
- *  credited as guaranteed. `isColourSource` is the schema's own predicate, stated on `ManaLine`.
+ *  restricted mana ("spend only ...", Smokebraider) is never a source; a GATED line (Tainted Peak's B/R needs a Swamp) is a source
+ *  only where the DECK meets its gate (owner 2026-10-13: the audit follows the gate check, `gate.ts`) and, in a clock, by the turn it is met.
+ *  `isColourSource` is the schema's own predicate, stated on `ManaLine`: it asks for no gate, and the deck-aware reading is `colourSourceLine`.
  *
  *  COST AGAINST PRODUCTION (owner, 2026-10-08, #1114): a costed line is FIXING only when it produces at least its mana cost
  *  plus the source's own tap. Cascade Bluffs ("{U/R}, {T}: Add {U}{U}, {U}{R}, or {R}{R}") pays 1 and makes 2: a full U and
@@ -17,7 +18,8 @@
  *  Swamp") cannot be judged from the line and is not struck, as before. */
 import type { ManaLine } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
-import { parseTypeLine } from "./typeline.js";
+import { gateMet, gateMetBy } from "./gate.js";
+import { countsAsLand, parseTypeLine } from "./typeline.js";
 
 export const WUBRG = ["W", "U", "B", "R", "G"] as const;
 const BASIC_COLOUR: Record<string, string> = { plains: "W", island: "U", swamp: "B", mountain: "R", forest: "G" };
@@ -67,10 +69,10 @@ export const usableLoyalty = (line: ManaLine): boolean => isLoyaltyAbility(line)
 export const paidWithResource = (line: ManaLine): boolean =>
   line.cost.sacrificeOther || line.cost.counters !== null || line.cost.tapOther || !line.cost.other.every((o) => NON_CONSUMING_COST.test(o) || LOYALTY_COST.test(o));
 
-/** The shape of a colour source -- everything `isColourSource` asks except that the production could be read. */
-const sourceShaped = (line: ManaLine): boolean =>
+/** The shape of a colour source -- everything `isColourSource` asks except that the production could be read, and the gate: the caller says whether it holds. */
+const sourceShaped = (line: ManaLine, gateHolds = false): boolean =>
   (line.source === "activated" || line.source === "static-grant")
-  && line.gate === null && line.restriction === null
+  && (gateHolds || line.gate === null) && line.restriction === null
   && !line.cost.sacrificeSelf && !paidWithResource(line)
   // A LOYALTY COST IS NO RESOURCE (`paidWithResource`), but a walker's ability is a source only if it can be activated the turn the walker is cast (owner 2026-10-13:
   // "the loyalty test applies to colour sources too"). Nissa, Worldwaker's -7 from loyalty 3 is not a Forest source; that is correct, and was only counted before
@@ -82,9 +84,22 @@ const sourceShaped = (line: ManaLine): boolean =>
  *  card itself taps, or the line a static ability grants. A trigger, an aura trigger, a token maker, a one-shot spell and a fetch
  *  are never one, whatever their cost says. A non-empty `cost.other` is a consumed resource unless it is on the list above.
  *  A `grantee` line (Katilda: the grantee's own colours) is not one: the card grants the ability and does not tap for it.
- *  CEILING: a GATED line (Tainted Peak's B/R needs a Swamp, Honored Hierarch's needs renown) is not credited at all, though it holds
- *  in most games; the audit under-claims rather than counts a source that may be dead. */
+ *  A GATED line (Tainted Peak's B/R needs a Swamp, Honored Hierarch's needs renown) is none here: this predicate is deck-free. Whether the deck meets the gate is `colourSourceLine`. */
 export const isColourSource = (line: ManaLine): boolean => sourceShaped(line) && !line.unread && line.anyColour !== "grantee";
+
+/** THE COLOUR-SOURCE RULE FOR A LINE IN A DECK (owner 2026-10-13: the colour audit follows the gate check, one answer for the audit and castability). An ungated line is one by
+ *  `isColourSource`; a gated line is one when the deck meets its gate -- over the deck (`gateMet`, the median clock) with no `turn`, or by `turn` (`gateMetBy`, the closed form of the
+ *  goldfish's timing), the same answer the goldfish gives. With no deck a gated line is none, as before; a gate no decklist settles (renown, speed, counters) is none, always.
+ *  CEILING: the deck is judged whole, so a gated Verge in a deck with two basics of its type counts only when `gate.ts` says the type is likely out; the colour audit's clock reads that likelihood
+ *  per turn, the flat count (`supplied`, the mana base) reads it at the median clock. */
+export function colourSourceLine(line: ManaLine, deck?: readonly DeckCard[], turn?: number, holderIsLand = false): boolean {
+  if (line.gate === null) return isColourSource(line);
+  const holds = deck !== undefined && (turn === undefined ? gateMet(line, deck) : gateMetBy(line.gate, deck, turn, holderIsLand));
+  return holds && sourceShaped(line, true) && !line.unread && line.anyColour !== "grantee";
+}
+
+/** THE CARD HAS A GATED LINE THAT WOULD BE A COLOUR SOURCE IF ITS GATE HELD: what a clock must re-ask turn by turn. */
+export const hasGatedColourLine = (dc: DeckCard): boolean => cardLines(dc).some((l) => l.gate !== null && sourceShaped(l, true) && !l.unread && l.anyColour !== "grantee");
 
 /** THE NAMES OF CARDS WITH A LINE THAT WOULD BE A COLOUR SOURCE BUT WHOSE PRODUCTION DERIVE COULD NOT READ ("choose a color of a permanent
  *  you control", Meteor Crater; "the type a land could produce" with a counter clause, Incubation Druid). They count as NO colour --
@@ -168,11 +183,12 @@ export function lineColours(line: ManaLine, identity: DeckIdentity, bounded: Bou
 
 // CEILING: a line derive could not read (`unread`) is not a colour source -- it counts as none, and `unreadSourceNames` lists the cards.
 /** THE COLOURS A CARD IS A COLOUR SOURCE OF, by its own tap or static production: its colour-source lines that pay their way, a
- *  land's intrinsic basic types. Empty for a card with no derived tags: it contributes nothing, and `coverage.ts` already lists it among the underived cards. A fetch is
+ *  land's intrinsic basic types. Given the `deck` it is in, a gated line the deck meets counts too (`colourSourceLine`), by `turn` when one is named. Empty for a card with no derived tags: it contributes nothing, and `coverage.ts` already lists it among the underived cards. A fetch is
  *  NOT counted here: what it finds is the deck's to say (`colour-sources.ts`). */
-export function colourSourceColours(dc: DeckCard, identity: DeckIdentity = null, bounded: BoundedColours = "five"): string[] {
+export function colourSourceColours(dc: DeckCard, identity: DeckIdentity = null, bounded: BoundedColours = "five", deck?: readonly DeckCard[], turn?: number): string[] {
   const out = new Set<string>(intrinsicColours(dc));
-  for (const l of cardLines(dc)) if (isColourSource(l) && paysItsWay(l)) for (const c of lineColours(l, identity, bounded)) out.add(c);
+  const land = countsAsLand(dc.card);
+  for (const l of cardLines(dc)) if (colourSourceLine(l, deck, turn, land) && paysItsWay(l)) for (const c of lineColours(l, identity, bounded)) out.add(c);
   return WUBRG.filter((c) => out.has(c));
 }
 
@@ -196,8 +212,9 @@ export function producedManaTypes(dc: DeckCard): string[] {
 
 /** DOES THE CARD ITSELF MAKE MANA you can use on demand, of any colour or none? A costed line that makes less than it costs still
  *  does (colourless, by the ruling). A plain fetch land does not: it makes mana only through what it finds. */
-export function makesAnyMana(dc: DeckCard): boolean {
-  return intrinsicColours(dc).length > 0 || cardLines(dc).some(isColourSource);
+export function makesAnyMana(dc: DeckCard, deck?: readonly DeckCard[], turn?: number): boolean {
+  const land = countsAsLand(dc.card);
+  return intrinsicColours(dc).length > 0 || cardLines(dc).some((l) => colourSourceLine(l, deck, turn, land));
 }
 
 /** A LAND-FETCH THAT COUNTS AS A SOURCE OF WHAT IT FINDS (owner, 2026-10-10): the card carries `landFetch`, and one of its fetch lines

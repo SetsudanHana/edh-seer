@@ -231,20 +231,20 @@ export function colourReplacements(
       if (makes && landOnlineBy(dc, turn, basicTypes)) continue;
       ranked.push({ name: f.name, tier: f.colours.length === 0 ? 1 : makes ? 2 : 3, land: true, tapped: f.tapped, colours: f.colours.length, hidden: f.colours.filter((c) => (anyShort[c] ?? 0) > 0).length });
     } else {
-      const made = colourSourceColours(dc, identity);
+      const made = colourSourceColours(dc, identity, "five", deck);
       // MANA SPENT "AS THOUGH IT WERE MANA OF ANY COLOR" (Chromatic Orrery) is every colour, whatever makes it: a derived static
       // fixer that covers all mana, refused like Arcane Signet.
       if (dc.tags?.staticFixer?.covers === "all") continue;
       // A LAND-FETCH SPELL (Rampant Growth): its colours are those of the deck's lands it can reach, and one
       // that can reach the short colour is a source of it, never named.
       if (isFetchSpell(dc)) {
-        const reach = [...fetchedColours(dc.card.oracleText ?? "", library, identity)].filter((c): c is Color => (COLORS as readonly string[]).includes(c));
+        const reach = [...fetchedColours(dc.card.oracleText ?? "", library, identity, deck)].filter((c): c is Color => (COLORS as readonly string[]).includes(c));
         if (reach.includes(colour) || reach.some((c) => otherShort.includes(c))) continue;
         ranked.push({ name: dc.card.name, tier: reach.some((c) => needed.has(c)) ? 3 : 1, land: false, tapped: 0, colours: reach.filter((c) => needed.has(c)).length, hidden: reach.filter((c) => (anyShort[c] ?? 0) > 0).length });
         continue;
       }
       const dork = /\bcreature\b/i.test(dc.card.typeLine);
-      if (!makesAnyMana(dc) || (dork ? !isPlainDork(dc, deck) || creatureSubtypes(dc).some((t) => themed.has(t)) : !/\bartifact\b/i.test(dc.card.typeLine))) continue;
+      if (!makesAnyMana(dc, deck) || (dork ? !isPlainDork(dc, deck) || creatureSubtypes(dc).some((t) => themed.has(t)) : !/\bartifact\b/i.test(dc.card.typeLine))) continue;
       // A ROCK THAT MAKES THE COLOUR IS NEVER NAMED, and only a PLAIN rock is (coordinator, 2026-10-08):
       // trading ramp that makes the colour for a land is not a colour fix, and an artifact that does
       // something else is a utility card.

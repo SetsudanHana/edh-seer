@@ -1,6 +1,7 @@
 import type { KarstenInputs } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectBuildCategories } from "./build.js";
 import { classifyAccelerant, manaOutput, playableLines } from "./goldfish.js";
+import { boardGateProbability, lineGateMetBy } from "./gate.js";
 import { isManaSource } from "./mana-audit.js";
 import { RAMP_RESILIENCE, drawCredit, landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
@@ -10,6 +11,11 @@ import { countsAsLand, transformsIntoLand } from "./typeline.js";
  *  shortens the turns the regression is about; a four-mana ramp spell needs the lands you were
  *  trying to count. */
 const CHEAP = 2;
+/** THE TURN A GATED SOURCE MUST BE LIVE BY TO COUNT AS FAST MANA OR CHEAP RAMP (owner 2026-10-13: board-count gates are timed turn by turn): Karsten's 0.28 and the Mox are about turns one
+ *  and two. The deck's chance of meeting the gate by then is `gate.ts`'s closed form of the goldfish's timing (the permanents on the battlefield by turn 2: a land a turn, a spell on curve). */
+const FAST_BY = 2;
+/** The turns a gated source's weight averages its gate over: the availability table's eight rows. */
+const WEIGHT_TURNS = 8;
 
 const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 
@@ -17,10 +23,18 @@ const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
  *  phase's or a landfall trigger), on a card that is neither a one-shot (`isOneShot`: Dark Ritual, Lotus Petal), nor suspend-only (`suspendOnly`:
  *  Mox Tantalite, never cast from hand). A line paid for with a counter ("Remove a +1/+1 counter: Add {C}", Cryptic Trilobite) is not a playable line:
  *  the mana runs out (owner, 2026-10-10). A GATED line counts in a deck that meets its gate (owner 2026-10-13, `gate.ts`): Mox Jasper is fast mana in a deck of Dragons. */
-function makesRepeatableMana(dc: DeckCard, deck: readonly DeckCard[]): boolean {
+function makesRepeatableMana(dc: DeckCard, deck: readonly DeckCard[], byTurn?: number): boolean {
   if (dc.tags === null || dc.tags.isOneShot || dc.tags.suspendOnly || !isManaSource(dc)) return false;
-  // `playableLines` already refuses a line paid with a counter (and every other consumed resource): what is left is mana that keeps coming.
-  return playableLines(dc, deck).length > 0;
+  // `playableLines` already refuses a line paid with a counter (and every other consumed resource): what is left is mana that keeps coming. With `byTurn`, a gated line counts only if
+  // its gate can be met by then (`lineGateMetBy`); an ungated line always does.
+  return playableLines(dc, deck).some((l) => byTurn === undefined || lineGateMetBy(l, deck, byTurn));
+}
+
+/** EVERY LINE THE GOLDFISH CAN PLAY IS GATED AND NONE OF THE GATES CAN BE MET BY TURN 2 (Mox Jasper in a deck of five-mana Dragons): a source that is a rock in the deck, but not on the clock the
+ *  Karsten inputs are about. A card with an ungated line, or with no playable line at all (a ritual, a land-fetch spell), is not. */
+function gatedOffClock(dc: DeckCard, deck: readonly DeckCard[]): boolean {
+  const lines = playableLines(dc, deck);
+  return lines.length > 0 && lines.every((l) => l.gate !== null && !lineGateMetBy(l, deck, FAST_BY));
 }
 
 /** A modal double-faced card with a LAND back, and whether that land enters untapped -- Karsten
@@ -63,6 +77,7 @@ export function landInputs(
 ): Required<KarstenInputs> {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
+  // A GATE IS JUDGED AGAINST THE WHOLE DECKLIST, the commander in it (owner 2026-10-13: it counts toward a gate, in the goldfish and here alike): `deck`, not `library`.
   // AN MDFC IS A LAND (owner ruling 2026-08-31), so it is NOT in the spell pool. Karsten's own
   // convention is the opposite -- count it as a spell and discount the requirement by 0.74/0.38 --
   // and `recommendedLands` below records why this repo departs from it. What matters here is that
@@ -76,7 +91,7 @@ export function landInputs(
     ? nonland.reduce((sum, dc) => sum + dc.card.manaValue, 0) / nonland.length
     : 0;
 
-  const fast = nonland.filter((dc) => dc.card.manaValue === 0 && makesRepeatableMana(dc, library));
+  const fast = nonland.filter((dc) => dc.card.manaValue === 0 && makesRepeatableMana(dc, deck, FAST_BY));
   const fastNames = new Set(fast.map((dc) => dc.card.name));
 
   // Ramp and draw membership come from the same rules every other readout uses, so a rules edit
@@ -91,7 +106,7 @@ export function landInputs(
     // CEILING: a card with NO derived tags at all (`dc.tags === null`) counts as nothing here, and `landInputs` has no channel to say so.
     // `coverage.ts` already lists the underived cards of a deck; the Karsten inputs are not the place that names them.
     ...nonland
-      .filter((dc) => dc.card.manaValue <= CHEAP && makesRepeatableMana(dc, library))
+      .filter((dc) => dc.card.manaValue <= CHEAP && makesRepeatableMana(dc, deck))
       .map((dc) => dc.card.name),
   ]);
   const mdfc = library.map(mdfcLandBack);
@@ -108,7 +123,9 @@ export function landInputs(
   // cheap rock here while the Ramp role had dropped it.
   const rampPlusDraw = nonland.filter(
     (dc) => accelerants.has(dc.card.name) && dc.card.manaValue <= CHEAP
-      && !fastNames.has(dc.card.name) && !transformsIntoLand(dc.card) && dc.tags?.isOneShot !== true,
+      && !fastNames.has(dc.card.name) && !transformsIntoLand(dc.card) && dc.tags?.isOneShot !== true
+      // A GATED SOURCE THAT IS NOT LIVE BY TURN 2 is not cheap ramp, whichever way it got into `accelerants` (the Ramp role holds Mox Jasper in every deck).
+      && !gatedOffClock(dc, deck),
   ).length;
 
   return {
@@ -158,7 +175,17 @@ export interface RoleTargets { ramp?: number; consistency?: number }
 export function rampWeight(dc: DeckCard, deck?: readonly DeckCard[]): number | null {
   const a = classifyAccelerant(dc, deck);
   if (!a) return null;
-  return manaOutput(dc, deck).turns === 1 ? RAMP_RESILIENCE.oneShot : RAMP_RESILIENCE[a.kind];
+  const out = manaOutput(dc, deck);
+  const weight = out.turns === 1 ? RAMP_RESILIENCE.oneShot : RAMP_RESILIENCE[a.kind];
+  // A SOURCE THAT MAKES MANA ONLY ONCE A BOARD-COUNT GATE IS MET (Mox Jasper: a Dragon; `amount` 0 until then) keeps producing for the share of the first eight turns the deck has the gate
+  // met in -- the average over turns 1-8 of the deck's chance of it (`boardGateProbability`, the closed form of the goldfish's timing). A source with mana of its own and a better one
+  // behind a gate (Leafkin Druid) is whole. CEILING: an expectation over the deck, not a trial; the probability at the median clock is the verdict that lets the card in at all (`gate.ts`).
+  if (out.gated !== undefined && out.amount === 0 && deck) {
+    let share = 0;
+    for (let t = 1; t <= WEIGHT_TURNS; t++) share += boardGateProbability(out.gated.gate, deck, t);
+    return weight * (share / WEIGHT_TURNS);
+  }
+  return weight;
 }
 
 /** Target vs actual land count for a deck.
@@ -178,7 +205,7 @@ export function recommendedLands(
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const commanderManaValue = Math.max(0, ...deck.filter((dc) => commanders.has(dc.card.name)).map((dc) => dc.card.manaValue));
-  const accelerants = library.filter((dc) => classifyAccelerant(dc, library) !== null).length;
+  const accelerants = library.filter((dc) => classifyAccelerant(dc, deck) !== null).length;
   const drawCards = detectBuildCategories([...library]).get("draw") ?? new Set<string>();
   const drawPieces = drawCards.size;
 
@@ -197,7 +224,7 @@ export function recommendedLands(
   // maker -- 0.15. Copies count, as `accelerants` always has.
   const rampRoleNames = roleMembers("ramp");
   const rampWeights = library.flatMap((dc): number[] => {
-    const w = rampWeight(dc, library);
+    const w = rampWeight(dc, deck);
     if (w !== null) return [w];
     return rampRoleNames.has(dc.card.name) && !isLand(dc) ? [RAMP_RESILIENCE.oneShot] : [];
   }).sort((x, y) => y - x);

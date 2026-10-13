@@ -4,7 +4,7 @@ import { minSources, pCanPayByTurn } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchedLandEntersTapped } from "./fetch-land.js";
 import { colourSourceCards } from "./colour-sources.js";
-import { deckIdentity, isFetchSource, makesAnyMana, unreadSourceNames } from "./mana-lines.js";
+import { colourSourceColours, deckIdentity, hasGatedColourLine, isFetchSource, makesAnyMana, unreadSourceNames } from "./mana-lines.js";
 import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import type { DeckCard } from "./types.js";
 import { BASIC_LAND_TYPES, countsAsLand } from "./typeline.js";
@@ -243,7 +243,7 @@ export function manaAuditFull(
   // A one-shot (Dark Ritual), a Treasure maker, a sacrifice outlet, a trigger and restricted or gated mana are lines that are not colour
   // sources at all (`isColourSource`), so none of them needs a card-type gate here.
   const identity = deckIdentity(deck, opts.commanderNames ?? []);
-  const byColour = colourSourceCards(library, identity);
+  const byColour = colourSourceCards(library, identity, deck);
 
   // WHAT COULD BE PRODUCING BY TURN N, for one set of sources, asked once per deadline and cached,
   // because a deck's demands share very few distinct turns.
@@ -262,13 +262,25 @@ export function manaAuditFull(
   // tapped arrival as well made it a source on no turn at all.
   const sourceOnline = (dc: DeckCard, turn: number): boolean =>
     countsAsLand(dc.card) ? landOnlineBy(dc, turn, basicTypes) : dc.card.manaValue < turn;
-  const availability = (sources: readonly DeckCard[]) => {
+  // A GATED SOURCE IS ONLINE FOR A COLOUR ON THE TURN ITS GATE IS MET BY (owner 2026-10-13: the audit follows the gate check, and the gate is timed turn by turn): Tainted Peak's red
+  // waits on a Swamp being likely out, Mox Jasper's on a Dragon that the mana could have cast. The same closed form the colour source count used to let the card in (`gate.ts`), asked of
+  // the turn. A fetch that is also a source keeps the fetch's clock.
+  const gatedAt = new Map<string, readonly string[]>();
+  const coloursBy = (dc: DeckCard, turn: number): readonly string[] => {
+    const key = `${turn}\0${dc.card.name}\0${dc.face ?? ""}`;
+    let c = gatedAt.get(key);
+    if (!c) gatedAt.set(key, (c = colourSourceColours(dc, identity, "five", deck, turn)));
+    return c;
+  };
+  const availability = (sources: readonly DeckCard[], colour?: Color) => {
     const availableAt = new Map<number, number>();
     return (turn: number): number => {
       const hit = availableAt.get(turn);
       if (hit !== undefined) return hit;
       const n = sources.filter((dc) => {
-        return sourceOnline(dc, turn);
+        if (!sourceOnline(dc, turn)) return false;
+        if (!hasGatedColourLine(dc) || isFetchSource(dc)) return true;
+        return colour === undefined ? coloursBy(dc, turn).length > 0 || makesAnyMana(dc, deck, turn) : coloursBy(dc, turn).includes(colour);
       }).length;
       availableAt.set(turn, n);
       return n;
@@ -280,7 +292,7 @@ export function manaAuditFull(
   // recoloured its whole mana base without adding a single card to it.
   const anyAvailableBy = availability([...new Set([
     ...[...sourcesByColor.values()].flat(),
-    ...library.filter(makesAnyMana),
+    ...library.filter((dc) => makesAnyMana(dc, deck)),
   ])]);
 
   // STATIC COLOUR FIXERS (owner, 2026-10-08, #1115): "after you play cards like Chromatic Lantern your color
@@ -306,7 +318,7 @@ export function manaAuditFull(
   for (const color of COLORS) {
     const sources = sourcesByColor.get(color)!;
     const supplied = sources.length;
-    const availableBy = availability(sources);
+    const availableBy = availability(sources, color);
     // Group by (pips, deadline): "12 cards want {B}{B} by T3" is one row, not twelve.
     const groups = new Map<string, ColorDemand>();
     for (const dc of library) {

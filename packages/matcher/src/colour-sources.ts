@@ -6,6 +6,9 @@
  *  FETCH that can find a land of the colour in this deck (`isFetchSource`, from the derived `landFetch`). Whether a fetch can
  *  find one is a fact about the deck and not the card, so it takes both; `fetchableLands` answers it.
  *
+ *  A GATED LINE COUNTS where the deck meets its gate (owner 2026-10-13: one answer for the audit and castability), judged against `deck` -- the whole decklist, commanders in it
+ *  (`gate.ts`) -- which is the library when the caller names none, and then nothing gated counts.
+ *
  *  Leaf module: imports the fetch predicates and the line reader, not the audit. */
 import type { Card } from "@edh-seer/engine";
 import { fetchableLands } from "./fetch-land.js";
@@ -32,13 +35,13 @@ export function withFetches(library: readonly DeckCard[], direct: readonly DeckC
 }
 
 /** The colours a library card makes by itself, keyed by the card, so a fetch's targets (plain `Card`s) can be asked what they make. */
-export function ownColoursByCard(library: readonly DeckCard[], identity: DeckIdentity): Map<Card, ReadonlySet<string>> {
-  return new Map(library.map((dc) => [dc.card, new Set(colourSourceColours(dc, identity))]));
+export function ownColoursByCard(library: readonly DeckCard[], identity: DeckIdentity, deck?: readonly DeckCard[]): Map<Card, ReadonlySet<string>> {
+  return new Map(library.map((dc) => [dc.card, new Set(colourSourceColours(dc, identity, "five", deck))]));
 }
 
 /** Every colour in `WUBRG`, and the cards that are a source of it. */
-export function colourSourceCards(library: readonly DeckCard[], identity: DeckIdentity): Map<string, DeckCard[]> {
-  const own = ownColoursByCard(library, identity);
+export function colourSourceCards(library: readonly DeckCard[], identity: DeckIdentity, deck?: readonly DeckCard[]): Map<string, DeckCard[]> {
+  const own = ownColoursByCard(library, identity, deck);
   return new Map(WUBRG.map((colour) => [
     colour,
     withFetches(library, library.filter((dc) => own.get(dc.card)!.has(colour)), (land) => own.get(land)?.has(colour) ?? false),
@@ -46,7 +49,7 @@ export function colourSourceCards(library: readonly DeckCard[], identity: DeckId
 }
 
 /** THE COLOURS A FETCH CAN REACH IN THIS DECK: the colours of the lands it can find. */
-export function fetchedColours(oracleText: string, library: readonly DeckCard[], identity: DeckIdentity): Set<string> {
-  const own = ownColoursByCard(library, identity);
+export function fetchedColours(oracleText: string, library: readonly DeckCard[], identity: DeckIdentity, deck?: readonly DeckCard[]): Set<string> {
+  const own = ownColoursByCard(library, identity, deck);
   return new Set(fetchableLands(oracleText, library.map((dc) => dc.card)).flatMap((c) => [...(own.get(c) ?? [])]));
 }

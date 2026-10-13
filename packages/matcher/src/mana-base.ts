@@ -170,7 +170,7 @@ const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 export function colourSources(deck: readonly DeckCard[], commanderNames: readonly string[] = []): Map<Color, number> {
   const commanders = new Set(commanderNames);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
-  const byColour = colourSourceCards(library, deckIdentity(deck, commanderNames));
+  const byColour = colourSourceCards(library, deckIdentity(deck, commanderNames), deck);
   return new Map<Color, number>(COLORS.map((c) => [c, byColour.get(c)!.length]));
 }
 
@@ -185,7 +185,7 @@ export function fixerSupply(deck: readonly DeckCard[], commanderNames: readonly 
   const fixers = libraryFixers(library);
   if (fixers.length === 0) return () => 0;
   const types = deckBasicTypes(library);
-  const byColour = colourSourceCards(library, deckIdentity(deck, commanderNames));
+  const byColour = colourSourceCards(library, deckIdentity(deck, commanderNames), deck);
   const per = library.map((dc) => ({ dc, colours: new Set(COLORS.filter((c) => byColour.get(c)!.includes(dc))) }));
   const anySources = per.filter((x) => x.colours.size > 0).length;
   const isOut = (dc: DeckCard, turn: number): boolean => (isLand(dc) ? landOnlineBy(dc, turn, types) : dc.card.manaValue < turn);
