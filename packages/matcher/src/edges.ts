@@ -86,14 +86,18 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
  *  deliberately. Enchantment mana sources (Utopia Sprawl, Cryptolith Rite, Gift of Paradise) are
  *  deliberately NOT rocks pending an owner call; Cultivator's Caravan (a Vehicle that is also a
  *  rock) keeps its entry, deliberately. */
-function isManaRock(tags: CardTags): boolean {
+export function isManaRock(tags: CardTags): boolean {
   const c = tags.characteristics;
   const types = (c?.types ?? []).map((t) => t.toLowerCase());
   const subtypes = (c?.subtypes ?? []).map((t) => t.toLowerCase());
   if (!types.includes("artifact")) return false;
   if (["land", "creature", "planeswalker"].some((t) => types.includes(t))) return false;
   if (subtypes.includes("equipment") || subtypes.includes("vehicle")) return false;
-  return tags.abilities.some((a) => a.kind === "activated" && a.effect?.kind === "mana-generation");
+  // AN ACTIVATED MANA LINE THE CARD ITSELF USES (#1169 task 2b-2; it was an activated ability labelled `mana-generation`): Lotus Petal and the Eggs
+  // (a sacrifice), a Signet, Sol Ring, The Golden Throne. A static grant (Resonating Lute gives the LANDS the ability), a trigger and a token maker are not one,
+  // and Doubling Cube ("Double the amount of each type of unspent mana") adds nothing, so it has no line. Measured over the 32,065 derived cards: 340 rocks
+  // before, 339 after (-Doubling Cube, -Resonating Lute, +The Golden Throne, whose derive had no mana-generation ability).
+  return (tags.manaLines ?? []).some((l) => l.source === "activated");
 }
 
 /** The theme tags a card earns just by BEING a permanent that enters the battlefield.

@@ -59,13 +59,22 @@ test("lands and colourless cards are never a colour miss", () => {
 test("tapped lands: always-tapped and slow fetches count, shocks, checks and commanders do not", () => {
   const deck = [
     land("Guildgate", "This land enters tapped.\n{T}: Add {W} or {U}."),
-    land("Evolving Wilds", "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."),
+    { ...land("Evolving Wilds", "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."),
+      tags: fetchTags({ kind: "permanent", tapped: true, reach: ["W", "U", "B", "R", "G"] }, { cost: { ...FREE_TAP, sacrificeSelf: true } }) },
     land("Hallowed Fountain", "({T}: Add {W} or {U}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped."),
     land("Glacial Fortress", "This land enters tapped unless you control a Plains or an Island.\n{T}: Add {W} or {U}."),
     land("Plains", "({T}: Add {W}.)"),
   ];
   expect(tappedLandCount(deck)).toBe(2);
   expect(tappedLandCount(deck, ["Guildgate"])).toBe(1);
+});
+
+// #1169 task 2b-2: the fetch is the DERIVED `landFetch`, not its oracle text (these print none).
+test("tapped lands: a fetch is slow when its derived landFetch says the land arrives tapped, whatever the text", () => {
+  const fetch = (name: string, tapped: boolean): DeckCard => ({
+    ...land(name, "{T}, Sacrifice this land."), tags: fetchTags({ kind: "permanent", tapped, reach: ["W", "U", "B", "R", "G"] }, { cost: { ...FREE_TAP, sacrificeSelf: true } }),
+  });
+  expect(tappedLandCount([fetch("Evolving Wilds", true), fetch("Polluted Delta", false)])).toBe(1);
 });
 
 test("sources are what the goldfish could tap: lands, fetches by what they find, {T}: Add permanents", () => {

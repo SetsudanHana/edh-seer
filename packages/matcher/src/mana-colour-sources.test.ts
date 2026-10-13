@@ -6,7 +6,7 @@ import fx from "./fixtures/mana-colour-sources.json" with { type: "json" };
 import { colourSources } from "./mana-base.js";
 import { colourDeficit, manaAuditFull, type Color } from "./mana-audit.js";
 import { colourSourceCards } from "./colour-sources.js";
-import { deckIdentity, isColourSource, colourSourceColours, makesAnyMana, isFetchSource, cardLines, hasConditionalMana } from "./mana-lines.js";
+import { deckIdentity, isColourSource, colourSourceColours, makesAnyMana, isFetchSource, cardLines, hasConditionalMana, producedManaTypes } from "./mana-lines.js";
 import { staticFixer } from "./static-fixers.js";
 import { landFacts, neededColours } from "./land-score.js";
 import { unreadSourceNames } from "./mana-lines.js";
@@ -245,5 +245,34 @@ describe("a loyalty ability is a colour source only if the walker can activate i
     expect(isColourSource(withLoyalty("−2", 3))).toBe(true);
     expect(isColourSource(withLoyalty("+1", 4))).toBe(true);
     expect(isColourSource(withLoyalty("0", 3))).toBe(true);
+  });
+});
+
+// #1169 task 2b-2: `producedManaTypes` is what Scryfall's `produced_mana` was meant to be, from the derived lines: every type the card's OWN lines add (a ritual's, trigger
+// mana, an Aura's, restricted mana), but not a Treasure maker's (the token makes it later) nor a fetch's (what it finds is the deck's).
+describe("every mana type a card's own lines can add", () => {
+  const types = (n: string) => producedManaTypes(get(n));
+  test("a Treasure maker, a Treasure Map's front and a land fetch add none, whatever Scryfall lists", () => {
+    expect(get("Pitiless Plunderer").card.producedMana).toBeDefined();
+    expect(types("Pitiless Plunderer")).toEqual([]);
+    expect(types("Cultivate")).toEqual([]);
+    expect(types("Polluted Delta")).toEqual([]);
+  });
+  test("a ritual, trigger mana and an Aura's extra mana are production; so is colourless, after the colours", () => {
+    expect(types("Dark Ritual")).toEqual(["B"]);
+    expect(types("Birgi, God of Storytelling")).toEqual(["R"]);
+    expect(types("Wild Growth")).toEqual(["G"]);
+    expect(types("Sol Ring")).toEqual(["C"]);
+    expect(types("Cavern of Souls")).toEqual(["W", "U", "B", "R", "G", "C"]);
+  });
+  test("a basic land type is a mana ability (intrinsic); a choice bounded outside the card is the five; a grantee's colours are none", () => {
+    expect(types("Plains")).toEqual(["W"]);
+    expect(types("Chrome Mox")).toEqual(["W", "U", "B", "R", "G"]);
+    expect(types("Reflecting Pool")).toEqual(["W", "U", "B", "R", "G"]);
+    expect(types("Katilda, Dawnhart Prime")).toEqual([]);
+  });
+  test("a transform card's land back is not production from the deck (Treasure Map), and a card with no derived tags adds none", () => {
+    expect(types("Treasure Map")).toEqual([]);
+    expect(producedManaTypes({ card: get("Sol Ring").card, tags: null })).toEqual([]);
   });
 });

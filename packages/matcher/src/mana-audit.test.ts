@@ -399,6 +399,22 @@ test("a fetch whose land arrives tapped is not available on its deadline", () =>
   expect(at(PASSAGE, 4)).toBe(34);
 });
 
+/** #1169 task 2b-2: when a fetched land is online comes from the derived `landFetch.tapped`, not the oracle text: these fetches print none. */
+test("a fetch's land is online on its deadline as landFetch says, not as its text says", () => {
+  const bare = (name: string, tapped: boolean): DeckCard => ({
+    ...fetchland(name, ""), tags: fetchTags({ kind: "permanent", tapped, reach: ["W", "U", "B", "R", "G"] }, { cost: { ...FREE_TAP, sacrificeSelf: true } }),
+  });
+  const build = (tapped: boolean) => fillTo(100, [
+    card("Ancestral Recall", "{U}", 1),
+    card("Counterspell", "{U}{U}", 2),
+    ...Array.from({ length: 30 }, (_, i) => basic(`Island-${i}`, "Island", ["U"])),
+    ...Array.from({ length: 4 }, (_, i) => bare(`fetch-${i}`, tapped)),
+  ]);
+  const at = (tapped: boolean, turn: number) => manaAudit(build(tapped)).find((r) => r.color === "U")!.demands.find((d) => d.turn === turn)!.available;
+  expect(at(false, 1)).toBe(34);
+  expect(at(true, 1)).toBe(30);
+});
+
 /** THE ONE PLACE `isManaSource` IS BYPASSED. That gate refuses a sorcery because a RITUAL is a
  *  one-shot; Cultivate is not one -- it leaves a Forest on the battlefield permanently. It is still
  *  on a rock's clock: cast on turn 3, it pays from turn 4. */

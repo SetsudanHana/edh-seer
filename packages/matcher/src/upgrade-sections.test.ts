@@ -6,10 +6,10 @@ import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import moxes from "./fixtures/mana-colour-sources.json" with { type: "json" };
 import { rolesOfCard } from "./quality.js";
 import { colourDeficit } from "./mana-audit.js";
-import { colouredNetYield, jobOf, landsToBattlefield, netYield, themedSubjects, sameFetchAnyColour } from "./same-job.js";
+import { colouredNetYield, isPlainDork, jobOf, landsToBattlefield, netPositiveMana, netYield, themedSubjects, sameFetchAnyColour } from "./same-job.js";
 import { answerCovers, gameChangerOption, landOptions, newConditions, roleOptions, sameJob, strictlyBetter, swapCloser } from "./upgrade-sections.js";
 import type { DeckCard } from "./types.js";
-import { manaTags, tapFor } from "./mana-test-support.js";
+import { FREE_TAP, manaTags, mkLine, tapFor, withLines } from "./mana-test-support.js";
 
 /** Cards as printed (oracle text read 2026-09-30); the text rules read nothing else. */
 const card = (name: string, typeLine: string, oracleText: string, producedMana?: string[]): DeckCard => ({
@@ -328,6 +328,73 @@ describe("an Aura's extra mana is still yield", () => {
   });
 });
 
+// #1169 task 2b-2: YIELD, THE RAMP KEY'S MANA AND A DORK'S SHAPE ARE READ OFF THE DERIVED LINES, never off the oracle text or Scryfall's `producedMana`.
+// Every card below has its text (or its `producedMana`) changed to something that says the opposite, so only the lines can decide.
+describe("a rock's yield, colours and shape come from the derived mana lines", () => {
+  const withText = (d: DeckCard, oracleText: string, producedMana?: string[]): DeckCard =>
+    ({ ...d, card: { ...d.card, oracleText, ...(producedMana ? { producedMana } : {}) } }) as DeckCard;
+  const real = (name: string) => (moxes.cards as unknown as DeckCard[]).find((c) => c.card.name === name)!;
+  const noLines = (d: DeckCard): DeckCard => ({ ...d, tags: { ...d.tags!, manaLines: undefined } }) as DeckCard;
+
+  test("the text is not read: a card that prints 'Add {G}{G}' but has no line yields nothing; one with a two-mana line and no text yields two", () => {
+    expect(netYield(noLines(withText(rock("Llanowar Elves"), "{T}: Add {G}{G}.")))).toBeNull();
+    expect(netYield(withLines(withText(rock("Mind Stone"), ""), [tapFor(["C"], { amount: { fixed: 2, scales: null }, net: 2 })]))).toBe(2);
+  });
+
+  test("a Treasure maker, a sacrifice outlet, a trigger and restricted mana are no yield", () => {
+    for (const n of ["Pitiless Plunderer", "Phyrexian Altar", "Priest of Forgotten Gods", "Birgi, God of Storytelling // Harnfel, Horn of Bounty", "Smokebraider", "Lotus Petal"]) {
+      expect(netYield(real(n)), n).toBeNull();
+      expect(colouredNetYield(real(n)), n).toBeNull();
+    }
+  });
+
+  test("an opponent-decided colour yields mana but no fix (Fellwar Stone is read from the line, not the words 'an opponent controls')", () => {
+    expect(netYield(withText(rock("Fellwar Stone"), ""))).toBeNull();
+    expect(colouredNetYield(withText(rock("Fellwar Stone"), ""))).toBeNull();
+  });
+
+  test("the cost rule: Prismatic Lens yields 1 but has no coloured line that pays its way; a Signet nets 1 in colour", () => {
+    expect(netYield(rock("Prismatic Lens"))).toBe(1);
+    expect(colouredNetYield(rock("Prismatic Lens"))).toBeNull();
+    expect(colouredNetYield(rock("Orzhov Signet"))).toBe(1);
+  });
+
+  test("the same-job ramp key holds the colours the LINES make, not Scryfall's producedMana", () => {
+    const izzet = rock("Izzet Signet");
+    expect(sameJob(izzet, withText(izzet, izzet.card.oracleText!, ["W"]), "ramp")).toBe(true);
+    expect(sameJob(izzet, rock("Orzhov Signet"), "ramp")).toBe(false);
+    // ...and a Treasure maker that Scryfall lists with five colours is not a five-colour rock.
+    const plunderer = real("Pitiless Plunderer");
+    expect([...plunderer.card.producedMana!].sort()).toEqual(["B", "G", "R", "U", "W"]);
+    expect(sameJob(withLines(izzet, [mkLine({ colours: [], colourless: 1 })]), plunderer, "ramp")).toBe(false);
+  });
+
+  test("net-positive mana: more mana than the card costs, from the lines (Sol Ring, Mana Crypt-shaped), not from the words", () => {
+    expect(netPositiveMana(rock("Sol Ring"))).toBe(true);
+    expect(netPositiveMana(rock("Mind Stone"))).toBe(false);
+    expect(netPositiveMana(withText(rock("Mind Stone"), "{T}: Add {C}{C}{C}."))).toBe(false);
+    expect(netPositiveMana(withLines(withText(rock("Mind Stone"), ""), [tapFor(["C"], { amount: { fixed: 3, scales: null }, net: 3 })]))).toBe(true);
+  });
+
+  test("a plain dork: its own tap pays for a fixed, unrestricted line and it has nothing else but activated abilities", () => {
+    const elf = rock("Llanowar Elves");
+    expect(isPlainDork(elf)).toBe(true);
+    expect(isPlainDork(noLines(withText(elf, "{T}: Add {G}.")))).toBe(false);
+    expect(isPlainDork(withLines(elf, [tapFor(["G"], { amount: { fixed: null, scales: "for each Elf you control" } })]))).toBe(false);
+    expect(isPlainDork(withLines(elf, [tapFor(["G"], { cost: { ...FREE_TAP, tap: false, mana: 1 } })]))).toBe(false);
+    expect(isPlainDork(withLines(elf, [tapFor(["G"], { restriction: { spend: "only to cast elf spells" } })]))).toBe(false);
+    // Birchlore Rangers' shape: it taps OTHER Elves and has no {T} of its own.
+    expect(isPlainDork(withLines(elf, [tapFor(["G"], { cost: { ...FREE_TAP, tap: false, tapOther: true } })]))).toBe(false);
+  });
+
+  test("a fetch spell that arrives tapped is the derived landFetch's say, not the words 'onto the battlefield tapped'", () => {
+    const tapped = (d: DeckCard, flag: boolean): DeckCard => withText({ ...d, tags: { ...d.tags!, landFetch: { ...d.tags!.landFetch!, tapped: flag } } } as DeckCard, d.card.oracleText!.replace("tapped", ""));
+    // Three Visits (untapped) is never traded for a tapped fetch; with the flag flipped on a Farseek whose words say nothing, the answer follows the flag.
+    expect(sameFetchAnyColour(rock("Three Visits"), tapped(rock("Farseek"), true))).toBe(false);
+    expect(sameFetchAnyColour(rock("Three Visits"), tapped(rock("Farseek"), false))).toBe(true);
+  });
+});
+
 // 2a review 3: a swap's `made` colours use `bounded: "none"`, so an `among` line (Chrome Mox, Mox Amber: bounded by the board) makes no colour claim.
 describe("a rock bounded by the board is not described as making a colour", () => {
   const mind4 = { ...rock("Mind Stone"), card: { ...rock("Mind Stone").card, manaValue: 4 } } as unknown as DeckCard;
@@ -369,7 +436,11 @@ describe("a dork for a dork, to close a colour shortfall", () => {
   const elf = (name: string, oracle: string, produced: string[], over: Record<string, unknown> = {}) => {
     const m = rock("Elvish Mystic");
     // The tags carry the line this spec stands for: a free tap for `produced`, restricted when the text says "spend this mana only".
-    const line = tapFor(produced, /spend this mana only/i.test(oracle) ? { restriction: { spend: "only to cast angel spells" } } : {});
+    const line = tapFor(produced, {
+      ...(/spend this mana only/i.test(oracle) ? { restriction: { spend: "only to cast angel spells" } } : {}),
+      // Birchlore Rangers pays by tapping OTHER Elves, not itself: derive reads that as `tapOther`, with no `{T}` of its own.
+      ...(/^tap two untapped/i.test(oracle) ? { cost: { ...FREE_TAP, tap: false, tapOther: true } } : {}),
+    });
     return { ...m, card: { ...m.card, name, oracleText: oracle, producedMana: produced, ...over }, tags: { ...m.tags, manaLines: [line] } } as unknown as DeckCard;
   };
   const swap = (cut: DeckCard, adds: DeckCard[], themed: string[]) =>

@@ -95,7 +95,10 @@ async function main(): Promise<void> {
     }
   }
 
-  let g = buildGraph(docs);
+  // PRODUCES edges are the card's DERIVED mana lines (#1169 task 2b-2); without them the graph draws none.
+  const derivedMana = new Map<string, CardTags>();
+  for (const t of await store.db.collection("cardTagsDerived").find({ oracleId: { $in: docs.map((d) => d._id) } }).toArray()) derivedMana.set(t.oracleId as string, t as unknown as CardTags);
+  let g = buildGraph(docs, (d) => derivedMana.get(d._id) ?? null);
 
   if (events) {
     // O(n^2) reason calls -- see the CEILING note in graph-events.ts. Warn rather than cap, since

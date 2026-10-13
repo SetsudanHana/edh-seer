@@ -2,9 +2,9 @@ import { minCopies } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { minSources, pCanPayByTurn } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
-import { fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
+import { fetchedLandEntersTapped } from "./fetch-land.js";
 import { colourSourceCards } from "./colour-sources.js";
-import { deckIdentity, makesAnyMana, unreadSourceNames } from "./mana-lines.js";
+import { deckIdentity, isFetchSource, makesAnyMana, unreadSourceNames } from "./mana-lines.js";
 import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import type { DeckCard } from "./types.js";
 import { BASIC_LAND_TYPES, countsAsLand } from "./typeline.js";
@@ -60,8 +60,7 @@ export function landOnlineBy(dc: DeckCard, turn: number, basicTypes: ReadonlySet
   if (entersTapped(classifyLand(dc.card), board)) return false;
   // WHAT IS STANDING THERE IS THE FETCHED LAND, and `classifyLand` cannot see it: Evolving Wilds
   // enters untapped and the basic it finds does not. Same board the simulator reads.
-  const text = dc.card.oracleText ?? "";
-  return !isLandFetch(text) || !fetchedLandEntersTapped(text, board.lands);
+  return !isFetchSource(dc) || !fetchedLandEntersTapped(dc, board.lands);
 }
 
 /** Coloured pips per colour in a mana cost, e.g. `{2}{B}{B}` -> `{ B: 2 }`.

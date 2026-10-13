@@ -7,12 +7,12 @@
  *  is strictly better than another (owner, 2026-09-30) when it makes every needed colour the other
  *  makes, enters tapped no more often, does everything else the other does, and gains on colours or
  *  on tapped. */
-import { fetchDemand, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
+import { fetchDemand, fetchedLandEntersTapped } from "./fetch-land.js";
 import { fetchedColours } from "./colour-sources.js";
 import { classifyLand } from "./land-conditions.js";
 import { COLORS, deckBasicTypes, landOnlineBy, pipsByColor, type Color } from "./mana-audit.js";
 import { rolesOfCard } from "./quality.js";
-import { colourSourceColours, deckIdentity, hasConditionalMana, makesAnyMana } from "./mana-lines.js";
+import { colourSourceColours, deckIdentity, hasConditionalMana, isFetchSource, makesAnyMana } from "./mana-lines.js";
 import { creatureSubtypes, isFetchSpell, isPlainDork, netPositiveMana, netYield } from "./same-job.js";
 import type { DeckCard } from "./types.js";
 import { countsAsLand } from "./typeline.js";
@@ -88,7 +88,7 @@ export function neededColours(deck: readonly DeckCard[]): Set<Color> {
 
 export function landFacts(dc: DeckCard, needed: ReadonlySet<Color>, library: readonly DeckCard[]): LandFacts {
   const text = dc.card.oracleText ?? "";
-  const fetches = isLandFetch(text);
+  const fetches = isFetchSource(dc);
   // AS `colourSources` COUNTS IT: a land that makes mana makes its own colours; only a land that makes
   // none (a fetch) takes the colours of what it fetches. Flagstones of Trokair makes {W}, whatever it
   // finds when it dies.
@@ -100,7 +100,7 @@ export function landFacts(dc: DeckCard, needed: ReadonlySet<Color>, library: rea
   const template = classifyLand(dc.card).template;
   // A FETCH THAT MAKES NO MANA ITSELF TAKES ITS LAND'S TIMING, as `tappedLandCount` reads it.
   const tapped: Tapped = !own && fetches
-    ? (fetchedLandEntersTapped(text, 3) ? 2 : 0)
+    ? (fetchedLandEntersTapped(dc, 3) ? 2 : 0)
     : template === "unconditional" || template === "unclassified" || template === "reveal" ? 2
       : template === "check" || template === "bfz" || template === "slow" || template === "fast" ? 1
         : 0;

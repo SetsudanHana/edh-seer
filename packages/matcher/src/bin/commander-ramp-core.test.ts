@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { castTurnStats, castTurns, silenceRamp } from "./commander-ramp-core.js";
-import type { SimulateResult } from "../goldfish.js";
+import { classifyAccelerant, type SimulateResult } from "../goldfish.js";
 import type { DeckCard } from "../types.js";
 import { manaTags, mkLine } from "../mana-test-support.js";
 
@@ -48,7 +48,10 @@ describe("silenceRamp", () => {
     const out = silenceRamp(lib, ramp);
     expect(out.silenced).toBe(1);
     expect(out.deck).toHaveLength(2);
-    expect(out.deck[0].card.producedMana).toEqual([]);
+    // Inert: no derived tags (all the goldfish reads mana from) and no printed text. `producedMana` is read by nothing and is left as it was.
+    expect(out.deck[0].tags).toBeNull();
+    expect(out.deck[0].card.oracleText).toBe("");
+    expect(classifyAccelerant(out.deck[0])).toBeNull();
     expect(out.deck[1]).toBe(lib[1]);
   });
 

@@ -95,7 +95,7 @@ for (const file of files) {
   // THE COUNTERFACTUAL IS THE SAME DECK WITH THE ACCELERANTS INERT, not a different deck: swapping
   // them out would change the library size and measure that instead. This is the mechanism test.
   const inert: DeckCard[] = deck.map((dc) => classifyAccelerant(dc)
-    ? { card: { ...dc.card, producedMana: [], oracleText: "" }, tags: null }
+    ? { card: { ...dc.card, oracleText: "" }, tags: null }
     : dc);
   const bare = simulate(inert, { trials: TRIALS, turns: TURNS, seed: SEED });
   rows.push({

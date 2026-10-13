@@ -1,4 +1,5 @@
 import { BASIC_LAND_TYPES } from "./typeline.js";
+import type { DeckCard } from "./types.js";
 /** A CARD THAT PUTS A LAND ONTO THE BATTLEFIELD FROM THE LIBRARY, and what colours that reaches.
  *
  *  Split out of `goldfish.ts` (2026-09-04) because two models read the same cards and only one of
@@ -23,37 +24,24 @@ import { BASIC_LAND_TYPES } from "./typeline.js";
 const LAND_FETCH = /search your library for (?:a |an |up to \w+ )?(?:basic )?(?:land|forest|island|swamp|mountain|plains)/i;
 const ONTO_BATTLEFIELD = /onto the battlefield/i;
 
-/** A FETCH IS NOT FREE JUST BECAUSE A MODEL PERFORMS IT (roadmap N12). Myriad Landscape's two basics
- *  cost `{2}`, Urza's Cave `{3}`, and **Wayfarer's Bauble is cast for {1} and then cracked for {2} a
- *  turn later** -- none of which these models pay, so each was a free land the moment it appeared.
- *  The activation cost is what sits before the colon on the fetch's own line; `{T}` and a sacrifice
- *  and a life payment are all costs a model CAN pay, and a mana symbol is not.
- *
- *  A LAND THAT FAILS THIS IS STILL A LAND -- Myriad Landscape taps for `{C}` and enters tapped -- it
- *  simply neither fixes colours nor thins until someone pays. That is the under-claiming direction,
- *  and it is 63 land slots plus 25 spell slots across the 71 decks. */
-const MANA_IN_COST = /\{(?!t\}|q\})[^{}]+\}/i;
-function fetchCostsMana(text: string): boolean {
-  const line = text.split("\n").find((l) => LAND_FETCH.test(l)) ?? "";
-  return line.includes(":") && MANA_IN_COST.test(line.slice(0, line.indexOf(":")));
-}
+// WHETHER A CARD FINDS A LAND AT A COST A MODEL CAN PAY is `isFetchSource` (mana-lines.ts), read off the derived `landFetch` and its fetch line (#1169 task
+// 2b-2; `isLandFetch` was a regex over the oracle text and agreed with it on every land card of the derived corpus: 0 differences over 32,065 derived cards, measured 2026-10-13). A fetch is not free
+// just because a model performs it (roadmap N12): Myriad Landscape's two basics cost {2}, Wayfarer's Bauble is cast for {1} and cracked for {2} a turn later,
+// and `isFetchSource` holds a permanent's activation to the cost rule any costed line is held to.
 
-/** Does this card find a land, at a cost these models can pay? */
-export const isLandFetch = (oracleText: string): boolean =>
-  LAND_FETCH.test(oracleText) && ONTO_BATTLEFIELD.test(oracleText) && !fetchCostsMana(oracleText);
-
-/** The fetched land's own tapped state, printed on the fetch: "put it onto the battlefield TAPPED".
- *  Fabled Passage -- 21 slots, and the only card of the family that prints the clause -- then untaps
- *  it once you control four lands, which is the `slow` shape one board count over. */
+/** The fetched land's own untap clause: Fabled Passage -- 21 slots, and the only LAND of the family that prints it -- untaps the land once you control
+ *  four lands, which is the `slow` shape one board count over. CEILING: PRINTED. `landFetch.tapped` says the land ARRIVES tapped; the clause that untaps
+ *  it afterwards is in no derived field (4 corpus cards print it: Fabled Passage, Elven Passage, Tiller Engine, Avatar Kyoshi), and a derive field for one
+ *  land was not worth a DERIVE_VERSION and a re-derive. */
 export const FETCH_UNTAPS = /untap that land/i;
-export const FETCHES_TAPPED = /onto the battlefield tapped/i;
 
 /** The board Fabled Passage's "if you control four or more lands" reads, counted BEFORE the drop the
  *  fetch itself makes -- hence three. Exported so the simulator's slot flag and the audit's turn-N
  *  board cannot drift apart on the one number they share. */
 export const FETCH_UNTAP_LANDS = 3;
 
-/** Is the land this fetch finds still tapped when it arrives, with `otherLands` already down?
+/** Is the land this fetch finds still tapped when it arrives, with `otherLands` already down? From the derived `landFetch.tapped` ("put it onto the battlefield
+ *  TAPPED": Evolving Wilds, Fabled Passage), less Fabled Passage's untap (`FETCH_UNTAPS`).
  *
  *  ASKED OF THE FETCH, NOT OF THE FETCHLAND. `classifyLand` reads the card in front of it and
  *  correctly calls Evolving Wilds untapped: the Wilds enters untapped and the BASIC it finds is the
@@ -61,8 +49,8 @@ export const FETCH_UNTAP_LANDS = 3;
  *
  *  `mana-audit` asks it of a turn-N board; the simulator asks the same question of its own slot
  *  flags against `FETCH_UNTAP_LANDS`. */
-export const fetchedLandEntersTapped = (oracleText: string, otherLands: number): boolean =>
-  FETCHES_TAPPED.test(oracleText) && !(FETCH_UNTAPS.test(oracleText) && otherLands >= FETCH_UNTAP_LANDS);
+export const fetchedLandEntersTapped = (dc: DeckCard, otherLands: number): boolean =>
+  dc.tags?.landFetch?.tapped === true && !(FETCH_UNTAPS.test(dc.card.oracleText ?? "") && otherLands >= FETCH_UNTAP_LANDS);
 
 /** The lands in THIS deck a fetch can actually find. Hand it the LIBRARY: a commander is not in it
  *  (CR 903.6) and cannot be fetched. */
@@ -113,7 +101,9 @@ export function fetchableLands<T extends { typeLine: string }>(
  *  deck with one basic of each type finds one land for its {2}, not two. `found` is the most lands
  *  a single activation can return -- for a shared-type fetch, the largest basic type the library
  *  holds; otherwise every land the fetch can reach. Not gated on the activation's mana cost, unlike
- *  `isLandFetch`: this is about what the card returns when you DO pay, not whether a model does. */
+ *  `isFetchSource`: this is about what the card returns when you DO pay, not whether a model does.
+ *  CEILING: PRINTED TEXT. `landFetch` carries the colours a fetch reaches (WUBRG) but not how many lands one activation asks for, nor the land types
+ *  it names or whether they must share one, which is what this counts against the deck's own lands; there is no derived field to read instead. */
 const UP_TO = /search your library for up to (two|three|four)\b/i;
 const COUNT: Record<string, number> = { two: 2, three: 3, four: 4 };
 export function fetchDemand<T extends { typeLine: string }>(

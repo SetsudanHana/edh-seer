@@ -176,6 +176,24 @@ export function colourSourceColours(dc: DeckCard, identity: DeckIdentity = null,
   return WUBRG.filter((c) => out.has(c));
 }
 
+/** EVERY MANA TYPE THE CARD'S OWN LINES CAN ADD, in WUBRG order and then `C` (#1169 task 2b-2): what Scryfall's `produced_mana` was meant to say, read from
+ *  the derived lines instead. NOT the colour-source question (`colourSourceColours`: a repeatable tap/static production you control) but the broader "what mana
+ *  does this card put in front of you": a ritual's colour, trigger mana (Birgi's {R}), an Aura's extra mana (Wild Growth's {G}), restricted and gated lines
+ *  all count, so a card keeps the type it adds. What it does NOT count: a Treasure maker or any token maker (the TOKEN makes mana, later, for a sacrifice:
+ *  Pitiless Plunderer lists all five colours on Scryfall and adds none), a land fetch (what it finds is the deck's to say, `colour-sources.ts`), a line derive
+ *  could not read, and a `grantee` line (the grantees' own colours). A bounded `anyColour` (`chosen`, `among`, ...) counts as the five it can be, as the
+ *  colour audit's "five" reading; `any` and `identity` are unbounded here (no commander is known to a card).
+ *  CEILING: CARD-LEVEL, with the faces `cardLines` counts: a modal DFC's land back counts, a transform card's back does not (`FRONT_FACE_ONLY`). */
+export function producedManaTypes(dc: DeckCard): string[] {
+  const out = new Set<string>(intrinsicColours(dc));
+  for (const l of cardLines(dc)) {
+    if (l.source === "token-maker" || l.source === "fetch" || l.unread) continue;
+    for (const c of lineColours(l, null, "five")) out.add(c);
+    if (l.colourless > 0) out.add("C");
+  }
+  return [...WUBRG.filter((c) => out.has(c)), ...(out.has("C") ? ["C"] : [])];
+}
+
 /** DOES THE CARD ITSELF MAKE MANA you can use on demand, of any colour or none? A costed line that makes less than it costs still
  *  does (colourless, by the ruling). A plain fetch land does not: it makes mana only through what it finds. */
 export function makesAnyMana(dc: DeckCard): boolean {

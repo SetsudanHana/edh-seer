@@ -1,11 +1,11 @@
 import { pAtLeast, seen } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { classifyLand } from "./land-conditions.js";
-import { fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
+import { fetchedLandEntersTapped } from "./fetch-land.js";
 import { COLORS, deckBasicTypes, landOnlineBy, type Color } from "./mana-audit.js";
 import { fixerCredit, libraryFixers } from "./static-fixers.js";
 import { colourSourceCards } from "./colour-sources.js";
-import { deckIdentity, makesAnyMana } from "./mana-lines.js";
+import { deckIdentity, isFetchSource, makesAnyMana } from "./mana-lines.js";
 import type { DeckCard } from "./types.js";
 import { countsAsLand } from "./typeline.js";
 
@@ -236,8 +236,7 @@ export function tappedLandCount(deck: readonly DeckCard[], commanderNames: reado
     if (commanders.has(dc.card.name) || !isLand(dc)) return false;
     const template = classifyLand(dc.card).template;
     if (template === "unconditional" || template === "unclassified") return true;
-    const text = dc.card.oracleText ?? "";
-    return !makesAnyMana(dc) && isLandFetch(text) && fetchedLandEntersTapped(text, 3);
+    return !makesAnyMana(dc) && isFetchSource(dc) && fetchedLandEntersTapped(dc, 3);
   }).length;
 }
 

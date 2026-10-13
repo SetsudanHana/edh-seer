@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 import type { CardDoc } from "@edh-seer/data";
+import type { CardTags } from "@edh-seer/tagger";
 import { buildGraph, type CardGraph } from "./graph.js";
+import { manaTags, mkLine, ritualLine, tapFor, triggerLine } from "./mana-test-support.js";
 
 const doc = (over: Partial<CardDoc> & { _id: string; name: string; typeLine: string }): CardDoc => ({
   oracleText: "", keywords: [], colors: [], manaValue: 0, colorIdentity: [],
@@ -128,13 +130,31 @@ test("two cards sharing a keyword reach the same keyword node", () => {
   expect(g.nodes.filter((n) => n.id === "keyword:flying")).toHaveLength(1);
 });
 
-test("producedMana and manaCost reach the same mana node", () => {
-  const land = doc({ _id: "land", name: "Land", typeLine: "Land", producedMana: ["G", "U"] });
+/** #1169 task 2b-2: PRODUCES is the mana the card's own DERIVED lines add, handed in as `tagsOf`; Scryfall's `producedMana` (which lists a Treasure maker's five
+ *  colours) is not read, and a graph built with no tags draws no PRODUCES edge. */
+test("derived mana lines and manaCost reach the same mana node", () => {
+  const land = doc({ _id: "land", name: "Land", typeLine: "Land", producedMana: ["B"] });
   const spell = doc({ _id: "spell", name: "Spell", typeLine: "Instant", manaCost: "{G}" });
-  const g = buildGraph([land, spell]);
+  const tags = new Map<string, CardTags>([["land", manaTags([tapFor(["G", "U"])])]]);
+  const g = buildGraph([land, spell], (c) => tags.get(c._id) ?? null);
   expect(edgesFrom(g, "card:land", "PRODUCES").sort()).toEqual(["mana:G", "mana:U"]);
   expect(edgesFrom(g, "card:spell", "MANA_SYMBOL")).toEqual(["mana:G"]);
   expect(g.nodes.filter((n) => n.id === "mana:G")).toHaveLength(1);
+});
+
+test("PRODUCES: colourless, a ritual and trigger mana count; a Treasure maker's five colours and a fetch do not", () => {
+  const produced = (name: string, over: Partial<CardDoc>, lines: Parameters<typeof manaTags>[0], extra: Partial<CardTags> = {}) => {
+    const d = doc({ _id: name, name, typeLine: "Artifact", ...over });
+    return edgesFrom(buildGraph([d], () => manaTags(lines, extra)), `card:${name}`, "PRODUCES").sort();
+  };
+  expect(produced("Sol Ring", { producedMana: ["C"] }, [tapFor(["C"])])).toEqual(["mana:C"]);
+  expect(produced("Dark Ritual", { typeLine: "Instant" }, [ritualLine(["B"], 3)])).toEqual(["mana:B"]);
+  expect(produced("Birgi", { typeLine: "Legendary Creature" }, [triggerLine("cast", "a spell", ["R"], 1)])).toEqual(["mana:R"]);
+  const five = ["W", "U", "B", "R", "G"];
+  expect(produced("Pitiless Plunderer", { typeLine: "Creature", producedMana: five }, [mkLine({ source: "token-maker", producesToken: "treasure", colours: five, repeats: "per-cycle" })])).toEqual([]);
+  expect(produced("Cultivate", { typeLine: "Sorcery", producedMana: five }, [mkLine({ source: "fetch", colours: five })], { landFetch: { kind: "spell", tapped: true, reach: five } })).toEqual([]);
+  // ...and with no tags the card draws no PRODUCES edge at all, whatever Scryfall listed.
+  expect(edgesFrom(buildGraph([doc({ _id: "x", name: "X", typeLine: "Land", producedMana: ["G"] })]), "card:x", "PRODUCES")).toEqual([]);
 });
 
 /** Item 1: face-level manaCost. A card-level manaCost is often absent or stale on multi-faced

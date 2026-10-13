@@ -428,9 +428,10 @@ function produced(o: ManaOutput, lands: readonly OnBoardLand[]): number {
  *  table counts. */
 const COLORLESS = 1 << COLORS.length;
 
-export function colorMask(producedMana: readonly string[] | undefined): number {
+// The argument is a list of mana types (WUBRG, `C`) the caller read off DERIVED mana lines or a land's colour identity; this does not read Scryfall's `producedMana`.
+export function colorMask(manaTypes: readonly string[] | undefined): number {
   let m = 0;
-  for (const c of producedMana ?? []) {
+  for (const c of manaTypes ?? []) {
     const u = c.toUpperCase();
     if (u === "C") { m |= COLORLESS; continue; }
     const i = COLORS.indexOf(u as Color);

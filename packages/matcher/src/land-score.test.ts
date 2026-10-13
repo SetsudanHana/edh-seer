@@ -3,7 +3,7 @@ import type { Card } from "@edh-seer/engine";
 import { basicsFloor, betterLand, colourReplacements, landFacts, neededColours } from "./land-score.js";
 import type { DeckCard } from "./types.js";
 import fetches from "./ramp-colour.fixtures.json" with { type: "json" };
-import { FREE_TAP, manaTags, tapFor } from "./mana-test-support.js";
+import { FREE_TAP, fetchTags, manaTags, tapFor } from "./mana-test-support.js";
 
 /** The synthetic cards here carry the derived mana line their `producedMana` spec stands for: one free tap for those colours. A card whose
  *  line is anything else says so with `withLines`. */
@@ -77,6 +77,17 @@ test("mana spendable only on some spells makes no colour, and marks the land con
   expect(betterLand(landFacts(forge, rw, []), landFacts(grounds, rw, [])).ok).toBe(false);
 });
 
+// #1169 task 2b-2: a fetch land is the DERIVED `landFetch` (its arrival tapped or not, and that it finds anything), not the oracle text; these print none.
+test("a fetchland's timing and colours come from landFetch, not its text", () => {
+  const fetch = (tapped: boolean): DeckCard => ({
+    card: { name: "Fetch", typeLine: "Land", oracleText: "", keywords: [], colors: [], manaValue: 0 } as Card,
+    tags: fetchTags({ kind: "permanent", tapped, reach: ["W", "U", "B", "R", "G"] }, { cost: { ...FREE_TAP, sacrificeSelf: true } }),
+  });
+  expect(landFacts(fetch(true), needed, [plains, shrine]).tapped).toBe(2);
+  expect(landFacts(fetch(false), needed, [plains, shrine]).tapped).toBe(0);
+  expect(landFacts(fetch(false), needed, [plains, shrine]).colours).toEqual(["W", "B"]);
+});
+
 test("the basics floor is what the deck's own cards search for", () => {
   const landscape = dc("Myriad Landscape", "Land", "Myriad Landscape enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice Myriad Landscape: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.", ["C"]);
   const wilds = dc("Evolving Wilds", "Land", "{T}, Sacrifice Evolving Wilds: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.");
@@ -86,16 +97,17 @@ test("the basics floor is what the deck's own cards search for", () => {
 
 // OWNER RULINGS 2026-10-08 (#966 T3): trade what makes none of the colour first, lands before rocks;
 // then what makes it but is not online in time; never fast mana, a utility land, or a commander.
-const rock = (name: string, mv: number, text: string, made: string[]): DeckCard => ({
+// `amount`: the mana one tap makes (#1169 task 2b-2: net-positive mana is read off the derived line, so Sol Ring's line must say two).
+const rock = (name: string, mv: number, text: string, made: string[], amount = 1): DeckCard => ({
   card: { name, typeLine: "Artifact", oracleText: text, keywords: [], colors: [], manaValue: mv, producedMana: made } as Card,
-  tags: manaTags(linesOf(made)),
+  tags: manaTags(made.length > 0 ? [tapFor(made, { amount: { fixed: amount, scales: null }, net: amount })] : []),
 });
 const izzetSpells = [dc("Counterspell", "Instant", "", [], [], "{U}{U}"), dc("Lightning Bolt", "Instant", "", [], [], "{R}")];
 const mountain = dc("Mountain", "Basic Land — Mountain", "({T}: Add {R}.)", ["R"]);
 const gate = dc("Izzet Guildgate", "Land — Gate", "Izzet Guildgate enters tapped.\n{T}: Add {U} or {R}.", ["U", "R"]);
 const vents = dc("Steam Vents", "Land — Island Mountain", "({T}: Add {U} or {R}.)\nAs Steam Vents enters, you may pay 2 life. If you don't, it enters tapped.", ["U", "R"]);
 const diamond = rock("Fire Diamond", 2, "Fire Diamond enters tapped.\n{T}: Add {R}.", ["R"]);
-const solRing = rock("Sol Ring", 1, "{T}: Add {C}{C}.", ["C"]);
+const solRing = rock("Sol Ring", 1, "{T}: Add {C}{C}.", ["C"], 2);
 const bog = dc("Bojuka Bog", "Land", "Bojuka Bog enters tapped.\nWhen Bojuka Bog enters, exile target player's graveyard.\n{T}: Add {B}.", ["B"], ["graveyard-hate", "mana-generation"]);
 const deckOf = (...more: DeckCard[]) => [...izzetSpells, ...more];
 
