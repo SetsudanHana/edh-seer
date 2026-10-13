@@ -29,7 +29,7 @@ export type GateVerdict = "met" | "unmet" | "unknown";
 
 /** A MAX-SPEED GATE ("speed 4": `ManaLine.gate` of Muraganda Raceway's "Max speed" line, Howlsquad Heavy, Endrider Catalyzer) IS MET FROM TURN 4, IN ANY DECK (owner 2026-10-13). CR 702.179a: a player
  *  with a permanent with start your engines! and no speed has speed 1, and CR 702.179d ("Start Your Engines!"): the speed trigger fires "only once each turn" and raises speed by 1 while it is under 4,
- *  so speed 4 is reached on turn 4 at the earliest. The gate needs no deck, so a consumer with none (the partner index's `rampGrade`) counts it too.
+ *  so speed 4 is met from turn 4 BY OWNER RULING 2026-10-13; the rule gives entry turn + 2 at the earliest (702.179a, 702.179d), which the model does not price: it over-claims a source cast after turn 2 and under-claims a turn-1 Raceway by one turn. The gate needs no deck, so a consumer with none (the partner index's `rampGrade`) counts it too.
  *  CEILING: speed rises only on a turn an opponent loses life (CR 702.179d), and this assumes it does on every turn from the first: turn 4 is the EARLIEST, so an over-claim by however many
  *  turns the player's opponents keep their life. The card carrying the gate is itself a start your engines! permanent in the corpus (all three), so speed exists once it is out; the model does not price the turn it is cast. */
 export const MAX_SPEED_TURN = 4;

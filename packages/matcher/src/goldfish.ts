@@ -244,7 +244,7 @@ export interface ManaOutput {
    *  battlefield, and for `amount` otherwise. Present even when it adds nothing to the mana (Tainted Peak's {B}/{R} line makes one, as its {C} does): the COLOURS wait on it too. */
   gated?: { gate: BoardGate; amount: number };
   /** A MAX-SPEED LINE (owner 2026-10-13; CR 702.179d, `MAX_SPEED_TURN`): Muraganda Raceway's "Max speed -- {T}: Add {C}{C}", Howlsquad Heavy, Endrider Catalyzer. The source taps for
-   *  `speed.amount` from turn `speed.turn` on (4: speed starts at 1 and rises once a turn), and for `amount` before (0 when the speed line is the card's only mana). Present whether or not
+   *  `speed.amount` from turn `speed.turn` on (4 by owner ruling 2026-10-13; the rule gives entry turn + 2 at the earliest (702.179a, 702.179d), which the model does not price: it over-claims a source cast after turn 2 and under-claims a turn-1 Raceway by one turn), and for `amount` before (0 when the speed line is the card's only mana). Present whether or not
    *  it beats `amount`. A scaling speed line (Howlsquad Heavy) is the incumbent 1. CEILING: speed rises only on a turn an opponent loses life, assumed to happen every turn (gate.ts
    *  `MAX_SPEED_TURN`). A speed line's COLOURS are in `colourMaskOf` from the start, like any gated colour that is not a board count, but they ride with the source's mana, which is 0 until turn 4
    *  when the speed line is the card's only one (Endrider Catalyzer, Howlsquad Heavy) and colourless on the card that has a plain line beside it (Muraganda Raceway: the three speed-gated lines of the corpus, 2026-10-13). */

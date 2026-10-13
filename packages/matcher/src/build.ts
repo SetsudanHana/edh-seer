@@ -631,6 +631,8 @@ export function rampGrade(dc: DeckCard, deck?: readonly DeckCard[]): number {
   const entersTapped = new RegExp(patterns.entersTappedEver!, "i").test(o);
   // Restricted mana ("spend only ...", Powerstone) is `restriction`; the grade asks that the rock make some unrestricted mana.
   const free = rockLines.filter((l) => l.restriction === null);
+  // The coloured bit (net >= 1) and the colour audit (`isColourSource`) answer different questions: the audit still counts a net-0 filter line (Sea Scryer, Prismatic Lens) as a colour
+  // source, per the costed-line ruling; this bit does not (owner 2026-10-13).
   // COLOURED is a coloured tap line that NETS AT LEAST ONE (owner 2026-10-13): a filter that returns no more than it costs (Prismatic Lens's "{1}, {T}: any color", Mana Prism) makes the card
   // a colourless rock, and a Signet's "{1}, {T}: {B}{R}" (net 1) keeps the bit.
   const coloured = faceLines.some((l) => l.source === "activated" && l.cost.tap && l.net >= 1 && (l.colours.length > 0 || l.anyColour !== null));

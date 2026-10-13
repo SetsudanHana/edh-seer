@@ -349,6 +349,15 @@ describe("a gated source in the Karsten inputs", () => {
     const druid = real("Leafkin Druid");
     expect(rampWeight(druid, [druid, ...filler(99)])).toBe(RAMP_RESILIENCE.dork);
   });
+
+  test("a source whose only mana is a max-speed line weighs a dork's times the share of the first eight turns it taps in (turns 4-8: 5 of 8), and a plain dork stays whole", () => {
+    for (const name of ["Howlsquad Heavy", "Endrider Catalyzer"]) {
+      const card = real(name);
+      expect(rampWeight(card, [card, ...filler(99)]), name).toBeCloseTo(RAMP_RESILIENCE.dork * (5 / 8), 10);
+    }
+    const llanowar = real("Llanowar Elves");
+    expect(rampWeight(llanowar, [llanowar, ...filler(99)])).toBe(RAMP_RESILIENCE.dork);
+  });
 });
 
 test("the land target is lowered by a gated source's weight, judged against the deck (rampWeight is handed the deck)", () => {

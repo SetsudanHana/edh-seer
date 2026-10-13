@@ -360,8 +360,12 @@ test("an Adventure or prepare card's spell half is a face you play: Rampant Grow
 test("a derived amount is what the line says: Relic of Sauron taps for two, Muraganda Raceway for one until max speed, Ancient Ziggurat's mana pays generic only", () => {
   expect(manaOutput(real("Relic of Sauron")).amount).toBe(2);
   expect(manaOutput(real("Muraganda Raceway")).amount).toBe(1);
-  // ...and for two from turn 4 (owner 2026-10-13, CR 702.179d: speed 4 is turn 4 at the earliest).
+  // ...and for two from turn 4 (turn 4 by owner ruling 2026-10-13; CR 702.179a/d give entry turn + 2 at the earliest, not priced).
   expect(manaOutput(real("Muraganda Raceway")).speed).toEqual({ turn: 4, amount: 2 });
+  // A card whose only mana is the speed line taps for nothing before it (Endrider Catalyzer: two at max speed; Howlsquad Heavy: one, the incumbent of its scaling line).
+  expect(manaOutput(real("Endrider Catalyzer")).amount).toBe(0);
+  expect(manaOutput(real("Endrider Catalyzer")).speed?.amount).toBe(2);
+  expect(manaOutput(real("Howlsquad Heavy")).speed?.amount).toBe(1);
   // RESTRICTED MANA IS NEVER A COLOUR SOURCE (owner, 2026-10-10): the creature-only mana of Ancient Ziggurat pays no coloured pip.
   expect(colourMaskOf(real("Ancient Ziggurat"))).toBe(0);
   // A gated line is not credited a colour (Tainted Peak's B/R needs a Swamp) but its plain {C} stays; Temple's gated {C}{C} keeps the colourless bit.

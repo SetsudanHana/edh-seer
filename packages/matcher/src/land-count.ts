@@ -185,6 +185,9 @@ export function rampWeight(dc: DeckCard, deck?: readonly DeckCard[]): number | n
     for (let t = 1; t <= WEIGHT_TURNS; t++) share += boardGateProbability(out.gated.gate, deck, t);
     return weight * (share / WEIGHT_TURNS);
   }
+  // A SOURCE WHOSE ONLY MANA IS A MAX-SPEED LINE (Endrider Catalyzer, Howlsquad Heavy: `amount` 0, `speed` set) is credited the same way: from `speed.turn` on, of the first eight turns
+  // (turns 4-8 are 5 of 8). The gate needs no deck (`isSpeedGate`), so this holds without one. A speed line beside a plain one (Muraganda Raceway, `amount` 1) is whole.
+  if (out.speed !== undefined && out.amount === 0) return weight * (Math.max(0, WEIGHT_TURNS - out.speed.turn + 1) / WEIGHT_TURNS);
   return weight;
 }
 
