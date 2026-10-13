@@ -26,11 +26,13 @@
  *  The precon-only fit is then held against the calibration decks.
  *
  *    npx tsx research/matcher/mana-base-fit.ts rows <out.json> [--shard i/n] [--trials N] [--only substring]   one shard of the sweep (needs Mongo)
- *    npx tsx research/matcher/mana-base-fit.ts fit <rows.json...> [--old <colourMiss.json>] [--or]            the regression and the report (no Mongo)
+ *    npx tsx research/matcher/mana-base-fit.ts fit <rows.json...> [--or] [--write-fixture <out.json>]           the regression and the report (no Mongo)
+ *    npx tsx research/matcher/mana-base-fit.ts --check                                                          re-derive every colourMiss (x) from Mongo, diff against the fixture
  *
- *  `--old` is a `{deck: {colourMiss, tappedLands, target, lands}}` file taken from another commit's `analyzeDeckStructured` (the colour count the coefficient was fitted on, before
- *  #1169 unified it), so the SAME simulated lost turns are regressed on the old and the new count and the refit is the ratio of the two slopes applied to the shipped one. `--or` reads
- *  a turn's lost-ness as once however many of its three ways hold, instead of the sum (the description does not say which; the sum is the one that reproduces the record).
+ *  THE RECORD OF `MANA_BASE_COST.colourMiss` is the fit module `packages/instruments/src/mana-base-fit-core.ts` over the fixture `packages/instruments/data/mana-base-fit-rows.json`
+ *  (`--write-fixture` makes it from the shards of `rows`); a test pins the constant to that slope. The fixture's x values come from Mongo `cardTagsDerived` (DERIVE_VERSION 307), so
+ *  RUN `--check` AFTER ANY CHANGE TO `colourSources`, `colourMiss`, `fixerSupply` OR DERIVE: it exits non-zero when the code no longer gives the x the slope was fitted on.
+ *  `--or` reads a turn's lost-ness as once however many of its three ways hold, instead of the sum (the description does not say which; the sum is the one that reproduces the record).
  */
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -42,6 +44,7 @@ import { buildDeckCards, analyzeDeckStructured } from "../../packages/matcher/sr
 import { classifyAccelerant, colorMask, drawOf, payable, simulate, spendUnits, type TurnView } from "../../packages/matcher/src/goldfish.js";
 import { deckIdentity } from "../../packages/matcher/src/mana-lines.js";
 import { MANA_BASE_COST } from "../../packages/matcher/src/mana-base.js";
+import { fit, round3, type Fit, type FitRow } from "../../packages/instruments/src/mana-base-fit-core.js";
 import { countsAsLand } from "../../packages/matcher/src/typeline.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
 
@@ -136,28 +139,37 @@ function toTarget(library: DeckCard[], target: number, deckAll: readonly DeckCar
   return { deck, note: `${moved} of ${Math.abs(delta)} swaps` };
 }
 
+interface Job { name: string; kind: Row["kind"]; text: string }
+function jobsFor(si: number, sn: number, only?: string): Job[] {
+  const precons = JSON.parse(readFileSync(new URL("../../packages/data/precons.json", import.meta.url), "utf8")) as Precon[];
+  return [
+    ...readdirSync(CALIBRATION_DECKS).filter((f) => f.endsWith(".txt")).sort().map((f) => ({ name: f.replace(/\.txt$/, ""), kind: "calibration" as const, text: readFileSync(join(CALIBRATION_DECKS, f), "utf8") })),
+    ...precons.map((p) => ({ name: `${p.setCode}:${p.name}`, kind: "precon" as const, text: preconDecklist(p) })),
+  ].filter((j, i) => i % sn === si && (!only || j.name.includes(only)));
+}
+
+/** One deck through the product's own analysis: the cards, the commanders' names and the manaBase the shipped code gives it. */
+async function analyse(j: Job, lookup: ReturnType<typeof mongoLookup>, tags: ReturnType<typeof createTagsLookup>) {
+  const s = parseDecklistSections(j.text);
+  const { cards, combos } = await resolveNames([...s.commanders, ...s.deck], lookup);
+  const cmdNames = new Set(s.commanders.map(normalizeName));
+  const dcs = await buildDeckCards(cards, lookup, tags);
+  const cn = dcs.filter((dc) => cmdNames.has(normalizeName(dc.card.name))).map((dc) => dc.card.name);
+  const rep = analyzeDeckStructured(dcs, cn, undefined, undefined, new ComboIndex(combos));
+  return { dcs, cn, mb: rep.deckMath?.lands?.manaBase };
+}
+
 async function rows(): Promise<void> {
   const out = process.argv[3];
   if (!out) throw new Error("usage: rows <out.json> [--shard i/n]");
   const [si, sn] = (arg("--shard") ?? "0/1").split("/").map(Number) as [number, number];
-  const only = arg("--only");
   const store = await connect(loadConfig());
   const lookup = mongoLookup(store);
   const tags = createTagsLookup(store.db, "derived");
-  const precons = JSON.parse(readFileSync(new URL("../../packages/data/precons.json", import.meta.url), "utf8")) as Precon[];
-  const jobs: { name: string; kind: Row["kind"]; text: string }[] = [
-    ...readdirSync(CALIBRATION_DECKS).filter((f) => f.endsWith(".txt")).sort().map((f) => ({ name: f.replace(/\.txt$/, ""), kind: "calibration" as const, text: readFileSync(join(CALIBRATION_DECKS, f), "utf8") })),
-    ...precons.map((p) => ({ name: `${p.setCode}:${p.name}`, kind: "precon" as const, text: preconDecklist(p) })),
-  ].filter((j, i) => i % sn === si && (!only || j.name.includes(only)));
+  const jobs = jobsFor(si, sn, arg("--only"));
   const rowsOut: Row[] = [];
   for (const j of jobs) {
-    const s = parseDecklistSections(j.text);
-    const { cards, combos } = await resolveNames([...s.commanders, ...s.deck], lookup);
-    const cmdNames = new Set(s.commanders.map(normalizeName));
-    const dcs = await buildDeckCards(cards, lookup, tags);
-    const cn = dcs.filter((dc) => cmdNames.has(normalizeName(dc.card.name))).map((dc) => dc.card.name);
-    const rep = analyzeDeckStructured(dcs, cn, undefined, undefined, new ComboIndex(combos));
-    const mb = rep.deckMath?.lands?.manaBase;
+    const { dcs, cn, mb } = await analyse(j, lookup, tags);
     if (!mb) { console.error(`no manaBase: ${j.name}`); continue; }
     const library = dcs.filter((dc) => !cn.includes(dc.card.name));
     const commanders = dcs.filter((dc) => cn.includes(dc.card.name));
@@ -175,27 +187,38 @@ async function rows(): Promise<void> {
   await store.close();
 }
 
-interface Fit { n: number; slope: number; r2Centred: number; r2Uncentred: number; r2Pearson: number; meanX: number; meanY: number }
-function fit(xs: number[], ys: number[], slope?: number): Fit {
-  const n = xs.length;
-  const sxy = xs.reduce((a, x, i) => a + x * ys[i]!, 0), sxx = xs.reduce((a, x) => a + x * x, 0);
-  const b = slope ?? sxy / sxx;
-  const my = ys.reduce((a, y) => a + y, 0) / n, mx = xs.reduce((a, x) => a + x, 0) / n;
-  const sse = ys.reduce((a, y, i) => a + (y - b * xs[i]!) ** 2, 0);
-  const sst = ys.reduce((a, y) => a + (y - my) ** 2, 0);
-  const sst0 = ys.reduce((a, y) => a + y * y, 0);
-  const cov = xs.reduce((a, x, i) => a + (x - mx) * (ys[i]! - my), 0);
-  const vx = xs.reduce((a, x) => a + (x - mx) ** 2, 0);
-  return { n, slope: b, r2Centred: 1 - sse / sst, r2Uncentred: 1 - sse / sst0, r2Pearson: (cov * cov) / (vx * sst), meanX: mx, meanY: my };
+const FIXTURE = new URL("../../packages/instruments/data/mana-base-fit-rows.json", import.meta.url);
+
+/** `--check`: re-derive every deck's colourMiss from Mongo and the shipped code, diff against the fixture. Exit 1 on any drift (a deck gone, a deck new, an x moved). */
+async function check(): Promise<void> {
+  const fixture = JSON.parse(readFileSync(FIXTURE, "utf8")) as FitRow[];
+  const want = new Map(fixture.map((r) => [r.name, r.colourMiss]));
+  const store = await connect(loadConfig());
+  const lookup = mongoLookup(store);
+  const tags = createTagsLookup(store.db, "derived");
+  const bad: string[] = [];
+  const seen = new Set<string>();
+  const jobs = jobsFor(0, 1);
+  for (const j of jobs) {
+    seen.add(j.name);
+    const { mb } = await analyse(j, lookup, tags);
+    const x = mb?.colourMiss;
+    if (!want.has(j.name)) bad.push(`not in the fixture: ${j.name}`);
+    else if (x === undefined || Math.abs(x - want.get(j.name)!) > 1e-9) bad.push(`${j.name}: fixture ${want.get(j.name)} now ${x}`);
+  }
+  for (const n of want.keys()) if (!seen.has(n)) bad.push(`in the fixture, no longer a deck: ${n}`);
+  await store.close();
+  console.log(`${jobs.length} decks re-derived against ${fixture.length} fixture rows: ${bad.length === 0 ? "no drift" : `${bad.length} DRIFTED`}`);
+  for (const b of bad.slice(0, 30)) console.log(`  ${b}`);
+  if (bad.length > 0) process.exitCode = 1;
 }
+
 const f3 = (x: number): string => x.toFixed(3);
 const show = (label: string, f: Fit): string => `${label.padEnd(34)} n=${String(f.n).padStart(3)} slope ${f3(f.slope)}  R2 centred ${f3(f.r2Centred)} uncentred ${f3(f.r2Uncentred)} pearson ${f3(f.r2Pearson)}  mean x ${f3(f.meanX)} mean y ${f3(f.meanY)}`;
 
 function report(): void {
-  const oldPath = arg("--old");
-  const old = oldPath ? JSON.parse(readFileSync(oldPath, "utf8")) as Record<string, { colourMiss: number; tappedLands: number; target: number; lands: number }> : null;
   const orArm = process.argv.includes("--or");
-  const all: Row[] = process.argv.slice(3).filter((f) => f.endsWith(".json") && f !== oldPath).flatMap((f) => JSON.parse(readFileSync(f, "utf8")) as Row[]);
+  const all: Row[] = process.argv.slice(3).filter((f) => f.endsWith(".json") && f !== arg("--write-fixture")).flatMap((f) => JSON.parse(readFileSync(f, "utf8")) as Row[]);
   if (!orArm) for (const r of all) for (const k of ["base", "allCol", "untapped", "atTarget"] as const) { const l = r[k]; if (l) l.lost = l.screw + l.colour + l.flood; }
   const pre = all.filter((r) => r.kind === "precon"), cal = all.filter((r) => r.kind === "calibration");
   console.log(`decks ${all.length} (${pre.length} precons, ${cal.length} calibration); shipped colourMiss ${MANA_BASE_COST.colourMiss}, tapped ${MANA_BASE_COST.tapped}`);
@@ -214,28 +237,13 @@ function report(): void {
   const preSlope = fit(pre.map((r) => r.colourMiss), pre.map(colour)).slope;
   console.log(show(`calibration at the PRECON slope`, fit(cal.map((r) => r.colourMiss), cal.map(colour), preSlope)));
   console.log(show(`all decks at the SHIPPED ${MANA_BASE_COST.colourMiss}`, fit(all.map((r) => r.colourMiss), all.map(colour), MANA_BASE_COST.colourMiss)));
-  if (old) {
-    const o = (r: Row): number => old[r.name]?.colourMiss ?? NaN;
-    const have = all.filter((r) => old[r.name]);
-    console.log(`\nTHE OLD COUNT (--old: ${have.length} of ${all.length} decks), the same lost turns regressed on the colourMiss the shipped 0.133 was fitted on:`);
-    console.log(`  mean colourMiss old ${f3(mean(have.map(o)))} new ${f3(mean(have.map((r) => r.colourMiss)))}; decks that moved ${have.filter((r) => Math.abs(o(r) - r.colourMiss) > 0.005).length}`);
-    for (const [label, rs] of [["all decks", have], ["precons only", have.filter((r) => r.kind === "precon")], ["calibration only", have.filter((r) => r.kind === "calibration")]] as const) {
-      const fo = fit(rs.map(o), rs.map(colour)), fn = fit(rs.map((r) => r.colourMiss), rs.map(colour));
-      console.log(show(`${label}, OLD count`, fo));
-      console.log(show(`${label}, NEW count`, fn));
-      console.log(`  -> ratio new/old slope ${f3(fn.slope / fo.slope)}; shipped ${MANA_BASE_COST.colourMiss} x ratio = ${f3(MANA_BASE_COST.colourMiss * fn.slope / fo.slope)}`);
-    }
-    // 95% BOOTSTRAP OVER DECKS (seeded), of the new slope and of the new/old ratio the refit rests on.
-    let seed = 12345;
-    const rnd = (): number => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 2 ** 32; };
-    const draws: { slope: number; ratio: number }[] = [];
-    for (let b = 0; b < 2000; b++) {
-      const pick = have.map(() => have[Math.floor(rnd() * have.length)]!);
-      const fn = fit(pick.map((r) => r.colourMiss), pick.map(colour)), fo = fit(pick.map(o), pick.map(colour));
-      draws.push({ slope: fn.slope, ratio: fn.slope / fo.slope });
-    }
-    const q = (xs: number[], p: number): number => xs.slice().sort((a, b) => a - b)[Math.floor(p * (xs.length - 1))]!;
-    console.log(`  bootstrap (2000 resamples of the ${have.length} decks): new slope [${f3(q(draws.map((d) => d.slope), 0.025))}, ${f3(q(draws.map((d) => d.slope), 0.975))}], ratio [${f3(q(draws.map((d) => d.ratio), 0.025))}, ${f3(q(draws.map((d) => d.ratio), 0.975))}]`);
+  console.log(`  raw slope rounded to 3 places ${f3(round3(fit(all.map((r) => r.colourMiss), all.map(colour)).slope))}, shipped ${MANA_BASE_COST.colourMiss}`);
+  const fixturePath = arg("--write-fixture");
+  if (fixturePath) {
+    const ways = (l: Lost): { screw: number; colour: number; flood: number } => ({ screw: l.screw, colour: l.colour, flood: l.flood });
+    const fixture: FitRow[] = all.map((r) => ({ name: r.name, kind: r.kind, colourMiss: r.colourMiss, base: ways(r.base), allCol: ways(r.allCol) }));
+    writeFileSync(fixturePath, JSON.stringify(fixture));
+    console.log(`fixture: ${fixture.length} decks -> ${fixturePath}`);
   }
   console.log("\nTAPPED  (y = lost(base) - lost(every land untapped), x = lands that always enter tapped)");
   console.log(show("all decks", fit(all.map((r) => r.tappedLands), all.map(tapped))));
@@ -254,4 +262,7 @@ function report(): void {
   if (ov.length > 0) console.log(show("over: measured on d^2", fit(ov.map((r) => (r.lands - r.target) ** 2), ov.map(count))));
 }
 
-if (process.argv[2] === "rows") await rows(); else if (process.argv[2] === "fit") report(); else throw new Error("rows <out.json> | fit <rows.json...>");
+if (process.argv[2] === "rows") await rows();
+else if (process.argv[2] === "fit") report();
+else if (process.argv[2] === "--check") await check();
+else throw new Error("rows <out.json> | fit <rows.json...> | --check");

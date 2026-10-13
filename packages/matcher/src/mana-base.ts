@@ -131,16 +131,18 @@ export function landTarget(inputs: LandFormulaInputs): number {
  *    every deck's own curve against the formula's target: 1-3 lands off costs about 0.03, 3-6 about
  *    0.1, 6-10 about 0.3. Flat near the target and steep past it, which is why a two-land miss is
  *    not a finding (`LAND_BAND`) and a seven-land one is.
- *  - COLOUR: 0.146 per `colourMiss` card, against what the same deck saves with every land making
- *    every colour (R^2 0.55 over the 268 decks, 0.78 through the origin; fitted on the precons alone it
- *    still explains 13% of the calibration decks' own at that slope). REFIT 2026-10-13 (#1169, task 3)
- *    on the unified colour-source count (`colourSources` is the audit's: land-fetch spells and gated
- *    sources count), which moved the mean `colourMiss` over the 268 decks from 4.60 to 4.22. It was
- *    0.133 on the old count. The generator is `research/matcher/mana-base-fit.ts`, a REBUILD (the
- *    original was never committed): its simulated lost turns regressed on the old count give 0.137
- *    where 0.133 is recorded, so the refit is 0.133 x (0.151 / 0.137) = 0.146, not the raw 0.151.
- *    Bootstrap over decks: slope [0.135, 0.165], ratio [1.005, 1.192]. The mean colour cost stays
- *    where it was (0.146 x 4.22 = 0.62, against 0.133 x 4.60 = 0.61).
+ *  - COLOUR: 0.151 per `colourMiss` card, against what the same deck saves with every land making
+ *    every colour. It is the RAW least-squares slope through the origin of `research/matcher/mana-base-fit.ts` (owner ruling
+ *    2026-10-13, #1169 task 3): 268 decks (197 precons + 71 calibration), 2,000 games each, ten turns, seed 20261013, 4 shards;
+ *    R^2 0.55 centred / 0.78 through the origin; fitted on the precons alone the slope is 0.163 and explains 13% of the
+ *    calibration decks' own. The record is the rows fixture `packages/instruments/data/mana-base-fit-rows.json` and a test
+ *    (`mana-base-fit-core.test.ts`) pinning this constant to its slope. The fit is reproducible ONLY at that fixed seed: other
+ *    seeds move the slope by +-0.001-0.002 (seeds 11 and 22 gave 0.149 and 0.150). It depends on Mongo `cardTagsDerived` at
+ *    DERIVE_VERSION 307, `packages/data/precons.json`, the 71 calibration decks and the `colourSources` / `colourMiss` code, so
+ *    RUN `npx tsx research/matcher/mana-base-fit.ts --check` AFTER ANY CHANGE TO `colourSources`, `colourMiss`, `fixerSupply` OR
+ *    DERIVE: it re-derives the 268 `colourMiss` values and exits non-zero when they no longer match the fixture.
+ *    History: 0.133 on the old, narrower colour count (the original script was never committed); the unified count moved the
+ *    mean `colourMiss` over the 268 from 4.60 to 4.22 (mean x now 4.223), and the refit is this raw slope, not 0.133 scaled.
  *  - TAPPED: 0.025 per land that always enters tapped, against the same deck with every land
  *    untapped (R^2 0.48: a tapped land costs most when it arrives early, which a count cannot see).
  *    The tapped count did not move in #1169 (268 of 268 decks identical), so it keeps the original fit;
@@ -150,8 +152,12 @@ export function landTarget(inputs: LandFormulaInputs): number {
  *  colours 0.61 on average (0.12 in a mono-colour deck, 0.86 in a three-colour one), tapped lands 0.17.
  *  The land count is not re-measured: the rebuilt arm that trades lands for spells reads 0.01, not the
  *  recorded 0.08, so `short` and `over` stay as fitted. The count is the smallest lever on most real
- *  decks, and the report should say so rather than lead with it. */
-export const MANA_BASE_COST = { short: 0.005, over: 0.004, colourMiss: 0.146, tapped: 0.025 } as const;
+ *  decks, and the report should say so rather than lead with it.
+ *
+ *  CEILING: only `colourMiss` comes from a committed script. `short` / `over` (0.005 / 0.004) and `tapped` (0.025) are the ORIGINAL
+ *  fit's, unrecoverable. The script's tapped slope is 0.021 (shipped 0.025), and its count arm does not reproduce the record
+ *  (slope -0.185, R^2 0.003; the 6-10 lands-off band reads 0.062 measured against 0.216 modelled), so neither is refit from it. */
+export const MANA_BASE_COST = { short: 0.005, over: 0.004, colourMiss: 0.151, tapped: 0.025 } as const;
 
 const PIP_COLOURS = new Set<string>(COLORS);
 
@@ -177,7 +183,7 @@ const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
  *
  *  THE SAME NUMBER AS `manaAudit`'s `supplied`, deliberately. Until 2026-10-10 this was a different count (Amarant's red: 38 sources
  *  by the audit against 26 here; Gisa's black 38 against 33; Fairdrazi 16-17 against 9-10, because only the audit counted land-fetch
- *  spells), and `colourMiss`'s coefficient was fitted on this one. Unifying them moved it: refit 0.133 -> 0.146 (#1169, task 3). */
+ *  spells), and `colourMiss`'s coefficient was fitted on this one. Unifying them moved it: refit 0.133 -> 0.151 (#1169, task 3). */
 export function colourSources(deck: readonly DeckCard[], commanderNames: readonly string[] = []): Map<Color, number> {
   const commanders = new Set(commanderNames);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
@@ -259,7 +265,7 @@ export interface ManaBaseScore {
   /** Lost turns per ten turns each part of the mana base costs, against a perfect one of the same deck. */
   costs: { count: number; colour: number; tapped: number };
   /** Their sum: the mana base's one quality number. 0 is a perfect mana base; the 268 decks run
-   *  0.1-2.5, a median of 0.75 and 1.35 at the 90th percentile. */
+   *  0.1-2.6 (at colourMiss 0.151), a median of 0.78 and 1.39 at the 90th percentile. */
   total: number;
   /** The expected number of cards whose colours are missing on their own turn (`colourMiss`). */
   colourMiss: number;
