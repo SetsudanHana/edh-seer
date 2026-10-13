@@ -39,21 +39,33 @@ export function deckIdentity(deck: readonly DeckCard[], commanderNames: readonly
  *  The list is the whole of what the corpus holds. */
 const NON_CONSUMING_COST = /^(?:exert|untap|mill)\b/i;
 
-/** A LOYALTY COST THAT ADDS OR KEEPS LOYALTY ("+2", "0"): a planeswalker's loyalty ability that takes nothing from it, so it can be activated every
- *  turn it is in play (CR 606.3: once per turn, at sorcery timing). Derive carries the loyalty cost as a `cost.other` piece, verbatim. A NEGATIVE cost
- *  ("−1", "−X") spends loyalty and is not repeatable for ever (CR 606.6: it can't be activated without that many counters). */
-const NON_NEGATIVE_LOYALTY = /^(?:\+\d+|0)$/;
-/** THE LINE'S LOYALTY COST IS NON-NEGATIVE, and it pays nothing else: a planeswalker's repeatable mana ability (Chandra, Torch of Defiance's
- *  "+1: Add {R}{R}", Ugin, Eye of the Storms' "0: Add {C}{C}{C}"). */
-export const isRepeatableLoyalty = (line: ManaLine): boolean =>
-  line.cost.other.length === 1 && NON_NEGATIVE_LOYALTY.test(line.cost.other[0]!);
+/** A LOYALTY COST as derive stores it in `cost.other`: "+2", "0", "−1" (U+2212, the printed minus). "−X" is none: no loyalty can be compared with it. */
+const LOYALTY_COST = /^(?:\+\d+|0|[\u2212-]\d+)$/;
+/** THE LINE IS A PLANESWALKER'S LOYALTY ABILITY, and it pays nothing else. */
+export const isLoyaltyAbility = (line: ManaLine): boolean => line.cost.other.length === 1 && LOYALTY_COST.test(line.cost.other[0]!);
+
+/** HOW MANY TURNS A LOYALTY ABILITY CAN BE USED from the walker's STARTING loyalty (`ManaLine.startLoyalty`), counting the turn it is cast: Infinity for a
+ *  "+N" or "0" (CR 606.3: once per turn at sorcery timing, and nothing is taken from the loyalty), floor(loyalty / cost) for a "−N" (CR 606.6: it can't be
+ *  activated without that many counters; a walker enters with its printed loyalty, CR 306.5b), 0 when a negative cost's loyalty is not known or does not cover it.
+ *  Owner 2026-10-13: a loyalty mana or land-fetch ability counts iff the walker can activate it the turn it is cast, i.e. at least 1.
+ *  CEILING: only this one ability is counted. A walker that also gains loyalty with its other abilities (a "+1" beside the "−1") could use the minus
+ *  ability for longer; the model does not play those. */
+export function loyaltyActivations(line: ManaLine): number {
+  if (!isLoyaltyAbility(line)) return Infinity;
+  const cost = Number(line.cost.other[0]!.replace("\u2212", "-"));
+  if (cost >= 0) return Infinity;
+  return line.startLoyalty === undefined ? 0 : Math.floor(line.startLoyalty / -cost);
+}
+/** A LOYALTY ABILITY THE WALKER CAN ACTIVATE THE TURN IT IS CAST. */
+export const usableLoyalty = (line: ManaLine): boolean => isLoyaltyAbility(line) && loyaltyActivations(line) >= 1;
 
 /** A COST THE LINE'S HOLDER CANNOT PAY FROM NOTHING: sacrificing another permanent, a counter removed or put, another permanent tapped (Springleaf
- *  Drum), or any `cost.other` piece off the allow-list above -- a consumed resource (energy, a discard, forage, an exile from a graveyard). The
+ *  Drum), or any `cost.other` piece off the allow-list above (a loyalty cost is on it, of either sign: whether the loyalty covers a "−N" is `usableLoyalty`'s
+ *  question, and the colour audit never asks, as a loyalty ability is no tap) -- a consumed resource (energy, a discard, forage, an exile from a graveyard). The
  *  colour audit and the goldfish both refuse a line paid this way: the first because the mana is not a source you control, the second because it
  *  models no board to pay from. */
 export const paidWithResource = (line: ManaLine): boolean =>
-  line.cost.sacrificeOther || line.cost.counters !== null || line.cost.tapOther || !line.cost.other.every((o) => NON_CONSUMING_COST.test(o) || NON_NEGATIVE_LOYALTY.test(o));
+  line.cost.sacrificeOther || line.cost.counters !== null || line.cost.tapOther || !line.cost.other.every((o) => NON_CONSUMING_COST.test(o) || LOYALTY_COST.test(o));
 
 /** The shape of a colour source -- everything `isColourSource` asks except that the production could be read. */
 const sourceShaped = (line: ManaLine): boolean =>
@@ -172,7 +184,9 @@ export function makesAnyMana(dc: DeckCard): boolean {
 export function isFetchSource(dc: DeckCard): boolean {
   const fetch = dc.tags?.landFetch;
   if (!fetch) return false;
-  return cardLines(dc).some((l) => l.source === "fetch" && l.gate === null && (fetch.kind === "spell" || l.net >= 1));
+  // A PLANESWALKER'S FETCH is a source only if it can be activated the turn the walker is cast (owner 2026-10-13): Nissa, Worldwaker's -7 and Nissa, Who
+  // Shakes the World's -8 cannot, from loyalty 3 and 5.
+  return cardLines(dc).some((l) => l.source === "fetch" && l.gate === null && (fetch.kind === "spell" || l.net >= 1) && (!isLoyaltyAbility(l) || usableLoyalty(l)));
 }
 
 /** The lines on which a land's mana is conditional, for the land score (never cut or upgraded for what it cannot be weighed on): a

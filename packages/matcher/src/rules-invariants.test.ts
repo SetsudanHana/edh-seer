@@ -79,12 +79,12 @@ const PROSE: Record<string, string> = {
   "903.8": "commander tax is a caveat, not a number",
   "113.3": "edges: the copy-ability pass reads the other card's ability kinds (AC12; edges.test asserts Strionic, Gogo, Tawnos)",
   "605.3b": "edges: 'activated' excludes mana abilities in the copy-ability pass (AC12)",
-  "306.5b": "edges: a planeswalker's loyalty is a counter (canCarryCounters, AL4)",
+  "306.5b": "edges: a planeswalker's loyalty is a counter (canCarryCounters, AL4); goldfish/mana-lines: it enters with its printed loyalty, which the first activation spends from (goldfish.test.ts)",
   "310.6": "edges: a battle's defence is a counter (canCarryCounters, AL4)",
   "702.63": "edges: vanishing puts time counters on (canCarryCounters, AL4)",
   "702.32": "edges: fading puts fade counters on (canCarryCounters, AL4)",
   "606.3": "partners-core effectOrder: a loyalty ability is once a round, so it ranks with the taps (AN3)",
-  "606.6": "goldfish/mana-lines: a negative loyalty cost spends loyalty the model does not track, so a \"-N\" mana ability is not played (CEILING; asserted in goldfish.test.ts)",
+  "606.6": "goldfish/mana-lines: a negative loyalty cost needs that many counters, so a \"-N\" mana ability is played iff the starting loyalty covers it, for floor(loyalty / N) turns (asserted in goldfish.test.ts)",
   "301.7a": "partners-core: a Vehicle prints power and toughness without being a creature, so it carries `pow`/`tou` in the index and answers a Power range -- printed, not \"is a creature\"",
 };
 

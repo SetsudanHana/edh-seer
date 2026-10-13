@@ -357,7 +357,7 @@ describe("review round 3 (#1169 task 1)", () => {
     expect(yue).toMatchObject({ source: "static-grant", colourless: 1 });
     expect(yue.gate).toBe("when princess yue dies");
     // ...while "for as long as" stays a duration (the test above), and a grant by a STATIC parent has no trigger to gate it.
-    expect(only("Imprisoned in the Moon").gate).toBeNull();
+    expect(only("Abundant Growth").gate).toBeNull();
     expect(linesOf("Chromatic Lantern", "static-grant")[0]!.gate).toBeNull();
     // A trigger that grants for a while is gated (Hydro-Man's end step, Song of Freyalise's chapter "until your next turn"); a grant to ANOTHER card
     // (Vraska, the Silencer's returned Treasure) is no mana of Vraska's; a Saga chapter with no duration (Urza's Saga) stands, as a land's tap does.
@@ -439,5 +439,36 @@ describe("review 3 of task 2a (#1169): a grantee's colours, a colour chosen as p
     expect(linesOf("Thriving Heath").find((l) => l.cost.tap)).toMatchObject({ anyColour: "chosen", colours: ["W"] });
     expect(only("Utopia Sprawl")).toMatchObject({ anyColour: "chosen" });
     expect(linesOf("Cryptic Spires").find((l) => l.cost.tap && l.anyColour !== null)).toMatchObject({ anyColour: "chosen" });
+  });
+});
+
+describe("an Aura's mana counts only if mana is the card's purpose (owner 2026-10-13, #1169 2b-1 review round 2)", () => {
+  it("removal Auras make no mana line: one that strips the enchanted permanent's card types, one on an opponent's permanent, a granted combat-damage trigger", () => {
+    // Imprisoned in the Moon: "Enchanted permanent is a colorless land with '{T}: Add {C}' and loses all other card types and abilities" -- it removes the
+    // permanent; the land it leaves is not ramp. Honest Work: "Enchant creature an opponent controls". Mark of Sakiko: the grant is a combat-damage trigger, no tap.
+    for (const n of ["Imprisoned in the Moon", "Honest Work", "Mark of Sakiko"]) expect(tagsOf(n).manaLines, n).toBeUndefined();
+  });
+  it("an Aura that gives a land (or creature) a tap ability keeps its line: Abundant Growth, Lithoform Blight, Bigger on the Inside, the 'enchanted land' triggers", () => {
+    for (const n of ["Abundant Growth", "Gift of Paradise", "Bigger on the Inside", "Grafted Growth", "Karametra's Favor", "Multani's Harmony", "Utopia Vow"]) {
+      expect(linesOf(n, "static-grant").length, n).toBeGreaterThan(0);
+    }
+    expect(linesOf("Lithoform Blight", "static-grant")).toHaveLength(2);
+    expect(linesOf("Wild Growth", "aura-trigger")).toHaveLength(1);
+    expect(linesOf("Utopia Sprawl", "aura-trigger")).toHaveLength(1);
+  });
+});
+
+describe("a planeswalker's starting loyalty rides on its loyalty-cost lines (CR 306.5b, 606.6)", () => {
+  it("a mana or fetch line costing loyalty carries the walker's printed loyalty", () => {
+    expect(only("Chandra, Novice Pyromancer", "activated")).toMatchObject({ cost: { other: ["\u22121"] }, startLoyalty: 5 });
+    expect(only("Chandra, Torch of Defiance", "activated")).toMatchObject({ cost: { other: ["+1"] }, startLoyalty: 4 });
+    expect(only("Nissa, Worldwaker", "fetch")).toMatchObject({ cost: { other: ["\u22127"] }, startLoyalty: 3 });
+    expect(linesOf("Nissa, Who Shakes the World", "fetch")[0]).toMatchObject({ cost: { other: ["\u22128"] }, startLoyalty: 5 });
+    // The BACK face's own loyalty (Arlinn, the Moon's Fury), by face.
+    expect(linesOf("Arlinn, the Pack's Hope").find((l) => l.face === 1)).toMatchObject({ startLoyalty: 4 });
+  });
+  it("a line with no loyalty cost carries none", () => {
+    expect(only("Sol Ring")).not.toHaveProperty("startLoyalty");
+    expect(only("Llanowar Elves")).not.toHaveProperty("startLoyalty");
   });
 });

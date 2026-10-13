@@ -28,7 +28,9 @@ const NAMES = ["Sol Ring", "Arcane Signet", "Cascade Bluffs", "Cascading Catarac
   "Plaza of Heroes", "The Grey Havens", "Mox Amber", "Faeburrow Elder", "Guild Globe", "Ether", "Pit of Offerings", "Aether Hub", "Servant of the Conduit",
   "Bog Witch", "Cryptex", "Molt Tender", "Thornvault Forager",
   "Tazri, Stalwart Survivor", "Katilda, Dawnhart Prime", "Corrupted Grafstone", "Three Tree City", "Cryptic Spires", "Astral Cornucopia", "Millikin", "Charmed Pendant",
-  "Loot, the Nexus", "Rhystic Cave", "Nyx Lotus", "Nykthos, Shrine to Nyx", "Thriving Heath", "Oasis Ritualist", "Arena of Glory", "Benthic Explorers", "Princess Yue", "Imprisoned in the Moon", "Urza's Saga", "Song of Freyalise", "Hydro-Man, Fluid Felon", "Vraska, the Silencer"];
+  "Loot, the Nexus", "Rhystic Cave", "Nyx Lotus", "Nykthos, Shrine to Nyx", "Thriving Heath", "Oasis Ritualist", "Arena of Glory", "Benthic Explorers", "Princess Yue", "Imprisoned in the Moon", "Urza's Saga", "Song of Freyalise", "Hydro-Man, Fluid Felon", "Vraska, the Silencer",
+  "Honest Work", "Mark of Sakiko", "Abundant Growth", "Lithoform Blight", "Bigger on the Inside", "Gift of Paradise", "Multani's Harmony", "Karametra's Favor", "Utopia Vow", "Minimus Containment", "Grafted Growth", "New Horizons", "Unbridled Growth", "Sheltered Aerie", "Find the Path", "Urban Utopia", "Weirding Wood",
+  "Arlinn, the Pack's Hope", "Nissa, Who Shakes the World", "Nissa, Worldwaker", "Chandra, Novice Pyromancer", "Koth of the Hammer", "Chandra, Torch of Defiance", "Crypt Ghast"];
 const out: Record<string, unknown> = {};
 for (const n of NAMES) {
   const card: any = await store.cards.findOne({ name: n } as never) ?? await store.cards.findOne({ name: new RegExp("^" + n + " //") } as never);

@@ -17,6 +17,8 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
+  "306.5b": "derive/mana-lines.test.ts — a planeswalker's printed loyalty rides on each of its loyalty-cost mana lines (ManaLine.startLoyalty, #1169)",
+  "606.6": "derive/mana-lines.test.ts — a loyalty cost needs that many counters, so the line carries the starting loyalty a consumer compares it with (#1169)",
   "113.6": "derive.test.ts — a card whose own static says it isn't a creature under a condition is marked creatureOnlyIf (#797)",
   "608.2c": "derive.test.ts — an unnamed draw is yours; a named one is the player it names (#697)",
   "508.1a": "derive/intervening-if.test.ts — only a creature attacks, so \"if you attacked this turn\" cares about attacks:creature (#1088)",

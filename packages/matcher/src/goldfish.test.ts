@@ -4,7 +4,8 @@ import type { DeckCard } from "./types.js";
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 import { FREE_TAP, fetchTags, manaTags, mkLine, ritualLine, tapFor, triggerLine, withLines, withTap } from "./mana-test-support.js";
-import { classifyAccelerant, colourMaskOf, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
+import { cardLines, colourSourceColours, isColourSource, isFetchSource } from "./mana-lines.js";
+import { classifyAccelerant, colourMaskOf, tapBonusOf, fetchesLand, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -170,11 +171,23 @@ test("derived lines the goldfish cannot play are not accelerants: a gate it cann
   expect(classifyAccelerant(real("Princess Yue"))).toBeNull();
   // A GATED FETCH (Charitable Levy: three noncreature spells first) is not a fetch the model can perform.
   expect(classifyAccelerant(real("Charitable Levy"))).toBeNull();
-  // A tap-replacement the card does not print the bonus of (Crypt Ghast: Swamps only) is not priced as a one-mana dork.
-  expect(classifyAccelerant(real("Crypt Ghast"))).toBeNull();
-  // ...while the two bonuses the simulation prices stay accelerants, with their bonus.
+  // The tap-replacements the simulation prices are accelerants, with their bonus: Forsaken Monument and Leyline of Abundance (owner 2026-10-13), and the
+  // same shape for one land type -- Crypt Ghast and Nirkana Revenant (Swamps), Nissa, Who Shakes the World (Forests), a bonus per matching land tapped.
   expect(classifyAccelerant(real("Forsaken Monument"))?.kind).toBe("rock");
   expect(classifyAccelerant(real("Leyline of Abundance"))?.kind).toBe("rock");
+  expect(classifyAccelerant(real("Crypt Ghast"))?.kind).toBe("dork");
+  expect(classifyAccelerant(real("Nirkana Revenant"))?.kind).toBe("dork");
+  expect(classifyAccelerant(real("Nissa, Who Shakes the World"))?.kind).toBe("rock");
+  expect([tapBonusOf(real("Forsaken Monument")), tapBonusOf(real("Leyline of Abundance")), tapBonusOf(real("Crypt Ghast")), tapBonusOf(real("Nissa, Who Shakes the World"))])
+    .toEqual(["colorless", "creature", "land:swamp", "land:forest"]);
+});
+
+// AN AURA'S MANA COUNTS ONLY IF MANA IS THE CARD'S PURPOSE (owner 2026-10-13): the removal Auras are no accelerant, the ramp Auras are.
+test("an Aura that removes what it enchants, or grants a trigger, is no accelerant; an Aura that gives a land a tap ability is", () => {
+  for (const n of ["Imprisoned in the Moon", "Honest Work", "Mark of Sakiko"]) expect(classifyAccelerant(real(n)), n).toBeNull();
+  expect(classifyAccelerant(real("Abundant Growth"))?.kind).toBe("rock");
+  expect(classifyAccelerant(real("Lithoform Blight"))?.kind).toBe("rock");
+  expect(manaOutput(real("Abundant Growth")).amount).toBe(1);
 });
 
 // LOYALTY MANA ABILITIES ARE ACCELERANTS (owner 2026-10-13, #1169 2b-1 review). CR 606.3: a loyalty ability is activated at sorcery timing, once per
@@ -192,9 +205,72 @@ test("a planeswalker's non-negative loyalty mana ability is an accelerant priced
   // The colour it makes is the line's: Chandra's {R}, Ugin's {C}.
   expect(colourMaskOf(real("Chandra, Torch of Defiance"))).toBe(colorMask(["R"]));
   expect(colourMaskOf(real("Ugin, Eye of the Storms"))).toBe(colorMask(["C"]));
-  // A NEGATIVE cost spends loyalty the model does not track (Chandra, Novice Pyromancer -1, Koth -2, Chandra, Heart of Fire's -9 ultimate), and Jaya's
-  // +1 restricts what the mana is for.
-  for (const n of ["Chandra, Novice Pyromancer", "Chandra, Heart of Fire", "Koth of the Hammer", "Jaya Ballard"]) expect(classifyAccelerant(real(n)), n).toBeNull();
+  // A NEGATIVE cost counts when the walker's STARTING loyalty covers it (owner 2026-10-13: usable the turn it is cast, CR 606.6): Chandra, Novice Pyromancer
+  // (loyalty 5, -1: Add {R}{R}) and Koth (loyalty 3, -2: Add {R} for each Mountain) are accelerants. One that does not -- Chandra, Heart of Fire's -9 at
+  // loyalty 5, Quintorius' -6 at 4 -- is not, and Jaya's +1 restricts what the mana is for.
+  for (const n of ["Chandra, Novice Pyromancer", "Koth of the Hammer"]) expect(classifyAccelerant(real(n))?.kind, n).toBe("rock");
+  for (const n of ["Chandra, Heart of Fire", "Quintorius Kand", "Jaya Ballard"]) expect(classifyAccelerant(real(n)), n).toBeNull();
+  expect(manaOutput(real("Chandra, Novice Pyromancer"))).toMatchObject({ amount: 2, turns: 5 });
+  // Koth's amount scales (a rate: priced at the incumbent one) and he can pay his -2 once from loyalty 3.
+  expect(manaOutput(real("Koth of the Hammer"))).toMatchObject({ amount: 1, turns: 1 });
+  // A "+N" or "0" never runs out.
+  expect(manaOutput(real("Chandra, Torch of Defiance"))).not.toHaveProperty("turns");
+  // A transform card's BACK face is not ramp (owner 2026-10-10, #1174): Arlinn, the Moon's Fury's "+2: Add {R}{G}" is reached only by transforming.
+  expect(classifyAccelerant(real("Arlinn, the Pack's Hope"))).toBeNull();
+  // Nissa's land fetches cost -7 (Worldwaker, loyalty 3) and -8 (Who Shakes the World, loyalty 5): neither can be activated the turn she is cast.
+  expect(isFetchSource(real("Nissa, Worldwaker"))).toBe(false);
+  expect(isFetchSource(real("Nissa, Who Shakes the World"))).toBe(false);
+  expect(fetchesLand(real("Nissa, Worldwaker"))).toBe(false);
+  expect(classifyAccelerant(real("Nissa, Worldwaker"))).toBeNull();
+});
+
+// PINS THAT LOYALTY NEVER LEAKS INTO COLOUR COUNTING: the colour audit asks for a repeatable TAP or a static grant (`isColourSource`), and a loyalty ability is neither.
+test("a planeswalker's loyalty mana ability is not a colour source", () => {
+  const chandra = real("Chandra, Torch of Defiance");
+  expect(colourSourceColours(chandra)).toEqual([]);
+  expect(cardLines(chandra).some(isColourSource)).toBe(false);
+  expect(colourSourceColours(real("Chandra, Novice Pyromancer"))).toEqual([]);
+});
+
+// A NEGATIVE LOYALTY ABILITY RUNS OUT (CR 606.6): loyalty L and cost c give floor(L/c) activations, one a turn (CR 606.3), and the simulation counts them.
+// The walker is priced at its best-amount ability, and the rest of the turns it adds nothing. Both arms are the SAME shuffle with one slot swapped (the walker
+// against an inert four-drop), so a trial's gap is the walker's own mana on that turn.
+test("a negative loyalty mana ability pays for floor(loyalty / cost) turns, from the turn the walker is cast", () => {
+  const turnsOn = (walker: DeckCard): number => {
+    const arm = (w: DeckCard): number[][] => simulate([w, ...basics(98)], { trials: 3_000, turns: 8, seed: 41, mulligan: false }).manaAt;
+    const a = arm(walker), b = arm(card("Inert four-drop", "Sorcery", 4));
+    let most = 0;
+    for (let i = 0; i < a[0]!.length; i++) {
+      let n = 0;
+      for (let t = 0; t < 8; t++) if (a[t]![i]! - b[t]![i]! === 2) n++;
+      most = Math.max(most, n);
+    }
+    return most;
+  };
+  const withLoyalty = (loyalty: number): DeckCard => {
+    const dc = structuredClone(real("Chandra, Novice Pyromancer"));
+    for (const l of dc.tags!.manaLines!) if (l.cost.other.length > 0) l.startLoyalty = loyalty;
+    return dc;
+  };
+  // Loyalty 1 and a -1 ability: one turn (the turn she is cast). Loyalty 5: five turns, turns four to eight.
+  expect(turnsOn(withLoyalty(1))).toBe(1);
+  expect(turnsOn(real("Chandra, Novice Pyromancer"))).toBe(5);
+  expect(turnsOn(real("Chandra, Torch of Defiance"))).toBe(5);
+});
+
+// NISSA, WHO SHAKES THE WORLD: "Whenever you tap a Forest for mana, add an additional {G}" -- +1 per Forest tapped, so it is worth the Forests on the board.
+test("a land-type tap bonus pays one per matching land tapped, and nothing for another land type", () => {
+  const gaps = (land: string, subtype: string): number[][] => {
+    const arm = (nissa: boolean): number[][] => simulate([nissa ? real("Nissa, Who Shakes the World") : card("Inert five-drop", "Sorcery", 5), ...basics(98, land).map((c) => ({ ...c, card: { ...c.card, typeLine: `Basic Land \u2014 ${subtype}` } }))],
+      { trials: 3_000, turns: 8, seed: 43, mulligan: false }).manaAt;
+    const a = arm(true), b = arm(false);
+    return a.map((turn, t) => turn.map((x, i) => x - b[t]![i]!));
+  };
+  const forests = gaps("Forest", "Forest");
+  // All lands bar one card, so by turn t there are t lands, and once she is out every Forest taps for one more.
+  for (let t = 4; t < 8; t++) for (const g of forests[t]!) expect([0, t + 1], `turn ${t + 1}`).toContain(g);
+  expect(forests[7]!.some((g) => g === 8)).toBe(true);
+  for (const turn of gaps("Plains", "Plains")) for (const g of turn) expect(g).toBe(0);
 });
 
 test("a planeswalker's loyalty mana lands in the simulation the turn it is cast and adds its amount", () => {
@@ -210,8 +286,10 @@ test("a planeswalker's loyalty mana lands in the simulation the turn it is cast 
   // Domri, Anarch of Bolas (mana value 3, +1: Add {R} or {G}): three lands and her one on turn three.
   expect(maxAt("Domri, Anarch of Bolas", 2)).toBe(2);
   expect(maxAt("Domri, Anarch of Bolas", 3)).toBe(4);
-  // Her −1 ability (Chandra, Novice Pyromancer, mana value 4) is not played: four lands on turn four and nothing more.
-  expect(maxAt("Chandra, Novice Pyromancer", 4)).toBe(4);
+  // Her −1 ability (Chandra, Novice Pyromancer, mana value 4, loyalty 5) is playable the turn she is cast: four lands and her two on turn four.
+  expect(maxAt("Chandra, Novice Pyromancer", 4)).toBe(6);
+  // Chandra, Heart of Fire's −9 cannot be paid from loyalty 5: four lands and nothing more.
+  expect(maxAt("Chandra, Heart of Fire", 4)).toBe(4);
 });
 
 test("an Adventure or prepare card's spell half is a face you play: Rampant Growth on Studious First-Year is a land-fetch", () => {

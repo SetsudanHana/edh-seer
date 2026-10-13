@@ -3,7 +3,7 @@ import type { ManaLine, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
-import { cardLines, colourSourceColours, isFetchSource, isLandfall, isPhaseTrigger, isRepeatableLoyalty, lineColours, minManaValue, paidWithResource, paysItsWay } from "./mana-lines.js";
+import { cardLines, colourSourceColours, isFetchSource, isLandfall, isLoyaltyAbility, isPhaseTrigger, loyaltyActivations, lineColours, minManaValue, paidWithResource, paysItsWay, usableLoyalty } from "./mana-lines.js";
 import { staticFixer } from "./static-fixers.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands } from "./fetch-land.js";
@@ -107,25 +107,34 @@ export interface Accelerant {
   fetchTapped?: boolean;
 }
 
+/** WHICH SOURCES A PER-SOURCE TAP BONUS PAYS FOR: `colorless` (anything tapped for {C}), `creature` (a creature tapped for mana) or `land:<type>` (a land of that
+ *  basic type tapped for mana: `land:forest`, Nissa, Who Shakes the World; `land:swamp`, Crypt Ghast). */
+export type TapBonus = "colorless" | "creature" | `land:${string}`;
+
 /** A TAP-REPLACEMENT: mana that arrives when some OTHER permanent is tapped (roadmap O2). Two shapes,
  *  and they are not the same size -- a land AURA is bounded at what its one enchanted land adds,
  *  while Forsaken Monument pays for EVERY permanent tapped for {C} and is worth as much as the board
  *  is wide. High Tide prints the same shape and is refused elsewhere for being an Instant. */
-const TAP_REPLACEMENT = /is tapped for mana|tap a (?:permanent|creature|land)\b[^.]*\bfor\b/i;
+const TAP_REPLACEMENT = /is tapped for mana|tap an? (?:permanent|creature|land|plains|island|swamp|mountain|forest)\b[^.]*\bfor\b/i;
 /** Which sources a per-source bonus reads. `colorless` is checkable only because `{C}` became a real
  *  mask bit (N11); before that a colourless source and a colourless COST were the same empty mask. */
 const BONUS_COLORLESS = /tap a permanent for \{c\}|tap a land for \{c\}/i;
 const BONUS_CREATURE = /tap a creature for mana/i;
+/** "Whenever you tap a Forest for mana, add an additional {G}" (Nissa, Who Shakes the World), "a Swamp" (Crypt Ghast, Nirkana Revenant). The "is tapped for mana"
+ *  shape (Vernal Bloom, Gauntlet of Might) is not read: it names no `you`, and it is every player's. */
+const BONUS_LAND_TYPE = /\btap an? (plains|island|swamp|mountain|forest) for mana\b/i;
 
-/** WHICH SOURCES A PER-SOURCE TAP BONUS PAYS FOR (Forsaken Monument: "tap a permanent for {C}", Leyline of Abundance: "tap a creature for mana"),
+/** WHICH SOURCES A PER-SOURCE TAP BONUS PAYS FOR (Forsaken Monument: "tap a permanent for {C}", Leyline of Abundance: "tap a creature for mana", Nissa, Who Shakes the World: "tap a Forest for mana"),
  *  or undefined. Read from the PRINTED text. CEILING: derive carries the bonus as a `trigger` line (event `tapped-for-mana`), but the subject it names is not one reading:
  *  the grammar path says "a permanent for {C}" (Forsaken Monument) where the model path says "a creature" (Leyline of Abundance) or "a land"
  *  (Ultima), so WHICH taps count is not derived yet; this stays the one printed check in the module. It is no mana detector: whether the card makes mana at all is its derived lines' answer (`classifyAccelerant`). */
-export function tapBonusOf(dc: DeckCard): "colorless" | "creature" | undefined {
+export function tapBonusOf(dc: DeckCard): TapBonus | undefined {
   const text = dc.card.oracleText ?? "";
   if (!TAP_REPLACEMENT.test(text)) return undefined;
   if (BONUS_CREATURE.test(text)) return "creature";
-  return BONUS_COLORLESS.test(text) ? "colorless" : undefined;
+  if (BONUS_COLORLESS.test(text)) return "colorless";
+  const land = BONUS_LAND_TYPE.exec(text);
+  return land ? `land:${land[1]!.toLowerCase()}` : undefined;
 }
 
 /** THE DERIVED LINES THE GOLDFISH CAN PLAY (#1169 task 2b-1): one derive reading of a card's mana (`CardTags.manaLines`), filtered by this model's
@@ -143,6 +152,9 @@ export function tapBonusOf(dc: DeckCard): "colorless" | "creature" | undefined {
  *    The exception is the tap-replacement a card prints (`tapBonusOf`), which the simulation prices as a per-source bonus. */
 export function playableLines(dc: DeckCard): ManaLine[] {
   const taps = tapBonusOf(dc) !== undefined;
+  // THE LINES OF THE FACES IN PLAY FROM THE DECK: a transform card's back is not (owner 2026-10-10, #1174: things that transform are not ramp), so Arlinn, the Moon's
+  // Fury's "+2: Add {R}{G}" is no accelerant of Arlinn, the Pack's Hope. Ashling's phase trigger asks for the back (`cardLines(dc, true)`) and keeps it.
+  const fromDeck = new Set(cardLines(dc));
   return cardLines(dc, true).filter((l) => {
     if (l.unread || l.cost.sacrificeSelf || paidWithResource(l)) return false;
     if (l.restriction !== null && minManaValue(l) === null) return false;
@@ -151,11 +163,13 @@ export function playableLines(dc: DeckCard): ManaLine[] {
     const checkable = l.gate === null || LANDS_GATE.test(l.gate) || TRON_GATE.test(l.gate);
     switch (l.source) {
       // A LOYALTY ABILITY ("+1: Add {R}{R}") is a source too (owner, 2026-10-13): once per turn at sorcery timing (CR 606.3), so it pays every turn the walker
-      // is out and the turn it is cast (no summoning sickness: it is no creature). Only a non-negative cost: a "−N" spends loyalty the model does not track.
+      // is out and the turn it is cast (no summoning sickness: it is no creature). A "+N" or "0" always; a "−N" (Chandra, Novice Pyromancer's −1: Add
+      // {R}{R}) iff the walker's STARTING loyalty covers it, so it can be activated the turn it is cast (`usableLoyalty`, owner 2026-10-13), and then for as many
+      // turns as the loyalty lasts (`ManaOutput.turns`). Only the walker's face in play from the deck.
       // CEILING: the walker never dies (the goldfish has no opponent to attack it), and a walker with two mana abilities is priced at its best one
-      // (`manaOutput`), which is one activation a turn as the rules allow. A "−N" mana ability (Chandra, Novice Pyromancer; Koth) is refused, not
-      // counted for the turns its loyalty would last.
-      case "activated": return (l.cost.tap || isRepeatableLoyalty(l)) && checkable;
+      // (`manaOutput`), which is one activation a turn as the rules allow; when that is a minus ability the walker stops after its last, though a lesser
+      // "+N" ability could carry on.
+      case "activated": return (l.cost.tap || (usableLoyalty(l) && fromDeck.has(l))) && checkable;
       case "static-grant": case "aura-trigger": return checkable;
       case "trigger": return l.gate === null && (isLandfall(l) || isPhaseTrigger(l) || (l.trigger === "tapped-for-mana" && taps));
       default: return false;
@@ -218,6 +232,9 @@ export interface ManaOutput {
    *  `everyLandType` is what makes the branch reachable. Prismatic Omen is deliberately NOT it:
    *  every BASIC land type does not include Urza's. */
   tron?: { subtypes: [string, string]; amount: number };
+  /** A PLANESWALKER'S MINUS ABILITY RUNS OUT: it can be activated this many turns, from the turn the walker is cast (`loyaltyActivations`: loyalty / cost, rounded
+   *  down, CR 606.6). Absent for a source that never does (every tap, and a "+N" or "0" loyalty ability). */
+  turns?: number;
 }
 
 /** THE ONE-SHOT-SPELL LINE OF A RITUAL, or null: an instant or sorcery whose derived line adds a FIXED run of mana -- Dark Ritual's "Add {B}{B}{B}."
@@ -324,10 +341,11 @@ const WORD_NUMBER: Record<string, number> = {
 };
 
 /** A LINE THAT PAYS NOTHING BUT THE TAP: a filter land's costed line ("{1}, {T}: Add {U}{U}"), a payment land, a sacrifice or a
- *  NEGATIVE loyalty cost is not a tap this model can pay, so it is not priced and the source stays at its NET one on purpose. A non-negative loyalty cost
- *  (a planeswalker's "+2: Add {R}{R}{R}") counts as the tap: the walker's one activation a turn, CR 606.3. */
+ *  counter-spending line is not a tap this model can pay, so it is not priced and the source stays at its NET one on purpose. A loyalty cost (a
+ *  planeswalker's "+2: Add {R}{R}{R}", "−1: Add {R}{R}") counts as the tap: the walker's one activation a turn, CR 606.3 (`playableLines` has already
+ *  refused the ones the starting loyalty does not cover). */
 const tapOnly = (l: ManaLine): boolean => l.cost.mana === 0 && l.cost.life === 0 && l.cost.counters === null && !l.cost.sacrificeOther && !l.cost.tapOther
-  && (l.cost.other.length === 0 || isRepeatableLoyalty(l));
+  && (l.cost.other.length === 0 || isLoyaltyAbility(l));
 
 export function manaOutput(dc: DeckCard): ManaOutput {
   if (BOUNCES.test(dc.card.oracleText ?? "")) return { amount: 1 };
@@ -353,6 +371,16 @@ export function manaOutput(dc: DeckCard): ManaOutput {
     const here: ManaOutput | null = needs > 0 ? { amount: l.amount.fixed!, needsLands: needs }
       : tron ? { amount: out.amount, tron: { subtypes: [tron[1]!.trim(), tron[2]!.trim()], amount: l.amount.fixed! } } : null;
     if (here && bestOf(here) > bestOf(out)) out = here;
+  }
+  // A WALKER WHOSE MANA IS ALL LOYALTY ABILITIES pays for as long as its priced ability can be activated. The priced ability is the best amount (a scaling one is
+  // the incumbent 1, Koth), the longest-lasting of equals. CEILING: that is the only ability the walker plays, so a "+N" mana ability beside a minus one is not
+  // carried on with after the minus one runs out.
+  const pays = playableLines(dc).filter((l) => l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger" || isPhaseTrigger(l));
+  if (pays.length > 0 && pays.every(isLoyaltyAbility)) {
+    const price = (l: ManaLine): number => l.amount.fixed ?? 1;
+    const best = pays.reduce((b, l) => price(l) > price(b) || (price(l) === price(b) && loyaltyActivations(l) > loyaltyActivations(b)) ? l : b);
+    const n = loyaltyActivations(best);
+    if (n !== Infinity) out = { ...out, turns: n };
   }
   return out;
 }
@@ -450,7 +478,7 @@ export const fetchUntapsOf = (dc: DeckCard): boolean => FETCH_UNTAPS.test(dc.car
  *  Mana the audit refuses stays refused: a RESTRICTED line (Cavern of Souls' coloured one), a GATED one (Tainted Peak's), and a costed line that makes
  *  less than it costs (Prismatic Lens' coloured one). */
 export function colourMaskOf(dc: DeckCard): number {
-  const triggerColours = playableLines(dc).filter((l) => (l.source !== "activated" && l.source !== "static-grant") || isRepeatableLoyalty(l)).flatMap((l) => lineColours(l, null, "five"));
+  const triggerColours = playableLines(dc).filter((l) => (l.source !== "activated" && l.source !== "static-grant") || isLoyaltyAbility(l)).flatMap((l) => lineColours(l, null, "five"));
   // A GATE does not take the colourless bit away: Temple of the False God's {C}{C} waits on five lands, which `manaOutput` prices as zero below the gate.
   const colourless = playableLines(dc).some((l) => l.colourless > 0 && paysItsWay(l));
   return colorMask([...colourSourceColours(dc), ...triggerColours, ...(colourless ? ["C"] : [])]);
@@ -625,7 +653,7 @@ interface DeckSlot {
    *  every permanent tapped for {C}, Leyline of Abundance every creature tapped for mana. A land
    *  AURA is deliberately absent -- it enchants ONE land, so its bonus is its own amount and it is
    *  priced as an ordinary dork (roadmap O2). */
-  tapBonus?: "colorless" | "creature";
+  tapBonus?: TapBonus;
   /** Mana per LAND ENTERING, which is one land drop a turn plus anything a fetch puts down. */
   landfall?: number;
   land?: LandCondition;
@@ -1064,11 +1092,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     const take = (c: DeckSlot): void => { hand.push(c); drawn.add(c.name); seenNow[kindOf(c)]++; };
     const drawCards = (n: number): void => { for (let k = 0; k < n && library.length > 0; k++) take(library.shift()!); };
     const lands: OnBoardLand[] = [];
-    const rocks: { turn: number; mana: number; colors: number }[] = [];   // the turn each landed, what it taps for, and in which colours
-    const dorks: { turn: number; mana: number; colors: number }[] = [];
+    const rocks: { turn: number; until?: number; mana: number; colors: number }[] = [];   // the turn each landed, the last turn it pays (a walker's minus ability runs out), what it taps for, and in which colours
+    const dorks: { turn: number; until?: number; mana: number; colors: number }[] = [];
     // A PER-SOURCE BONUS, kept beside the sources rather than among them: it makes OTHER permanents
     // produce more, so it has no mana of its own to add (roadmap O2).
-    const bonuses: { turn: number; need: "colorless" | "creature"; colors: number }[] = [];
+    const bonuses: { turn: number; need: TapBonus; colors: number }[] = [];
     // Landfall mana is per EVENT, not per turn: it pays for each land that entered THIS turn, which
     // is the land drop and anything a fetch put down beside it.
     const landfalls: { turn: number; mana: number; colors: number }[] = [];
@@ -1145,7 +1173,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         // Tracked so a per-source bonus can count what it actually reads: a creature bonus pays for
         // dorks and not for lands, a colourless one for anything that taps for {C}.
         const isCreature: boolean[] = [];
-        const push = (mana: number, colors: number, creature: boolean): void => { out.push({ mana, colors }); isCreature.push(creature); };
+        // ...and the land a source is, for a bonus that reads a land type (Nissa, Who Shakes the World: Forests). CEILING: a fetched land is typed nothing.
+        const landAt: (OnBoardLand | undefined)[] = [];
+        const push = (mana: number, colors: number, creature: boolean, land?: OnBoardLand): void => { out.push({ mana, colors }); isCreature.push(creature); landAt.push(land); };
         // A STATIC FIXER (Chromatic Lantern, Prismatic Omen, Urborg, Chromatic Orrery) makes every source it
         // covers tap for its colours, from the turn AFTER it is cast (the audit's `manaValue < turn` clock) or
         // the turn its land taps. CEILING: a land with no mana ability of its own (a fetch) gains none.
@@ -1157,10 +1187,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         for (const l of lands) {
           if (l.enteredTapped && l.enteredTurn === turn) continue;
           const m = produced(l.output, lands);
-          if (m > 0) push(m, l.colors | fixLands, false);
+          if (m > 0) push(m, l.colors | fixLands, false, l);
         }
-        for (const r of rocks) if (r.turn <= turn) push(r.mana, r.colors | fixAll, false);
-        for (const d of dorks) if (d.turn < turn) push(d.mana, d.colors | fixAll, true);
+        for (const r of rocks) if (r.turn <= turn && (r.until === undefined || turn <= r.until)) push(r.mana, r.colors | fixAll, false);
+        for (const d of dorks) if (d.turn < turn && (d.until === undefined || turn <= d.until)) push(d.mana, d.colors | fixAll, true);
         // A TAP-REPLACEMENT PAYS PER SOURCE, NOT PER MANA: Forsaken Monument adds one {C} for every
         // permanent TAPPED for {C}, so a source making two mana off one tap is still one trigger.
         // Counted after the sources exist and never against another bonus, which is what keeps two
@@ -1173,7 +1203,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           if (b.turn > turn) continue;
           let n = 0;
           for (let i = 0; i < base; i++) {
-            if (b.need === "creature" ? isCreature[i] : (out[i].colors & COLORLESS) !== 0) n++;
+            const hit = b.need === "creature" ? isCreature[i]
+              : b.need.startsWith("land:") ? landAt[i] !== undefined && (landAt[i]!.everyLandType || landAt[i]!.typeLine.toLowerCase().includes(b.need.slice(5)))
+              : (out[i].colors & COLORLESS) !== 0;
+            if (hit) n++;
           }
           if (n > 0) out.push({ mana: n, colors: b.colors });
         }
@@ -1226,8 +1259,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         else if (cast.tapBonus !== undefined) {
           bonuses.push({ turn: a.kind === "rock" ? turn : turn + 1, need: cast.tapBonus, colors: cast.colors });
         }
-        else if (a.kind === "rock") { rocks.push({ turn, mana, colors: cast.colors }); pool += mana; }
-        else if (a.kind === "dork") dorks.push({ turn, mana, colors: cast.colors });
+        else if (a.kind === "rock") { rocks.push({ turn, mana, colors: cast.colors, ...(cast.output.turns !== undefined ? { until: turn + cast.output.turns - 1 } : {}) }); pool += mana; }
+        else if (a.kind === "dork") dorks.push({ turn, mana, colors: cast.colors, ...(cast.output.turns !== undefined ? { until: turn + cast.output.turns } : {}) });
         else {
           // A FETCHED LAND DOES NOT CONSUME THE LAND DROP — it is put onto the battlefield, not
           // played — and it follows its own tapped state, which the spell's text states.

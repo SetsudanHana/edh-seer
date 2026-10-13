@@ -26,6 +26,7 @@ import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
 import { reductionOf } from "./reduction.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
+import startingLoyalty from "./starting-loyalty.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
@@ -438,7 +439,10 @@ import { emblemRecipient } from "../emblem.js";
 // 303: #1169 task 2b-1 review: a mana grant made by a TRIGGERED parent is gated by that trigger ("when princess yue dies"), not standing: Princess Yue's
 // Moon, Hydro-Man's end step, Song of Freyalise's chapter, Vraska the Silencer's returned Treasure (4 cards). "As long as", a Saga chapter with no
 // duration (Urza's Saga) and a token a trigger creates are unchanged.
-export const DERIVE_VERSION = 303;
+// 304: #1169 task 2b-1 review round 2: `ManaLine.startLoyalty` (a planeswalker's printed loyalty on each line that costs loyalty, so a consumer can tell
+// "−1: Add {R}{R}" is playable the turn the walker is cast); an Aura's mana is dropped when the Aura is removal (enchants an opponent's permanent, or
+// "loses all other card types": Honest Work, Imprisoned in the Moon) and a granted TRIGGER is no static-grant (Mark of Sakiko).
+export const DERIVE_VERSION = 304;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2962,6 +2966,8 @@ export function deriveCardTags(input: DeriveInput): CardTags {
       ...(input.clauseGrants ? { clauseGrants: input.clauseGrants } : {}),
       ...(input.grantedToken ? { grantedToken: input.grantedToken } : {}),
       ...(input.manaCosts ? { manaCosts: input.manaCosts } : {}),
+      ...(input.oracleText ? { oracleText: input.oracleText } : {}),
+      ...((startingLoyalty as Record<string, (number | null)[]>)[input.oracleId] ? { startLoyalty: (startingLoyalty as Record<string, (number | null)[]>)[input.oracleId]! } : {}),
     }),
     // Written only when there is something to surface, so a clean card stays byte-identical.
     ...(unknownTriggers.length ? { unknownTriggers } : {}),

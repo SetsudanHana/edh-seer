@@ -45,6 +45,11 @@ export interface ManaInput {
   grantedToken?: ReadonlySet<number>;
   /** The printed mana cost of each face (index = face), "" when it prints none. Absent: only `chars.cmc` is known. */
   manaCosts?: string[];
+  /** The printed text, for the two facts about an Aura the clause layer does not carry: whom it enchants ("Enchant creature an opponent controls") and
+   *  what it takes from the permanent ("loses all other card types"). */
+  oracleText?: string;
+  /** The printed STARTING LOYALTY of each face (index = face, null for a face with none): `starting-loyalty.json`. Absent: a card that is no planeswalker. */
+  startLoyalty?: (number | null)[];
 }
 
 /** The optional `CardTags` keys this module writes, each present only when the card has it. A writer that `$set`s the tags
@@ -58,6 +63,15 @@ export interface ManaResult {
   isOneShot?: true;
   suspendOnly?: true;
 }
+
+/** A LOYALTY COST as the cost piece stores it: "+2", "0", "−1" (U+2212, the printed minus) -- "−X" is a cost no loyalty can be compared with. */
+const LOYALTY_COST = /^(?:\+\d+|0|[\u2212-]\d+)$/;
+/** THE AURA IS REMOVAL, not ramp (owner, 2026-10-13: "mana counts only if mana is the card's purpose"): it enchants a permanent an opponent controls
+ *  (Honest Work: "Enchant creature an opponent controls") or takes the permanent's card types away (Imprisoned in the Moon: "loses all other card types and
+ *  abilities", which leaves a land that happens to tap for {C}). The ramp Auras give a permanent YOU control an ability and take nothing but its own land
+ *  types (Lithoform Blight: "loses all land types and abilities") or nothing at all. CEILING: a text test, not a reading of what the Aura is for. */
+const ENCHANTS_OPPONENTS = /^enchant [^\n]*\bopponent controls\b/im;
+const STRIPS_CARD_TYPES = /\bloses all (?:other )?card types\b/i;
 
 const inWubrgOrder = (cs: Iterable<string>): string[] => { const s = new Set(cs); return WUBRG.filter((c) => s.has(c)); };
 const faceOf = (id: number | string, faces?: Record<number, number>): 0 | 1 => ((faces?.[Number.parseInt(String(id), 10)] ?? 0) > 0 ? 1 : 0);
@@ -347,6 +361,7 @@ export function deriveMana(input: ManaInput): ManaResult {
   const selfNames = [(input.name ?? "").toLowerCase(), ...(input.name ?? "").split(" // ").map((n) => n.split(",")[0]!.trim().toLowerCase())].filter(Boolean);
   const faceMV = (face: number): number => (input.manaCosts ? manaValueOf(input.manaCosts[face] ?? input.manaCosts[0]) : chars.cmc);
   const lines: ManaLine[] = [];
+  const removalAura = chars.subtypes.some((t) => t.toLowerCase() === "aura") && (ENCHANTS_OPPONENTS.test(input.oracleText ?? "") || STRIPS_CARD_TYPES.test(input.oracleText ?? ""));
 
   // --- add-mana lines, one per action, in clause order -------------------------------------------------------
   for (const clause of clauses) {
@@ -408,6 +423,9 @@ export function deriveMana(input: ManaInput): ManaResult {
           // CEILING: a static ability that adds mana is printed by no card the corpus holds; refused, not guessed.
           : null;
       if (source === null) continue;
+      // A GRANT IS NOT ALWAYS A TAP ABILITY OR RAMP. A granted TRIGGER ("Enchanted creature has 'Whenever this creature deals combat damage to a player, add that
+      // much {G}'", Mark of Sakiko) is no tap source, and an Aura that removes what it enchants is not mana for the deck.
+      if (source === "static-grant" && ((clause.abilityType === "triggered" && trigger !== undefined) || removalAura)) continue;
       const made = production(object, amountText, text);
       // A GRANTED "{T}: Add one mana of any of this creature's colors" (Katilda) names the colours of each creature that has it. They are
       // neither the deck's nor the card's. CEILING: the grantees are each their own source and are not read; no colour is credited.
@@ -509,6 +527,13 @@ export function deriveMana(input: ManaInput): ManaResult {
       fetchTapped = fetchTapped && tapped;
       for (const c of colours) reach.add(c);
     }
+  }
+
+  // --- a planeswalker's starting loyalty, on each line that costs loyalty ---------------------------------------
+  // A loyalty ability can be activated the turn the walker is cast only if its printed loyalty covers the cost (CR 606.6), so the consumer needs both.
+  for (const l of lines) {
+    const n = input.startLoyalty?.[l.face];
+    if (n !== null && n !== undefined && l.cost.other.length === 1 && LOYALTY_COST.test(l.cost.other[0]!)) l.startLoyalty = n;
   }
 
   // --- the card-level facts ----------------------------------------------------------------------------------
