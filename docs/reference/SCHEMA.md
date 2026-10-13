@@ -280,6 +280,58 @@ Defined in [`Characteristics`](../../packages/tagger/src/schema.ts).
 | `keywords` | `string[]` | **required** |  |
 | `enchants` | `SubjectFilter` | optional | WHAT AN AURA CAN BE ATTACHED TO, from its printed "Enchant ..." line (CR 702.5a), parsed as a subject: "Enchant creature" is `{type: creature}`, "Enchant creature you control" adds the control, "Enchant creature card in a graveyard" (Animate Dead) carries the zone. Absent on every non-Aura, and on an Aura whose line names no class ("Enchant player"). |
 
+### ManaLine
+
+Defined in [`ManaLine`](../../packages/tagger/src/schema.ts).
+
+| field | type | | what it carries |
+|---|---|---|---|
+| `face` | `0 \| 1` | **required** | The face that prints it: 0 the front, 1 the back of a transform / modal card (Treasure Cove's `{T}: Add {C}`). |
+| `source` | `ManaLineSource` | **required** |  |
+| `repeats` | `Repeats \| null` | **required** | How often it can be used: the `repeats` of the ability the line was read from (`null` when that ability states none -- most triggers -- or no derived ability matches the clause). A dork is `per-cycle`, a spell `once`. |
+| `cost` | `object` | **required** | WHAT USING IT CONSUMES, read off the printed activation cost (a trigger, a spell and an aura pay none here). |
+| `cost.mana` | `number` | **required** | Mana symbols paid: a number is that many, a coloured / hybrid / Phyrexian symbol is 1, `{X}` is 0. For a `one-shot-spell` and a spell-speed `fetch` it is the mana value of the face that prints it. |
+| `cost.tap` | `boolean` | **required** | `{T}` is in the cost. The tap is NOT subtracted in `net`. |
+| `cost.sacrificeSelf` | `boolean` | **required** | Sacrifices the card itself ("{T}, Sacrifice this artifact: Add ..."): a one-shot (Lotus Petal, a Treasure). |
+| `cost.sacrificeOther` | `boolean` | **required** | Sacrifices something else ("Sacrifice a creature: ...", Phyrexian Altar, Priest of Forgotten Gods). |
+| `cost.life` | `number` | **required** | Life paid ("Pay 1 life"). |
+| `cost.counters` | `"remove" \| "put" \| null` | **required** | A counter removed from or put on the card as the cost ("Remove a +1/+1 counter", Cryptic Trilobite; "Put a -0/-1 counter", Wall of Roots): the mana is paid for by a resource that runs out. |
+| `cost.tapOther` | `boolean` | **required** | Taps other permanents ("Tap an untapped creature you control", Springleaf Drum). |
+| `cost.other` | `string[]` | **required** | Every other cost piece, verbatim: a discard, an untap, a loyalty change, `{E}`. |
+| `colours` | `string[]` | **required** | The WUBRG colours the printed text names, as a set. `any` names all five; a BOUNDED `anyColour` names none (the bound is outside the card), so the consumer resolves it from `anyColour`. |
+| `colourless` | `number` | **required** | The `{C}` mana of one use (the largest across the alternatives printed). |
+| `anyColour` | `ManaAnyColour \| null` | **required** | Set when the line chooses a colour instead of printing it. See `ManaAnyColour`. |
+| `amount` | `{ fixed: number \| null; scales: string \| null }` | **required** | How much one use adds. `fixed` is the number (the smallest across the printed alternatives), `null` when it scales; `scales` then names what it counts ("for each Forest you control", "equal to ...", "X"). |
+| `net` | `number` | **required** | Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as 1 (its floor would be 0; a consumer that cares reads `amount.scales`). |
+| `unread` | `boolean` | **required** | TRUE when the production could not be read: no colour, no colourless, no choice named ("any of the exiled card's colors", Chrome Mox; "for each color among permanents you control", Bloom Tender). Consumers treat it as UNKNOWN, never as a source of no colours. Always false on a `fetch` and a `token-maker`, which state theirs. |
+| `gate` | `string \| null` | **required** | The condition the amount or the activation holds under, verbatim lowercase: "Activate only if ..." (Tainted Peak: "you control a swamp"), "... instead if there are seven or more cards in your graveyard" (Cabal Ritual's threshold line), or "threshold" when only the ability's numeric threshold is known. A consumer must not credit a gated line as guaranteed. Else null. |
+| `restriction` | `{ spend: string; typeName?: string } \| null` | **required** | "Spend this mana only ..." (Smokebraider, Cavern of Souls, Ancient Ziggurat) or "this mana can't be spent ...": `spend` is the printed limit, `typeName` the one type it names, lowercase ("elemental", "creature", "chosen"). Mana with a restriction is not mana for the deck's spells. |
+| `timing` | `"now" \| "next-turn" \| "on-trigger"` | **required** | WHEN the mana arrives: `now`, `next-turn` (a delayed addition), `on-trigger` (when a trigger fires). |
+| `producesToken` | `string \| null` | **required** | The token a `token-maker` line makes that is itself a mana source ("treasure", "gold", "powerstone", "eldrazi-spawn"); null on every other line. |
+| `trigger` | `string \| null` | **required** | WHAT FIRES a `trigger` or `aura-trigger` line: the clause's trigger event, verbatim. Null on every other line, and on a trigger line whose own clause names none (a mode of a modal trigger, Zuko, Conflicted). Census of the 171 trigger / aura-trigger mana lines in the derived corpus (DERIVE_VERSION 302, 2026-10-11), by count of lines: `tapped-for-mana` 46 (the Auras' "whenever enchanted land is tapped for mana", and Forsaken Monument / Leyline of Abundance / Mana Flare: a tap-replacement), `main-phase` 30 and `upkeep` 5 and `end-step` 1 (the beginning of a phase: Coalition Relic, Abstract Paintmage), `enters` 27, `attacks` 17, `chapter` 14, `cast` 8 (Birgi: "whenever you cast a spell"), `dies` 6, `discarded` 3, `damage-dealt` 3, `transform` 2, `sacrificed` 2, `turned-face-up` 2, and one each of `life-gained`, `damaged`, `counter-added`. LANDFALL IS NOT AN EVENT OF ITS OWN: it is `enters` with a land `triggerSubject` (Lotus Cobra "a land you control"); `enters` with "this creature" is the card's own enters trigger (Burning-Tree Emissary). One printed add that the model split across two events (Ashling, Rimebound: "transforms into ... and at the beginning of your first main phase") is named for the phase. |
+| `triggerSubject` | `string \| null` | **required** | The subject of that trigger, verbatim as the clause names it ("a land you control", "your first main phase", "enchanted land", "a spell", "this creature"). Null wherever `trigger` is. Read with `trigger`: `enters` alone does not say whose. |
+| `startLoyalty` | `number` | optional | The printed STARTING LOYALTY of the planeswalker face that prints this line, present only when the line costs loyalty (`cost.other` holds "+1", "0", "−1"): the walker enters with that many counters (CR 306.5b) and a loyalty cost needs that many (CR 606.6), so "−1: Add {R}{R}" is playable the turn the walker is cast iff this is at least 1. From the card document's `loyalty` (Scryfall, per face), carried by ingest (owner 2026-10-13). |
+| `untilEndOfTurn` | `true` | optional | TRUE on a TAP BONUS THAT LASTS ONE TURN, the line of a spell (`source: "one-shot-spell"`, `trigger: "tapped-for-mana"`, `triggerSubject` the filter): High Tide's "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}" (owner 2026-10-13: ramp). `amount` is the bonus PER TAP and `net` is that one mana less the spell's cost, which says nothing: the yield is `amount` times the matching sources tapped that turn. Absent on a permanent's standing bonus (Forsaken Monument, Mana Flare, Vernal Bloom), which has no end. |
+
+### StaticFixer
+
+Defined in [`StaticFixer`](../../packages/tagger/src/schema.ts).
+
+| field | type | | what it carries |
+|---|---|---|---|
+| `covers` | `"lands" \| "all"` | **required** | `lands` when only lands you control gain the colours, `all` when any mana you spend does. |
+| `colours` | `string[]` | **required** | The WUBRG colours the card makes other sources produce. |
+
+### LandFetch
+
+Defined in [`LandFetch`](../../packages/tagger/src/schema.ts).
+
+| field | type | | what it carries |
+|---|---|---|---|
+| `kind` | `"spell" \| "permanent"` | **required** | `spell` for an instant or sorcery (Cultivate, Farseek), `permanent` for one that stays (a fetchland, Wood Elves, Sakura-Tribe Elder). |
+| `tapped` | `boolean` | **required** | The land arrives tapped. |
+| `reach` | `string[]` | **required** | The WUBRG colours the lands it can find make (a basic land reaches all five, "a Forest card" only G). |
+
 ### CardTags
 
 Defined in [`CardTags`](../../packages/tagger/src/schema.ts).

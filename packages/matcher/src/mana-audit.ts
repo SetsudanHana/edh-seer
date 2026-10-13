@@ -175,9 +175,11 @@ export interface ManaAuditRow {
  *    turn one, and a nonland source now counts only for a demand due later than its own mana value.
  *
  *  ONE REMAINS, and it is the one no turn number fixes:
- *  - **Conditional production.** A line gated behind a condition (Tainted Peak's B/R needs a Swamp) or restricted to some spells is no
- *    source at all (#1169: sources are read off the derived `manaLines`, not Scryfall's `producedMana`), which under-claims; a line that
- *    needs a board the deck might not have (Gaea's Cradle's scaling) still counts as one.
+ *  - **Conditional production.** A line restricted to some spells is no source (#1169: sources are read off the derived
+ *    `manaLines`, not Scryfall's `producedMana`), which under-claims. A GATED line (Tainted Peak's B/R needs a Swamp) is a source where the deck meets its
+ *    gate, judged turn by turn and credited WHOLE from the turn P(gate met) >= 0.5 (`colourSourceLine`, owner 2026-10-13: the audit follows the gate check;
+ *    CEILING in `mana-lines.ts`): a coin flip is a full integer source, with no fractional ones. A line that needs a board the deck might not have
+ *    (Gaea's Cradle's scaling) still counts as one.
  *
  *  ONE THING IT NO LONGER GETS WRONG: the requirement is priced WITH the free mulligan. `required`
  *  was `minCopies` alone until 2026-08-25 -- raw hypergeometric, the same model that read 37 lands
@@ -240,8 +242,9 @@ export function manaAuditFull(
   // makes the colour, and the fetches that can find a land of it -- a fetchland, and a land-fetch SPELL (Cultivate), which leaves a
   // land on the battlefield permanently and is on the rock clock below. BY WHAT IT FIXES, NOT WHAT IT CAN ADD (owner, 2026-10-08,
   // #1114): a colour only a line that costs more than it makes can produce (Cascading Cataracts, Prismatic Lens) is not a source of it.
-  // A one-shot (Dark Ritual), a Treasure maker, a sacrifice outlet, a trigger and restricted or gated mana are lines that are not colour
-  // sources at all (`isColourSource`), so none of them needs a card-type gate here.
+  // A one-shot (Dark Ritual), a Treasure maker, a sacrifice outlet, a trigger and restricted mana are lines that are not colour
+  // sources at all (`isColourSource`), so none of them needs a card-type gate here; a GATED line is one only where the deck meets its gate, by the turn it does
+  // (`colourSourceLine`, owner 2026-10-13).
   const identity = deckIdentity(deck, opts.commanderNames ?? []);
   const byColour = colourSourceCards(library, identity, deck);
 

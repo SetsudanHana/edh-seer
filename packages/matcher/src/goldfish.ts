@@ -510,8 +510,9 @@ export const fetchUntapsOf = (dc: DeckCard): boolean => FETCH_UNTAPS.test(dc.car
  *  - the colours of an Aura's trigger, a phase trigger and a landfall (Wild Growth, Lotus Cobra), which are mana but never a COLOUR SOURCE in the
  *    audit's sense (a source is a tap or a grant you control);
  *  - the colourless bit when any line the model plays makes {C} (Sol Ring, a gated Temple), since {C} pays only a colourless cost (CR 107.4c).
- *  Mana the audit refuses stays refused: a RESTRICTED line (Cavern of Souls' coloured one), a GATED one (Tainted Peak's), and a costed line that makes
- *  less than it costs (Prismatic Lens' coloured one). */
+ *  Mana the audit refuses stays refused: a RESTRICTED line (Cavern of Souls' coloured one) and a costed line that makes less than it costs (Prismatic Lens'
+ *  coloured one). A GATED line (Tainted Peak's) is judged as the audit judges it (owner 2026-10-13: one gate check for both), except that this model plays it
+ *  per game and the audit credits it whole from the turn P(gate met) >= 0.5. */
 /** THE GATED TAPS WHOSE COLOURS THIS MODEL PLAYS (the deck met the gate, `playableLines`): not a lands-counted or tron gate (priced by `manaOutput`), not a loyalty ability, not a
  *  grantee's colours, not a costed line that makes less than it costs. */
 function gatedColourLines(dc: DeckCard, deck?: readonly DeckCard[]): ManaLine[] {
@@ -530,8 +531,8 @@ export function colourMaskOf(dc: DeckCard, deck?: readonly DeckCard[], withBoard
   const triggerColours = playableLines(dc, deck).filter((l) => (l.source !== "activated" && l.source !== "static-grant") || isLoyaltyAbility(l)).flatMap((l) => lineColours(l, null, "five"));
   // A GATE does not take the colourless bit away: Temple of the False God's {C}{C} waits on five lands, which `manaOutput` prices as zero below the gate.
   const colourless = playableLines(dc, deck).some((l) => l.colourless > 0 && paysItsWay(l));
-  // A GATED TAP THE DECK MEETS IS A COLOUR HERE (owner 2026-10-13): Mox Jasper's any colour in a deck of Dragons, Tainted Peak's {B} or {R} in a deck of Swamps. The AUDIT does not count
-  // them (`isColourSource` wants no gate); this model plays the line, so it plays its colours. The deck's verdict (`gate.ts`) lets the line in; WHEN the gate holds is the board's
+  // A GATED TAP THE DECK MEETS IS A COLOUR HERE (owner 2026-10-13): Mox Jasper's any colour in a deck of Dragons, Tainted Peak's {B} or {R} in a deck of Swamps. The AUDIT counts them
+  // too, where the deck meets the gate (`colourSourceLine`, whole from P >= 0.5); this model plays the line per game, so it plays its colours. The deck's verdict (`gate.ts`) lets the line in; WHEN the gate holds is the board's
   // (`simulate`: `baseColors` is this mask without the board-gated colours, and a source makes the full one only on the turns `gateHolds`).
   // `withBoardGated` false leaves out the colours of a line that waits on the BOARD (`colourGateOf`): the colours the source makes before its gate is met.
   const gatedColours = gatedColourLines(dc, deck).filter((l) => withBoardGated || boardGateOf(l.gate!) === null).flatMap((l) => lineColours(l, null, "five"));
@@ -1406,7 +1407,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           // nor a type, which is the pessimistic direction for every other conditional land on the
           // board: fewer suppliers means more of them enter tapped. Stated rather than guessed.
           // A FETCHED LAND'S IDENTITY IS UNKNOWN, but its COLOUR is not: the spell names what it may
-          // find, and `fetchMask` reads that against the lands this deck actually holds.
+          // find, and `fetchMaskOf` reads that against the lands this deck actually holds.
           lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true && opts.landsUntapped !== true, typeLine: "", output: { amount: 1 }, everyLandType: false, colors: cast.colors });
           perms.push(FETCHED_LAND);
           takeRandomLand(library, turn > turns ? spill : random);

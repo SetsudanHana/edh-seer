@@ -741,7 +741,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -950,7 +952,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -1166,7 +1170,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -2090,7 +2096,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "isOneShot": true
@@ -2260,7 +2268,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "isOneShot": true
@@ -2497,7 +2507,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -2712,7 +2724,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -2942,17 +2956,6 @@
    "schemaVersion": 1,
    "segmentHash": "1606cbc255f25d50f321c674c580f8eb5b85da0985c1cda5a7f69dcb4d1ba34e",
    "clauseSource": "model",
-   "landFetch": {
-    "kind": "spell",
-    "tapped": true,
-    "reach": [
-     "W",
-     "U",
-     "B",
-     "R",
-     "G"
-    ]
-   },
    "manaLines": [
     {
      "face": 0,
@@ -3020,7 +3023,18 @@
      "trigger": null,
      "triggerSubject": null
     }
-   ]
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Scout the Wilderness": {
@@ -3237,17 +3251,6 @@
    "schemaVersion": 1,
    "segmentHash": "84b2e482b84ea3b822979bbbb048426e2421e954f0de54efd7a05f0b421db307",
    "clauseSource": "grammar",
-   "landFetch": {
-    "kind": "spell",
-    "tapped": true,
-    "reach": [
-     "W",
-     "U",
-     "B",
-     "R",
-     "G"
-    ]
-   },
    "manaLines": [
     {
      "face": 0,
@@ -3285,7 +3288,18 @@
      "trigger": null,
      "triggerSubject": null
     }
-   ]
+   ],
+   "landFetch": {
+    "kind": "spell",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   }
   }
  },
  "Path of Annihilation": {

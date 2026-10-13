@@ -1486,13 +1486,25 @@ export interface ManaLine {
  *  (lands gain "{T}: Add one mana of any color"), Prismatic Omen (lands are every basic land type), Urborg (every
  *  land is a Swamp), Chromatic Orrery (spend mana as though it were mana of any color). `covers` is `lands` when
  *  only lands you control gain the colours and `all` when any mana you spend does. Front face only. */
-export interface StaticFixer { covers: "lands" | "all"; colours: string[] }
+export interface StaticFixer {
+  /** `lands` when only lands you control gain the colours, `all` when any mana you spend does. */
+  covers: "lands" | "all";
+  /** The WUBRG colours the card makes other sources produce. */
+  colours: string[];
+}
 
 /** A card that puts lands onto the battlefield from the library (#1169). `kind` is `spell` for an instant or
  *  sorcery (Cultivate, Farseek) and `permanent` for one that stays (a fetchland, Wood Elves, Sakura-Tribe Elder);
  *  `tapped` when the land arrives tapped; `reach` the WUBRG colours the lands it can find make (a basic land
  *  reaches all five, "a Forest card" only G). */
-export interface LandFetch { kind: "spell" | "permanent"; tapped: boolean; reach: string[] }
+export interface LandFetch {
+  /** `spell` for an instant or sorcery (Cultivate, Farseek), `permanent` for one that stays (a fetchland, Wood Elves, Sakura-Tribe Elder). */
+  kind: "spell" | "permanent";
+  /** The land arrives tapped. */
+  tapped: boolean;
+  /** The WUBRG colours the lands it can find make (a basic land reaches all five, "a Forest card" only G). */
+  reach: string[];
+}
 
 export interface CardTags {
   oracleId: string;

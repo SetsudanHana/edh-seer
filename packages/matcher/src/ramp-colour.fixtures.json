@@ -107,7 +107,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -278,7 +280,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -309,7 +313,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -505,7 +511,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -612,7 +620,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -730,7 +740,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -848,7 +860,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -975,7 +989,9 @@
      "gate": null,
      "restriction": null,
      "timing": "on-trigger",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": "tapped-for-mana",
+     "triggerSubject": "enchanted land"
     }
    ]
   }
@@ -1082,7 +1098,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -1278,7 +1296,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -1390,7 +1410,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -1502,7 +1524,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -1615,7 +1639,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -1767,7 +1793,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -1801,7 +1829,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "staticFixer": {
@@ -1979,7 +2009,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "isOneShot": true
@@ -2152,7 +2184,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "isOneShot": true
@@ -2287,7 +2321,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -2321,7 +2357,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -2504,7 +2542,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -2537,7 +2577,9 @@
       "typeName": "sorcery"
      },
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -2708,7 +2750,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -2739,7 +2783,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -2869,7 +2915,9 @@
      "gate": null,
      "restriction": null,
      "timing": "on-trigger",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": "tapped-for-mana",
+     "triggerSubject": "enchanted Forest"
     }
    ]
   }
@@ -3004,7 +3052,9 @@
      "gate": null,
      "restriction": null,
      "timing": "on-trigger",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": "tapped-for-mana",
+     "triggerSubject": "enchanted land"
     }
    ]
   }
@@ -3131,7 +3181,9 @@
      "gate": null,
      "restriction": null,
      "timing": "on-trigger",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": "tapped-for-mana",
+     "triggerSubject": "enchanted land"
     }
    ]
   }
@@ -3989,7 +4041,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -4173,7 +4227,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -4327,7 +4383,9 @@
      "gate": null,
      "restriction": null,
      "timing": "on-trigger",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": "tapped-for-mana",
+     "triggerSubject": "enchanted land"
     }
    ]
   }
@@ -4511,7 +4569,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -4649,7 +4709,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -4782,7 +4844,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -4906,7 +4970,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -5030,7 +5096,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -5169,7 +5237,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -5306,7 +5376,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -5461,7 +5533,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -6047,7 +6121,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -6084,7 +6160,9 @@
       "typeName": "legendary"
      },
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -6449,7 +6527,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -6623,7 +6703,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -6808,7 +6890,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -7006,7 +7090,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -7220,7 +7306,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -7401,7 +7489,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -7577,7 +7667,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -7749,7 +7841,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -7947,7 +8041,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -8156,7 +8252,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -8374,7 +8472,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -8580,7 +8680,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -8848,7 +8950,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -9086,7 +9190,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -9299,7 +9405,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -9485,7 +9593,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -9691,7 +9801,9 @@
      "gate": "an opponent chooses two of those cards",
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "landFetch": {
@@ -9839,7 +9951,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -9870,7 +9984,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -10008,7 +10124,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -10042,7 +10160,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -10160,7 +10280,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -10297,7 +10419,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -10328,7 +10452,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -10454,7 +10580,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -10624,7 +10752,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -10658,7 +10788,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -10830,7 +10962,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -10858,7 +10992,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -10996,7 +11132,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "staticFixer": {
@@ -11084,7 +11222,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "staticFixer": {
@@ -11258,7 +11398,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 1,
@@ -11292,7 +11434,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -11372,7 +11516,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ],
    "staticFixer": {
@@ -11456,7 +11602,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     },
     {
      "face": 0,
@@ -11490,7 +11638,9 @@
      "gate": "you control six or more lands",
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }
@@ -11595,7 +11745,9 @@
      "gate": null,
      "restriction": null,
      "timing": "now",
-     "producesToken": null
+     "producesToken": null,
+     "trigger": null,
+     "triggerSubject": null
     }
    ]
   }

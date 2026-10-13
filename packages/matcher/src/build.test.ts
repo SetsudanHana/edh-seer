@@ -3,7 +3,8 @@ import { detectBuildCategories, detectBuildFacets, computeBuild, rampGrade, ramp
 import { ARCHETYPE_LEAD_FLOOR } from "./archetypes.js";
 import TEMPLATE from "./template-targets.json" with { type: "json" };
 import type { DeckCard } from "./types.js";
-import type { CardTags } from "@edh-seer/tagger";
+import type { CardTags, ManaLine } from "@edh-seer/tagger";
+import { FREE_TAP, filterLine, mkLine, tapFor, triggerLine } from "./mana-test-support.js";
 import { COVERAGE_CLASSES } from "./answer-coverage.js";
 
 /** Minimal DeckCard: oracleText + typeLine drive the heuristics; abilities drive ramp/draw. */
@@ -12,12 +13,14 @@ const mk = (
   oracleText: string,
   typeLine = "Creature",
   abilities: CardTags["abilities"] = [],
+  manaLines?: ManaLine[],
 ): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue: 0 } as never,
   tags: {
     oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
     characteristics: { types: [typeLine.toLowerCase()], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
     abilities,
+    ...(manaLines ? { manaLines } : {}),
   },
 });
 
@@ -872,49 +875,69 @@ test("removal facets: an ability that emits dies/leaves and repeats is an engine
   expect(inCat(facets.get("unlabelled"))).toEqual(["Chaos Warp", "Mystery Kill"]);
 });
 
-describe("rampGrade (#534)", () => {
-  // Abilities as the deriver writes them (dumped from cardTagsDerived 2026-09-27).
-  const tap = (cost: string, amount: string, repeats = "per-cycle"): CardTags["abilities"] =>
-    [{ kind: "activated", effect: { kind: "mana-generation", subject: { control: "any", token: null } }, cost, amount, repeats } as never];
-  const signet = mk("Rakdos Signet", "{1}, {T}: Add {B}{R}.", "Artifact", tap("{1}, {T}", "2"));
-  const talisman = mk("Talisman of Indulgence", "{T}: Add {C}.\n{T}: Add {B} or {R}. This artifact deals 1 damage to you.", "Artifact", tap("{T}", "1"));
-  const diamond = mk("Charcoal Diamond", "This artifact enters tapped.\n{T}: Add {B}.", "Artifact", tap("{T}", "1"));
-  const restricted = mk("Guidelight Optimizer", "{T}: Add {U}. Spend this mana only to cast an artifact spell or activate an ability.", "Artifact Creature — Robot", tap("{T}", "1"));
-  const elf = mk("Llanowar Elves", "{T}: Add {G}.", "Creature — Elf Druid", tap("{T}", "1"));
-  const mindStone = mk("Mind Stone", "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.", "Artifact", tap("{T}", "1"));
+describe("rampGrade (#534, on manaLines since #1169)", () => {
+  // Mana lines as derive writes them: the grade reads the lines and the gate, never the printed regexes.
+  const rock = (name: string, text: string, type: string, lines: ManaLine[]) => mk(name, text, type, [], lines);
+  const signet = rock("Rakdos Signet", "{1}, {T}: Add {B}{R}.", "Artifact", [filterLine(1, 2, ["B", "R"])]);
+  const talisman = rock("Talisman of Indulgence", "{T}: Add {C}.\n{T}: Add {B} or {R}. This artifact deals 1 damage to you.", "Artifact", [tapFor(["C"]), tapFor(["B", "R"])]);
+  const diamond = rock("Charcoal Diamond", "This artifact enters tapped.\n{T}: Add {B}.", "Artifact", [tapFor(["B"])]);
+  const restricted = rock("Guidelight Optimizer", "{T}: Add {U}. Spend this mana only to cast an artifact spell or activate an ability.", "Artifact Creature — Robot",
+    [tapFor(["U"], { restriction: { spend: "to cast an artifact spell or activate an ability" } })]);
+  const elf = rock("Llanowar Elves", "{T}: Add {G}.", "Creature — Elf Druid", [tapFor(["G"])]);
+  const mindStone = rock("Mind Stone", "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.", "Artifact", [tapFor(["C"])]);
 
   it("a transform card's back-face tap ability is not a rock you hold (#1167)", () => {
-    const back = (tap("{T}", "1")[0] as object);
-    const treasureMap = { ...mk("Treasure Map // Treasure Cove", "{1}, {T}: Scry 1.\n//\n{T}: Add one mana of any color.", "Artifact // Land",
-      [{ ...back, face: 1 } as never]), };
+    const treasureMap = rock("Treasure Map // Treasure Cove", "{1}, {T}: Scry 1.\n//\n{T}: Add one mana of any color.", "Artifact // Land", [tapFor(["W", "U", "B", "R", "G"], { face: 1 })]);
     expect(rampGrade({ ...treasureMap, card: { ...treasureMap.card, layout: "transform" } as never })).toBe(0);
     // Control: the same card as a modal DFC non-land (a castable back) keeps the whole-card reading.
     const control = { ...treasureMap, card: { ...treasureMap.card, typeLine: "Artifact // Artifact", layout: "modal_dfc" } as never };
     expect(rampGrade(control)).toBeGreaterThan(0);
   });
 
-  it("staple-grade is a per-cycle tap ability that nets mana; anything else is 0", () => {
-    expect(rampGrade(mk("Ashnod's Altar", "Sacrifice a creature: Add {C}{C}.", "Artifact", tap("Sacrifice a creature", "2", "repeatable")))).toBe(0);
-    expect(rampGrade(mk("Akki Rockspeaker", "When this creature enters, add {R}.", "Creature — Goblin Shaman",
-      [{ kind: "triggered", effect: { kind: "mana-generation" }, amount: "1", repeats: "once" } as never]))).toBe(0);
-    expect(rampGrade(mk("Bog Witch", "{B}, {T}, Discard a card: Add {B}{B}{B}.", "Creature — Human Spellshaper", tap("{B}, {T}, Discard a card", "3")))).toBe(0);
-    expect(rampGrade(mk("Flywheel Racer", "Vigilance\n{T}: Add one mana of any color. Activate only if this permanent is a creature.\nCrew 1", "Artifact — Vehicle", tap("{T}", "1")))).toBe(0);
-    expect(rampGrade(mk("Cryptolith Rite", "Creatures you control have \"{T}: Add one mana of any color.\"", "Enchantment", tap("{T}", "1")))).toBe(0);
+  it("staple-grade is a per-cycle tap line that nets mana; anything else is 0", () => {
+    expect(rampGrade(rock("Ashnod's Altar", "Sacrifice a creature: Add {C}{C}.", "Artifact",
+      [tapFor(["C"], { cost: { ...FREE_TAP, tap: false, sacrificeOther: true }, repeats: "repeatable", amount: { fixed: 2, scales: null }, net: 2 })]))).toBe(0);
+    expect(rampGrade(rock("Akki Rockspeaker", "When this creature enters, add {R}.", "Creature — Goblin Shaman",
+      [triggerLine("enters", "this creature", ["R"], 1, { repeats: "once" })]))).toBe(0);
+    expect(rampGrade(rock("Bog Witch", "{B}, {T}, Discard a card: Add {B}{B}{B}.", "Creature — Human Spellshaper",
+      [filterLine(1, 3, ["B"], { cost: { ...FREE_TAP, mana: 1, other: ["discard a card"] } })]))).toBe(0);
+    // A granted ability is another permanent's: the deriver files Cryptolith Rite's quoted tap as a static grant.
+    expect(rampGrade(rock("Cryptolith Rite", "Creatures you control have \"{T}: Add one mana of any color.\"", "Enchantment",
+      [tapFor(["W", "U", "B", "R", "G"], { source: "static-grant" })]))).toBe(0);
     // "{2}, {T}: Add one mana" pays two for one: never ramp, however cheap the artifact.
-    expect(rampGrade(mk("Filter", "{2}, {T}: Add {B}.", "Artifact", tap("{2}, {T}", "1")))).toBe(0);
+    expect(rampGrade(rock("Filter", "{2}, {T}: Add {B}.", "Artifact", [filterLine(2, 1, ["B"])]))).toBe(0);
     // Sackville's Treasure stays ramp by its rule (owner 2026-09-27) but is not staple-grade.
-    expect(rampGrade(mk("The Sackville-Bagginses", "When The Sackville-Bagginses enter, you may sacrifice another creature or artifact. If you do, draw a card and create a Treasure token.", "Legendary Creature — Halfling Citizen"))).toBe(0);
+    expect(rampGrade(rock("The Sackville-Bagginses", "When The Sackville-Bagginses enter, you may sacrifice another creature or artifact. If you do, draw a card and create a Treasure token.", "Legendary Creature — Halfling Citizen",
+      [mkLine({ source: "token-maker", repeats: "once", cost: { ...FREE_TAP, tap: false }, producesToken: "treasure" })]))).toBe(0);
+  });
+
+  it("a gated tap line is a rock only where the deck meets its gate (owner 2026-10-13: Mox Jasper in a Dragon deck)", () => {
+    const jasper = rock("Mox Jasper", "{T}: Add one mana of any color. Activate only if you control a Dragon.", "Artifact",
+      [tapFor(["W", "U", "B", "R", "G"], { gate: "you control a dragon" })]);
+    const dragon = (i: number): DeckCard => ({ ...mk(`Dragon ${i}`, "Flying", "Creature — Dragon"), card: { name: `Dragon ${i}`, typeLine: "Creature — Dragon", oracleText: "Flying", keywords: [], colors: [], manaValue: 3 } as never });
+    const dragons = Array.from({ length: 30 }, (_, i) => dragon(i));
+    const plain = Array.from({ length: 30 }, (_, i) => mk(`Bear ${i}`, "", "Creature — Bear"));
+    // No deck to judge it against: only what is unconditional counts, as the old "activate only if" refusal did.
+    expect(rampGrade(jasper)).toBe(0);
+    expect(rampGrade(jasper, plain)).toBe(0);
+    expect(rampGrade(jasper, [jasper, ...dragons])).toBe(rampGrade(rock("Ungated", "{T}: Add one mana of any color.", "Artifact", [tapFor(["W", "U", "B", "R", "G"])])));
+    // A gate no decklist settles (Flywheel Racer: "this permanent is a creature") is never met.
+    const racer = rock("Flywheel Racer", "Vigilance\n{T}: Add one mana of any color. Activate only if this permanent is a creature.\nCrew 1", "Artifact — Vehicle",
+      [tapFor(["W", "U", "B", "R", "G"], { gate: "this permanent is a creature" })]);
+    expect(rampGrade(racer, [racer, ...dragons])).toBe(0);
   });
 
   it("reads every restriction and every conditional tap (review 2026-09-27)", () => {
-    const powerstone = mk("Powerstone", "{T}: Add {C}{C}. This mana can't be spent to cast a nonartifact spell.", "Artifact", tap("{T}", "2"));
-    const compass = mk("Star Compass", "This artifact enters tapped unless you control two or more basic lands.\n{T}: Add one mana of any color a basic land you control could produce.", "Artifact", tap("{T}", "1"));
+    const powerstone = rock("Powerstone", "{T}: Add {C}{C}. This mana can't be spent to cast a nonartifact spell.", "Artifact",
+      [tapFor(["C"], { amount: { fixed: 2, scales: null }, net: 2, restriction: { spend: "can't be spent to cast a nonartifact spell" } })]);
+    const compass = rock("Star Compass", "This artifact enters tapped unless you control two or more basic lands.\n{T}: Add one mana of any color a basic land you control could produce.", "Artifact",
+      [tapFor([], { anyColour: "among" })]);
     expect(rampGrade(powerstone)).toBeLessThan(8);
     expect(rampGrade(compass)).toBeLessThan(rampGrade(talisman));
   });
 
   it("orders unrestricted, then untapped, then noncreature, then coloured", () => {
-    const order = [signet, talisman, mindStone, elf, diamond, restricted].map(rampGrade);
+    const order = [signet, talisman, mindStone, elf, diamond, restricted].map((c) => rampGrade(c));
     expect(order).toEqual([...order].sort((a, b) => b - a));
     expect(rampGrade(signet)).toBe(rampGrade(talisman));
     expect(rampGrade(talisman)).toBeGreaterThan(rampGrade(mindStone));

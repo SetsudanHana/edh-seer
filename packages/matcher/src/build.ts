@@ -4,6 +4,8 @@ import TEMPLATE from "./template-targets.json" with { type: "json" };
 import { answerClassesOf, loadRules, ruleMatches } from "./rules.js";
 import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
 import { countsAsLand } from "./typeline.js";
+import { cardLines } from "./mana-lines.js";
+import { gateMet } from "./gate.js";
 import { ROLE_PARENTS } from "./role-parents.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
@@ -582,9 +584,6 @@ export function rampResilience(cards: DeckCard[]): RampResilience {
   return total > 0 ? { ...out, landShare: out.land / total } : out;
 }
 
-/** A tap cost, alone or after generic mana: "{T}" and a Signet's "{1}, {T}". */
-const TAP_COST = /^(?:\{(\d+)\},\s*)?\{T\}$/;
-
 /** HOW MUCH A PLAYER WOULD TAKE THIS AS RAMP WITH NO SYNERGY TO ARGUE FOR IT, 0 = not staple-grade
  *  (owner ruling 2026-09-27, #534). A short-on-ramp list drawn only from the partner pool offered
  *  Inalla four cards no Wizards player would take: a plain rock joins nothing, so it never entered.
@@ -592,8 +591,9 @@ const TAP_COST = /^(?:\{(\d+)\},\s*)?\{T\}$/;
  *  STAPLE-GRADE is an activated mana ability paid for by tapping -- plus generic mana it more than
  *  returns -- usable every turn cycle. That keeps 19 of the 22 EDHREC top-list ramp cards at MV 2 in
  *  Grixis and drops 139 of the 215 (`research/matcher/ramp-staples.ts`): Ashnod's Altar (a sacrifice
- *  cost), Carnival of Souls (triggered), Akki Rockspeaker (once), Bog Witch (a discard), and any
- *  "activate only if" (Flywheel Racer, Mox Jasper) or granted in quotes (Cryptolith Rite).
+ *  cost), Carnival of Souls (triggered), Akki Rockspeaker (once), Bog Witch (a discard), and a
+ *  gate the deck does not meet (Flywheel Racer's crew; Mox Jasper outside a Dragon deck, #1169: with no deck, as in the
+ *  partner index, a gated line is none) or a granted ability (Cryptolith Rite).
  *
  *  THE GRADE ORDERS THE SURVIVORS, each feature worth more than all after it: unrestricted mana,
  *  untapped on entry, not a creature (`rampResilience`'s reason), coloured. Measured on Grixis MV
@@ -601,34 +601,38 @@ const TAP_COST = /^(?:\{(\d+)\},\s*)?\{T\}$/;
  *
  *  CEILING: a land-fetch spell (Cultivate), a ritual and a Treasure maker score 0. They are ramp,
  *  and staples in green, but "taps for mana" cannot see them; a grade for them is its own tier. */
-export function rampGrade(dc: DeckCard): number {
+export function rampGrade(dc: DeckCard, deck?: readonly DeckCard[]): number {
   if (isLand(dc)) return 0;
   // A CARD IN THE DECK IS ITS FRONT FACE (CR 712.8a), so for every layout but a modal DFC (whose back
   // you can cast) a back face's "{T}: Add" is not a rock you hold: Treasure Map's Treasure Cove is
   // reached by transforming. It graded 16 on the back's ability and text before (#1167).
   const frontOnly = dc.card.layout !== "modal_dfc";
-  const tapRamp = (dc.tags?.abilities ?? []).filter((a) => !frontOnly || (a.face ?? 0) === 0).some((a) => {
-    if (a.kind !== "activated" || a.effect?.kind !== "mana-generation" || a.repeats !== "per-cycle") return false;
-    const m = TAP_COST.exec(String(a.cost ?? ""));
-    return m !== null && Number(a.amount ?? 0) > Number(m[1] ?? 0);
-  });
-  if (!tapRamp) return 0;
+  // READ OFF THE DERIVED MANA LINES (#1169), not the printed text: a STAPLE-GRADE LINE is an activated ability the card
+  // taps for (`cost.tap`), paying nothing else (no sacrifice, life, counter, discard, other tap), usable every turn cycle,
+  // that returns more than its mana cost (`net`) and does not scale (a "for each" amount is no staple). A line granted to other permanents is another
+  // permanent's (Cryptolith Rite is a `static-grant`), a trigger or a spell is not a tap. A GATED line ("Activate only if you
+  // control a Dragon", Mox Jasper) is a rock where the DECK meets its gate (`gate.ts`, owner 2026-10-13: a gated source is
+  // still a source, conditioned on the deck), and none where there is no deck to judge it by (the partner index) or no decklist
+  // settles it (Flywheel Racer: "this permanent is a creature").
+  const faceLines = cardLines(dc).filter((l) => !frontOnly || l.face === 0);
+  const rockLines = faceLines.filter((l) => l.source === "activated" && l.repeats === "per-cycle" && l.cost.tap
+    && !l.cost.sacrificeSelf && !l.cost.sacrificeOther && l.cost.life === 0 && l.cost.counters === null && !l.cost.tapOther && l.cost.other.length === 0
+    && !l.unread && l.amount.scales === null && l.net >= 1
+    && gateMet(l, deck));
+  if (rockLines.length === 0) return 0;
   const { patterns } = loadRules();
   const o = frontOnly ? (dc.card.oracleText ?? "").split("\n//\n")[0]! : dc.card.oracleText ?? "";
-  const has = (p: string, text = o) => new RegExp(patterns[p]!, "i").test(text);
-  // A CONDITION ON THE ABILITY is not a rock: Flywheel Racer taps only while crewed, Mox Jasper only
-  // beside a Dragon. The tags carry no condition on an activated ability, so the printed text does.
-  if (has("activateOnlyIf")) return 0;
-  // A GRANTED ABILITY IS ANOTHER PERMANENT'S: Cryptolith Rite's creatures and Lithoform Blight's land
-  // tap for the mana, and the deriver files the quoted ability on the card that grants it. The rock
-  // has to print its own "{T}: Add" outside quotes.
-  if (!/\{T\}[^.:"]*:\s*add\b/i.test(o.replace(/"[^"]*"/g, ""))) return 0;
-  const addLines = o.split("\n").filter((l) => /\badd\b/i.test(l)).join("\n");
-  // `spendOnly` is goldfish.ts's RESTRICTED as data (Powerstone: "This mana can't be spent ...").
   // `entersTappedEver`, not the land rules' `entersTapped`: that one forgives "tapped unless", and
-  // Star Compass sometimes enters tapped, which is worse than a rock that never does.
-  return 1 + 8 * Number(!has("spendOnly")) + 4 * Number(!has("entersTappedEver"))
-    + 2 * Number(!/\bcreature\b/i.test(dc.card.typeLine)) + Number(has("colouredMana", addLines));
+  // Star Compass sometimes enters tapped, which is worse than a rock that never does. (Not mana: when the permanent enters is no
+  // mana line's business, so the printed text stays the reader.)
+  const entersTapped = new RegExp(patterns.entersTappedEver!, "i").test(o);
+  // Restricted mana ("spend only ...", Powerstone) is `restriction`; the grade asks that the rock make some unrestricted mana.
+  const free = rockLines.filter((l) => l.restriction === null);
+  // COLOURED is the card's own production, filter lines included: Prismatic Lens's "{1}, {T}: any color" nets nothing and is no staple line, but
+  // it is a coloured card (the printed-text reading it replaces asked the same of every "add" line of the card).
+  const coloured = faceLines.some((l) => l.source === "activated" && l.cost.tap && (l.colours.length > 0 || l.anyColour !== null));
+  return 1 + 8 * Number(free.length > 0) + 4 * Number(!entersTapped)
+    + 2 * Number(!/\bcreature\b/i.test(dc.card.typeLine)) + Number(coloured);
 }
 
 export interface BuildResult {

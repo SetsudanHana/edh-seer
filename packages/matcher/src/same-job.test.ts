@@ -82,6 +82,13 @@ test("G1: the pairs the group key puts together are the owner's same pairs", () 
   expect(same).toBeGreaterThanOrEqual(9);
 });
 
+// THE G1 FIXTURE CARRIES THE DERIVED MANA KEYS (#1169 whole-branch review): without them every ramp card keyed on nothing, and the gate could not see the ramp key at all.
+test("the label fixture's ramp cards key on what they make, so G1 can see the ramp key (Arcane Signet is not Dimir Signet)", () => {
+  const cards = labelCards as unknown as Record<string, DeckCard>;
+  expect(groupKey(cards["Arcane Signet"]!, "ramp")).not.toBe(groupKey(cards["Dimir Signet"]!, "ramp"));
+  expect(JSON.stringify(groupKey(cards["Dimir Signet"]!, "ramp"))).toContain("UB");
+});
+
 // #1169 2b-2 follow-up: a card that adds no mana TYPE (a Treasure / Spawn maker, a grantee engine) was one bucket in the ramp key (the empty string). It keys on what it does
 // instead, so a land fetch that also makes an Eldrazi Spawn is not the plain land fetch of the same cost.
 test("two ramp cards that add no mana type do not share a group because of it (Growth Spasm is not Scout the Wilderness)", () => {

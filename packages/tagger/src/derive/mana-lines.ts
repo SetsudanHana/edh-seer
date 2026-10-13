@@ -16,9 +16,9 @@
  *  A line STATES, and a consumer JUDGES. Whether a line is a colour source, cheap ramp or a goldfish dork is each
  *  consumer's policy over these fields (the plan's owner rulings); nothing here decides it.
  *
- *  CEILING: `manaAdded` in derive.ts still computes `Ability.amount` (it splits alternatives on "or" only) and is NOT
- *  replaced here, because changing it would move an engine output this task promises not to move. `amount` below is
- *  its own, finer, read. Task 2 retires the difference. */
+ *  CEILING: TWO READINGS OF "HOW MUCH IT ADDS" REMAIN. `manaAdded` in derive.ts still computes `Ability.amount` (it splits alternatives on "or"
+ *  only) and `ManaLine.amount` below is its own, finer read. They were meant to converge; they did not: `Ability.amount` is a field of every derived
+ *  ability, and replacing how it is computed is a derive refactor of its own that moves every row, which #1169 did not take on. A mana consumer reads `ManaLine`. */
 import type { ClauseRecord } from "../canonicalize.js";
 import type {
   Ability, Characteristics, LandFetch, ManaAnyColour, ManaLine, ManaLineSource, StaticFixer, SubjectFilter,

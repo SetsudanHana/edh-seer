@@ -178,8 +178,8 @@ const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
 
 /** THE SOURCES OF EACH COLOUR: the audit's own count (`colourSourceCards`, #1169), read off the derived mana lines. A land by what it
  *  taps for, a fetch by what it can find, a nonland permanent only when a colour-source line of it makes the colour (a repeatable tap
- *  or static production, nothing consumed: not a Treasure maker, a sacrifice outlet, a trigger like Birgi's, or restricted or gated
- *  mana), a land-fetch spell by what it fetches. The library only: a commander is never drawn.
+ *  or static production, nothing consumed: not a Treasure maker, a sacrifice outlet, a trigger like Birgi's, or restricted mana; a gated
+ *  line only where the deck meets its gate, `colourSourceLine`, owner 2026-10-13), a land-fetch spell by what it fetches. The library only: a commander is never drawn.
  *
  *  THE SAME NUMBER AS `manaAudit`'s `supplied`, deliberately. Until 2026-10-10 this was a different count (Amarant's red: 38 sources
  *  by the audit against 26 here; Gisa's black 38 against 33; Fairdrazi 16-17 against 9-10, because only the audit counted land-fetch
