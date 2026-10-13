@@ -13,7 +13,7 @@
  *    FLOOD   the card drawn is a land, and the mana on the table plus the lands in hand already pay for the dearest spell in hand and in the command zone.
  *  LOST TURNS PER TEN is the mean over games, over the first ten turns, of the number of ways a turn was lost: a turn that is both colour-screwed and flooded counts twice (`--sum`, the
  *  default). That reading is the one that REPRODUCES the recorded figures (see the validation in the commit): colours 0.61 on average against 0.62, a three-colour deck 0.86 against 0.87,
- *  and the shipped 0.133 refit on the old colour count as 0.137. Reading a turn as lost ONCE however many ways hold (`--or`) gives colours 0.43 and 0.094, 30% under both.
+ *  and (historical, the validation that preceded the 0.151 ruling) the shipped 0.133 refit on the old colour count as 0.137. Reading a turn as lost ONCE however many ways hold (`--or`) gives colours 0.43 and 0.094, 30% under both.
  *  NOT RECOVERED, GUESSED FROM THE PROSE: the exact predicates above (the description gives each in one clause), greedy dearest-first spending, commander tax ignored, a plain
  *  spell is never removed from the hand the land policy reads (the goldfish does not cast one), and X costs are never cast.
  *
