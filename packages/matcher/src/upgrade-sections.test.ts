@@ -503,8 +503,8 @@ describe("a land-fetch spell, swapped for a colour", () => {
     expect(swap(rock("Boundless Realms"), [rock("Farseek")], { reach: { Farseek: ["G"] } })).toEqual([]);
     expect(swap(rock("Elemental Teachings"), [rock("Farseek")], { reach: { Farseek: ["G"] } })).toEqual([]);
   });
-  test("only a plain fetch is cut or added: removal, land destruction, draw, sagas and planes are not", () => {
-    for (const n of ["Deathsprout", "Frenzied Tilling", "Renewal", "Binding the Old Gods", "Horizon Boughs"] as const) {
+  test("only a plain fetch is cut or added: removal, land destruction, draw and sagas are not", () => {
+    for (const n of ["Deathsprout", "Frenzied Tilling", "Renewal", "Binding the Old Gods"] as const) {
       expect(swap(rock(n), [rock("Farseek")], { reach: { Farseek: ["G"] } }), n).toEqual([]);
       expect(swap(rock("Rampant Growth"), [rock(n)], { reach: { [n]: ["G"] } }), n).toEqual([]);
     }

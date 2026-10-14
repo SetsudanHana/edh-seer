@@ -27,8 +27,8 @@ test("an unconditional 'spend mana as though any color' fixes all mana", () => {
 });
 
 test("the near misses are refused", () => {
-  // Restricted to a card type or a number of spells.
-  expect(staticFixer(real("Emissary's Ploy"))).toBeNull();
+  // Restricted to a card type (Vizier of the Menagerie: "spend mana of any type to cast creature spells"). Emissary's Ploy is the same branch
+  // but is banned in Commander, so derive never ran on it and its fixture row is null: asserting on it proved nothing.
   expect(staticFixer(real("Vizier of the Menagerie"))).toBeNull();
   // Spend-as-any restricted to a card type or to abilities: the sentence has more after "color".
   expect(staticFixer(real("Oath of Nissa"))).toBeNull();

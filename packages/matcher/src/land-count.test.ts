@@ -239,7 +239,7 @@ test("ramp is weighted by what survives, draw by what it costs", () => {
 
 // --- THE KARSTEN INPUTS READ THE DERIVED MANA LINES (#1169 task 2b-1; owner rulings 2026-10-10) ---
 
-/** A REAL CARD, as production derived it (`fixtures/goldfish-cards.json`, dumped by `research/mana/dump-goldfish-fixtures.mts`). */
+/** A REAL CARD, as production derived it (`fixtures/goldfish-cards.json`, written by `research/mana/refresh-fixtures.mts`). */
 const real = (name: string): DeckCard => {
   const hit = (goldfish as unknown as DeckCard[]).find((c) => c.card.name === name || c.card.name.startsWith(`${name} //`));
   expect(hit, `fixture for ${name}`).toBeDefined();
