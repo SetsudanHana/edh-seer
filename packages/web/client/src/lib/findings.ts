@@ -1,6 +1,7 @@
 import { LAND_BAND } from "@edh-seer/matcher/build";
 import type { DeckReport } from "../types.js";
 import { demandSentence } from "./demand-sentence.js";
+import { buildFindingId } from "./role-group.js";
 
 /** WHAT IS WRONG WITH THIS DECK — the report's eight diagnostic panels, ranked.
  *
@@ -80,10 +81,10 @@ function buildFindings(report: DeckReport): Finding[] {
     // The engine's own sentence for this parent, if it wrote one. It carries the cost band
     // (`typically 2–4 mana`) that this module has no business recomputing.
     const suggestion = suggestions.find((s) => s.startsWith(`${p.name} `));
-    const cut = cuts.get(p.name) ?? "";
+    const cut = cuts.get(p.key) ?? "";
     out.push({
       kind: "build",
-      id: `build:${p.name}`,
+      id: buildFindingId(p.key),
       headline: p.key === "consistency"
         ? "You will run out of cards before you run out of turns."
         : `You are ${missing} short on ${p.name.toLowerCase()}.`,
@@ -146,20 +147,20 @@ function donorSentences(
     }
     if (taken.length === 0) {
       const names = slack.map((s) => s.category).join(" and ");
-      out.set(p.name, `. ${names}'s spare slots already go to the suggestion above, so these are yours to find.`);
+      out.set(p.key, `. ${names}'s spare slots already go to the suggestion above, so these are yours to find.`);
       continue;
     }
     const rest = need > 0 ? `; nothing else runs over its target, so the other ${need} ${need === 1 ? "is" : "are"} yours to find.` : ".";
     if (taken.length === 1 && need === 0) {
       const [d] = taken;
-      out.set(p.name, `. Take the slots from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}.`);
+      out.set(p.key, `. Take the slots from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}.`);
     } else if (taken.length === 1) {
       const [d] = taken;
-      out.set(p.name, `. Take ${d!.n} of them from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}${rest}`);
+      out.set(p.key, `. Take ${d!.n} of them from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}${rest}`);
     } else {
       const parts = taken.map((d) => `${d.n} from ${d.category} (${d.count} against a target of ${d.target})`);
       parts[0] = parts[0]!.replace(/^(\d+) from/, "$1 of them from");
-      out.set(p.name, `. Take ${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}${rest}`);
+      out.set(p.key, `. Take ${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}${rest}`);
     }
   }
   return out;
@@ -558,7 +559,7 @@ export function slotTrade(report: DeckReport, shortfalls: readonly Finding[]): s
    *  answers finding is the interaction one — `detectBuildRules` counts removal under Interaction —
    *  and a build finding names its own category in `figureLabel`. */
   const asksForSame = shortfalls.some((f) =>
-    (f.kind === "answers" && top.key === "interaction") || f.figureLabel === top.category);
+    (f.kind === "answers" && top.key === "interaction") || f.id === buildFindingId(top.key));
   // "N of those slots are the ones you need" said the OPPOSITE of what it meant — the N are the
   // SURPLUS, which is where the room comes from. The skeptic persona read it three times and stayed
   // unsure (2026-08-27). It names the surplus as a surplus now.

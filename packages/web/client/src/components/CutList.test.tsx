@@ -45,7 +45,7 @@ test("trade-offs show four at a time; clear cuts always show in full", async () 
  *  are on the Roles shelves, which were repeated here as card images. */
 test("a role over its target says how many can go, and the row takes you to its shelf", () => {
   const card = (name: string) => ({ id: name, name, typeLine: "", text: "", isToken: false, isCommander: false, isLand: false, isFace: false, roles: ["draw"], score: 0, manaCost: "", physical: name });
-  render(<CutList cuts={[]} slack={[{ category: "Card advantage", count: 16, target: 13, over: 3 }]}
+  render(<CutList cuts={[]} slack={[{ category: "Card advantage", key: "consistency", count: 16, target: 13, over: 3 }]}
     surplus={[{ name: "Card advantage", count: 16, target: 13, over: 3, cards: [card("Brainstorm"), card("Ponder")], shelf: "draw" }]} />);
   // ONE BUTTON PER ROLE, scrolling to that role's own shelf (owner, 2026-09-29: "if I click it it
   // does not work"): a `#roles` link replaced the deck the report keeps in the URL's hash.

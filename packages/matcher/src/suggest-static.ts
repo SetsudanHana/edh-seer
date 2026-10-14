@@ -357,7 +357,7 @@ function shortlist(list: readonly Candidate[], n: number, band: readonly [number
 function groupsOf(report: DeckReport): GroupState[] {
   return (report.buildParents ?? []).map((p) => ({
     name: p.name, count: p.count, target: p.target, leaves: p.leaves,
-    costBand: BUILD_PARENTS.find((b) => b.name === p.name)?.costBand ?? ANY_BAND,
+    costBand: BUILD_PARENTS.find((b) => b.key === p.key)?.costBand ?? ANY_BAND,
   }));
 }
 

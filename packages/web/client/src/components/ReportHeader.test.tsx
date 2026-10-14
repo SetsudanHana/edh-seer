@@ -36,7 +36,7 @@ test("a deck with no short role adds nothing to the Build score", () => {
 
 test("two short roles say the first and count the rest, in findings order", () => {
   const c = header({ buildParents: [
-    { name: "Board wipes", count: 0, target: 2, leaves: [] },
+    { name: "Board wipes", key: "boardWipes", count: 0, target: 2, leaves: [] },
     { name: "Card advantage", key: "consistency", count: 9, target: 13, leaves: [] },
   ] });
   expect(gap(c)).toBe("2 short on board wipes and 1 more");
@@ -51,7 +51,7 @@ test("the gap uses the shelf's word for the role", () => {
 /** AND LEADS WITH THE ONE IMPROVE LEADS WITH: rankedFindings orders by impact, findings() by shortfall. */
 test("the first role is the one Improve leads with, by impact", () => {
   const c = header({ buildParents: [
-    { name: "Board wipes", count: 1, target: 3, leaves: [], impact: 0.1 },
+    { name: "Board wipes", key: "boardWipes", count: 1, target: 3, leaves: [], impact: 0.1 },
     { name: "Card advantage", key: "consistency", count: 8, target: 15, leaves: [], impact: 0.4 },
   ] });
   expect(gap(c)).toBe("7 short on card advantage and 1 more");

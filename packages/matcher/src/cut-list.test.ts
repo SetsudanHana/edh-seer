@@ -10,9 +10,9 @@ const card = (over: Partial<CutInput> & { name: string }): CutInput => ({
 // be "over" again. A card's `roles` stay LEAF names (`rolesByCard` is unchanged), which is why
 // each parent here still lists the same leaf the old fixture named.
 const PARENTS: SlackParent[] = [
-  { name: "Ramp", count: 14, target: 10, leaves: ["ramp"] },        // four to spare
-  { name: "Card advantage", count: 10, target: 10, leaves: ["draw"] }, // exactly at target
-  { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
+  { name: "Ramp", key: "ramp", count: 14, target: 10, leaves: ["ramp"] },        // four to spare
+  { name: "Card advantage", key: "consistency", count: 10, target: 10, leaves: ["draw"] }, // exactly at target
+  { name: "Board wipes", key: "boardWipes", count: 1, target: 3, leaves: ["boardWipe"] },
 ];
 
 test("a dead card is a candidate and its reasons name every condition", () => {
@@ -58,10 +58,10 @@ test("a ROLE_NOT_SYNERGY card is protected, however dead it looks", () => {
 });
 
 test("deckSlack names the over-target PARENTS, biggest surplus first, and never a card", () => {
-  expect(deckSlack(PARENTS)).toEqual([{ category: "Ramp", count: 14, target: 10, over: 4 }]);
+  expect(deckSlack(PARENTS)).toEqual([{ category: "Ramp", key: "ramp", count: 14, target: 10, over: 4 }]);
   // target 0 means "reported, never scored" (no archetype delta has lifted this group) — it can
   // never be over.
-  expect(deckSlack([{ name: "Interaction", count: 2, target: 0, leaves: ["graveyardHate"] }])).toEqual([]);
+  expect(deckSlack([{ name: "Interaction", key: "interaction", count: 2, target: 0, leaves: ["graveyardHate"] }])).toEqual([]);
   // NO LANDS EXCLUSION NEEDED ANY MORE: `lands` was never a `BUILD_PARENTS` member to begin with
   // (build.ts keeps it scored on its own two-sided band, outside every parent), so it can never
   // reach `deckSlack` as a row at all -- the guarantee moved from a filter here to the shape of

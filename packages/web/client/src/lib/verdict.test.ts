@@ -22,9 +22,9 @@ test("a partly read deck gets no verdict, and neither does a report without both
  *  seats' reports). Read off the same findings, so the two cannot disagree. */
 test("a well-built deck that is short on a basic says which, and never claims it has them all", () => {
   const parents = [
-    { name: "Card advantage", count: 9, target: 13, leaves: [] },
-    { name: "Interaction", count: 10, target: 13, leaves: [] },
-    { name: "Ramp", count: 11, target: 11, leaves: [] },
+    { name: "Card advantage", key: "consistency", count: 9, target: 13, leaves: [] },
+    { name: "Interaction", key: "interaction", count: 10, target: 13, leaves: [] },
+    { name: "Ramp", key: "ramp", count: 11, target: 11, leaves: [] },
   ];
   expect(verdict(r(2.8, 4.3, { buildParents: parents }))).toBe(
     "Mostly well built, but short on card advantage (9 of 13) and answers (10 of 13). Its cards don't work with each other much yet, which is what the synergy score measures.");
@@ -39,7 +39,7 @@ test("a gap names its role as the Roles shelf does, with the count and target it
   const gisa = [{ name: "Card advantage", key: "consistency", count: 12, target: 15, leaves: ["draw", "cardSelection", "tutor"] }];
   expect(verdict(r(4.2, 4.6, { buildParents: gisa }))).toBe("A well-built deck whose cards work together, short only on card advantage (12 of 15).");
   const mari = [
-    { name: "Board wipes", count: 0, target: 2, leaves: [] },
+    { name: "Board wipes", key: "boardWipes", count: 0, target: 2, leaves: [] },
     { name: "Card advantage", key: "consistency", count: 9, target: 13, leaves: [] },
   ];
   expect(verdict(r(2.8, 4.3, { buildParents: mari }))).toMatch(/^Mostly well built, but short on board wipes \(0 of 2\) and card advantage \(9 of 13\)\./);

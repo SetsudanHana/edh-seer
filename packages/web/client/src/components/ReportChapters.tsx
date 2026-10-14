@@ -9,6 +9,7 @@ import { HowYouWin } from "./HowYouWin.js";
 import { ManaGlance } from "./ManaGlance.js";
 import { TableTalkLine } from "./TableTalk.js";
 import { tableTalk } from "../lib/table-talk.js";
+import { slackLeaves } from "../lib/role-group.js";
 import { FirstTurns } from "./FirstTurns.js";
 import { firstTurns } from "../lib/first-turns.js";
 import { LegalityPanel } from "./LegalityPanel.js";
@@ -276,7 +277,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   const surplus = useMemo((): Surplus[] => {
     const shelves = roleShelves(report, data.graph);
     return (report.slack ?? []).map((s) => {
-      const leaves = report.buildParents?.find((p) => p.name === s.category)?.leaves ?? [s.category];
+      const leaves = slackLeaves(report, s);
       const seen = new Set<string>();
       const cards = shelves.filter((sh) => leaves.includes(sh.category)).flatMap((sh) => sh.cards)
         // The commander fills roles too, and is never a cut.
