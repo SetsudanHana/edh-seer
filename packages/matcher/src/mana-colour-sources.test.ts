@@ -1,6 +1,6 @@
 /** WHICH CARDS ARE A COLOUR SOURCE, on REAL derived tags (#1169, task 2a). `fixtures/mana-colour-sources.json` holds each named card's
  *  Card document and the mana keys of its production tags, and the whole Gisa deck, dumped from Mongo by
- *  `research/mana/dump-colour-fixtures.mts`: an assertion here is about what the corpus carries and not about a card as remembered. */
+ *  `research/mana/refresh-fixtures.mts`: an assertion here is about what the corpus carries and not about a card as remembered. */
 import { describe, expect, test } from "vitest";
 import fx from "./fixtures/mana-colour-sources.json" with { type: "json" };
 import { colourSources } from "./mana-base.js";

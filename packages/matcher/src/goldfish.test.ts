@@ -15,7 +15,7 @@ const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", pr
 });
 
 /** A REAL CARD, as production derived it: the Card document and the mana keys of its derived tags, dumped from Mongo by
- *  `research/mana/dump-goldfish-fixtures.mts` (the goldfish reads the derived mana lines, #1169 task 2b-1). `as` renames it, for a deck of copies. */
+ *  `research/mana/refresh-fixtures.mts` (the goldfish reads the derived mana lines, #1169 task 2b-1). `as` renames it, for a deck of copies. */
 const real = (name: string, as?: string): DeckCard => {
   const hit = (goldfish as unknown as DeckCard[]).find((c) => c.card.name === name || c.card.name.startsWith(`${name} //`));
   expect(hit, `fixture for ${name}`).toBeDefined();
