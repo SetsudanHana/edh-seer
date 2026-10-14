@@ -140,8 +140,8 @@ test("an empty pile scores near 0 and suggests the big gaps", () => {
 
 // THE TARGET IS THE THEME'S OWN ROW NOW (owner rulings 2026-09-06, spec
 // `2026-09-06-theme-template-proposal.md`): the hand-written deltas (voltron +3 protection, −2
-// wipes) are gone and `template-targets.json` says what a Voltron deck RUNS on EDHREC -- 19.5,
-// read as 20 whole cards, interaction against a population of 13, and wipes at the population's 2, so the old "fewer
+// wipes) are gone and `template-targets.json` says what a Voltron deck RUNS on EDHREC -- 18
+// interaction against a population of 12 (refit 2026-10-14, #1196), and wipes at the population's 2, so the old "fewer
 // wipes" claim was never in the data. A bare `primary` reads that row at full confidence.
 test("a primary archetype reads its own EDHREC row: Voltron runs more interaction, not fewer wipes", () => {
   const cards = [mk("Shield", "Permanents you control gain indestructible.", "Instant")];
