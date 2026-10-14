@@ -38,10 +38,20 @@ function shortNameAsTilde(preamble: string, name: string): string {
   return out;
 }
 
+/** An ABILITY WORD label ("Do You Like Squirrels? — ", "The Seven-fold Chant — ") names the ability and
+ *  does nothing: the text without it. The spaced em dash, a capitalised label of at most 40 characters
+ *  made of words, apostrophes, commas, "?", "!" and hyphens -- never a ".", ":" or a brace, which
+ *  would make it a sentence, a cost or a mana symbol. The ONE rule `parseActions` reads too. */
+export function withoutAbilityWord(text: string): string {
+  const dash = text.indexOf(" — ");
+  return dash > 0 && dash <= 41 && /^[A-Z~][\w' ,~?!-]*$/.test(text.slice(0, dash)) ? text.slice(dash + 3) : text;
+}
+
 /** The preamble of a triggered clause's printed text, or null when the text opens with no trigger
  *  word. The name becomes "~" BEFORE the cut: a name with a comma ("Gisela, the Broken Blade") would
  *  otherwise end it. */
 export function printedPreamble(text: string, cardName: string): string | null {
+  text = withoutAbilityWord(text);
   const m = PREAMBLE.exec(cardName ? selfAsTilde(text, cardName) : text);
   return m ? (cardName ? shortNameAsTilde(m[1]!.trim(), cardName) : m[1]!.trim()) : null;
 }
@@ -50,6 +60,7 @@ export function printedPreamble(text: string, cardName: string): string | null {
  *  preamble and an intervening "if ...," when it has them. An activated clause's text already
  *  excludes its cost (`segment()` keeps that apart). */
 export function effectText(text: string, cardName: string): string {
+  text = withoutAbilityWord(text);
   // A TOKEN's name is its type ("Rat"): "for each other Rat you control" is the class, never the card.
   const typeName = cardName.split(" ").every((w) => SUBTYPES.has(w.toLowerCase()));
   const named = cardName && !typeName ? selfAsTilde(text, cardName) : text;

@@ -109,3 +109,47 @@ test("labelling round 3: zones and players the sentence implies", () => {
   // A defined X is no paid X.
   expect(one("Heronblade Elite", "Creature — Human Warrior", "{T}: Add X mana of any one color, where X is this creature's power.")[0]!.actions![0]).not.toHaveProperty("amount");
 });
+
+// #1210 task 1: a punctuated ability word, and a game-start delayed effect.
+const readCard = (name: string, typeLine: string, oracleText: string, keywords: string[] = []) => grammarClauseRecords({ name, typeLine, oracleText, keywords });
+
+test("an ability word with ? ! or - in it labels the clause and is neither trigger subject nor object (#1210)", () => {
+  const sq = readCard("The Unbeatable Squirrel Girl", "Legendary Creature — Squirrel Human Hero",
+    "Do You Like Squirrels? — Whenever The Unbeatable Squirrel Girl enters or attacks, create a 1/1 green Squirrel creature token.\nI LOVE Squirrels! — {1}{G}{G}{G}: Create X 1/1 green Squirrel creature tokens, where X is the number of Squirrels you control.", ["I LOVE Squirrels!"]);
+  expect(sq.blocker).toBeUndefined();
+  expect(sq.complete).toBe(true);
+  expect(sq.records.filter((r) => r.trigger).map((r) => r.trigger!.event).sort()).toEqual(["attacks", "enters"]);
+  expect(sq.records[0]!.actions![0]).toMatchObject({ verb: "create" });
+  const tally = readCard("Tallyman of Nurgle", "Creature — Astartes Warrior",
+    "Lifelink\nThe Seven-fold Chant — At the beginning of your end step, if a creature died this turn, you draw a card and you lose 1 life. If seven or more creatures died this turn, instead you draw seven cards and you lose 7 life.", ["Lifelink", "The Seven-fold Chant"]);
+  expect(tally.blocker).toBeUndefined();
+  expect(tally.complete).toBe(true);
+});
+
+test("a game-start reveal records only the delayed effect's actions, with no trigger (#1210)", () => {
+  const dross = readCard("Chancellor of the Dross", "Creature — Phyrexian Vampire",
+    "You may reveal this card from your opening hand. If you do, at the beginning of the first upkeep, each opponent loses 3 life, then you gain life equal to the life lost this way.\nFlying, lifelink", ["Flying", "Lifelink"]);
+  expect(dross.blocker).toBeUndefined();
+  expect(dross.records[0]).toMatchObject({ abilityType: "static" });
+  expect(dross.records[0]!.trigger).toBeUndefined();
+  expect(dross.records[0]!.actions!.map((a) => a.verb)).toEqual(["lose-life", "gain-life"]);
+  expect(dross.records[0]!.actions![0]).toMatchObject({ object: "each opponent", amount: "3" });
+  const cases: [string, string, string, string[]][] = [
+    ["Chancellor of the Annex", "Creature — Phyrexian Angel", "You may reveal this card from your opening hand. If you do, when each opponent casts their first spell of the game, counter that spell unless that player pays {1}.\nFlying\nWhenever an opponent casts a spell, counter it unless that player pays {1}.", ["counter-spell"]],
+    ["Chancellor of the Forge", "Creature — Phyrexian Giant", "You may reveal this card from your opening hand. If you do, at the beginning of the first upkeep, create a 1/1 red Phyrexian Goblin creature token with haste.\nWhen this creature enters, create X 1/1 red Phyrexian Goblin creature tokens with haste, where X is the number of creatures you control.", ["create"]],
+    ["Chancellor of the Spires", "Creature — Phyrexian Sphinx", "You may reveal this card from your opening hand. If you do, at the beginning of the first upkeep, each opponent mills seven cards.\nFlying\nWhen this creature enters, you may cast target instant or sorcery card from an opponent's graveyard without paying its mana cost.", ["mill"]],
+    ["Chancellor of the Tangle", "Creature — Phyrexian Treefolk", "You may reveal this card from your opening hand. If you do, at the beginning of your first main phase of the game, add {G}.\nReach, vigilance", ["add-mana"]],
+    ["Sphinx of Foresight", "Creature — Sphinx", "You may reveal this card from your opening hand. If you do, scry 3 at the beginning of your first upkeep.\nFlying\nAt the beginning of your upkeep, scry 1.", ["scry"]],
+  ];
+  for (const [name, type, text, verbs] of cases) {
+    const g = readCard(name, type, text);
+    expect(g.blocker, name).toBeUndefined();
+    expect(g.complete, name).toBe(true);
+    expect(g.records[0]!.trigger, name).toBeUndefined();
+    expect(g.records[0]!.actions!.map((a) => a.verb), name).toEqual(verbs);
+  }
+  expect(readCard("Chancellor of the Annex", "Creature", cases[0]![2]).records[0]!.actions![0]).toMatchObject({ verb: "counter-spell", unless: { payer: "opponent" } });
+  // ...the same action the card's own second clause reads.
+  const annex = readCard("Chancellor of the Annex", "Creature", cases[0]![2]).records;
+  expect(annex[0]!.actions![0]!.unless).toEqual(annex.at(-1)!.actions![0]!.unless);
+});

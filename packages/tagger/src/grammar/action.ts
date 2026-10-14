@@ -14,6 +14,7 @@ import type { Control, SubjectFilter } from "../schema.js";
 import { counterKindOf } from "../derive/subject.js";
 import { KEYWORD_ABILITIES } from "../derive/subtypes.js";
 import { parse } from "./filter.js";
+import { withoutAbilityWord } from "./preamble.js";
 
 export interface ActionReading {
   verb: string;
@@ -1494,6 +1495,10 @@ function actorOf(phrase: string): ActionReading["actor"] | undefined {
   return hit ? { ...hit[1]!, text: phrase.trim().replace(/^(?:then|instead|also) /i, "").slice(0, hit[0].length) } : undefined;
 }
 
+/** The timing of a game-start delayed effect, in front of its effect or behind it. */
+const GAME_START_LEAD = /^(?:at the beginning of (?:the|your) first (?:upkeep|main phase of the game)|when each opponent casts their first spell of the game), /i;
+const GAME_START_TAIL = / at the beginning of (?:the|your) first (?:upkeep|main phase of the game)$/i;
+
 /** A sentence's opener: "If you do, ...", "If ..., ...", "Otherwise, ...". */
 const OPENER = /^(if you do|if you don't|if [^,]+|otherwise|then|as an additional cost to cast this spell|as long as [^,]+|during [^,]+|starting with you|whenever [^,]+|each time [^,]+), /i;
 
@@ -1514,8 +1519,7 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   // A mode's or a result's label is not text the action reads: a Spree mode's added cost ("+ {2} —"),
   // a d20 table row ("10—19 |"), a loyalty cost the segmenter left in ("[−9]").
   // An ability word ("Crescent Fang —", "Date Night —") names the ability and does nothing.
-  const dash = effect.indexOf(" — ");
-  if (dash > 0 && dash <= 41 && /^[A-Z~][\w' ,~-]*$/.test(effect.slice(0, dash))) effect = effect.slice(dash + 3);
+  effect = withoutAbilityWord(effect);
   // A loyalty cost the segmenter left in without brackets ("−8: You get an emblem ...") is no action.
   effect = effect.replace(/^[+−-](?:\d+|X): /, "");
   effect = effect.replace(/^\+ (?:\{[^}]+\})+ — /, "").replace(/^(?:\{[^}]+\})+ — /, "").replace(/^\d+(?:[-—–]\d+|\+)? \| /, "").replace(/^\[[+−-]?(?:\d+|X)\]:? /, "");
@@ -1544,9 +1548,14 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   const unquoted = effect.replace(/"[^"]*"/g, (q) => `\uE000${quotes.push(q) - 1}\uE001`)
     .replace(/\uE000(\d+)\uE001 (?=[A-Z])/g, (m, i: string) => (quotes[Number(i)]!.endsWith('."') ? `${m.trimEnd()}. ` : m));
   let mayBefore = false;
+  // A GAME-START DELAYED EFFECT (Chancellor of the Dross): "You may reveal this card from your opening
+  // hand. If you do, <timing>, <effect>". The reveal records no action, and the timing is no trigger
+  // (a game-start event is not in TRIGGERS): the actions are the effect's alone.
+  let gameStart = false;
   for (const raw of unquoted.split(/(?<=\.)\s+/)) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
+    if (/^you may reveal this card from your opening hand$/i.test(s)) { gameStart = true; continue; }
     // "You may pay {2}. If you do, draw a card": the draw is as optional as the payment (the store's
     // reading, and the rules': nothing happens unless you choose to pay).
     const ifYouDoAfterMay = mayBefore && /^if you do, /i.test(s);
@@ -1560,6 +1569,10 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       s = s.slice(open[0].length);
     }
     s = s.replace(/^([A-Z])/, (c) => c.toLowerCase());
+    if (gameStart && condition === "if you do") {
+      condition = undefined;
+      s = s.replace(GAME_START_LEAD, "").replace(GAME_START_TAIL, "");
+    }
     // "The same is true for first strike, double strike, ...": the grant before it, once per ability.
     const same = /^(?:the same is true for|do the same for|repeat this process for) (.+)$/i.exec(s);
     const last = out[out.length - 1];

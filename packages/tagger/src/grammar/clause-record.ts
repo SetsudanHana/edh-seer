@@ -9,7 +9,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
 import { segment } from "../segment.js";
 import { amountOf, parseActions, unreadPhrases, type ActionReading } from "./action.js";
-import { effectText, printedPreamble } from "./preamble.js";
+import { effectText, printedPreamble, withoutAbilityWord } from "./preamble.js";
 import { selfAsTilde } from "./self-as-tilde.js";
 import { parseTrigger, type TriggerReading } from "./trigger.js";
 
@@ -277,7 +277,10 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       // "When Brinelin enters AND WHENEVER you cast a spell with mana value 6 or greater": the second
       // event has its own subject; "enters or attacks" shares the first's.
       const second = /\b(?:and|or) whenever (.+)$/i.exec(preamble!)?.[1];
-      if (c.multiTrigger) for (const r of reads.slice(1)) if (r.event !== first.event) overflow.push({ id: nextId++, abilityType: type, trigger: { event: r.event, subject: second ? triggerSubjectText(`Whenever ${second}`) : record.trigger.subject, control: r.control ?? record.trigger.control ?? "any" }, actions: [] });
+      // CEILING: the segmenter tests its two-event flag against the text WITH an ability-word label
+      // (anchored at the front, so a label hides it); a labelled clause trusts the trigger grammar's own
+      // reading of more than one event instead.
+      if (c.multiTrigger || withoutAbilityWord(c.text) !== c.text) for (const r of reads.slice(1)) if (r.event !== first.event) overflow.push({ id: nextId++, abilityType: type, trigger: { event: r.event, subject: second ? triggerSubjectText(`Whenever ${second}`) : record.trigger.subject, control: r.control ?? record.trigger.control ?? "any" }, actions: [] });
     }
     const effect = effectText(c.text, card.name);
     // A DELAYED TRIGGER that is the whole clause ("{1}{W}{B}: Whenever you gain life this turn, each
