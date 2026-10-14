@@ -39,7 +39,7 @@ async function whole(names: string[]): Promise<Entry[]> {
   const out = dcs.map((dc: any) => ({ card: dc.card, tags: dc.tags ?? null }));
   const got = out.map((e: Entry) => e.card.name);
   if (got.length !== names.length || got.some((n: string, i: number) => n !== names[i])) throw new Error(`card set changed: ${names.filter((n) => !got.includes(n)).join(", ")}`);
-  // A card with no derived row (Mana Crypt, Horizon Boughs, Emissary's Ploy: no cardClauses) stays `tags: null`; the pin test names the allowed ones.
+  // A card with no derived row (Mana Crypt, Horizon Boughs, Emissary's Ploy: no cardClauses) stays `tags: null`; the pin test allows a null row only for a card that is not commander-legal (derive never runs on one).
   const noRow = out.filter((e: Entry) => !e.tags).map((e: Entry) => e.card.name);
   if (noRow.length) console.warn(`no cardTagsDerived row, written as tags: null: ${noRow.join(", ")}`);
   return out;
