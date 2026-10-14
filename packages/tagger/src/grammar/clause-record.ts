@@ -28,7 +28,7 @@ export interface GrammarRecords {
 }
 
 /** The verbs a trigger opening's event is printed with, to cut its subject off the front. */
-const EVENT_VERB = /\s(?:dies|die|enters|enter|attacks|attack|blocks|block|becomes|become|is|are|deals|deal|casts|cast|gains|gain|loses|lose|draws|draw|discards|discard|sacrifices|sacrifice|leaves|leave|gets|get|puts|put|plays|play|activates|activate|creates|create|mills|mill|explores|explore|taps|tap|untaps|untap|searches|search|cycles|cycle|scries|scry|surveils|surveil|exiles|exile|returns|return|fights|fight|transforms|transform|copies|copy|counters|was|were|has|have|would|can't|connives|proliferates?|expends|commits?|ventures?|completes?|crews?|saddles?|chooses?|reveals?|wins?|pays?|spends?|finishes?|unlocks?|opens?|rolls?|flips?|shuffles?|investigates?|forages?|descends?)\b/;
+const EVENT_VERB = /\s(?:dies|die|enters|enter|attacks|attack|blocks|block|becomes|become|is|are|deals|deal|casts|cast|gains|gain|loses|lose|draws|draw|discards|discard|sacrifices|sacrifice|leaves|leave|phases|gets|get|puts|put|plays|play|activates|activate|creates|create|mills|mill|explores|explore|taps|tap|untaps|untap|searches|search|cycles|cycle|scries|scry|surveils|surveil|exiles|exile|returns|return|fights|fight|transforms|transform|copies|copy|counters|was|were|has|have|would|can't|connives|proliferates?|expends|commits?|ventures?|completes?|crews?|saddles?|chooses?|reveals?|wins?|pays?|spends?|finishes?|unlocks?|opens?|rolls?|flips?|shuffles?|investigates?|forages?|descends?)\b/;
 const PLAYER = /^(?:you|a player|an opponent|each player|each opponent|target opponent|that player|one or more players|another player)$/i;
 
 /** WHOSE PHASE a phase trigger watches, which derive's repeats labeller reads: your turns only is
@@ -279,12 +279,23 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       // "When Brinelin enters AND WHENEVER you cast a spell with mana value 6 or greater": the second
       // event has its own subject; "enters or attacks" shares the first's.
       const second = /\b(?:and|or) whenever (.+)$/i.exec(preamble!)?.[1];
-      // CEILING: the segmenter tests its two-event flag against the text WITH an ability-word label
-      // (anchored at the front, so a label hides it); a labelled clause trusts the trigger grammar's own
-      // reading of more than one event instead.
-      if (c.multiTrigger || withoutAbilityWord(c.text) !== c.text) for (const r of reads.slice(1)) if (r.event !== first.event) overflow.push({ id: nextId++, abilityType: type, trigger: { event: r.event, subject: second ? triggerSubjectText(`Whenever ${second}`) : record.trigger.subject, control: r.control ?? record.trigger.control ?? "any" }, actions: [] });
+      // The segmenter's two-event flag is anchored at the front and stops at the first comma, so a label
+      // ("Do You Like Squirrels? — ") or a comma in the card's name ("Wernog, Rider's Chaplain") hides it.
+      // Ask it again about the text with the label cut and the name as "~".
+      const multi = c.multiTrigger || (reads.length > 1 && segment(withoutAbilityWord(selfAsTilde(c.text, card.name)), [], "Creature")[0]?.multiTrigger === true);
+      if (multi) for (const r of reads.slice(1)) if (r.event !== first.event) overflow.push({ id: nextId++, abilityType: type, trigger: { event: r.event, subject: second ? triggerSubjectText(`Whenever ${second}`) : record.trigger.subject, control: r.control ?? record.trigger.control ?? "any" }, actions: [] });
     }
-    const effect = labelled ? effectText(labelled.effect, card.name) : effectText(c.text, card.name);
+    let effect = labelled ? effectText(labelled.effect, card.name) : effectText(c.text, card.name);
+    // "AFTER YOU ROLL A DIE, you may ...": no when/whenever/at, so no triggered ability -- it modifies
+    // the roll (CR 706.2, a modifier to the natural result), a static clause. The roll it waits on is the
+    // clause's trigger all the same, the whole-clause way a delayed "whenever ... this turn" is, so
+    // derive links die-rollers to it.
+    const afterRoll = type !== "triggered" ? /^after (you roll a die), /i.exec(effect) : null;
+    if (afterRoll) {
+      const read = [parseTrigger(`Whenever ${afterRoll[1]}`, null) ?? []].flat()[0];
+      if (read) record.trigger = { event: read.event, subject: triggerSubjectText(`Whenever ${afterRoll[1]}`), control: read.control ?? "any" };
+      effect = effect.slice(afterRoll[0].length);
+    }
     // A DELAYED TRIGGER that is the whole clause ("{1}{W}{B}: Whenever you gain life this turn, each
     // opponent loses that much life"): the store records it as the clause's trigger. Not "at the
     // beginning of the next end step" mid-sentence: that times one action, and a clause trigger would

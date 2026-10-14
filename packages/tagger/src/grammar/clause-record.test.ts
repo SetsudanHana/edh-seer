@@ -174,3 +174,43 @@ test("a mana cost behind a label the segmenter missed makes the clause activated
   expect(clauseCosts(doc)[2]).toBe("{1}{G}{G}{G}");
   expect(clauseTexts(doc)[2]).toMatch(/^Create X 1\/1 green Squirrel/);
 });
+
+// #1210 task 2: six more shapes.
+test("energy payment, replacement lead-in, duration lead, look-at-top, 'who doesn't', roll-a-die (#1210)", () => {
+  const turret = readCard("Consulate Turret", "Artifact", "{T}: You get {E} (an energy counter).\n{T}, Pay {E}{E}{E}: This artifact deals 2 damage to target player or planeswalker.");
+  expect(turret.blocker).toBeUndefined();
+  expect(turret.records[1]!.actions!.map((a) => a.verb)).toEqual(["remove-counter", "deal-damage"]);
+  expect(turret.records[1]!.actions![0]).toMatchObject({ object: "energy counter", amount: "3" });
+
+  const warden = readCard("Crowd-Control Warden", "Creature — Human Soldier", "As this creature enters or is turned face up, put X +1/+1 counters on it, where X is the number of other creatures you control.\nDisguise {3}{G/W}{G/W} (You may cast this card face down for {3} as a 2/2 creature with ward {2}. Turn it face up any time for its disguise cost.)", ["Disguise"]);
+  expect(warden.blocker).toBeUndefined();
+  expect(warden.records[0]).toMatchObject({ abilityType: "static" });
+  expect(warden.records[0]!.actions![0]).toMatchObject({ verb: "add-counter", object: "+1/+1", amount: "the number of other creatures you control" });
+
+  const familiar = readCard("Ertai's Familiar", "Creature — Illusion", "Phasing (This phases in or out before you untap during each of your untap steps. While it's phased out, it's treated as though it doesn't exist.)\nWhen this creature phases out or leaves the battlefield, mill three cards.\n{U}: Until your next upkeep, this creature can't phase out.", ["Phasing"]);
+  expect(familiar.blocker).toBeUndefined();
+  expect(familiar.records.at(-1)!.actions![0]).toMatchObject({ verb: "cant", object: "phase out" });
+  expect(familiar.records[1]!.trigger).toMatchObject({ event: "phases-out", subject: "this creature" });
+
+  const viv = readCard("Vivien's Invocation", "Sorcery", "Look at the top seven cards of your library. You may put a creature card from among them onto the battlefield. Put the rest on the bottom of your library in a random order. When a creature is put onto the battlefield this way, it deals damage equal to its power to target creature an opponent controls.");
+  // The reflexive "When a creature is put onto the battlefield this way" has no reading (only "when you do"
+  // does): the card stays incomplete, but the first clause reads.
+  expect(viv.blocker).toMatchObject({ clause: 2, kind: "trigger" });
+  expect(viv.records[0]!.actions![0]).toMatchObject({ verb: "put", object: "a creature card", fromZone: "library", toZone: "battlefield", optional: true });
+  expect(viv.records[0]!.actions![1]).toMatchObject({ verb: "put", object: "the rest", fromZone: "library", toZone: "library" });
+
+  const wernog = readCard("Wernog, Rider's Chaplain", "Legendary Creature — Human Cleric", "When Wernog, Rider's Chaplain enters or leaves the battlefield, each opponent may investigate. Each opponent who doesn't loses 1 life. You investigate X times, where X is one plus the number of opponents who investigated this way.");
+  expect(wernog.blocker).toBeUndefined();
+  const w = wernog.records.flatMap((r) => r.actions!);
+  expect(w.find((a) => a.verb === "lose-life")).toMatchObject({ object: "each opponent", amount: "1" });
+  // The comma in the card's name hid the segmenter's two-event flag: "enters or leaves" is two records.
+  expect(wernog.records.map((r) => r.trigger?.event)).toEqual(["enters", "leaves"]);
+  expect(w.find((a) => a.verb === "investigate")).toBeDefined();
+
+  const xeno = readCard("Xenosquirrels", "Creature — Squirrel", "This creature enters with two +1/+1 counters on it.\nAfter you roll a die, you may remove a +1/+1 counter from this creature. If you do, increase or decrease the result by 1.");
+  expect(xeno.blocker).toBeUndefined();
+  const x = xeno.records[1]!;
+  expect(x).toMatchObject({ abilityType: "static" });
+  expect(x.trigger).toMatchObject({ event: "roll-dice" });
+  expect(x.actions![0]).toMatchObject({ verb: "remove-counter", optional: true });
+});

@@ -825,7 +825,7 @@ function subjectAction(t: string): ActionReading[] | null {
   }
   // "As this creature enters, it becomes your choice of a 3/3 creature with flying, a 2/5 creature
   // with vigilance, or a 0/12 creature with defender": one animation per choice, as stored.
-  const choices = /^(?:as (?:this creature|~) enters(?: or is turned face up)?, )?(?:it|~|this creature) becomes your choice of (.+)$/i.exec(t);
+  const choices = /^(?:it|~|this creature) becomes your choice of (.+)$/i.exec(t);
   if (choices) {
     const options = choices[1]!.split(/,? or |, /);
     if (options.every((o) => /^(?:an? )?(?:\d+\/\d+)(?: [\w ]+?)?(?: with [\w ]+)?$/i.test(o))) return options.map(() => ({ verb: "animate", object: SELF }));
@@ -1422,6 +1422,9 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   // "you get {E}{E}": energy counters on you (CR 107.14).
   const energy = /^(?:you )?gets? ((?:\{E\})+)(?: \.)?$/i.exec(t);
   if (energy) return [{ verb: "add-counter", object: parse("you")!, counter: "energy", amount: String(energy[1]!.length / 3), ...(condition ? { condition } : {}) }];
+  // "Pay {E}{E}{E}": the energy counters come off you (CR 107.14), as a removal reads.
+  const payEnergy = /^pay ((?:\{E\})+)$/i.exec(t);
+  if (payEnergy) return [{ verb: "remove-counter", object: parse("you")!, counter: "energy", amount: String(payEnergy[1]!.length / 3), ...(condition ? { condition } : {}) }];
   // "you may have target player discard a card": the actor is who is made to.
   const have = /^you (may )?have (.+)$/i.exec(t);
   const made = have && ACTORS.find(([w]) => have[2]!.toLowerCase().startsWith(w + " "));
@@ -1555,23 +1558,38 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   // Annex reads as an always-on static counter and the others as static actions, which is how Chancellor
   // of the Dross's bought answer stores it too.
   let gameStart = false;
+  // "Look at the top seven cards of your library" records no action, but the library is where the next
+  // sentence's "from among them" and "the rest" are.
+  let lookedAtLibrary = false;
   for (const raw of unquoted.split(/(?<=\.)\s+/)) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
     if (/^you may reveal this card from your opening hand$/i.test(s)) { gameStart = true; continue; }
+    if (/^look at the top (?:card|(?:\w+|\d+) cards) of your library$/i.test(s)) { lookedAtLibrary = true; continue; }
     // "You may pay {2}. If you do, draw a card": the draw is as optional as the payment (the store's
     // reading, and the rules': nothing happens unless you choose to pay).
     const ifYouDoAfterMay = mayBefore && /^if you do, /i.test(s);
     mayBefore = /\byou may\b/i.test(s);
     let condition: string | undefined;
     // "Until end of turn, target creature becomes ...": a duration at the front, not a condition.
-    s = s.replace(/^(?:until end of turn|until your next turn|until the end of your next turn|this turn|for as long as [^,]+), /i, "");
+    s = s.replace(/^(?:until end of turn|until your next turn|until your next upkeep|until the end of your next turn|this turn|for as long as [^,]+), /i, "");
     // Openers stack: "As long as ~ is equipped, if a triggered ability ... triggers, ...".
     for (let open = OPENER.exec(s), k = 0; open && k < 2; open = OPENER.exec(s), k++) {
       if (!/^then$/i.test(open[1]!)) condition = [condition, open[1]!.toLowerCase()].filter(Boolean).join(", ");
       s = s.slice(open[0].length);
     }
     s = s.replace(/^([A-Z])/, (c) => c.toLowerCase());
+    // CEILING: "If you do, increase or decrease the result by 1" (Xenosquirrels, CR 706.2) modifies a die
+    // result, which no verb expresses; it records no action.
+    if (/^increase or decrease the result by \d+$/i.test(s)) continue;
+    // "Each opponent who doesn't loses 1 life" (Wernog): the opponents who declined the "may" before it;
+    // the actor is each opponent, and the decline is the condition.
+    const decline = /^(each opponent|each player|each other player) who (?:doesn't|didn't|don't)\b,? (.+)$/i.exec(s);
+    if (decline) { s = `${decline[1]} ${decline[2]}`; condition = [condition, "if they don't"].filter(Boolean).join(", "); }
+    // "As this creature enters[ or is turned face up], ...": when the card arrives is no action, and the
+    // clause is a static replacement (Aquamorph Entity, Crowd-Control Warden). Not before "you may": a
+    // shock land's "you may pay 2 life" is a choice, and read bare it became a continuous life loss.
+    s = s.replace(/^as (?:this [a-z]+|~) enters(?: or is turned face up)?, (?!you may )/i, "");
     if (gameStart && condition === "if you do") {
       condition = undefined;
       s = s.replace(GAME_START_LEAD, "").replace(GAME_START_TAIL, "");
@@ -1624,6 +1642,7 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       }
       if (pay) out.push(...pay);
     }
+    if (lookedAtLibrary && /\bfrom among them\b|\bthe rest\b/i.test(s)) for (let i = at; i < out.length; i++) if (out[i]!.verb === "put" && !out[i]!.fromZone) out[i] = { ...out[i]!, fromZone: "library" };
     if (ifYouDoAfterMay) for (let i = at; i < out.length; i++) out[i] = { ...out[i]!, optional: true };
   }
   return out;
