@@ -245,6 +245,7 @@ test("isStickerCard reads a sticker sheet by its Stickers type line, and a stick
   expect(isStickerCard({ typeLine: "Stickers", oracleText: "" })).toBe(true);
   expect(isStickerCard({ typeLine: "Stickers", oracleText: "(Name) Pay 2 energy" })).toBe(true);
   expect(isStickerCard({ typeLine: "Creature", oracleText: "When this enters, put a name sticker on it." })).toBe(true);
+  expect(isStickerCard({ typeLine: "Creature", oracleText: "Whenever a stickered permanent you control dies, draw a card." })).toBe(true);
   expect(isStickerCard({ typeLine: "Artifact", oracleText: "{T}: Add {C}." })).toBe(false);
   expect(isStickerCard({ typeLine: "Artifact", oracleText: "" })).toBe(false);
   expect(isStickerCard({ oracleText: "Draw a card." })).toBe(false);

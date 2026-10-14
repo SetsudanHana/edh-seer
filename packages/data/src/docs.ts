@@ -36,13 +36,14 @@ export interface CardDoc {
   meldParts?: string[];
 }
 
-/** A STICKER CARD (Unfinity, CR 123): its text puts, uses or counts stickers, or it is a sticker SHEET
+/** A STICKER CARD (Unfinity, CR 123): its text puts, uses or counts stickers or reads a "stickered"
+ *  permanent (with every sticker card gone that ability can never apply), or it is a sticker SHEET
  *  (type line "Stickers"; its text is a list that need not say "sticker"). Dropped from the whole
  *  engine (owner 2026-10-02, extended 2026-10-14): not ingested, not normalized, not derived, no page.
  *  A decklist naming one still reads as an unknown card (`resolveNames`). */
 export function isStickerCard(d: { typeLine?: string; oracleText?: string; faces?: { oracleText?: string }[] }): boolean {
   if (d.typeLine === "Stickers") return true;
-  return [d.oracleText ?? "", ...(d.faces ?? []).map((f) => f.oracleText ?? "")].some((t) => /\bstickers?\b/i.test(t));
+  return [d.oracleText ?? "", ...(d.faces ?? []).map((f) => f.oracleText ?? "")].some((t) => /\bsticker(?:s|ed)?\b/i.test(t));
 }
 
 export interface ComboDoc {
