@@ -869,10 +869,12 @@ function subjectAction(t: string): ActionReading[] | null {
   // "that ability triggers an additional time": a trigger doubled.
   if (/^(?:that ability|it) triggers an additional time$/i.test(t)) return [{ verb: "trigger-again" }];
   if (/^(?:that player|target player|each opponent|you) (?:wins?|loses?) the game$/i.test(t)) return [{ verb: /wins? the game$/i.test(t) ? "win-game" : "lose-game" }];
-  const phases = /^(.+?) phases? out$/i.exec(t);
-  if (phases && (objectOf(phases[1]!) || THEY.test(phases[1]!))) {
+  const phases = /^(.+?) phases? (in|out)$/i.exec(t);
+  // CEILING: a phased-out class ("all phased-out creatures", Time and Tide) the object parser cannot name
+  // keeps its words as the phrase, on a back-reference object; no filter field is invented for the status.
+  if (phases && (objectOf(phases[1]!) || THEY.test(phases[1]!) || /^(?:all|each) [a-z -]{1,50}$/i.test(phases[1]!))) {
     const who = objectOf(phases[1]!)?.object ?? REF;
-    return [{ verb: "phase-out", object: who, ...(who.ref ? { phrase: phases[1]! } : { text: phases[1]! }) }];
+    return [{ verb: phases[2]!.toLowerCase() === "in" ? "phase-in" : "phase-out", object: who, ...(who.ref ? { phrase: phases[1]! } : { text: phases[1]! }) }];
   }
   if (/^you take the initiative$/i.test(t)) return [{ verb: "initiative" }];
   if (/^the ring tempts you$/i.test(t)) return [{ verb: "ring-tempts" }];
@@ -1026,7 +1028,7 @@ const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new Reg
 
 /** Every verb word a phrase can open with, for splitting -- wider than the handled ones, so a joint
  *  before an unhandled verb ("..., then shuffle") still splits. */
-const ANY_VERB = /^(?:(?:it|that creature|those creatures|they) (?:doesn't|don't|can't|gains?|gets?) |(?:up to one )?(?:other |another )?target [a-z]+(?: [a-z]+)? gets?(?= )|(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|removes? (?=it|them|that|all)|double (?=the|its|that|target|each)|blight|convert|repeat this process|(?:~|this [a-z]+) (?:gets?|gains?|can't|deals?|endures|explores|connives)(?= )|defending player (?=loses|gains|sacrifices|discards)))\b/i;
+const ANY_VERB = /^(?:(?:all|each|target) [a-z -]{1,50}? phases? (?:in|out)$|(?:it|that creature|those creatures|they) (?:doesn't|don't|can't|gains?|gets?) |(?:up to one )?(?:other |another )?target [a-z]+(?: [a-z]+)? gets?(?= )|(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|removes? (?=it|them|that|all)|double (?=the|its|that|target|each)|blight|convert|repeat this process|(?:~|this [a-z]+) (?:gets?|gains?|can't|deals?|endures|explores|connives)(?= )|defending player (?=loses|gains|sacrifices|discards)))\b/i;
 
 /** Split a sentence into phrases on ", then ", " and then ", ", and ", " and ", ", " -- only where a
  *  verb follows, so "a creature and a land" stays whole. */
@@ -1586,6 +1588,8 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     mayBefore = /\byou may\b/i.test(s);
     let condition: string | undefined;
     // "Until end of turn, target creature becomes ...": a duration at the front, not a condition.
+    // "Simultaneously, all phased-out creatures phase in and ..." (CR 702.26a): a timing word, no action.
+    s = s.replace(/^simultaneously, /i, "");
     s = s.replace(/^(?:until end of turn|until your next turn|until your next upkeep|until the end of your next turn|this turn|for as long as [^,]+), /i, "");
     // Openers stack: "As long as ~ is equipped, if a triggered ability ... triggers, ...".
     for (let open = OPENER.exec(s), k = 0; open && k < 2; open = OPENER.exec(s), k++) {

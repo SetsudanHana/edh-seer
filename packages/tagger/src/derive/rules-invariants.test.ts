@@ -48,6 +48,8 @@ const TESTED: Record<string, string> = {
   "108.3": "grammar/filter.test.ts — ownership beside control: 'you control but don't own' (#896)",
   "715": "grammar/filter.test.ts — an Adventure is a card's layout, read as a status (#896)",
   "702.22b": "grammar/filter.test.ts — 'bands with other' is a keyword a token can have (Master of the Hunt) (#896)",
+  "702.26a": "grammar/action.test.ts — 'Simultaneously, all phased-out creatures phase in and all creatures with phasing phase out' (Time and Tide): a timing word, then two phasing actions (#1210)",
+  "702.26c": "grammar/action.test.ts — 'target creature phases in' is the `phase-in` action, the twin of `phase-out` (#1210)",
   "702.95": "grammar/filter.test.ts — a soulbond pair is a status the filter can demand ('a creature paired with it') (#896)",
   "810": "grammar/filter.test.ts — a Two-Headed Giant team's permanents ('creatures your team controls') are yours (#896)",
   "701.34a": "grammar/clause-record.test.ts — a proliferate's object is any permanent or player, not only yours (task 7, #896)",

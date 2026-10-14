@@ -595,3 +595,8 @@ test("a game-start delayed effect carries no condition; an ordinary 'if you do' 
   const plain = parseActions("Sacrifice a creature. If you do, draw a card.", null);
   expect(plain.find((r) => r.verb === "draw")!.condition).toBe("if you do");
 });
+
+test("phase-in is the action side of the phases-in trigger (CR 702.26c); 'Simultaneously' is a timing word", () => {
+  expect(read("Target creature phases in.")).toMatchObject([{ verb: "phase-in" }]);
+  expect(read("Simultaneously, all phased-out creatures phase in and all creatures with phasing phase out.").map((r) => r.verb)).toEqual(["phase-in", "phase-out"]);
+});

@@ -1527,7 +1527,7 @@ const ACTION_FAMILY: Record<string, string> = {
     "bolster", "adapt", "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn",
     "monarch", "initiative", "ring-tempts", "explore", "connive", "endure", "cast", "play", "prevent", "cost-modify", "double", "animate",
     "roll-dice", "flip-coin", "extra-turn", "emblem", "exchange", "win-game", "lose-game", "clash", "exert", "manifest", "convert", "earthbend",
-    "airbend", "waterbend", "blight", "behold", "extra-combat", "extra-phase", "trigger-again", "phase-out"].map((v) => [v, "tail"])),
+    "airbend", "waterbend", "blight", "behold", "extra-combat", "extra-phase", "trigger-again", "phase-out", "phase-in"].map((v) => [v, "tail"])),
 };
 const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two

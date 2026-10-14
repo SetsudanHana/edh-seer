@@ -211,6 +211,7 @@ const VERB_TO_TRIGGER: Record<string, string> = {
   "turn-face-up": "turned-face-up",
   "gain-control": "gains-control",
   "phase-out": "phases-out",
+  "phase-in": "phases-in",
   "add-mana": "tapped-for-mana",
   "roll-dice": "dice-rolled",
   monstrosity: "becomes-monstrous",
