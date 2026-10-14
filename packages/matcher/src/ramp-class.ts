@@ -18,15 +18,15 @@ import type { DeckCard } from "./types.js";
  *  - `paid`: mana bought with a counter, a tapped permanent or another resource (Cryptic Trilobite, Springleaf Drum).
  *  - `other`: what none of those names (Mox Tantalite: suspend only).
  *
- *  - `cost-reducer`: a discount for OTHER spells (Sapphire Medallion, owner 2026-08-06 and 2026-10-13: cost reduction is ramp). It makes no mana, it saves some; the land target gives it the same 0.15.
+ *  - `cost-reducer`: a discount for OTHER spells (Sapphire Medallion, owner 2026-08-06 and 2026-10-13: cost reduction is ramp). It makes no mana and replaces no land: a discount is worth what the deck has to reduce, so the land target weighs it 0 (owner 2026-10-14; Heartstone and Training Grounds, which reduce activated abilities, are cost reducers too).
  *
  *  ASK ONLY OF A RAMP-ROLE CARD THAT `classifyAccelerant` returned null for. The first match wins, in the order below: a card with two reasons is named by the more telling one. */
 export type NonAccelerantRamp = "land" | "land-drop" | "cost-reducer" | "one-shot" | "sacrifice" | "trigger-mana" | "gated-off" | "restricted" | "paid" | "other";
 
-/** THE WEIGHT EACH CLASS CARRIES IN THE LAND TARGET: 0.15 for every one that is a piece (`RAMP_RESILIENCE.oneShot`), exactly what every non-accelerant has carried. NOT A RULING ON THE
- *  CLASSES: no owner ruling has priced them apart, so they share a number and a land is no piece (`null`, as the fallback always skipped a land). A weight change needs an owner ruling. */
+/** THE WEIGHT EACH CLASS CARRIES IN THE LAND TARGET: 0.15 for every one that is a piece (`RAMP_RESILIENCE.oneShot`), exactly what every non-accelerant has carried, EXCEPT the cost reducer: 0 (owner 2026-10-14, "it is worth more if you have
+ *  something to reduce"; it is still a ramp piece, it replaces no land). No other ruling has priced the classes apart, so the rest share a number and a land is no piece (`null`, as the fallback always skipped a land). A weight change needs an owner ruling. */
 export const NON_ACCELERANT_WEIGHT: Record<NonAccelerantRamp, number | null> = {
-  land: null, "land-drop": RAMP_RESILIENCE.oneShot, "cost-reducer": RAMP_RESILIENCE.oneShot, "one-shot": RAMP_RESILIENCE.oneShot, sacrifice: RAMP_RESILIENCE.oneShot, "trigger-mana": RAMP_RESILIENCE.oneShot,
+  land: null, "land-drop": RAMP_RESILIENCE.oneShot, "cost-reducer": 0, "one-shot": RAMP_RESILIENCE.oneShot, sacrifice: RAMP_RESILIENCE.oneShot, "trigger-mana": RAMP_RESILIENCE.oneShot,
   "gated-off": RAMP_RESILIENCE.oneShot, restricted: RAMP_RESILIENCE.oneShot, paid: RAMP_RESILIENCE.oneShot, other: RAMP_RESILIENCE.oneShot,
 };
 

@@ -226,7 +226,7 @@ export function recommendedLands(
   const roleCount = (key: "ramp" | "consistency"): number => roleMembers(key).size;
 
   // EACH RAMP PIECE AT WHAT IT KEEPS PRODUCING (`RAMP_RESILIENCE`): land ramp whole, a rock 0.7, a
-  // dork 0.5, and a Ramp-role card the goldfish does not play as an accelerant at its class's weight (`NON_ACCELERANT_WEIGHT`: 0.15 for every class, a land none). Copies count, as
+  // dork 0.5, and a Ramp-role card the goldfish does not play as an accelerant at its class's weight (`NON_ACCELERANT_WEIGHT`: 0.15 for every class but a cost reducer (0, owner 2026-10-14), a land none). Copies count, as
   // `accelerants` always has.
   const rampRoleNames = roleMembers("ramp");
   const rampWeights = library.flatMap((dc): number[] => {

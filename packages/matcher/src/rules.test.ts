@@ -585,6 +585,28 @@ describe("the Ramp role, second round (#1190)", () => {
     expect(ruleIds(texted("Trinisphere", "As long as this artifact is untapped, each spell that would cost less than three mana to cast costs three mana to cast."))).toEqual([]);
     expect(ruleIds(texted("Accursed Witch", "Spells your opponents cast that target this creature cost {1} less to cast."))).toEqual([]);
   });
+
+  // Real oracle text (Mongo, 2026-10-14). The derive typed every one of these cost-reduction with a scope-all subject; the rule decides.
+  test("a self discount, an alternative cost and a free cast are not ramp; Activated-ability reducers and a named-spell discount are (owner 2026-10-14)", () => {
+    const text = (name: string, oracleText: string, subject: object): DeckCard => ({
+      card: { name, oracleText, typeLine: "Artifact", manaValue: 3 } as Card,
+      tags: manaTags([], { abilities: [{ kind: "static", effect: { kind: "cost-reduction", subject } }] as never }),
+    });
+    const all = { control: "any", type: "spell", scope: "all" };
+    expect(ruleIds(text("Volcanic Salvo", "This spell costs {X} less to cast, where X is the total power of creatures you control.\nVolcanic Salvo deals 6 damage to each of up to two target creatures and/or planeswalkers.", { control: "you", type: "creature", scope: "all" }))).toEqual([]);
+    expect(ruleIds(text("As Foretold", "At the beginning of your upkeep, put a time counter on this enchantment.\nOnce each turn, you may pay {0} rather than pay the mana cost for a spell you cast with mana value X or less, where X is the number of time counters on this enchantment.", all))).toEqual([]);
+    expect(ruleIds(text("Aluren", "Any player may cast creature spells with mana value 3 or less without paying their mana costs and as though they had flash.", all))).toEqual([]);
+    expect(ruleIds(text("Fires of Invention", "You can cast spells only during your turn and you can cast no more than two spells each turn.\nYou may cast spells with mana value less than or equal to the number of lands you control without paying their mana costs.", all))).toEqual([]);
+    // Heartstone, Training Grounds: a reducer of activated abilities IS ramp (owner ruling); the derived subject names the ability kind.
+    const act = { abilityKind: ["activated"], type: "creature", scope: "all" };
+    expect(ruleIds(text("Heartstone", "Activated abilities of creatures cost {1} less to activate. This effect can't reduce the mana in that cost to less than one mana.", act))).toEqual(["ramp.costReduction"]);
+    expect(ruleIds(text("Training Grounds", "Activated abilities of creatures you control cost {2} less to activate. This effect can't reduce the mana in that cost to less than one mana.", act))).toEqual(["ramp.costReduction"]);
+    expect(ruleIds(text("Cheering Fanatic", "Whenever this creature attacks, choose a card name. Spells with the chosen name cost {1} less to cast this turn.", all))).toEqual(["ramp.costReduction"]);
+    expect(ruleIds(text("Sapphire Medallion", "Blue spells you cast cost {1} less to cast.", all))).toEqual(["ramp.costReduction"]);
+    // A self discount AND a discount for others stays ramp (Hamza), and so does a card that merely also casts something free (The Ur-Sphinx).
+    expect(ruleIds(text("Hamza, Guardian of Arashin", "This spell costs {1} less to cast for each creature you control with a +1/+1 counter on it.\nCreature spells you cast cost {1} less to cast for each creature you control with a +1/+1 counter on it.", all))).toEqual(["ramp.costReduction"]);
+    expect(ruleIds(text("The Ur-Sphinx", "Eminence \u2014 As long as The Ur-Sphinx is in the command zone or on the battlefield, other Sphinx spells you cast cost {1} less to cast.\nFlying\nWhenever one or more Sphinxes you control attack, each player mills that many cards. For each player, you may cast a card that player milled this way without paying its mana cost.", all))).toEqual(["ramp.costReduction"]);
+  });
 });
 
 // --- self-protection in words that are not a printed keyword (roadmap I1) ---

@@ -1,5 +1,5 @@
 {
-  "version": 21,
+  "version": 22,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -17,6 +17,7 @@
 
   "patterns": {
     "costNotReduced": "would cost less than|spells your opponents cast that target this",
+    "costNotADiscount": "^(?=[\\s\\S]*(?:this spell costs [^.]*less|without paying (?:its|their|your) mana costs?|rather than pay (?:its|their|the) mana costs?))(?![\\s\\S]*(?<!this spell )costs? (?:up to )?(?:\\{[^}]+\\}|x|\\w+) less)",
     "boardWipe": "(?:destroy|exile) (?:all|each) (?!(?:other )?cards?\\b|graveyards?\\b|(?:target )?(?:player|opponent))(?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?|lands?|tokens?|\\w+s)\\b(?! created (?:with|by) | you control\\b)|each player sacrifices (?:all|each|every|any number|x\\b|\\w+teen|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty)|(?:each player|each opponent|opponents|players)[^.]{0,120}?sacrifices? all (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|lands?)|(?:all|each|every) (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?) (?:gets?|get) [-−]|deals? (?:\\d+|x) damage to [^.]{0,60}?each (?:[\\w'-]+ ){0,2}?(?:creature|permanent|planeswalker(?! (?:they|that player) controls?\\b))|return (?:all|each) (?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?)|-1/-1 counters? on each (?:[\\w'-]+ ){0,2}?creature|(?=[\\s\\S]*\\boverload\\b)(?:destroy|exile|return|deals? (?:\\d+|x) damage to|gets? [-−]\\d)[^.]{0,20}?target (?:[\\w'-]+ ){0,3}?(?:creature|permanent|artifact|enchantment|planeswalker)\\b",
     "targetedRemoval": "destroy[^.:]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|exile[^.:]{0,25}?target[^.]{0,25}?\\b(?:creature|permanent|artifact|enchantment|planeswalker|land)s?\\b(?!\\s+you\\s+(?:control|own))(?![^.]{0,80}?then return (?:it|that card|them|those cards) to the battlefield)|return target (?![^.]*\\bgraveyard\\b)[^.]*? to [^.]*?hand|target creature[^.]{0,30}?gets [-−]|-1/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1/-1 counter|target player sacrifices|target permanent shuffles it into",
     "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?(?<class>creature(?: or planeswalker)?)",
@@ -220,8 +221,8 @@
       "id": "ramp.costReduction",
       "category": "ramp",
       "match": [{ "op": "effectKind", "in": ["cost-reduction"], "scope": ["all", "each"] }],
-      "not": [{ "op": "countsAsLand" }, { "op": "oracle", "pattern": "costNotReduced" }],
-      "why": "COST REDUCTION IS RAMP (owner 2026-08-06, wired into the rules 2026-10-13, #1190): a Medallion, a Goblin Electromancer, a \"second spell costs {2} less\" saves the mana a rock would make. The discount must reach OTHER spells (subject scope all/each); a card that only cheapens itself (\"This spell costs {1} less\", Sunderflock, affinity) is a cheaper card, not ramp. Tax is interaction, and neither forms a pairwise edge (`ROLE_NOT_SYNERGY`)."
+      "not": [{ "op": "countsAsLand" }, { "op": "oracle", "pattern": "costNotReduced" }, { "op": "oracle", "pattern": "costNotADiscount" }],
+      "why": "COST REDUCTION IS RAMP (owner 2026-08-06, wired into the rules 2026-10-13, #1190): a Medallion, a Goblin Electromancer, a \"second spell costs {2} less\" saves the mana a rock would make. The discount must reach OTHER spells (subject scope all/each); a card that only cheapens itself (\"This spell costs {1} less\", Sunderflock, affinity) is a cheaper card, not ramp (`costNotADiscount`, RULES 22: the derive types Volcanic Salvo's \"This spell costs {X} less\" with a scope-all subject, and an alternative or free cast -- As Foretold, Aluren, Fires of Invention -- as a reduction; a card whose ONLY such text is that is refused, one that also names a discount for other spells, Hamza, stays). Tax is interaction, and neither forms a pairwise edge (`ROLE_NOT_SYNERGY`)."
     },
     {
       "id": "ramp.landFetchSpell",

@@ -46,9 +46,10 @@ describe("the class of a Ramp-role card that is not an accelerant", () => {
     expect(nonAccelerantRamp(medallion, [medallion])).toBe("cost-reducer");
   });
 
-  test("the weight per class is the one every non-accelerant has had (0.15); a land is no ramp piece", () => {
+  test("the weight per class is the one every non-accelerant has had (0.15); a land is no ramp piece, a cost reducer weighs 0 (owner 2026-10-14)", () => {
     for (const [cls, w] of Object.entries(NON_ACCELERANT_WEIGHT)) {
       if (cls === "land") expect(w, cls).toBeNull();
+      else if (cls === "cost-reducer") expect(w, cls).toBe(0);
       else expect(w, cls).toBe(RAMP_RESILIENCE.oneShot);
     }
   });
