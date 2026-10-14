@@ -667,6 +667,10 @@ describe("a mana line states its cost, restriction and trigger as fields (DERIVE
     expect(linesOf("Oasis Ritualist").some((l) => l.cost.other.some((o) => /^exert/i.test(o)) && l.cost.consumes.length === 0)).toBe(true);
     expect(linesOf("Millikin")[0]!.cost.consumes).toEqual([]);
   });
+  it("a cost piece derive cannot classify is `unknown`, which is consumed (Korlash: the comma in the card's name splits the cost)", () => {
+    const l = linesOf("Korlash, Heir to Blackblade").find((x) => x.cost.other.includes("Heir to Blackblade"))!;
+    expect(l.cost).toMatchObject({ other: ["Discard another card named Korlash", "Heir to Blackblade"], consumes: ["discard", "unknown"] });
+  });
   it("a loyalty cost is `cost.loyalty`, signed, and is not in `other`", () => {
     expect(only("Chandra, Torch of Defiance", "activated").cost).toMatchObject({ loyalty: 1, other: [], consumes: [] });
     expect(only("Nissa, Worldwaker", "fetch").cost).toMatchObject({ loyalty: -7, other: [] });

@@ -181,7 +181,7 @@ describe("a consumed resource in the cost is not a colour source (review of 2a)"
     // ...and a piece off the list is a consumed resource on the same shape of line
     expect(isColourSource({ ...exert!, cost: { ...exert!.cost, other: ["Discard a card"], consumes: ["discard" as const] } })).toBe(false);
   });
-  test("an untap symbol is not a consumed resource: Pili-Pala's {2}, {Q} line is not paid and its colour is a source (#1193)", () => {
+  test("an untap symbol is not a consumed resource: Pili-Pala's {2}, {Q} line is not paid (#1193)", () => {
     const pili = cardLines(get("Pili-Pala")).find((l) => l.cost.other.includes("{Q}"));
     expect(pili, "Pili-Pala {Q} line").toBeDefined();
     expect(pili!.cost.consumes).toEqual([]);

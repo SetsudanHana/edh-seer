@@ -17575,5 +17575,105 @@
    }
   ],
   "source": "grammar"
+ },
+ "Korlash, Heir to Blackblade": {
+  "card": {
+   "_id": "09f99b5a-66cf-4178-ae64-29f2004fe899",
+   "name": "Korlash, Heir to Blackblade",
+   "typeLine": "Legendary Creature — Zombie Warrior",
+   "oracleText": "Korlash's power and toughness are each equal to the number of Swamps you control.\n{1}{B}: Regenerate Korlash.\nGrandeur — Discard another card named Korlash, Heir to Blackblade: Search your library for up to two Swamp cards, put them onto the battlefield tapped, then shuffle.",
+   "keywords": [
+    "Grandeur",
+    "Regenerate"
+   ],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 4,
+   "power": "*",
+   "toughness": "*",
+   "layout": "normal",
+   "manaCost": "{2}{B}{B}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Korlash, Heir to Blackblade",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the number of Swamps you control",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "regenerate",
+      "object": "Korlash, Heir to Blackblade",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "another card named Korlash, Heir to Blackblade",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "up to two Swamp cards",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "up to two Swamp cards",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "up to two Swamp cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
  }
 }

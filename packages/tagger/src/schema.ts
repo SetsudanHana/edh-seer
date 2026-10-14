@@ -1413,6 +1413,17 @@ export type ManaGate =
  *  THE LINE STATES; THE CONSUMER JUDGES. A colour audit, a land count, a goldfish each ask a different question
  *  (is this a colour SOURCE; is this CHEAP ramp; does it play on turn two), and each answers it by filtering
  *  these fields -- the line itself decides none of it. */
+/** A limit on what a mana line's mana may be spent on (`ManaLine.restriction`). */
+export interface ManaRestriction {
+  /** The limit as printed, lowercased. */
+  spend: string;
+  /** The one type it names, lowercase ("elemental", "creature", "chosen"). */
+  typeName?: string;
+  /** The mana-value floor the limit names: "to cast spells with mana value 4 or greater" (Ashling, Rimebound) -> 4. Null for every other limit, including the same floor with a
+   *  rider ("... or spells with {X} in their mana costs", Helga), which is also a limit on what the mana is FOR. */
+  minManaValue: number | null;
+}
+
 /** What a mana line's cost uses up (`ManaLine.cost.consumes`). */
 export type ConsumedCost = "discard" | "exile" | "energy" | "return-to-hand" | "forage" | "collect-evidence" | "unknown";
 
@@ -1475,10 +1486,7 @@ export interface ManaLine {
   /** "Spend this mana only ..." (Smokebraider, Cavern of Souls, Ancient Ziggurat) or "this mana can't be spent ...":
    *  `spend` is the printed limit, `typeName` the one type it names, lowercase ("elemental", "creature", "chosen"). Mana with
    *  a restriction is not mana for the deck's spells. */
-  restriction: { spend: string; typeName?: string;
-    /** The mana-value floor the limit names: "to cast spells with mana value 4 or greater" (Ashling, Rimebound) -> 4. Null for every other limit, including the same floor with a
-     *  rider ("... or spells with {X} in their mana costs", Helga), which is also a limit on what the mana is FOR. */
-    minManaValue: number | null } | null;
+  restriction: ManaRestriction | null;
   /** WHEN the mana arrives: `now`, `next-turn` (a delayed addition), `on-trigger` (when a trigger fires). */
   timing: "now" | "next-turn" | "on-trigger";
   /** The token a `token-maker` line makes that is itself a mana source ("treasure", "gold", "powerstone",

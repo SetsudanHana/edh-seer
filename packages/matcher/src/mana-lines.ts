@@ -36,7 +36,8 @@ export function deckIdentity(deck: readonly DeckCard[], commanderNames: readonly
 }
 
 /** THE LINE IS A PLANESWALKER'S LOYALTY ABILITY, and it pays nothing else. `cost.loyalty` is the tagger's one parse of the printed cost (#1193). */
-export const isLoyaltyAbility = (line: ManaLine): boolean => line.cost.loyalty !== null && line.cost.other.length === 0;
+// `!= null`, not `!== null`: a row derived before 312 has no `loyalty`, and undefined must not make every empty-cost line a loyalty ability (it is read as none, and the old "+1" in `other` then keeps it out of colour sources via paidWithResource).
+export const isLoyaltyAbility = (line: ManaLine): boolean => line.cost.loyalty != null && line.cost.other.length === 0;
 
 /** HOW MANY TURNS A LOYALTY ABILITY CAN BE USED from the walker's STARTING loyalty (`ManaLine.startLoyalty`), counting the turn it is cast: Infinity for a
  *  "+N" or "0" (CR 606.3: once per turn at sorcery timing, and nothing is taken from the loyalty), floor(loyalty / cost) for a "−N" (CR 606.6: it can't be
@@ -59,7 +60,8 @@ export const usableLoyalty = (line: ManaLine): boolean => isLoyaltyAbility(line)
  *  Exert, an untap ({Q}, Pili-Pala) and a mill consume nothing (owner rulings 2026-10-10 and 2026-10-11), and derive says so by leaving them out of `consumes`. The colour audit and the
  *  goldfish both refuse a line paid this way: the first because the mana is not a source you control, the second because it models no board to pay from. */
 export const paidWithResource = (line: ManaLine): boolean =>
-  line.cost.sacrificeOther || line.cost.counters !== null || line.cost.tapOther || line.cost.consumes.length > 0;
+  line.cost.sacrificeOther || line.cost.counters !== null || line.cost.tapOther || (line.cost.consumes ?? (line.cost.other.length > 0 ? ["unknown"] : [])).length > 0;
+// A pre-312 row has no `consumes`: undefined is NOT "consumes nothing". With pieces in `other` it reads as unknown (refused, the safe direction); with none, as nothing.
 
 /** The shape of a colour source -- everything `isColourSource` asks except that the production could be read, and the gate: the caller says whether it holds. */
 const sourceShaped = (line: ManaLine, gateHolds = false): boolean =>
@@ -243,8 +245,16 @@ export function minManaValue(line: ManaLine): number | null {
 /** The lines whose mana arrives when a land enters (Lotus Cobra: "Whenever a land you control enters, add one mana of any color"). Landfall is not
  *  an event of its own: it is `enters` with a land `trigger.subject` you control; `enters` with "this creature" is the card's own enters trigger (Burning-Tree
  *  Emissary), which makes mana once and is no source. CEILING: a land subject you control, which is the one printed shape the corpus holds ("a land you control"). */
-export const isLandfall = (line: ManaLine): boolean =>
-  line.source === "trigger" && line.trigger?.event === "enters" && line.trigger.subject?.type === "land" && line.trigger.subject.control === "you" && line.trigger.subject.self !== true;
+export const isLandfall = (line: ManaLine): boolean => {
+  const subject = line.trigger?.subject;
+  if (line.source !== "trigger" || line.trigger?.event !== "enters" || !subject) return false;
+  // parseSubject drops no qualifier silently: "a nonbasic land you control", "a basic land ...", "a tapped land ...", "... with a +1/+1 counter on it" each carry a field of their own, so the subject
+  // may carry NOTHING beyond a land type, "you" control and "another" (the old regex's one printed shape).
+  const plain = Object.keys(subject).every((k) => k === "type" || k === "control" || k === "token" || k === "other") && !subject.token;
+  // CEILING: parseSubject DROPS "nonbasic" and "tapped" outright (the subject of "a nonbasic land you control" is a plain land you control), so the structure cannot refuse them; the subject text
+  // must be the bare "a/an/another land you control", the one shape the corpus holds. Every qualifier it can represent is refused by the field check above.
+  return plain && subject.type === "land" && subject.control === "you" && /^(?:an?|another) land you control$/i.test(line.trigger?.text ?? "");
+};
 
 /** The lines whose mana arrives at the beginning of a phase (Coalition Relic's first main phase, Chaos Moon's upkeep, Go-Shintai's end step).
  *  CEILING: "your NEXT main phase" (Mana Drain, Plasm Capture) is a one-shot wearing a trigger, and its derived subject says only "you"; both scale

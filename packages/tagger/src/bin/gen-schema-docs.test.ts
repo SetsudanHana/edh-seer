@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 import { VERBS, TRIGGERS, ZONES } from "../normalize-prompt.js";
 import { EFFECT_KINDS, SCALING_BASES, VERB_VOCAB } from "../schema.js";
-import { OUT, docAbove, members, renderSchemaDoc, sources, stripComments } from "./gen-schema-docs.js";
+import { OUT, docAbove, fields, members, renderSchemaDoc, sources, stripComments } from "./gen-schema-docs.js";
 
 const ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 
@@ -98,4 +98,10 @@ test("no doc links to a file that is not there", () => {
     }
   }
   expect(broken).toEqual([]);
+});
+
+test("an interface field whose type spans lines is refused, not read as its first line (the drift test cannot see it)", () => {
+  const src = ["export interface X {", "  ok: string;", "  bad: { a: string;", "    b: number } | null;", "}"].join("\n");
+  expect(() => fields(src, "X")).toThrow(/spans lines/);
+  expect(fields(["export interface X {", "  ok: string;", "}"].join("\n"), "X")).toHaveLength(1);
 });
