@@ -6,6 +6,7 @@ import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 import { FREE_TAP, fetchTags, manaTags, mkLine, ritualLine, tapFor, triggerLine, withLines, withTap } from "./mana-test-support.js";
 import { cardLines, colourSourceColours, isColourSource, isFetchSource } from "./mana-lines.js";
+import { gateVerdict } from "./gate.js";
 import { classifyAccelerant, colourMaskOf, tapBonusOf, fetchesLand, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
@@ -1611,6 +1612,26 @@ describe("board-count gates are met turn by turn on the goldfish's own board", (
     expect(out.gated?.amount).toBe(2);
     // T1 1 land; T2 2 lands, the Druid is cast; T3 3 lands and a Druid that is not yet two (one Elf and itself); T4 four creatures: 4 lands + 2
     expect(manaPerTurn(deck, 5)).toEqual([1, 2, 4, 6, 6]);
+  });
+
+  test("a board gate is priced per game, not by the deck's median-clock verdict: one Dragon in 100 cards leaves Mox Jasper a blank in the games with no Dragon out and a rock in the games where it is (#1191, Fable finding 8)", () => {
+    const jasper = real("Mox Jasper");
+    const lone = (typeLine: string): DeckCard[] => [jasper, card("Lone Dragon", typeLine, 1), ...basics(98)];
+    expect(gateVerdict(jasper.tags!.manaLines![0]!.gate!, lone("Creature \u2014 Dragon")), "the deck-level verdict is unmet").toBe("unmet");
+    // the report-side classification (the audit's bar) still says no; the simulation asks per game and keeps the card
+    expect(classifyAccelerant(jasper, lone("Creature \u2014 Dragon"))).toBeNull();
+    expect(classifyAccelerant(jasper, lone("Creature \u2014 Dragon"), true)).not.toBeNull();
+    expect(classifyAccelerant(jasper, [jasper, ...basics(99)], true), "no Dragon in the deck: no game can meet the gate").toBeNull();
+    const run = (typeLine: string): number[][] => simulate(lone(typeLine), { trials: 300, turns: 10, seed: 11, mulligan: false }).manaAt;
+    const withDragon = run("Creature \u2014 Dragon"), control = run("Creature \u2014 Elf");
+    let more = 0, same = 0;
+    for (let t = 0; t < withDragon.length; t++) for (let i = 0; i < withDragon[t]!.length; i++) {
+      const d = withDragon[t]![i]! - control[t]![i]!;
+      expect(d, `turn ${t + 1} trial ${i}`).toBeGreaterThanOrEqual(0);
+      if (d > 0) more++; else same++;
+    }
+    expect(more, "the games where the Dragon is out play the Jasper").toBeGreaterThan(0);
+    expect(same, "the games with no Dragon out do not").toBeGreaterThan(0);
   });
 
   test("a power gate (Fanatic of Rhonas) turns on once a creature of power 4 is out, and stays off beside creatures of power 2 or a '*' (#1191)", () => {

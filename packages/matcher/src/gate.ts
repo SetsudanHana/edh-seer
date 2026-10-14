@@ -8,7 +8,7 @@
  *  parse it. A MAX-SPEED GATE IS NONE OF THESE: it is met from turn 4 in any deck (`isSpeedGate`). UNKNOWN IS TREATED AS UNMET by every consumer, never as met: a silent wrong answer is worse than a missing one.
  *
  *  "ENOUGH" (CEILING): a gate that asks for N permanents of a kind ("you control a dragon", "three or more artifacts", "a swamp") is met when the chance of having N of them among the cards seen
- *  by the corpus median clock is at least the repo's own confidence bar (`pAtLeast`, `GATE_TURN`, `GATE_CONFIDENCE`: the same turn and bar `deck-math.ts` asks "does the deck have enough of X"
+ *  by the corpus median clock is at least the repo's own confidence bar (`pAtLeast`, `CORPUS_MEDIAN_CLOCK`, `REQUIRED_CONFIDENCE`: the same turn and bar `deck-math.ts` asks "does the deck have enough of X"
  *  with). A single Dragon in a hundred cards does not make Mox Jasper a rock; a dozen do. The chance itself (`gateProbability`) is what a quality weight reads.
  *  CEILING: it counts the deck's own cards of the type, not tokens they make (a Dragon token) and not changelings. THE COMMANDER IS A CARD OF THE DECK (owner 2026-10-13): every consumer is handed the
  *  whole decklist, commanders included, and the commander counts toward a gate as one of the hundred (drawn like the rest: the model does not know it is castable from the command zone
@@ -23,6 +23,7 @@
 import { pAtLeast, seen } from "@edh-seer/engine";
 import type { ManaGate, ManaLine } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
+import { CORPUS_MEDIAN_CLOCK, REQUIRED_CONFIDENCE } from "./corpus-clock.js";
 import { countsAsLand, parseTypeLine } from "./typeline.js";
 
 export type GateVerdict = "met" | "unmet" | "unknown";
@@ -34,11 +35,6 @@ export type GateVerdict = "met" | "unmet" | "unknown";
  *  turns the player's opponents keep their life. The card carrying the gate is itself a start your engines! permanent in the corpus (all three), so speed exists once it is out; the model does not price the turn it is cast. */
 export const MAX_SPEED_TURN = 4;
 export const isSpeedGate = (gate: ManaGate): boolean => gate.kind === "speed";
-
-/** The turn the deck is asked at: `CORPUS_MEDIAN_CLOCK` in `deck-math.ts`, and the confidence bar is its `REQUIRED_CONFIDENCE`. Not imported: deck-math reaches this module through
- *  land-score and same-job. `gate.test.ts` pins both. */
-export const GATE_TURN = 9;
-export const GATE_CONFIDENCE = 0.5;
 
 const PERMANENT_TYPES: ReadonlySet<string> = new Set(["artifact", "creature", "enchantment", "land", "planeswalker", "battle"]);
 
@@ -92,7 +88,11 @@ export const permCounts = (g: BoardGate, p: Perm): boolean =>
 /** HOW MANY OF THESE PERMANENTS THE GATE COUNTS. */
 export const boardCount = (g: BoardGate, perms: readonly Perm[]): number => perms.filter((p) => permCounts(g, p)).length;
 
-/** THE CHANCE THE DECK MEETS THE GATE, or null when the gate is not a property of a decklist (`unknown`). By default by the median clock (`GATE_TURN`), over every card of the
+/** CAN THE DECK EVER MEET THIS BOARD GATE: it holds `need` permanents the gate counts. Reachability, not a probability -- the goldfish prices a board gate per game against the permanents
+ *  the game puts onto the battlefield, and this only says that some game can (a deck with no Dragon has no Jasper to play in any of them). */
+export const boardGateReachable = (g: BoardGate, deck: readonly DeckCard[]): boolean => boardCount(g, factsOf(deck).permanents) >= g.need;
+
+/** THE CHANCE THE DECK MEETS THE GATE, or null when the gate is not a property of a decklist (`unknown`). By default by the median clock (`CORPUS_MEDIAN_CLOCK`), over every card of the
  *  deck. With `by`, BY THAT TURN (the goldfish's timing, in closed form): the cards seen by then (`seen(by)`), and only the permanents that can be on the battlefield on it --
  *  a land (a land drop a turn) or a spell whose mana value is BELOW the turn: cast on curve the turn before, the colour audit's rock clock (`manaValue < turn`) and the goldfish's
  *  own, which counts a permanent it 'casts' from the next turn. CEILING: on curve is the mana available on that turn, and a spell cast earlier than it costs the turn's other plays,
@@ -102,7 +102,7 @@ export function gateProbability(gate: ManaGate, deck: readonly DeckCard[], by?: 
   if (gate.kind === "speed") return by === undefined || by >= gate.n ? 1 : 0;
   const f = factsOf(deck);
   if (gate.kind === "initiative") return f.initiative ? 1 : 0;
-  const n = seen(by ?? GATE_TURN);
+  const n = seen(by ?? CORPUS_MEDIAN_CLOCK);
   if (gate.kind === "same-name") {
     const byName = new Map<string, number>();
     for (const p of f.permanents) if (p.land) byName.set(p.name, (byName.get(p.name) ?? 0) + 1);
@@ -121,14 +121,14 @@ export function boardGateProbability(b: BoardGate, deck: readonly DeckCard[], by
   // A SPELL COUNTS FROM THE TURN AFTER IT CAN BE CAST, and never on turn 1: the goldfish casts a permanent it has no use for as a proxy at the END of the first turn whose leftover mana pays
   // its mana value and counts it from the NEXT turn, so a 0-mana artifact is out on turn 2, not 1 (`manaValue < by` alone said turn 1).
   // CEILING: this applies to a free ACCELERANT too (a Mox is cast and counted on turn 1 in the goldfish, turn 2 here): an under-claim, the safe direction.
-  return pAtLeast(b.need, counted.filter((p) => by === undefined || p.land || (p.manaValue < by && by >= 2)).length, seen(by ?? GATE_TURN), f.size);
+  return pAtLeast(b.need, counted.filter((p) => by === undefined || p.land || (p.manaValue < by && by >= 2)).length, seen(by ?? CORPUS_MEDIAN_CLOCK), f.size);
 }
 
-/** MET BY THIS TURN, in closed form: the same gate, the same bar (`GATE_CONFIDENCE`), the deck's chance of having the permanents on the battlefield by `turn` (`gateProbability`'s `by`).
+/** MET BY THIS TURN, in closed form: the same gate, the same bar (`REQUIRED_CONFIDENCE`), the deck's chance of having the permanents on the battlefield by `turn` (`gateProbability`'s `by`).
  *  The colour audit and the Karsten inputs ask it; the goldfish counts the permanents of each simulated game against the same `BoardGate`. A gate no decklist settles is not met. */
 export function gateMetBy(gate: ManaGate, deck: readonly DeckCard[], turn: number, holderIsLand = false): boolean {
   const p = gateProbability(gate, deck, turn, holderIsLand);
-  return p !== null && p >= GATE_CONFIDENCE;
+  return p !== null && p >= REQUIRED_CONFIDENCE;
 }
 
 /** THE LINE'S GATE HOLDS BY THIS TURN (an ungated line always does; a gated one with no deck to judge it against never does). */
@@ -138,7 +138,7 @@ export const lineGateMetBy = (line: ManaLine, deck: readonly DeckCard[] | undefi
 /** MET, UNMET OR UNKNOWN: whether the deck meets a gate string (`ManaLine.gate`). */
 export function gateVerdict(gate: ManaGate, deck: readonly DeckCard[]): GateVerdict {
   const p = gateProbability(gate, deck);
-  return p === null ? "unknown" : p >= GATE_CONFIDENCE ? "met" : "unmet";
+  return p === null ? "unknown" : p >= REQUIRED_CONFIDENCE ? "met" : "unmet";
 }
 
 /** A LINE'S GATE AGAINST THE DECK: an ungated line is met, and a gated one is unknown when there is no deck to judge it against (a consumer that was not given one credits

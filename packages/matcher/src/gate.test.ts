@@ -1,7 +1,6 @@
 import { parseGate } from "@edh-seer/tagger/gate";
 import { expect, test } from "vitest";
-import { GATE_CONFIDENCE, GATE_TURN, boardCount, boardGateOf, gateMetBy, gateProbability, gateVerdict, lineGateMetBy, lineGateVerdict, permOf } from "./gate.js";
-import { CORPUS_MEDIAN_CLOCK, REQUIRED_CONFIDENCE } from "./deck-math.js";
+import { boardCount, boardGateOf, gateMetBy, gateProbability, gateVerdict, lineGateMetBy, lineGateVerdict, permOf } from "./gate.js";
 import { mkLine } from "./mana-test-support.js";
 import type { DeckCard } from "./types.js";
 
@@ -10,11 +9,6 @@ const copies = (n: number, make: (i: number) => DeckCard): DeckCard[] => Array.f
 const filler = (n: number): DeckCard[] => copies(n, (i) => dc(`Spell ${i}`, "Instant"));
 /** A 100-card deck: `own` plus filler. */
 const deckOf = (...own: DeckCard[][]): DeckCard[] => { const cards = own.flat(); return [...cards, ...filler(100 - cards.length)]; };
-
-test("the gate horizon is the deck-math one (not imported there: deck-math reaches this module through land-score)", () => {
-  expect(GATE_TURN).toBe(CORPUS_MEDIAN_CLOCK);
-  expect(GATE_CONFIDENCE).toBe(REQUIRED_CONFIDENCE);
-});
 
 test("'you control a <subtype>' is met by a deck that has enough of the subtype to draw one by the median clock, not by one stray card (Mox Jasper)", () => {
   const dragons = (n: number) => copies(n, (i) => dc(`Dragon ${i}`, "Creature — Dragon"));
