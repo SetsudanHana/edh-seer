@@ -70,7 +70,7 @@ test("trading a land for a land is not ramp: Crop Rotation is not in Cultivate's
  *  owner's second reading of the labelled pairs, at least 90% of the pairs `sameJob` puts together
  *  are labelled same, and no pair labelled different is put together. Measured 2026-10-06: 9 of 10
  *  together are same, 0 different (the old rules: 11 of 61, 39 different). Cards as the static build
- *  resolves them (`research/matcher/dump-same-job-label-cards.ts`). A ratchet both ways: the purity
+ *  resolves them (`research/mana/refresh-fixtures.mts`). A ratchet both ways: the purity
  *  floor, and the count of same pairs found may not fall below what is banked. */
 test("G1: the pairs the group key puts together are the owner's same pairs", () => {
   const labels = labelSet.pairs as { role: string; out: string; in: string; label: string; excluded?: boolean }[];

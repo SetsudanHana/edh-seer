@@ -3,12 +3,23 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}",
    "manaValue": 2,
    "name": "Arcane Signet",
    "oracleText": "{T}: Add one mana of any color in your commander's color identity.",
+   "power": null,
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "toughness": null,
    "typeLine": "Artifact"
   },
   "tags": {
@@ -95,18 +106,30 @@
  },
  "Beast Within": {
   "card": {
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Beast",
+     "printingId": "62facbb8-1a83-4731-b515-0f7759ee8c3b",
+     "typeLine": "Token Creature — Beast"
+    }
+   ],
    "colorIdentity": [
     "G"
    ],
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}{G}",
    "manaValue": 3,
    "name": "Beast Within",
    "oracleText": "Destroy target permanent. Its controller creates a 3/3 green Beast creature token.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -254,12 +277,22 @@
  },
  "Big Score": {
   "card": {
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "printingId": "cec5cc8b-bc15-415a-bde6-6c783f8d0b0b",
+     "typeLine": "Token Artifact — Treasure"
+    }
+   ],
    "colorIdentity": [
     "R"
    ],
    "colors": [
     "R"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [
     "Treasure"
    ],
@@ -268,6 +301,15 @@
    "manaValue": 4,
    "name": "Big Score",
    "oracleText": "As an additional cost to cast this spell, discard a card.\nDraw two cards and create two Treasure tokens. (They're artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+   "power": null,
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -441,6 +483,8 @@
     "G"
    ],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [
     "Channel"
    ],
@@ -449,6 +493,11 @@
    "manaValue": 0,
    "name": "Boseiju, Who Endures",
    "oracleText": "{T}: Add {G}.\nChannel — {1}{G}, Discard this card: Destroy target artifact, enchantment, or nonbasic land an opponent controls. That player may search their library for a land card with a basic land type, put it onto the battlefield, then shuffle. This ability costs {1} less to activate for each legendary creature you control.",
+   "power": null,
+   "producedMana": [
+    "G"
+   ],
+   "toughness": null,
    "typeLine": "Legendary Land"
   },
   "tags": {
@@ -700,12 +749,16 @@
    "colors": [
     "U"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{1}{U}{U}",
    "manaValue": 3,
    "name": "Cancel",
    "oracleText": "Counter target spell.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -768,12 +821,16 @@
    "colors": [
     "R"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}{R}",
    "manaValue": 3,
    "name": "Chaos Warp",
    "oracleText": "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -837,12 +894,16 @@
    "colors": [
     "U"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{U}{U}",
    "manaValue": 2,
    "name": "Counterspell",
    "oracleText": "Counter target spell.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -899,12 +960,22 @@
  },
  "Crib Swap": {
   "card": {
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Shapeshifter",
+     "printingId": "c2963ce1-f9d8-437a-9489-e0913a8b8d26",
+     "typeLine": "Token Creature — Shapeshifter"
+    }
+   ],
    "colorIdentity": [
     "W"
    ],
    "colors": [
     "W"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [
     "Changeling"
    ],
@@ -913,6 +984,8 @@
    "manaValue": 3,
    "name": "Crib Swap",
    "oracleText": "Changeling (This card is every creature type.)\nExile target creature. Its controller creates a 1/1 colorless Shapeshifter creature token with changeling.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Kindred Instant — Shapeshifter"
   },
   "tags": {
@@ -1441,12 +1514,16 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}{G}",
    "manaValue": 3,
    "name": "Cultivate",
    "oracleText": "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Sorcery"
   },
   "tags": {
@@ -1612,6 +1689,8 @@
    "colors": [
     "U"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": true,
    "keywords": [
     "Overload"
    ],
@@ -1620,6 +1699,8 @@
    "manaValue": 2,
    "name": "Cyclonic Rift",
    "oracleText": "Return target nonland permanent you don't control to its owner's hand.\nOverload {6}{U} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -1715,12 +1796,16 @@
    "colors": [
     "R"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{X}{R}",
    "manaValue": 1,
    "name": "Fireball",
    "oracleText": "This spell costs {1} more to cast for each target beyond the first.\nFireball deals X damage divided evenly, rounded down, among any number of targets.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Sorcery"
   },
   "tags": {
@@ -1803,6 +1888,8 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [
     "Food"
    ],
@@ -1811,6 +1898,8 @@
    "manaValue": 0,
    "name": "Giant Mana Cake",
    "oracleText": "{TK}{TK} — When this permanent leaves the battlefield, create two Food tokens. (They're artifacts with \"{2}, {T}, Sacrifice this artifact: You gain 3 life.\")\n{TK}{TK}{TK}{TK} — When this permanent dies, destroy target nonland permanent.\n{TK}{TK} — 3/3\n{TK}{TK}{TK} — 6/2",
+   "power": null,
+   "toughness": null,
    "typeLine": "Stickers"
   },
   "tags": {
@@ -1943,6 +2032,8 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [
     "Equip"
    ],
@@ -1951,6 +2042,8 @@
    "manaValue": 2,
    "name": "Lightning Greaves",
    "oracleText": "Equipped creature has haste and shroud. (It can't be the target of spells or abilities.)\nEquip {0}",
+   "power": null,
+   "toughness": null,
    "typeLine": "Artifact — Equipment"
   },
   "tags": {
@@ -2011,18 +2104,39 @@
  },
  "Llanowar Elves": {
   "card": {
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Llanowar Elves",
+     "printingId": "11bd6cef-f887-4b07-a957-4c53cb3c9c87",
+     "typeLine": "Creature — Elf Druid"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Marwyn's Kindred",
+     "printingId": "8ef95e7a-9f07-41f8-908b-2df93e03d391",
+     "typeLine": "Sorcery"
+    }
+   ],
    "colorIdentity": [
     "G"
    ],
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{G}",
    "manaValue": 1,
    "name": "Llanowar Elves",
    "oracleText": "{T}: Add {G}.",
+   "power": "1",
+   "producedMana": [
+    "G"
+   ],
+   "toughness": "1",
    "typeLine": "Creature — Elf Druid"
   },
   "tags": {
@@ -2119,12 +2233,19 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}",
    "manaValue": 2,
    "name": "Mind Stone",
    "oracleText": "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.",
+   "power": null,
+   "producedMana": [
+    "C"
+   ],
+   "toughness": null,
    "typeLine": "Artifact"
   },
   "tags": {
@@ -2304,12 +2425,16 @@
    "colors": [
     "W"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{W}",
    "manaValue": 1,
    "name": "Path to Exile",
    "oracleText": "Exile target creature. Its controller may search their library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -2439,11 +2564,39 @@
    "colors": [
     "U"
    ],
+   "commanderLegality": "legal",
+   "faces": [
+    {
+     "artCrop": "https://cards.scryfall.io/art_crop/front/5/3/5358b87a-1a29-426d-b165-40c97da2c14d.jpg?1783911236",
+     "colors": [
+      "U"
+     ],
+     "manaCost": "{1}{U}{U}",
+     "name": "Sink into Stupor",
+     "oracleText": "Return target spell or nonland permanent an opponent controls to its owner's hand.",
+     "typeLine": "Instant"
+    },
+    {
+     "artCrop": "https://cards.scryfall.io/art_crop/back/5/3/5358b87a-1a29-426d-b165-40c97da2c14d.jpg?1783911236",
+     "colors": [],
+     "manaCost": "",
+     "name": "Soporific Springs",
+     "oracleText": "As this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {U}.",
+     "typeLine": "Land"
+    }
+   ],
+   "gameChanger": false,
    "keywords": [],
    "layout": "modal_dfc",
+   "manaCost": "{1}{U}{U}",
    "manaValue": 3,
    "name": "Sink into Stupor // Soporific Springs",
    "oracleText": "Return target spell or nonland permanent an opponent controls to its owner's hand.\n//\nAs this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {U}.",
+   "power": null,
+   "producedMana": [
+    "U"
+   ],
+   "toughness": null,
    "typeLine": "Instant // Land"
   },
   "tags": {
@@ -2596,12 +2749,28 @@
  },
  "Smothering Tithe": {
   "card": {
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Smothering Tithe",
+     "printingId": "da65d83c-67bd-4d54-9c9a-50d57ca115bb",
+     "typeLine": "Enchantment"
+    },
+    {
+     "component": "token",
+     "name": "Treasure",
+     "printingId": "cb7b5024-3a0b-4f14-977e-ba6c4c2567c9",
+     "typeLine": "Token Artifact — Treasure"
+    }
+   ],
    "colorIdentity": [
     "W"
    ],
    "colors": [
     "W"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": true,
    "keywords": [
     "Treasure"
    ],
@@ -2610,6 +2779,15 @@
    "manaValue": 4,
    "name": "Smothering Tithe",
    "oracleText": "Whenever an opponent draws a card, that player may pay {2}. If the player doesn't, you create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+   "power": null,
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "toughness": null,
    "typeLine": "Enchantment"
   },
   "tags": {
@@ -2739,12 +2917,16 @@
    "colors": [
     "W"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{W}",
    "manaValue": 1,
    "name": "Swords to Plowshares",
    "oracleText": "Exile target creature. Its controller gains life equal to its power.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -2847,12 +3029,16 @@
    "colors": [
     "W"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": true,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}{W}",
    "manaValue": 3,
    "name": "Teferi's Protection",
    "oracleText": "Until your next turn, your life total can't change and you gain protection from everything. All permanents you control phase out. (While they're phased out, they're treated as though they don't exist. They phase in before you untap during your untap step.)\nExile Teferi's Protection.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -2979,6 +3165,8 @@
    "colors": [
     "R"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [
     "Overload"
    ],
@@ -2987,6 +3175,8 @@
    "manaValue": 1,
    "name": "Vandalblast",
    "oracleText": "Destroy target artifact you don't control.\nOverload {4}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")",
+   "power": null,
+   "toughness": null,
    "typeLine": "Sorcery"
   },
   "tags": {
@@ -3051,12 +3241,16 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{X}{X}",
    "manaValue": 0,
    "name": "Walking Ballista",
    "oracleText": "This creature enters with X +1/+1 counters on it.\n{4}: Put a +1/+1 counter on this creature.\nRemove a +1/+1 counter from this creature: It deals 1 damage to any target.",
+   "power": "0",
+   "toughness": "0",
    "typeLine": "Artifact Creature — Construct"
   },
   "tags": {
@@ -3235,12 +3429,16 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{1}",
    "manaValue": 1,
    "name": "Wayfarer's Bauble",
    "oracleText": "{2}, {T}, Sacrifice this artifact: Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Artifact"
   },
   "tags": {
@@ -3492,12 +3690,16 @@
    "colors": [
     "W"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}{W}{W}",
    "manaValue": 4,
    "name": "Wrath of God",
    "oracleText": "Destroy all creatures. They can't be regenerated.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Sorcery"
   },
   "tags": {

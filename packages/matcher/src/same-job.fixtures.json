@@ -5,6 +5,7 @@
    "artCrop": "https://cards.scryfall.io/art_crop/front/c/6/c6b6117c-faab-4bbb-b851-07bd8061ef03.jpg?1789644435",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "edhrecRank": 3,
    "gameChanger": false,
    "keywords": [],
@@ -152,6 +153,8 @@
    "colors": [
     "W"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [
     "Rebound"
    ],
@@ -160,6 +163,8 @@
    "manaValue": 1,
    "name": "Blossoming Calm",
    "oracleText": "You gain hexproof until your next turn. You gain 2 life.\nRebound (If you cast this spell from your hand, exile it as it resolves. At the beginning of your next upkeep, you may cast this card from exile without paying its mana cost.)",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -248,6 +253,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "edhrecRank": 217,
    "gameChanger": true,
    "keywords": [],
@@ -494,12 +500,23 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{1}{G}",
    "manaValue": 2,
    "name": "Cryptolith Rite",
    "oracleText": "Creatures you control have \"{T}: Add one mana of any color.\"",
+   "power": null,
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "toughness": null,
    "typeLine": "Enchantment"
   },
   "tags": {
@@ -617,6 +634,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "edhrecRank": 20,
    "gameChanger": false,
    "keywords": [],
@@ -831,12 +849,16 @@
    "colors": [
     "W"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}{W}",
    "manaValue": 3,
    "name": "Flawless Maneuver",
    "oracleText": "If you control a commander, you may cast this spell without paying its mana cost.\nCreatures you control gain indestructible until end of turn.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -914,6 +936,8 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [
     "Corrupted",
     "Proliferate"
@@ -923,6 +947,15 @@
    "manaValue": 3,
    "name": "Glistening Sphere",
    "oracleText": "This artifact enters tapped.\nWhen this artifact enters, proliferate.\n{T}: Add one mana of any color.\nCorrupted — {T}: Add three mana of any one color. Activate only if an opponent has three or more poison counters.",
+   "power": null,
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "toughness": null,
    "typeLine": "Artifact"
   },
   "tags": {
@@ -1112,18 +1145,33 @@
  },
  "Growth Spasm": {
   "card": {
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Eldrazi Spawn",
+     "printingId": "0b14ddd5-7501-46e5-bcc7-e2bbef81b8b0",
+     "typeLine": "Token Creature — Eldrazi Spawn"
+    }
+   ],
    "colorIdentity": [
     "G"
    ],
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}{G}",
    "manaValue": 3,
    "name": "Growth Spasm",
    "oracleText": "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle. Create a 0/1 colorless Eldrazi Spawn creature token. It has \"Sacrifice this token: Add {C}.\"",
+   "power": null,
+   "producedMana": [
+    "C"
+   ],
+   "toughness": null,
    "typeLine": "Sorcery"
   },
   "tags": {
@@ -1413,12 +1461,16 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{1}{G}",
    "manaValue": 2,
    "name": "Heroic Intervention",
    "oracleText": "Permanents you control gain hexproof and indestructible until end of turn.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -1495,6 +1547,7 @@
    "colors": [
     "R"
    ],
+   "commanderLegality": "legal",
    "edhrecRank": 106,
    "gameChanger": true,
    "keywords": [],
@@ -1662,6 +1715,7 @@
    "artCrop": "https://cards.scryfall.io/art_crop/front/7/5/758f95f8-bcb0-43ae-b474-56ebd855951e.jpg?1783939234",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "edhrecRank": 741,
    "gameChanger": true,
    "keywords": [],
@@ -1924,6 +1978,7 @@
    "artCrop": "https://cards.scryfall.io/art_crop/front/c/1/c1a31d52-a407-4ded-bfca-cc812f11afa0.jpg?1783921790",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "edhrecRank": 152,
    "gameChanger": true,
    "keywords": [],
@@ -2132,12 +2187,19 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}",
    "manaValue": 2,
    "name": "Mind Stone",
    "oracleText": "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.",
+   "power": null,
+   "producedMana": [
+    "C"
+   ],
+   "toughness": null,
    "typeLine": "Artifact"
   },
   "tags": {
@@ -2315,6 +2377,7 @@
    "artCrop": "https://cards.scryfall.io/art_crop/front/b/f/bf9fecfd-d122-422f-bd0a-5bf69b434dfe.jpg?1783938445",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "edhrecRank": 248,
    "gameChanger": true,
    "keywords": [],
@@ -2530,12 +2593,23 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{0}",
    "manaValue": 0,
    "name": "Mox Jasper",
    "oracleText": "{T}: Add one mana of any color. Activate only if you control a Dragon.",
+   "power": null,
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "toughness": null,
    "typeLine": "Legendary Artifact"
   },
   "tags": {
@@ -2635,8 +2709,24 @@
  },
  "Mox Opal": {
   "card": {
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Mox Opal",
+     "printingId": "547e3aa5-d88a-4418-ab9d-dd65385f031b",
+     "typeLine": "Legendary Artifact"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Quicksilver Lapidary",
+     "printingId": "b9e9858f-4cdc-4682-be2f-20f555014b07",
+     "typeLine": "Creature — Phyrexian Artificer"
+    }
+   ],
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [
     "Metalcraft"
    ],
@@ -2645,6 +2735,15 @@
    "manaValue": 0,
    "name": "Mox Opal",
    "oracleText": "Metalcraft — {T}: Add one mana of any color. Activate only if you control three or more artifacts.",
+   "power": null,
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "toughness": null,
    "typeLine": "Legendary Artifact"
   },
   "tags": {
@@ -2763,6 +2862,7 @@
    "colors": [
     "B"
    ],
+   "commanderLegality": "legal",
    "edhrecRank": 1733,
    "gameChanger": false,
    "keywords": [
@@ -2904,10 +3004,20 @@
  },
  "Path of Annihilation": {
   "card": {
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Eldrazi Spawn",
+     "printingId": "e32795e1-5548-43ef-8cd6-c605a19ef708",
+     "typeLine": "Token Creature — Eldrazi Spawn"
+    }
+   ],
    "colorIdentity": [
     "G"
    ],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [
     "Devoid"
    ],
@@ -2916,6 +3026,16 @@
    "manaValue": 4,
    "name": "Path of Annihilation",
    "oracleText": "Devoid (This card has no color.)\nWhen this enchantment enters, create two 0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"\nEldrazi you control have \"{T}: Add one mana of any color.\"\nWhenever you cast a creature spell with mana value 7 or greater, you gain 4 life.",
+   "power": null,
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "toughness": null,
    "typeLine": "Enchantment"
   },
   "tags": {
@@ -3201,12 +3321,23 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{1}",
    "manaValue": 1,
    "name": "Pyramid of the Pantheon",
    "oracleText": "{2}, {T}: Add one mana of any color. Put a brick counter on this artifact.\n{T}: Add three mana of any one color. Activate only if there are three or more brick counters on this artifact.",
+   "power": null,
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "toughness": null,
    "typeLine": "Artifact"
   },
   "tags": {
@@ -3412,6 +3543,7 @@
    "colors": [
     "U"
    ],
+   "commanderLegality": "legal",
    "edhrecRank": 46,
    "gameChanger": true,
    "keywords": [],
@@ -3537,14 +3669,29 @@
  },
  "Sarevok's Tome": {
   "card": {
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Undercity // The Initiative",
+     "printingId": "2c65185b-6cf0-451d-985e-56aa45d9a57d",
+     "typeLine": "Dungeon — Undercity // Card"
+    }
+   ],
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{4}",
    "manaValue": 4,
    "name": "Sarevok's Tome",
    "oracleText": "When this artifact enters, you take the initiative.\n{T}: Add {C}. If you have the initiative, add {C}{C} instead.\n{3}, {T}: Exile cards from the top of your library until you exile a nonland card. You may cast that card without paying its mana cost. Activate only if you've completed a dungeon.",
+   "power": null,
+   "producedMana": [
+    "C"
+   ],
+   "toughness": null,
    "typeLine": "Artifact — Book"
   },
   "tags": {
@@ -3788,12 +3935,23 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{4}",
    "manaValue": 4,
    "name": "Sceptre of Eternal Glory",
    "oracleText": "{T}: Add one mana of any color.\n{T}: Add three mana of any one color. Activate only if you control three or more lands with the same name.",
+   "power": null,
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "toughness": null,
    "typeLine": "Legendary Artifact"
   },
   "tags": {
@@ -3956,6 +4114,14 @@
  },
  "Scout the Wilderness": {
   "card": {
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Soldier",
+     "printingId": "8c4b0257-2ca5-4015-9d63-d7cf6e87ab9d",
+     "typeLine": "Token Creature — Soldier"
+    }
+   ],
    "colorIdentity": [
     "G",
     "W"
@@ -3963,6 +4129,8 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [
     "Kicker"
    ],
@@ -3971,6 +4139,8 @@
    "manaValue": 3,
    "name": "Scout the Wilderness",
    "oracleText": "Kicker {1}{W} (You may pay an additional {1}{W} as you cast this spell.)\nSearch your library for a basic land card, put it onto the battlefield tapped, then shuffle. If this spell was kicked, create two 1/1 white Soldier creature tokens.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Sorcery"
   },
   "tags": {
@@ -4225,6 +4395,7 @@
    "artCrop": "https://cards.scryfall.io/art_crop/front/1/d/1d8b007b-3169-4ee3-80c7-781fc096fc7a.jpg?1783903215",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "edhrecRank": 39,
    "gameChanger": false,
    "keywords": [
@@ -4361,12 +4532,19 @@
   "card": {
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{1}",
    "manaValue": 1,
    "name": "Sol Ring",
    "oracleText": "{T}: Add {C}{C}.",
+   "power": null,
+   "producedMana": [
+    "C"
+   ],
+   "toughness": null,
    "typeLine": "Artifact"
   },
   "tags": {
@@ -4452,18 +4630,30 @@
  },
  "Stroke of Midnight": {
   "card": {
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Human",
+     "printingId": "5054bb15-ddd5-4e5e-a9fd-6bdf255f7fd3",
+     "typeLine": "Token Creature — Human"
+    }
+   ],
    "colorIdentity": [
     "W"
    ],
    "colors": [
     "W"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}{W}",
    "manaValue": 3,
    "name": "Stroke of Midnight",
    "oracleText": "Destroy target nonland permanent. Its controller creates a 1/1 white Human creature token.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -4626,12 +4816,16 @@
    "colors": [
     "W"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{2}{W}",
    "manaValue": 3,
    "name": "Teferi's Reproach",
    "oracleText": "Choose target opponent. Until that player's next turn, they gain protection from everything and their life total can't change. All nonland permanents they control phase out. (While they're phased out, they're treated as though they don't exist. They phase in before that player untaps during their next untap step.)\nExile Teferi's Reproach.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {
@@ -4725,6 +4919,7 @@
    "artCrop": "https://cards.scryfall.io/art_crop/front/d/5/d5806e68-1054-458e-866d-1f2470f682b2.jpg?1790212038",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "edhrecRank": 96,
    "gameChanger": true,
    "keywords": [
@@ -4959,12 +5154,16 @@
    "colors": [
     "R"
    ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
    "keywords": [],
    "layout": "normal",
    "manaCost": "{R}{R}",
    "manaValue": 2,
    "name": "Wild Magic Surge",
    "oracleText": "Destroy target permanent an opponent controls. Its controller reveals cards from the top of their library until they reveal a permanent card that shares a card type with that permanent. They put that card onto the battlefield and the rest on the bottom of their library in a random order.",
+   "power": null,
+   "toughness": null,
    "typeLine": "Instant"
   },
   "tags": {

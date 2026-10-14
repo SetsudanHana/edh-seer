@@ -13,14 +13,16 @@ const FIXTURES = [
   "ramp-colour.fixtures.json",
   "same-job.fixtures.json",
   "quality.fixtures.json",
+  "same-job.labels.cards.json",
 ] as const;
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REFRESH = "npx tsx research/mana/refresh-fixtures.mts";
 
-/** Cards that have no derived row in the corpus (Mongo has none today); the fixture holds `tags: null` for them and nothing reads it. */
-const NO_ROW = new Set(["Mana Crypt", "Horizon Boughs", "Emissary's Ploy"]);
+/** A card with no derived row is `tags: null` in a fixture. Derive never runs on a card that is not commander-legal (banned or not_legal), so
+ *  that is the only legitimate absence; any other null row is a hole. */
+const noRowByDesign = (r: Row) => r.tags === null && (r.card.commanderLegality === "banned" || r.card.commanderLegality === "not_legal");
 
-type Row = { card: { name: string }; tags: { deriveVersion?: number } | null };
+type Row = { card: { name: string; commanderLegality?: string }; tags: { deriveVersion?: number } | null };
 /** Every `{card, tags}` entry in a fixture, whichever of its three shapes (array, name-keyed object, `{cards, gisa.deck}`). */
 function rows(json: unknown): Row[] {
   if (Array.isArray(json)) return json as Row[];
@@ -33,7 +35,7 @@ describe("fixture derived rows are whole and current", () => {
   for (const file of FIXTURES) {
     test(file, () => {
       const everyRow = rows(JSON.parse(readFileSync(join(HERE, file), "utf8")));
-      const all = everyRow.filter((r) => !(r.tags === null && NO_ROW.has(r.card.name)));
+      const all = everyRow.filter((r) => !noRowByDesign(r));
       expect(all.length, `${file} has rows`).toBeGreaterThan(0);
       const missing = all.filter((r) => r.tags?.deriveVersion === undefined).map((r) => r.card.name);
       const stale = all.filter((r) => r.tags?.deriveVersion !== undefined && r.tags.deriveVersion !== DERIVE_VERSION).map((r) => `${r.card.name}@${r.tags!.deriveVersion}`);

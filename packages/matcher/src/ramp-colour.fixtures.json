@@ -8,6 +8,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Enchant"
@@ -189,6 +190,7 @@
    "_id": "c259e16f-2a44-4552-8678-815f757a02e8",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -332,6 +334,7 @@
    "_id": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -449,6 +452,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Shroud"
@@ -560,6 +564,7 @@
     "B",
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "saga",
@@ -794,6 +799,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Flying"
@@ -928,6 +934,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -1129,6 +1136,7 @@
     "B"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -1257,6 +1265,7 @@
     "U"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -1425,6 +1434,7 @@
    "_id": "d98b4250-3492-4864-9c4c-42db09b3ccd4",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Indestructible"
@@ -1604,6 +1614,7 @@
    "colors": [
     "W"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -1659,6 +1670,7 @@
    "_id": "539f5396-d99a-417d-a84c-dff7930b5900",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -1858,6 +1870,7 @@
    "_id": "95c3976c-33f3-490b-bfd3-7f1af2fe0416",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -2030,6 +2043,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -2233,6 +2247,7 @@
    "_id": "21d700e8-0255-418e-96a0-6fe05b3f836d",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -2351,6 +2366,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -2492,6 +2508,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -2677,6 +2694,7 @@
     "U"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -2799,6 +2817,7 @@
     "B",
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -3165,6 +3184,7 @@
     "B",
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -3382,6 +3402,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -3566,6 +3587,7 @@
    "_id": "b657b3df-9287-44cf-a1cd-a80ead71a553",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Flash"
@@ -3740,6 +3762,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -3889,6 +3912,7 @@
    "colors": [
     "U"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -4078,6 +4102,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Constellation"
@@ -4223,6 +4248,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -4433,6 +4459,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -4589,6 +4616,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -4710,6 +4738,7 @@
    "_id": "88e936c3-cab9-430f-baa1-930ff557cbf6",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "banned",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -4738,6 +4767,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -4924,6 +4954,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -5118,6 +5149,7 @@
    "_id": "95560508-7ac9-4be9-8a3f-3c7d5b52807b",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -5235,6 +5267,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Enchant"
@@ -5369,6 +5402,7 @@
     "R"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -5487,6 +5521,7 @@
     "G",
     "R"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -5699,6 +5734,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -5824,6 +5860,7 @@
    "colors": [
     "R"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -5977,6 +6014,23 @@
    ],
    "colors": [
     "G"
+   ],
+   "commanderLegality": "legal",
+   "faces": [
+    {
+     "colors": [],
+     "manaCost": "{2}{G}",
+     "name": "Greenhouse",
+     "oracleText": "Lands you control have \"{T}: Add one mana of any color.\"\n(You may cast either half. That door unlocks on the battlefield. As a sorcery, you may pay the mana cost of a locked door to unlock it.)",
+     "typeLine": "Enchantment — Room"
+    },
+    {
+     "colors": [],
+     "manaCost": "{3}{G}",
+     "name": "Rickety Gazebo",
+     "oracleText": "When you unlock this door, mill four cards, then return up to two permanent cards from among them to your hand.\n(You may cast either half. That door unlocks on the battlefield. As a sorcery, you may pay the mana cost of a locked door to unlock it.)",
+     "typeLine": "Enchantment — Room"
+    }
    ],
    "gameChanger": false,
    "keywords": [
@@ -6229,6 +6283,7 @@
    "_id": "32263baa-d3f0-463f-92b3-4e9938476add",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -6426,6 +6481,7 @@
    "_id": "065346cd-cd81-478e-8a62-2c7ea421bdcd",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "not_legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "planar",
@@ -6466,6 +6522,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -6651,6 +6708,7 @@
     "U"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -6713,6 +6771,7 @@
     "U"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -6833,6 +6892,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -6990,6 +7050,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Multikicker"
@@ -7133,6 +7194,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -7254,6 +7316,7 @@
    "_id": "32e5339e-9e4f-46f8-b305-f9d6d3ba8bb5",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -7428,6 +7491,7 @@
    "_id": "c97361b5-af16-4a7b-af85-a429dbaf4ad2",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -7627,6 +7691,7 @@
     "R"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -7686,6 +7751,7 @@
    "_id": "ae1f2ab5-c6a5-4d49-a746-3cb4668bf805",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -7747,11 +7813,33 @@
    "_id": "1a7e367e-1d8d-463d-a35f-4bad44a5ebea",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
+   "faces": [
+    {
+     "artCrop": "https://cards.scryfall.io/art_crop/front/1/1/115a9a44-131d-45f3-852a-40fd18e4afb6.jpg?1783925552",
+     "colors": [],
+     "manaCost": "{2}",
+     "name": "Mystic Skull",
+     "oracleText": "{1}, {T}: Add one mana of any color.\n{5}, {T}: Transform this artifact.",
+     "typeLine": "Artifact"
+    },
+    {
+     "artCrop": "https://cards.scryfall.io/art_crop/back/1/1/115a9a44-131d-45f3-852a-40fd18e4afb6.jpg?1783925552",
+     "colors": [],
+     "manaCost": "",
+     "name": "Mystic Monstrosity",
+     "oracleText": "Lands you control have \"{T}: Add one mana of any color.\"",
+     "power": "5",
+     "toughness": "6",
+     "typeLine": "Artifact Creature — Construct"
+    }
+   ],
    "gameChanger": false,
    "keywords": [
     "Transform"
    ],
    "layout": "transform",
+   "manaCost": "{2}",
    "manaValue": 2,
    "name": "Mystic Skull // Mystic Monstrosity",
    "oracleText": "{1}, {T}: Add one mana of any color.\n{5}, {T}: Transform this artifact.\n//\nLands you control have \"{T}: Add one mana of any color.\"",
@@ -7990,6 +8078,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Exalted"
@@ -8128,6 +8217,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -8218,6 +8308,7 @@
    "_id": "aa6723a2-75da-49f5-a1ba-cbfa82c55301",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -8424,6 +8515,7 @@
     "W"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -8544,6 +8636,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Enchant"
@@ -8672,6 +8765,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -8806,6 +8900,7 @@
    "_id": "e3056f28-868b-401a-a528-7528d639bdeb",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -8981,6 +9076,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -9065,6 +9161,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -9251,6 +9348,7 @@
    "colors": [
     "R"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -9359,6 +9457,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -9602,6 +9701,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -9771,6 +9871,7 @@
    "_id": "6ad8011d-3471-4369-9d68-b264cc027487",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -9883,6 +9984,7 @@
    "colors": [
     "U"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Landwalk",
@@ -9955,6 +10057,7 @@
    "_id": "eb735501-19e7-4910-aa6a-6667fff6f4e5",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Scry"
@@ -10165,6 +10268,7 @@
     "U"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -10335,6 +10439,7 @@
     "B"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -10398,6 +10503,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -10516,6 +10622,7 @@
    "colors": [
     "R"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Mill"
@@ -10734,6 +10841,7 @@
     "U"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -10939,6 +11047,7 @@
     "U"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -11147,6 +11256,7 @@
     "W"
    ],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -11511,6 +11621,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -11688,6 +11799,7 @@
     "R",
     "W"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Enchant"
@@ -11839,6 +11951,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Enchant"
@@ -12020,6 +12133,7 @@
    "_id": "db6174d7-211d-4817-b8e4-8384594c83f9",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -12083,6 +12197,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Enchant"
@@ -12214,6 +12329,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -12424,6 +12540,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Freerunning"
@@ -12611,6 +12728,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -12715,6 +12833,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [
     "Enchant"
@@ -12843,6 +12962,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -12954,6 +13074,7 @@
    "colors": [
     "G"
    ],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -13162,6 +13283,7 @@
    "_id": "b166b670-febc-4821-855e-f8d465644c03",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
@@ -13270,6 +13392,7 @@
    "_id": "8dd5f5af-d2d8-4356-8617-8381081b930c",
    "colorIdentity": [],
    "colors": [],
+   "commanderLegality": "legal",
    "gameChanger": false,
    "keywords": [],
    "layout": "normal",
