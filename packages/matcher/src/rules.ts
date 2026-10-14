@@ -20,7 +20,10 @@ export type RuleClause =
   | { op: "effectKind"; in: string[]; repeats?: (string | null)[]; control?: string[];
       /** The effect's SUBJECT scope (`all`, `each`, `target`): present on the effect and in this list. An effect that names none does not match -- `cost-reduction` with scope `all`/`each` is a discount
        *  for OTHER spells (Sapphire Medallion), and one with no scope is the card's own cost ("This spell costs {1} less", Sunderflock). */
-      scope?: string[] }
+      scope?: string[];
+      /** Refuse an ability whose subject is a spell THAT TARGETS THIS CARD (`subject.targets.self`): Spellwild Ouphe's "Spells that target this creature cost {2} less" cheapens
+       *  spells aimed at the card itself, a discount for no other spell (`discountsOtherSpells`). */
+      notSelfTargeted?: boolean }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -250,6 +253,12 @@ export function tokenQuotes(card: { oracleText?: string }, tokenName: string): s
   return out.join("\n");
 }
 
+/** A COST REDUCTION THAT REACHES OTHER SPELLS: the subject's scope is all/each AND it is not "spells that target this card" (`subject.targets.self`: Spellwild Ouphe, Elderwood Scion).
+ *  ONE predicate for the rule `ramp.costReduction` and for `nonAccelerantRamp`'s cost-reducer class, so the Role and its class agree. */
+export function discountsOtherSpells(effect: { kind: string; subject?: { scope?: string; targets?: { self?: boolean } } }): boolean {
+  return effect.kind === "cost-reduction" && (effect.subject?.scope === "all" || effect.subject?.scope === "each") && effect.subject?.targets?.self !== true;
+}
+
 function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
   switch (clause.op) {
     case "oracle":
@@ -278,7 +287,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         // WHO IT HAPPENS TO, when the effect names one (#574): The Chain Veil's "you lose 2 life" is
         // `player-life-loss` too. An effect with no subject is not refused -- nothing says who.
         && (clause.control === undefined || a.effect.subject?.control === undefined || clause.control.includes(a.effect.subject.control))
-        && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope))));
+        && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope)))
+        && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true));
     case "emits":
       return (dc.tags?.abilities ?? []).some((a) =>
         (a.emits ?? []).some((e) =>

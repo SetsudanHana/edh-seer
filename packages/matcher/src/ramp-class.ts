@@ -1,4 +1,4 @@
-import { loadRules, ruleMatches } from "./rules.js";
+import { discountsOtherSpells, loadRules, ruleMatches } from "./rules.js";
 import { RAMP_RESILIENCE } from "./mana-base.js";
 import { cardLines, paidWithResource } from "./mana-lines.js";
 import { countsAsLand } from "./typeline.js";
@@ -47,6 +47,6 @@ export function nonAccelerantRamp(dc: DeckCard, _deck?: readonly DeckCard[]): No
   if (lines.some((l) => l.restriction !== null)) return "restricted";
   if (lines.some((l) => paidWithResource(l))) return "paid";
   // A COST REDUCER has no mana line at all: it saves mana for the other spells (owner 2026-10-13). Last of the named classes because a card with a line is named by it first.
-  if ((tags?.abilities ?? []).some((a) => a.effect.kind === "cost-reduction" && (a.effect.subject?.scope === "all" || a.effect.subject?.scope === "each"))) return "cost-reducer";
+  if ((tags?.abilities ?? []).some((a) => discountsOtherSpells(a.effect as never))) return "cost-reducer";
   return "other";
 }

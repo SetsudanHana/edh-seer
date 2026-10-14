@@ -1,5 +1,5 @@
 {
-  "version": 22,
+  "version": 23,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -220,9 +220,9 @@
     {
       "id": "ramp.costReduction",
       "category": "ramp",
-      "match": [{ "op": "effectKind", "in": ["cost-reduction"], "scope": ["all", "each"] }],
+      "match": [{ "op": "effectKind", "in": ["cost-reduction"], "scope": ["all", "each"], "notSelfTargeted": true }],
       "not": [{ "op": "countsAsLand" }, { "op": "oracle", "pattern": "costNotReduced" }, { "op": "oracle", "pattern": "costNotADiscount" }],
-      "why": "COST REDUCTION IS RAMP (owner 2026-08-06, wired into the rules 2026-10-13, #1190): a Medallion, a Goblin Electromancer, a \"second spell costs {2} less\" saves the mana a rock would make. The discount must reach OTHER spells (subject scope all/each); a card that only cheapens itself (\"This spell costs {1} less\", Sunderflock, affinity) is a cheaper card, not ramp (`costNotADiscount`, RULES 22: the derive types Volcanic Salvo's \"This spell costs {X} less\" with a scope-all subject, and an alternative or free cast -- As Foretold, Aluren, Fires of Invention -- as a reduction; a card whose ONLY such text is that is refused, one that also names a discount for other spells, Hamza, stays). Tax is interaction, and neither forms a pairwise edge (`ROLE_NOT_SYNERGY`)."
+      "why": "COST REDUCTION IS RAMP (owner 2026-08-06, wired into the rules 2026-10-13, #1190): a Medallion, a Goblin Electromancer, a \"second spell costs {2} less\" saves the mana a rock would make. The discount must reach OTHER spells (subject scope all/each); a card that only cheapens itself (\"This spell costs {1} less\", Sunderflock, affinity) is a cheaper card, not ramp (`costNotADiscount`, RULES 22: the derive types Volcanic Salvo's \"This spell costs {X} less\" with a scope-all subject, and an alternative or free cast -- As Foretold, Aluren, Fires of Invention -- as a reduction; a card whose ONLY such text is that is refused, one that also names a discount for other spells, Hamza, stays). A discount for spells that target the card itself (Spellwild Ouphe, `subject.targets.self`) reaches no other spell: refused (RULES 23). Cost reduction DOES form pairwise edges (it left `ROLE_NOT_SYNERGY` 2026-08-18); tax does not (`ROLE_NOT_SYNERGY` is tax, win-game, extra-turn, extra-phase)."
     },
     {
       "id": "ramp.landFetchSpell",

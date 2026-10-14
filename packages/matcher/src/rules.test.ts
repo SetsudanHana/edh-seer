@@ -5,6 +5,7 @@ import { detectWincons } from "./wincon.js";
 import { answerClassesOf, loadRules, ownText, ruleMatches, RULES_VERSION, tokenQuotes, type Rule } from "./rules.js";
 import type { DeckCard } from "./types.js";
 import type { ManaLine } from "@edh-seer/tagger";
+import { nonAccelerantRamp } from "./ramp-class.js";
 import { FREE_TAP, manaTags, mkLine, ritualLine, tapFor, triggerLine } from "./mana-test-support.js";
 import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 
@@ -609,6 +610,20 @@ describe("the Ramp role, second round (#1190)", () => {
     // SYNTHETIC text (no such card): a self discount plus a discount for others written with several mana symbols, with and without "(or {1})".
     for (const other of ["Minotaur spells you cast cost {B}{R} less to cast.", "Spells you cast cost {W}{U}{B}{R}{G} less to cast.", "Spells you cast cost {U} (or {1}) less to cast."])
       expect(ruleIds(text("Synthetic", `This spell costs {1} less to cast.\n${other}`, all)), other).toEqual(["ramp.costReduction"]);
+
+    // SPELLS THAT TARGET THIS CARD are no discount for other spells (Spellwild Ouphe). The subjects below are the REAL derived ones (cardTagsDerived, 2026-10-14).
+    const ouphe = { control: "any", token: null, type: "spell", scope: "all", targets: { self: true, type: "creature" } };
+    expect(ruleIds(text("Spellwild Ouphe", "Spells that target this creature cost {2} less to cast.", ouphe))).toEqual([]);
+    const bladegraft: DeckCard = {
+      card: { name: "Bladegraft Aspirant", oracleText: "Menace\nEquipment spells you cast cost {1} less to cast.\nActivated abilities of Equipment you control that target this creature cost {1} less to activate.", typeLine: "Creature", manaValue: 2 } as Card,
+      tags: manaTags([], { abilities: [
+        { kind: "static", effect: { kind: "cost-reduction", subject: { control: "you", token: null, type: "spell", subtype: "equipment", scope: "all" } } },
+        { kind: "static", effect: { kind: "cost-reduction" } },
+      ] as never }),
+    };
+    expect(ruleIds(bladegraft)).toEqual(["ramp.costReduction"]);
+    expect(nonAccelerantRamp(bladegraft)).toBe("cost-reducer");
+    expect(nonAccelerantRamp(text("Spellwild Ouphe", "Spells that target this creature cost {2} less to cast.", ouphe))).not.toBe("cost-reducer");
   });
 });
 
