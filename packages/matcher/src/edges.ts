@@ -3760,7 +3760,7 @@ function creatureConditionEdges({ p, c, reasons }: PairScope): void {
 }
 
 function landConditionEdges({ p, c, reasons }: PairScope): void {
-  const landCond = classifyLand(c.card);
+  const landCond = classifyLand(c.card, c.tags);
   // THE G FAMILY IS THE SAME DEMAND ON A CARD THAT IS NOT A LAND (roadmap I9): Summit Apes wants a
   // Mountain exactly as Rootbound Crag does, so it takes the same SUBTYPE edge. A land's own
   // condition is asked first, so a card can never claim both.

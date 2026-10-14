@@ -23,7 +23,7 @@ for (const f of files) {
   for (const dc of dcs) for (const l of ml.cardLines(dc, true)) {
     if (l.gate === null) continue;
     const r = (rows[dc.card.name] ??= { gates: new Set(), shapes: new Set(), decks: {}, moved: new Set() });
-    r.gates.add(l.gate); r.shapes.add(`${l.source}${l.trigger ? ":" + l.trigger : ""}${l.cost.tap ? " tap" : ""} net${l.net}${/\bland\b/i.test(dc.card.typeLine ?? "") ? " LAND" : ""}`);
+    r.gates.add(l.gate.text); r.shapes.add(`${l.source}${l.trigger ? ":" + l.trigger : ""}${l.cost.tap ? " tap" : ""} net${l.net}${/\bland\b/i.test(dc.card.typeLine ?? "") ? " LAND" : ""}`);
     r.decks[deck] = gm.gateVerdict(l.gate, dcs);
     // what this deck's verdict does to the rock readings, against the deck-free answer (ef13ea04's)
     const a = [sj.netYield(dc), sj.netPositiveMana(dc)], b = [sj.netYield(dc, dcs), sj.netPositiveMana(dc, dcs)];

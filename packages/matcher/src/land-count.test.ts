@@ -1,3 +1,4 @@
+import { parseGate } from "@edh-seer/tagger/gate";
 import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { karstenLands } from "@edh-seer/engine";
@@ -374,7 +375,7 @@ describe("a gated source in the Karsten inputs", () => {
   test("a source that makes mana only once its gate is met weighs what it keeps producing times the share of the first eight turns it is met in", () => {
     const deck = [jasper, ...dragons(12, 5), ...filler(87)];
     const w = rampWeight(jasper, deck)!;
-    const share = [1, 2, 3, 4, 5, 6, 7, 8].reduce((n, t) => n + boardGateProbability(boardGateOf("you control a dragon")!, deck, t), 0) / 8;
+    const share = [1, 2, 3, 4, 5, 6, 7, 8].reduce((n, t) => n + boardGateProbability(boardGateOf(parseGate("you control a dragon"))!, deck, t), 0) / 8;
     expect(w).toBeCloseTo(RAMP_RESILIENCE.rock * share, 10);
     expect(w).toBeGreaterThan(0);
     expect(w).toBeLessThan(RAMP_RESILIENCE.rock);

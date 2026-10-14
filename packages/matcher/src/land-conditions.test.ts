@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
+import { parseGate } from "@edh-seer/tagger/gate";
+import { mkLine, tapFor } from "./mana-test-support.js";
 import { basicTypeDemand, classifyLand, entersTapped, type LandBoard, unmetLandConditions } from "./land-conditions.js";
+
+const bare = (cs: { name: string; typeLine: string; oracleText: string }[]) => cs.map((card) => ({ card, tags: null }));
 
 /** Oracle text FETCHED FROM THE CORPUS, never typed from memory (the standing rule). */
 const CARDS = {
@@ -183,14 +187,14 @@ test("a check land with no supplier in the deck is reported, and one with a supp
   const crag = { name: "Rootbound Crag", typeLine: "Land", oracleText: "This land enters tapped unless you control a Mountain or a Forest.\n{T}: Add {R} or {G}." };
   const island = { name: "Island", typeLine: "Basic Land — Island", oracleText: "" };
   // `draguns`' real case: a blue land whose condition names Mountain or Forest, in an island deck.
-  expect(unmetLandConditions([crag, island])).toEqual([
+  expect(unmetLandConditions(bare([crag, island]))).toEqual([
     { card: "Rootbound Crag", template: "check", wants: "a Mountain or a Forest", has: "no land of either type" },
   ]);
 
   // A NONBASIC CARRYING THE TYPE SATISFIES IT — the subtype-vs-supertype distinction this whole
   // family turns on. Steam Vents is a Mountain.
   const vents = { name: "Steam Vents", typeLine: "Land — Island Mountain", oracleText: "As this land enters, you may pay 2 life. If you don't, it enters tapped." };
-  expect(unmetLandConditions([crag, vents])).toEqual([]);
+  expect(unmetLandConditions(bare([crag, vents]))).toEqual([]);
 });
 
 test("a bfz land counts BASICS, and a shockland carrying the type does not help it", () => {
@@ -198,12 +202,12 @@ test("a bfz land counts BASICS, and a shockland carrying the type does not help 
   const vents = { name: "Steam Vents", typeLine: "Land — Island Mountain", oracleText: "" };
   // Cinder Glade does NOT satisfy its own condition, and neither does a shockland: the demand is the
   // SUPERTYPE `basic`, as a count.
-  expect(unmetLandConditions([glade, vents])).toEqual([
+  expect(unmetLandConditions(bare([glade, vents]))).toEqual([
     { card: "Cinder Glade", template: "bfz", wants: "2 or more basic lands", has: "0 basics in the deck" },
   ]);
 
   const mtn = { name: "Mountain", typeLine: "Basic Land — Mountain", oracleText: "" };
-  expect(unmetLandConditions([glade, mtn, { ...mtn, name: "Mountain 2" }])).toEqual([]);
+  expect(unmetLandConditions(bare([glade, mtn, { ...mtn, name: "Mountain 2" }]))).toEqual([]);
 });
 
 // FAMILY G: the same demand on a card that is NOT a land. 22 corpus cards, zero of them lands, and
@@ -211,12 +215,24 @@ test("a bfz land counts BASICS, and a shockland carrying the type does not help 
 test("a nonland demanding a basic type is read the same way, and its edge is the same edge", () => {
   const apes = { name: "Summit Apes", typeLine: "Creature — Ape", oracleText: "Summit Apes can't be blocked as long as you control a Mountain." };
   expect(basicTypeDemand(apes)).toEqual(["mountain"]);
-  expect(unmetLandConditions([apes, { name: "Island", typeLine: "Basic Land — Island", oracleText: "" }])).toEqual([
+  expect(unmetLandConditions(bare([apes, { name: "Island", typeLine: "Basic Land — Island", oracleText: "" }]))).toEqual([
     { card: "Summit Apes", template: "basic-type-demand", wants: "a Mountain", has: "no land of that type" },
   ]);
-  expect(unmetLandConditions([apes, { name: "Mountain", typeLine: "Basic Land — Mountain", oracleText: "" }])).toEqual([]);
+  expect(unmetLandConditions(bare([apes, { name: "Mountain", typeLine: "Basic Land — Mountain", oracleText: "" }]))).toEqual([]);
 
   // A LAND'S OWN CONDITION IS ASKED FIRST, so a card that is both is never reported twice.
   const both = { name: "Odd One", typeLine: "Land", oracleText: "This land enters tapped unless you control a Forest. It is bigger as long as you control a Mountain." };
-  expect(unmetLandConditions([both]).length).toBe(1);
+  expect(unmetLandConditions(bare([both])).length).toBe(1);
+});
+
+// #1191: the report path classifies from the typed gate. SYNTHETIC cards: the printed text carries no "activate only if" sentence, so only the gate can say it is a verge.
+test("unmetLandConditions reads a verge from the typed gate, not the printed text; a nonland with the same gate is no verge", () => {
+  const verge = { name: "Synthetic Verge", typeLine: "Land", oracleText: "{T}: Add {W}.\n{T}: Add {G}." };
+  const tags = { manaLines: [tapFor(["G"], { gate: parseGate("you control a mountain or a forest") }), mkLine()] };
+  expect(classifyLand(verge).template).toBe("none");
+  expect(unmetLandConditions([{ card: verge, tags }, ...bare([{ name: "Island", typeLine: "Basic Land \u2014 Island", oracleText: "" }])])).toEqual([
+    { card: "Synthetic Verge", template: "verge", wants: "a Mountain or a Forest", has: "no land of either type" },
+  ]);
+  const artifact = { name: "Synthetic Rock", typeLine: "Artifact", oracleText: "{T}: Add {G}." };
+  expect(classifyLand(artifact, tags).template).toBe("none");
 });

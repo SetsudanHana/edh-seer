@@ -1,3 +1,4 @@
+import { parseGate } from "@edh-seer/tagger/gate";
 import { expect, test } from "vitest";
 import fixtures from "./same-job.fixtures.json" with { type: "json" };
 import labelCards from "./same-job.labels.cards.json" with { type: "json" };
@@ -130,7 +131,7 @@ test("a gated rock is not a like-for-like swap for an ungated one, whatever the 
   const dragons = deckWith(ofType(12, "Creature — Dragon", "Dragon"));
   const signet = card("Arcane Signet");
   // the same card in every other respect, with its one mana line gated on a Dragon
-  const gated = withLines(signet, cardLines(signet).map((l) => ({ ...l, gate: "you control a dragon" })));
+  const gated = withLines(signet, cardLines(signet).map((l) => ({ ...l, gate: parseGate("you control a dragon") })));
   const twin = withLines(signet, cardLines(signet));
   expect(hasGatedYield(gated)).toBe(true);
   expect(hasGatedYield(twin)).toBe(false);
@@ -141,7 +142,7 @@ test("a gated rock is not a like-for-like swap for an ungated one, whatever the 
   expect(sameRockAnyColour(signet, twin, dragons)).toBe(true);
   expect(sameRockAnyColour(signet, gated, dragons)).toBe(false);
   expect(sameRockAnyColour(gated, signet, dragons)).toBe(false);
-  expect(sameRockAnyColour(gated, withLines(signet, cardLines(signet).map((l) => ({ ...l, gate: "you control a dragon" }))), dragons)).toBe(true);
+  expect(sameRockAnyColour(gated, withLines(signet, cardLines(signet).map((l) => ({ ...l, gate: parseGate("you control a dragon") }))), dragons)).toBe(true);
 });
 
 // #1169 2b-2 fix round 2 review: Path of Annihilation (a static grant AND two Eldrazi Spawn) and Cryptolith Rite (a static grant) both add every colour, so the types never fell

@@ -16002,5 +16002,143 @@
    }
   ],
   "source": "model"
+ },
+ "Gleaming Bastion": {
+  "card": {
+   "_id": "7785ffd4-f169-475d-9558-ce4877b3378a",
+   "name": "Gleaming Bastion",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add {C}.\n{T}: Add {W} or {U}. Activate only if this land entered this turn or if you control a basic land.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "C",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{W} or {U}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Fanatic of Rhonas": {
+  "card": {
+   "_id": "7973820b-fdaf-46ec-9e3e-d4c0e77b5067",
+   "name": "Fanatic of Rhonas",
+   "typeLine": "Creature — Snake Druid",
+   "oracleText": "{T}: Add {G}.\nFerocious — {T}: Add {G}{G}{G}{G}. Activate only if you control a creature with power 4 or greater.\nEternalize {2}{G}{G} ({2}{G}{G}, Exile this card from your graveyard: Create a token that's a copy of it, except it's a 4/4 black Zombie Snake Druid with no mana cost. Eternalize only as a sorcery.)",
+   "keywords": [
+    "Ferocious",
+    "Eternalize"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "G"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Fanatic of Rhonas",
+     "typeLine": "Creature — Snake Druid",
+     "printingId": "f82fce56-307a-44bf-8c46-0e1328550e17"
+    },
+    {
+     "component": "token",
+     "name": "Fanatic of Rhonas",
+     "typeLine": "Token Creature — Zombie Snake Druid",
+     "printingId": "6ef58164-4155-4e5b-8c16-f16f2ab65baa"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}{G}{G}{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Eternalize {2}{G}{G}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
  }
 }

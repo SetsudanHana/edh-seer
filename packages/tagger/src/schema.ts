@@ -1386,6 +1386,19 @@ export type ManaLineSource = "activated" | "trigger" | "static-grant" | "aura-tr
  *  Add one mana of that color", Loot, the Nexus). */
 export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "lands-you-could" | "among" | "grantee";
 
+
+/** THE CONDITION A MANA LINE HOLDS UNDER, PARSED ONCE IN DERIVE (`parseGate`, derive/gate.ts; #1191). Every kind keeps `text`, the verbatim lowercase gate, so a display reads it.
+ *  `control`: "you control a dragon" / "three or more artifacts" / "a plains or a swamp" -- `need` permanents among `nouns` (card types and subtypes, lowercase); `basic` when the noun is
+ *  a BASIC land ("if you control a basic land"); `minPower` for "a creature with power N or greater". `same-name`: N lands with one name. `tron`: two named lands ("an urza's mine and an
+ *  urza's tower"; the subtypes as printed). `speed`: "speed 4". `initiative`. `unknown`: everything no decklist settles (counters on the card, graveyard counts, game state), unmet everywhere. */
+export type ManaGate =
+  | { kind: "control"; need: number; nouns: string[]; basic?: true; minPower?: number; text: string }
+  | { kind: "same-name"; need: number; text: string }
+  | { kind: "tron"; names: string[]; text: string }
+  | { kind: "speed"; n: number; text: string }
+  | { kind: "initiative"; text: string }
+  | { kind: "unknown"; text: string };
+
 /** ONE WAY A CARD PRODUCES MANA (or a mana source, or a land), read once at derive time so no consumer parses
  *  oracle text again (#1169; the inventory found ten detectors disagreeing on real cards). A card carries
  *  one per `add-mana` action of every face, plus one per token-making and land-fetching ability. Absent on a card
@@ -1445,10 +1458,8 @@ export interface ManaLine {
    *  Chrome Mox; "for each color among permanents you control", Bloom Tender). Consumers treat it as UNKNOWN, never as a
    *  source of no colours. Always false on a `fetch` and a `token-maker`, which state theirs. */
   unread: boolean;
-  /** The condition the amount or the activation holds under, verbatim lowercase: "Activate only if ..." (Tainted Peak: "you
-   *  control a swamp"), "... instead if there are seven or more cards in your graveyard" (Cabal Ritual's threshold line), or
-   *  "threshold" when only the ability's numeric threshold is known. A consumer must not credit a gated line as guaranteed. Else null. */
-  gate: string | null;
+  /** The condition the amount or the activation holds under, PARSED ONCE in derive into a `ManaGate` (`kind`: control, same-name, tron, speed, initiative, unknown; every kind keeps `text`, the verbatim lowercase condition): "Activate only if ..." (Tainted Peak: control a swamp), "... instead if there are seven or more cards in your graveyard" (Cabal Ritual's threshold line, unknown), or "threshold" when only the ability's numeric threshold is known (unknown). matcher `gate.ts` is the only evaluator; a consumer must not credit a gated line as guaranteed. Else null. */
+  gate: ManaGate | null;
   /** "Spend this mana only ..." (Smokebraider, Cavern of Souls, Ancient Ziggurat) or "this mana can't be spent ...":
    *  `spend` is the printed limit, `typeName` the one type it names, lowercase ("elemental", "creature", "chosen"). Mana with
    *  a restriction is not mana for the deck's spells. */

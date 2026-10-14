@@ -1,10 +1,10 @@
 import { POLICY_COLLAPSE } from "@edh-seer/engine/percent";
-import type { ManaLine, SubjectFilter } from "@edh-seer/tagger";
+import type { ManaGate, ManaLine, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
 import { cardLines, colourSourceColours, isFetchSource, isLandfall, isLoyaltyAbility, isPhaseTrigger, loyaltyActivations, lineColours, minManaValue, paidWithResource, paysItsWay, usableLoyalty } from "./mana-lines.js";
-import { boardCount, boardGateOf, gateMet, isSpeedGate, MAX_SPEED_TURN, permCounts, permOf, type BoardGate, type Perm } from "./gate.js";
+import { boardCount, boardGateOf, boardGateReachable, gateMet, isSpeedGate, MAX_SPEED_TURN, permCounts, permOf, type BoardGate, type Perm } from "./gate.js";
 import { staticFixer } from "./static-fixers.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands } from "./fetch-land.js";
@@ -153,7 +153,7 @@ export function tapBonusOf(dc: DeckCard): TapBonus | undefined {
  *    rule 3 casts only accelerants, so pricing off that stream would read a fraction of a real deck's spells and feed back into the casting loop it
  *    came from. Every other trigger (the card's own enters trigger, combat, an opponent's discard) is refused for the same reason, as is a Treasure maker.
  *    The exception is the tap-replacement a card prints (`tapBonusOf`), which the simulation prices as a per-source bonus. */
-export function playableLines(dc: DeckCard, deck?: readonly DeckCard[]): ManaLine[] {
+export function playableLines(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): ManaLine[] {
   const taps = tapBonusOf(dc) !== undefined;
   // THE LINES OF THE FACES IN PLAY FROM THE DECK: a transform card's back is not (owner 2026-10-10, #1174: things that transform are not ramp), so Arlinn, the Moon's
   // Fury's "+2: Add {R}{G}" is no accelerant of Arlinn, the Pack's Hope. Ashling's phase trigger asks for the back (`cardLines(dc, true)`) and keeps it.
@@ -162,9 +162,16 @@ export function playableLines(dc: DeckCard, deck?: readonly DeckCard[]): ManaLin
     if (l.unread || l.cost.sacrificeSelf || paidWithResource(l)) return false;
     if (l.restriction !== null && minManaValue(l) === null) return false;
     // A GATE IS A CONDITION ON THE DECK (owner 2026-10-13: a gated source is still a source, conditioned on the deck). Mox Jasper ("Activate only if you control a Dragon")
-    // is mana in a deck that plays Dragons (`gateMet`, gate.ts) and a blank in one that does not; Howlsquad Heavy's "Max speed" is met in any deck (`isSpeedGate`) and
+    // is mana in a game that has a Dragon out (`manaOutput`, below) and a blank in one that does not; Howlsquad Heavy's "Max speed" is met in any deck (`isSpeedGate`) and
     // priced from turn 4 (`ManaOutput.speed`). The two gates `manaOutput` prices against the board turn by turn (lands counted, the tron pair) stay.
-    const checkable = l.gate === null || dynamicGate(l) || gateMet(l, deck);
+    // A BOARD-COUNT GATE ("control" kind: a Dragon, metalcraft, four creatures, a basic land, a power-4 creature) IS NOT FILTERED BY THE DECK'S VERDICT (#1191, Fable round 2 finding 8): the
+    // goldfish tracks the board, so `manaOutput` prices it per game against the permanents the game has put onto the battlefield (`gated`, `produced`) and the line plays in the games where
+    // they are out. The deck-level `gateMet` (the median clock, P >= 0.5) is the AUDIT's bar (owner 2026-10-13: the audit credits a gated source at P >= 0.5, the goldfish per game); using it
+    // here as well kept a Dragon-light deck's Jasper out of every game, the ones with a Dragon too. Only REACHABILITY is asked of the deck (`boardGateReachable`: it holds `need` such
+    // permanents, so some game can meet the gate), which keeps a deck with no Dragon from counting a Jasper that can never make mana. With no deck a gated line is none, as before.
+    // Speed and the initiative keep the deck check; an unknown gate is never met.
+    const board = l.gate === null ? null : boardGateOf(l.gate);
+    const checkable = l.gate === null || dynamicGate(l) || (perGame && board !== null && deck !== undefined && boardGateReachable(board, deck)) || gateMet(l, deck);
     switch (l.source) {
       // A LOYALTY ABILITY ("+1: Add {R}{R}") is a source too (owner, 2026-10-13): once per turn at sorcery timing (CR 606.3), so it pays every turn the walker
       // is out and the turn it is cast (no summoning sickness: it is no creature). A "+N" or "0" always; a "−N" (Chandra, Novice Pyromancer's −1: Add
@@ -185,7 +192,7 @@ export function playableLines(dc: DeckCard, deck?: readonly DeckCard[]): ManaLin
  *  type line, since #1169 task 2b-1 -- it was printed text and Scryfall's `producedMana`, which stamped Pitiless Plunderer (a Treasure maker) with
  *  five colours and priced Birgi as a dork. A card with no derived tags is none: derive covers every card in a deck, so that is an underived card and
  *  `coverage.ts` lists it. */
-export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[]): Accelerant | null {
+export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): Accelerant | null {
   const line = (dc.card.typeLine ?? "").toLowerCase();
   const name = dc.card.name;
   const manaValue = dc.card.manaValue ?? 0;
@@ -203,7 +210,7 @@ export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[]): Ac
   // A SUSPEND-ONLY CARD IS NEVER CAST FROM HAND (CR 702.62), and rule 3 casts by mana value alone -- so Mox Tantalite, mana value 0, would be deployed
   // FREE on turn one. The real sequence is a cost plus a three-turn wait: the same shape `castability.ts` REFUSES rather than prices (roadmap N9).
   if (tags.isOneShot || tags.suspendOnly || !isManaSource(dc)) return null;
-  const lines = playableLines(dc, deck);
+  const lines = playableLines(dc, deck, perGame);
   if (lines.length === 0) return null;
   // A LAND AURA WAITS A TURN, because the land it enchants is what pays for it: you tap the Forest for {G}, cast Wild Growth on it, and the Forest is
   // tapped. That is a DORK's timing (roadmap O2). A PHASE TRIGGER PAYS FROM THE NEXT TURN, whatever the type line says: you cast it DURING your first main
@@ -336,17 +343,16 @@ export function spendUnits(units: number[], cost: Cost): boolean {
  *  card makes mana is its lines' answer. Not modelled: a karoo's real net (it replays the bounced land, and a bounced fetch or utility land is worth
  *  more than one mana), and a bounce phrased any other way than the one sentence below -- such a card is priced at its full tap. */
 const BOUNCES = /return a land you control to its owner's hand/i;
-/** A GATE ON A LINE'S AMOUNT, read from the derived gate string (lowercase, verbatim): "you control five or more lands" (Temple of the False God).
- *  The wording of a gate is derived data; what this model does with it is this module's policy. Any other gate leaves the line uncounted.
- *  CEILING: "three or more lands WITH THE SAME NAME" (Sceptre of Eternal Glory) is read as its floor, three lands: the name is uncheckable here, and
+/** A GATE ON A LINE'S AMOUNT, read from the typed gate (derive's `parseGate`): "you control five or more lands" (Temple of the False God) is a `control` gate on `land` alone, and
+ *  "three or more lands with the same name" (Sceptre of Eternal Glory) a `same-name` one. This model prices both against the lands on the board, turn by turn (`needsLands`).
+ *  CEILING: "three or more lands WITH THE SAME NAME" is read as its floor, three lands: the name is uncheckable here, and
  *  the gate under-claims rather than counting three from turn one (roadmap N10). */
-const LANDS_GATE = /^you control (\w+) or more lands(?: with the same name)?$/;
-/** "you control an urza's power-plant and an urza's tower" -- the tron shape: two named other lands on the board upgrade the amount. Matched on the
- *  SUBTYPE as printed inside the gate, which is what the board carries -- and the subtype is `Urza's Power-Plant` with a hyphen while the CARD is
- *  `Urza's Power Plant` without one. */
-const TRON_GATE = /^you control (?:an?|the) (.{1,40}?) and (?:an?|the) (.{1,40})$/;
+const landsNeeded = (g: ManaGate): number => (g.kind === "same-name" ? g.need : g.kind === "control" && g.nouns.length === 1 && g.nouns[0] === "land" && !g.basic && g.minPower === undefined ? g.need : 0);
+/** The tron shape: two named other lands on the board upgrade the amount. The names are the SUBTYPES as printed inside the gate, which is what the board carries -- and the subtype is
+ *  `Urza's Power-Plant` with a hyphen while the CARD is `Urza's Power Plant` without one. */
+const tronOf = (g: ManaGate): readonly string[] | null => (g.kind === "tron" ? g.names : null);
 /** A GATE THIS MODEL PRICES AGAINST THE BOARD, turn by turn (`manaOutput`'s `needsLands` and `tron`), rather than against the decklist (`gate.ts`). */
-const dynamicGate = (l: ManaLine): boolean => l.gate !== null && (LANDS_GATE.test(l.gate) || TRON_GATE.test(l.gate));
+const dynamicGate = (l: ManaLine): boolean => l.gate !== null && (landsNeeded(l.gate) > 0 || tronOf(l.gate) !== null);
 /** A land that IS every land type, so it answers any subtype check on the board by itself — Planar
  *  Nexus, and Omo's everything counter one layer out of reach. BASIC-ONLY IS REFUSED: Prismatic
  *  Omen's "every basic land type" does not include Urza's, which is the whole point of the check. */
@@ -355,10 +361,6 @@ export function isEveryLandType(typeLine: string | undefined, oracleText: string
   return /\bland\b/i.test(typeLine ?? "") && EVERY_LAND_TYPE.test(oracleText ?? "");
 }
 
-const WORD_NUMBER: Record<string, number> = {
-  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
-};
-
 /** A LINE THAT PAYS NOTHING BUT THE TAP: a filter land's costed line ("{1}, {T}: Add {U}{U}"), a payment land, a sacrifice or a
  *  counter-spending line is not a tap this model can pay, so it is not priced and the source stays at its NET one on purpose. A loyalty cost (a
  *  planeswalker's "+2: Add {R}{R}{R}", "−1: Add {R}{R}") counts as the tap: the walker's one activation a turn, CR 606.3 (`playableLines` has already
@@ -366,13 +368,13 @@ const WORD_NUMBER: Record<string, number> = {
 const tapOnly = (l: ManaLine): boolean => l.cost.mana === 0 && l.cost.life === 0 && l.cost.counters === null && !l.cost.sacrificeOther && !l.cost.tapOther
   && (l.cost.other.length === 0 || isLoyaltyAbility(l));
 
-export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[]): ManaOutput {
+export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): ManaOutput {
   if (BOUNCES.test(dc.card.oracleText ?? "")) return { amount: 1 };
   // THE LINES THAT HAVE AN AMOUNT TO PRICE: a tap, a grant, an Aura's "an additional" and a phase trigger. Landfall and a tap-replacement bonus are
   // priced apart (`landfallOf`, `tapBonusOf`) and bring no mana of their own to a tap.
   // CEILING: a SCALING amount ("{G} for each creature you control", Gaea's Cradle; a phase trigger's "for each Raccoon") is a RATE and not an amount
   // (ruling I4, one subsystem over): a tap keeps the incumbent 1 and a phase trigger is refused, as before.
-  const lines = playableLines(dc, deck).filter((l) => (l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger" || isPhaseTrigger(l))
+  const lines = playableLines(dc, deck, perGame).filter((l) => (l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger" || isPhaseTrigger(l))
     && tapOnly(l) && l.amount.fixed !== null && l.amount.fixed > 0);
   // THREE KINDS OF GATE, and `playableLines` let each through for its own reason. The lands-counted and tron gates are priced turn by turn below (`needsLands`, `tron`); a BOARD-COUNT
   // gate ("you control a Dragon", metalcraft, four or more creatures) is priced turn by turn against the permanents the simulation puts onto the battlefield (`gated`, `produced`);
@@ -381,7 +383,7 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[]): ManaOutput
   const speedGated = (l: ManaLine): boolean => l.gate !== null && isSpeedGate(l.gate);
   const open = (l: ManaLine): boolean => l.gate === null || (!dynamicGate(l) && !speedGated(l) && timed(l) === null);
   // A SCALING speed line (Howlsquad Heavy: "{R} for each Goblin you control") is a rate, not an amount: it keeps the incumbent 1, as a scaling tap does everywhere in this module.
-  const speedLines = playableLines(dc, deck).filter((x) => speedGated(x) && x.source === "activated" && tapOnly(x) && x.restriction === null);
+  const speedLines = playableLines(dc, deck, perGame).filter((x) => speedGated(x) && x.source === "activated" && tapOnly(x) && x.restriction === null);
   const boardGated = lines.filter((x) => timed(x) !== null && x.restriction === null);
   // A CARD WHOSE ONLY PRICED MANA WAITS ON THE BOARD (Mox Jasper) OR ON MAX SPEED (Howlsquad Heavy) makes none until it is met; every other source starts at the incumbent 1.
   let out: ManaOutput = { amount: (boardGated.length > 0 || speedLines.length > 0) && !lines.some(open) ? 0 : 1 };
@@ -399,11 +401,10 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[]): ManaOutput
   // GATED: a gated line only wins if it beats what the card already makes unconditionally.
   const bestOf = (o: ManaOutput): number => Math.max(o.amount, o.tron?.amount ?? 0);
   for (const l of lines.filter((x) => !open(x) && timed(x) === null && x.restriction === null)) {
-    const lands = LANDS_GATE.exec(l.gate!);
-    const tron = TRON_GATE.exec(l.gate!);
-    const needs = lands ? (WORD_NUMBER[lands[1]!] ?? Number(lands[1])) : 0;
+    const needs = landsNeeded(l.gate!);
+    const tron = tronOf(l.gate!);
     const here: ManaOutput | null = needs > 0 ? { amount: l.amount.fixed!, needsLands: needs }
-      : tron ? { amount: out.amount, tron: { subtypes: [tron[1]!.trim(), tron[2]!.trim()], amount: l.amount.fixed! } } : null;
+      : tron ? { amount: out.amount, tron: { subtypes: [tron[0]!, tron[1]!], amount: l.amount.fixed! } } : null;
     if (here && bestOf(here) > bestOf(out)) out = here;
   }
   // THE BOARD-COUNT GATE: the best gated line, taken whether or not it beats the plain amount (a colour waits on it too). CEILING: one board gate per card; a second, lesser one is ignored.
@@ -415,7 +416,7 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[]): ManaOutput
   // A WALKER WHOSE MANA IS ALL LOYALTY ABILITIES pays for as long as its priced ability can be activated. The priced ability is the best amount (a scaling one is
   // the incumbent 1, Koth), the longest-lasting of equals. CEILING: that is the only ability the walker plays, so a "+N" mana ability beside a minus one is not
   // carried on with after the minus one runs out.
-  const pays = playableLines(dc, deck).filter((l) => l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger" || isPhaseTrigger(l));
+  const pays = playableLines(dc, deck, perGame).filter((l) => l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger" || isPhaseTrigger(l));
   if (pays.length > 0 && pays.every(isLoyaltyAbility)) {
     const price = (l: ManaLine): number => l.amount.fixed ?? 1;
     const best = pays.reduce((b, l) => price(l) > price(b) || (price(l) === price(b) && loyaltyActivations(l) > loyaltyActivations(b)) ? l : b);
@@ -427,8 +428,8 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[]): ManaOutput
 
 /** Mana a card adds per LAND ENTERING, or 0: the best ungated landfall line it plays. Restricted mana is refused (`playableLines`), for the same
  *  reason every other restricted source is: this model cannot check what mana is spent on. */
-export function landfallOf(dc: DeckCard, deck?: readonly DeckCard[]): number {
-  return Math.max(0, ...playableLines(dc, deck).filter(isLandfall).map((l) => l.amount.fixed ?? 1));
+export function landfallOf(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): number {
+  return Math.max(0, ...playableLines(dc, deck, perGame).filter(isLandfall).map((l) => l.amount.fixed ?? 1));
 }
 
 /** A source whose mana carries a mana-value restriction the DECK does not make vacuous is worth what
@@ -528,27 +529,27 @@ export const fetchUntapsOf = (dc: DeckCard): boolean => FETCH_UNTAPS.test(dc.car
  *  per game and the audit credits it whole from the turn P(gate met) >= 0.5. */
 /** THE GATED TAPS WHOSE COLOURS THIS MODEL PLAYS (the deck met the gate, `playableLines`): not a lands-counted or tron gate (priced by `manaOutput`), not a loyalty ability, not a
  *  grantee's colours, not a costed line that makes less than it costs. */
-function gatedColourLines(dc: DeckCard, deck?: readonly DeckCard[]): ManaLine[] {
-  return playableLines(dc, deck).filter((l) => l.gate !== null && !dynamicGate(l) && (l.source === "activated" || l.source === "static-grant")
+function gatedColourLines(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): ManaLine[] {
+  return playableLines(dc, deck, perGame).filter((l) => l.gate !== null && !dynamicGate(l) && (l.source === "activated" || l.source === "static-grant")
     && !isLoyaltyAbility(l) && l.anyColour !== "grantee" && paysItsWay(l));
 }
 
 /** THE BOARD-COUNT GATE THE SOURCE'S GATED COLOURS WAIT ON, or null (Tainted Peak: a Swamp; Mox Jasper: a Dragon; Spire of Industry: an artifact -- whose line also costs a life, so
  *  `manaOutput` prices no amount for it and the colours are the whole of what the gate changes). CEILING: one gate per card, the first. */
-export function colourGateOf(dc: DeckCard, deck?: readonly DeckCard[]): BoardGate | null {
-  for (const l of gatedColourLines(dc, deck)) { const g = boardGateOf(l.gate!); if (g && lineColours(l, null, "five").length > 0) return g; }
+export function colourGateOf(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): BoardGate | null {
+  for (const l of gatedColourLines(dc, deck, perGame)) { const g = boardGateOf(l.gate!); if (g && lineColours(l, null, "five").length > 0) return g; }
   return null;
 }
 
-export function colourMaskOf(dc: DeckCard, deck?: readonly DeckCard[], withBoardGated = true): number {
-  const triggerColours = playableLines(dc, deck).filter((l) => (l.source !== "activated" && l.source !== "static-grant") || isLoyaltyAbility(l)).flatMap((l) => lineColours(l, null, "five"));
+export function colourMaskOf(dc: DeckCard, deck?: readonly DeckCard[], withBoardGated = true, perGame = false): number {
+  const triggerColours = playableLines(dc, deck, perGame).filter((l) => (l.source !== "activated" && l.source !== "static-grant") || isLoyaltyAbility(l)).flatMap((l) => lineColours(l, null, "five"));
   // A GATE does not take the colourless bit away: Temple of the False God's {C}{C} waits on five lands, which `manaOutput` prices as zero below the gate.
-  const colourless = playableLines(dc, deck).some((l) => l.colourless > 0 && paysItsWay(l));
+  const colourless = playableLines(dc, deck, perGame).some((l) => l.colourless > 0 && paysItsWay(l));
   // A GATED TAP THE DECK MEETS IS A COLOUR HERE (owner 2026-10-13): Mox Jasper's any colour in a deck of Dragons, Tainted Peak's {B} or {R} in a deck of Swamps. The AUDIT counts them
   // too, where the deck meets the gate (`colourSourceLine`, whole from P >= 0.5); this model plays the line per game, so it plays its colours. The deck's verdict (`gate.ts`) lets the line in; WHEN the gate holds is the board's
   // (`simulate`: `baseColors` is this mask without the board-gated colours, and a source makes the full one only on the turns `gateHolds`).
   // `withBoardGated` false leaves out the colours of a line that waits on the BOARD (`colourGateOf`): the colours the source makes before its gate is met.
-  const gatedColours = gatedColourLines(dc, deck).filter((l) => withBoardGated || boardGateOf(l.gate!) === null).flatMap((l) => lineColours(l, null, "five"));
+  const gatedColours = gatedColourLines(dc, deck, perGame).filter((l) => withBoardGated || boardGateOf(l.gate!) === null).flatMap((l) => lineColours(l, null, "five"));
   return colorMask([...colourSourceColours(dc), ...triggerColours, ...gatedColours, ...(colourless ? ["C"] : [])]);
 }
 
@@ -929,12 +930,13 @@ export const seenKind = (isLand: boolean, manaValue: number): SeenKind => isLand
 
 /** THE GATE ITS COLOURS WAIT ON and the colours before it (see `DeckSlot.colourGate`), or nothing. */
 function colourGateFields(dc: DeckCard, deck: readonly DeckCard[]): { colourGate?: BoardGate; baseColors?: number } {
-  const colourGate = colourGateOf(dc, deck);
-  return colourGate ? { colourGate, baseColors: colourMaskOf(dc, deck, false) } : {};
+  const colourGate = colourGateOf(dc, deck, true);
+  return colourGate ? { colourGate, baseColors: colourMaskOf(dc, deck, false, true) } : {};
 }
 
 /** A land a fetch SPELL put onto the battlefield: a land, and nothing the model knows more of (`lands` types it nothing either). */
-const FETCHED_LAND: Perm = { name: "", types: new Set(["land"]), subtypes: new Set(), land: true, manaValue: 0 };
+// CEILING: not basic (a fetch may bring a basic; a gate that asks for a basic land under-claims it).
+const FETCHED_LAND: Perm = { name: "", types: new Set(["land"]), subtypes: new Set(), land: true, manaValue: 0, basic: false, power: null };
 
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
 interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean; colors: number; baseColors?: number; colourGate?: BoardGate; fixer?: FixerMask }
@@ -978,9 +980,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     // A land-fetch SPELL searches the library too, so it fixes colours and thins by the same fact.
     const fetches = fetchesLand(dc);
     const tapBonus = isLand ? undefined : tapBonusOf(dc);
-    const landfall = isLand ? 0 : landfallOf(dc, gateDeck);
+    const landfall = isLand ? 0 : landfallOf(dc, gateDeck, true);
     const ritual = isLand ? [] : ritualUnits(dc);
-    const output = spendable(manaOutput(dc, gateDeck), cheapest);
+    const output = spendable(manaOutput(dc, gateDeck, true), cheapest);
     const oppRitual = isLand ? 0 : opponentHandRitual(dc);
     return {
       name: dc.card.name,
@@ -989,7 +991,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       isLand,
       output,
       everyLandType: isEveryLandType(dc.card.typeLine, dc.card.oracleText),
-      colors: isLand && opts.landColours !== undefined ? opts.landColours : fetches ? fetchMaskOf(dc, deck) : colourMaskOf(dc, gateDeck),
+      colors: isLand && opts.landColours !== undefined ? opts.landColours : fetches ? fetchMaskOf(dc, deck) : colourMaskOf(dc, gateDeck, true, true),
       ...(!fetches && !(isLand && opts.landColours !== undefined) ? colourGateFields(dc, gateDeck) : {}),
       perm: permOf(dc),
       ...fixerOf(dc),
@@ -1003,7 +1005,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // different costs to one answer.
       cost: isLand ? null : parseCost(castableManaCost(dc.card)),
       costKey: castableManaCost(dc.card) ?? "",
-      ...(isLand ? { land: classifyLand(dc.card) } : { accelerant: classifyAccelerant(dc, gateDeck) }),
+      ...(isLand ? { land: classifyLand(dc.card, dc.tags) } : { accelerant: classifyAccelerant(dc, gateDeck, true) }),
       ...(ritual.length > 0 ? { ritual } : {}),
       ...(oppRitual > 0 ? { ritualPerOppCard: oppRitual } : {}),
       ...(attackOf(dc) ? { attack: attackOf(dc)! } : {}),
@@ -1028,8 +1030,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   // enters the `payableShare` denominator of a deck it is not in.
   const extras: DeckSlot[] = (opts.alsoPrice ?? []).map((dc) => {
     const tapBonus = tapBonusOf(dc);
-    const landfall = landfallOf(dc, gateDeck);
-    const output = spendable(manaOutput(dc, gateDeck), cheapest);
+    const landfall = landfallOf(dc, gateDeck, true);
+    const output = spendable(manaOutput(dc, gateDeck, true), cheapest);
     return {
       name: dc.card.name,
       manaValue: dc.card.manaValue ?? 0,
@@ -1037,13 +1039,13 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       isLand: false,
       output,
       everyLandType: false,
-      colors: colourMaskOf(dc, gateDeck),
+      colors: colourMaskOf(dc, gateDeck, true, true),
       ...colourGateFields(dc, gateDeck),
       perm: permOf(dc),
       fetches: false,
       cost: parseCost(castableManaCost(dc.card)),
       costKey: castableManaCost(dc.card) ?? "",
-      accelerant: classifyAccelerant(dc, gateDeck),
+      accelerant: classifyAccelerant(dc, gateDeck, true),
       ...(tapBonus ? { tapBonus } : {}),
       ...(landfall > 0 ? { landfall } : {}),
       // THE COMMANDER ATTACKS TOO: it is cast from the command zone like any creature it holds.
@@ -1956,7 +1958,7 @@ export function manaModel(
     combat: { one: turnQuartiles(greedy.killTurns.one), table: turnQuartiles(greedy.killTurns.table) },
     availability: {
       trials,
-      accelerants: deck.filter((dc) => classifyAccelerant(dc, gateDeck) !== null).length,
+      accelerants: deck.filter((dc) => classifyAccelerant(dc, gateDeck, true) !== null).length,
       rows,
       headline: { mana: 6, turn: 6, low: Math.min(lo, hi), high: Math.max(lo, hi) },
       need: { mana: needMana, turn: needMana, share: underOf(needMana), low: Math.min(nLo, nHi), high: Math.max(nLo, nHi) },

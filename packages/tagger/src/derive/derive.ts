@@ -454,7 +454,8 @@ import { emblemRecipient } from "../emblem.js";
 // Grove, Omenpath Journey) is a fetch; Piracy's "tap lands you don't control for mana" is an unread one-shot line.
 // 309: #1197 (owner 2026-10-14): a creation replacement that ADDS a Treasure to another token's creation is a token-maker line (Bilbo, Fellow Conspirator; Academy Manufactor); a pure Treasure doubler
 // (Xorn, Jolene's second sentence) stays none.
-export const DERIVE_VERSION = 309;
+// 310: #1191: ManaLine.gate is a typed ManaGate (control / same-name / tron / speed / initiative / unknown), parsed once by parseGate. New classes: "...or if you control a basic land" (Gleaming Bastion cycle) and "a creature with power N or greater" are control gates, no longer unknown.
+export const DERIVE_VERSION = 310;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

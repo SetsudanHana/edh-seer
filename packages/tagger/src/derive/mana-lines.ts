@@ -21,9 +21,10 @@
  *  ability, and replacing how it is computed is a derive refactor of its own that moves every row, which #1169 did not take on. A mana consumer reads `ManaLine`. */
 import type { ClauseRecord } from "../canonicalize.js";
 import type {
-  Ability, Characteristics, LandFetch, ManaAnyColour, ManaLine, ManaLineSource, StaticFixer, SubjectFilter,
+  Ability, Characteristics, LandFetch, ManaAnyColour, ManaGate, ManaLine, ManaLineSource, StaticFixer, SubjectFilter,
 } from "../schema.js";
 import { isEnergyObject } from "./effect-kind.js";
+import { parseGate } from "./gate.js";
 
 const WUBRG = ["W", "U", "B", "R", "G"] as const;
 const NUMBER_WORD: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
@@ -242,6 +243,8 @@ function colonHead(text: string): string {
   return text.slice(0, i).trim();
 }
 
+/** THE GATE, TYPED (#1191): every place below builds the verbatim lowercase condition; this is where it becomes a `ManaGate`, once (`parseGate`, derive/gate.ts). */
+const typedGate = (g: string | null): ManaGate | null => (g === null ? null : parseGate(g));
 const GATE = /\bactivate (?:this ability )?only (?:if|when|while) ([^.]*)/i;
 const sentencesOf = (text: string): string[] => text.split(/(?<=[.!?])\s+/).filter((x) => x.trim() !== "");
 /** A sentence that adds mana (a symbol or the word "mana" after "add"), as opposed to "add a +1/+1 counter". */
@@ -551,7 +554,7 @@ export function deriveMana(input: ManaInput): ManaResult {
         face, source, repeats: ability?.repeats ?? null, cost, ...made,
         unread: made.colours.length === 0 && made.colourless === 0 && made.anyColour === null,
         net: produced - cost.mana,
-        gate: grantGate ?? afterCost ?? requiresGate(ability) ?? gateOf(text, sentence, ability?.threshold !== undefined),
+        gate: typedGate(grantGate ?? afterCost ?? requiresGate(ability) ?? gateOf(text, sentence, ability?.threshold !== undefined)),
         restriction: restrictionOf(texts),
         timing: source === "trigger" || source === "aura-trigger" || oneTurn ? "on-trigger" : DELAYED.test(text) ? "next-turn" : "now",
         producesToken: tokenGrant ? "granted" : null,
@@ -646,7 +649,7 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (colours.length === 0 || (Array.isArray(subject.type) ? subject.type : [subject.type]).includes("creature")) continue;
       lines.push({
         face, source: "fetch", repeats: a.repeats ?? null, cost, colours, colourless: 0, anyColour: null, unread: false,
-        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: afterCost ?? (laterGate !== undefined ? laterGate : fetchGate(clauseText)), restriction: null, timing: "now", producesToken: null, trigger: null, triggerSubject: null,
+        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: typedGate(afterCost ?? (laterGate !== undefined ? laterGate : fetchGate(clauseText))), restriction: null, timing: "now", producesToken: null, trigger: null, triggerSubject: null,
       });
       fetchKind = a.kind === "on-cast" || fetchKind === "spell" ? "spell" : "permanent";
       fetchTapped = fetchTapped && tapped;

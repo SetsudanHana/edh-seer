@@ -1,3 +1,4 @@
+import { parseGate } from "@edh-seer/tagger/gate";
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { basicsFloor, betterLand, colourReplacements, landFacts, neededColours } from "./land-score.js";
@@ -245,7 +246,7 @@ test("a rock that fixes no colour is named as a trade when a colour is short; on
 // A GATED ROCK MAKES ITS COLOURS WHERE THE DECK MEETS THE GATE (owner 2026-10-13: the colour audit follows the gate), so a swap never names it for the colour it makes there.
 test("a rock whose red waits on a Dragon is not named for red in a deck of Dragons, and is in a deck without (the gate is judged against the deck)", () => {
   const gated = { ...rock("Dragon Stone", 2, "{T}: Add {C}. {T}: Add {R}. Activate only if you control a Dragon.", ["C"]),
-    tags: manaTags([tapFor(["C"]), tapFor(["R"], { gate: "you control a dragon" })]) };
+    tags: manaTags([tapFor(["C"]), tapFor(["R"], { gate: parseGate("you control a dragon") })]) };
   const dragons = Array.from({ length: 12 }, (_, i) => dc(`Dragon ${i}`, "Creature — Dragon", "", [], [], "{4}{R}"));
   const filler = Array.from({ length: 40 }, (_, i) => dc(`Filler ${i}`, "Sorcery", "", [], [], "{1}"));
   expect(colourReplacements([...izzetSpells, gated, ...dragons, ...filler], "R", 2, { R: 4 })).toEqual([]);
@@ -253,7 +254,7 @@ test("a rock whose red waits on a Dragon is not named for red in a deck of Drago
 });
 
 test("a rock whose only mana waits on a Dragon is a source the swap can name, in a deck of Dragons (makesAnyMana is handed the deck)", () => {
-  const only = { ...rock("Dragon Mox", 2, "{T}: Add {R}. Activate only if you control a Dragon.", ["R"]), tags: manaTags([tapFor(["R"], { gate: "you control a dragon" })]) };
+  const only = { ...rock("Dragon Mox", 2, "{T}: Add {R}. Activate only if you control a Dragon.", ["R"]), tags: manaTags([tapFor(["R"], { gate: parseGate("you control a dragon") })]) };
   const dragons = Array.from({ length: 12 }, (_, i) => dc(`Dragon ${i}`, "Creature \u2014 Dragon", "", [], [], "{4}{R}"));
   const filler = Array.from({ length: 40 }, (_, i) => dc(`Filler ${i}`, "Sorcery", "", [], [], "{1}"));
   // short on blue: a rock that makes red only is a source to trade, once it is a source at all

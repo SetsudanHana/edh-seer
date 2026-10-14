@@ -22,7 +22,7 @@ for (const doc of await store.db.collection("cardClauses").find({}).toArray() as
   console.log(`   ${oa.length} lines -> ${nb.length}`);
   for (let i = 0; i < Math.max(oa.length, nb.length); i++) if (JSON.stringify(oa[i]) !== JSON.stringify(nb[i])) {
     const keys = [...new Set([...Object.keys(oa[i] ?? {}), ...Object.keys(nb[i] ?? {})])].filter((k) => JSON.stringify(oa[i]?.[k]) !== JSON.stringify(nb[i]?.[k]));
-    console.log(`   line ${i}: gate ${oa[i]?.gate ?? "-"} -> ${nb[i]?.gate ?? "-"} [${nb[i]?.source ?? oa[i]?.source}] differs in ${keys.join(",")}`);
+    console.log(`   line ${i}: gate ${oa[i]?.gate?.text ?? oa[i]?.gate ?? "-"} -> ${nb[i]?.gate?.text ?? nb[i]?.gate ?? "-"} [${nb[i]?.source ?? oa[i]?.source}] differs in ${keys.join(",")}`);
   }
 }
 console.log(`${n} cards derived, ${changed} with different manaLines`);
