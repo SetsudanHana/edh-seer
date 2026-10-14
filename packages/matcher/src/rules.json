@@ -1,5 +1,5 @@
 {
-  "version": 24,
+  "version": 25,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -31,7 +31,7 @@
     "deathsExiledCreature": "(?:whenever a (?:nontoken )?creature an opponent controls dies, exile it|if a (?:nontoken )?creature an opponent (?:controls|owns) would die(?! this turn)[^.]*?,? (?:instead )?exile)",
     "deathsExiledAll": "if a card(?: or token)? would be put into (?:an opponent's|a) graveyard from anywhere,? (?:instead )?exile",
     "graveyardHatePositive": "exile[^.]{0,80}?(?:each |all |any number of |target )?(?:player|opponent)s?'s? graveyards?|exile all graveyards|exile[^.]{0,60}?cards?[^.]{0,40}?from (?:a|an opponent's|that) graveyard|exile[^.]{0,60}?target cards? from graveyards|opponent[^.]{0,90}?exiles?[^.]{0,60}?from their graveyard|if a card[^.]{0,60}?would be put into (?:a|an opponent's|their) graveyard from anywhere[^.]{0,40}?exile it instead",
-    "stack": "(?:counter|exile) target[^.]*?(?:spell|ability)|change the target of|choose new targets? for target (?:\\w+ )*(?:spell|ability)|return target (?:\\w+ )*spell(?:\\W+\\w+)*? to (?:its owner's|their|the owner's|owner's) hand|gain control of target (?:\\w+ ){0,6}spell(?![\\w'’])|target (?!of )(?:\\w+ ){0,6}spell\\b(?:[^.]*\\.){0,4}[^.]*?counter (?:that|the) spell",
+    "stack": "(?:counter|exile) target[^.]*?(?:spell|ability)|change the target of|choose new targets? for target (?:\\w+ )*(?:spell|ability)|return target (?:\\w+ )*spell(?:\\W+\\w+)*? to (?:its owner's|their|the owner's|owner's) hand|gain control of target (?:\\w+ ){0,6}spell(?![\\w'’])|target (?!of )(?:\\w+ ){0,6}spell\\b(?:[^.\\n]*\\.){0,6}[^.\\n]*?counter (?:that|the) spell",
     "protection": "hexproof|indestructible|protection from|can't be countered|shroud|phases? out",
     "tutor": "search your library for",
     "landFetch": "search your library for (a |an |up to \\w+ )?(basic )?(land|forest|island|swamp|mountain|plains)",
@@ -262,7 +262,8 @@
       "id": "stackInteraction.text",
       "category": "stackInteraction",
       "match": [{ "op": "oracle", "pattern": "stack" }],
-      "not": [{ "op": "countsAsLand" }]
+      "not": [{ "op": "countsAsLand" }],
+      "why": "A SPELL ON THE STACK IS ANSWERED BY COUNTERING IT, TAKING IT, OR REDIRECTING IT (owner rulings 2026-10-14: Commandeer, Invert Polarity, Split Decision, and Mages' Contest by the same shape). Retargeting your OWN copy is not (#491). A counter of 'that spell' counts only when 'target ... spell' came earlier in the SAME ability (no newline between), so a trigger on any cast ('whenever an opponent casts a spell, counter that spell') and a protection trigger ('becomes the target of a spell') stay out. CEILING: the sentence gap between the target and the counter is capped at 6 sentences; the corpus maximum is 5 (Mages' Contest, a bidding ability) on 2026-10-14. A longer ability would be missed silently, so re-measure the maximum with a corpus query when new cards print."
     },
     {
       "id": "burn.text",

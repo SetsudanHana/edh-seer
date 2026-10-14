@@ -853,12 +853,13 @@ test("gaining control of a targeted spell and countering a spell targeted earlie
     mk("Commandeer", "You may exile two blue cards from your hand rather than pay this spell's mana cost.\nGain control of target noncreature spell. You may choose new targets for it. (If that spell is an artifact, enchantment, or planeswalker, the permanent enters under your control.)"),
     mk("Invert Polarity", "Choose target spell, then flip a coin. If you win the flip, gain control of that spell and you may choose new targets for it. If you lose the flip, counter that spell."),
     mk("Split Decision", "Will of the council \u2014 Choose target instant or sorcery spell. Starting with you, each player votes for denial or duplication. If denial gets more votes, counter the spell. If duplication gets more votes or the vote is tied, copy the spell. You may choose new targets for the copy."),
+    mk("Mages' Contest", "You and target spell's controller bid life. You start the bidding with a bid of 1. In turn order, each player may top the high bid. The bidding ends if the high bid stands. The high bidder loses life equal to the high bid. If you win the bidding, counter that spell."),
     mk("Twincast", "Copy target instant or sorcery spell. You may choose new targets for the copy."),
     mk("Frost Titan", "Whenever this creature becomes the target of a spell or ability an opponent controls, counter that spell or ability unless its controller pays {2}.\nWhenever this creature enters or attacks, tap target permanent. It doesn't untap during its controller's next untap step.", "Creature \u2014 Giant"),
     mk("Skyfire Kirin", "Flying\nWhenever you cast a Spirit or Arcane spell, you may gain control of target creature with that spell's mana value until end of turn.", "Creature \u2014 Dragon Spirit"),
     mk("Counterbalance", "Whenever an opponent casts a spell, you may reveal the top card of your library. If you do, counter that spell if it has the same mana value as the revealed card.", "Enchantment"),
   ]);
-  expect([...(m.get("stackInteraction") ?? [])].sort()).toEqual(["Commandeer", "Invert Polarity", "Split Decision"]);
+  expect([...(m.get("stackInteraction") ?? [])].sort()).toEqual(["Commandeer", "Invert Polarity", "Mages' Contest", "Split Decision"]);
 });
 
 /** Owner ruling 2026-09-27 (issue #513): Saw in Half is NOT removal -- its controller gets two copies
