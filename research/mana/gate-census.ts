@@ -10,29 +10,33 @@
  *     - colour audit: `deckMath.colors[].supplied` (cards able to make the colour: the number an unread gated source silently leaves out), `worst.available` (sources
  *       by the deadline, which reads `gateMetBy`), `worst.required`; `gold` (joint demand); `unreadSources` (derive could not read it, counted as no colour).
  *     - goldfish: `manaAvailability` (the report's simulated mana per turn: median / p25 / p75, and the share of the deck payable) and its `accelerants`; the
- *       closed-form `castability` mean (low/high over the priced cards) because a gate that turns met moves what a deck can cast.
+ *       closed-form `castability` mean (low/high over the 4 hardest rows the report carries, CASTABILITY_ROWS = 4, not over all priced cards: CEILING, a coarse signal) because a gate that turns met moves what a deck can cast.
  *     - land target: `lands.target`, `rawTarget`, `actual`, `accelerants`, `manaBase.colourMiss`, `manaBase.total`.
  *     - gated: each gated card in the deck, its class and `lineGateVerdict` (met / unmet / unknown). */
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 const R = "../../packages";
 
-// THE ONE ADAPTER. Everything below reads a gate through these two functions; task 2 edits them and nothing else.
+// THE ONE ADAPTER. Everything below reads a gate through these two functions. Since #1191 (DERIVE 310) `ManaLine.gate` is a typed `ManaGate` whose `kind` IS the class; a string gate
+// (a stored row from before it) is only CLASSIFIED here, by a copy of the old grammars, so a pre-retype row still reads; `lineGateVerdict` takes the typed gate, so verdicts need a re-derived corpus.
 type Line = { gate?: unknown; [k: string]: unknown };
-const TRON_GATE = /^you control (?:an?|the) (.{1,40}?) and (?:an?|the) (.{1,40})$/; // goldfish.ts's shape (not exported)
 const gm = await import(`${R}/matcher/src/gate.ts`);
 export type GateClass = "control" | "same-name" | "tron" | "speed" | "initiative" | "unknown";
+const KINDS: readonly GateClass[] = ["control", "same-name", "tron", "speed", "initiative", "unknown"];
 function gateOf(gate: unknown): { text: string; cls: GateClass } {
   if (gate !== null && typeof gate === "object") {
-    const g = gate as { kind?: string };
-    return { text: JSON.stringify(gate), cls: ((g.kind ?? "unknown") as GateClass) };
+    const g = gate as { kind?: string; text?: string };
+    const cls = KINDS.find((k) => k === g.kind);
+    if (cls === undefined) throw new Error(`gate-census: gate kind ${String(g.kind)} is not one of ${KINDS.join(", ")}`);
+    return { text: g.text ?? JSON.stringify(gate), cls };
   }
   const text = String(gate).trim().toLowerCase();
+  const TRON = /^you control (?:an?|the) (.{1,40}?) and (?:an?|the) (.{1,40})$/;
   let cls: GateClass = "unknown";
-  if (gm.isSpeedGate(text)) cls = "speed";
+  if (text === "speed 4") cls = "speed";
   else if (text === "you have the initiative") cls = "initiative";
   else if (/^you control (?:(?:an?)|(?:\w+) or more) lands with the same name$/.test(text)) cls = "same-name";
-  else if (gm.boardGateOf(text)) cls = "control";
-  else if (TRON_GATE.test(text)) cls = "tron";
+  else if (/^you control (?:(?:an?)|(?:\w+) or more) [^ ]+(?: or (?:an? )?[^ ]+)*$/.test(text) && !/ and /.test(text)) cls = "control";
+  else if (TRON.test(text)) cls = "tron";
   return { text, cls };
 }
 const verdictOf = (line: Line, dcs: unknown[]): string => gm.lineGateVerdict(line, dcs);
@@ -72,7 +76,7 @@ async function measure(out: string): Promise<void> {
     for (const l of d.manaLines as Line[]) {
       if (l.gate === null || l.gate === undefined) continue;
       const g = gateOf(l.gate);
-      census.corpus.counts[g.cls]! += 1; census.corpus.lines += 1;
+      census.corpus.counts[g.cls] = (census.corpus.counts[g.cls] ?? 0) + 1; census.corpus.lines += 1;
       (census.corpus.cards[name] ??= []).push(g);
     }
   }
@@ -127,7 +131,11 @@ function diff(a: Census, b: Census): void {
   const clsKey = (x: { cls: string }[] | undefined): string => (x ?? []).map((g) => g.cls).sort().join(",") || "(none)";
   for (const n of [...new Set([...Object.keys(a.corpus.cards), ...Object.keys(b.corpus.cards)])].sort()) if (clsKey(a.corpus.cards[n]) !== clsKey(b.corpus.cards[n])) console.log(`  ${n}: ${clsKey(a.corpus.cards[n])} -> ${clsKey(b.corpus.cards[n])}`);
   console.log("CARD VERDICT / CLASS CHANGES PER DECK (card | gate keyed by gate text; a retyped gate changes its text, so match by card name)");
-  const byCard = (d: DeckRow): Map<string, string> => { const r = new Map<string, string>(); for (const [k, g] of Object.entries(d.gated)) r.set(k.split(" | ")[0]!, `${g.cls}:${g.verdict}`); return r; };
+  const byCard = (d: DeckRow): Map<string, string> => {
+    const lines = new Map<string, string[]>();
+    for (const [k, g] of Object.entries(d.gated)) { const n = k.split(" | ")[0]!; lines.set(n, [...(lines.get(n) ?? []), `${g.cls}:${g.verdict}`]); }
+    return new Map([...lines].map(([n, v]) => [n, v.sort().join(" + ")] as const));
+  };
   const moved = new Map<string, Set<string>>();
   for (const [dn, da] of Object.entries(a.decks)) {
     const db = b.decks[dn]; if (!db) continue;

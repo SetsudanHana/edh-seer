@@ -46,7 +46,7 @@ describe("tap abilities: cost, colours and amount", () => {
   it("Tainted Peak: the coloured line is gated on a Swamp; Exotic Orchard is bounded by the opponents' lands", () => {
     const [plain, gated] = linesOf("Tainted Peak");
     expect(plain.gate).toBeNull();
-    expect(gated).toMatchObject({ colours: ["B", "R"], gate: "you control a swamp", amount: { fixed: 1, scales: null } });
+    expect(gated).toMatchObject({ colours: ["B", "R"], gate: { kind: "control", text: "you control a swamp" }, amount: { fixed: 1, scales: null } });
     expect(only("Exotic Orchard")).toMatchObject({ anyColour: "opponent-lands", colours: [], face: 0 });
   });
   it("Llanowar Elves is a one-colour tap", () => {
@@ -130,7 +130,7 @@ describe("amounts and gates the goldfish reads (DERIVE_VERSION 302)", () => {
   it("Muraganda Raceway: the Max speed line is gated, the plain one is not", () => {
     const [plain, speed] = linesOf("Muraganda Raceway");
     expect(plain).toMatchObject({ amount: { fixed: 1, scales: null }, gate: null });
-    expect(speed).toMatchObject({ amount: { fixed: 2, scales: null }, gate: "speed 4" });
+    expect(speed).toMatchObject({ amount: { fixed: 2, scales: null }, gate: { kind: "speed", n: 4 } });
   });
 });
 
@@ -269,7 +269,7 @@ describe("review fixes (#1169 task 1)", () => {
   it("Cabal Ritual's threshold line is gated, the plain line is not", () => {
     const [plain, threshold] = linesOf("Cabal Ritual");
     expect(plain.gate).toBeNull();
-    expect(threshold).toMatchObject({ amount: { fixed: 5 }, gate: "there are seven or more cards in your graveyard" });
+    expect(threshold).toMatchObject({ amount: { fixed: 5 }, gate: { kind: "unknown", text: "there are seven or more cards in your graveyard" } });
   });
   it("counters and tapping other permanents are structured", () => {
     expect(only("Cryptic Trilobite").cost).toMatchObject({ counters: "remove", other: [] });
@@ -299,18 +299,22 @@ describe("review round 2 (#1169 task 1)", () => {
       expect(last.gate, n).not.toBeNull();
       expect(ls[0]!.gate, n).toBeNull();
     }
-    expect(linesOf("Urza's Tower")[1]).toMatchObject({ colourless: 3, gate: "you control an urza's mine and an urza's power-plant" });
+    expect(linesOf("Urza's Tower")[1]).toMatchObject({ colourless: 3, gate: { kind: "tron", names: ["urza's mine", "urza's power-plant"] } });
+  });
+  it("typed gates (#1191): a basic-land count (Gleaming Bastion) and a power count (Fanatic of Rhonas) are control gates, no longer unknown", () => {
+    expect(linesOf("Gleaming Bastion").map((l) => l.gate)).toContainEqual(expect.objectContaining({ kind: "control", need: 1, nouns: ["land"], basic: true }));
+    expect(linesOf("Fanatic of Rhonas").map((l) => l.gate)).toContainEqual(expect.objectContaining({ kind: "control", need: 1, nouns: ["creature"], minPower: 4 }));
   });
   it("'as long as ...' on a granted ability gates the grant", () => {
-    expect(only("Honored Hierarch").gate).toBe("this creature is renowned");
-    expect(only("Mul Daya Channelers").gate).toBe("the top card of your library is a land card");
+    expect(only("Honored Hierarch").gate?.text).toBe("this creature is renowned");
+    expect(only("Mul Daya Channelers").gate?.text).toBe("the top card of your library is a land card");
   });
   it("a fetch that lands only under a condition keeps its line and carries the condition", () => {
     for (const n of ["Embermouth Sentinel", "Ruin in Their Wake", "Scholar of New Horizons", "Stoic Farmer", "Natural Balance", "Elemental Teachings"]) {
       expect(tagsOf(n).landFetch, n).toBeDefined();
       expect(linesOf(n, "fetch")[0]!.gate, n).not.toBeNull();
     }
-    expect(linesOf("Stoic Farmer", "fetch")[0]!.gate).toBe("an opponent controls more lands than you");
+    expect(linesOf("Stoic Farmer", "fetch")[0]!.gate?.text).toBe("an opponent controls more lands than you");
     expect(linesOf("Cultivate", "fetch")[0]!.gate).toBeNull();
   });
   it("every player searching includes you; a target player may not", () => {
@@ -327,13 +331,13 @@ describe("review round 3 (#1169 task 1)", () => {
   it("Gemstone Caverns: a plain {C} line and a gated any-colour line", () => {
     const [plain, any] = linesOf("Gemstone Caverns");
     expect(plain).toMatchObject({ colourless: 1, anyColour: null, gate: null });
-    expect(any).toMatchObject({ anyColour: "any", gate: "gemstone caverns has a luck counter on it" });
+    expect(any).toMatchObject({ anyColour: "any", gate: { kind: "unknown", text: "gemstone caverns has a luck counter on it" } });
   });
   it("an intervening if gates the trigger", () => {
-    expect(only("Mardu Warshrieker").gate).toBe("you attacked this turn");
-    expect(only("Coal Stoker").gate).toBe("you cast it from your hand");
-    expect(only("Realm-Scorcher Hellkite").gate).toBe("it was bargained");
-    expect(only("Scattering Stroke").gate).toBe("you win");
+    expect(only("Mardu Warshrieker").gate?.text).toBe("you attacked this turn");
+    expect(only("Coal Stoker").gate?.text).toBe("you cast it from your hand");
+    expect(only("Realm-Scorcher Hellkite").gate?.text).toBe("it was bargained");
+    expect(only("Scattering Stroke").gate?.text).toBe("you win");
   });
   it("'you may <cost>. If you do, add' is a cost, and 'you do' is never a gate", () => {
     expect(only("Yavimaya Bloomsage").cost).toMatchObject({ life: 1 });
@@ -345,7 +349,7 @@ describe("review round 3 (#1169 task 1)", () => {
     expect(linesOf("Cartographer's Hawk", "fetch")[0]!.cost.other).toEqual(["return it to its owner's hand"]);
     expect(linesOf("Purestrain Genestealer", "fetch")[0]!.cost).toMatchObject({ counters: "remove" });
     expect(linesOf("Charitable Levy", "fetch")[0]!.cost).toMatchObject({ sacrificeSelf: true });
-    for (const fx of Object.keys(fixtures)) for (const l of tagsOf(fx.split(" // ")[0]!).manaLines ?? []) expect(l.gate ?? "", fx).not.toMatch(/^(?:you|they|that player) do$/);
+    for (const fx of Object.keys(fixtures)) for (const l of tagsOf(fx.split(" // ")[0]!).manaLines ?? []) expect(l.gate?.text ?? "", fx).not.toMatch(/^(?:you|they|that player) do$/);
     for (const n of ["Yavimaya Bloomsage", "Energy Tap", "Fire Lord Ozai", "Springbloom Druid"]) expect(linesOf(n)[0]!.gate, n).toBeNull();
   });
   it("'for as long as' is a duration, not a gate", () => {
@@ -356,15 +360,15 @@ describe("review round 3 (#1169 task 1)", () => {
     // "When Princess Yue dies, ... return this card ... She gains '{T}: Add {C}.'": the mana exists only after the death, not from the card in play.
     const yue = only("Princess Yue");
     expect(yue).toMatchObject({ source: "static-grant", colourless: 1 });
-    expect(yue.gate).toBe("when princess yue dies");
+    expect(yue.gate?.text).toBe("when princess yue dies");
     // ...while "for as long as" stays a duration (the test above), and a grant by a STATIC parent has no trigger to gate it.
     expect(only("Abundant Growth").gate).toBeNull();
     expect(linesOf("Chromatic Lantern", "static-grant")[0]!.gate).toBeNull();
     // A trigger that grants for a while is gated (Hydro-Man's end step, Song of Freyalise's chapter "until your next turn"); a grant to ANOTHER card
     // (Vraska, the Silencer's returned Treasure) is no mana of Vraska's; a Saga chapter with no duration (Urza's Saga) stands, as a land's tap does.
-    expect(only("Hydro-Man, Fluid Felon", "static-grant").gate).toBe("at the beginning of your end step");
-    expect(only("Song of Freyalise", "static-grant").gate).toBe("until your next turn");
-    expect(only("Vraska, the Silencer", "static-grant").gate).toBe("whenever a nontoken creature an opponent controls dies");
+    expect(only("Hydro-Man, Fluid Felon", "static-grant").gate?.text).toBe("at the beginning of your end step");
+    expect(only("Song of Freyalise", "static-grant").gate?.text).toBe("until your next turn");
+    expect(only("Vraska, the Silencer", "static-grant").gate?.text).toBe("whenever a nontoken creature an opponent controls dies");
     expect(only("Urza's Saga", "static-grant").gate).toBeNull();
   });
   it("Ashling's one printed add is one line, not one per cast/copy twin", () => {
@@ -375,7 +379,7 @@ describe("review round 3 (#1169 task 1)", () => {
 describe("review round 4 (#1169 task 1)", () => {
   it("Charitable Levy: the 'if' before the comma is the gate, the sacrifice after it is the cost", () => {
     const l = linesOf("Charitable Levy", "fetch")[0]!;
-    expect(l.gate).toBe("there are three or more collection counters on it");
+    expect(l.gate?.text).toBe("there are three or more collection counters on it");
     expect(l.cost).toMatchObject({ sacrificeSelf: true, other: [] });
   });
 });
@@ -576,7 +580,7 @@ describe("token makers: the Treasure a card really makes, and the one it does no
 describe("a land fetch whose landing is printed in a LATER clause", () => {
   it("Caravan Vigil puts the land onto the battlefield only if a creature died; Druid of the Emerald Grove only on a high roll", () => {
     expect(tagsOf("Caravan Vigil").landFetch).toMatchObject({ kind: "spell", reach: WUBRG });
-    expect(only("Caravan Vigil", "fetch").gate).toMatch(/creature died/);
+    expect(only("Caravan Vigil", "fetch").gate?.text).toMatch(/creature died/);
     expect(tagsOf("Druid of the Emerald Grove").landFetch).toMatchObject({ kind: "permanent", tapped: true });
     expect(only("Druid of the Emerald Grove", "fetch").gate).not.toBeNull();
   });

@@ -110,6 +110,8 @@ export function classifyLand(card: Pick<Card, "typeLine" | "oracleText">): LandC
   const bounces = /when this land enters, return a land you control to its owner's hand/.test(text);
   const base = { subtypes: [] as string[], bounces };
 
+  // CEILING (#1191): this reads the verge sentence off the PRINTED text, not off the line's typed `control` gate. `classifyLand` takes a card's type line and oracle text only (its callers
+  // hold no tags: the build categories, the land score and the goldfish all call it on `dc.card`), so the typed gate is out of its reach; the sentence is the same one derive's `parseGate` reads.
   // The verge cue is an ACTIVATION restriction and can sit on a land with no tapped clause at all,
   // so it is read before the tapped question rather than inside it.
   const verge = /activate only if you control (?:a|an) ([a-z'-]+)(?: or (?:(?:a|an) )?([a-z'-]+))?/.exec(text);

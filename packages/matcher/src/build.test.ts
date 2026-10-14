@@ -1,3 +1,4 @@
+import { parseGate } from "@edh-seer/tagger/gate";
 import { describe, expect, it, test } from "vitest";
 import { detectBuildCategories, detectBuildFacets, computeBuild, rampGrade, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT, scoreBuild, parentImpact, landsImpactOf, answersImpactOf, templateBlend, SECONDARY_SHARE, BUILD_PARENTS } from "./build.js";
 import { ARCHETYPE_LEAD_FLOOR } from "./archetypes.js";
@@ -924,7 +925,7 @@ describe("rampGrade (#534, on manaLines since #1169)", () => {
 
   it("a gated tap line is a rock only where the deck meets its gate (owner 2026-10-13: Mox Jasper in a Dragon deck)", () => {
     const jasper = rock("Mox Jasper", "{T}: Add one mana of any color. Activate only if you control a Dragon.", "Artifact",
-      [tapFor(["W", "U", "B", "R", "G"], { gate: "you control a dragon" })]);
+      [tapFor(["W", "U", "B", "R", "G"], { gate: parseGate("you control a dragon") })]);
     const dragon = (i: number): DeckCard => ({ ...mk(`Dragon ${i}`, "Flying", "Creature — Dragon"), card: { name: `Dragon ${i}`, typeLine: "Creature — Dragon", oracleText: "Flying", keywords: [], colors: [], manaValue: 3 } as never });
     const dragons = Array.from({ length: 30 }, (_, i) => dragon(i));
     const plain = Array.from({ length: 30 }, (_, i) => mk(`Bear ${i}`, "", "Creature — Bear"));
@@ -934,12 +935,12 @@ describe("rampGrade (#534, on manaLines since #1169)", () => {
     expect(rampGrade(jasper, [jasper, ...dragons])).toBe(rampGrade(rock("Ungated", "{T}: Add one mana of any color.", "Artifact", [tapFor(["W", "U", "B", "R", "G"])])));
     // A gate no decklist settles (Flywheel Racer: "this permanent is a creature") is never met.
     const racer = rock("Flywheel Racer", "Vigilance\n{T}: Add one mana of any color. Activate only if this permanent is a creature.\nCrew 1", "Artifact — Vehicle",
-      [tapFor(["W", "U", "B", "R", "G"], { gate: "this permanent is a creature" })]);
+      [tapFor(["W", "U", "B", "R", "G"], { gate: parseGate("this permanent is a creature") })]);
     expect(rampGrade(racer, [racer, ...dragons])).toBe(0);
   });
 
   it("a max-speed gate is met in any deck, so the partner index grades the line (owner 2026-10-13; CR 702.179d: speed 4 from turn 4)", () => {
-    const catalyzer = rock("Gated Rock", "Max speed -- {T}: Add {C}{C}.", "Artifact", [tapFor(["C"], { gate: "speed 4", amount: { fixed: 2, scales: null }, net: 2 })]);
+    const catalyzer = rock("Gated Rock", "Max speed -- {T}: Add {C}{C}.", "Artifact", [tapFor(["C"], { gate: parseGate("speed 4"), amount: { fixed: 2, scales: null }, net: 2 })]);
     expect(rampGrade(catalyzer)).toBe(rampGrade(rock("Ungated", "{T}: Add {C}{C}.", "Artifact", [tapFor(["C"], { amount: { fixed: 2, scales: null }, net: 2 })])));
     expect(rampGrade(catalyzer)).toBeGreaterThan(0);
   });

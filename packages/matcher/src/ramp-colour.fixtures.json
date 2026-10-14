@@ -9798,7 +9798,10 @@
       "scales": null
      },
      "net": -4,
-     "gate": "an opponent chooses two of those cards",
+     "gate": {
+      "kind": "unknown",
+      "text": "an opponent chooses two of those cards"
+     },
      "restriction": null,
      "timing": "now",
      "producesToken": null,
@@ -11635,7 +11638,14 @@
      },
      "unread": false,
      "net": 1,
-     "gate": "you control six or more lands",
+     "gate": {
+      "kind": "control",
+      "need": 6,
+      "nouns": [
+       "land"
+      ],
+      "text": "you control six or more lands"
+     },
      "restriction": null,
      "timing": "now",
      "producesToken": null,

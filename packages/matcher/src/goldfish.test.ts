@@ -1,3 +1,4 @@
+import { parseGate } from "@edh-seer/tagger/gate";
 import { describe, expect, test } from "vitest";
 import { pAtLeast, seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
@@ -338,7 +339,7 @@ describe("a max-speed gate is priced from turn 4", () => {
   const raceways = (edit: "kept" | "ungated" | "removed"): DeckCard[] => [...Array.from({ length: 60 }, (_, i) => {
     const c = real("Muraganda Raceway", `Raceway ${i}`);
     const lines = c.tags!.manaLines!;
-    c.tags!.manaLines = edit === "kept" ? lines : edit === "removed" ? lines.filter((l) => l.gate !== "speed 4") : lines.map((l) => (l.gate === "speed 4" ? { ...l, gate: null } : l));
+    c.tags!.manaLines = edit === "kept" ? lines : edit === "removed" ? lines.filter((l) => l.gate?.kind !== "speed") : lines.map((l) => (l.gate?.kind === "speed" ? { ...l, gate: null } : l));
     return c;
   }), ...spells(39, 3)];
   test("Howlsquad Heavy is an accelerant in any deck; Muraganda Raceway taps for two from turn 4 and for one before", () => {
@@ -814,7 +815,7 @@ test("N10: a word-form amount is read, and its gate with it", () => {
   // An X amount is a RATE, not an amount -- it stays at one rather than being guessed.
   expect(manaOutput(withManaLines("Elves", "Creature", [tapFor(WUBRG, { amount: { fixed: null, scales: "x" }, net: 1 })])).amount).toBe(1);
   // A gate this model cannot check leaves its line uncounted.
-  expect(manaOutput(withManaLines("Gated", "Artifact", [tapFor(["C"], { ...amountOf(3), gate: "you control a swamp" })])).amount).toBe(1);
+  expect(manaOutput(withManaLines("Gated", "Artifact", [tapFor(["C"], { ...amountOf(3), gate: parseGate("you control a swamp") })])).amount).toBe(1);
 });
 
 // N11. `{C}` IS A RULES-REAL DEMAND (CR 107.4c): colourless mana, and no other kind pays it. The
@@ -1069,7 +1070,7 @@ test("O2: landfall mana pays per land entering, and only that bucket is modellab
   const bare = [...Array.from({ length: 12 }, () => card("Not A Real Card", "Creature — Snake", 2)), ...basics(37), ...spells(50, 3)];
   expect(pAtLeastMana(asRestricted, 9, 8)).toBe(pAtLeastMana(simulate(bare, { trials: 4_000, turns: 8, seed: 21 }), 9, 8));
   // A GATED landfall is not credited either (Koth: "that land is a Mountain").
-  expect(classifyAccelerant(withManaLines("Gated Landfall", "Creature", [triggerLine("enters", "a land you control", ["R"], 1, { gate: "that land is a mountain" })]))).toBeNull();
+  expect(classifyAccelerant(withManaLines("Gated Landfall", "Creature", [triggerLine("enters", "a land you control", ["R"], 1, { gate: parseGate("that land is a mountain") })]))).toBeNull();
 });
 
 // O1. THE FLIP, AND THE ITEM'S OWN PREMISE SHRANK TWICE UNDER MEASUREMENT. Ashling was ALREADY
@@ -1656,7 +1657,7 @@ describe("board-count gates are met turn by turn on the goldfish's own board", (
   });
 
   test("a commander whose own mana waits on a Dragon plays once the library's Dragon is out, in its colour (the priced extras are judged against the whole decklist too)", () => {
-    const commander = withManaLines("Dragon Elf", "Legendary Creature \u2014 Elf", [tapFor(["G"], { gate: "you control a dragon" })]);
+    const commander = withManaLines("Dragon Elf", "Legendary Creature \u2014 Elf", [tapFor(["G"], { gate: parseGate("you control a dragon") })]);
     const withCmd = { ...commander, card: { ...commander.card, manaValue: 2 } };
     const islands = Array.from({ length: 5 }, (_, i) => card(`Island ${i}`, "Basic Land \u2014 Island"));
     const green: DeckCard = { ...card("Green Spell", "Sorcery", 1), card: { ...card("Green Spell", "Sorcery", 1).card, manaCost: "{G}" } };
@@ -1673,7 +1674,7 @@ describe("board-count gates are met turn by turn on the goldfish's own board", (
   });
 
   test("a walker's gated loyalty line is priced against the deck, its turns included (manaOutput's loyalty branch is handed the deck)", () => {
-    const line = mkLine({ gate: "you control a dragon", cost: { ...FREE_TAP, tap: false, other: ["−1"] }, startLoyalty: 3, colours: ["R"], amount: { fixed: 2, scales: null }, net: 2 });
+    const line = mkLine({ gate: parseGate("you control a dragon"), cost: { ...FREE_TAP, tap: false, other: ["−1"] }, startLoyalty: 3, colours: ["R"], amount: { fixed: 2, scales: null }, net: 2 });
     const walker = withManaLines("Gated Walker", "Legendary Planeswalker — Test", [line]);
     const deck = deckOfDragons([walker]);
     expect(manaOutput(walker, deck).turns).toBe(3);

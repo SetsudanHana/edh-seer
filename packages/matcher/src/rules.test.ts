@@ -1,3 +1,4 @@
+import { parseGate } from "@edh-seer/tagger/gate";
 import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./build.js";
@@ -474,9 +475,9 @@ test("a one-shot mana spell is ramp only when it nets, and a permanent mana sour
   expect(cats(spell("Jeska's Will", [ritualLine(["R"], 1, { amount: { fixed: null, scales: "for each card in target opponent's hand" }, cost: { ...FREE_TAP, tap: false, mana: 3 }, net: -2 })], 3, "Sorcery"))).toContain("ramp");
 
   // THE MAXIMUM, NOT THE SUM: Cabal Ritual's second sentence says "instead" (a gated line of its own).
-  expect(cats(spell("Cabal Ritual", [ritualLine(["B"], 3, { cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 1 }), ritualLine(["B"], 5, { gate: "threshold", cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 3 })], 2, "Sorcery"))).toContain("ramp");
+  expect(cats(spell("Cabal Ritual", [ritualLine(["B"], 3, { cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 1 }), ritualLine(["B"], 5, { gate: parseGate("threshold"), cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 3 })], 2, "Sorcery"))).toContain("ramp");
   // ...and a spell with a line that nets nothing in either reading is not ramp.
-  expect(cats(spell("Net Zero", [ritualLine(["B"], 2, { cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 0 }), ritualLine(["B"], 2, { gate: "threshold", cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 0 })], 2, "Sorcery"))).not.toContain("ramp");
+  expect(cats(spell("Net Zero", [ritualLine(["B"], 2, { cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 0 }), ritualLine(["B"], 2, { gate: parseGate("threshold"), cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 0 })], 2, "Sorcery"))).not.toContain("ramp");
   // A card with no mana line at all is not ramp any more (#1190): the mana-generation LABEL on its ability decides nothing, the derived record does.
   expect(cats(spell("No Line", [], 2, "Sorcery"))).not.toContain("ramp");
 

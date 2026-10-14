@@ -1,5 +1,5 @@
 import { POLICY_COLLAPSE } from "@edh-seer/engine/percent";
-import type { ManaLine, SubjectFilter } from "@edh-seer/tagger";
+import type { ManaGate, ManaLine, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
@@ -336,17 +336,16 @@ export function spendUnits(units: number[], cost: Cost): boolean {
  *  card makes mana is its lines' answer. Not modelled: a karoo's real net (it replays the bounced land, and a bounced fetch or utility land is worth
  *  more than one mana), and a bounce phrased any other way than the one sentence below -- such a card is priced at its full tap. */
 const BOUNCES = /return a land you control to its owner's hand/i;
-/** A GATE ON A LINE'S AMOUNT, read from the derived gate string (lowercase, verbatim): "you control five or more lands" (Temple of the False God).
- *  The wording of a gate is derived data; what this model does with it is this module's policy. Any other gate leaves the line uncounted.
- *  CEILING: "three or more lands WITH THE SAME NAME" (Sceptre of Eternal Glory) is read as its floor, three lands: the name is uncheckable here, and
+/** A GATE ON A LINE'S AMOUNT, read from the typed gate (derive's `parseGate`): "you control five or more lands" (Temple of the False God) is a `control` gate on `land` alone, and
+ *  "three or more lands with the same name" (Sceptre of Eternal Glory) a `same-name` one. This model prices both against the lands on the board, turn by turn (`needsLands`).
+ *  CEILING: "three or more lands WITH THE SAME NAME" is read as its floor, three lands: the name is uncheckable here, and
  *  the gate under-claims rather than counting three from turn one (roadmap N10). */
-const LANDS_GATE = /^you control (\w+) or more lands(?: with the same name)?$/;
-/** "you control an urza's power-plant and an urza's tower" -- the tron shape: two named other lands on the board upgrade the amount. Matched on the
- *  SUBTYPE as printed inside the gate, which is what the board carries -- and the subtype is `Urza's Power-Plant` with a hyphen while the CARD is
- *  `Urza's Power Plant` without one. */
-const TRON_GATE = /^you control (?:an?|the) (.{1,40}?) and (?:an?|the) (.{1,40})$/;
+const landsNeeded = (g: ManaGate): number => (g.kind === "same-name" ? g.need : g.kind === "control" && g.nouns.length === 1 && g.nouns[0] === "land" && !g.basic && g.minPower === undefined ? g.need : 0);
+/** The tron shape: two named other lands on the board upgrade the amount. The names are the SUBTYPES as printed inside the gate, which is what the board carries -- and the subtype is
+ *  `Urza's Power-Plant` with a hyphen while the CARD is `Urza's Power Plant` without one. */
+const tronOf = (g: ManaGate): readonly string[] | null => (g.kind === "tron" ? g.names : null);
 /** A GATE THIS MODEL PRICES AGAINST THE BOARD, turn by turn (`manaOutput`'s `needsLands` and `tron`), rather than against the decklist (`gate.ts`). */
-const dynamicGate = (l: ManaLine): boolean => l.gate !== null && (LANDS_GATE.test(l.gate) || TRON_GATE.test(l.gate));
+const dynamicGate = (l: ManaLine): boolean => l.gate !== null && (landsNeeded(l.gate) > 0 || tronOf(l.gate) !== null);
 /** A land that IS every land type, so it answers any subtype check on the board by itself — Planar
  *  Nexus, and Omo's everything counter one layer out of reach. BASIC-ONLY IS REFUSED: Prismatic
  *  Omen's "every basic land type" does not include Urza's, which is the whole point of the check. */
@@ -354,10 +353,6 @@ const EVERY_LAND_TYPE = /\bis every (?:nonbasic )?land type\b/i;
 export function isEveryLandType(typeLine: string | undefined, oracleText: string | undefined): boolean {
   return /\bland\b/i.test(typeLine ?? "") && EVERY_LAND_TYPE.test(oracleText ?? "");
 }
-
-const WORD_NUMBER: Record<string, number> = {
-  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
-};
 
 /** A LINE THAT PAYS NOTHING BUT THE TAP: a filter land's costed line ("{1}, {T}: Add {U}{U}"), a payment land, a sacrifice or a
  *  counter-spending line is not a tap this model can pay, so it is not priced and the source stays at its NET one on purpose. A loyalty cost (a
@@ -399,11 +394,10 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[]): ManaOutput
   // GATED: a gated line only wins if it beats what the card already makes unconditionally.
   const bestOf = (o: ManaOutput): number => Math.max(o.amount, o.tron?.amount ?? 0);
   for (const l of lines.filter((x) => !open(x) && timed(x) === null && x.restriction === null)) {
-    const lands = LANDS_GATE.exec(l.gate!);
-    const tron = TRON_GATE.exec(l.gate!);
-    const needs = lands ? (WORD_NUMBER[lands[1]!] ?? Number(lands[1])) : 0;
+    const needs = landsNeeded(l.gate!);
+    const tron = tronOf(l.gate!);
     const here: ManaOutput | null = needs > 0 ? { amount: l.amount.fixed!, needsLands: needs }
-      : tron ? { amount: out.amount, tron: { subtypes: [tron[1]!.trim(), tron[2]!.trim()], amount: l.amount.fixed! } } : null;
+      : tron ? { amount: out.amount, tron: { subtypes: [tron[0]!, tron[1]!], amount: l.amount.fixed! } } : null;
     if (here && bestOf(here) > bestOf(out)) out = here;
   }
   // THE BOARD-COUNT GATE: the best gated line, taken whether or not it beats the plain amount (a colour waits on it too). CEILING: one board gate per card; a second, lesser one is ignored.
@@ -934,7 +928,8 @@ function colourGateFields(dc: DeckCard, deck: readonly DeckCard[]): { colourGate
 }
 
 /** A land a fetch SPELL put onto the battlefield: a land, and nothing the model knows more of (`lands` types it nothing either). */
-const FETCHED_LAND: Perm = { name: "", types: new Set(["land"]), subtypes: new Set(), land: true, manaValue: 0 };
+// CEILING: not basic (a fetch may bring a basic; a gate that asks for a basic land under-claims it).
+const FETCHED_LAND: Perm = { name: "", types: new Set(["land"]), subtypes: new Set(), land: true, manaValue: 0, basic: false, power: null };
 
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
 interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean; colors: number; baseColors?: number; colourGate?: BoardGate; fixer?: FixerMask }

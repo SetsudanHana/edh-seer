@@ -1,3 +1,4 @@
+import { parseGate } from "@edh-seer/tagger/gate";
 import { describe, expect, it } from "vitest";
 import { castTurnStats, castTurns, silenceRamp } from "./commander-ramp-core.js";
 import { classifyAccelerant, type SimulateResult } from "../goldfish.js";
@@ -74,7 +75,7 @@ describe("silenceRamp", () => {
   it("judges a gated rock against the library AND the commander: a Dragon commander makes Mox Jasper a rock the arm can silence", () => {
     // Mox Jasper's gate is a Dragon on the board. Three Dragons in a 99-card library are 41% by the median clock (below the 0.5 bar) and a Dragon commander makes it four in 100, 51% (owner 2026-10-13: the commander counts toward a gate).
     const jasper = { ...card({ name: "Mox Jasper", manaValue: 0, oracleText: "{T}: Add one mana of any color. Activate only if you control a Dragon." }),
-      tags: manaTags([mkLine({ colourless: 1, gate: "you control a dragon", net: 1 })]) };
+      tags: manaTags([mkLine({ colourless: 1, gate: parseGate("you control a dragon"), net: 1 })]) };
     const filler = [
       ...Array.from({ length: 3 }, (_, i) => card({ name: `Dragon ${i}`, typeLine: "Creature — Dragon", manaValue: 5 })),
       ...Array.from({ length: 95 }, (_, i) => card({ name: `Filler ${i}`, typeLine: "Instant", manaValue: 3 })),
