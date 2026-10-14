@@ -183,14 +183,16 @@ export function production(object: string, amountText = "", context = ""): Pick<
     const symbols = [...alt.matchAll(/\{([WUBRGC](?:\/[WUBRGCP])?)\}/gi)].map((m) => m[1]!.toUpperCase());
     for (const s of symbols) for (const c of s.split("/")) if ((WUBRG as readonly string[]).includes(c)) colours.add(c);
     colourless = Math.max(colourless, symbols.filter((s) => s === "C").length);
-    const word = new RegExp(`\\b(${WORD})\\s+mana\\b`, "i").exec(alt)?.[1]?.toLowerCase();
+    // EVERY "N mana" PHRASE OF AN "and"-JOINED ALTERNATIVE ADDS: "two mana of any one color and two mana of any other color" (Open the Omenpaths) is 4.
+    const phrases = [...alt.matchAll(new RegExp(`\\b(${WORD})\\s+mana\\b`, "gi"))].map((m) => NUMBER_WORD[m[1]!.toLowerCase()]!);
+    const word = phrases.length > 0 ? String(phrases.reduce((a, b) => a + b, 0)) : undefined;
     // THE CLAUSE'S OWN COUNT is the amount of a lone alternative that states none: "{R}" with amount "6" (Chandra, Heart of Fire), "mana of any one color" with
     // amount "10" (The Aetherspark). A count printed in the object (a number word, two or more symbols) is not overridden.
     // "seven {R}" (the grammar's form of "Add seven {R}", Irencrag Feat, Avatar Roku) is that many times the symbols after it.
     const times = symbols.length > 0 ? LEADING_COUNT.exec(alt.trim()) : null; // {E} is no mana symbol: "eight {E}" counts nothing
     const stated = combination ? NUMBER_WORD[combination[1]!.toLowerCase()]
       : times ? (/^\d+$/.test(times[1]!) ? Number(times[1]) : NUMBER_WORD[times[1]!.toLowerCase()]!) * symbols.length
-      : word ? NUMBER_WORD[word] : undefined;
+      : word ? Number(word) : undefined;
     const clauseCount = alts.length === 1 && symbols.length <= 1 && stated === undefined ? amountNum : undefined;
     // CEILING: a bare "mana" (Piracy: "you may tap lands you don't control for mana") adds no amount; "mana of any color" with no count is one.
     counts.push(stated ?? (symbols.length > 1 ? symbols.length : clauseCount ?? (symbols.length === 1 ? 1 : /^(?:an? )?(?:additional )?mana\b/i.test(alt) && alt.trim().toLowerCase() !== "mana" ? 1 : undefined)));

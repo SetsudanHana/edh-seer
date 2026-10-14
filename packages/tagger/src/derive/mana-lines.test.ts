@@ -621,6 +621,7 @@ describe("Ability.amount and ManaLine.amount are one reading (DERIVE_VERSION 311
     ["Omnath, Locus of All", 3],
     ["Gilded Lotus", 3],
     ["Smokebraider", 2],
+    ["Open the Omenpaths", 4], // "two mana of any one color and two mana of any other color": every "N mana" phrase adds
   ];
   for (const [name, n] of CASES) {
     it(`${name} adds ${n} on the ability and on the line`, () => {
@@ -640,6 +641,10 @@ describe("Ability.amount and ManaLine.amount are one reading (DERIVE_VERSION 311
   it("Unclaimed Territory's restricted line reads one mana, the rider after the comma is no alternative", () => {
     const lines = linesOf("Unclaimed Territory");
     expect(lines.map((l) => l.amount)).toEqual([{ fixed: 1, scales: null }, { fixed: 1, scales: null }]);
+    expect(lines[1]).toMatchObject({ anyColour: "any", restriction: { spend: expect.stringContaining("creature spell") } });
+  });
+  it("Piracy's line reads no amount and is unread", () => {
+    expect(only("Piracy")).toMatchObject({ unread: true, amount: { fixed: null, scales: null } });
   });
 });
 
