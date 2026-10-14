@@ -414,7 +414,7 @@ export function lastingRamp(accelerants: number, rampCards: number | undefined, 
   const like = conditional.length === 1 ? conditional[0] : `${conditional.slice(0, -1).join(", ")} and ${conditional.at(-1)}`;
   const parts: string[] = [];
   if (n("land") > 0) parts.push("lands the land count already holds");
-  if (n("cost-reducer") > 0) parts.push("cost reducers, which save mana rather than make it");
+  if (n("cost-reducer") > 0) parts.push("cost reducers, which save mana rather than make it and replace no land");
   if (conditional.length > 0) parts.push(`mana made only once or under a condition, like ${like}`);
   const what = parts.length === 0 ? "they make mana only once or under a condition" : parts.join("; ");
   return `${accelerants} of your ${rampCards} ramp cards that keep producing mana (rocks, dorks and land ramp; ${rest === 1 ? "the other one counts" : `the other ${rest} count`} for little: ${what})`;

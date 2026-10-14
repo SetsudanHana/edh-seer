@@ -200,7 +200,7 @@ test("the rest of the ramp role is named by class, short, and a land or a cost r
     .toBe("9 of your 16 ramp cards that keep producing mana (rocks, dorks and land ramp; the other 7 count for little: mana made only once or under a condition, like rituals and Treasure, trigger mana and sacrifice outlets)");
   expect(lastingOf(9, 16, { land: 7 })).toBe("9 of your 16 ramp cards that keep producing mana (rocks, dorks and land ramp; the other 7 count for little: lands the land count already holds)");
   expect(lastingOf(9, 16, { land: 2, "cost-reducer": 3, "trigger-mana": 2 }))
-    .toBe("9 of your 16 ramp cards that keep producing mana (rocks, dorks and land ramp; the other 7 count for little: lands the land count already holds; cost reducers, which save mana rather than make it; mana made only once or under a condition, like trigger mana)");
+    .toBe("9 of your 16 ramp cards that keep producing mana (rocks, dorks and land ramp; the other 7 count for little: lands the land count already holds; cost reducers, which save mana rather than make it and replace no land; mana made only once or under a condition, like trigger mana)");
   expect(lastingOf(9, 10, { "trigger-mana": 1 })).toBe("9 of your 10 ramp cards that keep producing mana (rocks, dorks and land ramp; the other one counts for little: mana made only once or under a condition, like trigger mana)");
   // no rest: the short form
   expect(lastingOf(9, 9, {})).toBe("9 rocks, dorks and land ramp");
