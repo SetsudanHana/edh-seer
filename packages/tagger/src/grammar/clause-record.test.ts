@@ -153,3 +153,14 @@ test("a game-start reveal records only the delayed effect's actions, with no tri
   const annex = readCard("Chancellor of the Annex", "Creature", cases[0]![2]).records;
   expect(annex[0]!.actions![0]!.unless).toEqual(annex.at(-1)!.actions![0]!.unless);
 });
+
+test("a labelled keyword line stays a keyword line, and a labelled cost the segmenter missed refuses (#1210 review)", () => {
+  const arms = readCard("Paladin's Arms", "Artifact — Equipment", "Lightbringer and Hero's Shield — Equip {4}");
+  expect(arms.complete).toBe(true);
+  expect(arms.records).toMatchObject([{ id: 1, abilityType: "none", actions: [{ verb: "none" }] }]);
+  const blitz = readCard("Blitzball Stadium", "Land", "Go for the Goal! — {3}, {T}: Until end of turn, target creature gains \"Whenever this creature deals combat damage to a player, draw a card.\" and it can't be blocked this turn.");
+  expect(blitz.complete).toBe(false);
+  expect(blitz.blocker).toMatchObject({ clause: 1, kind: "action" });
+  const strax = readCard("Strax", "Creature — Sontaran", "Grenades! — {2}, {T}, Sacrifice an artifact: This creature deals 2 damage to any target.");
+  expect(strax.complete).toBe(false);
+});

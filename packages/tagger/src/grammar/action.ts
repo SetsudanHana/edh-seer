@@ -1551,6 +1551,9 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   // A GAME-START DELAYED EFFECT (Chancellor of the Dross): "You may reveal this card from your opening
   // hand. If you do, <timing>, <effect>". The reveal records no action, and the timing is no trigger
   // (a game-start event is not in TRIGGERS): the actions are the effect's alone.
+  // CEILING: the delayed ONE-TIME timing and the reveal's optionality are discarded. Chancellor of the
+  // Annex reads as an always-on static counter and the others as static actions, which is how Chancellor
+  // of the Dross's bought answer stores it too.
   let gameStart = false;
   for (const raw of unquoted.split(/(?<=\.)\s+/)) {
     let s = raw.trim().replace(/\.$/, "");

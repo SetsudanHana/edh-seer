@@ -293,13 +293,24 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       if (read) record.trigger = { event: read.event, subject: triggerSubjectText(delayed[1]!), control: read.control ?? "any" };
     }
     const cost = c.cost;
+    // AN ACTIVATED COST BEHIND A LABEL THE SEGMENTER MISSED ("Go for the Goal! — {3}, {T}: ..."): it
+    // left the clause cost-less and static, and reading the text past the label would drop the cost and
+    // bank a static grant. Refused, as before the label strip existed. A cost of mana alone ("I LOVE
+    // Squirrels! — {1}{G}{G}{G}: Create ...") has no tap, sacrifice or other payment to lose, and reads.
+    // CEILING: that clause is still recorded static, as the segmenter classed it.
+    const bare = withoutAbilityWord(c.text);
+    const colon = bare !== c.text && !cost ? bare.indexOf(": ") : -1;
+    if (colon > 0 && !/[."]/.test(bare.slice(0, colon)) && /^(?:\{|(?:Pay|Sacrifice|Discard|Exile|Tap|Remove|Return|Put)\b)/.test(bare)
+      && !/^(?:\{(?:\d+|[WUBRGCSX]|[WUBRG]\/[WUBRGP])\})+$/.test(bare.slice(0, colon))) {
+      return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: bare.slice(0, colon) } };
+    }
     const unread = unreadPhrases(effect, type, cost);
     if (unread.length) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: unread[0]! } };
     const readingsHere = parseActions(effect, type, cost);
     readings[c.id] = { ...readings[c.id], actions: readingsHere };
     // A KEYWORD LINE the segmenter left as an ability ("Suspend 4—{U}", its reminder stripped): the
     // card's own keywords, which the store records as no action, as it does a keyword clause.
-    if (type !== "triggered" && !cost && readingsHere.length > 0 && !/\b(?:has|have|gains?|gets?|is|are|becomes?)\b|^equip\b/i.test(effect)
+    if (type !== "triggered" && !cost && readingsHere.length > 0 && !/\b(?:has|have|gains?|gets?|is|are|becomes?)\b/i.test(effect) && !/^equip\b/i.test(c.text)
       && readingsHere.every((r) => r.verb === "grant-ability" && r.object?.self === true)) {
       records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] });
       continue;

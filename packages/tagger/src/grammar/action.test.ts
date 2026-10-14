@@ -584,3 +584,14 @@ test("a reading keeps the printed object words as `phrase`", () => {
   expect(put).toMatchObject({ verb: "put", phrase: "it onto the battlefield tapped" });
   expect(put?.text).toBeUndefined();
 });
+
+test("a game-start delayed effect carries no condition; an ordinary 'if you do' keeps its own (#1210)", () => {
+  const dross = parseActions("You may reveal this card from your opening hand. If you do, at the beginning of the first upkeep, each opponent loses 3 life, then you gain life equal to the life lost this way.", null);
+  expect(dross.map((r) => r.verb)).toEqual(["lose-life", "gain-life"]);
+  for (const r of dross) { expect(r.condition).toBeUndefined(); expect(r.optional).toBeFalsy(); }
+  const sphinx = parseActions("You may reveal this card from your opening hand. If you do, scry 3 at the beginning of your first upkeep.", null);
+  expect(sphinx.map((r) => r.verb)).toEqual(["scry"]);
+  expect(sphinx[0]!.condition).toBeUndefined();
+  const plain = parseActions("Sacrifice a creature. If you do, draw a card.", null);
+  expect(plain.find((r) => r.verb === "draw")!.condition).toBe("if you do");
+});
