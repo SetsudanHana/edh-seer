@@ -113,6 +113,8 @@ function vergeFromText(text: string): string[] {
 /** THE SAME CUE OFF THE DERIVED LINES: a line of the land face whose typed gate counts one permanent among basic land types (`parseGate`, derive/gate.ts). */
 function vergeFromGate(lines: readonly ManaLine[], typeLine: string): string[] {
   const halves = typeLine.split("//").map((h) => h.trim());
+  // Only a LAND can be a verge: edges asks `classifyLand` about nonlands too (the G family), and a control gate on an artifact naming a basic type is not one.
+  if (!halves.some((h) => /\bland\b/i.test(h))) return [];
   const face = halves.length > 1 ? halves.findIndex((h) => /\bland\b/i.test(h)) : 0;
   for (const l of lines) {
     const g = l.gate;
@@ -132,7 +134,7 @@ export function classifyLand(card: Pick<Card, "typeLine" | "oracleText">, tags?:
 
   // The verge cue is an ACTIVATION restriction and can sit on a land with no tapped clause at all,
   // so it is read before the tapped question rather than inside it. READ FROM THE TYPED GATE when the caller hands the card's derived mana lines (#1191, `parseGate` is the one parse of
-  // the sentence): a line gated on one or two basic land types, a count of one. CEILING: with no derived mana lines (`unmetLandConditions` is handed bare cards; a card whose derive produced no line, which cannot be a verge) the sentence is read off the
+  // the sentence): a line gated on one or two basic land types, a count of one. CEILING: with no derived mana lines (a bare card; a card whose derive produced no line, which cannot be a verge) the sentence is read off the
   // printed text instead, the same words by a second regex.
   const vergeTypes = tags?.manaLines ? vergeFromGate(tags.manaLines, typeLine) : vergeFromText(text);
 
@@ -293,8 +295,9 @@ export interface UnmetLandCondition {
  *  run min 4, median 12, max 30), and **G on zero of 71**. One in seventy-one is the `Oath of
  *  Liliana` rate and carries the same caveat: these are the owner's own well-built decks. */
 export function unmetLandConditions(
-  cards: readonly Pick<Card, "name" | "typeLine" | "oracleText">[],
+  entries: readonly { card: Pick<Card, "name" | "typeLine" | "oracleText">; tags?: { manaLines?: readonly ManaLine[] } | null }[],
 ): UnmetLandCondition[] {
+  const cards = entries.map((e) => e.card);
   const subtypes = new Set<string>();
   let basics = 0;
   for (const c of cards) {
@@ -308,8 +311,8 @@ export function unmetLandConditions(
   const named_ = (ts: string[]): string => ts.map((t) => `a ${t.charAt(0).toUpperCase()}${t.slice(1)}`).join(" or ");
 
   const out: UnmetLandCondition[] = [];
-  for (const c of cards) {
-    const cond = classifyLand(c);
+  for (const { card: c, tags } of entries) {
+    const cond = classifyLand(c, tags);
     if ((cond.template === "check" || cond.template === "verge") && cond.subtypes.length > 0
       && !cond.subtypes.some((t) => subtypes.has(t))) {
       out.push({

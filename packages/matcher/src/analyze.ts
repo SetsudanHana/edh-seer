@@ -1114,7 +1114,7 @@ export function analyzeDeckStructured(
     bracket: deckBracket([...resolved, ...companionResolved].map((dc) => dc.card), foundCombos),
     // The deck-level half of I9: the pairwise pass states the POSITIVE and can say nothing when the
     // answer is zero, and that silence reads exactly like a card with no condition at all.
-    landConditions: unmetLandConditions(resolved.map((dc) => dc.card)),
+    landConditions: unmetLandConditions(resolved),
     // TWENTY-ONE, FROM ONE CREATURE (CR 903.10a) — and deliberately NOT a threshold swap in
     // `pressure.ts`, whose curve is total board power. Gated on the deck's OWN detected archetype so
     // this module cannot disagree with `detectArchetypes` about what the deck is.

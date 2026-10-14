@@ -18,7 +18,8 @@
  *  TWO READERS OF THE SAME GATE, ONE ANSWER (owner 2026-10-13: board-count gates are timed turn by turn, and the colour audit follows the gate check). The goldfish counts the permanents each
  *  simulated game puts onto the battlefield against the parsed `BoardGate` (`boardGateOf`, `permCounts`); the colour audit and the Karsten inputs ask the closed form of that timing,
  *  `gateMetBy(gate, deck, turn)`: the chance the deck has `need` of the permanents on the battlefield by that turn (a land a turn, a spell the turn after its mana value) at the same bar. The
- *  deck-level `gateVerdict` stays the first filter on both: a deck that cannot meet a gate by the median clock has no such source.
+ *  deck-level `gateVerdict` is the REPORT's filter (the audit, the Karsten inputs, the ramp role: owner 2026-10-13, a gated source counts from P >= 0.5); the goldfish does not apply it to a board-count gate, only
+ *  asks that the deck can ever meet it (`boardGateReachable`) and prices the rest per game (#1191).
  *  CEILING: a gate that names two kinds of thing at once ("an urza's mine and an urza's tower", the tron lands) is `unknown` here: the goldfish prices that pair against the board turn by turn. */
 import { pAtLeast, seen } from "@edh-seer/engine";
 import type { ManaGate, ManaLine } from "@edh-seer/tagger";
