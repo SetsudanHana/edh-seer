@@ -9,7 +9,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
 import { segment } from "../segment.js";
 import { amountOf, parseActions, unreadPhrases, type ActionReading } from "./action.js";
-import { effectText, labelledManaCost, printedPreamble, withoutAbilityWord } from "./preamble.js";
+import { effectText, missedCost, printedPreamble, withoutAbilityWord } from "./preamble.js";
 import { selfAsTilde } from "./self-as-tilde.js";
 import { parseTrigger, type TriggerReading } from "./trigger.js";
 
@@ -73,6 +73,17 @@ const BACK_REFERENCE = /^(?:it|them|him|her|that card|those cards|that creature|
 /** A reading's object as the store writes it: the printed object words, without a zone move's
  *  destination ("that card into your graveyard" -> "that card"). */
 function objectWords(r: ActionReading): string {
+  const raw = objectWordsOf(r);
+  if (!r.lookedAt) return raw;
+  const w = raw.replace(/ back$/, "");
+  // The look's library, in the words the store uses: "the rest of the top four cards of your library".
+  if (/^the rest$/i.test(w)) return `${w} of ${r.lookedAt}`;
+  const some = /^(.+) of (?:them|those cards)$/i.exec(w);
+  if (some) return `${some[1]} of ${r.lookedAt}`;
+  return r.text !== undefined ? `${w} from ${r.lookedAt}` : w;
+}
+
+function objectWordsOf(r: ActionReading): string {
   // A COUNTER's object is its kind, the recipient in front when it is named and not the card itself
   // ("target creature, +1/+1") -- exactly the form derive's grammar switch writes for a stored one.
   if (r.counter !== undefined) {
@@ -184,7 +195,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
       // "Shuffle Beacon of Immortality into its owner's library": a spell shuffles itself from the stack.
       : r.verb === "shuffle" && r.object?.self === true && type === "spell" ? "stack" : null);
     const from = r.fromZone ?? castRef ?? selfBounce ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
-      : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? "exile" : before !== undefined ? null
+      : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? (/\bthe top (?:\w+|\d+) cards of your library\b/i.test(before.object ?? "") ? "library" : "exile") : before !== undefined ? null
         // "When enchanted creature dies, return that card": the card the trigger put in the graveyard.
         // "Counter target spell. If that spell is countered this way, exile it instead": still on the stack.
         : r.verb === "exile" && out.some((a) => a.verb === "counter-spell") ? "stack"
@@ -216,7 +227,11 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     const noun = /\bthat (creature|player)$/i.exec(object)?.[1];
     const target = pronoun && out.length > 0 ? [...out].reverse().map((a) => /^((?:up to (?:one|two|three) )?(?:another )?targets? [^,]+)/i.exec(a.object ?? "")?.[1])
       .find((t) => t && (!noun || new RegExp(`\\b${noun}`, "i").test(t))) : undefined;
-    const named = target ?? (!pronoun ? undefined : out.length > 0 && selfTrigger ? selfTrigger
+    // "Exile a creature card from the top four cards ... you may cast IT" (Durnan): the exiled card, never the
+    // trigger's own card.
+    const exiledBefore = pronoun && r.verb === "cast" ? /^an? (?:([\w -]+?) )?card\b/i.exec([...out].reverse().find((a) => a.verb === "exile")?.object ?? "") : null;
+    const exiledCard = exiledBefore ? `the exiled ${exiledBefore[1] ? `${exiledBefore[1]} ` : ""}card` : undefined;
+    const named = target ?? exiledCard ?? (!pronoun ? undefined : out.length > 0 && selfTrigger ? selfTrigger
       : /^(?:enchanted|equipped) [a-z]+$/i.test(triggerSubject ?? "") ? triggerSubject : undefined);
     const itsAntecedent = named ?? "";
     const tapped = r.verb === "tap" && !object && out.length > 0 ? out[out.length - 1]!.object ?? "" : "";
@@ -264,7 +279,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     if (c.kind === "reminder") continue;
     if (c.kind === "keyword") { records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] }); continue; }
     // A mana cost behind a label the segmenter missed makes the clause ACTIVATED, carrying that cost.
-    const labelled = !c.cost && c.abilityType !== "triggered" ? labelledManaCost(c.text) : null;
+    const labelled = !c.cost && (c.abilityType ?? "static") === "static" ? missedCost(c.text) : null;
     const type = labelled ? "activated" : c.abilityType ?? "static";
     const record: ClauseRecord = { id: c.id, abilityType: type, actions: [] };
     if (type === "triggered") {
@@ -310,7 +325,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // left the clause cost-less and static, and reading the text past the label would drop the cost and
     // bank a static grant. Refused, as before the label strip existed. A cost of mana alone ("I LOVE
     // Squirrels! — {1}{G}{G}{G}: Create ...") has no tap, sacrifice or other payment to lose, and reads.
-    // That clause is recorded activated with its cost (`labelledManaCost`), as `derive-input` carries it.
+    // That clause is recorded activated with its cost (`missedCost`), as `derive-input` carries it.
     const bare = withoutAbilityWord(c.text);
     const colon = bare !== c.text && !cost ? bare.indexOf(": ") : -1;
     if (colon > 0 && !/[."]/.test(bare.slice(0, colon)) && /^(?:\{|(?:Pay|Sacrifice|Discard|Exile|Tap|Remove|Return|Put)\b)/.test(bare)) {

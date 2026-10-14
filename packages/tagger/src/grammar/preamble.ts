@@ -47,16 +47,26 @@ export function withoutAbilityWord(text: string): string {
   return dash > 0 && dash <= 41 && /^[A-Z~][\w' ,~?!-]*$/.test(text.slice(0, dash)) ? text.slice(dash + 3) : text;
 }
 
-/** AN ACTIVATED ABILITY BEHIND A LABEL THE SEGMENTER MISSED ("I LOVE Squirrels! — {1}{G}{G}{G}: Create
- *  ..."): the segmenter's `ABILITY_WORD` does not strip a label with "!" or "?", so it left the clause
- *  static and cost-less. When the text after the label opens with a cost of MANA ALONE and a colon,
- *  this is that cost and the effect -- the pair `segment()` would have produced had it stripped the
- *  label. Mana only: a tap or sacrifice behind such a label is refused by the caller. */
-export function labelledManaCost(text: string): { cost: string; effect: string } | null {
+/** AN ACTIVATED ABILITY THE SEGMENTER LEFT STATIC AND COST-LESS: its cost and effect, the pair `segment()`
+ *  would have produced. Two ways it misses one:
+ *  - behind a label its `ABILITY_WORD` does not strip ("I LOVE Squirrels! — {1}{G}{G}{G}: Create ...").
+ *    Only a cost of MANA ALONE is taken here: a tap or sacrifice behind such a label is refused by the
+ *    caller.
+ *  - an ENERGY payment it does not know as a cost ("{T}, Pay {E}{E}{E}: ...", "Pay {E}{E}: ..."), then a
+ *    colon and a capital -- the shape `parseActions` takes for a cost left in the text. CEILING: energy
+ *    only; a tap or sacrifice cost left in (Wall of Roots) stays as the segmenter classed it, because
+ *    recording it activated moved bought cards off the grammar's reading.
+ *  Callers pass a clause the segmenter classed static with no cost. */
+export function missedCost(text: string): { cost: string; effect: string } | null {
   const bare = withoutAbilityWord(text);
-  if (bare === text) return null;
-  const m = /^((?:\{(?:\d+|[WUBRGCSX]|[WUBRG]\/[WUBRGP])\})+): (.+)$/s.exec(bare);
-  return m ? { cost: m[1]!, effect: m[2]! } : null;
+  const labelled = bare !== text;
+  const colon = bare.indexOf(": ");
+  if (colon <= 0) return null;
+  const prefix = bare.slice(0, colon);
+  if (/[."]/.test(prefix) || !/^[A-Z]/.test(bare.slice(colon + 2))) return null;
+  const mana = /^(?:\{(?:\d+|[WUBRGCSX]|[WUBRG]\/[WUBRGP])\})+$/.test(prefix);
+  const ok = labelled ? mana : /\bPay (?:X )?(?:\{E\})+/.test(prefix);
+  return ok ? { cost: prefix, effect: bare.slice(colon + 2) } : null;
 }
 
 /** The preamble of a triggered clause's printed text, or null when the text opens with no trigger

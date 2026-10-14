@@ -34,6 +34,10 @@ export interface ActionReading {
    *  is withheld so derive keeps the stored object. A clause record built from the grammar alone
    *  (task 7) has no stored object, and derive's antecedent resolver reads exactly these words. */
   phrase?: string;
+  /** The library a "look at the top N cards of your library" before this move named ("the top four
+   *  cards of your library"): "the rest", "two of them", "a land card from among them" are cards of
+   *  THAT library, yours, and the store writes the object with it. */
+  lookedAt?: string;
 }
 
 const NUMBER: Record<string, string> = {
@@ -637,6 +641,12 @@ const MANA_TAP: Record<string, [string, Handler]> = {
     return r && { object: r.object, ...(r.object.ref || r.object.self ? {} : { text: rest }) };
   }],
   untap: ["untap", (rest) => {
+    // "untap up to two target creatures and up to two target lands" (Nissa, Genesis Mage): one untap each.
+    const parts = rest.split(/,? and (?=up to \w+ target )/);
+    if (parts.length > 1) {
+      const each = parts.map((p) => objectOf(p));
+      return each.every((e) => e) ? each.map((e, i) => ({ object: e!.object, ...(e!.object.ref || e!.object.self ? {} : { text: parts[i]! }) })) : null;
+    }
     const r = objectOf(rest);
     return r && { object: r.object, ...(r.object.ref || r.object.self ? {} : { text: rest }) };
   }],
@@ -837,6 +847,9 @@ function subjectAction(t: string): ActionReading[] | null {
   // a few capitalised words; the store's modify-pt on the card, the count its amount.
   const cda = /^((?:~|this [a-z]+|[a-z][\w-]*(?: [A-Za-z][\w-]*){0,3}))'s (?:power(?: and toughness)?|toughness) (?:is|are)(?: each)? equal to (.+)$/i.exec(t);
   if (cda && !/\b(?:target|each|enchanted|equipped|that|another)\b/i.test(cda[1]!)) return [{ verb: "modify-pt", object: SELF, amount: cda[2]! }];
+  // "If you do, it becomes plotted" (Make Your Own Luck): a status of a card in exile (plot), no animation
+  // and no verb of its own.
+  if (/^(?:it|that card|~|this card|the exiled card) becomes plotted$/i.test(t)) return [];
   // "This creature enters prepared", "it becomes prepared", "target creature becomes unprepared".
   const prepared = /^(.+?) (?:enters|becomes) (un)?prepared$/i.exec(t);
   if (prepared && (objectOf(prepared[1]!) || THEY.test(prepared[1]!))) {
@@ -1467,7 +1480,7 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
       return all.map((a) => ({ verb, ...a, ...(who !== undefined ? { object: parse(who) ?? { control: "any" as const, token: null, ref: "sentence" as const }, text: who } : {}),
         ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
     }
-    return all.map((a, i) => ({ verb, ...(isRef(a) ? (({ text: _t, ...rest }: Args) => rest)(a) : a), ...(a.object && !isRef(a) && a.text === undefined && /\S/.test(rest) && !/^(?:\d+|x)$/i.test(rest) ? { text: objectPhrase(verb, rest) } : {}), ...(/\S/.test(rest) && i === 0 && (a.verb === undefined || a.verb === verb) ? { phrase: objectPhrase(verb, rest) } : {}), ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
+    return all.map((a, i) => ({ verb, ...(isRef(a) ? (({ text: _t, ...rest }: Args) => rest)(a) : a), ...(a.object && !isRef(a) && a.text === undefined && /\S/.test(rest) && !/^(?:\d+|x)$/i.test(rest) ? { text: objectPhrase(verb, rest) } : {}), ...(/\S/.test(rest) && i === 0 && (a.verb === undefined || a.verb === verb) ? { phrase: objectPhrase(verb, rest) } : {}), ...(counted && ZONE[base] && isRef(a) && a.amount === undefined && /\bX\b/.test(rest) ? { amount: counted } : {}), ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
   }
   return null;
 }
@@ -1560,12 +1573,13 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   let gameStart = false;
   // "Look at the top seven cards of your library" records no action, but the library is where the next
   // sentence's "from among them" and "the rest" are.
-  let lookedAtLibrary = false;
+  let lookedAtLibrary = "";
   for (const raw of unquoted.split(/(?<=\.)\s+/)) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
     if (/^you may reveal this card from your opening hand$/i.test(s)) { gameStart = true; continue; }
-    if (/^look at the top (?:card|(?:\w+|\d+) cards) of your library$/i.test(s)) { lookedAtLibrary = true; continue; }
+    const look = /^look at (the top (?:card|(?:\w+|\d+) cards) of your library)$/i.exec(s);
+    if (look) { lookedAtLibrary = look[1]!.toLowerCase(); continue; }
     // "You may pay {2}. If you do, draw a card": the draw is as optional as the payment (the store's
     // reading, and the rules': nothing happens unless you choose to pay).
     const ifYouDoAfterMay = mayBefore && /^if you do, /i.test(s);
@@ -1583,9 +1597,12 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     // result, which no verb expresses; it records no action.
     if (/^increase or decrease the result by \d+$/i.test(s)) continue;
     // "Each opponent who doesn't loses 1 life" (Wernog): the opponents who declined the "may" before it;
-    // the actor is each opponent, and the decline is the condition.
-    const decline = /^(each opponent|each player|each other player) who (?:doesn't|didn't|don't)\b,? (.+)$/i.exec(s);
-    if (decline) { s = `${decline[1]} ${decline[2]}`; condition = [condition, "if they don't"].filter(Boolean).join(", "); }
+    // the actor is each opponent, and the decline is the condition. The object keeps the store's wording,
+    // "each opponent who doesn't sacrifice", which derive's subject reading turns into a negated did.
+    // Only a plain verb after it: "who didn't choose the lowest number discards ..." is not this.
+    const decline = /^(each opponent|each player|each other player) who (?:doesn't|don't) ((?:loses?|gains?|draws?|discards?|sacrifices?|mills?|takes?) .+)$/i.exec(s);
+    const declined = decline ? [...out].reverse().find((a) => a.optional)?.verb.split("-")[0] : undefined;
+    if (decline) { s = `${decline[1]} ${decline[2]}`; }
     // "As this creature enters[ or is turned face up], ...": when the card arrives is no action, and the
     // clause is a static replacement (Aquamorph Entity, Crowd-Control Warden). Not before "you may": a
     // shock land's "you may pay 2 life" is a choice, and read bare it became a continuous life loss.
@@ -1642,7 +1659,16 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       }
       if (pay) out.push(...pay);
     }
-    if (lookedAtLibrary && /\bfrom among them\b|\bthe rest\b/i.test(s)) for (let i = at; i < out.length; i++) if (out[i]!.verb === "put" && !out[i]!.fromZone) out[i] = { ...out[i]!, fromZone: "library" };
+    if (decline && declined) {
+      const who = decline[1]!.toLowerCase(), punished = `${who} who doesn't ${declined}`;
+      for (let i = at; i < out.length; i++) {
+        const o = out[i]!;
+        out[i] = { ...o, ...(o.text === who ? { text: punished } : {}), ...(o.actor?.text === who ? { actor: { ...o.actor, text: punished } } : {}) };
+      }
+    }
+    if (lookedAtLibrary && /\bfrom among (?:them|those cards)\b|\bthe rest\b|\b(?:of|from) (?:them|those cards)\b/i.test(s)) {
+      for (let i = at; i < out.length; i++) if ((out[i]!.verb === "put" || out[i]!.verb === "exile") && !out[i]!.fromZone) out[i] = { ...out[i]!, fromZone: "library", lookedAt: lookedAtLibrary };
+    }
     if (ifYouDoAfterMay) for (let i = at; i < out.length; i++) out[i] = { ...out[i]!, optional: true };
   }
   return out;

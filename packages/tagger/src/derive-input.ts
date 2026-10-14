@@ -11,18 +11,18 @@ import { hasEmblemPart } from "./emblem.js";
 import type { DerivedTagsDoc } from "./clause-store.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import type { DeriveInput } from "./derive/derive.js";
-import { labelledManaCost } from "./grammar/preamble.js";
+import { missedCost } from "./grammar/preamble.js";
 
 /** Clause id -> clause text, recomputed rather than stored. `segment()` is deterministic over the
  *  same three inputs the clause doc was built from, so this reproduces exactly the clauses the model
  *  was asked about — and it stays free, which is the whole reason the actor recovery in
  *  `recipient.ts` lives on this side of the money line rather than in the prompt. */
-export function clauseTexts(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, string> {
+export function clauseTexts(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }, activated?: ReadonlySet<number>): Record<number, string> {
   const out: Record<number, string> = {};
   for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) {
-    // A mana cost behind a label the segmenter missed is split off, as `clauseCosts` and the grammar's
+    // A cost the segmenter missed, for a clause the caller says is activated, is split off, as `clauseCosts` and the grammar's
     // own record do: the text is the effect, as it would be had the label been stripped.
-    const split = !c.cost && c.abilityType !== "triggered" ? labelledManaCost(c.text) : null;
+    const split = !c.cost && (c.abilityType ?? "static") === "static" && (activated?.has(c.id) ?? false) ? missedCost(c.text) : null;
     out[c.id] = split ? split.effect : c.text;
   }
   return out;
@@ -77,11 +77,11 @@ export function clauseRequires(doc: { oracleText?: string; keywords?: string[]; 
  *  `segment.ts`'s `classify()` splits an activated ability's cost out of the body text, so it never
  *  rides along in `clauseTexts`. `repeatsFor` needs both: the cost for the self-sacrifice/tap rules,
  *  the body text for the "once each turn" rule. */
-export function clauseCosts(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, string> {
+export function clauseCosts(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }, activated?: ReadonlySet<number>): Record<number, string> {
   const out: Record<number, string> = {};
   for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) {
     if (c.cost) { out[c.id] = c.cost; continue; }
-    const split = c.abilityType !== "triggered" ? labelledManaCost(c.text) : null;
+    const split = (c.abilityType ?? "static") === "static" && (activated?.has(c.id) ?? false) ? missedCost(c.text) : null;
     if (split) out[c.id] = split.cost;
   }
   return out;
@@ -138,14 +138,17 @@ type CardDocLike = Parameters<typeof charsFrom>[0] & { oracleText?: string; keyw
  *  it ONLY alongside that same call's `records` as `clauses`: the ids line up by construction, and a
  *  model-path `clauses` (the stored answer) can number and split its clauses differently. */
 export function deriveInputOf(card: CardDocLike, oracleId: string, name: string, clauses: ClauseRecord[], characteristics?: DerivedTagsDoc["characteristics"], readings?: DeriveInput["readings"]): DeriveInput {
+  // A cost the segmenter missed is split off only for a clause the RECORDS call activated: a stored answer
+  // that called it static keeps the text it was derived against (Wall of Roots' "this creature").
+  const activatedIds = new Set(clauses.filter((c) => c.abilityType === "activated").map((c) => c.id));
   return {
     oracleId,
     name,
     clauses,
     characteristics: characteristics ?? charsFrom(card),
-    clauseTexts: clauseTexts(card),
+    clauseTexts: clauseTexts(card, activatedIds),
     clauseRequires: clauseRequires(card),
-    clauseCosts: clauseCosts(card),
+    clauseCosts: clauseCosts(card, activatedIds),
     clauseFaces: clauseFaces(card),
     clauseGrants: clauseGrants(card),
     manaCosts: faceManaCosts(card),
