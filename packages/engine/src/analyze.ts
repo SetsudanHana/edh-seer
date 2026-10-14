@@ -568,7 +568,7 @@ export interface DeckReport {
     band: "1-2" | "3" | "4-5";
     gameChangers: string[];
     infiniteCombos: number;
-    cheapCombos: { cards: string[]; result: string; manaValue: number }[];
+    cheapCombos: { cards: string[]; result: string; manaValue: number; requires?: string[] }[];
     reasons: string[];
   };
   archetypes?: ArchetypeGroup[];

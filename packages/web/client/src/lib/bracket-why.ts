@@ -1,4 +1,4 @@
-import { BRACKET_3_GAME_CHANGERS, isInfiniteCombo } from "@edh-seer/matcher/brackets";
+import { BRACKET_3_GAME_CHANGERS, comboKey, isInfiniteCombo } from "@edh-seer/matcher/brackets";
 import type { DeckReport } from "../types.js";
 
 /** THE BRACKET, WITH ITS WORKING SHOWN (owner, 2026-09-26: "we should be able to assess the
@@ -32,15 +32,15 @@ export function infiniteCombos(
   combos: readonly { cards: string[]; result: string; requires?: string[]; payoffs?: InfiniteCombo["payoffs"] }[] | undefined,
   manaValueOf: (name: string) => number | undefined,
   /** `report.bracket.cheapCombos`: which of these the matcher calls cheap (#1194; this used to be recomputed here). */
-  cheapCombos: readonly { cards: readonly string[] }[] | undefined,
+  cheapCombos: readonly { cards: readonly string[]; requires?: readonly string[] }[] | undefined,
 ): InfiniteCombo[] {
-  const cheapKeys = new Set((cheapCombos ?? []).map((c) => c.cards.join("|")));
+  const cheapKeys = new Set((cheapCombos ?? []).map(comboKey));
   return (combos ?? [])
     .filter((c) => isInfiniteCombo(c.result))
     .map((c) => {
       const manaValue = c.cards.reduce((t, n) => t + (manaValueOf(n) ?? 0), 0);
       return {
-        cards: c.cards, result: c.result, manaValue, cheap: cheapKeys.has(c.cards.join("|")),
+        cards: c.cards, result: c.result, manaValue, cheap: cheapKeys.has(comboKey(c)),
         ...(c.requires?.length ? { requires: c.requires } : {}),
         ...(c.payoffs?.length ? { payoffs: c.payoffs } : {}),
       };

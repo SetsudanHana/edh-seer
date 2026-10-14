@@ -18,3 +18,16 @@ test("a combo is cheap when the report's cheapCombos names it, whatever its cost
 test("a combo the report does not call cheap is not, even when the two cards cost little", () => {
   expect(infiniteCombos(combos, mv, []).every((c) => !c.cheap)).toBe(true);
 });
+
+/** A bare two-card loop and the same two cards with an unnamed third piece (#568) are two combos
+ *  (Guilty Conscience + Brash Taunter in the corpus). Only the bare one is in `cheapCombos`. */
+test("a cheap two-card combo does not make its same-named three-piece twin cheap", async () => {
+  const { deckBracket } = await import("@edh-seer/matcher/brackets");
+  const pair = { cards: ["Guilty Conscience", "Brash Taunter"], result: "Infinite damage to one opponent" };
+  const twin = { ...pair, requires: ["Card That Gives Indestructible"] };
+  const cards = [{ name: "Guilty Conscience", manaValue: 1 }, { name: "Brash Taunter", manaValue: 5 }];
+  const b = deckBracket(cards as never, [pair, twin] as never);
+  expect(b.cheapCombos).toHaveLength(1);
+  const listed = infiniteCombos([pair, twin], (n) => cards.find((c) => c.name === n)?.manaValue, b.cheapCombos);
+  expect(listed.map((c) => [c.requires ?? [], c.cheap])).toEqual([[[], true], [["Card That Gives Indestructible"], false]]);
+});
