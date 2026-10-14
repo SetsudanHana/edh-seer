@@ -50,7 +50,7 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf, model }: {
 }) {
   const [allCombos, setAllCombos] = useState(false);
   // Without the full list (an older saved report), the cheap combos the bracket carries stand in.
-  const listed = useMemo(() => !bracket ? [] : combos ? infiniteCombos(combos, manaValueOf ?? (() => undefined)) : bracket.cheapCombos.map((c) => ({ ...c, cheap: true })), [bracket, combos, manaValueOf]);
+  const listed = useMemo(() => !bracket ? [] : combos ? infiniteCombos(combos, manaValueOf ?? (() => undefined), bracket.cheapCombos) : bracket.cheapCombos.map((c) => ({ ...c, cheap: true })), [bracket, combos, manaValueOf]);
   if (!bracket) return null;
   const why = bracketWhy(bracket, combos ? listed : []);
   // THE FIRST COMBO, DRAWN AS MOCKED UP (Combo mockup, 2026-09-27); the rest stay rows.

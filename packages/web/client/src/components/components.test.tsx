@@ -3110,7 +3110,8 @@ test("the bracket panel names every infinite combo, what it does, and says why i
   const mv: Record<string, number> = { "Dualcaster Mage": 3, "Ghostly Flicker": 3, "Essence Flux": 1, "Kiki-Jiki, Mirror Breaker": 5, "Zealous Conscripts": 5 };
   render(<BracketPanel
     bracket={{ band: "4-5", gameChangers: ["Jeska's Will"], infiniteCombos: 3,
-      cheapCombos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB", manaValue: 4 }], reasons: [] }}
+      // The matcher's own list: both Dualcaster pairs are two-card loops at or under the ceiling.
+      cheapCombos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB", manaValue: 4 }, { cards: ["Dualcaster Mage", "Ghostly Flicker"], result: "Infinite ETB", manaValue: 6 }], reasons: [] }}
     combos={[
       { cards: ["Kiki-Jiki, Mirror Breaker", "Zealous Conscripts"], result: "Infinite hasty tokens" },
       { cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB, Infinite storm count" },
