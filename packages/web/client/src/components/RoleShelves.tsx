@@ -31,11 +31,13 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
   const parentOf = new Map(parents.flatMap((p) => p.leaves.map((l) => [l, p] as const)));
   const own = new Map((report.buildCategories ?? []).filter((c) => c.target > 0).map((c) => [c.category, c.target]));
   const headed = new Set<string>();
-  // THE RAMP THE LAND COUNT LEANS ON (#1033): the rest of the Ramp shelf is one-shots. Ramp is a
+  // THE RAMP THE LAND COUNT LEANS ON (#1033): the rest of the Ramp shelf makes mana once or under a condition, or only saves it (#1190). Ramp is a
   // one-leaf group (`BUILD_PARENTS`), so it never heads shelves; its own shelf carries the note.
   const lasting = report.deckMath?.lands?.accelerants;
   const rampCount = parents.find((x) => x.key === "ramp")?.count;
-  const oneShots = lasting !== undefined && rampCount !== undefined ? Math.max(0, rampCount - lasting) : 0;
+  // A ramp LAND in the role is not room to cut: the land count holds it (#1190).
+  const rampLands = report.deckMath?.lands?.rampOther?.land ?? 0;
+  const oneShots = lasting !== undefined && rampCount !== undefined ? Math.max(0, rampCount - lasting - rampLands) : 0;
   return (
     <ul className="flex flex-col gap-4 text-sm">
       {shelves.map(({ category, cards, tokens }) => {

@@ -13622,5 +13622,2284 @@
    }
   ],
   "source": "model"
+ },
+ "Ingenious Mastery": {
+  "card": {
+   "_id": "dad43a2d-5b30-45f2-a34d-9e68d1fbb716",
+   "name": "Ingenious Mastery",
+   "typeLine": "Sorcery",
+   "oracleText": "You may pay {2}{U} rather than pay this spell's mana cost.\nIf the {2}{U} cost was paid, you draw three cards, then an opponent creates two Treasure tokens and they scry 2. If that cost wasn't paid, you draw X cards.",
+   "keywords": [
+    "Treasure",
+    "Scry"
+   ],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{X}{2}{U}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "1a2d027f-8996-4761-a776-47cd428f6779"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Ingenious Mastery",
+     "typeLine": "Sorcery",
+     "printingId": "18b4f3c5-4129-4e4b-98b9-91d2ca33ab7c"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "you may pay {2}{U} rather than pay this spell's mana cost",
+      "fromZone": null,
+      "toZone": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "two Treasure tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "scry",
+      "object": "2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Erestor of the Council": {
+  "card": {
+   "_id": "b65e1dff-9423-4840-a6af-78cb3e6f4f31",
+   "name": "Erestor of the Council",
+   "typeLine": "Legendary Creature — Elf Noble",
+   "oracleText": "Whenever players finish voting, each opponent who voted for a choice you voted for creates a Treasure token. You scry X, where X is the number of opponents who voted for a choice you didn't vote for. Draw a card.",
+   "keywords": [
+    "Treasure",
+    "Scry"
+   ],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "manaValue": 3,
+   "power": "2",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{1}{G}{U}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "b29d7556-9051-4451-812e-91513ef10e62"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Erestor of the Council",
+     "typeLine": "Legendary Creature — Elf Noble",
+     "printingId": "f4549bed-a026-4238-93c0-213fef84e789"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "vote",
+     "subject": "players finish voting",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "scry",
+      "object": "X",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the number of opponents who voted for a choice you didn't vote for",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Ant-Man's Army": {
+  "card": {
+   "_id": "34c0f75d-10a9-428d-b202-3defb3949090",
+   "name": "Ant-Man's Army",
+   "typeLine": "Creature — Insect",
+   "oracleText": "When this creature enters, create a Food token or a Treasure token. (A Food token is an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\" A Treasure token is an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+   "keywords": [
+    "Treasure",
+    "Food"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "3",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "cec5cc8b-bc15-415a-bde6-6c783f8d0b0b"
+    },
+    {
+     "component": "token",
+     "name": "Food",
+     "typeLine": "Token Artifact — Food",
+     "printingId": "39389acc-cfa7-4a44-9d46-45be7dd72564"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Food token or a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "The Third Doctor": {
+  "card": {
+   "_id": "2a73db99-5e31-49a8-91e7-b28b3434585d",
+   "name": "The Third Doctor",
+   "typeLine": "Legendary Creature — Time Lord Doctor",
+   "oracleText": "Trample\nThe Third Doctor gets +1/+1 for each noncreature token you control.\nWhen The Third Doctor enters, create your choice of a Clue token, a Food token, or a Treasure token.",
+   "keywords": [
+    "Treasure",
+    "Food",
+    "Trample"
+   ],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{2}{G}{U}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "The Third Doctor",
+     "typeLine": "Legendary Creature — Time Lord Doctor",
+     "printingId": "f6d25476-cab1-4035-843f-19da73c4dac7"
+    },
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "cd31e197-a322-4310-95a9-67f806f904a6"
+    },
+    {
+     "component": "token",
+     "name": "Clue",
+     "typeLine": "Token Artifact — Clue",
+     "printingId": "1145be5c-62f5-43ef-8dea-3a1e85ad9b72"
+    },
+    {
+     "component": "token",
+     "name": "Food",
+     "typeLine": "Token Artifact — Food",
+     "printingId": "be99852d-54f7-42bd-b2a2-e123302650eb"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1 for each noncreature token you control",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "your choice of a Clue token, a Food token, or a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "~",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Tireless Provisioner": {
+  "card": {
+   "_id": "ab8d5f5c-1976-4f77-8ed2-8d28ee666741",
+   "name": "Tireless Provisioner",
+   "typeLine": "Creature — Elf Scout",
+   "oracleText": "Landfall — Whenever a land you control enters, create a Food token or a Treasure token. (Food is an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\" Treasure is an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+   "keywords": [
+    "Treasure",
+    "Food",
+    "Landfall"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "3",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "1728ad2d-c8a6-49e4-85bb-29934fa26208"
+    },
+    {
+     "component": "token",
+     "name": "Food",
+     "typeLine": "Token Artifact — Food",
+     "printingId": "95a625ba-330c-4677-a9b3-9c471225b204"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Food token or a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "a land you control",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Tempting Contract": {
+  "card": {
+   "_id": "cc4f1023-09e4-4f27-8712-be72e9694a80",
+   "name": "Tempting Contract",
+   "typeLine": "Artifact",
+   "oracleText": "At the beginning of your upkeep, each opponent may create a Treasure token. For each opponent who does, you create a Treasure token.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "2888d3ed-0719-4e1d-9de7-3da6fbde0c48"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Tempting Contract",
+     "typeLine": "Artifact",
+     "printingId": "a971b3d5-9a78-437f-a385-3390e64c53de"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Song of Eärendil": {
+  "card": {
+   "_id": "440366dd-7654-4ede-aa47-7e8a7916e31e",
+   "name": "Song of Eärendil",
+   "typeLine": "Enchantment — Saga",
+   "oracleText": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Scry 2, then draw two cards.\nII — Create a Treasure token and a 2/2 blue Bird creature token with flying.\nIII — Put a flying counter on each creature you control without flying.",
+   "keywords": [
+    "Treasure",
+    "Scry"
+   ],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "manaValue": 5,
+   "power": null,
+   "toughness": null,
+   "layout": "saga",
+   "manaCost": "{3}{G}{U}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "b29d7556-9051-4451-812e-91513ef10e62"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Song of Eärendil",
+     "typeLine": "Enchantment — Saga",
+     "printingId": "b18492fa-5b44-40aa-bf1d-1c8c4676b465"
+    },
+    {
+     "component": "token",
+     "name": "Bird",
+     "typeLine": "Token Creature — Bird",
+     "printingId": "c813d283-c996-4f85-afaa-7702414a1197"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter I",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "scry",
+      "object": "2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter II",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token and a 2/2 blue Bird creature token with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter III",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "flying counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Spiked Pit Trap": {
+  "card": {
+   "_id": "a0aa1aa1-f011-4c65-9886-95521947beef",
+   "name": "Spiked Pit Trap",
+   "typeLine": "Artifact",
+   "oracleText": "Flash\n{5}, {T}, Sacrifice this artifact: Choose target creature, then roll a d20.\n1—9 | This artifact deals 5 damage to that creature.\n10—20 | This artifact deals 5 damage to that creature. Create a Treasure token.",
+   "keywords": [
+    "Treasure",
+    "Flash"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "a3a684b7-27e0-4d9e-a064-9e03c6e50c89"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "roll-dice",
+      "object": "a d20",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Smoke Spirits' Aid": {
+  "card": {
+   "_id": "8fef58ff-4743-4065-9df0-c5edf9aa2502",
+   "name": "Smoke Spirits' Aid",
+   "typeLine": "Sorcery",
+   "oracleText": "For each of up to X target creatures, create a red Aura enchantment token named Smoke Blessing attached to that creature. Those tokens have enchant creature and \"When enchanted creature dies, it deals 1 damage to its controller and you create a Treasure token.\"",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{X}{R}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "6911181d-573b-41eb-96a4-799c96e008fc"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Smoke Spirits' Aid",
+     "typeLine": "Sorcery",
+     "printingId": "cbcade55-8ae3-4ac0-b2a9-f890b83ed530"
+    },
+    {
+     "component": "token",
+     "name": "Smoke Blessing",
+     "typeLine": "Token Enchantment — Aura",
+     "printingId": "5eb01bef-8989-4b38-a303-0aafab1b33e5"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a red Aura enchantment token named Smoke Blessing",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "enchanted creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "its controller",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Jolene, the Plunder Queen": {
+  "card": {
+   "_id": "8215f4a2-7131-426b-ad9c-6427caabd715",
+   "name": "Jolene, the Plunder Queen",
+   "typeLine": "Legendary Creature — Human Warrior",
+   "oracleText": "Whenever a player attacks one or more of your opponents, that attacking player creates a Treasure token.\nIf you would create one or more Treasure tokens, instead create those tokens plus an additional Treasure token.\nSacrifice five Treasures: Put five +1/+1 counters on Jolene.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "G",
+    "R"
+   ],
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{2}{R}{G}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "93116d98-2dad-4b80-a3af-9e36e34da6d4"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Jolene, the Plunder Queen",
+     "typeLine": "Legendary Creature — Human Warrior",
+     "printingId": "9cc91ea6-4246-4d99-be3a-62187c3261e9"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a player",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "those tokens plus an additional Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "five Treasures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Beamsaw Prospector": {
+  "card": {
+   "_id": "bbe740f8-6e7c-4cfd-9134-9bf8d5f48cf5",
+   "name": "Beamsaw Prospector",
+   "typeLine": "Creature — Human Artificer",
+   "oracleText": "When this creature dies, create a Lander token. (It's an artifact with \"{2}, {T}, Sacrifice this token: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.\")",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{B}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Lander",
+     "typeLine": "Token Artifact — Lander",
+     "printingId": "85ef1950-219f-401b-8ff5-914f9aaec122"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Lander token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Divert Disaster": {
+  "card": {
+   "_id": "76fdbc2c-d2b1-466f-9230-06e187bcc9e6",
+   "name": "Divert Disaster",
+   "typeLine": "Instant",
+   "oracleText": "Counter target spell unless its controller pays {2}. If they do, you create a Lander token. (It's an artifact with \"{2}, {T}, Sacrifice this token: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.\")",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{U}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Lander",
+     "typeLine": "Token Artifact — Lander",
+     "printingId": "85ef1950-219f-401b-8ff5-914f9aaec122"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "target spell",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false,
+      "unless": {
+       "cost": "{2}",
+       "payer": "controller"
+      }
+     },
+     {
+      "verb": "create",
+      "object": "a Lander token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Caravan Vigil": {
+  "card": {
+   "_id": "925a3ded-b7bc-4384-8684-79c20c59ab12",
+   "name": "Caravan Vigil",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for a basic land card, reveal it, put it into your hand, then shuffle.\nMorbid — You may put that card onto the battlefield instead of putting it into your hand if a creature died this turn.",
+   "keywords": [
+    "Morbid"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Druid of the Emerald Grove": {
+  "card": {
+   "_id": "acf54a85-0e9e-43fb-99d9-c223c02f13c4",
+   "name": "Druid of the Emerald Grove",
+   "typeLine": "Creature — Dwarf Druid",
+   "oracleText": "When this creature enters, search your library for up to two basic land cards and reveal them, then roll a d20.\n9 or less | Put those cards into your hand, then shuffle.\n10—19 | Put one of those cards onto the battlefield tapped and the other into your hand, then shuffle.\n20+ | Put those cards onto the battlefield tapped, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{3}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for up to two basic land cards",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "roll-dice",
+      "object": "a d20",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "those cards",
+      "fromZone": null,
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "one of those cards",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the other",
+      "fromZone": null,
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "those cards",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Omenpath Journey": {
+  "card": {
+   "_id": "8b067e44-2001-4b49-aa4a-2c86f8929751",
+   "name": "Omenpath Journey",
+   "typeLine": "Enchantment",
+   "oracleText": "When this enchantment enters, search your library for up to five land cards that have different names, exile them, then shuffle.\nAt the beginning of your end step, choose a card at random exiled with this enchantment and put it onto the battlefield tapped.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for up to five land cards that have different names",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a card at random exiled with this enchantment",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Piracy": {
+  "card": {
+   "_id": "131acf69-fa5c-4ce7-9e39-2677af4f8907",
+   "name": "Piracy",
+   "typeLine": "Sorcery",
+   "oracleText": "Until end of turn, you may tap lands you don't control for mana. Spend this mana only to cast spells.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{U}{U}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "lands you don't control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-mana",
+      "object": "mana",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Marching Duodrone": {
+  "card": {
+   "_id": "939b77f1-d7c4-4e52-b487-5866145ace01",
+   "name": "Marching Duodrone",
+   "typeLine": "Artifact Creature — Construct",
+   "oracleText": "Whenever this creature attacks, each player creates a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{2}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "770b988d-4f31-4746-8c23-4ed8d9a6b393"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Marching Duodrone",
+     "typeLine": "Artifact Creature — Construct",
+     "printingId": "5eec4350-cd61-4520-98a4-4a14fcbc226f"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Thran Spider": {
+  "card": {
+   "_id": "78d710ea-fbf5-4855-b874-b53478bf4a87",
+   "name": "Thran Spider",
+   "typeLine": "Artifact Creature — Spider",
+   "oracleText": "Reach\nWhen this creature enters, you and target opponent each create a tapped Powerstone token.\n{7}: Look at the top four cards of your library. You may reveal an artifact card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.",
+   "keywords": [
+    "Reach"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 3,
+   "power": "2",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{3}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Thran Spider",
+     "typeLine": "Artifact Creature — Spider",
+     "printingId": "42c400de-25cb-4865-ad1b-9a8a8da3da55"
+    },
+    {
+     "component": "token",
+     "name": "Powerstone",
+     "typeLine": "Token Artifact — Powerstone",
+     "printingId": "d45fe4b6-aeaf-4f84-b660-c7b482ed8512"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Reach",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a tapped Powerstone token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a tapped Powerstone token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "an artifact card",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Prismari Command": {
+  "card": {
+   "_id": "fa3e28b1-131c-4223-81e0-18dfbab22c26",
+   "name": "Prismari Command",
+   "typeLine": "Instant",
+   "oracleText": "Choose two —\n• Prismari Command deals 2 damage to any target.\n• Target player draws two cards, then discards two cards.\n• Target player creates a Treasure token.\n• Destroy target artifact.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{U}{R}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "b4f61b5e-9c53-40b1-b93e-3ffa351ff052"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": []
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target artifact",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Gonti, Night Minister": {
+  "card": {
+   "_id": "e16f79c1-ffbb-4893-b62a-d4e9d15e2b16",
+   "name": "Gonti, Night Minister",
+   "typeLine": "Legendary Creature — Aetherborn Rogue",
+   "oracleText": "Whenever a player casts a spell they don't own, that player creates a Treasure token.\nWhenever a creature deals combat damage to one of your opponents, its controller looks at the top card of that opponent's library and exiles it face down. They may play that card for as long as it remains exiled. Mana of any type can be spent to cast a spell this way.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 4,
+   "power": "3",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{2}{B}{B}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "ba7638ef-114b-4055-9855-390f82b7d5c5"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Gonti, Night Minister",
+     "typeLine": "Legendary Creature — Aetherborn Rogue",
+     "printingId": "21ed5dd3-e67b-4425-bb98-6b07db1e9d1f"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell they don't own",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of that opponent's library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Bilbo's Gambit": {
+  "card": {
+   "_id": "ef71ef07-8a35-41ec-a851-d95e9e3a221b",
+   "name": "Bilbo's Gambit",
+   "typeLine": "Instant",
+   "oracleText": "Gift a Treasure (You may promise an opponent a gift as you cast this spell. If you do, they create a Treasure token before its other effects. It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")\nReturn target spell to its owner's hand. If the gift was promised, players can't cast spells this turn.",
+   "keywords": [
+    "Gift",
+    "Treasure"
+   ],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{W}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "d1892b78-7663-4cbd-a732-9a4b0b18d4c8"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Bilbo's Gambit",
+     "typeLine": "Instant",
+     "printingId": "fa74ca8a-8bcd-4dc5-ab2b-a2e18a70978e"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Gift a Treasure"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target spell",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "cast spells this turn",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Academy Manufactor": {
+  "card": {
+   "_id": "f36d1d8b-8303-44a9-ab56-531931641ea2",
+   "name": "Academy Manufactor",
+   "typeLine": "Artifact Creature — Assembly-Worker",
+   "oracleText": "If you would create a Clue, Food, or Treasure token, instead create one of each.",
+   "keywords": [
+    "Treasure",
+    "Food"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 3,
+   "power": "1",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{3}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "7ec6f053-96f7-4e57-b2eb-4e7699a40a4f"
+    },
+    {
+     "component": "token",
+     "name": "Clue",
+     "typeLine": "Token Artifact — Clue",
+     "printingId": "764a906c-8b27-4ffa-bdc3-7825c6919d3e"
+    },
+    {
+     "component": "token",
+     "name": "Food",
+     "typeLine": "Token Artifact — Food",
+     "printingId": "600d5d22-62a0-49c9-b050-90a2566e8caf"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Clue token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Food token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Kibo, Uktabi Prince": {
+  "card": {
+   "_id": "0b9be4fa-5238-4afd-a9f6-f9022e67e5ab",
+   "name": "Kibo, Uktabi Prince",
+   "typeLine": "Legendary Creature — Monkey Noble",
+   "oracleText": "{T}: Each player creates a colorless artifact token named Banana with \"{T}, Sacrifice this token: Add {R} or {G}. You gain 2 life.\"\nWhenever an artifact an opponent controls is put into a graveyard from the battlefield, put a +1/+1 counter on each creature you control that's an Ape or a Monkey.\nWhenever Kibo attacks, defending player sacrifices an artifact of their choice.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "manaValue": 3,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "G",
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a colorless artifact token named Banana with that ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this token",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{R} or {G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "each creature you control that's an Ape or a Monkey, +1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "dies",
+     "subject": "an artifact an opponent controls",
+     "control": "opp"
+    }
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "an artifact of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "attacks",
+     "subject": "~",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Cityscape Leveler": {
+  "card": {
+   "_id": "d4d65797-2b92-4265-9169-133120c86c7f",
+   "name": "Cityscape Leveler",
+   "typeLine": "Artifact Creature — Construct",
+   "oracleText": "Trample\nWhen you cast this spell and whenever this creature attacks, destroy up to one target nonland permanent. Its controller creates a tapped Powerstone token.\nUnearth {8}",
+   "keywords": [
+    "Unearth",
+    "Trample"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 8,
+   "power": "8",
+   "toughness": "8",
+   "layout": "normal",
+   "manaCost": "{8}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Powerstone",
+     "typeLine": "Token Artifact — Powerstone",
+     "printingId": "d45fe4b6-aeaf-4f84-b660-c7b482ed8512"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Cityscape Leveler",
+     "typeLine": "Artifact Creature — Construct",
+     "printingId": "35d2bcd1-3ed3-4b99-9bb6-d0fa0a9f2ea1"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "this spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "up to one target nonland permanent",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "create",
+      "object": "a tapped Powerstone token",
+      "amount": "1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "up to one target nonland permanent",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "create",
+      "object": "a tapped Powerstone token",
+      "amount": "1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Unearth {8}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Emergency Eject": {
+  "card": {
+   "_id": "da363da1-aecf-4d49-8e77-8dc56981a741",
+   "name": "Emergency Eject",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target nonland permanent. Its controller creates a Lander token. (It's an artifact with \"{2}, {T}, Sacrifice this token: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.\")",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{W}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Lander",
+     "typeLine": "Token Artifact — Lander",
+     "printingId": "85ef1950-219f-401b-8ff5-914f9aaec122"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target nonland permanent",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Lander token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Vazi, Keen Negotiator": {
+  "card": {
+   "_id": "7446c013-63b0-402b-b8b9-dd25ccc553df",
+   "name": "Vazi, Keen Negotiator",
+   "typeLine": "Legendary Creature — Human Advisor",
+   "oracleText": "Haste\n{T}: Target opponent creates X Treasure tokens, where X is the number of Treasure tokens you created this turn.\nWhenever an opponent casts a spell or activates an ability, if mana from a Treasure was spent to cast it or activate it, put a +1/+1 counter on target creature, then draw a card.",
+   "keywords": [
+    "Treasure",
+    "Haste"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "R"
+   ],
+   "colorIdentity": [
+    "B",
+    "G",
+    "R"
+   ],
+   "manaValue": 5,
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{2}{B}{R}{G}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "93116d98-2dad-4b80-a3af-9e36e34da6d4"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Vazi, Keen Negotiator",
+     "typeLine": "Legendary Creature — Human Advisor",
+     "printingId": "fa1f1295-0b9c-45ac-beec-0850b970cd33"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "X Treasure tokens, where X is the number of Treasure tokens you created this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the number of Treasure tokens you created this turn",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "target creature, +1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell or activates an ability",
+     "control": "opp"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Generous Plunderer": {
+  "card": {
+   "_id": "91c835d1-22ca-4c90-9ba6-c8e01bbc0347",
+   "name": "Generous Plunderer",
+   "typeLine": "Creature — Human Rogue",
+   "oracleText": "Menace\nAt the beginning of your upkeep, you may create a Treasure token. When you do, target opponent creates a tapped Treasure token.\nWhenever this creature attacks, it deals damage to defending player equal to the number of artifacts they control.",
+   "keywords": [
+    "Treasure",
+    "Menace"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{R}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "7ec6f053-96f7-4e57-b2eb-4e7699a40a4f"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Generous Plunderer",
+     "typeLine": "Creature — Human Rogue",
+     "printingId": "393bf5fc-0ad2-4116-83b4-346d61ac2911"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     }
+    ],
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    }
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a tapped Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "a tapped Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "reflexive",
+     "subject": "you do",
+     "control": "any"
+    }
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "defending player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the number of artifacts they control",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
  }
 }

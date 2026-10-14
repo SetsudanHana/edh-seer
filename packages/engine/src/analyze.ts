@@ -308,6 +308,9 @@ export interface DeckMath {
     accelerants?: number;
     /** Cards in the Draw role: the land formula's draw term, counted only up to Consistency's target. */
     drawPieces?: number;
+    /** The Ramp role's cards that are NOT accelerants, by what they are (#1190): `land`, `land-drop`, `one-shot` (a ritual, Treasure), `sacrifice`, `trigger-mana`, `gated-off`,
+     *  `restricted`, `paid`, `other`. Only the classes present; the matcher's `NonAccelerantRamp` names them. Absent on a report built before it existed. */
+    rampOther?: Record<string, number>;
     /** The land target once a role that runs over its own target is trimmed back to it, by cutting
      *  the pieces the formula counts. Present only when that moves the target. */
     ifTrimmed?: { ramp?: { over: number; target: number }; draw?: { over: number; target: number } };

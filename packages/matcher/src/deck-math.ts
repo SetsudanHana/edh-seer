@@ -331,6 +331,7 @@ export function computeDeckMath(
     commanderManaValue: rec.commanderManaValue,
     accelerants: rec.accelerants,
     drawPieces: rec.drawPieces,
+    rampOther: rec.rampOther,
     // THE SAME ARCHETYPE DELTA AS THE TARGET, so a trimmed landfall deck still reads its +4.
     ...(rec.ifTrimmed ? { ifTrimmed: Object.fromEntries(Object.entries(rec.ifTrimmed).map(([k, v]) => [k, { over: v.over, target: v.target + archetypeDelta }])) } : {}),
     targetSource: landsGate.source,

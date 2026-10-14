@@ -8,7 +8,7 @@ import { classifyAccelerant } from "./goldfish.js";
 import { boardGateOf, boardGateProbability } from "./gate.js";
 import { RAMP_RESILIENCE, landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
-import { tapFor, withLines, withTap } from "./mana-test-support.js";
+import { fetchTags, manaTags, tapFor, withLines, withTap } from "./mana-test-support.js";
 
 const mk = (
   name: string, manaValue: number, oracleText = "", typeLine = "Artifact",
@@ -72,8 +72,9 @@ test("cheap ramp and cheap draw count, expensive ones do not", () => {
     abilities: [{ kind: "on-cast" as const, effect: { kind: "draw-card" as const } }],
   });
   const deck: DeckCard[] = [
-    mk("Rampant Growth", 2, "Search your library for a basic land card and put it onto the battlefield tapped.", "Sorcery"),
-    mk("Explosive Vegetation", 4, "Search your library for two basic land cards and put them onto the battlefield tapped.", "Sorcery"),
+    // the Ramp role reads the derived `landFetch` (#1190), as a real analysed deck carries it
+    { ...mk("Rampant Growth", 2, "Search your library for a basic land card and put it onto the battlefield tapped.", "Sorcery"), tags: fetchTags({ kind: "spell", tapped: true, reach: ["W", "U", "B", "R", "G"] }) },
+    { ...mk("Explosive Vegetation", 4, "Search your library for two basic land cards and put them onto the battlefield tapped.", "Sorcery"), tags: fetchTags({ kind: "spell", tapped: true, reach: ["W", "U", "B", "R", "G"] }) },
     { ...mk("Ponder", 1, "Draw a card.", "Sorcery"), tags: drawTags("ponder") },
     { ...mk("Blue Sun's Zenith", 5, "Target player draws X cards.", "Instant"), tags: drawTags("bsz") },
     land("Swamp"),
@@ -289,6 +290,38 @@ test("a walker whose mana lasts one turn weighs as a one-shot, one that lasts lo
   expect(rampWeight(real("Chandra, Torch of Defiance"))).toBe(RAMP_RESILIENCE.rock);
   expect(rampWeight(real("Chandra, Hope's Beacon"))).toBe(RAMP_RESILIENCE.rock);
   expect(rampWeight(real("Dark Ritual"))).toBeNull();
+});
+
+// #1190: THE RAMP-ROLE CARDS THE LAND TARGET DOES NOT COUNT AS ACCELERANTS ARE NAMED BY WHAT THEY ARE, not all "one-shots". The weight is unchanged: 0.15 each, a land none; a cost reducer weighs 0 (owner 2026-10-14).
+test("the non-accelerant Ramp-role cards are counted by class, at the weight they always had", () => {
+  const filler = Array.from({ length: 50 }, (_, i) => mk(`Spell-${i}`, 3, "", "Sorcery"));
+  const lands = Array.from({ length: 36 }, (_, i) => land(`Swamp-${i}`));
+  const names = ["Sol Ring", "Dark Ritual", "Pitiless Plunderer", "Birgi, God of Storytelling // Harnfel, Horn of Bounty", "Phyrexian Altar", "Myriad Landscape", "Wayfarer's Bauble"];
+  const deck = [...names.map((n) => real(n)), ...filler, ...lands];
+  const rec = recommendedLands(deck);
+  expect(rec.rampOther).toEqual({ "one-shot": 2, "trigger-mana": 1, sacrifice: 1, land: 1, "land-drop": 1 });
+  // the target is the one the same deck gets with the classes spelled out as weights: Sol Ring (rock 0.7) + five pieces at 0.15
+  const accelerants = 1;
+  expect(rec.accelerants).toBe(accelerants);
+  const want = landTarget({ avgManaValue: rec.avgManaValue, commanderManaValue: 0, accelerants: RAMP_RESILIENCE.rock + 5 * RAMP_RESILIENCE.oneShot, drawCredit: 0 });
+  expect(rec.target).toBe(want);
+});
+
+// A COST REDUCER REPLACES NO LAND (owner 2026-10-14: "it is worth more if you have something to reduce"): a Medallion in the deck leaves the target where it was.
+test("a cost reducer contributes nothing to the land target", () => {
+  const filler = Array.from({ length: 50 }, (_, i) => mk(`Spell-${i}`, 3, "", "Sorcery"));
+  const lands = Array.from({ length: 36 }, (_, i) => land(`Swamp-${i}`));
+  // Sapphire Medallion (oracle "Blue spells you cast cost {1} less to cast."), typed as the derive types it: a cost-reduction for all spells.
+  const medallion: DeckCard = { card: mk("Sapphire Medallion", 3, "Blue spells you cast cost {1} less to cast.").card, tags: manaTags([], { abilities: [{ kind: "static", effect: { kind: "cost-reduction", subject: { control: "you", type: "spell", scope: "all" } } }] as never }) };
+  const without = recommendedLands([...filler, ...lands, mk("Padding", 3, "", "Sorcery")]);
+  const withMedallion = recommendedLands([...filler, ...lands, medallion]);
+  expect(withMedallion.rampOther).toEqual({ "cost-reducer": 1 });
+  expect(withMedallion.accelerants).toBe(0);
+  expect(withMedallion.target).toBe(landTarget({ avgManaValue: withMedallion.avgManaValue, commanderManaValue: 0, accelerants: 0, drawCredit: 0 }));
+  expect(withMedallion.target).toBe(without.target);
+  // ten of them, so that 0.15 each (a land and a half) would show through the rounding
+  const ten = recommendedLands([...filler, ...lands, ...Array.from({ length: 10 }, () => medallion)]);
+  expect(ten.target).toBe(without.target);
 });
 
 // A GATED SOURCE IS FAST MANA ONLY IF ITS GATE CAN BE MET ON TURN 1 OR 2 (owner 2026-10-13, #1169 2b-2: board-count gates are timed turn by turn). Mox Jasper costs nothing, but a

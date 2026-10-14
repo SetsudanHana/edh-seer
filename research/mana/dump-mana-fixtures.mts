@@ -31,7 +31,8 @@ const NAMES = ["Sol Ring", "Arcane Signet", "Cascade Bluffs", "Cascading Catarac
   "Loot, the Nexus", "Rhystic Cave", "Nyx Lotus", "Nykthos, Shrine to Nyx", "Thriving Heath", "Oasis Ritualist", "Arena of Glory", "Benthic Explorers", "Princess Yue", "Imprisoned in the Moon", "Urza's Saga", "Song of Freyalise", "Hydro-Man, Fluid Felon", "Vraska, the Silencer",
   "Honest Work", "Mark of Sakiko", "Abundant Growth", "Lithoform Blight", "Bigger on the Inside", "Gift of Paradise", "Multani's Harmony", "Karametra's Favor", "Utopia Vow", "Minimus Containment", "Grafted Growth", "New Horizons", "Unbridled Growth", "Sheltered Aerie", "Find the Path", "Urban Utopia", "Weirding Wood",
   "Arlinn, the Pack's Hope", "Nissa, Who Shakes the World", "Nissa, Worldwaker", "Chandra, Novice Pyromancer", "Koth of the Hammer", "Chandra, Torch of Defiance", "Crypt Ghast",
-  "High Tide", "Bubbling Muck", "Eldrazi Confluence", "Reckless Blaze", "Divergent Growth", "Mana Flare", "Pyre Rhymer // Molten Tide"];
+  "High Tide", "Bubbling Muck", "Eldrazi Confluence", "Reckless Blaze", "Divergent Growth", "Mana Flare", "Pyre Rhymer // Molten Tide",
+  "Ingenious Mastery", "Erestor of the Council", "Ant-Man's Army", "The Third Doctor", "Tireless Provisioner", "Tempting Contract", "Song of Eärendil", "Spiked Pit Trap", "Smoke Spirits' Aid", "Jolene, the Plunder Queen", "Beamsaw Prospector", "Divert Disaster", "Caravan Vigil", "Druid of the Emerald Grove", "Omenpath Journey", "Piracy", "Marching Duodrone", "Thran Spider", "Prismari Command", "Gonti, Night Minister", "Bilbo's Gambit", "Academy Manufactor", "Kibo, Uktabi Prince", "Cityscape Leveler", "Emergency Eject", "Vazi, Keen Negotiator", "Generous Plunderer"];
 const out: Record<string, unknown> = {};
 for (const n of NAMES) {
   const card: any = await store.cards.findOne({ name: n } as never) ?? await store.cards.findOne({ name: new RegExp("^" + n + " //") } as never);

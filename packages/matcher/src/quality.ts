@@ -45,7 +45,11 @@ const ROLE_KINDS: Record<Role, { kinds?: readonly string[]; verbs?: readonly str
   graveyardHate: { verbs: ["exiled"] },
 };
 
-/** Mana you make as a token (the `ramp.manaToken` rule): Smothering Tithe, Big Score. */
+/** CEILING (#1190): THE RAMP ROLE IS READ FROM THE DERIVED MANA RECORD (`rules.json`), BUT THE RAMP QUALITY INGREDIENTS STILL READ THE ABILITY LIST. `roleAbilities` below, `frequencyOf`, `timingOf`
+ *  and the amounts are ability-shaped (an ability's `repeats`, its kind, its cost), and a mana line carries different facts (its source, its net, its gate), so moving them is a refit of the
+ *  ramp weights on new ingredients, not a rename. Measured effect of the split: a Ramp-role card with no mana-generation ability (a cost reducer, a Lander maker, a line with no ability) has NO
+ *  ingredients, so it is unscored (`qualityScore` null) rather than guessed -- the direction the rest of this file takes when it cannot read a card.
+ *  Mana you make as a token (the `ramp.manaToken` rule): Smothering Tithe, Big Score. */
 const MANA_TOKENS = new Set(["treasure", "gold", "powerstone", "heartwood"]);
 
 export function roleAbilities(d: DeckCard, role: Role): Ability[] {

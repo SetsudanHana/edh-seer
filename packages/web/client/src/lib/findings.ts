@@ -404,12 +404,27 @@ function synergyFinding(report: DeckReport): Finding | null {
  *  to cut" in Roles read as two answers to one question, in three seats. They are one count seen
  *  twice: the target weighs each Ramp card by what it keeps producing, and a ritual or a Treasure
  *  maker produces once. So the phrase names both numbers and the difference. */
-export function lastingRamp(accelerants: number, rampCards: number | undefined): string {
+export function lastingRamp(accelerants: number, rampCards: number | undefined, others?: Record<string, number>): string {
   if (rampCards === undefined || rampCards <= accelerants) return `${accelerants} rocks, dorks and land ramp`;
   const rest = rampCards - accelerants;
-  return `${accelerants} of your ${rampCards} ramp cards that keep producing mana (rocks, dorks and land ramp; `
-    + `the other ${rest} ${rest === 1 ? "is a one-shot" : "are one-shots"}, like a ritual or a Treasure, and count for little)`;
+  const n = (cls: string): number => others?.[cls] ?? 0;
+  // THE REST, NAMED BY WHAT IT IS (#1190): it was "one-shots, like a ritual or a Treasure", which Birgi (trigger mana), Phyrexian Altar (a sacrifice outlet), a Medallion (a cost reducer) and a ramp
+  // LAND in the role (Myriad Landscape) are not. The land target gives every one of them the same little weight; the sentence says why in the card's own terms.
+  const conditional = CONDITIONAL_RAMP.map(([cls, words]) => [n(cls), words] as const).filter(([k]) => k > 0).sort((a, b) => b[0] - a[0]).slice(0, 3).map(([, words]) => words);
+  const like = conditional.length === 1 ? conditional[0] : `${conditional.slice(0, -1).join(", ")} and ${conditional.at(-1)}`;
+  const parts: string[] = [];
+  if (n("land") > 0) parts.push("lands the land count already holds");
+  if (n("cost-reducer") > 0) parts.push("cost reducers, which save mana rather than make it and replace no land");
+  if (conditional.length > 0) parts.push(`mana made only once or under a condition, like ${like}`);
+  const what = parts.length === 0 ? "they make mana only once or under a condition" : parts.join("; ");
+  return `${accelerants} of your ${rampCards} ramp cards that keep producing mana (rocks, dorks and land ramp; ${rest === 1 ? "the other one counts" : `the other ${rest} count`} for little: ${what})`;
 }
+
+/** The classes of a Ramp-role card that makes mana only once or under a condition (`NonAccelerantRamp` in the matcher), with the words the sentence uses, in the order a tie resolves. */
+const CONDITIONAL_RAMP: readonly (readonly [string, string])[] = [
+  ["one-shot", "rituals and Treasure"], ["trigger-mana", "trigger mana"], ["sacrifice", "sacrifice outlets"], ["land-drop", "land fetchers"],
+  ["restricted", "restricted mana"], ["gated-off", "gated mana"], ["paid", "mana paid for with a counter or a card"],
+];
 
 function landFinding(report: DeckReport): Finding | null {
   const lands = report.deckMath?.lands;
@@ -428,7 +443,7 @@ function landFinding(report: DeckReport): Finding | null {
       // THE TARGET IS FOR A PACKAGE (owner, 2026-09-29), so the finding names it, and where the
       // count goes if an over-target role is trimmed back.
       + (lands.accelerants !== undefined
-        ? `, with ${lands.drawPieces ?? 0} draw cards and ${lastingRamp(lands.accelerants, report.buildParents?.find((p) => p.key === "ramp")?.count)}`
+        ? `, with ${lands.drawPieces ?? 0} draw cards and ${lastingRamp(lands.accelerants, report.buildParents?.find((p) => p.key === "ramp")?.count, lands.rampOther)}`
         : "")
       + ". "
       + (lands.ifTrimmed?.ramp ? `Trimming ramp to its target with rocks or dorks moves it to ${lands.ifTrimmed.ramp.target}. ` : "")

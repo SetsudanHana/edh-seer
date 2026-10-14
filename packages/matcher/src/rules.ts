@@ -1,6 +1,7 @@
 import ruleSet from "./rules.json" with { type: "json" };
+import type { ManaLineSource } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
-import { cardLines } from "./mana-lines.js";
+import { cardLines, isLoyaltyAbility, usableLoyalty } from "./mana-lines.js";
 import { countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
 
 /** A single test against one card. The operator set is CLOSED on purpose: `oracle`, `effectKind`,
@@ -16,7 +17,13 @@ export type RuleClause =
    *  sac outlet is not a draw engine. `null` names an ability `repeats.ts` refused to label. Owner,
    *  2026-09-05: "we count the one-off instant that draws 1 card the same way as Rhystic Study".
    *  `Ability.repeats` had sat on every derived ability since 2026-08-11 with no count reading it. */
-  | { op: "effectKind"; in: string[]; repeats?: (string | null)[]; control?: string[] }
+  | { op: "effectKind"; in: string[]; repeats?: (string | null)[]; control?: string[];
+      /** The effect's SUBJECT scope (`all`, `each`, `target`): present on the effect and in this list. An effect that names none does not match -- `cost-reduction` with scope `all`/`each` is a discount
+       *  for OTHER spells (Sapphire Medallion), and one with no scope is the card's own cost ("This spell costs {1} less", Sunderflock). */
+      scope?: string[];
+      /** Refuse an ability whose subject is a spell THAT TARGETS THIS CARD (`subject.targets.self`): Spellwild Ouphe's "Spells that target this creature cost {2} less" cheapens
+       *  spells aimed at the card itself, a discount for no other spell (`discountsOtherSpells`). */
+      notSelfTargeted?: boolean }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -64,6 +71,14 @@ export type RuleClause =
    *  a transform card with a land back (Treasure Map) a land to every `not` guard, so it earned no
    *  role while the land count called it a spell. */
   | { op: "countsAsLand" }
+  /** A DERIVED MANA LINE (`CardTags.manaLines`, #1169; #1190): the card has at least one line, of the faces in play from the deck (`cardLines(dc, true)`: a transform card's NON-LAND
+   *  back counts, as the Ramp role always read it; a land back never does, `ruleMatches` refuses it), satisfying EVERY filter given, tested on the SAME line. The Ramp role asked the
+   *  ability list and printed text instead until #1190, which is how four Auras that make no mana anywhere else were ramp. `source` names the line's `ManaLineSource`; `repeats` its
+   *  `repeats` label (`null` = the ability the line was read from states none); `producesToken` the lines that make a mana token (Treasure, Gold, Powerstone, Eldrazi Spawn). Closed
+   *  like `effectKind`: a filter on a field of the line, never an expression. */
+  | { op: "manaLine"; source?: ManaLineSource[]; repeats?: (string | null)[]; producesToken?: true }
+  /** The card puts lands onto the battlefield FROM THE LIBRARY (`CardTags.landFetch`: Cultivate, Wood Elves, Wayfarer's Bauble). A fetch to hand only is no `landFetch`. */
+  | { op: "landFetch" }
   | { op: "anyOf"; clauses: RuleClause[] };
 
 export interface Rule {
@@ -238,12 +253,31 @@ export function tokenQuotes(card: { oracleText?: string }, tokenName: string): s
   return out.join("\n");
 }
 
+/** A COST REDUCTION THAT REACHES OTHER SPELLS: the subject's scope is all/each AND it is not "spells that target this card" (`subject.targets.self`: Spellwild Ouphe, Elderwood Scion).
+ *  ONE predicate for the rule `ramp.costReduction` and for `nonAccelerantRamp`'s cost-reducer class, so the Role and its class agree. */
+export function discountsOtherSpells(effect: { kind: string; subject?: { scope?: string; targets?: { self?: boolean } } }): boolean {
+  return effect.kind === "cost-reduction" && (effect.subject?.scope === "all" || effect.subject?.scope === "each") && effect.subject?.targets?.self !== true;
+}
+
 function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
   switch (clause.op) {
     case "oracle":
       return pattern(set, clause.pattern).test(ownText(dc.card));
     case "countsAsLand":
       return countsAsLand(dc.card);
+    case "manaLine":
+      return cardLines(dc, true).some((l) =>
+        // A LOYALTY ABILITY THE WALKER CANNOT USE THE TURN IT IS CAST is no line of the Role (owner 2026-10-13, #1190: the loyalty test of the accelerants and the colour sources governs the role).
+        (!isLoyaltyAbility(l) || usableLoyalty(l))
+        && (clause.source === undefined || clause.source.includes(l.source))
+        && (clause.repeats === undefined || clause.repeats.includes(l.repeats))
+        && (clause.producesToken === undefined || l.producesToken !== null));
+    case "landFetch":
+      // ...and the same for a walker's land fetch (Nissa, Worldwaker's -7 from loyalty 3): a fetch line that is a loyalty ability counts only if usable on the cast turn.
+      return dc.tags?.landFetch !== undefined && (() => {
+        const fetches = cardLines(dc, true).filter((l) => l.source === "fetch");
+        return fetches.length === 0 || fetches.some((l) => !isLoyaltyAbility(l) || usableLoyalty(l));
+      })();
     case "typeLine":
       return (dc.card.typeLine ?? "").toLowerCase().includes(clause.contains);
     case "effectKind":
@@ -252,7 +286,9 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null))
         // WHO IT HAPPENS TO, when the effect names one (#574): The Chain Veil's "you lose 2 life" is
         // `player-life-loss` too. An effect with no subject is not refused -- nothing says who.
-        && (clause.control === undefined || a.effect.subject?.control === undefined || clause.control.includes(a.effect.subject.control)));
+        && (clause.control === undefined || a.effect.subject?.control === undefined || clause.control.includes(a.effect.subject.control))
+        && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope)))
+        && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true));
     case "emits":
       return (dc.tags?.abilities ?? []).some((a) =>
         (a.emits ?? []).some((e) =>

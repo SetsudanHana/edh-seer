@@ -4,6 +4,7 @@ import { classifyAccelerant, manaOutput, playableLines } from "./goldfish.js";
 import { boardGateProbability, lineGateMetBy } from "./gate.js";
 import { isManaSource } from "./mana-audit.js";
 import { RAMP_RESILIENCE, drawCredit, landTarget } from "./mana-base.js";
+import { NON_ACCELERANT_WEIGHT, nonAccelerantRamp, type NonAccelerantRamp } from "./ramp-class.js";
 import type { DeckCard } from "./types.js";
 import { countsAsLand, transformsIntoLand } from "./typeline.js";
 
@@ -155,6 +156,8 @@ export interface LandRecommendation extends Required<KarstenInputs> {
   accelerants: number;
   /** Cards in the Draw role. */
   drawPieces: number;
+  /** THE RAMP-ROLE CARDS THAT ARE NOT ACCELERANTS, by class (#1190; distinct cards, the Ramp role's own count): what the report calls the rest of the Ramp role. Only the classes present. */
+  rampOther: Partial<Record<NonAccelerantRamp, number>>;
   /** What the land formula asks for (`mana-base.ts`'s `landTarget`), rounded and clamped to the
    *  land counts it was simulated at, with ramp and draw counted only up to their role targets. */
   target: number;
@@ -223,14 +226,26 @@ export function recommendedLands(
   const roleCount = (key: "ramp" | "consistency"): number => roleMembers(key).size;
 
   // EACH RAMP PIECE AT WHAT IT KEEPS PRODUCING (`RAMP_RESILIENCE`): land ramp whole, a rock 0.7, a
-  // dork 0.5, and a one-shot -- a Ramp-role card the goldfish does not play, a ritual or a Treasure
-  // maker -- 0.15. Copies count, as `accelerants` always has.
+  // dork 0.5, and a Ramp-role card the goldfish does not play as an accelerant at its class's weight (`NON_ACCELERANT_WEIGHT`: 0.15 for every class but a cost reducer (0, owner 2026-10-14), a land none). Copies count, as
+  // `accelerants` always has.
   const rampRoleNames = roleMembers("ramp");
   const rampWeights = library.flatMap((dc): number[] => {
     const w = rampWeight(dc, deck);
     if (w !== null) return [w];
-    return rampRoleNames.has(dc.card.name) && !isLand(dc) ? [RAMP_RESILIENCE.oneShot] : [];
+    if (!rampRoleNames.has(dc.card.name)) return [];
+    const classWeight = NON_ACCELERANT_WEIGHT[nonAccelerantRamp(dc, deck)];
+    return classWeight === null ? [] : [classWeight];
   }).sort((x, y) => y - x);
+  // THE REST OF THE RAMP ROLE, NAMED (#1190): one count per distinct Ramp-role card that is not an accelerant, over the whole deck as the role count is (the commander included).
+  const rampOther: Partial<Record<NonAccelerantRamp, number>> = {};
+  const seenRamp = new Set<string>();
+  for (const dc of deck) {
+    if (!rampRoleNames.has(dc.card.name) || seenRamp.has(dc.card.name)) continue;
+    seenRamp.add(dc.card.name);
+    if (classifyAccelerant(dc, deck) !== null) continue;
+    const cls = nonAccelerantRamp(dc, deck);
+    rampOther[cls] = (rampOther[cls] ?? 0) + 1;
+  }
   // EACH DRAW CARD AT WHAT ITS MANA VALUE SAVES (`drawCredit`), best first.
   const drawCredits = library.filter((dc) => drawCards.has(dc.card.name)).map((dc) => drawCredit(dc.card.manaValue)).sort((x, y) => y - x);
 
@@ -267,6 +282,7 @@ export function recommendedLands(
     commanderManaValue,
     accelerants,
     drawPieces,
+    rampOther,
     target,
     ...(trims.ramp || trims.draw ? { ifTrimmed: trims } : {}),
   };

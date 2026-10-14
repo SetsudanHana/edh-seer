@@ -1,10 +1,11 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./build.js";
 import { detectWincons } from "./wincon.js";
 import { answerClassesOf, loadRules, ownText, ruleMatches, RULES_VERSION, tokenQuotes, type Rule } from "./rules.js";
 import type { DeckCard } from "./types.js";
 import type { ManaLine } from "@edh-seer/tagger";
+import { nonAccelerantRamp } from "./ramp-class.js";
 import { FREE_TAP, manaTags, mkLine, ritualLine, tapFor, triggerLine } from "./mana-test-support.js";
 import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 
@@ -476,8 +477,8 @@ test("a one-shot mana spell is ramp only when it nets, and a permanent mana sour
   expect(cats(spell("Cabal Ritual", [ritualLine(["B"], 3, { cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 1 }), ritualLine(["B"], 5, { gate: "threshold", cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 3 })], 2, "Sorcery"))).toContain("ramp");
   // ...and a spell with a line that nets nothing in either reading is not ramp.
   expect(cats(spell("Net Zero", [ritualLine(["B"], 2, { cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 0 }), ritualLine(["B"], 2, { gate: "threshold", cost: { ...FREE_TAP, tap: false, mana: 2 }, net: 0 })], 2, "Sorcery"))).not.toContain("ramp");
-  // A card with no mana line at all states no number: kept (the lenient direction).
-  expect(cats(spell("No Line", [], 2, "Sorcery"))).toContain("ramp");
+  // A card with no mana line at all is not ramp any more (#1190): the mana-generation LABEL on its ability decides nothing, the derived record does.
+  expect(cats(spell("No Line", [], 2, "Sorcery"))).not.toContain("ramp");
 
   // A PERMANENT MANA SOURCE REPEATS, so it is never net-tested — a dork nets 0 the turn it lands.
   expect(cats(spell("Llanowar Elves", [tapFor(["G"])], 1, "Creature — Elf Druid"))).toContain("ramp");
@@ -508,6 +509,122 @@ test("High Tide's real derived line (a one-turn tap bonus) keeps the Ramp role; 
   expect(cats(spell("Divergent Growth", [mkLine({ source: "static-grant", colours: ["W", "U", "B", "R", "G"], anyColour: "any" })], 1, "Instant"))).not.toContain("ramp");
   // ...and a trigger that DOES out-produce the spell's mana value stays ramp.
   expect(cats(spell("Big Trigger", [triggerLine("dies", "a creature", ["R"], 3)], 2, "Instant"))).toContain("ramp");
+});
+
+// #1190 (Fable round 2, finding 1): THE RAMP ROLE READS THE DERIVED MANA RECORD, like every other mana reader since #1169. It read `abilities[].effect.kind` and printed-text patterns, so
+// four Auras that make no mana anywhere else were Ramp (the cards below carry NO abilities: the verdict can only come from `manaLines` / `landFetch`).
+describe("the Ramp role is read from the derived mana record (#1190)", () => {
+  const rampLeaves = (dc: DeckCard) => ruleIds(dc).filter((id) => loadRules().rules.find((r) => r.id === id)?.category === "ramp");
+  const ruleIds = (dc: DeckCard) => loadRules().rules.filter((r) => ruleMatches(r, dc)).map((r) => r.id);
+  const real = (name: string): DeckCard => structuredClone((goldfish as unknown as DeckCard[]).find((c) => c.card.name === name)!);
+  const ramp = (name: string) => rampLeaves(real(name)).length > 0;
+
+  test("an Aura whose mana is a side effect has no mana line and no Ramp role (owner 2026-10-13)", () => {
+    for (const n of ["Honest Work", "Imprisoned in the Moon", "Mark of Sakiko"]) expect(ramp(n), n).toBe(false);
+    // ...and a mana-generation LABEL alone, with no line behind it, decides nothing (the 18 cards that carried one).
+    const label: DeckCard = { card: { name: "Labelled", oracleText: "", typeLine: "Enchantment — Aura", manaValue: 2 } as Card, tags: manaTags([], { abilities: [{ kind: "static", effect: { kind: "mana-generation" }, repeats: "per-cycle" }] as never }) };
+    expect(rampLeaves(label)).toEqual([]);
+    expect(ruleIds(label)).not.toContain("ramp.engine.source");
+  });
+
+  test("the classes the owner ruled ramp stay ramp, each from its own line", () => {
+    for (const n of ["Abundant Growth", "Phyrexian Altar", "Birgi, God of Storytelling // Harnfel, Horn of Bounty", "Pitiless Plunderer", "Dark Ritual", "High Tide", "Lotus Petal",
+      "Sol Ring", "Llanowar Elves", "Black Market"]) expect(ramp(n), n).toBe(true);
+    // land fetch: a spell, a creature that fetches, and a rock that sacrifices to fetch
+    for (const n of ["Nature's Lore", "Wood Elves", "Wayfarer's Bauble"]) expect(rampLeaves(real(n)), n).toContain("ramp.landFetchSpell");
+    expect(rampLeaves(real("Pitiless Plunderer"))).toContain("ramp.manaToken");
+    expect(rampLeaves(real("Sol Ring"))).not.toContain("ramp.manaToken");
+    expect(rampLeaves(real("Dark Ritual"))).toEqual(["ramp.effect"]);
+  });
+
+  test("a line with NO ability behind it is ramp (Molten Tide's shape, #1182)", () => {
+    const tide: DeckCard = { card: { name: "Molten Tide", oracleText: "", typeLine: "Sorcery", manaValue: 3 } as Card, tags: manaTags([mkLine({ source: "one-shot-spell", repeats: "once", trigger: "tapped-for-mana", triggerSubject: "a mountain", untilEndOfTurn: true, cost: { ...FREE_TAP, tap: false, mana: 3 }, net: -2 })], { isOneShot: true }) };
+    expect(rampLeaves(tide)).toEqual(["ramp.effect"]);
+  });
+
+  test("the engines facet reads the line's repeats and the token it makes, not any token-generation ability", () => {
+    const facets = (n: string) => ruleIds(real(n)).filter((id) => id.startsWith("ramp.engine") || id === "ramp.unlabelled");
+    expect(facets("Sol Ring")).toContain("ramp.engine.source");
+    expect(facets("Phyrexian Altar")).toContain("ramp.engine.source");
+    expect(facets("Pitiless Plunderer")).toContain("ramp.engine.source");
+    expect(facets("Birgi, God of Storytelling // Harnfel, Horn of Bounty")).toContain("ramp.engine.source");
+    expect(facets("Dark Ritual")).toEqual([]);
+    expect(facets("Wood Elves")).toContain("ramp.engine.land");
+    // a creature-token engine is no mana engine: it has no mana line at all
+    const soldiers: DeckCard = { card: { name: "Token Engine", oracleText: "", typeLine: "Enchantment", manaValue: 3 } as Card, tags: manaTags([], { abilities: [{ kind: "triggered", effect: { kind: "token-generation" }, repeats: "repeatable" }] as never }) };
+    expect(ruleIds(soldiers)).not.toContain("ramp.engine.source");
+  });
+});
+
+// #1190 follow-ups (owner rulings 2026-10-13).
+describe("the Ramp role, second round (#1190)", () => {
+  const ruleIds = (dc: DeckCard) => loadRules().rules.filter((r) => (r.category === "ramp" || r.facet?.of === "ramp") && ruleMatches(r, dc)).map((r) => r.id);
+  const real = (name: string): DeckCard => structuredClone((goldfish as unknown as DeckCard[]).find((c) => c.card.name === name)!);
+
+  test("a loyalty ability the walker cannot use the turn it is cast is not the Role either (Nissa, Worldwaker's -7 at loyalty 3)", () => {
+    expect(ruleIds(real("Nissa, Worldwaker"))).toEqual([]);
+    // Nissa, Who Shakes the World keeps the Role through her Forest trigger; her -8 fetch at loyalty 5 adds no engine.
+    expect(ruleIds(real("Nissa, Who Shakes the World"))).toContain("ramp.effect");
+    expect(ruleIds(real("Nissa, Who Shakes the World"))).not.toContain("ramp.landFetchSpell");
+    // "-1: Add {R}{R}" at loyalty 5 is usable on the cast turn.
+    expect(ruleIds(real("Chandra, Novice Pyromancer"))).toContain("ramp.effect");
+  });
+
+  test("cost reduction IS ramp (owner 2026-08-06 and 2026-10-13): a discount for OTHER spells, not a cheaper self", () => {
+    const withAbility = (name: string, subject: object, kind = "static"): DeckCard => ({
+      card: { name, oracleText: "", typeLine: "Artifact", manaValue: 3 } as Card,
+      tags: manaTags([], { abilities: [{ kind, effect: { kind: "cost-reduction", subject } }] as never }),
+    });
+    // Sapphire Medallion: "Blue spells you cast cost {1} less" -- control you, spells, all of them
+    expect(ruleIds(withAbility("Sapphire Medallion", { control: "you", type: "spell", scope: "all" }))).toEqual(["ramp.costReduction"]);
+    expect(ruleIds(withAbility("Zimone", { control: "any", type: "spell", scope: "each" }))).toEqual(["ramp.costReduction"]);
+    // "This spell costs {1} less to cast ..." and a self-discount with no subject are a cheaper card, not ramp
+    expect(ruleIds(withAbility("Blasphemous Act", { control: "any", type: "spell", self: true }, "on-cast"))).toEqual([]);
+    expect(ruleIds(withAbility("Sunderflock", {}))).toEqual([]);
+    // Trinisphere ("each spell that would cost less than three mana costs three") is a tax the derive typed as a reduction; Accursed Witch cheapens OPPONENTS' spells
+    const texted = (name: string, oracleText: string): DeckCard => ({ ...withAbility(name, { control: "any", type: "spell", scope: "all" }), card: { name, oracleText, typeLine: "Artifact", manaValue: 3 } as Card });
+    expect(ruleIds(texted("Trinisphere", "As long as this artifact is untapped, each spell that would cost less than three mana to cast costs three mana to cast."))).toEqual([]);
+    expect(ruleIds(texted("Accursed Witch", "Spells your opponents cast that target this creature cost {1} less to cast."))).toEqual([]);
+  });
+
+  // Real oracle text (Mongo, 2026-10-14). The derive typed every one of these cost-reduction with a scope-all subject; the rule decides.
+  test("a self discount, an alternative cost and a free cast are not ramp; Activated-ability reducers and a named-spell discount are (owner 2026-10-14)", () => {
+    const text = (name: string, oracleText: string, subject: object): DeckCard => ({
+      card: { name, oracleText, typeLine: "Artifact", manaValue: 3 } as Card,
+      tags: manaTags([], { abilities: [{ kind: "static", effect: { kind: "cost-reduction", subject } }] as never }),
+    });
+    const all = { control: "any", type: "spell", scope: "all" };
+    expect(ruleIds(text("Volcanic Salvo", "This spell costs {X} less to cast, where X is the total power of creatures you control.\nVolcanic Salvo deals 6 damage to each of up to two target creatures and/or planeswalkers.", { control: "you", type: "creature", scope: "all" }))).toEqual([]);
+    expect(ruleIds(text("As Foretold", "At the beginning of your upkeep, put a time counter on this enchantment.\nOnce each turn, you may pay {0} rather than pay the mana cost for a spell you cast with mana value X or less, where X is the number of time counters on this enchantment.", all))).toEqual([]);
+    expect(ruleIds(text("Aluren", "Any player may cast creature spells with mana value 3 or less without paying their mana costs and as though they had flash.", all))).toEqual([]);
+    expect(ruleIds(text("Fires of Invention", "You can cast spells only during your turn and you can cast no more than two spells each turn.\nYou may cast spells with mana value less than or equal to the number of lands you control without paying their mana costs.", all))).toEqual([]);
+    // Heartstone, Training Grounds: a reducer of activated abilities IS ramp (owner ruling); the derived subject names the ability kind.
+    const act = { abilityKind: ["activated"], type: "creature", scope: "all" };
+    expect(ruleIds(text("Heartstone", "Activated abilities of creatures cost {1} less to activate. This effect can't reduce the mana in that cost to less than one mana.", act))).toEqual(["ramp.costReduction"]);
+    expect(ruleIds(text("Training Grounds", "Activated abilities of creatures you control cost {2} less to activate. This effect can't reduce the mana in that cost to less than one mana.", act))).toEqual(["ramp.costReduction"]);
+    expect(ruleIds(text("Cheering Fanatic", "Whenever this creature attacks, choose a card name. Spells with the chosen name cost {1} less to cast this turn.", all))).toEqual(["ramp.costReduction"]);
+    expect(ruleIds(text("Sapphire Medallion", "Blue spells you cast cost {1} less to cast.", all))).toEqual(["ramp.costReduction"]);
+    // A self discount AND a discount for others stays ramp (Hamza), and so does a card that merely also casts something free (The Ur-Sphinx).
+    expect(ruleIds(text("Hamza, Guardian of Arashin", "This spell costs {1} less to cast for each creature you control with a +1/+1 counter on it.\nCreature spells you cast cost {1} less to cast for each creature you control with a +1/+1 counter on it.", all))).toEqual(["ramp.costReduction"]);
+    expect(ruleIds(text("The Ur-Sphinx", "Eminence \u2014 As long as The Ur-Sphinx is in the command zone or on the battlefield, other Sphinx spells you cast cost {1} less to cast.\nFlying\nWhenever one or more Sphinxes you control attack, each player mills that many cards. For each player, you may cast a card that player milled this way without paying its mana cost.", all))).toEqual(["ramp.costReduction"]);
+    // SYNTHETIC text (no such card): a self discount plus a discount for others written with several mana symbols, with and without "(or {1})".
+    for (const other of ["Minotaur spells you cast cost {B}{R} less to cast.", "Spells you cast cost {W}{U}{B}{R}{G} less to cast.", "Spells you cast cost {U} (or {1}) less to cast."])
+      expect(ruleIds(text("Synthetic", `This spell costs {1} less to cast.\n${other}`, all)), other).toEqual(["ramp.costReduction"]);
+
+    // SPELLS THAT TARGET THIS CARD are no discount for other spells (Spellwild Ouphe). The subjects below are the REAL derived ones (cardTagsDerived, 2026-10-14).
+    const ouphe = { control: "any", token: null, type: "spell", scope: "all", targets: { self: true, type: "creature" } };
+    expect(ruleIds(text("Spellwild Ouphe", "Spells that target this creature cost {2} less to cast.", ouphe))).toEqual([]);
+    const bladegraft: DeckCard = {
+      card: { name: "Bladegraft Aspirant", oracleText: "Menace\nEquipment spells you cast cost {1} less to cast.\nActivated abilities of Equipment you control that target this creature cost {1} less to activate.", typeLine: "Creature", manaValue: 2 } as Card,
+      tags: manaTags([], { abilities: [
+        { kind: "static", effect: { kind: "cost-reduction", subject: { control: "you", token: null, type: "spell", subtype: "equipment", scope: "all" } } },
+        { kind: "static", effect: { kind: "cost-reduction" } },
+      ] as never }),
+    };
+    expect(ruleIds(bladegraft)).toEqual(["ramp.costReduction"]);
+    expect(nonAccelerantRamp(bladegraft)).toBe("cost-reducer");
+    expect(nonAccelerantRamp(text("Spellwild Ouphe", "Spells that target this creature cost {2} less to cast.", ouphe))).not.toBe("cost-reducer");
+  });
 });
 
 // --- self-protection in words that are not a printed keyword (roadmap I1) ---
@@ -732,7 +849,9 @@ test("a destroy whose controller gets copies back is neither removal nor an answ
   const saw = mk("Saw in Half", "Destroy target creature. If that creature dies this way, its controller creates two tokens that are copies of that creature, except their power is half that creature's power and their toughness is half that creature's toughness. Round up each time.", "Instant");
   const fractured = mk("Fractured Identity", "Exile target nonland permanent. Each player other than its controller creates a token that's a copy of it.", "Sorcery");
   const hireling = mk("Grim Hireling", "Whenever one or more creatures you control deal combat damage to a player, create two Treasure tokens.\n{B}, Sacrifice X Treasures: Target creature gets -X/-X until end of turn. Activate only as a sorcery.", "Creature — Tiefling Rogue");
-  const cats = detectBuildCategories([saw, fractured, hireling]);
+  // The Treasure is the derived mana line's, not the oracle text's (#1190).
+  const treasure = { ...hireling, tags: manaTags([mkLine({ source: "token-maker", repeats: "repeatable", producesToken: "treasure", cost: { ...FREE_TAP, tap: false } })]) };
+  const cats = detectBuildCategories([saw, fractured, treasure]);
   expect(cats.get("targetedRemoval")?.has("Saw in Half") ?? false).toBe(false);
   expect(cats.get("targetedRemoval")?.has("Fractured Identity")).toBe(true);
   expect(cats.get("targetedRemoval")?.has("Grim Hireling")).toBe(true);
@@ -784,10 +903,10 @@ test("a neutralising Aura is targeted removal for the classes it can enchant", (
 });
 
 // #1167: the rule table reads a card as the DECK holds it. Same printed text, two layouts.
-const tapAdd = (face: number) => [{ kind: "activated", effect: { kind: "mana-generation" }, cost: "{T}", amount: "1", repeats: "per-cycle", face }] as never;
-const layoutCard = (layout: string, face: number, typeLine = "Artifact // Land"): DeckCard => ({
+const tapAdd = (face: 0 | 1) => [tapFor(["C"], { face })];
+const layoutCard = (layout: string, face: 0 | 1, typeLine = "Artifact // Land"): DeckCard => ({
   card: { name: "Probe // Cave", oracleText: "Scry 1.\n//\n{T}: Add {C}.", typeLine, layout } as Card,
-  tags: { abilities: tapAdd(face), characteristics: { types: ["artifact"] } } as never,
+  tags: { abilities: [], manaLines: tapAdd(face), characteristics: { types: ["artifact"] } } as never,
 });
 
 test("countsAsLand op: a modal DFC with a land face is a land to the guards, a transform card is a spell", () => {
