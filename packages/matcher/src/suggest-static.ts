@@ -85,7 +85,7 @@ export interface SuggestedPair {
   addStrength: Strength;
 }
 export interface DeckSuggestions {
-  /** Keyed by `buildParents[].name` ("Interaction"). */
+  /** Keyed by `buildParents[].key` ("interaction"); a card's `fills` is the parent's display name. */
   build: Record<string, SuggestedCard[]>;
   /** Keyed by `deckMath.answers[].class` ("enchantment"). */
   answers: Record<string, SuggestedCard[]>;
@@ -356,8 +356,8 @@ function shortlist(list: readonly Candidate[], n: number, band: readonly [number
 /** The build groups as `pairReplacements` needs them: the report's counts, `BUILD_PARENTS`' bands. */
 function groupsOf(report: DeckReport): GroupState[] {
   return (report.buildParents ?? []).map((p) => ({
-    name: p.name, count: p.count, target: p.target, leaves: p.leaves,
-    costBand: BUILD_PARENTS.find((b) => b.name === p.name)?.costBand ?? ANY_BAND,
+    name: p.name, key: p.key, count: p.count, target: p.target, leaves: p.leaves,
+    costBand: BUILD_PARENTS.find((b) => b.key === p.key)?.costBand ?? ANY_BAND,
   }));
 }
 
@@ -510,7 +510,7 @@ export async function suggestForDeck(input: {
     .filter((g) => g.target > 0 && g.count < g.target)
     .map((g) => {
       const n = g.target - g.count + SPARES;
-      return [g.name, shortlist(gapList(pool, g.leaves, g.costBand, Infinity), n * SHORTLIST, g.costBand), n, g.costBand, stapleList(index, g.leaves, g.costBand, n, admissible)] as const;
+      return [g.key, g.name, shortlist(gapList(pool, g.leaves, g.costBand, Infinity), n * SHORTLIST, g.costBand), n, g.costBand, stapleList(index, g.leaves, g.costBand, n, admissible)] as const;
     });
   const answersRanked = (report.deckMath?.answers ?? [])
     // ONLY A CLASS WITH NO ANSWER AT ALL, the one the page's finding names (owner, 2026-09-26: the
@@ -543,9 +543,9 @@ export async function suggestForDeck(input: {
   }));
   // ONE PREFETCH FOR EVERY CANDIDATE THAT MIGHT BE SHOWN, so verification reads a warm lookup.
   const shown = unique([
-    ...planRanked, ...buildRanked.flatMap(([, l]) => l), ...answersRanked.flatMap(([, l]) => l),
+    ...planRanked, ...buildRanked.flatMap(([, , l]) => l), ...answersRanked.flatMap(([, l]) => l),
     ...synergyRanked.flatMap(([, l]) => l),
-  ].map((c) => c.card.name).concat(buildRanked.flatMap(([, , , , st]) => st.map((c) => c.name))));
+  ].map((c) => c.card.name).concat(buildRanked.flatMap(([, , , , , st]) => st.map((c) => c.name))));
   await lookup.prefetch(shown.map(normalizeName));
   // A POLYMORPH DECK REFUSES A SMALL CREATURE (owner ruling 2026-10-02, #965): every creature below the
   // hit line is a reveal that misses, so it dilutes the deck's whole plan however well it links.
@@ -632,7 +632,7 @@ export async function suggestForDeck(input: {
   // 2-mana rocks myself". Staple-grade cards the engine joins come first with their reasons, then
   // the staples it does not, then the synergy-only picks.
   const isStaple = (c: SuggestedCard): boolean => (atName.get(c.name)?.grade ?? 0) > 0;
-  for (const [name, list, limit, band, staples] of buildRanked) {
+  for (const [key, name, list, limit, band, staples] of buildRanked) {
     const joined = await verified(list, limit, verify, nonland, band);
     const plain: SuggestedCard[] = [];
     for (const st of staples) {
@@ -648,7 +648,7 @@ export async function suggestForDeck(input: {
     // NO STAPLES, NO REORDER: only a ramp group gets any, and a graded card on another list is there
     // for that list's job.
     const ordered = staples.length > 0 ? [...joined.filter(isStaple), ...plain, ...joined.filter((c) => !isStaple(c))] : joined;
-    out.build[name] = ordered.slice(0, limit).map((c) => ({ ...c, fills: name }));
+    out.build[key] = ordered.slice(0, limit).map((c) => ({ ...c, fills: name }));
   }
   for (const [cls, list, limit, band] of answersRanked) out.answers[cls] = (await verified(list, limit, verify, nonland, band)).map((c) => ({ ...c, answers: [cls] }));
   for (const [key, list] of synergyRanked) {

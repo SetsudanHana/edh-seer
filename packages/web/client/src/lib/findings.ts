@@ -1,6 +1,7 @@
 import { LAND_BAND } from "@edh-seer/matcher/build";
 import type { DeckReport } from "../types.js";
 import { demandSentence } from "./demand-sentence.js";
+import { buildFindingId } from "./role-group.js";
 
 /** WHAT IS WRONG WITH THIS DECK — the report's eight diagnostic panels, ranked.
  *
@@ -71,19 +72,19 @@ export interface Finding {
  *  how two surfaces start disagreeing, which this repo has now measured twice. */
 function buildFindings(report: DeckReport): Finding[] {
   const parents = report.buildParents ?? [];
-  const suggestions = report.suggestions ?? [];
-  const cuts = donorSentences(parents, suggestions, report.slack ?? []);
+  const byKey = report.suggestionByKey ?? {};
+  const cuts = donorSentences(parents, byKey, report.slack ?? []);
   const out: Finding[] = [];
   for (const p of parents) {
     if (p.target <= 0 || p.count >= p.target) continue;
     const missing = p.target - p.count;
     // The engine's own sentence for this parent, if it wrote one. It carries the cost band
     // (`typically 2–4 mana`) that this module has no business recomputing.
-    const suggestion = suggestions.find((s) => s.startsWith(`${p.name} `));
-    const cut = cuts.get(p.name) ?? "";
+    const suggestion = byKey[p.key];
+    const cut = cuts.get(p.key) ?? "";
     out.push({
       kind: "build",
-      id: `build:${p.name}`,
+      id: buildFindingId(p.key),
       headline: p.key === "consistency"
         ? "You will run out of cards before you run out of turns."
         : `You are ${missing} short on ${p.name.toLowerCase()}.`,
@@ -94,8 +95,13 @@ function buildFindings(report: DeckReport): Finding[] {
       detail: `You run ${p.count}, against a target of ${p.target}.`,
       // Strip the leading "Name 6/14 — " the CLI sentence carries, since the figure is rendered
       // beside the row already.
+      // A parent at zero is the odd one out: the engine says "No board wipe (target 3); most cost 3-5
+      // mana" (the CLI prints it as is), which restates the gap instead of asking for the fix, so the
+      // same imperative is built here from the parent's own numbers and the sentence's cost band.
       action: suggestion
-        ? `${suggestion.replace(/^[^—]*—\s*/, "").replace(/^add/, "Add")}${cut}`
+        ? `${(suggestion.includes("—")
+          ? suggestion.replace(/^[^—]*—\s*/, "").replace(/^add/, "Add")
+          : `Add ~${Math.ceil(missing)} ${p.name.toLowerCase()}${suggestion.match(/;.*$/)?.[0] ?? ""}`)}${cut}`
         : undefined,
       figure: `${p.count}/${p.target}`,
       figureLabel: p.name,
@@ -122,7 +128,7 @@ function buildFindings(report: DeckReport): Finding[] {
  *  The amount handed out is the "~N" the reader is told to add, falling back to the shortfall. */
 function donorSentences(
   parents: NonNullable<DeckReport["buildParents"]>,
-  suggestions: readonly string[],
+  byKey: Readonly<Record<string, string>>,
   slack: NonNullable<DeckReport["slack"]>,
 ): Map<string, string> {
   const out = new Map<string, string>();
@@ -132,7 +138,7 @@ function donorSentences(
     .filter((p) => p.target > 0 && p.count < p.target)
     .sort((a, b) => (b.impact ?? -1) - (a.impact ?? -1) || a.name.localeCompare(b.name));
   for (const p of short) {
-    const said = suggestions.find((s) => s.startsWith(`${p.name} `))?.match(/~(\d+)/);
+    const said = byKey[p.key]?.match(/~(\d+)/);
     const want = said ? Number(said[1]) : p.target - p.count;
     const taken: { category: string; count: number; target: number; n: number }[] = [];
     let need = want;
@@ -146,20 +152,20 @@ function donorSentences(
     }
     if (taken.length === 0) {
       const names = slack.map((s) => s.category).join(" and ");
-      out.set(p.name, `. ${names}'s spare slots already go to the suggestion above, so these are yours to find.`);
+      out.set(p.key, `. ${names}'s spare slots already go to the suggestion above, so these are yours to find.`);
       continue;
     }
     const rest = need > 0 ? `; nothing else runs over its target, so the other ${need} ${need === 1 ? "is" : "are"} yours to find.` : ".";
     if (taken.length === 1 && need === 0) {
       const [d] = taken;
-      out.set(p.name, `. Take the slots from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}.`);
+      out.set(p.key, `. Take the slots from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}.`);
     } else if (taken.length === 1) {
       const [d] = taken;
-      out.set(p.name, `. Take ${d!.n} of them from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}${rest}`);
+      out.set(p.key, `. Take ${d!.n} of them from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}${rest}`);
     } else {
       const parts = taken.map((d) => `${d.n} from ${d.category} (${d.count} against a target of ${d.target})`);
       parts[0] = parts[0]!.replace(/^(\d+) from/, "$1 of them from");
-      out.set(p.name, `. Take ${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}${rest}`);
+      out.set(p.key, `. Take ${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}${rest}`);
     }
   }
   return out;
@@ -558,7 +564,7 @@ export function slotTrade(report: DeckReport, shortfalls: readonly Finding[]): s
    *  answers finding is the interaction one — `detectBuildRules` counts removal under Interaction —
    *  and a build finding names its own category in `figureLabel`. */
   const asksForSame = shortfalls.some((f) =>
-    (f.kind === "answers" && top.key === "interaction") || f.figureLabel === top.category);
+    (f.kind === "answers" && top.key === "interaction") || f.id === buildFindingId(top.key));
   // "N of those slots are the ones you need" said the OPPOSITE of what it meant — the N are the
   // SURPLUS, which is where the room comes from. The skeptic persona read it three times and stayed
   // unsure (2026-08-27). It names the surplus as a surplus now.

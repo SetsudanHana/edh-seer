@@ -55,7 +55,13 @@ export interface BracketCombo {
   result: string;
   /** Total mana value of every piece, summed off the deck's own cards. */
   manaValue: number;
+  /** The unnamed pieces the combo needs (#568), when it has any: two combos can name the same cards. */
+  requires?: string[];
 }
+
+/** One identity for a combo: its named cards and its unnamed pieces. */
+export const comboKey = (c: { cards: readonly string[]; requires?: readonly string[] }): string =>
+  `${c.cards.join("|")}\u0001${(c.requires ?? []).join("|")}`;
 
 export interface DeckBracket {
   /** THREE BANDS AND NOT FIVE, and the missing precision is a ceiling rather than an omission:
@@ -105,6 +111,7 @@ export function deckBracket(cards: Card[], combos: Combo[]): DeckBracket {
     .map((c) => ({
       cards: c.cards,
       result: c.result,
+      ...(c.requires?.length ? { requires: c.requires } : {}),
       manaValue: c.cards.reduce((total, n) => total + (manaValue.get(n) ?? 0), 0),
     }))
     .filter((c) => c.manaValue <= CHEAP_COMBO_MV)

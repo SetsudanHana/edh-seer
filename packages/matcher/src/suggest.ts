@@ -160,6 +160,8 @@ const SAME_JOB_EXTRA_MANA = 1;
 /** A build group (`buildParents` row) with its cost band. */
 export interface GroupState {
   name: string;
+  /** The role parent's key: what `DeckSuggestions.build` is keyed by (#1194). */
+  key: string;
   count: number;
   target: number;
   leaves: readonly string[];

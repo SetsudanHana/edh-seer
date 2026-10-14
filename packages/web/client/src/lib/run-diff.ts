@@ -1,5 +1,6 @@
 import type { AnalyzeResponse } from "../types.js";
 import { findings } from "./findings.js";
+import { currentFindingId } from "./role-group.js";
 
 /** WHAT MOVED SINCE YOUR LAST RUN.
  *
@@ -84,7 +85,8 @@ export function diffRuns(prev: RunSnapshot, next: RunSnapshot): RunDiff | null {
   const moved = (a?: number, b?: number): { from: number; to: number } | undefined =>
     a !== undefined && b !== undefined && a.toFixed(1) !== b.toFixed(1) ? { from: a, to: b } : undefined;
 
-  const prevF = prev.findings ?? {};
+  // A snapshot saved before #1194 keys build findings by display name; read them as the key ids.
+  const prevF = Object.fromEntries(Object.entries(prev.findings ?? {}).map(([id, v]) => [currentFindingId(id), v]));
   const nextF = next.findings ?? {};
   const findingMoves = [...new Set([...Object.keys(prevF), ...Object.keys(nextF)])]
     .filter((id) => prevF[id] !== nextF[id])

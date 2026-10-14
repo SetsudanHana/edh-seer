@@ -22,7 +22,7 @@ function killHere(c: Parameters<typeof comboKill>[0]): string {
 export function topPairs(report: DeckReport, model: EngineModel, manaValueOf: (name: string) => number | undefined): TopPair[] {
   const out: TopPair[] = [];
   // Two named cards and nothing required: a combo that needs a third piece is not a pair.
-  const c = infiniteCombos(report.combos, manaValueOf).find((x) => x.cards.length === 2 && !x.requires?.length);
+  const c = infiniteCombos(report.combos, manaValueOf, report.bracket?.cheapCombos).find((x) => x.cards.length === 2 && !x.requires?.length);
   if (c) out.push({ kind: "combo", cards: [front(c.cards[0]!), front(c.cards[1]!)], manaTogether: c.manaValue, result: c.result, kill: killHere(c) });
   const taken = c ? new Set(c.cards.map(front)) : undefined;
   // The same cap `strongestPairs` keeps (no card in more than two pairs): the combo is one pair for each of its cards.

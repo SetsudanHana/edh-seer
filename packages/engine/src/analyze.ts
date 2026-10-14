@@ -568,7 +568,7 @@ export interface DeckReport {
     band: "1-2" | "3" | "4-5";
     gameChangers: string[];
     infiniteCombos: number;
-    cheapCombos: { cards: string[]; result: string; manaValue: number }[];
+    cheapCombos: { cards: string[]; result: string; manaValue: number; requires?: string[] }[];
     reasons: string[];
   };
   archetypes?: ArchetypeGroup[];
@@ -600,7 +600,7 @@ export interface DeckReport {
    *  flag instead of matching `name === "Interaction"` (whole-branch review IMPORTANT 4: a rename of
    *  that parent would otherwise silently unwire the panel's coverage note while the score kept
    *  docking it). */
-  buildParents?: { name: string; key?: string; count: number; target: number; leaves: string[]; impact?: number; coverageWeighted?: true }[];
+  buildParents?: { name: string; key: string; count: number; target: number; leaves: string[]; impact?: number; coverageWeighted?: true }[];
   /** WHICH THEME ROW(S) THE PARENT TARGETS CAME FROM (owner ruling 2026-09-06, spec
    *  `2026-09-06-theme-template-proposal.md`): the detected primary and, when strong enough, the
    *  secondary, each with its EDHREC-population row keyed by `buildParents[].key`, plus the
@@ -622,6 +622,8 @@ export interface DeckReport {
   answersImpact?: number;
   /** Concrete, few, actionable BUILD gap suggestions in the deck's own language. Matcher-only. */
   suggestions?: string[];
+  /** The parent-gap sentences of `suggestions` by role-parent key (#1194). */
+  suggestionByKey?: Record<string, string>;
   /** The coverage multiplier `Interaction` was scored with, its per-class weights, and the
    *  graveyard vulnerability it was built from. Present so the panel and a test can say WHY the
    *  number is what it is rather than trust it. Matcher-only, optional for the same reason every
@@ -663,7 +665,7 @@ export interface DeckReport {
   /** Build categories the deck carries MORE of than its target, biggest surplus first — where the
    *  deck has room. Names the CATEGORY and never a member: nothing in this engine ranks two ramp
    *  cards against each other, which is exactly why the cut list protects any card with a role. */
-  slack?: { category: string; key?: string; count: number; target: number; over: number }[];
+  slack?: { category: string; key: string; count: number; target: number; over: number }[];
   /** Deck math: what the deck demands of itself and what it can answer, priced by when you draw
    *  it. Matcher-only, and structural here for the same reason `buildCategories` is -- this package
    *  must not depend on @edh-seer/matcher. */

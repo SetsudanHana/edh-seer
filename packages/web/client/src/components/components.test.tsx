@@ -969,7 +969,7 @@ const OVERLAP_CATEGORIES = [
 ] as unknown as typeof SAMPLE.report.buildCategories;
 const OVERLAP_PARENTS = [
   // 6 + 3 = 9 leaf mentions; ONE card fills both leaves, so the parent's own union is only 8.
-  { name: "Card advantage", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
+  { name: "Card advantage", key: "consistency", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
 ] as unknown as typeof SAMPLE.report.buildParents;
 
 test("leaf shares total 100% even when a card fills two leaves, and the header says why", () => {
@@ -1008,7 +1008,7 @@ test("the role groups keep list semantics: every list holds only real list items
 // and the header states the whole and stops.
 test("a parent whose leaves do not overlap states the whole and nothing else", () => {
   const parents = [
-    { name: "Card advantage", count: 9, target: 10, leaves: ["draw", "cardSelection"] },
+    { name: "Card advantage", key: "consistency", count: 9, target: 10, leaves: ["draw", "cardSelection"] },
   ] as unknown as typeof SAMPLE.report.buildParents;
   render(<BuildBenchmarks categories={OVERLAP_CATEGORIES} parents={parents} />);
   const header = screen.getByTestId("role-group-total-Card advantage");
@@ -1022,8 +1022,8 @@ test("a parent whose leaves do not overlap states the whole and nothing else", (
  *  broken-heading shape the guard exists to prevent. */
 test("single-leaf parents alone render no heading, because they render no rows", () => {
   const singles = [
-    { name: "Ramp", count: 8, target: 10, leaves: ["ramp"] },
-    { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
+    { name: "Ramp", key: "ramp", count: 8, target: 10, leaves: ["ramp"] },
+    { name: "Board wipes", key: "boardWipes", count: 1, target: 3, leaves: ["boardWipe"] },
   ] as unknown as typeof SAMPLE.report.buildParents;
   const { container } = render(
     <BuildBenchmarks categories={SCRAMBLED_CATEGORIES} parents={singles} />,
@@ -1045,10 +1045,10 @@ const ZERO_TARGET_MULTI_LEAF_CATEGORIES = [
   { category: "stackInteraction", count: 1, target: 0 },
 ] as unknown as typeof SAMPLE.report.buildCategories;
 const ZERO_TARGET_MULTI_LEAF_PARENTS = [
-  { name: "Card advantage", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
+  { name: "Card advantage", key: "consistency", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
   // count > 0 against target 0 is deliberate, mirroring the original fixture's own reasoning: a
   // parent can be unscored while its cards still exist in the deck.
-  { name: "Interaction", count: 4, target: 0, leaves: ["targetedRemoval", "stackInteraction"] },
+  { name: "Interaction", key: "interaction", count: 4, target: 0, leaves: ["targetedRemoval", "stackInteraction"] },
 ] as unknown as typeof SAMPLE.report.buildParents;
 
 test("a zero-target parent's leaves stay hidden, while a scored sibling's leaves render", () => {
@@ -1082,10 +1082,10 @@ const SCRAMBLED_CATEGORIES = [
   { category: "graveyardHate", count: 1, target: 0 },
 ] as unknown as typeof SAMPLE.report.buildCategories;
 const SCRAMBLED_PARENTS = [
-  { name: "Card advantage", count: 8, target: 10, leaves: ["draw", "cardSelection", "tutor"] }, // 6+2+0
-  { name: "Ramp", count: 8, target: 10, leaves: ["ramp"] },
-  { name: "Interaction", count: 4, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] }, // 3+0+1+0
-  { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
+  { name: "Card advantage", key: "consistency", count: 8, target: 10, leaves: ["draw", "cardSelection", "tutor"] }, // 6+2+0
+  { name: "Ramp", key: "ramp", count: 8, target: 10, leaves: ["ramp"] },
+  { name: "Interaction", key: "interaction", count: 4, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] }, // 3+0+1+0
+  { name: "Board wipes", key: "boardWipes", count: 1, target: 3, leaves: ["boardWipe"] },
 ] as unknown as typeof SAMPLE.report.buildParents;
 
 test("every leaf still renders grouped under its own parent, in the parent's own order", () => {
@@ -1486,7 +1486,7 @@ test("the coverage dock names the parent the flag is on, surviving a rename", ()
  *  `parents` that identify the row -- but it names nobody. */
 test("a parent named Interaction without the flag is never named by the dock", () => {
   const unflagged = [
-    { name: "Interaction", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction"] },
+    { name: "Interaction", key: "interaction", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction"] },
   ] as unknown as typeof SAMPLE.report.buildParents;
   render(
     <BuildBenchmarks
@@ -1912,8 +1912,8 @@ test("BuildBenchmarks renders without deck math at all", () => {
  *  caught this, because `deckMath`'s own rows mean the container is never empty either way. */
 test("a single-leaf-parents deck with deckMath present still hides the role-spend heading", () => {
   const singles = [
-    { name: "Ramp", count: 8, target: 10, leaves: ["ramp"] },
-    { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
+    { name: "Ramp", key: "ramp", count: 8, target: 10, leaves: ["ramp"] },
+    { name: "Board wipes", key: "boardWipes", count: 1, target: 3, leaves: ["boardWipe"] },
   ] as unknown as typeof SAMPLE.report.buildParents;
   render(<BuildBenchmarks categories={SCRAMBLED_CATEGORIES} parents={singles} deckMath={DECK_MATH} />);
   expect(screen.queryByText(/How the roles are spent/i)).toBeNull();
@@ -2273,7 +2273,7 @@ test("the slack chip names its category in words, not the raw camelCase key", ()
   render(
     <CutList
       cuts={[]}
-      slack={[{ category: "targetedRemoval", count: 14, target: 10, over: 4 }]}
+      slack={[{ category: "targetedRemoval", key: "interaction", count: 14, target: 10, over: 4 }]}
     />,
   );
   expect(screen.getByText(/Removal/)).toBeInTheDocument();
@@ -2284,7 +2284,7 @@ test("the slack chip names its category in words, not the raw camelCase key", ()
 // another" whatever the chips under it were -- Interaction and Consistency on both review decks,
 // while the same report called ramp SHORT. Three seats read it as an instruction about ramp.
 test("the trim note under the slack chips does not name a role the chips are not", () => {
-  render(<CutList cuts={[]} slack={[{ category: "Interaction", count: 17, target: 13, over: 4 }]} />);
+  render(<CutList cuts={[]} slack={[{ category: "Interaction", key: "interaction", count: 17, target: 13, over: 4 }]} />);
   expect(screen.getByText(/we don.t rank the cards inside a role against each other/)).toBeInTheDocument();
   expect(screen.queryByText(/ramp card/)).not.toBeInTheDocument();
 });
@@ -3110,7 +3110,8 @@ test("the bracket panel names every infinite combo, what it does, and says why i
   const mv: Record<string, number> = { "Dualcaster Mage": 3, "Ghostly Flicker": 3, "Essence Flux": 1, "Kiki-Jiki, Mirror Breaker": 5, "Zealous Conscripts": 5 };
   render(<BracketPanel
     bracket={{ band: "4-5", gameChangers: ["Jeska's Will"], infiniteCombos: 3,
-      cheapCombos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB", manaValue: 4 }], reasons: [] }}
+      // The matcher's own list: both Dualcaster pairs are two-card loops at or under the ceiling.
+      cheapCombos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB", manaValue: 4 }, { cards: ["Dualcaster Mage", "Ghostly Flicker"], result: "Infinite ETB", manaValue: 6 }], reasons: [] }}
     combos={[
       { cards: ["Kiki-Jiki, Mirror Breaker", "Zealous Conscripts"], result: "Infinite hasty tokens" },
       { cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB, Infinite storm count" },

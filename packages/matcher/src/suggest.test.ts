@@ -78,8 +78,8 @@ test("answer list filters on the missing class", () => {
 // card; an add must out-connect the cut, and each add is used once.
 
 const groups = (ramp: [number, number], inter: [number, number]): GroupState[] => [
-  { name: "Ramp", count: ramp[0], target: ramp[1], leaves: ["ramp"], costBand: [2, 3] },
-  { name: "Interaction", count: inter[0], target: inter[1], leaves: ["targetedRemoval"], costBand: [2, 4] },
+  { name: "Ramp", key: "ramp", count: ramp[0], target: ramp[1], leaves: ["ramp"], costBand: [2, 3] },
+  { name: "Interaction", key: "interaction", count: inter[0], target: inter[1], leaves: ["targetedRemoval"], costBand: [2, 4] },
 ];
 const cand = (pos: number, name: string, roles: string[], n: number): Candidate =>
   ({ card: { pos, name, slug: name, identity: [], isLand: false, mv: 3, roles, answers: [] },
@@ -139,9 +139,9 @@ test("cross-job stops once the surplus is spent", async () => {
 
 test("cross-job targets the group furthest under by fraction of its target", async () => {
   const gs: GroupState[] = [
-    { name: "Ramp", count: 13, target: 10, leaves: ["ramp"], costBand: [2, 3] },
-    { name: "Interaction", count: 8, target: 10, leaves: ["targetedRemoval"], costBand: [2, 4] },
-    { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"], costBand: [3, 5] },
+    { name: "Ramp", key: "ramp", count: 13, target: 10, leaves: ["ramp"], costBand: [2, 3] },
+    { name: "Interaction", key: "interaction", count: 8, target: 10, leaves: ["targetedRemoval"], costBand: [2, 4] },
+    { name: "Board wipes", key: "boardWipes", count: 1, target: 3, leaves: ["boardWipe"], costBand: [3, 5] },
   ];
   const pool = new Map([[1, cand(1, "Chaos Warp", ["targetedRemoval"], 4)], [2, cand(2, "Blasphemous Act", ["boardWipe"], 4)]]);
   const out = await pairReplacements([{ name: "Mind Stone", roles: ["ramp"], connections: 0 }], gs, pool, []);

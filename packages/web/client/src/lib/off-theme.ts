@@ -1,4 +1,5 @@
 import type { DeckReport } from "../types.js";
+import { slackLeaves } from "./role-group.js";
 
 /** THE CARDS THAT FIT NO THEME, SPLIT INTO THOSE A SLOT CAN COME FROM AND THOSE IT CANNOT.
  *
@@ -14,7 +15,7 @@ export function offThemeSplit(
   report: Pick<DeckReport, "cards" | "slack" | "buildParents">,
 ): { free: string[]; held: string[] } {
   const keep = new Set(["targetedRemoval", "stackInteraction", "boardWipe", "graveyardHate", "protection"]);
-  const spare = new Set((report.slack ?? []).flatMap((s) => report.buildParents?.find((p) => p.name === s.category)?.leaves ?? [s.category]));
+  const spare = new Set((report.slack ?? []).flatMap((s) => slackLeaves(report, s)));
   // Only a role WITH a target can be at or under it: stax and burn are in no parent (#1085).
   const targeted = new Set((report.buildParents ?? []).flatMap((p) => p.leaves));
   const guarded = new Set(report.cards

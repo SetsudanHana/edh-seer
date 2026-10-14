@@ -58,11 +58,11 @@ test("a snapshot carries the deck, both scores, the theme and the build counts",
  *  re-ranked list and no statement that the number they were chasing had moved. */
 test("a finding whose figure moved is reported, and a fixed one is reported as gone", () => {
   const base = { cards: ["a", "b", "c", "d"], categories: {} };
-  const prev = { ...base, findings: { "build:Card advantage": "Card advantage 6/14", "lands": "lands 30/36" } };
-  const next = { ...base, findings: { "build:Card advantage": "Card advantage 9/14" } };
+  const prev = { ...base, findings: { "build:consistency": "Card advantage 6/14", "lands": "lands 30/36" } };
+  const next = { ...base, findings: { "build:consistency": "Card advantage 9/14" } };
   const d = diffRuns(prev, next)!;
   expect(d.findings).toEqual([
-    { id: "build:Card advantage", label: "Card advantage", from: "Card advantage 6/14", to: "Card advantage 9/14" },
+    { id: "build:consistency", label: "Card advantage", from: "Card advantage 6/14", to: "Card advantage 9/14" },
     { id: "lands", label: "lands", from: "lands 30/36" },
   ]);
 });

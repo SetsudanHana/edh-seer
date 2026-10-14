@@ -3,9 +3,9 @@ import type { CardGraph, DeckReport } from "../types.js";
 import { tableTalk } from "./table-talk.js";
 
 const rows = [1, 2, 3, 4, 5, 6, 7, 8].map((turn) => ({ turn, mana: { p25: turn, median: turn, p75: turn + 1 }, payableShare: { p25: 0, median: 0, p75: 0 } }));
-function report(over: Partial<{ gameChangers: string[]; band: string; combos: { cards: string[]; result: string; payoffs?: { name: string; on: string[]; effect: string }[] }[]; clock: number; focus: number }> = {}): DeckReport {
+function report(over: Partial<{ gameChangers: string[]; band: string; combos: { cards: string[]; result: string; payoffs?: { name: string; on: string[]; effect: string }[] }[]; clock: number; focus: number; cheap: string[][] }> = {}): DeckReport {
   return {
-    bracket: { band: over.band ?? "3", gameChangers: over.gameChangers ?? [], infiniteCombos: 0, cheapCombos: [], reasons: [] },
+    bracket: { band: over.band ?? "3", gameChangers: over.gameChangers ?? [], infiniteCombos: 0, cheapCombos: (over.cheap ?? []).map((cards) => ({ cards, result: "", manaValue: 0 })), reasons: [] },
     combos: over.combos ?? [],
     manaAvailability: { trials: 1, accelerants: 0, rows, headline: { mana: 5, turn: 5, low: 0, high: 0 } },
     deckMath: { clock: { turn: over.clock ?? 7, powerAtFive: 5 }, speed: { combat: { turn: (over.clock ?? 7) + 5 } }, wincons: { classes: [{ class: "go-wide", count: 8, share: 0.6, cards: [] }, { class: "burn", count: 4, share: 0.4, cards: [] }], focus: over.focus ?? 0.7 } },
@@ -40,7 +40,7 @@ test("a deck spread evenly across its plans is not said to win mostly by one", (
 });
 
 test("a cheap two-card combo is the bracket's reason and the fastest route, and is not repeated as a heads-up", () => {
-  const t = tableTalk(report({ band: "4-5", combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB", payoffs: [{ name: "Impact Tremors", on: ["Dualcaster Mage"], effect: "damage" }] }] }), graph({}), (n) => mv[n])!;
+  const t = tableTalk(report({ band: "4-5", cheap: [["Dualcaster Mage", "Essence Flux"]], combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB", payoffs: [{ name: "Impact Tremors", on: ["Dualcaster Mage"], effect: "damage" }] }] }), graph({}), (n) => mv[n])!;
   expect(t.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that wins through Impact Tremors.");
   expect(t.plan).toMatch(/can combo as early as turn 4\.$/);
   expect(t.headsUp).toEqual([]);
@@ -68,13 +68,13 @@ test("stealing your own permanent back is not stealing", () => {
 test("a combo in the table sentence says what turns it into a win, or that something else must", () => {
   const winning = tableTalk(report({ combos: [{ cards: ["A", "B", "C"], result: "Infinite creature ETB", payoffs: [{ name: "Impact Tremors", on: ["A"], effect: "damage" }] }] }), graph({}), (n) => mv[n])!;
   expect(winning.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C) and wins through Impact Tremors.");
-  const bare = tableTalk(report({ band: "4-5", combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB" }] }), graph({}), (n) => mv[n])!;
+  const bare = tableTalk(report({ band: "4-5", cheap: [["Dualcaster Mage", "Essence Flux"]], combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB" }] }), graph({}), (n) => mv[n])!;
   expect(bare.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that needs another card to win.");
 });
 
 /** (#1084) A loop whose RESULT is the kill needs no other card; one past the simulated mana says so. */
 test("a combo that wins by itself is not said to need another card", () => {
-  const t = tableTalk(report({ band: "4-5", combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite mana, Infinite damage" }] }), graph({}), (n) => mv[n])!;
+  const t = tableTalk(report({ band: "4-5", cheap: [["Dualcaster Mage", "Essence Flux"]], combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite mana, Infinite damage" }] }), graph({}), (n) => mv[n])!;
   expect(t.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that wins by itself.");
   const late = tableTalk(report({ combos: [{ cards: ["A", "B", "C"], result: "Infinite damage" }] }), graph({}), (n) => mv[n])!;
   expect(late.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C) and wins by itself.");
@@ -91,7 +91,7 @@ test("a killing combo the test games cannot afford is said to be untimed beside 
 
 test("the plan clause names the timed combo when the bracket sentence names a different loop", () => {
   const m: Record<string, number> = { A: 1, B: 1, "Wayta, Trainer Prodigy": 2, "Boros Reckoner": 3 };
-  const t = tableTalk(report({ band: "4-5", combos: [
+  const t = tableTalk(report({ band: "4-5", cheap: [["A", "B"]], combos: [
     { cards: ["A", "B"], result: "Infinite lifegain" },
     { cards: ["Wayta, Trainer Prodigy", "Boros Reckoner"], result: "Infinite damage" },
   ] }), graph({}), (n) => m[n])!;
@@ -113,7 +113,7 @@ test("an untimed killing combo is marked unknown even when no route is timed", (
 
 test("an untimed killing combo is named when the bracket sentence names a different loop", () => {
   const m: Record<string, number> = { A: 1, B: 1, X: 6, Y: 6 };
-  const r = report({ band: "4-5", combos: [{ cards: ["A", "B"], result: "Infinite lifegain" }, { cards: ["X", "Y"], result: "Infinite damage" }] });
+  const r = report({ band: "4-5", cheap: [["A", "B"]], combos: [{ cards: ["A", "B"], result: "Infinite lifegain" }, { cards: ["X", "Y"], result: "Infinite damage" }] });
   delete (r.deckMath!.speed as { combat?: unknown }).combat;
   const t = tableTalk(r, graph({}), (n) => m[n])!;
   expect(t.plan).toMatch(/, and the combo's speed is not timed \(X \+ Y\): its pieces cost 12 mana together\.$/);

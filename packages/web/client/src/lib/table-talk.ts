@@ -52,7 +52,7 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
   const b = report.bracket;
   if (!b) return null;
   const band = b.band === "1-2" ? "1–2" : b.band === "4-5" ? "4–5" : "3";
-  const combos = infiniteCombos(report.combos, manaValueOf);
+  const combos = infiniteCombos(report.combos, manaValueOf, b.cheapCombos);
   const why: string[] = [];
   if (b.gameChangers.length) why.push(b.gameChangers.length <= 2 ? `${list(b.gameChangers.map(front))} (${b.gameChangers.length === 1 ? "a Game Changer" : "Game Changers"})` : `${b.gameChangers.length} Game Changers`);
   const cheap = combos.find((c) => c.cheap);

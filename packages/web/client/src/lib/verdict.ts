@@ -1,7 +1,6 @@
 import type { DeckReport } from "../types.js";
 import { scoreBand } from "./score-band.js";
 import { findings, rankedFindings, type Finding } from "./findings.js";
-import { groupKey } from "./role-group.js";
 
 /** A short basic, in the words the verdict says it in. */
 export const GAP_WORD_BY_KEY: Record<string, string> = { consistency: "card advantage", ramp: "ramp", interaction: "answers", boardWipes: "board wipes" };
@@ -42,12 +41,13 @@ function rolesOf(report: DeckReport, list: readonly Finding[]): ShortRole[] {
   };
   for (const f of list) {
     if (f.kind === "build") {
-      const name = f.id.replace(/^build:/, ""); const key = groupKey(name); const w = key ? GAP_WORD_BY_KEY[key] : undefined;
+      const key = f.id.replace(/^build:/, ""); const w = GAP_WORD_BY_KEY[key];
       // THE ROLE'S OWN NUMBERS (#1086): "short on card advantage (12 of 15)" cannot be read against a
       // Roles shelf that says "Draw 11", because the count it names is the one the shelf's group shows.
       // Read from the build parent the finding was made from, never from the headline's words.
-      const parent = report.buildParents?.find((p) => p.name === name);
-      if (w) add(w, name.toLowerCase(), parent?.count ?? NaN, parent?.target ?? NaN, f.id);
+      const parent = report.buildParents?.find((p) => p.key === key);
+      // The name is DISPLAY text only; the finding and the parent are matched by key (#1194).
+      if (w) add(w, (parent?.name ?? w).toLowerCase(), parent?.count ?? NaN, parent?.target ?? NaN, f.id);
     }
     else if (f.kind === "lands" && /short|under/i.test(f.headline)) {
       // The Lands tile's own figures: what is run, against the modelled target.
