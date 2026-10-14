@@ -564,6 +564,8 @@ describe("token makers: the Treasure a card really makes, and the one it does no
     expect(oneOf("If you would create one or more tokens, instead create those tokens plus an additional Treasure token.")).toBe("treasure");
     expect(oneOf("If one or more tokens would be created under your control, those tokens plus an additional Treasure token are created instead.")).toBe("treasure");
     expect(oneOf("If you would create one or more Food tokens under your control, instead create those tokens plus an additional Treasure token.")).toBe("treasure");
+    // The passive replaced part starts at its own "If": an earlier sentence naming a Food is not what is replaced.
+    expect(oneOf("Whenever you sacrifice a Food, draw a card. If one or more Treasure tokens would be created, those tokens plus an additional Treasure token are created instead.")).toBeNull();
   });
   it("a Lander token is a land-fetch token, the way a Treasure is a mana token (Beamsaw Prospector, Divert Disaster)", () => {
     expect(only("Beamsaw Prospector", "token-maker")).toMatchObject({ producesToken: "lander", source: "token-maker", unread: false, colourless: 0 });

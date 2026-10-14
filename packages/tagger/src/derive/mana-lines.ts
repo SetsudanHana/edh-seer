@@ -374,7 +374,8 @@ const REPLACES_CREATION = /\bif you would create\b|\binstead create\b|\bthose to
  *  Both templates are read: the active "If you would create X, instead create ..." and the passive "If one or more X would be created ..., those tokens plus an additional Y token are created instead".
  *  The replaced part is what stands before its first "token(s)": a token NAME in it that is not the mana token (REPLACED_TOKEN_NAMES, a positive list) makes the added mana token a maker; no name at all is
  *  every token ("one or more tokens", Tippy-Toe's shape), which also makes it one; the mana token alone is a doubler. Qualifiers after "tokens" ("under your control") are never read.
- *  CEILING: a replaced token that is a creature type or any name outside REPLACED_TOKEN_NAMES (Soldier, Thopter) is not recognised, so a replacement over it adds no line; "one of each" adds every token named. */
+ *  CEILING: a replaced token that is a creature type or any name outside REPLACED_TOKEN_NAMES (Soldier, Thopter) is not recognised, so a replacement over it adds no line; "one of each" adds every token named. A
+ *  replaced "Treasure or Gold" that adds a Treasure reads as a maker (Gold is another name), though it only doubles mana tokens; no card prints it. */
 const REPLACED_FILLER = new Set(["if", "you", "would", "create", "be", "created", "a", "an", "one", "or", "more", "and", "of", "each", "the", "tapped", "untapped", "that", "many", "additional", "another"]);
 const REPLACED_TOKEN_NAMES = new Set(["clue", "food", "blood", "map", "junk", "incubator", "role", "shard", "powerstone", "gold", "treasure", "lander", "mutagen", "eldrazi", "spawn", "scion"]);
 const ADDED_MANA_TOKENS = ["treasure", "gold", "powerstone"] as const;
@@ -392,7 +393,8 @@ export function replacementAddedToken(text: string): string | null {
     const would = flat.indexOf("would be created");
     const plus = flat.indexOf("those tokens plus");
     if (would < 0 || plus < would) return null;
-    replacedText = flat.slice(0, would);
+    // From the replacement's own "If": an earlier sentence in the clause is not what is replaced.
+    replacedText = flat.slice(Math.max(0, flat.lastIndexOf("if ", would)), would);
     added = flat.slice(plus);
   }
   const firstToken = replacedText.indexOf("token");
