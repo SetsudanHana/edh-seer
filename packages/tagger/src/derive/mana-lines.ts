@@ -366,8 +366,30 @@ const tokenKey = (sub: SubjectFilter["subtype"], anyOf?: readonly Partial<Subjec
  *  (Marching Duodrone), "that attacking player creates" (Jolene: any player attacking your opponents, you included), "target player creates" (Prismari Command: you may name yourself). */
 const OPP_RECIPIENT = /\b(?:an?|each|target|defending|those) opponents?(?:\s+who\s+[^.,]*?|\s+may)?\s+creates?\b|\b(?:its|their|that (?:creature|permanent|spell)'s) controller(?:\s+may)?\s+creates?\b/i;
 const YOU_CREATE = /\byou (?:may )?create\b|\byou and [^.]*\bcreate\b|\beach player (?:may )?creates?\b|\b(?:that|target|each) (?:attacking )?player (?:may )?creates?\b/i;
-/** A sentence about TOKEN CREATION being replaced or doubled makes none (Academy Manufactor, Xorn, Jolene's "plus an additional Treasure token"). */
+/** A sentence about TOKEN CREATION being replaced or doubled makes none (Xorn, Jolene's "plus an additional Treasure token") unless it ADDS a mana token to another's creation (`replacementAddedToken`). */
 const REPLACES_CREATION = /\bif you would create\b|\binstead create\b|\bthose tokens plus\b/i;
+/** THE MANA TOKEN A CREATION REPLACEMENT ADDS TO THE CREATION OF A DIFFERENT TOKEN (owner 2026-10-14, #1197): "If you would create a Food token, instead create a Food token and a Treasure token" (Bilbo,
+ *  Fellow Conspirator), "If you would create a Clue, Food, or Treasure token, instead create one of each" (Academy Manufactor: a Clue or a Food made yields a Treasure). A doubler of the Treasure you
+ *  are already making ("instead create those tokens plus an additional Treasure token", Xorn; Jolene's second sentence) makes none without another maker, and is no line.
+ *  CEILING: the replaced set is read as its words minus the quantifiers; "one of each" (Manufactor) adds every token the replaced set names, so a Treasure in the replaced set counts as added only when
+ *  it is named with another token. A replacement over ALL tokens ("those tokens plus an additional Treasure") would read as a maker; no card in the corpus is one. */
+const REPLACED_FILLER = new Set(["if", "you", "would", "create", "a", "an", "one", "or", "more", "token", "tokens", "and", "of", "each", "the"]);
+function replacementAddedToken(text: string): string | null {
+  const flat = text.replace(/\([^)]*\)/g, " ").toLowerCase();
+  const at = flat.indexOf("instead create");
+  const head = flat.indexOf("if you would create");
+  if (at < 0 || head < 0 || head > at) return null;
+  const replaced = flat.slice(head, at).split(/[^a-z]+/).filter((w) => w !== "" && !REPLACED_FILLER.has(w));
+  // "instead create one of each" (Academy Manufactor) adds every token the replaced set names.
+  const added = /\bone of each\b/.test(flat.slice(at)) ? flat.slice(head, at) : flat.slice(at);
+  for (const [word, key] of [["treasure", "treasure"], ["gold", "gold"], ["powerstone", "powerstone"]] as const) {
+    if (!new RegExp(`\\b${word}\\b`).test(added)) continue;
+    const others = replaced.filter((w) => w !== word);
+    // Replaced = the mana token alone (a doubler) is none; any other token named there, or a replacement over tokens in general, adds it.
+    if (others.length > 0 || !replaced.includes(word)) return key;
+  }
+  return null;
+}
 const handsTokenToOpponentOnly = (text: string, abilityControl: string | undefined): boolean =>
   (abilityControl === "opp" || OPP_RECIPIENT.test(text)) && !YOU_CREATE.test(text);
 /** THE WHOLE CARD'S SENTENCES THAT NAME THE TOKEN decide first (reminder text stripped): a clause the segmenter cut short (Cityscape Leveler's attack trigger loses "Its controller creates a tapped Powerstone")
@@ -621,8 +643,10 @@ export function deriveMana(input: ManaInput): ManaResult {
   // CEILING: a Treasure inside any quoted ability of a token the clause makes is credited to the card that makes the token, as the Aura's is.
   for (const c of clauses) {
     const text = input.textOf(c);
-    if (REPLACES_CREATION.test(text)) continue;
-    for (const action of c.actions ?? []) {
+    const replaces = REPLACES_CREATION.test(text);
+    const added = replaces ? replacementAddedToken(text) : null;
+    if (replaces && added === null) continue;
+    for (const action of replaces ? [{ verb: "create", object: `a ${added} token` }] : c.actions ?? []) {
       if (action.verb !== "create") continue;
       const m = CREATES_MANA_TOKEN.exec(`create ${action.object ?? ""}`);
       if (!m) continue;

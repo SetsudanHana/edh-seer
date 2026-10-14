@@ -547,8 +547,14 @@ describe("token makers: the Treasure a card really makes, and the one it does no
     expect(tokens("Thran Spider")).toEqual(["powerstone"]);
     expect(tokens("Prismari Command")).toEqual(["treasure"]);
   });
-  it("a Treasure DOUBLER makes none (Academy Manufactor)", () => {
-    expect(tokens("Academy Manufactor")).toEqual([]);
+  it("a replacement that ADDS a Treasure to the creation of another token is a Treasure maker (owner 2026-10-14, #1197: Bilbo, Academy Manufactor)", () => {
+    expect(tokens("Bilbo, Fellow Conspirator")).toEqual(["treasure"]);
+    expect(tokens("Academy Manufactor")).toEqual(["treasure"]);
+  });
+  it("a pure Treasure DOUBLER makes none: Xorn has no line, Jolene keeps only the line her attack trigger gives her", () => {
+    expect(tokens("Xorn")).toEqual([]);
+    expect(tokens("Jolene, the Plunder Queen")).toEqual(["treasure"]);
+    expect(linesOf("Jolene, the Plunder Queen", "token-maker")).toHaveLength(1);
   });
   it("a Lander token is a land-fetch token, the way a Treasure is a mana token (Beamsaw Prospector, Divert Disaster)", () => {
     expect(only("Beamsaw Prospector", "token-maker")).toMatchObject({ producesToken: "lander", source: "token-maker", unread: false, colourless: 0 });

@@ -452,7 +452,9 @@ import { emblemRecipient } from "../emblem.js";
 // 308: #1190 (owner 2026-10-13): a Lander token is a land-fetch token line; a Treasure in a choice of tokens, beside another token, in a clause the abilities mistyped, or made by "that attacking player"
 // is a token-maker line; a token only an OPPONENT creates is none (Ingenious Mastery, Erestor of the Council); a land put onto the battlefield in a LATER clause (Caravan Vigil, Druid of the Emerald
 // Grove, Omenpath Journey) is a fetch; Piracy's "tap lands you don't control for mana" is an unread one-shot line.
-export const DERIVE_VERSION = 308;
+// 309: #1197 (owner 2026-10-14): a creation replacement that ADDS a Treasure to another token's creation is a token-maker line (Bilbo, Fellow Conspirator; Academy Manufactor); a pure Treasure doubler
+// (Xorn, Jolene's second sentence) stays none.
+export const DERIVE_VERSION = 309;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
