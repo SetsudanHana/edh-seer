@@ -12,6 +12,7 @@ import {
 } from "./spellbook.js";
 import { isStickerCard, toCardDoc, type CardDoc, type ComboDoc } from "./docs.js";
 import { connect } from "./db.js";
+import { comboNamesOf } from "./purge.js";
 import { loadConfig } from "./config.js";
 import { fetchFlavorNames, ingestFlavorNames } from "./flavor.js";
 
@@ -31,11 +32,12 @@ export async function ingestCards(
    *  corpus. They are unplayable in paper and unreachable by ingest-otags, which filters
    *  -is:alchemy, so they would sit permanently untagged. */
   digitalOnly: ReadonlySet<string> = new Set(),
-): Promise<IngestCounts & { stickers: number }> {
+): Promise<IngestCounts & { stickers: number; stickerNames: Set<string> }> {
   const total = raws.length;
   let processed = 0;
   let skipped = 0;
   let stickers = 0;
+  const stickerNames = new Set<string>();
   let done = 0;
   let ops: AnyBulkWriteOperation<CardDoc>[] = [];
 
@@ -56,6 +58,7 @@ export async function ingestCards(
       if (isStickerCard(doc)) {
         skipped++;
         stickers++;
+        for (const nm of comboNamesOf(doc.name)) stickerNames.add(nm);
         continue;
       }
       ops.push({ replaceOne: { filter: { _id: doc._id }, replacement: doc, upsert: true } });
@@ -68,16 +71,19 @@ export async function ingestCards(
   }
   await flush();
   onProgress?.(done, total);
-  return { processed, skipped, stickers };
+  return { processed, skipped, stickers, stickerNames };
 }
 
 export async function ingestCombos(
   variants: AsyncIterable<SpellbookVariant> | Iterable<SpellbookVariant>,
   combos: Collection<ComboDoc>,
   onProgress?: (done: number) => void,
-): Promise<IngestCounts> {
+  /** Names of sticker cards (owner 2026-10-14: outside the engine): a combo with one as a piece is dropped. */
+  stickerNames: ReadonlySet<string> = new Set(),
+): Promise<IngestCounts & { stickers: number }> {
   let processed = 0;
   let skipped = 0;
+  let stickers = 0;
   let done = 0;
   let ops: AnyBulkWriteOperation<ComboDoc>[] = [];
 
@@ -92,6 +98,9 @@ export async function ingestCombos(
     const n = normalizeVariant(raw);
     if (!n) {
       skipped++;
+    } else if (n.combo.cards.some((c) => stickerNames.has(c))) {
+      skipped++;
+      stickers++;
     } else {
       const doc: ComboDoc = {
         _id: n.id, cards: n.combo.cards, result: n.combo.result,
@@ -107,7 +116,7 @@ export async function ingestCombos(
   }
   await flush();
   onProgress?.(done);
-  return { processed, skipped };
+  return { processed, skipped, stickers };
 }
 
 /** A carriage-return progress bar; no dependency. Prints a newline when complete. */
@@ -144,9 +153,9 @@ export async function runIngest(): Promise<void> {
     console.log(`Flavor names: ${f.applied} applied, ${f.skipped} skipped`);
 
     console.log("Downloading Commander Spellbook variants...");
-    const k = await ingestCombos(streamVariants(), store.combos, countReporter("Combos:"));
+    const k = await ingestCombos(streamVariants(), store.combos, countReporter("Combos:"), c.stickerNames);
     process.stdout.write("\n");
-    console.log(`Combos: ${k.processed} processed, ${k.skipped} skipped`);
+    console.log(`Combos: ${k.processed} processed, ${k.skipped} skipped (${k.stickers} name a sticker card, outside the engine)`);
   } finally {
     await store.close();
   }

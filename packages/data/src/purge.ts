@@ -27,3 +27,13 @@ export const PER_CARD_COLLECTIONS: readonly { collection: string; field: "_id" |
 export function stickerPurgeFilters(ids: readonly string[]): { collection: string; filter: Record<string, unknown> }[] {
   return PER_CARD_COLLECTIONS.map(({ collection, field }) => ({ collection, filter: { [field]: { $in: [...ids] } } }));
 }
+
+/** The names a combo may use for a card: the whole name and each face of "A // B". */
+export function comboNamesOf(cardName: string): string[] {
+  return [...new Set([cardName, ...cardName.split(" // ")])];
+}
+
+/** The filter for combos naming any of the given cards (Commander Spellbook lists pieces by name). */
+export function stickerComboFilter(names: Iterable<string>): Record<string, unknown> {
+  return { cards: { $in: [...names] } };
+}
