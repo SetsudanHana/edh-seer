@@ -6,7 +6,7 @@ import fx from "./fixtures/mana-colour-sources.json" with { type: "json" };
 import { colourSources } from "./mana-base.js";
 import { colourDeficit, manaAuditFull, type Color } from "./mana-audit.js";
 import { colourSourceCards } from "./colour-sources.js";
-import { deckIdentity, isColourSource, colourSourceColours, makesAnyMana, isFetchSource, cardLines, hasConditionalMana, producedManaTypes } from "./mana-lines.js";
+import { deckIdentity, isColourSource, colourSourceColours, makesAnyMana, isFetchSource, cardLines, hasConditionalMana, producedManaTypes, paidWithResource } from "./mana-lines.js";
 import { staticFixer } from "./static-fixers.js";
 import { landFacts, neededColours } from "./land-score.js";
 import { unreadSourceNames } from "./mana-lines.js";
@@ -179,7 +179,14 @@ describe("a consumed resource in the cost is not a colour source (review of 2a)"
     expect(isColourSource(untap!)).toBe(true);
     expect(makesAnyMana(get("Benthic Explorers"))).toBe(true);
     // ...and a piece off the list is a consumed resource on the same shape of line
-    expect(isColourSource({ ...exert!, cost: { ...exert!.cost, other: ["Discard a card"] } })).toBe(false);
+    expect(isColourSource({ ...exert!, cost: { ...exert!.cost, other: ["Discard a card"], consumes: ["discard" as const] } })).toBe(false);
+  });
+  test("an untap symbol is not a consumed resource: Pili-Pala's {2}, {Q} line is not paid (#1193)", () => {
+    const pili = cardLines(get("Pili-Pala")).find((l) => l.cost.other.includes("{Q}"));
+    expect(pili, "Pili-Pala {Q} line").toBeDefined();
+    expect(pili!.cost.consumes).toEqual([]);
+    expect(paidWithResource(pili!)).toBe(false);
+    expect(paidWithResource({ ...pili!, cost: { ...pili!.cost, consumes: ["energy"] } })).toBe(true);
   });
   test("a self-exile is a one-shot: Ether is no source", () => {
     expect(colours("Ether")).toEqual([]);
@@ -235,7 +242,7 @@ describe("an Aura's trigger is not a colour source, so it is no colour swap eith
 // loyalty cost was never compared with the loyalty. `paidWithResource` lets a loyalty cost through, so the colour path asks `usableLoyalty` itself.
 describe("a loyalty ability is a colour source only if the walker can activate it the turn it is cast (owner 2026-10-13)", () => {
   const lantern = cardLines(get("Chromatic Lantern")).find((l) => l.source === "static-grant")!;
-  const withLoyalty = (cost: string, startLoyalty?: number) => ({ ...lantern, cost: { ...lantern.cost, other: [cost] }, ...(startLoyalty !== undefined ? { startLoyalty } : {}) });
+  const withLoyalty = (cost: string, startLoyalty?: number) => ({ ...lantern, cost: { ...lantern.cost, loyalty: Number(cost.replace("\u2212", "-")) }, ...(startLoyalty !== undefined ? { startLoyalty } : {}) });
   test("the control: the same static-grant line with no loyalty cost is a colour source", () => {
     expect(isColourSource(lantern)).toBe(true);
   });

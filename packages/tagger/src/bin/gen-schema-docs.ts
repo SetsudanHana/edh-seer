@@ -160,7 +160,11 @@ export function fields(src: string, name: string, flatten: readonly string[] = [
   const out: { name: string; optional: boolean; type: string; doc: string }[] = [];
   for (let i = start + 1; i < code.length && !code[i]!.startsWith("}"); i++) {
     const m = /^ {2}(\w+)(\??): (.+);$/.exec(code[i]!);
-    if (m) out.push({ name: m[1]!, optional: m[2] === "?", type: m[3]!, doc: docAbove(lines, i) });
+    if (m) {
+      // A TYPE THAT SPANS LINES IS READ AS ITS FIRST LINE ONLY, and the checked-in file would then match the generator forever (the drift test compares output with itself): refuse it.
+      if ((m[3]!.match(/\{/g) ?? []).length !== (m[3]!.match(/\}/g) ?? []).length) throw new Error(`gen-schema-docs: ${name}.${m[1]} has a type that spans lines; give it a named interface or write it on one line`);
+      out.push({ name: m[1]!, optional: m[2] === "?", type: m[3]!, doc: docAbove(lines, i) });
+    }
     // A NESTED OBJECT NAMED IN `flatten` (ManaLine's `cost`) gets a row of its own and one row per member, `cost.tap`. Every other nested object stays skipped.
     const open = /^ {2}(\w+)(\??): \{$/.exec(code[i]!);
     if (open && flatten.includes(open[1]!)) {

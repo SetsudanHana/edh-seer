@@ -894,7 +894,7 @@ describe("rampGrade (#534, on manaLines since #1169)", () => {
   const talisman = rock("Talisman of Indulgence", "{T}: Add {C}.\n{T}: Add {B} or {R}. This artifact deals 1 damage to you.", "Artifact", [tapFor(["C"]), tapFor(["B", "R"])]);
   const diamond = rock("Charcoal Diamond", "This artifact enters tapped.\n{T}: Add {B}.", "Artifact", [tapFor(["B"])]);
   const restricted = rock("Guidelight Optimizer", "{T}: Add {U}. Spend this mana only to cast an artifact spell or activate an ability.", "Artifact Creature — Robot",
-    [tapFor(["U"], { restriction: { spend: "to cast an artifact spell or activate an ability" } })]);
+    [tapFor(["U"], { restriction: { spend: "to cast an artifact spell or activate an ability", minManaValue: null } })]);
   const elf = rock("Llanowar Elves", "{T}: Add {G}.", "Creature — Elf Druid", [tapFor(["G"])]);
   const mindStone = rock("Mind Stone", "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.", "Artifact", [tapFor(["C"])]);
 
@@ -912,7 +912,7 @@ describe("rampGrade (#534, on manaLines since #1169)", () => {
     expect(rampGrade(rock("Akki Rockspeaker", "When this creature enters, add {R}.", "Creature — Goblin Shaman",
       [triggerLine("enters", "this creature", ["R"], 1, { repeats: "once" })]))).toBe(0);
     expect(rampGrade(rock("Bog Witch", "{B}, {T}, Discard a card: Add {B}{B}{B}.", "Creature — Human Spellshaper",
-      [filterLine(1, 3, ["B"], { cost: { ...FREE_TAP, mana: 1, other: ["discard a card"] } })]))).toBe(0);
+      [filterLine(1, 3, ["B"], { cost: { ...FREE_TAP, mana: 1, other: ["discard a card"], consumes: ["discard"] } })]))).toBe(0);
     // A granted ability is another permanent's: the deriver files Cryptolith Rite's quoted tap as a static grant.
     expect(rampGrade(rock("Cryptolith Rite", "Creatures you control have \"{T}: Add one mana of any color.\"", "Enchantment",
       [tapFor(["W", "U", "B", "R", "G"], { source: "static-grant" })]))).toBe(0);
@@ -953,7 +953,7 @@ describe("rampGrade (#534, on manaLines since #1169)", () => {
 
   it("reads every restriction and every conditional tap (review 2026-09-27)", () => {
     const powerstone = rock("Powerstone", "{T}: Add {C}{C}. This mana can't be spent to cast a nonartifact spell.", "Artifact",
-      [tapFor(["C"], { amount: { fixed: 2, scales: null }, net: 2, restriction: { spend: "can't be spent to cast a nonartifact spell" } })]);
+      [tapFor(["C"], { amount: { fixed: 2, scales: null }, net: 2, restriction: { spend: "can't be spent to cast a nonartifact spell", minManaValue: null } })]);
     const compass = rock("Star Compass", "This artifact enters tapped unless you control two or more basic lands.\n{T}: Add one mana of any color a basic land you control could produce.", "Artifact",
       [tapFor([], { anyColour: "among" })]);
     expect(rampGrade(powerstone)).toBeLessThan(8);

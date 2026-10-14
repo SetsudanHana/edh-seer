@@ -29,7 +29,7 @@ import crKeywords from "./cr-keywords.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
-import { deriveMana } from "./mana-lines.js";
+import { deriveMana, production } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.js";
@@ -455,7 +455,13 @@ import { emblemRecipient } from "../emblem.js";
 // 309: #1197 (owner 2026-10-14): a creation replacement that ADDS a Treasure to another token's creation is a token-maker line (Bilbo, Fellow Conspirator; Academy Manufactor); a pure Treasure doubler
 // (Xorn, Jolene's second sentence) stays none.
 // 310: #1191: ManaLine.gate is a typed ManaGate (control / same-name / tron / speed / initiative / unknown), parsed once by parseGate. New classes: "...or if you control a basic land" (Gleaming Bastion cycle) and "a creature with power N or greater" are control gates, no longer unknown.
-export const DERIVE_VERSION = 310;
+// 311: #1193 / #1187: ONE reader of "how much mana it adds" (`production()` in mana-lines.ts): `ManaLine.amount` and `Ability.amount` of a mana add are one reading. A clause's own count is the amount of a lone
+// alternative that states none ("{R}" + 6, Chandra Heart of Fire / The Flux; "mana of any one color" + 10, The Aetherspark), "seven {R}" is 7, a list joined by "and" is a sum (Terra), "N mana in any combination
+// of {U}, {B}, and/or {R}" is N (Relic of Sauron, Orcish Lumberjack), a rider after a comma ("..., spendable only to ...", Shang-Chi) is no alternative, the model's symbols on `amount` are the mana (Valleymaker),
+// a bare "mana" adds no amount (Piracy), and an ability's number word is a number (Cosmic Crucible "four" -> "4").
+// 312: #1193 task 2 (Fable finding 5): ManaLine states what the matcher used to re-parse. `cost.loyalty` (signed, parsed once), `cost.consumes` (what the cost uses up: energy, discard, exile, return-to-hand, forage,
+// collect-evidence, unknown; {Q} untap, exert and mill consume nothing, so Pili-Pala's {Q} line is no longer "paid"), `restriction.minManaValue`, and `trigger: {event, subject: SubjectFilter, text}` replacing `trigger` + `triggerSubject`.
+export const DERIVE_VERSION = 312;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -492,16 +498,10 @@ export function unitAmount(verb: string, object: string): string | undefined {
   return undefined;
 }
 
-export function manaAdded(object: string): number | undefined {
-  if (/\bfor each\b|\bequal to\b|\bthat m(?:any|uch)\b|\bnumber of\b|\bX\b|\{E\}|\bE\b/.test(object)) return undefined;
-  const counts = object.split(/\s*,?\s+or\s+/i).map((alt) => {
-    const symbols = (alt.match(/\{[WUBRGC](?:\/[WUBRGCP])?\}/gi) ?? []).length;
-    if (symbols > 0) return symbols;
-    const word = /\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+mana\b/i.exec(alt)?.[1]?.toLowerCase();
-    return word ? NUMBER_WORD[word] : undefined;
-  });
-  if (counts.some((n) => n === undefined)) return undefined;
-  return Math.min(...(counts as number[]));
+/** HOW MUCH MANA AN ADD-MANA ACTION ADDS, as a number: `production()`'s fixed amount, the SAME read `ManaLine.amount` is (#1193). `undefined` where it scales
+ *  (X, "for each", "that much") or the object names no amount. `amountText` is the clause action's `amount`. */
+export function manaAdded(object: string, amountText = ""): number | undefined {
+  return production(object, amountText).amount.fixed ?? undefined;
 }
 
 /** WHERE A COUNTER LANDS, read from the clause text: on this card ("on this creature", "on it"
@@ -2478,10 +2478,13 @@ export function deriveAbilities(
       if (clause.abilityType === "activated") ability.cost = cost;
       // The amount belongs to the ACTION, not the clause: Kaya's -2 is one clause whose two actions
       // each carry their own. Assigned here, in the per-action loop, for that reason.
-      if (action.amount != null && action.amount !== "") ability.amount = action.amount;
+      // A MANA ADD READS ITS AMOUNT THROUGH `production()` ALONE (#1193), the reader the mana line uses: a number is "6", never the clause's own word ("four", Cosmic
+      // Crucible). What scales keeps the clause's text, and nothing when it states none.
+      const added = action.verb === "add-mana" && effectKind === "mana-generation" ? manaAdded(action.object ?? "", typeof action.amount === "string" ? action.amount : "") : undefined;
+      if (added !== undefined) ability.amount = String(added);
+      else if (action.amount != null && action.amount !== "") ability.amount = action.amount;
       else if (action.verb === "add-mana" && effectKind === "mana-generation") {
-        const added = manaAdded(action.object ?? "");
-        if (added !== undefined) ability.amount = String(added);
+        // scales or unread: no number
       } else {
         const unit = unitAmount(action.verb ?? "", action.object ?? "");
         if (unit !== undefined) ability.amount = unit;

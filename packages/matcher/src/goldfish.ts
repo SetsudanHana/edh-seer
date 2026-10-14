@@ -182,7 +182,7 @@ export function playableLines(dc: DeckCard, deck?: readonly DeckCard[], perGame 
       // "+N" ability could carry on.
       case "activated": return (l.cost.tap || (usableLoyalty(l) && fromDeck.has(l))) && checkable;
       case "static-grant": case "aura-trigger": return checkable;
-      case "trigger": return l.gate === null && (isLandfall(l) || isPhaseTrigger(l) || (l.trigger === "tapped-for-mana" && taps));
+      case "trigger": return l.gate === null && (isLandfall(l) || isPhaseTrigger(l) || (l.trigger?.event === "tapped-for-mana" && taps));
       default: return false;
     }
   });

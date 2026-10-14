@@ -6288,7 +6288,7 @@ describe("a mana rock is an artifact with an activated mana line (#1169 task 2b-
     expect(cardThemeTags(tagsOf(["artifact"], [manaAbility], [])).has("enters:artifact")).toBe(true);
   });
   test("a static grant, a trigger and a Treasure maker are not an activated line: no rock", () => {
-    for (const l of [mkLine({ source: "static-grant" }), mkLine({ source: "trigger", trigger: "attacks", triggerSubject: "this creature" }), mkLine({ source: "token-maker", producesToken: "treasure" })]) {
+    for (const l of [mkLine({ source: "static-grant" }), mkLine({ source: "trigger", trigger: { event: "attacks", text: "this creature", subject: { control: "any", token: null, type: "creature", self: true } } }), mkLine({ source: "token-maker", producesToken: "treasure" })]) {
       expect(cardThemeTags(tagsOf(["artifact"], [], [l])).has("enters:artifact"), l.source).toBe(true);
     }
   });

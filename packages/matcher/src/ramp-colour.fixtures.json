@@ -138,7 +138,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -155,8 +155,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -173,7 +175,6 @@
      "source": "static-grant",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -317,7 +318,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "c259e16f-2a44-4552-8678-815f757a02e8",
@@ -402,7 +403,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -413,8 +414,10 @@
      "colourless": 0,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -431,7 +434,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -544,7 +546,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "11f17f85-ca97-4551-838f-7cb32f0e5f10",
@@ -735,7 +737,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "permanent",
     "reach": [
@@ -755,8 +757,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -773,7 +777,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -878,7 +881,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -895,8 +898,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -913,7 +918,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -1071,7 +1075,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -1099,8 +1103,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 7,
       "other": [],
       "sacrificeOther": false,
@@ -1117,7 +1123,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -1214,7 +1219,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -1227,8 +1232,10 @@
       "B"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 2,
       "other": [],
       "sacrificeOther": false,
@@ -1245,7 +1252,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -1355,7 +1361,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -1366,8 +1372,10 @@
      "colourless": 1,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -1384,7 +1392,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -1399,8 +1406,10 @@
       "R"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 1,
       "other": [],
       "sacrificeOther": false,
@@ -1417,7 +1426,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -1528,7 +1536,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -1539,8 +1547,10 @@
      "colourless": 1,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -1557,7 +1567,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -1575,8 +1584,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 5,
       "other": [],
       "sacrificeOther": false,
@@ -1593,7 +1604,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -1656,7 +1666,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "b4d27fad-9a94-4760-80a6-6a2948109864",
@@ -1772,7 +1782,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -1789,8 +1799,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -1807,7 +1819,6 @@
      "source": "static-grant",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -1825,8 +1836,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -1843,7 +1856,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -1983,7 +1995,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -1994,8 +2006,10 @@
      "colourless": 5,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -2012,7 +2026,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -2184,7 +2197,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -2212,8 +2225,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 4,
       "other": [],
       "sacrificeOther": false,
@@ -2230,7 +2245,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -2316,7 +2330,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -2327,8 +2341,10 @@
      "colourless": 0,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -2345,7 +2361,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -2452,7 +2467,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -2469,8 +2484,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -2487,7 +2504,6 @@
      "source": "static-grant",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -2628,7 +2644,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -2656,8 +2672,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 3,
       "other": [],
       "sacrificeOther": false,
@@ -2674,7 +2692,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -2762,7 +2779,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -2776,8 +2793,10 @@
       "B"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 1,
       "other": [],
       "sacrificeOther": false,
@@ -2794,7 +2813,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -3126,7 +3144,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -3143,8 +3161,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -3161,7 +3181,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -3335,7 +3354,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -3363,8 +3382,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 4,
       "other": [],
       "sacrificeOther": false,
@@ -3381,7 +3402,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -3502,7 +3522,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -3513,8 +3533,10 @@
      "colourless": 1,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -3531,7 +3553,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -3549,8 +3570,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -3564,13 +3587,13 @@
      "producesToken": null,
      "repeats": "per-cycle",
      "restriction": {
+      "minManaValue": null,
       "spend": "to cast a legendary spell",
       "typeName": "legendary"
      },
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -3705,7 +3728,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "isOneShot": true,
    "manaLines": [
     {
@@ -3723,8 +3746,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -3741,7 +3766,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -3848,7 +3872,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -3865,8 +3889,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -3883,7 +3909,6 @@
      "source": "static-grant",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -4084,7 +4109,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "5af48f87-7b94-44de-90e3-91f10ced00d3",
@@ -4230,7 +4255,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "77ccbea1-70af-4194-adad-39a904221c75",
@@ -4389,7 +4414,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -4417,8 +4442,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 5,
       "other": [],
       "sacrificeOther": false,
@@ -4438,7 +4465,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -4564,7 +4590,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -4577,8 +4603,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -4595,7 +4623,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -4690,7 +4717,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -4703,8 +4730,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -4721,7 +4750,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -4887,7 +4915,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -4915,8 +4943,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 4,
       "other": [],
       "sacrificeOther": false,
@@ -4933,7 +4963,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -5088,7 +5117,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -5114,8 +5143,10 @@
       "R"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 2,
       "other": [],
       "sacrificeOther": false,
@@ -5132,7 +5163,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -5217,7 +5247,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -5228,8 +5258,10 @@
      "colourless": 0,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -5246,7 +5278,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -5345,7 +5376,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -5362,8 +5393,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -5379,8 +5412,15 @@
      "restriction": null,
      "source": "aura-trigger",
      "timing": "on-trigger",
-     "trigger": "tapped-for-mana",
-     "triggerSubject": "enchanted land",
+     "trigger": {
+      "event": "tapped-for-mana",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land"
+      },
+      "text": "enchanted land"
+     },
      "unread": false
     }
    ],
@@ -5467,7 +5507,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -5480,8 +5520,10 @@
       "R"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -5498,7 +5540,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -5667,7 +5708,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -5695,8 +5736,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 5,
       "other": [],
       "sacrificeOther": false,
@@ -5713,7 +5756,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -5808,7 +5850,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -5821,8 +5863,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -5839,7 +5883,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -5997,7 +6040,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "9fc28e1f-f4ea-4bf8-9442-a36dba3b3b29",
@@ -6221,7 +6264,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -6238,8 +6281,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -6256,7 +6301,6 @@
      "source": "static-grant",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -6435,7 +6479,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -6446,8 +6490,10 @@
      "colourless": 2,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -6464,7 +6510,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -6692,7 +6737,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "3fa71348-fa4d-4f39-a451-cf1570591991",
@@ -6754,7 +6799,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "b2c6aa39-2d2a-459c-a555-fb48ba993373",
@@ -6839,7 +6884,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -6853,8 +6898,10 @@
       "R"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 1,
       "other": [],
       "sacrificeOther": false,
@@ -6871,7 +6918,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -6984,7 +7030,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -7001,8 +7047,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -7019,7 +7067,6 @@
      "source": "static-grant",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -7162,7 +7209,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "8959a147-75b1-4f4a-a699-cb354ff55e59",
@@ -7268,7 +7315,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -7281,8 +7328,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -7299,7 +7348,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -7438,7 +7486,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "isOneShot": true,
    "manaLines": [
     {
@@ -7456,8 +7504,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -7474,7 +7524,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -7643,7 +7692,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -7654,8 +7703,10 @@
      "colourless": 1,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -7672,7 +7723,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -7737,7 +7787,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "a3fb7228-e76b-4e96-a40e-20b5fed75685",
@@ -7789,7 +7839,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "ae1f2ab5-c6a5-4d49-a746-3cb4668bf805",
@@ -7984,7 +8034,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -8001,8 +8051,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 1,
       "other": [],
       "sacrificeOther": false,
@@ -8019,7 +8071,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -8037,8 +8088,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -8055,7 +8108,6 @@
      "source": "static-grant",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -8163,7 +8215,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -8178,8 +8230,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -8196,7 +8250,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -8294,7 +8347,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "c4efdbab-711d-4269-9b24-b05d36f7e5c7",
@@ -8436,7 +8489,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -8447,8 +8500,10 @@
      "colourless": 1,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -8465,7 +8520,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -8477,8 +8531,10 @@
      "colourless": 0,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 1,
       "other": [],
       "sacrificeOther": false,
@@ -8495,7 +8551,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -8583,7 +8638,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -8597,8 +8652,10 @@
       "B"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 1,
       "other": [],
       "sacrificeOther": false,
@@ -8615,7 +8672,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -8710,7 +8766,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -8723,8 +8779,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -8740,8 +8798,15 @@
      "restriction": null,
      "source": "aura-trigger",
      "timing": "on-trigger",
-     "trigger": "tapped-for-mana",
-     "triggerSubject": "enchanted land",
+     "trigger": {
+      "event": "tapped-for-mana",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land"
+      },
+      "text": "enchanted land"
+     },
      "unread": false
     }
    ],
@@ -8852,7 +8917,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -8865,8 +8930,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -8883,7 +8950,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -8990,7 +9056,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -9001,8 +9067,10 @@
      "colourless": 1,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -9019,7 +9087,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -9037,8 +9104,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 1,
       "other": [],
       "sacrificeOther": false,
@@ -9055,7 +9124,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -9133,7 +9201,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "d90882ae-6572-4214-8d9c-0bdfb75f9be2",
@@ -9281,7 +9349,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -9309,8 +9377,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 2,
       "other": [],
       "sacrificeOther": false,
@@ -9327,7 +9397,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -9439,7 +9508,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "180e1a7e-890d-477c-80a5-da8a5f2857b3",
@@ -9634,7 +9703,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -9662,8 +9731,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 3,
       "other": [],
       "sacrificeOther": false,
@@ -9680,7 +9751,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -9816,7 +9886,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -9836,8 +9906,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 4,
       "other": [],
       "sacrificeOther": false,
@@ -9854,7 +9926,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -9934,7 +10005,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -9945,8 +10016,10 @@
      "colourless": 2,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -9963,7 +10036,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -10037,7 +10109,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "131a7475-0b9e-46eb-9ade-fef1b9820184",
@@ -10180,7 +10252,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -10191,8 +10263,10 @@
      "colourless": 1,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -10209,7 +10283,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -10227,8 +10300,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 1,
       "other": [],
       "sacrificeOther": false,
@@ -10245,7 +10320,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -10358,7 +10432,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -10369,8 +10443,10 @@
      "colourless": 1,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -10387,7 +10463,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -10402,8 +10477,10 @@
       "B"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 1,
       "other": [],
       "sacrificeOther": false,
@@ -10420,7 +10497,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -10485,7 +10561,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "56719f6a-1a6c-4c0a-8d21-18f7d7350b68",
@@ -10598,7 +10674,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "feb00c6d-ff43-49bc-84d5-57e2d4651258",
@@ -10755,7 +10831,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -10768,8 +10844,10 @@
       "R"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -10786,7 +10864,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -10800,8 +10877,10 @@
       "R"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -10815,13 +10894,13 @@
      "producesToken": null,
      "repeats": "per-cycle",
      "restriction": {
+      "minManaValue": null,
       "spend": "to cast instant and sorcery spells",
       "typeName": "sorcery"
      },
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -10965,7 +11044,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -10976,8 +11055,10 @@
      "colourless": 1,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -10994,7 +11075,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -11009,8 +11089,10 @@
       "R"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -11027,7 +11109,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -11171,7 +11252,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -11182,8 +11263,10 @@
      "colourless": 1,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -11200,7 +11283,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -11215,8 +11297,10 @@
       "B"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -11233,7 +11317,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -11526,7 +11609,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -11539,8 +11622,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -11557,7 +11642,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     },
     {
@@ -11575,8 +11659,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -11600,7 +11686,6 @@
      "source": "static-grant",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -11736,7 +11821,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -11756,8 +11841,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 2,
       "other": [],
       "sacrificeOther": false,
@@ -11774,7 +11861,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -11892,7 +11978,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -11909,8 +11995,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -11926,8 +12014,15 @@
      "restriction": null,
      "source": "aura-trigger",
      "timing": "on-trigger",
-     "trigger": "tapped-for-mana",
-     "triggerSubject": "enchanted land",
+     "trigger": {
+      "event": "tapped-for-mana",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land"
+      },
+      "text": "enchanted land"
+     },
      "unread": false
     }
    ],
@@ -12081,7 +12176,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -12098,8 +12193,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -12116,7 +12213,6 @@
      "source": "static-grant",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -12173,7 +12269,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "db6174d7-211d-4817-b8e4-8384594c83f9",
@@ -12276,7 +12372,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -12287,8 +12383,10 @@
      "colourless": 0,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -12304,8 +12402,15 @@
      "restriction": null,
      "source": "aura-trigger",
      "timing": "on-trigger",
-     "trigger": "tapped-for-mana",
-     "triggerSubject": "enchanted Forest",
+     "trigger": {
+      "event": "tapped-for-mana",
+      "subject": {
+       "control": "any",
+       "subtype": "forest",
+       "token": null
+      },
+      "text": "enchanted Forest"
+     },
      "unread": false
     }
    ],
@@ -12473,7 +12578,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -12501,8 +12606,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 6,
       "other": [],
       "sacrificeOther": false,
@@ -12519,7 +12626,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -12661,7 +12767,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -12689,8 +12795,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 5,
       "other": [],
       "sacrificeOther": false,
@@ -12707,7 +12815,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -12815,7 +12922,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "4f890d42-e4f1-4eed-aa6c-718865de8927",
@@ -12907,7 +13014,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -12920,8 +13027,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -12937,8 +13046,15 @@
      "restriction": null,
      "source": "aura-trigger",
      "timing": "on-trigger",
-     "trigger": "tapped-for-mana",
-     "triggerSubject": "enchanted land",
+     "trigger": {
+      "event": "tapped-for-mana",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land"
+      },
+      "text": "enchanted land"
+     },
      "unread": false
     }
    ],
@@ -13056,7 +13172,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "67a52a74-9474-4f4e-8785-6ff54078a8ca",
@@ -13228,7 +13344,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "landFetch": {
     "kind": "permanent",
     "reach": [
@@ -13248,8 +13364,10 @@
       "G"
      ],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -13266,7 +13384,6 @@
      "source": "fetch",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -13346,7 +13463,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "manaLines": [
     {
      "amount": {
@@ -13357,8 +13474,10 @@
      "colourless": 2,
      "colours": [],
      "cost": {
+      "consumes": [],
       "counters": null,
       "life": 0,
+      "loyalty": null,
       "mana": 0,
       "other": [],
       "sacrificeOther": false,
@@ -13375,7 +13494,6 @@
      "source": "activated",
      "timing": "now",
      "trigger": null,
-     "triggerSubject": null,
      "unread": false
     }
    ],
@@ -13432,7 +13550,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 310,
+   "deriveVersion": 312,
    "model": "derived",
    "normalizeVersion": 18,
    "oracleId": "8dd5f5af-d2d8-4356-8617-8381081b930c",

@@ -1,15 +1,15 @@
 /** TEST SUPPORT for the colour-source consumers (#1169, task 2a): hand-built derived mana tags for the SYNTHETIC cards a unit test
  *  invents (a land that taps for {B}, a rock that costs 2). A card a test names after a real card takes its tags from the real
  *  derive instead (`fixtures/mana-colour-sources.json`, see `mana-colour-sources.test.ts`). */
-import type { CardTags, ManaLine, LandFetch } from "@edh-seer/tagger";
+import { parseSubject, type CardTags, type ManaLine, type LandFetch } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 
-export const FREE_TAP: ManaLine["cost"] = { mana: 0, tap: true, sacrificeSelf: false, sacrificeOther: false, life: 0, counters: null, tapOther: false, other: [] };
+export const FREE_TAP: ManaLine["cost"] = { mana: 0, tap: true, sacrificeSelf: false, sacrificeOther: false, life: 0, counters: null, tapOther: false, loyalty: null, consumes: [], other: [] };
 
 /** A free `{T}: Add` line, any field overridable. */
 export const mkLine = (over: Partial<ManaLine> = {}): ManaLine => ({
   face: 0, source: "activated", repeats: "per-cycle", cost: FREE_TAP, colours: [], colourless: 0, anyColour: null,
-  amount: { fixed: 1, scales: null }, net: 1, unread: false, gate: null, restriction: null, timing: "now", producesToken: null, trigger: null, triggerSubject: null, ...over,
+  amount: { fixed: 1, scales: null }, net: 1, unread: false, gate: null, restriction: null, timing: "now", producesToken: null, trigger: null, ...over,
 });
 
 /** `{T}: Add` of these colours (`"C"` is colourless; all five is "any colour"). */
@@ -33,7 +33,7 @@ export const fetchTags = (landFetch: LandFetch, over: Partial<ManaLine> = {}): C
 export const triggerLine = (event: string, subject: string, colours: readonly string[], amount: number, over: Partial<ManaLine> = {}): ManaLine => {
   const wubrg = colours.filter((c) => c !== "C");
   return mkLine({ source: "trigger", repeats: "repeatable", cost: { ...FREE_TAP, tap: false }, colours: wubrg, colourless: colours.includes("C") ? 1 : 0,
-    amount: { fixed: amount, scales: null }, net: amount, timing: "on-trigger", trigger: event, triggerSubject: subject, ...over });
+    amount: { fixed: amount, scales: null }, net: amount, timing: "on-trigger", trigger: { event, text: subject, subject: { ...parseSubject(subject), ...(/^(?:this|~)\b/i.test(subject) ? { self: true as const } : {}) } }, ...over });
 };
 
 /** An instant or sorcery that adds `amount` of `colours` as it resolves (Dark Ritual). */

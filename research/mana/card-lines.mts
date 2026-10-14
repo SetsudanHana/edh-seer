@@ -10,7 +10,7 @@ for (const n of process.argv.slice(2)) {
     console.log("== " + d.name + " | " + d.typeLine + " | " + d.manaCost);
     console.log(d.oracleText ?? (d.faces ?? d.card_faces ?? []).map((f: any) => f.oracleText).join("\n//\n"));
     const t: any = await store.db.collection("cardTagsDerived").findOne({ oracleId: d._id } as any);
-    console.log(JSON.stringify(t?.manaLines?.map((l: any) => ({ s: l.source, g: l.gate, net: l.net, am: l.amount, col: l.colours, any: l.anyColour, face: l.face, trig: l.trigger, ts: l.triggerSubject, tm: l.timing, tap: l.cost?.tap }))));
+    console.log(JSON.stringify(t?.manaLines?.map((l: any) => ({ s: l.source, g: l.gate, net: l.net, am: l.amount, col: l.colours, any: l.anyColour, face: l.face, trig: l.trigger?.event, ts: l.trigger?.text, tm: l.timing, tap: l.cost?.tap }))));
   }
 }
 await store.close();

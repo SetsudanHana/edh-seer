@@ -286,7 +286,7 @@ test("a negative loyalty mana ability pays for floor(loyalty / cost) turns, from
   };
   const withLoyalty = (loyalty: number): DeckCard => {
     const dc = structuredClone(real("Chandra, Novice Pyromancer"));
-    for (const l of dc.tags!.manaLines!) if (l.cost.other.length > 0) l.startLoyalty = loyalty;
+    for (const l of dc.tags!.manaLines!) if (l.cost.loyalty !== null) l.startLoyalty = loyalty;
     return dc;
   };
   // Loyalty 1 and a -1 ability: one turn (the turn she is cast). Loyalty 5: five turns, turns four to eight.
@@ -810,7 +810,7 @@ test("N10: a word-form amount is read, and its gate with it", () => {
   expect(manaOutput(withManaLines("Three", "Artifact", [tapFor(WUBRG, amountOf(3))])).amount).toBe(3);
   expect(manaOutput(withManaLines("Two", "Artifact", [tapFor(["U", "B", "R"], amountOf(2))])).amount).toBe(2);
   // Restricted mana stays one: the model is colour-blind, so it cannot check the restriction.
-  expect(manaOutput(withManaLines("Smoke", "Creature", [tapFor(WUBRG, { ...amountOf(2), restriction: { spend: "to cast elemental spells", typeName: "elemental" } })])).amount).toBe(1);
+  expect(manaOutput(withManaLines("Smoke", "Creature", [tapFor(WUBRG, { ...amountOf(2), restriction: { spend: "to cast elemental spells", typeName: "elemental", minManaValue: null } })])).amount).toBe(1);
   // A cost that is not exactly {T} is not a tap this model can pay.
   expect(manaOutput(withManaLines("Costed", "Artifact", [tapFor(WUBRG, { cost: { ...FREE_TAP, mana: 1 }, ...amountOf(2, { net: 1 }) })])).amount).toBe(1);
   // An X amount is a RATE, not an amount -- it stays at one rather than being guessed.
@@ -1061,7 +1061,7 @@ test("O2: landfall mana pays per land entering, and only that bucket is modellab
   // reader in this module checks the restriction, and landfall being the one that does not is how a
   // rule quietly diverges from its neighbours.
   const restricted = withManaLines("Not A Real Card", "Creature — Snake", [
-    triggerLine("enters", "a land you control", ["G"], 2, { restriction: { spend: "to cast creature spells", typeName: "creature" } })]);
+    triggerLine("enters", "a land you control", ["G"], 2, { restriction: { spend: "to cast creature spells", typeName: "creature", minManaValue: null } })]);
   // Refused outright, since the restriction cannot be checked: not an accelerant at all.
   expect(classifyAccelerant(restricted)).toBeNull();
   expect(landfallOf(restricted)).toBe(0);
@@ -1082,7 +1082,7 @@ test("O2: landfall mana pays per land entering, and only that bucket is modellab
 test("O1: a restricted phase trigger counts when the deck makes the restriction vacuous", () => {
   // Ashling's back face, as the line derive reads it: two mana of any colour at the beginning of your first main phase, spent only on spells at
   // mana value 4 or greater. (The REAL card transforms, and a transform card's back is never a source from the deck, #1174; this is the shape.)
-  const floor = { restriction: { spend: "to cast spells with mana value 4 or greater" } };
+  const floor = { restriction: { spend: "to cast spells with mana value 4 or greater", minManaValue: 4 } };
   const ashling = (i: number) => withLines(card(`Ashling ${i}`, "Legendary Creature — Elemental Sorcerer", 4),
     [triggerLine("main-phase", "your first main phase", WUBRG, 2, { anyColour: "any", ...floor })]);
   // THE AMOUNT IS TWO, with its floor recorded for the deck to settle.
@@ -1281,7 +1281,7 @@ test("a ritual is an instant or sorcery that adds a fixed amount; a rate or a cr
   // free ritual.
   expect(ritualAdds(real("Culling the Weak"))).toBe(0);
   expect(ritualAdds(withLines(card("Bound", "Instant", 1, "Add {R}{R}{R}. Spend this mana only to cast instant or sorcery spells."),
-    [ritualLine(["R"], 3, { restriction: { spend: "to cast instant or sorcery spells" } })]))).toBe(0);
+    [ritualLine(["R"], 3, { restriction: { spend: "to cast instant or sorcery spells", minManaValue: null } })]))).toBe(0);
   expect(ritualAdds(withLines(card("Giant", "Creature — Giant // Instant — Adventure", 4, "Add {R}{R}{R}."), [ritualLine(["R"], 3)]))).toBe(0);
   // Two colours, one mana each: one unit of each. Two colours at three mana cannot be told apart per unit and are refused.
   expect(ritualAdds(withLines(card("Pair", "Instant", 1), [ritualLine(["R", "G"], 2)]))).toBe(2);
@@ -1715,7 +1715,7 @@ describe("board-count gates are met turn by turn on the goldfish's own board", (
   });
 
   test("a walker's gated loyalty line is priced against the deck, its turns included (manaOutput's loyalty branch is handed the deck)", () => {
-    const line = mkLine({ gate: parseGate("you control a dragon"), cost: { ...FREE_TAP, tap: false, other: ["−1"] }, startLoyalty: 3, colours: ["R"], amount: { fixed: 2, scales: null }, net: 2 });
+    const line = mkLine({ gate: parseGate("you control a dragon"), cost: { ...FREE_TAP, tap: false, loyalty: -1 }, startLoyalty: 3, colours: ["R"], amount: { fixed: 2, scales: null }, net: 2 });
     const walker = withManaLines("Gated Walker", "Legendary Planeswalker — Test", [line]);
     const deck = deckOfDragons([walker]);
     expect(manaOutput(walker, deck).turns).toBe(3);
