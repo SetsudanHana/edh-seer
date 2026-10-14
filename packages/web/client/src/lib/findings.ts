@@ -95,8 +95,13 @@ function buildFindings(report: DeckReport): Finding[] {
       detail: `You run ${p.count}, against a target of ${p.target}.`,
       // Strip the leading "Name 6/14 — " the CLI sentence carries, since the figure is rendered
       // beside the row already.
+      // A parent at zero is the odd one out: the engine says "No board wipe (target 3); most cost 3-5
+      // mana" (the CLI prints it as is), which restates the gap instead of asking for the fix, so the
+      // same imperative is built here from the parent's own numbers and the sentence's cost band.
       action: suggestion
-        ? `${suggestion.replace(/^[^—]*—\s*/, "").replace(/^add/, "Add")}${cut}`
+        ? `${(suggestion.includes("—")
+          ? suggestion.replace(/^[^—]*—\s*/, "").replace(/^add/, "Add")
+          : `Add ~${Math.ceil(missing)} ${p.name.toLowerCase()}${suggestion.match(/;.*$/)?.[0] ?? ""}`)}${cut}`
         : undefined,
       figure: `${p.count}/${p.target}`,
       figureLabel: p.name,

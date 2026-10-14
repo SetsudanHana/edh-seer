@@ -513,3 +513,19 @@ test("the slot trade finds the interaction surplus by key, whatever the parent i
   expect(slotTrade(renamed, findings(renamed))!).toContain("take the slots from the cards that answer the same things");
   // A slack row with a name and no key is not a shape any more: `key` is required (#1194).
 });
+
+
+/** The engine writes a zero-wipe gap as "No board wipe (target 3); most cost 3-5 mana", which reads as a
+ *  restatement; the finding's action says the same imperative the other parents do ("Add ~4; most cost ..."). */
+test("a parent at zero gets the same imperative action as the others", () => {
+  const r = report({
+    buildParents: [
+      { name: "Board wipes", key: "boardWipes", count: 0, target: 3, leaves: [] },
+      { name: "Ramp", key: "ramp", count: 6, target: 10, leaves: [] },
+    ],
+    suggestionByKey: { boardWipes: "No board wipe (target 3); most cost 3–5 mana", ramp: "Ramp 6/10 — add ~4; most cost 2–3 mana" },
+  });
+  const actions = Object.fromEntries(findings(r).filter((f) => f.kind === "build").map((f) => [f.id, f.action]));
+  expect(actions["build:ramp"]).toBe("Add ~4; most cost 2–3 mana");
+  expect(actions["build:boardWipes"]).toBe("Add ~3 board wipes; most cost 3–5 mana");
+});

@@ -1014,3 +1014,15 @@ test("a transform card with a land back is a spell to the rule table: it earns i
   expect(m.get("draw")).toEqual(new Set([map.card.name]));
   expect(m.get("lands") ?? new Set()).toEqual(new Set());
 });
+
+// #1194: the keyed copy of the gap sentences is the same sentences, each under a real parent key.
+test("suggestionByKey is the parent-gap subset of suggestions, keyed by buildParents keys", () => {
+  const r = computeBuild([mk("Lonely", "Vanilla.", "Creature")], "goodstuff");
+  const lands = r.suggestions.filter((s) => /^Lands /.test(s));
+  expect(Object.keys(r.suggestionByKey).length).toBeGreaterThan(0);
+  for (const [key, text] of Object.entries(r.suggestionByKey)) {
+    expect(r.buildParents.map((p) => p.key)).toContain(key);
+    expect(r.suggestions).toContain(text);
+  }
+  expect(Object.keys(r.suggestionByKey)).toHaveLength(r.suggestions.length - lands.length);
+});

@@ -63,7 +63,7 @@ test("the slot trade and the donor sentence follow the key, not the name", () =>
   const r = renamed(withSlack());
   expect(slotTrade(r, findings(r))).toContain("sits at 17 against a target of 10");
   const was = findings(withSlack()).map((f) => [f.id, f.action?.replace(/Ramp/g, "R")]);
-  const now = findings(r).map((f) => [f.id, f.action?.replace(/Renamed Ramp/g, "R")]);
+  const now = findings(r).map((f) => [f.id, f.action?.replace(/Renamed Ramp/g, "R").replace(/renamed /g, "")]);
   expect(now).toEqual(was);
 });
 
@@ -96,7 +96,8 @@ test("the engine's suggestion sentence and the suggested cards attach to each sh
   // Sentences that no longer start with any parent's name: only the key can find them.
   r.suggestions = r.suggestions!.map((s) => s.replace(/^[A-Za-z ]+(?= \d| \(target)/, "Elsewhere"));
   const now = findings(r).filter((f) => f.kind === "build");
-  expect(now.map((f) => [f.id, f.action])).toEqual(was.map((f) => [f.id, f.action]));
+  // The zero-wipe imperative names the parent in display text ("board wipes"), which follows the rename.
+  expect(now.map((f) => [f.id, f.action?.replace(/renamed /g, "")])).toEqual(was.map((f) => [f.id, f.action]));
   const card = { name: "Sol Ring" } as DeckSuggestions["build"][string][number];
   const sug = { build: { ramp: [card], interaction: [], boardWipes: [] }, answers: {}, synergy: {}, plan: [], pairs: [], routes: [] } as unknown as DeckSuggestions;
   for (const f of now) expect(suggestionsFor(f, sug, r), f.id).toEqual(f.id === "build:ramp" ? [card] : []);

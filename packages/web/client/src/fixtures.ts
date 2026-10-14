@@ -92,14 +92,14 @@ export const SAMPLE: AnalyzeResponse = {
     // cost band (F14). A fixture that no longer resembles real output stops exercising the renderer
     // it exists for.
     suggestions: [
-      "No board wipe (target 3), typically 3–5 mana",
-      "Ramp 6/10 — add ~4, typically 2–3 mana",
-      "Interaction 7/10 — add ~3, typically 2–4 mana",
+      "No board wipe (target 3); most cost 3–5 mana",
+      "Ramp 6/10 — add ~4; most cost 2–3 mana",
+      "Interaction 7/10 — add ~3; most cost 2–4 mana",
     ],
     suggestionByKey: {
       boardWipes: "No board wipe (target 3); most cost 3–5 mana",
-      ramp: "Ramp 6/10 — add ~4, typically 2–3 mana",
-      interaction: "Interaction 7/10 — add ~3, typically 2–4 mana",
+      ramp: "Ramp 6/10 — add ~4; most cost 2–3 mana",
+      interaction: "Interaction 7/10 — add ~3; most cost 2–4 mana",
     },
     roles: { ramp: 4, draw: 10, removal: 6 },
     cohesion: {
