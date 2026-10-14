@@ -164,3 +164,13 @@ test("a labelled keyword line stays a keyword line, and a labelled cost the segm
   const strax = readCard("Strax", "Creature — Sontaran", "Grenades! — {2}, {T}, Sacrifice an artifact: This creature deals 2 damage to any target.");
   expect(strax.complete).toBe(false);
 });
+
+test("a mana cost behind a label the segmenter missed makes the clause activated, and derive's input carries the cost (#1210)", async () => {
+  const text = "Do You Like Squirrels? — Whenever The Unbeatable Squirrel Girl enters or attacks, create a 1/1 green Squirrel creature token.\nI LOVE Squirrels! — {1}{G}{G}{G}: Create X 1/1 green Squirrel creature tokens, where X is the number of Squirrels you control.";
+  const g = readCard("The Unbeatable Squirrel Girl", "Legendary Creature — Squirrel Human Hero", text, ["I LOVE Squirrels!"]);
+  expect(g.records.find((r) => r.id === 2)).toMatchObject({ abilityType: "activated" });
+  const { clauseCosts, clauseTexts } = await import("../derive-input.js");
+  const doc = { oracleText: text, keywords: ["I LOVE Squirrels!"], typeLine: "Legendary Creature — Squirrel Human Hero" };
+  expect(clauseCosts(doc)[2]).toBe("{1}{G}{G}{G}");
+  expect(clauseTexts(doc)[2]).toMatch(/^Create X 1\/1 green Squirrel/);
+});

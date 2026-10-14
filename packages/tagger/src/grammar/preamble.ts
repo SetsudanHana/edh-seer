@@ -47,6 +47,18 @@ export function withoutAbilityWord(text: string): string {
   return dash > 0 && dash <= 41 && /^[A-Z~][\w' ,~?!-]*$/.test(text.slice(0, dash)) ? text.slice(dash + 3) : text;
 }
 
+/** AN ACTIVATED ABILITY BEHIND A LABEL THE SEGMENTER MISSED ("I LOVE Squirrels! — {1}{G}{G}{G}: Create
+ *  ..."): the segmenter's `ABILITY_WORD` does not strip a label with "!" or "?", so it left the clause
+ *  static and cost-less. When the text after the label opens with a cost of MANA ALONE and a colon,
+ *  this is that cost and the effect -- the pair `segment()` would have produced had it stripped the
+ *  label. Mana only: a tap or sacrifice behind such a label is refused by the caller. */
+export function labelledManaCost(text: string): { cost: string; effect: string } | null {
+  const bare = withoutAbilityWord(text);
+  if (bare === text) return null;
+  const m = /^((?:\{(?:\d+|[WUBRGCSX]|[WUBRG]\/[WUBRGP])\})+): (.+)$/s.exec(bare);
+  return m ? { cost: m[1]!, effect: m[2]! } : null;
+}
+
 /** The preamble of a triggered clause's printed text, or null when the text opens with no trigger
  *  word. The name becomes "~" BEFORE the cut: a name with a comma ("Gisela, the Broken Blade") would
  *  otherwise end it. */

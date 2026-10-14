@@ -9,7 +9,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
 import { segment } from "../segment.js";
 import { amountOf, parseActions, unreadPhrases, type ActionReading } from "./action.js";
-import { effectText, printedPreamble, withoutAbilityWord } from "./preamble.js";
+import { effectText, labelledManaCost, printedPreamble, withoutAbilityWord } from "./preamble.js";
 import { selfAsTilde } from "./self-as-tilde.js";
 import { parseTrigger, type TriggerReading } from "./trigger.js";
 
@@ -263,7 +263,9 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
   for (const c of clauses) {
     if (c.kind === "reminder") continue;
     if (c.kind === "keyword") { records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] }); continue; }
-    const type = c.abilityType ?? "static";
+    // A mana cost behind a label the segmenter missed makes the clause ACTIVATED, carrying that cost.
+    const labelled = !c.cost && c.abilityType !== "triggered" ? labelledManaCost(c.text) : null;
+    const type = labelled ? "activated" : c.abilityType ?? "static";
     const record: ClauseRecord = { id: c.id, abilityType: type, actions: [] };
     if (type === "triggered") {
       const preamble = printedPreamble(c.text, card.name);
@@ -282,7 +284,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       // reading of more than one event instead.
       if (c.multiTrigger || withoutAbilityWord(c.text) !== c.text) for (const r of reads.slice(1)) if (r.event !== first.event) overflow.push({ id: nextId++, abilityType: type, trigger: { event: r.event, subject: second ? triggerSubjectText(`Whenever ${second}`) : record.trigger.subject, control: r.control ?? record.trigger.control ?? "any" }, actions: [] });
     }
-    const effect = effectText(c.text, card.name);
+    const effect = labelled ? effectText(labelled.effect, card.name) : effectText(c.text, card.name);
     // A DELAYED TRIGGER that is the whole clause ("{1}{W}{B}: Whenever you gain life this turn, each
     // opponent loses that much life"): the store records it as the clause's trigger. Not "at the
     // beginning of the next end step" mid-sentence: that times one action, and a clause trigger would
@@ -292,16 +294,15 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       const read = [parseTrigger(delayed[1]!, null) ?? []].flat()[0];
       if (read) record.trigger = { event: read.event, subject: triggerSubjectText(delayed[1]!), control: read.control ?? "any" };
     }
-    const cost = c.cost;
+    const cost = labelled ? labelled.cost : c.cost;
     // AN ACTIVATED COST BEHIND A LABEL THE SEGMENTER MISSED ("Go for the Goal! — {3}, {T}: ..."): it
     // left the clause cost-less and static, and reading the text past the label would drop the cost and
     // bank a static grant. Refused, as before the label strip existed. A cost of mana alone ("I LOVE
     // Squirrels! — {1}{G}{G}{G}: Create ...") has no tap, sacrifice or other payment to lose, and reads.
-    // CEILING: that clause is still recorded static, as the segmenter classed it.
+    // That clause is recorded activated with its cost (`labelledManaCost`), as `derive-input` carries it.
     const bare = withoutAbilityWord(c.text);
     const colon = bare !== c.text && !cost ? bare.indexOf(": ") : -1;
-    if (colon > 0 && !/[."]/.test(bare.slice(0, colon)) && /^(?:\{|(?:Pay|Sacrifice|Discard|Exile|Tap|Remove|Return|Put)\b)/.test(bare)
-      && !/^(?:\{(?:\d+|[WUBRGCSX]|[WUBRG]\/[WUBRGP])\})+$/.test(bare.slice(0, colon))) {
+    if (colon > 0 && !/[."]/.test(bare.slice(0, colon)) && /^(?:\{|(?:Pay|Sacrifice|Discard|Exile|Tap|Remove|Return|Put)\b)/.test(bare)) {
       return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: bare.slice(0, colon) } };
     }
     const unread = unreadPhrases(effect, type, cost);

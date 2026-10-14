@@ -11,6 +11,7 @@ import { hasEmblemPart } from "./emblem.js";
 import type { DerivedTagsDoc } from "./clause-store.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import type { DeriveInput } from "./derive/derive.js";
+import { labelledManaCost } from "./grammar/preamble.js";
 
 /** Clause id -> clause text, recomputed rather than stored. `segment()` is deterministic over the
  *  same three inputs the clause doc was built from, so this reproduces exactly the clauses the model
@@ -18,7 +19,12 @@ import type { DeriveInput } from "./derive/derive.js";
  *  `recipient.ts` lives on this side of the money line rather than in the prompt. */
 export function clauseTexts(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, string> {
   const out: Record<number, string> = {};
-  for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) out[c.id] = c.text;
+  for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) {
+    // A mana cost behind a label the segmenter missed is split off, as `clauseCosts` and the grammar's
+    // own record do: the text is the effect, as it would be had the label been stripped.
+    const split = !c.cost && c.abilityType !== "triggered" ? labelledManaCost(c.text) : null;
+    out[c.id] = split ? split.effect : c.text;
+  }
   return out;
 }
 
@@ -73,7 +79,11 @@ export function clauseRequires(doc: { oracleText?: string; keywords?: string[]; 
  *  the body text for the "once each turn" rule. */
 export function clauseCosts(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, string> {
   const out: Record<number, string> = {};
-  for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) if (c.cost) out[c.id] = c.cost;
+  for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) {
+    if (c.cost) { out[c.id] = c.cost; continue; }
+    const split = c.abilityType !== "triggered" ? labelledManaCost(c.text) : null;
+    if (split) out[c.id] = split.cost;
+  }
   return out;
 }
 
