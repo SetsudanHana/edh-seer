@@ -499,7 +499,7 @@ test("High Tide's real derived line (a one-turn tap bonus) keeps the Ramp role; 
   };
   for (const name of ["High Tide", "Bubbling Muck"]) {
     const dc = real(name);
-    expect(dc.tags?.manaLines?.[0], name).toMatchObject({ untilEndOfTurn: true, trigger: "tapped-for-mana" });
+    expect(dc.tags?.manaLines?.[0], name).toMatchObject({ untilEndOfTurn: true, trigger: { event: "tapped-for-mana" } });
     expect(cats(dc), name).toContain("ramp");
   }
   const spell = (name: string, lines: ManaLine[], manaValue: number, typeLine: string): DeckCard => ({
@@ -539,7 +539,7 @@ describe("the Ramp role is read from the derived mana record (#1190)", () => {
   });
 
   test("a line with NO ability behind it is ramp (Molten Tide's shape, #1182)", () => {
-    const tide: DeckCard = { card: { name: "Molten Tide", oracleText: "", typeLine: "Sorcery", manaValue: 3 } as Card, tags: manaTags([mkLine({ source: "one-shot-spell", repeats: "once", trigger: "tapped-for-mana", triggerSubject: "a mountain", untilEndOfTurn: true, cost: { ...FREE_TAP, tap: false, mana: 3 }, net: -2 })], { isOneShot: true }) };
+    const tide: DeckCard = { card: { name: "Molten Tide", oracleText: "", typeLine: "Sorcery", manaValue: 3 } as Card, tags: manaTags([mkLine({ source: "one-shot-spell", repeats: "once", trigger: { event: "tapped-for-mana", text: "a mountain", subject: { control: "any", token: null, subtype: "mountain" } }, untilEndOfTurn: true, cost: { ...FREE_TAP, tap: false, mana: 3 }, net: -2 })], { isOneShot: true }) };
     expect(rampLeaves(tide)).toEqual(["ramp.effect"]);
   });
 

@@ -1406,13 +1406,16 @@ export type ManaGate =
  *
  *  A COLOUR SOURCE needs more than a `source` label: `!cost.sacrificeSelf && !cost.sacrificeOther && cost.counters === null &&
  *  !cost.tapOther && restriction === null && gate === null && !unread && anyColour !== "grantee" && (cost.tap || source === "static-grant")`,
- *  and every entry of `cost.other` is on the allow-list of pieces that consume nothing: exert, untap, mill (a consumed resource is no
- *  source: energy, a discard, collect evidence, forage, an exile from a graveyard). Phyrexian Altar is an `activated` line with no tap,
+ *  and `cost.consumes` is empty (a consumed resource is no
+ *  source: energy, a discard, collect evidence, forage, an exile from a graveyard; exert, untap and mill consume nothing). Phyrexian Altar is an `activated` line with no tap,
  *  a Treasure-maker is `token-maker`, Birgi is `trigger`, and an Aura's trigger (`aura-trigger`) is never one.
  *
  *  THE LINE STATES; THE CONSUMER JUDGES. A colour audit, a land count, a goldfish each ask a different question
  *  (is this a colour SOURCE; is this CHEAP ramp; does it play on turn two), and each answers it by filtering
  *  these fields -- the line itself decides none of it. */
+/** What a mana line's cost uses up (`ManaLine.cost.consumes`). */
+export type ConsumedCost = "discard" | "exile" | "energy" | "return-to-hand" | "forage" | "collect-evidence" | "unknown";
+
 export interface ManaLine {
   /** The face that prints it: 0 the front, 1 the back of a transform / modal card (Treasure Cove's `{T}: Add {C}`). */
   face: 0 | 1;
@@ -1438,7 +1441,16 @@ export interface ManaLine {
     counters: "remove" | "put" | null;
     /** Taps other permanents ("Tap an untapped creature you control", Springleaf Drum). */
     tapOther: boolean;
-    /** Every other cost piece, verbatim: a discard, an untap, a loyalty change, `{E}`. */
+    /** A PLANESWALKER'S LOYALTY COST, signed: +1 -> 1, 0 -> 0, "−3" -> -3. Null on a line with no loyalty cost ("−X" is none: no loyalty can be compared with it and it stays in `other`).
+     *  Parsed ONCE, here; the matcher's `isLoyaltyAbility` and `startLoyalty` read it and match no text. */
+    loyalty: number | null;
+    /** WHAT THE COST USES UP beyond the typed fields above, classified from `other` (a consumer judges "paid with a resource" from this and never reads `other`'s text):
+     *  `discard` (a card from hand, "Discard your hand"), `exile` (cards exiled from a graveyard or hand, a creature you control), `energy` ({E}, "Pay {E}"),
+     *  `return-to-hand` (this creature or a permanent returns), `forage`, `collect-evidence`, and `unknown` for a piece the classifier does not recognise (refused, never
+     *  guessed: it counts as consumed). NOT consumed, so absent: exerting (a skipped untap), untapping a permanent (`{Q}`, Pili-Pala; "Untap a tapped land"), milling yourself
+     *  (Millikin). CEILING: one entry per piece, so `Pay {E}{E}{E}` is one `energy`. */
+    consumes: ConsumedCost[];
+    /** Every cost piece that is not a typed field or the loyalty cost, verbatim, for display: a discard, an untap, `{E}`. */
     other: string[];
   };
   /** The WUBRG colours the printed text names, as a set. `any` names all five; a BOUNDED `anyColour` names none
@@ -1463,30 +1475,31 @@ export interface ManaLine {
   /** "Spend this mana only ..." (Smokebraider, Cavern of Souls, Ancient Ziggurat) or "this mana can't be spent ...":
    *  `spend` is the printed limit, `typeName` the one type it names, lowercase ("elemental", "creature", "chosen"). Mana with
    *  a restriction is not mana for the deck's spells. */
-  restriction: { spend: string; typeName?: string } | null;
+  restriction: { spend: string; typeName?: string;
+    /** The mana-value floor the limit names: "to cast spells with mana value 4 or greater" (Ashling, Rimebound) -> 4. Null for every other limit, including the same floor with a
+     *  rider ("... or spells with {X} in their mana costs", Helga), which is also a limit on what the mana is FOR. */
+    minManaValue: number | null } | null;
   /** WHEN the mana arrives: `now`, `next-turn` (a delayed addition), `on-trigger` (when a trigger fires). */
   timing: "now" | "next-turn" | "on-trigger";
   /** The token a `token-maker` line makes that is itself a mana source ("treasure", "gold", "powerstone",
    *  "eldrazi-spawn"); null on every other line. */
   producesToken: string | null;
-  /** WHAT FIRES a `trigger` or `aura-trigger` line: the clause's trigger event, verbatim. Null on every other line, and on a trigger line
+  /** WHAT FIRES a `trigger` or `aura-trigger` line: the clause's trigger event (verbatim) and the SUBJECT it watches, read once in derive. Null on every other line, and on a trigger line
    *  whose own clause names none (a mode of a modal trigger, Zuko, Conflicted). Census of the 171 trigger / aura-trigger mana lines in the derived corpus
    *  (DERIVE_VERSION 302, 2026-10-11), by count of lines: `tapped-for-mana` 46 (the Auras' "whenever enchanted land is tapped for mana", and
    *  Forsaken Monument / Leyline of Abundance / Mana Flare: a tap-replacement), `main-phase` 30 and `upkeep` 5 and `end-step` 1 (the
    *  beginning of a phase: Coalition Relic, Abstract Paintmage), `enters` 27, `attacks` 17, `chapter` 14, `cast` 8 (Birgi: "whenever you
    *  cast a spell"), `dies` 6, `discarded` 3, `damage-dealt` 3, `transform` 2, `sacrificed` 2, `turned-face-up` 2, and one each of
-   *  `life-gained`, `damaged`, `counter-added`. LANDFALL IS NOT AN EVENT OF ITS OWN: it is `enters` with a land `triggerSubject` (Lotus
-   *  Cobra "a land you control"); `enters` with "this creature" is the card's own enters trigger (Burning-Tree Emissary). One printed add that the model split
-   *  across two events (Ashling, Rimebound: "transforms into ... and at the beginning of your first main phase") is named for the phase. */
-  trigger: string | null;
-  /** The subject of that trigger, verbatim as the clause names it ("a land you control", "your first main phase", "enchanted land",
-   *  "a spell", "this creature"). Null wherever `trigger` is. Read with `trigger`: `enters` alone does not say whose. */
-  triggerSubject: string | null;
-  /** The printed STARTING LOYALTY of the planeswalker face that prints this line, present only when the line costs loyalty (`cost.other` holds "+1", "0",
-   *  "−1"): the walker enters with that many counters (CR 306.5b) and a loyalty cost needs that many (CR 606.6), so "−1: Add {R}{R}" is playable the turn
+   *  `life-gained`, `damaged`, `counter-added`. LANDFALL IS NOT AN EVENT OF ITS OWN: it is `enters` with a land subject you control (Lotus
+   *  Cobra "a land you control"); `enters` with a `self` subject is the card's own enters trigger (Burning-Tree Emissary). One printed add that the model split
+   *  across two events (Ashling, Rimebound: "transforms into ... and at the beginning of your first main phase") is named for the phase.
+   *  `subject` is `parseSubject` of `text` (`self: true` when it names the card), or null when the clause names none; `text` is the subject as the clause names it
+   *  ("a land you control", "your first main phase", "enchanted land", "a spell", "this creature"), kept for display and for a shape `subject` cannot say. */
+  trigger: { event: string; subject: SubjectFilter | null; text: string | null } | null;
+  /** The printed STARTING LOYALTY of the planeswalker face that prints this line, present only when the line costs loyalty (`cost.loyalty` is set): the walker enters with that many counters (CR 306.5b) and a loyalty cost needs that many (CR 606.6), so "−1: Add {R}{R}" is playable the turn
    *  the walker is cast iff this is at least 1. From the card document's `loyalty` (Scryfall, per face), carried by ingest (owner 2026-10-13). */
   startLoyalty?: number;
-  /** TRUE on a TAP BONUS THAT LASTS ONE TURN, the line of a spell (`source: "one-shot-spell"`, `trigger: "tapped-for-mana"`, `triggerSubject` the filter): High Tide's
+  /** TRUE on a TAP BONUS THAT LASTS ONE TURN, the line of a spell (`source: "one-shot-spell"`, `trigger.event` "tapped-for-mana", `trigger.subject` the filter): High Tide's
    *  "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}" (owner 2026-10-13: ramp). `amount` is the bonus PER TAP and `net` is
    *  that one mana less the spell's cost, which says nothing: the yield is `amount` times the matching sources tapped that turn. Absent on a permanent's standing bonus
    *  (Forsaken Monument, Mana Flare, Vernal Bloom), which has no end. */

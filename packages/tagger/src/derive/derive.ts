@@ -459,7 +459,9 @@ import { emblemRecipient } from "../emblem.js";
 // alternative that states none ("{R}" + 6, Chandra Heart of Fire / The Flux; "mana of any one color" + 10, The Aetherspark), "seven {R}" is 7, a list joined by "and" is a sum (Terra), "N mana in any combination
 // of {U}, {B}, and/or {R}" is N (Relic of Sauron, Orcish Lumberjack), a rider after a comma ("..., spendable only to ...", Shang-Chi) is no alternative, the model's symbols on `amount` are the mana (Valleymaker),
 // a bare "mana" adds no amount (Piracy), and an ability's number word is a number (Cosmic Crucible "four" -> "4").
-export const DERIVE_VERSION = 311;
+// 312: #1193 task 2 (Fable finding 5): ManaLine states what the matcher used to re-parse. `cost.loyalty` (signed, parsed once), `cost.consumes` (what the cost uses up: energy, discard, exile, return-to-hand, forage,
+// collect-evidence, unknown; {Q} untap, exert and mill consume nothing, so Pili-Pala's {Q} line is no longer "paid"), `restriction.minManaValue`, and `trigger: {event, subject: SubjectFilter, text}` replacing `trigger` + `triggerSubject`.
+export const DERIVE_VERSION = 312;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

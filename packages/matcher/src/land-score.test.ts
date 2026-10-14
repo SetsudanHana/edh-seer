@@ -70,7 +70,7 @@ test("a tapped land is never better than an untapped one, whatever its colours",
 // after the mana line, so the colours were read as free.
 test("mana spendable only on some spells makes no colour, and marks the land conditional", () => {
   const grounds = withLines(dc("Tournament Grounds", "Land", "{T}: Add {C}.\n{T}: Add {R}, {W}, or {B}. Spend this mana only to cast a Knight or Equipment spell.", ["C", "R", "W", "B"]),
-    [tapFor(["C"]), tapFor(["R", "W", "B"], { restriction: { spend: "only to cast a knight or equipment spell" } })]);
+    [tapFor(["C"]), tapFor(["R", "W", "B"], { restriction: { spend: "only to cast a knight or equipment spell", minManaValue: null } })]);
   const forge = withLines(dc("Battlefield Forge", "Land", "{T}: Add {C}.\n{T}: Add {R} or {W}. Battlefield Forge deals 1 damage to you.", ["C", "R", "W"]), [tapFor(["C"]), tapFor(["R", "W"])]);
   const rw = new Set(["R", "W"] as const);
   expect(landFacts(grounds, rw, []).colours).toEqual([]);
@@ -202,7 +202,7 @@ test("a plain dork is named like a plain rock, unless its creature type is the d
   const elfDork = mv1(dc("Elvish Mystic", "Creature — Elf Druid", "{T}: Add {G}.", ["G"], ["mana-generation"]));
   const bird = mv1(dc("Birds of Paradise", "Creature — Bird", "Flying\n{T}: Add one mana of any color.", ["W", "U", "B", "R", "G"], ["mana-generation"]));
   const giada = mv1(withLines(dc("Giada Alike", "Creature — Angel", "{T}: Add {W}. Spend this mana only to cast Angel spells.", ["W"], ["mana-generation"]),
-    [tapFor(["W"], { restriction: { spend: "only to cast angel spells", typeName: "angel" } })]));
+    [tapFor(["W"], { restriction: { spend: "only to cast angel spells", typeName: "angel", minManaValue: null } })]));
   const lord = mv1(withTags(dc("Elf Lord", "Creature — Elf Druid", "Other Elves get +1/+1.\n{T}: Add {G}.", ["G"]), [["static", ""], ["activated", "mana-generation"]]));
   const deck = (...more: DeckCard[]) => deckOf(...more);
   expect(colourReplacements(deck(elfDork), "U", 2, { U: 4 })).toEqual(["Elvish Mystic"]);

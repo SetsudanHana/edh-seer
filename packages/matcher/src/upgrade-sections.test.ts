@@ -382,7 +382,7 @@ describe("a rock's yield, colours and shape come from the derived mana lines", (
     expect(isPlainDork(noLines(withText(elf, "{T}: Add {G}.")))).toBe(false);
     expect(isPlainDork(withLines(elf, [tapFor(["G"], { amount: { fixed: null, scales: "for each Elf you control" } })]))).toBe(false);
     expect(isPlainDork(withLines(elf, [tapFor(["G"], { cost: { ...FREE_TAP, tap: false, mana: 1 } })]))).toBe(false);
-    expect(isPlainDork(withLines(elf, [tapFor(["G"], { restriction: { spend: "only to cast elf spells" } })]))).toBe(false);
+    expect(isPlainDork(withLines(elf, [tapFor(["G"], { restriction: { spend: "only to cast elf spells", minManaValue: null } })]))).toBe(false);
     // Birchlore Rangers' shape: it taps OTHER Elves and has no {T} of its own.
     expect(isPlainDork(withLines(elf, [tapFor(["G"], { cost: { ...FREE_TAP, tap: false, tapOther: true } })]))).toBe(false);
   });
@@ -437,7 +437,7 @@ describe("a dork for a dork, to close a colour shortfall", () => {
     const m = rock("Elvish Mystic");
     // The tags carry the line this spec stands for: a free tap for `produced`, restricted when the text says "spend this mana only".
     const line = tapFor(produced, {
-      ...(/spend this mana only/i.test(oracle) ? { restriction: { spend: "only to cast angel spells" } } : {}),
+      ...(/spend this mana only/i.test(oracle) ? { restriction: { spend: "only to cast angel spells", minManaValue: null } } : {}),
       // Birchlore Rangers pays by tapping OTHER Elves, not itself: derive reads that as `tapOther`, with no `{T}` of its own.
       ...(/^tap two untapped/i.test(oracle) ? { cost: { ...FREE_TAP, tap: false, tapOther: true } } : {}),
     });

@@ -17435,5 +17435,145 @@
    }
   ],
   "source": "grammar"
+ },
+ "Pili-Pala": {
+  "card": {
+   "_id": "ad97333e-733c-402f-8ca3-e836c96b843c",
+   "name": "Pili-Pala",
+   "typeLine": "Artifact Creature — Scarecrow",
+   "oracleText": "Flying\n{2}, {Q}: Add one mana of any color. ({Q} is the untap symbol.)",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{2}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Helga, Skittish Seer": {
+  "card": {
+   "_id": "0a0d25a8-4f28-453b-9270-4d449fe0ca65",
+   "name": "Helga, Skittish Seer",
+   "typeLine": "Legendary Creature — Frog Druid",
+   "oracleText": "Whenever you cast a creature spell with mana value 4 or greater, you draw a card, gain 1 life, and put a +1/+1 counter on Helga.\n{T}: Add X mana of any one color, where X is Helga's power. Spend this mana only to cast creature spells with mana value 4 or greater or creature spells with {X} in their mana costs.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "colorIdentity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "manaValue": 3,
+   "power": "1",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{G}{W}{U}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "cast",
+     "subject": "a creature spell with mana value 4 or greater",
+     "control": "you"
+    }
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is Helga's power",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "spend this mana only to cast creature spells with mana value 4 or greater or creature spells with {X} in their mana costs",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
  }
 }

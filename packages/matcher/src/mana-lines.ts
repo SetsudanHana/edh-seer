@@ -35,16 +35,8 @@ export function deckIdentity(deck: readonly DeckCard[], commanderNames: readonly
   return found.length === 0 ? null : new Set(found.flatMap((dc) => dc.card.colorIdentity!));
 }
 
-/** COST PIECES THAT CONSUME NOTHING: exerting a creature (it skips an untap, Arena of Glory, Oasis Ritualist), untapping a permanent
- *  (Benthic Explorers) and milling yourself (Millikin: the card is not a resource the deck plays). Every other entry in `cost.other` is a
- *  consumed resource: energy, a discard, collect evidence, forage, an exile from a graveyard (owner rulings 2026-10-10 and 2026-10-11).
- *  The list is the whole of what the corpus holds. */
-const NON_CONSUMING_COST = /^(?:exert|untap|mill)\b/i;
-
-/** A LOYALTY COST as derive stores it in `cost.other`: "+2", "0", "−1" (U+2212, the printed minus). "−X" is none: no loyalty can be compared with it. */
-const LOYALTY_COST = /^(?:\+\d+|0|[\u2212-]\d+)$/;
-/** THE LINE IS A PLANESWALKER'S LOYALTY ABILITY, and it pays nothing else. */
-export const isLoyaltyAbility = (line: ManaLine): boolean => line.cost.other.length === 1 && LOYALTY_COST.test(line.cost.other[0]!);
+/** THE LINE IS A PLANESWALKER'S LOYALTY ABILITY, and it pays nothing else. `cost.loyalty` is the tagger's one parse of the printed cost (#1193). */
+export const isLoyaltyAbility = (line: ManaLine): boolean => line.cost.loyalty !== null && line.cost.other.length === 0;
 
 /** HOW MANY TURNS A LOYALTY ABILITY CAN BE USED from the walker's STARTING loyalty (`ManaLine.startLoyalty`), counting the turn it is cast: Infinity for a
  *  "+N" or "0" (CR 606.3: once per turn at sorcery timing, and nothing is taken from the loyalty), floor(loyalty / cost) for a "−N" (CR 606.6: it can't be
@@ -54,7 +46,7 @@ export const isLoyaltyAbility = (line: ManaLine): boolean => line.cost.other.len
  *  ability for longer; the model does not play those. */
 export function loyaltyActivations(line: ManaLine): number {
   if (!isLoyaltyAbility(line)) return Infinity;
-  const cost = Number(line.cost.other[0]!.replace("\u2212", "-"));
+  const cost = line.cost.loyalty!;
   if (cost >= 0) return Infinity;
   return line.startLoyalty === undefined ? 0 : Math.floor(line.startLoyalty / -cost);
 }
@@ -62,12 +54,12 @@ export function loyaltyActivations(line: ManaLine): number {
 export const usableLoyalty = (line: ManaLine): boolean => isLoyaltyAbility(line) && loyaltyActivations(line) >= 1;
 
 /** A COST THE LINE'S HOLDER CANNOT PAY FROM NOTHING: sacrificing another permanent, a counter removed or put, another permanent tapped (Springleaf
- *  Drum), or any `cost.other` piece off the allow-list above (a loyalty cost is on it, of either sign: whether the loyalty covers a "−N" is `usableLoyalty`'s
- *  question, and the colour audit never asks, as a loyalty ability is no tap) -- a consumed resource (energy, a discard, forage, an exile from a graveyard). The
- *  colour audit and the goldfish both refuse a line paid this way: the first because the mana is not a source you control, the second because it
- *  models no board to pay from. */
+ *  Drum), or anything the cost uses up (`cost.consumes`: energy, a discard, forage, an exile, collect evidence, a piece derive could not classify). A loyalty cost
+ *  is no resource, of either sign: whether the loyalty covers a "−N" is `usableLoyalty`'s question, and the colour audit never asks, as a loyalty ability is no tap.
+ *  Exert, an untap ({Q}, Pili-Pala) and a mill consume nothing (owner rulings 2026-10-10 and 2026-10-11), and derive says so by leaving them out of `consumes`. The colour audit and the
+ *  goldfish both refuse a line paid this way: the first because the mana is not a source you control, the second because it models no board to pay from. */
 export const paidWithResource = (line: ManaLine): boolean =>
-  line.cost.sacrificeOther || line.cost.counters !== null || line.cost.tapOther || !line.cost.other.every((o) => NON_CONSUMING_COST.test(o) || LOYALTY_COST.test(o));
+  line.cost.sacrificeOther || line.cost.counters !== null || line.cost.tapOther || line.cost.consumes.length > 0;
 
 /** The shape of a colour source -- everything `isColourSource` asks except that the production could be read, and the gate: the caller says whether it holds. */
 const sourceShaped = (line: ManaLine, gateHolds = false): boolean =>
@@ -245,18 +237,17 @@ export function hasConditionalMana(dc: DeckCard): boolean {
  *  spells with mana value 4 or greater" (Ashling, Rimebound). The one restriction a consumer that knows every card's mana value can settle against
  *  the deck (the goldfish); every other restriction ("to activate abilities", "elemental spells") is a limit on what the mana is FOR. */
 export function minManaValue(line: ManaLine): number | null {
-  const m = /^to cast spells with mana value (\d+) or greater$/.exec(line.restriction?.spend ?? "");
-  return m ? Number(m[1]) : null;
+  return line.restriction?.minManaValue ?? null;
 }
 
 /** The lines whose mana arrives when a land enters (Lotus Cobra: "Whenever a land you control enters, add one mana of any color"). Landfall is not
- *  an event of its own: it is `enters` with a land `triggerSubject`; `enters` with "this creature" is the card's own enters trigger (Burning-Tree
- *  Emissary), which makes mana once and is no source. CEILING: the subject is read as the one printed shape the corpus holds ("a land you control"). */
+ *  an event of its own: it is `enters` with a land `trigger.subject` you control; `enters` with "this creature" is the card's own enters trigger (Burning-Tree
+ *  Emissary), which makes mana once and is no source. CEILING: a land subject you control, which is the one printed shape the corpus holds ("a land you control"). */
 export const isLandfall = (line: ManaLine): boolean =>
-  line.source === "trigger" && line.trigger === "enters" && /^an?(?:other)? land you control$/i.test(line.triggerSubject ?? "");
+  line.source === "trigger" && line.trigger?.event === "enters" && line.trigger.subject?.type === "land" && line.trigger.subject.control === "you" && line.trigger.subject.self !== true;
 
 /** The lines whose mana arrives at the beginning of a phase (Coalition Relic's first main phase, Chaos Moon's upkeep, Go-Shintai's end step).
  *  CEILING: "your NEXT main phase" (Mana Drain, Plasm Capture) is a one-shot wearing a trigger, and its derived subject says only "you"; both scale
  *  their amount, which every consumer refuses, so nothing reads the difference. */
 export const isPhaseTrigger = (line: ManaLine): boolean =>
-  line.source === "trigger" && (line.trigger === "main-phase" || line.trigger === "upkeep" || line.trigger === "end-step");
+  line.source === "trigger" && (line.trigger?.event === "main-phase" || line.trigger?.event === "upkeep" || line.trigger?.event === "end-step");

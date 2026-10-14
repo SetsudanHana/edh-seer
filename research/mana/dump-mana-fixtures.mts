@@ -34,7 +34,7 @@ const NAMES = ["Sol Ring", "Arcane Signet", "Cascade Bluffs", "Cascading Catarac
   "High Tide", "Bubbling Muck", "Eldrazi Confluence", "Reckless Blaze", "Divergent Growth", "Mana Flare", "Pyre Rhymer // Molten Tide",
   "Ingenious Mastery", "Erestor of the Council", "Ant-Man's Army", "The Third Doctor", "Tireless Provisioner", "Tempting Contract", "Song of Eärendil", "Spiked Pit Trap", "Smoke Spirits' Aid", "Jolene, the Plunder Queen", "Beamsaw Prospector", "Divert Disaster", "Caravan Vigil", "Druid of the Emerald Grove", "Omenpath Journey", "Piracy", "Marching Duodrone", "Thran Spider", "Prismari Command", "Gonti, Night Minister", "Bilbo's Gambit", "Academy Manufactor", "Kibo, Uktabi Prince", "Cityscape Leveler", "Emergency Eject", "Vazi, Keen Negotiator", "Generous Plunderer", "Bilbo, Fellow Conspirator", "Xorn", "Gleaming Bastion", "Fanatic of Rhonas",
   "Chandra, Heart of Fire", "The Flux", "Terra, Magical Adept", "The Aetherspark", "Irencrag Feat", "Avatar Roku, Firebender", "Orcish Lumberjack", "Goblin Clearcutter",
-  "Shang-Chi, Master of Kung Fu", "Valleymaker", "Unclaimed Territory", "Gilded Lotus", "Radiant Lotus", "Axebane Guardian", "Blaster Hulk", "Open the Omenpaths"];
+  "Shang-Chi, Master of Kung Fu", "Valleymaker", "Unclaimed Territory", "Gilded Lotus", "Radiant Lotus", "Axebane Guardian", "Blaster Hulk", "Open the Omenpaths", "Pili-Pala", "Millikin", "Oasis Ritualist", "Helga, Skittish Seer"];
 const out: Record<string, unknown> = {};
 for (const n of NAMES) {
   const card: any = await store.cards.findOne({ name: n } as never) ?? await store.cards.findOne({ name: new RegExp("^" + n + " //") } as never);

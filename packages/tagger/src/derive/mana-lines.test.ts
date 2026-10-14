@@ -23,7 +23,7 @@ const only = (name: string, source?: ManaLine["source"]): ManaLine => {
   expect(ls, `${name} lines`).toHaveLength(1);
   return ls[0]!;
 };
-const FREE_TAP = { mana: 0, tap: true, sacrificeSelf: false, sacrificeOther: false, life: 0, counters: null, tapOther: false, other: [] };
+const FREE_TAP = { mana: 0, tap: true, sacrificeSelf: false, sacrificeOther: false, life: 0, counters: null, tapOther: false, loyalty: null, consumes: [], other: [] };
 
 describe("tap abilities: cost, colours and amount", () => {
   it("Sol Ring taps for two colourless, free", () => {
@@ -62,7 +62,7 @@ describe("a cost the segmenter did not split", () => {
   it("Aether Hub's second line pays {E} beside the tap", () => {
     const [plain, energy] = linesOf("Aether Hub");
     expect(plain).toMatchObject({ colourless: 1, cost: { other: [] } });
-    expect(energy).toMatchObject({ anyColour: "any", cost: { tap: true, other: ["Pay {E}"] } });
+    expect(energy).toMatchObject({ anyColour: "any", cost: { tap: true, other: ["Pay {E}"], consumes: ["energy"] } });
   });
 });
 
@@ -74,7 +74,7 @@ describe("restricted mana", () => {
   it("Omen Hawker: {C}{U} that only activates abilities", () => {
     const l = only("Omen Hawker");
     expect(l).toMatchObject({ colours: ["U"], colourless: 1, amount: { fixed: 2, scales: null } });
-    expect(l.restriction).toEqual({ spend: "to activate abilities" });
+    expect(l.restriction).toEqual({ spend: "to activate abilities", minManaValue: null });
   });
   it("Cavern of Souls: the coloured line spends on the chosen type; Ancient Ziggurat on creature spells", () => {
     const [plain, coloured] = linesOf("Cavern of Souls");
@@ -87,7 +87,7 @@ describe("restricted mana", () => {
 describe("what using the line consumes", () => {
   it("Phyrexian Altar sacrifices something else, not itself, and does not tap", () => {
     expect(only("Phyrexian Altar")).toMatchObject({ source: "activated", repeats: "repeatable", anyColour: "any",
-      cost: { mana: 0, tap: false, sacrificeSelf: false, sacrificeOther: true, life: 0, counters: null, tapOther: false, other: [] } });
+      cost: { mana: 0, tap: false, sacrificeSelf: false, sacrificeOther: true, life: 0, counters: null, tapOther: false, loyalty: null, consumes: [], other: [] } });
   });
   it("Priest of Forgotten Gods taps and sacrifices two others for {B}{B}", () => {
     expect(only("Priest of Forgotten Gods")).toMatchObject({ source: "activated", colours: ["B"], amount: { fixed: 2, scales: null },
@@ -96,7 +96,7 @@ describe("what using the line consumes", () => {
   it("Cryptic Trilobite pays with a counter, and the mana only activates abilities", () => {
     const l = only("Cryptic Trilobite");
     expect(l).toMatchObject({ colourless: 2, repeats: "repeatable", cost: { mana: 0, tap: false, counters: "remove", tapOther: false, other: [] } });
-    expect(l.restriction).toEqual({ spend: "to activate abilities" });
+    expect(l.restriction).toEqual({ spend: "to activate abilities", minManaValue: null });
   });
   it("Lotus Petal sacrifices itself: a one-shot", () => {
     expect(only("Lotus Petal")).toMatchObject({ cost: { tap: true, sacrificeSelf: true, sacrificeOther: false }, repeats: "once" });
@@ -136,41 +136,42 @@ describe("amounts and gates the goldfish reads (DERIVE_VERSION 302)", () => {
 
 describe("what fires a trigger line (DERIVE_VERSION 302)", () => {
   it("Lotus Cobra is landfall: `enters` on a land you control", () => {
-    expect(only("Lotus Cobra", "trigger")).toMatchObject({ trigger: "enters", triggerSubject: "a land you control", anyColour: "any", amount: { fixed: 1, scales: null } });
+    expect(only("Lotus Cobra", "trigger")).toMatchObject({ trigger: { event: "enters", text: "a land you control", subject: { control: "you", type: "land" } }, anyColour: "any", amount: { fixed: 1, scales: null } });
   });
   it("Burning-Tree Emissary's enters trigger is `enters` on the card itself, not landfall", () => {
     const l = only("Burning-Tree Emissary", "trigger");
-    expect(l.trigger).toBe("enters");
-    expect(l.triggerSubject).not.toMatch(/\bland\b/);
+    expect(l.trigger?.event).toBe("enters");
+    expect(l.trigger?.subject).toMatchObject({ self: true });
+    expect(l.trigger?.subject?.type).not.toBe("land");
   });
   it("a beginning-of-phase adder names the phase: Hulking Raptor and Eladamri's Vineyard `main-phase`", () => {
-    expect(only("Hulking Raptor", "trigger")).toMatchObject({ trigger: "main-phase", amount: { fixed: 2, scales: null }, gate: null, restriction: null });
-    expect(only("Eladamri's Vineyard", "trigger")).toMatchObject({ trigger: "main-phase", amount: { fixed: 2, scales: null } });
+    expect(only("Hulking Raptor", "trigger")).toMatchObject({ trigger: { event: "main-phase" }, amount: { fixed: 2, scales: null }, gate: null, restriction: null });
+    expect(only("Eladamri's Vineyard", "trigger")).toMatchObject({ trigger: { event: "main-phase" }, amount: { fixed: 2, scales: null } });
   });
   it("Birgi's cast trigger is `cast`", () => {
-    expect(only("Birgi, God of Storytelling", "trigger")).toMatchObject({ trigger: "cast", triggerSubject: "a spell" });
+    expect(only("Birgi, God of Storytelling", "trigger")).toMatchObject({ trigger: { event: "cast", text: "a spell", subject: { type: "spell" } } });
   });
   it("an Aura's line is `tapped-for-mana` on the enchanted land; so is Forsaken Monument's, which is no Aura", () => {
-    expect(only("Wild Growth", "aura-trigger")).toMatchObject({ trigger: "tapped-for-mana", triggerSubject: "enchanted land" });
-    expect(only("Forsaken Monument", "trigger")).toMatchObject({ trigger: "tapped-for-mana" });
+    expect(only("Wild Growth", "aura-trigger")).toMatchObject({ trigger: { event: "tapped-for-mana", text: "enchanted land", subject: { type: "land" } } });
+    expect(only("Forsaken Monument", "trigger")).toMatchObject({ trigger: { event: "tapped-for-mana" } });
   });
   it("only a trigger or aura-trigger line names an event", () => {
     for (const n of ["Sol Ring", "Dark Ritual", "Pitiless Plunderer", "Cultivate", "Chromatic Lantern"]) {
-      for (const l of linesOf(n)) expect([l.source, l.trigger, l.triggerSubject]).toEqual([l.source, null, null]);
+      for (const l of linesOf(n)) expect([l.source, l.trigger]).toEqual([l.source, null]);
     }
   });
   it("Ashling, Rimebound: one add fired by a transform AND the first main phase is named for the phase, and its two mana are read through the restriction sentence", () => {
     const ls = linesOf("Ashling, Rekindled", "trigger");
     expect(ls).toHaveLength(1);
-    expect(ls[0]).toMatchObject({ face: 1, trigger: "main-phase", triggerSubject: "your first main phase", anyColour: "any", amount: { fixed: 2, scales: null },
-      restriction: { spend: "to cast spells with mana value 4 or greater" } });
+    expect(ls[0]).toMatchObject({ face: 1, trigger: { event: "main-phase", text: "your first main phase" }, anyColour: "any", amount: { fixed: 2, scales: null },
+      restriction: { spend: "to cast spells with mana value 4 or greater", minManaValue: 4 } });
   });
   it("a transform trigger alone stays a transform trigger (Alluring Suitor's back)", () => {
-    expect(linesOf("Ashling, Flame Dancer", "trigger").every((l) => l.trigger === "cast" || l.trigger === "copy")).toBe(true);
+    expect(linesOf("Ashling, Flame Dancer", "trigger").every((l) => l.trigger?.event === "cast" || l.trigger?.event === "copy")).toBe(true);
   });
   it("Ashling's two clauses (cast, copy) are one printed add and keep the first event", () => {
     const ls = linesOf("Ashling, Flame Dancer", "trigger");
-    expect(new Set(ls.map((l) => JSON.stringify({ ...l, trigger: null, triggerSubject: null }))).size).toBe(ls.length);
+    expect(new Set(ls.map((l) => JSON.stringify({ ...l, trigger: null }))).size).toBe(ls.length);
   });
 });
 
@@ -469,10 +470,10 @@ describe("an Aura's mana counts only if mana is the card's purpose (owner 2026-1
 
 describe("a planeswalker's starting loyalty rides on its loyalty-cost lines (CR 306.5b, 606.6)", () => {
   it("a mana or fetch line costing loyalty carries the walker's printed loyalty", () => {
-    expect(only("Chandra, Novice Pyromancer", "activated")).toMatchObject({ cost: { other: ["\u22121"] }, startLoyalty: 5 });
-    expect(only("Chandra, Torch of Defiance", "activated")).toMatchObject({ cost: { other: ["+1"] }, startLoyalty: 4 });
-    expect(only("Nissa, Worldwaker", "fetch")).toMatchObject({ cost: { other: ["\u22127"] }, startLoyalty: 3 });
-    expect(linesOf("Nissa, Who Shakes the World", "fetch")[0]).toMatchObject({ cost: { other: ["\u22128"] }, startLoyalty: 5 });
+    expect(only("Chandra, Novice Pyromancer", "activated")).toMatchObject({ cost: { loyalty: -1, other: [] }, startLoyalty: 5 });
+    expect(only("Chandra, Torch of Defiance", "activated")).toMatchObject({ cost: { loyalty: 1, other: [] }, startLoyalty: 4 });
+    expect(only("Nissa, Worldwaker", "fetch")).toMatchObject({ cost: { loyalty: -7, other: [] }, startLoyalty: 3 });
+    expect(linesOf("Nissa, Who Shakes the World", "fetch")[0]).toMatchObject({ cost: { loyalty: -8, other: [] }, startLoyalty: 5 });
     // The BACK face's own loyalty (Arlinn, the Moon's Fury), by face.
     expect(linesOf("Arlinn, the Pack's Hope").find((l) => l.face === 1)).toMatchObject({ startLoyalty: 4 });
   });
@@ -493,15 +494,15 @@ describe("a planeswalker's starting loyalty rides on its loyalty-cost lines (CR 
 describe("a one-turn tap bonus is a tap-bonus line, not a net-0 add (owner 2026-10-13, #1169 2b-2 follow-up)", () => {
   it("High Tide: a one-shot spell whose line is the Island tap bonus for the turn", () => {
     const l = only("High Tide");
-    expect(l).toMatchObject({ source: "one-shot-spell", trigger: "tapped-for-mana", triggerSubject: "an Island", timing: "on-trigger", untilEndOfTurn: true,
+    expect(l).toMatchObject({ source: "one-shot-spell", trigger: { event: "tapped-for-mana", text: "an Island", subject: { subtype: "island" } }, timing: "on-trigger", untilEndOfTurn: true,
       colours: ["U"], amount: { fixed: 1, scales: null }, cost: { mana: 1 } });
     expect(tagsOf("High Tide").isOneShot).toBe(true);
   });
   it("Bubbling Muck reads the same, for Swamps", () => {
-    expect(only("Bubbling Muck")).toMatchObject({ source: "one-shot-spell", trigger: "tapped-for-mana", triggerSubject: "a Swamp", untilEndOfTurn: true, colours: ["B"] });
+    expect(only("Bubbling Muck")).toMatchObject({ source: "one-shot-spell", trigger: { event: "tapped-for-mana", text: "a Swamp" }, untilEndOfTurn: true, colours: ["B"] });
   });
   it("Molten Tide (Pyre Rhymer // Molten Tide): the add the model filed under effectActions, which the canonical record drops, is read off the printed text", () => {
-    expect(only("Pyre Rhymer")).toMatchObject({ face: 1, source: "one-shot-spell", trigger: "tapped-for-mana", triggerSubject: "a Mountain", timing: "on-trigger", untilEndOfTurn: true,
+    expect(only("Pyre Rhymer")).toMatchObject({ face: 1, source: "one-shot-spell", trigger: { event: "tapped-for-mana", text: "a Mountain" }, timing: "on-trigger", untilEndOfTurn: true,
       colours: ["R"], amount: { fixed: 1, scales: null }, cost: { mana: 1 }, net: 0, gate: null });
   });
   it("a spell whose own text is not the tap bonus gets no line from the fallback (the front face's Prowess and prepare)", () => {
@@ -651,5 +652,33 @@ describe("Ability.amount and ManaLine.amount are one reading (DERIVE_VERSION 311
 describe("an energy cost is no mana amount (DERIVE_VERSION 311)", () => {
   it("Blaster Hulk's 'pay eight {E}' leaves the ability without an amount", () => {
     expect((tagsOf("Blaster Hulk").abilities ?? []).filter((a) => a.effect.kind === "mana-generation").map((a) => a.amount)).toEqual([undefined]);
+  });
+});
+
+/** STRUCTURED COST / RESTRICTION / TRIGGER (#1193, finding 5, DERIVE_VERSION 312): derive parses once what the matcher used to re-parse from verbatim strings. */
+describe("a mana line states its cost, restriction and trigger as fields (DERIVE_VERSION 312)", () => {
+  it("Pili-Pala's {Q} (untap this creature) consumes nothing; its text stays in `other`", () => {
+    const l = linesOf("Pili-Pala").find((x) => x.cost.other.includes("{Q}"))!;
+    expect(l).toBeDefined();
+    expect(l.cost).toMatchObject({ other: ["{Q}"], consumes: [], loyalty: null });
+  });
+  it("energy, a discard and an exile from a graveyard are consumed; exert and mill are not", () => {
+    expect(linesOf("Aether Hub")[1]!.cost).toMatchObject({ other: ["Pay {E}"], consumes: ["energy"] });
+    expect(linesOf("Oasis Ritualist").some((l) => l.cost.other.some((o) => /^exert/i.test(o)) && l.cost.consumes.length === 0)).toBe(true);
+    expect(linesOf("Millikin")[0]!.cost.consumes).toEqual([]);
+  });
+  it("a loyalty cost is `cost.loyalty`, signed, and is not in `other`", () => {
+    expect(only("Chandra, Torch of Defiance", "activated").cost).toMatchObject({ loyalty: 1, other: [], consumes: [] });
+    expect(only("Nissa, Worldwaker", "fetch").cost).toMatchObject({ loyalty: -7, other: [] });
+    expect(only("Sol Ring").cost.loyalty).toBeNull();
+  });
+  it("a mana-value floor is `restriction.minManaValue`; the same floor with a rider, and any other limit, is null", () => {
+    expect(only("Ashling, Rekindled", "trigger").restriction).toMatchObject({ minManaValue: 4 });
+    expect(linesOf("Helga, Skittish Seer")[0]!.restriction).toMatchObject({ minManaValue: null });
+    expect(only("Smokebraider").restriction).toMatchObject({ minManaValue: null });
+  });
+  it("a trigger's subject is a SubjectFilter: landfall is a land you control, a card's own enter is `self`", () => {
+    expect(only("Lotus Cobra", "trigger").trigger!.subject).toEqual({ control: "you", token: null, type: "land" });
+    expect(only("Burning-Tree Emissary", "trigger").trigger!.subject).toMatchObject({ self: true });
   });
 });

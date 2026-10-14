@@ -21,10 +21,12 @@
  *  ability keeps the clause's own text, or nothing. `research/mana/amount-agreement.ts` measures the agreement.  */
 import type { ClauseRecord } from "../canonicalize.js";
 import type {
-  Ability, Characteristics, LandFetch, ManaAnyColour, ManaGate, ManaLine, ManaLineSource, StaticFixer, SubjectFilter,
+  Ability, Characteristics, ConsumedCost, LandFetch, ManaAnyColour, ManaGate, ManaLine, ManaLineSource, StaticFixer, SubjectFilter,
 } from "../schema.js";
 import { isEnergyObject } from "./effect-kind.js";
 import { parseGate } from "./gate.js";
+import { isSelfSubject } from "./self-reference.js";
+import { parseSubject } from "./subject.js";
 
 const WUBRG = ["W", "U", "B", "R", "G"] as const;
 const NUMBER_WORD: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
@@ -65,13 +67,15 @@ export interface ManaResult {
   suspendOnly?: true;
 }
 
-/** A LOYALTY COST as the cost piece stores it: "+2", "0", "−1" (U+2212, the printed minus) -- "−X" is a cost no loyalty can be compared with. */
-const LOYALTY_COST = /^(?:\+\d+|0|[\u2212-]\d+)$/;
+/** A LOYALTY COST as the printed cost piece reads: "+2", "0", "−1" (U+2212, the printed minus) -- "−X" is a cost no loyalty can be compared with, so it is none.
+ *  THE ONE PARSE of it in the engine's mana lines: the result is `ManaLine.cost.loyalty`. */
+const LOYALTY_COST = /^(\+\d+|0|[\u2212-]\d+)$/;
+const loyaltyOf = (piece: string): number | null => (LOYALTY_COST.test(piece) ? Number(piece.replace("\u2212", "-")) : null);
 /** THE LOYALTY-COST MANA LINES THAT CARRY NO STARTING LOYALTY: a walker whose loyalty the card document does not give (an ingest that predates it, "X" or "*" printed). A
  *  consumer reads a negative one as unusable (`loyaltyActivations`), so each is a source silently dropped -- `derive-corpus` prints the count (expected 0) and a test fails
  *  on one in the fixtures. */
 export const unpricedLoyaltyLines = (lines: readonly ManaLine[] | undefined): ManaLine[] =>
-  (lines ?? []).filter((l) => l.cost.other.length === 1 && LOYALTY_COST.test(l.cost.other[0]!) && l.startLoyalty === undefined);
+  (lines ?? []).filter((l) => l.cost.loyalty !== null && l.cost.other.length === 0 && l.startLoyalty === undefined);
 
 /** THE AURA IS REMOVAL, not ramp (owner, 2026-10-13: "mana counts only if mana is the card's purpose"): it enchants a permanent an opponent controls
  *  (Honest Work: "Enchant creature an opponent controls") or takes the permanent's card types away (Imprisoned in the Moon: "loses all other card types and
@@ -101,7 +105,7 @@ export function manaValueOf(cost: string | undefined): number {
 // ---------------------------------------------------------------------------------------------------------------
 
 type Cost = ManaLine["cost"];
-const noCost = (): Cost => ({ mana: 0, tap: false, sacrificeSelf: false, sacrificeOther: false, life: 0, counters: null, tapOther: false, other: [] });
+const noCost = (): Cost => ({ mana: 0, tap: false, sacrificeSelf: false, sacrificeOther: false, life: 0, counters: null, tapOther: false, loyalty: null, consumes: [], other: [] });
 
 /** The pieces of an activation cost, comma-separated outside braces: "{1}, {T}", "{T}, Sacrifice two other
  *  creatures", "Pay 1 life". Mana symbols hold no comma, so a plain split is right. */
@@ -116,7 +120,7 @@ export function parseCost(cost: string | undefined, selfNames: readonly string[]
       for (const m of piece.matchAll(/\{([^}]+)\}/g)) {
         const s = m[1]!.toUpperCase();
         if (s === "T") out.tap = true;
-        else if (s === "Q" || s === "E") out.other.push(`{${s}}`);
+        else if (s === "Q" || s === "E") { out.other.push(`{${s}}`); const used = consumedBy(`{${s}}`); if (used !== null) out.consumes.push(used); }
         else out.mana += /^\d+$/.test(s) ? Number(s) : s === "X" ? 0 : 1;
       }
       continue;
@@ -144,9 +148,29 @@ export function parseCost(cost: string | undefined, selfNames: readonly string[]
     const counter = /^(remove|put)\b[^.]*\bcounters?\b/i.exec(piece);
     if (counter) { out.counters = counter[1]!.toLowerCase() as "remove" | "put"; continue; }
     if (/^tap (?:an?|one|two|three|\d+|x|any number of|target)\b[^.]*\buntapped\b/i.test(piece)) { out.tapOther = true; continue; }
+    const loyalty = loyaltyOf(piece);
+    if (loyalty !== null) { out.loyalty = loyalty; continue; }
     out.other.push(piece);
+    const used = consumedBy(piece);
+    if (used !== null) out.consumes.push(used);
   }
   return out;
+}
+
+/** WHAT A COST PIECE USES UP, or null when it uses nothing (`ManaLine.cost.consumes`). The corpus's whole `cost.other` (DERIVE 311, 2026-10-14, 32 distinct values after digits are
+ *  folded): `{Q}` and "Untap a tapped land an opponent controls" untap (Pili-Pala, Benthic Explorers), "Exert this creature/land" skips an untap (Arena of Glory, Oasis Ritualist) and
+ *  "Mill a card" mills yourself (Millikin): none of them is a resource the deck plays. "Pay {E}", "Discard ...", "Exile ... from your graveyard/hand", "Return ... to its owner's hand",
+ *  "Forage" and "Collect evidence N" are resources. CEILING: any other piece ("convert Megatron", "Heir to Blackblade", "Put a card ... from exile into that player's graveyard",
+ *  "have defending player activate ...") is `unknown` and counted as consumed: refused, never guessed. */
+function consumedBy(piece: string): ConsumedCost | null {
+  if (/^(?:exert|untap|mill)\b/i.test(piece) || /^\{Q\}$/i.test(piece)) return null;
+  if (/^(?:pay\s+)?(?:\{E\})+$/i.test(piece)) return "energy";
+  if (/^discard\b/i.test(piece)) return "discard";
+  if (/^exile\b/i.test(piece)) return "exile";
+  if (/^return\b[^.]*\bhand$/i.test(piece)) return "return-to-hand";
+  if (/^forage\b/i.test(piece)) return "forage";
+  if (/^collect evidence\b/i.test(piece)) return "collect-evidence";
+  return "unknown";
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -248,7 +272,10 @@ function restrictionOf(texts: readonly string[]): ManaLine["restriction"] {
     if (!raw) continue;
     const spend = raw.replace(/\s+/g, " ").replace(/,? and (?:that|it|those)\b.*$/i, "").trim().toLowerCase();
     const type = /\bof the chosen type\b/.test(spend) ? "chosen" : [...spend.matchAll(/\b([a-z'-]+)\s+spells?\b/g)].map((m) => m[1]!).find((w) => !NOT_A_TYPE.has(w));
-    return type ? { spend, typeName: type } : { spend };
+    // The floor is the one printed shape; the same floor with a rider ("... or spells with {X} in their mana costs") is a limit on what the mana is FOR, as every other.
+    const floor = /^to cast spells with mana value (\d+) or greater$/.exec(spend);
+    const minManaValue = floor ? Number(floor[1]) : null;
+    return type ? { spend, typeName: type, minManaValue } : { spend, minManaValue };
   }
   return null;
 }
@@ -288,17 +315,22 @@ const gateOf = (text: string, sentence: string, thresholdAbility: boolean): stri
 /** A GAME-STATE REQUIREMENT THE ABILITY WORD CARRIES (`Ability.requires`): "Max speed — {T}: Add {C}{C}" (Muraganda Raceway) holds only at speed 4, so the line is gated
  *  ("speed 4"), never credited as guaranteed. The segmenter strips the word from the clause text, which is why it is not in `gateOf`'s reach. */
 const requiresGate = (ability: Ability | undefined): string | null => ability?.requires ? `${ability.requires.marker} ${ability.requires.min}` : null;
-/** WHAT FIRES A TRIGGER LINE (`ManaLine.trigger`, `triggerSubject`): the clause's own event. ONE EXCEPTION, for a printed add the model split across two
+/** WHAT FIRES A TRIGGER LINE (`ManaLine.trigger`): the clause's own event. ONE EXCEPTION, for a printed add the model split across two
  *  events and kept on the first: "Whenever this creature transforms into Ashling, Rimebound AND AT THE BEGINNING OF YOUR FIRST MAIN PHASE, add two mana
  *  of any one color" arrives as a transform clause carrying the add and a main-phase clause carrying only the flip, so the add would be named for the one
  *  flip. The beginning of a phase recurs, so the line is named for it. CEILING: read off the clause text, for the one printed shape ("... and at the
  *  beginning of <your ...> <upkeep | end step | main phase>, add"); a card printing it otherwise keeps its first event. */
 const AND_AT_PHASE = /\band at the beginning of ((?:your|each|the)\b[^,]*?\b(upkeep|end step|main phase)\b[^,]*),\s*(?:you may )?add\b/i;
-const firedBy = (trigger: { event?: string; subject?: string } | undefined, text: string): Pick<ManaLine, "trigger" | "triggerSubject"> => {
+/** A TRIGGER AS A LINE STATES IT: the event, the subject text, and the subject read once (`parseSubject`, `self: true` when it names the card). */
+const triggerOf = (event: string, text: string | null, cardName: string): NonNullable<ManaLine["trigger"]> => ({
+  event, text,
+  subject: text === null ? null : { ...parseSubject(text), ...(isSelfSubject(text, cardName) ? { self: true as const } : {}) },
+});
+const firedBy = (trigger: { event?: string; subject?: string } | undefined, text: string, cardName: string): Pick<ManaLine, "trigger"> => {
   const phase = trigger?.event && !["main-phase", "upkeep", "end-step"].includes(trigger.event) ? AND_AT_PHASE.exec(text) : null;
-  if (!phase) return { trigger: trigger?.event ?? null, triggerSubject: trigger?.subject ?? null };
+  if (!phase) return { trigger: trigger?.event ? triggerOf(trigger.event, trigger.subject ?? null, cardName) : null };
   const event = phase[2]!.toLowerCase() === "main phase" ? "main-phase" : phase[2]!.toLowerCase() === "end step" ? "end-step" : "upkeep";
-  return { trigger: event, triggerSubject: phase[1]!.toLowerCase() };
+  return { trigger: triggerOf(event, phase[1]!.toLowerCase(), cardName) };
 };
 /** "As long as <condition>, this creature has that ability" (Honored Hierarch, Mul Daya Channelers): the grant's condition.
  *  "FOR as long as <duration>" (Ultima, Kitesail Larcenist) is a duration of a grant, not a condition on the line: excluded. */
@@ -323,7 +355,8 @@ function antecedentCost(text: string, what: RegExp, cost: Cost, selfNames: reado
   const act = (/\b(?:you|they|that player) may (.+)$/i.exec(tail)?.[1] ?? tail.replace(/^(?:when|whenever|at the beginning of)\b[^,]*,\s*/i, "")).trim();
   const got = parseCost(act, selfNames);
   cost.mana += got.mana; cost.tap ||= got.tap; cost.life += got.life; cost.sacrificeSelf ||= got.sacrificeSelf;
-  cost.sacrificeOther ||= got.sacrificeOther; cost.tapOther ||= got.tapOther; cost.counters ??= got.counters; cost.other.push(...got.other);
+  cost.sacrificeOther ||= got.sacrificeOther; cost.tapOther ||= got.tapOther; cost.counters ??= got.counters; cost.other.push(...got.other); cost.consumes.push(...got.consumes);
+  if (got.loyalty !== null) cost.loyalty = got.loyalty;
   return split ? split[1]!.trim().toLowerCase() : null;
 }
 
@@ -359,7 +392,7 @@ const DELAYED = /\b(?:at the beginning of|on) (?:your |the )?next [^,.]*,?[^.]*\
 const MANA_TOKENS: Record<string, Pick<ManaLine, "colours" | "colourless" | "anyColour" | "restriction">> = {
   treasure: { colours: [...WUBRG], colourless: 0, anyColour: "any", restriction: null },
   gold: { colours: [...WUBRG], colourless: 0, anyColour: "any", restriction: null },
-  powerstone: { colours: [], colourless: 1, anyColour: null, restriction: { spend: "can't be spent to cast a nonartifact spell", typeName: "artifact" } },
+  powerstone: { colours: [], colourless: 1, anyColour: null, restriction: { spend: "can't be spent to cast a nonartifact spell", typeName: "artifact", minManaValue: null } },
   "eldrazi-spawn": { colours: [], colourless: 1, anyColour: null, restriction: null },
   "eldrazi-scion": { colours: [], colourless: 1, anyColour: null, restriction: null },
   // A LANDER IS A LAND-FETCH TOKEN, not a mana one (owner 2026-10-13, #1190: "a land-fetch token like Treasure is a mana token; its makers keep the Ramp role"): "{2}, {T}, Sacrifice this token:
@@ -576,12 +609,12 @@ export function deriveMana(input: ManaInput): ManaResult {
         restriction: restrictionOf(texts),
         timing: source === "trigger" || source === "aura-trigger" || oneTurn ? "on-trigger" : DELAYED.test(text) ? "next-turn" : "now",
         producesToken: tokenGrant ? "granted" : null,
-        ...(source === "trigger" || source === "aura-trigger" ? firedBy(trigger, text) : oneTurn ? { trigger: "tapped-for-mana", triggerSubject: oneTurn[1]!.trim(), untilEndOfTurn: true as const } : { trigger: null, triggerSubject: null }),
+        ...(source === "trigger" || source === "aura-trigger" ? firedBy(trigger, text, input.name ?? "") : oneTurn ? { trigger: triggerOf("tapped-for-mana", oneTurn[1]!.trim(), input.name ?? ""), untilEndOfTurn: true as const } : { trigger: null }),
       };
       // ONE PRINTED ADD, TWO CLAUSES: "Whenever you cast or copy ..." (Ashling) arrives as a cast clause and a copy clause, each with the
       // same add. An identical trigger line is the same add read twice. CEILING: a card printing two identical trigger adds would merge; the
-      // merged line keeps the first clause's `trigger` and `triggerSubject`.
-      const sameAdd = (l: ManaLine): boolean => JSON.stringify({ ...l, trigger: null, triggerSubject: null }) === JSON.stringify({ ...line, trigger: null, triggerSubject: null });
+      // merged line keeps the first clause's `trigger`.
+      const sameAdd = (l: ManaLine): boolean => JSON.stringify({ ...l, trigger: null }) === JSON.stringify({ ...line, trigger: null });
       if ((source === "trigger" || source === "aura-trigger") && lines.some(sameAdd)) continue;
       lines.push(line);
     }
@@ -609,7 +642,7 @@ export function deriveMana(input: ManaInput): ManaResult {
         face, source: "token-maker", repeats: a.repeats ?? null, cost, ...make, unread: false,
         // Each token is one use of mana when it is spent; a token count that scales is unknown.
         amount: tokens !== null ? { fixed: tokens, scales: null } : { fixed: null, scales: a.amount ?? null },
-        net: (tokens ?? 1) - cost.mana, gate: null, timing: "now", producesToken: key, trigger: null, triggerSubject: null,
+        net: (tokens ?? 1) - cost.mana, gate: null, timing: "now", producesToken: key, trigger: null,
       });
       continue;
     }
@@ -667,7 +700,7 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (colours.length === 0 || (Array.isArray(subject.type) ? subject.type : [subject.type]).includes("creature")) continue;
       lines.push({
         face, source: "fetch", repeats: a.repeats ?? null, cost, colours, colourless: 0, anyColour: null, unread: false,
-        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: typedGate(afterCost ?? (laterGate !== undefined ? laterGate : fetchGate(clauseText))), restriction: null, timing: "now", producesToken: null, trigger: null, triggerSubject: null,
+        amount: { fixed: lands, scales: null }, net: lands - cost.mana, gate: typedGate(afterCost ?? (laterGate !== undefined ? laterGate : fetchGate(clauseText))), restriction: null, timing: "now", producesToken: null, trigger: null,
       });
       fetchKind = a.kind === "on-cast" || fetchKind === "spell" ? "spell" : "permanent";
       fetchTapped = fetchTapped && tapped;
@@ -700,7 +733,7 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (c.abilityType === "spell") cost.mana = faceMV(face);
       lines.push({
         face, source: "token-maker", repeats: own?.repeats ?? null, cost, ...MANA_TOKENS[key]!, unread: false,
-        amount: { fixed: 1, scales: null }, net: 1 - cost.mana, gate: null, timing: "now", producesToken: key, trigger: null, triggerSubject: null,
+        amount: { fixed: 1, scales: null }, net: 1 - cost.mana, gate: null, timing: "now", producesToken: key, trigger: null,
       });
     }
   }
@@ -709,7 +742,7 @@ export function deriveMana(input: ManaInput): ManaResult {
   // A loyalty ability can be activated the turn the walker is cast only if its printed loyalty covers the cost (CR 606.6), so the consumer needs both.
   for (const l of lines) {
     const n = input.startLoyalty?.[l.face];
-    if (n !== null && n !== undefined && l.cost.other.length === 1 && LOYALTY_COST.test(l.cost.other[0]!)) l.startLoyalty = n;
+    if (n !== null && n !== undefined && l.cost.loyalty !== null && l.cost.other.length === 0) l.startLoyalty = n;
   }
 
   // --- the card-level facts ----------------------------------------------------------------------------------
