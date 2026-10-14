@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { deriveInputOf } from "../derive-input.js";
 import { deriveCardTags } from "./derive.js";
 import type { CardTags, ManaLine } from "../schema.js";
-import { unpricedLoyaltyLines } from "./mana-lines.js";
+import { replacementAddedToken, unpricedLoyaltyLines } from "./mana-lines.js";
 import fixtures from "./mana-lines.fixtures.json" with { type: "json" };
 
 const WUBRG = ["W", "U", "B", "R", "G"];
@@ -555,6 +555,15 @@ describe("token makers: the Treasure a card really makes, and the one it does no
     expect(tokens("Xorn")).toEqual([]);
     expect(tokens("Jolene, the Plunder Queen")).toEqual(["treasure"]);
     expect(linesOf("Jolene, the Plunder Queen", "token-maker")).toHaveLength(1);
+  });
+  it("SYNTHETIC: a Treasure doubler with qualifiers is still a doubler; a replacement over every token that adds a Treasure is a maker; the passive template is read", () => {
+    const oneOf = (t: string) => replacementAddedToken(t);
+    expect(oneOf("If you would create one or more Treasure tokens under your control, instead create those tokens plus an additional Treasure token.")).toBeNull();
+    expect(oneOf("If you would create one or more tapped Treasure tokens, instead create that many tapped Treasure tokens plus an additional Treasure token.")).toBeNull();
+    expect(oneOf("If one or more Treasure tokens would be created under your control, those tokens plus an additional Treasure token are created instead.")).toBeNull();
+    expect(oneOf("If you would create one or more tokens, instead create those tokens plus an additional Treasure token.")).toBe("treasure");
+    expect(oneOf("If one or more tokens would be created under your control, those tokens plus an additional Treasure token are created instead.")).toBe("treasure");
+    expect(oneOf("If you would create one or more Food tokens under your control, instead create those tokens plus an additional Treasure token.")).toBe("treasure");
   });
   it("a Lander token is a land-fetch token, the way a Treasure is a mana token (Beamsaw Prospector, Divert Disaster)", () => {
     expect(only("Beamsaw Prospector", "token-maker")).toMatchObject({ producesToken: "lander", source: "token-maker", unread: false, colourless: 0 });

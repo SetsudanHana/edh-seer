@@ -371,22 +371,37 @@ const REPLACES_CREATION = /\bif you would create\b|\binstead create\b|\bthose to
 /** THE MANA TOKEN A CREATION REPLACEMENT ADDS TO THE CREATION OF A DIFFERENT TOKEN (owner 2026-10-14, #1197): "If you would create a Food token, instead create a Food token and a Treasure token" (Bilbo,
  *  Fellow Conspirator), "If you would create a Clue, Food, or Treasure token, instead create one of each" (Academy Manufactor: a Clue or a Food made yields a Treasure). A doubler of the Treasure you
  *  are already making ("instead create those tokens plus an additional Treasure token", Xorn; Jolene's second sentence) makes none without another maker, and is no line.
- *  CEILING: the replaced set is read as its words minus the quantifiers; "one of each" (Manufactor) adds every token the replaced set names, so a Treasure in the replaced set counts as added only when
- *  it is named with another token. A replacement over ALL tokens ("those tokens plus an additional Treasure") would read as a maker; no card in the corpus is one. */
-const REPLACED_FILLER = new Set(["if", "you", "would", "create", "a", "an", "one", "or", "more", "token", "tokens", "and", "of", "each", "the"]);
-function replacementAddedToken(text: string): string | null {
+ *  Both templates are read: the active "If you would create X, instead create ..." and the passive "If one or more X would be created ..., those tokens plus an additional Y token are created instead".
+ *  The replaced part is what stands before its first "token(s)": a token NAME in it that is not the mana token (REPLACED_TOKEN_NAMES, a positive list) makes the added mana token a maker; no name at all is
+ *  every token ("one or more tokens", Tippy-Toe's shape), which also makes it one; the mana token alone is a doubler. Qualifiers after "tokens" ("under your control") are never read.
+ *  CEILING: a replaced token that is a creature type or any name outside REPLACED_TOKEN_NAMES (Soldier, Thopter) is not recognised, so a replacement over it adds no line; "one of each" adds every token named. */
+const REPLACED_FILLER = new Set(["if", "you", "would", "create", "be", "created", "a", "an", "one", "or", "more", "and", "of", "each", "the", "tapped", "untapped", "that", "many", "additional", "another"]);
+const REPLACED_TOKEN_NAMES = new Set(["clue", "food", "blood", "map", "junk", "incubator", "role", "shard", "powerstone", "gold", "treasure", "lander", "mutagen", "eldrazi", "spawn", "scion"]);
+const ADDED_MANA_TOKENS = ["treasure", "gold", "powerstone"] as const;
+export function replacementAddedToken(text: string): string | null {
   const flat = text.replace(/\([^)]*\)/g, " ").toLowerCase();
   const at = flat.indexOf("instead create");
   const head = flat.indexOf("if you would create");
-  if (at < 0 || head < 0 || head > at) return null;
-  const replaced = flat.slice(head, at).split(/[^a-z]+/).filter((w) => w !== "" && !REPLACED_FILLER.has(w));
-  // "instead create one of each" (Academy Manufactor) adds every token the replaced set names.
-  const added = /\bone of each\b/.test(flat.slice(at)) ? flat.slice(head, at) : flat.slice(at);
-  for (const [word, key] of [["treasure", "treasure"], ["gold", "gold"], ["powerstone", "powerstone"]] as const) {
-    if (!new RegExp(`\\b${word}\\b`).test(added)) continue;
-    const others = replaced.filter((w) => w !== word);
-    // Replaced = the mana token alone (a doubler) is none; any other token named there, or a replacement over tokens in general, adds it.
-    if (others.length > 0 || !replaced.includes(word)) return key;
+  let replacedText: string;
+  let added: string;
+  if (at >= 0 && head >= 0 && head <= at) {
+    replacedText = flat.slice(head, at);
+    // "instead create one of each" (Academy Manufactor) adds every token the replaced set names.
+    added = /\bone of each\b/.test(flat.slice(at)) ? replacedText : flat.slice(at);
+  } else {
+    const would = flat.indexOf("would be created");
+    const plus = flat.indexOf("those tokens plus");
+    if (would < 0 || plus < would) return null;
+    replacedText = flat.slice(0, would);
+    added = flat.slice(plus);
+  }
+  const firstToken = replacedText.indexOf("token");
+  const named = (firstToken < 0 ? replacedText : replacedText.slice(0, firstToken)).split(/[^a-z]+/).filter((w) => w !== "" && !REPLACED_FILLER.has(w));
+  for (const key of ADDED_MANA_TOKENS) {
+    if (!new RegExp(`\\b${key}\\b`).test(added)) continue;
+    const others = named.filter((w) => w !== key && REPLACED_TOKEN_NAMES.has(w));
+    // The mana token alone is a doubler (none); another token named, or every token (nothing named), adds it. An unrecognised name is none.
+    if (others.length > 0 || named.length === 0) return key;
   }
   return null;
 }
