@@ -151,7 +151,7 @@ const noCards = { build: {}, answers: {}, synergy: {}, plan: [], pairs: [], rout
 const withLands = { ...report, deckMath: { ...report.deckMath, lands: { actual: 30, target: 37, avgManaValue: 3 } } } as typeof report;
 
 test("a build finding lists its cards under its own row", () => {
-  render(<MemoryRouter><Findings report={report} suggestions={{ state: "ready", value: { ...noCards, build: { Interaction: [chaosWarp] } } }} /></MemoryRouter>);
+  render(<MemoryRouter><Findings report={report} suggestions={{ state: "ready", value: { ...noCards, build: { interaction: [chaosWarp] } } }} /></MemoryRouter>);
   const row = screen.getByText(/short on interaction/).closest("li")!;
   expect(within(row).getByRole("link", { name: "Chaos Warp" })).toBeInTheDocument();
   expect(within(row).getByText("Cards that fit")).toBeInTheDocument();

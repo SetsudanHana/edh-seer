@@ -977,7 +977,7 @@ export function analyzeDeckStructured(
     ...strategies.filter((s) => s.name === "reanimator" || s.name === "aristocrats").map((s) => s.confidence),
   );
   const {
-    buildScore, buildCategories, buildParents, template, suggestions, answerCoverage: coverage, rampResilience,
+    buildScore, buildCategories, buildParents, template, suggestions, suggestionByKey, answerCoverage: coverage, rampResilience,
     landsImpact, answersImpact,
   } =
     computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability, strategies);
@@ -1149,6 +1149,7 @@ export function analyzeDeckStructured(
     landsImpact,
     answersImpact,
     suggestions,
+    suggestionByKey,
     answerCoverage: coverage,
     rampResilience,
     cutList,

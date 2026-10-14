@@ -622,6 +622,8 @@ export interface DeckReport {
   answersImpact?: number;
   /** Concrete, few, actionable BUILD gap suggestions in the deck's own language. Matcher-only. */
   suggestions?: string[];
+  /** The parent-gap sentences of `suggestions` by role-parent key (#1194). */
+  suggestionByKey?: Record<string, string>;
   /** The coverage multiplier `Interaction` was scored with, its per-class weights, and the
    *  graveyard vulnerability it was built from. Present so the panel and a test can say WHY the
    *  number is what it is rather than trust it. Matcher-only, optional for the same reason every

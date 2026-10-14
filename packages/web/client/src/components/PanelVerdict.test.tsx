@@ -11,6 +11,7 @@ const gisa = {
   ...SAMPLE.report,
   buildParents: [{ name: "Card advantage", key: "consistency", count: 5, target: 8, impact: 9, leaves: ["Card advantage"] }],
   suggestions: ["Card advantage 5/8 — add ~3 cards that draw"],
+  suggestionByKey: { consistency: "Card advantage 5/8 — add ~3 cards that draw" },
   slack: [],
 } as unknown as DeckReport;
 const clean = { ...SAMPLE.report, buildParents: [], suggestions: [], slack: [] } as unknown as DeckReport;
@@ -33,6 +34,7 @@ const overLands = (impact: number) => ({
   ...SAMPLE.report,
   buildParents: [{ name: "Ramp", key: "ramp", count: 8, target: 10, impact, leaves: ["Ramp"] }],
   suggestions: ["Ramp 8/10 — add ~2 ramp"],
+  suggestionByKey: { ramp: "Ramp 8/10 — add ~2 ramp" },
   slack: [],
   deckMath: { lands: { actual: 41, target: 36, avgManaValue: 3 } },
   landsImpact: 20,

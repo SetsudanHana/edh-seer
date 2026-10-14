@@ -7,6 +7,8 @@ import { headerGaps, shortRoles, verdict } from "./verdict.js";
 import { offThemeSplit } from "./off-theme.js";
 import { slackLeaves } from "./role-group.js";
 import { diffRuns } from "./run-diff.js";
+import { suggestionsFor } from "./suggestions.js";
+import type { DeckSuggestions } from "@edh-seer/matcher/suggest-static";
 
 /** #1194: a role parent is SELECTED by `key` in every web reader; its name is display text only. Every
  *  parent's name is renamed here (as #1086 renamed "Consistency" to "Card advantage"), as the engine
@@ -19,7 +21,9 @@ function renamed(report: DeckReport): DeckReport {
     ...report,
     buildParents: report.buildParents?.map((p) => ({ ...p, name: names.get(p.name) ?? p.name })),
     slack: report.slack?.map((s) => ({ ...s, category: names.get(s.category) ?? s.category })),
+    // The engine writes the new name into its sentences; the key is what addresses them.
     suggestions: report.suggestions?.map((s) => [...names].reduce((t, [from, to]) => (t.startsWith(`${from} `) ? to + t.slice(from.length) : t), s)),
+    suggestionByKey: Object.fromEntries(Object.entries(report.suggestionByKey ?? {}).map(([k, s]) => [k, [...names].reduce((t, [from, to]) => (t.startsWith(`${from} `) ? to + t.slice(from.length) : t), s)])),
   };
 }
 
@@ -82,4 +86,18 @@ test("a run snapshot saved with name-keyed finding ids still diffs against key-k
   const prev = { ...base, findings: { "build:Ramp": "Ramp 6/10" } };
   const next = { ...base, findings: { "build:ramp": "Ramp 6/10" } };
   expect(diffRuns(prev, next)).toBeNull();
+});
+
+test("the engine's suggestion sentence and the suggested cards attach to each short parent by key after a rename", () => {
+  const was = findings(SAMPLE.report).filter((f) => f.kind === "build");
+  // The "No board wipe (target N)" sentence is not "<name> n/t - add": it used to match no prefix.
+  expect(was.filter((f) => f.action).map((f) => f.id).sort()).toEqual(["build:boardWipes", "build:interaction", "build:ramp"]);
+  const r = renamed(SAMPLE.report);
+  // Sentences that no longer start with any parent's name: only the key can find them.
+  r.suggestions = r.suggestions!.map((s) => s.replace(/^[A-Za-z ]+(?= \d| \(target)/, "Elsewhere"));
+  const now = findings(r).filter((f) => f.kind === "build");
+  expect(now.map((f) => [f.id, f.action])).toEqual(was.map((f) => [f.id, f.action]));
+  const card = { name: "Sol Ring" } as DeckSuggestions["build"][string][number];
+  const sug = { build: { ramp: [card], interaction: [], boardWipes: [] }, answers: {}, synergy: {}, plan: [], pairs: [], routes: [] } as unknown as DeckSuggestions;
+  for (const f of now) expect(suggestionsFor(f, sug, r), f.id).toEqual(f.id === "build:ramp" ? [card] : []);
 });

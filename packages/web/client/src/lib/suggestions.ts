@@ -22,7 +22,7 @@ const byName = (lists: readonly (readonly SuggestedCard[] | undefined)[]): Sugge
  *  the way `suggest-static` read it; `synergy` is one finding over every unmet key. */
 export function suggestionsFor(f: Finding, s: DeckSuggestions | null, report: DeckReport): readonly SuggestedCard[] | undefined {
   if (!s || !takesCards(f.kind)) return undefined;
-  if (f.kind === "build") return s.build[f.figureLabel] ?? [];
+  if (f.kind === "build") return s.build[f.id.replace(/^build:/, "")] ?? [];
   if (f.kind === "answers") {
     // THE CLASSES THE FINDING NAMES: the ones with no answer at all (see `answerFinding`).
     const short = (report.deckMath?.answers ?? []).filter((a) => a.class !== "graveyard" && a.class !== "land" && a.count === 0 && !a.fromCommandZone);

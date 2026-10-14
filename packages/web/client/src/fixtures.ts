@@ -96,6 +96,11 @@ export const SAMPLE: AnalyzeResponse = {
       "Ramp 6/10 — add ~4, typically 2–3 mana",
       "Interaction 7/10 — add ~3, typically 2–4 mana",
     ],
+    suggestionByKey: {
+      boardWipes: "No board wipe (target 3); most cost 3–5 mana",
+      ramp: "Ramp 6/10 — add ~4, typically 2–3 mana",
+      interaction: "Interaction 7/10 — add ~3, typically 2–4 mana",
+    },
     roles: { ramp: 4, draw: 10, removal: 6 },
     cohesion: {
       theme: "Tokens",

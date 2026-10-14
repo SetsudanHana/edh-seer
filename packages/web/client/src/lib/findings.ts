@@ -72,15 +72,15 @@ export interface Finding {
  *  how two surfaces start disagreeing, which this repo has now measured twice. */
 function buildFindings(report: DeckReport): Finding[] {
   const parents = report.buildParents ?? [];
-  const suggestions = report.suggestions ?? [];
-  const cuts = donorSentences(parents, suggestions, report.slack ?? []);
+  const byKey = report.suggestionByKey ?? {};
+  const cuts = donorSentences(parents, byKey, report.slack ?? []);
   const out: Finding[] = [];
   for (const p of parents) {
     if (p.target <= 0 || p.count >= p.target) continue;
     const missing = p.target - p.count;
     // The engine's own sentence for this parent, if it wrote one. It carries the cost band
     // (`typically 2–4 mana`) that this module has no business recomputing.
-    const suggestion = suggestions.find((s) => s.startsWith(`${p.name} `));
+    const suggestion = byKey[p.key];
     const cut = cuts.get(p.key) ?? "";
     out.push({
       kind: "build",
@@ -123,7 +123,7 @@ function buildFindings(report: DeckReport): Finding[] {
  *  The amount handed out is the "~N" the reader is told to add, falling back to the shortfall. */
 function donorSentences(
   parents: NonNullable<DeckReport["buildParents"]>,
-  suggestions: readonly string[],
+  byKey: Readonly<Record<string, string>>,
   slack: NonNullable<DeckReport["slack"]>,
 ): Map<string, string> {
   const out = new Map<string, string>();
@@ -133,7 +133,7 @@ function donorSentences(
     .filter((p) => p.target > 0 && p.count < p.target)
     .sort((a, b) => (b.impact ?? -1) - (a.impact ?? -1) || a.name.localeCompare(b.name));
   for (const p of short) {
-    const said = suggestions.find((s) => s.startsWith(`${p.name} `))?.match(/~(\d+)/);
+    const said = byKey[p.key]?.match(/~(\d+)/);
     const want = said ? Number(said[1]) : p.target - p.count;
     const taken: { category: string; count: number; target: number; n: number }[] = [];
     let need = want;

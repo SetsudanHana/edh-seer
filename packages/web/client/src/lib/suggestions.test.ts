@@ -10,11 +10,11 @@ vi.mock("@edh-seer/matcher/suggest-static", () => ({ suggestForDeck }));
 
 const card = (name: string): SuggestedCard => ({ name, slug: name.toLowerCase(), identity: ["R"], mv: 2, connections: [], reasons: [] });
 const empty: DeckSuggestions = { build: {}, answers: {}, synergy: {}, plan: [], pairs: [], routes: [] };
-const finding = (kind: Finding["kind"], figureLabel = ""): Finding => ({ kind, figureLabel } as unknown as Finding);
+const finding = (kind: Finding["kind"], figureLabel = "", id = ""): Finding => ({ kind, figureLabel, id } as unknown as Finding);
 
-test("a build finding takes its group's cards, by the group name it prints", () => {
-  const s = { ...empty, build: { Interaction: [card("Chaos Warp")] } };
-  expect(suggestionsFor(finding("build", "Interaction"), s, {} as DeckReport)?.map((c) => c.name)).toEqual(["Chaos Warp"]);
+test("a build finding takes its group's cards, by the group key in its id, not the name it prints", () => {
+  const s = { ...empty, build: { interaction: [card("Chaos Warp")] } };
+  expect(suggestionsFor(finding("build", "Renamed Interaction", "build:interaction"), s, {} as DeckReport)?.map((c) => c.name)).toEqual(["Chaos Warp"]);
 });
 
 test("an answers finding takes the cards of every class with no answer, each card once", () => {

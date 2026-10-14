@@ -674,6 +674,9 @@ export interface BuildResult {
    *  say WHY the number is what it is rather than print a fallback silently. */
   landsTargetSource: LandsTarget["source"];
   suggestions: string[];
+  /** The "<name> n/t - add ~k" sentences of `suggestions`, by the parent's KEY (#1194), so a reader
+   *  addresses a parent's sentence without matching its prefix. Includes the "No board wipe" form. */
+  suggestionByKey: Record<string, string>;
   /** The coverage multiplier applied to `Interaction`, and the per-class weights it was built
    *  from, so the panel and a test can say WHY the number is what it is rather than trust it. */
   answerCoverage: CoverageResult;
@@ -777,7 +780,7 @@ export function computeBuild(
   return {
     buildScore, buildCategories, buildParents, template, landsImpact, answersImpact,
     landsTargetSource: landsGate.source,
-    suggestions: buildSuggestions(parentsWithCount, countOf, targets),
+    ...suggestionsOf(buildSuggestions(parentsWithCount, countOf, targets)),
     answerCoverage: coverage,
     rampResilience: rampResilience(cards),
   };
@@ -800,8 +803,8 @@ function buildSuggestions(
   parents: (BuildParentSpec & { count: number })[],
   countOf: (c: BuildCategory) => number,
   targets: Record<BuildCategory, number>,
-): string[] {
-  const gaps: { gap: number; text: string }[] = [];
+): { text: string; key: string }[] {
+  const gaps: { gap: number; text: string; key: string }[] = [];
   for (const p of parents) {
     if (p.target <= 0 || p.count >= p.target) continue;
     // The cost band is the SHAPE half of the answer (F14), appended to whichever sentence the gap
@@ -814,13 +817,20 @@ function buildSuggestions(
       p.count === 0 && p.key === "boardWipes"
         ? `No board wipe (target ${p.target})${band}`
         : `${p.name} ${p.count}/${p.target} — add ~${Math.ceil(p.target - p.count)}${band}`;
-    gaps.push({ gap: p.target - p.count, text });
+    gaps.push({ gap: p.target - p.count, text, key: p.key });
   }
   const landsTarget = targets.lands;
   const landCount = countOf("lands");
-  if (landCount < landsTarget - LAND_BAND) gaps.push({ gap: landsTarget - landCount, text: `Lands ${landCount} — aim for ~${landsTarget}` });
-  else if (landCount > landsTarget + LAND_BAND) gaps.push({ gap: landCount - landsTarget, text: `Lands ${landCount} — high, aim for ~${landsTarget}` });
-  return gaps.sort((a, b) => b.gap - a.gap).slice(0, 4).map((g) => g.text);
+  if (landCount < landsTarget - LAND_BAND) gaps.push({ gap: landsTarget - landCount, text: `Lands ${landCount} — aim for ~${landsTarget}`, key: "lands" });
+  else if (landCount > landsTarget + LAND_BAND) gaps.push({ gap: landCount - landsTarget, text: `Lands ${landCount} — high, aim for ~${landsTarget}`, key: "lands" });
+  return gaps.sort((a, b) => b.gap - a.gap).slice(0, 4);
+}
+
+function suggestionsOf(list: { text: string; key: string }[]): { suggestions: string[]; suggestionByKey: Record<string, string> } {
+  return {
+    suggestions: list.map((g) => g.text),
+    suggestionByKey: Object.fromEntries(list.flatMap((g) => (g.key !== "lands" ? [[g.key, g.text] as const] : []))),
+  };
 }
 
 /** Small flat premium to a double-duty card's synergyRating. Mirrors the versatilityMult shape

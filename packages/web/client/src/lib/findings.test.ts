@@ -382,6 +382,7 @@ test("the action line names the cut when the deck has slack", () => {
   const { scored } = rankedFindings(report({
     buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 }],
     suggestions: ["Card advantage 6/14 — add ~8, typically 2–4 mana"],
+    suggestionByKey: { consistency: "Card advantage 6/14 — add ~8, typically 2–4 mana" },
     slack: [{ category: "ramp", key: "ramp", count: 17, target: 10, over: 7 }],
   }));
   // ~8 to add against 7 spare: the donor covers 7 and the sentence says so, rather than promising
@@ -394,6 +395,7 @@ test("the donor covers the whole add when its surplus is big enough", () => {
   const { scored } = rankedFindings(report({
     buildParents: [{ name: "Card advantage", key: "consistency", count: 11, target: 14, leaves: ["draw"], impact: 0.3 }],
     suggestions: ["Card advantage 11/14 — add ~3, typically 2–4 mana"],
+    suggestionByKey: { consistency: "Card advantage 11/14 — add ~3, typically 2–4 mana" },
     slack: [{ category: "ramp", key: "ramp", count: 17, target: 10, over: 7 }],
   }));
   expect(scored[0]!.action).toContain("Take the slots from ramp, where you have 17 against a target of 10.");
@@ -410,6 +412,7 @@ test("two findings never spend the same spare slots twice", () => {
       { name: "Card advantage", key: "consistency", count: 10, target: 13, leaves: ["draw"], impact: 0.2 },
     ],
     suggestions: ["Ramp 9/11 — add ~3, typically 2–4 mana", "Card advantage 10/13 — add ~3, typically 2–3 mana"],
+    suggestionByKey: { ramp: "Ramp 9/11 — add ~3, typically 2–4 mana", consistency: "Card advantage 10/13 — add ~3, typically 2–3 mana" },
     slack: [{ category: "Interaction", key: "interaction", count: 15, target: 13, over: 2 }],
   }));
   const [first, second] = scored.filter((f) => f.kind === "build");
@@ -424,6 +427,7 @@ test("a second surplus is used before the reader is told to find the rest", () =
   const { scored } = rankedFindings(report({
     buildParents: [{ name: "Ramp", key: "ramp", count: 8, target: 11, leaves: ["ramp"], impact: 0.3 }],
     suggestions: ["Ramp 8/11 — add ~3, typically 2–4 mana"],
+    suggestionByKey: { ramp: "Ramp 8/11 — add ~3, typically 2–4 mana" },
     slack: [
       { category: "Interaction", key: "interaction", count: 15, target: 13, over: 2 },
       { category: "Card advantage", key: "consistency", count: 15, target: 14, over: 1 },
@@ -437,6 +441,7 @@ test("the action line names no cut when the deck has no slack", () => {
   const { scored } = rankedFindings(report({
     buildParents: [{ name: "Card advantage", key: "consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 }],
     suggestions: ["Card advantage 6/14 — add ~8, typically 2–4 mana"],
+    suggestionByKey: { consistency: "Card advantage 6/14 — add ~8, typically 2–4 mana" },
     slack: [],
   }));
   expect(scored[0]!.action).not.toContain("cutting from");
