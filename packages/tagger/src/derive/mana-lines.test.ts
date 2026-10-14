@@ -600,3 +600,51 @@ describe("Piracy: mana from lands you do not control", () => {
     expect(tagsOf("Piracy").isOneShot).toBe(true);
   });
 });
+
+/** ONE READER OF "HOW MUCH MANA" (#1193, #1187): `Ability.amount` and `ManaLine.amount` come from the same `production()` read, so the two never
+ *  disagree on a card with one mana ability. Every card is real corpus input. Each row: the number of mana the printed text adds. */
+describe("Ability.amount and ManaLine.amount are one reading (DERIVE_VERSION 311)", () => {
+  const manaAbilities = (name: string) => (tagsOf(name).abilities ?? []).filter((a) => a.effect.kind === "mana-generation");
+  const CASES: [string, number][] = [
+    ["Chandra, Heart of Fire", 6], // "Add six {R}." the clause keeps {R} with amount "6": the line read 1
+    ["The Flux", 6],
+    ["Irencrag Feat", 7], // "Add seven {R}.": the ability read 1 symbol
+    ["Avatar Roku, Firebender", 6],
+    ["Terra, Magical Adept", 10], // "{W}{W}, {U}{U}, {B}{B}, {R}{R}, and {G}{G}": a sum, not alternatives, the line read 2
+    ["The Aetherspark", 10], // "mana of any one color" with amount "10"
+    ["Orcish Lumberjack", 3], // "three mana in any combination of {R} and/or {G}": the ability counted the 2 symbols
+    ["Goblin Clearcutter", 3],
+    ["Relic of Sauron", 2], // "two mana in any combination of {U}, {B}, and/or {R}": the ability counted 3
+    ["Shang-Chi, Master of Kung Fu", 2], // #1187: "two mana of any one color, spendable only to ...": the line read nothing
+    ["Valleymaker", 3], // the model keeps "{G}{G}{G}" on amount and "chosen player" on the object
+    ["Cosmic Crucible", 4], // amount "four": the ability kept the word
+    ["Omnath, Locus of All", 3],
+    ["Gilded Lotus", 3],
+    ["Smokebraider", 2],
+  ];
+  for (const [name, n] of CASES) {
+    it(`${name} adds ${n} on the ability and on the line`, () => {
+      const abilities = manaAbilities(name);
+      expect(abilities, `${name} abilities`).toHaveLength(1);
+      expect(abilities[0]!.amount).toBe(String(n));
+      const lines = linesOf(name).filter((l) => l.source !== "token-maker");
+      expect(lines, `${name} lines`).toHaveLength(1);
+      expect(lines[0]!.amount).toEqual({ fixed: n, scales: null });
+    });
+  }
+  it("a scaling amount keeps no number on the ability and names what it counts on the line", () => {
+    expect(manaAbilities("Axebane Guardian")[0]!.amount).toBeUndefined();
+    expect(linesOf("Axebane Guardian")[0]!.amount).toEqual({ fixed: null, scales: "x" });
+    expect(linesOf("Radiant Lotus")[0]!.amount.fixed).toBeNull();
+  });
+  it("Unclaimed Territory's restricted line reads one mana, the rider after the comma is no alternative", () => {
+    const lines = linesOf("Unclaimed Territory");
+    expect(lines.map((l) => l.amount)).toEqual([{ fixed: 1, scales: null }, { fixed: 1, scales: null }]);
+  });
+});
+
+describe("an energy cost is no mana amount (DERIVE_VERSION 311)", () => {
+  it("Blaster Hulk's 'pay eight {E}' leaves the ability without an amount", () => {
+    expect((tagsOf("Blaster Hulk").abilities ?? []).filter((a) => a.effect.kind === "mana-generation").map((a) => a.amount)).toEqual([undefined]);
+  });
+});

@@ -16140,5 +16140,1231 @@
    }
   ],
   "source": "model"
+ },
+ "Chandra, Heart of Fire": {
+  "card": {
+   "_id": "58ad45fc-b625-4484-8d49-ebc42db9040a",
+   "name": "Chandra, Heart of Fire",
+   "typeLine": "Legendary Planeswalker — Chandra",
+   "oracleText": "+1: Discard your hand, then exile the top three cards of your library. Until end of turn, you may play cards exiled this way.\n+1: Chandra deals 2 damage to any target.\n−9: Search your graveyard and library for any number of red instant and/or sorcery cards, exile them, then shuffle. You may cast them this turn. Add six {R}.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 5,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}{R}{R}",
+   "producedMana": [
+    "R"
+   ],
+   "loyalty": "5"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "mill",
+      "object": "top three cards of your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "cards exiled this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "cards exiled this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "any number of red instant and/or sorcery cards",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "any number of red instant and/or sorcery cards",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "them",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "6",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "The Flux": {
+  "card": {
+   "_id": "8beaaf55-e05d-49c3-9320-c222c4d8ad12",
+   "name": "The Flux",
+   "typeLine": "Enchantment — Saga",
+   "oracleText": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after VI.)\nI — This Saga deals 4 damage to target creature an opponent controls.\nII, III, IV, V — Exile the top card of your library. You may play that card this turn.\nVI — Add six {R}.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "saga",
+   "manaCost": "{2}{R}{R}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after VI.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter I",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target creature an opponent controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter II, III, IV, V",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of your library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter VI",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "6",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Terra, Magical Adept // Esper Terra": {
+  "card": {
+   "_id": "54ca5904-9099-497a-9684-101656025487",
+   "name": "Terra, Magical Adept // Esper Terra",
+   "typeLine": "Legendary Creature — Human Wizard Warrior // Legendary Enchantment Creature — Saga Wizard",
+   "oracleText": "When Terra enters, mill five cards. Put up to one enchantment card milled this way into your hand.\nTrance — {4}{R}{G}, {T}: Exile Terra, then return it to the battlefield transformed under its owner's control. Activate only as a sorcery.\n//\n(As this Saga enters and after your draw step, add a lore counter.)\nI, II, III — Create a token that's a copy of target nonlegendary enchantment you control. It gains haste. If it's a Saga, put up to three lore counters on it. Sacrifice it at the beginning of your next end step.\nIV — Add {W}{W}, {U}{U}, {B}{B}, {R}{R}, and {G}{G}. Exile Esper Terra, then return it to the battlefield (front face up).\nFlying",
+   "keywords": [
+    "Flying",
+    "Transform",
+    "Mill",
+    "Trance"
+   ],
+   "colors": [
+    "G",
+    "R"
+   ],
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "producedMana": [
+    "B",
+    "R",
+    "U",
+    "W"
+   ],
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Terra, Magical Adept // Esper Terra",
+     "typeLine": "Legendary Creature — Human Wizard Warrior // Legendary Enchantment Creature — Saga Wizard",
+     "printingId": "fe0aa7d7-73e7-4c8c-92b5-b923817ce461"
+    },
+    {
+     "component": "token",
+     "name": "Copy",
+     "typeLine": "Token",
+     "printingId": "81c9d442-d7d5-4911-b0b9-c3206faeab1d"
+    }
+   ],
+   "faces": [
+    {
+     "name": "Terra, Magical Adept",
+     "typeLine": "Legendary Creature — Human Wizard Warrior",
+     "manaCost": "{1}{R}{G}"
+    },
+    {
+     "name": "Esper Terra",
+     "typeLine": "Legendary Enchantment Creature — Saga Wizard",
+     "manaCost": ""
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Terra",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "five cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "up to one enchantment card milled this way",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "Terra",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "transform",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "(As this Saga enters and after your draw step, add a lore counter.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter I, II, III",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a token that's a copy of target nonlegendary enchantment you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "it gains haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "lore counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "up to three",
+      "optional": true
+     },
+     {
+      "verb": "sacrifice",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter IV",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{W}{W}, {U}{U}, {B}{B}, {R}{R}, and {G}{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "Esper Terra",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 6,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "The Aetherspark": {
+  "card": {
+   "_id": "483c747a-b602-4747-95bc-72c2c17ed509",
+   "name": "The Aetherspark",
+   "typeLine": "Legendary Artifact Planeswalker — Equipment",
+   "oracleText": "As long as The Aetherspark is attached to a creature, The Aetherspark can't be attacked and has \"Whenever equipped creature deals combat damage during your turn, put that many loyalty counters on The Aetherspark.\"\n+1: Attach The Aetherspark to up to one target creature you control. Put a +1/+1 counter on that creature.\n−5: Draw two cards.\n−10: Add ten mana of any one color.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "loyalty": "4"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be attacked",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "that ability",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "equipped creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "loyalty counter",
+      "amount": "that many",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "attach",
+      "object": "The Aetherspark",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1 counter",
+      "amount": "1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "card",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "mana of any one color",
+      "amount": "10",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Irencrag Feat": {
+  "card": {
+   "_id": "2d550e17-7340-4b11-8b25-1d4f1a58f82f",
+   "name": "Irencrag Feat",
+   "typeLine": "Sorcery",
+   "oracleText": "Add seven {R}. You can cast only one more spell this turn.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{R}{R}{R}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}{R}{R}{R}{R}{R}{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "cast more than one spell this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Avatar Roku, Firebender": {
+  "card": {
+   "_id": "9eb9e4c1-fabf-45ff-a584-fbe4b94fb41c",
+   "name": "Avatar Roku, Firebender",
+   "typeLine": "Legendary Creature — Human Avatar",
+   "oracleText": "Whenever a player attacks, add six {R}. Until end of combat, you don't lose this mana as steps end.\n{R}{R}{R}: Target creature gets +3/+0 until end of turn.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 6,
+   "power": "6",
+   "toughness": "6",
+   "layout": "normal",
+   "manaCost": "{3}{R}{R}{R}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a player",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}{R}{R}{R}{R}{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "Until end of combat, you don't lose this mana as steps end",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+3/+0",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Orcish Lumberjack": {
+  "card": {
+   "_id": "383e3fe4-8558-4561-8632-6eadb5d5963c",
+   "name": "Orcish Lumberjack",
+   "typeLine": "Creature — Orc",
+   "oracleText": "{T}, Sacrifice a Forest: Add three mana in any combination of {R} and/or {G}.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "manaValue": 1,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{R}",
+   "producedMana": [
+    "G",
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a Forest",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "three mana in any combination of {R} and/or {G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Goblin Clearcutter": {
+  "card": {
+   "_id": "08a01139-1b1e-4a32-bb00-3a9660cce1ef",
+   "name": "Goblin Clearcutter",
+   "typeLine": "Creature — Goblin",
+   "oracleText": "{T}, Sacrifice a Forest: Add three mana in any combination of {R} and/or {G}.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "manaValue": 4,
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{3}{R}",
+   "producedMana": [
+    "G",
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a Forest",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "three mana in any combination of {R} and/or {G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Shang-Chi, Master of Kung Fu": {
+  "card": {
+   "_id": "700ef9c8-698b-45f7-a1fd-dec74e553224",
+   "name": "Shang-Chi, Master of Kung Fu",
+   "typeLine": "Legendary Creature — Human Warrior Hero",
+   "oracleText": "You may activate abilities of creatures you control as though those creatures had haste.\n{T}: Add two mana of any one color. Spend this mana only to activate abilities of creature sources.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "creatures you control can be activated as though they had haste",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "two mana of any one color, spendable only to activate abilities of creature sources",
+      "amount": null,
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Valleymaker": {
+  "card": {
+   "_id": "57098671-016e-4adb-ba7d-ab2dd2bc34e3",
+   "name": "Valleymaker",
+   "typeLine": "Creature — Giant Shaman",
+   "oracleText": "{T}, Sacrifice a Mountain: This creature deals 3 damage to target creature.\n{T}, Sacrifice a Forest: Choose a player. That player adds {G}{G}{G}.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "R"
+   ],
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "manaValue": 6,
+   "power": "5",
+   "toughness": "5",
+   "layout": "normal",
+   "manaCost": "{5}{R/G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a Mountain",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a Forest",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "chosen player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "{G}{G}{G}",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Unclaimed Territory": {
+  "card": {
+   "_id": "584b15f2-6ae9-413a-8b8d-9244dbea4878",
+   "name": "Unclaimed Territory",
+   "typeLine": "Land",
+   "oracleText": "As this land enters, choose a creature type.\n{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a creature spell of the chosen type.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this land enters",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color, spend this mana only to cast a creature spell of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Gilded Lotus": {
+  "card": {
+   "_id": "9a02a9a7-39d9-4763-85d3-747a0540b60b",
+   "name": "Gilded Lotus",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add three mana of any one color.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 5,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{5}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "three mana of any one color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Radiant Lotus": {
+  "card": {
+   "_id": "307be184-176a-40a8-944c-48aa00cfdd29",
+   "name": "Radiant Lotus",
+   "typeLine": "Artifact",
+   "oracleText": "{T}, Sacrifice one or more artifacts: Choose a color. Target player adds three mana of the chosen color for each artifact sacrificed this way. (Activate only as an instant.)",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 6,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{6}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "one or more artifacts",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "three mana of the chosen color for each artifact sacrificed this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Axebane Guardian": {
+  "card": {
+   "_id": "060e0378-e335-4b3d-82aa-ae36639339f6",
+   "name": "Axebane Guardian",
+   "typeLine": "Creature — Human Druid",
+   "oracleText": "Defender\n{T}: Add X mana in any combination of colors, where X is the number of creatures you control with defender.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "0",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana in any combination of colors, where X is the number of creatures you control with defender",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Blaster Hulk": {
+  "card": {
+   "_id": "4b8ca7fd-3c8e-44fe-ab0a-0ddc2f2b047c",
+   "name": "Blaster Hulk",
+   "typeLine": "Artifact Creature — Pirate",
+   "oracleText": "This spell costs {1} less to cast for each {E} (energy counter) you've paid or lost this turn.\nHaste\nWhenever this creature attacks, you get {E}{E}, then you may pay eight {E}. When you do, this creature deals 8 damage divided as you choose among up to eight targets.",
+   "keywords": [
+    "Haste"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 8,
+   "power": "8",
+   "toughness": "8",
+   "layout": "normal",
+   "manaCost": "{6}{R}{R}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Blaster Hulk",
+     "typeLine": "Artifact Creature — Pirate",
+     "printingId": "2995201b-22c7-425f-b793-fac54ad10fff"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "1c516212-ad39-4396-8e05-ae57f100309f"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "casting cost reduced by 1 for each {E} you've paid or lost this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{E}{E}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "eight {E}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "other",
+     "subject": "you pay eight {E}",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "up to eight targets",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "8 divided as you choose",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
  }
 }

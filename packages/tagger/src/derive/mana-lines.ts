@@ -16,9 +16,9 @@
  *  A line STATES, and a consumer JUDGES. Whether a line is a colour source, cheap ramp or a goldfish dork is each
  *  consumer's policy over these fields (the plan's owner rulings); nothing here decides it.
  *
- *  CEILING: TWO READINGS OF "HOW MUCH IT ADDS" REMAIN. `manaAdded` in derive.ts still computes `Ability.amount` (it splits alternatives on "or"
- *  only) and `ManaLine.amount` below is its own, finer read. They were meant to converge; they did not: `Ability.amount` is a field of every derived
- *  ability, and replacing how it is computed is a derive refactor of its own that moves every row, which #1169 did not take on. A mana consumer reads `ManaLine`. */
+ *  ONE READER OF "HOW MUCH IT ADDS" (#1193, DERIVE_VERSION 311): `production()` below. `ManaLine.amount` is its result and derive.ts sets `Ability.amount` from the
+ *  same call (`manaAdded`), so the two cannot disagree. A SCALING amount ("X", "for each ...", "that much") has no number: the line names what it counts and the
+ *  ability keeps the clause's own text, or nothing. `research/mana/amount-agreement.ts` measures the agreement.  */
 import type { ClauseRecord } from "../canonicalize.js";
 import type {
   Ability, Characteristics, LandFetch, ManaAnyColour, ManaGate, ManaLine, ManaLineSource, StaticFixer, SubjectFilter,
@@ -153,20 +153,29 @@ export function parseCost(cost: string | undefined, selfNames: readonly string[]
 // What a line makes
 // ---------------------------------------------------------------------------------------------------------------
 
+const LEADING_COUNT = new RegExp(`^(${WORD}|\\d+)\\s+(?:\\{[^}]+\\})+$`, "i");
 const SCALES = /\b(for each|equal to|that (?:many|much)|number of|where x)\b[^.]*|\{X\}|\bX\b/;
 
 /** What `object` ("one mana of any color", "{U}{U}, {U}{R}, or {R}{R}", "five mana in any combination of colors")
  *  makes, alternative by alternative. */
-function production(object: string, amountText = "", context = ""): Pick<ManaLine, "colours" | "colourless" | "anyColour" | "amount"> {
+export function production(object: string, amountText = "", context = ""): Pick<ManaLine, "colours" | "colourless" | "anyColour" | "amount"> {
   // A RESTRICTION SENTENCE THE MODEL LEFT ON THE OBJECT ("two mana of any one color. Spend this mana only to cast spells with mana value 4 or greater",
-  // Ashling, Rimebound) is read by `restrictionOf`, not here: its "or" split the alternatives and left the amount unknown.
-  const text = object.replace(/\.\s*(?:spend (?:this|that|the) mana only|this mana can'?t be spent)\b.*$/is, "").trim();
+  // Ashling, Rimebound) is read by `restrictionOf`, not here: its "or" split the alternatives and left the amount unknown. Joined by a comma instead
+  // ("two mana of any one color, spendable only to activate abilities of creature sources", Shang-Chi) it is the same rider.
+  const stripped = object.replace(/[.,]\s*(?:spend (?:this|that|the) mana only|spendable only|this mana can'?t be spent)\b.*$/is, "").trim();
+  // THE MODEL FILES THE MANA ON `amount` WHEN THE OBJECT NAMES THE RECIPIENT ("chosen player" + amount "{G}{G}{G}", Valleymaker): the symbols are the object.
+  const at = amountText.trim().toLowerCase();
+  const text = /^(?:\{[^}]+\})+$/.test(at) && !/\{[^}]+\}/.test(stripped) ? amountText.trim() : stripped;
   const lower = text.toLowerCase();
   // "two mana in any combination of {U}, {B}, and/or {R}" (Relic of Sauron) is ONE alternative of that many mana: the commas list the colours it may
   // be made of, not separate alternatives, and splitting on them read an amount of 1.
   const combination = new RegExp(`^(${WORD})\\s+mana\\s+in\\s+any\\s+combination\\s+of\\s+(?:\\{[^}]+\\}[\\s,/]*|and/or\\s*|or\\s*|and\\s*)+$`, "i").exec(text);
   // Whitespace is collapsed first so the split needs no unbounded `\s*` on both sides of a separator (CodeQL js/polynomial-redos on runs of spaces).
-  const alts = combination ? [text] : text.replace(/\s+/g, " ").split(/ ?, ?or | ?, | or /i).filter((a) => a.trim() !== "");
+  // "{W}{W}, {U}{U}, {B}{B}, {R}{R}, and {G}{G}" (Terra) is a SUM: a list joined by "and" and offering no "or" is not alternatives, so it stays one.
+  // CEILING: a list that mixes "and" and "or" is split on the "or" and the commas as before.
+  const collapsed = text.replace(/\s+/g, " ");
+  const alts = combination || (!/ or /i.test(collapsed) && / and /i.test(collapsed)) ? [text] : collapsed.split(/ ?, ?or | ?, | or /i).filter((a) => a.trim() !== "");
+  const amountNum = /^\d+$/.test(at) ? Number(at) : NUMBER_WORD[at];
   const colours = new Set<string>();
   let colourless = 0;
   const counts: (number | undefined)[] = [];
@@ -175,7 +184,16 @@ function production(object: string, amountText = "", context = ""): Pick<ManaLin
     for (const s of symbols) for (const c of s.split("/")) if ((WUBRG as readonly string[]).includes(c)) colours.add(c);
     colourless = Math.max(colourless, symbols.filter((s) => s === "C").length);
     const word = new RegExp(`\\b(${WORD})\\s+mana\\b`, "i").exec(alt)?.[1]?.toLowerCase();
-    counts.push(combination ? NUMBER_WORD[combination[1]!.toLowerCase()] : symbols.length > 0 ? symbols.length : word ? NUMBER_WORD[word] : /^(?:an? )?(?:additional )?mana\b/i.test(alt) ? 1 : undefined);
+    // THE CLAUSE'S OWN COUNT is the amount of a lone alternative that states none: "{R}" with amount "6" (Chandra, Heart of Fire), "mana of any one color" with
+    // amount "10" (The Aetherspark). A count printed in the object (a number word, two or more symbols) is not overridden.
+    // "seven {R}" (the grammar's form of "Add seven {R}", Irencrag Feat, Avatar Roku) is that many times the symbols after it.
+    const times = symbols.length > 0 ? LEADING_COUNT.exec(alt.trim()) : null; // {E} is no mana symbol: "eight {E}" counts nothing
+    const stated = combination ? NUMBER_WORD[combination[1]!.toLowerCase()]
+      : times ? (/^\d+$/.test(times[1]!) ? Number(times[1]) : NUMBER_WORD[times[1]!.toLowerCase()]!) * symbols.length
+      : word ? NUMBER_WORD[word] : undefined;
+    const clauseCount = alts.length === 1 && symbols.length <= 1 && stated === undefined ? amountNum : undefined;
+    // CEILING: a bare "mana" (Piracy: "you may tap lands you don't control for mana") adds no amount; "mana of any color" with no count is one.
+    counts.push(stated ?? (symbols.length > 1 ? symbols.length : clauseCount ?? (symbols.length === 1 ? 1 : /^(?:an? )?(?:additional )?mana\b/i.test(alt) && alt.trim().toLowerCase() !== "mana" ? 1 : undefined)));
   }
   let anyColour: ManaAnyColour | null = null;
   if (/commander'?s color identity/.test(lower)) anyColour = "identity";
@@ -202,8 +220,6 @@ function production(object: string, amountText = "", context = ""): Pick<ManaLin
   // digit there ("four", Cosmic Crucible) is a fixed amount; any other non-symbol text ("the greatest power among creatures you
   // control", Bighorner Rancher) is a count of something. `{X}` (Halo Forager) scales deliberately: X is chosen when it is paid,
   // so the line is named `scales: "x"` and never given a fixed number.
-  const at = amountText.trim().toLowerCase();
-  const amountNum = /^\d+$/.test(at) ? Number(at) : NUMBER_WORD[at];
   const found = SCALES.exec(`${text} ${amountText}`.trim());
   const scale = found
     ? ([found[0].toLowerCase() === "{x}" ? "x" : found[0]] as RegExpExecArray)
