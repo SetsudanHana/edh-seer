@@ -1519,8 +1519,9 @@ export interface ManaLine {
  *  land is a Swamp), Chromatic Orrery (spend mana as though it were mana of any color). `covers` is `lands` when
  *  only lands you control gain the colours and `all` when any mana you spend does. Front face only. */
 export interface StaticFixer {
-  /** `lands` when only lands you control gain the colours, `all` when any mana you spend does. */
-  covers: "lands" | "all";
+  /** `lands` when only lands you control gain the colours, `all` when any mana you spend does, `basics` when only
+   *  BASIC lands you control do (Pulse of Llanowar). */
+  covers: "lands" | "all" | "basics";
   /** The WUBRG colours the card makes other sources produce. */
   colours: string[];
 }

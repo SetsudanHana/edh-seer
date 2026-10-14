@@ -320,7 +320,7 @@ Defined in [`StaticFixer`](../../packages/tagger/src/schema.ts).
 
 | field | type | | what it carries |
 |---|---|---|---|
-| `covers` | `"lands" \| "all"` | **required** | `lands` when only lands you control gain the colours, `all` when any mana you spend does. |
+| `covers` | `"lands" \| "all" \| "basics"` | **required** | `lands` when only lands you control gain the colours, `all` when any mana you spend does, `basics` when only BASIC lands you control do (Pulse of Llanowar). |
 | `colours` | `string[]` | **required** | The WUBRG colours the card makes other sources produce. |
 
 ### LandFetch

@@ -926,6 +926,11 @@ function restrictionOf(t: string): ActionReading[] | null {
   // "Spend this mana only to cast creature spells": a restriction on the mana just made.
   // The store's `other`: a restriction on mana is no permanent's "can't" (as `cant` derive read it as
   // an ability loss, task 7's first measurement).
+  // Pulse of Llanowar (a replacement effect on a land tapped for mana, CR 106.12b): "If a basic land you control is tapped for mana, it produces mana of
+  // a color of your choice instead of any other type". The enchantment is no mana source, so NOT add-mana: the colour fixing
+  // is derive's static-fixer reader. The "If a basic land ... is tapped for mana," opener is already the condition; the sentence itself is the whole anchor.
+  if (/^it produces mana of a color of your choice instead of any other type$/i.test(t))
+    return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t }];
   if (/^spend this mana only (?:to cast|on) .+$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t }];
   // "Skip your draw step": the store's cant on drawing then.
   if (/^skip your draw step$/i.test(t)) return [{ verb: "cant", object: parse("you")!, text: "draw during your draw step" }];

@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
-import { staticFixer } from "./static-fixers.js";
+import { pAtLeast, seen } from "@edh-seer/engine";
+import { fixerCredit, staticFixer, type LibraryFixer } from "./static-fixers.js";
 import type { DeckCard } from "./types.js";
 
 /** Cards as the corpus prints them (#1115). */
@@ -47,4 +48,46 @@ test("the near misses are refused", () => {
 
 test("a Room's front door is read", () => {
   expect(staticFixer(real("Greenhouse // Rickety Gazebo"))).toEqual({ colours: WUBRG, covers: "lands" });
+});
+
+// --- the third coverage tier: BASIC lands only (Pulse of Llanowar, #1210) -------------------------------------------
+const fx = (name: string, covers: LibraryFixer["covers"], colours: LibraryFixer["colours"] = ["W", "U", "B", "R", "G"]): LibraryFixer =>
+  ({ dc: { card: { name } } as unknown as DeckCard, colours, covers });
+const always = () => true;
+
+/** The formula as it stood before `newBasics`, kept here verbatim so the new one is proved equal when no basics fixer is out. */
+const oldCredit = (fixers: LibraryFixer[], turn: number, newLands: number, newAll: number, n: number): number => {
+  const pAny = pAtLeast(1, fixers.length, seen(turn), n);
+  const all = fixers.filter((f) => f.covers === "all-mana");
+  const pAll = all.length > 0 ? pAtLeast(1, all.length, seen(turn), n) : 0;
+  return Math.floor(pAny * Math.min(newLands, newAll) + pAll * Math.max(0, newAll - newLands) + 1e-9);
+};
+
+test("with no basics fixer the credit is the old number, for any basics count", () => {
+  for (const fixers of [[fx("Lantern", "lands")], [fx("Orrery", "all-mana")], [fx("Lantern", "lands"), fx("Orrery", "all-mana")], [fx("A", "lands"), fx("B", "lands")]]) {
+    for (let turn = 1; turn <= 9; turn++) for (const newLands of [0, 3, 12, 20]) for (const newAll of [0, 3, 12, 25]) for (const newBasics of [0, 5, 12]) {
+      const got = fixerCredit(fixers, "G", turn, always, Math.min(newBasics, newLands), newLands, newAll, 99).extra;
+      expect(got, `${fixers.map((f) => f.covers)} T${turn} L${newLands} A${newAll} B${newBasics}`).toBe(oldCredit(fixers, turn, newLands, newAll, 99));
+    }
+  }
+});
+
+test("a basics fixer credits only the basic lands it newly reaches", () => {
+  const pulse = [fx("Pulse of Llanowar", "basics")];
+  // 6 new basics, 10 new lands in all: Pulse reaches the basics alone.
+  const p = pAtLeast(1, 1, seen(5), 99);
+  expect(fixerCredit(pulse, "G", 5, always, 6, 10, 10, 99).extra).toBe(Math.floor(p * 6 + 1e-9));
+  expect(fixerCredit(pulse, "G", 5, always, 0, 10, 10, 99).extra).toBe(0);
+  // A lands fixer reaches the nonbasics too; with both out the credit covers all ten.
+  const both = [fx("Pulse of Llanowar", "basics"), fx("Lantern", "lands")];
+  const pb = pAtLeast(1, 2, seen(5), 99), pl = pAtLeast(1, 1, seen(5), 99);
+  expect(fixerCredit(both, "G", 5, always, 6, 10, 10, 99).extra).toBe(Math.floor(pb * 6 + pl * 4 + 1e-9));
+  // An all-mana fixer additionally reaches the non-lands.
+  const all = [fx("Pulse of Llanowar", "basics"), fx("Orrery", "all-mana")];
+  expect(fixerCredit(all, "G", 5, always, 6, 10, 15, 99).extra).toBe(Math.floor(pb * 6 + pl * 4 + pl * 5 + 1e-9));
+});
+
+test("a derived `basics` cover stays `basics` and is never widened to lands", () => {
+  const dc = { card: { name: "Pulse of Llanowar" }, tags: { staticFixer: { covers: "basics", colours: WUBRG } } } as unknown as DeckCard;
+  expect(staticFixer(dc)).toEqual({ colours: WUBRG, covers: "basics" });
 });

@@ -503,6 +503,11 @@ const LANTERN_PARENT = /^lands you control have that ability\.?$/;
 const EVERY_TYPE = /^lands you control are every basic land type in addition to their other types\.?$/;
 const ONE_TYPE = /^(?:each land is|all lands are|lands you control are) (?:an? )?(plains|island|swamp|mountain|forest)(?:s|es)? in addition to (?:its|their) other (?:land )?types\.?$/;
 const SPEND_ANY = /^(?:you|players) may spend mana as though it were mana of any (?:color|type)\.?$/;
+// BASIC lands only (Pulse of Llanowar), measured 2026-10-15 over the whole corpus ("basic land" + "tapped for mana" + "instead"):
+// Pulse of Llanowar matches; Mirri (vanguard) matches and is dropped by NOT_IN_A_DECK. Sovereign's Realm (conspiracy) is dropped
+// by the same filter and its wording differs. Refused: Gauntlet of Power ("an additional one mana of that color", a bonus, not a
+// choice), Nexos ("{C}{C}" for costs with {X}, a grant to basics that adds colourless).
+const BASICS_ANY = /^if a basic land you control is tapped for mana, it produces mana of a color of your choice instead of any other type\.?$/;
 const NOT_IN_A_DECK = new Set(["vanguard", "plane", "phenomenon", "conspiracy", "scheme", "ongoing scheme"]);
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -773,6 +778,7 @@ function staticFixerOf(input: ManaInput): StaticFixer | null {
     if (EVERY_TYPE.test(line)) return { covers: "lands", colours: [...WUBRG] };
     const one = ONE_TYPE.exec(line);
     if (one) return { covers: "lands", colours: [BASIC_COLOUR[one[1]!]!] };
+    if (BASICS_ANY.test(line)) return { covers: "basics", colours: [...WUBRG] };
     if (SPEND_ANY.test(line)) return { covers: "all", colours: [...WUBRG] };
     if (LANTERN_PARENT.test(line)) {
       // The grant is a fixer only if what it grants is the plain, unrestricted, free tap for any colour.

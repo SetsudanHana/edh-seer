@@ -736,7 +736,7 @@ interface DeckSlot {
   /** A STATIC COLOUR FIXER (#1115): while on the battlefield, the lands (or all mana) also make these colours. */
   fixer?: FixerMask;
 }
-interface FixerMask { mask: number; covers: "lands" | "all-mana" }
+interface FixerMask { mask: number; covers: "lands" | "all-mana" | "basics" }
 
 /** The static colour fixer a card prints, as the simulation's mask (the audit reads the same `staticFixer`). */
 function fixerOf(dc: DeckCard): { fixer?: FixerMask } {
@@ -1320,15 +1320,16 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         // A STATIC FIXER (Chromatic Lantern, Prismatic Omen, Urborg, Chromatic Orrery) makes every source it
         // covers tap for its colours, from the turn AFTER it is cast (the audit's `manaValue < turn` clock) or
         // the turn its land taps. CEILING: a land with no mana ability of its own (a fetch) gains none.
-        let fixLands = 0, fixAll = 0;
-        const fixes = (f: FixerMask): void => { if (f.covers === "all-mana") fixAll |= f.mask; else fixLands |= f.mask; };
+        let fixLands = 0, fixAll = 0, fixBasics = 0;
+        const fixes = (f: FixerMask): void => { if (f.covers === "all-mana") fixAll |= f.mask; else if (f.covers === "basics") fixBasics |= f.mask; else fixLands |= f.mask; };
         for (const t of statics) if (t.turn < turn) fixes(t.fixer);
         for (const l of lands) if (l.fixer && !(l.enteredTapped && l.enteredTurn === turn)) fixes(l.fixer);
         fixLands |= fixAll;
+        fixBasics |= fixLands;
         for (const l of lands) {
           if (l.enteredTapped && l.enteredTurn === turn) continue;
           const m = produced(l.output, lands, perms, turn);
-          if (m > 0) push(m, (l.colourGate && l.baseColors !== undefined && !holds(l.colourGate, perms) ? l.baseColors : l.colors) | fixLands, false, l);
+          if (m > 0) push(m, (l.colourGate && l.baseColors !== undefined && !holds(l.colourGate, perms) ? l.baseColors : l.colors) | (/\bbasic\b/i.test(l.typeLine.split(" // ")[0]!.split(/\s[—–-]\s/)[0]!) ? fixBasics : fixLands), false, l);
         }
         const now = (r: Mana): { mana: number; colors: number } => ({
           mana: r.out ? produced(r.out, lands, perms, turn) : r.mana,

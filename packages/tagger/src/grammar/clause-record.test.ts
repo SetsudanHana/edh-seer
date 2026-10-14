@@ -269,3 +269,9 @@ test("Time and Tide: 'Simultaneously' is a timing word, the two phasing verbs ar
   expect(g.complete).toBe(true);
   expect(g.records[0]!.actions!.map((a) => a.verb)).toEqual(["phase-in", "phase-out"]);
 });
+
+test("Pulse of Llanowar: the basic-land colour replacement is one `other` action, never add-mana (#1210 task 4)", () => {
+  const g = readCard("Pulse of Llanowar", "Enchantment", "If a basic land you control is tapped for mana, it produces mana of a color of your choice instead of any other type.");
+  expect(g.complete).toBe(true);
+  expect(g.records[0]!.actions!.map((a) => a.verb)).toEqual(["other"]);
+});
