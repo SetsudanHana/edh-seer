@@ -7,7 +7,7 @@
  *
  *  Reads Mongo (the clause store); writes docs/measurements/card-grammar/grammar-only.json. */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { connect, isStickerCard, loadConfig } from "@edh-seer/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { deriveCardTags, deriveDiff, deriveInputOf, grammarClauseRecords, lostClaims } from "@edh-seer/tagger";
 
 const OUT = "docs/measurements/card-grammar";
@@ -19,7 +19,7 @@ const groups = new Map<string, string[]>();
 const guarded: string[] = [];
 for (const doc of docs as unknown as { oracleId: string; name: string; canonical: never[] }[]) {
   const card = await store.cards.findOne({ _id: doc.oracleId } as never);
-  if (!card || isStickerCard(card)) continue;
+  if (!card) continue;
   total++;
   const g = grammarClauseRecords(card);
   if (!g.complete) { const k = g.blocker!.kind; blockers[k] = (blockers[k] ?? 0) + 1; continue; }

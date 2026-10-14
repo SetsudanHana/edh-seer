@@ -16,3 +16,19 @@ test("junk filter does not match a vanilla card (empty oracleText, real typeLine
   const oracleBranch = f.$or.find((b) => b.oracleText);
   expect(oracleBranch?.oracleText?.$in).not.toContain("");
 });
+
+test("sticker purge reaches every per-card collection by the field that keys it", async () => {
+  const { stickerPurgeFilters } = await import("./purge.js");
+  const f = stickerPurgeFilters(["a", "b"]);
+  expect(f.map((x) => x.collection)).toEqual(["cards", "cardOtags", "cardClauses", "cardTags", "cardTagsDerived"]);
+  expect(f[0].filter).toEqual({ _id: { $in: ["a", "b"] } });
+  expect(f[2].filter).toEqual({ oracleId: { $in: ["a", "b"] } });
+  expect(f.map((x) => x.collection)).not.toContain("tokens");
+});
+
+test("combo names of a card are the whole name and each face; the combo filter matches any piece", async () => {
+  const { comboNamesOf, stickerComboFilter } = await import("./purge.js");
+  expect(comboNamesOf("Sticky // Back")).toEqual(["Sticky // Back", "Sticky", "Back"]);
+  expect(comboNamesOf("Sol Ring")).toEqual(["Sol Ring"]);
+  expect(stickerComboFilter(new Set(["A"]))).toEqual({ cards: { $in: ["A"] } });
+});

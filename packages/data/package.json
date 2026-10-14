@@ -25,7 +25,8 @@
     "ingest": "tsx src/bin/ingest.ts",
     "refresh-mechanics": "tsx src/bin/refresh-mechanics.ts",
     "mechanic-coverage": "tsx src/bin/mechanic-coverage.ts",
-    "ingest-precons": "tsx src/bin/ingest-precons.ts"
+    "ingest-precons": "tsx src/bin/ingest-precons.ts",
+    "purge-sticker-cards": "tsx src/bin/purge-sticker-cards.ts"
   },
   "dependencies": {
     "@edh-seer/engine": "*",
