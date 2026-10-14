@@ -53,6 +53,7 @@ const TESTED: Record<string, string> = {
   "701.34a": "grammar/clause-record.test.ts — a proliferate's object is any permanent or player, not only yours (task 7, #896)",
   "701.41a": "grammar/clause-record.test.ts — support's object is other target creatures (task 7, #896)",
   "706.2": "grammar/clause-record.test.ts — a die-roll modifier (Xenosquirrels) is a static clause keyed on the roll, not a triggered ability (#1210)",
+  "702.170c": "grammar/clause-record.test.ts — 'it becomes plotted' reads as no action, never an animation (Make Your Own Luck, #1210)",
   "701.15": "grammar/filter.test.ts — goaded is a status the filter can demand (#896)",
   "701.60": "grammar/filter.test.ts — suspected is a status the filter can demand (#896)",
   "702.33": "grammar/filter.test.ts — a kicked spell is a status the filter can demand (#896)",

@@ -178,6 +178,9 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     // mostly leaves it (Beast Within; defaulting it to the battlefield moved 2,348 cards).
     const ref = BACK_REFERENCE.test(object);
     const before = [...out].reverse().find((a) => a.verb === "search" || a.verb === "exile");
+    // An exile "from among them" of a looked-at library leaves the rest in the library; an exile that
+    // MOVED the top cards ("Exile the top three cards of your library") leaves the rest in exile.
+    const looksAtLibrary = readings.slice(0, readings.indexOf(r)).reverse().find((x) => x.verb === "search" || x.verb === "exile")?.lookedAt !== undefined;
     // "Until end of turn, you may cast THAT CARD" after an exile: from exile, as the store writes it.
     const castRef = (r.verb === "cast" || r.verb === "play") && ref && before?.verb === "exile" ? "exile"
       // "reveal the top card of your library ... cast that card" (Powerbalance); "cast the exiled card",
@@ -195,7 +198,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
       // "Shuffle Beacon of Immortality into its owner's library": a spell shuffles itself from the stack.
       : r.verb === "shuffle" && r.object?.self === true && type === "spell" ? "stack" : null);
     const from = r.fromZone ?? castRef ?? selfBounce ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
-      : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? (/\bthe top (?:\w+|\d+) cards of your library\b/i.test(before.object ?? "") ? "library" : "exile") : before !== undefined ? null
+      : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? (looksAtLibrary ? "library" : "exile") : before !== undefined ? null
         // "When enchanted creature dies, return that card": the card the trigger put in the graveyard.
         // "Counter target spell. If that spell is countered this way, exile it instead": still on the stack.
         : r.verb === "exile" && out.some((a) => a.verb === "counter-spell") ? "stack"

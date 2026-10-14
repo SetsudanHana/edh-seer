@@ -847,8 +847,8 @@ function subjectAction(t: string): ActionReading[] | null {
   // a few capitalised words; the store's modify-pt on the card, the count its amount.
   const cda = /^((?:~|this [a-z]+|[a-z][\w-]*(?: [A-Za-z][\w-]*){0,3}))'s (?:power(?: and toughness)?|toughness) (?:is|are)(?: each)? equal to (.+)$/i.exec(t);
   if (cda && !/\b(?:target|each|enchanted|equipped|that|another)\b/i.test(cda[1]!)) return [{ verb: "modify-pt", object: SELF, amount: cda[2]! }];
-  // "If you do, it becomes plotted" (Make Your Own Luck): a status of a card in exile (plot), no animation
-  // and no verb of its own.
+  // CEILING: "If you do, it becomes plotted" (Make Your Own Luck) records no action: plotted is a status of
+  // a card in exile (CR 702.170c), no animation, and no verb carries it.
   if (/^(?:it|that card|~|this card|the exiled card) becomes plotted$/i.test(t)) return [];
   // "This creature enters prepared", "it becomes prepared", "target creature becomes unprepared".
   const prepared = /^(.+?) (?:enters|becomes) (un)?prepared$/i.exec(t);
@@ -1571,8 +1571,8 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   // Annex reads as an always-on static counter and the others as static actions, which is how Chancellor
   // of the Dross's bought answer stores it too.
   let gameStart = false;
-  // "Look at the top seven cards of your library" records no action, but the library is where the next
-  // sentence's "from among them" and "the rest" are.
+  // CEILING: "Look at the top seven cards of your library" records no action (nothing leaves the library),
+  // but the library is where the next sentence's "from among them" and "the rest" are.
   let lookedAtLibrary = "";
   for (const raw of unquoted.split(/(?<=\.)\s+/)) {
     let s = raw.trim().replace(/\.$/, "");
@@ -1602,7 +1602,8 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     // Only a plain verb after it: "who didn't choose the lowest number discards ..." is not this.
     const decline = /^(each opponent|each player|each other player) who (?:doesn't|don't) ((?:loses?|gains?|draws?|discards?|sacrifices?|mills?|takes?) .+)$/i.exec(s);
     const declined = decline ? [...out].reverse().find((a) => a.optional)?.verb.split("-")[0] : undefined;
-    if (decline) { s = `${decline[1]} ${decline[2]}`; }
+    // Only when a declined "may" is found: otherwise the prefix stays, the phrase stays unread, and the card refuses.
+    if (decline && declined) { s = `${decline[1]} ${decline[2]}`; }
     // "As this creature enters[ or is turned face up], ...": when the card arrives is no action, and the
     // clause is a static replacement (Aquamorph Entity, Crowd-Control Warden). Not before "you may": a
     // shock land's "you may pay 2 life" is a choice, and read bare it became a continuous life loss.

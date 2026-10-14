@@ -255,3 +255,11 @@ test("cards of a looked-at library are yours, and the exiled card is not what a 
   expect(copy?.emits?.[0]?.subject).toMatchObject({ control: "any" });
   expect(copy?.emits?.[0]?.subject.type).toBeUndefined();
 });
+
+test("a 'who doesn't' with no declined choice before it refuses; an exile that moved the cards leaves the rest in exile (#1210 review)", () => {
+  expect(readCard("X", "Sorcery", "Each opponent who doesn't loses 3 life.").complete).toBe(false);
+  const g = readCard("Y", "Sorcery", "Exile the top three cards of your library. Put one of them into your hand.");
+  expect(g.records[0]!.actions![1]).toMatchObject({ verb: "put", fromZone: "exile" });
+  const durnan = readCard("Durnan of the Yawning Portal", "Legendary Creature — Human Warrior", "Whenever Durnan of the Yawning Portal attacks, look at the top four cards of your library. You may exile a creature card from among them. Put the rest on the bottom of your library in any order.");
+  expect(durnan.records[0]!.actions![1]).toMatchObject({ verb: "put", fromZone: "library", toZone: "library" });
+});
