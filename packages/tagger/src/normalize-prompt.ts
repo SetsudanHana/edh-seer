@@ -142,9 +142,11 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   // regenerate each earned one.
   "gain-control", "phase-out", "monarch",
   // CR 702.26c. THE ACTION SIDE OF `phases-in`, the trigger that already exists, as `phase-out` is of
-  // `phases-out`. Sized over the whole corpus on 2026-10-15: 8 cards PERFORM it (Time and Tide,
-  // Teferi Timeless Voyager, The Pandorica ...), 12 mention "phase in" at all, the other 4 only
-  // trigger on it. No EMITS row and no engine Verb, following `phase-out` exactly: the clause
+  // `phases-out`. Sized over the whole corpus on 2026-10-15: 3 cards PERFORM it (Time and Tide,
+  // The Pandorica "that permanent phases in", The Doctor's Childhood Barn "those permanents phase in"),
+  // a 4th (Oubliette, "as it phases in this way") only rides on it, and 12 mention "phase in" at all by
+  // reading each oracle text: 4 trigger on it, 4 restrict it ("can't phase in": Teferi Timeless
+  // Voyager, Disciple of Caelus Nin, The Phasing of Zhalfir, The City on the Edge of Forever). No EMITS row and no engine Verb, following `phase-out` exactly: the clause
   // survives, derive reads it as a tail verb. NORMALIZE_VERSION and VOCAB_VERSION 22/21 -> 23.
   "phase-in",
   // CR 702.143 / 116.2h. THE ONE 702 KEYWORD A CARD INSTRUCTS AS AN ACTION: Ethereal Valkyrie

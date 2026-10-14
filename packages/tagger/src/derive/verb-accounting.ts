@@ -42,7 +42,7 @@ export const OPEN: Record<string, { cards: number; note: string }> = {
   // 722.3b loses it) with no engine verb yet: its edges wait on the owner's ruling of 2026-09-27.
   unprepare: { cards: 0, note: "CR 722.3b; losing the designation. Same queue as `prepare`" },
   // --- CR 702.26 Phasing: `phase-out` emits `phases-out`; its twin has no engine verb yet (2026-10-15).
-  "phase-in": { cards: 0, note: "CR 702.26c; the action side of the `phases-in` trigger. 8 corpus cards perform it (Time and Tide, Teferi Timeless Voyager ...); no card has derived it yet, so 0 until the next derive, then re-run dropped-action-census and raise the row" },
+  "phase-in": { cards: 0, note: "CR 702.26c; the action side of the `phases-in` trigger. 3 corpus cards perform it (Time and Tide, The Pandorica, The Doctor's Childhood Barn; Oubliette only rides on it, and Teferi Timeless Voyager merely restricts it); no card has derived it yet, so 0 until the next derive, then re-run dropped-action-census and raise the row" },
   // --- CR 701 keyword actions the rules give no primitive — CLOSED 2026-09-09 (AC11 batch 3).
   // --- CR 705 / 725-731 designations — CLOSED 2026-09-09 (AC11 batch 4).
 };
