@@ -114,7 +114,7 @@ export function parseCost(cost: string | undefined, selfNames: readonly string[]
   for (const raw of (cost ?? "").split(",")) {
     const piece = raw.trim();
     if (piece === "") continue;
-    if (/^(?:\{[^}]+\})+$/.test(piece)) {
+    if (/^(?:\{[^{}]+\})+$/.test(piece)) {
       // CEILING: only MANA symbols are a mana cost. {X} is 0, a hybrid or Phyrexian symbol is 1 whichever way it is
       // paid, and {E} / {Q} are listed as `other`.
       for (const m of piece.matchAll(/\{([^}]+)\}/g)) {
@@ -177,7 +177,7 @@ function consumedBy(piece: string): ConsumedCost | null {
 // What a line makes
 // ---------------------------------------------------------------------------------------------------------------
 
-const LEADING_COUNT = new RegExp(`^(${WORD}|\\d+)\\s+(?:\\{[^}]+\\})+$`, "i");
+const LEADING_COUNT = new RegExp(`^(${WORD}|\\d+)\\s+(?:\\{[^{}]+\\})+$`, "i");
 const SCALES = /\b(for each|equal to|that (?:many|much)|number of|where x)\b[^.]*|\{X\}|\bX\b/;
 
 /** What `object` ("one mana of any color", "{U}{U}, {U}{R}, or {R}{R}", "five mana in any combination of colors")
@@ -189,11 +189,11 @@ export function production(object: string, amountText = "", context = ""): Pick<
   const stripped = object.replace(/[.,]\s*(?:spend (?:this|that|the) mana only|spendable only|this mana can'?t be spent)\b.*$/is, "").trim();
   // THE MODEL FILES THE MANA ON `amount` WHEN THE OBJECT NAMES THE RECIPIENT ("chosen player" + amount "{G}{G}{G}", Valleymaker): the symbols are the object.
   const at = amountText.trim().toLowerCase();
-  const text = /^(?:\{[^}]+\})+$/.test(at) && !/\{[^}]+\}/.test(stripped) ? amountText.trim() : stripped;
+  const text = /^(?:\{[^{}]+\})+$/.test(at) && !/\{[^{}]+\}/.test(stripped) ? amountText.trim() : stripped;
   const lower = text.toLowerCase();
   // "two mana in any combination of {U}, {B}, and/or {R}" (Relic of Sauron) is ONE alternative of that many mana: the commas list the colours it may
   // be made of, not separate alternatives, and splitting on them read an amount of 1.
-  const combination = new RegExp(`^(${WORD})\\s+mana\\s+in\\s+any\\s+combination\\s+of\\s+(?:\\{[^}]+\\}[\\s,/]*|and/or\\s*|or\\s*|and\\s*)+$`, "i").exec(text);
+  const combination = new RegExp(`^(${WORD})\\s+mana\\s+in\\s+any\\s+combination\\s+of\\s+(?:\\{[^{}]+\\}[\\s,/]*|and/or\\s*|or\\s*|and\\s*)+$`, "i").exec(text);
   // Whitespace is collapsed first so the split needs no unbounded `\s*` on both sides of a separator (CodeQL js/polynomial-redos on runs of spaces).
   // "{W}{W}, {U}{U}, {B}{B}, {R}{R}, and {G}{G}" (Terra) is a SUM: a list joined by "and" and offering no "or" is not alternatives, so it stays one.
   // CEILING: a list that mixes "and" and "or" is split on the "or" and the commas as before.
@@ -249,7 +249,7 @@ export function production(object: string, amountText = "", context = ""): Pick<
   const found = SCALES.exec(`${text} ${amountText}`.trim());
   const scale = found
     ? ([found[0].toLowerCase() === "{x}" ? "x" : found[0]] as RegExpExecArray)
-    : at !== "" && amountNum === undefined && !/^(?:\{[^}]+\})+$/.test(at) ? ([at] as RegExpExecArray) : null;
+    : at !== "" && amountNum === undefined && !/^(?:\{[^{}]+\})+$/.test(at) ? ([at] as RegExpExecArray) : null;
   const known = counts.length > 0 && counts.every((n) => n !== undefined);
   return {
     colours: inWubrgOrder(colours), colourless, anyColour,
@@ -524,7 +524,7 @@ export function deriveMana(input: ManaInput): ManaResult {
     // drops, so the clause arrives with no add at all. The one-turn tap bonus is read off its printed text instead, as it is for High Tide: the symbols after "an additional".
     // CEILING: that one printed shape only; any other add the model filed under `effectActions` is still unseen.
     if (adds.length === 0 && clause.abilityType === "spell" && ONE_TURN_TAP_BONUS.test(text.trim())) {
-      const symbols = /\badditional\s+((?:\{[^}]+\})+)/i.exec(text)?.[1];
+      const symbols = /\badditional\s+((?:\{[^{}]+\})+)/i.exec(text)?.[1];
       if (symbols) adds = [{ verb: "add-mana", object: symbols }];
     }
     if (adds.length === 0) continue;
@@ -563,7 +563,7 @@ export function deriveMana(input: ManaInput): ManaResult {
     const aligned = addSentences.length === adds.length + lead;
     const entries: { object: string; amountText: string; sentence: string; ability: Ability | undefined }[] = [];
     for (const sentence of addSentences.slice(0, lead)) {
-      const m = /^add\s+((?:\{[^}]+\})+|(?:one|two|three|four|five|six|seven)\s+mana\b[^.]*)\.?$/i.exec(sentence.trim());
+      const m = /^add\s+((?:\{[^{}]+\})+|(?:one|two|three|four|five|six|seven)\s+mana\b[^.]*)\.?$/i.exec(sentence.trim());
       if (m) entries.push({ object: m[1]!, amountText: "", sentence, ability: matching[0] });
     }
     for (const [k, action] of adds.entries()) {
