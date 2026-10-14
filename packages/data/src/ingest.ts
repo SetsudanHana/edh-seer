@@ -10,7 +10,7 @@ import {
   streamVariants,
   type SpellbookVariant,
 } from "./spellbook.js";
-import { toCardDoc, type CardDoc, type ComboDoc } from "./docs.js";
+import { isStickerCard, toCardDoc, type CardDoc, type ComboDoc } from "./docs.js";
 import { connect } from "./db.js";
 import { loadConfig } from "./config.js";
 import { fetchFlavorNames, ingestFlavorNames } from "./flavor.js";
@@ -31,10 +31,11 @@ export async function ingestCards(
    *  corpus. They are unplayable in paper and unreachable by ingest-otags, which filters
    *  -is:alchemy, so they would sit permanently untagged. */
   digitalOnly: ReadonlySet<string> = new Set(),
-): Promise<IngestCounts> {
+): Promise<IngestCounts & { stickers: number }> {
   const total = raws.length;
   let processed = 0;
   let skipped = 0;
+  let stickers = 0;
   let done = 0;
   let ops: AnyBulkWriteOperation<CardDoc>[] = [];
 
@@ -51,6 +52,12 @@ export async function ingestCards(
       skipped++;
     } else {
       const doc = toCardDoc(n);
+      // Sticker cards are outside the engine (owner 2026-10-14): never stored. Counted in `skipped` too.
+      if (isStickerCard(doc)) {
+        skipped++;
+        stickers++;
+        continue;
+      }
       ops.push({ replaceOne: { filter: { _id: doc._id }, replacement: doc, upsert: true } });
       processed++;
     }
@@ -61,7 +68,7 @@ export async function ingestCards(
   }
   await flush();
   onProgress?.(done, total);
-  return { processed, skipped };
+  return { processed, skipped, stickers };
 }
 
 export async function ingestCombos(
@@ -130,7 +137,7 @@ export async function runIngest(): Promise<void> {
     const digitalOnly = await fetchDigitalOnlyOracleIds();
     console.log(`Excluding ${digitalOnly.size} digital-only (non-paper) cards`);
     const c = await ingestCards(cardRaws, store.cards, barReporter("Cards:"), digitalOnly);
-    console.log(`Cards: ${c.processed} processed, ${c.skipped} skipped`);
+    console.log(`Cards: ${c.processed} processed, ${c.skipped} skipped (${c.stickers} sticker cards, outside the engine)`);
 
     console.log("Downloading flavor names...");
     const f = await ingestFlavorNames(await fetchFlavorNames(), store.cards);

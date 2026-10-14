@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { toCardDoc, docToCard } from "./docs.js";
+import { toCardDoc, docToCard, isStickerCard } from "./docs.js";
 import type { NormalizedCard } from "./scryfall.js";
 import { normalizeScryfallCard } from "./scryfall.js";
 
@@ -237,4 +237,15 @@ test("loyalty reaches the document and the Card, card-level and per face (owner 
   expect("loyalty" in dfc).toBe(false);
   expect(docToCard(dfc).faces![1]!.loyalty).toBe("5");
   expect("loyalty" in docToCard(toCardDoc(normalizeScryfallCard({ oracle_id: "s", name: "Sol Ring", type_line: "Artifact", keywords: [], colors: [], cmc: 1 })!))).toBe(false);
+});
+
+// Owner 2026-10-14: the sticker SHEETS go with the cards that use stickers. A sheet's oracle text is
+// its sticker list (it can say anything), so the type line is what names it.
+test("isStickerCard reads a sticker sheet by its Stickers type line, and a sticker-using card by text", () => {
+  expect(isStickerCard({ typeLine: "Stickers", oracleText: "" })).toBe(true);
+  expect(isStickerCard({ typeLine: "Stickers", oracleText: "(Name) Pay 2 energy" })).toBe(true);
+  expect(isStickerCard({ typeLine: "Creature", oracleText: "When this enters, put a name sticker on it." })).toBe(true);
+  expect(isStickerCard({ typeLine: "Artifact", oracleText: "{T}: Add {C}." })).toBe(false);
+  expect(isStickerCard({ typeLine: "Artifact", oracleText: "" })).toBe(false);
+  expect(isStickerCard({ oracleText: "Draw a card." })).toBe(false);
 });

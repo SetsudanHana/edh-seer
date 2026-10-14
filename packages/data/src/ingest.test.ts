@@ -24,7 +24,7 @@ test("ingestCards batches upserts via bulkWrite and reports progress (no Mongo)"
   const progress: Array<[number, number]> = [];
   const counts = await ingestCards(cardRaws, cards, (done, total) => progress.push([done, total]));
 
-  expect(counts).toEqual({ processed: 1, skipped: 1 });
+  expect(counts).toEqual({ processed: 1, skipped: 1, stickers: 0 });
   // One bulkWrite call carrying a single replaceOne-upsert op (Sol Ring); malformed skipped.
   expect(bulkWrite).toHaveBeenCalledTimes(1);
   const ops = (bulkWrite as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0] as Array<{
@@ -37,6 +37,20 @@ test("ingestCards batches upserts via bulkWrite and reports progress (no Mongo)"
   expect(progress.at(-1)).toEqual([2, 2]);
 });
 
+test("ingestCards drops sticker cards and sticker sheets, counted apart (owner 2026-10-14)", async () => {
+  const bulkWrite = vi.fn(async () => ({}));
+  const cards = { bulkWrite } as unknown as Collection<CardDoc>;
+  const raws: ScryfallCard[] = [
+    { oracle_id: "ring", name: "Sol Ring", type_line: "Artifact", oracle_text: "", colors: [], cmc: 1 },
+    { oracle_id: "user", name: "Sticky", type_line: "Creature — Elf", oracle_text: "When this enters, put a name sticker on it.", colors: [], cmc: 1 },
+    { oracle_id: "sheet", name: "Sticker sheet", type_line: "Stickers", oracle_text: "", colors: [], cmc: 0 },
+  ];
+  const counts = await ingestCards(raws, cards);
+  expect(counts).toEqual({ processed: 1, skipped: 2, stickers: 2 });
+  const ops = (bulkWrite as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0] as Array<{ replaceOne: { filter: { _id: string } } }>;
+  expect(ops.map((o) => o.replaceOne.filter._id)).toEqual(["ring"]);
+});
+
 test("ingestCards excludes digital-only oracle ids", async () => {
   const bulkWrite = vi.fn(async () => ({}));
   const cards = { bulkWrite } as unknown as Collection<CardDoc>;
@@ -46,7 +60,7 @@ test("ingestCards excludes digital-only oracle ids", async () => {
   ];
   const counts = await ingestCards(raws, cards, undefined, new Set(["arena"]));
 
-  expect(counts).toEqual({ processed: 1, skipped: 1 });
+  expect(counts).toEqual({ processed: 1, skipped: 1, stickers: 0 });
   const ops = (bulkWrite as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0] as Array<{
     replaceOne: { filter: { _id: string } };
   }>;
@@ -70,7 +84,7 @@ suite("ingest idempotency", () => {
 
   test("counts processed/skipped and upserts without duplicates on re-run", async () => {
     const first = await ingestCards(cardRaws, store.cards);
-    expect(first).toEqual({ processed: 1, skipped: 1 });
+    expect(first).toEqual({ processed: 1, skipped: 1, stickers: 0 });
     await ingestCombos(comboRaws, store.combos);
 
     // Re-run: still one card, one combo — upsert, not insert.

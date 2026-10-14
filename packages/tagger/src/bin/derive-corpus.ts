@@ -5,7 +5,7 @@
  *  token. If this ever needs the network, the layering has been broken.
  *
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
-import { connect, isStickerCard, loadConfig } from "@edh-seer/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { deriveInputOf } from "../derive-input.js";
 import { createPool } from "@edh-seer/data/parallel";
 import type { DeriveItem, DeriveResult } from "../derive-worker.js";
@@ -36,12 +36,8 @@ const clauseDocs = await clausesCol.find({}).toArray();
 console.log(`clause docs: ${clauseDocs.length} | DERIVE_VERSION ${DERIVE_VERSION}`);
 
 let written = 0, skipped = 0, empty = 0, tokenWritten = 0, grammarSwitched = 0;
-// A STICKER CARD IS OUTSIDE THE ENGINE (owner 2026-10-02, `isStickerCard`): no tags, and any row an
-// earlier derive wrote is removed so nothing downstream reads it.
-const stickers = new Set((await store.cards.find({ oracleText: /sticker/i } as never, { projection: { _id: 1, oracleText: 1, faces: 1 } }).toArray())
-  .filter((c) => isStickerCard(c as never)).map((c) => c._id as string));
-const removed = (await derivedCol.deleteMany({ oracleId: { $in: [...stickers] } })).deletedCount;
-console.log(`sticker cards excluded: ${stickers.size} (${removed} derived row(s) removed)`);
+// STICKER CARDS ARE NOT IN `cards` (owner 2026-10-14): ingest skips them and `purge-sticker-cards`
+// removed the existing ones, with their clause and derived rows, so there is nothing to exclude here.
 
 // A CARD WITH NO ANSWER FOR ITS TEXT THAT THE GRAMMAR READS COMPLETELY (G-T1): normalize-corpus no
 // longer buys one, so it has no clause doc, or only one bought for text it no longer prints (an
@@ -55,7 +51,6 @@ let grammarOnlyWritten = 0;
 const unpricedLoyalty: string[] = [];
 for await (const card of store.cards.find({ "legalities.commander": "legal" } as never).project({ _id: 1, oracleText: 1, keywords: 1, typeLine: 1 })) {
   const c = card as unknown as { _id: string; oracleText?: string; keywords?: string[]; typeLine?: string };
-  if (stickers.has(c._id)) continue;
   const hash = segmentHash(c.oracleText ?? "", c.typeLine ?? "", c.keywords ?? []);
   if (answeredHash.get(c._id) === hash) continue;
   const source = await store.cards.findOne({ _id: c._id } as never) as unknown as { _id: string; name: string } | null;
@@ -81,7 +76,7 @@ console.log(`no answer for the printed text, read completely by the grammar: ${g
 const existingById = new Map((await derivedCol.find({}, { projection: { oracleId: 1, deriveVersion: 1, normalizeVersion: 1, segmentHash: 1 } }).toArray())
   .map((e) => [e.oracleId, e as DerivedTagsDoc] as const));
 const due = clauseDocs.filter((doc) => {
-  if (stickers.has(doc.oracleId) || grammarOnly.has(doc.oracleId)) return false;
+  if (grammarOnly.has(doc.oracleId)) return false;
   if (!FORCE && !needsDerive(existingById.get(doc.oracleId) ?? null, doc, DERIVE_VERSION)) { skipped++; return false; }
   return true;
 });
