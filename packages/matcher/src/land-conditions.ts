@@ -1,5 +1,6 @@
 import { LAND_SUBTYPES, SUBTYPE_TYPES } from "@edh-seer/tagger/subtypes";
 import type { Card } from "@edh-seer/engine";
+import type { ManaLine } from "@edh-seer/tagger";
 import { BASIC_LAND_TYPES } from "./typeline.js";
 
 /** WHAT A CONDITIONAL LAND DEMANDS, read off printed text. Free — no derivation, no clause layer,
@@ -104,18 +105,36 @@ function landFaceText(typeLine: string, oracleText: string): string {
   return i >= 0 ? textHalves[i] : oracleText;
 }
 
+/** THE VERGE CUE OFF THE PRINTED TEXT: "activate only if you control a Swamp or a Forest". */
+function vergeFromText(text: string): string[] {
+  const verge = /activate only if you control (?:a|an) ([a-z'-]+)(?: or (?:(?:a|an) )?([a-z'-]+))?/.exec(text);
+  return verge ? named(verge[1], verge[2]) : [];
+}
+/** THE SAME CUE OFF THE DERIVED LINES: a line of the land face whose typed gate counts one permanent among basic land types (`parseGate`, derive/gate.ts). */
+function vergeFromGate(lines: readonly ManaLine[], typeLine: string): string[] {
+  const halves = typeLine.split("//").map((h) => h.trim());
+  const face = halves.length > 1 ? halves.findIndex((h) => /\bland\b/i.test(h)) : 0;
+  for (const l of lines) {
+    const g = l.gate;
+    if (g?.kind !== "control" || g.need !== 1 || g.basic || g.minPower !== undefined || (halves.length > 1 && face >= 0 && l.face !== face)) continue;
+    const types = named(...g.nouns);
+    if (types.length > 0) return types;
+  }
+  return [];
+}
+
 /** Classify one card's printed text. Non-lands return `none` — the caller decides whether to ask. */
-export function classifyLand(card: Pick<Card, "typeLine" | "oracleText">): LandCondition {
-  const text = landFaceText(card.typeLine ?? "", card.oracleText ?? "").toLowerCase();
+export function classifyLand(card: Pick<Card, "typeLine" | "oracleText">, tags?: { manaLines?: readonly ManaLine[] } | null): LandCondition {
+  const typeLine = card.typeLine ?? "";
+  const text = landFaceText(typeLine, card.oracleText ?? "").toLowerCase();
   const bounces = /when this land enters, return a land you control to its owner's hand/.test(text);
   const base = { subtypes: [] as string[], bounces };
 
-  // CEILING (#1191): this reads the verge sentence off the PRINTED text, not off the line's typed `control` gate. `classifyLand` takes a card's type line and oracle text only (its callers
-  // hold no tags: the build categories, the land score and the goldfish all call it on `dc.card`), so the typed gate is out of its reach; the sentence is the same one derive's `parseGate` reads.
   // The verge cue is an ACTIVATION restriction and can sit on a land with no tapped clause at all,
-  // so it is read before the tapped question rather than inside it.
-  const verge = /activate only if you control (?:a|an) ([a-z'-]+)(?: or (?:(?:a|an) )?([a-z'-]+))?/.exec(text);
-  const vergeTypes = verge ? named(verge[1], verge[2]) : [];
+  // so it is read before the tapped question rather than inside it. READ FROM THE TYPED GATE when the caller hands the card's derived mana lines (#1191, `parseGate` is the one parse of
+  // the sentence): a line gated on one or two basic land types, a count of one. CEILING: with no derived mana lines (`unmetLandConditions` is handed bare cards; a card whose derive produced no line, which cannot be a verge) the sentence is read off the
+  // printed text instead, the same words by a second regex.
+  const vergeTypes = tags?.manaLines ? vergeFromGate(tags.manaLines, typeLine) : vergeFromText(text);
 
   // "put it onto the battlefield tapped" is about a FETCHED land, not this one -- Evolving Wilds
   // enters untapped and a bare /tapped/ test calls it a tapped land.

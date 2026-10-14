@@ -57,7 +57,7 @@ export function landOnlineBy(dc: DeckCard, turn: number, basicTypes: ReadonlySet
     types: turn > 1 ? basicTypes : EMPTY_TYPES,
     opponents: 3,
   };
-  if (entersTapped(classifyLand(dc.card), board)) return false;
+  if (entersTapped(classifyLand(dc.card, dc.tags), board)) return false;
   // WHAT IS STANDING THERE IS THE FETCHED LAND, and `classifyLand` cannot see it: Evolving Wilds
   // enters untapped and the basic it finds does not. Same board the simulator reads.
   return !isFetchSource(dc) || !fetchedLandEntersTapped(dc, board.lands);

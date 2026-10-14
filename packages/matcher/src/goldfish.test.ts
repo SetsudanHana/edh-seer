@@ -1613,6 +1613,26 @@ describe("board-count gates are met turn by turn on the goldfish's own board", (
     expect(manaPerTurn(deck, 5)).toEqual([1, 2, 4, 6, 6]);
   });
 
+  test("a power gate (Fanatic of Rhonas) turns on once a creature of power 4 is out, and stays off beside creatures of power 2 or a '*' (#1191)", () => {
+    const withPower = (name: string, power: string): DeckCard => ({ ...card(name, "Creature \u2014 Giant", 2), card: { ...card(name, "Creature \u2014 Giant", 2).card, power } });
+    const dork = withManaLines("Power Dork", "Creature \u2014 Elf", [tapFor(["G"], { gate: parseGate("you control a creature with power 4 or greater") })]);
+    const mana = (power: string): number[] => manaPerTurn([dork, withPower("Giant", power), ...basics(6)], 6);
+    const off = mana("2");
+    expect(off).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(mana("*")).toEqual(off);
+    const on = mana("4");
+    expect(on.slice(0, 2)).toEqual(off.slice(0, 2));
+    expect(on[5]).toBeGreaterThan(off[5]!);
+  });
+
+  test("a basic-land gate (Gleaming Bastion) makes its colour once a BASIC is out, and never beside non-basic lands (#1191)", () => {
+    const bastion = withLines(card("Basic Gated Land", "Land", 0), [tapFor(["C"]), tapFor(["W"], { gate: parseGate("this land entered this turn or if you control a basic land") })]);
+    const white: DeckCard = { ...card("White Spell", "Sorcery", 1), card: { ...card("White Spell", "Sorcery", 1).card, manaCost: "{W}" } };
+    const castable = (lands: DeckCard[]): number[] => simulate([bastion, ...lands, white], { trials: 20, turns: 4, seed: 5, mulligan: false }).byCardCastable.get("White Spell")!;
+    expect(castable(basics(3))[3]).toBe(1);
+    expect(castable(Array.from({ length: 3 }, (_, i) => card(`Utility ${i}`, "Land")))).toEqual([0, 0, 0, 0]);
+  });
+
   test("Mox Jasper makes nothing until a Dragon is on the board, then one mana of any colour: a Dragon the mana could pay for on turn 2 helps from turn 3", () => {
     const jasper = real("Mox Jasper");
     const dragon = card("Dragon", "Creature — Dragon", 2);

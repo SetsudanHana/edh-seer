@@ -159,3 +159,16 @@ test("a power gate counts creatures with that printed power or more; a '*' never
   expect(gateVerdict(g, deckOf(small))).toBe("unmet");
   expect(gateVerdict(g, deckOf(star))).toBe("unmet");
 });
+
+// #1191: what a permanent is, as a gate counts it. The DFC is Delver of Secrets (corpus: card.power is null, faces[0].power "1").
+test("permOf: basic supertype (snow-covered counts), Wastes is not a basic land type but is basic, a non-basic land is not, a '*' power never counts, a DFC reads its first face's power", () => {
+  const perm = (c: Record<string, unknown>) => permOf({ card: { name: "X", manaValue: 0, oracleText: "", ...c } as never, tags: null })!;
+  expect(perm({ typeLine: "Basic Snow Land — Forest" })).toMatchObject({ basic: true, land: true });
+  expect(perm({ name: "Wastes", typeLine: "Basic Land" })).toMatchObject({ basic: true, land: true, power: null });
+  expect(perm({ typeLine: "Land — Gate" })).toMatchObject({ basic: false, land: true });
+  expect(perm({ typeLine: "Creature — Goyf", power: "*" }).power).toBeNull();
+  expect(perm({ typeLine: "Creature — Elf", power: "4" }).power).toBe(4);
+  const delver = perm({ name: "Delver of Secrets // Insectile Aberration", typeLine: "Creature — Human Wizard // Creature — Human Insect", power: null, faces: [{ power: "1" }, { power: "3" }] });
+  expect(delver.power).toBe(1);
+  expect(delver.subtypes.has("wizard")).toBe(true);
+});

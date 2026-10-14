@@ -251,7 +251,7 @@ export function tappedLandCount(deck: readonly DeckCard[], commanderNames: reado
   const commanders = new Set(commanderNames);
   return deck.filter((dc) => {
     if (commanders.has(dc.card.name) || !isLand(dc)) return false;
-    const template = classifyLand(dc.card).template;
+    const template = classifyLand(dc.card, dc.tags).template;
     if (template === "unconditional" || template === "unclassified") return true;
     return !makesAnyMana(dc) && isFetchSource(dc) && fetchedLandEntersTapped(dc, 3);
   }).length;

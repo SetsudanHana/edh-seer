@@ -52,8 +52,10 @@ export function permOf(dc: DeckCard): Perm | null {
   const p = parseTypeLine(front);
   const land = countsAsLand(dc.card);
   if (!land && !p.types.some((t) => PERMANENT_TYPES.has(t))) return null;
-  // CEILING: the printed power (`card.power`); a '*' or any other non-number never counts toward a power gate, and a double-faced card reads its first face's.
-  const power = /^\d+$/.test(dc.card.power ?? "") ? Number(dc.card.power) : null;
+  // CEILING: the printed power; a double-faced card has none on the card and reads its FIRST face's (`faces[0].power`), the face it is cast as (CR 712.8a, as the type line above). A '*' or any other
+  // non-number never counts toward a power gate: a Tarmogoyf's power is a number only in a game, which this does not play.
+  const printed = dc.card.power ?? dc.card.faces?.[0]?.power;
+  const power = /^\d+$/.test(printed ?? "") ? Number(printed) : null;
   return { name: dc.card.name, types: new Set(land ? [...p.types, "land"] : p.types), subtypes: new Set(p.subtypes), land, manaValue: dc.card.manaValue ?? 0, basic: p.supertypes.includes("basic"), power };
 }
 

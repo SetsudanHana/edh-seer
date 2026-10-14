@@ -97,7 +97,7 @@ export function landFacts(dc: DeckCard, needed: ReadonlySet<Color>, library: rea
   // Bluffs makes {U} and {R}, Cascading Cataracts nothing. `tapColours` reads both.
   const produced = own || !fetches ? tapColours(dc) : [...fetchedColours(text, library, null)];
   const colours = COLORS.filter((c) => needed.has(c) && produced.includes(c));
-  const template = classifyLand(dc.card).template;
+  const template = classifyLand(dc.card, dc.tags).template;
   // A FETCH THAT MAKES NO MANA ITSELF TAKES ITS LAND'S TIMING, as `tappedLandCount` reads it.
   const tapped: Tapped = !own && fetches
     ? (fetchedLandEntersTapped(dc, 3) ? 2 : 0)
