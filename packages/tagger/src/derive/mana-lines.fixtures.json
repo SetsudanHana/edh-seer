@@ -15901,5 +15901,106 @@
    }
   ],
   "source": "grammar"
+ },
+ "Bilbo, Fellow Conspirator": {
+  "card": {
+   "_id": "d273f87d-1271-49d2-a628-2d1bd888f56c",
+   "name": "Bilbo, Fellow Conspirator",
+   "typeLine": "Legendary Creature — Halfling Citizen",
+   "oracleText": "If you would create a Food token, instead create a Food token and a Treasure token.",
+   "keywords": [
+    "Treasure",
+    "Food"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "2",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{2}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Food token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Xorn": {
+  "card": {
+   "_id": "11d8fab8-93af-4291-80bd-cf9436e99f4b",
+   "name": "Xorn",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "If you would create one or more Treasure tokens, instead create those tokens plus an additional Treasure token.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 3,
+   "power": "3",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{2}{R}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Xorn",
+     "typeLine": "Creature — Elemental",
+     "printingId": "713a6502-5239-449a-b04a-c82d525f9916"
+    },
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "a3a684b7-27e0-4d9e-a064-9e03c6e50c89"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "Treasure tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "those tokens plus an additional Treasure token",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
  }
 }

@@ -366,8 +366,47 @@ const tokenKey = (sub: SubjectFilter["subtype"], anyOf?: readonly Partial<Subjec
  *  (Marching Duodrone), "that attacking player creates" (Jolene: any player attacking your opponents, you included), "target player creates" (Prismari Command: you may name yourself). */
 const OPP_RECIPIENT = /\b(?:an?|each|target|defending|those) opponents?(?:\s+who\s+[^.,]*?|\s+may)?\s+creates?\b|\b(?:its|their|that (?:creature|permanent|spell)'s) controller(?:\s+may)?\s+creates?\b/i;
 const YOU_CREATE = /\byou (?:may )?create\b|\byou and [^.]*\bcreate\b|\beach player (?:may )?creates?\b|\b(?:that|target|each) (?:attacking )?player (?:may )?creates?\b/i;
-/** A sentence about TOKEN CREATION being replaced or doubled makes none (Academy Manufactor, Xorn, Jolene's "plus an additional Treasure token"). */
+/** A sentence about TOKEN CREATION being replaced or doubled makes none (Xorn, Jolene's "plus an additional Treasure token") unless it ADDS a mana token to another's creation (`replacementAddedToken`). */
 const REPLACES_CREATION = /\bif you would create\b|\binstead create\b|\bthose tokens plus\b/i;
+/** THE MANA TOKEN A CREATION REPLACEMENT ADDS TO THE CREATION OF A DIFFERENT TOKEN (owner 2026-10-14, #1197): "If you would create a Food token, instead create a Food token and a Treasure token" (Bilbo,
+ *  Fellow Conspirator), "If you would create a Clue, Food, or Treasure token, instead create one of each" (Academy Manufactor: a Clue or a Food made yields a Treasure). A doubler of the Treasure you
+ *  are already making ("instead create those tokens plus an additional Treasure token", Xorn; Jolene's second sentence) makes none without another maker, and is no line.
+ *  Both templates are read: the active "If you would create X, instead create ..." and the passive "If one or more X would be created ..., those tokens plus an additional Y token are created instead".
+ *  The replaced part is what stands before its first "token(s)": a token NAME in it that is not the mana token (REPLACED_TOKEN_NAMES, a positive list) makes the added mana token a maker; no name at all is
+ *  every token ("one or more tokens", Tippy-Toe's shape), which also makes it one; the mana token alone is a doubler. Qualifiers after "tokens" ("under your control") are never read.
+ *  CEILING: a replaced token that is a creature type or any name outside REPLACED_TOKEN_NAMES (Soldier, Thopter) is not recognised, so a replacement over it adds no line; "one of each" adds every token named. A
+ *  replaced "Treasure or Gold" that adds a Treasure reads as a maker (Gold is another name), though it only doubles mana tokens; no card prints it. */
+const REPLACED_FILLER = new Set(["if", "you", "would", "create", "be", "created", "a", "an", "one", "or", "more", "and", "of", "each", "the", "tapped", "untapped", "that", "many", "additional", "another"]);
+const REPLACED_TOKEN_NAMES = new Set(["clue", "food", "blood", "map", "junk", "incubator", "role", "shard", "powerstone", "gold", "treasure", "lander", "mutagen", "eldrazi", "spawn", "scion"]);
+const ADDED_MANA_TOKENS = ["treasure", "gold", "powerstone"] as const;
+export function replacementAddedToken(text: string): string | null {
+  const flat = text.replace(/\([^)]*\)/g, " ").toLowerCase();
+  const at = flat.indexOf("instead create");
+  const head = flat.indexOf("if you would create");
+  let replacedText: string;
+  let added: string;
+  if (at >= 0 && head >= 0 && head <= at) {
+    replacedText = flat.slice(head, at);
+    // "instead create one of each" (Academy Manufactor) adds every token the replaced set names.
+    added = /\bone of each\b/.test(flat.slice(at)) ? replacedText : flat.slice(at);
+  } else {
+    const would = flat.indexOf("would be created");
+    const plus = flat.indexOf("those tokens plus");
+    if (would < 0 || plus < would) return null;
+    // From the replacement's own "If": an earlier sentence in the clause is not what is replaced.
+    replacedText = flat.slice(Math.max(0, flat.lastIndexOf("if ", would)), would);
+    added = flat.slice(plus);
+  }
+  const firstToken = replacedText.indexOf("token");
+  const named = (firstToken < 0 ? replacedText : replacedText.slice(0, firstToken)).split(/[^a-z]+/).filter((w) => w !== "" && !REPLACED_FILLER.has(w));
+  for (const key of ADDED_MANA_TOKENS) {
+    if (!new RegExp(`\\b${key}\\b`).test(added)) continue;
+    const others = named.filter((w) => w !== key && REPLACED_TOKEN_NAMES.has(w));
+    // The mana token alone is a doubler (none); another token named, or every token (nothing named), adds it. An unrecognised name is none.
+    if (others.length > 0 || named.length === 0) return key;
+  }
+  return null;
+}
 const handsTokenToOpponentOnly = (text: string, abilityControl: string | undefined): boolean =>
   (abilityControl === "opp" || OPP_RECIPIENT.test(text)) && !YOU_CREATE.test(text);
 /** THE WHOLE CARD'S SENTENCES THAT NAME THE TOKEN decide first (reminder text stripped): a clause the segmenter cut short (Cityscape Leveler's attack trigger loses "Its controller creates a tapped Powerstone")
@@ -621,8 +660,10 @@ export function deriveMana(input: ManaInput): ManaResult {
   // CEILING: a Treasure inside any quoted ability of a token the clause makes is credited to the card that makes the token, as the Aura's is.
   for (const c of clauses) {
     const text = input.textOf(c);
-    if (REPLACES_CREATION.test(text)) continue;
-    for (const action of c.actions ?? []) {
+    const replaces = REPLACES_CREATION.test(text);
+    const added = replaces ? replacementAddedToken(text) : null;
+    if (replaces && added === null) continue;
+    for (const action of replaces ? [{ verb: "create", object: `a ${added} token` }] : c.actions ?? []) {
       if (action.verb !== "create") continue;
       const m = CREATES_MANA_TOKEN.exec(`create ${action.object ?? ""}`);
       if (!m) continue;
