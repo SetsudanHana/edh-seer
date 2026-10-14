@@ -61,7 +61,7 @@ export interface CutInput {
   /** Functional BUILD roles it fills ("ramp", "draw", ...); empty when it fills none. */
   roles: readonly string[];
   /** The card carries an effect kind the matcher classes as a DECK ROLE rather than a pairwise
-   *  claim (`ROLE_NOT_SYNERGY`: cost-reduction, tax, win-game, extra-turn, extra-phase). Such a
+   *  claim (`ROLE_NOT_SYNERGY`: tax, win-game, extra-turn, extra-phase; cost-reduction left it 2026-08-18). Such a
    *  card forms no edge BY DESIGN, so its zero partner count says nothing about it. */
   fillsDeckRole: boolean;
   isLand: boolean;

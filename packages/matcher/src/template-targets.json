@@ -1,6 +1,6 @@
 {
  "version": 1,
- "source": "packages/cli/decks/edhrec, 2126 decks over 214 themes, regenerated 2026-09-06 by research/matcher/template-fit.ts",
+ "source": "packages/cli/decks/edhrec, 2126 decks over 214 themes, regenerated 2026-09-06 by research/matcher/template-fit.ts; the ramp column (and population/range ramp) refit 2026-10-14 under RULES 23 (#1190), the other columns are still the 2026-09-06 fit",
  "population": {
   "consistency": 13,
   "ramp": 13,
