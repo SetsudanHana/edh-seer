@@ -27,3 +27,11 @@ test("the readout defaults to the need turn and the headline is labelled Ramp", 
   expect(screen.getByTestId("availability-readout")).toHaveTextContent("Turn 3 · 30% of the deck payable");
   expect(screen.getByText("Ramp:").parentElement).toHaveTextContent(/Ramp:.*40%.*to make 6 mana by turn 6/);
 });
+
+test("a headline range names its ends, a collapsed one does not (#1226)", () => {
+  const { unmount } = render(<ManaAvailability manaAvailability={{ ...MA, headline: { mana: 6, turn: 6, low: 0.4, high: 0.7 } }} />);
+  expect(screen.getByText("40% if you hold up two mana, 70% if you spend it all on ramp")).toBeInTheDocument();
+  unmount();
+  render(<ManaAvailability manaAvailability={MA} />);
+  expect(document.body.textContent).not.toMatch(/hold up two mana/);
+});

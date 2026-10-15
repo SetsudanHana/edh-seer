@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { policyBand } from "@edh-seer/engine/percent";
+import { policyBand, policyEnds } from "@edh-seer/engine/percent";
 import type { DeckReport } from "../types.js";
 import { bandState } from "../lib/deck-gauge.js";
 import { landHandProbabilities } from "../lib/land-math.js";
@@ -74,21 +74,28 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
     // THE DECK'S OWN NEED (owner 2026-10-10, #1151): can I pay for MY spells on time. The fixed
     // 6-by-6 benchmark is the ramp figure in "Show the numbers".
     tiles.push(<Tile key="mana" label="Mana" big={policyBand(need.low, need.high)}
-      sub={`to make ${need.mana} mana by turn ${need.turn}; ${Math.round(need.share * 100)}% of your spells cost ${need.mana} or less`} />);
+      sub={<>{`to make ${need.mana} mana by turn ${need.turn}; ${Math.round(need.share * 100)}% of your spells cost ${need.mana} or less`}<Ends low={need.low} high={need.high} /></>} />);
   } else if (h) {
-    tiles.push(<Tile key="mana" label="Mana" big={policyBand(h.low, h.high)} sub={`to make ${h.mana} mana by turn ${h.turn}`} />);
+    tiles.push(<Tile key="mana" label="Mana" big={policyBand(h.low, h.high)} sub={<>{`to make ${h.mana} mana by turn ${h.turn}`}<Ends low={h.low} high={h.high} /></>} />);
   }
   const hardest = [...(deckMath?.castability.cards ?? [])].sort((a, b) => a.castable.high - b.castable.high)[0];
   if (hardest) {
     tiles.push(
       <Tile key="cast" label="Hardest cast" warn={hardest.castable.high < 0.5} big={policyBand(hardest.castable.low, hardest.castable.high)}
-        sub={<><CardName name={hardest.name} /> on turn {hardest.turn}</>} />,
+        sub={<><CardName name={hardest.name} /> on turn {hardest.turn}<Ends low={hardest.castable.low} high={hardest.castable.high} /></>} />,
     );
   }
   if (!tiles.length) return null;
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2" data-testid="mana-glance">{tiles}</div>
   );
+}
+
+/** Which end of a range is which, on its own line under the tile's sub (#1226). Nothing for a figure
+ *  that collapsed to one number -- it has no ends. */
+function Ends({ low, high }: { low: number; high: number }) {
+  const ends = policyEnds(low, high);
+  return ends ? <span className="block mt-0.5">{ends}</span> : null;
 }
 
 function Tile({ label, big, sub, warn }: { label: string; big: ReactNode; sub: ReactNode; warn?: boolean }) {

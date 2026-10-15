@@ -96,3 +96,20 @@ test("the weakest-colour tile carries the same caveat", () => {
   render(<ManaGlance deckMath={short} landCount={34} deckSize={100} />);
   expect(screen.getAllByTestId("mana-tile")[1]).toHaveTextContent("Not counted: Meteor Crater (its mana could not be read)");
 });
+
+/** #1226: a policy RANGE says which end is which inside its own tile; a collapsed figure adds no
+ *  end words (persona rounds 2026-10-14..15: every seat asked which end applied to their game). */
+test("a range on the Mana and Hardest cast tiles names its ends; a single figure does not", () => {
+  const ranged = { headline: { mana: 6, turn: 6, low: 0.62, high: 0.85 } } as never;
+  const dm = { ...(deckMath as object), castability: { cards: [{ name: "Dualcaster Mage", turn: 3, castable: { low: 0.34, high: 0.53 }, mana: { low: 0.71, high: 0.86 } }] } } as never;
+  const { unmount } = render(<ManaGlance deckMath={dm} manaAvailability={ranged} landCount={34} deckSize={100} />);
+  const tiles = screen.getAllByTestId("mana-tile");
+  const mana = tiles.find((t) => t.textContent?.startsWith("Mana"))!;
+  const cast = tiles.find((t) => t.textContent?.startsWith("Hardest cast"))!;
+  expect(mana).toHaveTextContent("62% – 85%");
+  expect(mana).toHaveTextContent("62% if you hold up two mana, 85% if you spend it all on ramp");
+  expect(cast).toHaveTextContent("34% if you hold up two mana, 53% if you spend it all on ramp");
+  unmount();
+  render(<ManaGlance deckMath={deckMath} manaAvailability={manaAvailability} landCount={34} deckSize={100} />);
+  expect(document.body.textContent).not.toMatch(/hold up two mana/);
+});

@@ -6,7 +6,7 @@ import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { CardName, useAdded } from "./card-drawer.js";
 import { WinPlans } from "./WinPlans.js";
-import { policyBand } from "@edh-seer/engine/percent";
+import { isPolicyRange, POLICY_LEGEND, policyBand } from "@edh-seer/engine/percent";
 import { bandState } from "../lib/deck-gauge.js";
 // NOTHING IS VALUE-IMPORTED FROM @edh-seer/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
 // prior deep import of `GRAVEYARD_HATE_SHARE` from `@edh-seer/matcher/src/answer-coverage.js` (reasoned
@@ -682,7 +682,7 @@ function DeckMathRows({
                       // THE FIGURE PER ROW, THE MEANING ONCE (review 2026-09-24): the full clause on
                       // every row took the row's width and cut the card NAME to "Wate…" or "C".
                       // What the gap means is said once, under the list.
-                      const note = gap >= COLOUR_GAP ? `mana alone ${band(c.mana)}` : "";
+                      const note = gap >= COLOUR_GAP ? `ignoring colour ${band(c.mana)}` : "";
                       return (
                         <li
                           key={c.name}
@@ -732,6 +732,20 @@ function DeckMathRows({
             *  9-drop and then appeared nowhere on the report at all. A reader looking for their
             *  most expensive card could not find out what happened to it. Named with the reason,
             *  biggest first, the same call `cheatsIntoPlay` makes one paragraph down. */}
+          {/* THE ENDS, NAMED ONCE IN THE BLOCK (#1226). Every persona seat asked which end of
+            *  "34% – 53%" was theirs; the words come from `percent.ts` so no surface can drift. The
+            *  colour line is explained here too, once, so the rows carry only the figure. */}
+          {castability.cards.some((c) => isPolicyRange(c.castable.low, c.castable.high) || isPolicyRange(c.mana.low, c.mana.high)) ? (
+            <p className="text-xs text-(--muted) max-w-[65ch]">
+              {POLICY_LEGEND}
+            </p>
+          ) : null}
+          {castability.cards.some((c) => c.mana.high - c.castable.high >= COLOUR_GAP) ? (
+            <p className="text-xs text-(--muted) max-w-[65ch]">
+              &ldquo;Ignoring colour&rdquo; is the same cast with colours waved through, so a gap
+              between the two figures means colours, not mana, are what hold the card back.
+            </p>
+          ) : null}
           {castability.refusedCards && castability.refusedCards.length > 0 ? (
             <p className="text-xs text-(--muted) max-w-[65ch]">
               <span className="text-(--foreground)">Not checked:</span>{" "}

@@ -7,7 +7,7 @@ import { Explain } from "./Explain.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 // ONE RENDERER ACROSS THE SURFACES (roadmap N6): this file printed "0%" where the CLI floored
 // the same cell at "1%". A measured zero is a measurement; the floor belongs on the refusal path.
-import { policyBand } from "@edh-seer/engine/percent";
+import { isPolicyRange, POLICY_LEGEND, policyBand } from "@edh-seer/engine/percent";
 import { cardImageUrl } from "./card-node.js";
 import { isUnread } from "../lib/unread.js";
 
@@ -184,7 +184,7 @@ function Cost({ card, cell, className }: { card: DeckReport["cards"][number]; ce
     <span data-cell={cell} className={className}>
       <ManaSymbols cost={card.manaCost ?? ""} />
       {card.castability ? (
-        <span className="text-xs text-(--muted) stat-num">
+        <span className="text-xs text-(--muted) stat-num" title={castTitle(card.castability)}>
           {castRange(card.castability)} by T{card.castability.turn}
         </span>
       ) : null}
@@ -194,6 +194,11 @@ function Cost({ card, cell, className }: { card: DeckReport["cards"][number]; ce
 
 const castRange = (c: { castable: { low: number; high: number } }): string =>
   policyBand(c.castable.low, c.castable.high);
+
+/** A range in a table cell cannot carry end words (#1226); the table says it once, as a title on the
+ *  cell, and the legend under it for those who cannot hover. */
+const castTitle = (c: { castable: { low: number; high: number } }): string | undefined =>
+  isPolicyRange(c.castable.low, c.castable.high) ? POLICY_LEGEND : undefined;
 
 type SortKey = "synergy" | "name" | "cost";
 

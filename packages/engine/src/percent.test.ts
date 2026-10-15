@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { band, percent, policyBand } from "./percent.js";
+import { band, isPolicyRange, percent, policyBand, policyEnds, POLICY_LEGEND } from "./percent.js";
 
 // N6. THE FLOOR BELONGS ON THE REFUSAL PATH, NOT ON A MEASURED ZERO. A castability of exactly 0 in
 // 20,000 of 20,000 trials is a MEASUREMENT, and printing it as "1%" claims the cast is possible;
@@ -42,4 +42,15 @@ test("a policy interval narrower than 8pp reads as one number, and a wide one ke
   // A measured zero is still zero, and a rounding-to-zero low end still says <1%.
   expect(policyBand(0, 0.02)).toBe("0%");
   expect(policyBand(0.001, 0.02)).toBe("<1%");
+});
+
+test("policyEnds names both ends of a range and says nothing for a collapsed figure", () => {
+  expect(isPolicyRange(0.34, 0.53)).toBe(true);
+  expect(policyEnds(0.34, 0.53)).toBe("34% if you hold up two mana, 53% if you spend it all on ramp");
+  // Collapsed (under 8pp): one figure, no end words, and the rule agrees with policyBand.
+  expect(isPolicyRange(0.48, 0.55)).toBe(false);
+  expect(policyEnds(0.48, 0.55)).toBe("");
+  expect(isPolicyRange(0.3, 0.38)).toBe(true);
+  expect(POLICY_LEGEND).toMatch(/low end[^.]*hold/i);
+  expect(POLICY_LEGEND).toMatch(/high end[^.]*ramp/i);
 });

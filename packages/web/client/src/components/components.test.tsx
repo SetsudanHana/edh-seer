@@ -470,6 +470,17 @@ test("Cards tab shows what a card costs and when you can cast it, beside the rat
     expect(where.textContent).toContain("22% – 40% by T7");
   }
   expect(within(row).getByText("3.7")).toBeInTheDocument();
+  // #1226: a range in a compact cell carries the ends in its title; a collapsed figure carries none.
+  expect(inline.querySelector("[title]")!.getAttribute("title")).toMatch(/low end holds up two mana.*high end spends everything on ramp/);
+});
+
+test("Cards tab: a collapsed castability figure has no end-words title (#1226)", () => {
+  const cards = [{
+    name: "Sol Ring", synergyRating: 1, topPartners: [], manaCost: "{1}", manaValue: 1,
+    castability: { turn: 1, castable: { low: 0.9, high: 0.93 }, mana: { low: 0.9, high: 0.93 } },
+  }] as any;
+  render(<CardList cards={cards} />);
+  expect(document.querySelector('[data-cell="cost"] [title]')).toBeNull();
 });
 
 /** The precon persona listed "{3}{B}{B} and the rest of the cost symbols" among words it could not
@@ -1838,14 +1849,18 @@ test("BuildBenchmarks says whether you can CAST it, and names colour when that i
   expect(screen.getByLabelText(/Ulamog, 3% – 11% to cast by turn 10/i)).toBeInTheDocument();
   // WHICH PROBLEM IT IS. Damnation's mana is there 70-90% of the time and it casts 61-78%, so the
   // gap is the colours -- a different deck problem from being short on mana, fixed differently.
-  expect(screen.getByLabelText(/Damnation, 61% – 78% to cast by turn 4, mana alone 70% – 90%/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/Damnation, 61% – 78% to cast by turn 4, ignoring colour 70% – 90%/i)).toBeInTheDocument();
   // Ulamog's colours line up, so it gets no second number: below the gap it would say the same
   // thing twice, which is how a panel stops being read.
-  expect(screen.getByLabelText(/Ulamog/i).textContent).not.toMatch(/mana alone/i);
+  expect(screen.getByLabelText(/Ulamog/i).textContent).not.toMatch(/ignoring colour/i);
   // THE DEADLINE IS ON SCREEN, not only in the aria-label. Four cards of equal mana value tie at
   // the same percentage by construction, and a bare "3%" repeated down the block was read as a
   // broken readout by three of four player reviews.
   expect(screen.getByText(/3% – 11% to cast by turn 10/i)).toBeInTheDocument();
+  // #1226: THE ENDS ARE NAMED IN THE BLOCK, once, and the colour line is explained beside them.
+  expect(screen.getByText(/low end holds up two mana/i)).toBeInTheDocument();
+  expect(screen.getByText(/ignoring colour.*same cast with colours waved through/i)).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/mana alone/i);
 });
 
 /** A DEGENERATE RANGE COLLAPSES TO ONE FIGURE. "91% – 91%" reads as a broken readout, and the first
@@ -1862,8 +1877,10 @@ test("BuildBenchmarks never prints a range whose two ends are the same figure", 
   } as never;
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={math} />);
   expect(screen.getByText(/31% to cast by turn 1/i)).toBeInTheDocument();
-  expect(screen.getByText(/^mana alone 91%$/i)).toBeInTheDocument();
+  expect(screen.getByText(/^ignoring colour 91%$/i)).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/(\d+)% – \1%/);
+  // A block with no range has no ends to name.
+  expect(document.body.textContent).not.toMatch(/low end holds up/i);
 });
 
 /** Two land numbers used to reach one panel -- this regression's (an MDFC is a spell worth a
