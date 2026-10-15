@@ -1683,6 +1683,16 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     if (lookedAtLibrary && /\bfrom among (?:them|those cards)\b|\bthe rest\b|\b(?:of|from) (?:them|those cards)\b/i.test(s)) {
       for (let i = at; i < out.length; i++) if ((out[i]!.verb === "put" || out[i]!.verb === "exile") && !out[i]!.fromZone) { out[i] = { ...out[i]!, fromZone: "library", lookedAt: lookedAtLibrary }; pendingLook = null; }
     }
+    // A back-reference after the look ("put it into your hand", "exile that card", "put one ... and the other ...") is the looked-at card:
+    // the move's source is the library, as the store writes it. A reveal of it only names the look.
+    if (lookedAtLibrary) {
+      for (let i = at; i < out.length; i++) {
+        const o = out[i]!;
+        if (o.object?.ref !== "sentence" || o.fromZone) continue;
+        if (o.verb === "put" || o.verb === "exile") { out[i] = { ...o, fromZone: "library", lookedAt: lookedAtLibrary }; pendingLook = null; }
+        else if (o.verb === "reveal") { out[i] = { ...o, lookedAt: lookedAtLibrary }; pendingLook = null; }
+      }
+    }
     if (ifYouDoAfterMay) for (let i = at; i < out.length; i++) out[i] = { ...out[i]!, optional: true };
   }
   if (pendingLook !== null) unread?.push(pendingLook);

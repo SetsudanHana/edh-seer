@@ -76,6 +76,12 @@ function objectWords(r: ActionReading): string {
   const raw = objectWordsOf(r);
   if (!r.lookedAt) return raw;
   const w = raw.replace(/ back$/, "");
+  // "If it's a creature card, ... put it into your hand": the store writes the condition's type as the object ("a creature card").
+  // Here, not in parseActions: the reading keeps the printed "it", and this is where printed words become the store's.
+  if (r.fromZone === "library" && BACK_REFERENCE.test(w) && r.condition !== undefined) {
+    const t = /^if (?:it(?:'s| is)|that card is) (?:an? )?(.+?)(?: card)?$/i.exec(r.condition.trim());
+    if (t && !/\b(?:card|with|mana)\b/i.test(t[1]!)) return `${/^[aeiou]/i.test(t[1]!) ? "an" : "a"} ${t[1]} card`;
+  }
   // The look's library, in the words the store uses: "the rest of the top four cards of your library".
   if (/^the rest$/i.test(w)) return `${w} of ${r.lookedAt}`;
   const some = /^(.+) of (?:them|those cards)$/i.exec(w);

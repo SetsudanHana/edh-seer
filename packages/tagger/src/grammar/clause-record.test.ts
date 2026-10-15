@@ -304,9 +304,21 @@ test("Astrid Peth: a stored record split off a compound does not take the printe
   expect(tags.abilities.filter((a) => a.trigger?.verbs?.includes("attacks" as never)).flatMap((a) => a.emits ?? []).map((e) => e.verb)).toContain("create-token");
 });
 
-test("a 'look at the top card' whose later 'it' / 'that card' is never resolved blocks, rather than read complete with the claim missing (#1210 review)", () => {
-  expect(readCard("Domri Rade", "Legendary Planeswalker — Domri", "+1: Look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand.").complete).toBe(false);
-  expect(readCard("Puresight Merrow", "Creature — Merfolk Wizard", "{W/U}, {Q}: Look at the top card of your library. You may exile that card.").complete).toBe(false);
+test("a 'look at the top card' whose later 'it' / 'that card' is resolved to the library reads complete; one nothing touches still blocks (#1210)", () => {
+  const domri = readCard("Domri Rade", "Legendary Planeswalker — Domri", "+1: Look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand.");
+  expect(domri.complete).toBe(true);
+  expect(domri.records[0]!.actions!.find((a) => a.verb === "put")).toMatchObject({ object: "a creature card", fromZone: "library", toZone: "hand" });
+  const merrow = readCard("Puresight Merrow", "Creature — Merfolk Wizard", "{W/U}, {Q}: Look at the top card of your library. You may exile that card.");
+  expect(merrow.complete).toBe(true);
+  expect(merrow.records[0]!.actions!.find((a) => a.verb === "exile")).toMatchObject({ fromZone: "library" });
+  const hound = readCard("Codecracker Hound", "Creature — Dog", "When this creature enters, look at the top two cards of your library. Put one into your hand and the other into your graveyard.");
+  expect(hound.complete).toBe(true);
+  expect(hound.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.fromZone, a.toZone])).toEqual([["library", "hand"], ["library", "graveyard"]]);
+  const reef = readCard("Risen Reef", "Creature — Elemental", "Whenever Risen Reef or another Elemental you control enters, look at the top card of your library. If it's a land card, you may put it onto the battlefield tapped. If you don't put the card onto the battlefield, put it into your hand.");
+  expect(reef.complete).toBe(true);
+  expect(reef.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["a land card", "library", "battlefield"], ["it", "library", "hand"]]);
+  // A look no later action touches is an unread phrase: the card blocks.
+  expect(readCard("Peek", "Instant", "Look at the top card of your library. Then draw a card.").complete).toBe(false);
   // A look whose "of them" / "the rest" picks the library up is still skipped, and the rest is milled by you.
   const sp = readCard("Strategic Planning", "Sorcery", "Look at the top three cards of your library. Put one of them into your hand and the rest into your graveyard.");
   expect(sp.complete).toBe(true);
