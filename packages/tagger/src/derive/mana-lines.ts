@@ -390,7 +390,9 @@ const needsOf = (source: ManaLineSource | null, text: string, costText: string, 
 /** A MODEL READING THAT LEFT THE COUNT OFF THE ADD (#1188): "For each nonland card revealed this way, add {G} and you gain 1 life" (Selvala, Explorer Returned) files the object as "{G}" and
  *  keeps the "for each" in the sentence, so `production()` (which reads the object and the clause's own amount) saw a fixed 1. A sentence that adds mana AND counts with "for each" scales
  *  by it, in either order ("for each X, add {G}", "add {G} for each X"). Named as `production()` names it: the phrase from "for each", up to the first comma or full stop.
- *  CEILING: a "for each" in the add's own sentence is assumed to count the mana; "Add {R}, then lose 1 life for each ..." would read as scaling (the safe direction: a scaling line grades as no staple). */
+ *  CEILING: a "for each" in the add's own sentence is assumed to count the mana; "Add {R}, then lose 1 life for each ..." would read as scaling (the safe direction: a scaling line grades as no staple).
+ *  The net of such a line is its printed fixed part when "for each" follows the add (Rite of Flame's {R}{R}), else 1. */
+const ADD_BEFORE_FOR_EACH = /\badd\b[^.]{0,200}\bfor each\b/i;
 const FOR_EACH = /\bfor each\b[^,.]{0,80}/i;
 const scaleOfSentence = (sentence: string): string | null => {
   for (const s of sentencesOf(sentence)) if (ADDS_MANA.test(s)) { const m = FOR_EACH.exec(s); if (m) return m[0].trim().toLowerCase(); }
@@ -634,13 +636,19 @@ export function deriveMana(input: ManaInput): ManaResult {
       // A GRANTED "{T}: Add one mana of any of this creature's colors" (Katilda) names the colours of each creature that has it. They are
       // neither the deck's nor the card's. CEILING: the grantees are each their own source and are not read; no colour is credited.
       if (source === "static-grant" && made.anyColour === "among" && /\bthis creature'?s colou?rs\b/i.test(object)) made.anyColour = "grantee";
-      if (made.amount.scales === null) { const counted = scaleOfSentence(sentence); if (counted !== null) made.amount = { fixed: null, scales: counted }; }
+      // THE PRINTED FLOOR: "Add {R}{R}, then add {R} for each ..." (Rite of Flame) always makes the {R}{R}, so its net is that fixed part less the cost. Kept off `amount` (fixed stays null, the schema contract);
+      // only when the add comes BEFORE the "for each" (else the count belongs to this add and the floor is the ceiling of 1).
+      let floor: number | null = null;
+      if (made.amount.scales === null) {
+        const counted = scaleOfSentence(sentence);
+        if (counted !== null) { if (ADD_BEFORE_FOR_EACH.test(sentence)) floor = made.amount.fixed; made.amount = { fixed: null, scales: counted }; }
+      }
       const cost = source === "activated" || source === "static-grant" || source === "token-maker"
         ? parseCost(costText, selfNames)
         : noCost();
       if (source === "one-shot-spell") cost.mana = faceMV(face);
       const afterCost = antecedentCost(text, ADDS_MANA, cost, selfNames);
-      const produced = made.amount.fixed ?? 1;
+      const produced = made.amount.fixed ?? floor ?? 1;
       const line: ManaLine = {
         face, source, repeats: ability?.repeats ?? null, cost, ...made,
         unread: made.colours.length === 0 && made.colourless === 0 && made.anyColour === null,

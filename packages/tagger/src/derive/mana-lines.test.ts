@@ -68,6 +68,11 @@ describe("a tap whose mana depends on something the line must state (#1188)", ()
   it("Corrupted Grafstone makes no mana with an empty graveyard", () => {
     expect(only("Corrupted Grafstone")).toMatchObject({ anyColour: "among", gate: { kind: "unknown", text: "there is a card in your graveyard" } });
   });
+  it("Rite of Flame: '{R}{R}, then {R} for each ...' scales but its net keeps the printed floor of 2 (net 1 on a 1-mana spell); Bloom Tender keeps the ceiling of 1", () => {
+    const [first] = linesOf("Rite of Flame");
+    expect(first).toMatchObject({ amount: { fixed: null, scales: "for each card named rite of flame in each graveyard" }, cost: { mana: 1 }, net: 1 });
+    expect(only("Bloom Tender")).toMatchObject({ amount: { fixed: null }, net: 1 });
+  });
   it("a plain tap stays ungated and fixed (Llanowar Elves, Birds of Paradise)", () => {
     expect(only("Llanowar Elves")).toMatchObject({ amount: { fixed: 1, scales: null }, gate: null });
     expect(only("Birds of Paradise")).toMatchObject({ amount: { fixed: 1, scales: null }, gate: null });
