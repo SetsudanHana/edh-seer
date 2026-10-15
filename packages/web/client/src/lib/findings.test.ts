@@ -529,3 +529,13 @@ test("a parent at zero gets the same imperative action as the others", () => {
   expect(actions["build:ramp"]).toBe("Add ~4; most cost 2–3 mana");
   expect(actions["build:boardWipes"]).toBe("Add ~3 board wipes; most cost 3–5 mana");
 });
+
+/** SOURCES THE COUNT COULD NOT READ (#1186): the colour finding's source count may be short. */
+test("a colour finding says when sources could not be read, naming them", () => {
+  const mk = (unreadSources?: string[]) => findings(report({
+    deckMath: { colors: [{ color: "U", supplied: 15, worst: { pips: 2, turn: 3, required: 17, requiredRaw: 17, cards: 1, available: 12, names: ["Cancel"] } }], ...(unreadSources ? { unreadSources } : {}) } as unknown as DeckReport["deckMath"],
+  })).filter((f) => f.id === "colour:U");
+  expect(mk()[0]!.detail).not.toContain("could not be read");
+  expect(mk(["Meteor Crater"])[0]!.detail).toContain(" Not counted: Meteor Crater (its mana could not be read), so the count may be short.");
+  expect(mk(["A", "B", "C"])[0]!.detail).toContain("Not counted: A, B and 1 other card (their mana could not be read)");
+});

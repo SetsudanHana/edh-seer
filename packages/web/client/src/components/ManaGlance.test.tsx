@@ -72,3 +72,27 @@ test("the mana tile reads the deck's own need, and falls back to the headline fo
   render(<ManaGlance manaAvailability={manaAvailability} landCount={0} deckSize={0} />);
   expect(screen.getByTestId("mana-tile")).toHaveTextContent("Mana52%to make 6 mana by turn 6");
 });
+
+/** SOURCES THE COUNT COULD NOT READ (#1186): derive lists a mana line it could not read as no colour, and the
+ *  tile used to claim "enough sources for every card" over a count that might be short. */
+test("a colour tile says which sources it could not read, and no longer claims every card is covered", () => {
+  const fine = (unreadSources?: string[]) => ({ lands: { actual: 37, target: 37 }, colors: [{ color: "G", supplied: 30 }], castability: { cards: [] }, ...(unreadSources ? { unreadSources } : {}) }) as never;
+  const text = (names?: string[]) => {
+    const { unmount } = render(<ManaGlance deckMath={fine(names)} landCount={37} deckSize={100} />);
+    const t = screen.getAllByTestId("mana-tile")[1]!.textContent;
+    unmount();
+    return t;
+  };
+  expect(text()).toContain("enough sources for every card");
+  expect(text()).not.toContain("Not counted");
+  const one = text(["Meteor Crater"]);
+  expect(one).toContain("Not counted: Meteor Crater (its mana could not be read)");
+  expect(one).toContain("enough sources for every card it could read");
+  expect(text(["Charmed Pendant", "Incubation Druid", "Meteor Crater"])).toContain("Not counted: Charmed Pendant, Incubation Druid and 1 other card (their mana could not be read)");
+});
+
+test("the weakest-colour tile carries the same caveat", () => {
+  const short = { ...(deckMath as object), unreadSources: ["Meteor Crater"] } as never;
+  render(<ManaGlance deckMath={short} landCount={34} deckSize={100} />);
+  expect(screen.getAllByTestId("mana-tile")[1]).toHaveTextContent("Not counted: Meteor Crater (its mana could not be read)");
+});

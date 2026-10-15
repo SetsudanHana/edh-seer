@@ -5,7 +5,7 @@ import { bandState } from "../lib/deck-gauge.js";
 import { landHandProbabilities } from "../lib/land-math.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { CardName } from "./card-drawer.js";
-import { NAME as COLOUR_NAME } from "../lib/findings.js";
+import { NAME as COLOUR_NAME, unreadNote } from "../lib/findings.js";
 
 /** THE MANABASE, ANSWERED FIRST (owner, 2026-09-27: "manabase is also a section that no one is going
  *  to read through"). The chapter was five panels of figures and the paragraphs that qualify them,
@@ -41,6 +41,8 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
     );
   }
   const colours = deckMath?.colors ?? [];
+  // SOURCES THE COUNT COULD NOT READ (#1186): counted as no colour, so the tile never claims full cover over them.
+  const unread = unreadNote(deckMath?.unreadSources);
   if (colours.length) {
     // The colour furthest short of what its earliest demanding card needs; none short says so.
     const short = colours.filter((c) => c.worst && c.worst.available < c.worst.required)
@@ -54,10 +56,10 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
         // then" left the seat asking "more black lands or fewer tapped ones?", and the Improve finding
         // two chapters down already knew: a deck that runs enough of the colour has a SPEED problem.
         // The tile says which problem it is, in the finding's own words, then the numbers.
-        sub={<ColourVerdict c={short} worst={short.worst} />} />
+        sub={<><ColourVerdict c={short} worst={short.worst} />{unread && <> {unread}.</>}</>} />
     ) : (
       <Tile key="colours" label="Colours" big={<span className="inline-flex gap-0.5">{colours.map((c) => <ManaSymbols key={c.color} cost={`{${c.color}}`} />)}</span>}
-        sub="enough sources for every card" />
+        sub={unread ? <>enough sources for every card it could read. {unread}.</> : "enough sources for every card"} />
     ));
   }
   if (landCount > 0 && deckSize > 0) {

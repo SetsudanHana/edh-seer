@@ -364,7 +364,7 @@ export function computeDeckMath(
     turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,
     // THE JOINT DEMAND THE PER-COLOUR ROWS HIDE (#1116): present only when it fails with every colour passing alone.
     ...(gold ? { gold: { ...gold, names: gold.names.slice(0, 2) } } : {}),
-    // Mana sources derive could not read, counted as no colour (`manaAuditFull`). No renderer shows it yet.
+    // Mana sources derive could not read, counted as no colour (`manaAuditFull`). The Manabase colour tile and the colour findings name them.
     ...(unreadSources ? { unreadSources } : {}),
     castability, demand, topdeck: topdeckPayoffs(deck, commanderNames), fetchShortfalls,
     speed,

@@ -293,3 +293,15 @@ test("blue short, red hidden: colourless sources are traded first; without them 
     else expect(blue.replace![0]).toMatch(/^Izzet Gate/);
   }
 });
+
+/** THE PASS-THROUGH (#1186): `manaAuditFull` lists a card whose ungated mana line derive could not read; the
+ *  deck math must carry that list out, or no renderer can say the source count may be short. */
+test("deckMath.unreadSources carries the audit's list, and is absent when there is none", () => {
+  const pendant: DeckCard = {
+    card: { name: "Charmed Pendant", typeLine: "Artifact", oracleText: "", keywords: [], colors: [], manaValue: 3 } as Card,
+    tags: manaTags([tapFor([], { unread: true })]),
+  };
+  const deck = fillTo(99, [pendant]);
+  expect(computeDeckMath(deck, H).unreadSources).toEqual(["Charmed Pendant"]);
+  expect(computeDeckMath(fillTo(99, []), H).unreadSources).toBeUndefined();
+});
