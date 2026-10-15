@@ -387,6 +387,21 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
   };
 }
 
+/** The links that rank a pair: repeating, not a helper's, and read. */
+const rankingLinks = (pair: Pair): Link[] => pair.links.filter((l) => l.repeat !== "oneshot" && !isHelperTag(l.tag) && !unread(l));
+
+/** HOW WELL TWO CARDS WORK TOGETHER, as one number (the ranking `strongestPairs` sorts by): the
+ *  distinct ways they help, 1.5 if it goes both ways, 1 if one is a commander, and up to 3 for how
+ *  central both cards are. 0 when no repeating, non-helper, readable link joins them. */
+export function pairStrength(pair: Pair, cards: ReadonlyMap<string, EngineCard>, groups: ReadonlyMap<string, EngineGroup>, smax: number): number {
+  const rep = rankingLinks(pair);
+  if (!rep.length) return 0;
+  const a = cards.get(pair.a)!, b = cards.get(pair.b)!;
+  const ways = new Set(rep.map((l) => groups.get(l.tag)?.name ?? groupName(l.tag)));
+  const both = new Set(rep.map(helper)).size > 1;
+  return ways.size + (both ? 1.5 : 0) + (a.isCommander || b.isCommander ? 1 : 0) + (3 * (a.score + b.score)) / (2 * smax);
+}
+
 /** THE PAIRS THAT WORK BEST TOGETHER. Ranked by how many different things they do for each other
  *  (the names shown, so the count and the list agree -- round 3), whether it goes both ways, whether
  *  one of them is the commander, and how central both cards are. No card appears more than twice:
@@ -398,12 +413,12 @@ function strongestPairs(pairs: Map<string, Pair>, cards: Map<string, EngineCard>
     if (a.isToken || b.isToken) return [];
     // An effect the engine has not read does not rank a pair: two Rikku pairs sat in the top three
     // on lines that said "effect not read yet" (round 11).
-    const rep = pair.links.filter((l) => l.repeat !== "oneshot" && !isHelperTag(l.tag) && !unread(l));
+    const rep = rankingLinks(pair);
     if (!rep.length) return [];
     const ways = [...new Set(rep.map((l) => groups.get(l.tag)?.name ?? groupName(l.tag)))];
     const actor = helper;
     const both = new Set(rep.map(actor)).size > 1;
-    const strength = ways.length + (both ? 1.5 : 0) + (a.isCommander || b.isCommander ? 1 : 0) + (3 * (a.score + b.score)) / (2 * smax);
+    const strength = pairStrength(pair, cards, groups, smax);
     // Both directions on screen when it goes both ways, so "each helps the other" is visible.
     const ordered = [...rep].sort((x, y) => REPEAT_ORDER[x.repeat] - REPEAT_ORDER[y.repeat]);
     const first = ordered[0]!;

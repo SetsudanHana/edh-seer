@@ -5,7 +5,7 @@ import { engineDeck } from "../lib/engine-model.fixture.js";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { buildOrbit } from "../lib/orbit-model.js";
 import { CardDrawerProvider } from "./card-drawer.js";
-import { allPartners, MAP_CAP, mapPartners } from "./Constellation.js";
+import { allPartners, lineWidth, MAP_CAP, mapPartners } from "./Constellation.js";
 import { OrbitView, countText } from "./OrbitView.js";
 
 
@@ -196,7 +196,7 @@ test("with reduced motion nothing runs, and arrows carry the direction", async (
     const shown = (id: string) => [...container.querySelectorAll(`[data-testid=${id}]`)].filter((e) => (e as SVGElement).style.display !== "none");
     expect(shown("constellation-tick").length).toBe(0);
     expect(shown("constellation-arrow").length).toBeGreaterThan(0);
-    expect(screen.getByText(/A solid line keeps working; a dashed line works once\./)).toBeInTheDocument();
+    expect(screen.getByText(/A solid line keeps working; a dashed line works once; the thicker the line, the better the two work together\./)).toBeInTheDocument();
   } finally { window.matchMedia = mm; }
 });
 
@@ -315,4 +315,26 @@ test("two pieces of one infinite combo say so, and the way to the combo", () => 
   render(<OrbitView report={withCombo} graph={graph} focusId="Payoff A" onFocus={() => {}} ask={{ partner: "Cleric 1" }} />);
   expect(screen.getByText(/Together they go infinite/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "See the combo" })).toBeInTheDocument();
+});
+
+test("the map names the partners that work best with the card, and keeps them in sector order", () => {
+  const { report, graph } = engineDeck();
+  const o = buildOrbit(buildEngineModel(report, graph), "Payoff A")!;
+  const base = o.sectors[0]!.partners[0]!;
+  const n = MAP_CAP + 6;
+  // Strengths are scrambled against the sector order so the strongest are not simply the first.
+  const strengthAt = (i: number) => ((i * 7) % n) + 1;
+  const partners = Array.from({ length: n }, (_, i) => ({ ...base, card: { ...base.card, id: `s${i}` }, links: [{ ...base.links[0]!, repeat: "static" as const }], once: false, strength: strengthAt(i) }));
+  const drawn = mapPartners({ ...o, sectors: [{ ...o.sectors[0]!, partners }] }).map((x) => x.p.card.id);
+  const strongest = partners.map((p, i) => ({ id: p.card.id, i, s: p.strength })).sort((a, b) => b.s - a.s).slice(0, MAP_CAP).sort((a, b) => a.i - b.i).map((x) => x.id);
+  expect(drawn).toEqual(strongest);
+});
+
+test("a stronger pair draws a thicker line, and a lit one thicker still", () => {
+  expect(lineWidth(0, 0)).toBeCloseTo(1.2);
+  expect(lineWidth(1, 0)).toBeCloseTo(2.6);
+  expect(lineWidth(0, 1)).toBeCloseTo(3.0);
+  // A map with no strengths at all (a card page's) keeps the width every line had before.
+  expect(lineWidth(null, 0)).toBeCloseTo(1.6);
+  expect(lineWidth(null, 1)).toBeCloseTo(3.4);
 });

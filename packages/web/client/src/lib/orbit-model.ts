@@ -1,4 +1,4 @@
-import { groupName, type EngineCard, type EngineGroup, type EngineModel, type Link } from "./engine-model.js";
+import { groupName, pairStrength, type EngineCard, type EngineGroup, type EngineModel, type Link } from "./engine-model.js";
 
 /** ONE CARD'S WORLD, IN RINGS (graph evaluation 2026-09-25, design B).
  *
@@ -17,6 +17,8 @@ export interface OrbitPartner {
   links: Link[];
   /** Every one of those lines works only once. */
   once: boolean;
+  /** How well the pair works together (`pairStrength`); 0 when nothing repeats. */
+  strength: number;
 }
 
 export interface OrbitSector {
@@ -68,6 +70,7 @@ export function buildOrbit(m: EngineModel, focusId: string): OrbitModel | null {
   if (!focus) return null;
   const nb = m.partners.get(focusId) ?? new Map();
   const groupByTag = new Map(m.groups.map((g) => [g.tag, g]));
+  const smax = Math.max(1, ...[...m.cards.values()].map((c) => c.score));
   const rank = new Map(m.groups.map((g, i) => [g.tag, g.helper ? 1000 + i : i]));
 
   const sectors = new Map<string, OrbitSector>();
@@ -85,7 +88,7 @@ export function buildOrbit(m: EngineModel, focusId: string): OrbitModel | null {
     // 2026-09-26).
     const key = group?.tag ?? links[0]?.tag ?? "";
     if (!sectors.has(key)) sectors.set(key, { group, key, name: group?.name ?? (key ? groupName(key) : OTHER_NAME), hue: group?.hue ?? OTHER_HUE, partners: [] });
-    sectors.get(key)!.partners.push({ card, links, once: pair.once });
+    sectors.get(key)!.partners.push({ card, links, once: pair.once, strength: pairStrength(pair, m.cards, groupByTag, smax) });
   }
   // Groups first in the deck's order, then the unclaimed lines biggest first. Past MAX_SECTORS, and
   // for a line only one card shares, the unclaimed fold into "Other links": a ring cut into a dozen

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { nodeId as matcherNodeId } from "@edh-seer/matcher/graph-projection";
 import { engineDeck } from "./engine-model.fixture.js";
-import { buildEngineModel, foldSpellTag, groupName, listNames, nodeId, plural, tokenLabel } from "./engine-model.js";
+import { buildEngineModel, foldSpellTag, pairStrength, groupName, listNames, nodeId, plural, tokenLabel } from "./engine-model.js";
 import type { CardGraph, DeckReport } from "../types.js";
 
 describe("nodeId", () => {
@@ -321,5 +321,24 @@ describe("a face named like another deck card (#1176)", () => {
     const m = buildEngineModel(report, graph);
     expect(m.cards.get("face:1:S // Rampant Growth")!.score).toBe(7);
     expect(m.cards.get("Rampant Growth")!.score).toBe(3);
+  });
+});
+
+describe("pairStrength", () => {
+  const strengthOf = (reasons: Parameters<typeof tiny>[1]) => {
+    const m = tiny(["A", "B"], reasons);
+    const smax = Math.max(1, ...[...m.cards.values()].map((c) => c.score));
+    return pairStrength(m.partners.get("A")!.get("B")!, m.cards, new Map(m.groups.map((g) => [g.tag, g])), smax);
+  };
+  const oneWay = { producer: "A", consumer: "B", tag: "attacks:any", text: "When A attacks, B grows" };
+  const back = { producer: "B", consumer: "A", tag: "dies:creature", text: "When B dies, A draws a card" };
+
+  test("is 0 when every link works only once, and above 0 when one repeats", () => {
+    expect(strengthOf([{ ...oneWay, repeatability: "oneshot" }])).toBe(0);
+    expect(strengthOf([oneWay])).toBeGreaterThan(0);
+  });
+
+  test("a pair that works both ways scores higher than the same pair one way", () => {
+    expect(strengthOf([oneWay, back])).toBeGreaterThan(strengthOf([oneWay]));
   });
 });
