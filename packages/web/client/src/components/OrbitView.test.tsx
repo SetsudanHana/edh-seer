@@ -196,7 +196,7 @@ test("with reduced motion nothing runs, and arrows carry the direction", async (
     const shown = (id: string) => [...container.querySelectorAll(`[data-testid=${id}]`)].filter((e) => (e as SVGElement).style.display !== "none");
     expect(shown("constellation-tick").length).toBe(0);
     expect(shown("constellation-arrow").length).toBeGreaterThan(0);
-    expect(screen.getByText(/A solid line keeps working; a dashed line works once\./)).toBeInTheDocument();
+    expect(screen.getByText(/A solid line keeps working; a dashed line works once; the thicker the line, the better the two work together\./)).toBeInTheDocument();
   } finally { window.matchMedia = mm; }
 });
 

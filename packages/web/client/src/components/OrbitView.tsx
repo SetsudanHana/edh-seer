@@ -401,7 +401,7 @@ function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; pa
         ) : null}
         {/* ONE LINE (owner, 2026-09-27: "less is more"): it was a paragraph on dashes, the gold line
           *  and right-click, which the map shows by doing them. */}
-        Tap a card to read it, tap it again to put it in the middle. A solid line keeps working; a dashed line works once.</p>
+        Tap a card to read it, tap it again to put it in the middle. A solid line keeps working; a dashed line works once; the thicker the line, the better the two work together.</p>
       {o.through.length ? (
         <details>
           <summary className="cursor-pointer py-1.5">
