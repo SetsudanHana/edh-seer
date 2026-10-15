@@ -183,7 +183,8 @@ test("a gated mana line plays in a deck that meets its gate and not in one that 
 test("the board-count gates stay priced turn by turn whatever the deck: Sceptre of Eternal Glory still waits on its three lands (not 'met' from the first land)", () => {
   const sceptre = real("Sceptre of Eternal Glory");
   const forests = [sceptre, ...basics(40, "Forest").map((d) => ({ ...d, card: { ...d.card, name: "Forest" } })), ...spells(59, 3)];
-  expect(manaOutput(sceptre, forests)).toEqual({ amount: 3, needsLands: 3 });
+  // It pins the gate's SHAPE now: 3 once three lands share a name, the printed one-mana line until then (#1183).
+  expect(manaOutput(sceptre, forests)).toEqual({ amount: 3, needsLands: 3, sameName: true, below: 1 });
   expect(manaOutput(sceptre, forests)).toEqual(manaOutput(sceptre));
 });
 
@@ -194,6 +195,22 @@ test("#1184: Pyramid of the Pantheon is no accelerant: its only playable line ne
   expect(playableLines(pyramid).map((l) => l.net)).toEqual([-1]);
   expect(classifyAccelerant(pyramid)).toBeNull();
   expect(manaAvailability([pyramid, ...basics(37), ...spells(61, 3)], { trials: 50 }).accelerants).toBe(0);
+});
+
+// #1183: SCEPTRE OF ETERNAL GLORY makes one mana of any colour from the turn it is cast, and three once three lands with the SAME NAME are out.
+test("#1183: Sceptre of Eternal Glory taps for 1 until three same-named lands are out, then 3; Temple of the False God stays 0 below five lands", () => {
+  const sceptre = real("Sceptre of Eternal Glory");
+  expect(manaOutput(sceptre)).toEqual({ amount: 3, needsLands: 3, sameName: true, below: 1 });
+  expect(manaOutput(real("Temple of the False God"))).toEqual({ amount: 2, needsLands: 5 });
+  const grey = withTap(card("Grey Rock", "Artifact", sceptre.card.manaValue ?? 4, "{T}: Add {C}."), ["C"]);
+  const run = (rock: DeckCard, lands: DeckCard[]) => simulate([...lands, rock, ...spells(61, 3)], { trials: 6_000, turns: 8, seed: 23 });
+  // lands that all differ in name: the gate never holds, so the Sceptre is the one-mana rock it prints beside its gate.
+  const distinct = basics(37);
+  expect(run(sceptre, distinct).manaAt).toEqual(run(grey, distinct).manaAt);
+  // three lands of one name: the gate holds, and it makes more than the one-mana rock.
+  const alike = basics(37).map((d) => ({ ...d, card: { ...d.card, name: "Forest" } }));
+  const [a, b] = [run(sceptre, alike), run(grey, alike)];
+  expect(pAtLeastMana(a, 6, 6)).toBeGreaterThan(pAtLeastMana(b, 6, 6) + 0.02);
 });
 
 // WHAT THE DERIVED READING DROPS, AND WHY (#1169 task 2b-1). Each card below was an accelerant when the goldfish read printed text and `producedMana`.
@@ -812,11 +829,12 @@ test("N9: token mana is not a mana source, and a granted mana ability still is",
 // Sceptre of Eternal Glory is in 11 decks and was priced at one mana.
 test("N10: a word-form amount is read, and its gate with it", () => {
   const sceptre = manaOutput(real("Sceptre of Eternal Glory"));
-  // The gated line wins because it makes more -- and it is ZERO below the gate, not one.
+  // The gated line wins because it makes more. Below the gate it is the ungated "one mana of any color" (`below`), not zero (#1183); a card with ONLY a gated line is zero (Temple).
   expect(sceptre.amount).toBe(3);
-  // SAME NAME IS UNCHECKABLE HERE and "three or more lands" is its floor, so the gate under-claims
-  // rather than counting three from turn one.
+  // "Three or more lands with the SAME NAME" is checked against the lands' names (`sameName`), not read as its floor of three lands.
   expect(sceptre.needsLands).toBe(3);
+  expect(sceptre.sameName).toBe(true);
+  expect(sceptre.below).toBe(1);
 
   expect(manaOutput(withManaLines("Three", "Artifact", [tapFor(WUBRG, amountOf(3))])).amount).toBe(3);
   expect(manaOutput(withManaLines("Two", "Artifact", [tapFor(["U", "B", "R"], amountOf(2))])).amount).toBe(2);
