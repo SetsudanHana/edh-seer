@@ -1797,6 +1797,8 @@ function homeOfMisplaced(
   if (!event || !clauseTexts) return undefined;
   const own = textForClause(clause, clauseTexts);
   if (!own || triggerHasCue(event, own)) return undefined;
+  // A REFLEXIVE "When you do" sentence is numbered the previous sentence's verb as its event -- the store's convention, not drift (Curious Forager).
+  if (/^\s*when you do\b/i.test(withoutAbilityWord(own))) return undefined;
   const hits = [...new Set(Object.values(clauseTexts).filter((t) => t && t !== own && triggerHasCue(event, t)))];
   const orphans = hits.filter((t) => !clauses.some((c) => c !== clause && c.trigger?.event === event && textForClause(c, clauseTexts) === t));
   return orphans.length === 0 ? undefined : orphans.length === 1 ? orphans[0] : "";
@@ -1851,7 +1853,9 @@ export function deriveAbilities(
   /** What an earlier clause exiled, for "the exiled card" in a later one (#860). */
   let lastExiled: string | undefined;
   /** Per clause text, the trigger verbs a record has already read off it (see `misplaced`). */
-  const grammarCovered = new Map<string, Set<string>>();
+  const grammarCovered = new Map<string, Map<string, number | string>>();
+  /** Re-homed records dropped-if-redundant: clause id -> the id of the record that already read their event off the same sentence. */
+  const twinOf = new Map<number | string, number | string>();
   for (let clause of clauses) {
     // "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860): see `exiledAcrossClauses`.
     ({ clause, lastExiled } = exiledAcrossClauses(clause, lastExiled, cardName));
@@ -2020,14 +2024,15 @@ export function deriveAbilities(
       && Object.values(clauseTexts ?? {}).some((t) => t !== text && triggerHasCue(clause.trigger!.event!, t)));
     // A re-homed record whose event the sentence's own record already read (Kratos 2 `dies` on the attack-or-dies sentence record 1 claims;
     // Astrid 2 `attacks` on the enters-or-attacks sentence) is that record's twin, not a second ability.
-    if (misplaced && rehomed && grammarCovered.get(rehomed)?.has(normalizeTriggerVerb(clause.trigger!.event!) ?? "")) continue;
+    const partner = misplaced && rehomed ? grammarCovered.get(rehomed)?.get(normalizeTriggerVerb(clause.trigger!.event!) ?? "") : undefined;
+    if (partner !== undefined) twinOf.set(clause.id, partner);
     const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
       clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
       readings?.[clause.id]?.trigger, curse) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
     if (text && claimed.length > 0) {
-      const covered = grammarCovered.get(text) ?? new Set<string>();
-      for (const g of claimed) for (const v of g.verbs) covered.add(v);
+      const covered = grammarCovered.get(text) ?? new Map<string, number | string>();
+      for (const g of claimed) for (const v of g.verbs) if (!covered.has(v)) covered.set(v, clause.id);
       grammarCovered.set(text, covered);
     }
     /** The clause's further readings of its own event, each a twin of the first (pushed below). */
@@ -2868,6 +2873,21 @@ export function deriveAbilities(
     for (const e of abilities.flatMap((a) => a.emits ?? [])) {
       const types = Array.isArray(e.subject.type) ? e.subject.type : [e.subject.type];
       if (POLYMORPH_VERBS.has(e.verb) && e.subject.self !== true && types.includes("creature")) e.subject.control = "you";
+    }
+  }
+  // A TWIN IS DROPPED ONLY WHEN IT SAYS NOTHING ITS PARTNER DOES NOT: same trigger, same effect kind, and every emit (verb, type, subtype, counter, self) is on one
+  // of the partner's abilities of that trigger. A twin carrying more (Champions of the Shoal's `taps` emit, Borborygmos' typed `discard land`) stays, re-homed.
+  // CEILING: a cue heuristic -- a twin is "the same verb already claimed on that sentence", and a re-homed record is "the one orphan sentence that
+  // prints its cue". A card whose record numbering drifts in a way neither sees keeps its stored trigger over the sentence its own text prints.
+  if (twinOf.size > 0) {
+    const emitKey = (e: { verb: string; subject: SubjectFilter }): string => [e.verb, JSON.stringify(e.subject.type ?? null), e.subject.subtype ?? "", e.subject.counter ?? "", e.subject.self ?? ""].join("|");
+    const verbsKey = (a: Ability): string => (a.trigger?.verbs ?? []).join(",");
+    const redundant = (a: Ability, partnerId: number | string): boolean => abilities.some((b) => b !== a && b.clause === partnerId && verbsKey(b) === verbsKey(a)
+      && b.effect.kind === a.effect.kind && (a.emits ?? []).every((e) => (b.emits ?? []).some((f) => emitKey(f) === emitKey(e))));
+    for (let i = abilities.length - 1; i >= 0; i--) {
+      const a = abilities[i]!;
+      const partnerId = a.clause !== undefined ? twinOf.get(a.clause) : undefined;
+      if (partnerId !== undefined && redundant(a, partnerId)) abilities.splice(i, 1);
     }
   }
   return { abilities, unclaimed, unknownTriggers };

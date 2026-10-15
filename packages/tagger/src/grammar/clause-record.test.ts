@@ -320,6 +320,46 @@ test("Kratos, Stoic Father: a record numbered into another sentence reads that s
   expect(view).toEqual([["attacks", "experience"], ["dies", "experience"], ["end-step", "+1/+1"]]);
 });
 
+test("a reflexive 'When you do' record is never re-homed (Curious Forager); a re-homed twin that carries more than its partner is kept (Champions of the Shoal)", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const act = (verb: string, object: string, extra: Record<string, unknown> = {}) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false, ...extra });
+  const forager = { name: "Curious Forager", typeLine: "Creature — Squirrel Druid", keywords: [] as string[],
+    oracleText: "When this creature enters, you may forage. When you do, return target permanent card from your graveyard to your hand. (To forage, exile three cards from your graveyard or sacrifice a Food.)" };
+  const fStored = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [act("forage", "", { optional: true })] },
+    { id: 2, abilityType: "triggered", trigger: { event: "forage", subject: "you", control: "you" }, actions: [act("return", "target permanent card", { fromZone: "graveyard", toZone: "hand" })] },
+  ];
+  const f = deriveCardTags(deriveInputOf(forager as never, "x", forager.name, fStored as never));
+  const back = f.abilities.find((a) => a.effect.kind === "graveyard-recursion");
+  expect(back?.trigger?.verbs).toEqual(["forage"]);
+  expect(back?.emits?.find((e) => e.verb === "leaves")?.subject).toMatchObject({ control: "you", fromZone: "graveyard" });
+  const champs = { name: "Champions of the Shoal", typeLine: "Creature — Merfolk Wizard", keywords: [] as string[],
+    oracleText: "As an additional cost to cast this spell, behold a Merfolk and exile it. (Exile a Merfolk you control or a Merfolk card from your hand.)\nWhenever this creature enters or becomes tapped, tap up to one target creature and put a stun counter on it.\nWhen this creature leaves the battlefield, return the exiled card to its owner's hand." };
+  // The twin (3, `taps`) carries a stun counter its partner (2) does not: it is kept, not dropped as a duplicate.
+  const cStored = [
+    { id: 1, abilityType: "static", actions: [act("behold", "a Merfolk"), act("exile", "it")] },
+    { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [act("tap", "up to one target creature", { optional: true })] },
+    { id: 3, abilityType: "triggered", trigger: { event: "taps", subject: "this creature", control: "you" }, actions: [act("tap", "up to one target creature", { optional: true }), act("add-counter", "stun counter")] },
+    { id: 4, abilityType: "triggered", trigger: { event: "leaves", subject: "this creature", control: "you" }, actions: [act("return", "the exiled card", { fromZone: "exile", toZone: "hand" })] },
+  ];
+  const c = deriveCardTags(deriveInputOf(champs as never, "x", champs.name, cStored as never));
+  expect(c.abilities.some((a) => a.trigger?.verbs?.[0] === "taps" && (a.emits ?? []).some((e) => e.subject.counter === "stun"))).toBe(true);
+});
+
+test("Kratos, Stoic Father as shipped (grammar path): attacks, dies, end-step, and the two-event overflow's twin dies", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const card = { name: "Kratos, Stoic Father", typeLine: "Legendary Creature — God Warrior", keywords: ["Partner"] as string[],
+    oracleText: "Whenever you attack with one or more Gods and whenever a God dies, you get an experience counter.\nAt the beginning of your end step, put a number of +1/+1 counters on target creature equal to the number of experience counters you have.\nPartner\u2014Father & son" };
+  const g = grammarClauseRecords(card);
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
+  // CEILING: the second event of a two-event trigger is an overflow record numbered after the last clause (the store's convention), so the
+  // `dies` the first record already reads off the sentence is read a second time (c4). A twin, harmless to edges; not deduplicated here.
+  expect(tags.abilities.map((a) => [a.clause, a.trigger?.verbs?.[0]])).toEqual([[1, "attacks"], [1, "dies"], [2, "end-step"], [4, "dies"]]);
+  expect(tags.abilities.find((a) => a.trigger?.verbs?.[0] === "end-step")?.emits?.[0]?.subject).toMatchObject({ counter: "+1/+1" });
+});
+
 test("Territory Culler: the looked-at card goes from YOUR library to your graveyard, so the mill emit is control you; Domri's dig still names creature", async () => {
   const { deriveInputOf } = await import("../derive-input.js");
   const { deriveCardTags } = await import("../derive/derive.js");

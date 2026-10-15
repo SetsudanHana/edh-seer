@@ -285,6 +285,8 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
   // A TWO-EVENT TRIGGER ("enters or leaves the battlefield", "attacks or blocks") is two records, the
   // second numbered after the card's last clause -- the store's convention (`validate-clauses.ts`),
   // which derive reads back to the parent's text.
+  // CEILING: when the first record's own reading already yields the second event ("Whenever you attack ... and whenever a God dies", Kratos), the overflow
+  // record reads it a second time: a harmless twin, kept because the store's convention numbers it.
   const overflow: ClauseRecord[] = [];
   let nextId = Math.max(0, ...clauses.map((c) => c.id)) + 1;
   const readings: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }> = {};
