@@ -600,3 +600,38 @@ test("phase-in is the action side of the phases-in trigger (CR 702.26c); 'Simult
   expect(read("Target creature phases in.")).toMatchObject([{ verb: "phase-in" }]);
   expect(read("Simultaneously, all phased-out creatures phase in and all creatures with phasing phase out.").map((r) => r.verb)).toEqual(["phase-in", "phase-out"]);
 });
+
+// #1214: in one sentence a "may" governs every phrase coordinated with it (CR 608.2c) until a phrase names
+// its own actor or the sentence ends.
+const opt = (effect: string) => parseActions(effect, "spell").map((r) => `${r.verb}${r.optional ? "*" : ""}`);
+
+test("'you may A and B' makes B optional too (Domri Rade, Elvish Harbinger, a tutor)", () => {
+  expect(opt("Look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand.")).toEqual(["reveal*", "put*"]);
+  expect(opt("You may search your library for an Elf card, reveal it, then shuffle and put that card on top.")).toEqual(["search*", "reveal*", "shuffle*", "put*"]);
+  expect(opt("You may search your library for an Elf card, reveal it, put it into your hand, then shuffle.")).toEqual(["search*", "reveal*", "put*", "shuffle*"]);
+});
+
+test("'you may A and <new actor> B' and a following sentence stay required", () => {
+  expect(opt("You may sacrifice a creature and you gain 2 life.")).toEqual(["sacrifice*", "gain-life"]);
+  expect(opt("You may sacrifice a creature and each opponent loses 1 life.")).toEqual(["sacrifice*", "lose-life"]);
+  expect(opt("You may sacrifice a creature, then that player shuffles.")).toEqual(["sacrifice*", "shuffle"]);
+  expect(opt("You may sacrifice a creature. Then draw a card.")).toEqual(["sacrifice*", "draw"]);
+});
+
+test("a phrase with its own non-player subject, or an 'otherwise' branch, is not under the may (#1214)", () => {
+  expect(opt("You may sacrifice a creature and this creature deals 2 damage to any target.")).toEqual(["sacrifice*", "deal-damage"]);
+  expect(opt("You may sacrifice a creature and ~ deals 2 damage to any target.")).toEqual(["sacrifice*", "deal-damage"]);
+  expect(opt("You may sacrifice a creature and Goblin Bomber deals 2 damage to any target.")).toEqual(["deal-damage"]);
+  expect(opt("You may sacrifice a creature and target creature gets +2/+2 until end of turn.")).toEqual(["sacrifice*", "modify-pt"]);
+  expect(opt("You may exile target creature you control, then that creature gains haste.")).toEqual(["exile*", "grant-ability"]);
+  expect(opt("You may exile target creature you control, then it gains haste.")).toEqual(["exile*", "grant-ability"]);
+  expect(opt("You may draw a card; otherwise create a Treasure token and scry 1.").filter((v) => v.startsWith("scry")).every((v) => !v.endsWith("*"))).toBe(true);
+});
+
+test("a may does not reach a finite verb, a replacement, or 'the rest' (Guild Feud, Walk-In Closet, Zimone's Experiment)", () => {
+  expect(opt("At the beginning of your upkeep, target opponent reveals the top three cards of their library, may put a creature card from among them onto the battlefield, then puts the rest into their graveyard.")).toEqual(["reveal", "put*", "put"]);
+  expect(opt("When you unlock this door, you may cast spells from your graveyard this turn, and if a card would be put into your graveyard from anywhere this turn, exile it instead.")).toEqual(["exile"]);
+  expect(opt("Look at the top five cards of your library. You may reveal up to two creature and/or land cards from among them, then put the rest on the bottom of your library in a random order.")).toEqual(["put"]);
+  // A copy's exceptions ("... is an artifact ..., and has myriad") are still the may's (Auton Soldier).
+  expect(opt("You may have this creature enter as a copy of any creature on the battlefield, except it isn't legendary, is an artifact in addition to its other types, and has myriad.")).toEqual(["copy*", "cant*", "grant-ability*", "grant-ability*"]);
+});
