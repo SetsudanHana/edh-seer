@@ -402,7 +402,7 @@ const scaleOfSentence = (sentence: string): string | null => {
 /** THE SELF-GUARANTEED FLOOR (#1188): "For each color among permanents you control, add one mana of that color" (Faeburrow Elder, Bloom Tender) counts the card itself, a permanent you control,
  *  so it always makes one mana per colour of its OWN. CEILING: only this colour-among shape is read; a type count that counts the card too (Priest of Titania, "for each Elf on the battlefield")
  *  has a self-floor that is not read, and nets its ceiling of 1 as any scaling line does. */
-const FOR_EACH_COLOUR_AMONG_OWN = /\bfor each colou?r among permanents you control\b/i;
+const FOR_EACH_COLOUR_AMONG_OWN = /^for each colou?r among permanents you control$/i;
 
 /** AN ACTIVATED ABILITY THAT TARGETS holds only while a legal target exists (CR 602.2b applying 601.2c: the targets are chosen when the ability is activated, and with none to choose it
  *  cannot be). Deathrite Shaman's "{T}: Exile target land card from a graveyard. Add one mana of any color." is no mana without a land card in a graveyard; Red Death, Shipwrecker's "Goad
@@ -647,8 +647,9 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (made.amount.scales === null) {
         const counted = scaleOfSentence(sentence);
         if (counted !== null) { if (ADD_BEFORE_FOR_EACH.test(sentence)) floor = made.amount.fixed; made.amount = { fixed: null, scales: counted }; }
-        if (counted !== null && FOR_EACH_COLOUR_AMONG_OWN.test(counted) && source === "activated" && !chars.types.some((t) => /^(?:instant|sorcery)$/i.test(t))) floor = Math.max(floor ?? 0, chars.colors.length);
       }
+      // The own-colour floor reads whichever scale text the line ends with (the model path's `counted`, or the grammar path's `action.amount` that `production()` already stored).
+      if (made.amount.scales !== null && FOR_EACH_COLOUR_AMONG_OWN.test(made.amount.scales) && source === "activated" && !chars.types.some((t) => /^(?:instant|sorcery)$/i.test(t))) floor = Math.max(floor ?? 0, chars.colors.length);
       const cost = source === "activated" || source === "static-grant" || source === "token-maker"
         ? parseCost(costText, selfNames)
         : noCost();

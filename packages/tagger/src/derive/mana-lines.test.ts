@@ -435,6 +435,16 @@ describe("review of task 2a (#1169): 'among', unread, self-exile", () => {
     }
     for (const n of ["Faeburrow Elder", "Bloom Tender"]) expect(only(n), n).toMatchObject({ anyColour: "among", unread: false });
   });
+  it("the own-colour floor also holds when the grammar path puts the count on action.amount; a colourless permanent nets 0 and an instant gets no floor (review)", () => {
+    const of = (typeLine: string, colors: string[]) => {
+      const card = { name: "Probe", typeLine, colors, oracleText: "{T}: For each color among permanents you control, add one mana of that color.", keywords: [] as string[] };
+      const records = [{ id: 1, abilityType: "activated", actions: [{ verb: "add-mana", object: "one mana of that color", amount: "for each color among permanents you control", optional: false, fromZone: null, toZone: null }] }];
+      return deriveCardTags(deriveInputOf(card as never, "x", "Probe", records as never)).manaLines![0]!;
+    };
+    expect(of("Creature — Treefolk Druid", ["G", "W"])).toMatchObject({ amount: { fixed: null, scales: "for each color among permanents you control" }, net: 2 });
+    expect(of("Artifact", [])).toMatchObject({ net: 0 });
+    expect(of("Instant", ["G", "W"])).toMatchObject({ net: 1 });
+  });
   it("The Grey Havens' 'among legendary creature cards in your graveyard' needs a card there (Fix B); a board-bounded 'among' stays ungated", () => {
     const gated = linesOf("The Grey Havens").filter((l) => l.anyColour === "among");
     expect(gated).toHaveLength(1);

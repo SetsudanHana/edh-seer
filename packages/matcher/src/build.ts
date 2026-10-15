@@ -586,7 +586,7 @@ export function rampResilience(cards: DeckCard[]): RampResilience {
 
 /** The one scaling amount that is guaranteed every turn: "for each color among permanents you control" counts the card itself, so derive nets its own colours (Faeburrow Elder 2, Bloom Tender 1);
  *  mirrors `FOR_EACH_COLOUR_AMONG_OWN` in tagger derive/mana-lines.ts. CEILING: the one self-guaranteed shape; Priest of Titania-style type counts and Gaea's Cradle-style counts that can be 0 stay no staple. */
-const SELF_GUARANTEED_SCALE = /^for each colou?r among permanents you control$/i;
+export const SELF_GUARANTEED_SCALE = /^for each colou?r among permanents you control$/i;
 
 /** HOW MUCH A PLAYER WOULD TAKE THIS AS RAMP WITH NO SYNERGY TO ARGUE FOR IT, 0 = not staple-grade
  *  (owner ruling 2026-09-27, #534). A short-on-ramp list drawn only from the partner pool offered
