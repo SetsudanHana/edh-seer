@@ -542,8 +542,10 @@ function counterOnSelf(verb: string | undefined, text: string, cardName?: string
   // on it" (The Great Henge) is that creature -- the panel's Henge -> Dusk Legion Duelist REAL
   // pair was unjoined by reading it as self on the first derive-153 run.
   const onIt = re.onIt.test(text) && !OTHER_OBJECT.test(text)
-    && (triggerIsSelf || /^this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(text));
+    && (triggerIsSelf || lead !== text || /^this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(text));
   if (!onThis && !onIt) return false;
+  // "As this creature enters [or is turned face up], put X +1/+1 counters on it": the lead-in names the card, so "it" is the card (Crowd-Control Warden).
+  const lead = text.replace(/^as (?:this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)|~) enters(?: or is turned face up)?, /i, "");
   // THE CARD'S OWN NAME IS NOT "THE OTHER ONE" (DERIVE 173, overview item 8): `onOther` reads "counters
   // on THE Ozolith" as "on the <something>", so The Ozolith's own counters went kindless and fed The
   // Earth Crystal's creature-only doubler. The own-name phrase is taken out before that test.
