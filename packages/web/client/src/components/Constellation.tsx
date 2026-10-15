@@ -42,11 +42,15 @@ const NARROW: Geometry = { aspect: 20 / 23, stretch: 1, cap: 10, rings: [150, 21
 const BROAD: Geometry = { ...WIDE, aspect: 16 / 9, stretch: 1.7, minW: 1310 };
 const geometry = (narrow: boolean, broad: boolean) => (narrow ? NARROW : broad ? BROAD : WIDE);
 
+/** A line's width: a stronger pair (weight 0..1, against the strongest drawn) is thicker, and a
+ *  lit line thicker still. */
+export const lineWidth = (weight: number, bright: number) => 1.2 + weight * 1.4 + bright * 1.8;
+
 /** The partners the map draws for a card, strongest first, sectors in the report's order. */
 export function mapPartners(o: OrbitModel, cap = MAP_CAP): MapPartner[] {
   return o.sectors.flatMap((s) => s.partners.map((p) => ({ p, hue: s.hue })))
     .map((x, i) => ({ ...x, i, rank: Math.min(...x.p.links.map((l) => RANK[l.repeat])) }))
-    .sort((a, b) => a.rank - b.rank || a.i - b.i)
+    .sort((a, b) => b.p.strength - a.p.strength || a.rank - b.rank || a.i - b.i)
     .slice(0, cap)
     .sort((a, b) => a.i - b.i)
     .map(({ p, hue }) => ({ p, hue }));
@@ -103,7 +107,7 @@ interface Node extends Look {
 }
 interface Edge {
   a: string; b: string; line: SVGLineElement; t1: SVGLineElement; t2: SVGLineElement; arrow: SVGPathElement;
-  o: number; to: number; hue: string; from: string; both: boolean; dashed: boolean; speed: number; bright: number;
+  o: number; to: number; hue: string; from: string; both: boolean; dashed: boolean; speed: number; bright: number; weight: number;
 }
 
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -228,7 +232,7 @@ class Sky {
       const t1 = make("line", { stroke: "var(--foreground)", "stroke-linecap": "round", "stroke-dasharray": "4 12", "data-testid": "constellation-tick" }, this.layers.ticks);
       const t2 = make("line", { stroke: "var(--foreground)", "stroke-linecap": "round", "stroke-dasharray": "4 12", "data-testid": "constellation-tick" }, this.layers.ticks);
       const arrow = make("path", { d: "M6,0 L-4,-5 L-4,5 Z", "data-testid": "constellation-arrow" }, this.layers.ticks);
-      e = { a, b, line, t1, t2, arrow, o: 0, to: 0, hue: "var(--muted)", from: a, both: false, dashed: false, speed: 40, bright: 0 };
+      e = { a, b, line, t1, t2, arrow, o: 0, to: 0, hue: "var(--muted)", from: a, both: false, dashed: false, speed: 40, bright: 0, weight: 0 };
       this.edges.set(k, e);
     }
     return e;
@@ -308,8 +312,10 @@ class Sky {
     for (const id of visited) { const n = this.nodes.get(id); if (n && id !== focus) { n.hue = GOLD; n.dashed = false; } }
     // Links to earlier middles stay drawn, faint: the shape of where you have been.
     for (const e of this.edges.values()) e.to = e.to > 0 ? 0.22 : 0;
+    const top = Math.max(0, ...partners.map(({ p }) => p.strength));
     for (const { p, hue } of partners) {
       const e = this.edge(focus, p.card.id);
+      e.weight = top > 0 ? p.strength / top : 0;
       const rank = p.links.map((l) => l.repeat).sort((x, y) => RANK[x] - RANK[y])[0] ?? "triggered";
       const into = p.links.some((l) => l.to === focus), out = p.links.some((l) => l.from === focus);
       e.to = 1; e.hue = hue; e.dashed = p.once; e.speed = SPEED[rank];
@@ -407,7 +413,7 @@ class Sky {
       e.line.setAttribute("x1", ax.toFixed(1)); e.line.setAttribute("y1", ay.toFixed(1));
       e.line.setAttribute("x2", bx.toFixed(1)); e.line.setAttribute("y2", by.toFixed(1));
       e.line.setAttribute("stroke", e.hue);
-      e.line.setAttribute("stroke-width", (1.6 + e.bright * 1.8).toFixed(2));
+      e.line.setAttribute("stroke-width", lineWidth(e.weight, e.bright).toFixed(2));
       e.line.setAttribute("stroke-dasharray", e.dashed ? "6 6" : "none");
       e.line.setAttribute("opacity", (show * 0.8 * dim).toFixed(3));
       const fromA = e.from === e.a;

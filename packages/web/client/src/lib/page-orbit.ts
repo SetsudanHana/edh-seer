@@ -58,14 +58,14 @@ export function pageMap(page: CardPageData, slug: string, rows: readonly Partner
     const link = { from: row.producer ? row.slug : slug, to: row.producer ? slug : row.slug, tag: row.event, text: row.reason, repeat: "triggered" as const };
     const had = s.partners.find((p) => p.card.id === row.slug);
     if (had) had.links.push(link);
-    else s.partners.push({ card, links: [link], once: false });
+    else s.partners.push({ card, links: [link], once: false, strength: 0 });
   }
   if (pair && pair.slug !== slug) {
     const card = cardOf(pair.slug, pair.name, undefined);
     card.image = pair.artCrop ? cardImage(pair.artCrop) : undefined;
     cards.set(pair.slug, card);
     const links = [slug, pair.slug].map((from) => ({ from, to: from === slug ? pair.slug : slug, tag: "pair", text: `${page.name} and ${pair.name} lead the deck together`, repeat: "static" as const }));
-    sectors.unshift({ key: "pair", name: `Leads beside ${page.name}`, hue: PAIR_HUE, partners: [{ card, links, once: false }] });
+    sectors.unshift({ key: "pair", name: `Leads beside ${page.name}`, hue: PAIR_HUE, partners: [{ card, links, once: false, strength: 0 }] });
   }
   const direct = new Set(sectors.flatMap((s) => s.partners.map((p) => p.card.id))).size;
   const orbit = { focus, sectors, direct, directTokens: 0, near: [], through: [], far: [], farLands: 0 } as unknown as OrbitModel;
