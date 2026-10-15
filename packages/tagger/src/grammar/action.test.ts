@@ -617,3 +617,13 @@ test("'you may A and <new actor> B' and a following sentence stay required", () 
   expect(opt("You may sacrifice a creature, then that player shuffles.")).toEqual(["sacrifice*", "shuffle"]);
   expect(opt("You may sacrifice a creature. Then draw a card.")).toEqual(["sacrifice*", "draw"]);
 });
+
+test("a phrase with its own non-player subject, or an 'otherwise' branch, is not under the may (#1214)", () => {
+  expect(opt("You may sacrifice a creature and this creature deals 2 damage to any target.")).toEqual(["sacrifice*", "deal-damage"]);
+  expect(opt("You may sacrifice a creature and ~ deals 2 damage to any target.")).toEqual(["sacrifice*", "deal-damage"]);
+  expect(opt("You may sacrifice a creature and Goblin Bomber deals 2 damage to any target.").slice(1)).not.toContain("deal-damage*");
+  expect(opt("You may sacrifice a creature and target creature gets +2/+2 until end of turn.")).toEqual(["sacrifice*", "modify-pt"]);
+  expect(opt("You may exile target creature you control, then that creature gains haste.")).toEqual(["exile*", "grant-ability"]);
+  expect(opt("You may exile target creature you control, then it gains haste.")).toEqual(["exile*", "grant-ability"]);
+  expect(opt("You may draw a card; otherwise create a Treasure token and scry 1.").filter((v) => v.startsWith("scry")).every((v) => !v.endsWith("*"))).toBe(true);
+});

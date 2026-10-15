@@ -1511,6 +1511,15 @@ function playerSubject(phrase: string): boolean {
   return subject !== "" && !subject.includes(",") && /\b(?:players?|opponents?|controller|owner)\b/i.test(subject);
 }
 
+/** A phrase that opens with a verb and no subject of its own ("reveal it", "put it into your hand",
+ *  "then shuffle"): the shape an earlier "may" still governs. A player, a pronoun, "~", "this <type>",
+ *  "target ...", "that ...", a card name or "otherwise" opens its own clause. */
+function bareVerbPhrase(phrase: string): boolean {
+  const t = phrase.trim().replace(/^(?:then|also|and) /i, "");
+  if (actorOf(t) || /^(?:otherwise|it|that|this|those|they|target|up to|all|each|another|other|~)\b|^~/i.test(t)) return false;
+  return VERB_FORMS.some(([re]) => re.test(t)) || ANY_VERB.test(t);
+}
+
 /** The actor a phrase opens with, if any. */
 function actorOf(phrase: string): ActionReading["actor"] | undefined {
   const t = phrase.trim().replace(/^(?:then|instead|also) /i, "").toLowerCase();
@@ -1670,7 +1679,9 @@ export function parseActions(effect: string, _type: string | null, cost?: string
         let r = readPhrase(alt, mainCondition, carried);
         const startsMay = /^(?:(?:then|also) )?(?:you )?may /i.test(alt.trim());
         if (startsMay) mayScope = true;
-        else if (actorOf(alt)) mayScope = false;
+        if (/; |\botherwise\b/i.test(alt)) mayScope = false;
+        else if (startsMay) { /* scope already on */ }
+        else if (!bareVerbPhrase(alt)) mayScope = false;
         else if (mayScope && r) r = r.map((a) => ({ ...a, optional: true as const }));
         if (r) out.push(...r);
         else unread?.push(alt.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!).trim());
