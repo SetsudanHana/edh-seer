@@ -468,7 +468,8 @@ import { emblemRecipient } from "../emblem.js";
 // 314: #1210 tasks 5-6: a stored record whose event has no printed cue in its own segment keeps its stored trigger (`misplaced` guard: Astrid Peth, Sidisi, Huntmaster of the Fells and others) and, when the sentence that carries the cue is no same-event record's, reads THAT sentence (Kratos) or is dropped as its twin; a
 // back-reference after "look at the top ... of your library" is the looked-at card (fromZone library; 32 cards read complete again, 15 grammar-only), "if it's a X card" is its object (\"a X card from the top card of your library\": the mill emit is control you), Discover the Impossible
 // puts from exile, and a spell returning itself leaves the stack (13 spells).
-export const DERIVE_VERSION = 314;
+// 315: #1205 parseSubject stops dropping qualifiers the schema already carries: nonbasic (basic:false), nonlegendary (legendary:false), snow/nonsnow, tapped/untapped as an adjective before the noun (not "enters tapped"), multicolored/monocolored (colorCount).
+export const DERIVE_VERSION = 315;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

@@ -15,6 +15,11 @@ describe("isLandfall reads the subject structurally and refuses a qualified land
     "%s is not landfall", (subject) => expect(landfall(subject)).toBe(false));
 });
 
+describe("isLandfall refuses a qualified land by structure alone (#1205, no text guard)", () => {
+  test.each(["a nonbasic land you control", "a tapped land you control", "an untapped land you control", "a snow land you control", "a nonsnow land you control", "a legendary land you control"])(
+    "%s is not landfall", (subject) => expect(isLandfall(triggerLine("enters", subject, ["G"], 1))).toBe(false));
+});
+
 describe("a line derived before 312 reads safely (static-out rows built earlier)", () => {
   // A pre-312 cost has no `loyalty` and no `consumes`, and carries a loyalty cost as a string in `other`.
   const pre = (other: string[]): ManaLine => { const { loyalty: _l, consumes: _c, ...old } = FREE_TAP; return mkLine({ cost: { ...old, tap: false, other } as unknown as ManaLine["cost"] }); };

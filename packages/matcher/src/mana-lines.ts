@@ -244,16 +244,14 @@ export function minManaValue(line: ManaLine): number | null {
 
 /** The lines whose mana arrives when a land enters (Lotus Cobra: "Whenever a land you control enters, add one mana of any color"). Landfall is not
  *  an event of its own: it is `enters` with a land `trigger.subject` you control; `enters` with "this creature" is the card's own enters trigger (Burning-Tree
- *  Emissary), which makes mana once and is no source. CEILING: a land subject you control, which is the one printed shape the corpus holds ("a land you control"). */
+ *  Emissary), which makes mana once and is no source. */
 export const isLandfall = (line: ManaLine): boolean => {
   const subject = line.trigger?.subject;
   if (line.source !== "trigger" || line.trigger?.event !== "enters" || !subject) return false;
-  // parseSubject drops no qualifier silently: "a nonbasic land you control", "a basic land ...", "a tapped land ...", "... with a +1/+1 counter on it" each carry a field of their own, so the subject
-  // may carry NOTHING beyond a land type, "you" control and "another" (the old regex's one printed shape).
+  // parseSubject keeps every qualifier it reads as a field of its own ("a nonbasic land" basic:false, "a basic land" basic:true, "a tapped land" tapped, "... with a +1/+1 counter on it" counter),
+  // so the subject may carry NOTHING beyond a land type, "you" control and "another".
   const plain = Object.keys(subject).every((k) => k === "type" || k === "control" || k === "token" || k === "other") && !subject.token;
-  // CEILING: parseSubject DROPS "nonbasic" and "tapped" outright (the subject of "a nonbasic land you control" is a plain land you control), so the structure cannot refuse them; the subject text
-  // must be the bare "a/an/another land you control", the one shape the corpus holds. Every qualifier it can represent is refused by the field check above.
-  return plain && subject.type === "land" && subject.control === "you" && /^(?:an?|another) land you control$/i.test(line.trigger?.text ?? "");
+  return plain && subject.type === "land" && subject.control === "you";
 };
 
 /** The lines whose mana arrives at the beginning of a phase (Coalition Relic's first main phase, Chaos Moon's upkeep, Go-Shintai's end step).

@@ -351,11 +351,11 @@ test("a subject with no supertype does not claim one", () => {
 });
 
 // Helm of the Host, Quantum Misalignment and Vesuvan Duplimancy all make a copy "except it isn't
-// legendary". Reading that as a legendary constraint inverts the card.
+// legendary". Reading that as a legendary constraint inverts the card; since #1205 it is `legendary: false`, the grammar's value.
 test("a negated legendary is not a legendary constraint", () => {
   expect(parseSubject("a token that's a copy of equipped creature, except the token isn't legendary").legendary)
-    .toBeUndefined();
-  expect(parseSubject("nonlegendary creatures you control").legendary).toBeUndefined();
+    .toBe(false);
+  expect(parseSubject("nonlegendary creatures you control").legendary).toBe(false);
 });
 
 // A KEYWORD IS NOT A TYPE, so nothing in SubjectFilter could carry it and the narrowing was simply
@@ -494,8 +494,8 @@ test("a subject with no basic supertype does not claim one", () => {
 // "Nonbasic lands you control" (Blood Moon and its family) is the negation, and reading it as a
 // basic constraint inverts the card exactly as a negated legendary does.
 test("a negated basic is not a basic constraint", () => {
-  expect(parseSubject("nonbasic lands you control").basic).toBeUndefined();
-  expect(parseSubject("a land that isn't basic").basic).toBeUndefined();
+  expect(parseSubject("nonbasic lands you control").basic).toBe(false);
+  expect(parseSubject("a land that isn't basic").basic).toBe(false);
 });
 
 // "Basic land TYPE" is the SUBTYPE sense — Forest, Island, Swamp, Mountain, Plains — and says
@@ -777,4 +777,72 @@ test("'an odd/even mana value' is a parity stat (Soundwave, Superior Captain, #7
   expect(parseSubject("a spell with an odd mana value").stats).toEqual([{ metric: "mana-value", op: "odd" }]);
   expect(parseSubject("a permanent card with an even mana value").stats).toEqual([{ metric: "mana-value", op: "even" }]);
   expect(parseSubject("spells with even mana values").stats).toEqual([{ metric: "mana-value", op: "even" }]);
+});
+
+/** #1205: qualifiers the schema carries and parseSubject used to drop, so "a nonbasic land you control" read as every land. */
+test.each([
+  ["a nonbasic land you control", { basic: false }],
+  ["a tapped land you control", { tapped: true }],
+  ["an untapped creature you control", { tapped: false }],
+  ["untapped lands you control", { tapped: false }],
+  ["target tapped artifact", { tapped: true }],
+  ["each untapped creature", { tapped: false }],
+  ["a snow land you control", { snow: true }],
+  ["a nonsnow land you control", { snow: false }],
+  ["a multicolored creature you control", { colorCount: "multi" }],
+  ["a monocoloured creature you control", { colorCount: "mono" }],
+  ["a nonlegendary creature you control", { legendary: false }],
+  ["a basic land you control", { basic: true }],
+  ["a legendary creature you control", { legendary: true }],
+])("%s carries its qualifier", (text, fields) => {
+  expect(parseSubject(text)).toMatchObject(fields);
+});
+
+test("a plain land carries none of the five qualifiers", () => {
+  const s = parseSubject("a land you control");
+  for (const k of ["basic", "legendary", "snow", "tapped", "colorCount"]) expect(s).not.toHaveProperty(k);
+});
+
+test.each([
+  "a creature that enters tapped",
+  "put a land card onto the battlefield tapped",
+  "whenever a creature becomes tapped",
+  "untap target creature",
+  "a Snow-Covered Forest",
+])("%s does not set tapped or snow", (text) => {
+  const s = parseSubject(text);
+  expect(s).not.toHaveProperty("tapped");
+  expect(s).not.toHaveProperty("snow");
+});
+
+test("basic land types is not the basic supertype", () => {
+  expect(parseSubject("lands you control have every basic land type")).not.toHaveProperty("basic");
+});
+
+/** #1205 review: "tapped" before a SUBTYPE noun is the same status ("an untapped Forest you control"). */
+test.each([
+  ["an untapped Forest you control", false],
+  ["target untapped Elf", false],
+  ["untapped Mountains you control", false],
+  ["a tapped Treasure", true],
+  ["another untapped Warrior", false],
+  ["a tapped and attacking Zombie", true],
+])("%s carries tapped=%s through a subtype noun", (text, tapped) => {
+  expect(parseSubject(text).tapped).toBe(tapped);
+});
+
+test("tapped followed by no noun still sets nothing", () => {
+  expect(parseSubject("a Forest that enters tapped and you gain 1 life")).not.toHaveProperty("tapped");
+  expect(parseSubject("put an Elf onto the battlefield tapped")).not.toHaveProperty("tapped");
+});
+
+/** Shuri, Wakandan Inventor: "Target artifact you control becomes a copy of a second target artifact you control until
+ *  end of turn, except it isn't legendary." The clause describes the RESULT, so the copied object is not nonlegendary. */
+test("'except it isn't legendary' on a non-token subject does not demand a nonlegendary object", () => {
+  expect(parseSubject("target artifact you control becomes a copy of a second target artifact you control until end of turn, except it isn't legendary"))
+    .not.toHaveProperty("legendary");
+  expect(parseSubject("a copy of target artifact, except it isn't legendary")).not.toHaveProperty("legendary");
+  // a created token copy IS the result: it keeps legendary:false
+  expect(parseSubject("a token that's a copy of equipped creature, except the token isn't legendary").legendary).toBe(false);
+  expect(parseSubject("a nonlegendary artifact").legendary).toBe(false);
 });
