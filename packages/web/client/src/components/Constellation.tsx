@@ -43,8 +43,9 @@ const BROAD: Geometry = { ...WIDE, aspect: 16 / 9, stretch: 1.7, minW: 1310 };
 const geometry = (narrow: boolean, broad: boolean) => (narrow ? NARROW : broad ? BROAD : WIDE);
 
 /** A line's width: a stronger pair (weight 0..1, against the strongest drawn) is thicker, and a
- *  lit line thicker still. */
-export const lineWidth = (weight: number, bright: number) => 1.2 + weight * 1.4 + bright * 1.8;
+ *  lit line thicker still. `null` is a map that knows no strengths (a card page's, built from
+ *  partner rows): its lines keep the one width every line had before strength was drawn. */
+export const lineWidth = (weight: number | null, bright: number) => (weight === null ? 1.6 : 1.2 + weight * 1.4) + bright * 1.8;
 
 /** The partners the map draws for a card, strongest first, sectors in the report's order. */
 export function mapPartners(o: OrbitModel, cap = MAP_CAP): MapPartner[] {
@@ -107,7 +108,7 @@ interface Node extends Look {
 }
 interface Edge {
   a: string; b: string; line: SVGLineElement; t1: SVGLineElement; t2: SVGLineElement; arrow: SVGPathElement;
-  o: number; to: number; hue: string; from: string; both: boolean; dashed: boolean; speed: number; bright: number; weight: number;
+  o: number; to: number; hue: string; from: string; both: boolean; dashed: boolean; speed: number; bright: number; weight: number | null;
 }
 
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -232,7 +233,7 @@ class Sky {
       const t1 = make("line", { stroke: "var(--foreground)", "stroke-linecap": "round", "stroke-dasharray": "4 12", "data-testid": "constellation-tick" }, this.layers.ticks);
       const t2 = make("line", { stroke: "var(--foreground)", "stroke-linecap": "round", "stroke-dasharray": "4 12", "data-testid": "constellation-tick" }, this.layers.ticks);
       const arrow = make("path", { d: "M6,0 L-4,-5 L-4,5 Z", "data-testid": "constellation-arrow" }, this.layers.ticks);
-      e = { a, b, line, t1, t2, arrow, o: 0, to: 0, hue: "var(--muted)", from: a, both: false, dashed: false, speed: 40, bright: 0, weight: 0 };
+      e = { a, b, line, t1, t2, arrow, o: 0, to: 0, hue: "var(--muted)", from: a, both: false, dashed: false, speed: 40, bright: 0, weight: null };
       this.edges.set(k, e);
     }
     return e;
@@ -315,7 +316,7 @@ class Sky {
     const top = Math.max(0, ...partners.map(({ p }) => p.strength));
     for (const { p, hue } of partners) {
       const e = this.edge(focus, p.card.id);
-      e.weight = top > 0 ? p.strength / top : 0;
+      e.weight = top > 0 ? p.strength / top : null;
       const rank = p.links.map((l) => l.repeat).sort((x, y) => RANK[x] - RANK[y])[0] ?? "triggered";
       const into = p.links.some((l) => l.to === focus), out = p.links.some((l) => l.from === focus);
       e.to = 1; e.hue = hue; e.dashed = p.once; e.speed = SPEED[rank];

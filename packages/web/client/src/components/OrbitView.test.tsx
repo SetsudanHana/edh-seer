@@ -334,4 +334,7 @@ test("a stronger pair draws a thicker line, and a lit one thicker still", () => 
   expect(lineWidth(0, 0)).toBeCloseTo(1.2);
   expect(lineWidth(1, 0)).toBeCloseTo(2.6);
   expect(lineWidth(0, 1)).toBeCloseTo(3.0);
+  // A map with no strengths at all (a card page's) keeps the width every line had before.
+  expect(lineWidth(null, 0)).toBeCloseTo(1.6);
+  expect(lineWidth(null, 1)).toBeCloseTo(3.4);
 });
