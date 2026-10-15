@@ -461,7 +461,11 @@ import { emblemRecipient } from "../emblem.js";
 // a bare "mana" adds no amount (Piracy), and an ability's number word is a number (Cosmic Crucible "four" -> "4").
 // 312: #1193 task 2 (Fable finding 5): ManaLine states what the matcher used to re-parse. `cost.loyalty` (signed, parsed once), `cost.consumes` (what the cost uses up: energy, discard, exile, return-to-hand, forage,
 // collect-evidence, unknown; {Q} untap, exert and mill consume nothing, so Pili-Pala's {Q} line is no longer "paid"), `restriction.minManaValue`, and `trigger: {event, subject: SubjectFilter, text}` replacing `trigger` + `triggerSubject`.
-export const DERIVE_VERSION = 312;
+// 313: #1210 grammar reads 14 underived cards (punctuated ability words, opening-hand reveals, energy costs, "as ~ enters or is
+// turned face up", look-at-top, "who doesn't", "after you roll a die", phase-in, Pulse of Llanowar); bought cards take the new
+// readings where the grammar now reads them (36 cards, each checked against oracle text); staticFixer gains `covers: "basics"`;
+// "As this creature enters, … counters on it" is the card itself (10 bought cards gain `self`).
+export const DERIVE_VERSION = 313;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -541,11 +545,11 @@ function counterOnSelf(verb: string | undefined, text: string, cardName?: string
   // put a counter on it"; "whenever a nontoken creature you control enters, put a +1/+1 counter
   // on it" (The Great Henge) is that creature -- the panel's Henge -> Dusk Legion Duelist REAL
   // pair was unjoined by reading it as self on the first derive-153 run.
+  // "As this creature enters [or is turned face up], put X +1/+1 counters on it": the lead-in names the card, so "it" is the card (Crowd-Control Warden).
+  const lead = text.replace(/^as (?:this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)|~) enters(?: or is turned face up)?, /i, "");
   const onIt = re.onIt.test(text) && !OTHER_OBJECT.test(text)
     && (triggerIsSelf || lead !== text || /^this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(text));
   if (!onThis && !onIt) return false;
-  // "As this creature enters [or is turned face up], put X +1/+1 counters on it": the lead-in names the card, so "it" is the card (Crowd-Control Warden).
-  const lead = text.replace(/^as (?:this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)|~) enters(?: or is turned face up)?, /i, "");
   // THE CARD'S OWN NAME IS NOT "THE OTHER ONE" (DERIVE 173, overview item 8): `onOther` reads "counters
   // on THE Ozolith" as "on the <something>", so The Ozolith's own counters went kindless and fed The
   // Earth Crystal's creature-only doubler. The own-name phrase is taken out before that test.
