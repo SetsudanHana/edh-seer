@@ -73,6 +73,7 @@ const TESTED: Record<string, string> = {
   "702.177a": "repeats.test.ts — an Exhaust ability repeats once (Loot, the Pathfinder)",
   "700.11": "intervening-if.test.ts — 'you descended this turn' cares about permanents hitting your graveyard",
   "701.14a": "derive.test.ts — a fight's dealer is the fighting creature, not the spell",
+  "603.2e": "derive.test.ts — a token created tapped is not 'tapped' by an effect: no taps event for a permanent that arrives that way",
   "603.2c": "derive.test.ts — 'whenever one or more ... enter' is batched: one firing per event, however many objects (edge magnitude)",
   "712.14": "derive.test.ts — a self re-entry with no 'transformed' is left unmarked: front face up",
   "712.14a": "derive.test.ts — 'return it to the battlefield transformed' marks the re-entry as the back face (#715)",
