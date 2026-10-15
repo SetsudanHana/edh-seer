@@ -70,6 +70,10 @@ const ZONE_VERBS = new Set(["destroy", "exile", "sacrifice", "return", "put", "s
 // "put that card ON TOP" (Cruel Tutor): where it goes is no part of which card it is.
 const BACK_REFERENCE = /^(?:it|them|him|her|that card|those cards|that creature|that permanent|the card|the cards|one|the other|the rest|one of them|those)(?: on (?:top|the bottom)(?: of (?:your|their|its owner's) library)?)?$/i;
 
+// One card, named by a back-reference: after an exile of "one of them" it is the exiled card (Discover the Impossible: "put that card into
+// your hand"), where "the rest" / "the other" are still the looked-at library.
+const SINGULAR_REF = /^(?:it|that card|the card)$/i;
+
 /** A reading's object as the store writes it: the printed object words, without a zone move's
  *  destination ("that card into your graveyard" -> "that card"). */
 function objectWords(r: ActionReading): string {
@@ -79,7 +83,7 @@ function objectWords(r: ActionReading): string {
   // "If it's a creature card, ... put it into your hand": the store writes the condition's type as the object ("a creature card").
   // Here, not in parseActions: the reading keeps the printed "it", and this is where printed words become the store's.
   if (r.fromZone === "library" && BACK_REFERENCE.test(w) && r.condition !== undefined) {
-    const t = /^if (?:it(?:'s| is)|that card is) (?:an? )?(.+?)(?: card)?$/i.exec(r.condition.trim());
+    const t = /^if (?:it(?:'s| is) an?|that card is(?: an?)?) (.+?)(?: card)?$/i.exec(r.condition.trim());
     if (t && !/\b(?:card|with|mana)\b/i.test(t[1]!)) return `${/^[aeiou]/i.test(t[1]!) ? "an" : "a"} ${t[1]} card`;
   }
   // The look's library, in the words the store uses: "the rest of the top four cards of your library".
@@ -194,7 +198,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
       : (r.verb === "cast" || r.verb === "play") && ref && before === undefined && revealedFrom ? revealedFrom
       : (r.verb === "cast" || r.verb === "play") && /\bexiled\b/i.test(object) && !/\bthis way\b/i.test(object) ? "exile" : null;
     // "return this enchantment to its owner's hand": the card itself leaves the battlefield.
-    const selfBounce = ((r.verb === "return" || r.verb === "put") && (r.object?.self === true || selfIt) && (r.toZone === "hand" || r.toZone === "library") ? "battlefield"
+    const selfBounce = ((r.verb === "return" || r.verb === "put") && (r.object?.self === true || selfIt) && (r.toZone === "hand" || r.toZone === "library") ? (type === "spell" ? "stack" : "battlefield")
       // "Exile any number of target spells" (Mindbreak Trap): spells are on the stack.
       : r.verb === "exile" && /\btarget (?:[\w ]+ )?spells?\b/i.test(object) ? "stack"
       // "Exile this enchantment" (Sapling Nursery, Lantern of the Lost): a permanent exiling itself.
@@ -204,7 +208,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
       // "Shuffle Beacon of Immortality into its owner's library": a spell shuffles itself from the stack.
       : r.verb === "shuffle" && r.object?.self === true && type === "spell" ? "stack" : null);
     const from = r.fromZone ?? castRef ?? selfBounce ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
-      : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? (looksAtLibrary ? "library" : "exile") : before !== undefined ? null
+      : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? (looksAtLibrary && !SINGULAR_REF.test(object) ? "library" : "exile") : before !== undefined ? null
         // "When enchanted creature dies, return that card": the card the trigger put in the graveyard.
         // "Counter target spell. If that spell is countered this way, exile it instead": still on the stack.
         : r.verb === "exile" && out.some((a) => a.verb === "counter-spell") ? "stack"

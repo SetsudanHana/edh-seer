@@ -1685,10 +1685,15 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     }
     // A back-reference after the look ("put it into your hand", "exile that card", "put one ... and the other ...") is the looked-at card:
     // the move's source is the library, as the store writes it. A reveal of it only names the look.
+    // CEILING: every back-reference after a look is taken to be the looked-at card, so long as no earlier action MOVED a looked-at card out of
+    // the library. It misreads a back-reference to something else the ability named in between ("Look at the top card of your library. Target
+    // creature gets +1/+1. Put it into your hand" -- "it" the creature); a singular "it" / "that card" after an exile is the exiled card, so is
+    // left unstamped (clause-record reads it as exile).
     if (lookedAtLibrary) {
       for (let i = at; i < out.length; i++) {
         const o = out[i]!;
         if (o.object?.ref !== "sentence" || o.fromZone) continue;
+        if (/^(?:it|that card|the card)\b/i.test(o.phrase ?? o.text ?? "") && out.slice(0, i).some((a) => a.verb === "exile" && a.lookedAt !== undefined)) continue;
         if (o.verb === "put" || o.verb === "exile") { out[i] = { ...o, fromZone: "library", lookedAt: lookedAtLibrary }; pendingLook = null; }
         else if (o.verb === "reveal") { out[i] = { ...o, lookedAt: lookedAtLibrary }; pendingLook = null; }
       }

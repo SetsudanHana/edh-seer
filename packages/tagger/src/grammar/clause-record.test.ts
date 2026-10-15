@@ -317,6 +317,15 @@ test("a 'look at the top card' whose later 'it' / 'that card' is resolved to the
   const reef = readCard("Risen Reef", "Creature — Elemental", "Whenever Risen Reef or another Elemental you control enters, look at the top card of your library. If it's a land card, you may put it onto the battlefield tapped. If you don't put the card onto the battlefield, put it into your hand.");
   expect(reef.complete).toBe(true);
   expect(reef.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["a land card", "library", "battlefield"], ["it", "library", "hand"]]);
+  // The card EXILED from the look is in exile, not the library (Discover the Impossible; stored answer: exile).
+  const disc = readCard("Discover the Impossible", "Sorcery", "Look at the top five cards of your library. Exile one of them face down and put the rest on the bottom of your library in a random order. You may cast the exiled card without paying its mana cost if it's an instant spell with mana value 2 or less. If you don't, put that card into your hand.");
+  expect(disc.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["the rest of the top five cards of your library", "library", "library"], ["that card", "exile", "hand"]]);
+  // A condition that names no card type does not become one ("a your turn card").
+  const turn = readCard("Peek Two", "Instant", "Look at the top card of your library. If it's your turn, put it into your hand.");
+  expect(turn.records[0]!.actions!.find((a) => a.verb === "put")).toMatchObject({ object: "it", fromZone: "library" });
+  // A spell that returns itself as it resolves leaves the stack (Petals of Insight; stored answer: stack).
+  const petals = readCard("Petals of Insight", "Sorcery — Arcane", "Look at the top three cards of your library. You may put those cards on the bottom of your library in any order. If you do, return Petals of Insight to its owner's hand. Otherwise, draw three cards.");
+  expect(petals.records[0]!.actions!.find((a) => a.verb === "return")).toMatchObject({ fromZone: "stack", toZone: "hand" });
   // A look no later action touches is an unread phrase: the card blocks.
   expect(readCard("Peek", "Instant", "Look at the top card of your library. Then draw a card.").complete).toBe(false);
   // A look whose "of them" / "the rest" picks the library up is still skipped, and the rest is milled by you.
