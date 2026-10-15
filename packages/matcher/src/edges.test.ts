@@ -6550,4 +6550,43 @@ describe("a multi-type emit names the member the trigger heard (#1224)", () => {
     expect(r.length).toBeGreaterThan(0);
     for (const t of r) expect(t).toContain("When Mizzix's Mastery is cast");
   });
+
+  // "Whenever you cast an instant, sorcery, or Wizard spell" (Windrider Wizard) is an `anyOf`, so the
+  // trigger's own `type` is empty and the member path was skipped.
+  describe("a trigger spelled as anyOf branches", () => {
+    const wizardWatcher = base("Windrider Wizard", [{
+      kind: "triggered",
+      trigger: { verbs: ["cast"], subject: { anyOf: [{ type: "instant" }, { type: "sorcery" }, { type: "spell", subtype: "wizard" }], control: "you", token: null } },
+      effect: { kind: "drain" },
+    }]);
+    const caster = (name: string, type: string, subtypes: string[] = []) => {
+      const c = base(name, [{
+        kind: "triggered",
+        effect: { kind: "copy-spell" },
+        // The shape Sarevok's Tome derives to: any nonland card type, cast from exile.
+        emits: [{ verb: "cast", subject: { type: ["creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "battle"], notType: ["land"], control: "you", token: null, fromZone: "exile" } }],
+      }], subtypes);
+      (c.tags.characteristics as { types: string[] }).types = [type];
+      return c;
+    };
+
+    test("an artifact producer cannot be the spell cast, so the sentence names it", () => {
+      const r = pairReasons(caster("Sarevok's Tome", "artifact"), wizardWatcher, H).filter((x) => x.tag.startsWith("cast:"));
+      expect(r.length).toBeGreaterThan(0);
+      for (const x of r) expect(x.text).not.toContain("When Sarevok's Tome is cast");
+      expect(r.some((x) => x.text.includes("is cast thanks to Sarevok's Tome"))).toBe(true);
+    });
+
+    test("a Wizard creature producer can be the Wizard spell cast and keeps the wording", () => {
+      const r = pairReasons(caster("Wizard Caster", "creature", ["wizard"]), wizardWatcher, H).filter((x) => x.tag.startsWith("cast:"));
+      expect(r.length).toBeGreaterThan(0);
+      expect(r.some((x) => x.text.includes("When Wizard Caster is cast"))).toBe(true);
+    });
+
+    test("a sorcery producer can be the spell cast and keeps the wording", () => {
+      const r = pairReasons(caster("Mizzix's Mastery", "sorcery"), wizardWatcher, H).filter((x) => x.tag.startsWith("cast:"));
+      expect(r.length).toBeGreaterThan(0);
+      for (const x of r) expect(x.text).toContain("When Mizzix's Mastery is cast");
+    });
+  });
 });

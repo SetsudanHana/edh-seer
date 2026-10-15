@@ -1672,13 +1672,24 @@ function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy)
  *  [creature, artifact, enchantment, ...] against a Constellation payoff is the enchantment, which the
  *  Kitten can never be, though it is a creature. The producer can be the subject when it can be ANY
  *  member the trigger accepts -- Mizzix's Mastery's [instant, sorcery] against a noncreature-cast
- *  trigger hears both, and the Mastery is a sorcery. A trigger that names no type, or a lone-type
- *  emit, hears the whole subject: the old question, unchanged. */
+ *  trigger hears both, and the Mastery is a sorcery.
+ *
+ *  Each member is matched against the FULL heard filter, `anyOf` branches included (`subjectMatches`
+ *  expands them): "an instant, sorcery, or Wizard spell" (Windrider Wizard) has no `type` of its own.
+ *  Where the question cannot be split -- a lone-type emit, a trigger naming no type and no branch, or
+ *  no member accepted -- it asks `producerCanBeSubject` of `nounSubject(emit, heard)`, the subject the
+ *  noun names, so the check and the noun agree. */
 function producerCanBeHeard(p: DeckCard, emit: SubjectFilter, heard: SubjectFilter, h: Hierarchy): boolean {
   const members = list(emit.type);
-  if (members.length < 2 || list(heard.type).length === 0) return producerCanBeSubject(p, nounSubject(emit, heard), h);
-  const { type, notType } = heard;
-  const hit = members.filter((m) => subjectMatches({ control: emit.control, token: emit.token, type: m }, { control: emit.control, token: emit.token, type, notType }, h));
+  const names = list(heard.type).length > 0 || (heard.anyOf?.length ?? 0) > 0;
+  if (members.length < 2 || !names) return producerCanBeSubject(p, nounSubject(emit, heard), h);
+  // Only the TYPE LINE decides here: control and token are neutralised to the emit's own, and the
+  // heard filter is cut to type, notType and its branches' type and subtype. A bare member stub can
+  // never satisfy "historic" or "legendary" (Basim Ibn Ishaq's historic spell), and carrying those
+  // over emptied the hit list and moved Jodah, the Unifier's row.
+  const line = (s: Partial<SubjectFilter>): SubjectFilter => ({ control: emit.control, token: emit.token, type: s.type, subtype: s.subtype, notType: s.notType });
+  const heardLine: SubjectFilter = { ...line(heard), ...(heard.anyOf?.length ? { anyOf: heard.anyOf.map(line) } : {}) };
+  const hit = members.filter((m) => subjectMatches({ control: emit.control, token: emit.token, type: m }, heardLine, h));
   if (hit.length === 0) return producerCanBeSubject(p, nounSubject(emit, heard), h);
   return hit.some((m) => producerCanBeSubject(p, { ...emit, type: m }, h));
 }
@@ -2151,7 +2162,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
         // here forms one. This removes one, and only in the case the condition can actually be read
         // against a printed type line -- the producer IS the object the condition is about, and that
         // object is not the kind of thing a counter lives on. Same predicate as the sentence's own
-        // `subjectNoun`, so a row that reads "When Misty Rainforest dies" is exactly a row this can
+        // `subjectNoun` FOR A LONE-TYPE EMIT, so a row that reads "When Misty Rainforest dies" is exactly a row this can
         // refuse, and a row that reads "thanks to" is exactly one it leaves alone: the engine cannot
         // know what the sacrificed creature had on it, and guessing either way is the second rules
         // engine the 2026-08-15 refusal already declined to build.
@@ -2171,6 +2182,10 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
         // 24 corpus cards pair a dies trigger with a counter condition and ALL 24 are the "if it had
         // counters on IT" shape, so the misread has no witness today. The upgrade path is a
         // derive-side field naming which noun the condition is about, not a wider guess here.
+        // CEILING: for a LIST emit this asks `producerCanBeSubject` of the whole union, while the
+        // sentence's `subjectNoun` asks `producerCanBeHeard` (the members the trigger heard, #1224), so
+        // the two can now disagree. No corpus witness: of 113 counter-added `conditionCares` only
+        // Ochre Jelly's is on a dies trigger, and that one is `self`, which this guard excludes.
         const objectLeftTheBattlefield = (t.verb === "dies" || t.verb === "leaves")
           && (t.subject.zone ?? "battlefield") === "battlefield" && t.subject.self !== true;
         if (objectLeftTheBattlefield && (a.conditionCares ?? []).some((tag) => tag.startsWith("counter-added:"))
