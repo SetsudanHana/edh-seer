@@ -1511,9 +1511,22 @@ function playerSubject(phrase: string): boolean {
   return subject !== "" && !subject.includes(",") && /\b(?:players?|opponents?|controller|owner)\b/i.test(subject);
 }
 
+/** A phrase an open "may" does not govern though it opens with a verb: a finite third-person form
+ *  ("then puts the rest" -- its own subject's, elided), a replacement ("exile it instead", "if ... would ..."),
+ *  or one whose object is "the rest" / "the other(s)", which happens whatever the choice was. */
+// CEILING: "finite" is any first word ending in a single "s"; a bare verb so spelled would end the scope early.
+function mayEnds(phrase: string): boolean {
+  const t = phrase.trim().replace(/^(?:then|also|and) /i, "");
+  // "has myriad" / "is an artifact" are a copy's exceptions ("you may have it enter as a copy, except ... and has"), still the may's.
+  return (/^[a-z]+(?<!s)s\b/i.test(t) && !/^(?:has|is)\b/i.test(t))
+    || /^if\b.*\bwould\b|\binstead$/i.test(t)
+    || /^\S+ the (?:rest|others?)\b/i.test(t);
+}
+
 /** A phrase that opens with a verb and no subject of its own ("reveal it", "put it into your hand",
  *  "then shuffle"): the shape an earlier "may" still governs. A player, a pronoun, "~", "this <type>",
  *  "target ...", "that ...", a card name or "otherwise" opens its own clause. */
+// CEILING: a card name that opens with a verb word ("Return to Dust deals ...") would read as a bare verb.
 function bareVerbPhrase(phrase: string): boolean {
   const t = phrase.trim().replace(/^(?:then|also|and) /i, "");
   if (actorOf(t) || /^(?:otherwise|it|that|this|those|they|target|up to|all|each|another|other|~)\b|^~/i.test(t)) return false;
@@ -1681,7 +1694,7 @@ export function parseActions(effect: string, _type: string | null, cost?: string
         if (startsMay) mayScope = true;
         if (/; |\botherwise\b/i.test(alt)) mayScope = false;
         else if (startsMay) { /* scope already on */ }
-        else if (!bareVerbPhrase(alt)) mayScope = false;
+        else if (!bareVerbPhrase(alt) || mayEnds(alt)) mayScope = false;
         else if (mayScope && r) r = r.map((a) => ({ ...a, optional: true as const }));
         if (r) out.push(...r);
         else unread?.push(alt.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!).trim());

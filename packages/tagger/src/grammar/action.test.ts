@@ -621,9 +621,15 @@ test("'you may A and <new actor> B' and a following sentence stay required", () 
 test("a phrase with its own non-player subject, or an 'otherwise' branch, is not under the may (#1214)", () => {
   expect(opt("You may sacrifice a creature and this creature deals 2 damage to any target.")).toEqual(["sacrifice*", "deal-damage"]);
   expect(opt("You may sacrifice a creature and ~ deals 2 damage to any target.")).toEqual(["sacrifice*", "deal-damage"]);
-  expect(opt("You may sacrifice a creature and Goblin Bomber deals 2 damage to any target.").slice(1)).not.toContain("deal-damage*");
+  expect(opt("You may sacrifice a creature and Goblin Bomber deals 2 damage to any target.")).toEqual(["deal-damage"]);
   expect(opt("You may sacrifice a creature and target creature gets +2/+2 until end of turn.")).toEqual(["sacrifice*", "modify-pt"]);
   expect(opt("You may exile target creature you control, then that creature gains haste.")).toEqual(["exile*", "grant-ability"]);
   expect(opt("You may exile target creature you control, then it gains haste.")).toEqual(["exile*", "grant-ability"]);
   expect(opt("You may draw a card; otherwise create a Treasure token and scry 1.").filter((v) => v.startsWith("scry")).every((v) => !v.endsWith("*"))).toBe(true);
+});
+
+test("a may does not reach a finite verb, a replacement, or 'the rest' (Guild Feud, Walk-In Closet, Zimone's Experiment)", () => {
+  expect(opt("At the beginning of your upkeep, target opponent reveals the top three cards of their library, may put a creature card from among them onto the battlefield, then puts the rest into their graveyard.")).toEqual(["reveal", "put*", "put"]);
+  expect(opt("When you unlock this door, you may cast spells from your graveyard this turn, and if a card would be put into your graveyard from anywhere this turn, exile it instead.")).toEqual(["exile"]);
+  expect(opt("Look at the top five cards of your library. You may reveal up to two creature and/or land cards from among them, then put the rest on the bottom of your library in a random order.")).toEqual(["put"]);
 });
