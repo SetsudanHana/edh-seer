@@ -599,9 +599,6 @@ export function rampResilience(cards: DeckCard[]): RampResilience {
  *  untapped on entry, not a creature (`rampResilience`'s reason), coloured. Measured on Grixis MV
  *  2-3: 8 of the top 10 are top-list staples. EDHREC is the LABEL, never an input (owner: derive it).
  *
- *  CEILING: A TAP WHOSE MANA DEPENDS ON SOMETHING DERIVE DOES NOT READ GRADES AS A PLAIN ROCK (#1188; oracle text read from Mongo 2026-10-13): Selvala, Explorer Returned ("add {G} for each nonland
- *  card revealed"), Deathrite Shaman (the tap needs a target land card in a graveyard), Red Death, Shipwrecker (the mana rides on a goad of a target creature) and Corrupted Grafstone (the colour
- *  is one of a card in your graveyard) carry a net-1 line with no gate and no `scales` for the grade to refuse, so each grades like a Llanowar Elves or a Mind Stone.
  *  CEILING: a land-fetch spell (Cultivate), a ritual and a Treasure maker score 0. They are ramp,
  *  and staples in green, but "taps for mana" cannot see them; a grade for them is its own tier. */
 export function rampGrade(dc: DeckCard, deck?: readonly DeckCard[]): number {

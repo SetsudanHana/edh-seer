@@ -65,6 +65,7 @@ const TESTED: Record<string, string> = {
   "110.2a": "derive.test.ts — what you put onto the battlefield enters under your control (Misty Rainforest)",
   "118.12a": "derive.test.ts / clause-store.test.ts — an action's unless-payment rides onto the ability, and a doc that dropped one is re-asked",
   "602.1a": "payment.test.ts — an activation cost is read part by part into payment, an unread part kept verbatim",
+  "602.2b": "derive/mana-lines.test.ts — an activated ability that targets (Deathrite Shaman, Red Death, Shipwrecker) holds only while a legal target exists, so its mana line is gated on it (#1188)",
   "605.1a": "derive.test.ts — a mana ability's amount is the mana its object adds (Sol Ring 2, Talisman 1, Gilded Lotus 3)",
   "701.21a": "payment.test.ts — a sacrifice in a cost is of your own permanents, so its class is control you",
   "702.14": "derive.test.ts — a landwalk grant names its [type]walk (Lord of Atlantis islandwalk, Vectis Gloves landwalk)",

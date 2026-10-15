@@ -380,6 +380,44 @@ const QUOTED = /"[^"]*"/g;
 const ADDS_MANA_OR_S = /\badds?\b[^.]*(?:\{[WUBRGCX]|\bmana\b)/i;
 const DELAYED = /\b(?:at the beginning of|on) (?:your |the )?next [^,.]*,?[^.]*\badd\b|\badd\b[^.]*\bat the beginning of (?:your |the )?next\b/i;
 
+/** THE GATE A LINE'S OWN WORDS IMPOSE (#1188), after every printed condition: a legal target for an activated ability that targets, a card in your graveyard for a colour taken from one. */
+const needsOf = (source: ManaLineSource | null, text: string, costText: string, anyColour: ManaAnyColour | null, object: string): string | null => {
+  const target = source === "activated" ? targetNeeded(text, costText) : null;
+  if (target !== null) return `a legal target exists: ${target}`;
+  return anyColour === "among" && COLOUR_FROM_GRAVEYARD.test(`${object} ${text}`) ? "there is a card in your graveyard" : null;
+};
+
+/** A MODEL READING THAT LEFT THE COUNT OFF THE ADD (#1188): "For each nonland card revealed this way, add {G} and you gain 1 life" (Selvala, Explorer Returned) files the object as "{G}" and
+ *  keeps the "for each" in the sentence, so `production()` (which reads the object and the clause's own amount) saw a fixed 1. A sentence that adds mana AND counts with "for each" scales
+ *  by it, in either order ("for each X, add {G}", "add {G} for each X"). Named as `production()` names it: the phrase from "for each", up to the first comma or full stop.
+ *  CEILING: a "for each" in the add's own sentence is assumed to count the mana; "Add {R}, then lose 1 life for each ..." would read as scaling (the safe direction: a scaling line grades as no staple). */
+const FOR_EACH = /\bfor each\b[^,.]{0,80}/i;
+const scaleOfSentence = (sentence: string): string | null => {
+  for (const s of sentencesOf(sentence)) if (ADDS_MANA.test(s)) { const m = FOR_EACH.exec(s); if (m) return m[0].trim().toLowerCase(); }
+  return null;
+};
+
+/** AN ACTIVATED ABILITY THAT TARGETS holds only while a legal target exists (CR 602.2b applying 601.2c: the targets are chosen when the ability is activated, and with none to choose it
+ *  cannot be). Deathrite Shaman's "{T}: Exile target land card from a graveyard. Add one mana of any color." is no mana without a land card in a graveyard; Red Death, Shipwrecker's "Goad
+ *  target creature an opponent controls ... You add {R}" is none without that creature. The target is read off the clause's own printed text and its cost (reminder text and quoted abilities
+ *  removed), never another ability of the card. A targeting ability is not a mana ability (CR 605.1a), but it is still a source of mana, so the line is GATED rather than refused.
+ *  "Up to N target ..." and "any number of target ..." (Quintorius Kand) need no target and are skipped; a target player or opponent always exists in a game and is skipped.
+ *  CEILING: the gate says THAT a target is needed, not whether a deck can supply one: it is `unknown` (unmet everywhere), so the line grades as no staple and the colour audit drops it. */
+const TARGET = /\btargets?\b[^.:;,]{0,80}/gi;
+const ALWAYS_THERE = /^targets?\s+(?:player|opponent)s?\b/i;
+const UP_TO = /\b(?:up to (?:\w{1,5} )?|any number of )(?:other )?$/i;
+const targetNeeded = (text: string, costText: string): string | null => {
+  const flat = `${costText}. ${text}`.replace(/\([^)]*\)/g, " ").replace(QUOTED, " ");
+  for (const m of flat.matchAll(TARGET)) {
+    const at = m.index ?? 0;
+    if (ALWAYS_THERE.test(m[0]) || UP_TO.test(flat.slice(Math.max(0, at - 16), at))) continue;
+    return m[0].replace(/\s+/g, " ").trim().toLowerCase();
+  }
+  return null;
+};
+/** "Choose a color of a card in your graveyard. Add one mana of that color" (Corrupted Grafstone): with no card there, no colour to choose and no mana. */
+const COLOUR_FROM_GRAVEYARD = /\bcolou?rs? of (?:an?|any) (?:card|creature|permanent)s? in your graveyard\b/i;
+
 // ---------------------------------------------------------------------------------------------------------------
 // Token and land makers
 // ---------------------------------------------------------------------------------------------------------------
@@ -596,6 +634,7 @@ export function deriveMana(input: ManaInput): ManaResult {
       // A GRANTED "{T}: Add one mana of any of this creature's colors" (Katilda) names the colours of each creature that has it. They are
       // neither the deck's nor the card's. CEILING: the grantees are each their own source and are not read; no colour is credited.
       if (source === "static-grant" && made.anyColour === "among" && /\bthis creature'?s colou?rs\b/i.test(object)) made.anyColour = "grantee";
+      if (made.amount.scales === null) { const counted = scaleOfSentence(sentence); if (counted !== null) made.amount = { fixed: null, scales: counted }; }
       const cost = source === "activated" || source === "static-grant" || source === "token-maker"
         ? parseCost(costText, selfNames)
         : noCost();
@@ -606,7 +645,7 @@ export function deriveMana(input: ManaInput): ManaResult {
         face, source, repeats: ability?.repeats ?? null, cost, ...made,
         unread: made.colours.length === 0 && made.colourless === 0 && made.anyColour === null,
         net: produced - cost.mana,
-        gate: typedGate(grantGate ?? afterCost ?? requiresGate(ability) ?? gateOf(text, sentence, ability?.threshold !== undefined)),
+        gate: typedGate(grantGate ?? afterCost ?? requiresGate(ability) ?? gateOf(text, sentence, ability?.threshold !== undefined) ?? needsOf(source, text, costText, made.anyColour, object)),
         restriction: restrictionOf(texts),
         timing: source === "trigger" || source === "aura-trigger" || oneTurn ? "on-trigger" : DELAYED.test(text) ? "next-turn" : "now",
         producesToken: tokenGrant ? "granted" : null,

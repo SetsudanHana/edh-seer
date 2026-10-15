@@ -17675,5 +17675,273 @@
    }
   ],
   "source": "model"
+ },
+ "Selvala, Explorer Returned": {
+  "card": {
+   "_id": "b628a39b-c923-473d-900a-1617f47ecb76",
+   "name": "Selvala, Explorer Returned",
+   "typeLine": "Legendary Creature — Elf Scout",
+   "oracleText": "Parley — {T}: Each player reveals the top card of their library. For each nonland card revealed this way, add {G} and you gain 1 life. Then each player draws a card. (Activate only as an instant.)",
+   "keywords": [
+    "Parley"
+   ],
+   "colors": [
+    "G",
+    "W"
+   ],
+   "colorIdentity": [
+    "G",
+    "W"
+   ],
+   "manaValue": 3,
+   "power": "2",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{1}{G}{W}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Deathrite Shaman": {
+  "card": {
+   "_id": "22f1a4a4-c423-4d1c-8775-0ed604a9fa51",
+   "name": "Deathrite Shaman",
+   "typeLine": "Creature — Elf Shaman",
+   "oracleText": "{T}: Exile target land card from a graveyard. Add one mana of any color. (Activate only as an instant.)\n{B}, {T}: Exile target instant or sorcery card from a graveyard. Each opponent loses 2 life.\n{G}, {T}: Exile target creature card from a graveyard. You gain 2 life.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "manaValue": 1,
+   "power": "1",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{B/G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target land card from a graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target instant or sorcery card from a graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature card from a graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Red Death, Shipwrecker": {
+  "card": {
+   "_id": "0d40b2c3-9f39-45c6-8b25-12353f300613",
+   "name": "Red Death, Shipwrecker",
+   "typeLine": "Legendary Creature — Crab Mutant",
+   "oracleText": "Alluring Eyes — {T}: Goad target creature an opponent controls. That player draws a card. You add {R}. (Until your next turn, that creature attacks each combat if able and attacks a player other than you if able.)",
+   "keywords": [
+    "Alluring Eyes",
+    "Goad"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{U}{R}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "goad",
+      "object": "target creature an opponent controls",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Birds of Paradise": {
+  "card": {
+   "_id": "d3a0b660-358c-41bd-9cd2-41fbf3491b1a",
+   "name": "Birds of Paradise",
+   "typeLine": "Creature — Bird",
+   "oracleText": "Flying\n{T}: Add one mana of any color.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": "0",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
  }
 }

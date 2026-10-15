@@ -55,6 +55,25 @@ describe("tap abilities: cost, colours and amount", () => {
   });
 });
 
+describe("a tap whose mana depends on something the line must state (#1188)", () => {
+  it("Selvala, Explorer Returned: 'for each nonland card revealed this way, add {G}' scales, it is not a fixed 1", () => {
+    expect(only("Selvala, Explorer Returned")).toMatchObject({ colours: ["G"], amount: { fixed: null, scales: "for each nonland card revealed this way" }, gate: null });
+  });
+  it("Deathrite Shaman needs a land card in a graveyard to target, so the line is gated on it (CR 602.2b, 601.2c); its other two abilities add nothing", () => {
+    expect(only("Deathrite Shaman")).toMatchObject({ anyColour: "any", amount: { fixed: 1, scales: null }, gate: { kind: "unknown", text: "a legal target exists: target land card from a graveyard" } });
+  });
+  it("Red Death, Shipwrecker needs a target creature an opponent controls", () => {
+    expect(only("Red Death, Shipwrecker")).toMatchObject({ colours: ["R"], gate: { kind: "unknown", text: "a legal target exists: target creature an opponent controls" } });
+  });
+  it("Corrupted Grafstone makes no mana with an empty graveyard", () => {
+    expect(only("Corrupted Grafstone")).toMatchObject({ anyColour: "among", gate: { kind: "unknown", text: "there is a card in your graveyard" } });
+  });
+  it("a plain tap stays ungated and fixed (Llanowar Elves, Birds of Paradise)", () => {
+    expect(only("Llanowar Elves")).toMatchObject({ amount: { fixed: 1, scales: null }, gate: null });
+    expect(only("Birds of Paradise")).toMatchObject({ amount: { fixed: 1, scales: null }, gate: null });
+  });
+});
+
 describe("a cost the segmenter did not split", () => {
   it("Wall of Roots pays with a counter (typed static by the model); Contamination's replacement is no line", () => {
     expect(only("Wall of Roots")).toMatchObject({ source: "activated", colours: ["G"], cost: { mana: 0, tap: false, counters: "put", other: [] } });
