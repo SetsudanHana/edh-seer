@@ -494,7 +494,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
                 *  which links keep working, and what a cut costs. */}
               {themes && data.graph && winPlan?.cards?.length ? (
                 <div className="mt-8">
-                  <PlanLens report={report} graph={data.graph} model={themes} plan={winPlan.class} planCards={winPlan.cards} allPlanCards={allWinCards} manaValueOf={manaValueOf} />
+                  <PlanLens key={walkGen} report={report} graph={data.graph} model={themes} plan={winPlan.class} planCards={winPlan.cards} allPlanCards={allWinCards} manaValueOf={manaValueOf} />
                 </div>
               ) : null}
             </Movement>

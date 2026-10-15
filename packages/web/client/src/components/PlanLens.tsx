@@ -59,8 +59,9 @@ export function PlanLens({ report, graph, model, plan: planClass, planCards, all
   const [lastingOnly, setLastingOnly] = useState(false);
   const [turn, setTurn] = useState<number | null>(null);
   const [colour, setColour] = useState<string | null>(null);
-  // A new plan is a new map: what was tapped or cut on the old one is not on this one.
-  useEffect(() => { setTap(null); setCut(null); setOpen(null); }, [planClass]);
+  // A new plan is a new map: what was tapped, cut or filtered on the old one may not be on this one
+  // (a colour the new plan does not play would fade every card, with no chip left to clear it).
+  useEffect(() => { setTap(null); setCut(null); setOpen(null); setColour(null); setTurn(null); }, [planClass]);
 
   const card = useMemo(() => {
     const m = new Map<string, EngineCard>();
@@ -69,7 +70,11 @@ export function PlanLens({ report, graph, model, plan: planClass, planCards, all
   }, [model]);
   const colours = useMemo(() => {
     const m = new Map<string, string[]>();
-    for (const n of graph.nodes) m.set((n as { cardName?: string }).cardName ?? n.id, (n.colors ?? []).filter((k) => k in MANA));
+    // Every face's colours: Fire // Ice is red AND blue.
+    for (const n of graph.nodes) {
+      const k = (n as { cardName?: string }).cardName ?? n.id;
+      m.set(k, [...new Set([...(m.get(k) ?? []), ...(n.colors ?? []).filter((c) => c in MANA)])].sort((a, b) => "WUBRG".indexOf(a) - "WUBRG".indexOf(b)));
+    }
     return m;
   }, [graph]);
   if (!lens.plan.length) return null;
@@ -93,7 +98,7 @@ export function PlanLens({ report, graph, model, plan: planClass, planCards, all
         <span className="text-(--muted)">Castable by turn</span>
         {TURNS.map((t) => <Chip key={t} on={turn === t} onClick={() => setTurn(turn === t ? null : t)}>{t}</Chip>)}
         <Chip on={turn === null} onClick={() => setTurn(null)}>Any</Chip>
-        {deckColours.length > 1 ? <>
+        {deckColours.length > 1 || colour ? <>
           <span className="ml-2 text-(--muted)">Colour</span>
           {deckColours.map((k) => <Chip key={k} on={colour === k} onClick={() => setColour(colour === k ? null : k)}><Dot k={k} />{COLOUR[k]}</Chip>)}
           <Chip on={colour === null} onClick={() => setColour(null)}>All</Chip>
@@ -185,7 +190,7 @@ function LensMap({ lens, setup, wide, card, colours, manaValueOf, tap, cut, last
         return (
           <g key={n} role="button" tabIndex={0} aria-pressed={tap === n} aria-label={`${label}${win ? ", in this plan" : ", sets it up"}`}
             onClick={() => onTap(n)} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onTap(n); } }}
-            className="cursor-pointer outline-none" opacity={isCut ? 0.3 : lit ? 1 : 0.25} data-testid="plan-lens-card" data-card={n}>
+            className="cursor-pointer focus-visible:outline-2 focus-visible:outline-(--accent)" opacity={isCut ? 0.3 : lit ? 1 : 0.25} data-testid="plan-lens-card" data-card={n}>
             {c?.art ? <image href={c.art} x={x - r} y={y - r} width={2 * r} height={2 * r} preserveAspectRatio="xMidYMid slice" clipPath={`url(#lens-clip-${i})`} />
               : <circle cx={x} cy={y} r={r} fill="var(--surface-tertiary)" />}
             <circle cx={x} cy={y} r={r} fill="none" stroke={tap === n ? "var(--accent)" : win ? "var(--foreground)" : "var(--edge)"} strokeWidth={tap === n ? 3.5 : win ? 2.5 : 1.5} />
@@ -354,14 +359,19 @@ function Pc({ kind, children }: { kind: "last" | "once" | "combo"; children: Rea
 
 const kindOf = (p: Partner) => (p.combo ? "combo" : p.lasting ? "last" : "once");
 
+/** Once-only chips named on a row before the rest are folded into a count: a drain card fed by 34
+ *  cards was a wall of 34 names. Every lasting partner is always named; "Why each one" lists all. */
+const ONCE_NAMED = 6;
+
 function Chips({ ps, lastingOnly }: { ps: Partner[]; lastingOnly: boolean }) {
-  const shown = lastingOnly ? ps.filter((p) => p.lasting || p.combo) : ps;
-  const hidden = ps.length - shown.length;
   if (!ps.length) return null;
+  const strong = ps.filter((p) => p.lasting || p.combo), weak = ps.filter((p) => !p.lasting && !p.combo);
+  const named = lastingOnly ? [] : weak.slice(0, ONCE_NAMED);
+  const hidden = weak.length - named.length;
   return (
     <span className="flex flex-wrap gap-1" data-testid="plan-lens-chips">
-      {shown.map((p) => <Pc key={p.name} kind={kindOf(p)}>{front(p.name)}</Pc>)}
-      {hidden ? <span className="inline-block rounded border border-dotted border-(--edge) px-1.5 text-xs text-(--muted)">+{hidden} once, hidden</span> : null}
+      {[...strong, ...named].map((p) => <Pc key={p.name} kind={kindOf(p)}>{front(p.name)}</Pc>)}
+      {hidden ? <span className="inline-block rounded border border-dotted border-(--edge) px-1.5 text-xs text-(--muted)">+{hidden} once{lastingOnly ? ", hidden" : " more"}</span> : null}
     </span>
   );
 }

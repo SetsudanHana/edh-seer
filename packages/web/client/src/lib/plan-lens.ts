@@ -34,7 +34,8 @@ export interface PlanLens {
   plan: string[];
   /** The cards that feed the plan most, strongest first: the outer ring. */
   setup: string[];
-  /** Every link from a shown card into a plan card. */
+  /** Every link into a plan card, from any card: the counts read all of them, so a card past the
+   *  drawn ring still counts for the plan card it feeds. */
   links: LensLink[];
 }
 
@@ -48,11 +49,12 @@ export function planLens(model: EngineModel, planCards: readonly string[], combo
   const plan = [...new Set(planCards)].filter((n) => physicalIds(model, n).length);
   const inPlan = new Set(plan);
   const groups = new Map(model.groups.map((g) => [g.tag, g]));
+  const deckNames = new Set([...model.cards.values()].filter((c) => !c.isToken).map((c) => c.physical));
   const smax = Math.max(1, ...[...model.cards.values()].map((c) => c.score));
   const comboKey = new Set(combos.flatMap((cs) => cs.flatMap((a) => cs.filter((b) => b !== a).map((b) => `${a}\u0001${b}`))));
 
   // Every directed link into a plan card, folded per physical pair.
-  const acc = new Map<string, { from: string; to: string; links: Link[]; strength: number }>();
+  const acc = new Map<string, { from: string; to: string; links: { l: Link; lasting: boolean }[]; strength: number }>();
   const seen = new Set<object>();
   for (const row of model.partners.values()) {
     for (const pair of row.values()) {
@@ -61,22 +63,28 @@ export function planLens(model: EngineModel, planCards: readonly string[], combo
       const strength = pairStrength(pair, model.cards, groups, smax);
       for (const l of pair.links) {
         const from = model.cards.get(l.from), to = model.cards.get(l.to);
-        if (!from || !to || !inPlan.has(to.physical) || from.physical === to.physical) continue;
-        // A token is drawn through the card that makes it, never as its own disc.
-        if (from.isToken) continue;
-        const k = `${from.physical}\u0001${to.physical}`;
-        const e = acc.get(k) ?? { from: from.physical, to: to.physical, links: [], strength: 0 };
-        e.links.push(l);
-        e.strength = Math.max(e.strength, strength);
-        acc.set(k, e);
+        if (!from || !to || !inPlan.has(to.physical) || to.isToken) continue;
+        // A TOKEN FEEDS THROUGH THE CARD THAT MAKES IT (as the cut list credits it): a token dying into a
+        // drain card is its maker setting the plan up. A token nothing in the deck makes is left out.
+        // It keeps working only if the maker keeps making it: Asinine Antics makes its Cursed Roles
+        // once, though each Role's enter trigger repeats; The Rani makes a Mark every time she hits.
+        const givers = from.isToken ? (from.madeBy ?? []).filter((n) => deckNames.has(n)) : [from.physical];
+        for (const giver of givers) {
+          if (giver === to.physical) continue;
+          const k = `${giver}\u0001${to.physical}`;
+          const e = acc.get(k) ?? { from: giver, to: to.physical, links: [], strength: 0 };
+          e.links.push({ l, lasting: l.repeat !== "oneshot" && (!from.isToken || makesAgain(model, giver, from.id)) });
+          e.strength = Math.max(e.strength, strength);
+          acc.set(k, e);
+        }
       }
     }
   }
   const all: LensLink[] = [...acc.values()].map((e) => {
-    const best = [...e.links].sort((x, y) => rank(x) - rank(y))[0]!;
-    const hue = groups.get(e.links.find((l) => l.repeat !== "oneshot" && groups.has(l.tag))?.tag ?? best.tag)?.hue;
+    const best = [...e.links].sort((x, y) => rank(x) - rank(y))[0]!.l;
+    const hue = groups.get(e.links.find((x) => x.lasting && groups.has(x.l.tag))?.l.tag ?? best.tag)?.hue;
     return {
-      from: e.from, to: e.to, lasting: e.links.some((l) => l.repeat !== "oneshot"),
+      from: e.from, to: e.to, lasting: e.links.some((x) => x.lasting),
       combo: comboKey.has(`${e.from}\u0001${e.to}`), why: best.text, strength: e.strength,
       ...(hue ? { hue } : {}),
     };
@@ -95,25 +103,34 @@ export function planLens(model: EngineModel, planCards: readonly string[], combo
   const setup = [...feed.entries()]
     .sort((a, b) => b[1].s - a[1].s || b[1].n - a[1].n || (a[0] < b[0] ? -1 : 1))
     .slice(0, cap).map(([n]) => n);
-  const shown = new Set([...plan, ...setup]);
-  return { plan, setup, links: all.filter((l) => shown.has(l.from)) };
+  return { plan, setup, links: all };
 }
 
 /** A lasting, read reason first, then any read one: the sentence a reader can check. */
-const rank = (l: Link) => (l.repeat === "oneshot" ? 2 : 0) + (unread(l) ? 1 : 0);
+const rank = (x: { l: Link; lasting: boolean }) => (x.lasting ? 0 : 2) + (unread(x.l) ? 1 : 0);
+
+/** Whether a deck card makes this token over and over: a repeating link from the card to it. */
+function makesAgain(model: EngineModel, maker: string, token: string): boolean {
+  for (const c of model.cards.values()) {
+    if (c.physical !== maker) continue;
+    if (model.partners.get(c.id)?.get(token)?.links.some((l) => l.from === c.id && l.repeat !== "oneshot")) return true;
+  }
+  return false;
+}
 
 const physicalIds = (model: EngineModel, name: string) => [...model.cards.values()].filter((c) => c.physical === name).map((c) => c.id);
 
-/** A plan card's feeders, or the plan cards a set-up card feeds, with `cut` left out. Lasting
- *  partners first, then the strongest. */
+/** A plan card's feeders, or the plan cards any other card feeds, with `cut` left out. Lasting
+ *  partners first, then the strongest. A plan card that feeds another plan card is counted on the
+ *  card it feeds, never as fed by it. */
 export function partnersOf(lens: PlanLens, name: string, cut: ReadonlySet<string> = new Set()): Partner[] {
   const inPlan = lens.plan.includes(name);
   const out = new Map<string, Partner>();
   for (const l of lens.links) {
-    const other = inPlan && l.to === name ? l.from : l.from === name ? l.to : null;
+    const other = inPlan ? (l.to === name ? l.from : null) : l.from === name ? l.to : null;
     if (other === null || cut.has(other)) continue;
     const p = out.get(other);
-    // A plan card both feeds and is fed by another plan card: one entry, lasting if either is.
+    // Two faces feeding the same card: one entry, lasting if either is.
     if (!p) out.set(other, { name: other, lasting: l.lasting, combo: l.combo, why: l.why, strength: l.strength });
     else if (!p.lasting && l.lasting) out.set(other, { ...p, lasting: true, why: l.why, combo: p.combo || l.combo, strength: Math.max(p.strength, l.strength) });
   }

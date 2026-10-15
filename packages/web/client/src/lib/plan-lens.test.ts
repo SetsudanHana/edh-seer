@@ -81,3 +81,49 @@ test("across every plan: the plan cards a card works with either way, and how ma
   // A plan card is not counted against itself: Leech has two OTHER plan cards, and works with neither.
   expect(acrossPlans(m, "Leech", ["Leech", "Mage", "Flux"])).toEqual({ all: 0, lasting: 0, of: 2 });
 });
+
+test("a plan card that feeds another is counted on the card it feeds, never as fed by it", () => {
+  // Review of the first draft: Leech feeding Ascension read as Ascension feeding Leech, and cutting
+  // Ascension then said Leech "would have no lasting link left".
+  const m = tiny(["Leech", "Ascension"], [lasting("Leech", "Ascension", "When Leech dies, Ascension drains")]);
+  const lens = planLens(m, ["Leech", "Ascension"], []);
+  expect(partnersOf(lens, "Leech")).toEqual([]);
+  expect(partnersOf(lens, "Ascension").map((p) => p.name)).toEqual(["Leech"]);
+  expect(cutPreview(lens, new Set(["Ascension"])).left).toEqual([]);
+});
+
+test("a feeder past the drawn ring still counts for the plan card it feeds", () => {
+  const m = tiny(["Win", "Big", "Small"], [
+    lasting("Big", "Win", "When Win enters thanks to Big, it drains"),
+    lasting("Small", "Win", "When Win enters thanks to Small, it drains"),
+  ]);
+  const lens = planLens(m, ["Win"], [], 1);
+  expect(lens.setup).toHaveLength(1);
+  expect(counts(partnersOf(lens, "Win"))).toEqual({ all: 2, lasting: 2 });
+  expect(cutPreview(lens, new Set([lens.setup[0]!])).left).toEqual([]);
+});
+
+/** A deck whose Maker makes Rogue tokens (`makes` repeatability) and a Rogue dying drains. */
+function tokenDeck(makes: string) {
+  const report = {
+    commanders: [], cards: [{ name: "Maker", score: 1 }, { name: "Drainer", score: 1 }],
+    tokenNodes: [{ name: "Rogue", hasPartner: true, madeBy: ["Maker"] }],
+    edges: [
+      { a: "Rogue", b: "Drainer", score: 1, reasons: [{ producer: "Rogue", producerIsToken: true, consumer: "Drainer", tag: "dies:creature", text: "When a Rogue dies, Drainer drains", repeatability: "triggered" }] },
+      { a: "Maker", b: "Rogue", score: 1, reasons: [{ producer: "Maker", consumer: "Rogue", consumerIsToken: true, tag: "token:creature", text: "Maker creates Rogue", repeatability: makes }] },
+    ],
+  } as unknown as DeckReport;
+  const node = (id: string, label: string, isToken = false) => ({ id, label, isToken, copies: 1, types: ["creature"], subtypes: [], supertypes: [], colors: [], cmc: 2, roles: [] });
+  const graph = { nodes: [node("Maker", "Maker"), node("Drainer", "Drainer"), node("token:Rogue", "Rogue", true)], edges: [], undirectedReasons: 0, offDeckReasons: 0 } as unknown as CardGraph;
+  return planLens(buildEngineModel(report, graph), ["Drainer"], []);
+}
+
+test("a token feeds the plan through the card that makes it", () => {
+  const lens = tokenDeck("triggered");
+  expect(lens.setup).toEqual(["Maker"]);
+  expect(partnersOf(lens, "Drainer")).toEqual([expect.objectContaining({ name: "Maker", lasting: true, why: "When a Rogue dies, Drainer drains" })]);
+});
+
+test("a token made once feeds the plan once, however often its own trigger repeats", () => {
+  expect(partnersOf(tokenDeck("oneshot"), "Drainer")).toEqual([expect.objectContaining({ name: "Maker", lasting: false })]);
+});
