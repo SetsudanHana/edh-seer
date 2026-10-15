@@ -171,7 +171,7 @@
       "why": "'a token that's a copy of target nontoken creature': the copy IS a token; 'nontoken' describes the original. parseSubject read the token as nontoken."
     },
     "tapped": {
-      "distinct": 76,
+      "distinct": 60,
       "label": "grammar right",
       "rule": "CR 110.5",
       "why": "'target tapped creature', 'an untapped creature you control', 'a tapped Treasure token': a status the schema now holds (`tapped`); parseSubject dropped the word, so the filter claimed every creature. An OR whose alternatives disagree on it ('target artifact or tapped creature') is refused."
@@ -195,7 +195,7 @@
       "why": "'a multicolored spell', 'target monocolored creature' (`colorCount`); parseSubject dropped the word."
     },
     "legendary": {
-      "distinct": 2,
+      "distinct": 1,
       "label": "grammar right",
       "rule": "printed text",
       "why": "'target nonlegendary creature' (`legendary: false`); parseSubject dropped the negation."

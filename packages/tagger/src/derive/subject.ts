@@ -393,14 +393,16 @@ const CHOSEN = /\bof the chosen\b|\bthe chosen (?:type|color|colour)\b/i;
  *  origin from every `dies` producer, none of which states one, deleting real edges to buy nothing. */
 /** "Historic spell", "another nontoken historic permanent you control". A NEGATED mention
  *  ("each nonland permanent that's NOT historic", Desynchronization) is not the constraint, and the
- *  engine cannot express the inverse — better unset than inverted. */
+ *  schema has no `historic: false`, so the negation is left unset — better unset than inverted
+ *  (legendary, basic and snow DO have a `false`, and read it). */
 const HISTORIC = /\bhistoric\b/i;
 
 /** CR 700.12 outlaws and CR 700.9 modified permanents, both with their negation.
  *
  *  "Destroy target NON-OUTLAW creature" (Shoot the Sheriff) and "protection from modified creatures"
- *  (Louvaq, the Aberrant) are the inverse constraint, which the engine cannot express — better unset
- *  than inverted, the same call `NOT_HISTORIC` and `NOT_LEGENDARY` make.
+ *  (Louvaq, the Aberrant) are the inverse constraint. The schema has no `outlaw: false` / `modified: false`, so they stay
+ *  unset — better unset than inverted, the same call `NOT_HISTORIC` makes (`NON_LEGENDARY` is different:
+ *  `legendary: false` exists).
  *
  *  Anchored on the whole word: "outlaws" appears in reminder text listing the five types, and
  *  `modified` must not match "unmodified" or the "modifications" of a reminder line. */
@@ -414,17 +416,24 @@ const ATTACKING = /\battacking\b/i;
 const BLOCKING = /\bblocking\b/i;
 const NOT_MODIFIED = /\b(?:un|non-?)modified\b|\bprotection from modified\b/i;
 
-/** The LEGENDARY supertype, and its negation. Helm of the Host, Quantum Misalignment and Vesuvan
- *  Duplimancy all copy something "except it isn't legendary" — reading that as a legendary
- *  constraint inverts the card, the same trap `nontoken` and `notType` exist for. */
+/** The LEGENDARY supertype, and its negation, which is `legendary: false`. Helm of the Host, Quantum
+ *  Misalignment and Vesuvan Duplimancy all copy something "except it isn't legendary" — reading that
+ *  as a legendary constraint would invert the card, the same trap `nontoken` and `notType` exist for.
+ *
+ *  Two spellings, two meanings. "nonlegendary creature" restricts the OBJECT (`NON_LEGENDARY`).
+ *  "except it isn't legendary" describes the RESULT of a copy: on a created token (Helm of the Host,
+ *  Miirym) the token IS the result, so `legendary: false` is right; on a non-token subject (Shuri,
+ *  Wakandan Inventor: "target artifact … becomes a copy of a second target artifact, except it isn't
+ *  legendary") it would refuse a legendary artifact as the copied object, so it stays unset. */
 const LEGENDARY = /\blegendary\b/i;
-const NOT_LEGENDARY = /\b(?:isn'?t|is not|isn’t|non-?)\s*legendary\b/i;
+const NON_LEGENDARY = /\bnon-?legendary\b/i;
+const ISNT_LEGENDARY = /\b(?:isn'?t|is not|isn’t)\s*legendary\b/i;
 const NOT_HISTORIC = /\b(?:not|non-?)\s*historic\b/i;
 
 /** The BASIC supertype, and the two ways of not meaning it.
  *
  *  `NOT_BASIC` is the Blood Moon family — "nonbasic lands you control" — where reading it as a basic
- *  constraint inverts the card, exactly as a negated legendary does.
+ *  constraint would invert the card, exactly as a negated legendary would; it is `basic: false`.
  *
  *  `BASIC_LAND_TYPE` is the subtler one and has nothing to do with the supertype: a "basic land
  *  TYPE" is Forest, Island, Swamp, Mountain or Plains, the SUBTYPE. Prismatic Omen's "lands you
@@ -440,11 +449,24 @@ const SNOW = /\bsnow\b(?!-)/i;
 const NOT_SNOW = /\bnon-?snow\b/i;
 
 /** CR 110.5 status, only as an ADJECTIVE before the subject's noun: "a tapped creature", "untapped lands
- *  you control", "target tapped artifact". "enters tapped", "onto the battlefield tapped", "becomes tapped" and
- *  "untap target creature" have no noun right behind the word (or are the verb "untap"), so they never match.
- *  Up to two more adjectives may sit between ("a tapped nonland permanent"). Bounded, and the word class and
- *  the whitespace class are disjoint, so nothing here can backtrack polynomially. */
-const TAPPED_ADJ = /\b(un)?tapped\s{1,4}(?:[\w-]{1,20}\s{1,4}){0,2}(?:creature|land|artifact|enchantment|planeswalker|permanent|battle|token|nonland|noncreature|nonartifact)s?\b/i;
+ *  you control", "target tapped artifact", "an untapped Forest", "a tapped and attacking Zombie".
+ *  "enters tapped", "onto the battlefield tapped", "becomes tapped" and "untap target creature" have no
+ *  noun right behind the word (or are the verb "untap"), so they never match.
+ *
+ *  The regex finds the word and up to THREE words after it (one `\s{1,4}` between each, word class and
+ *  whitespace class disjoint, so nothing backtracks polynomially); `tappedStatus` then asks whether any
+ *  of them is a type noun or a SUBTYPE from the closed list, in code rather than in one big alternation. */
+const TAPPED_WORD = /\b(un)?tapped\b((?:\s{1,4}[\w'-]{1,20}){1,3})/gi;
+const TAPPED_NOUNS = new Set(["creature", "land", "artifact", "enchantment", "planeswalker", "permanent", "battle", "token", "nonland", "noncreature", "nonartifact"]);
+
+/** `false` for untapped, `true` for tapped, undefined when no noun follows the word. */
+function tappedStatus(t: string): boolean | undefined {
+  for (const m of t.matchAll(TAPPED_WORD)) {
+    const words = m[2]!.toLowerCase().match(/[\w'-]+/g) ?? [];
+    if (words.some((w) => singulars(w).some((x) => TAPPED_NOUNS.has(x) || SUBTYPES.has(x)))) return m[1] === undefined;
+  }
+  return undefined;
+}
 
 /** Colour COUNT (the grammar's `colorCount`), not a colour: "multicolored creature", "monocolored permanent". */
 const MULTICOLORED = /\bmulti-?colou?red\b/i;
@@ -681,14 +703,20 @@ export function parseSubject(text: string): SubjectFilter {
   // leak unreachable rather than fixing it, which is the smaller change AND the right answer: a
   // corrected noun would still claim every instant in the deck. See `SubjectFilter.restricted`.
   if (TARGETS_ONLY.test(t)) out.restricted = true;
-  if (NOT_LEGENDARY.test(t)) out.legendary = false;
-  else if (LEGENDARY.test(t)) out.legendary = true;
+  // CEILING: in an OR list these qualifiers (legendary/basic/snow/tapped/colorCount) hang on the WHOLE
+  // subject, not the branch they were written on: Nahiri's "enchantment, tapped artifact, or tapped
+  // creature", "tapped or blocking creature", Break the Ice's "snow or could produce {C}", Narfi's "snow
+  // and Zombie creatures". That NARROWS the claim and never widens it. The grammar keeps them per branch;
+  // the disagreements are banked in grammar-triage.json (groups anyOf,tapped,type; anyOf,basic,type;
+  // anyOf,combat,tapped; anyOf,snow; anyOf,snow,subtype).
+  if (NON_LEGENDARY.test(t) || (ISNT_LEGENDARY.test(t) && out.token === true)) out.legendary = false;
+  else if (LEGENDARY.test(t) && !ISNT_LEGENDARY.test(t)) out.legendary = true;
   if (NOT_BASIC.test(t)) { if (!BASIC_LAND_TYPE.test(t)) out.basic = false; }
   else if (BASIC.test(t) && !BASIC_LAND_TYPE.test(t)) out.basic = true;
   if (NOT_SNOW.test(t)) out.snow = false;
   else if (SNOW.test(t)) out.snow = true;
-  const tapped = t.match(TAPPED_ADJ);
-  if (tapped) out.tapped = tapped[1] === undefined;
+  const tapped = tappedStatus(t);
+  if (tapped !== undefined) out.tapped = tapped;
   if (MULTICOLORED.test(t)) out.colorCount = "multi";
   else if (MONOCOLORED.test(t)) out.colorCount = "mono";
   // A keyword counter is a counter, so the counter reading wins where both could fire.

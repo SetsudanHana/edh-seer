@@ -818,3 +818,31 @@ test.each([
 test("basic land types is not the basic supertype", () => {
   expect(parseSubject("lands you control have every basic land type")).not.toHaveProperty("basic");
 });
+
+/** #1205 review: "tapped" before a SUBTYPE noun is the same status ("an untapped Forest you control"). */
+test.each([
+  ["an untapped Forest you control", false],
+  ["target untapped Elf", false],
+  ["untapped Mountains you control", false],
+  ["a tapped Treasure", true],
+  ["another untapped Warrior", false],
+  ["a tapped and attacking Zombie", true],
+])("%s carries tapped=%s through a subtype noun", (text, tapped) => {
+  expect(parseSubject(text).tapped).toBe(tapped);
+});
+
+test("tapped followed by no noun still sets nothing", () => {
+  expect(parseSubject("a Forest that enters tapped and you gain 1 life")).not.toHaveProperty("tapped");
+  expect(parseSubject("put an Elf onto the battlefield tapped")).not.toHaveProperty("tapped");
+});
+
+/** Shuri, Wakandan Inventor: "Target artifact you control becomes a copy of a second target artifact you control until
+ *  end of turn, except it isn't legendary." The clause describes the RESULT, so the copied object is not nonlegendary. */
+test("'except it isn't legendary' on a non-token subject does not demand a nonlegendary object", () => {
+  expect(parseSubject("target artifact you control becomes a copy of a second target artifact you control until end of turn, except it isn't legendary"))
+    .not.toHaveProperty("legendary");
+  expect(parseSubject("a copy of target artifact, except it isn't legendary")).not.toHaveProperty("legendary");
+  // a created token copy IS the result: it keeps legendary:false
+  expect(parseSubject("a token that's a copy of equipped creature, except the token isn't legendary").legendary).toBe(false);
+  expect(parseSubject("a nonlegendary artifact").legendary).toBe(false);
+});
