@@ -632,4 +632,6 @@ test("a may does not reach a finite verb, a replacement, or 'the rest' (Guild Fe
   expect(opt("At the beginning of your upkeep, target opponent reveals the top three cards of their library, may put a creature card from among them onto the battlefield, then puts the rest into their graveyard.")).toEqual(["reveal", "put*", "put"]);
   expect(opt("When you unlock this door, you may cast spells from your graveyard this turn, and if a card would be put into your graveyard from anywhere this turn, exile it instead.")).toEqual(["exile"]);
   expect(opt("Look at the top five cards of your library. You may reveal up to two creature and/or land cards from among them, then put the rest on the bottom of your library in a random order.")).toEqual(["put"]);
+  // A copy's exceptions ("... is an artifact ..., and has myriad") are still the may's (Auton Soldier).
+  expect(opt("You may have this creature enter as a copy of any creature on the battlefield, except it isn't legendary, is an artifact in addition to its other types, and has myriad.")).toEqual(["copy*", "cant*", "grant-ability*", "grant-ability*"]);
 });
