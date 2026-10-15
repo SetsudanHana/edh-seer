@@ -1474,8 +1474,10 @@ export interface ManaLine {
   /** How much one use adds. `fixed` is the number (the smallest across the printed alternatives), `null` when it
    *  scales; `scales` then names what it counts ("for each Forest you control", "equal to ...", "X"). */
   amount: { fixed: number | null; scales: string | null };
-  /** Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as 1 (its floor
-   *  would be 0; a consumer that cares reads `amount.scales`). */
+  /** Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as its printed fixed part when one
+   *  precedes the "for each" ("Add {R}{R}, then add {R} for each ...", Rite of Flame: 2), else as 1 (its true floor
+   *  may be 0; a consumer that cares reads `amount.scales`). EXCEPT "for each color among permanents you control" (Faeburrow Elder, Bloom Tender) on a permanent: the card is itself a permanent
+   *  you control, so its floor is the number of its OWN colours (Faeburrow 2, Bloom Tender 1), and `net` is that less the cost. */
   net: number;
   /** TRUE when the production could not be read: no colour, no colourless, no choice named ("any of the exiled card's colors",
    *  Chrome Mox; "for each color among permanents you control", Bloom Tender). Consumers treat it as UNKNOWN, never as a

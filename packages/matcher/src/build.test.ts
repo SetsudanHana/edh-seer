@@ -1,6 +1,7 @@
 import { parseGate } from "@edh-seer/tagger/gate";
 import { describe, expect, it, test } from "vitest";
-import { detectBuildCategories, detectBuildFacets, computeBuild, rampGrade, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT, scoreBuild, parentImpact, landsImpactOf, answersImpactOf, templateBlend, SECONDARY_SHARE, BUILD_PARENTS } from "./build.js";
+import { cardLines } from "./mana-lines.js";
+import { detectBuildCategories, detectBuildFacets, computeBuild, rampGrade, SELF_GUARANTEED_SCALE, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT, scoreBuild, parentImpact, landsImpactOf, answersImpactOf, templateBlend, SECONDARY_SHARE, BUILD_PARENTS } from "./build.js";
 import { ARCHETYPE_LEAD_FLOOR } from "./archetypes.js";
 import TEMPLATE from "./template-targets.json" with { type: "json" };
 import type { DeckCard } from "./types.js";
@@ -921,6 +922,19 @@ describe("rampGrade (#534, on manaLines since #1169)", () => {
     // Sackville's Treasure stays ramp by its rule (owner 2026-09-27) but is not staple-grade.
     expect(rampGrade(rock("The Sackville-Bagginses", "When The Sackville-Bagginses enter, you may sacrifice another creature or artifact. If you do, draw a card and create a Treasure token.", "Legendary Creature — Halfling Citizen",
       [mkLine({ source: "token-maker", repeats: "once", cost: { ...FREE_TAP, tap: false }, producesToken: "treasure" })]))).toBe(0);
+  });
+
+  it("a 'for each color among permanents you control' tap is graded on its own-colour floor, as before #1188 (Faeburrow Elder, Bloom Tender: 14)", () => {
+    for (const n of ["Faeburrow Elder", "Bloom Tender"]) {
+      const dc = (rocks as unknown as Record<string, DeckCard>)[n]!;
+      expect(rampGrade(dc), n).toBe(14);
+    }
+  });
+
+  it("SELF_GUARANTEED_SCALE accepts the scale text derive stores for Faeburrow Elder, so the two regexes cannot drift (review)", () => {
+    const dc = (rocks as unknown as Record<string, DeckCard>)["Faeburrow Elder"]!;
+    const line = cardLines(dc).find((l) => l.amount.scales !== null)!;
+    expect(SELF_GUARANTEED_SCALE.test(line.amount.scales!)).toBe(true);
   });
 
   it("a gated tap line is a rock only where the deck meets its gate (owner 2026-10-13: Mox Jasper in a Dragon deck)", () => {

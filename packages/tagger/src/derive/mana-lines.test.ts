@@ -55,6 +55,34 @@ describe("tap abilities: cost, colours and amount", () => {
   });
 });
 
+describe("a tap whose mana depends on something the line must state (#1188)", () => {
+  it("Selvala, Explorer Returned: 'for each nonland card revealed this way, add {G}' scales, it is not a fixed 1", () => {
+    expect(only("Selvala, Explorer Returned")).toMatchObject({ colours: ["G"], amount: { fixed: null, scales: "for each nonland card revealed this way" }, gate: null });
+  });
+  it("Deathrite Shaman needs a land card in a graveyard to target, so the line is gated on it (CR 602.2b, 601.2c); its other two abilities add nothing", () => {
+    expect(only("Deathrite Shaman")).toMatchObject({ anyColour: "any", amount: { fixed: 1, scales: null }, gate: { kind: "unknown", text: "a legal target exists: target land card from a graveyard" } });
+  });
+  it("Red Death, Shipwrecker needs a target creature an opponent controls", () => {
+    expect(only("Red Death, Shipwrecker")).toMatchObject({ colours: ["R"], gate: { kind: "unknown", text: "a legal target exists: target creature an opponent controls" } });
+  });
+  it("Corrupted Grafstone makes no mana with an empty graveyard", () => {
+    expect(only("Corrupted Grafstone")).toMatchObject({ anyColour: "among", gate: { kind: "unknown", text: "there is a card in your graveyard" } });
+  });
+  it("Rite of Flame: '{R}{R}, then {R} for each ...' scales but its net keeps the printed floor of 2 (net 1 on a 1-mana spell); Bloom Tender keeps the ceiling of 1", () => {
+    const [first] = linesOf("Rite of Flame");
+    expect(first).toMatchObject({ amount: { fixed: null, scales: "for each card named rite of flame in each graveyard" }, cost: { mana: 1 }, net: 1 });
+    expect(only("Bloom Tender")).toMatchObject({ amount: { fixed: null }, net: 1 });
+  });
+  it("'for each color among permanents you control' is guaranteed the card's own colours: Faeburrow Elder (G, W) nets 2, Bloom Tender (G) nets 1", () => {
+    expect(only("Faeburrow Elder")).toMatchObject({ amount: { fixed: null, scales: "for each color among permanents you control" }, net: 2 });
+    expect(only("Bloom Tender")).toMatchObject({ amount: { fixed: null, scales: "for each color among permanents you control" }, net: 1 });
+  });
+  it("a plain tap stays ungated and fixed (Llanowar Elves, Birds of Paradise)", () => {
+    expect(only("Llanowar Elves")).toMatchObject({ amount: { fixed: 1, scales: null }, gate: null });
+    expect(only("Birds of Paradise")).toMatchObject({ amount: { fixed: 1, scales: null }, gate: null });
+  });
+});
+
 describe("a cost the segmenter did not split", () => {
   it("Wall of Roots pays with a counter (typed static by the model); Contamination's replacement is no line", () => {
     expect(only("Wall of Roots")).toMatchObject({ source: "activated", colours: ["G"], cost: { mana: 0, tap: false, counters: "put", other: [] } });
@@ -91,7 +119,7 @@ describe("what using the line consumes", () => {
       cost: { mana: 0, tap: false, sacrificeSelf: false, sacrificeOther: true, life: 0, counters: null, tapOther: false, loyalty: null, consumes: [], other: [] } });
   });
   it("Priest of Forgotten Gods taps and sacrifices two others for {B}{B}", () => {
-    expect(only("Priest of Forgotten Gods")).toMatchObject({ source: "activated", colours: ["B"], amount: { fixed: 2, scales: null },
+    expect(only("Priest of Forgotten Gods")).toMatchObject({ source: "activated", colours: ["B"], amount: { fixed: 2, scales: null }, gate: null,
       cost: { tap: true, sacrificeSelf: false, sacrificeOther: true } });
   });
   it("Cryptic Trilobite pays with a counter, and the mana only activates abilities", () => {
@@ -407,6 +435,27 @@ describe("review of task 2a (#1169): 'among', unread, self-exile", () => {
     }
     for (const n of ["Faeburrow Elder", "Bloom Tender"]) expect(only(n), n).toMatchObject({ anyColour: "among", unread: false });
   });
+  it("the own-colour floor also holds when the grammar path puts the count on action.amount; a colourless permanent nets 0 and an instant gets no floor (review)", () => {
+    const of = (typeLine: string, colors: string[]) => {
+      const card = { name: "Probe", typeLine, colors, oracleText: "{T}: For each color among permanents you control, add one mana of that color.", keywords: [] as string[] };
+      const records = [{ id: 1, abilityType: "activated", actions: [{ verb: "add-mana", object: "one mana of that color", amount: "for each color among permanents you control", optional: false, fromZone: null, toZone: null }] }];
+      return deriveCardTags(deriveInputOf(card as never, "x", "Probe", records as never)).manaLines![0]!;
+    };
+    expect(of("Creature — Treefolk Druid", ["G", "W"])).toMatchObject({ amount: { fixed: null, scales: "for each color among permanents you control" }, net: 2 });
+    expect(of("Artifact", [])).toMatchObject({ net: 0 });
+    expect(of("Instant", ["G", "W"])).toMatchObject({ net: 1 });
+  });
+  it("The Grey Havens' 'among legendary creature cards in your graveyard' needs a card there (Fix B); a board-bounded 'among' stays ungated", () => {
+    const gated = linesOf("The Grey Havens").filter((l) => l.anyColour === "among");
+    expect(gated).toHaveLength(1);
+    expect(gated[0]!.gate).toMatchObject({ kind: "unknown", text: "there is a card in your graveyard" });
+    expect(only("Mox Amber").gate).toBeNull();
+  });
+  it("a target player or opponent (ALWAYS_THERE) and 'any number of target' (Quintorius Kand's UP_TO) gate nothing", () => {
+    expect(only("Witch Engine")).toMatchObject({ colours: ["B"], gate: null });
+    expect(linesOf("Quintorius Kand").every((l) => l.gate === null)).toBe(true);
+    expect(linesOf("Quintorius Kand").length).toBeGreaterThan(0);
+  });
   it("Chrome Mox: the imprinted card's colours are a bound, not an unread line", () => {
     expect(only("Chrome Mox")).toMatchObject({ anyColour: "among", unread: false });
   });
@@ -651,6 +700,8 @@ describe("Ability.amount and ManaLine.amount are one reading (DERIVE_VERSION 311
     expect(manaAbilities("Axebane Guardian")[0]!.amount).toBeUndefined();
     expect(linesOf("Axebane Guardian")[0]!.amount).toEqual({ fixed: null, scales: "x" });
     expect(linesOf("Radiant Lotus")[0]!.amount.fixed).toBeNull();
+    // "up to" / "any number of" target nothing that must exist: no target gate (UP_TO)
+    expect(linesOf("Radiant Lotus")[0]!.gate).toBeNull();
   });
   it("Unclaimed Territory's restricted line reads one mana, the rider after the comma is no alternative", () => {
     const lines = linesOf("Unclaimed Territory");

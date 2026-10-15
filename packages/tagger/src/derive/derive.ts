@@ -470,7 +470,11 @@ import { emblemRecipient } from "../emblem.js";
 // puts from exile, and a spell returning itself leaves the stack (13 spells).
 // 315: #1205 parseSubject stops dropping qualifiers the schema already carries: nonbasic (basic:false), nonlegendary (legendary:false), snow/nonsnow, tapped/untapped as an adjective before the noun (not "enters tapped"), multicolored/monocolored (colorCount).
 // 316: #1215 the arrives-tapped suppression of a `taps` emit reads the clause's EFFECT only (effectText), never its trigger: "Whenever this creature enters or becomes tapped, tap up to one target creature" (Champions of the Shoal) lost its tap to the trigger's "enters ... tapped"; and a token CREATED tapped (or tapped and attacking: Mobilize) emits no taps for the companion `tap` on it (CR 603.2e).
-export const DERIVE_VERSION = 316;
+// 317: #1188 mana lines state what a tap depends on: a "for each ..., add" / "add ... for each" amount SCALES (Selvala, Explorer Returned), an activated ability that targets is gated on a legal target (Deathrite Shaman,
+// Red Death, Shipwrecker; CR 602.2b), and a colour taken from "a card in your graveyard" is gated on one (Corrupted Grafstone). The gates are `unknown` (unmet everywhere), so rampGrade and the colour audit drop them.
+// 318: #1188 follow-up: a "for each" add keeps its printed fixed floor in `net` ("Add {R}{R}, then add {R} for each ...", Rite of Flame: net 1, not 0); `amount` is unchanged (fixed null, scales set).
+// 319: #1188 whole-branch review: "for each color among permanents you control" on a permanent nets the card's OWN colours (Faeburrow Elder 2, Bloom Tender 1; the card is a permanent you control); a colour taken from "among ... cards in your graveyard" (The Grey Havens) is gated on a card there.
+export const DERIVE_VERSION = 319;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

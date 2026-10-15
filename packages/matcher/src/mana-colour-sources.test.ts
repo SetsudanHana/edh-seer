@@ -196,7 +196,9 @@ describe("a consumed resource in the cost is not a colour source (review of 2a)"
 describe("'among' is bounded by the commander's colours (a CEILING), unread is never a silent zero", () => {
   test("Plaza of Heroes, Mox Amber, Chrome Mox and Faeburrow Elder make the identity's colours", () => {
     const id = new Set(["B", "R"]);
-    for (const n of ["Mox Amber", "Chrome Mox", "Faeburrow Elder", "Meteor Crater", "Corrupted Grafstone"]) expect(colours(n, id), n).toEqual(["B", "R"]);
+    for (const n of ["Mox Amber", "Chrome Mox", "Faeburrow Elder", "Meteor Crater"]) expect(colours(n, id), n).toEqual(["B", "R"]);
+    // Gated on a card in your graveyard (#1188): an `unknown` gate is unmet, so the audit drops it.
+    expect(colours("Corrupted Grafstone", id), "gated").toEqual([]);
     expect(colours("Tazri, Stalwart Survivor", id), "restricted").toEqual([]);
     expect(colours("Plaza of Heroes", id)).toEqual(["B", "R"]);
   });
