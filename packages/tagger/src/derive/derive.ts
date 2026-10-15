@@ -465,7 +465,10 @@ import { emblemRecipient } from "../emblem.js";
 // turned face up", look-at-top, "who doesn't", "after you roll a die", phase-in, Pulse of Llanowar); bought cards take the new
 // readings where the grammar now reads them (36 cards, each checked against oracle text); staticFixer gains `covers: "basics"`;
 // "As this creature enters, … counters on it" is the card itself (10 bought cards gain `self`).
-export const DERIVE_VERSION = 313;
+// 314: #1210 tasks 5-6: a stored record whose event has no printed cue in its own segment keeps its stored trigger (`misplaced` guard: Astrid Peth, Sidisi, Huntmaster of the Fells and others); a
+// back-reference after "look at the top ... of your library" is the looked-at card (fromZone library; 32 cards read complete again, 15 grammar-only), "if it's a X card" is its object, Discover the Impossible
+// puts from exile, and a spell returning itself leaves the stack (13 spells).
+export const DERIVE_VERSION = 314;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
