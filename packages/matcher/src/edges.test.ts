@@ -6504,3 +6504,118 @@ describe("attack tags are one event (CR 508.1a)", () => {
     expect([...cardCaresTags(untyped.tags)]).toContain("attacks:creature");
   });
 });
+
+/** ISSUE #1224. Displacer Kitten flickers "up to one target nonland permanent", so its `enters` emit
+ *  carries every nonland permanent type. It is a creature, so the WHOLE union "can be" its subject
+ *  and the noun was dropped: a Constellation payoff read "When Displacer Kitten enters" for an
+ *  ENCHANTMENT entering. The question is asked of the member the trigger matched. */
+describe("a multi-type emit names the member the trigger heard (#1224)", () => {
+  const kitten = () => base("Displacer Kitten", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: "noncreature", control: "you", token: null } },
+    effect: { kind: "flicker" },
+    // The shape Displacer Kitten derives to: every nonland permanent type, a target, from exile.
+    emits: [{ verb: "enters", subject: { type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], notType: ["land"], token: null, control: "you", scope: "target", fromZone: "exile" } }],
+  }]);
+  const watcher = (name: string, type: string) => base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type, control: "you", token: null } },
+    effect: { kind: "drain" },
+  }]);
+
+  test("an enchantment trigger hears an enchantment entering, not the creature producer", () => {
+    const r = pairReasons(kitten(), watcher("Grim Guardian", "enchantment"), H).find((x) => x.tag === "enters:enchantment")!;
+    expect(r.text).toContain("When an enchantment enters thanks to Displacer Kitten");
+  });
+
+  test("a creature trigger keeps the producer-as-subject wording, since it can be that creature", () => {
+    const r = pairReasons(kitten(), watcher("Impact Tremors", "creature"), H).find((x) => x.tag === "enters:creature")!;
+    expect(r.text).toContain("When Displacer Kitten enters");
+  });
+
+  test("a trigger that hears several members keeps the wording when the producer can be any of them", () => {
+    // Mizzix's Mastery is a sorcery casting [instant, sorcery]; a noncreature-cast trigger hears both.
+    const mastery = base("Mizzix's Mastery", [{
+      kind: "triggered",
+      effect: { kind: "copy-spell" },
+      emits: [{ verb: "cast", subject: { type: ["instant", "sorcery"], control: "you", token: null } }],
+    }]);
+    (mastery.tags.characteristics as { types: string[] }).types = ["sorcery"];
+    const castWatcher = base("Young Pyromancer", [{
+      kind: "triggered",
+      trigger: { verbs: ["cast"], subject: { type: "noncreature", control: "you", token: null } },
+      effect: { kind: "drain" },
+    }]);
+    const r = pairReasons(mastery, castWatcher, H).map((x) => x.text);
+    expect(r.length).toBeGreaterThan(0);
+    for (const t of r) expect(t).toContain("When Mizzix's Mastery is cast");
+    expect(r.some((t) => t.includes("thanks to"))).toBe(false);
+  });
+
+  // "Whenever you cast an instant, sorcery, or Wizard spell" (Windrider Wizard) is an `anyOf`, so the
+  // trigger's own `type` is empty and the member path was skipped.
+  describe("a trigger spelled as anyOf branches", () => {
+    const wizardWatcher = base("Windrider Wizard", [{
+      kind: "triggered",
+      trigger: { verbs: ["cast"], subject: { anyOf: [{ type: "instant" }, { type: "sorcery" }, { type: "spell", subtype: "wizard" }], control: "you", token: null } },
+      effect: { kind: "drain" },
+    }]);
+    const caster = (name: string, type: string, subtypes: string[] = []) => {
+      const c = base(name, [{
+        kind: "triggered",
+        effect: { kind: "copy-spell" },
+        // The shape Sarevok's Tome derives to: any nonland card type, cast from exile.
+        emits: [{ verb: "cast", subject: { type: ["creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "battle"], notType: ["land"], control: "you", token: null, fromZone: "exile" } }],
+      }], subtypes);
+      (c.tags.characteristics as { types: string[] }).types = [type];
+      return c;
+    };
+
+    test("an artifact producer cannot be the spell cast, so the sentence names it", () => {
+      const r = pairReasons(caster("Sarevok's Tome", "artifact"), wizardWatcher, H).filter((x) => x.tag.startsWith("cast:"));
+      expect(r.length).toBeGreaterThan(0);
+      for (const x of r) expect(x.text).not.toContain("When Sarevok's Tome is cast");
+      expect(r.some((x) => x.text.includes("is cast thanks to Sarevok's Tome"))).toBe(true);
+    });
+
+    // The implied self-cast row ("When X is cast") also reads like this, so the assertion is on the
+    // rows the LIST EMIT made: those are the ones that say "thanks to" when the class is named.
+    const castRows = (producer: ReturnType<typeof caster>) =>
+      pairReasons(producer, wizardWatcher, H).filter((x) => x.tag.startsWith("cast:")).map((x) => x.text);
+
+    // CEILING: a branch that demands a SUBTYPE ("Wizard spell") cannot be hit by a bare type member, so
+    // a Wizard creature's list emit is read as the class, never as the producer. Conservative: the
+    // implied self-cast row still says "When Wizard Caster is cast".
+    test("a Wizard creature producer: the self-cast row names it, the list emit names the class", () => {
+      const r = castRows(caster("Wizard Caster", "creature", ["wizard"]));
+      expect(r).toContain("When Wizard Caster is cast, Windrider Wizard drains each opponent");
+      expect(r.filter((t) => t.includes("thanks to Wizard Caster")).length).toBe(1);
+    });
+
+    test("a sorcery producer can be the spell cast and keeps the wording", () => {
+      const r = castRows(caster("Mizzix's Mastery", "sorcery"));
+      expect(r).toContain("When Mizzix's Mastery is cast, Windrider Wizard drains each opponent");
+      expect(r.filter((t) => t.includes("thanks to Mizzix's Mastery"))).toEqual([]);
+    });
+
+    test("an outer type survives branches that carry none (Arnyn: creatures with power or toughness 1 or less)", () => {
+      const arnyn = base("Arnyn", [{
+        kind: "triggered",
+        trigger: { verbs: ["dies"], subject: { type: "creature", control: "you", token: null,
+          anyOf: [{ stats: [{ metric: "power", op: "lte", value: 1 }] }, { stats: [{ metric: "toughness", op: "lte", value: 1 }] }] } },
+        effect: { kind: "drain" },
+      }]);
+      const citadel = artifact("Bolas's Citadel", [{
+        kind: "triggered",
+        effect: { kind: "sacrifice" },
+        emits: [{ verb: "dies", subject: { type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], notType: ["land"], control: "you", token: null } }],
+      }]);
+      const r = pairReasons(citadel, arnyn, H).filter((x) => x.tag.startsWith("dies:")).map((x) => x.text);
+      expect(r.length).toBeGreaterThan(0);
+      for (const t of r) {
+        expect(t).not.toContain("When Bolas's Citadel dies");
+        expect(t).toContain("thanks to Bolas's Citadel");
+      }
+    });
+  });
+});
