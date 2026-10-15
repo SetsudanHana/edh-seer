@@ -127,6 +127,7 @@ test("C3: a conditional land is tapped early and untapped later", () => {
 //
 // What a unit test CAN anchor without the corpus is the DOSE: more accelerants must be worth more,
 // and none must be worth nothing.
+// A full simulation over many seeds: 1.1 s locally, 2.5-4.4 s on a CI runner on main, against the 5 s default (timed out on #1213).
 test("accelerants are monotone in count, and three are worth less than thirteen", () => {
   const bare = [...basics(37), ...spells(62, 3)];
   const rocks = (n: number): DeckCard[] =>
@@ -141,7 +142,7 @@ test("accelerants are monotone in count, and three are worth less than thirteen"
   expect(c).toBeGreaterThan(b);
   // …and the dose is not flat: the step from 3 to 13 is bigger than the step from 0 to 3.
   expect(c - b).toBeGreaterThan(b - a);
-});
+}, 30000);
 
 test("classifyAccelerant reads the derived mana lines and refuses a one-shot", () => {
   expect(classifyAccelerant(real("Sol Ring"))?.kind).toBe("rock");
@@ -676,6 +677,7 @@ test("N15: a fetch removes a UNIFORMLY RANDOM land, not the first one in draw or
   expect(none.map((c) => c.id)).toEqual(["X"]);
 });
 
+// A full simulation over many seeds: 1.1 s locally, 2.3-4.4 s on a CI runner on main, against the 5 s default (timed out on #1213).
 test("N15: the simulator's fetches read the corrected policy, and it pays on a fetch-heavy deck", () => {
   const FETCH = "{T}, Pay 1 life, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield, then shuffle.";
   const fetchland = (i: number): DeckCard => ({ ...card(`Fetch ${i}`, "Land", 0, FETCH, []), tags: fetchTags({ kind: "permanent", tapped: false, reach: WUBRG }) });
@@ -699,7 +701,7 @@ test("N15: the simulator's fetches read the corrected policy, and it pays on a f
   ];
   const withRamp = simulate(ramp, { trials: TRIALS, turns: 8, seed: 11 });
   expect(pAtLeastMana(withRamp, 6, 6)).toBeGreaterThan(0.65);
-});
+}, 30000);
 
 // N2. THE TEN REAL FETCHLANDS ARE FETCHLANDS. The gate demanded the literal words "land card" and
 // the cycle prints "an Island or Mountain CARD", so ~110 slots -- concentrated in exactly the
