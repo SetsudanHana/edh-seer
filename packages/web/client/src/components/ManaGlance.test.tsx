@@ -87,7 +87,7 @@ test("a colour tile says which sources it could not read, and no longer claims e
   expect(text()).not.toContain("Not counted");
   const one = text(["Meteor Crater"]);
   expect(one).toContain("Not counted: Meteor Crater (its mana could not be read)");
-  expect(one).toContain("enough sources for every card counted");
+  expect(one).toContain("enough sources for every card it could read");
   expect(text(["Charmed Pendant", "Incubation Druid", "Meteor Crater"])).toContain("Not counted: Charmed Pendant, Incubation Druid and 1 other card (their mana could not be read)");
 });
 

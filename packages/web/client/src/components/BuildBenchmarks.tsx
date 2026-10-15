@@ -68,7 +68,7 @@ const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n =
  *  `@edh-seer/matcher`'s `PHASE_VERBS` — the two engine lists that define what a census key's verb half
  *  can ever be. Not a public API otherwise; read `demandSentence` if you want the rendering. */
 import { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS } from "../lib/demand-sentence.js";
-import { colourRowLabel, lastingRamp } from "../lib/findings.js";
+import { colourRowLabel, lastingRamp, unreadNote } from "../lib/findings.js";
 export { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
 
 /** Stable ids for the four deck-math groups. The sub-tabs route these to three different panels,
@@ -974,6 +974,7 @@ function DeckMathRows({
   // Tightening that needs a per-colour supply ceiling this component does not have; the guard here
   // only removes the case where the sentence is self-evidently false.
   const overcommitted = colors.filter((c) => c.worst).length > 1 && totalRequired > landRoom;
+  const unread = unreadNote(deckMath.unreadSources);
   const coloursBlock = colors.length > 0 ? (
         <div className="flex flex-col gap-1.5">
           <h4 className="eyebrow">Colours</h4>
@@ -1064,6 +1065,8 @@ function DeckMathRows({
             *  base is broken" and then discarded the whole block for contradicting the row above.
             *  It does not contradict it: a land count and a pip deadline are different questions,
             *  and the honest fix for a demand no 100-card deck can meet is usually the spell. */}
+          {/* SOURCES THE COUNTS ABOVE COULD NOT READ (#1186): said once under the rows, not per row. */}
+          {unread && <p className="text-xs text-(--muted)">{unread}, so the counts above may be short.</p>}
         </div>
   ) : null;
 

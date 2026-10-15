@@ -59,7 +59,7 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
         sub={<><ColourVerdict c={short} worst={short.worst} />{unread && <> {unread}.</>}</>} />
     ) : (
       <Tile key="colours" label="Colours" big={<span className="inline-flex gap-0.5">{colours.map((c) => <ManaSymbols key={c.color} cost={`{${c.color}}`} />)}</span>}
-        sub={unread ? <>enough sources for every card counted. {unread}.</> : "enough sources for every card"} />
+        sub={unread ? <>enough sources for every card it could read. {unread}.</> : "enough sources for every card"} />
     ));
   }
   if (landCount > 0 && deckSize > 0) {

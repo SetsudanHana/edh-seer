@@ -334,7 +334,7 @@ export function cardsSubject(names: readonly string[], cards: number): string {
 }
 
 /** SOURCES THE COLOUR COUNT COULD NOT READ (#1186): derive could not read their mana line, so the audit counts them as
- *  no colour and lists them (`unreadSources`). Every place that prints a source count says so. Past two names it counts the rest. */
+ *  no colour and lists them (`unreadSources`). The colour tile, the colour finding and the Colours rows say so. Past two names it counts the rest. */
 export function unreadNote(names: readonly string[] | undefined): string | null {
   if (!names?.length) return null;
   return `Not counted: ${cardsSubject(names.slice(0, 2), names.length)} (${names.length === 1 ? "its" : "their"} mana could not be read)`;

@@ -55,6 +55,17 @@ test("a colour row says which end of the fraction the deck is, and prints its tu
   }
 });
 
+/** SOURCES THE COUNT COULD NOT READ (#1186): the "Show the numbers" Colours rows print source counts too, so the
+ *  block says once, under the rows, which cards are not in them. */
+test("the Colours rows carry the unread-sources note once, and only when there are some", () => {
+  const { container, unmount } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(container.textContent).not.toContain("Not counted");
+  unmount();
+  const withUnread = { ...DECK_MATH, unreadSources: ["Charmed Pendant"] } as never;
+  const r = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={withUnread} />);
+  expect(r.container.textContent?.match(/Not counted: Charmed Pendant \(its mana could not be read\)/g)).toHaveLength(1);
+});
+
 // A10's rule: a SPECIFIC primary measures itself, so the family share is the difference between
 // "this deck is broken" and "five Daleks inside a creature deck".
 
