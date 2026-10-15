@@ -284,3 +284,32 @@ test("Crowd-Control Warden: after the 'As this creature enters or is turned face
   const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
   expect(tags.abilities[0]!.emits?.[0]).toMatchObject({ verb: "counter-added", subject: { counter: "+1/+1", self: true } });
 });
+
+test("Astrid Peth: a stored record split off a compound does not take the printed trigger of the clause segment() numbered the same", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const card = { name: "Astrid Peth", typeLine: "Legendary Creature — Human Peasant", keywords: [] as string[],
+    oracleText: "Whenever Astrid Peth enters or attacks, create a Food token.\nBrand-new Sky — Whenever you sacrifice a Clue or Food, Astrid Peth explores." };
+  const act = (verb: string, object: string) => [{ verb, object, fromZone: null, toZone: null, amount: verb === "create" ? "1" : null, optional: false }];
+  const stored = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "Astrid Peth", control: "you" }, actions: act("create", "a Food token") },
+    { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "Astrid Peth", control: "you" }, actions: act("create", "a Food token") },
+    { id: 3, abilityType: "triggered", trigger: { event: "sacrificed", subject: "a Clue or Food", control: "you" }, actions: act("explore", "Astrid Peth") },
+  ];
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, stored as never));
+  // The sacrifice trigger carries the explore, never the Food: no ability pairs it with a create-token emit.
+  const sacrifice = tags.abilities.filter((a) => a.trigger?.verbs?.includes("sacrifice" as never));
+  expect(sacrifice.length).toBeGreaterThan(0);
+  expect(sacrifice.flatMap((a) => a.emits ?? []).map((e) => e.verb)).not.toContain("create-token");
+  expect(tags.abilities.filter((a) => a.trigger?.verbs?.includes("attacks" as never)).flatMap((a) => a.emits ?? []).map((e) => e.verb)).toContain("create-token");
+});
+
+test("a 'look at the top card' whose later 'it' / 'that card' is never resolved blocks, rather than read complete with the claim missing (#1210 review)", () => {
+  expect(readCard("Domri Rade", "Legendary Planeswalker — Domri", "+1: Look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand.").complete).toBe(false);
+  expect(readCard("Puresight Merrow", "Creature — Merfolk Wizard", "{W/U}, {Q}: Look at the top card of your library. You may exile that card.").complete).toBe(false);
+  // A look whose "of them" / "the rest" picks the library up is still skipped, and the rest is milled by you.
+  const sp = readCard("Strategic Planning", "Sorcery", "Look at the top three cards of your library. Put one of them into your hand and the rest into your graveyard.");
+  expect(sp.complete).toBe(true);
+  expect(sp.records[0]!.actions!.map((a) => a.verb)).toEqual(["put", "put"]);
+  expect(sp.records[0]!.actions![0]).toMatchObject({ fromZone: "library" });
+});

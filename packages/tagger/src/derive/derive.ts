@@ -1983,7 +1983,13 @@ export function deriveAbilities(
       subject.control = r.control === "any" && /\byou control\b/i.test(recipient) ? "you" : r.control;
       grantedTo = { control: subject.control, token: null, type: subject.type, ...(subject.subtype ? { subtype: subject.subtype } : {}) };
     };
-    const grammarAll = clause.trigger?.event && text ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
+    // THE PRINTED TRIGGER MUST BE THIS RECORD'S OWN. The stored numbering is the model's and `segment()`'s is the segmenter's; they drift when the
+    // model splits a compound ("enters or attacks") into two records (Astrid Peth: stored 1 enters, 2 attacks, 3 the Brand-new Sky trigger; segment()
+    // has 2 for that sentence). A record whose event has NO printed cue in this text but does in another clause's text was numbered into the wrong
+    // sentence: it keeps its stored trigger, as before an ability word stopped hiding the preamble.
+    const misplaced = clause.trigger?.event !== undefined && !triggerHasCue(clause.trigger.event, text)
+      && Object.values(clauseTexts ?? {}).some((t) => t !== text && triggerHasCue(clause.trigger!.event!, t));
+    const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
       clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
       readings?.[clause.id]?.trigger, curse) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));

@@ -123,3 +123,11 @@ test("an Equipment pays its equip, a Spree card its mode, a commander-free spell
   expect(ingredients(c("Sign in Blood"), "draw").amount).toBe(2);
   expect(ingredients(c("Insatiable Avarice"), "draw").amount).toBe(3);
 });
+
+test("an Attraction is never in a deck: it has no role even when its tags would give it one", () => {
+  const signet = dc("Arcane Signet");
+  expect(rolesOfCard(signet)).toContain("ramp");
+  const attraction = { ...signet, card: { ...signet.card, typeLine: "Artifact — Attraction" },
+    tags: { ...signet.tags!, characteristics: { ...signet.tags!.characteristics, types: ["artifact"], subtypes: ["Attraction"] } } } as DeckCard;
+  expect(rolesOfCard(attraction)).toEqual([]);
+});

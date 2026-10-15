@@ -1581,12 +1581,16 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   // CEILING: "Look at the top seven cards of your library" records no action (nothing leaves the library),
   // but the library is where the next sentence's "from among them" and "the rest" are.
   let lookedAtLibrary = "";
+  // ...but the look is skipped ONLY when a later object picks the library up. A later "it" / "that card" ("If it's a creature card, you may
+  // reveal it and put it into your hand", Domri Rade) is never resolved to the looked-at card, so the clause would read complete with the claim
+  // silently missing: an unconsumed look stays an unread phrase and the card blocks.
+  let pendingLook: string | null = null;
   for (const raw of unquoted.split(/(?<=\.)\s+/)) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
     if (/^you may reveal this card from your opening hand$/i.test(s)) { gameStart = true; continue; }
     const look = /^look at (the top (?:card|(?:\w+|\d+) cards) of your library)$/i.exec(s);
-    if (look) { lookedAtLibrary = look[1]!.toLowerCase(); continue; }
+    if (look) { if (pendingLook !== null) unread?.push(pendingLook); pendingLook = s; lookedAtLibrary = look[1]!.toLowerCase(); continue; }
     // "You may pay {2}. If you do, draw a card": the draw is as optional as the payment (the store's
     // reading, and the rules': nothing happens unless you choose to pay).
     const ifYouDoAfterMay = mayBefore && /^if you do, /i.test(s);
@@ -1677,10 +1681,11 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       }
     }
     if (lookedAtLibrary && /\bfrom among (?:them|those cards)\b|\bthe rest\b|\b(?:of|from) (?:them|those cards)\b/i.test(s)) {
-      for (let i = at; i < out.length; i++) if ((out[i]!.verb === "put" || out[i]!.verb === "exile") && !out[i]!.fromZone) out[i] = { ...out[i]!, fromZone: "library", lookedAt: lookedAtLibrary };
+      for (let i = at; i < out.length; i++) if ((out[i]!.verb === "put" || out[i]!.verb === "exile") && !out[i]!.fromZone) { out[i] = { ...out[i]!, fromZone: "library", lookedAt: lookedAtLibrary }; pendingLook = null; }
     }
     if (ifYouDoAfterMay) for (let i = at; i < out.length; i++) out[i] = { ...out[i]!, optional: true };
   }
+  if (pendingLook !== null) unread?.push(pendingLook);
   return out;
 }
 
