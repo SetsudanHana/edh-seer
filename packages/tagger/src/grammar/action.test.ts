@@ -600,3 +600,20 @@ test("phase-in is the action side of the phases-in trigger (CR 702.26c); 'Simult
   expect(read("Target creature phases in.")).toMatchObject([{ verb: "phase-in" }]);
   expect(read("Simultaneously, all phased-out creatures phase in and all creatures with phasing phase out.").map((r) => r.verb)).toEqual(["phase-in", "phase-out"]);
 });
+
+// #1214: in one sentence a "may" governs every phrase coordinated with it (CR 608.2c) until a phrase names
+// its own actor or the sentence ends.
+const opt = (effect: string) => parseActions(effect, "spell").map((r) => `${r.verb}${r.optional ? "*" : ""}`);
+
+test("'you may A and B' makes B optional too (Domri Rade, Elvish Harbinger, a tutor)", () => {
+  expect(opt("Look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand.")).toEqual(["reveal*", "put*"]);
+  expect(opt("You may search your library for an Elf card, reveal it, then shuffle and put that card on top.")).toEqual(["search*", "reveal*", "shuffle*", "put*"]);
+  expect(opt("You may search your library for an Elf card, reveal it, put it into your hand, then shuffle.")).toEqual(["search*", "reveal*", "put*", "shuffle*"]);
+});
+
+test("'you may A and <new actor> B' and a following sentence stay required", () => {
+  expect(opt("You may sacrifice a creature and you gain 2 life.")).toEqual(["sacrifice*", "gain-life"]);
+  expect(opt("You may sacrifice a creature and each opponent loses 1 life.")).toEqual(["sacrifice*", "lose-life"]);
+  expect(opt("You may sacrifice a creature, then that player shuffles.")).toEqual(["sacrifice*", "shuffle"]);
+  expect(opt("You may sacrifice a creature. Then draw a card.")).toEqual(["sacrifice*", "draw"]);
+});

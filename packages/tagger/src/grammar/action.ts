@@ -1653,6 +1653,9 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     // as yours alone -- and the card is not complete without them (task 7 reads it as unread).
     if (/^you and /i.test(s)) { unread?.push(s); continue; }
     let carried: ActionReading["actor"];
+    // "You may reveal it and put it into your hand": the may governs every phrase joined to it in this
+    // sentence, until one names its own actor.
+    let mayScope = false;
     lastSubject = undefined;
     const at = out.length;
     for (const p of phrases(s)) {
@@ -1664,7 +1667,11 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       const mainCondition = payment && !pay ? [condition, `unless ${payment}`].filter(Boolean).join(", ") : condition;
       // "discard a card or pay {2}", "sacrifice a creature or discard a card": either is an action.
       for (const alt of main!.split(/ or (?=(?:pay|sacrifice|discard|draw|mill|exile|lose|reveal|search)\b)/)) {
-        const r = readPhrase(alt, mainCondition, carried);
+        let r = readPhrase(alt, mainCondition, carried);
+        const startsMay = /^(?:(?:then|also) )?(?:you )?may /i.test(alt.trim());
+        if (startsMay) mayScope = true;
+        else if (actorOf(alt)) mayScope = false;
+        else if (mayScope && r) r = r.map((a) => ({ ...a, optional: true as const }));
         if (r) out.push(...r);
         else unread?.push(alt.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!).trim());
         // The actor carries even past a phrase this grammar does not read yet: "target opponent
