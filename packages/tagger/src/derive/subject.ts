@@ -455,7 +455,10 @@ const NOT_SNOW = /\bnon-?snow\b/i;
  *
  *  The regex finds the word and up to THREE words after it (one `\s{1,4}` between each, word class and
  *  whitespace class disjoint, so nothing backtracks polynomially); `tappedStatus` then asks whether any
- *  of them is a type noun or a SUBTYPE from the closed list, in code rather than in one big alternation. */
+ *  of them is a type noun or a SUBTYPE from the closed list, in code rather than in one big alternation.
+ *  CEILING: the window cannot tell the adjective from the verb, so a verb "tapped" with a noun within
+ *  three words still sets it: Desolation's "each player who tapped a land for mana" reads `tapped: true`
+ *  (as the old two-word pattern did), and "a Forest enters tapped and an Elf ..." would too. */
 const TAPPED_WORD = /\b(un)?tapped\b((?:\s{1,4}[\w'-]{1,20}){1,3})/gi;
 const TAPPED_NOUNS = new Set(["creature", "land", "artifact", "enchantment", "planeswalker", "permanent", "battle", "token", "nonland", "noncreature", "nonartifact"]);
 
