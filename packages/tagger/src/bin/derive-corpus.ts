@@ -12,18 +12,13 @@ import type { DeriveItem, DeriveResult } from "../derive-worker.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
-import { MANA_TAG_KEYS, unpricedLoyaltyLines } from "../derive/mana-lines.js";
+import { unpricedLoyaltyLines } from "../derive/mana-lines.js";
 import {
-  CLAUSES_COLLECTION, DERIVED_COLLECTION, ensureClauseIndexes, needsDerive, segmentHash,
+  CLAUSES_COLLECTION, DERIVED_COLLECTION, derivedRow, ensureClauseIndexes, needsDerive, segmentHash,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "../clause-store.js";
 
 const FORCE = process.argv.includes("--force");
-/** `$set` never removes a key, so a card whose derive no longer yields a mana key (`manaLines`, `landFetch`, ...) would keep the
- *  old one from the last run. Those keys are absent when empty (#1169); this names the ones to `$unset`. */
-const absentManaKeys = (tags: object): Record<string, ""> =>
-  Object.fromEntries(MANA_TAG_KEYS.filter((k) => !(k in tags)).map((k) => [k, ""]));
-const unsetAbsent = (tags: object) => (Object.keys(absentManaKeys(tags)).length > 0 ? { $unset: absentManaKeys(tags) } : {});
 /** Token characteristics live outside `cards` -- see `packages/data/src/bin/ingest-tokens-core.ts`. */
 const TOKENS_COLLECTION = "tokens";
 
@@ -62,7 +57,8 @@ for await (const card of store.cards.find({ "legalities.commander": "legal" } as
   if (!FORCE && existing?.deriveVersion === DERIVE_VERSION && existing.segmentHash === hash && existing.clauseSource === "grammar") continue;
   const tags = deriveCardTags(deriveInputOf(source as never, c._id, source.name, g.records, undefined, g.readings));
   // normalizeVersion 0: no answer was bought, so a later bought one always reads as new.
-  await derivedCol.updateOne({ oracleId: c._id }, { $set: { ...tags, deriveVersion: DERIVE_VERSION, normalizeVersion: 0, segmentHash: hash, clauseSource: "grammar" }, ...unsetAbsent(tags) }, { upsert: true });
+  // replaceOne, not $set: the stored row is exactly the fresh one, so a key derive stopped producing goes (#1181).
+  await derivedCol.replaceOne({ oracleId: c._id }, derivedRow(tags, { deriveVersion: DERIVE_VERSION, normalizeVersion: 0, segmentHash: hash, clauseSource: "grammar" }), { upsert: true });
   grammarOnlyWritten++;
   unpricedLoyaltyLines(tags.manaLines).forEach(() => unpricedLoyalty.push(source.name));
 }
@@ -114,20 +110,10 @@ try {
       unpricedLoyaltyLines(tags.manaLines).forEach(() => unpricedLoyalty.push(doc.name));
       if (token) tokenWritten++;
       return {
-        updateOne: {
+        replaceOne: {
           filter: { oracleId: doc.oracleId },
-          update: {
-            $set: {
-              ...tags,
-              deriveVersion: DERIVE_VERSION,
-              normalizeVersion: doc.normalizeVersion,
-              segmentHash: doc.segmentHash,
-              ...(token ? { isToken: true } : {}),
-              // Which answer the abilities came from: the printed text alone, or the stored model answer.
-              clauseSource: fromGrammar ? "grammar" : "model",
-            },
-            ...unsetAbsent(tags),
-          },
+          // Which answer the abilities came from: the printed text alone, or the stored model answer.
+          replacement: derivedRow(tags, { deriveVersion: DERIVE_VERSION, normalizeVersion: doc.normalizeVersion, segmentHash: doc.segmentHash, clauseSource: fromGrammar ? "grammar" : "model", isToken: token }),
           upsert: true,
         },
       };

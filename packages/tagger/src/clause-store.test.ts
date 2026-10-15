@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { triggerHasCue } from "./clause-store.js";
+import { triggerHasCue, derivedRow } from "./clause-store.js";
 import type { Clause } from "./segment.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import {
@@ -371,4 +371,18 @@ test("dropsUnlessPayment: a stated payment the doc does not carry is worth re-as
   expect(dropsUnlessPayment(kept, text)).toBe(false);
   expect(dropsUnlessPayment(bare, "Draw two cards.")).toBe(false);
   expect(dropsUnlessPayment(null, text)).toBe(false);
+});
+
+const rowMeta = { deriveVersion: 9, normalizeVersion: 3, segmentHash: "h", clauseSource: "model" as const };
+const rowTags = { oracleId: "o1", abilities: [] } as unknown as DerivedTagsDoc;
+
+test("derivedRow is the fresh tags plus bookkeeping only, so a key derive stopped producing is absent (#1181)", () => {
+  const row = derivedRow(rowTags, rowMeta);
+  expect(row).toEqual({ oracleId: "o1", abilities: [], ...rowMeta });
+  expect("unknownTriggers" in row).toBe(false);
+  expect("isToken" in row).toBe(false);
+});
+
+test("derivedRow marks a token row", () => {
+  expect(derivedRow(rowTags, { ...rowMeta, isToken: true }).isToken).toBe(true);
 });

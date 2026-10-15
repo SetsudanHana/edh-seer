@@ -45,6 +45,17 @@ export interface DerivedTagsDoc extends CardTags {
   clauseSource?: "grammar" | "model";
 }
 
+/** The whole stored row for one derived card: the fresh tags plus its bookkeeping, nothing else. The bin
+ *  writes it with `replaceOne`, because `$set` never removes a key and an optional key derive writes only
+ *  when non-empty (`unknownTriggers`, `manaLines`, ...) would otherwise keep its old value (#1181). */
+export function derivedRow(
+  tags: CardTags,
+  meta: { deriveVersion: number; normalizeVersion: number; segmentHash: string; clauseSource: "grammar" | "model"; isToken?: boolean },
+): DerivedTagsDoc & { isToken?: true } {
+  const { isToken, ...rest } = meta;
+  return { ...tags, ...rest, ...(isToken ? { isToken: true as const } : {}) };
+}
+
 /** A separator that cannot occur in oracle text, a type line or a keyword. Written as an escape
  *  rather than a literal control byte: a raw NUL is invisible in an editor, makes `grep` treat the
  *  file as binary, and turns into a plain space on one careless copy-paste -- at which point
