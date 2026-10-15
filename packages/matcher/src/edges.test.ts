@@ -6504,3 +6504,50 @@ describe("attack tags are one event (CR 508.1a)", () => {
     expect([...cardCaresTags(untyped.tags)]).toContain("attacks:creature");
   });
 });
+
+/** ISSUE #1224. Displacer Kitten flickers "up to one target nonland permanent", so its `enters` emit
+ *  carries every nonland permanent type. It is a creature, so the WHOLE union "can be" its subject
+ *  and the noun was dropped: a Constellation payoff read "When Displacer Kitten enters" for an
+ *  ENCHANTMENT entering. The question is asked of the member the trigger matched. */
+describe("a multi-type emit names the member the trigger heard (#1224)", () => {
+  const kitten = () => base("Displacer Kitten", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: "noncreature", control: "you", token: null } },
+    effect: { kind: "flicker" },
+    // The shape Displacer Kitten derives to: every nonland permanent type, a target, from exile.
+    emits: [{ verb: "enters", subject: { type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], notType: ["land"], token: null, control: "you", scope: "target", fromZone: "exile" } }],
+  }]);
+  const watcher = (name: string, type: string) => base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type, control: "you", token: null } },
+    effect: { kind: "drain" },
+  }]);
+
+  test("an enchantment trigger hears an enchantment entering, not the creature producer", () => {
+    const r = pairReasons(kitten(), watcher("Grim Guardian", "enchantment"), H).find((x) => x.tag === "enters:enchantment")!;
+    expect(r.text).toContain("When an enchantment enters thanks to Displacer Kitten");
+  });
+
+  test("a creature trigger keeps the producer-as-subject wording, since it can be that creature", () => {
+    const r = pairReasons(kitten(), watcher("Impact Tremors", "creature"), H).find((x) => x.tag === "enters:creature")!;
+    expect(r.text).toContain("When Displacer Kitten enters");
+  });
+
+  test("a trigger that hears several members keeps the wording when the producer can be any of them", () => {
+    // Mizzix's Mastery is a sorcery casting [instant, sorcery]; a noncreature-cast trigger hears both.
+    const mastery = base("Mizzix's Mastery", [{
+      kind: "triggered",
+      effect: { kind: "copy-spell" },
+      emits: [{ verb: "cast", subject: { type: ["instant", "sorcery"], control: "you", token: null } }],
+    }]);
+    (mastery.tags.characteristics as { types: string[] }).types = ["sorcery"];
+    const castWatcher = base("Young Pyromancer", [{
+      kind: "triggered",
+      trigger: { verbs: ["cast"], subject: { type: "noncreature", control: "you", token: null } },
+      effect: { kind: "drain" },
+    }]);
+    const r = pairReasons(mastery, castWatcher, H).map((x) => x.text);
+    expect(r.length).toBeGreaterThan(0);
+    for (const t of r) expect(t).toContain("When Mizzix's Mastery is cast");
+  });
+});

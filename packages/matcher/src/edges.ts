@@ -1667,6 +1667,22 @@ function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy)
   return subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h);
 }
 
+/** `producerCanBeSubject`, asked only of the members of a TYPE LIST the trigger heard (#1224). A list
+ *  emit is one event per member, and the trigger matched some of them: Displacer Kitten's
+ *  [creature, artifact, enchantment, ...] against a Constellation payoff is the enchantment, which the
+ *  Kitten can never be, though it is a creature. The producer can be the subject when it can be ANY
+ *  member the trigger accepts -- Mizzix's Mastery's [instant, sorcery] against a noncreature-cast
+ *  trigger hears both, and the Mastery is a sorcery. A trigger that names no type, or a lone-type
+ *  emit, hears the whole subject: the old question, unchanged. */
+function producerCanBeHeard(p: DeckCard, emit: SubjectFilter, heard: SubjectFilter, h: Hierarchy): boolean {
+  const members = list(emit.type);
+  if (members.length < 2 || list(heard.type).length === 0) return producerCanBeSubject(p, nounSubject(emit, heard), h);
+  const { type, notType } = heard;
+  const hit = members.filter((m) => subjectMatches({ control: emit.control, token: emit.token, type: m }, { control: emit.control, token: emit.token, type, notType }, h));
+  if (hit.length === 0) return producerCanBeSubject(p, nounSubject(emit, heard), h);
+  return hit.some((m) => producerCanBeSubject(p, { ...emit, type: m }, h));
+}
+
 /** WHO IS ASKING. The default is the deck report, and every field here has to leave it unchanged.
  *
  *  `tokensMediate` is the token suppression below: a maker's own "a Treasure enters" event and the
@@ -2260,7 +2276,12 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
               ?? (t.verb === "counter-added" && e.subject.self !== true ? emitSubjectNoun(e.subject) ?? "a permanent"
               // A COMMANDER IS NEVER WHAT A `notCommander` TRIGGER HEARD (#559): Nalia is a Rogue, but
               // the Rogue Folk Hero's commander ability draws for is one Nalia lets you cast.
-              : producerCanBeSubject(p, e.subject, h) && !(t.subject.notCommander === true && p.tags?.characteristics.commander === true)
+              //
+              // ASKED OF THE MEMBERS THE TRIGGER HEARD, NOT THE WHOLE LIST (#1224): Displacer Kitten
+              // flickers "a nonland permanent", a creature among five types, so the union always
+              // "could be" the Kitten and a Constellation payoff read "When Displacer Kitten enters"
+              // for an ENCHANTMENT entering. See `producerCanBeHeard`.
+              : producerCanBeHeard(p, e.subject, t.subject, h) && !(t.subject.notCommander === true && p.tags?.characteristics.commander === true)
                 ? undefined : emitSubjectNoun(nounSubject(e.subject, t.subject))),
           }),
           effectKind: a.effect.kind,
