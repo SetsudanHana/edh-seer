@@ -7,7 +7,7 @@ import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 import { FREE_TAP, fetchTags, manaTags, mkLine, ritualLine, tapFor, triggerLine, withLines, withTap } from "./mana-test-support.js";
 import { cardLines, colourSourceColours, isColourSource, isFetchSource } from "./mana-lines.js";
 import { gateVerdict } from "./gate.js";
-import { classifyAccelerant, colourMaskOf, tapBonusOf, fetchesLand, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
+import { classifyAccelerant, playableLines, colourMaskOf, tapBonusOf, fetchesLand, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -185,6 +185,15 @@ test("the board-count gates stay priced turn by turn whatever the deck: Sceptre 
   const forests = [sceptre, ...basics(40, "Forest").map((d) => ({ ...d, card: { ...d.card, name: "Forest" } })), ...spells(59, 3)];
   expect(manaOutput(sceptre, forests)).toEqual({ amount: 3, needsLands: 3 });
   expect(manaOutput(sceptre, forests)).toEqual(manaOutput(sceptre));
+});
+
+// #1184: A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION. Pyramid of the Pantheon's only playable line is "{2}, {T}: Add one mana of any color. Put a brick counter" (net -1);
+// its three-mana line waits on counters on the card itself, which no decklist settles.
+test("#1184: Pyramid of the Pantheon is no accelerant: its only playable line nets -1", () => {
+  const pyramid = real("Pyramid of the Pantheon");
+  expect(playableLines(pyramid).map((l) => l.net)).toEqual([-1]);
+  expect(classifyAccelerant(pyramid)).toBeNull();
+  expect(manaAvailability([pyramid, ...basics(37), ...spells(61, 3)], { trials: 50 }).accelerants).toBe(0);
 });
 
 // WHAT THE DERIVED READING DROPS, AND WHY (#1169 task 2b-1). Each card below was an accelerant when the goldfish read printed text and `producedMana`.

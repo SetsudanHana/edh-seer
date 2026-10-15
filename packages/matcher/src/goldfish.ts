@@ -211,7 +211,12 @@ export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[], per
   // FREE on turn one. The real sequence is a cost plus a three-turn wait: the same shape `castability.ts` REFUSES rather than prices (roadmap N9).
   if (tags.isOneShot || tags.suspendOnly || !isManaSource(dc)) return null;
   const lines = playableLines(dc, deck, perGame);
-  if (lines.length === 0) return null;
+  // A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION (#1184): Pyramid of the Pantheon's "{2}, {T}: Add one mana of any color" nets -1, and its three-mana line waits on counters
+  // on the card itself, which no decklist settles. The bar is a line that nets AT LEAST ONE, as `rampGrade`'s coloured bit does (owner 2026-10-13); a net-0 filter (Prismatic Lens's
+  // coloured line, Mana Prism) is a colour fixer the audit still counts, but it adds no mana, and this model asks of an accelerant that it add some.
+  // A SCALING LINE'S NET IS A CEILING, NOT A MEASURE (derive nets "{G}, {T}: Add X mana" and "{2}, {T}: Add {B} for each Swamp" at 1 less the cost): Selvala and Magus of the Coffers
+  // make more than they cost in the decks that scale them, so a scaling line is not judged by its net and stays what it was (the census, 2026-10-16: the only two it keeps).
+  if (!lines.some((l) => l.net >= 1 || l.amount.scales !== null)) return null;
   // A LAND AURA WAITS A TURN, because the land it enchants is what pays for it: you tap the Forest for {G}, cast Wild Growth on it, and the Forest is
   // tapped. That is a DORK's timing (roadmap O2). A PHASE TRIGGER PAYS FROM THE NEXT TURN, whatever the type line says: you cast it DURING your first main
   // phase, so that turn's trigger has already happened. LANDFALL MANA MISSES THE TURN IT LANDS: rule 2 plays the land BEFORE rule 3 casts anything.
