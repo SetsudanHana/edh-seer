@@ -941,7 +941,9 @@ function colourGateFields(dc: DeckCard, deck: readonly DeckCard[]): { colourGate
 const FETCHED_LAND: Perm = { name: "", types: new Set(["land"]), subtypes: new Set(), land: true, manaValue: 0, basic: false, power: null };
 
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
-interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean; colors: number; baseColors?: number; colourGate?: BoardGate; fixer?: FixerMask }
+// `basic`: the FRONT face's supertype, read once when the land enters -- the colour credit asks it every turn of every trial (#1213: per-turn
+// it cost the two whole-simulation tests ~20%).
+interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; basic: boolean; output: ManaOutput; everyLandType: boolean; colors: number; baseColors?: number; colourGate?: BoardGate; fixer?: FixerMask }
 
 function boardFor(lands: OnBoardLand[], pod: number): { lands: number; basics: number; types: Set<string>; opponents: number } {
   const types = new Set<string>();
@@ -1294,6 +1296,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
               && !(played.fetchUntapsAt !== undefined && board.lands >= played.fetchUntapsAt)
             : opts.landsUntapped !== true && entersTapped(played.land!, board),
           typeLine: played.typeLine,
+          basic: /\bbasic\b/i.test(played.typeLine.split(" // ")[0]!.split(/\s[—–-]\s/)[0]!),
           output: played.output,
           everyLandType: played.everyLandType,
           colors: played.colors,
@@ -1332,7 +1335,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         for (const l of lands) {
           if (l.enteredTapped && l.enteredTurn === turn) continue;
           const m = produced(l.output, lands, perms, turn);
-          if (m > 0) push(m, (l.colourGate && l.baseColors !== undefined && !holds(l.colourGate, perms) ? l.baseColors : l.colors) | (/\bbasic\b/i.test(l.typeLine.split(" // ")[0]!.split(/\s[—–-]\s/)[0]!) ? fixBasics : fixLands), false, l);
+          if (m > 0) push(m, (l.colourGate && l.baseColors !== undefined && !holds(l.colourGate, perms) ? l.baseColors : l.colors) | (l.basic ? fixBasics : fixLands), false, l);
         }
         const now = (r: Mana): { mana: number; colors: number } => ({
           mana: r.out ? produced(r.out, lands, perms, turn) : r.mana,
@@ -1430,7 +1433,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           // CEILING: a fetch that does not say "basic" ("an Island or Mountain card", "a land card") may find a basic or not; it stays "".
           // A FETCHED LAND'S IDENTITY IS UNKNOWN, but its COLOUR is not: the spell names what it may
           // find, and `fetchMaskOf` reads that against the lands this deck actually holds.
-          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true && opts.landsUntapped !== true, typeLine: cast.fetchesBasic === true ? "Basic Land" : "", output: { amount: 1 }, everyLandType: false, colors: cast.colors });
+          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true && opts.landsUntapped !== true, typeLine: cast.fetchesBasic === true ? "Basic Land" : "", basic: cast.fetchesBasic === true, output: { amount: 1 }, everyLandType: false, colors: cast.colors });
           perms.push(FETCHED_LAND);
           takeRandomLand(library, turn > turns ? spill : random);
           if (a.fetchTapped !== true || opts.landsUntapped === true) pool += 1;
