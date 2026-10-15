@@ -434,6 +434,22 @@ const BASIC = /\bbasic\b/i;
 const NOT_BASIC = /\b(?:isn'?t|is not|isn’t|non-?)\s*basic\b/i;
 const BASIC_LAND_TYPE = /\bbasic\s+land\s+types?\b/i;
 
+/** SNOW supertype and its negation (the grammar's `snow: true | false`). "Snow-Covered Forest" is a card
+ *  NAME, not the supertype, so "snow" followed by a hyphen is refused. */
+const SNOW = /\bsnow\b(?!-)/i;
+const NOT_SNOW = /\bnon-?snow\b/i;
+
+/** CR 110.5 status, only as an ADJECTIVE before the subject's noun: "a tapped creature", "untapped lands
+ *  you control", "target tapped artifact". "enters tapped", "onto the battlefield tapped", "becomes tapped" and
+ *  "untap target creature" have no noun right behind the word (or are the verb "untap"), so they never match.
+ *  Up to two more adjectives may sit between ("a tapped nonland permanent"). Bounded, and the word class and
+ *  the whitespace class are disjoint, so nothing here can backtrack polynomially. */
+const TAPPED_ADJ = /\b(un)?tapped\s{1,4}(?:[\w-]{1,20}\s{1,4}){0,2}(?:creature|land|artifact|enchantment|planeswalker|permanent|battle|token|nonland|noncreature|nonartifact)s?\b/i;
+
+/** Colour COUNT (the grammar's `colorCount`), not a colour: "multicolored creature", "monocolored permanent". */
+const MULTICOLORED = /\bmulti-?colou?red\b/i;
+const MONOCOLORED = /\bmono-?colou?red\b/i;
+
 /** Counter kinds, a CLOSED dictionary — the printed keyword counters plus the two power/toughness
  *  ones. Cards either PRODUCE a counter or CARE about one, exactly as they do with tokens, and the
  *  matcher has read `SubjectFilter.counter` since the flat tagger while the derived path never wrote
@@ -665,8 +681,16 @@ export function parseSubject(text: string): SubjectFilter {
   // leak unreachable rather than fixing it, which is the smaller change AND the right answer: a
   // corrected noun would still claim every instant in the deck. See `SubjectFilter.restricted`.
   if (TARGETS_ONLY.test(t)) out.restricted = true;
-  if (LEGENDARY.test(t) && !NOT_LEGENDARY.test(t)) out.legendary = true;
-  if (BASIC.test(t) && !NOT_BASIC.test(t) && !BASIC_LAND_TYPE.test(t)) out.basic = true;
+  if (NOT_LEGENDARY.test(t)) out.legendary = false;
+  else if (LEGENDARY.test(t)) out.legendary = true;
+  if (NOT_BASIC.test(t)) { if (!BASIC_LAND_TYPE.test(t)) out.basic = false; }
+  else if (BASIC.test(t) && !BASIC_LAND_TYPE.test(t)) out.basic = true;
+  if (NOT_SNOW.test(t)) out.snow = false;
+  else if (SNOW.test(t)) out.snow = true;
+  const tapped = t.match(TAPPED_ADJ);
+  if (tapped) out.tapped = tapped[1] === undefined;
+  if (MULTICOLORED.test(t)) out.colorCount = "multi";
+  else if (MONOCOLORED.test(t)) out.colorCount = "mono";
   // A keyword counter is a counter, so the counter reading wins where both could fire.
   const keywords = counter ? undefined : parseKeywords(t);
   if (keywords) out.keyword = keywords;
