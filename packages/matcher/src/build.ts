@@ -584,6 +584,10 @@ export function rampResilience(cards: DeckCard[]): RampResilience {
   return total > 0 ? { ...out, landShare: out.land / total } : out;
 }
 
+/** The one scaling amount that is guaranteed every turn: "for each color among permanents you control" counts the card itself, so derive nets its own colours (Faeburrow Elder 2, Bloom Tender 1);
+ *  mirrors `FOR_EACH_COLOUR_AMONG_OWN` in tagger derive/mana-lines.ts. CEILING: the one self-guaranteed shape; Priest of Titania-style type counts and Gaea's Cradle-style counts that can be 0 stay no staple. */
+const SELF_GUARANTEED_SCALE = /^for each colou?r among permanents you control$/i;
+
 /** HOW MUCH A PLAYER WOULD TAKE THIS AS RAMP WITH NO SYNERGY TO ARGUE FOR IT, 0 = not staple-grade
  *  (owner ruling 2026-09-27, #534). A short-on-ramp list drawn only from the partner pool offered
  *  Inalla four cards no Wizards player would take: a plain rock joins nothing, so it never entered.
@@ -609,7 +613,7 @@ export function rampGrade(dc: DeckCard, deck?: readonly DeckCard[]): number {
   const frontOnly = dc.card.layout !== "modal_dfc";
   // READ OFF THE DERIVED MANA LINES (#1169), not the printed text: a STAPLE-GRADE LINE is an activated ability the card
   // taps for (`cost.tap`), paying nothing else (no sacrifice, life, counter, discard, other tap), usable every turn cycle,
-  // that returns more than its mana cost (`net`) and does not scale (a "for each" amount is no staple). A line granted to other permanents is another
+  // that returns more than its mana cost (`net`) and does not scale (a "for each" amount is no staple; the one exception is `SELF_GUARANTEED_SCALE`). A line granted to other permanents is another
   // permanent's (Cryptolith Rite is a `static-grant`), a trigger or a spell is not a tap. A GATED line ("Activate only if you
   // control a Dragon", Mox Jasper) is a rock where the DECK meets its gate (`gate.ts`, owner 2026-10-13: a gated source is
   // still a source, conditioned on the deck), and none where there is no deck to judge it by (the partner index) or no decklist
@@ -617,7 +621,7 @@ export function rampGrade(dc: DeckCard, deck?: readonly DeckCard[]): number {
   const faceLines = cardLines(dc).filter((l) => !frontOnly || l.face === 0);
   const rockLines = faceLines.filter((l) => l.source === "activated" && l.repeats === "per-cycle" && l.cost.tap
     && !l.cost.sacrificeSelf && !l.cost.sacrificeOther && l.cost.life === 0 && l.cost.counters === null && !l.cost.tapOther && l.cost.other.length === 0
-    && !l.unread && l.amount.scales === null && l.net >= 1
+    && !l.unread && (l.amount.scales === null || SELF_GUARANTEED_SCALE.test(l.amount.scales)) && l.net >= 1
     && gateMet(l, deck));
   if (rockLines.length === 0) return 0;
   const { patterns } = loadRules();

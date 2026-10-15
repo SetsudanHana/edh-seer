@@ -923,6 +923,13 @@ describe("rampGrade (#534, on manaLines since #1169)", () => {
       [mkLine({ source: "token-maker", repeats: "once", cost: { ...FREE_TAP, tap: false }, producesToken: "treasure" })]))).toBe(0);
   });
 
+  it("a 'for each color among permanents you control' tap is graded on its own-colour floor, as before #1188 (Faeburrow Elder, Bloom Tender: 14)", () => {
+    for (const n of ["Faeburrow Elder", "Bloom Tender"]) {
+      const dc = (rocks as unknown as Record<string, DeckCard>)[n]!;
+      expect(rampGrade(dc), n).toBe(14);
+    }
+  });
+
   it("a gated tap line is a rock only where the deck meets its gate (owner 2026-10-13: Mox Jasper in a Dragon deck)", () => {
     const jasper = rock("Mox Jasper", "{T}: Add one mana of any color. Activate only if you control a Dragon.", "Artifact",
       [tapFor(["W", "U", "B", "R", "G"], { gate: parseGate("you control a dragon") })]);

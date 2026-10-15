@@ -473,7 +473,8 @@ import { emblemRecipient } from "../emblem.js";
 // 317: #1188 mana lines state what a tap depends on: a "for each ..., add" / "add ... for each" amount SCALES (Selvala, Explorer Returned), an activated ability that targets is gated on a legal target (Deathrite Shaman,
 // Red Death, Shipwrecker; CR 602.2b), and a colour taken from "a card in your graveyard" is gated on one (Corrupted Grafstone). The gates are `unknown` (unmet everywhere), so rampGrade and the colour audit drop them.
 // 318: #1188 follow-up: a "for each" add keeps its printed fixed floor in `net` ("Add {R}{R}, then add {R} for each ...", Rite of Flame: net 1, not 0); `amount` is unchanged (fixed null, scales set).
-export const DERIVE_VERSION = 318;
+// 319: #1188 whole-branch review: "for each color among permanents you control" on a permanent nets the card's OWN colours (Faeburrow Elder 2, Bloom Tender 1; the card is a permanent you control); a colour taken from "among ... cards in your graveyard" (The Grey Havens) is gated on a card there.
+export const DERIVE_VERSION = 319;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

@@ -399,6 +399,11 @@ const scaleOfSentence = (sentence: string): string | null => {
   return null;
 };
 
+/** THE SELF-GUARANTEED FLOOR (#1188): "For each color among permanents you control, add one mana of that color" (Faeburrow Elder, Bloom Tender) counts the card itself, a permanent you control,
+ *  so it always makes one mana per colour of its OWN. CEILING: only this colour-among shape is read; a type count that counts the card too (Priest of Titania, "for each Elf on the battlefield")
+ *  has a self-floor that is not read, and nets its ceiling of 1 as any scaling line does. */
+const FOR_EACH_COLOUR_AMONG_OWN = /\bfor each colou?r among permanents you control\b/i;
+
 /** AN ACTIVATED ABILITY THAT TARGETS holds only while a legal target exists (CR 602.2b applying 601.2c: the targets are chosen when the ability is activated, and with none to choose it
  *  cannot be). Deathrite Shaman's "{T}: Exile target land card from a graveyard. Add one mana of any color." is no mana without a land card in a graveyard; Red Death, Shipwrecker's "Goad
  *  target creature an opponent controls ... You add {R}" is none without that creature. The target is read off the clause's own printed text and its cost (reminder text and quoted abilities
@@ -418,7 +423,7 @@ const targetNeeded = (text: string, costText: string): string | null => {
   return null;
 };
 /** "Choose a color of a card in your graveyard. Add one mana of that color" (Corrupted Grafstone): with no card there, no colour to choose and no mana. */
-const COLOUR_FROM_GRAVEYARD = /\bcolou?rs? of (?:an?|any) (?:card|creature|permanent)s? in your graveyard\b/i;
+const COLOUR_FROM_GRAVEYARD = /\bcolou?rs? of (?:an?|any) (?:card|creature|permanent)s? in your graveyard\b|\bamong [^.]{0,40}cards? in your graveyard\b/i;
 
 // ---------------------------------------------------------------------------------------------------------------
 // Token and land makers
@@ -642,6 +647,7 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (made.amount.scales === null) {
         const counted = scaleOfSentence(sentence);
         if (counted !== null) { if (ADD_BEFORE_FOR_EACH.test(sentence)) floor = made.amount.fixed; made.amount = { fixed: null, scales: counted }; }
+        if (counted !== null && FOR_EACH_COLOUR_AMONG_OWN.test(counted) && source === "activated" && !chars.types.some((t) => /^(?:instant|sorcery)$/i.test(t))) floor = Math.max(floor ?? 0, chars.colors.length);
       }
       const cost = source === "activated" || source === "static-grant" || source === "token-maker"
         ? parseCost(costText, selfNames)
