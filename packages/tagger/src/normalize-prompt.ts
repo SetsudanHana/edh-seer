@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 22;
+export const NORMALIZE_VERSION = 23;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -35,7 +35,7 @@ export const NORMALIZE_MIN_COMPATIBLE = 3;
  *  prose fix reopen the whole `carriesOther` set — on 2026-08-06 a one-line rule about trigger
  *  subjects selected 158 cards, of which 148 had been bought hours earlier at v8 and would come back
  *  identical. Priced at $0.69 to fix 9 cards. With this the same run selects 10 and costs $0.02. */
-export const VOCAB_VERSION = 21;
+export const VOCAB_VERSION = 23;
 
 /** The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION.
  *
@@ -141,6 +141,14 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   // here is that the CLAUSE SURVIVES rather than being lost whole -- the same reason goad, vote and
   // regenerate each earned one.
   "gain-control", "phase-out", "monarch",
+  // CR 702.26c. THE ACTION SIDE OF `phases-in`, the trigger that already exists, as `phase-out` is of
+  // `phases-out`. Sized over the whole corpus on 2026-10-15: 3 cards PERFORM it (Time and Tide,
+  // The Pandorica "that permanent phases in", The Doctor's Childhood Barn "those permanents phase in"),
+  // a 4th (Oubliette, "as it phases in this way") only rides on it, and 12 mention "phase in" at all by
+  // reading each oracle text: 4 trigger on it, 4 restrict it ("can't phase in": Teferi Timeless
+  // Voyager, Disciple of Caelus Nin, The Phasing of Zhalfir, The City on the Edge of Forever). No EMITS row and no engine Verb, following `phase-out` exactly: the clause
+  // survives, derive reads it as a tail verb. NORMALIZE_VERSION and VOCAB_VERSION 22/21 -> 23.
+  "phase-in",
   // CR 702.143 / 116.2h. THE ONE 702 KEYWORD A CARD INSTRUCTS AS AN ACTION: Ethereal Valkyrie
   // exiles a card face down and says "It becomes foretold", and Dream Devourer watches "whenever
   // you foretell a card". Missing from BOTH lists until the 2026-09-09 rules walk (AC1/AC4). No

@@ -673,3 +673,27 @@ describe("a gated source in the colour audit", () => {
     expect(makesAnyMana(jasper, deck, 6)).toBe(true);
   });
 });
+
+test("Pulse of Llanowar credits only the BASIC lands that were not blue; audit and mana base give one number (#1210)", () => {
+  const land = (name: string, typeLine: string, c: string): DeckCard => ({ ...source(name, [c]), card: { ...source(name, [c]).card, typeLine } as Card });
+  const basicMountains = (n: number) => Array.from({ length: n }, (_, i) => land(`Basic Mountain-${i}`, "Basic Land \u2014 Mountain", "R"));
+  const plainMountains = (n: number) => Array.from({ length: n }, (_, i) => land(`Nonbasic Mountain-${i}`, "Land \u2014 Mountain", "R"));
+  const pulse: DeckCard = { ...card("Pulse of Llanowar", "{1}{G}", 2, { typeLine: "Enchantment" }), tags: { staticFixer: { covers: "basics", colours: ["W", "U", "B", "R", "G"] } } as never };
+  const build = (lands: DeckCard[], extra: DeckCard) => fillTo(100, [card("Cancel", "{2}{U}{U}", 4), ...lands, ...islands(6), extra]);
+  const uOf = (deck: DeckCard[]) => manaAudit(deck).find((r) => r.color === "U")!.demands[0]!;
+  const p = pAtLeast(1, 1, seen(4), 100);
+
+  const withBasics = build([...basicMountains(20), ...plainMountains(10)], pulse);
+  const bare = build([...basicMountains(20), ...plainMountains(10)], filler(950));
+  // Twenty basics are newly reached; the ten nonbasic Mountains are not.
+  expect(uOf(withBasics).available).toBe(uOf(bare).available + Math.floor(p * 20 + 1e-9));
+  expect(uOf(withBasics).fixedBy).toEqual(["Pulse of Llanowar"]);
+  // The mana base reads the same number through the same function.
+  expect(fixerSupply(withBasics)("U", 4)).toBe(Math.floor(p * 20 + 1e-9));
+
+  // Only nonbasic lands: Pulse fixes nothing.
+  const nonbasicOnly = build(plainMountains(30), pulse);
+  expect(uOf(nonbasicOnly).available).toBe(uOf(build(plainMountains(30), filler(951))).available);
+  expect(uOf(nonbasicOnly).fixedBy).toBeUndefined();
+  expect(fixerSupply(nonbasicOnly)("U", 4)).toBe(0);
+});

@@ -3,7 +3,7 @@ import { castableManaCost } from "./split-cost.js";
 import { classifyLand } from "./land-conditions.js";
 import { fetchedLandEntersTapped } from "./fetch-land.js";
 import { COLORS, deckBasicTypes, landOnlineBy, type Color } from "./mana-audit.js";
-import { fixerCredit, libraryFixers } from "./static-fixers.js";
+import { fixerCredit, isBasicLand, libraryFixers } from "./static-fixers.js";
 import { colourSourceCards } from "./colour-sources.js";
 import { deckIdentity, isFetchSource, makesAnyMana } from "./mana-lines.js";
 import type { DeckCard } from "./types.js";
@@ -208,8 +208,9 @@ export function fixerSupply(deck: readonly DeckCard[], commanderNames: readonly 
   const isOut = (dc: DeckCard, turn: number): boolean => (isLand(dc) ? landOnlineBy(dc, turn, types) : dc.card.manaValue < turn);
   return (colour, turn) => {
     const have = per.filter((x) => x.colours.has(colour)).length;
-    const newLands = per.filter((x) => isLand(x.dc) && !x.colours.has(colour)).length;
-    return fixerCredit(fixers, colour, turn, isOut, newLands, Math.max(0, anySources - have), library.length).extra;
+    const reached = per.filter((x) => isLand(x.dc) && !x.colours.has(colour));
+    const newLands = reached.length, newBasics = reached.filter((x) => isBasicLand(x.dc)).length;
+    return fixerCredit(fixers, colour, turn, isOut, newBasics, newLands, Math.max(0, anySources - have), library.length).extra;
   };
 }
 

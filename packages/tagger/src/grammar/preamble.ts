@@ -38,10 +38,42 @@ function shortNameAsTilde(preamble: string, name: string): string {
   return out;
 }
 
+/** An ABILITY WORD label ("Do You Like Squirrels? — ", "The Seven-fold Chant — ") names the ability and
+ *  does nothing: the text without it. The spaced em dash, a capitalised label of at most 40 characters
+ *  made of words, apostrophes, commas, "?", "!" and hyphens -- never a ".", ":" or a brace, which
+ *  would make it a sentence, a cost or a mana symbol. The ONE rule `parseActions` reads too. */
+export function withoutAbilityWord(text: string): string {
+  const dash = text.indexOf(" — ");
+  return dash > 0 && dash <= 41 && /^[A-Z~][\w' ,~?!-]*$/.test(text.slice(0, dash)) ? text.slice(dash + 3) : text;
+}
+
+/** AN ACTIVATED ABILITY THE SEGMENTER LEFT STATIC AND COST-LESS: its cost and effect, the pair `segment()`
+ *  would have produced. Two ways it misses one:
+ *  - behind a label its `ABILITY_WORD` does not strip ("I LOVE Squirrels! — {1}{G}{G}{G}: Create ...").
+ *    Only a cost of MANA ALONE is taken here: a tap or sacrifice behind such a label is refused by the
+ *    caller.
+ *  - an ENERGY payment it does not know as a cost ("{T}, Pay {E}{E}{E}: ...", "Pay {E}{E}: ..."), then a
+ *    colon and a capital -- the shape `parseActions` takes for a cost left in the text. CEILING: energy
+ *    only; a tap or sacrifice cost left in (Wall of Roots) stays as the segmenter classed it, because
+ *    recording it activated moved bought cards off the grammar's reading.
+ *  Callers pass a clause the segmenter classed static with no cost. */
+export function missedCost(text: string): { cost: string; effect: string } | null {
+  const bare = withoutAbilityWord(text);
+  const labelled = bare !== text;
+  const colon = bare.indexOf(": ");
+  if (colon <= 0) return null;
+  const prefix = bare.slice(0, colon);
+  if (/[."]/.test(prefix) || !/^[A-Z]/.test(bare.slice(colon + 2))) return null;
+  const mana = /^(?:\{(?:\d+|[WUBRGCSX]|[WUBRG]\/[WUBRGP])\})+$/.test(prefix);
+  const ok = labelled ? mana : /\bPay (?:X )?(?:\{E\})+/.test(prefix);
+  return ok ? { cost: prefix, effect: bare.slice(colon + 2) } : null;
+}
+
 /** The preamble of a triggered clause's printed text, or null when the text opens with no trigger
  *  word. The name becomes "~" BEFORE the cut: a name with a comma ("Gisela, the Broken Blade") would
  *  otherwise end it. */
 export function printedPreamble(text: string, cardName: string): string | null {
+  text = withoutAbilityWord(text);
   const m = PREAMBLE.exec(cardName ? selfAsTilde(text, cardName) : text);
   return m ? (cardName ? shortNameAsTilde(m[1]!.trim(), cardName) : m[1]!.trim()) : null;
 }
@@ -50,6 +82,7 @@ export function printedPreamble(text: string, cardName: string): string | null {
  *  preamble and an intervening "if ...," when it has them. An activated clause's text already
  *  excludes its cost (`segment()` keeps that apart). */
 export function effectText(text: string, cardName: string): string {
+  text = withoutAbilityWord(text);
   // A TOKEN's name is its type ("Rat"): "for each other Rat you control" is the class, never the card.
   const typeName = cardName.split(" ").every((w) => SUBTYPES.has(w.toLowerCase()));
   const named = cardName && !typeName ? selfAsTilde(text, cardName) : text;

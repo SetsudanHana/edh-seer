@@ -5,7 +5,7 @@ import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchedLandEntersTapped } from "./fetch-land.js";
 import { colourSourceCards } from "./colour-sources.js";
 import { colourSourceColours, deckIdentity, hasGatedColourLine, isFetchSource, makesAnyMana, unreadSourceNames } from "./mana-lines.js";
-import { fixerCredit, libraryFixers } from "./static-fixers.js";
+import { fixerCredit, isBasicLand, libraryFixers } from "./static-fixers.js";
 import type { DeckCard } from "./types.js";
 import { BASIC_LAND_TYPES, countsAsLand } from "./typeline.js";
 
@@ -316,8 +316,9 @@ export function manaAuditFull(
     const have = new Set(sources);
     // WHAT EACH KIND OF FIXER NEWLY REACHES: a land-fixer, the online lands that were not already this colour's
     // source; an all-mana fixer, also every other online source (a rock, a dork).
-    const newLands = lands.filter((dc) => !have.has(dc) && landOnlineBy(dc, turn, basicTypes)).length;
-    return fixerCredit(fixers, color, turn, fixerOut, newLands, Math.max(0, anyAvailableBy(turn) - available), library.length);
+    const reached = lands.filter((dc) => !have.has(dc) && landOnlineBy(dc, turn, basicTypes));
+    const newLands = reached.length, newBasics = reached.filter(isBasicLand).length;
+    return fixerCredit(fixers, color, turn, fixerOut, newBasics, newLands, Math.max(0, anyAvailableBy(turn) - available), library.length);
   };
 
   const rows: ManaAuditRow[] = [];

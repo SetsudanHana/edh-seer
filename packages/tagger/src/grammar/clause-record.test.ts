@@ -109,3 +109,334 @@ test("labelling round 3: zones and players the sentence implies", () => {
   // A defined X is no paid X.
   expect(one("Heronblade Elite", "Creature — Human Warrior", "{T}: Add X mana of any one color, where X is this creature's power.")[0]!.actions![0]).not.toHaveProperty("amount");
 });
+
+// #1210 task 1: a punctuated ability word, and a game-start delayed effect.
+const readCard = (name: string, typeLine: string, oracleText: string, keywords: string[] = []) => grammarClauseRecords({ name, typeLine, oracleText, keywords });
+
+test("an ability word with ? ! or - in it labels the clause and is neither trigger subject nor object (#1210)", () => {
+  const sq = readCard("The Unbeatable Squirrel Girl", "Legendary Creature — Squirrel Human Hero",
+    "Do You Like Squirrels? — Whenever The Unbeatable Squirrel Girl enters or attacks, create a 1/1 green Squirrel creature token.\nI LOVE Squirrels! — {1}{G}{G}{G}: Create X 1/1 green Squirrel creature tokens, where X is the number of Squirrels you control.", ["I LOVE Squirrels!"]);
+  expect(sq.blocker).toBeUndefined();
+  expect(sq.complete).toBe(true);
+  expect(sq.records.filter((r) => r.trigger).map((r) => r.trigger!.event).sort()).toEqual(["attacks", "enters"]);
+  expect(sq.records[0]!.actions![0]).toMatchObject({ verb: "create" });
+  const tally = readCard("Tallyman of Nurgle", "Creature — Astartes Warrior",
+    "Lifelink\nThe Seven-fold Chant — At the beginning of your end step, if a creature died this turn, you draw a card and you lose 1 life. If seven or more creatures died this turn, instead you draw seven cards and you lose 7 life.", ["Lifelink", "The Seven-fold Chant"]);
+  expect(tally.blocker).toBeUndefined();
+  expect(tally.complete).toBe(true);
+});
+
+test("a game-start reveal records only the delayed effect's actions, with no trigger (#1210)", () => {
+  const dross = readCard("Chancellor of the Dross", "Creature — Phyrexian Vampire",
+    "You may reveal this card from your opening hand. If you do, at the beginning of the first upkeep, each opponent loses 3 life, then you gain life equal to the life lost this way.\nFlying, lifelink", ["Flying", "Lifelink"]);
+  expect(dross.blocker).toBeUndefined();
+  expect(dross.records[0]).toMatchObject({ abilityType: "static" });
+  expect(dross.records[0]!.trigger).toBeUndefined();
+  expect(dross.records[0]!.actions!.map((a) => a.verb)).toEqual(["lose-life", "gain-life"]);
+  expect(dross.records[0]!.actions![0]).toMatchObject({ object: "each opponent", amount: "3" });
+  const cases: [string, string, string, string[]][] = [
+    ["Chancellor of the Annex", "Creature — Phyrexian Angel", "You may reveal this card from your opening hand. If you do, when each opponent casts their first spell of the game, counter that spell unless that player pays {1}.\nFlying\nWhenever an opponent casts a spell, counter it unless that player pays {1}.", ["counter-spell"]],
+    ["Chancellor of the Forge", "Creature — Phyrexian Giant", "You may reveal this card from your opening hand. If you do, at the beginning of the first upkeep, create a 1/1 red Phyrexian Goblin creature token with haste.\nWhen this creature enters, create X 1/1 red Phyrexian Goblin creature tokens with haste, where X is the number of creatures you control.", ["create"]],
+    ["Chancellor of the Spires", "Creature — Phyrexian Sphinx", "You may reveal this card from your opening hand. If you do, at the beginning of the first upkeep, each opponent mills seven cards.\nFlying\nWhen this creature enters, you may cast target instant or sorcery card from an opponent's graveyard without paying its mana cost.", ["mill"]],
+    ["Chancellor of the Tangle", "Creature — Phyrexian Treefolk", "You may reveal this card from your opening hand. If you do, at the beginning of your first main phase of the game, add {G}.\nReach, vigilance", ["add-mana"]],
+    ["Sphinx of Foresight", "Creature — Sphinx", "You may reveal this card from your opening hand. If you do, scry 3 at the beginning of your first upkeep.\nFlying\nAt the beginning of your upkeep, scry 1.", ["scry"]],
+  ];
+  for (const [name, type, text, verbs] of cases) {
+    const g = readCard(name, type, text);
+    expect(g.blocker, name).toBeUndefined();
+    expect(g.complete, name).toBe(true);
+    expect(g.records[0]!.trigger, name).toBeUndefined();
+    expect(g.records[0]!.actions!.map((a) => a.verb), name).toEqual(verbs);
+  }
+  expect(readCard("Chancellor of the Annex", "Creature", cases[0]![2]).records[0]!.actions![0]).toMatchObject({ verb: "counter-spell", unless: { payer: "opponent" } });
+  // ...the same action the card's own second clause reads.
+  const annex = readCard("Chancellor of the Annex", "Creature", cases[0]![2]).records;
+  expect(annex[0]!.actions![0]!.unless).toEqual(annex.at(-1)!.actions![0]!.unless);
+});
+
+test("a labelled keyword line stays a keyword line, and a labelled cost the segmenter missed refuses (#1210 review)", () => {
+  const arms = readCard("Paladin's Arms", "Artifact — Equipment", "Lightbringer and Hero's Shield — Equip {4}");
+  expect(arms.complete).toBe(true);
+  expect(arms.records).toMatchObject([{ id: 1, abilityType: "none", actions: [{ verb: "none" }] }]);
+  const blitz = readCard("Blitzball Stadium", "Land", "Go for the Goal! — {3}, {T}: Until end of turn, target creature gains \"Whenever this creature deals combat damage to a player, draw a card.\" and it can't be blocked this turn.");
+  expect(blitz.complete).toBe(false);
+  expect(blitz.blocker).toMatchObject({ clause: 1, kind: "action" });
+  const strax = readCard("Strax", "Creature — Sontaran", "Grenades! — {2}, {T}, Sacrifice an artifact: This creature deals 2 damage to any target.");
+  expect(strax.complete).toBe(false);
+});
+
+test("a mana cost behind a label the segmenter missed makes the clause activated, and derive's input carries the cost (#1210)", async () => {
+  const text = "Do You Like Squirrels? — Whenever The Unbeatable Squirrel Girl enters or attacks, create a 1/1 green Squirrel creature token.\nI LOVE Squirrels! — {1}{G}{G}{G}: Create X 1/1 green Squirrel creature tokens, where X is the number of Squirrels you control.";
+  const g = readCard("The Unbeatable Squirrel Girl", "Legendary Creature — Squirrel Human Hero", text, ["I LOVE Squirrels!"]);
+  expect(g.records.find((r) => r.id === 2)).toMatchObject({ abilityType: "activated" });
+  const { clauseCosts, clauseTexts } = await import("../derive-input.js");
+  const doc = { oracleText: text, keywords: ["I LOVE Squirrels!"], typeLine: "Legendary Creature — Squirrel Human Hero" };
+  const activated = new Set(g.records.filter((r) => r.abilityType === "activated").map((r) => r.id));
+  expect(clauseCosts(doc)[2]).toBeUndefined();
+  expect(clauseCosts(doc, activated)[2]).toBe("{1}{G}{G}{G}");
+  expect(clauseTexts(doc, activated)[2]).toMatch(/^Create X 1\/1 green Squirrel/);
+});
+
+// #1210 task 2: six more shapes.
+test("energy payment, replacement lead-in, duration lead, look-at-top, 'who doesn't', roll-a-die (#1210)", () => {
+  const turret = readCard("Consulate Turret", "Artifact", "{T}: You get {E} (an energy counter).\n{T}, Pay {E}{E}{E}: This artifact deals 2 damage to target player or planeswalker.");
+  expect(turret.blocker).toBeUndefined();
+  // The segmenter classes "{T}, Pay {E}{E}{E}:" static; the payment is a cost of an activated clause.
+  expect(turret.records[1]).toMatchObject({ abilityType: "activated" });
+  expect(turret.records[1]!.actions!.map((a) => a.verb)).toEqual(["remove-counter", "deal-damage"]);
+  expect(turret.records[1]!.actions![0]).toMatchObject({ object: "energy counter", amount: "3" });
+
+  const warden = readCard("Crowd-Control Warden", "Creature — Human Soldier", "As this creature enters or is turned face up, put X +1/+1 counters on it, where X is the number of other creatures you control.\nDisguise {3}{G/W}{G/W} (You may cast this card face down for {3} as a 2/2 creature with ward {2}. Turn it face up any time for its disguise cost.)", ["Disguise"]);
+  expect(warden.blocker).toBeUndefined();
+  expect(warden.records[0]).toMatchObject({ abilityType: "static" });
+  expect(warden.records[0]!.actions![0]).toMatchObject({ verb: "add-counter", object: "+1/+1", amount: "the number of other creatures you control" });
+
+  const familiar = readCard("Ertai's Familiar", "Creature — Illusion", "Phasing (This phases in or out before you untap during each of your untap steps. While it's phased out, it's treated as though it doesn't exist.)\nWhen this creature phases out or leaves the battlefield, mill three cards.\n{U}: Until your next upkeep, this creature can't phase out.", ["Phasing"]);
+  expect(familiar.blocker).toBeUndefined();
+  expect(familiar.records.at(-1)!.actions![0]).toMatchObject({ verb: "cant", object: "phase out" });
+  expect(familiar.records[1]!.trigger).toMatchObject({ event: "phases-out", subject: "this creature" });
+
+  const viv = readCard("Vivien's Invocation", "Sorcery", "Look at the top seven cards of your library. You may put a creature card from among them onto the battlefield. Put the rest on the bottom of your library in a random order. When a creature is put onto the battlefield this way, it deals damage equal to its power to target creature an opponent controls.");
+  // The reflexive "When a creature is put onto the battlefield this way" has no reading (only "when you do"
+  // does): the card stays incomplete, but the first clause reads.
+  expect(viv.blocker).toMatchObject({ clause: 2, kind: "trigger" });
+  expect(viv.records[0]!.actions![0]).toMatchObject({ verb: "put", object: "a creature card from the top seven cards of your library", fromZone: "library", toZone: "battlefield", optional: true });
+  expect(viv.records[0]!.actions![1]).toMatchObject({ verb: "put", object: "the rest of the top seven cards of your library", fromZone: "library", toZone: "library" });
+
+  const wernog = readCard("Wernog, Rider's Chaplain", "Legendary Creature — Human Cleric", "When Wernog, Rider's Chaplain enters or leaves the battlefield, each opponent may investigate. Each opponent who doesn't loses 1 life. You investigate X times, where X is one plus the number of opponents who investigated this way.");
+  expect(wernog.blocker).toBeUndefined();
+  const w = wernog.records.flatMap((r) => r.actions!);
+  expect(w.find((a) => a.verb === "lose-life")).toMatchObject({ object: "each opponent who doesn't investigate", amount: "1" });
+  // The comma in the card's name hid the segmenter's two-event flag: "enters or leaves" is two records.
+  expect(wernog.records.map((r) => r.trigger?.event)).toEqual(["enters", "leaves"]);
+  expect(w.find((a) => a.verb === "investigate")).toBeDefined();
+
+  const xeno = readCard("Xenosquirrels", "Creature — Squirrel", "This creature enters with two +1/+1 counters on it.\nAfter you roll a die, you may remove a +1/+1 counter from this creature. If you do, increase or decrease the result by 1.");
+  expect(xeno.blocker).toBeUndefined();
+  const x = xeno.records[1]!;
+  expect(x).toMatchObject({ abilityType: "static" });
+  expect(x.trigger).toMatchObject({ event: "roll-dice" });
+  expect(x.actions![0]).toMatchObject({ verb: "remove-counter", optional: true });
+});
+
+// #1210 task 2 review: what the six readings must not break on cards that were already right.
+test("cards of a looked-at library are yours, and the exiled card is not what a cost tapped (#1210)", async () => {
+  const bargain = readCard("Rakshasa's Bargain", "Instant", "Look at the top four cards of your library. Put two of them into your hand and the rest into your graveyard.");
+  expect(bargain.records[0]!.actions).toMatchObject([
+    { verb: "put", object: "two of the top four cards of your library", fromZone: "library", toZone: "hand" },
+    { verb: "put", object: "the rest of the top four cards of your library", fromZone: "library", toZone: "graveyard" },
+  ]);
+  const nightwatch = readCard("Gurmag Nightwatch", "Creature — Zombie", "When this creature enters, look at the top three cards of your library. You may put one of those cards back on top of your library. Put the rest into your graveyard.");
+  expect(nightwatch.records[0]!.actions![0]).toMatchObject({ object: "one of the top three cards of your library", toZone: "library" });
+  const durnan = readCard("Durnan of the Yawning Portal", "Legendary Creature — Human Warrior", "Whenever Durnan of the Yawning Portal attacks, exile a creature card from the top four cards of your library. For as long as that card remains exiled, you may cast it. That spell has undaunted.");
+  expect(durnan.records[0]!.actions!.find((a) => a.verb === "cast")).toMatchObject({ object: "the exiled creature card", fromZone: "exile" });
+  // "it becomes plotted" is a status, never an animation.
+  const luck = readCard("Make Your Own Luck", "Sorcery", "Look at the top three cards of your library. You may exile a nonland card from among them. If you do, it becomes plotted. Put the rest into your hand.");
+  expect(luck.records[0]!.actions!.map((a) => a.verb)).toEqual(["exile", "put"]);
+  expect(luck.records[0]!.actions![0]).toMatchObject({ fromZone: "library", object: "a nonland card from the top three cards of your library" });
+  // The punished opponents keep the store's wording, which derive reads into a negated did.
+  const fandaniel = readCard("Fandaniel, Telophoroi Ascian", "Legendary Creature — Human", "At the beginning of your end step, each opponent may sacrifice a nontoken creature of their choice. Each opponent who doesn't loses 2 life for each instant and sorcery card in your graveyard.");
+  expect(fandaniel.records[0]!.actions![1]).toMatchObject({ verb: "lose-life", object: "each opponent who doesn't sacrifice" });
+  const nissa = readCard("Nissa, Genesis Mage", "Legendary Planeswalker — Nissa", "+2: Untap up to two target creatures and up to two target lands.");
+  expect(nissa.records[0]!.actions!.map((a) => a.object)).toEqual(["up to two target creatures", "up to two target lands"]);
+  const ashiok = readCard("Ashiok", "Legendary Planeswalker — Ashiok", "−7: Target player exiles the top X cards of their library, where X is the total mana value of cards you own in exile.");
+  expect(ashiok.records[0]!.actions![0]).toMatchObject({ verb: "exile", amount: "the total mana value of cards you own in exile" });
+  // An energy payment the segmenter left static is the cost of an activated clause.
+  const surveillance = readCard("Consulate Surveillance", "Enchantment", "When this enchantment enters, you get {E}{E}{E}{E} (four energy counters).\nPay {E}{E}: Prevent all damage that would be dealt to you this turn by a source of your choice.");
+  expect(surveillance.records.at(-1)).toMatchObject({ abilityType: "activated" });
+  // Dermotaxi: the copy is of the exiled card, never of the creatures tapped to pay.
+  const { grammarClauseRecords: records } = await import("./clause-record.js");
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const card = { name: "Dermotaxi", typeLine: "Artifact — Vehicle", oracleText: "Imprint — As this Vehicle enters, exile a creature card from a graveyard.\nTap two untapped creatures you control: Until end of turn, this Vehicle becomes a copy of the exiled card, except it's a Vehicle artifact in addition to its other types.", keywords: [] };
+  const g = records(card);
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
+  const copy = tags.abilities.find((a) => a.effect.kind === "clone");
+  expect(copy?.emits?.[0]?.subject).toMatchObject({ control: "any" });
+  expect(copy?.emits?.[0]?.subject.type).toBeUndefined();
+});
+
+test("a 'who doesn't' with no declined choice before it refuses; an exile that moved the cards leaves the rest in exile (#1210 review)", () => {
+  expect(readCard("X", "Sorcery", "Each opponent who doesn't loses 3 life.").complete).toBe(false);
+  const g = readCard("Y", "Sorcery", "Exile the top three cards of your library. Put one of them into your hand.");
+  expect(g.records[0]!.actions![1]).toMatchObject({ verb: "put", fromZone: "exile" });
+  const durnan = readCard("Durnan of the Yawning Portal", "Legendary Creature — Human Warrior", "Whenever Durnan of the Yawning Portal attacks, look at the top four cards of your library. You may exile a creature card from among them. Put the rest on the bottom of your library in any order.");
+  expect(durnan.records[0]!.actions![1]).toMatchObject({ verb: "put", fromZone: "library", toZone: "library" });
+});
+
+test("Time and Tide: 'Simultaneously' is a timing word, the two phasing verbs are the actions (CR 702.26a, #1210 task 3)", () => {
+  const g = readCard("Time and Tide", "Instant", "Simultaneously, all phased-out creatures phase in and all creatures with phasing phase out.");
+  expect(g.complete).toBe(true);
+  expect(g.records[0]!.actions!.map((a) => a.verb)).toEqual(["phase-in", "phase-out"]);
+});
+
+test("Pulse of Llanowar: the basic-land colour replacement is one `other` action, never add-mana (#1210 task 4)", () => {
+  const g = readCard("Pulse of Llanowar", "Enchantment", "If a basic land you control is tapped for mana, it produces mana of a color of your choice instead of any other type.");
+  expect(g.complete).toBe(true);
+  expect(g.records[0]!.actions!.map((a) => a.verb)).toEqual(["other"]);
+});
+
+test("Crowd-Control Warden: after the 'As this creature enters or is turned face up' lead-in, 'it' is the card, so the counter emit is self", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const card = { name: "Crowd-Control Warden", typeLine: "Creature — Human Soldier", oracleText: "As this creature enters or is turned face up, put X +1/+1 counters on it, where X is the number of other creatures you control.", keywords: [] as string[] };
+  const g = grammarClauseRecords(card);
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
+  expect(tags.abilities[0]!.emits?.[0]).toMatchObject({ verb: "counter-added", subject: { counter: "+1/+1", self: true } });
+});
+
+test("Astrid Peth: a stored record split off a compound does not take the printed trigger of the clause segment() numbered the same", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const card = { name: "Astrid Peth", typeLine: "Legendary Creature — Human Peasant", keywords: [] as string[],
+    oracleText: "Whenever Astrid Peth enters or attacks, create a Food token.\nBrand-new Sky — Whenever you sacrifice a Clue or Food, Astrid Peth explores." };
+  const act = (verb: string, object: string) => [{ verb, object, fromZone: null, toZone: null, amount: verb === "create" ? "1" : null, optional: false }];
+  const stored = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "Astrid Peth", control: "you" }, actions: act("create", "a Food token") },
+    { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "Astrid Peth", control: "you" }, actions: act("create", "a Food token") },
+    { id: 3, abilityType: "triggered", trigger: { event: "sacrificed", subject: "a Clue or Food", control: "you" }, actions: act("explore", "Astrid Peth") },
+  ];
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, stored as never));
+  // The sacrifice trigger carries the explore, never the Food: no ability pairs it with a create-token emit.
+  const sacrifice = tags.abilities.filter((a) => a.trigger?.verbs?.includes("sacrifice" as never));
+  expect(sacrifice.length).toBeGreaterThan(0);
+  expect(sacrifice.flatMap((a) => a.emits ?? []).map((e) => e.verb)).not.toContain("create-token");
+  expect(tags.abilities.filter((a) => a.trigger?.verbs?.includes("attacks" as never)).flatMap((a) => a.emits ?? []).map((e) => e.verb)).toContain("create-token");
+});
+
+test("Kratos, Stoic Father: a record numbered into another sentence reads that sentence, never a mix; its twin of an already-read event is dropped", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const card = { name: "Kratos, Stoic Father", typeLine: "Legendary Creature — God Warrior", keywords: ["Partner"] as string[],
+    oracleText: "Whenever you attack with one or more Gods and whenever a God dies, you get an experience counter.\nAt the beginning of your end step, put a number of +1/+1 counters on target creature equal to the number of experience counters you have.\nPartner\u2014Father & son" };
+  const stored = [
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "one or more Gods", control: "you" }, actions: [{ verb: "add-counter", object: "experience counter", optional: false }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "a God", control: "you" }, actions: [{ verb: "add-counter", object: "experience counter", optional: false }] },
+    { id: 3, abilityType: "triggered", trigger: { event: "end-step", control: "you" }, actions: [{ verb: "add-counter", object: "+1/+1 counter", amount: "the number of experience counters you have", optional: false }] },
+    { id: 3, abilityType: "none", actions: [{ verb: "none", object: "Partner\u2014Father & son" }] },
+  ];
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, stored as never));
+  const view = tags.abilities.map((a) => [a.trigger?.verbs?.[0], (a.emits ?? []).map((e) => e.subject.counter).join(",")]);
+  expect(view).toEqual([["attacks", "experience"], ["dies", "experience"], ["end-step", "+1/+1"]]);
+});
+
+test("a reflexive 'When you do' record is never re-homed (Curious Forager); a re-homed twin that carries more than its partner is kept (Champions of the Shoal)", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const act = (verb: string, object: string, extra: Record<string, unknown> = {}) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false, ...extra });
+  const forager = { name: "Curious Forager", typeLine: "Creature — Squirrel Druid", keywords: [] as string[],
+    oracleText: "When this creature enters, you may forage. When you do, return target permanent card from your graveyard to your hand. (To forage, exile three cards from your graveyard or sacrifice a Food.)" };
+  const fStored = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [act("forage", "", { optional: true })] },
+    { id: 2, abilityType: "triggered", trigger: { event: "forage", subject: "you", control: "you" }, actions: [act("return", "target permanent card", { fromZone: "graveyard", toZone: "hand" })] },
+  ];
+  const f = deriveCardTags(deriveInputOf(forager as never, "x", forager.name, fStored as never));
+  const back = f.abilities.find((a) => a.effect.kind === "graveyard-recursion");
+  expect(back?.trigger?.verbs).toEqual(["forage"]);
+  expect(back?.emits?.find((e) => e.verb === "leaves")?.subject).toMatchObject({ control: "you", fromZone: "graveyard" });
+  const champs = { name: "Champions of the Shoal", typeLine: "Creature — Merfolk Wizard", keywords: [] as string[],
+    oracleText: "As an additional cost to cast this spell, behold a Merfolk and exile it. (Exile a Merfolk you control or a Merfolk card from your hand.)\nWhenever this creature enters or becomes tapped, tap up to one target creature and put a stun counter on it.\nWhen this creature leaves the battlefield, return the exiled card to its owner's hand." };
+  // The twin (3, `taps`) carries a stun counter its partner (2) does not: it is kept, not dropped as a duplicate.
+  const cStored = [
+    { id: 1, abilityType: "static", actions: [act("behold", "a Merfolk"), act("exile", "it")] },
+    { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [act("tap", "up to one target creature", { optional: true })] },
+    { id: 3, abilityType: "triggered", trigger: { event: "taps", subject: "this creature", control: "you" }, actions: [act("tap", "up to one target creature", { optional: true }), act("add-counter", "stun counter")] },
+    { id: 4, abilityType: "triggered", trigger: { event: "leaves", subject: "this creature", control: "you" }, actions: [act("return", "the exiled card", { fromZone: "exile", toZone: "hand" })] },
+  ];
+  const c = deriveCardTags(deriveInputOf(champs as never, "x", champs.name, cStored as never));
+  expect(c.abilities.some((a) => a.trigger?.verbs?.[0] === "taps" && (a.emits ?? []).some((e) => e.subject.counter === "stun"))).toBe(true);
+});
+
+test("Kratos, Stoic Father as shipped (grammar path): attacks, dies, end-step, and the two-event overflow's twin dies", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const card = { name: "Kratos, Stoic Father", typeLine: "Legendary Creature — God Warrior", keywords: ["Partner"] as string[],
+    oracleText: "Whenever you attack with one or more Gods and whenever a God dies, you get an experience counter.\nAt the beginning of your end step, put a number of +1/+1 counters on target creature equal to the number of experience counters you have.\nPartner\u2014Father & son" };
+  const g = grammarClauseRecords(card);
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
+  // CEILING: the second event of a two-event trigger is an overflow record numbered after the last clause (the store's convention), so the
+  // `dies` the first record already reads off the sentence is read a second time (c4). A twin, harmless to edges; not deduplicated here.
+  expect(tags.abilities.map((a) => [a.clause, a.trigger?.verbs?.[0]])).toEqual([[1, "attacks"], [1, "dies"], [2, "end-step"], [4, "dies"]]);
+  expect(tags.abilities.find((a) => a.trigger?.verbs?.[0] === "end-step")?.emits?.[0]?.subject).toMatchObject({ counter: "+1/+1" });
+});
+
+test("a reflexive sentence is never re-homed: Yes Man keeps the quest counter on itself, Explosion of Riches keeps its refusal (#1210)", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const act = (verb: string, object: string, extra: Record<string, unknown> = {}) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false, ...extra });
+  const yes = { name: "Yes Man, Personal Securitron", typeLine: "Legendary Artifact Creature — Robot", keywords: [] as string[],
+    oracleText: "{T}: Target opponent gains control of Yes Man. When they do, you draw two cards and put a quest counter on Yes Man. Activate only during your turn.\nWild Card \u2014 When Yes Man leaves the battlefield, its owner creates a tapped 1/1 white Soldier creature token for each quest counter on it." };
+  const yStored = [
+    { id: 1, abilityType: "activated", actions: [act("gain-control", "target opponent")] },
+    { id: 2, abilityType: "triggered", trigger: { event: "gains-control", subject: "Yes Man", control: "opponent" }, actions: [act("draw", "you", { amount: "2" }), act("add-counter", "quest counter")] },
+    { id: 3, abilityType: "triggered", trigger: { event: "leaves", subject: "Yes Man", control: "you" }, actions: [act("create", "a tapped 1/1 white Soldier creature token", { amount: "number of quest counters on Yes Man" })] },
+  ];
+  const y = deriveCardTags(deriveInputOf(yes as never, "x", yes.name, yStored as never));
+  expect(y.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added" && e.subject.counter === "quest")?.subject.self).toBe(true);
+  const ex = { name: "Explosion of Riches", typeLine: "Sorcery", keywords: [] as string[],
+    oracleText: "Draw a card, then each other player may draw a card. Whenever a card is drawn this way, Explosion of Riches deals 5 damage to target opponent chosen at random from among your opponents." };
+  const eStored = [
+    { id: 1, abilityType: "spell", actions: [act("draw", "a card"), act("draw", "a card", { optional: true })] },
+    { id: 2, abilityType: "triggered", trigger: { event: "draw", subject: "a card", control: "any" }, actions: [act("deal-damage", "target opponent chosen at random from among your opponents", { amount: "5" })] },
+  ];
+  const e = deriveCardTags(deriveInputOf(ex as never, "x", ex.name, eStored as never));
+  expect(e.abilities.filter((a) => a.trigger?.verbs?.includes("draw" as never)).length).toBe(0);
+});
+
+test("Territory Culler: the looked-at card goes from YOUR library to your graveyard, so the mill emit is control you; Domri's dig still names creature", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const derive = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+  };
+  const culler = derive("Territory Culler", "Creature — Eldrazi Drone", "Landfall \u2014 Whenever a land you control enters, look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.");
+  const mill = culler.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "mill");
+  expect(mill?.subject).toMatchObject({ control: "you", fromZone: "library" });
+  expect(mill?.subject.type).toBeUndefined();
+  // "Otherwise" / "if you don't": the card the condition did not take is untyped and never the card itself (Bison Whistle, Traveling Botanist).
+  const whistle = derive("Bison Whistle", "Artifact", "{1}, {T}: Look at the top card of your library. If it's a Bison card, you may put it onto the battlefield. If it's a creature card, you may reveal it and put it into your hand. Otherwise, you may put it into your graveyard.");
+  const wMill = whistle.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "mill");
+  expect(wMill?.subject).toMatchObject({ control: "you", fromZone: "library" });
+  expect(wMill?.subject.type).toBeUndefined();
+  const botanist = derive("Traveling Botanist", "Creature — Elf Scout", "Whenever this creature becomes tapped, look at the top card of your library. If it's a land card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.");
+  const bMill = botanist.abilities.find((a) => (a.emits ?? []).some((e) => e.verb === "mill"));
+  expect(bMill?.emits?.find((e) => e.verb === "mill")?.subject).toMatchObject({ control: "you", fromZone: "library" });
+  expect(bMill?.emits?.find((e) => e.verb === "mill")?.subject.type).toBeUndefined();
+  expect(bMill?.emits?.find((e) => e.verb === "mill")?.subject.self).toBeUndefined();
+  expect(bMill?.effect.subject?.self).toBeUndefined();
+  const domri = derive("Domri Rade", "Legendary Planeswalker — Domri", "+1: Look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand.");
+  expect(domri.abilities.find((a) => a.effect.kind === "search")?.effect.subject).toMatchObject({ type: "creature" });
+});
+
+test("a 'look at the top card' whose later 'it' / 'that card' is resolved to the library reads complete; one nothing touches still blocks (#1210)", () => {
+  const domri = readCard("Domri Rade", "Legendary Planeswalker — Domri", "+1: Look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand.");
+  expect(domri.complete).toBe(true);
+  expect(domri.records[0]!.actions!.find((a) => a.verb === "put")).toMatchObject({ object: "a creature card from the top card of your library", fromZone: "library", toZone: "hand" });
+  const merrow = readCard("Puresight Merrow", "Creature — Merfolk Wizard", "{W/U}, {Q}: Look at the top card of your library. You may exile that card.");
+  expect(merrow.complete).toBe(true);
+  expect(merrow.records[0]!.actions!.find((a) => a.verb === "exile")).toMatchObject({ fromZone: "library" });
+  const hound = readCard("Codecracker Hound", "Creature — Dog", "When this creature enters, look at the top two cards of your library. Put one into your hand and the other into your graveyard.");
+  expect(hound.complete).toBe(true);
+  expect(hound.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.fromZone, a.toZone])).toEqual([["library", "hand"], ["library", "graveyard"]]);
+  const reef = readCard("Risen Reef", "Creature — Elemental", "Whenever Risen Reef or another Elemental you control enters, look at the top card of your library. If it's a land card, you may put it onto the battlefield tapped. If you don't put the card onto the battlefield, put it into your hand.");
+  expect(reef.complete).toBe(true);
+  expect(reef.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["a land card from the top card of your library", "library", "battlefield"], ["the top card of your library", "library", "hand"]]);
+  // The card EXILED from the look is in exile, not the library (Discover the Impossible; stored answer: exile).
+  const disc = readCard("Discover the Impossible", "Sorcery", "Look at the top five cards of your library. Exile one of them face down and put the rest on the bottom of your library in a random order. You may cast the exiled card without paying its mana cost if it's an instant spell with mana value 2 or less. If you don't, put that card into your hand.");
+  expect(disc.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["the rest of the top five cards of your library", "library", "library"], ["that card", "exile", "hand"]]);
+  // A condition that names no card type does not become one ("a your turn card").
+  const turn = readCard("Peek Two", "Instant", "Look at the top card of your library. If it's your turn, put it into your hand.");
+  expect(turn.records[0]!.actions!.find((a) => a.verb === "put")).toMatchObject({ object: "it", fromZone: "library" });
+  // A spell that returns itself as it resolves leaves the stack (Petals of Insight; stored answer: stack).
+  const petals = readCard("Petals of Insight", "Sorcery — Arcane", "Look at the top three cards of your library. You may put those cards on the bottom of your library in any order. If you do, return Petals of Insight to its owner's hand. Otherwise, draw three cards.");
+  expect(petals.records[0]!.actions!.find((a) => a.verb === "return")).toMatchObject({ fromZone: "stack", toZone: "hand" });
+  // A look no later action touches is an unread phrase: the card blocks.
+  expect(readCard("Peek", "Instant", "Look at the top card of your library. Then draw a card.").complete).toBe(false);
+  // A look whose "of them" / "the rest" picks the library up is still skipped, and the rest is milled by you.
+  const sp = readCard("Strategic Planning", "Sorcery", "Look at the top three cards of your library. Put one of them into your hand and the rest into your graveyard.");
+  expect(sp.complete).toBe(true);
+  expect(sp.records[0]!.actions!.map((a) => a.verb)).toEqual(["put", "put"]);
+  expect(sp.records[0]!.actions![0]).toMatchObject({ fromZone: "library" });
+});

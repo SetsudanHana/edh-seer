@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveInputOf } from "../derive-input.js";
 import { deriveCardTags } from "./derive.js";
+import { grammarClauseRecords } from "../grammar/clause-record.js";
 import type { CardTags, ManaLine } from "../schema.js";
 import { replacementAddedToken, unpricedLoyaltyLines } from "./mana-lines.js";
 import fixtures from "./mana-lines.fixtures.json" with { type: "json" };
@@ -219,6 +220,18 @@ describe("static fixers and suspend", () => {
     expect(tagsOf("Prismatic Omen").staticFixer).toEqual({ covers: "lands", colours: WUBRG });
     expect(tagsOf("Urborg, Tomb of Yawgmoth").staticFixer).toEqual({ covers: "lands", colours: ["B"] });
     expect(tagsOf("Sol Ring").staticFixer).toBeUndefined();
+  });
+  it("Pulse of Llanowar fixes BASIC lands in every colour and is no mana source itself (#1210 task 4); Mirri (vanguard) is dropped by type", () => {
+    const text = "If a basic land you control is tapped for mana, it produces mana of a color of your choice instead of any other type.";
+    const of = (name: string, typeLine: string) => {
+      const card = { name, typeLine, oracleText: text, keywords: [] as string[] };
+      const g = grammarClauseRecords(card);
+      return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+    };
+    const pulse = of("Pulse of Llanowar", "Enchantment");
+    expect(pulse.staticFixer).toEqual({ covers: "basics", colours: WUBRG });
+    expect(pulse.manaLines).toBeUndefined();
+    expect(of("Mirri", "Vanguard").staticFixer).toBeUndefined();
   });
   it("Mox Tantalite and Lotus Bloom are suspend-only; a Mox with a cost is not", () => {
     expect(tagsOf("Mox Tantalite").suspendOnly).toBe(true);

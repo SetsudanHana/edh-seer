@@ -63,7 +63,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "manaLines": [
     {
      "amount": {
@@ -267,7 +267,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "7735eeba-693b-47e2-bd51-414379cf1016",
@@ -431,7 +431,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "manaLines": [
     {
      "amount": {
@@ -700,7 +700,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "manaLines": [
     {
      "amount": {
@@ -807,7 +807,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "7d00fb28-ea6c-49a9-b4af-ffb38860a9a7",
@@ -880,7 +880,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "07a0cba9-8768-4fd9-a3d5-b0f83b4bf8e8",
@@ -952,7 +952,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "cc187110-1148-4090-bbb8-e205694a39f5",
@@ -1500,7 +1500,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "2987c385-011a-4032-a516-a46d1e9dc9e8",
@@ -1626,7 +1626,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -1783,7 +1783,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "d75b9c82-1b49-4c3e-a1b5-aeef57d6644b",
@@ -1879,157 +1879,13 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "aa7714b0-2bfb-458a-8ebf-37ec2c53383e",
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "46b34616d4d00573f1f44274177ab2b903ff352e7ddf1de8e3dc686e126c3afe"
-  }
- },
- "Giant Mana Cake": {
-  "card": {
-   "colorIdentity": [],
-   "colors": [],
-   "commanderLegality": "legal",
-   "gameChanger": false,
-   "keywords": [
-    "Food"
-   ],
-   "layout": "normal",
-   "manaCost": "",
-   "manaValue": 0,
-   "name": "Giant Mana Cake",
-   "oracleText": "{TK}{TK} — When this permanent leaves the battlefield, create two Food tokens. (They're artifacts with \"{2}, {T}, Sacrifice this artifact: You gain 3 life.\")\n{TK}{TK}{TK}{TK} — When this permanent dies, destroy target nonland permanent.\n{TK}{TK} — 3/3\n{TK}{TK}{TK} — 6/2",
-   "power": null,
-   "toughness": null,
-   "typeLine": "Stickers"
-  },
-  "tags": {
-   "_id": "6aa1381c22a4c97a52eed228",
-   "abilities": [
-    {
-     "amount": "2",
-     "clause": 1,
-     "count": {
-      "ceiling": 2,
-      "floor": 2
-     },
-     "effect": {
-      "kind": "token-generation",
-      "subject": {
-       "control": "you",
-       "scope": "all",
-       "subtype": "food",
-       "token": true
-      }
-     },
-     "emits": [
-      {
-       "subject": {
-        "control": "you",
-        "scope": "all",
-        "subtype": "food",
-        "token": true,
-        "type": "artifact"
-       },
-       "verb": "create-token"
-      },
-      {
-       "subject": {
-        "control": "you",
-        "scope": "all",
-        "subtype": "food",
-        "token": true,
-        "type": "artifact"
-       },
-       "verb": "enters"
-      }
-     ],
-     "kind": "triggered",
-     "repeats": "once",
-     "trigger": {
-      "subject": {
-       "control": "you",
-       "self": true,
-       "token": null,
-       "type": "permanent"
-      },
-      "verbs": [
-       "leaves"
-      ]
-     }
-    },
-    {
-     "amount": "1",
-     "clause": 2,
-     "count": {
-      "ceiling": 1,
-      "floor": 1
-     },
-     "effect": {
-      "kind": ""
-     },
-     "emits": [
-      {
-       "subject": {
-        "control": "opp",
-        "notType": [
-         "land"
-        ],
-        "scope": "target",
-        "token": null,
-        "type": [
-         "creature",
-         "artifact",
-         "enchantment",
-         "planeswalker",
-         "battle"
-        ]
-       },
-       "verb": "dies"
-      }
-     ],
-     "kind": "triggered",
-     "repeats": "once",
-     "trigger": {
-      "subject": {
-       "control": "you",
-       "self": true,
-       "token": null,
-       "type": "permanent"
-      },
-      "verbs": [
-       "dies"
-      ]
-     }
-    }
-   ],
-   "characteristics": {
-    "cmc": 0,
-    "colors": [],
-    "identity": [],
-    "keywords": [
-     "food"
-    ],
-    "layout": "normal",
-    "power": null,
-    "subtypes": [],
-    "token": false,
-    "toughness": null,
-    "types": [
-     "stickers"
-    ]
-   },
-   "clauseSource": "model",
-   "deriveVersion": 312,
-   "model": "derived",
-   "normalizeVersion": 20,
-   "oracleId": "26f6170a-34dc-41c8-b3b1-20377f131e6e",
-   "promptVersion": 0,
-   "schemaVersion": 1,
-   "segmentHash": "62b2caa2c324fd8d69569545834fad78d31cb23b2d7b28d2e9e92d3665540c63"
   }
  },
  "Lightning Greaves": {
@@ -2097,7 +1953,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "ca204b66-8d0c-431a-8d34-282f7c2d17da",
@@ -2190,7 +2046,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "manaLines": [
     {
      "amount": {
@@ -2381,7 +2237,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "manaLines": [
     {
      "amount": {
@@ -2553,7 +2409,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "d683d985-9888-4d21-8b5f-69e69ce4a03b",
@@ -2710,7 +2566,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "manaLines": [
     {
      "amount": {
@@ -2869,7 +2725,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "manaLines": [
     {
      "amount": {
@@ -3020,7 +2876,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "b1544f21-7e98-461b-aed5-e748b0168c52",
@@ -3156,7 +3012,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "0d4ecdb1-ec90-497f-a7a4-1c68092b8757",
@@ -3236,7 +3092,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "3567c3c8-b3c7-45b7-935b-b1fdbc973720",
@@ -3424,7 +3280,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "4b515bb0-f275-4400-8032-3173b799ab40",
@@ -3632,7 +3488,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "landFetch": {
     "kind": "permanent",
     "reach": [
@@ -3763,7 +3619,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 312,
+   "deriveVersion": 314,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "34515b16-c9a4-4f98-8c77-416a7a523407",

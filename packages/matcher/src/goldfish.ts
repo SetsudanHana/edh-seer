@@ -722,6 +722,8 @@ interface DeckSlot {
   fetches: boolean;
   /** The land this fetch FINDS arrives tapped -- Evolving Wilds and the Landscape cycle. */
   fetchTapped?: boolean;
+  /** The land this fetch finds is a BASIC one: its text says "basic" (Rampant Growth, Cultivate). */
+  fetchesBasic?: boolean;
   /** ...unless you already control this many lands: Fabled Passage's own untap clause. */
   fetchUntapsAt?: number;
   /** A tap-replacement that pays PER QUALIFYING SOURCE rather than once: Forsaken Monument reads
@@ -736,7 +738,7 @@ interface DeckSlot {
   /** A STATIC COLOUR FIXER (#1115): while on the battlefield, the lands (or all mana) also make these colours. */
   fixer?: FixerMask;
 }
-interface FixerMask { mask: number; covers: "lands" | "all-mana" }
+interface FixerMask { mask: number; covers: "lands" | "all-mana" | "basics" }
 
 /** The static colour fixer a card prints, as the simulation's mask (the audit reads the same `staticFixer`). */
 function fixerOf(dc: DeckCard): { fixer?: FixerMask } {
@@ -939,7 +941,9 @@ function colourGateFields(dc: DeckCard, deck: readonly DeckCard[]): { colourGate
 const FETCHED_LAND: Perm = { name: "", types: new Set(["land"]), subtypes: new Set(), land: true, manaValue: 0, basic: false, power: null };
 
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
-interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean; colors: number; baseColors?: number; colourGate?: BoardGate; fixer?: FixerMask }
+// `basic`: the FRONT face's supertype, read once when the land enters -- the colour credit asks it every turn of every trial (#1213: per-turn
+// it cost the two whole-simulation tests ~20%).
+interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; basic: boolean; output: ManaOutput; everyLandType: boolean; colors: number; baseColors?: number; colourGate?: BoardGate; fixer?: FixerMask }
 
 function boardFor(lands: OnBoardLand[], pod: number): { lands: number; basics: number; types: Set<string>; opponents: number } {
   const types = new Set<string>();
@@ -997,6 +1001,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       ...fixerOf(dc),
       fetches,
       fetchTapped: fetches && fetchTappedOf(dc) && opts.landsUntapped !== true,
+      ...(fetches && /\bbasic\b/i.test(dc.card.oracleText ?? "") ? { fetchesBasic: true } : {}),
       ...(tapBonus ? { tapBonus } : {}),
       ...(landfall > 0 ? { landfall } : {}),
       ...(fetches && fetchUntapsOf(dc) ? { fetchUntapsAt: FETCH_UNTAP_LANDS } : {}),
@@ -1291,6 +1296,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
               && !(played.fetchUntapsAt !== undefined && board.lands >= played.fetchUntapsAt)
             : opts.landsUntapped !== true && entersTapped(played.land!, board),
           typeLine: played.typeLine,
+          basic: /\bbasic\b/i.test(played.typeLine.split(" // ")[0]!.split(/\s[—–-]\s/)[0]!),
           output: played.output,
           everyLandType: played.everyLandType,
           colors: played.colors,
@@ -1320,15 +1326,16 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         // A STATIC FIXER (Chromatic Lantern, Prismatic Omen, Urborg, Chromatic Orrery) makes every source it
         // covers tap for its colours, from the turn AFTER it is cast (the audit's `manaValue < turn` clock) or
         // the turn its land taps. CEILING: a land with no mana ability of its own (a fetch) gains none.
-        let fixLands = 0, fixAll = 0;
-        const fixes = (f: FixerMask): void => { if (f.covers === "all-mana") fixAll |= f.mask; else fixLands |= f.mask; };
+        let fixLands = 0, fixAll = 0, fixBasics = 0;
+        const fixes = (f: FixerMask): void => { if (f.covers === "all-mana") fixAll |= f.mask; else if (f.covers === "basics") fixBasics |= f.mask; else fixLands |= f.mask; };
         for (const t of statics) if (t.turn < turn) fixes(t.fixer);
         for (const l of lands) if (l.fixer && !(l.enteredTapped && l.enteredTurn === turn)) fixes(l.fixer);
         fixLands |= fixAll;
+        fixBasics |= fixLands;
         for (const l of lands) {
           if (l.enteredTapped && l.enteredTurn === turn) continue;
           const m = produced(l.output, lands, perms, turn);
-          if (m > 0) push(m, (l.colourGate && l.baseColors !== undefined && !holds(l.colourGate, perms) ? l.baseColors : l.colors) | fixLands, false, l);
+          if (m > 0) push(m, (l.colourGate && l.baseColors !== undefined && !holds(l.colourGate, perms) ? l.baseColors : l.colors) | (l.basic ? fixBasics : fixLands), false, l);
         }
         const now = (r: Mana): { mana: number; colors: number } => ({
           mana: r.out ? produced(r.out, lands, perms, turn) : r.mana,
@@ -1421,9 +1428,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           // "a Forest" and the trial never chooses one. It counts as a LAND and as NEITHER a basic
           // nor a type, which is the pessimistic direction for every other conditional land on the
           // board: fewer suppliers means more of them enter tapped. Stated rather than guessed.
+          // ...EXCEPT WHEN THE TEXT SAYS "basic" (`fetchesBasic`): every land it can find is a basic land, so the fetched one carries the supertype and a
+          // basics-only static fixer (Pulse of Llanowar) reaches it. It still names no basic type, so type conditions read it as before.
+          // CEILING: a fetch that does not say "basic" ("an Island or Mountain card", "a land card") may find a basic or not; it stays "".
           // A FETCHED LAND'S IDENTITY IS UNKNOWN, but its COLOUR is not: the spell names what it may
           // find, and `fetchMaskOf` reads that against the lands this deck actually holds.
-          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true && opts.landsUntapped !== true, typeLine: "", output: { amount: 1 }, everyLandType: false, colors: cast.colors });
+          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true && opts.landsUntapped !== true, typeLine: cast.fetchesBasic === true ? "Basic Land" : "", basic: cast.fetchesBasic === true, output: { amount: 1 }, everyLandType: false, colors: cast.colors });
           perms.push(FETCHED_LAND);
           takeRandomLand(library, turn > turns ? spill : random);
           if (a.fetchTapped !== true || opts.landsUntapped === true) pool += 1;

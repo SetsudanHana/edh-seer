@@ -461,7 +461,14 @@ import { emblemRecipient } from "../emblem.js";
 // a bare "mana" adds no amount (Piracy), and an ability's number word is a number (Cosmic Crucible "four" -> "4").
 // 312: #1193 task 2 (Fable finding 5): ManaLine states what the matcher used to re-parse. `cost.loyalty` (signed, parsed once), `cost.consumes` (what the cost uses up: energy, discard, exile, return-to-hand, forage,
 // collect-evidence, unknown; {Q} untap, exert and mill consume nothing, so Pili-Pala's {Q} line is no longer "paid"), `restriction.minManaValue`, and `trigger: {event, subject: SubjectFilter, text}` replacing `trigger` + `triggerSubject`.
-export const DERIVE_VERSION = 312;
+// 313: #1210 grammar reads 14 underived cards (punctuated ability words, opening-hand reveals, energy costs, "as ~ enters or is
+// turned face up", look-at-top, "who doesn't", "after you roll a die", phase-in, Pulse of Llanowar); bought cards take the new
+// readings where the grammar now reads them (36 cards, each checked against oracle text); staticFixer gains `covers: "basics"`;
+// "As this creature enters, … counters on it" is the card itself (10 bought cards gain `self`).
+// 314: #1210 tasks 5-6: a stored record whose event has no printed cue in its own segment keeps its stored trigger (`misplaced` guard: Astrid Peth, Sidisi, Huntmaster of the Fells and others) and, when the sentence that carries the cue is no same-event record's, reads THAT sentence (Kratos) or is dropped as its twin; a
+// back-reference after "look at the top ... of your library" is the looked-at card (fromZone library; 32 cards read complete again, 15 grammar-only), "if it's a X card" is its object (\"a X card from the top card of your library\": the mill emit is control you), Discover the Impossible
+// puts from exile, and a spell returning itself leaves the stack (13 spells).
+export const DERIVE_VERSION = 314;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -541,8 +548,10 @@ function counterOnSelf(verb: string | undefined, text: string, cardName?: string
   // put a counter on it"; "whenever a nontoken creature you control enters, put a +1/+1 counter
   // on it" (The Great Henge) is that creature -- the panel's Henge -> Dusk Legion Duelist REAL
   // pair was unjoined by reading it as self on the first derive-153 run.
+  // "As this creature enters [or is turned face up], put X +1/+1 counters on it": the lead-in names the card, so "it" is the card (Crowd-Control Warden).
+  const lead = text.replace(/^as (?:this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)|~) enters(?: or is turned face up)?, /i, "");
   const onIt = re.onIt.test(text) && !OTHER_OBJECT.test(text)
-    && (triggerIsSelf || /^this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(text));
+    && (triggerIsSelf || lead !== text || /^this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(text));
   if (!onThis && !onIt) return false;
   // THE CARD'S OWN NAME IS NOT "THE OTHER ONE" (DERIVE 173, overview item 8): `onOther` reads "counters
   // on THE Ozolith" as "on the <something>", so The Ozolith's own counters went kindless and fed The
@@ -1527,7 +1536,7 @@ const ACTION_FAMILY: Record<string, string> = {
     "bolster", "adapt", "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn",
     "monarch", "initiative", "ring-tempts", "explore", "connive", "endure", "cast", "play", "prevent", "cost-modify", "double", "animate",
     "roll-dice", "flip-coin", "extra-turn", "emblem", "exchange", "win-game", "lose-game", "clash", "exert", "manifest", "convert", "earthbend",
-    "airbend", "waterbend", "blight", "behold", "extra-combat", "extra-phase", "trigger-again", "phase-out"].map((v) => [v, "tail"])),
+    "airbend", "waterbend", "blight", "behold", "extra-combat", "extra-phase", "trigger-again", "phase-out", "phase-in"].map((v) => [v, "tail"])),
 };
 const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
@@ -1775,6 +1784,36 @@ const REVEALS = /\b(?:reveals?|looks? at)\b/i;
 const ENTERS_PREPARED = /\benters prepared\b/i;
 const BECOMES_PREPARED = /\bbecomes? prepared\b/i;
 
+/** The sentence a record numbered into the WRONG one belongs to. Its own text carries no printed cue for its event but another clause's text
+ *  does. Returns that sentence when exactly one such text is not already the text of a record with the same event (a mode bullet repeating
+ *  its header's trigger keeps its own text: its header IS the same-event owner); `""` when several are, so no printed text is read at all;
+ *  `undefined` when the record is not misplaced or only a same-event owner carries the cue. */
+/** A reflexive sentence ("When you do", "When they do", "Whenever a card is drawn this way"): its event is the previous sentence's verb by the store's convention. */
+// One to four words between "when" and "do", each word then one space: no overlap between the parts, so no backtracking (CodeQL polynomial-redos).
+// CEILING: a reflexive opening of five or more words ("Whenever one or more of them do") or with a double space is not matched; over the
+// corpus's 109198 sentences the four-word form matches the same 407 as the unbounded one did (2026-10-15).
+const REFLEXIVE_OPENING = /^\s*(?:when|whenever)\s(?:[\w']+\s){1,4}(?:do|does)\b/i;
+function isReflexiveText(text: string): boolean {
+  const t = withoutAbilityWord(text);
+  return REFLEXIVE_OPENING.test(t) || /\bthis way\b/i.test(t.split(",")[0] ?? "");
+}
+
+function homeOfMisplaced(
+  clause: { id: number | string; trigger?: { event?: string } | null },
+  clauses: readonly { id: number | string; trigger?: { event?: string } | null }[],
+  clauseTexts?: Record<number, string>,
+): string | undefined {
+  const event = clause.trigger?.event;
+  if (!event || !clauseTexts) return undefined;
+  const own = textForClause(clause, clauseTexts);
+  if (!own || triggerHasCue(event, own)) return undefined;
+  // A REFLEXIVE "When you do" sentence is numbered the previous sentence's verb as its event -- the store's convention, not drift (Curious Forager).
+  if (isReflexiveText(own)) return undefined;
+  const hits = [...new Set(Object.values(clauseTexts).filter((t) => t && t !== own && triggerHasCue(event, t)))];
+  const orphans = hits.filter((t) => !clauses.some((c) => c !== clause && c.trigger?.event === event && textForClause(c, clauseTexts) === t));
+  return orphans.length === 0 ? undefined : orphans.length === 1 ? orphans[0] : "";
+}
+
 export function deriveAbilities(
   clauses: ClauseRecord[],
   cardName?: string,
@@ -1823,6 +1862,10 @@ export function deriveAbilities(
 
   /** What an earlier clause exiled, for "the exiled card" in a later one (#860). */
   let lastExiled: string | undefined;
+  /** Per clause text, the trigger verbs a record has already read off it (see `misplaced`). */
+  const grammarCovered = new Map<string, Map<string, number | string>>();
+  /** Re-homed records dropped-if-redundant: clause id -> the id of the record that already read their event off the same sentence. */
+  const twinOf = new Map<number | string, number | string>();
   for (let clause of clauses) {
     // "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860): see `exiledAcrossClauses`.
     ({ clause, lastExiled } = exiledAcrossClauses(clause, lastExiled, cardName));
@@ -1831,7 +1874,13 @@ export function deriveAbilities(
     // keeping the effect and dropping the trigger would leave the card claiming to do a thing it
     // never does. The token's own derived row carries both halves.
     if (grantedToken?.has(clause.id)) continue;
-    clause = withGrammarActions(clause, clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
+    // A MISPLACED RECORD READS NO TEXT BUT ITS OWN SENTENCE. The stored numbering drifts from `segment()`'s when the model splits a compound
+    // (Astrid Peth) or merges two sentences (Kratos): a record whose event has NO printed cue in the text numbered to it, but does in other
+    // clauses' texts, was numbered into the wrong sentence. EXACTLY ONE other text carrying the cue re-homes it there (trigger kept as stored,
+    // effect read off that sentence); none-or-several leave it NO printed text (the stored reading alone). Mixing the stored trigger with another
+    // sentence's effect was Kratos at 314: a `dies` trigger carrying the end-step's +1/+1 counters.
+    const rehomed = homeOfMisplaced(clause, clauses, clauseTexts);
+    clause = withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
     // matcher can stop reading a back-face ability against the card's UNION of types.
     const face = clauseFaces?.[clause.id];
@@ -1871,7 +1920,7 @@ export function deriveAbilities(
     // Who performs each action, when the clause names someone the object text does not carry. The
     // cue localises the actor to a VERB, not to an action, so a clause with two actions of that verb
     // is ambiguous and is left alone -- a missing answer beats a wrong one.
-    const clauseText = textForClause(clause, clauseTexts);
+    const clauseText = rehomed ?? textForClause(clause, clauseTexts);
     // "EACH CREATURE YOU CONTROL BECOMES PREPARED" IS A PREPARE, NOT A GRANT (CR 722.3a). Codie,
     // Ravenous Codex's activated ability came back from the model as `grant-ability` even with
     // `prepare` in the vocabulary, so the one card that prepares a whole board prepared nothing.
@@ -1977,10 +2026,25 @@ export function deriveAbilities(
       subject.control = r.control === "any" && /\byou control\b/i.test(recipient) ? "you" : r.control;
       grantedTo = { control: subject.control, token: null, type: subject.type, ...(subject.subtype ? { subtype: subject.subtype } : {}) };
     };
-    const grammarAll = clause.trigger?.event && text ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
+    // THE PRINTED TRIGGER MUST BE THIS RECORD'S OWN. The stored numbering is the model's and `segment()`'s is the segmenter's; they drift when the
+    // model splits a compound ("enters or attacks") into two records (Astrid Peth: stored 1 enters, 2 attacks, 3 the Brand-new Sky trigger; segment()
+    // has 2 for that sentence). A record whose event has NO printed cue in this text but does in another clause's text was numbered into the wrong
+    // sentence: it keeps its stored trigger, as before an ability word stopped hiding the preamble.
+    const misplaced = rehomed !== undefined || (clause.trigger?.event !== undefined && !isReflexiveText(text) && !triggerHasCue(clause.trigger.event, text)
+      && Object.values(clauseTexts ?? {}).some((t) => t !== text && triggerHasCue(clause.trigger!.event!, t)));
+    // A re-homed record whose event the sentence's own record already read (Kratos 2 `dies` on the attack-or-dies sentence record 1 claims;
+    // Astrid 2 `attacks` on the enters-or-attacks sentence) is that record's twin, not a second ability.
+    const partner = misplaced && rehomed ? grammarCovered.get(rehomed)?.get(normalizeTriggerVerb(clause.trigger!.event!) ?? "") : undefined;
+    if (partner !== undefined) twinOf.set(clause.id, partner);
+    const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
       clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
       readings?.[clause.id]?.trigger, curse) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
+    if (text && claimed.length > 0) {
+      const covered = grammarCovered.get(text) ?? new Map<string, number | string>();
+      for (const g of claimed) for (const v of g.verbs) if (!covered.has(v)) covered.set(v, clause.id);
+      grammarCovered.set(text, covered);
+    }
     /** The clause's further readings of its own event, each a twin of the first (pushed below). */
     grammarExtra = claimed.slice(1);
     if (grammarAll) {
@@ -2819,6 +2883,21 @@ export function deriveAbilities(
     for (const e of abilities.flatMap((a) => a.emits ?? [])) {
       const types = Array.isArray(e.subject.type) ? e.subject.type : [e.subject.type];
       if (POLYMORPH_VERBS.has(e.verb) && e.subject.self !== true && types.includes("creature")) e.subject.control = "you";
+    }
+  }
+  // A TWIN IS DROPPED ONLY WHEN IT SAYS NOTHING ITS PARTNER DOES NOT: same trigger, same effect kind, and every emit (verb, type, subtype, counter, self) is on one
+  // of the partner's abilities of that trigger. A twin carrying more (Champions of the Shoal's `taps` emit, Borborygmos' typed `discard land`) stays, re-homed.
+  // CEILING: a cue heuristic -- a twin is "the same verb already claimed on that sentence", and a re-homed record is "the one orphan sentence that
+  // prints its cue". A card whose record numbering drifts in a way neither sees keeps its stored trigger over the sentence its own text prints.
+  if (twinOf.size > 0) {
+    const emitKey = (e: { verb: string; subject: SubjectFilter }): string => [e.verb, JSON.stringify(e.subject.type ?? null), e.subject.subtype ?? "", e.subject.counter ?? "", e.subject.self ?? ""].join("|");
+    const verbsKey = (a: Ability): string => (a.trigger?.verbs ?? []).join(",");
+    const redundant = (a: Ability, partnerId: number | string): boolean => abilities.some((b) => b !== a && b.clause === partnerId && verbsKey(b) === verbsKey(a)
+      && b.effect.kind === a.effect.kind && (a.emits ?? []).every((e) => (b.emits ?? []).some((f) => emitKey(f) === emitKey(e))));
+    for (let i = abilities.length - 1; i >= 0; i--) {
+      const a = abilities[i]!;
+      const partnerId = a.clause !== undefined ? twinOf.get(a.clause) : undefined;
+      if (partnerId !== undefined && redundant(a, partnerId)) abilities.splice(i, 1);
     }
   }
   return { abilities, unclaimed, unknownTriggers };

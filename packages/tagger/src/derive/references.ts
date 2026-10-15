@@ -122,6 +122,9 @@ export function antecedentSource(actions: readonly Action[], idx: number, trigge
     // A GRANT's object is the ability granted ("haste"), never a thing (#896 task 6): "That creature
     // gains haste. Sacrifice it" (Incandescent Soulstoke) means the creature put before the grant.
     if (actions[i]?.verb === "grant-ability") continue;
+    // "THE EXILED CARD" is never what a COST tapped ("Tap two untapped creatures you control: ... becomes a
+    // copy of the exiled card", Dermotaxi).
+    if (verb === "exile" && (actions[i]?.verb === "tap" || actions[i]?.verb === "untap")) continue;
     return { to: "action", action: i };
   }
   // A REVEALED OR LOOKED-AT CARD outranks the trigger: it is the nearer thing the sentence names.
