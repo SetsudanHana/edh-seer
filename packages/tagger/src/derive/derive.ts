@@ -1789,7 +1789,10 @@ const BECOMES_PREPARED = /\bbecomes? prepared\b/i;
  *  its header's trigger keeps its own text: its header IS the same-event owner); `""` when several are, so no printed text is read at all;
  *  `undefined` when the record is not misplaced or only a same-event owner carries the cue. */
 /** A reflexive sentence ("When you do", "When they do", "Whenever a card is drawn this way"): its event is the previous sentence's verb by the store's convention. */
-const REFLEXIVE_OPENING = /^\s*(?:when|whenever)\s+(?:you|they|that player|[\w' ]+?)\s+(?:do|does)\b/i;
+// One to four words between "when" and "do", each word then one space: no overlap between the parts, so no backtracking (CodeQL polynomial-redos).
+// CEILING: a reflexive opening of five or more words ("Whenever one or more of them do") or with a double space is not matched; over the
+// corpus's 109198 sentences the four-word form matches the same 407 as the unbounded one did (2026-10-15).
+const REFLEXIVE_OPENING = /^\s*(?:when|whenever)\s(?:[\w']+\s){1,4}(?:do|does)\b/i;
 function isReflexiveText(text: string): boolean {
   const t = withoutAbilityWord(text);
   return REFLEXIVE_OPENING.test(t) || /\bthis way\b/i.test(t.split(",")[0] ?? "");
