@@ -589,6 +589,36 @@ test("a permanent arriving tapped emits no tap event", () => {
   expect(real.abilities.flatMap((a) => a.emits ?? []).some((e) => e.verb === "taps")).toBe(true);
 });
 
+test("a tap effect under a trigger that says enters/becomes tapped still emits taps (#1215)", () => {
+  // Champions of the Shoal: "Whenever this creature enters or becomes tapped, tap up to one target
+  // creature and put a stun counter on it." ARRIVES_TAPPED read the TRIGGER's "enters or becomes
+  // tapped" and dropped the effect's real tap. Only the effect may speak for the arrival state.
+  const text = "Whenever this creature enters or becomes tapped, tap up to one target creature and put a stun counter on it.";
+  const actions = [
+    { verb: "tap", object: "up to one target creature", optional: true },
+    { verb: "add-counter", object: "a stun counter", amount: "1" },
+  ];
+  const { abilities } = deriveAbilities(
+    [
+      { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions },
+      { id: 2, abilityType: "triggered", trigger: { event: "taps", subject: "this creature", control: "you" }, actions },
+    ],
+    "Champions of the Shoal",
+    { 1: text, 2: text },
+  );
+  // One ability per action: each trigger (enters, taps) carries a taps emit and a counter emit.
+  const tappers = abilities.filter((a) => (a.emits ?? []).some((e) => e.verb === "taps"));
+  expect(tappers.flatMap((a) => a.trigger?.verbs ?? []).sort()).toEqual(["enters", "taps"]);
+
+  // The effect's own arrival state is still no event, trigger or not.
+  const arrival = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [{ verb: "put", object: "target land", toZone: "battlefield" }, { verb: "tap", object: "target land" }] }],
+    "Some Card",
+    { 1: "When this creature enters, put target land onto the battlefield tapped." },
+  );
+  expect(arrival.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "taps")).toEqual([]);
+});
+
 test("a trigger on a permanent entering TRANSFORMED is not an enters trigger", () => {
   // Corruption of Towashi: "Whenever a permanent you control transforms or a permanent you control
   // enters transformed, you may draw a card." The normalizer kept "enters transformed" in the

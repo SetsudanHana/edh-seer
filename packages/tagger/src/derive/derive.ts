@@ -469,7 +469,8 @@ import { emblemRecipient } from "../emblem.js";
 // back-reference after "look at the top ... of your library" is the looked-at card (fromZone library; 32 cards read complete again, 15 grammar-only), "if it's a X card" is its object (\"a X card from the top card of your library\": the mill emit is control you), Discover the Impossible
 // puts from exile, and a spell returning itself leaves the stack (13 spells).
 // 315: #1205 parseSubject stops dropping qualifiers the schema already carries: nonbasic (basic:false), nonlegendary (legendary:false), snow/nonsnow, tapped/untapped as an adjective before the noun (not "enters tapped"), multicolored/monocolored (colorCount).
-export const DERIVE_VERSION = 315;
+// 316: #1215 the arrives-tapped suppression of a `taps` emit reads the clause's EFFECT only (effectText), never its trigger: "Whenever this creature enters or becomes tapped, tap up to one target creature" (Champions of the Shoal) lost its tap to the trigger's "enters ... tapped".
+export const DERIVE_VERSION = 316;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2289,7 +2290,7 @@ export function deriveAbilities(
       // (Hofri Ghostforge, Eater of Virtue, Chaos Shrine's Black Crystal wrote it; review of S3).
       const zone = refersToTrigger && (!action.fromZone || action.fromZone === "battlefield") ? zoneAfterEvent(clause.trigger?.event) : undefined;
       const emits = temporaryRider ? [] : actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, text, { self: emitsSelf })
-        .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)))
+        .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(effectText(text, cardName ?? ""))))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
         // Animate Dead) is the price of a reanimation aura: the permanent that would be the outlet is
