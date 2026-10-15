@@ -28,15 +28,19 @@ const ROUTE_OF: Record<string, SpeedRoute["kind"]> = {
  *  first, then the cards that set them up.
  *
  *  `routes` are `speedRoutes`: without them (the build panel's own copy) the tiles have no turn. */
-export function WinPlans({ wincons, routes, pressure, model }: {
+export function WinPlans({ wincons, routes, pressure, model, picked: pickedOutside, onPick }: {
   wincons: Wincons; routes?: SpeedRoute[];
+  /** The plan picked, when the caller shares it (the plan lens below reads the same plan). */
+  picked?: string; onPick?: (cls: string) => void;
   /** The deck's cards: with them, each named card carries its art. */
   model?: EngineModel | null;
   /** The combat clock's snapshot on the way there: expected power on board by turn 5. */
   pressure?: number;
 }) {
   const { classes, focus } = wincons;
-  const [picked, setPicked] = useState(classes[0]?.class ?? "");
+  const [pickedHere, setPickedHere] = useState(classes[0]?.class ?? "");
+  const picked = pickedOutside ?? pickedHere;
+  const setPicked = onPick ?? setPickedHere;
   const plan = classes.find((c) => c.class === picked) ?? classes[0];
   if (!classes.length || !plan) return null;
   // A voltron plan reads its commander-damage turn when it HAS one, and the board's otherwise: every

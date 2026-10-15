@@ -21,6 +21,7 @@ import { ManaCurveChart } from "./ManaCurveChart.js";
 import { ManaTimeline } from "./ManaTimeline.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
+import { PlanLens } from "./PlanLens.js";
 import { PlanThemes } from "./PlanThemes.js";
 import { PanelVerdict } from "./PanelVerdict.js";
 import { StrongestPairs } from "./StrongestPairs.js";
@@ -181,6 +182,11 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   }, [themes]);
   const unmetDemand = (report.deckMath?.demand ?? []).some((d) => d.available !== null && d.suppliers === 0);
   const [centre, setCentre] = useState<string | null>(null);
+  // THE PLAN PICKED UNDER "HOW YOU WIN", shared with the plan lens below it.
+  const winClasses = report.deckMath?.wincons?.classes ?? [];
+  const [winPick, setWinPick] = useState<string | null>(null);
+  const winPlan = winClasses.find((c) => c.class === winPick) ?? winClasses[0];
+  const allWinCards = useMemo(() => [...new Set(winClasses.flatMap((c) => c.cards ?? []))], [winClasses]);
   // THE PAIR ASKED FOR FROM ELSEWHERE IN THE REPORT (pair-view mockups F1/F2, owner 2026-09-30): a
   // new object per ask, so asking for the same pair again opens it again.
   const [pairAsk, setPairAsk] = useState<PairAsk | undefined>(undefined);
@@ -194,6 +200,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     setShownReport(report);
     setCentre(null);
     setPairAsk(undefined);
+    setWinPick(null);
     setWalkGen((g) => g + 1);
   }
   /** ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27). The card drawer draws the card's own
@@ -468,7 +475,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               <div className="grid gap-8 items-start [grid-template-columns:repeat(auto-fit,minmax(min(100%,40rem),1fr))]">
                 {/* THE TURNS AS TILES, AND ONE TURN'S CARDS AT A TIME. */}
                 {turns ? <FirstTurns model={turns} /> : null}
-                <HowYouWin report={report} manaValueOf={manaValueOf} model={themes} />
+                <HowYouWin report={report} manaValueOf={manaValueOf} model={themes} picked={winPlan?.class} onPick={setWinPick} />
                 {/* WHAT YOUR CARDS ARE WAITING FOR, ONLY WHEN SOMETHING IS (owner, 2026-09-27: "less is
                   *  more"). With every demand met it said "everything your cards care about, something in
                   *  the deck causes" under a second copy of the turn-7 line: nothing to act on. */}
@@ -483,6 +490,13 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
                   />
                 ) : null}
               </div>
+              {/* THE PICKED PLAN ON A MAP, FULL WIDTH (persona rounds 2026-10-14..15): who feeds whom,
+                *  which links keep working, and what a cut costs. */}
+              {themes && data.graph && winPlan?.cards?.length ? (
+                <div className="mt-8">
+                  <PlanLens report={report} graph={data.graph} model={themes} plan={winPlan.class} planCards={winPlan.cards} allPlanCards={allWinCards} manaValueOf={manaValueOf} />
+                </div>
+              ) : null}
             </Movement>
           ) : null}
           <HighSynergyCards cards={report.cards} />
