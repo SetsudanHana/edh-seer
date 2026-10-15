@@ -1,4 +1,4 @@
-import { pairStrength, unread, type EngineModel, type Link } from "./engine-model.js";
+import { pairStrength, unread, type EngineCard, type EngineModel, type Link } from "./engine-model.js";
 
 /** THE PLAN LENS: one win plan read as a map of who feeds whom (persona rounds 2026-10-14..15, five
  *  rounds, the readers' tasks were "which cards keep my drain cards firing", "what does cutting
@@ -49,7 +49,6 @@ export function planLens(model: EngineModel, planCards: readonly string[], combo
   const plan = [...new Set(planCards)].filter((n) => physicalIds(model, n).length);
   const inPlan = new Set(plan);
   const groups = new Map(model.groups.map((g) => [g.tag, g]));
-  const deckNames = new Set([...model.cards.values()].filter((c) => !c.isToken).map((c) => c.physical));
   const smax = Math.max(1, ...[...model.cards.values()].map((c) => c.score));
   const comboKey = new Set(combos.flatMap((cs) => cs.flatMap((a) => cs.filter((b) => b !== a).map((b) => `${a}\u0001${b}`))));
 
@@ -68,12 +67,11 @@ export function planLens(model: EngineModel, planCards: readonly string[], combo
         // drain card is its maker setting the plan up. A token nothing in the deck makes is left out.
         // It keeps working only if the maker keeps making it: Asinine Antics makes its Cursed Roles
         // once, though each Role's enter trigger repeats; The Rani makes a Mark every time she hits.
-        const givers = from.isToken ? (from.madeBy ?? []).filter((n) => deckNames.has(n)) : [from.physical];
-        for (const giver of givers) {
+        for (const { name: giver, again } of owners(model, from)) {
           if (giver === to.physical) continue;
           const k = `${giver}\u0001${to.physical}`;
           const e = acc.get(k) ?? { from: giver, to: to.physical, links: [], strength: 0 };
-          e.links.push({ l, lasting: l.repeat !== "oneshot" && (!from.isToken || makesAgain(model, giver, from.id)) });
+          e.links.push({ l, lasting: l.repeat !== "oneshot" && again });
           e.strength = Math.max(e.strength, strength);
           acc.set(k, e);
         }
@@ -109,13 +107,22 @@ export function planLens(model: EngineModel, planCards: readonly string[], combo
 /** A lasting, read reason first, then any read one: the sentence a reader can check. */
 const rank = (x: { l: Link; lasting: boolean }) => (x.lasting ? 0 : 2) + (unread(x.l) ? 1 : 0);
 
-/** Whether a deck card makes this token over and over: a repeating link from the card to it. */
-function makesAgain(model: EngineModel, maker: string, token: string): boolean {
-  for (const c of model.cards.values()) {
-    if (c.physical !== maker) continue;
-    if (model.partners.get(c.id)?.get(token)?.links.some((l) => l.from === c.id && l.repeat !== "oneshot")) return true;
+/** THE DECK CARDS A CARD'S LINKS COUNT FOR: itself, or for a token the cards that make it, each with
+ *  whether it makes the token over and over. `madeBy` names FACES (Legion's Landing, not "Legion's
+ *  Landing // Adanto, the First Fort"), so each is read back to the physical card a player cuts. */
+function owners(model: EngineModel, card: EngineCard): { name: string; again: boolean }[] {
+  if (!card.isToken) return [{ name: card.physical, again: true }];
+  const out = new Map<string, boolean>();
+  for (const face of card.madeBy ?? []) {
+    for (const c of model.cards.values()) {
+      if (c.isToken || (c.name !== face && c.physical !== face)) continue;
+      // A REPEATING "creates" link, the tag the cut list's makers key on: a static anthem from the
+      // same card to its token is not making it again.
+      const again = (model.partners.get(c.id)?.get(card.id)?.links ?? []).some((l) => l.from === c.id && /^creates/.test(l.tag) && l.repeat !== "oneshot");
+      out.set(c.physical, (out.get(c.physical) ?? false) || again);
+    }
   }
-  return false;
+  return [...out].map(([name, again]) => ({ name, again }));
 }
 
 const physicalIds = (model: EngineModel, name: string) => [...model.cards.values()].filter((c) => c.physical === name).map((c) => c.id);
@@ -160,13 +167,22 @@ export function cutPreview(lens: PlanLens, cut: ReadonlySet<string>) {
 export function acrossPlans(model: EngineModel, name: string, planCards: readonly string[]) {
   const wins = new Set(planCards);
   const all = new Set<string>(), lasting = new Set<string>();
-  for (const c of model.cards.values()) {
-    if (c.physical !== name) continue;
-    for (const [o, pair] of model.partners.get(c.id) ?? []) {
-      const other = model.cards.get(o)?.physical;
-      if (!other || other === name || !wins.has(other)) continue;
-      all.add(other);
-      if (!pair.once) lasting.add(other);
+  const seen = new Set<object>();
+  for (const row of model.partners.values()) {
+    for (const pair of row.values()) {
+      if (seen.has(pair)) continue;
+      seen.add(pair);
+      for (const l of pair.links) {
+        const ends = [model.cards.get(l.from), model.cards.get(l.to)];
+        if (!ends[0] || !ends[1]) continue;
+        // Either way round, a token counting for its maker as the plan lens credits it.
+        for (const [mine, theirs] of [[ends[0], ends[1]], [ends[1], ends[0]]] as const) {
+          const me = owners(model, mine).find((o) => o.name === name);
+          if (!me || theirs.isToken || theirs.physical === name || !wins.has(theirs.physical)) continue;
+          all.add(theirs.physical);
+          if (l.repeat !== "oneshot" && me.again) lasting.add(theirs.physical);
+        }
+      }
     }
   }
   return { all: all.size, lasting: lasting.size, of: wins.size - (wins.has(name) ? 1 : 0) };
