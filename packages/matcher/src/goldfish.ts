@@ -722,6 +722,8 @@ interface DeckSlot {
   fetches: boolean;
   /** The land this fetch FINDS arrives tapped -- Evolving Wilds and the Landscape cycle. */
   fetchTapped?: boolean;
+  /** The land this fetch finds is a BASIC one: its text says "basic" (Rampant Growth, Cultivate). */
+  fetchesBasic?: boolean;
   /** ...unless you already control this many lands: Fabled Passage's own untap clause. */
   fetchUntapsAt?: number;
   /** A tap-replacement that pays PER QUALIFYING SOURCE rather than once: Forsaken Monument reads
@@ -997,6 +999,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       ...fixerOf(dc),
       fetches,
       fetchTapped: fetches && fetchTappedOf(dc) && opts.landsUntapped !== true,
+      ...(fetches && /\bbasic\b/i.test(dc.card.oracleText ?? "") ? { fetchesBasic: true } : {}),
       ...(tapBonus ? { tapBonus } : {}),
       ...(landfall > 0 ? { landfall } : {}),
       ...(fetches && fetchUntapsOf(dc) ? { fetchUntapsAt: FETCH_UNTAP_LANDS } : {}),
@@ -1422,9 +1425,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           // "a Forest" and the trial never chooses one. It counts as a LAND and as NEITHER a basic
           // nor a type, which is the pessimistic direction for every other conditional land on the
           // board: fewer suppliers means more of them enter tapped. Stated rather than guessed.
+          // ...EXCEPT WHEN THE TEXT SAYS "basic" (`fetchesBasic`): every land it can find is a basic land, so the fetched one carries the supertype and a
+          // basics-only static fixer (Pulse of Llanowar) reaches it. It still names no basic type, so type conditions read it as before.
+          // CEILING: a fetch that does not say "basic" ("an Island or Mountain card", "a land card") may find a basic or not; it stays "".
           // A FETCHED LAND'S IDENTITY IS UNKNOWN, but its COLOUR is not: the spell names what it may
           // find, and `fetchMaskOf` reads that against the lands this deck actually holds.
-          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true && opts.landsUntapped !== true, typeLine: "", output: { amount: 1 }, everyLandType: false, colors: cast.colors });
+          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true && opts.landsUntapped !== true, typeLine: cast.fetchesBasic === true ? "Basic Land" : "", output: { amount: 1 }, everyLandType: false, colors: cast.colors });
           perms.push(FETCHED_LAND);
           takeRandomLand(library, turn > turns ? spill : random);
           if (a.fetchTapped !== true || opts.landsUntapped === true) pool += 1;

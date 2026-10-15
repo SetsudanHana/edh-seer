@@ -1543,6 +1543,38 @@ test("Chromatic Lantern makes the lands blue in the simulation, beyond its own t
   for (let t = 0; t < 3; t++) expect(withStatic[t]).toBe(without[t]);
 });
 
+// A BASICS-ONLY FIXER (Pulse of Llanowar, #1210): only a basic land gains the colours. The twin has no fixer; it is the yardstick.
+const pulseLike = (covers: "basics" | undefined): DeckCard => ({
+  card: { name: covers ? "Pulse Like" : "Pulse Twin", typeLine: "Enchantment", oracleText: "", keywords: [], colors: ["G"], manaCost: "{1}{G}", manaValue: 2 } as never,
+  tags: covers ? ({ staticFixer: { covers, colours: WUBRG } } as never) : null,
+});
+const probe = (cost = "{2}{U}{U}"): DeckCard => ({ ...card("Probe", "Instant", 4), card: { ...card("Probe", "Instant", 4).card, manaCost: cost } });
+
+test("a basics fixer gives the colours to basic lands only, not to a nonbasic land of the same type", () => {
+  const island = (i: number) => card(`Island ${i}`, "Basic Land — Island", 0, "({T}: Add {U}.)", ["U"]);
+  const mountain = (i: number, line: string) => card(`Mountain ${i}`, line, 0, line.startsWith("Basic") ? "({T}: Add {R}.)" : "{T}: Add {R}.", ["R"]);
+  const deckWith = (extra: DeckCard, mountainLine: string) => [...Array.from({ length: 4 }, (_, i) => island(i)), ...Array.from({ length: 30 }, (_, i) => mountain(i, mountainLine)), extra, probe(), ...spells(30, 1)];
+  const run = (d: DeckCard[]) => simulate(d, { trials: 6_000, turns: 8, seed: 5 }).byCardCastable.get("Probe")!;
+  const basicWith = run(deckWith(pulseLike("basics"), "Basic Land — Mountain"));
+  const basicWithout = run(deckWith(pulseLike(undefined), "Basic Land — Mountain"));
+  expect(basicWith[7]!).toBeGreaterThan(basicWithout[7]! + 0.01);
+  const nonbasicWith = run(deckWith(pulseLike("basics"), "Land — Mountain"));
+  const nonbasicWithout = run(deckWith(pulseLike(undefined), "Land — Mountain"));
+  expect(nonbasicWith[7]!).toBeLessThanOrEqual(nonbasicWithout[7]! + 0.005);
+});
+
+test("a land a spell fetches with 'basic' in its text is a basic land, and gains a basics fixer's colours", () => {
+  const rampant = (i: number): DeckCard => ({ ...card(`Rampant ${i}`, "Sorcery", 2, "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle."), tags: fetchTags({ kind: "spell", tapped: true, reach: WUBRG }) });
+  const nonbasic = (i: number) => card(`Wastes Mountain ${i}`, "Land — Mountain", 0, "{T}: Add {R}.", ["R"]);
+  const deckWith = (extra: DeckCard, fetch: (i: number) => DeckCard) => [...Array.from({ length: 31 }, (_, i) => nonbasic(i)), ...Array.from({ length: 8 }, (_, i) => fetch(i)), extra, probe("{3}{U}"), ...spells(20, 1)];
+  const plain = (i: number) => card(`Plain ${i}`, "Sorcery", 2);
+  const run = (d: DeckCard[]) => simulate(d, { trials: 6_000, turns: 8, seed: 5 }).byCardCastable.get("Probe")!;
+  // With Pulse out, the basic a Rampant Growth finds taps for blue: the deck holds no other basic, so that is the only blue it has.
+  const withFetch = run(deckWith(pulseLike("basics"), rampant));
+  const noFetch = run(deckWith(pulseLike("basics"), plain));
+  expect(withFetch[7]!).toBeGreaterThan(noFetch[7]! + 0.005);
+});
+
 // A creature that is also a static fixer (Stormtide Leviathan, Dryad of the Ilysian Grove) is still a creature: it
 // attacks (#1115 review). A vanilla twin with the same body is the yardstick.
 test("a creature fixer is fielded and attacks like its vanilla twin", () => {
