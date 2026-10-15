@@ -1788,6 +1788,13 @@ const BECOMES_PREPARED = /\bbecomes? prepared\b/i;
  *  does. Returns that sentence when exactly one such text is not already the text of a record with the same event (a mode bullet repeating
  *  its header's trigger keeps its own text: its header IS the same-event owner); `""` when several are, so no printed text is read at all;
  *  `undefined` when the record is not misplaced or only a same-event owner carries the cue. */
+/** A reflexive sentence ("When you do", "When they do", "Whenever a card is drawn this way"): its event is the previous sentence's verb by the store's convention. */
+const REFLEXIVE_OPENING = /^\s*(?:when|whenever)\s+(?:you|they|that player|[\w' ]+?)\s+(?:do|does)\b/i;
+function isReflexiveText(text: string): boolean {
+  const t = withoutAbilityWord(text);
+  return REFLEXIVE_OPENING.test(t) || /\bthis way\b/i.test(t.split(",")[0] ?? "");
+}
+
 function homeOfMisplaced(
   clause: { id: number | string; trigger?: { event?: string } | null },
   clauses: readonly { id: number | string; trigger?: { event?: string } | null }[],
@@ -1798,7 +1805,7 @@ function homeOfMisplaced(
   const own = textForClause(clause, clauseTexts);
   if (!own || triggerHasCue(event, own)) return undefined;
   // A REFLEXIVE "When you do" sentence is numbered the previous sentence's verb as its event -- the store's convention, not drift (Curious Forager).
-  if (/^\s*when you do\b/i.test(withoutAbilityWord(own))) return undefined;
+  if (isReflexiveText(own)) return undefined;
   const hits = [...new Set(Object.values(clauseTexts).filter((t) => t && t !== own && triggerHasCue(event, t)))];
   const orphans = hits.filter((t) => !clauses.some((c) => c !== clause && c.trigger?.event === event && textForClause(c, clauseTexts) === t));
   return orphans.length === 0 ? undefined : orphans.length === 1 ? orphans[0] : "";
@@ -2020,7 +2027,7 @@ export function deriveAbilities(
     // model splits a compound ("enters or attacks") into two records (Astrid Peth: stored 1 enters, 2 attacks, 3 the Brand-new Sky trigger; segment()
     // has 2 for that sentence). A record whose event has NO printed cue in this text but does in another clause's text was numbered into the wrong
     // sentence: it keeps its stored trigger, as before an ability word stopped hiding the preamble.
-    const misplaced = rehomed !== undefined || (clause.trigger?.event !== undefined && !triggerHasCue(clause.trigger.event, text)
+    const misplaced = rehomed !== undefined || (clause.trigger?.event !== undefined && !isReflexiveText(text) && !triggerHasCue(clause.trigger.event, text)
       && Object.values(clauseTexts ?? {}).some((t) => t !== text && triggerHasCue(clause.trigger!.event!, t)));
     // A re-homed record whose event the sentence's own record already read (Kratos 2 `dies` on the attack-or-dies sentence record 1 claims;
     // Astrid 2 `attacks` on the enters-or-attacks sentence) is that record's twin, not a second ability.

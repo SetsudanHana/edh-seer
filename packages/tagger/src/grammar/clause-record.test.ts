@@ -360,6 +360,29 @@ test("Kratos, Stoic Father as shipped (grammar path): attacks, dies, end-step, a
   expect(tags.abilities.find((a) => a.trigger?.verbs?.[0] === "end-step")?.emits?.[0]?.subject).toMatchObject({ counter: "+1/+1" });
 });
 
+test("a reflexive sentence is never re-homed: Yes Man keeps the quest counter on itself, Explosion of Riches keeps its refusal (#1210)", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const act = (verb: string, object: string, extra: Record<string, unknown> = {}) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false, ...extra });
+  const yes = { name: "Yes Man, Personal Securitron", typeLine: "Legendary Artifact Creature — Robot", keywords: [] as string[],
+    oracleText: "{T}: Target opponent gains control of Yes Man. When they do, you draw two cards and put a quest counter on Yes Man. Activate only during your turn.\nWild Card \u2014 When Yes Man leaves the battlefield, its owner creates a tapped 1/1 white Soldier creature token for each quest counter on it." };
+  const yStored = [
+    { id: 1, abilityType: "activated", actions: [act("gain-control", "target opponent")] },
+    { id: 2, abilityType: "triggered", trigger: { event: "gains-control", subject: "Yes Man", control: "opponent" }, actions: [act("draw", "you", { amount: "2" }), act("add-counter", "quest counter")] },
+    { id: 3, abilityType: "triggered", trigger: { event: "leaves", subject: "Yes Man", control: "you" }, actions: [act("create", "a tapped 1/1 white Soldier creature token", { amount: "number of quest counters on Yes Man" })] },
+  ];
+  const y = deriveCardTags(deriveInputOf(yes as never, "x", yes.name, yStored as never));
+  expect(y.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added" && e.subject.counter === "quest")?.subject.self).toBe(true);
+  const ex = { name: "Explosion of Riches", typeLine: "Sorcery", keywords: [] as string[],
+    oracleText: "Draw a card, then each other player may draw a card. Whenever a card is drawn this way, Explosion of Riches deals 5 damage to target opponent chosen at random from among your opponents." };
+  const eStored = [
+    { id: 1, abilityType: "spell", actions: [act("draw", "a card"), act("draw", "a card", { optional: true })] },
+    { id: 2, abilityType: "triggered", trigger: { event: "draw", subject: "a card", control: "any" }, actions: [act("deal-damage", "target opponent chosen at random from among your opponents", { amount: "5" })] },
+  ];
+  const e = deriveCardTags(deriveInputOf(ex as never, "x", ex.name, eStored as never));
+  expect(e.abilities.filter((a) => a.trigger?.verbs?.includes("draw" as never)).length).toBe(0);
+});
+
 test("Territory Culler: the looked-at card goes from YOUR library to your graveyard, so the mill emit is control you; Domri's dig still names creature", async () => {
   const { deriveInputOf } = await import("../derive-input.js");
   const { deriveCardTags } = await import("../derive/derive.js");
@@ -371,6 +394,18 @@ test("Territory Culler: the looked-at card goes from YOUR library to your gravey
   const culler = derive("Territory Culler", "Creature — Eldrazi Drone", "Landfall \u2014 Whenever a land you control enters, look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.");
   const mill = culler.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "mill");
   expect(mill?.subject).toMatchObject({ control: "you", fromZone: "library" });
+  expect(mill?.subject.type).toBeUndefined();
+  // "Otherwise" / "if you don't": the card the condition did not take is untyped and never the card itself (Bison Whistle, Traveling Botanist).
+  const whistle = derive("Bison Whistle", "Artifact", "{1}, {T}: Look at the top card of your library. If it's a Bison card, you may put it onto the battlefield. If it's a creature card, you may reveal it and put it into your hand. Otherwise, you may put it into your graveyard.");
+  const wMill = whistle.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "mill");
+  expect(wMill?.subject).toMatchObject({ control: "you", fromZone: "library" });
+  expect(wMill?.subject.type).toBeUndefined();
+  const botanist = derive("Traveling Botanist", "Creature — Elf Scout", "Whenever this creature becomes tapped, look at the top card of your library. If it's a land card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.");
+  const bMill = botanist.abilities.find((a) => (a.emits ?? []).some((e) => e.verb === "mill"));
+  expect(bMill?.emits?.find((e) => e.verb === "mill")?.subject).toMatchObject({ control: "you", fromZone: "library" });
+  expect(bMill?.emits?.find((e) => e.verb === "mill")?.subject.type).toBeUndefined();
+  expect(bMill?.emits?.find((e) => e.verb === "mill")?.subject.self).toBeUndefined();
+  expect(bMill?.effect.subject?.self).toBeUndefined();
   const domri = derive("Domri Rade", "Legendary Planeswalker — Domri", "+1: Look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand.");
   expect(domri.abilities.find((a) => a.effect.kind === "search")?.effect.subject).toMatchObject({ type: "creature" });
 });
@@ -387,7 +422,7 @@ test("a 'look at the top card' whose later 'it' / 'that card' is resolved to the
   expect(hound.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.fromZone, a.toZone])).toEqual([["library", "hand"], ["library", "graveyard"]]);
   const reef = readCard("Risen Reef", "Creature — Elemental", "Whenever Risen Reef or another Elemental you control enters, look at the top card of your library. If it's a land card, you may put it onto the battlefield tapped. If you don't put the card onto the battlefield, put it into your hand.");
   expect(reef.complete).toBe(true);
-  expect(reef.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["a land card from the top card of your library", "library", "battlefield"], ["it", "library", "hand"]]);
+  expect(reef.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["a land card from the top card of your library", "library", "battlefield"], ["the top card of your library", "library", "hand"]]);
   // The card EXILED from the look is in exile, not the library (Discover the Impossible; stored answer: exile).
   const disc = readCard("Discover the Impossible", "Sorcery", "Look at the top five cards of your library. Exile one of them face down and put the rest on the bottom of your library in a random order. You may cast the exiled card without paying its mana cost if it's an instant spell with mana value 2 or less. If you don't, put that card into your hand.");
   expect(disc.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["the rest of the top five cards of your library", "library", "library"], ["that card", "exile", "hand"]]);

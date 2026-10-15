@@ -86,6 +86,9 @@ function objectWords(r: ActionReading): string {
     const t = /^if (?:it(?:'s| is) an?|that card is(?: an?)?) (.+?)(?: card)?$/i.exec(r.condition.trim());
     if (t && !/\b(?:card|with|mana)\b/i.test(t[1]!)) return `${/^[aeiou]/i.test(t[1]!) ? "an" : "a"} ${t[1]} card from ${r.lookedAt}`;
   }
+  // "Otherwise, put it into your graveyard" / "If you don't put the card into your hand, put it into your graveyard": the card the condition
+  // above did NOT take, so it is never the earlier put's type ("a creature card") -- the looked-at card, untyped, from your library.
+  if (r.fromZone === "library" && SINGULAR_REF.test(w) && r.condition !== undefined && /^(?:otherwise|if you (?:don't|didn't|do not|did not)\b)/i.test(r.condition.trim())) return r.lookedAt;
   // The look's library, in the words the store uses: "the rest of the top four cards of your library".
   if (/^the rest$/i.test(w)) return `${w} of ${r.lookedAt}`;
   const some = /^(.+) of (?:them|those cards)$/i.exec(w);
