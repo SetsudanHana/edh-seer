@@ -42,16 +42,21 @@ function useWide() {
   return wide;
 }
 
-export function PlanLens({ report, graph, model, plan: planClass, planCards, allPlanCards, manaValueOf }: {
+export function PlanLens({ report, graph, model, plan: planClass, planCards, plans, manaValueOf }: {
   report: DeckReport; graph: CardGraph; model: EngineModel;
   /** The plan picked above, and its cards. */
   plan: string; planCards: readonly string[];
-  /** Every plan's cards, for "across both your win plans". */
-  allPlanCards: readonly string[];
+  /** Every win plan, for what a tapped card feeds in each and "across your win plans". */
+  plans: readonly { plan: string; cards: readonly string[] }[];
   manaValueOf: (name: string) => number | undefined;
 }) {
   const wide = useWide();
   const lens = useMemo(() => planLens(model, planCards, (report.combos ?? []).map((c) => c.cards)), [model, planCards, report.combos]);
+  const perPlan = useMemo(() => plans.map((p) => ({
+    phrase: WIN_PHRASE[p.plan] ?? p.plan, here: p.plan === planClass,
+    lens: p.plan === planClass ? lens : planLens(model, p.cards, (report.combos ?? []).map((c) => c.cards)),
+  })), [plans, planClass, lens, model, report.combos]);
+  const allPlanCards = useMemo(() => [...new Set(plans.flatMap((p) => p.cards))], [plans]);
   const drawn = useMemo(() => (wide ? lens.setup : lens.setup.slice(0, PHONE_SETUP)), [lens, wide]);
   const [tap, setTap] = useState<string | null>(null);
   const [cut, setCut] = useState<string | null>(null);
@@ -120,7 +125,7 @@ export function PlanLens({ report, graph, model, plan: planClass, planCards, all
             {drawn.length < lens.setup.length ? ` The map draws the ${drawn.length} strongest cards that set it up; all ${lens.setup.length} are in the list.` : ""}
           </p>
         </div>
-        <Panel lens={lens} phrase={phrase} card={card} colours={colours} manaValueOf={manaValueOf} model={model} allPlanCards={allPlanCards}
+        <Panel lens={lens} phrase={phrase} card={card} colours={colours} manaValueOf={manaValueOf} model={model} allPlanCards={allPlanCards} perPlan={perPlan}
           tap={tap} cut={cut} cutSet={cutSet} open={open} lastingOnly={lastingOnly} hasCombo={hasCombo}
           onCut={(n) => { setCut(n); setTap(null); }} onOpen={(n) => setOpen(open === n ? null : n)} onClose={() => setTap(null)} />
       </div>
@@ -161,6 +166,31 @@ function LensMap({ lens, setup, wide, card, colours, manaValueOf, tap, cut, last
   const drawn = [...lines.values()].filter((e) => !cut.has(e.a) && !cut.has(e.b) && !(lastingOnly && !e.lasting && !e.combo))
     // Lasting lines on top of the dashed ones.
     .sort((x, y) => Number(x.lasting || x.combo) - Number(y.lasting || y.combo));
+  // EVERY LABEL WHERE IT FITS (round 6, phone: Nightmare Shepherd's name ran into Wicked Visitor's, and
+  // The Rani's count was cut at the edge because the edge check measured the name, not the longer
+  // count under it). Plan cards are placed first; a set-up card's label goes under its disc, or above
+  // it when under would overlap a label or a disc already placed.
+  const labels = new Map<string, { label: string; count: string; alone: boolean; lx: number; ly: number }>();
+  const boxes: { x0: number; x1: number; y0: number; y1: number }[] = [...pos].map(([n, [x, y]]) => { const r = radius(inPlan.has(n), wide); return { x0: x - r, x1: x + r, y0: y - r, y1: y + r }; });
+  const hits = (b: { x0: number; x1: number; y0: number; y1: number }) => boxes.reduce((t, o) => t + Math.max(0, Math.min(b.x1, o.x1) - Math.max(b.x0, o.x0)) * Math.max(0, Math.min(b.y1, o.y1) - Math.max(b.y0, o.y0)), 0);
+  for (const n of [...lens.plan, ...setup]) {
+    const p = pos.get(n);
+    if (!p) continue;
+    const [x, y] = p, win = inPlan.has(n), r = radius(win, wide);
+    const k = counts(partnersOf(lens, n, cut)), before = counts(partnersOf(lens, n));
+    const alone = win && before.lasting > 0 && k.lasting === 0;
+    const label = front(card.get(n)?.name ?? n);
+    const count = cut.has(n) ? "cut" : alone ? "no lasting link left" : lastingOnly ? `${k.lasting} lasting` : `${win ? "fed by" : "feeds"} ${k.all} · ${k.lasting} lasting`;
+    const half = Math.max(label.length * NAME_PX(wide) * 0.29, count.length * COUNT_PX(wide) * 0.28) + 4;
+    const lx = Math.max(half, Math.min(W - half, x));
+    // Under the disc: name baseline r+15 below its centre, count 14 under that. Above: clear of the
+    // colour dots and the mana-value badge.
+    const at = (ly: number) => ({ ly, box: { x0: lx - half, x1: lx + half, y0: ly - NAME_PX(wide), y1: ly + 17 } });
+    const under = at(y + r + 15), over = at(y - r - 34);
+    const pick = win || hits(under.box) <= hits(over.box) ? under : over;
+    boxes.push(pick.box);
+    labels.set(n, { label, count, alone, lx, ly: pick.ly });
+  }
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto rounded-(--radius) border border-(--separator) bg-(--surface)" role="group" aria-label="The plan's cards and the cards that set them up" data-testid="plan-lens-map">
       <defs>
@@ -181,20 +211,19 @@ function LensMap({ lens, setup, wide, card, colours, manaValueOf, tap, cut, last
         const c = card.get(n), [x, y] = pos.get(n)!, win = inPlan.has(n), r = radius(win, wide);
         const lit = (!near || near.has(n)) && passes(n);
         const isCut = cut.has(n);
-        const k = counts(partnersOf(lens, n, cut)), before = counts(partnersOf(lens, n));
-        const alone = win && before.lasting > 0 && k.lasting === 0;
+        const { label, count, alone, lx, ly } = labels.get(n)!;
         const mv = manaValueOf(n) ?? manaValueOf(front(n));
         const cs = colours.get(n) ?? [];
-        const label = front(c?.name ?? n);
-        const lx = Math.max(label.length * 3.4 + 4, Math.min(W - label.length * 3.4 - 4, x));
         return (
           <g key={n} role="button" tabIndex={0} aria-pressed={tap === n} aria-label={`${label}${win ? ", in this plan" : ", sets it up"}`}
             onClick={() => onTap(n)} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onTap(n); } }}
-            className="cursor-pointer focus-visible:outline-2 focus-visible:outline-(--accent)" opacity={isCut ? 0.3 : lit ? 1 : 0.25} data-testid="plan-lens-card" data-card={n}>
+            className="group cursor-pointer outline-none" opacity={isCut ? 0.3 : lit ? 1 : 0.25} data-testid="plan-lens-card" data-card={n}>
             {c?.art ? <image href={c.art} x={x - r} y={y - r} width={2 * r} height={2 * r} preserveAspectRatio="xMidYMid slice" clipPath={`url(#lens-clip-${i})`} />
               : <circle cx={x} cy={y} r={r} fill="var(--surface-tertiary)" />}
             <circle cx={x} cy={y} r={r} fill="none" stroke={tap === n ? "var(--accent)" : win ? "var(--foreground)" : "var(--edge)"} strokeWidth={tap === n ? 3.5 : win ? 2.5 : 1.5} />
             {alone ? <circle cx={x} cy={y} r={r + 5} fill="none" stroke="var(--danger)" strokeWidth={3} /> : null}
+            {/* Keyboard focus is a ring round the disc, not the browser's box round the whole group. */}
+            <circle cx={x} cy={y} r={r + 9} fill="none" strokeWidth={2.5} className="stroke-transparent group-focus-visible:stroke-(--accent)" />
             {mv !== undefined ? <g>
               <circle cx={x + r * 0.78} cy={y - r * 0.78} r={10} fill="var(--background)" stroke="var(--foreground)" strokeWidth={1.2} />
               <text x={x + r * 0.78} y={y - r * 0.78 + 4} textAnchor="middle" fontSize={11} fontWeight={700} fill="var(--foreground)">{mv}</text>
@@ -202,10 +231,8 @@ function LensMap({ lens, setup, wide, card, colours, manaValueOf, tap, cut, last
             {cs.map((k2, j) => <circle key={k2} cx={x - (cs.length - 1) * 6 + j * 12} cy={y - r - 7} r={5} fill={MANA[k2]} stroke="var(--background)" strokeWidth={1.5} />)}
             {isCut ? <text x={x} y={y + 9} textAnchor="middle" fontSize={26} fontWeight={700} fill="var(--danger)">✕</text> : null}
             {/* A label never takes the tap: on a phone a plan card's label lies over the disc beside it. */}
-            <text pointerEvents="none" x={lx} y={y + r + 15} textAnchor="middle" fontSize={wide ? 12 : 13} fontWeight={win ? 600 : 400} fill="var(--foreground)">{label}</text>
-            <text pointerEvents="none" x={lx} y={y + r + 29} textAnchor="middle" fontSize={wide ? 10.5 : 11.5} fill={alone ? "var(--danger)" : "var(--muted)"} data-testid="plan-lens-count">
-              {isCut ? "cut" : alone ? "no lasting link left" : lastingOnly ? `${k.lasting} lasting` : `${win ? "fed by" : "feeds"} ${k.all} · ${k.lasting} lasting`}
-            </text>
+            <text pointerEvents="none" x={lx} y={ly} textAnchor="middle" fontSize={NAME_PX(wide)} fontWeight={win ? 600 : 400} fill="var(--foreground)">{label}</text>
+            <text pointerEvents="none" x={lx} y={ly + 14} textAnchor="middle" fontSize={COUNT_PX(wide)} fill={alone ? "var(--danger)" : "var(--muted)"} data-testid="plan-lens-count">{count}</text>
           </g>
         );
       })}
@@ -214,6 +241,8 @@ function LensMap({ lens, setup, wide, card, colours, manaValueOf, tap, cut, last
 }
 
 const radius = (win: boolean, wide: boolean) => (wide ? (win ? 30 : 23) : (win ? 22 : 17));
+const NAME_PX = (wide: boolean) => (wide ? 12 : 13);
+const COUNT_PX = (wide: boolean) => (wide ? 10.5 : 11.5);
 
 /** Plan cards evenly on the inner ring; each set-up card beside the plan cards it feeds, pushed apart
  *  so no two share a slot. */
@@ -239,9 +268,9 @@ function layout(lens: Lens, setup: string[], wide: boolean) {
   return new Map([...pos].map(([k, [x, y]]) => [k, [x, y] as [number, number]]));
 }
 
-function Panel({ lens, phrase, card, colours, manaValueOf, model, allPlanCards, tap, cut, cutSet, open, lastingOnly, hasCombo, onCut, onOpen, onClose }: {
+function Panel({ lens, phrase, card, colours, manaValueOf, model, allPlanCards, perPlan, tap, cut, cutSet, open, lastingOnly, hasCombo, onCut, onOpen, onClose }: {
   lens: Lens; phrase: string; card: Map<string, EngineCard>; colours: Map<string, string[]>; manaValueOf: (n: string) => number | undefined;
-  model: EngineModel; allPlanCards: readonly string[];
+  model: EngineModel; allPlanCards: readonly string[]; perPlan: { phrase: string; here: boolean; lens: Lens }[];
   tap: string | null; cut: string | null; cutSet: ReadonlySet<string>; open: string | null; lastingOnly: boolean; hasCombo: boolean;
   onCut: (n: string) => void; onOpen: (n: string) => void; onClose: () => void;
 }) {
@@ -300,16 +329,22 @@ function Panel({ lens, phrase, card, colours, manaValueOf, model, allPlanCards, 
         </div>
         <p className="text-xs text-(--muted)">{c?.typeLine}{c?.manaCost ? ` · ${c.manaCost}` : ""} · {meta(tap)} · {win ? "in this plan" : "sets this plan up"}</p>
         {c?.text ? <p className="whitespace-pre-line rounded-(--radius) border border-(--separator) p-2 text-xs">{c.text}</p> : null}
-        {/* THE TWO COUNTS SAY WHICH IS WHICH (round 4: "works with 5 of your 12 cards that win, 0 of
-          *  them with links that keep working" beside "fed by 12 · 7 lasting" read as a contradiction). */}
+        {/* EACH COUNT SAYS WHAT IT COUNTS (rounds 4 and 6). "Works with 11 of your 12 plan cards" beside
+          *  "feeds 4 · 3 lasting" read as a contradiction to four seats of five: the map counts what the
+          *  card feeds in one plan, the 11 counts links either way across every plan. The per-plan
+          *  feeds come first, each plan named; the either-way count follows and says it is one. */}
         <p data-testid="plan-lens-across">
           {win
-            ? <>In this plan {k.all} {k.all === 1 ? "card feeds" : "cards feed"} it, {k.lasting} of them with links that keep working. Among your other {x.of} plan cards, it works with {x.all}{x.all ? `, ${x.lasting} of them with links that keep working` : ""}.</>
-            : <>Across your win plans it works with {x.all} of your {x.of} plan cards, {x.lasting} of them with links that keep working.</>}
+            ? <>In this plan {k.all} {k.all === 1 ? "card feeds" : "cards feed"} it, {k.lasting} of them with links that keep working. </>
+            : (() => {
+              const fed = perPlan.map((p) => ({ ...p, k: counts(partnersOf(p.lens, tap)) })).filter((p) => p.k.all);
+              return fed.length ? <>It feeds {and(fed.map((p) => `${p.k.all} ${p.k.all === 1 ? "card" : "cards"} in ${p.here ? "this plan" : `“${cap(p.phrase)}”`} (${p.k.lasting} lasting)`))}. </> : null;
+            })()}
+          Counting links in either direction, it works with {x.all} of your {win ? "other " : ""}{x.of} plan cards{x.all ? `, ${x.lasting} of them with links that keep working` : ""}.
         </p>
         <button type="button" onClick={() => onCut(tap)} className="self-start min-h-8 text-xs text-(--accent) underline underline-offset-2">What if I cut {front(c?.name ?? tap)}?</button>
         <span className="eyebrow text-(--muted)">{win ? "Fed, in this plan, by" : "Feeds, in this plan"}</span>
-        <Links ps={mine} lastingOnly={lastingOnly} />
+        <Links ps={mine} giver={win ? null : tap} />
       </div>
     );
   }
@@ -326,8 +361,8 @@ function Panel({ lens, phrase, card, colours, manaValueOf, model, allPlanCards, 
           <span><b><CardName name={n} /></b></span>
           <span className="text-xs text-(--muted)">{meta(n)} · {inPlan.has(n) ? "fed by" : "feeds"} {k.all}, {k.lasting} lasting</span>
           <Chips ps={ps} lastingOnly={lastingOnly} />
-          {isOpen ? <Links ps={ps} lastingOnly={lastingOnly} />
-            : top ? <span className="text-xs text-(--muted)">{top.lasting ? "Keeps working: " : ""}{top.why}</span> : null}
+          {isOpen ? <Links ps={ps} giver={inPlan.has(n) ? null : n} />
+            : top ? <span className="text-xs text-(--muted)">{top.lasting ? "Keeps working: " : ""}{whyOf(top, inPlan.has(n) ? top.name : n)}</span> : null}
           {ps.length ? <button type="button" onClick={() => onOpen(n)} className="self-start min-h-8 text-xs text-(--accent)" aria-expanded={isOpen}>{isOpen ? "Hide the reasons" : "Why each one ›"}</button> : null}
         </div>
       </li>
@@ -339,7 +374,7 @@ function Panel({ lens, phrase, card, colours, manaValueOf, model, allPlanCards, 
       <p className="text-xs text-(--muted)">
         {lens.plan.length} cards in the plan, {lens.setup.length} set it up. Each card's partners in this plan:{" "}
         <Pc kind="last">keeps working</Pc> <Pc kind="once">once</Pc>{hasCombo ? <> <Pc kind="combo">combo</Pc> (the two loop together; a loop is counted apart from lasting links)</> : null}.
-        {lastingOnly ? <> <b>Lasting links only:</b> once-only links are hidden.</> : null}
+        {lastingOnly ? <> <b>Lasting links only:</b> once-only links are hidden; "Why each one" still lists every reason.</> : null}
       </p>
       <span className="eyebrow text-(--muted)">Cards in the plan</span>
       <ul className="flex flex-col gap-3">{lens.plan.map(row)}</ul>
@@ -376,16 +411,22 @@ function Chips({ ps, lastingOnly }: { ps: Partner[]; lastingOnly: boolean }) {
   );
 }
 
-/** Every partner with its sentence: what a reader checks against both cards' text. */
-function Links({ ps, lastingOnly }: { ps: Partner[]; lastingOnly: boolean }) {
-  const shown = lastingOnly ? ps.filter((p) => p.lasting || p.combo) : ps;
+/** A sentence about a token says whose token it is: "When Mark of the Rani enters, Forgeborn Oreads
+ *  deals 1 damage" sat on The Rani's row with nothing tying the Mark to her (round 6). */
+const whyOf = (p: Partner, giver: string) => (p.via ? `Through ${front(giver)}'s ${p.via} token: ${p.why}` : p.why);
+
+/** Every partner with its sentence: what a reader checks against both cards' text. An opened list
+ *  reads every reason whatever the switch says: opened under "Lasting links only" it once showed
+ *  nothing but "+3 once, hidden" (round 6). `giver` is the card whose row it is when that card does
+ *  the feeding; on a plan card's row each partner is the giver. */
+function Links({ ps, giver }: { ps: Partner[]; giver: string | null }) {
   return (
     <ul className="flex flex-col gap-1.5" data-testid="plan-lens-links">
-      {shown.map((p) => (
+      {ps.map((p) => (
         <li key={p.name} className={`border-l-2 py-0.5 pl-2 text-xs ${p.combo ? "border-[#D4A63A]" : p.lasting ? "border-(--edge)" : "border-dashed border-(--edge) text-(--muted)"}`}>
           <b className="text-(--foreground)"><CardName name={p.name} /></b>{" "}
           <span className="font-mono text-[10px] text-(--muted)">{p.combo ? "combo loop" : p.lasting ? "keeps working" : "once"}</span>
-          <br />{p.why}
+          <br />{whyOf(p, giver ?? p.name)}
         </li>
       ))}
     </ul>

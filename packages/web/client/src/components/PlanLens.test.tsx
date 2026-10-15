@@ -30,7 +30,7 @@ const graph = {
 const model = buildEngineModel(report, graph);
 const mv = new Map(NAMES.map((n, i) => [n, i + 1]));
 
-const lens = () => render(<PlanLens report={report} graph={graph} model={model} plan="burn" planCards={["Leech", "Ascension"]} allPlanCards={["Leech", "Ascension"]} manaValueOf={(n) => mv.get(n)} />);
+const lens = () => render(<PlanLens report={report} graph={graph} model={model} plan="burn" planCards={["Leech", "Ascension"]} plans={[{ plan: "burn", cards: ["Leech", "Ascension"] }]} manaValueOf={(n) => mv.get(n)} />);
 const row = (name: string) => screen.getAllByTestId("plan-lens-row").find((r) => r.getAttribute("data-card") === name)!;
 
 test("each card's row says what feeds it and how many of those links keep working, with the sentence", () => {
@@ -55,7 +55,8 @@ test("tapping a card reads it; cutting it says what each plan card keeps", () =>
   lens();
   const kitten = screen.getAllByTestId("plan-lens-card").find((g) => g.getAttribute("data-card") === "Kitten")!;
   fireEvent.click(kitten);
-  expect(screen.getByTestId("plan-lens-across")).toHaveTextContent("Across your win plans it works with 2 of your 2 plan cards, 1 of them with links that keep working.");
+  // What it feeds in each plan first; the either-way count after, saying it is one (round 6).
+  expect(screen.getByTestId("plan-lens-across")).toHaveTextContent("It feeds 2 cards in this plan (1 lasting). Counting links in either direction, it works with 2 of your 2 plan cards, 1 of them with links that keep working.");
   fireEvent.click(screen.getByRole("button", { name: "What if I cut Kitten?" }));
   expect(screen.getByTestId("plan-lens-cut-summary")).toHaveTextContent("Leech loses a lasting link. Leech would have no lasting link left.");
   expect(screen.getByRole("button", { name: "Cut: Kitten ✕" })).toBeInTheDocument();
@@ -68,4 +69,11 @@ test("lasting links only hides the dashed lines and the once-only chips", () => 
   expect(screen.getAllByTestId("plan-lens-line").length).toBeLessThan(before);
   expect(screen.getAllByTestId("plan-lens-line").every((l) => l.hasAttribute("data-lasting"))).toBe(true);
   expect(row("Leech")).toHaveTextContent("+1 once, hidden");
+});
+
+test("an opened row lists every reason, even with Lasting links only on", () => {
+  lens();
+  fireEvent.click(screen.getByRole("button", { name: "Lasting links only" }));
+  fireEvent.click(within(row("Curse")).getByRole("button", { name: /Why each one/ }));
+  expect(within(row("Curse")).getByTestId("plan-lens-links")).toHaveTextContent("Leech once");
 });

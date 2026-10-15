@@ -23,6 +23,10 @@ export interface LensLink {
   combo: boolean;
   /** The sentence a reader checks: a lasting, read reason first. */
   why: string;
+  /** The token the sentence is about, when the link reaches the plan card through a token its giver
+   *  makes: "When Mark of the Rani enters, …" on The Rani's row needs "through its Mark of the Rani
+   *  token" to be checkable (round 6). */
+  via?: string;
   /** How well the two work together (`pairStrength`), for line width and ranking. */
   strength: number;
   /** The colour of the group the reason belongs to, when it has one. */
@@ -41,7 +45,7 @@ export interface PlanLens {
 
 /** What a card has, in this plan: the cards that feed it (a plan card) or that it feeds (a set-up
  *  card), one entry per partner. */
-export interface Partner { name: string; lasting: boolean; combo: boolean; why: string; strength: number }
+export interface Partner { name: string; lasting: boolean; combo: boolean; why: string; via?: string; strength: number }
 
 const SETUP_CAP = 10;
 
@@ -53,7 +57,7 @@ export function planLens(model: EngineModel, planCards: readonly string[], combo
   const comboKey = new Set(combos.flatMap((cs) => cs.flatMap((a) => cs.filter((b) => b !== a).map((b) => `${a}\u0001${b}`))));
 
   // Every directed link into a plan card, folded per physical pair.
-  const acc = new Map<string, { from: string; to: string; links: { l: Link; lasting: boolean }[]; strength: number }>();
+  const acc = new Map<string, { from: string; to: string; links: { l: Link; lasting: boolean; via?: string }[]; strength: number }>();
   const seen = new Set<object>();
   for (const row of model.partners.values()) {
     for (const pair of row.values()) {
@@ -71,7 +75,7 @@ export function planLens(model: EngineModel, planCards: readonly string[], combo
           if (giver === to.physical) continue;
           const k = `${giver}\u0001${to.physical}`;
           const e = acc.get(k) ?? { from: giver, to: to.physical, links: [], strength: 0 };
-          e.links.push({ l, lasting: l.repeat !== "oneshot" && again });
+          e.links.push({ l, lasting: l.repeat !== "oneshot" && again, ...(from.isToken ? { via: from.name } : {}) });
           e.strength = Math.max(e.strength, strength);
           acc.set(k, e);
         }
@@ -79,11 +83,12 @@ export function planLens(model: EngineModel, planCards: readonly string[], combo
     }
   }
   const all: LensLink[] = [...acc.values()].map((e) => {
-    const best = [...e.links].sort((x, y) => rank(x) - rank(y))[0]!.l;
+    const top = [...e.links].sort((x, y) => rank(x) - rank(y))[0]!, best = top.l;
     const hue = groups.get(e.links.find((x) => x.lasting && groups.has(x.l.tag))?.l.tag ?? best.tag)?.hue;
     return {
       from: e.from, to: e.to, lasting: e.links.some((x) => x.lasting),
       combo: comboKey.has(`${e.from}\u0001${e.to}`), why: best.text, strength: e.strength,
+      ...(top.via ? { via: top.via } : {}),
       ...(hue ? { hue } : {}),
     };
   });
@@ -105,7 +110,7 @@ export function planLens(model: EngineModel, planCards: readonly string[], combo
 }
 
 /** A lasting, read reason first, then any read one: the sentence a reader can check. */
-const rank = (x: { l: Link; lasting: boolean }) => (x.lasting ? 0 : 2) + (unread(x.l) ? 1 : 0);
+const rank = (x: { l: Link; lasting: boolean; via?: string }) => (x.lasting ? 0 : 2) + (unread(x.l) ? 1 : 0);
 
 /** THE DECK CARDS A CARD'S LINKS COUNT FOR: itself, or for a token the cards that make it, each with
  *  whether it makes the token over and over. `madeBy` names FACES (Legion's Landing, not "Legion's
@@ -138,8 +143,9 @@ export function partnersOf(lens: PlanLens, name: string, cut: ReadonlySet<string
     if (other === null || cut.has(other)) continue;
     const p = out.get(other);
     // Two faces feeding the same card: one entry, lasting if either is.
-    if (!p) out.set(other, { name: other, lasting: l.lasting, combo: l.combo, why: l.why, strength: l.strength });
-    else if (!p.lasting && l.lasting) out.set(other, { ...p, lasting: true, why: l.why, combo: p.combo || l.combo, strength: Math.max(p.strength, l.strength) });
+    const mine = { name: other, lasting: l.lasting, combo: l.combo, why: l.why, strength: l.strength, ...(l.via ? { via: l.via } : {}) };
+    if (!p) out.set(other, mine);
+    else if (!p.lasting && l.lasting) out.set(other, { ...mine, combo: p.combo || l.combo, strength: Math.max(p.strength, l.strength) });
   }
   return [...out.values()].sort((a, b) => Number(b.lasting) - Number(a.lasting) || b.strength - a.strength || (a.name < b.name ? -1 : 1));
 }

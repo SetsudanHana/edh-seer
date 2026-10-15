@@ -186,7 +186,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   const winClasses = report.deckMath?.wincons?.classes ?? [];
   const [winPick, setWinPick] = useState<string | null>(null);
   const winPlan = winClasses.find((c) => c.class === winPick) ?? winClasses[0];
-  const allWinCards = useMemo(() => [...new Set(winClasses.flatMap((c) => c.cards ?? []))], [winClasses]);
+  const winPlans = useMemo(() => winClasses.map((c) => ({ plan: c.class, cards: c.cards ?? [] })), [winClasses]);
   // THE PAIR ASKED FOR FROM ELSEWHERE IN THE REPORT (pair-view mockups F1/F2, owner 2026-09-30): a
   // new object per ask, so asking for the same pair again opens it again.
   const [pairAsk, setPairAsk] = useState<PairAsk | undefined>(undefined);
@@ -494,7 +494,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
                 *  which links keep working, and what a cut costs. */}
               {themes && data.graph && winPlan?.cards?.length ? (
                 <div className="mt-8">
-                  <PlanLens key={walkGen} report={report} graph={data.graph} model={themes} plan={winPlan.class} planCards={winPlan.cards} allPlanCards={allWinCards} manaValueOf={manaValueOf} />
+                  <PlanLens key={walkGen} report={report} graph={data.graph} model={themes} plan={winPlan.class} planCards={winPlan.cards} plans={winPlans} manaValueOf={manaValueOf} />
                 </div>
               ) : null}
             </Movement>

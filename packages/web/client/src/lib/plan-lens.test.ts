@@ -124,7 +124,7 @@ function tokenDeck(makes: string, { tag = "creates:creature", faces = false } = 
 test("a token feeds the plan through the card that makes it", () => {
   const { lens, model } = tokenDeck("triggered");
   expect(lens.setup).toEqual(["Maker"]);
-  expect(partnersOf(lens, "Drainer")).toEqual([expect.objectContaining({ name: "Maker", lasting: true, why: "When a Rogue dies, Drainer drains" })]);
+  expect(partnersOf(lens, "Drainer")).toEqual([expect.objectContaining({ name: "Maker", lasting: true, why: "When a Rogue dies, Drainer drains", via: "Rogue" })]);
   // The tapped card's line agrees with its row.
   expect(acrossPlans(model, "Maker", ["Drainer"])).toEqual({ all: 1, lasting: 1, of: 1 });
 });
