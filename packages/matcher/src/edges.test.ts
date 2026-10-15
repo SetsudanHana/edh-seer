@@ -6549,6 +6549,7 @@ describe("a multi-type emit names the member the trigger heard (#1224)", () => {
     const r = pairReasons(mastery, castWatcher, H).map((x) => x.text);
     expect(r.length).toBeGreaterThan(0);
     for (const t of r) expect(t).toContain("When Mizzix's Mastery is cast");
+    expect(r.some((t) => t.includes("thanks to"))).toBe(false);
   });
 
   // "Whenever you cast an instant, sorcery, or Wizard spell" (Windrider Wizard) is an `anyOf`, so the
@@ -6577,16 +6578,44 @@ describe("a multi-type emit names the member the trigger heard (#1224)", () => {
       expect(r.some((x) => x.text.includes("is cast thanks to Sarevok's Tome"))).toBe(true);
     });
 
-    test("a Wizard creature producer can be the Wizard spell cast and keeps the wording", () => {
-      const r = pairReasons(caster("Wizard Caster", "creature", ["wizard"]), wizardWatcher, H).filter((x) => x.tag.startsWith("cast:"));
-      expect(r.length).toBeGreaterThan(0);
-      expect(r.some((x) => x.text.includes("When Wizard Caster is cast"))).toBe(true);
+    // The implied self-cast row ("When X is cast") also reads like this, so the assertion is on the
+    // rows the LIST EMIT made: those are the ones that say "thanks to" when the class is named.
+    const castRows = (producer: ReturnType<typeof caster>) =>
+      pairReasons(producer, wizardWatcher, H).filter((x) => x.tag.startsWith("cast:")).map((x) => x.text);
+
+    // CEILING: a branch that demands a SUBTYPE ("Wizard spell") cannot be hit by a bare type member, so
+    // a Wizard creature's list emit is read as the class, never as the producer. Conservative: the
+    // implied self-cast row still says "When Wizard Caster is cast".
+    test("a Wizard creature producer: the self-cast row names it, the list emit names the class", () => {
+      const r = castRows(caster("Wizard Caster", "creature", ["wizard"]));
+      expect(r).toContain("When Wizard Caster is cast, Windrider Wizard drains each opponent");
+      expect(r.filter((t) => t.includes("thanks to Wizard Caster")).length).toBe(1);
     });
 
     test("a sorcery producer can be the spell cast and keeps the wording", () => {
-      const r = pairReasons(caster("Mizzix's Mastery", "sorcery"), wizardWatcher, H).filter((x) => x.tag.startsWith("cast:"));
+      const r = castRows(caster("Mizzix's Mastery", "sorcery"));
+      expect(r).toContain("When Mizzix's Mastery is cast, Windrider Wizard drains each opponent");
+      expect(r.filter((t) => t.includes("thanks to Mizzix's Mastery"))).toEqual([]);
+    });
+
+    test("an outer type survives branches that carry none (Arnyn: creatures with power or toughness 1 or less)", () => {
+      const arnyn = base("Arnyn", [{
+        kind: "triggered",
+        trigger: { verbs: ["dies"], subject: { type: "creature", control: "you", token: null,
+          anyOf: [{ stats: [{ metric: "power", op: "lte", value: 1 }] }, { stats: [{ metric: "toughness", op: "lte", value: 1 }] }] } },
+        effect: { kind: "drain" },
+      }]);
+      const citadel = artifact("Bolas's Citadel", [{
+        kind: "triggered",
+        effect: { kind: "sacrifice" },
+        emits: [{ verb: "dies", subject: { type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], notType: ["land"], control: "you", token: null } }],
+      }]);
+      const r = pairReasons(citadel, arnyn, H).filter((x) => x.tag.startsWith("dies:")).map((x) => x.text);
       expect(r.length).toBeGreaterThan(0);
-      for (const x of r) expect(x.text).toContain("When Mizzix's Mastery is cast");
+      for (const t of r) {
+        expect(t).not.toContain("When Bolas's Citadel dies");
+        expect(t).toContain("thanks to Bolas's Citadel");
+      }
     });
   });
 });

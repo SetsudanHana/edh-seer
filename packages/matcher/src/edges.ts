@@ -1674,11 +1674,14 @@ function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy)
  *  member the trigger accepts -- Mizzix's Mastery's [instant, sorcery] against a noncreature-cast
  *  trigger hears both, and the Mastery is a sorcery.
  *
- *  Each member is matched against the FULL heard filter, `anyOf` branches included (`subjectMatches`
- *  expands them): "an instant, sorcery, or Wizard spell" (Windrider Wizard) has no `type` of its own.
- *  Where the question cannot be split -- a lone-type emit, a trigger naming no type and no branch, or
- *  no member accepted -- it asks `producerCanBeSubject` of `nounSubject(emit, heard)`, the subject the
- *  noun names, so the check and the noun agree. */
+ *  Each member is matched against the heard filter CUT TO ITS TYPE LINE (type, subtype, notType),
+ *  with the outer filter merged into each `anyOf` branch first, the way `subjectMatches` merges them:
+ *  "an instant, sorcery, or Wizard spell" (Windrider Wizard) has no `type` of its own, and "a creature
+ *  with power or toughness 1 or less" (Arnyn) has a type only on the outside. A branch demanding a
+ *  SUBTYPE cannot be hit by a bare type member, so it never makes the producer "heard"; that is
+ *  conservative, the class is named. Where the question cannot be split -- a lone-type emit, a trigger
+ *  naming no type and no branch, or no member accepted -- it asks `producerCanBeSubject` of
+ *  `nounSubject(emit, heard)`, the subject the noun names, so the check and the noun agree. */
 function producerCanBeHeard(p: DeckCard, emit: SubjectFilter, heard: SubjectFilter, h: Hierarchy): boolean {
   const members = list(emit.type);
   const names = list(heard.type).length > 0 || (heard.anyOf?.length ?? 0) > 0;
@@ -1687,8 +1690,15 @@ function producerCanBeHeard(p: DeckCard, emit: SubjectFilter, heard: SubjectFilt
   // heard filter is cut to type, notType and its branches' type and subtype. A bare member stub can
   // never satisfy "historic" or "legendary" (Basim Ibn Ishaq's historic spell), and carrying those
   // over emptied the hit list and moved Jodah, the Unifier's row.
-  const line = (s: Partial<SubjectFilter>): SubjectFilter => ({ control: emit.control, token: emit.token, type: s.type, subtype: s.subtype, notType: s.notType });
-  const heardLine: SubjectFilter = { ...line(heard), ...(heard.anyOf?.length ? { anyOf: heard.anyOf.map(line) } : {}) };
+  // Defined keys only: `subjectMatches` merges a branch over its outer filter as `{...shared, ...b}`,
+  // and an explicit `type: undefined` on a branch would erase the outer type.
+  const line = (s: Partial<SubjectFilter>): SubjectFilter => ({
+    control: emit.control, token: emit.token,
+    ...(s.type !== undefined ? { type: s.type } : {}),
+    ...(s.subtype !== undefined ? { subtype: s.subtype } : {}),
+    ...(s.notType !== undefined ? { notType: s.notType } : {}),
+  });
+  const heardLine: SubjectFilter = { ...line(heard), ...(heard.anyOf?.length ? { anyOf: heard.anyOf.map((b) => line({ ...heard, ...b })) } : {}) };
   const hit = members.filter((m) => subjectMatches({ control: emit.control, token: emit.token, type: m }, heardLine, h));
   if (hit.length === 0) return producerCanBeSubject(p, nounSubject(emit, heard), h);
   return hit.some((m) => producerCanBeSubject(p, { ...emit, type: m }, h));
