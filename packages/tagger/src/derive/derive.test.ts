@@ -1,5 +1,7 @@
 import { describe, expect, it, test } from "vitest";
 import { manaAdded, unitAmount, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
+import { grammarClauseRecords } from "../grammar/clause-record.js";
+import { deriveInputOf } from "../derive-input.js";
 import type { Characteristics } from "../schema.js";
 
 test("one ability per action, sharing the clause kind and trigger", () => {
@@ -624,15 +626,22 @@ test("a token created tapped is not tapped by an effect (CR 603.2e, Mobilize 702
     deriveAbilities(clauses, name, texts).abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "taps");
   const create = (object: string, amount = "2") => ({ verb: "create", object, amount });
 
+  // THE GRAMMAR PATH (Army of the Damned, a spell with no trigger to hide behind): the grammar itself
+  // appends the companion `{verb:"tap", object:{ref:"sentence"}}` after "create ... tapped".
+  for (const [name, oracleText] of [
+    ["Army of the Damned", "Create thirteen tapped 2/2 black Zombie creature tokens."],
+    ["Royal Warden", "When this creature enters, create two tapped 2/2 black Necron Warrior artifact creature tokens."],
+  ] as const) {
+    const card = { name, typeLine: "Sorcery", oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+    expect(tags.abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "create-token"))).toBe(true);
+    expect(tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "taps")).toEqual([]);
+  }
   // Royal Warden / Alchemist's Talent shape: the grammar adds a companion tap on the created token.
   expect(tapsOf(
     [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [create("two tapped 2/2 black Necron Warrior artifact creature tokens"), { verb: "tap", object: "them" }] }],
     "Royal Warden", { 1: "When this creature enters, create two tapped 2/2 black Necron Warrior artifact creature tokens." },
-  )).toEqual([]);
-  // A spell, no enters trigger to hide behind (Army of the Damned).
-  expect(tapsOf(
-    [{ id: 1, abilityType: "spell", actions: [create("thirteen tapped 2/2 black Zombie creature tokens", "13"), { verb: "tap", object: "this" }] }],
-    "Army of the Damned", { 1: "Create thirteen tapped 2/2 black Zombie creature tokens." },
   )).toEqual([]);
   // The tap names the created phrase itself (Leering Onlooker).
   expect(tapsOf(

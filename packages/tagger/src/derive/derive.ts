@@ -2305,6 +2305,11 @@ export function deriveAbilities(
         a.verb === "create" && (tapObject === (a.object ?? "").trim().toLowerCase()
           || ((PRONOUN_OBJECT.test(tapObject) || CREATED_TOKEN_REF.test(tapObject)) && sourceOf(actionIdx).to === "action" && (sourceOf(actionIdx) as { action: number }).action === i)
           || (CREATED_TOKEN_REF.test(tapObject) && sourceOf(actionIdx).to !== "action")));
+      // CEILING: a token created tapped is recognised by the word "tapped" ANYWHERE in the effect text, not by
+      // the create action's own object. A tap of the created thing phrased other than TAPS_IT is read as the
+      // creation tap (0 corpus cards hit this today). "Create two 1/1 Dog tokens. Tap those tokens." (no
+      // "tapped") still emits the wildcard `{token:true, scope:all}` tap, because CREATED_TOKEN_REF only
+      // resolves when "tapped" is present.
       const tapsCreated = tapMadeHere && TAPPED_WORD.test(effectText(text, cardName ?? "")) && !TAPS_IT.test(effectText(text, cardName ?? ""));
       const emits = temporaryRider ? [] : actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, text, { self: emitsSelf })
         .filter((e) => !(e.verb === "taps" && (tapsCreated || ARRIVES_TAPPED.test(effectText(text, cardName ?? "")))))
