@@ -192,7 +192,7 @@ export function playableLines(dc: DeckCard, deck?: readonly DeckCard[], perGame 
  *  type line, since #1169 task 2b-1 -- it was printed text and Scryfall's `producedMana`, which stamped Pitiless Plunderer (a Treasure maker) with
  *  five colours and priced Birgi as a dork. A card with no derived tags is none: derive covers every card in a deck, so that is an underived card and
  *  `coverage.ts` lists it. */
-export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): Accelerant | null {
+export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[], perGame = false, netBar = false): Accelerant | null {
   const line = (dc.card.typeLine ?? "").toLowerCase();
   const name = dc.card.name;
   const manaValue = dc.card.manaValue ?? 0;
@@ -212,6 +212,14 @@ export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[], per
   if (tags.isOneShot || tags.suspendOnly || !isManaSource(dc)) return null;
   const lines = playableLines(dc, deck, perGame);
   if (lines.length === 0) return null;
+  // A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION (#1184), IN THE SIMULATION (`netBar`): Pyramid of the Pantheon's "{2}, {T}: Add one mana of any color" nets -1, and its three-mana
+  // line waits on counters on the card itself, which no decklist settles. The bar is a line that nets AT LEAST ONE, as `rampGrade`'s coloured bit does (owner 2026-10-13); a net-0 filter (Prophetic
+  // Prism, Mana Cylix) adds no mana. The land count, the commander-ramp core and mana-base-fit do NOT pass the bar: their weights are owner rulings (the land count's class of a net-0 filter is a
+  // question for the owner), so they keep the answer they gave.
+  // CEILING: a net-0 filter's COLOUR CONVERSION is no longer modelled in the goldfish (an under-claim; it used to be priced as a free +1 rock, an over-claim).
+  // A SCALING LINE'S NET IS A CEILING, NOT A MEASURE (derive nets "{G}, {T}: Add X mana" and "{2}, {T}: Add {B} for each Swamp" at 1 less the cost): Selvala and Magus of the Coffers make more than
+  // they cost in the decks that scale them, so a scaling line is not judged by its net.
+  if (netBar && !lines.some((l) => l.net >= 1 || l.amount.scales !== null)) return null;
   // A LAND AURA WAITS A TURN, because the land it enchants is what pays for it: you tap the Forest for {G}, cast Wild Growth on it, and the Forest is
   // tapped. That is a DORK's timing (roadmap O2). A PHASE TRIGGER PAYS FROM THE NEXT TURN, whatever the type line says: you cast it DURING your first main
   // phase, so that turn's trigger has already happened. LANDFALL MANA MISSES THE TURN IT LANDS: rule 2 plays the land BEFORE rule 3 casts anything.
@@ -231,6 +239,11 @@ export interface ManaOutput {
   amount: number;
   /** `Temple of the False God`: "Activate only if you control five or more lands". */
   needsLands?: number;
+  /** The gate `needsLands` counts is "three or more lands with the SAME NAME" (Sceptre of Eternal Glory): it holds once `needsLands` lands on the board share a name. */
+  sameName?: boolean;
+  /** What the card taps for BELOW its lands gate, when it has an ungated line beside the gated one (Sceptre of Eternal Glory: one mana of any color, three once the gate holds). Absent:
+   *  nothing below the gate (Temple of the False God). */
+  below?: number;
   /** This mana may be spent only on spells at or above this mana value (roadmap O1). It is counted
    *  ONLY when the deck makes the restriction vacuous, which `simulate` settles. */
   needsMinMV?: number;
@@ -345,8 +358,8 @@ export function spendUnits(units: number[], cost: Cost): boolean {
 const BOUNCES = /return a land you control to its owner's hand/i;
 /** A GATE ON A LINE'S AMOUNT, read from the typed gate (derive's `parseGate`): "you control five or more lands" (Temple of the False God) is a `control` gate on `land` alone, and
  *  "three or more lands with the same name" (Sceptre of Eternal Glory) a `same-name` one. This model prices both against the lands on the board, turn by turn (`needsLands`).
- *  CEILING: "three or more lands WITH THE SAME NAME" is read as its floor, three lands: the name is uncheckable here, and
- *  the gate under-claims rather than counting three from turn one (roadmap N10). */
+ *  "With the same name" is checked against the names of the lands on the board (`OnBoardLand.name`, `ManaOutput.sameName`). CEILING: a land fetched by a spell has no known name
+ *  (`""`) and joins no group, and neither does a land that enters as a copy (Vesuva keeps its own name), an under-claim. */
 const landsNeeded = (g: ManaGate): number => (g.kind === "same-name" ? g.need : g.kind === "control" && g.nouns.length === 1 && g.nouns[0] === "land" && !g.basic && g.minPower === undefined ? g.need : 0);
 /** The tron shape: two named other lands on the board upgrade the amount. The names are the SUBTYPES as printed inside the gate, which is what the board carries -- and the subtype is
  *  `Urza's Power-Plant` with a hyphen while the CARD is `Urza's Power Plant` without one. */
@@ -403,7 +416,12 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = f
   for (const l of lines.filter((x) => !open(x) && timed(x) === null && x.restriction === null)) {
     const needs = landsNeeded(l.gate!);
     const tron = tronOf(l.gate!);
-    const here: ManaOutput | null = needs > 0 ? { amount: l.amount.fixed!, needsLands: needs }
+    const here: ManaOutput | null = needs > 0 ? {
+        amount: l.amount.fixed!, needsLands: needs,
+        ...(l.gate!.kind === "same-name" ? { sameName: true } : {}),
+        // An ungated line beside the gated one is what the card taps for until the gate holds (Sceptre of Eternal Glory, #1183).
+        ...(lines.some(open) ? { below: out.amount } : {}),
+      }
       : tron ? { amount: out.amount, tron: { subtypes: [tron[0]!, tron[1]!], amount: l.amount.fixed! } } : null;
     if (here && bestOf(here) > bestOf(out)) out = here;
   }
@@ -446,6 +464,15 @@ function spendable(o: ManaOutput, cheapestNonland: number): ManaOutput {
 const gateHolds = (o: ManaOutput, perms: readonly Perm[]): boolean => o.gated !== undefined && holds(o.gated.gate, perms);
 const holds = (g: BoardGate, perms: readonly Perm[]): boolean => boardCount(g, perms) >= g.need;
 
+/** The lands gate holds: `needsLands` lands on the board, and for a "same name" gate that many sharing one name. */
+function landsGateHolds(o: ManaOutput, lands: readonly OnBoardLand[]): boolean {
+  if (lands.length < o.needsLands!) return false;
+  if (!o.sameName) return true;
+  const count = new Map<string, number>();
+  for (const l of lands) if (l.name !== "") count.set(l.name, (count.get(l.name) ?? 0) + 1);
+  return Math.max(0, ...count.values()) >= o.needsLands!;
+}
+
 function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly Perm[], turn: number): number {
   if (o.tron) {
     const has = (s: string): boolean =>
@@ -455,7 +482,7 @@ function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly 
   // ZERO, not one. "Activate only if you control five or more lands" means Temple of the False God
   // taps for NOTHING below the gate — the incumbent priced it at one, which is a land that does not
   // exist for the first four turns of every game.
-  if (o.needsLands !== undefined && lands.length < o.needsLands) return 0;
+  if (o.needsLands !== undefined && !landsGateHolds(o, lands)) return o.below ?? 0;
   // A BOARD-COUNT GATE: the better amount once the permanents it names are out (Leafkin Druid's two, Mox Jasper's one), the plain one before.
   const board = o.gated !== undefined && o.gated.amount > o.amount && gateHolds(o, perms) ? o.gated.amount : o.amount;
   // MAX SPEED: the better amount from turn 4 on (`ManaOutput.speed`).
@@ -943,7 +970,7 @@ const FETCHED_LAND: Perm = { name: "", types: new Set(["land"]), subtypes: new S
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
 // `basic`: the FRONT face's supertype, read once when the land enters -- the colour credit asks it every turn of every trial (#1213: per-turn
 // it cost the two whole-simulation tests ~20%).
-interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; basic: boolean; output: ManaOutput; everyLandType: boolean; colors: number; baseColors?: number; colourGate?: BoardGate; fixer?: FixerMask }
+interface OnBoardLand { name: string; cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; basic: boolean; output: ManaOutput; everyLandType: boolean; colors: number; baseColors?: number; colourGate?: BoardGate; fixer?: FixerMask }
 
 function boardFor(lands: OnBoardLand[], pod: number): { lands: number; basics: number; types: Set<string>; opponents: number } {
   const types = new Set<string>();
@@ -1010,7 +1037,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // different costs to one answer.
       cost: isLand ? null : parseCost(castableManaCost(dc.card)),
       costKey: castableManaCost(dc.card) ?? "",
-      ...(isLand ? { land: classifyLand(dc.card, dc.tags) } : { accelerant: classifyAccelerant(dc, gateDeck, true) }),
+      ...(isLand ? { land: classifyLand(dc.card, dc.tags) } : { accelerant: classifyAccelerant(dc, gateDeck, true, true) }),
       ...(ritual.length > 0 ? { ritual } : {}),
       ...(oppRitual > 0 ? { ritualPerOppCard: oppRitual } : {}),
       ...(attackOf(dc) ? { attack: attackOf(dc)! } : {}),
@@ -1050,7 +1077,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       fetches: false,
       cost: parseCost(castableManaCost(dc.card)),
       costKey: castableManaCost(dc.card) ?? "",
-      accelerant: classifyAccelerant(dc, gateDeck, true),
+      accelerant: classifyAccelerant(dc, gateDeck, true, true),
       ...(tapBonus ? { tapBonus } : {}),
       ...(landfall > 0 ? { landfall } : {}),
       // THE COMMANDER ATTACKS TOO: it is cast from the command zone like any creature it holds.
@@ -1286,6 +1313,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       if (idx >= 0) {
         const played = hand.splice(idx, 1)[0];
         lands.push({
+          name: played.name,
           cond: played.land!,
           enteredTurn: turn,
           // WHAT IS STANDING THERE IS THE FETCHED LAND, so its tapped state is the one that counts --
@@ -1405,7 +1433,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         if (cast.perm) perms.push(cast.perm);
         const mana = produced(cast.output, lands, perms, turn);
         const gated = {
-          ...(cast.output.gated || cast.output.speed ? { out: cast.output } : {}),
+          // A LANDS-COUNTED GATE (Sceptre of Eternal Glory) is priced every turn too: the source is re-priced against the lands on the board, not frozen at its cast-turn value.
+          ...(cast.output.gated || cast.output.speed || cast.output.needsLands !== undefined ? { out: cast.output } : {}),
           ...(cast.colourGate && cast.baseColors !== undefined ? { colourGate: cast.colourGate, baseColors: cast.baseColors } : {}),
         };
         // A PER-SOURCE BONUS BRINGS NO MANA OF ITS OWN, so it goes to `bonuses` INSTEAD of the source
@@ -1433,7 +1462,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           // CEILING: a fetch that does not say "basic" ("an Island or Mountain card", "a land card") may find a basic or not; it stays "".
           // A FETCHED LAND'S IDENTITY IS UNKNOWN, but its COLOUR is not: the spell names what it may
           // find, and `fetchMaskOf` reads that against the lands this deck actually holds.
-          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true && opts.landsUntapped !== true, typeLine: cast.fetchesBasic === true ? "Basic Land" : "", basic: cast.fetchesBasic === true, output: { amount: 1 }, everyLandType: false, colors: cast.colors });
+          lands.push({ name: "", cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true && opts.landsUntapped !== true, typeLine: cast.fetchesBasic === true ? "Basic Land" : "", basic: cast.fetchesBasic === true, output: { amount: 1 }, everyLandType: false, colors: cast.colors });
           perms.push(FETCHED_LAND);
           takeRandomLand(library, turn > turns ? spill : random);
           if (a.fetchTapped !== true || opts.landsUntapped === true) pool += 1;
@@ -1968,7 +1997,7 @@ export function manaModel(
     combat: { one: turnQuartiles(greedy.killTurns.one), table: turnQuartiles(greedy.killTurns.table) },
     availability: {
       trials,
-      accelerants: deck.filter((dc) => classifyAccelerant(dc, gateDeck, true) !== null).length,
+      accelerants: deck.filter((dc) => classifyAccelerant(dc, gateDeck, true, true) !== null).length,
       rows,
       headline: { mana: 6, turn: 6, low: Math.min(lo, hi), high: Math.max(lo, hi) },
       need: { mana: needMana, turn: needMana, share: underOf(needMana), low: Math.min(nLo, nHi), high: Math.max(nLo, nHi) },

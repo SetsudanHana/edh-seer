@@ -7,7 +7,9 @@ import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 import { FREE_TAP, fetchTags, manaTags, mkLine, ritualLine, tapFor, triggerLine, withLines, withTap } from "./mana-test-support.js";
 import { cardLines, colourSourceColours, isColourSource, isFetchSource } from "./mana-lines.js";
 import { gateVerdict } from "./gate.js";
-import { classifyAccelerant, colourMaskOf, tapBonusOf, fetchesLand, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
+import { rampWeight } from "./land-count.js";
+import { RAMP_RESILIENCE } from "./mana-base.js";
+import { classifyAccelerant, playableLines, colourMaskOf, tapBonusOf, fetchesLand, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -183,8 +185,52 @@ test("a gated mana line plays in a deck that meets its gate and not in one that 
 test("the board-count gates stay priced turn by turn whatever the deck: Sceptre of Eternal Glory still waits on its three lands (not 'met' from the first land)", () => {
   const sceptre = real("Sceptre of Eternal Glory");
   const forests = [sceptre, ...basics(40, "Forest").map((d) => ({ ...d, card: { ...d.card, name: "Forest" } })), ...spells(59, 3)];
-  expect(manaOutput(sceptre, forests)).toEqual({ amount: 3, needsLands: 3 });
+  // It pins the gate's SHAPE now: 3 once three lands share a name, the printed one-mana line until then (#1183).
+  expect(manaOutput(sceptre, forests)).toEqual({ amount: 3, needsLands: 3, sameName: true, below: 1 });
   expect(manaOutput(sceptre, forests)).toEqual(manaOutput(sceptre));
+});
+
+// #1184: A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION. Pyramid of the Pantheon's only playable line is "{2}, {T}: Add one mana of any color. Put a brick counter" (net -1);
+// its three-mana line waits on counters on the card itself, which no decklist settles.
+test("#1184: Pyramid of the Pantheon is no accelerant in the simulation: its only playable line nets -1", () => {
+  const pyramid = real("Pyramid of the Pantheon");
+  expect(playableLines(pyramid).map((l) => l.net)).toEqual([-1]);
+  expect(classifyAccelerant(pyramid, undefined, false, true)).toBeNull();
+  expect(manaAvailability([pyramid, ...basics(37), ...spells(61, 3)], { trials: 50 }).accelerants).toBe(0);
+});
+
+// #1184 STAYS IN THE GOLDFISH: the land count (`land-count.ts`) reads `classifyAccelerant` without the bar, so its answer is what main gave (the weight of a net-0 filter is an owner ruling).
+test("#1184: the net bar is the simulation's; the land count keeps its class and weight for Prophetic Prism", () => {
+  const prism = real("Prophetic Prism");
+  expect(playableLines(prism).map((l) => l.net)).toEqual([0]);
+  expect(classifyAccelerant(prism)?.kind).toBe("rock");
+  expect(classifyAccelerant(prism, undefined, false, true)).toBeNull();
+  expect(classifyAccelerant(real("Magus of the Coffers"), undefined, false, true)?.kind).toBe("dork");
+  const deck = [prism, ...basics(37), ...spells(61, 3)];
+  expect(rampWeight(prism, deck)).toBe(RAMP_RESILIENCE.rock);
+});
+
+// #1183: SCEPTRE OF ETERNAL GLORY makes one mana of any colour from the turn it is cast, and three once three lands with the SAME NAME are out.
+test("#1183: Sceptre of Eternal Glory taps for 1 until three same-named lands are out, then 3; Temple of the False God stays 0 below five lands", () => {
+  const sceptre = real("Sceptre of Eternal Glory");
+  expect(manaOutput(sceptre)).toEqual({ amount: 3, needsLands: 3, sameName: true, below: 1 });
+  expect(manaOutput(real("Temple of the False God"))).toEqual({ amount: 2, needsLands: 5 });
+  const grey = withTap(card("Grey Rock", "Artifact", sceptre.card.manaValue ?? 4, "{T}: Add {C}."), ["C"]);
+  const run = (rock: DeckCard, lands: DeckCard[]) => simulate([...lands, rock, ...spells(61, 3)], { trials: 6_000, turns: 8, seed: 23 });
+  // lands that all differ in name: the gate never holds, so the Sceptre is the one-mana rock it prints beside its gate.
+  const distinct = basics(37);
+  expect(run(sceptre, distinct).manaAt).toEqual(run(grey, distinct).manaAt);
+  // three lands of one name: the gate holds, and it makes more than the one-mana rock.
+  const alike = basics(37).map((d) => ({ ...d, card: { ...d.card, name: "Forest" } }));
+  const [a, b] = [run(sceptre, alike), run(grey, alike)];
+  expect(pAtLeastMana(a, 6, 6)).toBeGreaterThan(pAtLeastMana(b, 6, 6) + 0.02);
+  // TWO ALTERNATING NAMES: the gate fails on the cast turn with four lands (2 + 2) and holds from five on (pigeonhole). The Sceptre is PRICED EVERY TURN, not frozen at its cast-turn value, so
+  // at turn 8 it makes what a three-mana rock does wherever five lands are out (eight mana needs 5 lands + 3, or more lands).
+  const two = basics(37).map((d, i) => ({ ...d, card: { ...d.card, name: i % 2 ? "Forest" : "Island" } }));
+  const grey3 = withTap(card("Grey Rock 3", "Artifact", sceptre.card.manaValue ?? 4, "{T}: Add {C}{C}{C}."), ["C"], 3);
+  const [s2, g2] = [run(sceptre, two), run(grey3, two)];
+  expect(pAtLeastMana(s2, 8, 8)).toBeGreaterThan(0.15);
+  expect(Math.abs(pAtLeastMana(s2, 8, 8) - pAtLeastMana(g2, 8, 8))).toBeLessThan(0.005);
 });
 
 // WHAT THE DERIVED READING DROPS, AND WHY (#1169 task 2b-1). Each card below was an accelerant when the goldfish read printed text and `producedMana`.
@@ -803,11 +849,12 @@ test("N9: token mana is not a mana source, and a granted mana ability still is",
 // Sceptre of Eternal Glory is in 11 decks and was priced at one mana.
 test("N10: a word-form amount is read, and its gate with it", () => {
   const sceptre = manaOutput(real("Sceptre of Eternal Glory"));
-  // The gated line wins because it makes more -- and it is ZERO below the gate, not one.
+  // The gated line wins because it makes more. Below the gate it is the ungated "one mana of any color" (`below`), not zero (#1183); a card with ONLY a gated line is zero (Temple).
   expect(sceptre.amount).toBe(3);
-  // SAME NAME IS UNCHECKABLE HERE and "three or more lands" is its floor, so the gate under-claims
-  // rather than counting three from turn one.
+  // "Three or more lands with the SAME NAME" is checked against the lands' names (`sameName`), not read as its floor of three lands.
   expect(sceptre.needsLands).toBe(3);
+  expect(sceptre.sameName).toBe(true);
+  expect(sceptre.below).toBe(1);
 
   expect(manaOutput(withManaLines("Three", "Artifact", [tapFor(WUBRG, amountOf(3))])).amount).toBe(3);
   expect(manaOutput(withManaLines("Two", "Artifact", [tapFor(["U", "B", "R"], amountOf(2))])).amount).toBe(2);
