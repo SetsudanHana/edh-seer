@@ -469,7 +469,8 @@ import { emblemRecipient } from "../emblem.js";
 // back-reference after "look at the top ... of your library" is the looked-at card (fromZone library; 32 cards read complete again, 15 grammar-only), "if it's a X card" is its object (\"a X card from the top card of your library\": the mill emit is control you), Discover the Impossible
 // puts from exile, and a spell returning itself leaves the stack (13 spells).
 // 315: #1205 parseSubject stops dropping qualifiers the schema already carries: nonbasic (basic:false), nonlegendary (legendary:false), snow/nonsnow, tapped/untapped as an adjective before the noun (not "enters tapped"), multicolored/monocolored (colorCount).
-export const DERIVE_VERSION = 315;
+// 316: #1215 the arrives-tapped suppression of a `taps` emit reads the clause's EFFECT only (effectText), never its trigger: "Whenever this creature enters or becomes tapped, tap up to one target creature" (Champions of the Shoal) lost its tap to the trigger's "enters ... tapped"; and a token CREATED tapped (or tapped and attacking: Mobilize) emits no taps for the companion `tap` on it (CR 603.2e).
+export const DERIVE_VERSION = 316;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1703,6 +1704,11 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   return { verbs: [verb], subject };
 }
 
+/** "those tokens" / "the token": not a PRONOUN_OBJECT, so it never resolves and emitted a wildcard token tap (Dog Walker). */
+const CREATED_TOKEN_REF = /^(?:the|that|those|these) tokens?$/i;
+const TAPPED_WORD = /\btapped\b/i;
+/** An imperative tap of the created thing ("create a token, then tap it"): that one IS a tap event. */
+const TAPS_IT = /\btap (?:it|them|that token|those tokens|the tokens?)\b/i;
 const ARRIVES_TAPPED = /\b(?:battlefield|enters?|play)\b[^.]{0,30}?\btapped\b|\btapped\b[^.]{0,20}?\bunder\b/i;
 
 /** "Whenever you tap a permanent for {C}" (Forsaken Monument), "whenever enchanted land is tapped for
@@ -2288,8 +2294,25 @@ export function deriveAbilities(
       // The EVENT outranks a "battlefield" the model wrote on the action: a card that died is not there
       // (Hofri Ghostforge, Eater of Virtue, Chaos Shrine's Black Crystal wrote it; review of S3).
       const zone = refersToTrigger && (!action.fromZone || action.fromZone === "battlefield") ? zoneAfterEvent(clause.trigger?.event) : undefined;
+      // A TOKEN CREATED TAPPED IS NOT TAPPED BY ANYTHING (CR 603.2e: "becomes tapped" does not trigger for a
+      // permanent that enters in that state; Mobilize, 702.181a, is the same). The grammar writes a companion
+      // `tap` on a created "tapped" token and the stored model writes `tap: them / this / the token(s) / the
+      // created phrase`; resolved through the antecedent that is a scoped tap of the token. A tap that names
+      // a target, or says "tap it/them" in the effect, is a real event and keeps its emit.
+      const actionIdx = (clause.actions ?? []).indexOf(action);
+      const tapObject = (action.object ?? "").trim().toLowerCase();
+      const tapMadeHere = action.verb === "tap" && actionIdx > 0 && (clause.actions ?? []).slice(0, actionIdx).some((a, i) =>
+        a.verb === "create" && (tapObject === (a.object ?? "").trim().toLowerCase()
+          || ((PRONOUN_OBJECT.test(tapObject) || CREATED_TOKEN_REF.test(tapObject)) && sourceOf(actionIdx).to === "action" && (sourceOf(actionIdx) as { action: number }).action === i)
+          || (CREATED_TOKEN_REF.test(tapObject) && sourceOf(actionIdx).to !== "action")));
+      // CEILING: a token created tapped is recognised by the word "tapped" ANYWHERE in the effect text, not by
+      // the create action's own object. A tap of the created thing phrased other than TAPS_IT is read as the
+      // creation tap (0 corpus cards hit this today). "Create two 1/1 Dog tokens. Tap those tokens." (no
+      // "tapped") still emits the wildcard `{token:true, scope:all}` tap, because CREATED_TOKEN_REF only
+      // resolves when "tapped" is present.
+      const tapsCreated = tapMadeHere && TAPPED_WORD.test(effectText(text, cardName ?? "")) && !TAPS_IT.test(effectText(text, cardName ?? ""));
       const emits = temporaryRider ? [] : actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, text, { self: emitsSelf })
-        .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)))
+        .filter((e) => !(e.verb === "taps" && (tapsCreated || ARRIVES_TAPPED.test(effectText(text, cardName ?? "")))))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
         // Animate Dead) is the price of a reanimation aura: the permanent that would be the outlet is

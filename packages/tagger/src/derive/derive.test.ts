@@ -1,5 +1,7 @@
 import { describe, expect, it, test } from "vitest";
 import { manaAdded, unitAmount, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
+import { grammarClauseRecords } from "../grammar/clause-record.js";
+import { deriveInputOf } from "../derive-input.js";
 import type { Characteristics } from "../schema.js";
 
 test("one ability per action, sharing the clause kind and trigger", () => {
@@ -587,6 +589,87 @@ test("a permanent arriving tapped emits no tap event", () => {
     { 1: "Sacrifice an Eldrazi Scion: Tap target creature." },
   );
   expect(real.abilities.flatMap((a) => a.emits ?? []).some((e) => e.verb === "taps")).toBe(true);
+});
+
+test("a tap effect under a trigger that says enters/becomes tapped still emits taps (#1215)", () => {
+  // Champions of the Shoal: "Whenever this creature enters or becomes tapped, tap up to one target
+  // creature and put a stun counter on it." ARRIVES_TAPPED read the TRIGGER's "enters or becomes
+  // tapped" and dropped the effect's real tap. Only the effect may speak for the arrival state.
+  const text = "Whenever this creature enters or becomes tapped, tap up to one target creature and put a stun counter on it.";
+  const actions = [
+    { verb: "tap", object: "up to one target creature", optional: true },
+    { verb: "add-counter", object: "a stun counter", amount: "1" },
+  ];
+  const { abilities } = deriveAbilities(
+    [
+      { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions },
+      { id: 2, abilityType: "triggered", trigger: { event: "taps", subject: "this creature", control: "you" }, actions },
+    ],
+    "Champions of the Shoal",
+    { 1: text, 2: text },
+  );
+  // One ability per action: each trigger (enters, taps) carries a taps emit and a counter emit.
+  const tappers = abilities.filter((a) => (a.emits ?? []).some((e) => e.verb === "taps"));
+  expect(tappers.flatMap((a) => a.trigger?.verbs ?? []).sort()).toEqual(["enters", "taps"]);
+
+  // The effect's own arrival state is still no event, trigger or not.
+  const arrival = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [{ verb: "put", object: "target land", toZone: "battlefield" }, { verb: "tap", object: "target land" }] }],
+    "Some Card",
+    { 1: "When this creature enters, put target land onto the battlefield tapped." },
+  );
+  expect(arrival.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "taps")).toEqual([]);
+});
+
+test("a token created tapped is not tapped by an effect (CR 603.2e, Mobilize 702.181a) (#1215)", () => {
+  const tapsOf = (clauses: Parameters<typeof deriveAbilities>[0], name: string, texts: Record<number, string>) =>
+    deriveAbilities(clauses, name, texts).abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "taps");
+  const create = (object: string, amount = "2") => ({ verb: "create", object, amount });
+
+  // THE GRAMMAR PATH (Army of the Damned, a spell with no trigger to hide behind): the grammar itself
+  // appends the companion `{verb:"tap", object:{ref:"sentence"}}` after "create ... tapped".
+  for (const [name, oracleText] of [
+    ["Army of the Damned", "Create thirteen tapped 2/2 black Zombie creature tokens."],
+    ["Royal Warden", "When this creature enters, create two tapped 2/2 black Necron Warrior artifact creature tokens."],
+  ] as const) {
+    const card = { name, typeLine: "Sorcery", oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+    expect(tags.abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "create-token"))).toBe(true);
+    expect(tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "taps")).toEqual([]);
+  }
+  // Royal Warden / Alchemist's Talent shape: the grammar adds a companion tap on the created token.
+  expect(tapsOf(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [create("two tapped 2/2 black Necron Warrior artifact creature tokens"), { verb: "tap", object: "them" }] }],
+    "Royal Warden", { 1: "When this creature enters, create two tapped 2/2 black Necron Warrior artifact creature tokens." },
+  )).toEqual([]);
+  // The tap names the created phrase itself (Leering Onlooker).
+  expect(tapsOf(
+    [{ id: 1, abilityType: "activated", actions: [create("two tapped 1/1 black Bat creature tokens with flying"), { verb: "tap", object: "two tapped 1/1 black Bat creature tokens with flying" }] }],
+    "Leering Onlooker", { 1: "Create two tapped 1/1 black Bat creature tokens with flying." },
+  )).toEqual([]);
+  // "tap those tokens" is a reference to the created tokens, not a wildcard token tap (Dog Walker).
+  expect(tapsOf(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "turned-face-up", subject: "this creature", control: "you" }, actions: [create("two tapped 1/1 white Dog creature tokens"), { verb: "tap", object: "those tokens" }] }],
+    "Dog Walker", { 1: "When this creature is turned face up, create two tapped 1/1 white Dog creature tokens." },
+  )).toEqual([]);
+  // Mobilize-shaped: enter tapped and attacking.
+  expect(tapsOf(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [create("a tapped and attacking token that's a copy of target creature you control", "1"), { verb: "tap", object: "it" }] }],
+    "Sandstorm Crasher", { 1: "Whenever this creature attacks, create a tapped and attacking token that's a copy of target creature you control." },
+  )).toEqual([]);
+
+  // A tap of something already on the battlefield, in the same clause, is still an event.
+  const both = tapsOf(
+    [{ id: 1, abilityType: "spell", actions: [create("two tapped Treasure tokens"), { verb: "tap", object: "them" }, { verb: "tap", object: "target creature" }] }],
+    "Some Spell", { 1: "Create two tapped Treasure tokens, then tap target creature." },
+  );
+  expect(both).toHaveLength(1);
+  expect(both[0]!.subject.scope).toBe("target");
+  expect(tapsOf(
+    [{ id: 1, abilityType: "spell", actions: [create("a Treasure token", "1"), { verb: "tap", object: "target creature" }] }],
+    "Some Spell", { 1: "Create a Treasure token, then tap target creature." },
+  )).toHaveLength(1);
 });
 
 test("a trigger on a permanent entering TRANSFORMED is not an enters trigger", () => {
