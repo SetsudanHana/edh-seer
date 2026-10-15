@@ -192,7 +192,7 @@ export function playableLines(dc: DeckCard, deck?: readonly DeckCard[], perGame 
  *  type line, since #1169 task 2b-1 -- it was printed text and Scryfall's `producedMana`, which stamped Pitiless Plunderer (a Treasure maker) with
  *  five colours and priced Birgi as a dork. A card with no derived tags is none: derive covers every card in a deck, so that is an underived card and
  *  `coverage.ts` lists it. */
-export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): Accelerant | null {
+export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[], perGame = false, netBar = false): Accelerant | null {
   const line = (dc.card.typeLine ?? "").toLowerCase();
   const name = dc.card.name;
   const manaValue = dc.card.manaValue ?? 0;
@@ -211,12 +211,15 @@ export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[], per
   // FREE on turn one. The real sequence is a cost plus a three-turn wait: the same shape `castability.ts` REFUSES rather than prices (roadmap N9).
   if (tags.isOneShot || tags.suspendOnly || !isManaSource(dc)) return null;
   const lines = playableLines(dc, deck, perGame);
-  // A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION (#1184): Pyramid of the Pantheon's "{2}, {T}: Add one mana of any color" nets -1, and its three-mana line waits on counters
-  // on the card itself, which no decklist settles. The bar is a line that nets AT LEAST ONE, as `rampGrade`'s coloured bit does (owner 2026-10-13); a net-0 filter (Prismatic Lens's
-  // coloured line, Mana Prism) is a colour fixer the audit still counts, but it adds no mana, and this model asks of an accelerant that it add some.
-  // A SCALING LINE'S NET IS A CEILING, NOT A MEASURE (derive nets "{G}, {T}: Add X mana" and "{2}, {T}: Add {B} for each Swamp" at 1 less the cost): Selvala and Magus of the Coffers
-  // make more than they cost in the decks that scale them, so a scaling line is not judged by its net and stays what it was (the census, 2026-10-16: the only two it keeps).
-  if (!lines.some((l) => l.net >= 1 || l.amount.scales !== null)) return null;
+  if (lines.length === 0) return null;
+  // A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION (#1184), IN THE SIMULATION (`netBar`): Pyramid of the Pantheon's "{2}, {T}: Add one mana of any color" nets -1, and its three-mana
+  // line waits on counters on the card itself, which no decklist settles. The bar is a line that nets AT LEAST ONE, as `rampGrade`'s coloured bit does (owner 2026-10-13); a net-0 filter (Prophetic
+  // Prism, Mana Cylix) adds no mana. The land count, the commander-ramp core and mana-base-fit do NOT pass the bar: their weights are owner rulings (the land count's class of a net-0 filter is a
+  // question for the owner), so they keep the answer they gave.
+  // CEILING: a net-0 filter's COLOUR CONVERSION is no longer modelled in the goldfish (an under-claim; it used to be priced as a free +1 rock, an over-claim).
+  // A SCALING LINE'S NET IS A CEILING, NOT A MEASURE (derive nets "{G}, {T}: Add X mana" and "{2}, {T}: Add {B} for each Swamp" at 1 less the cost): Selvala and Magus of the Coffers make more than
+  // they cost in the decks that scale them, so a scaling line is not judged by its net.
+  if (netBar && !lines.some((l) => l.net >= 1 || l.amount.scales !== null)) return null;
   // A LAND AURA WAITS A TURN, because the land it enchants is what pays for it: you tap the Forest for {G}, cast Wild Growth on it, and the Forest is
   // tapped. That is a DORK's timing (roadmap O2). A PHASE TRIGGER PAYS FROM THE NEXT TURN, whatever the type line says: you cast it DURING your first main
   // phase, so that turn's trigger has already happened. LANDFALL MANA MISSES THE TURN IT LANDS: rule 2 plays the land BEFORE rule 3 casts anything.
@@ -356,7 +359,7 @@ const BOUNCES = /return a land you control to its owner's hand/i;
 /** A GATE ON A LINE'S AMOUNT, read from the typed gate (derive's `parseGate`): "you control five or more lands" (Temple of the False God) is a `control` gate on `land` alone, and
  *  "three or more lands with the same name" (Sceptre of Eternal Glory) a `same-name` one. This model prices both against the lands on the board, turn by turn (`needsLands`).
  *  "With the same name" is checked against the names of the lands on the board (`OnBoardLand.name`, `ManaOutput.sameName`). CEILING: a land fetched by a spell has no known name
- *  (`""`) and joins no group, an under-claim. */
+ *  (`""`) and joins no group, and neither does a land that enters as a copy (Vesuva keeps its own name), an under-claim. */
 const landsNeeded = (g: ManaGate): number => (g.kind === "same-name" ? g.need : g.kind === "control" && g.nouns.length === 1 && g.nouns[0] === "land" && !g.basic && g.minPower === undefined ? g.need : 0);
 /** The tron shape: two named other lands on the board upgrade the amount. The names are the SUBTYPES as printed inside the gate, which is what the board carries -- and the subtype is
  *  `Urza's Power-Plant` with a hyphen while the CARD is `Urza's Power Plant` without one. */
@@ -1034,7 +1037,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // different costs to one answer.
       cost: isLand ? null : parseCost(castableManaCost(dc.card)),
       costKey: castableManaCost(dc.card) ?? "",
-      ...(isLand ? { land: classifyLand(dc.card, dc.tags) } : { accelerant: classifyAccelerant(dc, gateDeck, true) }),
+      ...(isLand ? { land: classifyLand(dc.card, dc.tags) } : { accelerant: classifyAccelerant(dc, gateDeck, true, true) }),
       ...(ritual.length > 0 ? { ritual } : {}),
       ...(oppRitual > 0 ? { ritualPerOppCard: oppRitual } : {}),
       ...(attackOf(dc) ? { attack: attackOf(dc)! } : {}),
@@ -1074,7 +1077,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       fetches: false,
       cost: parseCost(castableManaCost(dc.card)),
       costKey: castableManaCost(dc.card) ?? "",
-      accelerant: classifyAccelerant(dc, gateDeck, true),
+      accelerant: classifyAccelerant(dc, gateDeck, true, true),
       ...(tapBonus ? { tapBonus } : {}),
       ...(landfall > 0 ? { landfall } : {}),
       // THE COMMANDER ATTACKS TOO: it is cast from the command zone like any creature it holds.
@@ -1430,7 +1433,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         if (cast.perm) perms.push(cast.perm);
         const mana = produced(cast.output, lands, perms, turn);
         const gated = {
-          ...(cast.output.gated || cast.output.speed ? { out: cast.output } : {}),
+          // A LANDS-COUNTED GATE (Sceptre of Eternal Glory) is priced every turn too: the source is re-priced against the lands on the board, not frozen at its cast-turn value.
+          ...(cast.output.gated || cast.output.speed || cast.output.needsLands !== undefined ? { out: cast.output } : {}),
           ...(cast.colourGate && cast.baseColors !== undefined ? { colourGate: cast.colourGate, baseColors: cast.baseColors } : {}),
         };
         // A PER-SOURCE BONUS BRINGS NO MANA OF ITS OWN, so it goes to `bonuses` INSTEAD of the source
@@ -1993,7 +1997,7 @@ export function manaModel(
     combat: { one: turnQuartiles(greedy.killTurns.one), table: turnQuartiles(greedy.killTurns.table) },
     availability: {
       trials,
-      accelerants: deck.filter((dc) => classifyAccelerant(dc, gateDeck, true) !== null).length,
+      accelerants: deck.filter((dc) => classifyAccelerant(dc, gateDeck, true, true) !== null).length,
       rows,
       headline: { mana: 6, turn: 6, low: Math.min(lo, hi), high: Math.max(lo, hi) },
       need: { mana: needMana, turn: needMana, share: underOf(needMana), low: Math.min(nLo, nHi), high: Math.max(nLo, nHi) },

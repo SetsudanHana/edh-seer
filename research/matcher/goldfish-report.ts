@@ -70,7 +70,7 @@ if (one) {
   if (!file && !alt) { console.log(`no such deck: ${one}`); await store.close(); process.exit(1); }
   const { deck, commanders } = await loadDeck((file ?? alt)!, file ? DECK_DIR : DECK_DIR_ALT);
   const gateDeck = [...deck, ...commanders];
-  const accel = deck.map((dc) => classifyAccelerant(dc, gateDeck)).filter((a) => a !== null);
+  const accel = deck.map((dc) => classifyAccelerant(dc, gateDeck, false, true)).filter((a) => a !== null);
   const r = simulate(deck, { trials: TRIALS, turns: TURNS, seed: SEED, alsoPrice: commanders });
   console.log(`${file ?? alt} — ${deck.length} library cards, ${accel.length} accelerants (${TRIALS} trials, seed ${SEED})`);
   console.log(`  accelerants: ${accel.map((a) => `${a!.name} [${a!.kind} ${a!.manaValue}]`).join(" · ")}`);
@@ -94,14 +94,14 @@ const rows: { deck: string; accelerants: number; headline: number; held: number;
 for (const file of files) {
   const { deck, commanders } = await loadDeck(file);
   const gateDeck = [...deck, ...commanders];
-  const accelerants = deck.map((dc) => classifyAccelerant(dc, gateDeck)).filter((a) => a !== null).length;
+  const accelerants = deck.map((dc) => classifyAccelerant(dc, gateDeck, false, true)).filter((a) => a !== null).length;
   const r = simulate(deck, { trials: TRIALS, turns: TURNS, seed: SEED, alsoPrice: commanders });
   // THE ALTERNATIVE POLICY IS RUN FOR EVERY DECK, NOT ONLY UNDER `--criteria`, because the point
   // readout is WITHDRAWN (the whole-item falsifier fired) and the pair of policies IS the output.
   const held = simulate(deck, { trials: TRIALS, turns: TURNS, seed: SEED, holdUp: 2, alsoPrice: commanders });
   // THE COUNTERFACTUAL IS THE SAME DECK WITH THE ACCELERANTS INERT, not a different deck: swapping
   // them out would change the library size and measure that instead. This is the mechanism test.
-  const inert: DeckCard[] = deck.map((dc) => classifyAccelerant(dc, gateDeck)
+  const inert: DeckCard[] = deck.map((dc) => classifyAccelerant(dc, gateDeck, false, true)
     ? { card: { ...dc.card, oracleText: "" }, tags: null }
     : dc);
   const bare = simulate(inert, { trials: TRIALS, turns: TURNS, seed: SEED, alsoPrice: commanders });

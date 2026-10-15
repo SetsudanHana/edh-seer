@@ -7,6 +7,8 @@ import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 import { FREE_TAP, fetchTags, manaTags, mkLine, ritualLine, tapFor, triggerLine, withLines, withTap } from "./mana-test-support.js";
 import { cardLines, colourSourceColours, isColourSource, isFetchSource } from "./mana-lines.js";
 import { gateVerdict } from "./gate.js";
+import { rampWeight } from "./land-count.js";
+import { RAMP_RESILIENCE } from "./mana-base.js";
 import { classifyAccelerant, playableLines, colourMaskOf, tapBonusOf, fetchesLand, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
@@ -190,11 +192,22 @@ test("the board-count gates stay priced turn by turn whatever the deck: Sceptre 
 
 // #1184: A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION. Pyramid of the Pantheon's only playable line is "{2}, {T}: Add one mana of any color. Put a brick counter" (net -1);
 // its three-mana line waits on counters on the card itself, which no decklist settles.
-test("#1184: Pyramid of the Pantheon is no accelerant: its only playable line nets -1", () => {
+test("#1184: Pyramid of the Pantheon is no accelerant in the simulation: its only playable line nets -1", () => {
   const pyramid = real("Pyramid of the Pantheon");
   expect(playableLines(pyramid).map((l) => l.net)).toEqual([-1]);
-  expect(classifyAccelerant(pyramid)).toBeNull();
+  expect(classifyAccelerant(pyramid, undefined, false, true)).toBeNull();
   expect(manaAvailability([pyramid, ...basics(37), ...spells(61, 3)], { trials: 50 }).accelerants).toBe(0);
+});
+
+// #1184 STAYS IN THE GOLDFISH: the land count (`land-count.ts`) reads `classifyAccelerant` without the bar, so its answer is what main gave (the weight of a net-0 filter is an owner ruling).
+test("#1184: the net bar is the simulation's; the land count keeps its class and weight for Prophetic Prism", () => {
+  const prism = real("Prophetic Prism");
+  expect(playableLines(prism).map((l) => l.net)).toEqual([0]);
+  expect(classifyAccelerant(prism)?.kind).toBe("rock");
+  expect(classifyAccelerant(prism, undefined, false, true)).toBeNull();
+  expect(classifyAccelerant(real("Magus of the Coffers"), undefined, false, true)?.kind).toBe("dork");
+  const deck = [prism, ...basics(37), ...spells(61, 3)];
+  expect(rampWeight(prism, deck)).toBe(RAMP_RESILIENCE.rock);
 });
 
 // #1183: SCEPTRE OF ETERNAL GLORY makes one mana of any colour from the turn it is cast, and three once three lands with the SAME NAME are out.
@@ -211,6 +224,13 @@ test("#1183: Sceptre of Eternal Glory taps for 1 until three same-named lands ar
   const alike = basics(37).map((d) => ({ ...d, card: { ...d.card, name: "Forest" } }));
   const [a, b] = [run(sceptre, alike), run(grey, alike)];
   expect(pAtLeastMana(a, 6, 6)).toBeGreaterThan(pAtLeastMana(b, 6, 6) + 0.02);
+  // TWO ALTERNATING NAMES: the gate fails on the cast turn with four lands (2 + 2) and holds from five on (pigeonhole). The Sceptre is PRICED EVERY TURN, not frozen at its cast-turn value, so
+  // at turn 8 it makes what a three-mana rock does wherever five lands are out (eight mana needs 5 lands + 3, or more lands).
+  const two = basics(37).map((d, i) => ({ ...d, card: { ...d.card, name: i % 2 ? "Forest" : "Island" } }));
+  const grey3 = withTap(card("Grey Rock 3", "Artifact", sceptre.card.manaValue ?? 4, "{T}: Add {C}{C}{C}."), ["C"], 3);
+  const [s2, g2] = [run(sceptre, two), run(grey3, two)];
+  expect(pAtLeastMana(s2, 8, 8)).toBeGreaterThan(0.15);
+  expect(Math.abs(pAtLeastMana(s2, 8, 8) - pAtLeastMana(g2, 8, 8))).toBeLessThan(0.005);
 });
 
 // WHAT THE DERIVED READING DROPS, AND WHY (#1169 task 2b-1). Each card below was an accelerant when the goldfish read printed text and `producedMana`.
