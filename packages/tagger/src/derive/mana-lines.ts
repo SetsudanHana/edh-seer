@@ -55,10 +55,6 @@ export interface ManaInput {
   startLoyalty?: (number | null)[];
 }
 
-/** The optional `CardTags` keys this module writes, each present only when the card has it. A writer that `$set`s the tags
- *  must `$unset` the ones a card no longer has, or a re-derive cannot retract a line (derive-corpus does). */
-export const MANA_TAG_KEYS = ["manaLines", "staticFixer", "landFetch", "isOneShot", "suspendOnly"] as const;
-
 export interface ManaResult {
   manaLines?: ManaLine[];
   staticFixer?: StaticFixer;
