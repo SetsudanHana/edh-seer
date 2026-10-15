@@ -259,6 +259,7 @@ function colourFindings(report: DeckReport): Finding[] {
     const verb = worst.cards === 1 ? "wants" : "want";
     // THE ONE THE DECK CAN FIX BY SEQUENCING RATHER THAN BY BUILDING. When the deck holds the
     // sources and they simply are not online that early, saying "short of blue" is the false half.
+    const unread = unreadNote(report.deckMath?.unreadSources);
     const timing = c.supplied >= worst.required
       ? ` You have enough ${colour} overall; it's a speed problem.`
       : "";
@@ -270,7 +271,8 @@ function colourFindings(report: DeckReport): Finding[] {
         ? `Only ${worst.available} ${colour} sources can tap for mana by then, counting ${worst.fixedBy.join(" and ")} fixing your lands (${c.supplied} make ${colour} on their own)`
         : `Only ${worst.available} of your ${c.supplied} ${colour} sources can tap for mana by then`)
         + " (tapped lands, and rocks you couldn't have cast yet, don't count)."
-        + ` Casting it on curve nine games in ten takes ${worst.required}.${timing}`,
+        + ` Casting it on curve nine games in ten takes ${worst.required}.${timing}`
+        + (unread ? ` ${unread}, so the count may be short.` : ""),
       action: tradeAction(worst.replace ?? [], colour, worst.turn),
       // NO SLASH (#1033), the same words as the Manabase tile: "30/37" read as 30 of 37 lands.
       figure: `${worst.available} of ${worst.required}`,
@@ -329,6 +331,13 @@ export function cardsSubject(names: readonly string[], cards: number): string {
   const others = cards - names.length;
   if (others <= 0) return names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
   return `${names.join(", ")} and ${others} other ${others === 1 ? "card" : "cards"}`;
+}
+
+/** SOURCES THE COLOUR COUNT COULD NOT READ (#1186): derive could not read their mana line, so the audit counts them as
+ *  no colour and lists them (`unreadSources`). Every place that prints a source count says so. Past two names it counts the rest. */
+export function unreadNote(names: readonly string[] | undefined): string | null {
+  if (!names?.length) return null;
+  return `Not counted: ${cardsSubject(names.slice(0, 2), names.length)} (${names.length === 1 ? "its" : "their"} mana could not be read)`;
 }
 
 /** Pips read as words because the figure beside the row is already digits, and "2 blue" next to

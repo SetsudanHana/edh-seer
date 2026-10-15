@@ -441,6 +441,9 @@ export interface DeckMath {
     /** P(the drawn sources pay the whole cost) and the lowest per-colour P, both in the plain draw model. */
     pJoint: number; pEach: number;
   };
+  /** Mana sources derive could not read (#1186): the colour audit counts them as no colour, so the source counts may be short.
+   *  Absent when there are none. */
+  unreadSources?: string[];
   /** The deck's biggest demand shapes: how many cards want the event, how many supply it, and
    *  whether you will have a supplier. */
   demand: {
