@@ -465,8 +465,8 @@ import { emblemRecipient } from "../emblem.js";
 // turned face up", look-at-top, "who doesn't", "after you roll a die", phase-in, Pulse of Llanowar); bought cards take the new
 // readings where the grammar now reads them (36 cards, each checked against oracle text); staticFixer gains `covers: "basics"`;
 // "As this creature enters, … counters on it" is the card itself (10 bought cards gain `self`).
-// 314: #1210 tasks 5-6: a stored record whose event has no printed cue in its own segment keeps its stored trigger (`misplaced` guard: Astrid Peth, Sidisi, Huntmaster of the Fells and others); a
-// back-reference after "look at the top ... of your library" is the looked-at card (fromZone library; 32 cards read complete again, 15 grammar-only), "if it's a X card" is its object, Discover the Impossible
+// 314: #1210 tasks 5-6: a stored record whose event has no printed cue in its own segment keeps its stored trigger (`misplaced` guard: Astrid Peth, Sidisi, Huntmaster of the Fells and others) and, when the sentence that carries the cue is no same-event record's, reads THAT sentence (Kratos) or is dropped as its twin; a
+// back-reference after "look at the top ... of your library" is the looked-at card (fromZone library; 32 cards read complete again, 15 grammar-only), "if it's a X card" is its object (\"a X card from the top card of your library\": the mill emit is control you), Discover the Impossible
 // puts from exile, and a spell returning itself leaves the stack (13 spells).
 export const DERIVE_VERSION = 314;
 
@@ -1784,6 +1784,24 @@ const REVEALS = /\b(?:reveals?|looks? at)\b/i;
 const ENTERS_PREPARED = /\benters prepared\b/i;
 const BECOMES_PREPARED = /\bbecomes? prepared\b/i;
 
+/** The sentence a record numbered into the WRONG one belongs to. Its own text carries no printed cue for its event but another clause's text
+ *  does. Returns that sentence when exactly one such text is not already the text of a record with the same event (a mode bullet repeating
+ *  its header's trigger keeps its own text: its header IS the same-event owner); `""` when several are, so no printed text is read at all;
+ *  `undefined` when the record is not misplaced or only a same-event owner carries the cue. */
+function homeOfMisplaced(
+  clause: { id: number | string; trigger?: { event?: string } | null },
+  clauses: readonly { id: number | string; trigger?: { event?: string } | null }[],
+  clauseTexts?: Record<number, string>,
+): string | undefined {
+  const event = clause.trigger?.event;
+  if (!event || !clauseTexts) return undefined;
+  const own = textForClause(clause, clauseTexts);
+  if (!own || triggerHasCue(event, own)) return undefined;
+  const hits = [...new Set(Object.values(clauseTexts).filter((t) => t && t !== own && triggerHasCue(event, t)))];
+  const orphans = hits.filter((t) => !clauses.some((c) => c !== clause && c.trigger?.event === event && textForClause(c, clauseTexts) === t));
+  return orphans.length === 0 ? undefined : orphans.length === 1 ? orphans[0] : "";
+}
+
 export function deriveAbilities(
   clauses: ClauseRecord[],
   cardName?: string,
@@ -1832,6 +1850,8 @@ export function deriveAbilities(
 
   /** What an earlier clause exiled, for "the exiled card" in a later one (#860). */
   let lastExiled: string | undefined;
+  /** Per clause text, the trigger verbs a record has already read off it (see `misplaced`). */
+  const grammarCovered = new Map<string, Set<string>>();
   for (let clause of clauses) {
     // "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860): see `exiledAcrossClauses`.
     ({ clause, lastExiled } = exiledAcrossClauses(clause, lastExiled, cardName));
@@ -1840,7 +1860,13 @@ export function deriveAbilities(
     // keeping the effect and dropping the trigger would leave the card claiming to do a thing it
     // never does. The token's own derived row carries both halves.
     if (grantedToken?.has(clause.id)) continue;
-    clause = withGrammarActions(clause, clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
+    // A MISPLACED RECORD READS NO TEXT BUT ITS OWN SENTENCE. The stored numbering drifts from `segment()`'s when the model splits a compound
+    // (Astrid Peth) or merges two sentences (Kratos): a record whose event has NO printed cue in the text numbered to it, but does in other
+    // clauses' texts, was numbered into the wrong sentence. EXACTLY ONE other text carrying the cue re-homes it there (trigger kept as stored,
+    // effect read off that sentence); none-or-several leave it NO printed text (the stored reading alone). Mixing the stored trigger with another
+    // sentence's effect was Kratos at 314: a `dies` trigger carrying the end-step's +1/+1 counters.
+    const rehomed = homeOfMisplaced(clause, clauses, clauseTexts);
+    clause = withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
     // matcher can stop reading a back-face ability against the card's UNION of types.
     const face = clauseFaces?.[clause.id];
@@ -1880,7 +1906,7 @@ export function deriveAbilities(
     // Who performs each action, when the clause names someone the object text does not carry. The
     // cue localises the actor to a VERB, not to an action, so a clause with two actions of that verb
     // is ambiguous and is left alone -- a missing answer beats a wrong one.
-    const clauseText = textForClause(clause, clauseTexts);
+    const clauseText = rehomed ?? textForClause(clause, clauseTexts);
     // "EACH CREATURE YOU CONTROL BECOMES PREPARED" IS A PREPARE, NOT A GRANT (CR 722.3a). Codie,
     // Ravenous Codex's activated ability came back from the model as `grant-ability` even with
     // `prepare` in the vocabulary, so the one card that prepares a whole board prepared nothing.
@@ -1990,12 +2016,20 @@ export function deriveAbilities(
     // model splits a compound ("enters or attacks") into two records (Astrid Peth: stored 1 enters, 2 attacks, 3 the Brand-new Sky trigger; segment()
     // has 2 for that sentence). A record whose event has NO printed cue in this text but does in another clause's text was numbered into the wrong
     // sentence: it keeps its stored trigger, as before an ability word stopped hiding the preamble.
-    const misplaced = clause.trigger?.event !== undefined && !triggerHasCue(clause.trigger.event, text)
-      && Object.values(clauseTexts ?? {}).some((t) => t !== text && triggerHasCue(clause.trigger!.event!, t));
+    const misplaced = rehomed !== undefined || (clause.trigger?.event !== undefined && !triggerHasCue(clause.trigger.event, text)
+      && Object.values(clauseTexts ?? {}).some((t) => t !== text && triggerHasCue(clause.trigger!.event!, t)));
+    // A re-homed record whose event the sentence's own record already read (Kratos 2 `dies` on the attack-or-dies sentence record 1 claims;
+    // Astrid 2 `attacks` on the enters-or-attacks sentence) is that record's twin, not a second ability.
+    if (misplaced && rehomed && grammarCovered.get(rehomed)?.has(normalizeTriggerVerb(clause.trigger!.event!) ?? "")) continue;
     const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
       clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
       readings?.[clause.id]?.trigger, curse) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
+    if (text && claimed.length > 0) {
+      const covered = grammarCovered.get(text) ?? new Set<string>();
+      for (const g of claimed) for (const v of g.verbs) covered.add(v);
+      grammarCovered.set(text, covered);
+    }
     /** The clause's further readings of its own event, each a twin of the first (pushed below). */
     grammarExtra = claimed.slice(1);
     if (grammarAll) {

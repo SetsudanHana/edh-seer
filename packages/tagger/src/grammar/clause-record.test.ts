@@ -304,10 +304,41 @@ test("Astrid Peth: a stored record split off a compound does not take the printe
   expect(tags.abilities.filter((a) => a.trigger?.verbs?.includes("attacks" as never)).flatMap((a) => a.emits ?? []).map((e) => e.verb)).toContain("create-token");
 });
 
+test("Kratos, Stoic Father: a record numbered into another sentence reads that sentence, never a mix; its twin of an already-read event is dropped", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const card = { name: "Kratos, Stoic Father", typeLine: "Legendary Creature — God Warrior", keywords: ["Partner"] as string[],
+    oracleText: "Whenever you attack with one or more Gods and whenever a God dies, you get an experience counter.\nAt the beginning of your end step, put a number of +1/+1 counters on target creature equal to the number of experience counters you have.\nPartner\u2014Father & son" };
+  const stored = [
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "one or more Gods", control: "you" }, actions: [{ verb: "add-counter", object: "experience counter", optional: false }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "a God", control: "you" }, actions: [{ verb: "add-counter", object: "experience counter", optional: false }] },
+    { id: 3, abilityType: "triggered", trigger: { event: "end-step", control: "you" }, actions: [{ verb: "add-counter", object: "+1/+1 counter", amount: "the number of experience counters you have", optional: false }] },
+    { id: 3, abilityType: "none", actions: [{ verb: "none", object: "Partner\u2014Father & son" }] },
+  ];
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, stored as never));
+  const view = tags.abilities.map((a) => [a.trigger?.verbs?.[0], (a.emits ?? []).map((e) => e.subject.counter).join(",")]);
+  expect(view).toEqual([["attacks", "experience"], ["dies", "experience"], ["end-step", "+1/+1"]]);
+});
+
+test("Territory Culler: the looked-at card goes from YOUR library to your graveyard, so the mill emit is control you; Domri's dig still names creature", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const derive = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+  };
+  const culler = derive("Territory Culler", "Creature — Eldrazi Drone", "Landfall \u2014 Whenever a land you control enters, look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.");
+  const mill = culler.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "mill");
+  expect(mill?.subject).toMatchObject({ control: "you", fromZone: "library" });
+  const domri = derive("Domri Rade", "Legendary Planeswalker — Domri", "+1: Look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand.");
+  expect(domri.abilities.find((a) => a.effect.kind === "search")?.effect.subject).toMatchObject({ type: "creature" });
+});
+
 test("a 'look at the top card' whose later 'it' / 'that card' is resolved to the library reads complete; one nothing touches still blocks (#1210)", () => {
   const domri = readCard("Domri Rade", "Legendary Planeswalker — Domri", "+1: Look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand.");
   expect(domri.complete).toBe(true);
-  expect(domri.records[0]!.actions!.find((a) => a.verb === "put")).toMatchObject({ object: "a creature card", fromZone: "library", toZone: "hand" });
+  expect(domri.records[0]!.actions!.find((a) => a.verb === "put")).toMatchObject({ object: "a creature card from the top card of your library", fromZone: "library", toZone: "hand" });
   const merrow = readCard("Puresight Merrow", "Creature — Merfolk Wizard", "{W/U}, {Q}: Look at the top card of your library. You may exile that card.");
   expect(merrow.complete).toBe(true);
   expect(merrow.records[0]!.actions!.find((a) => a.verb === "exile")).toMatchObject({ fromZone: "library" });
@@ -316,7 +347,7 @@ test("a 'look at the top card' whose later 'it' / 'that card' is resolved to the
   expect(hound.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.fromZone, a.toZone])).toEqual([["library", "hand"], ["library", "graveyard"]]);
   const reef = readCard("Risen Reef", "Creature — Elemental", "Whenever Risen Reef or another Elemental you control enters, look at the top card of your library. If it's a land card, you may put it onto the battlefield tapped. If you don't put the card onto the battlefield, put it into your hand.");
   expect(reef.complete).toBe(true);
-  expect(reef.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["a land card", "library", "battlefield"], ["it", "library", "hand"]]);
+  expect(reef.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["a land card from the top card of your library", "library", "battlefield"], ["it", "library", "hand"]]);
   // The card EXILED from the look is in exile, not the library (Discover the Impossible; stored answer: exile).
   const disc = readCard("Discover the Impossible", "Sorcery", "Look at the top five cards of your library. Exile one of them face down and put the rest on the bottom of your library in a random order. You may cast the exiled card without paying its mana cost if it's an instant spell with mana value 2 or less. If you don't, put that card into your hand.");
   expect(disc.records[0]!.actions!.filter((a) => a.verb === "put").map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["the rest of the top five cards of your library", "library", "library"], ["that card", "exile", "hand"]]);
