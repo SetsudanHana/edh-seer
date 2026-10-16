@@ -1124,6 +1124,18 @@ export interface Ability {
      *  prints no size. */
     amount?: { op: "eq" | "gte"; value: number };
   };
+  /** THE TRIGGER THIS ABILITY WAITS ON WAS REFUSED, AND THE ABILITY POINTS BACK AT IT (#1253).
+   *  "Whenever a creature you control attacks ALONE, IT gains double strike" (Squall): the grammar
+   *  refuses the narrowing (`unknownTriggers`: `narrowing:attacks`, `if:dies`, `becomes-blocked`, ...)
+   *  and the ability derives with `kind: "triggered"` and NO `trigger`, while its emits and effect
+   *  subject still say `ref: "trigger"` over a `control: "any"` subject -- "it" with the one thing that
+   *  defined it gone. Read as written that is every creature, so a refused trigger became a silent WIDE
+   *  claim (62 corpus cards). The `restricted` rule one layer over: KEEP THE ABILITY AND ITS KINDS
+   *  (roles, themes and counts read those) and CLAIM NO CARDS -- the matcher forms no pair reason from
+   *  this ability on either side. Set only when `ref: "trigger"` appears in the ability's emits or
+   *  effect; a refused trigger whose ability never names the trigger object claims what it always
+   *  did (a saga chapter's token is still a token). */
+  triggerRefused?: true;
   /** A numeric condition on WHEN the ability is on — The Millennium Calendar's "when there are
    *  1,000 or more time counters", Chrome Steed's "as long as you control three or more artifacts",
    *  Urza's Workshop's "activate only if you control three or more artifacts", Gadrak's "can't

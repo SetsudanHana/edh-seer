@@ -6719,3 +6719,62 @@ describe("a multi-type emit names the member the trigger heard (#1224)", () => {
     });
   });
 });
+
+// A REFUSED TRIGGER CLAIMS NOTHING (#1253). Cunning Evasion's "Whenever a creature you control becomes
+// blocked, you may return IT to its owner's hand": the grammar refuses `becomes-blocked`, so the ability
+// derives with no trigger and a `leaves` emit that is `ref: "trigger"` over a creature -- which reads as
+// every creature leaving. `triggerRefused` keeps the ability (and its kind) and claims no cards.
+describe("triggerRefused: an ability whose trigger was refused claims nothing", () => {
+  const leavesWatcher = () => base("Blood Artist Analogue", [{
+    kind: "triggered",
+    trigger: { verbs: ["leaves"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const evasion = (refused: boolean) => base("Cunning Evasion", [{
+    kind: "triggered",
+    ...(refused ? { triggerRefused: true as const } : {}),
+    effect: { kind: "bounce", subject: { control: "any", token: null, zone: "battlefield" } },
+    emits: [{ verb: "leaves", subject: { control: "you", token: null, type: "creature", fromZone: "battlefield", ref: "trigger" } }],
+  }]);
+
+  test("before the flag: the unread trigger's 'return it' feeds a leaves watcher (the defect)", () => {
+    expect(pairReasons(evasion(false), leavesWatcher(), H).length).toBeGreaterThan(0);
+  });
+
+  test("flagged: no reason forms on either side", () => {
+    expect(pairReasons(evasion(true), leavesWatcher(), H)).toEqual([]);
+    expect(pairReasons(leavesWatcher(), evasion(true), H)).toEqual([]);
+  });
+
+  test("a correctly-read sibling trigger on the SAME card still forms its reason", () => {
+    const squall = base("Squall", [
+      ...evasion(true).tags.abilities,
+      {
+        kind: "triggered",
+        trigger: { verbs: ["combat-damage"], subject: { control: "you", token: null, self: true } },
+        effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "permanent", zone: "graveyard" } },
+        emits: [{ verb: "leaves", subject: { control: "you", token: null, type: "permanent", fromZone: "graveyard", zone: "graveyard" } }],
+      },
+    ]);
+    const graveyardWatcher = base("Graveyard Watcher", [{
+      kind: "triggered",
+      trigger: { verbs: ["leaves"], subject: { type: "permanent", control: "you", token: null, zone: "graveyard" } },
+      effect: { kind: "draw-card" },
+    }]);
+    const reasons = pairReasons(squall, graveyardWatcher, H);
+    expect(reasons.length).toBeGreaterThan(0);
+    // Only the read ability (index 1) is the producer; the refused one (index 0) is never named.
+    expect(reasons.every((r) => r.producerAbility === undefined || r.producerAbility === 1)).toBe(true);
+  });
+
+  test("creates-channel readers skip it too", () => {
+    const maker = base("Refused Maker", [{
+      kind: "triggered", triggerRefused: true,
+      effect: { kind: "token-generation", subject: { control: "you", token: true } },
+      emits: [{ verb: "create-token", subject: { control: "you", token: true, type: "creature", ref: "trigger" } }],
+    }]);
+    const token = base("Goblin", []);
+    (token.tags.characteristics as { token: boolean }).token = true;
+    expect(createsReasons(maker, token, H)).toEqual([]);
+  });
+});

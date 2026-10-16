@@ -482,7 +482,8 @@ import { emblemRecipient } from "../emblem.js";
 // 325: #1250 task 3 review -- only the `leaves` emit of that graveyard recursion is an opponent's; the cast and enters emits keep their reading (you cast it, it enters under your control).
 // 326: #1250 task 5 -- "if you didn't cast it from your hand" on an enters trigger is the entry's HOW (`notCast`), no longer dropped silently: Chainer, Nightmare Adept was fed by every creature cast from hand (Braids, owner-judged FALSE); Phage the Untouchable's self trigger carries it too.
 // 327: #1250 branch review -- "at end of combat" is no longer a delayed action: the creature is still attacking (CR 511.2/511.3), so Goblin Sappers' destroy keeps instantSpeed and feeds Kardur's attacking-creature death.
-export const DERIVE_VERSION = 327;
+// 328: #1253 an ability of a REFUSED trigger that points back at the trigger object (`ref: "trigger"` in its emits or effect, no `trigger`) is `triggerRefused`: it keeps its kind and the matcher claims nothing from it ("return it" was any card); where the refused trigger is about THIS card ("this creature blocks"), "it" is the card itself (`self`) and nothing is withdrawn.
+export const DERIVE_VERSION = 328;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -651,6 +652,14 @@ const CLAUSE_TO_ABILITY_KIND: Record<string, AbilityKind> = {
   static: "static",
   "on-cast": "on-cast",
 };
+
+/** Does the ability's effect or any emit carry `ref: "trigger"` -- the object a trigger's event was
+ *  about? Only a trigger can define it, so on an ability with no trigger it points at nothing. */
+function namesTriggerObject(a: Ability): boolean {
+  const has = (o: unknown): boolean => o !== null && typeof o === "object"
+    && ((o as { ref?: unknown }).ref === "trigger" || Object.values(o as object).some(has));
+  return has(a.effect) || has(a.emits);
+}
 
 function abilityKind(clause: ClauseRecord): AbilityKind {
   return CLAUSE_TO_ABILITY_KIND[clause.abilityType ?? ""] ?? "static";
@@ -2415,7 +2424,16 @@ export function deriveAbilities(
       // is the opponent whose permanent carries it, so the emit reads `opp` -- the same seat
       // swap `flipPerspective` makes for an opponent's emblem.
       if (grantedTo) for (const e of emits) if (e.subject.control === "you" && e.subject.self !== true) e.subject.control = grantedTo.control;
-      if (refersToTrigger) for (const e of emits) e.subject.ref = "trigger";
+      // A REFUSED TRIGGER ABOUT THIS CARD'S OWN SELF names the card (#1253): "Whenever this creature blocks
+      // or becomes blocked, target opponent gains control of IT" (Goblin Cadets) -- the grammar reads the
+      // same "sacrifice it" under a refused "this creature becomes the target" as the card itself
+      // (Phantasmal Bear), and a `ref: "trigger"` over a trigger that is gone is a class with no trigger
+      // to bound it. With no trigger left to point at, it is `self`. Any other refused trigger keeps the
+      // ref and the ability is marked `triggerRefused` below.
+      if (refersToTrigger) for (const e of emits) {
+        if (!trigger && clause.trigger?.subject && isSelfSubject(clause.trigger.subject, cardName)) e.subject.self = true;
+        else e.subject.ref = "trigger";
+      }
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 
       // A subject is attached ONLY when there is a kind. matcher's edges.ts emits a
@@ -2903,6 +2921,15 @@ export function deriveAbilities(
       // else from a condition that governs the whole clause text (roadmap W18).
       const requires = clauseRequires?.[clause.id] ?? requiresOf(text);
       if (requires) abilities[i] = { ...abilities[i], requires };
+      // A REFUSED TRIGGER CLAIMS NOTHING (#1253). Every way a triggered clause loses its trigger funnels
+      // here: the grammar's refusal and its narrowing/if: refusals (`grammarAll`), the stored path's
+      // `unknownTriggers` branches, a phantom guard, and a mode that inherited a header the grammar
+      // refused. Whatever the cause, an ability of kind `triggered` with NO trigger whose emits or effect
+      // say `ref: "trigger"` is pointing at an object nothing defines, and over a `control: any` subject
+      // that is every card. Marked, not dropped: roles and counts keep its kind.
+      if (kind === "triggered" && !abilities[i].trigger && namesTriggerObject(abilities[i])) {
+        abilities[i] = { ...abilities[i], triggerRefused: true };
+      }
       const trig = abilities[i].trigger;
       // THE CLASS INSIDE THE IF IS THE TRIGGER'S CLASS (owner, 2026-09-16, recall v7 #178): "whenever
       // you cast a spell, if it's the first instant spell, the first sorcery spell, or the first

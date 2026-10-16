@@ -4369,3 +4369,97 @@ test("Weatherseed Totem's 'if it was a creature' dies trigger stays refused", ()
   expect(unknownTriggers).toContain("if:dies");
   expect(abilities.some((a) => a.trigger?.verbs.includes("dies"))).toBe(false);
 });
+
+// A REFUSED TRIGGER CLAIMS NOTHING (#1253). Squall's first line is "Whenever a creature you control
+// attacks ALONE": the grammar refuses the narrowing (`narrowing:attacks`), so the ability derives with
+// no trigger -- and its "it" (the attacker) is `ref: "trigger"` over a `control: any` effect subject,
+// which reads as any creature. The ability keeps its kind and effect kind (roles and counts read
+// those) and says it was refused, so the matcher forms no pair reason from it. Its sibling, a trigger
+// the grammar DID read, carries no such flag.
+test("an ability whose trigger was refused and that points back at the trigger object is flagged triggerRefused", () => {
+  const text1 = "Rough Divide — Whenever a creature you control attacks alone, it gains double strike until end of turn.";
+  const text2 = "Whenever Squall deals combat damage to a player, return target permanent card with mana value 3 or less from your graveyard to the battlefield.";
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [
+      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a creature you control", control: "you" },
+        actions: [{ verb: "double", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "Squall", control: "you" },
+        actions: [{ verb: "return", object: "target permanent card with mana value 3 or less from your graveyard", fromZone: "graveyard", toZone: "battlefield", amount: null, optional: false }] },
+    ],
+    "Squall, SeeD Mercenary",
+    { 1: text1, 2: text2 },
+    `${text1}\n${text2}`,
+  );
+  expect(unknownTriggers).toContain("narrowing:attacks");
+  const refused = abilities.filter((a) => a.clause === 1);
+  expect(refused.length).toBeGreaterThan(0);
+  for (const a of refused) {
+    expect(a.trigger).toBeUndefined();
+    expect(a.kind).toBe("triggered");
+    expect(a.triggerRefused).toBe(true);
+  }
+  expect(refused[0]!.effect.kind).toBe("speed-increase");
+  const read = abilities.filter((a) => a.clause === 2);
+  expect(read.length).toBeGreaterThan(0);
+  for (const a of read) {
+    expect(a.trigger).toBeDefined();
+    expect(a.triggerRefused).toBeUndefined();
+  }
+});
+
+test("a refused becomes-blocked trigger flags its \"return it\", and a refused trigger that never points back at the trigger object is not flagged", () => {
+  // "Whenever a creature you control becomes blocked, you may return it": the refused trigger's object.
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "a creature you control", control: "you" },
+      actions: [{ verb: "return", object: "it", fromZone: "battlefield", toZone: "hand", amount: null, optional: true }] }],
+    "Cunning Evasion",
+    { 1: "Whenever a creature you control becomes blocked, you may return it to its owner's hand." },
+  );
+  expect(abilities.every((a) => a.trigger === undefined && a.triggerRefused === true)).toBe(true);
+  // "Whenever you cast your second spell each turn, draw a card." is refused (narrowing:cast) but names
+  // no trigger object: nothing wide to withdraw, so no flag.
+  const { abilities: draw, unknownTriggers } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell", control: "you" },
+      actions: [{ verb: "draw", object: "a card", fromZone: null, toZone: null, amount: "1", optional: false }] }],
+    "Test Card",
+    { 1: "Whenever you cast your second spell each turn, draw a card." },
+  );
+  expect(unknownTriggers).toContain("narrowing:cast");
+  expect(draw.every((a) => a.triggerRefused === undefined)).toBe(true);
+});
+
+test("a mode bullet that inherits a REFUSED header trigger is flagged like the header", () => {
+  // Whenever a creature you control becomes blocked, choose one --
+  //  * Return it to its owner's hand.  * Draw a card.
+  const { abilities } = deriveAbilities(
+    [
+      { id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "a creature you control", control: "you" }, actions: [] },
+      { id: 2, abilityType: "triggered", actions: [{ verb: "return", object: "it", fromZone: "battlefield", toZone: "hand", amount: null, optional: false }] },
+      { id: 3, abilityType: "triggered", actions: [{ verb: "draw", object: "a card", fromZone: null, toZone: null, amount: "1", optional: false }] },
+    ],
+    "Modal Evasion",
+    { 1: "Whenever a creature you control becomes blocked, choose one —", 2: "Return it to its owner's hand.", 3: "Draw a card." },
+  );
+  const ret = abilities.filter((a) => a.clause === 2);
+  expect(ret.length).toBeGreaterThan(0);
+  expect(ret.every((a) => a.trigger === undefined && a.triggerRefused === true)).toBe(true);
+  const draw = abilities.filter((a) => a.clause === 3);
+  expect(draw.every((a) => a.triggerRefused === undefined)).toBe(true);
+});
+
+test("a refused trigger about THIS card makes its 'it' the card itself, and withdraws nothing (#1253, Goblin Cadets)", () => {
+  const text = "Whenever this creature blocks or becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature", control: "you" },
+      actions: [{ verb: "gain-control", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] }],
+    "Goblin Cadets",
+    { 1: text },
+  );
+  expect(unknownTriggers).toContain("becomes-blocked");
+  expect(abilities.length).toBeGreaterThan(0);
+  for (const a of abilities) {
+    expect(a.trigger).toBeUndefined();
+    expect(a.triggerRefused).toBeUndefined();
+    for (const e of a.emits ?? []) { expect(e.subject.self).toBe(true); expect(e.subject.ref).toBeUndefined(); }
+  }
+});
