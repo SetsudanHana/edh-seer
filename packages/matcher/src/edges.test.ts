@@ -4793,8 +4793,22 @@ describe("fodder", () => {
 
   test("an artifact outlet eats an artifact token and a CHEAP artifact card, never a creature", () => {
     expect(pairReasons(construct, engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
-    expect(pairReasons(artifact("Aether Spellbomb", []), engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
+    expect(pairReasons(artifact("Ornithopter", []), engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
     expect(pairReasons(base("Grizzly Bears", []), engineer, H).map((r) => r.tag)).not.toContain("fodder:artifact");
+  });
+  // OWNER VERDICT 2026-10-16 (Aether Spellbomb -> Sai, FALSE; note 2026-09-09: "you can just pay 1,
+  // sacrifice Spellbomb to its own ability and have the same effect"): a REAL card with its own
+  // "Sacrifice this" ability is spent through that ability, not fed to another outlet. A token that
+  // sacrifices itself (Treasure) is still made in quantity, so it stays fodder.
+  test("a real card with its own sacrifice-this ability is not fodder; a token that has one still is", () => {
+    const selfSac = [{
+      kind: "activated" as const, cost: "{1}, Sacrifice this artifact", effect: { kind: "draw-card" },
+      payment: { mana: "{1}", sacrifice: [{ amount: "1", subject: { self: true } }] },
+    }] as unknown as CardTags["abilities"];
+    expect(pairReasons(artifact("Aether Spellbomb", selfSac), engineer, H).map((r) => r.tag)).not.toContain("fodder:artifact");
+    const treasure = tokenNode("Treasure", ["artifact"], ["treasure"]);
+    treasure.tags!.abilities = selfSac;
+    expect(pairReasons(treasure, engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
   });
   // OWNER RULING 2026-09-09: fodder is a token or something cheap and expendable, never a card with an
   // effect you keep around (Surgehacker Mech -> Threefold Thunderhulk, Midnight Crusader Shuttle ->

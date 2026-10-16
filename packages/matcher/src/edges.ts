@@ -3148,11 +3148,19 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     // not fodder, those are things you typically would like to keep around." Four verdicts set the
     // line: Surgehacker Mech (mv 4, an ETB) and Midnight Crusader Shuttle (mv 4, an attack trigger)
     // are not fodder for Threefold Thunderhulk / Daretti; Syr Ginger (mv 2, LEGENDARY, a payoff) is
-    // not fodder for Trading Post; Aether Spellbomb (mv 1) is. So a real card is fodder only when it
-    // is cheap and not legendary; a token always is. Measured before the rule: 1,702 of the 2,694
+    // not fodder for Trading Post; Aether Spellbomb (mv 1) was judged fodder for Sai that day, and
+    // RE-JUDGED FALSE 2026-10-16 (see the self-sacrifice line below). So a real card is fodder only
+    // when it is cheap and not legendary; a token always is. Measured before the rule: 1,702 of the 2,694
     // fodder reasons on the 71 decks were real cards, 956 of them above mana value 2.
     // CEILING: "cheap" is a mana-value line, set at 2 on those four verdicts; a rate model (Y9 /
     // AE4) would compare the card against what the outlet pays out instead.
+    // A REAL CARD WITH ITS OWN "SACRIFICE THIS" ABILITY IS SPENT THROUGH THAT ABILITY (owner verdict
+    // 2026-10-16, Aether Spellbomb -> Sai, FALSE: "theoretically yes Sai can sacrifice paying 2 mana
+    // and 2 artifacts to draw a card, but practically you can just pay 1, sacrifice Spellbomb to its
+    // own ability and have the same effect"). A token that does (Treasure, Clue) is made in quantity,
+    // so it stays fodder. Read off the derived self-sacrifice COST, not the oracle text.
+    const spentOnItsOwn = !isToken && (p.tags?.abilities ?? []).some((pa) =>
+      pa.kind === "activated" && (pa.payment?.sacrifice ?? []).some((sc) => sc.subject?.self === true));
     // A CREATURE THAT COMES BACK IS FODDER TOO (owner ruling 2026-09-27, #509): "creatures that can
     // come back can be considered fodder, you just have to remember how many times they can come
     // back." Undying and persist each return it once, so it is fodder even for a whole-board
@@ -3164,7 +3172,7 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     const comesBack = eats.verb === "exiled" || eats.verb === "leaves" ? undefined : (p.tags.characteristics.keywords ?? []).find((k) => /^(?:undying|persist)$/i.test(k))?.toLowerCase();
     const expendable = isToken || comesBack !== undefined || (p.card.manaValue <= EXPENDABLE_MV
       && !p.tags.characteristics.types.some((t) => t.toLowerCase() === "legendary"));
-    const is = expendable && (isToken || comesBack !== undefined || subtype !== undefined || narrowType)
+    const is = expendable && !spentOnItsOwn && (isToken || comesBack !== undefined || subtype !== undefined || narrowType)
       && subjectMatches(characteristicsSubject(p.tags, p.card.name), { ...wanted, token: null }, h);
     if (!is && !makes) continue;
     reasons.push({
