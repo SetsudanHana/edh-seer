@@ -1607,8 +1607,9 @@ test("'that player's graveyard' after combat damage to a player by your creature
   ] }], "Tinybones, the Pickpocket", { 2: text }, undefined, text);
   const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
   expect(rec.effect.subject?.control).toBe("opp");
-  expect(rec.emits?.map((e) => e.subject.control)).toEqual(rec.emits?.map(() => "opp"));
-  expect((rec.emits ?? []).length).toBeGreaterThan(0);
+  // Only the card LEAVING their graveyard is theirs; YOU cast it.
+  expect(rec.emits?.find((e) => e.verb === "leaves")?.subject.control).toBe("opp");
+  expect(rec.emits?.find((e) => e.verb === "cast")?.subject.control).not.toBe("opp");
 });
 
 test("'that player's graveyard' after ANYONE's combat damage, or a target player, is left unresolved", () => {

@@ -47,8 +47,31 @@ const oppMill = card("Opponent Mill (synthetic)", ["sorcery"], [
 test("Tinybones's recursion subject and cast/leaves emits are an opponent's graveyard", () => {
   const rec = tinybones.tags!.abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
   expect(rec.effect.subject?.control).toBe("opp");
-  expect((rec.emits ?? []).length).toBeGreaterThan(0);
-  for (const e of rec.emits ?? []) expect(e.subject.control).toBe("opp");
+  expect(rec.emits?.find((e) => e.verb === "leaves")?.subject.control).toBe("opp");
+  expect(rec.emits?.find((e) => e.verb === "cast")?.subject.control).not.toBe("opp");
+});
+
+// Scion of Darkness: you put the creature onto the battlefield under YOUR control.
+const SCION = "Whenever this creature deals combat damage to a player, you may put target creature card from that player's graveyard onto the battlefield under your control.";
+const scionRecords = grammarClauseRecords({ name: "Scion of Darkness", oracleText: SCION, keywords: [], typeLine: "Creature — Avatar" });
+const scion = card("Scion of Darkness", ["creature"], scionRecords.records, { 1: SCION }, SCION);
+const castPayoff = card("Cast Payoff (synthetic)", ["enchantment"], [
+  { id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" }, actions: [{ verb: "draw", object: "a card" }] },
+] as ClauseRecord[], { 1: "Whenever you cast an instant or sorcery spell, draw a card." }, "Whenever you cast an instant or sorcery spell, draw a card.");
+const oppEntersPayoff = card("Opp Enters Payoff (synthetic)", ["enchantment"], [
+  { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "a creature an opponent controls", control: "opp" }, actions: [{ verb: "draw", object: "a card" }] },
+] as ClauseRecord[], { 1: "Whenever a creature an opponent controls enters, draw a card." }, "Whenever a creature an opponent controls enters, draw a card.");
+const WREX = "Whenever Wrexial deals combat damage to a player, you may cast target instant or sorcery card from that player's graveyard without paying its mana cost.";
+const wrexial = card("Wrexial, the Risen Deep", ["creature"], grammarClauseRecords({ name: "Wrexial, the Risen Deep", oracleText: WREX, keywords: [], typeLine: "Creature" }).records, { 1: WREX }, WREX);
+
+test("Scion's creature enters under YOUR control, not an opponent's", () => {
+  const rec = scion.tags!.abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
+  expect(rec.emits?.find((e) => e.verb === "enters")?.subject.control).toBe("you");
+  expect(pairReasons(scion, oppEntersPayoff, H).map((r) => r.tag).filter((t) => t.startsWith("enters"))).toEqual([]);
+});
+
+test("Wrexial's cast still feeds a 'whenever you cast' payoff", () => {
+  expect(pairReasons(wrexial, castPayoff, H).length).toBeGreaterThan(0);
 });
 
 test("Lively Dirge (fills YOUR graveyard) forms no graveyard-recursion with Tinybones", () => {

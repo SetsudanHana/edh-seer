@@ -479,7 +479,8 @@ import { emblemRecipient } from "../emblem.js";
 // 322: #1250 task 2 -- a self `dies` trigger with "if it was a creature" (the Enduring cycle, Harold and Bob, Tom Bert and William) is read, not refused: its triggerless recursion read "return it" as ANY graveyard card (Smoke Bomb -> Enduring Curiosity, owner-judged FALSE).
 // 323: #1250 review -- WAS_A_CREATURE is admitted only on a card whose type line includes Creature; Weatherseed Totem (an animated Artifact) keeps its refusal, its intervening if is not vacuous (it formed dies:artifact with Krark-Clan Ironworks and Deadly Dispute).
 // 324: #1250 task 3 -- "from that player's graveyard" in a combat-damage trigger whose damager is yours (or "to an opponent") is an OPPONENT's graveyard, on the recursion subject and its cast/leaves emits (Tinybones, Ink-Eyes, Scion of Darkness, Zareth San, Skullsnatcher, Zombie Cannibal, Wrexial, Whispersteel Dagger, Deluxe Dragster, Shark Shredder, Fire Nation Salvagers); it read `any` and so matched a graveyard filler of your own (Lively Dirge -> Tinybones).
-export const DERIVE_VERSION = 324;
+// 325: #1250 task 3 review -- only the `leaves` emit of that graveyard recursion is an opponent's; the cast and enters emits keep their reading (you cast it, it enters under your control).
+export const DERIVE_VERSION = 325;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -902,9 +903,11 @@ const ZONE_OWNER: ReadonlyArray<readonly [RegExp, Control]> = [
 ];
 
 /** "THAT PLAYER'S GRAVEYARD" IN A COMBAT-DAMAGE TRIGGER IS THE DAMAGED PLAYER (#1250, Tinybones): when the
- *  damager is yours -- the card itself, "this Vehicle", "equipped creature" (CR 301.5c: you equip your
- *  own), anything "you control" -- the player it hit is an opponent's, and "to an opponent" says so
- *  outright. "A creature deals combat damage to a player" could hit you, so that stays `any`. */
+ *  damager is yours -- the card itself, "this Vehicle", "equipped creature" (CR 301.5b: equip attaches to a creature
+ *  you control), anything "you control" -- the player it hit is an opponent's, and "to an opponent" says so
+ *  outright. "A creature deals combat damage to a player" could hit you, so that stays `any`.
+ *  CEILING: an equipped creature an opponent later gains control of (CR 301.5d: the Equipment's controller is
+ *  separate from the creature's) could damage you, and "that player" would be you; not modelled. */
 function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, cardName?: string): boolean {
   const m = /^\s*(?:whenever|when)\s+(.+?)\s+deals?\s+combat damage to (a player|an opponent)\b/i.exec(clauseText);
   if (!m) return false;
@@ -2410,11 +2413,12 @@ export function deriveAbilities(
       const subject = effectKind
         ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
-      // #1250: the same damaged-player reading reaches the cast/leaves emits of the card taken out of
-      // "that player's graveyard" -- their graveyard is the one they leave. Only an emit still `any`.
+      // #1250: the same damaged-player reading reaches the `leaves` emit -- it is THEIR graveyard the card
+      // leaves. Only that emit: YOU cast the card / put it onto the battlefield under your control, so the
+      // cast and enters emits keep their own reading (review).
       if (action.fromZone === "graveyard" && /\bfrom that player's graveyard\b/i.test(text)
         && damagedPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
-        for (const e of emits) if (e.subject.control === "any" && (e.subject.fromZone === "graveyard" || e.subject.zone === "graveyard")) e.subject.control = "opp";
+        for (const e of emits) if (e.verb === "leaves" && e.subject.control === "any" && e.subject.zone === "graveyard") e.subject.control = "opp";
       }
       // A GRANT TO THE TRIGGERING OBJECT says so (Stonehoof Chieftain: "whenever another creature you
       // control attacks, IT gains trample"), so the matcher can see a keyword that object already
