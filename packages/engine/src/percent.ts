@@ -45,3 +45,29 @@ export const POLICY_COLLAPSE = 0.08;
 export function policyBand(low: number, high: number): string {
   return high - low < POLICY_COLLAPSE ? percent(low) : band(low, high);
 }
+
+/** WHEN A POLICY INTERVAL IS SHOWN AS A RANGE, and the only place that decides it, so `policyBand`
+ *  and the words that name its ends cannot disagree about whether there are two ends. */
+export function isPolicyRange(low: number, high: number): boolean {
+  return high - low >= POLICY_COLLAPSE;
+}
+
+/** WHICH END IS WHICH, in one set of words for every surface (persona rounds 2026-10-14..15: every
+ *  seat asked which end applies to their game). Short on purpose; the figures come from the caller.
+ *  The low end is nearer real play; the high end is a ceiling. */
+export const POLICY_LOW_WORDS = "if you hold up two mana";
+export const POLICY_HIGH_WORDS = "if you spend it all on ramp";
+
+/** "34% if you hold up two mana, 53% if you spend it all on ramp" -- or "" when the interval collapsed
+ *  to one figure, because a single figure has no ends to name. Never averages the two. */
+export function policyEnds(low: number, high: number): string {
+  return isPolicyRange(low, high)
+    ? `${percent(low)} ${POLICY_LOW_WORDS}, ${percent(high)} ${POLICY_HIGH_WORDS}`
+    : "";
+}
+
+/** The once-per-block legend for a compact surface (a table of ranges) where per-cell words do not
+ *  fit. Says what each end is and what moves a game between them. */
+export const POLICY_LEGEND =
+  "Where a figure is a range, the low end holds up two mana before casting ramp, which is nearer how a real deck is played, "
+  + "and the high end spends everything on ramp, a ceiling. Your own games fall between the two.";

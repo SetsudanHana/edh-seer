@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { scaleBand, scaleLinear } from "d3-scale";
 import type { DeckReport } from "../types.js";
-import { policyBand } from "@edh-seer/engine/percent";
+import { policyBand, policyEnds } from "@edh-seer/engine/percent";
 
 const W = 320;
 const H = 88;
@@ -65,6 +65,10 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
           to make {m.headline.mana} mana by turn {m.headline.turn}
         </span>
       </div>
+      {/* WHICH END IS WHICH (#1226), only when there are two ends. */}
+      {policyEnds(m.headline.low, m.headline.high) ? (
+        <p className="text-xs text-(--muted)">{policyEnds(m.headline.low, m.headline.high)}</p>
+      ) : null}
 
       {/* THE TABLE WAS TWO SERIES OF NUMBERS AND ONE OF THEM WAS ALREADY DRAWN (roadmap T17).
         *  Owner: *"mana availability is just a table with numbers, it can be presented better"*.

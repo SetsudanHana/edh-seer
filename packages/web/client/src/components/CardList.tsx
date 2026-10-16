@@ -7,7 +7,7 @@ import { Explain } from "./Explain.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 // ONE RENDERER ACROSS THE SURFACES (roadmap N6): this file printed "0%" where the CLI floored
 // the same cell at "1%". A measured zero is a measurement; the floor belongs on the refusal path.
-import { policyBand } from "@edh-seer/engine/percent";
+import { isPolicyRange, POLICY_LEGEND, policyBand } from "@edh-seer/engine/percent";
 import { cardImageUrl } from "./card-node.js";
 import { isUnread } from "../lib/unread.js";
 
@@ -184,7 +184,7 @@ function Cost({ card, cell, className }: { card: DeckReport["cards"][number]; ce
     <span data-cell={cell} className={className}>
       <ManaSymbols cost={card.manaCost ?? ""} />
       {card.castability ? (
-        <span className="text-xs text-(--muted) stat-num">
+        <span className="text-xs text-(--muted) stat-num" title={castTitle(card.castability)}>
           {castRange(card.castability)} by T{card.castability.turn}
         </span>
       ) : null}
@@ -194,6 +194,11 @@ function Cost({ card, cell, className }: { card: DeckReport["cards"][number]; ce
 
 const castRange = (c: { castable: { low: number; high: number } }): string =>
   policyBand(c.castable.low, c.castable.high);
+
+/** A range in a table cell cannot carry end words (#1226). A title is a hover-only bonus; the
+ *  touch-reachable copy is the same legend inside the Explain block at the top of the tab. */
+const castTitle = (c: { castable: { low: number; high: number } }): string | undefined =>
+  isPolicyRange(c.castable.low, c.castable.high) ? POLICY_LEGEND : undefined;
 
 type SortKey = "synergy" | "name" | "cost";
 
@@ -306,8 +311,7 @@ export function CardList({ cards, artByName, coverage }: {
       <Explain label="what the cost figures mean">
         The chance you have the mana, in the right colours, to cast the card on time. We shuffle
         and deal your deck 2,000 times to find out. It is a range because it depends on how you
-        play: the low end keeps two mana open before casting ramp, the high end puts everything
-        into ramp, which no real deck does. &ldquo;On time&rdquo; is the turn matching the
+        play. {POLICY_LEGEND} &ldquo;On time&rdquo; is the turn matching the
         card&rsquo;s mana value, so a 5-drop is checked on turn 5. Lands, and costs we cannot
         work out, show a dash instead of 0%. The test plays no opponent and casts no card draw,
         so a deck that draws a lot scores lower than it plays.
