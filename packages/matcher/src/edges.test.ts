@@ -4195,6 +4195,13 @@ test("an instant-speed death satisfies an attacking-creature dies trigger", () =
     emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature", scope: "target" }, instantSpeed: true }],
   }]);
   expect(pairReasons(downfall, kardur, H).map((r) => r.tag)).toEqual(["dies:creature"]);
+  // A DELAYED sacrifice ("Sacrifice it at the beginning of the next end step", Reflection of Kiki-Jiki)
+  // carries no instantSpeed (#1250): Fable -> Kardur, owner-judged FALSE.
+  const reflection = base("Reflection", [{
+    kind: "activated", effect: { kind: "" }, cost: "{1}, {T}",
+    emits: [{ verb: "dies", subject: { control: "you", token: true, type: "creature", scope: "target" } }],
+  }]);
+  expect(pairReasons(reflection, kardur, H)).toEqual([]);
 });
 
 // BLOODCHIEF ASCENSION'S PRODUCER LIST READ LIKE A LIST OF CARDS DYING (owner, 2026-09-05): "When

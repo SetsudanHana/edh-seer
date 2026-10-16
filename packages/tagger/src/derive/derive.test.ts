@@ -2382,6 +2382,22 @@ test("an emit from an activated ability, an instant or a flash spell is instant-
   expect(flash.abilities[0].emits?.[0].instantSpeed).toBe(true);
 });
 
+// A DELAYED SACRIFICE IS NOT INSTANT SPEED (#1250). Reflection of Kiki-Jiki's "Sacrifice it at the
+// beginning of the next end step" happens on a delayed trigger, so no player can aim it at an attacker
+// and Kardur's "an attacking creature dies" was owner-judged FALSE. The token it makes keeps the stamp.
+test("an emit from a delayed 'at the beginning of the next end step' sacrifice is not instant-speed", () => {
+  const text = "{1}, {T}: Create a token that's a copy of another target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the next end step.";
+  const abilities = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "create", object: "a token that's a copy of another target nonlegendary creature you control" }, { verb: "sacrifice", object: "it" }] }],
+    "Reflection", { 1: text }, { 1: "{1}, {T}" },
+  ).abilities;
+  const made = abilities.find((a) => a.emits?.some((e) => e.verb === "create-token"));
+  expect(made?.emits?.filter((e) => e.verb !== "dies").every((e) => e.instantSpeed === true)).toBe(true);
+  const sac = abilities.filter((a) => a.emits?.some((e) => e.verb === "sacrifice"));
+  expect(sac.length).toBeGreaterThan(0);
+  for (const a of sac) expect(a.emits?.some((e) => e.instantSpeed === true)).toBe(false);
+});
+
 // THE EERIE HALF, AND THE CHANNEL THAT WAS SUPPOSED TO CATCH ITS ABSENCE. "Whenever you fully unlock
 // a Room" was recorded by the clause layer as `unlocked` and derived to nothing, and
 // `unknownTriggers` -- the field that exists so a dropped trigger is visible -- was computed and then

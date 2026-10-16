@@ -474,7 +474,8 @@ import { emblemRecipient } from "../emblem.js";
 // Red Death, Shipwrecker; CR 602.2b), and a colour taken from "a card in your graveyard" is gated on one (Corrupted Grafstone). The gates are `unknown` (unmet everywhere), so rampGrade and the colour audit drop them.
 // 318: #1188 follow-up: a "for each" add keeps its printed fixed floor in `net` ("Add {R}{R}, then add {R} for each ...", Rite of Flame: net 1, not 0); `amount` is unchanged (fixed null, scales set).
 // 319: #1188 whole-branch review: "for each color among permanents you control" on a permanent nets the card's OWN colours (Faeburrow Elder 2, Bloom Tender 1; the card is a permanent you control); a colour taken from "among ... cards in your graveyard" (The Grey Havens) is gated on a card there.
-export const DERIVE_VERSION = 319;
+// 320: #1250 an emit of an action that happens on a delayed trigger ("Sacrifice it at the beginning of the next end step", Reflection of Kiki-Jiki; "return it at the beginning of the next end step") is not `instantSpeed`: no player can aim it at an attacker, so Fable -> Kardur (owner-judged FALSE) no longer forms.
+export const DERIVE_VERSION = 320;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1478,6 +1479,22 @@ const WITHOUT_DYING = /\bwithout dying\b|\bdidn'?t die\b|\bdoesn'?t die\b/i;
 
 /** "Activate only as a sorcery" (CR 307.5 timing on an activated ability) and its "only during
  *  your turn" cousin: an activation that cannot happen in combat. */
+/** AN ACTION THAT HAPPENS ON A DELAYED TRIGGER IS NOT AT INSTANT SPEED (#1250). "Sacrifice it at the
+ *  beginning of the next end step" (Reflection of Kiki-Jiki) is a delayed triggered ability (CR 603.7),
+ *  so no player can aim it at an attacker. Read on the action's OWN sentence, and only when no later
+ *  action in that sentence carries the delay ("exile it, then return it at the next end step" delays
+ *  the return, not the exile). CEILING: the verb is found by its own word in the sentence. */
+const DELAYED_SENTENCE = /\bat (?:the beginning of (?:the|your) next (?:end step|upkeep|turn)|(?:the )?end of (?:the )?(?:turn|combat))\b/i;
+function delayedAction(text: string, action: { verb?: string }, actions: readonly { verb?: string }[]): boolean {
+  if (!action.verb) return false;
+  const k = actions.slice(0, actions.indexOf(action as never)).filter((x) => x.verb === action.verb).length;
+  // A clause that lists the verb's action twice (Chimeric Coils) prints it once: past the last, use the last.
+  const printed = (text.match(new RegExp(`\\b${action.verb}\\b`, "gi")) ?? []).length;
+  const sentence = nthSentenceWith(text, action.verb, Math.max(0, Math.min(k, printed - 1)));
+  if (!DELAYED_SENTENCE.test(sentence)) return false;
+  const at = sentence.search(new RegExp(`\\b${action.verb}\\b`, "i"));
+  return !actions.some((o) => o !== action && o.verb && o.verb !== action.verb && sentence.search(new RegExp(`\\b${o.verb}\\b`, "i")) > at);
+}
 const SORCERY_SPEED = /\bactivate (?:this ability )?only as a sorcery\b|\bonly during your turn\b/i;
 /** A loyalty symbol as a cost — "+1", "−3", "0" — the shape `segment.ts` hands over for a
  *  planeswalker ability, which CR 606.3 makes sorcery-speed. */
@@ -2619,7 +2636,7 @@ export function deriveAbilities(
       const instantSpeed = kind === "activated"
         ? !SORCERY_SPEED.test(clauseText ?? "") && !LOYALTY_COST.test(cost)
         : kind === "on-cast" && castAtInstantSpeed === true;
-      if (instantSpeed) for (const e of emits) e.instantSpeed = true;
+      if (instantSpeed && !(kind === "activated" && delayedAction(text, action, clause.actions ?? []))) for (const e of emits) e.instantSpeed = true;
       if (emits.length) ability.emits = emits;
       // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate
       // return beside a delayed one stays immediate (Gift of Immortality, Swift Warkite; review). The
