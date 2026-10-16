@@ -138,3 +138,22 @@ test("a graveyard leave feeds no battlefield-leave payoff, no without-dying payo
   // briefly claimed "so it can die again" was ruled out by the owner on 2026-09-09.
   expect(tags(reanimate, bloodArtist)).toEqual([]);
 });
+
+// A DELAYED SACRIFICE CANNOT BE AIMED AT AN ATTACKER (#1250). Reflection of Kiki-Jiki's "Sacrifice it at the
+// beginning of the next end step" is not instant speed, so Kardur's "an attacking creature dies" is not met
+// (owner-judged FALSE, Fable -> Kardur); Ayara's instant-speed sacrifice outlet still is. Derived, not hand-built.
+test("a delayed end-step sacrifice does not meet an attacking-creature dies trigger; an instant-speed outlet does", () => {
+  const kardur = card("Kardur", ["creature"], [{
+    id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "an attacking creature" },
+    actions: [{ verb: "lose-life", object: "each opponent", amount: "1" }],
+  }], { 1: "Whenever an attacking creature dies, each opponent loses 1 life." });
+  const reflection = card("Reflection", ["creature"], [{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "create", object: "a token that's a copy of another target nonlegendary creature you control" }, { verb: "sacrifice", object: "it" }],
+  }], { 1: "{1}, {T}: Create a token that's a copy of another target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the next end step." });
+  const ayara = card("Ayara", ["creature"], [{
+    id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "another black creature" }, { verb: "draw", object: "a card" }],
+  }], { 1: "{T}, Sacrifice another black creature: Draw a card." });
+  expect(pairReasons(reflection, kardur, H).filter((r) => r.tag === "dies:creature")).toEqual([]);
+  expect(pairReasons(ayara, kardur, H).map((r) => r.tag)).toContain("dies:creature");
+});

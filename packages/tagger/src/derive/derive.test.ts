@@ -2398,6 +2398,39 @@ test("an emit from a delayed 'at the beginning of the next end step' sacrifice i
   for (const a of sac) expect(a.emits?.some((e) => e.instantSpeed === true)).toBe(false);
 });
 
+// ...the guard's edges (#1250 review). It reads the action's OWN sentence and only a delay naming a LATER moment.
+test("the delayed-action guard: an instant's delayed sacrifice, a delayed return beside an immediate exile, and the non-delays", () => {
+  const stamped = (a: { emits?: { instantSpeed?: true }[] }) => a.emits?.some((e) => e.instantSpeed === true);
+  // (d) an instant spell's delayed sacrifice is de-stamped, like an activated ability's.
+  const reanimate = deriveCardTags({
+    oracleId: "ap", clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "put", object: "target creature card from a graveyard", toZone: "battlefield" }, { verb: "sacrifice", object: "it" }] }],
+    clauseTexts: { 1: "Put target creature card from a graveyard onto the battlefield under your control. It gains haste. Sacrifice it at the beginning of the next end step." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  const sacs = reanimate.abilities.filter((a) => a.emits?.some((e) => e.verb === "sacrifice"));
+  expect(sacs.length).toBeGreaterThan(0);
+  for (const a of sacs) expect(stamped(a)).toBe(false);
+  // (a) "Exile X, then return it ... at the beginning of the next end step": the exile stays instant, the return does not.
+  const blink = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "exile", object: "target creature you control", fromZone: "battlefield", toZone: "exile" }, { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" }] }],
+    "Blinker", { 1: "{T}: Exile target creature you control, then return it to the battlefield at the beginning of the next end step." }, { 1: "{T}" },
+  ).abilities;
+  expect(blink.filter((a) => a.emits?.some((e) => e.verb === "exiled")).every(stamped)).toBe(true);
+  const back = blink.filter((a) => a.emits?.some((e) => e.verb === "enters"));
+  expect(back.length).toBeGreaterThan(0);
+  for (const a of back) expect(stamped(a)).toBe(false);
+  // (b) "each end step" and (c) "until end of turn" are not delays of the action.
+  for (const [text, actions] of [
+    ["{T}: Sacrifice a creature at the beginning of each end step.", [{ verb: "sacrifice", object: "a creature" }]],
+    ["{T}: Sacrifice a creature. It gains haste until end of turn.", [{ verb: "sacrifice", object: "a creature" }]],
+  ] as const) {
+    const abs = deriveAbilities([{ id: 1, abilityType: "activated", actions: [...actions] }], "N", { 1: text }, { 1: "{T}" }).abilities;
+    const sac = abs.filter((a) => a.emits?.some((e) => e.verb === "sacrifice"));
+    expect(sac.length, text).toBeGreaterThan(0);
+    for (const a of sac) expect(stamped(a), text).toBe(true);
+  }
+});
+
 // THE EERIE HALF, AND THE CHANNEL THAT WAS SUPPOSED TO CATCH ITS ABSENCE. "Whenever you fully unlock
 // a Room" was recorded by the clause layer as `unlocked` and derived to nothing, and
 // `unknownTriggers` -- the field that exists so a dropped trigger is visible -- was computed and then
