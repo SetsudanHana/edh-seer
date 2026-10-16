@@ -338,9 +338,20 @@ export function visibleBand(y: number, height: number, obscuredTop: number, obsc
 
 /** Where to scroll for the next frame so its readable top equals this frame's readable bottom: the
  *  step is the readable height, so the overlap is exactly the obscured bands. Overlap is harmless; a
- *  gap is not. Always advances at least one pixel so a degenerate measurement cannot stall the loop. */
-export function nextScroll(y: number, height: number, obscuredTop: number, obscuredBottom: number): number {
-  return y + Math.max(1, height - obscuredTop - obscuredBottom);
+ *  gap is not (`SEAM_OVERLAP` below). Always advances at least one pixel so a degenerate measurement cannot stall the loop. */
+export function nextScroll(y: number, height: number, obscuredTop: number, obscuredBottom: number, overlap = SEAM_OVERLAP): number {
+  return y + Math.max(1, height - obscuredTop - obscuredBottom - overlap);
+}
+
+/** How much two consecutive frames' readable bands share. Abutting bands (overlap 0) leave a line that
+ *  straddles the seam whole in no frame, while `covered` (the union) still passes; 48px is about two
+ *  lines of body text, enough for any single line and small enough not to add a frame to a step. */
+export const SEAM_OVERLAP = 48;
+
+/** Whether a document-relative box [top, bottom) lies wholly inside ONE frame's readable band: the
+ *  question for a line of text, which a reader cannot read half of in each of two frames. */
+export function wholeInOne(ranges: readonly [number, number][], top: number, bottom: number): boolean {
+  return ranges.some(([a, z]) => a <= top && bottom <= z);
 }
 
 /** Whether a document-relative box [top, bottom) lies wholly inside the union of the frames'
@@ -559,39 +570,49 @@ async function boxOf(page: Page, selector: string): Promise<{ top: number; botto
   }, selector);
 }
 
-/** The heights of whatever is pinned over the top and bottom of the viewport right now. Fixed or
- *  sticky elements only, shown, at least half the viewport wide. Bars STACK (a sticky bar `top: 69px` under a header sits
- *  at rect.top 69, not 0), so a candidate counts when it touches the band built so far, grown
- *  greedily. An element spanning the whole viewport height is a rail or an overlay, not a bar, and
- *  counts for neither end; each band is capped at half the viewport regardless. Measured per frame
- *  because the phone bar is not the desktop bar. */
+/** A fixed or sticky element's rect in viewport coordinates. */
+export interface BarRect { top: number; bottom: number; width: number }
+
+/** The heights of whatever is pinned over the top and bottom of a viewport, from the rects of its
+ *  fixed/sticky elements. Bars STACK (a sticky bar `top: 69px` under a header sits at rect.top 69,
+ *  not 0), so a candidate counts when it touches the band built so far, grown greedily. Narrower than
+ *  half the viewport is a rail or drawer that hides only its own column; spanning the whole height is
+ *  a rail or overlay; neither is a bar. No cap: a viewport the bars leave unreadable crawls 1px a
+ *  frame to the slice cap and the region is then reported missing, which is the truth. */
+export function barBands(rects: readonly BarRect[], vw: number, vh: number): { top: number; bottom: number } {
+  const bars = rects.filter((r) => r.width >= vw / 2 && !(r.top <= 1 && r.bottom >= vh - 1));
+  let top = 0;
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const r of bars) if (r.top <= top + 1 && r.bottom > top) { top = r.bottom; grew = true; }
+  }
+  let bottom = vh;
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const r of bars) if (r.bottom >= bottom - 1 && r.top < bottom && r.top > top) { bottom = r.top; grew = true; }
+  }
+  return { top, bottom: vh - bottom };
+}
+
+/** Measured per frame, because the phone bar is not the desktop bar. Only the collection runs in the
+ *  page; the arithmetic is `barBands`. */
 async function obscuredBands(page: Page, dump = false): Promise<{ top: number; bottom: number; seen: string[] }> {
-  return page.evaluate((dumpIt: boolean) => {
-    const h = window.innerHeight;
-    const rects: { t: number; b: number; tag: string }[] = [];
+  const { rects, w, h, tags } = await page.evaluate(() => {
+    const out: { top: number; bottom: number; width: number }[] = [];
+    const tags: string[] = [];
     for (const el of Array.from(document.querySelectorAll<HTMLElement>("body *"))) {
       const cs = getComputedStyle(el);
       if (cs.position !== "fixed" && cs.position !== "sticky") continue;
       if (cs.display === "none" || cs.visibility === "hidden") continue;
       const r = el.getBoundingClientRect();
-      // A BAR spans most of the width; a side rail or drawer (the 320px aside) hides only its own column.
-      if (r.width < window.innerWidth / 2 || r.height <= 0) continue;
-      if (r.bottom <= 0 || r.top >= h) continue;
-      rects.push({ t: r.top, b: r.bottom, tag: `${el.tagName}.${String(el.className).slice(0, 40)} ${cs.position} ${Math.round(r.top)}-${Math.round(r.bottom)} w${Math.round(r.width)}` });
+      if (r.width <= 0 || r.height <= 0) continue;
+      if (r.bottom <= 0 || r.top >= window.innerHeight) continue;
+      out.push({ top: r.top, bottom: r.bottom, width: r.width });
+      tags.push(`${el.tagName}.${String(el.className).slice(0, 40)} ${cs.position} ${Math.round(r.top)}-${Math.round(r.bottom)} w${Math.round(r.width)}`);
     }
-    const bars = rects.filter((r) => !(r.t <= 1 && r.b >= h - 1));
-    let top = 0;
-    for (let grew = true; grew;) {
-      grew = false;
-      for (const r of bars) if (r.t <= top + 1 && r.b > top) { top = r.b; grew = true; }
-    }
-    let bottom = h;
-    for (let grew = true; grew;) {
-      grew = false;
-      for (const r of bars) if (r.b >= bottom - 1 && r.t < bottom) { bottom = r.t; grew = true; }
-    }
-    return { top: Math.min(top, h / 2), bottom: Math.min(h - bottom, h / 2), seen: dumpIt ? rects.map((r) => r.tag) : [] };
-  }, dump);
+    return { rects: out, w: window.innerWidth, h: window.innerHeight, tags };
+  });
+  return { ...barBands(rects, w, h), seen: dump ? tags : [] };
 }
 
 async function shoot(page: Page, dir: string, stem: string, through?: string): Promise<{ files: string[]; ranges: [number, number][] }> {
@@ -638,6 +659,39 @@ async function missingRegions(page: Page, regions: readonly string[], ranges: [n
     else if (!covered(ranges, b.top, b.bottom)) out.push(`${sel} (${Math.round(b.top)}-${Math.round(b.bottom)}px, frames reach ${ranges.map(([a, z]) => `${Math.round(a)}-${Math.round(z)}`).join(", ")})`);
   }
   return out;
+}
+
+/** Text a reader would have to read half of in each of two frames: leaf elements of the `regions`
+ *  (a non-whitespace direct text node, shown, with area, not inside a shut <details>) whose document
+ *  box is not wholly inside ONE readable band. `covered` cannot see these, since it asks only for the
+ *  union. An element taller than the tallest band can be whole nowhere, so it is counted, not failed. */
+async function splitText(page: Page, regions: readonly string[], ranges: [number, number][]): Promise<{ split: string[]; tall: number }> {
+  const maxBand = Math.max(0, ...ranges.map(([a, z]) => z - a));
+  const leaves = await page.evaluate((sels: string[]) => {
+    const out: { text: string; top: number; bottom: number }[] = [];
+    for (const sel of sels) {
+      const root = document.querySelector(sel);
+      if (!root) continue;
+      for (const el of Array.from(root.querySelectorAll<HTMLElement>("*"))) {
+        if (!Array.from(el.childNodes).some((n) => n.nodeType === 3 && (n.textContent ?? "").trim() !== "")) continue;
+        const cs = getComputedStyle(el);
+        if (cs.display === "none" || cs.visibility === "hidden") continue;
+        const shut = el.closest("details:not([open])");
+        if (shut && !el.closest("summary")) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) continue;
+        out.push({ text: (el.textContent ?? "").trim().replace(/\s+/g, " "), top: r.top + window.scrollY, bottom: r.bottom + window.scrollY });
+      }
+    }
+    return out;
+  }, [...regions]);
+  const split: string[] = [];
+  let tall = 0;
+  for (const l of leaves) {
+    if (l.bottom - l.top > maxBand) { tall++; continue; }
+    if (!wholeInOne(ranges, l.top, l.bottom)) split.push(`"${l.text.slice(0, 60)}" (${Math.round(l.top)}-${Math.round(l.bottom)})`);
+  }
+  return { split, tall };
 }
 
 /** Clicks every "Show all N" / "Show N more" / "Show N smaller" list open inside the page body,
@@ -896,6 +950,15 @@ async function main(runPath: string): Promise<void> {
               missing.push(`${stem}/${step.id}/${label}: ${m}`);
             }
           }
+          if (full && step.regions?.length) {
+            const { split, tall } = await splitText(page, step.regions, ranges);
+            for (const m of split.slice(0, 5)) {
+              console.log(`  SPLIT TEXT ${stem}/${step.id}/${label}: ${m}`);
+            }
+            if (split.length > 5) console.log(`  SPLIT TEXT ${stem}/${step.id}/${label}: ... and ${split.length - 5} more`);
+            console.log(`  split-text check ${stem}/${step.id}/${label}: ${split.length} split, ${tall} taller than a frame (excluded)`);
+            for (const m of split) missing.push(`${stem}/${step.id}/${label}: SPLIT TEXT ${m}`);
+          }
           manifest.push({
             deck: stem, step: step.id, goal: step.goal, viewport: label, files,
             // Present and non-empty means the reader could not do this step at this width. The
@@ -1152,13 +1215,32 @@ function selfTest(): void {
   eq(covered([[0, 1000]], 0, 1001), false, "one pixel past the last frame is missing");
   eq(visibleBand(0, 1000, 130, 0), [130, 1000], "the band under a 130px bar starts 130px down");
   eq(visibleBand(500, 1000, 130, 20), [630, 1480], "a bottom bar trims the other end");
-  eq(nextScroll(0, 1000, 130, 0), 870, "the next screen starts where this one's readable part ended");
+  eq(nextScroll(0, 1000, 130, 0, 0), 870, "with no overlap the next screen starts where this one's readable part ended");
+  eq(nextScroll(0, 1000, 130, 0), 1000 - 130 - SEAM_OVERLAP, "by default the frames overlap by SEAM_OVERLAP");
+  eq(nextScroll(0, 100, 80, 40), 1, "an unreadable viewport still advances, so the loop ends at its cap");
   {
     const a = visibleBand(0, 1000, 130, 0);
-    const b = visibleBand(nextScroll(0, 1000, 130, 0), 1000, 130, 0);
-    eq(covered([a, b], 900, 1200), true, "stepping by the readable height leaves no seam");
+    const abut = visibleBand(nextScroll(0, 1000, 130, 0, 0), 1000, 130, 0);
+    const lap = visibleBand(nextScroll(0, 1000, 130, 0), 1000, 130, 0);
+    eq(covered([a, abut], 900, 1200), true, "abutting bands leave no seam for covered()");
+    eq(wholeInOne([a, abut], 980, 1020), false, "a line straddling an abutting seam is whole in no frame");
+    eq(wholeInOne([a, lap], 980, 1020), true, "the same line is whole in one frame once the bands overlap");
+    eq(wholeInOne([a, lap], 100, 200), false, "a box under the bar of the first frame is in no band");
+    eq(wholeInOne([], 0, 10), false, "no frames show nothing");
   }
-  eq(covered([[0, 1000], [1130, 2000]], 900, 1200), false, "the old recording hid [1000,1130) under the bar");
+  eq(covered([[0, 1000], [1000, 2000]], 900, 1200), true, "the OLD recording claimed the bar-covered band was shown");
+  eq(covered([[0, 1000], [1130, 2000]], 900, 1200), false, "the honest bands show [1000,1130) was never readable");
+  {
+    const bar = (top: number, bottom: number, width = 1920) => ({ top, bottom, width });
+    eq(barBands([bar(0, 69), bar(69, 130)], 1920, 1080), { top: 130, bottom: 0 }, "stacked bars add");
+    eq(barBands([bar(0, 69), bar(75, 130)], 1920, 1080), { top: 69, bottom: 0 }, "a gap over 1px ends the stack");
+    eq(barBands([bar(0, 1080)], 1920, 1080), { top: 0, bottom: 0 }, "a full-height overlay is not a bar");
+    eq(barBands([bar(69, 1080, 320)], 1920, 1080), { top: 0, bottom: 0 }, "a narrow rail hides only its column");
+    eq(barBands([bar(1000, 1080)], 1920, 1080), { top: 0, bottom: 80 }, "a bottom bar is measured from the bottom");
+    eq(barBands([bar(0, 69), bar(1000, 1080)], 1920, 1080), { top: 69, bottom: 80 }, "both ends at once");
+    eq(barBands([bar(300, 400)], 1920, 1080), { top: 0, bottom: 0 }, "a bar in the middle of the screen is no band");
+    eq(barBands([], 390, 844), { top: 0, bottom: 0 }, "no bars, no bands");
+  }
 
   console.log("self-test: ok");
 }
