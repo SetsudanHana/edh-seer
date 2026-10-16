@@ -911,10 +911,22 @@ const ZONE_OWNER: ReadonlyArray<readonly [RegExp, Control]> = [
  *  CEILING: an equipped creature an opponent later gains control of (CR 301.5d: the Equipment's controller is
  *  separate from the creature's) could damage you, and "that player" would be you; not modelled. */
 function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, cardName?: string): boolean {
-  const m = /^\s*(?:whenever|when)\s+(.+?)\s+deals?\s+combat damage to (a player|an opponent)\b/i.exec(clauseText);
-  if (!m) return false;
-  if (/^an opponent$/i.test(m[2]!)) return true;
-  const who = m[1]!;
+  // SCANNED, NOT MATCHED: `^\s*(?:whenever|when)\s+(.+?)\s+deals?\s+combat damage…` backtracks
+  // polynomially on runs of spaces (CodeQL js/polynomial-redos), so the shape is read with string search.
+  const text = clauseText.trimStart();
+  const lower = text.toLowerCase();
+  const start = lower.startsWith("whenever ") ? 9 : lower.startsWith("when ") ? 5 : -1;
+  if (start < 0) return false;
+  const at = lower.indexOf(" combat damage to ", start);
+  if (at < 0) return false;
+  const target = lower.slice(at + " combat damage to ".length);
+  const toOpponent = /^an opponent\b/.test(target);
+  if (!toOpponent && !/^a player\b/.test(target)) return false;
+  const head = text.slice(start, at).trimEnd();
+  const verbAt = head.toLowerCase().endsWith(" deals") ? head.length - 6 : head.toLowerCase().endsWith(" deal") ? head.length - 5 : -1;
+  if (verbAt < 0) return false;
+  if (toOpponent) return true;
+  const who = head.slice(0, verbAt).trim();
   return triggerIsSelf || /\byou control\b/i.test(who) || /^(?:this |equipped creature$)/i.test(who)
     || (cardName !== undefined && (who === cardName || who.toLowerCase() === cardName.split(",")[0]!.toLowerCase()));
 }
