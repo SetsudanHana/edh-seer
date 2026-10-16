@@ -4302,3 +4302,22 @@ test("a clause with both a double and a grant-ability action records every speed
   } as never).abilities.find((a) => a.effect?.kind === "speed-increase");
   expect([...(ability?.grants ?? [])].sort()).toEqual(["double strike", "haste"]);
 });
+
+// "IF IT WAS A CREATURE" ON A SELF DIES TRIGGER IS REPRESENTED (#1250). Enduring Curiosity's intervening if was refused
+// (`if:dies`), which left the recursion a TRIGGERLESS triggered ability: "return it" read as `ref: "trigger"` over
+// `control: any`, so another card's graveyard fill (Smoke Bomb sacrificing itself) fed it. Oracle text as printed.
+test("an Enduring card's self dies trigger survives 'if it was a creature', and its return is the card itself", () => {
+  const text = "When Enduring Curiosity dies, if it was a creature, return it to the battlefield under its owner's control. It's an enchantment. (It's not a creature.)";
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 3, abilityType: "triggered", trigger: { event: "dies", subject: "Enduring Curiosity", control: "you" },
+    actions: [
+      { verb: "return", object: "it", fromZone: "graveyard", toZone: "battlefield" },
+      { verb: "animate", object: "it" },
+    ],
+  }], "Enduring Curiosity", { 3: text });
+  expect(unknownTriggers ?? []).toEqual([]);
+  const recursion = abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
+  expect(recursion.trigger?.verbs).toContain("dies");
+  expect(recursion.trigger?.subject.self).toBe(true);
+  expect(recursion.effect.subject?.self).toBe(true);
+});

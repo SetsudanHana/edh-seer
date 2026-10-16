@@ -476,7 +476,8 @@ import { emblemRecipient } from "../emblem.js";
 // 319: #1188 whole-branch review: "for each color among permanents you control" on a permanent nets the card's OWN colours (Faeburrow Elder 2, Bloom Tender 1; the card is a permanent you control); a colour taken from "among ... cards in your graveyard" (The Grey Havens) is gated on a card there.
 // 320: #1250 an emit of an action that happens on a delayed trigger ("Sacrifice it at the beginning of the next end step", Reflection of Kiki-Jiki; "return it at the beginning of the next end step") is not `instantSpeed`: no player can aim it at an attacker, so Fable -> Kardur (owner-judged FALSE) no longer forms.
 // 321: #1250 review: the delayed-action guard covers an instant/flash spell's emits too ("Sacrifice it at the beginning of the next end step" on a reanimation instant), not only activated abilities.
-export const DERIVE_VERSION = 321;
+// 322: #1250 task 2 -- a self `dies` trigger with "if it was a creature" (the Enduring cycle, Harold and Bob, Tom Bert and William) is read, not refused: its triggerless recursion read "return it" as ANY graveyard card (Smoke Bomb -> Enduring Curiosity, owner-judged FALSE).
+export const DERIVE_VERSION = 322;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1525,6 +1526,10 @@ const SOURCE_ZONE = /^(?:~|this \w+|it) is (?:in|on) (?:the command zone|the bat
  *  card in your graveyard": `uniqueName` (CR 903.5b; owner, 2026-10-01). */
 const SAME_NAME = /^it doesn't have the same name as /i;
 
+/** The Enduring cycle's "When ~ dies, if it was a creature, return it ... It's an enchantment" (#1250): the card is only
+ *  a creature when it dies and still has this trigger, so the condition narrows nothing a producer supplies. Self dies only. */
+const WAS_A_CREATURE = /^(?:it was|they were) an? creature$/i;
+
 function conditionRepresented(condition: string, text: string): boolean {
   return thresholdFor(text) !== undefined || SAME_NAME.test(condition) || ARRIVED_WITHOUT_CASTING.test(condition) || WITHOUT_DYING.test(condition)
     || /\bthe first \w+ spell\b/i.test(condition) || SOURCE_ZONE.test(condition);
@@ -1706,7 +1711,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   if (!verb) return { refused: r.event === "tapped-for-mana" ? "taps-for-mana" : r.event };
   // Entering TRANSFORMED keeps the name the stored path gave it.
   if (verb === "enters" && /\btransformed\b/.test(r.narrowing ?? "")) return { refused: "enters-transformed", subject };
-  if (r.condition && !conditionRepresented(r.condition.text, text)) return { refused: `if:${r.event}`, subject };
+  if (r.condition && !conditionRepresented(r.condition.text, text) && !(verb === "dies" && subject.self === true && WAS_A_CREATURE.test(r.condition.text))) return { refused: `if:${r.event}`, subject };
   if (r.narrowing && !narrowingRepresented(r, text)) return { refused: `narrowing:${r.event}`, subject };
   if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
   if (r.condition && SAME_NAME.test(r.condition.text)) subject.uniqueName = true;

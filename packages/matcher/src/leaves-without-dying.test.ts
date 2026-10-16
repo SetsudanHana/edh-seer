@@ -157,3 +157,18 @@ test("a delayed end-step sacrifice does not meet an attacking-creature dies trig
   expect(pairReasons(reflection, kardur, H).filter((r) => r.tag === "dies:creature")).toEqual([]);
   expect(pairReasons(ayara, kardur, H).map((r) => r.tag)).toContain("dies:creature");
 });
+
+// A SELF-RECURSION IS NOT FED BY ANOTHER CARD'S GRAVEYARD FILL (#1250). Enduring Curiosity's "When Enduring Curiosity dies,
+// if it was a creature, return it" returns ITSELF; Smoke Bomb sacrificing itself fills a graveyard with an artifact the
+// return cannot take (owner-judged FALSE). Derived from the printed text, not hand-built.
+test("Smoke Bomb's self-sacrifice does not feed Enduring Curiosity's return of itself", () => {
+  const smokeBomb = card("Smoke Bomb", ["artifact"], [{
+    id: 3, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" },
+    actions: [{ verb: "sacrifice", object: "this artifact" }],
+  }], { 3: "At the beginning of your upkeep, sacrifice this artifact. When you do, target creature you control can't be blocked this turn." });
+  const curiosity = card("Enduring Curiosity", ["enchantment", "creature"], [{
+    id: 3, abilityType: "triggered", trigger: { event: "dies", subject: "Enduring Curiosity", control: "you" },
+    actions: [{ verb: "return", object: "it", fromZone: "graveyard", toZone: "battlefield" }, { verb: "animate", object: "it" }],
+  }], { 3: "When Enduring Curiosity dies, if it was a creature, return it to the battlefield under its owner's control. It's an enchantment. (It's not a creature.)" });
+  expect(pairReasons(smokeBomb, curiosity, H).filter((r) => r.tag.startsWith("graveyard-recursion"))).toEqual([]);
+});
