@@ -4504,6 +4504,7 @@ test("'if this card is exiled, put it onto the battlefield' returns the card its
   const emits = abilities.flatMap((a) => a.emits ?? []);
   expect(emits.length).toBeGreaterThan(0);
   for (const e of emits) { expect(e.subject.self).toBe(true); expect(e.subject.ref).toBeUndefined(); }
+  expect(abilities.find((a) => a.effect.kind === "flicker")?.effect.subject?.self).toBe(true);
 });
 
 test("Sacred Ground's recursion takes the returned land's class: type land, control you (no longer any card in any graveyard)", () => {
@@ -4511,16 +4512,43 @@ test("Sacred Ground's recursion takes the returned land's class: type land, cont
   const g = grammarClauseRecords({ name: "Sacred Ground", oracleText: t, typeLine: "Enchantment", manaCost: "{1}{W}", keywords: [] } as never);
   const { abilities } = deriveAbilities(g.records, "Sacred Ground", { 1: t }, undefined, t);
   const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
-  expect(rec.effect.subject).toMatchObject({ type: "land", control: "you", zone: "graveyard" });
+  expect(rec.effect.subject).toMatchObject({ type: "land", control: "you", zone: "graveyard", fromZone: "battlefield" });
 });
 
-test("'in your graveyard' is YOUR graveyard, as 'from your graveyard' (Victimize)", () => {
-  const t = "Choose two target creature cards in your graveyard. Sacrifice a creature as an additional cost to cast this spell. Return the chosen cards to the battlefield tapped.";
+test("'in your graveyard' is YOUR graveyard, as 'from your graveyard' (Victimize, corpus text and stored clause)", () => {
+  const t = "Choose two target creature cards in your graveyard. Sacrifice a creature. If you do, return the chosen cards to the battlefield tapped.";
   const { abilities } = deriveAbilities(
-    [{ id: 1, abilityType: "spell", actions: [{ verb: "return", object: "two target creature cards in your graveyard", fromZone: "graveyard", toZone: "battlefield", amount: null, optional: false }] }],
+    [{ id: 1, abilityType: "spell", actions: [
+      { verb: "sacrifice", object: "a creature", fromZone: null, toZone: null, amount: null, optional: false },
+      { verb: "return", object: "the chosen cards", fromZone: "graveyard", toZone: "battlefield", amount: null, optional: true },
+      { verb: "tap", object: "the chosen cards", fromZone: null, toZone: null, amount: null, optional: false }] }],
     "Victimize", { 1: t }, undefined, t);
   const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
   expect(rec.effect.subject?.control).toBe("you");
+});
+
+test("'in your graveyard' is read off the ACTION's object first: Neyam Shai Murad's 'their graveyard' is not yours", () => {
+  const t = "Whenever Neyam Shai Murad deals combat damage to a player, you may have that player return target permanent card from their graveyard to their hand. If you do, that player chooses a permanent card in your graveyard, then you put it onto the battlefield under your control.";
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "Neyam Shai Murad", control: "you" }, actions: [
+      { verb: "return", object: "target permanent card from that player's graveyard", fromZone: "graveyard", toZone: "hand", amount: null, optional: true },
+      { verb: "put", object: "a permanent card in your graveyard chosen by that player", fromZone: "graveyard", toZone: "battlefield", amount: null, optional: false }] }],
+    "Neyam Shai Murad", { 1: t }, undefined, t);
+  const recs = abilities.filter((a) => a.effect.kind === "graveyard-recursion");
+  expect(recs).toHaveLength(2);
+  expect(recs[0]!.effect.subject?.control).not.toBe("you");
+  expect(recs[1]!.effect.subject?.control).toBe("you");
+});
+
+test("Hedron Blade's blockers are not 'it': the trigger subject's class is not copied when it follows 'blocked by'", () => {
+  const t = "Whenever equipped creature becomes blocked by one or more colorless creatures, it gains deathtouch until end of turn.";
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "one or more colorless creatures", control: "any" },
+      actions: [{ verb: "grant-ability", object: "equipped creature gains deathtouch until end of turn", fromZone: null, toZone: null, amount: null, optional: false }] }],
+    "Hedron Blade", { 1: t }, undefined, t);
+  const grant = abilities.find((a) => a.effect.kind === "keyword-grant")!;
+  expect(grant.effect.subject?.colors).toBeUndefined();
+  expect(grant.effect.subject?.type).toBeUndefined();
 });
 
 test("a mode bullet of a refused header reads the header's object: 'It gains X' is the creature you control (inherited)", () => {
@@ -4531,6 +4559,7 @@ test("a mode bullet of a refused header reads the header's object: 'It gains X' 
     ],
     "Modal Attacker",
     { 1: "Whenever a creature you control attacks alone, choose one —", 2: "It gains indestructible until end of turn." },
+    undefined, "Whenever a creature you control attacks alone, choose one —\n• It gains indestructible until end of turn.",
   );
   const grant = abilities.find((a) => a.clause === 2 && a.effect.kind === "keyword-grant")!;
   // CEILING (pre-existing, every modal bullet): the bullet re-reads its header's event WITHOUT the header's

@@ -486,7 +486,8 @@ import { emblemRecipient } from "../emblem.js";
 // 328: #1253 an ability of a REFUSED trigger that points back at the trigger object (`ref: "trigger"` in its emits or effect, no `trigger`) is `triggerRefused`: it keeps its kind and the matcher claims nothing from it ("return it" was any card); where the refused trigger is about THIS card ("this creature blocks"), "it" is the card itself (`self`) and nothing is withdrawn.
 // 330: #1253 the stored trigger subject of "a spell or ability an opponent controls causes X to ..." is X, not the cause plus half the event: Sacred Ground's land is YOURS (its return read `control: opp`).
 // 331: #1253 review -- a refused trigger's class is copied onto a keyword grant's ref'd subject ("it gains X" over "a creature you control attacks alone" is a creature you control); an `if:` flags only when it tests the object; "them" after a cast/draw/discard trigger is the player, and "put it" under "if this card is exiled" is the card (Scytheclaw Raptor, Adrenaline Jockey, Senu); a recursion of the trigger's own object takes its class (Sacred Ground); "in your graveyard" is yours (Victimize); an inherited "It gains" bullet reads the header's object.
-export const DERIVE_VERSION = 331;
+// 332: #1253 final review -- a grant's class is copied only when the trigger subject precedes the event (Hedron Blade's blockers are not "it"); "in your graveyard" is read off the action's object first (Neyam Shai Murad's "their graveyard" is not yours); Sacred Ground's recursion is of a card put into the graveyard FROM THE BATTLEFIELD; Senu's flicker effect is self.
+export const DERIVE_VERSION = 332;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -682,6 +683,17 @@ function triggerObjectClassless(a: Ability): boolean {
   };
   walk(a.effect); walk(a.emits);
   return found.some((o) => Object.keys(o).every((k) => CLASSLESS_KEYS.has(k)));
+}
+
+/** Is the trigger subject the thing the event happens TO, standing before the event verb in the printed
+ *  sentence? Hedron Blade's stored subject is "one or more colorless creatures" -- the BLOCKERS, after
+ *  "becomes blocked by" -- while its "it" is the equipped creature, so the subject's class must not be copied
+ *  onto the grant (#1253). A subject that does not appear in the text at all is not trusted either. */
+function triggerSubjectPrecedesEvent(text: string, subject: string): boolean {
+  const lower = text.toLowerCase(), at = lower.indexOf(subject.trim().toLowerCase());
+  if (at < 0) return false;
+  const by = lower.search(/\b(?:blocked by|blocks)\b/);
+  return by < 0 || at < by;
 }
 
 /** AN `if:` THAT TESTS THE TRIGGER'S OBJECT, not the turn or a count: "if it was enchanted or equipped" (Koll),
@@ -938,8 +950,6 @@ const SELF_BARE = /^this$/i;
 const ZONE_OWNER: ReadonlyArray<readonly [RegExp, Control]> = [
   [/\bfrom (?:your|their) own\b/i, "you"],
   [/\bfrom your\b/i, "you"],
-  // "Choose two target creature cards IN your graveyard" (Victimize): the same owner, said with "in".
-  [/\bin your\b/i, "you"],
   [/\bfrom (?:an |each |target )?opponent'?s?\b/i, "opp"],
   // "THEIR" AFTER COMBAT DAMAGE TO A PLAYER IS THE DAMAGED PLAYER, an opponent (#729): Soundwave and
   // Froghemoth exile "from their graveyard". Only when the clause EXILES (a taking): "that player returns
@@ -975,7 +985,10 @@ function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, car
     || (cardName !== undefined && (who === cardName || who.toLowerCase() === cardName.split(",")[0]!.toLowerCase()));
 }
 
-function zoneOwner(clauseText: string, zone: string | null | undefined, triggerIsSelf = false, cardName?: string): Control | undefined {
+/** An object that names whose zone it is in: "from their graveyard", "from that player's graveyard". */
+const OBJECT_NAMES_AN_OWNER = /\b(?:from|in) (?:your|their|that player's|target (?:player|opponent)'s|an opponent's|each opponent's|its owner's)\b/i;
+
+function zoneOwner(clauseText: string, zone: string | null | undefined, triggerIsSelf = false, cardName?: string, objectText?: string): Control | undefined {
   if (!zone || clauseText === "") return undefined;
   if (zone === "graveyard" && /\bfrom that player's graveyard\b/i.test(clauseText) && damagedPlayerIsOpponent(clauseText, triggerIsSelf, cardName)) return "opp";
   for (const [re, control] of ZONE_OWNER) {
@@ -984,6 +997,12 @@ function zoneOwner(clauseText: string, zone: string | null | undefined, triggerI
     const m = clauseText.match(new RegExp(`${re.source}\\s+${zone}`, "i"));
     if (m) return control;
   }
+  // "Choose two target creature cards IN your graveyard" (Victimize, #1253): the same owner, said with "in".
+  // Read off the ACTION'S OBJECT first (Daretti, Wake to Slaughter carry it there); the clause only when the
+  // object names no owner of its own ("the chosen cards"), so Neyam Shai Murad's "that player returns a card
+  // from THEIR graveyard" does not borrow the "in your graveyard" of its second action.
+  const inYour = new RegExp(`\\bin your\\s+${zone}`, "i");
+  if (objectText !== undefined && (inYour.test(objectText) || (!OBJECT_NAMES_AN_OWNER.test(objectText) && inYour.test(clauseText)))) return "you";
   return undefined;
 }
 
@@ -1373,7 +1392,7 @@ function effectSubject(
   if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) {
     subject.zone = action.fromZone;
     // Only when the object text stated no owner of its own -- an explicit one is more specific.
-    const owner = zoneOwner(clauseText, action.fromZone, triggerIsSelf, cardName);
+    const owner = zoneOwner(clauseText, action.fromZone, triggerIsSelf, cardName, object);
     if (owner && subject.control === "any") subject.control = owner;
   }
   // Owner's ruling 2026-08-14 (threshold-lines): a coarse extra-phase conflated units the game
@@ -2500,6 +2519,7 @@ export function deriveAbilities(
       const subject = effectKind
         ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
+      if (subject && selfByIf) subject.self = true;
       // A RECURSION OF THE TRIGGER'S OWN OBJECT HAS THAT OBJECT'S CLASS (#1253, Sacred Ground): its emits say
       // "land you control" and its effect subject said "a card in any graveyard", so every graveyard filler
       // in the deck "enabled" it. Copy the ref'd emit's class and controller onto the effect subject.
@@ -2511,6 +2531,11 @@ export function deriveAbilities(
             if (!CLASSLESS_KEYS.has(k) && k !== "self" && v !== undefined && dst[k] === undefined) dst[k] = v;
           }
           if (subject.control === "any" && made.subject.control !== "any") subject.control = made.subject.control;
+          // The recursion is of a card that was put into the graveyard FROM THE BATTLEFIELD: a mill or a
+          // discard (from the library or the hand) cannot be what it returns (Glimpse the Unthinkable).
+          if (/\binto (?:your|a|an opponent's) graveyard from the battlefield\b/i.test(text)) subject.fromZone = "battlefield";
+          // CEILING: "a spell or ability AN OPPONENT CONTROLS causes ..." is not expressible on the producer
+          // side, so your own Armageddon, Strip Mine and Wasteland still feed this recursion.
         }
       }
       // #1250: the same damaged-player reading reaches the `leaves` emit -- it is THEIR graveyard the card
@@ -2529,7 +2554,7 @@ export function deriveAbilities(
         && !isSelfSubject(clause.trigger.subject, cardName) && !/\btarget\b/i.test(text)
         && (GRANT_TO_TRIGGER.test(text) || (inherits && GRANT_BULLET_TO_TRIGGER.test(text.trim())))) {
         subject.ref = "trigger";
-        if (!trigger || inherits) {
+        if ((!trigger || inherits) && triggerSubjectPrecedesEvent(inherits ? (cardText || text) : text, clause.trigger.subject)) {
         // THE REFUSED TRIGGER STILL NAMES THE CLASS (#1253): "Whenever a creature you control attacks alone,
         // IT gains X" is a creature you control, as No Mercy's "destroy it" is a creature. Copy what the
         // trigger subject says onto the ref'd subject so only a truly class-less object is withdrawn.

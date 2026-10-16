@@ -2436,6 +2436,9 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       //
       // `zone` is dropped from the fill before the test: a card's printed characteristics sit in no
       // zone, so keeping it would fail every card and silently delete the whole family.
+      // A RECURSION OF A CARD PUT INTO THE GRAVEYARD FROM THE BATTLEFIELD (Sacred Ground, #1253) is not
+      // enabled by a random mill or a discard, which take the card from the library or the hand.
+      if (a.effect.subject.fromZone === "battlefield" && (e.origin !== undefined || e.subject.fromZone === "hand")) continue;
       if (a.effect.subject.self === true) {
         // ONLY A DEATH FROM THE BATTLEFIELD ENABLES IT (owner-judged FALSE 2026-10-16: Tomb Fortress,
         // Tablet of Discovery, The Warring Triad -> a mill; Prismari Command -> a discard). A mill is

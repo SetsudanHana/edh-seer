@@ -6801,3 +6801,25 @@ test("a No Mercy-shaped destroy feeds a payoff on opposing deaths and not one on
   expect(directedReasons(noMercy, wurm, H).some((r) => r.tag.startsWith("dies:"))).toBe(true);
   expect(directedReasons(noMercy, zulaport, H).some((r) => r.tag.startsWith("dies:"))).toBe(false);
 });
+
+// SACRED GROUND RETURNS A LAND PUT INTO THE GRAVEYARD FROM THE BATTLEFIELD (#1253): a mill or a discard
+// takes the card from the library or the hand, so it is not a fill that recursion reads.
+test("a recursion whose subject comes from the battlefield is fed by a sacrifice and not by a mill or a discard", () => {
+  const recursion = (fromZone?: "battlefield") => base("Sacred Ground", [{
+    kind: "triggered",
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "land", zone: "graveyard", ...(fromZone ? { fromZone } : {}) } },
+  }]);
+  const filler = (effect: string, verb: string, subject: object) => base("Filler", [{
+    kind: "on-cast", effect: { kind: effect as never, subject: { control: "you", token: null } },
+    emits: [{ verb, subject } as never],
+  }]);
+  const sacrifice = filler("", "dies", { control: "you", token: null, type: "land" });
+  const mill = filler("mill", "mill", { control: "you", token: null });
+  const discard = filler("draw-card", "discard", { control: "you", token: null });
+  const hits = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => directedReasons(p, c, H).filter((r) => r.tag.startsWith("graveyard-recursion")).length;
+  expect(hits(sacrifice, recursion("battlefield"))).toBeGreaterThan(0);
+  expect(hits(mill, recursion("battlefield"))).toBe(0);
+  expect(hits(discard, recursion("battlefield"))).toBe(0);
+  // The same mill still feeds a recursion that does not say where its card came from.
+  expect(hits(mill, recursion())).toBeGreaterThan(0);
+});
