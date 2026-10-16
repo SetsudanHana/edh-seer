@@ -1597,6 +1597,29 @@ test("exiling from THEIR graveyard after combat damage to a player is a recursio
   expect(oppRecursion(abilities)?.control).toBe("opp");
 });
 
+// #1250 task 3: Tinybones casts from "that player's graveyard" -- the player it damaged, an opponent.
+// The zone's owner was dropped, so the recursion read control `any` and a graveyard filler of YOUR own
+// (Lively Dirge) was paired to it.
+test("'that player's graveyard' after combat damage to a player by your creature is an opponent's yard", () => {
+  const text = "Whenever Tinybones deals combat damage to a player, you may cast target nonland permanent card from that player's graveyard, and mana of any type can be spent to cast that spell.";
+  const { abilities } = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "Tinybones", control: "you" }, actions: [
+    { verb: "cast", object: "target nonland permanent card from that player's graveyard", fromZone: "graveyard", toZone: "stack", optional: true },
+  ] }], "Tinybones, the Pickpocket", { 2: text }, undefined, text);
+  const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
+  expect(rec.effect.subject?.control).toBe("opp");
+  // Only the card LEAVING their graveyard is theirs; YOU cast it.
+  expect(rec.emits?.find((e) => e.verb === "leaves")?.subject.control).toBe("opp");
+  expect(rec.emits?.find((e) => e.verb === "cast")?.subject.control).not.toBe("opp");
+});
+
+test("'that player's graveyard' after ANYONE's combat damage, or a target player, is left unresolved", () => {
+  const text = "Whenever a creature deals combat damage to a player, you may cast target instant card from that player's graveyard.";
+  const { abilities } = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "a creature", control: "any" }, actions: [
+    { verb: "cast", object: "target instant card from that player's graveyard", fromZone: "graveyard", toZone: "stack", optional: true },
+  ] }], "Some Thief", { 2: text }, undefined, text);
+  expect(abilities.find((a) => a.effect.kind === "graveyard-recursion")?.effect.subject?.control).toBe("any");
+});
+
 test("an exile from a graveyard that uses nothing stays hate", () => {
   const { abilities } = deriveAbilities([{
     id: 1, abilityType: "activated",
@@ -2380,6 +2403,68 @@ test("an emit from an activated ability, an instant or a flash spell is instant-
     characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"], keywords: ["Flash"] },
   });
   expect(flash.abilities[0].emits?.[0].instantSpeed).toBe(true);
+});
+
+// A DELAYED SACRIFICE IS NOT INSTANT SPEED (#1250). Reflection of Kiki-Jiki's "Sacrifice it at the
+// beginning of the next end step" happens on a delayed trigger, so no player can aim it at an attacker
+// and Kardur's "an attacking creature dies" was owner-judged FALSE. The token it makes keeps the stamp.
+test("an emit from a delayed 'at the beginning of the next end step' sacrifice is not instant-speed", () => {
+  const text = "{1}, {T}: Create a token that's a copy of another target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the next end step.";
+  const abilities = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "create", object: "a token that's a copy of another target nonlegendary creature you control" }, { verb: "sacrifice", object: "it" }] }],
+    "Reflection", { 1: text }, { 1: "{1}, {T}" },
+  ).abilities;
+  const made = abilities.find((a) => a.emits?.some((e) => e.verb === "create-token"));
+  expect(made?.emits?.filter((e) => e.verb !== "dies").every((e) => e.instantSpeed === true)).toBe(true);
+  const sac = abilities.filter((a) => a.emits?.some((e) => e.verb === "sacrifice"));
+  expect(sac.length).toBeGreaterThan(0);
+  for (const a of sac) expect(a.emits?.some((e) => e.instantSpeed === true)).toBe(false);
+});
+
+// ...the guard's edges (#1250 review). It reads the action's OWN sentence and only a delay naming a LATER moment.
+test("the delayed-action guard: an instant's delayed sacrifice, a delayed return beside an immediate exile, and the non-delays", () => {
+  const stamped = (a: { emits?: { instantSpeed?: true }[] }) => a.emits?.some((e) => e.instantSpeed === true);
+  // (d) an instant spell's delayed sacrifice is de-stamped, like an activated ability's.
+  const reanimate = deriveCardTags({
+    oracleId: "ap", clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "put", object: "target creature card from a graveyard", toZone: "battlefield" }, { verb: "sacrifice", object: "it" }] }],
+    clauseTexts: { 1: "Put target creature card from a graveyard onto the battlefield under your control. It gains haste. Sacrifice it at the beginning of the next end step." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  const sacs = reanimate.abilities.filter((a) => a.emits?.some((e) => e.verb === "sacrifice"));
+  expect(sacs.length).toBeGreaterThan(0);
+  for (const a of sacs) expect(stamped(a)).toBe(false);
+  // (a) "Exile X, then return it ... at the beginning of the next end step": the exile stays instant, the return does not.
+  const blink = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "exile", object: "target creature you control", fromZone: "battlefield", toZone: "exile" }, { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" }] }],
+    "Blinker", { 1: "{T}: Exile target creature you control, then return it to the battlefield at the beginning of the next end step." }, { 1: "{T}" },
+  ).abilities;
+  expect(blink.filter((a) => a.emits?.some((e) => e.verb === "exiled")).every(stamped)).toBe(true);
+  const back = blink.filter((a) => a.emits?.some((e) => e.verb === "enters"));
+  expect(back.length).toBeGreaterThan(0);
+  for (const a of back) expect(stamped(a)).toBe(false);
+  // (b) "each end step" and (c) "until end of turn" are not delays of the action.
+  for (const [text, actions] of [
+    ["{T}: Sacrifice a creature at the beginning of each end step.", [{ verb: "sacrifice", object: "a creature" }]],
+    ["{T}: Sacrifice a creature. It gains haste until end of turn.", [{ verb: "sacrifice", object: "a creature" }]],
+  ] as const) {
+    const abs = deriveAbilities([{ id: 1, abilityType: "activated", actions: [...actions] }], "N", { 1: text }, { 1: "{T}" }).abilities;
+    const sac = abs.filter((a) => a.emits?.some((e) => e.verb === "sacrifice"));
+    expect(sac.length, text).toBeGreaterThan(0);
+    for (const a of sac) expect(stamped(a), text).toBe(true);
+  }
+});
+
+// "AT END OF COMBAT" IS NOT A DELAY PAST COMBAT (#1250 branch review). CR 511.2: the ability triggers as
+// the end of combat step begins; CR 511.3: creatures leave combat only as that step ends. So Goblin Sappers'
+// "Destroy it at end of combat" still kills an ATTACKING creature and keeps its instant-speed stamp.
+test("an emit from a 'destroy it at end of combat' keeps instantSpeed (the creature is still attacking)", () => {
+  const abs = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "cant", object: "be blocked this turn" }, { verb: "destroy", object: "target creature you control" }, { verb: "destroy", object: "this creature" }] }],
+    "Goblin Sappers", { 1: "Target creature you control can't be blocked this turn. Destroy it and this creature at end of combat." }, { 1: "{R}{R}, {T}" },
+  ).abilities;
+  const kills = abs.filter((a) => a.emits?.some((e) => e.verb === "dies"));
+  expect(kills.length).toBeGreaterThan(0);
+  expect(kills.some((a) => a.emits?.some((e) => e.instantSpeed === true))).toBe(true);
 });
 
 // THE EERIE HALF, AND THE CHANNEL THAT WAS SUPPOSED TO CATCH ITS ABSENCE. "Whenever you fully unlock
@@ -4252,4 +4337,35 @@ test("a clause with both a double and a grant-ability action records every speed
     clauseTexts: { 1: "Amass Orcs X, then Goblins and Orcs you control gain double strike and haste until end of turn." },
   } as never).abilities.find((a) => a.effect?.kind === "speed-increase");
   expect([...(ability?.grants ?? [])].sort()).toEqual(["double strike", "haste"]);
+});
+
+// "IF IT WAS A CREATURE" ON A SELF DIES TRIGGER IS REPRESENTED (#1250). Enduring Curiosity's intervening if was refused
+// (`if:dies`), which left the recursion a TRIGGERLESS triggered ability: "return it" read as `ref: "trigger"` over
+// `control: any`, so another card's graveyard fill (Smoke Bomb sacrificing itself) fed it. Oracle text as printed.
+test("an Enduring card's self dies trigger survives 'if it was a creature', and its return is the card itself", () => {
+  const text = "When Enduring Curiosity dies, if it was a creature, return it to the battlefield under its owner's control. It's an enchantment. (It's not a creature.)";
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 3, abilityType: "triggered", trigger: { event: "dies", subject: "Enduring Curiosity", control: "you" },
+    actions: [
+      { verb: "return", object: "it", fromZone: "graveyard", toZone: "battlefield" },
+      { verb: "animate", object: "it" },
+    ],
+  }], "Enduring Curiosity", { 3: text }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true);
+  expect(unknownTriggers ?? []).toEqual([]);
+  const recursion = abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
+  expect(recursion.trigger?.verbs).toContain("dies");
+  expect(recursion.trigger?.subject.self).toBe(true);
+  expect(recursion.effect.subject?.self).toBe(true);
+});
+
+// ...BUT NOT ON A CARD THAT IS ONLY SOMETIMES A CREATURE (#1250 review). Weatherseed Totem is an Artifact, a creature only once
+// animated, so "if it was a creature" is a real condition (CR 603.4): the trigger stays refused rather than claim every artifact death.
+test("Weatherseed Totem's 'if it was a creature' dies trigger stays refused", () => {
+  const text = "When this artifact is put into a graveyard from the battlefield, if it was a creature, return this card to its owner's hand.";
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 3, abilityType: "triggered", trigger: { event: "dies", subject: "this artifact", control: "you" },
+    actions: [{ verb: "return", object: "this card", fromZone: "graveyard", toZone: "hand" }],
+  }], "Weatherseed Totem", { 3: text }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, false);
+  expect(unknownTriggers).toContain("if:dies");
+  expect(abilities.some((a) => a.trigger?.verbs.includes("dies"))).toBe(false);
 });

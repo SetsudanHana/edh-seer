@@ -138,3 +138,86 @@ test("a graveyard leave feeds no battlefield-leave payoff, no without-dying payo
   // briefly claimed "so it can die again" was ruled out by the owner on 2026-09-09.
   expect(tags(reanimate, bloodArtist)).toEqual([]);
 });
+
+// A DELAYED SACRIFICE CANNOT BE AIMED AT AN ATTACKER (#1250). Reflection of Kiki-Jiki's "Sacrifice it at the
+// beginning of the next end step" is not instant speed, so Kardur's "an attacking creature dies" is not met
+// (owner-judged FALSE, Fable -> Kardur); Ayara's instant-speed sacrifice outlet still is. Derived, not hand-built.
+test("a delayed end-step sacrifice does not meet an attacking-creature dies trigger; an instant-speed outlet does", () => {
+  const kardur = card("Kardur", ["creature"], [{
+    id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "an attacking creature" },
+    actions: [{ verb: "lose-life", object: "each opponent", amount: "1" }],
+  }], { 1: "Whenever an attacking creature dies, each opponent loses 1 life." });
+  const reflection = card("Reflection", ["creature"], [{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "create", object: "a token that's a copy of another target nonlegendary creature you control" }, { verb: "sacrifice", object: "it" }],
+  }], { 1: "{1}, {T}: Create a token that's a copy of another target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the next end step." });
+  const ayara = card("Ayara", ["creature"], [{
+    id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "another black creature" }, { verb: "draw", object: "a card" }],
+  }], { 1: "{T}, Sacrifice another black creature: Draw a card." });
+  expect(pairReasons(reflection, kardur, H).filter((r) => r.tag === "dies:creature")).toEqual([]);
+  expect(pairReasons(ayara, kardur, H).map((r) => r.tag)).toContain("dies:creature");
+});
+
+// A SELF-RECURSION IS NOT FED BY ANOTHER CARD'S GRAVEYARD FILL (#1250). Enduring Curiosity's "When Enduring Curiosity dies,
+// if it was a creature, return it" returns ITSELF; Smoke Bomb sacrificing itself fills a graveyard with an artifact the
+// return cannot take (owner-judged FALSE). Derived from the printed text, not hand-built.
+test("Smoke Bomb's self-sacrifice does not feed Enduring Curiosity's return of itself", () => {
+  const smokeBomb = card("Smoke Bomb", ["artifact"], [{
+    id: 3, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" },
+    actions: [{ verb: "sacrifice", object: "this artifact" }],
+  }], { 3: "At the beginning of your upkeep, sacrifice this artifact. When you do, target creature you control can't be blocked this turn." });
+  const curiosity = card("Enduring Curiosity", ["enchantment", "creature"], [{
+    id: 3, abilityType: "triggered", trigger: { event: "dies", subject: "Enduring Curiosity", control: "you" },
+    actions: [{ verb: "return", object: "it", fromZone: "graveyard", toZone: "battlefield" }, { verb: "animate", object: "it" }],
+  }], { 3: "When Enduring Curiosity dies, if it was a creature, return it to the battlefield under its owner's control. It's an enchantment. (It's not a creature.)" });
+  expect(pairReasons(smokeBomb, curiosity, H).filter((r) => r.tag.startsWith("graveyard-recursion"))).toEqual([]);
+});
+
+// WEATHERSEED TOTEM IS NOT AN ARTIFACT-DEATH PAYOFF (#1250 review): it returns itself only if it died AS A CREATURE, which a
+// plain artifact sacrifice (Krark-Clan Ironworks) does not supply; the trigger stays refused, so no dies:artifact edge forms.
+test("an artifact sacrifice outlet does not feed Weatherseed Totem's 'if it was a creature' return", () => {
+  const totem = card("Weatherseed Totem", ["artifact"], [{
+    id: 3, abilityType: "triggered", trigger: { event: "dies", subject: "this artifact", control: "you" },
+    actions: [{ verb: "return", object: "this card", fromZone: "graveyard", toZone: "hand" }],
+  }], { 3: "When this artifact is put into a graveyard from the battlefield, if it was a creature, return this card to its owner's hand." });
+  const ironworks = card("Krark-Clan Ironworks", ["artifact"], [{
+    id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "an artifact" }, { verb: "add-mana", object: "{C}{C}" }],
+  }], { 1: "Sacrifice an artifact: Add {C}{C}." });
+  expect(pairReasons(ironworks, totem, H).filter((r) => r.tag.startsWith("dies"))).toEqual([]);
+});
+
+// #1250 branch review. "Destroy it at end of combat" (CR 511.2: it triggers as the end of combat step
+// begins; CR 511.3: creatures leave combat only as that step ends) still kills an ATTACKING creature, so
+// Goblin Sappers feeds Kardur. A sacrifice at the beginning of the next end step (Reflection of Kiki-Jiki)
+// is past combat and does not.
+const kardur = card("Kardur, Doomscourge", ["creature"], [{
+  id: 2, abilityType: "triggered",
+  trigger: { event: "dies", subject: "an attacking creature", control: "opponent" },
+  actions: [{ verb: "lose-life", object: "each opponent", amount: "1" }, { verb: "gain-life", object: "you", amount: "1" }],
+}], { 2: "Whenever an attacking creature dies, each opponent loses 1 life and you gain 1 life." });
+
+const goblinSappers = card("Goblin Sappers", ["creature"], [{
+  id: 1, abilityType: "activated",
+  actions: [{ verb: "cant", object: "be blocked this turn" }, { verb: "destroy", object: "target creature you control" }, { verb: "destroy", object: "this creature" }],
+}], { 1: "Target creature you control can't be blocked this turn. Destroy it and this creature at end of combat." });
+goblinSappers.tags = deriveCardTags({
+  oracleId: "Goblin Sappers", name: "Goblin Sappers", clauses: [{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "cant", object: "be blocked this turn" }, { verb: "destroy", object: "target creature you control" }, { verb: "destroy", object: "this creature" }],
+  }], clauseTexts: { 1: "Target creature you control can't be blocked this turn. Destroy it and this creature at end of combat." },
+  clauseCosts: { 1: "{R}{R}, {T}" }, characteristics: chars(["creature"]),
+} as never) as CardTags;
+
+const kikiReflection = card("Reflection of Kiki-Jiki", ["creature"], [], {});
+kikiReflection.tags = deriveCardTags({
+  oracleId: "Reflection", name: "Reflection of Kiki-Jiki", clauses: [{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "create", object: "a token that's a copy of another target nonlegendary creature you control" }, { verb: "sacrifice", object: "it" }],
+  }], clauseTexts: { 1: "Create a token that's a copy of another target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the next end step." },
+  clauseCosts: { 1: "{1}, {T}" }, characteristics: chars(["creature"]),
+} as never) as CardTags;
+
+test("a destroy at end of combat feeds an attacking-creature death payoff; a sacrifice at the next end step does not", () => {
+  expect(tags(goblinSappers, kardur)).toContain("dies:creature");
+  expect(tags(kikiReflection, kardur).filter((t) => t.startsWith("dies"))).toEqual([]);
+});

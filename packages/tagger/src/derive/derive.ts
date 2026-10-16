@@ -474,7 +474,15 @@ import { emblemRecipient } from "../emblem.js";
 // Red Death, Shipwrecker; CR 602.2b), and a colour taken from "a card in your graveyard" is gated on one (Corrupted Grafstone). The gates are `unknown` (unmet everywhere), so rampGrade and the colour audit drop them.
 // 318: #1188 follow-up: a "for each" add keeps its printed fixed floor in `net` ("Add {R}{R}, then add {R} for each ...", Rite of Flame: net 1, not 0); `amount` is unchanged (fixed null, scales set).
 // 319: #1188 whole-branch review: "for each color among permanents you control" on a permanent nets the card's OWN colours (Faeburrow Elder 2, Bloom Tender 1; the card is a permanent you control); a colour taken from "among ... cards in your graveyard" (The Grey Havens) is gated on a card there.
-export const DERIVE_VERSION = 319;
+// 320: #1250 an emit of an action that happens on a delayed trigger ("Sacrifice it at the beginning of the next end step", Reflection of Kiki-Jiki; "return it at the beginning of the next end step") is not `instantSpeed`: no player can aim it at an attacker, so Fable -> Kardur (owner-judged FALSE) no longer forms.
+// 321: #1250 review: the delayed-action guard covers an instant/flash spell's emits too ("Sacrifice it at the beginning of the next end step" on a reanimation instant), not only activated abilities.
+// 322: #1250 task 2 -- a self `dies` trigger with "if it was a creature" (the Enduring cycle, Harold and Bob, Tom Bert and William) is read, not refused: its triggerless recursion read "return it" as ANY graveyard card (Smoke Bomb -> Enduring Curiosity, owner-judged FALSE).
+// 323: #1250 review -- WAS_A_CREATURE is admitted only on a card whose type line includes Creature; Weatherseed Totem (an animated Artifact) keeps its refusal, its intervening if is not vacuous (it formed dies:artifact with Krark-Clan Ironworks and Deadly Dispute).
+// 324: #1250 task 3 -- "from that player's graveyard" in a combat-damage trigger whose damager is yours (or "to an opponent") is an OPPONENT's graveyard, on the recursion subject and its cast/leaves emits (Tinybones, Ink-Eyes, Scion of Darkness, Zareth San, Skullsnatcher, Zombie Cannibal, Wrexial, Whispersteel Dagger, Deluxe Dragster, Shark Shredder, Fire Nation Salvagers); it read `any` and so matched a graveyard filler of your own (Lively Dirge -> Tinybones).
+// 325: #1250 task 3 review -- only the `leaves` emit of that graveyard recursion is an opponent's; the cast and enters emits keep their reading (you cast it, it enters under your control).
+// 326: #1250 task 5 -- "if you didn't cast it from your hand" on an enters trigger is the entry's HOW (`notCast`), no longer dropped silently: Chainer, Nightmare Adept was fed by every creature cast from hand (Braids, owner-judged FALSE); Phage the Untouchable's self trigger carries it too.
+// 327: #1250 branch review -- "at end of combat" is no longer a delayed action: the creature is still attacking (CR 511.2/511.3), so Goblin Sappers' destroy keeps instantSpeed and feeds Kardur's attacking-creature death.
+export const DERIVE_VERSION = 327;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -896,8 +904,36 @@ const ZONE_OWNER: ReadonlyArray<readonly [RegExp, Control]> = [
   [/\bcombat damage to a player\b[^.]*?,\s*exile\b[^.]*?\bfrom their/i, "opp"],
 ];
 
-function zoneOwner(clauseText: string, zone: string | null | undefined): Control | undefined {
+/** "THAT PLAYER'S GRAVEYARD" IN A COMBAT-DAMAGE TRIGGER IS THE DAMAGED PLAYER (#1250, Tinybones): when the
+ *  damager is yours -- the card itself, "this Vehicle", "equipped creature" (CR 301.5b: equip attaches to a creature
+ *  you control), anything "you control" -- the player it hit is an opponent's, and "to an opponent" says so
+ *  outright. "A creature deals combat damage to a player" could hit you, so that stays `any`.
+ *  CEILING: an equipped creature an opponent later gains control of (CR 301.5d: the Equipment's controller is
+ *  separate from the creature's) could damage you, and "that player" would be you; not modelled. */
+function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, cardName?: string): boolean {
+  // SCANNED, NOT MATCHED: `^\s*(?:whenever|when)\s+(.+?)\s+deals?\s+combat damage…` backtracks
+  // polynomially on runs of spaces (CodeQL js/polynomial-redos), so the shape is read with string search.
+  const text = clauseText.trimStart();
+  const lower = text.toLowerCase();
+  const start = lower.startsWith("whenever ") ? 9 : lower.startsWith("when ") ? 5 : -1;
+  if (start < 0) return false;
+  const at = lower.indexOf(" combat damage to ", start);
+  if (at < 0) return false;
+  const target = lower.slice(at + " combat damage to ".length);
+  const toOpponent = /^an opponent\b/.test(target);
+  if (!toOpponent && !/^a player\b/.test(target)) return false;
+  const head = text.slice(start, at).trimEnd();
+  const verbAt = head.toLowerCase().endsWith(" deals") ? head.length - 6 : head.toLowerCase().endsWith(" deal") ? head.length - 5 : -1;
+  if (verbAt < 0) return false;
+  if (toOpponent) return true;
+  const who = head.slice(0, verbAt).trim();
+  return triggerIsSelf || /\byou control\b/i.test(who) || /^(?:this |equipped creature$)/i.test(who)
+    || (cardName !== undefined && (who === cardName || who.toLowerCase() === cardName.split(",")[0]!.toLowerCase()));
+}
+
+function zoneOwner(clauseText: string, zone: string | null | undefined, triggerIsSelf = false, cardName?: string): Control | undefined {
   if (!zone || clauseText === "") return undefined;
+  if (zone === "graveyard" && /\bfrom that player's graveyard\b/i.test(clauseText) && damagedPlayerIsOpponent(clauseText, triggerIsSelf, cardName)) return "opp";
   for (const [re, control] of ZONE_OWNER) {
     // Anchored on the ZONE the action names, so "return it to your hand" cannot be read as a claim
     // about whose graveyard was searched.
@@ -1293,7 +1329,7 @@ function effectSubject(
   if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) {
     subject.zone = action.fromZone;
     // Only when the object text stated no owner of its own -- an explicit one is more specific.
-    const owner = zoneOwner(clauseText, action.fromZone);
+    const owner = zoneOwner(clauseText, action.fromZone, triggerIsSelf, cardName);
     if (owner && subject.control === "any") subject.control = owner;
   }
   // Owner's ruling 2026-08-14 (threshold-lines): a coarse extra-phase conflated units the game
@@ -1476,6 +1512,25 @@ const LEAVES_GRAVEYARD = /\bleaves? (?:your|a|an opponent'?s|their|each player'?
  *  demand that refuses a death. 5 corpus cards. */
 const WITHOUT_DYING = /\bwithout dying\b|\bdidn'?t die\b|\bdoesn'?t die\b/i;
 
+/** AN ACTION THAT HAPPENS ON A DELAYED TRIGGER IS NOT AT INSTANT SPEED (#1250). "Sacrifice it at the
+ *  beginning of the next end step" (Reflection of Kiki-Jiki) is a delayed triggered ability (CR 603.7),
+ *  so no player can aim it at an attacker. Read on the action's OWN sentence, and only when no later
+ *  action in that sentence carries the delay ("exile it, then return it at the next end step" delays
+ *  the return, not the exile). "At end of combat" is NOT a delay past combat: the ability triggers as the
+ *  end of combat step begins (CR 511.2) and creatures leave combat only as that step ends (CR 511.3), so
+ *  "destroy it at end of combat" (Goblin Sappers, Silent Assassin, Winter's Chill) still kills an attacker.
+ *  CEILING: the verb is found by its own word in the sentence. */
+const DELAYED_SENTENCE = /\bat (?:the beginning of (?:the|your) next (?:end step|upkeep|turn)|(?:the )?end of (?:the )?turn)\b/i;
+function delayedAction(text: string, action: { verb?: string }, actions: readonly { verb?: string }[]): boolean {
+  if (!action.verb) return false;
+  const k = actions.slice(0, actions.indexOf(action as never)).filter((x) => x.verb === action.verb).length;
+  // A clause that lists the verb's action twice (Chimeric Coils) prints it once: past the last, use the last.
+  const printed = (text.match(new RegExp(`\\b${action.verb}\\b`, "gi")) ?? []).length;
+  const sentence = nthSentenceWith(text, action.verb, Math.max(0, Math.min(k, printed - 1)));
+  if (!DELAYED_SENTENCE.test(sentence)) return false;
+  const at = sentence.search(new RegExp(`\\b${action.verb}\\b`, "i"));
+  return !actions.some((o) => o !== action && o.verb && o.verb !== action.verb && sentence.search(new RegExp(`\\b${o.verb}\\b`, "i")) > at);
+}
 /** "Activate only as a sorcery" (CR 307.5 timing on an activated ability) and its "only during
  *  your turn" cousin: an activation that cannot happen in combat. */
 const SORCERY_SPEED = /\bactivate (?:this ability )?only as a sorcery\b|\bonly during your turn\b/i;
@@ -1484,10 +1539,13 @@ const SORCERY_SPEED = /\bactivate (?:this ability )?only as a sorcery\b|\bonly d
 const LOYALTY_COST = /^[+\u2212-]?(?:\d+|X)$/;
 
 /** "if none of them were cast", "if it wasn't cast", "no mana was spent to cast", "without being
- *  played" — the entry happened by some route other than casting. Card-scoped like every other
- *  printed cue here. */
+ *  played", "if you didn't cast it from your hand" (Chainer, Nightmare Adept; Phage the Untouchable) — the
+ *  entry happened by some route other than casting. CEILING: the last cue also holds for a cast from
+ *  another zone (a flashback from the graveyard), which `notCast` refuses as a cast; only the hand
+ *  is the implied cast, so the miss is a creature cast from the graveyard entering. Card-scoped like
+ *  every other printed cue here. */
 const ARRIVED_WITHOUT_CASTING =
-  /\b(?:wasn't|weren't) cast\b|\bnone of them were cast\b|\bno mana was spent\b|\bwithout being played\b/i;
+  /\b(?:wasn't|weren't) cast\b|\bnone of them were cast\b|\bno mana was spent\b|\bwithout being played\b|\byou didn't cast (?:it|them) from your hand\b/i;
 
 /** WORDS ABOUT WHEN, NOT WHICH: "your NEXT upkeep", "dies THIS TURN", "this combat". A delayed or
  *  windowed trigger fires on the same class of event, as `oncePerTurn` does; `delayedBy` and
@@ -1506,6 +1564,13 @@ const SOURCE_ZONE = /^(?:~|this \w+|it) is (?:in|on) (?:the command zone|the bat
 /** Guardian Project's "if it doesn't have the same name as another creature you control or a creature
  *  card in your graveyard": `uniqueName` (CR 903.5b; owner, 2026-10-01). */
 const SAME_NAME = /^it doesn't have the same name as /i;
+
+/** The Enduring cycle's "When ~ dies, if it was a creature, return it ... It's an enchantment" (#1250): the card is a creature
+ *  card, so it dies as one and the condition narrows nothing a producer supplies. Admitted ONLY for a self `dies` trigger on a
+ *  card whose printed type line includes Creature; Weatherseed Totem (an Artifact that is a creature only once animated) keeps
+ *  the refusal, its if is not vacuous (CR 603.4). CEILING: reads the printed type line; a creature card that stops being a
+ *  creature before it dies (Enduring Curiosity after it returns as an enchantment) is not modelled. */
+const WAS_A_CREATURE = /^(?:it was|they were) an? creature$/i;
 
 function conditionRepresented(condition: string, text: string): boolean {
   return thresholdFor(text) !== undefined || SAME_NAME.test(condition) || ARRIVED_WITHOUT_CASTING.test(condition) || WITHOUT_DYING.test(condition)
@@ -1642,7 +1707,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
 
 type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter } | { refused: string; subject?: SubjectFilter };
 
-function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[], curse?: boolean): GrammarTrigger[] | null {
+function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean): GrammarTrigger[] | null {
   // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
   const bounded = boundedByEnchantLine(text, enchantText);
   const preamble = printedPreamble(bounded, cardName ?? "");
@@ -1666,10 +1731,10 @@ function grammarTriggersOf(text: string, cardName: string | undefined, storedEve
   const mine = readings.filter((x) => x.event === storedEvent);
   const chosen = !split ? readings : mine.length > 0 ? mine : [readings[0]!];
   if (chosen.some((r) => r.event === "reflexive")) return null;
-  return chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText, curse));
+  return chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText, curse, creatureCard));
 }
 
-function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, cardName: string | undefined, cardText: string, curse?: boolean): GrammarTrigger {
+function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, cardName: string | undefined, cardText: string, curse?: boolean, creatureCard?: boolean): GrammarTrigger {
   // A CURSE'S ENCHANTED PLAYER IS AN OPPONENT (owner 2026-10-07): Maddening Hex's "whenever enchanted
   // player casts a noncreature spell" was refused as a narrowing to one player, so its damage had
   // no trigger. A Curse goes on an opponent in play, so the one player reads as an opponent; on any
@@ -1688,7 +1753,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   if (!verb) return { refused: r.event === "tapped-for-mana" ? "taps-for-mana" : r.event };
   // Entering TRANSFORMED keeps the name the stored path gave it.
   if (verb === "enters" && /\btransformed\b/.test(r.narrowing ?? "")) return { refused: "enters-transformed", subject };
-  if (r.condition && !conditionRepresented(r.condition.text, text)) return { refused: `if:${r.event}`, subject };
+  if (r.condition && !conditionRepresented(r.condition.text, text) && !(verb === "dies" && subject.self === true && creatureCard === true && WAS_A_CREATURE.test(r.condition.text))) return { refused: `if:${r.event}`, subject };
   if (r.narrowing && !narrowingRepresented(r, text)) return { refused: `narrowing:${r.event}`, subject };
   if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
   if (r.condition && SAME_NAME.test(r.condition.text)) subject.uniqueName = true;
@@ -1854,6 +1919,8 @@ export function deriveAbilities(
   readings?: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }>,
   /** The card is a Curse: its enchanted player is an opponent (owner 2026-10-07). */
   curse?: boolean,
+  /** The card's printed type line includes Creature (WAS_A_CREATURE reads only then). */
+  creatureCard?: boolean,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -2049,7 +2116,7 @@ export function deriveAbilities(
     if (partner !== undefined) twinOf.set(clause.id, partner);
     const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
       clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
-      readings?.[clause.id]?.trigger, curse) : null;
+      readings?.[clause.id]?.trigger, curse, creatureCard) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
     if (text && claimed.length > 0) {
       const covered = grammarCovered.get(text) ?? new Map<string, number | string>();
@@ -2366,6 +2433,13 @@ export function deriveAbilities(
       const subject = effectKind
         ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
+      // #1250: the same damaged-player reading reaches the `leaves` emit -- it is THEIR graveyard the card
+      // leaves. Only that emit: YOU cast the card / put it onto the battlefield under your control, so the
+      // cast and enters emits keep their own reading (review).
+      if (action.fromZone === "graveyard" && /\bfrom that player's graveyard\b/i.test(text)
+        && damagedPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
+        for (const e of emits) if (e.verb === "leaves" && e.subject.control === "any" && e.subject.zone === "graveyard") e.subject.control = "opp";
+      }
       // A GRANT TO THE TRIGGERING OBJECT says so (Stonehoof Chieftain: "whenever another creature you
       // control attacks, IT gains trample"), so the matcher can see a keyword that object already
       // has is no gift (owner 2026-10-02: "flying flying gives you nothing additional").
@@ -2619,7 +2693,7 @@ export function deriveAbilities(
       const instantSpeed = kind === "activated"
         ? !SORCERY_SPEED.test(clauseText ?? "") && !LOYALTY_COST.test(cost)
         : kind === "on-cast" && castAtInstantSpeed === true;
-      if (instantSpeed) for (const e of emits) e.instantSpeed = true;
+      if (instantSpeed && !delayedAction(text, action, clause.actions ?? [])) for (const e of emits) e.instantSpeed = true;
       if (emits.length) ability.emits = emits;
       // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate
       // return beside a delayed one stays immediate (Gift of Immortality, Swift Warkite; review). The
@@ -2991,7 +3065,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
   const derived = deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
-    chars.subtypes.some((t) => t.toLowerCase() === "curse"));
+    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"));
   const { unknownTriggers } = derived;
   // AN AURA ON AN OPPONENT'S CREATURE WATCHES THE OPPONENT'S CREATURE (owner 2026-09-23, AN7).
   // Nurgle's Rot prints "Enchant creature an opponent controls / When enchanted creature dies": the

@@ -5,7 +5,7 @@ import { faceDeckCards } from "./faces.js";
 import { fixtureDeckCard } from "./fixture-cards.js";
 import { FREE_TAP, mkLine } from "./mana-test-support.js";
 import type { Reason } from "@edh-seer/engine";
-import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
+import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"] };
@@ -1299,6 +1299,47 @@ test("a self-recursion is only enabled by a fill that could contain the card its
   const artifact = directedReasons(filler("Krark-Clan Ironworks", "Artifact"), colossus, H)
     .filter((r) => r.tag.startsWith("graveyard-recursion"));
   expect(artifact.length).toBeGreaterThan(0);
+});
+
+test("a self-recursion is never enabled by a random mill or a discard; a death, a tutor and a surveil still enable it", () => {
+  // Owner-judged FALSE 2026-10-16: Tomb Fortress, Tablet of Discovery and The Warring Triad (mill) and
+  // Prismari Command (discard) "enabled" a card returning ITSELF from the graveyard. A mill is random
+  // and a discard is chosen from hand: neither is how a creature that returns itself is meant to get
+  // there. Every REAL verdict on a self-recursion (Ayara -> Death Tyrant, Cultist of the Absolute ->
+  // Bloodsoaked Champion) is a death from the battlefield.
+  const returnsItself = (name: string): DeckCard => ({
+    card: { name, typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 2, colorIdentity: [], power: "1", toughness: "1" },
+    tags: {
+      oracleId: name, schemaVersion: 1, promptVersion: 0, model: "derived",
+      characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 2, power: "1", toughness: "1", token: false, keywords: [] },
+      abilities: [{
+        kind: "activated",
+        effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, self: true, zone: "graveyard" } },
+      }],
+    },
+  });
+  const producer = (name: string, emits: GameEvent[]): DeckCard => ({
+    card: { name, typeLine: "Artifact", oracleText: "", keywords: [], colors: [], manaValue: 2, colorIdentity: [], power: null, toughness: null },
+    tags: {
+      oracleId: name, schemaVersion: 1, promptVersion: 0, model: "derived",
+      characteristics: { types: ["artifact"], subtypes: [], colors: [], identity: [], cmc: 2, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{ kind: "activated", effect: { kind: "" }, emits }],
+    },
+  });
+  const skeleton = returnsItself("Reassembling Skeleton");
+  const recursion = (p: DeckCard) => directedReasons(p, skeleton, H).filter((r) => r.tag.startsWith("graveyard-recursion"));
+  const you = { control: "you" as const, token: null };
+
+  expect(recursion(producer("Tablet of Discovery", [{ verb: "mill", subject: you }]))).toEqual([]);
+  expect(recursion(producer("Prismari Command", [{ verb: "discard", subject: you }]))).toEqual([]);
+  // CHOSEN fills still join (owner ruling 2026-10-16): a surveil, and a tutor putting a card into the graveyard.
+  expect(recursion(producer("Consider", [{ verb: "surveil", subject: you }])).length).toBeGreaterThan(0);
+  expect(recursion(producer("Entomb", [{ verb: "enters-graveyard", subject: { ...you, fromZone: "library" } }])).length).toBeGreaterThan(0);
+  // An authored put from the hand is a discard.
+  expect(recursion(producer("Putrefy Hand", [{ verb: "enters-graveyard", subject: { ...you, fromZone: "hand" } }]))).toEqual([]);
+
+  // A creature dying (sacrifice outlet, removal) still joins.
+  expect(recursion(producer("Phyrexian Altar", [{ verb: "dies", subject: { ...you, type: "creature" } }])).length).toBeGreaterThan(0);
 });
 
 /** THE RANI AND SAREVOK'S TOME, reported off the board. A self-ETB consumer whose subject names no
@@ -4752,8 +4793,67 @@ describe("fodder", () => {
 
   test("an artifact outlet eats an artifact token and a CHEAP artifact card, never a creature", () => {
     expect(pairReasons(construct, engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
-    expect(pairReasons(artifact("Aether Spellbomb", []), engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
+    expect(pairReasons(artifact("Ornithopter", []), engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
     expect(pairReasons(base("Grizzly Bears", []), engineer, H).map((r) => r.tag)).not.toContain("fodder:artifact");
+  });
+  // OWNER VERDICT 2026-10-16 (Aether Spellbomb -> Sai, FALSE: "you can just pay 1, sacrifice Spellbomb
+  // to its own ability and have the same effect"), narrowed the same day: only when the OUTLET pays
+  // the same kind of thing as the card's own sacrifice ability. Persist/undying (#509), tokens and a
+  // GRANTED self-sacrifice (Compulsory Rest) stay fodder.
+  describe("a real card with its own sacrifice-this ability", () => {
+    const own = (kind: string) => [{
+      kind: "activated" as const, cost: "{1}, Sacrifice this artifact", effect: { kind },
+      payment: { mana: "{1}", sacrifice: [{ amount: "1", subject: { self: true } }] },
+    }] as unknown as CardTags["abilities"];
+    // Derive's shape: the sacrifice ability (effect kind "") and the payoff ability share one cost.
+    const outlet = (name: string, kind: string) => base(name, [{
+      kind: "activated", cost: "{1}{U}, Sacrifice two artifacts", effect: { kind: "" },
+      emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "artifact" } }],
+    }, { kind: "activated", cost: "{1}{U}, Sacrifice two artifacts", effect: { kind } }]);
+    const sai = outlet("Sai, Master Thopterist", "draw-card");
+    const ravager = outlet("Arcbound Ravager", "counters-plus1");
+    test("is not fodder for an outlet with the same payoff, and is for a different one", () => {
+      const bomb = artifact("Aether Spellbomb", own("draw-card"));
+      expect(pairReasons(bomb, sai, H).map((r) => r.tag)).not.toContain("fodder:artifact");
+      expect(pairReasons(bomb, ravager, H).map((r) => r.tag)).toContain("fodder:artifact");
+    });
+    test("owner 2026-10-16: a Food, or a card with its own death trigger, stays fodder; a damage Spellbomb and a search Bauble do not", () => {
+      const anvil = outlet("Oni-Cult Anvil", "lifegain");
+      const food = artifact("Instant Ramen", own("lifegain"));
+      food.tags!.characteristics.subtypes = ["food"];
+      expect(pairReasons(food, anvil, H).map((r) => r.tag)).toContain("fodder:artifact");
+      const block = artifact("Nutrient Block", own("lifegain"));
+      block.tags!.abilities = [...block.tags!.abilities, {
+        kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, type: "artifact", self: true } }, effect: { kind: "draw-card" },
+      } as never];
+      expect(pairReasons(block, anvil, H).map((r) => r.tag)).toContain("fodder:artifact");
+      const plain = artifact("Mind Stone", own("lifegain"));
+      expect(pairReasons(plain, anvil, H).map((r) => r.tag)).not.toContain("fodder:artifact");
+      const pyrite = artifact("Pyrite Spellbomb", own("damage"));
+      expect(pairReasons(pyrite, outlet("Oni-Cult Anvil", "damage"), H).map((r) => r.tag)).not.toContain("fodder:artifact");
+      const bauble = artifact("Wayfarer's Bauble", own("search"));
+      expect(pairReasons(bauble, outlet("Search Outlet", "search"), H).map((r) => r.tag)).not.toContain("fodder:artifact");
+    });
+    test("a token that has one still is fodder", () => {
+      const treasure = tokenNode("Treasure", ["artifact"], ["treasure"]);
+      treasure.tags!.abilities = own("draw-card");
+      expect(pairReasons(treasure, sai, H).map((r) => r.tag)).toContain("fodder:artifact");
+    });
+    test("a persist creature with one is still fodder for a creature outlet", () => {
+      const out = outlet("Sac Outlet", "draw-card");
+      (out.tags!.abilities[0]!.emits![0]!.subject as { type: string }).type = "creature";
+      const archmage = base("Glen Elendra Archmage", own("draw-card"));
+      archmage.tags!.characteristics.keywords = ["Persist"];
+      expect(pairReasons(archmage, out, H).map((r) => r.tag)).toContain("fodder:creature");
+    });
+    test("a granted self-sacrifice (an Aura host) does not count", () => {
+      const out = outlet("Enchantment Outlet", "lifegain");
+      (out.tags!.abilities[0]!.emits![0]!.subject as { type: string }).type = "enchantment";
+      const rest = base("Compulsory Rest", own("lifegain"), ["aura"]);
+      rest.tags!.characteristics.types = ["enchantment"];
+      rest.card.manaValue = 1;
+      expect(pairReasons(rest, out, H).map((r) => r.tag)).toContain("fodder:enchantment");
+    });
   });
   // OWNER RULING 2026-09-09: fodder is a token or something cheap and expendable, never a card with an
   // effect you keep around (Surgehacker Mech -> Threefold Thunderhulk, Midnight Crusader Shuttle ->

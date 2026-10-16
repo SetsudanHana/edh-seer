@@ -98,6 +98,9 @@ const TESTED: Record<string, string> = {
   "602.5": "threshold.test.ts — 'activate only if' gates the whole ability, the one later sentence that is not a rider",
   "611.3a": "threshold.test.ts / derive.test.ts — a static's 'as long as' count is a threshold on the ability",
   "702.5a": "characteristics.test.ts — an Aura's Enchant line is carried as `characteristics.enchants`",
+  "301.5b": "damaged-player-graveyard.test.ts (matcher) — equip attaches to a creature you control, so the player it damages is an opponent (#1250)",
+  "511.2": "matcher leaves-without-dying.test.ts — an 'at end of combat' destroy triggers as the step begins, so it still kills an attacker (Goblin Sappers -> Kardur)",
+  "511.3": "matcher leaves-without-dying.test.ts — creatures leave combat only as the end of combat step ends",
   "301.5c": "repeats.test.ts — an Equipment outlives its host, so equipped-dies repeats once a round (Skullclamp)",
   "704.5m": "matcher edges.test.ts — a producer removing what an Aura enchants supplies the Aura's own dies trigger",
   "120.1": "derive.test.ts — the receiving side of damage is its own verb `damaged`, never the dealing one",
@@ -106,6 +109,7 @@ const TESTED: Record<string, string> = {
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
 const PROSE: Record<string, string> = {
+  "301.5d": "CEILING note on damagedPlayerIsOpponent: an Equipment's controller is separate from the equipped creature's; not modelled",
   "100.2a": "schema: the CR's own numbering for a rules reference", "104.2": "verb-accounting: win-game NOT AN EVENT",
   "106.4": "normalize-prompt / verb-accounting: mana-spent, add-mana",
   "107.14": "normalize-prompt ENERGY rule: {E} is a counter", "120": "derive: damage direction split by text",
