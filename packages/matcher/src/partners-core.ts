@@ -10,7 +10,7 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
-import { POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, losesYouTheGame, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { keywordAbilities } from "./implied.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
@@ -1101,7 +1101,8 @@ export const abilitiesOf = perCard((d: DeckCard): CardTags["abilities"] =>
  *  `Ability.triggerRefused`). Every key, candidate and ranking below reads this one; only the page's
  *  ability rows read the full list, because they SHOW what the card prints. */
 export const claimingAbilitiesOf = perCard((d: DeckCard): CardTags["abilities"] =>
-  abilitiesOf(d).filter((a) => a.triggerRefused !== true));
+  // A self "you lose the game" trigger claims nothing either (owner 2026-10-16, #1252): see `losesYouTheGame`.
+  abilitiesOf(d).filter((a) => a.triggerRefused !== true && !losesYouTheGame(a)));
 export const emitKeysOf = perCard((d: DeckCard): string[] =>
   claimingAbilitiesOf(d).flatMap((a) => (a.emits ?? []).flatMap((e) => splitKey(eventKey(e)))));
 /** WHAT A CARD SUPPLIES BY BEING PLAYED (owner, 2026-10-03, #1014: "the implied events have to stop

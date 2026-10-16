@@ -1771,13 +1771,24 @@ function ownBoardKill(a: Ability): number | undefined {
  *  every edge where it was. */
 // play-from-top and extra-loyalty are read raw by `playFromTopEdges` and `extraLoyaltyEdges`.
 const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top", "extra-loyalty"]);
+/** A SELF "YOU LOSE THE GAME" TRIGGER IS NEVER A PAYOFF (owner ruling 2026-10-16, #1252). A triggered
+ *  ability whose ONLY effect is that its controller loses the game (Phage the Untouchable's "When Phage
+ *  enters, if you didn't cast it from your hand, you lose the game", the Pacts' upkeep payment, Lich's
+ *  Mastery's leaves trigger) is a drawback nobody builds toward: no `enters`, `cheat`, `doubles` or
+ *  `copies` edge reaches it. Not an anti-synergy warning, no new edge kind. The card's other abilities
+ *  keep theirs. `withLiveKills` blanks it for every channel; `abilityIsKind` and `cheatEdges` read this
+ *  one predicate on the unblanked tags. */
+export function losesYouTheGame(a: Ability): boolean {
+  const emits = a.emits ?? [];
+  return a.kind === "triggered" && emits.length > 0 && emits.every((e) => e.verb === "loses-game" && e.subject.control === "you");
+}
 const forPairs = new WeakMap<CardTags, Map<number | undefined, CardTags>>();
 function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
   const tags = dc.tags;
   if (!tags) return dc;
   const floor = opts.revenantToughness;
   const dead = (a: Ability) => { const n = ownBoardKill(a); return n !== undefined && !(floor !== undefined && n >= floor); };
-  if (!tags.abilities.some((a) => dead(a) || FACT_KINDS.has(a.effect.kind) || a.triggerRefused === true)) return dc;
+  if (!tags.abilities.some((a) => dead(a) || FACT_KINDS.has(a.effect.kind) || a.triggerRefused === true || losesYouTheGame(a))) return dc;
   const byFloor = forPairs.get(tags) ?? forPairs.set(tags, new Map()).get(tags)!;
   let out = byFloor.get(floor);
   if (!out) {
@@ -1786,6 +1797,8 @@ function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
       // other readers hold are positions) and reads as the blank effect a fact kind does, with no emits
       // and no trigger. Its kind survives in `tags`, which the role/theme/count readers see, not this copy.
       if (a.triggerRefused === true) { const { emits: _emits, ...rest } = a; return { ...rest, effect: { kind: "" as const } }; }
+      // A SELF "YOU LOSE THE GAME" TRIGGER IS NEVER A PAYOFF: it reads as a blank static, no trigger, no emits.
+      if (losesYouTheGame(a)) { const { emits: _emits, trigger: _trigger, ...rest } = a; return { ...rest, kind: "static" as const, effect: { kind: "" as const } }; }
       const b = FACT_KINDS.has(a.effect.kind) ? { ...a, effect: { kind: "" as const } } : a;
       return dead(b) ? { ...b, emits: (b.emits ?? []).filter((e) => e.verb !== "dies") } : b;
     }) };
@@ -1940,7 +1953,8 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
   if (!p.tags || !c.tags) return [];
   if (silencedBy(p, c, h)) return [];
   // Both sides carry tags from here on, which is what `TaggedCard` records for the channels.
-  const s: PairScope = { p: p as TaggedCard, c: c as TaggedCard, h, opts, pEvents: producerEvents(p.tags), reasons: [] };
+  const cLosesOnEnter = (c0.tags?.abilities ?? []).some((a) => losesYouTheGame(a) && a.trigger?.subject?.self === true && a.trigger.verbs.includes("enters"));
+  const s: PairScope = { p: p as TaggedCard, c: c as TaggedCard, h, opts, pEvents: producerEvents(p.tags), reasons: [], cLosesOnEnter };
   // THE ORDER IS PART OF THE OUTPUT. Each channel appends to one list, and `dedupeReasons` keeps the
   // first of two identical claims, so reordering these calls can change which one survives.
   eventEdges(s);
@@ -2013,6 +2027,8 @@ interface PairScope {
   reasons: Reason[];
   /** The event pass run with the sides SWAPPED, over the consumer's CR 614 replacements only. */
   replacementOnly?: boolean;
+  /** The consumer's own enters trigger loses its controller the game: nobody puts it into play except by casting. */
+  cLosesOnEnter?: boolean;
 }
 
 // EVENT EDGES: a producer event against a consumer trigger. The main channel; every other
@@ -3314,7 +3330,8 @@ function cheatBonusType(oracle: string | undefined): string | undefined {
 // A POLYMORPH CHEATS FROM THE LIBRARY (owner ruling 2026-10-02, #964): "with polymorph you want to cheat
 // out big things into play". The card it reveals is random, so it links only to the deck's big
 // creatures -- mana value 6 or more, the owner's line -- which are what it is played to hit.
-function cheatEdges({ p, c, h, reasons }: PairScope): void {
+function cheatEdges({ p, c, h, reasons, cLosesOnEnter }: PairScope): void {
+  if (cLosesOnEnter === true) return; // a self lose-the-game enters trigger (owner 2026-10-16, #1252): see `losesYouTheGame`
   if (p === c || c.isToken || c.tags.characteristics.token === true || !c.tags.characteristics.types.includes("creature")) return;
   const fromLibrary = c.card.manaValue >= POLYMORPH_HIT_MV && isPolymorph(p);
   for (const a of p.tags.abilities) {
@@ -4028,7 +4045,7 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
 export function abilityIsKind(ca: CardTags["abilities"][number], kind: string): boolean {
   const loyalty = ca.kind === "activated" && /^[+\u2212-]?(?:\d+|X)$/.test((ca.cost ?? "").trim());
   const mana = ca.kind === "activated" && ca.effect?.kind === "mana-generation";
-  if (kind === "triggered") return ca.kind === "triggered";
+  if (kind === "triggered") return ca.kind === "triggered" && !losesYouTheGame(ca);
   if (kind === "loyalty") return loyalty;
   if (kind === "mana") return mana;
   if (kind === "activated") return ca.kind === "activated" && !mana;
