@@ -185,3 +185,39 @@ test("an artifact sacrifice outlet does not feed Weatherseed Totem's 'if it was 
   }], { 1: "Sacrifice an artifact: Add {C}{C}." });
   expect(pairReasons(ironworks, totem, H).filter((r) => r.tag.startsWith("dies"))).toEqual([]);
 });
+
+// #1250 branch review. "Destroy it at end of combat" (CR 511.2: it triggers as the end of combat step
+// begins; CR 511.3: creatures leave combat only as that step ends) still kills an ATTACKING creature, so
+// Goblin Sappers feeds Kardur. A sacrifice at the beginning of the next end step (Reflection of Kiki-Jiki)
+// is past combat and does not.
+const kardur = card("Kardur, Doomscourge", ["creature"], [{
+  id: 2, abilityType: "triggered",
+  trigger: { event: "dies", subject: "an attacking creature", control: "opponent" },
+  actions: [{ verb: "lose-life", object: "each opponent", amount: "1" }, { verb: "gain-life", object: "you", amount: "1" }],
+}], { 2: "Whenever an attacking creature dies, each opponent loses 1 life and you gain 1 life." });
+
+const goblinSappers = card("Goblin Sappers", ["creature"], [{
+  id: 1, abilityType: "activated",
+  actions: [{ verb: "cant", object: "be blocked this turn" }, { verb: "destroy", object: "target creature you control" }, { verb: "destroy", object: "this creature" }],
+}], { 1: "Target creature you control can't be blocked this turn. Destroy it and this creature at end of combat." });
+goblinSappers.tags = deriveCardTags({
+  oracleId: "Goblin Sappers", name: "Goblin Sappers", clauses: [{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "cant", object: "be blocked this turn" }, { verb: "destroy", object: "target creature you control" }, { verb: "destroy", object: "this creature" }],
+  }], clauseTexts: { 1: "Target creature you control can't be blocked this turn. Destroy it and this creature at end of combat." },
+  clauseCosts: { 1: "{R}{R}, {T}" }, characteristics: chars(["creature"]),
+} as never) as CardTags;
+
+const kikiReflection = card("Reflection of Kiki-Jiki", ["creature"], [], {});
+kikiReflection.tags = deriveCardTags({
+  oracleId: "Reflection", name: "Reflection of Kiki-Jiki", clauses: [{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "create", object: "a token that's a copy of another target nonlegendary creature you control" }, { verb: "sacrifice", object: "it" }],
+  }], clauseTexts: { 1: "Create a token that's a copy of another target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the next end step." },
+  clauseCosts: { 1: "{1}, {T}" }, characteristics: chars(["creature"]),
+} as never) as CardTags;
+
+test("a destroy at end of combat feeds an attacking-creature death payoff; a sacrifice at the next end step does not", () => {
+  expect(tags(goblinSappers, kardur)).toContain("dies:creature");
+  expect(tags(kikiReflection, kardur).filter((t) => t.startsWith("dies"))).toEqual([]);
+});

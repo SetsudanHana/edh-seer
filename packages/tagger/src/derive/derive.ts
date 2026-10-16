@@ -481,7 +481,8 @@ import { emblemRecipient } from "../emblem.js";
 // 324: #1250 task 3 -- "from that player's graveyard" in a combat-damage trigger whose damager is yours (or "to an opponent") is an OPPONENT's graveyard, on the recursion subject and its cast/leaves emits (Tinybones, Ink-Eyes, Scion of Darkness, Zareth San, Skullsnatcher, Zombie Cannibal, Wrexial, Whispersteel Dagger, Deluxe Dragster, Shark Shredder, Fire Nation Salvagers); it read `any` and so matched a graveyard filler of your own (Lively Dirge -> Tinybones).
 // 325: #1250 task 3 review -- only the `leaves` emit of that graveyard recursion is an opponent's; the cast and enters emits keep their reading (you cast it, it enters under your control).
 // 326: #1250 task 5 -- "if you didn't cast it from your hand" on an enters trigger is the entry's HOW (`notCast`), no longer dropped silently: Chainer, Nightmare Adept was fed by every creature cast from hand (Braids, owner-judged FALSE); Phage the Untouchable's self trigger carries it too.
-export const DERIVE_VERSION = 326;
+// 327: #1250 branch review -- "at end of combat" is no longer a delayed action: the creature is still attacking (CR 511.2/511.3), so Goblin Sappers' destroy keeps instantSpeed and feeds Kardur's attacking-creature death.
+export const DERIVE_VERSION = 327;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1503,8 +1504,11 @@ const WITHOUT_DYING = /\bwithout dying\b|\bdidn'?t die\b|\bdoesn'?t die\b/i;
  *  beginning of the next end step" (Reflection of Kiki-Jiki) is a delayed triggered ability (CR 603.7),
  *  so no player can aim it at an attacker. Read on the action's OWN sentence, and only when no later
  *  action in that sentence carries the delay ("exile it, then return it at the next end step" delays
- *  the return, not the exile). CEILING: the verb is found by its own word in the sentence. */
-const DELAYED_SENTENCE = /\bat (?:the beginning of (?:the|your) next (?:end step|upkeep|turn)|(?:the )?end of (?:the )?(?:turn|combat))\b/i;
+ *  the return, not the exile). "At end of combat" is NOT a delay past combat: the ability triggers as the
+ *  end of combat step begins (CR 511.2) and creatures leave combat only as that step ends (CR 511.3), so
+ *  "destroy it at end of combat" (Goblin Sappers, Silent Assassin, Winter's Chill) still kills an attacker.
+ *  CEILING: the verb is found by its own word in the sentence. */
+const DELAYED_SENTENCE = /\bat (?:the beginning of (?:the|your) next (?:end step|upkeep|turn)|(?:the )?end of (?:the )?turn)\b/i;
 function delayedAction(text: string, action: { verb?: string }, actions: readonly { verb?: string }[]): boolean {
   if (!action.verb) return false;
   const k = actions.slice(0, actions.indexOf(action as never)).filter((x) => x.verb === action.verb).length;

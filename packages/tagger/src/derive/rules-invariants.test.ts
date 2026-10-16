@@ -99,6 +99,8 @@ const TESTED: Record<string, string> = {
   "611.3a": "threshold.test.ts / derive.test.ts — a static's 'as long as' count is a threshold on the ability",
   "702.5a": "characteristics.test.ts — an Aura's Enchant line is carried as `characteristics.enchants`",
   "301.5b": "damaged-player-graveyard.test.ts (matcher) — equip attaches to a creature you control, so the player it damages is an opponent (#1250)",
+  "511.2": "matcher leaves-without-dying.test.ts — an 'at end of combat' destroy triggers as the step begins, so it still kills an attacker (Goblin Sappers -> Kardur)",
+  "511.3": "matcher leaves-without-dying.test.ts — creatures leave combat only as the end of combat step ends",
   "301.5c": "repeats.test.ts — an Equipment outlives its host, so equipped-dies repeats once a round (Skullclamp)",
   "704.5m": "matcher edges.test.ts — a producer removing what an Aura enchants supplies the Aura's own dies trigger",
   "120.1": "derive.test.ts — the receiving side of damage is its own verb `damaged`, never the dealing one",

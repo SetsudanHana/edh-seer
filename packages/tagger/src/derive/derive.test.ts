@@ -2454,6 +2454,19 @@ test("the delayed-action guard: an instant's delayed sacrifice, a delayed return
   }
 });
 
+// "AT END OF COMBAT" IS NOT A DELAY PAST COMBAT (#1250 branch review). CR 511.2: the ability triggers as
+// the end of combat step begins; CR 511.3: creatures leave combat only as that step ends. So Goblin Sappers'
+// "Destroy it at end of combat" still kills an ATTACKING creature and keeps its instant-speed stamp.
+test("an emit from a 'destroy it at end of combat' keeps instantSpeed (the creature is still attacking)", () => {
+  const abs = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "cant", object: "be blocked this turn" }, { verb: "destroy", object: "target creature you control" }, { verb: "destroy", object: "this creature" }] }],
+    "Goblin Sappers", { 1: "Target creature you control can't be blocked this turn. Destroy it and this creature at end of combat." }, { 1: "{R}{R}, {T}" },
+  ).abilities;
+  const kills = abs.filter((a) => a.emits?.some((e) => e.verb === "dies"));
+  expect(kills.length).toBeGreaterThan(0);
+  expect(kills.some((a) => a.emits?.some((e) => e.instantSpeed === true))).toBe(true);
+});
+
 // THE EERIE HALF, AND THE CHANNEL THAT WAS SUPPOSED TO CATCH ITS ABSENCE. "Whenever you fully unlock
 // a Room" was recorded by the clause layer as `unlocked` and derived to nothing, and
 // `unknownTriggers` -- the field that exists so a dropped trigger is visible -- was computed and then
