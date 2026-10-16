@@ -482,10 +482,18 @@ import { emblemRecipient } from "../emblem.js";
 // 325: #1250 task 3 review -- only the `leaves` emit of that graveyard recursion is an opponent's; the cast and enters emits keep their reading (you cast it, it enters under your control).
 // 326: #1250 task 5 -- "if you didn't cast it from your hand" on an enters trigger is the entry's HOW (`notCast`), no longer dropped silently: Chainer, Nightmare Adept was fed by every creature cast from hand (Braids, owner-judged FALSE); Phage the Untouchable's self trigger carries it too.
 // 327: #1250 branch review -- "at end of combat" is no longer a delayed action: the creature is still attacking (CR 511.2/511.3), so Goblin Sappers' destroy keeps instantSpeed and feeds Kardur's attacking-creature death.
-export const DERIVE_VERSION = 327;
+// 329: #1253 owner ruling -- triggerRefused only when the refused trigger's object is class-less or the refusal is an `if:` (a timing/count refusal keeps the exact class and the claim); the damager of a refused "deals damage to you" is an opponent's.
+// 328: #1253 an ability of a REFUSED trigger that points back at the trigger object (`ref: "trigger"` in its emits or effect, no `trigger`) is `triggerRefused`: it keeps its kind and the matcher claims nothing from it ("return it" was any card); where the refused trigger is about THIS card ("this creature blocks"), "it" is the card itself (`self`) and nothing is withdrawn.
+// 330: #1253 the stored trigger subject of "a spell or ability an opponent controls causes X to ..." is X, not the cause plus half the event: Sacred Ground's land is YOURS (its return read `control: opp`).
+// 331: #1253 review -- a refused trigger's class is copied onto a keyword grant's ref'd subject ("it gains X" over "a creature you control attacks alone" is a creature you control); an `if:` flags only when it tests the object; "them" after a cast/draw/discard trigger is the player, and "put it" under "if this card is exiled" is the card (Scytheclaw Raptor, Adrenaline Jockey, Senu); a recursion of the trigger's own object takes its class (Sacred Ground); "in your graveyard" is yours (Victimize); an inherited "It gains" bullet reads the header's object.
+// 332: #1253 final review -- a grant's class is copied only when the trigger subject precedes the event (Hedron Blade's blockers are not "it"); "in your graveyard" is read off the action's object first (Neyam Shai Murad's "their graveyard" is not yours); Sacred Ground's recursion is of a card put into the graveyard FROM THE BATTLEFIELD; Senu's flicker effect is self.
+export const DERIVE_VERSION = 332;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
+/** The same, for a MODE BULLET that inherited a trigger (#1253): its text is the bare "It gains indestructible
+ *  until end of turn.", the trigger sits on the header. */
+const GRANT_BULLET_TO_TRIGGER = /^(?:until end of turn,\s*)?(?:it|they)\s+(?:each\s+)?gains?\b/i;
 const GRANT_TO_TRIGGER = /\b(?:whenever|when)\b[^.]*?,\s*(?:until end of turn,\s*)?(?:it|they)\s+(?:each\s+)?gains?\b/i;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
@@ -651,6 +659,52 @@ const CLAUSE_TO_ABILITY_KIND: Record<string, AbilityKind> = {
   static: "static",
   "on-cast": "on-cast",
 };
+
+/** Does the ability's effect or any emit carry `ref: "trigger"` -- the object a trigger's event was
+ *  about? Only a trigger can define it, so on an ability with no trigger it points at nothing. */
+function namesTriggerObject(a: Ability): boolean {
+  const has = (o: unknown): boolean => o !== null && typeof o === "object"
+    && ((o as { ref?: unknown }).ref === "trigger" || Object.values(o as object).some(has));
+  return has(a.effect) || has(a.emits);
+}
+
+/** Does some `ref: "trigger"` subject of the ability name NO class -- nothing beyond who controls it,
+ *  whether it is a token, a count scope and its zone? "it gains deathtouch" over a refused "attacks
+ *  alone" is `{control: any}`: every permanent. A subject that keeps a type, subtype, keyword, counter
+ *  or the like has an exact class, and a refusal that only read timing or a count ("second spell each
+ *  turn", "deals damage to you") leaves that class intact (owner ruling, #1253). */
+const CLASSLESS_KEYS: ReadonlySet<string> = new Set(["ref", "control", "token", "scope", "zone", "fromZone"]);
+function triggerObjectClassless(a: Ability): boolean {
+  const found: object[] = [];
+  const walk = (o: unknown): void => {
+    if (o === null || typeof o !== "object") return;
+    if ((o as { ref?: unknown }).ref === "trigger") found.push(o);
+    for (const v of Object.values(o as object)) walk(v);
+  };
+  walk(a.effect); walk(a.emits);
+  return found.some((o) => Object.keys(o).every((k) => CLASSLESS_KEYS.has(k)));
+}
+
+/** Is the trigger subject the thing the event happens TO, standing before the event verb in the printed
+ *  sentence? Hedron Blade's stored subject is "one or more colorless creatures" -- the BLOCKERS, after
+ *  "becomes blocked by" -- while its "it" is the equipped creature, so the subject's class must not be copied
+ *  onto the grant (#1253). A subject that does not appear in the text at all is not trusted either. */
+function triggerSubjectPrecedesEvent(text: string, subject: string): boolean {
+  const lower = text.toLowerCase(), at = lower.indexOf(subject.trim().toLowerCase());
+  if (at < 0) return false;
+  const by = lower.search(/\b(?:blocked by|blocks)\b/);
+  return by < 0 || at < by;
+}
+
+/** AN `if:` THAT TESTS THE TRIGGER'S OBJECT, not the turn or a count: "if it was enchanted or equipped" (Koll),
+ *  "if it was cast" (Mirror of Life Trapping), "if it was attacking or blocking alone" (Thijarian Witness),
+ *  "if it's exiled" (Alaundo). A predicate outside this list ("if it's not their turn", "if it's the first
+ *  time that creature has become tapped this turn") is a timing or a count and keeps the class. */
+const TESTS_THE_OBJECT = /\bif (?:it|that (?:creature|card|permanent|land)|those cards|they)(?:['\u2019]s| (?:was|is|were|are|had|has))(?: not| n['\u2019]t)? (?:an? |the )?(?:enchanted|equipped|cast|attacking|blocking|tapped|untapped|exiled|legendary|nontoken|token|face[- ]down|modified|historic|multicolored|colorless|creature|artifact|land|permanent)\b/i;
+
+/** "Whenever a creature deals damage to YOU, destroy it": the damager is an opponent's (owner ruling,
+ *  #1253). CEILING: your own creature can deal you damage (a Fireblast-style self-hit). */
+const DEALS_DAMAGE_TO_YOU = /\bdeals (?:combat |noncombat )?damage to you\b/i;
 
 function abilityKind(clause: ClauseRecord): AbilityKind {
   return CLAUSE_TO_ABILITY_KIND[clause.abilityType ?? ""] ?? "static";
@@ -931,7 +985,10 @@ function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, car
     || (cardName !== undefined && (who === cardName || who.toLowerCase() === cardName.split(",")[0]!.toLowerCase()));
 }
 
-function zoneOwner(clauseText: string, zone: string | null | undefined, triggerIsSelf = false, cardName?: string): Control | undefined {
+/** An object that names whose zone it is in: "from their graveyard", "from that player's graveyard". */
+const OBJECT_NAMES_AN_OWNER = /\b(?:from|in) (?:your|their|that player's|target (?:player|opponent)'s|an opponent's|each opponent's|its owner's)\b/i;
+
+function zoneOwner(clauseText: string, zone: string | null | undefined, triggerIsSelf = false, cardName?: string, objectText?: string): Control | undefined {
   if (!zone || clauseText === "") return undefined;
   if (zone === "graveyard" && /\bfrom that player's graveyard\b/i.test(clauseText) && damagedPlayerIsOpponent(clauseText, triggerIsSelf, cardName)) return "opp";
   for (const [re, control] of ZONE_OWNER) {
@@ -940,6 +997,12 @@ function zoneOwner(clauseText: string, zone: string | null | undefined, triggerI
     const m = clauseText.match(new RegExp(`${re.source}\\s+${zone}`, "i"));
     if (m) return control;
   }
+  // "Choose two target creature cards IN your graveyard" (Victimize, #1253): the same owner, said with "in".
+  // Read off the ACTION'S OBJECT first (Daretti, Wake to Slaughter carry it there); the clause only when the
+  // object names no owner of its own ("the chosen cards"), so Neyam Shai Murad's "that player returns a card
+  // from THEIR graveyard" does not borrow the "in your graveyard" of its second action.
+  const inYour = new RegExp(`\\bin your\\s+${zone}`, "i");
+  if (objectText !== undefined && (inYour.test(objectText) || (!OBJECT_NAMES_AN_OWNER.test(objectText) && inYour.test(clauseText)))) return "you";
   return undefined;
 }
 
@@ -1329,7 +1392,7 @@ function effectSubject(
   if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) {
     subject.zone = action.fromZone;
     // Only when the object text stated no owner of its own -- an explicit one is more specific.
-    const owner = zoneOwner(clauseText, action.fromZone, triggerIsSelf, cardName);
+    const owner = zoneOwner(clauseText, action.fromZone, triggerIsSelf, cardName, object);
     if (owner && subject.control === "any") subject.control = owner;
   }
   // Owner's ruling 2026-08-14 (threshold-lines): a coarse extra-phase conflated units the game
@@ -1945,6 +2008,7 @@ export function deriveAbilities(
   /** Re-homed records dropped-if-redundant: clause id -> the id of the record that already read their event off the same sentence. */
   const twinOf = new Map<number | string, number | string>();
   for (let clause of clauses) {
+    const refusedBefore = unknownTriggers.length;
     // "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860): see `exiledAcrossClauses`.
     ({ clause, lastExiled } = exiledAcrossClauses(clause, lastExiled, cardName));
     // The whole clause goes, not just its trigger. What is quoted on a created token is a complete
@@ -2316,7 +2380,16 @@ export function deriveAbilities(
       if (INERT_VERBS.has(action.verb ?? "")) continue;
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
       // See antecedentFor: a pronoun object inherits the thing named earlier in the same clause.
-      const antecedent = PRONOUN_OBJECT.test((action.object ?? "").trim())
+      // "Whenever a player casts a spell, if it's not their turn, this creature deals 4 damage to THEM"
+      // (Scytheclaw Raptor, Adrenaline Jockey): the pronoun is the player who acted, not the spell the
+      // trigger subject names (#1253). "if THIS CARD is exiled, put IT onto the battlefield" (Senu) is
+      // the card itself, not the attacker the trigger watches.
+      const actorPronoun = !trigger && /^(?:them|him|her)$/i.test((action.object ?? "").trim())
+        && /^(?:cast|play|draw|discard|activate)$/.test(clause.trigger?.event ?? "")
+        && sourceOf((clause.actions ?? []).indexOf(action)).to === "trigger";
+      const selfByIf = /^it$/i.test((action.object ?? "").trim()) && /\bif (?:this (?:card|creature|permanent)|~) is exiled\b/i.test(text)
+        && sourceOf((clause.actions ?? []).indexOf(action)).to === "trigger";
+      const antecedent = actorPronoun ? "a player" : selfByIf ? undefined : PRONOUN_OBJECT.test((action.object ?? "").trim())
         ? antecedentFor((clause.actions ?? []).indexOf(action))
         : undefined;
       // "Return THIS card to the battlefield" (Reassembling Skeleton, Drownyard Temple) emits an
@@ -2328,7 +2401,7 @@ export function deriveAbilities(
       // FIRST, as the fighter, and the prefix test above would read the whole pair as self. But the
       // fight's emit is the OTHER creature being dealt damage (emits.ts, CR 701.14a) -- Brash Taunter
       // supplied no "a creature is dealt damage" payoff. 17 corpus cards.
-      const emitsSelf = action.verb !== "fight" && (SELF_REFERENCE.test((action.object ?? "").trim())
+      const emitsSelf = action.verb !== "fight" && (selfByIf || SELF_REFERENCE.test((action.object ?? "").trim())
         || /^this$/i.test((action.object ?? "").trim())
         || isSelfSubject(action.object ?? "", cardName)
         // A COUNTER PUT ON THE CARD ITSELF (owner-reported 2026-09-17, Primal Amulet -> Exemplar of
@@ -2360,7 +2433,7 @@ export function deriveAbilities(
       // NOT AFTER A REVEAL OR A LOOK: "When Matter Reshaper dies, reveal the top card of your library. You
       // may put IT onto the battlefield" means the revealed card, which the clause records no action for.
       // 124 of 671 trigger references sit in such a clause; they keep their old reading, unmarked.
-      const refersToTrigger = antecedent !== undefined && !emitsSelf && !REVEALS.test(text)
+      const refersToTrigger = antecedent !== undefined && !actorPronoun && !emitsSelf && !REVEALS.test(text)
         && sourceOf((clause.actions ?? []).indexOf(action)).to === "trigger";
       // The EVENT outranks a "battlefield" the model wrote on the action: a card that died is not there
       // (Hofri Ghostforge, Eater of Virtue, Chaos Shrine's Black Crystal wrote it; review of S3).
@@ -2415,7 +2488,20 @@ export function deriveAbilities(
       // is the opponent whose permanent carries it, so the emit reads `opp` -- the same seat
       // swap `flipPerspective` makes for an opponent's emblem.
       if (grantedTo) for (const e of emits) if (e.subject.control === "you" && e.subject.self !== true) e.subject.control = grantedTo.control;
-      if (refersToTrigger) for (const e of emits) e.subject.ref = "trigger";
+      // A REFUSED TRIGGER ABOUT THIS CARD'S OWN SELF names the card (#1253): "Whenever this creature blocks
+      // or becomes blocked, target opponent gains control of IT" (Goblin Cadets) -- the grammar reads the
+      // same "sacrifice it" under a refused "this creature becomes the target" as the card itself
+      // (Phantasmal Bear), and a `ref: "trigger"` over a trigger that is gone is a class with no trigger
+      // to bound it. With no trigger left to point at, it is `self`. Any other refused trigger keeps the
+      // ref and the ability is marked `triggerRefused` below.
+      if (refersToTrigger) for (const e of emits) {
+        if (!trigger && clause.trigger?.subject && isSelfSubject(clause.trigger.subject, cardName)) e.subject.self = true;
+        else {
+          e.subject.ref = "trigger";
+          // The damager of a refused "deals damage to you" is an opponent's (No Mercy, Mikaeus, Dread).
+          if (!trigger && e.subject.control === "any" && DEALS_DAMAGE_TO_YOU.test(text)) e.subject.control = "opp";
+        }
+      }
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 
       // A subject is attached ONLY when there is a kind. matcher's edges.ts emits a
@@ -2433,6 +2519,25 @@ export function deriveAbilities(
       const subject = effectKind
         ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
+      if (subject && selfByIf) subject.self = true;
+      // A RECURSION OF THE TRIGGER'S OWN OBJECT HAS THAT OBJECT'S CLASS (#1253, Sacred Ground): its emits say
+      // "land you control" and its effect subject said "a card in any graveyard", so every graveyard filler
+      // in the deck "enabled" it. Copy the ref'd emit's class and controller onto the effect subject.
+      if (subject && effectKind === "graveyard-recursion" && refersToTrigger && !trigger) {
+        const made = emits.find((e) => e.subject.ref === "trigger");
+        if (made) {
+          const src = made.subject as unknown as Record<string, unknown>, dst = subject as unknown as Record<string, unknown>;
+          for (const [k, v] of Object.entries(src)) {
+            if (!CLASSLESS_KEYS.has(k) && k !== "self" && v !== undefined && dst[k] === undefined) dst[k] = v;
+          }
+          if (subject.control === "any" && made.subject.control !== "any") subject.control = made.subject.control;
+          // The recursion is of a card that was put into the graveyard FROM THE BATTLEFIELD: a mill or a
+          // discard (from the library or the hand) cannot be what it returns (Glimpse the Unthinkable).
+          if (/\binto (?:your|a|an opponent's) graveyard from the battlefield\b/i.test(text)) subject.fromZone = "battlefield";
+          // CEILING: "a spell or ability AN OPPONENT CONTROLS causes ..." is not expressible on the producer
+          // side, so your own Armageddon, Strip Mine and Wasteland still feed this recursion.
+        }
+      }
       // #1250: the same damaged-player reading reaches the `leaves` emit -- it is THEIR graveyard the card
       // leaves. Only that emit: YOU cast the card / put it onto the battlefield under your control, so the
       // cast and enters emits keep their own reading (review).
@@ -2447,7 +2552,18 @@ export function deriveAbilities(
       // or "they" after the trigger, with no target in the sentence and a trigger that is not the card.
       if (subject && effectKind === "keyword-grant" && clause.trigger?.subject
         && !isSelfSubject(clause.trigger.subject, cardName) && !/\btarget\b/i.test(text)
-        && GRANT_TO_TRIGGER.test(text)) subject.ref = "trigger";
+        && (GRANT_TO_TRIGGER.test(text) || (inherits && GRANT_BULLET_TO_TRIGGER.test(text.trim())))) {
+        subject.ref = "trigger";
+        if ((!trigger || inherits) && triggerSubjectPrecedesEvent(inherits ? (cardText || text) : text, clause.trigger.subject)) {
+        // THE REFUSED TRIGGER STILL NAMES THE CLASS (#1253): "Whenever a creature you control attacks alone,
+        // IT gains X" is a creature you control, as No Mercy's "destroy it" is a creature. Copy what the
+        // trigger subject says onto the ref'd subject so only a truly class-less object is withdrawn.
+        const named = subjectFrom(clause.trigger.subject, cardName, enchantText) as unknown as Record<string, unknown>;
+        for (const [k, v] of Object.entries(named)) {
+          if (!CLASSLESS_KEYS.has(k) && k !== "self" && k !== "batched" && v !== undefined && (subject as unknown as Record<string, unknown>)[k] === undefined) (subject as unknown as Record<string, unknown>)[k] = v;
+        }
+        }
+      }
       // See THAT_TYPED. Read BEFORE the actor, which is a stronger statement and overrides it.
       const objectText = (action.object ?? "").trim();
       if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText)) {
@@ -2903,6 +3019,20 @@ export function deriveAbilities(
       // else from a condition that governs the whole clause text (roadmap W18).
       const requires = clauseRequires?.[clause.id] ?? requiresOf(text);
       if (requires) abilities[i] = { ...abilities[i], requires };
+      // A REFUSED TRIGGER CLAIMS NOTHING (#1253). Every way a triggered clause loses its trigger funnels
+      // here: the grammar's refusal and its narrowing/if: refusals (`grammarAll`), the stored path's
+      // `unknownTriggers` branches, a phantom guard, and a mode that inherited a header the grammar
+      // refused. Whatever the cause, an ability of kind `triggered` with NO trigger whose emits or effect
+      // say `ref: "trigger"` is pointing at an object nothing defines, and over a `control: any` subject
+      // that is every card. Marked, not dropped: roles and counts keep its kind.
+      // ONLY WHEN THE OBJECT'S CLASS IS GONE (owner ruling, #1253): the ref names no class at all, or the
+      // refusal is an `if:` that TESTS THE OBJECT ("if it was enchanted or equipped", "if it was cast",
+      // "if it's exiled"). A refusal that read only timing or a count ("if it's not their turn", "if it's
+      // the first time ... this turn") leaves "a creature you control" exact, and the ability keeps claiming it.
+      if (kind === "triggered" && !abilities[i].trigger && namesTriggerObject(abilities[i])
+        && (triggerObjectClassless(abilities[i]) || unknownTriggers.slice(refusedBefore).some((r) => r.startsWith("if:")) && TESTS_THE_OBJECT.test(text))) {
+        abilities[i] = { ...abilities[i], triggerRefused: true };
+      }
       const trig = abilities[i].trigger;
       // THE CLASS INSIDE THE IF IS THE TRIGGER'S CLASS (owner, 2026-09-16, recall v7 #178): "whenever
       // you cast a spell, if it's the first instant spell, the first sorcery spell, or the first

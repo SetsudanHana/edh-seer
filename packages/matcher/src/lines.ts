@@ -268,7 +268,8 @@ export function detectLines(deck: readonly DeckCard[], hierarchy: Hierarchy): De
       let needsUntap = typeof a.cost === "string" && a.cost.includes("{T}");
 
       for (const other of deck) {
-        const otherAbilities = (other.tags?.abilities ?? []) as unknown as Record<string, any>[];
+        // A REFUSED TRIGGER'S ABILITY SUPPLIES NOTHING (#1253, `Ability.triggerRefused`).
+        const otherAbilities = ((other.tags?.abilities ?? []) as unknown as Record<string, any>[]).filter((x) => x.triggerRefused !== true);
         const producerEvts = other.tags ? producerEvents(other.tags) : [];
 
         // Suppliers: reuse the engine's own event matching instead of a synthetic demand built from

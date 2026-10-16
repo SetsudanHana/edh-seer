@@ -246,7 +246,7 @@ const FILL_VERBS: ReadonlySet<string> = new Set(["dies", "mill", "discard", "sur
 /** Every fill this card emits is its OWN card going to the graveyard (a fetchland's sacrifice, a
  *  cycling, a bauble): one card, once. Used only to order equal feeders, never to refuse one. */
 export const fillsOnlyItself = (d: DeckCard): boolean => {
-  const fills = abilitiesOf(d).flatMap((a) => (a.emits ?? []).filter((e) => FILL_VERBS.has(e.verb) && e.subject.token !== true));
+  const fills = claimingAbilitiesOf(d).flatMap((a) => (a.emits ?? []).filter((e) => FILL_VERBS.has(e.verb) && e.subject.token !== true));
   return fills.length > 0 && fills.every((e) => e.subject.self === true);
 };
 
@@ -328,7 +328,7 @@ const DAMAGE_KEY = /^(?:non-combat-damage|combat-damage)\|/;
 
 /** The numeric sizes a card's abilities emitting `verb` state (`Ability.amount`), sorted,
  *  deduplicated. Per verb: a card's 3 combat damage is not a 3-damage ping. */
-const damageSizesOf = (d: DeckCard, verb: string): number[] => [...new Set(abilitiesOf(d)
+const damageSizesOf = (d: DeckCard, verb: string): number[] => [...new Set(claimingAbilitiesOf(d)
   .filter((a) => (a.emits ?? []).some((e) => e.verb === verb))
   .map((a) => (a.amount ?? "").trim())
   .filter((x) => /^\d+$/.test(x))
@@ -698,7 +698,7 @@ export function partnersFor(
       // "Whenever you cast a noncreature spell" splits into six keys and "an artifact spell" into
       // one, so both reach `cast|artifact` at the same price; the narrower one is the closer pair.
       const events = new Map<string, { score: number; tags: Set<string>; width: number }>();
-      for (const a of abilitiesOf(c)) {
+      for (const a of claimingAbilitiesOf(c)) {
         for (const verb of a.trigger?.verbs ?? []) {
           // ONE EVENT PER TYPE (roadmap AK5): a trigger naming two types proposes two, and the
           // candidate keeps whichever scores best -- so a partner is still listed once, under the
@@ -1097,8 +1097,13 @@ function perCard<T>(fn: (d: DeckCard) => T): (d: DeckCard) => T {
 
 export const abilitiesOf = perCard((d: DeckCard): CardTags["abilities"] =>
   d.tags ? [...d.tags.abilities, ...keywordAbilities(d.tags.characteristics)] : []);
+/** THE ABILITIES THAT MAY CLAIM A CARD: `abilitiesOf` without those whose trigger was refused (#1253,
+ *  `Ability.triggerRefused`). Every key, candidate and ranking below reads this one; only the page's
+ *  ability rows read the full list, because they SHOW what the card prints. */
+export const claimingAbilitiesOf = perCard((d: DeckCard): CardTags["abilities"] =>
+  abilitiesOf(d).filter((a) => a.triggerRefused !== true));
 export const emitKeysOf = perCard((d: DeckCard): string[] =>
-  abilitiesOf(d).flatMap((a) => (a.emits ?? []).flatMap((e) => splitKey(eventKey(e)))));
+  claimingAbilitiesOf(d).flatMap((a) => (a.emits ?? []).flatMap((e) => splitKey(eventKey(e)))));
 /** WHAT A CARD SUPPLIES BY BEING PLAYED (owner, 2026-10-03, #1014: "the implied events have to stop
  *  being implied, so cards like Sol Ring which are generically good still produce the event of
  *  artifact being cast or artifact entering"). The engine's own producer side, `producerEvents`,
@@ -1125,7 +1130,7 @@ export const demandKeysOf = perCard((d: DeckCard): string[] => [
   // attacks (`self: true`, derived correctly); keyed as `attacks|-|-|-` the page filed it as a gap
   // the deck must cover and ranked attackers as his partners (owner, 2026-09-05). The deck report
   // already gates self triggers; the page now does the same.
-  ...abilitiesOf(d).flatMap((a) =>
+  ...claimingAbilitiesOf(d).flatMap((a) =>
     a.trigger?.subject?.self === true ? []
       : (a.trigger?.verbs ?? []).flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))),
   // AN INTERVENING IF IS A DEMAND TOO (owner, 2026-09-29): Resplendent Angel's "if you gained 5 or
@@ -1135,7 +1140,7 @@ export const demandKeysOf = perCard((d: DeckCard): string[] => [
   // THE RULED FAMILIES ONLY (review): lifegain and spells cast. The older condition tags ("if you
   // attacked", "a creature died", counters, descend) are not wired here -- "if you attacked" is a
   // step from the self-trigger shape above, and none of them is measured as a pool demand.
-  ...abilitiesOf(d).flatMap((a) => (a.conditionCares ?? []).filter((t) => POOL_CONDITION_FAMILIES.test(t)).flatMap(conditionDemandKeys)),
+  ...claimingAbilitiesOf(d).flatMap((a) => (a.conditionCares ?? []).filter((t) => POOL_CONDITION_FAMILIES.test(t)).flatMap(conditionDemandKeys)),
   // ALL THREE FEEDER SHAPES ARE DEMANDS. Listing only board counts here left Strionic Resonator --
   // no trigger, no emit, one copy-ability -- with no demand at all, so `isSubstantive` dropped it
   // from the pool and its page had no rows, feeder pass or not (found on the first rebuild).
@@ -1190,7 +1195,7 @@ export const fillDemandsOf = (d: DeckCard): { key: string; tag: string; tags: st
       if (!out.some((o) => o.key === k && o.tags.join() === tags.join())) out.push({ key: k, tag: tags[0]!, tags });
     }
   };
-  for (const a of abilitiesOf(d)) {
+  for (const a of claimingAbilitiesOf(d)) {
     const s = a.effect?.subject;
     // An intercepted fill (Dauthi, Valgavoth) is its own family, as the engine tags it (#1083).
     if (a.effect?.kind === "graveyard-recursion" && s?.zone === "graveyard" && s.self !== true) {
@@ -1225,14 +1230,14 @@ const ABILITY_OBJECT_KINDS = ["activated", "triggered", "loyalty", "mana"] as co
 /** `copies|-|<kind>|-`: what a copy-ability card wants the other card to HAVE (CR 113.3). An `opp`
  *  copier demands nothing of THIS deck -- see the same gate in the engine's copy-ability pass. */
 export const copyDemandsOf = (d: DeckCard): { key: string; tag: string }[] =>
-  abilitiesOf(d).flatMap((a) => a.effect?.kind !== "copy-ability" || a.effect.subject?.control === "opp" ? []
+  claimingAbilitiesOf(d).flatMap((a) => a.effect?.kind !== "copy-ability" || a.effect.subject?.control === "opp" ? []
     : (a.effect.subject?.abilityKind ?? ["activated", "triggered"]).map((k) => ({ key: `copies|-|${k}|-`, tag: `copies:${k}` })));
 /** `fodder|-|<noun>|-`: what a sacrifice outlet eats -- the emit's subject, subtype first, else its
  *  single type. Edicts (control any) and self-sacrifices demand nothing, as in the engine. */
 const POLYMORPH_EATS: ReadonlySet<string> = new Set(["exiled", "dies", "leaves"]);
 export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] => {
   const polymorph = isPolymorph(d);
-  return abilitiesOf(d).flatMap((a) => {
+  return claimingAbilitiesOf(d).flatMap((a) => {
     // A POLYMORPH'S REMOVAL EATS LIKE A SACRIFICE, as in the engine's fodder pass (#964/#965).
     const eats = (a.emits ?? []).find((e) => (e.verb === "sacrifice" || (polymorph && POLYMORPH_EATS.has(e.verb)))
       && e.subject.control === "you" && e.subject.self !== true);
@@ -1251,7 +1256,7 @@ export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] => 
  *  the first subtype (`themeSubjectKey`), so a Rogue feeder is verified under `scales:cleric` --
  *  the tag is carried beside the key rather than rebuilt from it. */
 export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
-  abilitiesOf(d).flatMap((a) => {
+  claimingAbilitiesOf(d).flatMap((a) => {
     // Two counts, one demand: the count a payoff GROWS with (`scalingSubject`, stamped with the
     // battlefield zone by derive) and the count it is GATED on (`thresholdSubject`, a board count by
     // construction -- see `thresholdSubjectFor`). Same keys, each carrying the tag the engine writes.
@@ -1295,7 +1300,8 @@ export const supplyKeysOf = perCard((d: DeckCard): string[] => [
     .filter((t) => !WHOLE_DECK_TYPES.has(t))
     .map((t) => `counts|-|${t}|-`),
   // WHAT A COPIER CAN COPY: the kinds of ability this card HAS (AC12; `abilityIsKind` is the
-  // engine's own reading, mana excluded from "activated").
+  // engine's own reading, mana excluded from "activated"). Read from ALL abilities, flagged ones too: a
+  // refused-trigger ability is still a triggered ability a copier can copy (CR 603.1), and `copyAbilityEdges` agrees.
   ...ABILITY_OBJECT_KINDS.filter((k) => abilitiesOf(d).some((a) => abilityIsKind(a, k))).map((k) => `copies|-|${k}|-`),
   // WHAT AN OUTLET CAN EAT. A real card is fodder by its subtypes and by a non-whole-deck type; a
   // TOKEN MAKER is fodder by what it makes, creature tokens included -- the engine's maker path
@@ -1305,7 +1311,7 @@ export const supplyKeysOf = perCard((d: DeckCard): string[] => [
   ...(d.tags?.characteristics.token !== true && (d.tags?.characteristics.types ?? []).includes("creature")
     && (d.tags?.characteristics.cmc ?? 0) >= POLYMORPH_HIT_MV ? [HIT_KEY] : []),
   // A DONATION supplies Zedruu's count (#681): the same test the deck edge uses.
-  ...(givesAPermanentAway(abilitiesOf(d).flatMap((a) => a.emits ?? []), d.card.oracleText) ? [DONATED_KEY] : []),
+  ...(givesAPermanentAway(claimingAbilitiesOf(d).flatMap((a) => a.emits ?? []), d.card.oracleText) ? [DONATED_KEY] : []),
 ]);
 const DONATED_KEY = "counts|-|donated|-";
 
@@ -1313,7 +1319,7 @@ const fodderSupplyKeysOf = (d: DeckCard): string[] => {
   const nouns = new Set<string>();
   for (const t of d.tags?.characteristics.subtypes ?? []) if (!BASIC_LAND_TYPE_SET.has(t)) nouns.add(t);
   for (const t of d.tags?.characteristics.types ?? []) if (!WHOLE_DECK_TYPES.has(t)) nouns.add(t);
-  for (const a of abilitiesOf(d)) for (const e of a.emits ?? []) {
+  for (const a of claimingAbilitiesOf(d)) for (const e of a.emits ?? []) {
     if (e.verb !== "create-token" || e.subject.token !== true) continue;
     for (const t of asList(e.subject.type)) nouns.add(t);
     for (const t of asList(e.subject.subtype)) nouns.add(t);
@@ -1375,7 +1381,7 @@ export function effectOrder(key: string): (a: DeckCard, b: DeckCard) => number {
     if (hit) return hit;
     let best: Doing | undefined;
     let supplies = false;
-    for (const a of abilitiesOf(d)) {
+    for (const a of claimingAbilitiesOf(d)) {
       const emits = (a.emits ?? []).filter((e) => splitKey(eventKey(e)).flatMap(supplyForms).some((f) => forms.has(f)));
       if (emits.length === 0) continue;
       supplies = true;
@@ -1488,7 +1494,7 @@ export const staticKeysOfAbility = (a: CardTags["abilities"][number]): string[] 
 };
 
 export const staticKeysOf = perCard((d: DeckCard): string[] =>
-  [...new Set(abilitiesOf(d).flatMap(staticKeysOfAbility))]);
+  [...new Set(claimingAbilitiesOf(d).flatMap(staticKeysOfAbility))]);
 /** WHAT A CARD IS FOR A STATIC'S PURPOSES: its printed types and subtypes, AND those of the tokens
  *  it makes. A noncreature spell that makes creature bodies is what a Samut deck is built from --
  *  the discount and the anthem both land on it -- and the ranking has to see that before the
@@ -1497,7 +1503,7 @@ export const staticKeysOf = perCard((d: DeckCard): string[] =>
 const reachOf = (c: DeckCard): { types: Set<string>; subtypes: Set<string> } => {
   const types = new Set(c.tags?.characteristics.types.map((t) => t.toLowerCase()) ?? []);
   const subtypes = new Set(c.tags?.characteristics.subtypes.map((t) => t.toLowerCase()) ?? []);
-  for (const a of abilitiesOf(c)) {
+  for (const a of claimingAbilitiesOf(c)) {
     for (const e of a.emits ?? []) {
       if (e.subject.token !== true) continue;
       for (const t of asList(e.subject.type)) types.add(t.toLowerCase());

@@ -2147,3 +2147,30 @@ test("an intercepted recursion demands a graveyard-intercept fill and reads as s
   expect(fillDemandsOf(dauthi).map((d) => d.tags)).toEqual([["graveyard-intercept:any"]]);
   expect(abilityRowsOf(dauthi).map((r) => r.effect)).toEqual(["graveyard-intercept"]);
 });
+
+// A REFUSED TRIGGER'S ABILITY CLAIMS NOTHING ON THE PAGE EITHER (#1253): no emit key, no demand, not a
+// candidate -- but it is still a triggered ability, so a copier is still offered it.
+test("a triggerRefused ability yields no emit, demand or supply key, and still offers the copies|triggered key", () => {
+  const card = (refused: boolean): DeckCard => ({
+    card: { name: refused ? "Refused" : "Read", typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 0 },
+    tags: {
+      oracleId: "x", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{
+        kind: "triggered", ...(refused ? { triggerRefused: true } : {}),
+        effect: { kind: "graveyard-recursion", subject: { control: "any", token: null, zone: "graveyard" } },
+        emits: [{ verb: "leaves", subject: { control: "any", token: null, type: "creature", fromZone: "battlefield", ref: "trigger" } }],
+      }],
+    } as unknown as CardTags,
+  } as unknown as DeckCard);
+  const read = card(false), refused = card(true);
+  expect(emitKeysOf(read).some((k) => k.startsWith("leaves"))).toBe(true);
+  expect(emitKeysOf(refused)).toEqual([]);
+  expect(fillDemandsOf(read).length).toBeGreaterThan(0);
+  expect(fillDemandsOf(refused)).toEqual([]);
+  expect(supplyKeysOf(refused).some((k) => k.startsWith("leaves"))).toBe(false);
+  expect(supplyKeysOf(refused)).toContain("copies|-|triggered|-");
+  expect(supplyKeysOf(read)).toContain("copies|-|triggered|-");
+  // The card page still SHOWS the line it prints.
+  expect(abilityRowsOf(refused)).toHaveLength(1);
+});

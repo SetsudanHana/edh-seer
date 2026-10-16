@@ -492,7 +492,8 @@ function baseEvents(tags: CardTags): GameEvent[] {
   return [
     // A DAMAGE EMIT CARRIES ITS SIZE, the ability's own `amount`, so a trigger that requires one
     // ("exactly 1 damage", Ghyrson Starn) can tell Impact Tremors from Eidolon of the Great Revel.
-    ...tags.abilities.flatMap((a) => (a.emits ?? []).map((e) =>
+    // A REFUSED TRIGGER'S ABILITY SUPPLIES NOTHING (#1253): see `Ability.triggerRefused`.
+    ...tags.abilities.filter((a) => a.triggerRefused !== true).flatMap((a) => (a.emits ?? []).map((e) =>
       a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e)),
     ...impliedEvents(tags.characteristics).map((e) => targeting.length && e.verb === "cast" ? { ...e, targeting } : e),
   ].map(normalizeZoneEvent);
@@ -585,6 +586,7 @@ function producerEventsUncached(tags: CardTags): GameEvent[] {
 export function producerEventOrigins(tags: CardTags): Map<string, number> {
   const out = new Map<string, number>();
   tags.abilities.forEach((a, i) => {
+    if (a.triggerRefused === true) return;
     const own = (a.emits ?? []).map((e) =>
       normalizeZoneEvent(a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e));
     for (const e of selfLeavesTypes(own, tags.characteristics)) {
@@ -1775,11 +1777,15 @@ function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
   if (!tags) return dc;
   const floor = opts.revenantToughness;
   const dead = (a: Ability) => { const n = ownBoardKill(a); return n !== undefined && !(floor !== undefined && n >= floor); };
-  if (!tags.abilities.some((a) => dead(a) || FACT_KINDS.has(a.effect.kind))) return dc;
+  if (!tags.abilities.some((a) => dead(a) || FACT_KINDS.has(a.effect.kind) || a.triggerRefused === true)) return dc;
   const byFloor = forPairs.get(tags) ?? forPairs.set(tags, new Map()).get(tags)!;
   let out = byFloor.get(floor);
   if (!out) {
     out = { ...tags, abilities: tags.abilities.map((a) => {
+      // A REFUSED TRIGGER CLAIMS NOTHING (#1253): the ability stays in its slot (the ability indices
+      // other readers hold are positions) and reads as the blank effect a fact kind does, with no emits
+      // and no trigger. Its kind survives in `tags`, which the role/theme/count readers see, not this copy.
+      if (a.triggerRefused === true) { const { emits: _emits, ...rest } = a; return { ...rest, effect: { kind: "" as const } }; }
       const b = FACT_KINDS.has(a.effect.kind) ? { ...a, effect: { kind: "" as const } } : a;
       return dead(b) ? { ...b, emits: (b.emits ?? []).filter((e) => e.verb !== "dies") } : b;
     }) };
@@ -2430,6 +2436,9 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       //
       // `zone` is dropped from the fill before the test: a card's printed characteristics sit in no
       // zone, so keeping it would fail every card and silently delete the whole family.
+      // A RECURSION OF A CARD PUT INTO THE GRAVEYARD FROM THE BATTLEFIELD (Sacred Ground, #1253) is not
+      // enabled by a random mill or a discard, which take the card from the library or the hand.
+      if (a.effect.subject.fromZone === "battlefield" && (e.origin !== undefined || e.subject.fromZone === "hand")) continue;
       if (a.effect.subject.self === true) {
         // ONLY A DEATH FROM THE BATTLEFIELD ENABLES IT (owner-judged FALSE 2026-10-16: Tomb Fortress,
         // Tablet of Discovery, The Warring Triad -> a mill; Prismari Command -> a discard). A mill is
@@ -3954,11 +3963,11 @@ export function createsForYou(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
   // AN EMBLEM IS OURS WHEN THE GRANT SAYS SO (CR 114.2). An opponent's emblem is on the board but
   // never credits its granter with supporting our payoffs.
   if (c.tags.characteristics.emblem === true) {
-    return p.tags.abilities.some((pa) => pa.effect.kind === "emblem" && pa.effect.subject?.control !== "opp");
+    return p.tags.abilities.some((pa) => pa.triggerRefused !== true && pa.effect.kind === "emblem" && pa.effect.subject?.control !== "opp");
   }
   if (c.tags.characteristics.token !== true) return false;
   const consumerSubject = characteristicsSubject(c.tags, c.card.name);
-  return p.tags.abilities.some((pa) =>
+  return p.tags.abilities.some((pa) => pa.triggerRefused !== true &&
     (pa.emits ?? []).some((e) =>
       e.verb === "create-token" && e.subject.control !== "opp" && subjectMatches(consumerSubject, e.subject, h)));
 }
@@ -3972,7 +3981,7 @@ function emblemReasons(p: DeckCard, c: DeckCard): Reason[] {
   if (!p.tags || !c.tags || c.tags.characteristics.emblem !== true) return [];
   const reasons: Reason[] = [];
   for (const pa of p.tags.abilities) {
-    if (pa.effect.kind !== "emblem") continue;
+    if (pa.effect.kind !== "emblem" || pa.triggerRefused === true) continue;
     const control = pa.effect.subject?.control;
     reasons.push({
       tag: "creates:emblem",
@@ -3993,6 +4002,7 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
   const consumerSubject = characteristicsSubject(c.tags, c.card.name);
   const reasons: Reason[] = [];
   for (const [pi, pa] of p.tags.abilities.entries()) {
+    if (pa.triggerRefused === true) continue;
     for (const e of pa.emits ?? []) {
       if (e.verb !== "create-token") continue;
       if (!subjectMatches(consumerSubject, e.subject, h)) continue;

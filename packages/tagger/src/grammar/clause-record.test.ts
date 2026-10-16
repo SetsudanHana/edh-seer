@@ -440,3 +440,20 @@ test("a 'look at the top card' whose later 'it' / 'that card' is resolved to the
   expect(sp.records[0]!.actions!.map((a) => a.verb)).toEqual(["put", "put"]);
   expect(sp.records[0]!.actions![0]).toMatchObject({ fromZone: "library" });
 });
+
+test("a cause is no part of the trigger subject: the caused object is (#1253, Sacred Ground)", () => {
+  expect(triggerSubjectText("Whenever a spell or ability an opponent controls causes a land to be put into your graveyard from the battlefield")).toBe("a land you control");
+  expect(triggerSubjectText("When a spell or ability an opponent controls causes you to discard this card")).toBe("this card");
+});
+
+test("Sacred Ground's return is of YOUR land: control you, not the opponent whose spell caused it", () => {
+  const text = "Whenever a spell or ability an opponent controls causes a land to be put into your graveyard from the battlefield, return that card to the battlefield.";
+  const g = grammarClauseRecords({ name: "Sacred Ground", oracleText: text, typeLine: "Enchantment", manaCost: "{1}{W}", keywords: [] } as never);
+  expect(g.records[0]!.trigger!.subject).toBe("a land you control");
+});
+
+test("only 'a spell or ability ... causes' is rewritten: another cause keeps the old subject text (#1253)", () => {
+  // Unanchored, `^.+? causes? (.+?) to` rewrote 23 corpus preambles (Firesong and Sunspeaker, Toofer, Strict Proctor ...).
+  expect(triggerSubjectText("Whenever a player causes a creature to be sacrificed")).toBe("a player causes a creature to be sacrificed");
+  expect(triggerSubjectText("Whenever a source an opponent controls causes you to gain life")).toBe("a source an opponent controls causes you to");
+});

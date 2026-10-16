@@ -1124,6 +1124,27 @@ export interface Ability {
      *  prints no size. */
     amount?: { op: "eq" | "gte"; value: number };
   };
+  /** THE TRIGGER THIS ABILITY WAITS ON WAS REFUSED, AND THE ABILITY POINTS BACK AT AN OBJECT WITH NO CLASS (#1253).
+   *  "Whenever a spell or ability an opponent controls causes you to discard cards this turn, return THOSE
+   *  CARDS from your graveyard" (Pure Intentions): the grammar refuses the narrowing (`unknownTriggers`:
+   *  `narrowing:discarded`, `if:dies`, ...) and the ability derives with `kind: "triggered"` and NO `trigger`,
+   *  while its emits still say `ref: "trigger"` over a `control: "any"` subject with no type -- "those cards"
+   *  with the one thing that defined them gone. Read as written that is every card, so a refused trigger
+   *  became a silent WIDE claim. The `restricted` rule one layer over: KEEP THE ABILITY AND ITS KINDS (roles,
+   *  themes and counts read those) and CLAIM NO CARDS -- the matcher forms no pair reason from this ability
+   *  on either side.
+   *
+   *  Set only when `ref: "trigger"` appears in the ability's emits or effect AND the object's class is
+   *  gone: the ref'd subject names no class (no type, subtype, keyword, counter ...) AFTER the refused
+   *  trigger's own subject has been copied onto it, or the refusal is an `if:` that tests the OBJECT ("if
+   *  it was enchanted or equipped", "if it was cast"). A refusal that read only timing or a count ("attacks
+   *  alone", "second spell each turn", "if it's not their turn", "deals damage to you") leaves "a creature
+   *  you control" exact and the ability keeps its claim (owner ruling): Squall's "it gains double strike"
+   *  is a creature you control and is NOT flagged. A refused trigger whose ability never names the trigger
+   *  object claims what it always did (a saga chapter's token is still a token).
+   *  ONE THING STILL SEES IT: a flagged ability is a triggered ability (CR 603.1), so it still counts
+   *  as one for the `copies|-|triggered|-` key a copier is offered. */
+  triggerRefused?: true;
   /** A numeric condition on WHEN the ability is on — The Millennium Calendar's "when there are
    *  1,000 or more time counters", Chrome Steed's "as long as you control three or more artifacts",
    *  Urza's Workshop's "activate only if you control three or more artifacts", Gadrak's "can't

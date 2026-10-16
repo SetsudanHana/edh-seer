@@ -12,7 +12,12 @@ const json = (v: unknown): string => JSON.stringify(canonical(v ?? null));
 /** The abilities of one clause, as comparable strings, in a stable order. */
 function byClause(abilities: readonly Ability[]): Map<number, Ability[]> {
   const out = new Map<number, Ability[]>();
-  for (const a of abilities) {
+  for (const a0 of abilities) {
+    // `triggerRefused` (#1253) is a consequence of the `ref: "trigger"` reading it sits beside, not a
+    // second difference: counted, it moved every group key that has a `ref` change in it (the
+    // 'grammar right' label of "this creature becomes the target ... sacrifice it") to an unlabelled
+    // one and silently un-switched 13 cards. The comparison reads the abilities without it.
+    const { triggerRefused: _refused, ...a } = a0;
     const k = a.clause ?? -1;
     (out.get(k) ?? out.set(k, []).get(k)!).push(a);
   }

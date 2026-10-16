@@ -42,11 +42,45 @@ export function phaseControl(preamble: string): "you" | "opp" | "any" {
 /** The store's `trigger.subject`: what the event happens to, and for an ACTOR trigger ("you discard a
  *  card", "an opponent casts a spell") the OBJECT, which is what derive's self and antecedent readings
  *  key on. */
+/** `^a spell or ability(?: an opponent controls| you control)? causes? (.+?) to (be )?(.+)$`, read by string
+ *  search: the regex form backtracks polynomially on repeated "a to a" (CodeQL js/polynomial-redos). Returns
+ *  [whole, object, "be " | undefined, event] like the regex's exec, or null. */
+function causedEventParts(rest: string): [string, string, string | undefined, string] | null {
+  const lower = rest.toLowerCase();
+  let at = -1;
+  for (const head of ["a spell or ability an opponent controls ", "a spell or ability you control ", "a spell or ability "]) {
+    if (!lower.startsWith(head)) continue;
+    const tail = lower.slice(head.length);
+    const verb = tail.startsWith("causes ") ? 7 : tail.startsWith("cause ") ? 6 : -1;
+    if (verb >= 0) { at = head.length + verb; break; }
+  }
+  if (at < 0) return null;
+  const to = lower.indexOf(" to ", at + 1);
+  if (to < 0) return null;
+  const object = rest.slice(at, to);
+  let event = rest.slice(to + 4);
+  const be = /^be /i.test(event) ? event.slice(0, 3) : undefined;
+  if (be) event = event.slice(3);
+  if (!event) return null;
+  return [rest, object, be, event];
+}
+
 export function triggerSubjectText(preamble: string): string {
   // A PHASE TRIGGER names whose phase: "your upkeep" is yours, "each upkeep" / "the end step" anyone's.
   const phase = /^at the beginning of (your|each|the|each player's|each opponent's|that player's)\b/i.exec(preamble);
   if (phase) return /^your$/i.test(phase[1]!) ? "you" : /opponent/i.test(phase[1]!) ? "each opponent" : "each player";
-  const rest = preamble.replace(/^(?:when|whenever|at)\s+/i, "");
+  let rest = preamble.replace(/^(?:when|whenever|at)\s+/i, "");
+  // "A SPELL OR ABILITY AN OPPONENT CONTROLS CAUSES A LAND TO BE PUT into your graveyard" (Sacred Ground,
+  // #1253): the cause is no part of the subject. Cut at the first event verb, the head was the whole
+  // cause plus half the event ("a spell or ability an opponent controls causes a land to be"), and
+  // derive read "an opponent controls" as the LAND's controller. The caused event reads as its own
+  // sentence, the way the trigger grammar reads it (`causedEvent`): "a land is put into ...", "you
+  // discard this card".
+  const caused = causedEventParts(rest);
+  if (caused) rest = `${caused[1]} ${caused[2] ? "is " : ""}${caused[3]}`;
+  // The land is put into YOUR graveyard, so it is yours: the subject says so, as "a creature you control
+  // dies" does (Koll). CEILING: a graveyard is its owner's, so a stolen land is yours only by ownership.
+  const ownGraveyard = caused !== null && !!caused[2] && /\binto your graveyard\b/i.test(caused[3]!);
   const v = EVENT_VERB.exec(rest);
   const head = (v ? rest.slice(0, v.index) : rest).trim();
   if (v && PLAYER.test(head)) {
@@ -57,7 +91,7 @@ export function triggerSubjectText(preamble: string): string {
     if (on) return on[1]!;
     if (obj) return obj;
   }
-  return head;
+  return ownGraveyard && head !== "" ? `${head} you control` : head;
 }
 
 const SELF_SUBJECT = /^(?:~|this [a-z]+)$/i;

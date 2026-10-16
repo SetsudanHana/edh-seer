@@ -26,3 +26,12 @@ test("a grammar-only derive that drops a claim the stored one makes says which",
   expect(lostClaims([recursion], [ab({ effect: { kind: "" } })])).toEqual(["emit:leaves", "kind:graveyard-recursion"]);
   expect(lostClaims([ab({})], [recursion])).toEqual([]);
 });
+
+test("triggerRefused is no difference: it must not move a labelled group key (#1253)", () => {
+  const ref = { verb: "sacrifice", subject: { control: "you", token: null, type: "creature", ref: "trigger" } };
+  const self = { verb: "sacrifice", subject: { control: "you", token: null, type: "creature", self: true } };
+  const withFlag = deriveDiff([ab({ emits: [ref], triggerRefused: true } as never)], [ab({ emits: [self] } as never)]);
+  const without = deriveDiff([ab({ emits: [ref] } as never)], [ab({ emits: [self] } as never)]);
+  expect(withFlag).toBe(without);
+  expect(deriveDiff([ab({ triggerRefused: true } as never)], [ab({})])).toBeNull();
+});

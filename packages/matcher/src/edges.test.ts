@@ -6719,3 +6719,107 @@ describe("a multi-type emit names the member the trigger heard (#1224)", () => {
     });
   });
 });
+
+// A REFUSED TRIGGER CLAIMS NOTHING (#1253). Cunning Evasion's "Whenever a creature you control becomes
+// blocked, you may return IT to its owner's hand": the grammar refuses `becomes-blocked`, so the ability
+// derives with no trigger and a `leaves` emit that is `ref: "trigger"` over a creature -- which reads as
+// every creature leaving. `triggerRefused` keeps the ability (and its kind) and claims no cards.
+describe("triggerRefused: an ability whose trigger was refused claims nothing", () => {
+  const leavesWatcher = () => base("Blood Artist Analogue", [{
+    kind: "triggered",
+    trigger: { verbs: ["leaves"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const evasion = (refused: boolean) => base("Cunning Evasion", [{
+    kind: "triggered",
+    ...(refused ? { triggerRefused: true as const } : {}),
+    effect: { kind: "bounce", subject: { control: "any", token: null, zone: "battlefield" } },
+    emits: [{ verb: "leaves", subject: { control: "you", token: null, type: "creature", fromZone: "battlefield", ref: "trigger" } }],
+  }]);
+
+  test("before the flag: the unread trigger's 'return it' feeds a leaves watcher (the defect)", () => {
+    expect(pairReasons(evasion(false), leavesWatcher(), H).length).toBeGreaterThan(0);
+  });
+
+  test("flagged: no reason forms on either side", () => {
+    expect(pairReasons(evasion(true), leavesWatcher(), H)).toEqual([]);
+    expect(pairReasons(leavesWatcher(), evasion(true), H)).toEqual([]);
+  });
+
+  test("a correctly-read sibling trigger on the SAME card still forms its reason", () => {
+    const squall = base("Squall", [
+      ...evasion(true).tags.abilities,
+      {
+        kind: "triggered",
+        trigger: { verbs: ["combat-damage"], subject: { control: "you", token: null, self: true } },
+        effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "permanent", zone: "graveyard" } },
+        emits: [{ verb: "leaves", subject: { control: "you", token: null, type: "permanent", fromZone: "graveyard", zone: "graveyard" } }],
+      },
+    ]);
+    const graveyardWatcher = base("Graveyard Watcher", [{
+      kind: "triggered",
+      trigger: { verbs: ["leaves"], subject: { type: "permanent", control: "you", token: null, zone: "graveyard" } },
+      effect: { kind: "draw-card" },
+    }]);
+    const reasons = pairReasons(squall, graveyardWatcher, H);
+    expect(reasons.length).toBeGreaterThan(0);
+    // Only the read ability (index 1) is the producer; the refused one (index 0) is never named.
+    expect(reasons.every((r) => r.producerAbility === undefined || r.producerAbility === 1)).toBe(true);
+  });
+
+  test("creates-channel readers skip it too", () => {
+    const maker = base("Refused Maker", [{
+      kind: "triggered", triggerRefused: true,
+      effect: { kind: "token-generation", subject: { control: "you", token: true } },
+      emits: [{ verb: "create-token", subject: { control: "you", token: true, type: "creature", ref: "trigger" } }],
+    }]);
+    const token = base("Goblin", []);
+    (token.tags.characteristics as { token: boolean }).token = true;
+    expect(createsReasons(maker, token, H)).toEqual([]);
+  });
+});
+
+// THE DAMAGER OF A REFUSED "deals damage to you" IS AN OPPONENT'S (#1253, owner ruling). No Mercy's
+// "destroy it" derives `dies {control: opp, type: creature, ref: trigger}`: an opponent's creature dying
+// feeds a payoff for opposing creatures (Massacre Wurm), not one for creatures you control (Zulaport).
+test("a No Mercy-shaped destroy feeds a payoff on opposing deaths and not one on your own creatures' deaths", () => {
+  const noMercy = base("No Mercy", [{
+    kind: "triggered",
+    effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature", ref: "trigger" } }],
+  }]);
+  const wurm = base("Massacre Wurm", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { type: "creature", control: "opp", token: null } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null } },
+  }]);
+  const zulaport = base("Zulaport Cutthroat", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null } },
+  }]);
+  expect(directedReasons(noMercy, wurm, H).some((r) => r.tag.startsWith("dies:"))).toBe(true);
+  expect(directedReasons(noMercy, zulaport, H).some((r) => r.tag.startsWith("dies:"))).toBe(false);
+});
+
+// SACRED GROUND RETURNS A LAND PUT INTO THE GRAVEYARD FROM THE BATTLEFIELD (#1253): a mill or a discard
+// takes the card from the library or the hand, so it is not a fill that recursion reads.
+test("a recursion whose subject comes from the battlefield is fed by a sacrifice and not by a mill or a discard", () => {
+  const recursion = (fromZone?: "battlefield") => base("Sacred Ground", [{
+    kind: "triggered",
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "land", zone: "graveyard", ...(fromZone ? { fromZone } : {}) } },
+  }]);
+  const filler = (effect: string, verb: string, subject: object) => base("Filler", [{
+    kind: "on-cast", effect: { kind: effect as never, subject: { control: "you", token: null } },
+    emits: [{ verb, subject } as never],
+  }]);
+  const sacrifice = filler("", "dies", { control: "you", token: null, type: "land" });
+  const mill = filler("mill", "mill", { control: "you", token: null });
+  const discard = filler("draw-card", "discard", { control: "you", token: null });
+  const hits = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => directedReasons(p, c, H).filter((r) => r.tag.startsWith("graveyard-recursion")).length;
+  expect(hits(sacrifice, recursion("battlefield"))).toBeGreaterThan(0);
+  expect(hits(mill, recursion("battlefield"))).toBe(0);
+  expect(hits(discard, recursion("battlefield"))).toBe(0);
+  // The same mill still feeds a recursion that does not say where its card came from.
+  expect(hits(mill, recursion())).toBeGreaterThan(0);
+});
