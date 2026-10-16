@@ -70,4 +70,4 @@ export function policyEnds(low: number, high: number): string {
  *  fit. Says what each end is and what moves a game between them. */
 export const POLICY_LEGEND =
   "Where a figure is a range, the low end holds up two mana before casting ramp, which is nearer how a real deck is played, "
-  + "and the high end spends everything on ramp, a ceiling. They are two ways of playing it, two mana held back each turn before casting ramp against everything into ramp, and your games fall between them.";
+  + "and the high end spends everything on ramp, a ceiling. Your own games fall between the two.";
