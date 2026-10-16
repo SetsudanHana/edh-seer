@@ -207,6 +207,11 @@ test("coverage push 2: object lists, recipient lists, control magic, clones, cas
   expect(read("You may cast spells that have a cycling ability from your graveyard.")).toEqual([]);
 });
 
+test("the player who loses the game is the actor, kept (#1252)", () => {
+  expect(read("that player loses the game.")).toMatchObject([{ verb: "lose-game", actor: { text: "that player" } }]);
+  expect(read("you lose the game.")).toMatchObject([{ verb: "lose-game", actor: { control: "you", text: "you" } }]);
+});
+
 test("coverage push 3: game and keyword actions read by verb, the stored object kept", () => {
   for (const [text, verb] of [["roll a d20.", "roll-dice"], ["flip a coin.", "flip-coin"], ["Take an extra turn after this one.", "extra-turn"],
     ["you win the game.", "win-game"], ["that player loses the game.", "lose-game"], ["After this phase, there is an additional combat phase.", "extra-combat"],
