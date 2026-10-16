@@ -2431,6 +2431,13 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // `zone` is dropped from the fill before the test: a card's printed characteristics sit in no
       // zone, so keeping it would fail every card and silently delete the whole family.
       if (a.effect.subject.self === true) {
+        // ONLY A DEATH FROM THE BATTLEFIELD ENABLES IT (owner-judged FALSE 2026-10-16: Tomb Fortress,
+        // Tablet of Discovery, The Warring Triad -> a mill; Prismari Command -> a discard). A mill is
+        // random out of the library and a discard is the hand's: that the card COULD be among them is
+        // not a way to put it in the graveyard on purpose. Every REAL self-recursion verdict (Ayara ->
+        // Death Tyrant, Cultist of the Absolute -> Bloodsoaked Champion) is a sacrifice or a death.
+        // CEILING: a fill with no stated origin is taken as a battlefield death.
+        if (e.origin !== undefined || e.subject.fromZone === "library" || e.subject.fromZone === "hand") continue;
         // A fill that is ITSELF self-scoped puts the PRODUCER into the graveyard, and the producer is
         // never the consumer in a pair. `self` rode along in fillIdentity below, where subjectMatches
         // does not read it, so the fill looked untyped and wildcarded through the very check that

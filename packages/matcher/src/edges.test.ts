@@ -5,7 +5,7 @@ import { faceDeckCards } from "./faces.js";
 import { fixtureDeckCard } from "./fixture-cards.js";
 import { FREE_TAP, mkLine } from "./mana-test-support.js";
 import type { Reason } from "@edh-seer/engine";
-import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
+import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"] };
@@ -1299,6 +1299,46 @@ test("a self-recursion is only enabled by a fill that could contain the card its
   const artifact = directedReasons(filler("Krark-Clan Ironworks", "Artifact"), colossus, H)
     .filter((r) => r.tag.startsWith("graveyard-recursion"));
   expect(artifact.length).toBeGreaterThan(0);
+});
+
+test("a self-recursion is never enabled by a mill, discard or surveil, only by a death from the battlefield", () => {
+  // Owner-judged FALSE 2026-10-16: Tomb Fortress, Tablet of Discovery and The Warring Triad (mill) and
+  // Prismari Command (discard) "enabled" a card returning ITSELF from the graveyard. A mill is random
+  // and a discard is chosen from hand: neither is how a creature that returns itself is meant to get
+  // there. Every REAL verdict on a self-recursion (Ayara -> Death Tyrant, Cultist of the Absolute ->
+  // Bloodsoaked Champion) is a death from the battlefield.
+  const returnsItself = (name: string): DeckCard => ({
+    card: { name, typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 2, colorIdentity: [], power: "1", toughness: "1" },
+    tags: {
+      oracleId: name, schemaVersion: 1, promptVersion: 0, model: "derived",
+      characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 2, power: "1", toughness: "1", token: false, keywords: [] },
+      abilities: [{
+        kind: "activated",
+        effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, self: true, zone: "graveyard" } },
+      }],
+    },
+  });
+  const producer = (name: string, emits: GameEvent[]): DeckCard => ({
+    card: { name, typeLine: "Artifact", oracleText: "", keywords: [], colors: [], manaValue: 2, colorIdentity: [], power: null, toughness: null },
+    tags: {
+      oracleId: name, schemaVersion: 1, promptVersion: 0, model: "derived",
+      characteristics: { types: ["artifact"], subtypes: [], colors: [], identity: [], cmc: 2, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{ kind: "activated", effect: { kind: "" }, emits }],
+    },
+  });
+  const skeleton = returnsItself("Reassembling Skeleton");
+  const recursion = (p: DeckCard) => directedReasons(p, skeleton, H).filter((r) => r.tag.startsWith("graveyard-recursion"));
+  const you = { control: "you" as const, token: null };
+
+  expect(recursion(producer("Tablet of Discovery", [{ verb: "mill", subject: you }]))).toEqual([]);
+  expect(recursion(producer("Prismari Command", [{ verb: "discard", subject: you }]))).toEqual([]);
+  expect(recursion(producer("Consider", [{ verb: "surveil", subject: you }]))).toEqual([]);
+  // An authored "put a card from your library/hand into your graveyard" names its origin.
+  expect(recursion(producer("Entomb", [{ verb: "enters", subject: { ...you, zone: "graveyard", fromZone: "library" } }]))).toEqual([]);
+  expect(recursion(producer("Putrefy Hand", [{ verb: "enters", subject: { ...you, zone: "graveyard", fromZone: "hand" } }]))).toEqual([]);
+
+  // A creature dying (sacrifice outlet, removal) still joins.
+  expect(recursion(producer("Phyrexian Altar", [{ verb: "dies", subject: { ...you, type: "creature" } }])).length).toBeGreaterThan(0);
 });
 
 /** THE RANI AND SAREVOK'S TOME, reported off the board. A self-ETB consumer whose subject names no

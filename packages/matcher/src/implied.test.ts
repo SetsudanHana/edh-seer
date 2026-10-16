@@ -178,7 +178,10 @@ test("mill and discard imply an untyped enters@graveyard", () => {
  *  with Animate Dead, not with Tasigur, not with a per-graveyard payoff. */
 test("a surveil implies a graveyard fill, exactly as a mill does", () => {
   const out = impliedGraveyardEvents([{ verb: "surveil", subject: { control: "you", token: null } }]);
-  expect(out).toEqual([{ verb: "enters", subject: { control: "you", token: null, zone: "graveyard" } }]);
+  expect(out).toEqual([{ verb: "enters", subject: { control: "you", token: null, zone: "graveyard" }, origin: "library" }]);
+  // A discard leaves the hand, a mill the library; both are marked so a self-recursion can refuse them.
+  expect(impliedGraveyardEvents([{ verb: "discard", subject: { control: "you", token: null } }])[0]!.origin).toBe("hand");
+  expect(impliedGraveyardEvents([{ verb: "mill", subject: { control: "you", token: null } }])[0]).toMatchObject({ milled: true, origin: "library" });
 });
 
 test("a nontoken dies implies a typed enters@graveyard; a token does not; a LEAVES fills nothing", () => {

@@ -794,6 +794,13 @@ export interface GameEvent {
    *  Matcher-only, written by `impliedGraveyardEvents`. Read by the recursion pass: a random fill
    *  does not promise a card of a noncreature class (Takenuma -> Emry, owner FALSE 2026-09-28). */
   milled?: true;
+  /** WHERE AN IMPLIED GRAVEYARD FILL CAME FROM when it was not the battlefield: a mill or surveil
+   *  takes it off the library, a discard out of the hand. Matcher-only, written by
+   *  `impliedGraveyardEvents` beside `milled` (which stays, because the noncreature-class gate reads
+   *  it). Read by the SELF-scoped recursion pass: a card that returns ITSELF is not enabled by a card
+   *  that might be milled or discarded (owner FALSE 2026-10-16: Tomb Fortress, Tablet of Discovery,
+   *  The Warring Triad, Prismari Command). */
+  origin?: "library" | "hand";
   /** The producer acts at INSTANT SPEED: an activated ability (loyalty and "activate only as a
    *  sorcery" excepted), an instant, or a spell with flash. The smallest timing model that holds
    *  the owner's ruling (2026-08-22, upheld): Ayara -> Death Tyrant is REAL because a sac outlet
