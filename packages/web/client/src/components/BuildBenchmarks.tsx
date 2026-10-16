@@ -735,7 +735,7 @@ function DeckMathRows({
           {/* THE ENDS, NAMED ONCE IN THE BLOCK (#1226). Every persona seat asked which end of
             *  "34% – 53%" was theirs; the words come from `percent.ts` so no surface can drift. The
             *  colour line is explained here too, once, so the rows carry only the figure. */}
-          {castability.cards.some((c) => isPolicyRange(c.castable.low, c.castable.high) || isPolicyRange(c.mana.low, c.mana.high)) ? (
+          {castability.cards.some((c) => isPolicyRange(c.castable.low, c.castable.high) || (c.mana.high - c.castable.high >= COLOUR_GAP && isPolicyRange(c.mana.low, c.mana.high))) ? (
             <p className="text-xs text-(--muted) max-w-[65ch]">
               {POLICY_LEGEND}
             </p>

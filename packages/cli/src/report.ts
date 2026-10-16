@@ -1,5 +1,5 @@
 import { dedupeReasonsByText, type DeckReport } from "@edh-seer/engine";
-import { percent, policyBand } from "@edh-seer/engine/percent";
+import { percent, policyBand, POLICY_LEGEND } from "@edh-seer/engine/percent";
 
 /** SHARED WITH THE WEB, one copy (roadmap N6). This file floored a probability at 1% and
  *  `CardList.tsx` did not, so a measured-impossible cast read "1%" here and "0%" there. The floor
@@ -57,7 +57,7 @@ export function formatReport(report: DeckReport, trim = 0): string {
   // arithmetic biases, and the old "reads low, land-fetch ramp is not counted" caveat is GONE
   // because the simulation models land-fetch ramp -- it was the measured defect that motivated it.
   if (cmdCast.some((c) => c.castable !== null)) {
-    lines.push("  (simulated: the low end holds up two mana, the high end spends everything on ramp)");
+    lines.push(`  (simulated. ${POLICY_LEGEND})`);
   }
 
   lines.push("");
@@ -281,8 +281,7 @@ export function formatReport(report: DeckReport, trim = 0): string {
       lines.push(`  by turn ${m.need.turn} you can make ${m.need.mana} mana ${policyBand(m.need.low, m.need.high)} of the time; ${Math.round(m.need.share * 100)}% of your spells cost ${m.need.mana} or less`);
     }
     lines.push(`  ${m.need ? "ramp: " : ""}by turn ${m.headline.turn} you can make ${m.headline.mana} mana ${odds} of the time`);
-    lines.push("    (the range is the PLAY POLICY: the low end holds up two mana, the high end spends");
-    lines.push("     everything on acceleration and is a CEILING no real deck plays to)");
+    lines.push(`    (the range is the PLAY POLICY. ${POLICY_LEGEND})`);
     lines.push("");
     lines.push("  turn   mana (p25-median-p75)   spells you could pay for");
     for (const r of m.rows) {

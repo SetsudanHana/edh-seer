@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
+import { POLICY_LEGEND } from "@edh-seer/engine/percent";
 import userEvent from "@testing-library/user-event";
 import { CardDrawerProvider, CardName, ReasonText } from "./card-drawer.js";
 import { ComboList } from "./ComboList.js";
@@ -472,6 +473,11 @@ test("Cards tab shows what a card costs and when you can cast it, beside the rat
   expect(within(row).getByText("3.7")).toBeInTheDocument();
   // #1226: a range in a compact cell carries the ends in its title; a collapsed figure carries none.
   expect(inline.querySelector("[title]")!.getAttribute("title")).toMatch(/low end holds up two mana.*high end spends everything on ramp/);
+});
+
+test("Cards tab: the cost-figure Explain block carries the shared legend (#1226)", () => {
+  render(<CardList cards={[{ name: "A", synergyRating: 1, topPartners: [] }] as any} />);
+  expect(document.body.textContent).toContain(POLICY_LEGEND);
 });
 
 test("Cards tab: a collapsed castability figure has no end-words title (#1226)", () => {
@@ -2489,7 +2495,7 @@ test("CardList explains the cost range on the tab that prints it", () => {
   expect(screen.getByText("what the cost figures mean")).toBeInTheDocument();
   // The figure is CASTABILITY now — mana and colours together — and the range is the play policy.
   expect(screen.getByText(/in the right colours/)).toBeInTheDocument();
-  expect(screen.getByText(/keeps two mana open/)).toBeInTheDocument();
+  expect(screen.getByText(/low end holds up two mana/)).toBeInTheDocument();
 });
 
 // --- F10 / F11: saying a thing once. ---

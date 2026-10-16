@@ -113,3 +113,9 @@ test("a range on the Mana and Hardest cast tiles names its ends; a single figure
   render(<ManaGlance deckMath={deckMath} manaAvailability={manaAvailability} landCount={34} deckSize={100} />);
   expect(document.body.textContent).not.toMatch(/hold up two mana/);
 });
+
+test("the need branch of the Mana tile names its ends too (#1226)", () => {
+  const withNeed = { headline: { mana: 6, turn: 6, low: 0.59, high: 0.7 }, need: { mana: 4, turn: 4, share: 0.94, low: 0.62, high: 0.85 } } as never;
+  render(<ManaGlance manaAvailability={withNeed} landCount={0} deckSize={0} />);
+  expect(screen.getByTestId("mana-tile")).toHaveTextContent("62% if you hold up two mana, 85% if you spend it all on ramp");
+});

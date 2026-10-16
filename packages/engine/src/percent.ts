@@ -69,5 +69,5 @@ export function policyEnds(low: number, high: number): string {
 /** The once-per-block legend for a compact surface (a table of ranges) where per-cell words do not
  *  fit. Says what each end is and what moves a game between them. */
 export const POLICY_LEGEND =
-  "Where a figure is a range, the low end holds up two mana before casting ramp, which is nearer how most games go, "
-  + "and the high end spends everything on ramp, a ceiling. Your own play picks the end: holding mana back gives the low figure, tapping out for ramp each turn the high one.";
+  "Where a figure is a range, the low end holds up two mana before casting ramp, which is nearer how a real deck is played, "
+  + "and the high end spends everything on ramp, a ceiling. They are two ways of playing it, two mana held back each turn before casting ramp against everything into ramp, and your games fall between them.";
