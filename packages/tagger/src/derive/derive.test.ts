@@ -4314,10 +4314,22 @@ test("an Enduring card's self dies trigger survives 'if it was a creature', and 
       { verb: "return", object: "it", fromZone: "graveyard", toZone: "battlefield" },
       { verb: "animate", object: "it" },
     ],
-  }], "Enduring Curiosity", { 3: text });
+  }], "Enduring Curiosity", { 3: text }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true);
   expect(unknownTriggers ?? []).toEqual([]);
   const recursion = abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
   expect(recursion.trigger?.verbs).toContain("dies");
   expect(recursion.trigger?.subject.self).toBe(true);
   expect(recursion.effect.subject?.self).toBe(true);
+});
+
+// ...BUT NOT ON A CARD THAT IS ONLY SOMETIMES A CREATURE (#1250 review). Weatherseed Totem is an Artifact, a creature only once
+// animated, so "if it was a creature" is a real condition (CR 603.4): the trigger stays refused rather than claim every artifact death.
+test("Weatherseed Totem's 'if it was a creature' dies trigger stays refused", () => {
+  const text = "When this artifact is put into a graveyard from the battlefield, if it was a creature, return this card to its owner's hand.";
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 3, abilityType: "triggered", trigger: { event: "dies", subject: "this artifact", control: "you" },
+    actions: [{ verb: "return", object: "this card", fromZone: "graveyard", toZone: "hand" }],
+  }], "Weatherseed Totem", { 3: text }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, false);
+  expect(unknownTriggers).toContain("if:dies");
+  expect(abilities.some((a) => a.trigger?.verbs.includes("dies"))).toBe(false);
 });

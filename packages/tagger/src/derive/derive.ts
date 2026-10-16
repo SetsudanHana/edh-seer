@@ -477,7 +477,8 @@ import { emblemRecipient } from "../emblem.js";
 // 320: #1250 an emit of an action that happens on a delayed trigger ("Sacrifice it at the beginning of the next end step", Reflection of Kiki-Jiki; "return it at the beginning of the next end step") is not `instantSpeed`: no player can aim it at an attacker, so Fable -> Kardur (owner-judged FALSE) no longer forms.
 // 321: #1250 review: the delayed-action guard covers an instant/flash spell's emits too ("Sacrifice it at the beginning of the next end step" on a reanimation instant), not only activated abilities.
 // 322: #1250 task 2 -- a self `dies` trigger with "if it was a creature" (the Enduring cycle, Harold and Bob, Tom Bert and William) is read, not refused: its triggerless recursion read "return it" as ANY graveyard card (Smoke Bomb -> Enduring Curiosity, owner-judged FALSE).
-export const DERIVE_VERSION = 322;
+// 323: #1250 review -- WAS_A_CREATURE is admitted only on a card whose type line includes Creature; Weatherseed Totem (an animated Artifact) keeps its refusal, its intervening if is not vacuous (it formed dies:artifact with Krark-Clan Ironworks and Deadly Dispute).
+export const DERIVE_VERSION = 323;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1526,8 +1527,11 @@ const SOURCE_ZONE = /^(?:~|this \w+|it) is (?:in|on) (?:the command zone|the bat
  *  card in your graveyard": `uniqueName` (CR 903.5b; owner, 2026-10-01). */
 const SAME_NAME = /^it doesn't have the same name as /i;
 
-/** The Enduring cycle's "When ~ dies, if it was a creature, return it ... It's an enchantment" (#1250): the card is only
- *  a creature when it dies and still has this trigger, so the condition narrows nothing a producer supplies. Self dies only. */
+/** The Enduring cycle's "When ~ dies, if it was a creature, return it ... It's an enchantment" (#1250): the card is a creature
+ *  card, so it dies as one and the condition narrows nothing a producer supplies. Admitted ONLY for a self `dies` trigger on a
+ *  card whose printed type line includes Creature; Weatherseed Totem (an Artifact that is a creature only once animated) keeps
+ *  the refusal, its if is not vacuous (CR 603.4). CEILING: reads the printed type line; a creature card that stops being a
+ *  creature before it dies (Enduring Curiosity after it returns as an enchantment) is not modelled. */
 const WAS_A_CREATURE = /^(?:it was|they were) an? creature$/i;
 
 function conditionRepresented(condition: string, text: string): boolean {
@@ -1665,7 +1669,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
 
 type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter } | { refused: string; subject?: SubjectFilter };
 
-function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[], curse?: boolean): GrammarTrigger[] | null {
+function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean): GrammarTrigger[] | null {
   // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
   const bounded = boundedByEnchantLine(text, enchantText);
   const preamble = printedPreamble(bounded, cardName ?? "");
@@ -1689,10 +1693,10 @@ function grammarTriggersOf(text: string, cardName: string | undefined, storedEve
   const mine = readings.filter((x) => x.event === storedEvent);
   const chosen = !split ? readings : mine.length > 0 ? mine : [readings[0]!];
   if (chosen.some((r) => r.event === "reflexive")) return null;
-  return chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText, curse));
+  return chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText, curse, creatureCard));
 }
 
-function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, cardName: string | undefined, cardText: string, curse?: boolean): GrammarTrigger {
+function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, cardName: string | undefined, cardText: string, curse?: boolean, creatureCard?: boolean): GrammarTrigger {
   // A CURSE'S ENCHANTED PLAYER IS AN OPPONENT (owner 2026-10-07): Maddening Hex's "whenever enchanted
   // player casts a noncreature spell" was refused as a narrowing to one player, so its damage had
   // no trigger. A Curse goes on an opponent in play, so the one player reads as an opponent; on any
@@ -1711,7 +1715,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   if (!verb) return { refused: r.event === "tapped-for-mana" ? "taps-for-mana" : r.event };
   // Entering TRANSFORMED keeps the name the stored path gave it.
   if (verb === "enters" && /\btransformed\b/.test(r.narrowing ?? "")) return { refused: "enters-transformed", subject };
-  if (r.condition && !conditionRepresented(r.condition.text, text) && !(verb === "dies" && subject.self === true && WAS_A_CREATURE.test(r.condition.text))) return { refused: `if:${r.event}`, subject };
+  if (r.condition && !conditionRepresented(r.condition.text, text) && !(verb === "dies" && subject.self === true && creatureCard === true && WAS_A_CREATURE.test(r.condition.text))) return { refused: `if:${r.event}`, subject };
   if (r.narrowing && !narrowingRepresented(r, text)) return { refused: `narrowing:${r.event}`, subject };
   if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
   if (r.condition && SAME_NAME.test(r.condition.text)) subject.uniqueName = true;
@@ -1877,6 +1881,8 @@ export function deriveAbilities(
   readings?: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }>,
   /** The card is a Curse: its enchanted player is an opponent (owner 2026-10-07). */
   curse?: boolean,
+  /** The card's printed type line includes Creature (WAS_A_CREATURE reads only then). */
+  creatureCard?: boolean,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -2072,7 +2078,7 @@ export function deriveAbilities(
     if (partner !== undefined) twinOf.set(clause.id, partner);
     const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
       clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
-      readings?.[clause.id]?.trigger, curse) : null;
+      readings?.[clause.id]?.trigger, curse, creatureCard) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
     if (text && claimed.length > 0) {
       const covered = grammarCovered.get(text) ?? new Map<string, number | string>();
@@ -3014,7 +3020,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
   const derived = deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
-    chars.subtypes.some((t) => t.toLowerCase() === "curse"));
+    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"));
   const { unknownTriggers } = derived;
   // AN AURA ON AN OPPONENT'S CREATURE WATCHES THE OPPONENT'S CREATURE (owner 2026-09-23, AN7).
   // Nurgle's Rot prints "Enchant creature an opponent controls / When enchanted creature dies": the

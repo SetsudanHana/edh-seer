@@ -172,3 +172,16 @@ test("Smoke Bomb's self-sacrifice does not feed Enduring Curiosity's return of i
   }], { 3: "When Enduring Curiosity dies, if it was a creature, return it to the battlefield under its owner's control. It's an enchantment. (It's not a creature.)" });
   expect(pairReasons(smokeBomb, curiosity, H).filter((r) => r.tag.startsWith("graveyard-recursion"))).toEqual([]);
 });
+
+// WEATHERSEED TOTEM IS NOT AN ARTIFACT-DEATH PAYOFF (#1250 review): it returns itself only if it died AS A CREATURE, which a
+// plain artifact sacrifice (Krark-Clan Ironworks) does not supply; the trigger stays refused, so no dies:artifact edge forms.
+test("an artifact sacrifice outlet does not feed Weatherseed Totem's 'if it was a creature' return", () => {
+  const totem = card("Weatherseed Totem", ["artifact"], [{
+    id: 3, abilityType: "triggered", trigger: { event: "dies", subject: "this artifact", control: "you" },
+    actions: [{ verb: "return", object: "this card", fromZone: "graveyard", toZone: "hand" }],
+  }], { 3: "When this artifact is put into a graveyard from the battlefield, if it was a creature, return this card to its owner's hand." });
+  const ironworks = card("Krark-Clan Ironworks", ["artifact"], [{
+    id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "an artifact" }, { verb: "add-mana", object: "{C}{C}" }],
+  }], { 1: "Sacrifice an artifact: Add {C}{C}." });
+  expect(pairReasons(ironworks, totem, H).filter((r) => r.tag.startsWith("dies"))).toEqual([]);
+});
