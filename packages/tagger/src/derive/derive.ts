@@ -480,7 +480,8 @@ import { emblemRecipient } from "../emblem.js";
 // 323: #1250 review -- WAS_A_CREATURE is admitted only on a card whose type line includes Creature; Weatherseed Totem (an animated Artifact) keeps its refusal, its intervening if is not vacuous (it formed dies:artifact with Krark-Clan Ironworks and Deadly Dispute).
 // 324: #1250 task 3 -- "from that player's graveyard" in a combat-damage trigger whose damager is yours (or "to an opponent") is an OPPONENT's graveyard, on the recursion subject and its cast/leaves emits (Tinybones, Ink-Eyes, Scion of Darkness, Zareth San, Skullsnatcher, Zombie Cannibal, Wrexial, Whispersteel Dagger, Deluxe Dragster, Shark Shredder, Fire Nation Salvagers); it read `any` and so matched a graveyard filler of your own (Lively Dirge -> Tinybones).
 // 325: #1250 task 3 review -- only the `leaves` emit of that graveyard recursion is an opponent's; the cast and enters emits keep their reading (you cast it, it enters under your control).
-export const DERIVE_VERSION = 325;
+// 326: #1250 task 5 -- "if you didn't cast it from your hand" on an enters trigger is the entry's HOW (`notCast`), no longer dropped silently: Chainer, Nightmare Adept was fed by every creature cast from hand (Braids, owner-judged FALSE); Phage the Untouchable's self trigger carries it too.
+export const DERIVE_VERSION = 326;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1522,10 +1523,13 @@ const SORCERY_SPEED = /\bactivate (?:this ability )?only as a sorcery\b|\bonly d
 const LOYALTY_COST = /^[+\u2212-]?(?:\d+|X)$/;
 
 /** "if none of them were cast", "if it wasn't cast", "no mana was spent to cast", "without being
- *  played" — the entry happened by some route other than casting. Card-scoped like every other
- *  printed cue here. */
+ *  played", "if you didn't cast it from your hand" (Chainer, Nightmare Adept; Phage the Untouchable) — the
+ *  entry happened by some route other than casting. CEILING: the last cue also holds for a cast from
+ *  another zone (a flashback from the graveyard), which `notCast` refuses as a cast; only the hand
+ *  is the implied cast, so the miss is a creature cast from the graveyard entering. Card-scoped like
+ *  every other printed cue here. */
 const ARRIVED_WITHOUT_CASTING =
-  /\b(?:wasn't|weren't) cast\b|\bnone of them were cast\b|\bno mana was spent\b|\bwithout being played\b/i;
+  /\b(?:wasn't|weren't) cast\b|\bnone of them were cast\b|\bno mana was spent\b|\bwithout being played\b|\byou didn't cast (?:it|them) from your hand\b/i;
 
 /** WORDS ABOUT WHEN, NOT WHICH: "your NEXT upkeep", "dies THIS TURN", "this combat". A delayed or
  *  windowed trigger fires on the same class of event, as `oncePerTurn` does; `delayedBy` and
