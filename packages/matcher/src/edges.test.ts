@@ -1301,7 +1301,7 @@ test("a self-recursion is only enabled by a fill that could contain the card its
   expect(artifact.length).toBeGreaterThan(0);
 });
 
-test("a self-recursion is never enabled by a mill, discard or surveil, only by a death from the battlefield", () => {
+test("a self-recursion is never enabled by a random mill or a discard; a death, a tutor and a surveil still enable it", () => {
   // Owner-judged FALSE 2026-10-16: Tomb Fortress, Tablet of Discovery and The Warring Triad (mill) and
   // Prismari Command (discard) "enabled" a card returning ITSELF from the graveyard. A mill is random
   // and a discard is chosen from hand: neither is how a creature that returns itself is meant to get
@@ -1332,10 +1332,11 @@ test("a self-recursion is never enabled by a mill, discard or surveil, only by a
 
   expect(recursion(producer("Tablet of Discovery", [{ verb: "mill", subject: you }]))).toEqual([]);
   expect(recursion(producer("Prismari Command", [{ verb: "discard", subject: you }]))).toEqual([]);
-  expect(recursion(producer("Consider", [{ verb: "surveil", subject: you }]))).toEqual([]);
-  // An authored "put a card from your library/hand into your graveyard" names its origin.
-  expect(recursion(producer("Entomb", [{ verb: "enters", subject: { ...you, zone: "graveyard", fromZone: "library" } }]))).toEqual([]);
-  expect(recursion(producer("Putrefy Hand", [{ verb: "enters", subject: { ...you, zone: "graveyard", fromZone: "hand" } }]))).toEqual([]);
+  // CHOSEN fills still join (owner ruling 2026-10-16): a surveil, and a tutor putting a card into the graveyard.
+  expect(recursion(producer("Consider", [{ verb: "surveil", subject: you }])).length).toBeGreaterThan(0);
+  expect(recursion(producer("Entomb", [{ verb: "enters-graveyard", subject: { ...you, fromZone: "library" } }])).length).toBeGreaterThan(0);
+  // An authored put from the hand is a discard.
+  expect(recursion(producer("Putrefy Hand", [{ verb: "enters-graveyard", subject: { ...you, fromZone: "hand" } }]))).toEqual([]);
 
   // A creature dying (sacrifice outlet, removal) still joins.
   expect(recursion(producer("Phyrexian Altar", [{ verb: "dies", subject: { ...you, type: "creature" } }])).length).toBeGreaterThan(0);

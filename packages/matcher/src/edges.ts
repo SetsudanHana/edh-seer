@@ -2436,8 +2436,13 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
         // random out of the library and a discard is the hand's: that the card COULD be among them is
         // not a way to put it in the graveyard on purpose. Every REAL self-recursion verdict (Ayara ->
         // Death Tyrant, Cultist of the Absolute -> Bloodsoaked Champion) is a sacrifice or a death.
-        // CEILING: a fill with no stated origin is taken as a battlefield death.
-        if (e.origin !== undefined || e.subject.fromZone === "library" || e.subject.fromZone === "hand") continue;
+        // OWNER RULING 2026-10-16 (#1250): CHOSEN fills still enable it -- a tutor that puts a card into
+        // the graveyard (Entomb, Buried Alive, Unmarked Grave) and a surveil. Only the random MILL and
+        // the DISCARD are refused; both are marked `origin` by `impliedGraveyardEvents`, a surveil is not,
+        // and a tutor's authored fill carries `fromZone: "library"` without it.
+        // CEILING: an authored put "from your hand" is refused as a discard; a fill with no stated
+        // origin is taken as a battlefield death.
+        if (e.origin !== undefined || e.subject.fromZone === "hand") continue;
         // A fill that is ITSELF self-scoped puts the PRODUCER into the graveyard, and the producer is
         // never the consumer in a pair. `self` rode along in fillIdentity below, where subjectMatches
         // does not read it, so the fill looked untyped and wildcarded through the very check that

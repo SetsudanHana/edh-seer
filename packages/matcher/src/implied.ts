@@ -531,7 +531,8 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
         ...(e.subject.self === true ? { self: true } : {}),
       }, ...(e.verb === "mill" ? { milled: true as const } : {}),
       // `self` discards (cycling) are the card's own, typed by `selfFillTypes`; they too leave the hand.
-      origin: e.verb === "discard" ? "hand" as const : "library" as const });
+      // A SURVEIL IS CHOSEN, so it carries no origin (owner ruling 2026-10-16): only mill and discard refuse.
+      ...(e.verb === "discard" ? { origin: "hand" as const } : e.verb === "mill" ? { origin: "library" as const } : {}) });
     } else if (e.verb === "dies" && e.subject.token !== true) {
       // A DEATH fills the graveyard with a typed card; a `leaves` does not -- a flicker, a bounce
       // or an exile moved the permanent anywhere but a graveyard (CR 700.4), and until 2026-09-05
