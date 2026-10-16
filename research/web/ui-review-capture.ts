@@ -694,6 +694,15 @@ async function splitText(page: Page, regions: readonly string[], ranges: [number
   return { split, tall };
 }
 
+/** Prints and records `splitText` for one pass: at most 5 lines, a count, and every split into `missing`. */
+async function reportSplitText(page: Page, regions: readonly string[], ranges: [number, number][], tag: string, missing: string[]): Promise<void> {
+  const { split, tall } = await splitText(page, regions, ranges);
+  for (const m of split.slice(0, 5)) console.log(`  SPLIT TEXT ${tag}: ${m}`);
+  if (split.length > 5) console.log(`  SPLIT TEXT ${tag}: ... and ${split.length - 5} more`);
+  console.log(`  split-text check ${tag}: ${split.length} split, ${tall} taller than a frame (excluded)`);
+  for (const m of split) missing.push(`${tag}: SPLIT TEXT ${m}`);
+}
+
 /** Clicks every "Show all N" / "Show N more" / "Show N smaller" list open inside the page body,
  *  repeatedly, since the cut list opens in steps. Returns how many clicks it took (#989: first-cuts
  *  could not reach its 8th cut behind a shut "Show 2 more").
@@ -950,15 +959,7 @@ async function main(runPath: string): Promise<void> {
               missing.push(`${stem}/${step.id}/${label}: ${m}`);
             }
           }
-          if (full && step.regions?.length) {
-            const { split, tall } = await splitText(page, step.regions, ranges);
-            for (const m of split.slice(0, 5)) {
-              console.log(`  SPLIT TEXT ${stem}/${step.id}/${label}: ${m}`);
-            }
-            if (split.length > 5) console.log(`  SPLIT TEXT ${stem}/${step.id}/${label}: ... and ${split.length - 5} more`);
-            console.log(`  split-text check ${stem}/${step.id}/${label}: ${split.length} split, ${tall} taller than a frame (excluded)`);
-            for (const m of split) missing.push(`${stem}/${step.id}/${label}: SPLIT TEXT ${m}`);
-          }
+          if (full && step.regions?.length) await reportSplitText(page, step.regions, ranges, `${stem}/${step.id}/${label}`, missing);
           manifest.push({
             deck: stem, step: step.id, goal: step.goal, viewport: label, files,
             // Present and non-empty means the reader could not do this step at this width. The
@@ -1013,6 +1014,8 @@ async function main(runPath: string): Promise<void> {
               await page.waitForTimeout(200);
               const opened = await shoot(page, deckDir, `${step.id}-${label}-expanded`, step.through);
               manifest.push({ deck: stem, step: step.id, goal: step.goal, viewport: label, variant: "details-expanded", files: opened.files });
+              // The opened pass is where the seam gap was found (#1241); check it before it is shut again.
+              if (step.regions?.length) await reportSplitText(page, step.regions, opened.ranges, `${stem}/${step.id}/${label}-expanded`, missing);
               await restoreDetails(page);
               if (lists) {
                 await page.reload();
