@@ -17,7 +17,7 @@
  *  is indistinguishable from a fix that did not work.
  *
  *  Output lands in `persona-shots/<surface>/`, already gitignored. */
-import { mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync, rmSync, renameSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, type BrowserContext, type Page } from "@playwright/test";
@@ -329,11 +329,18 @@ export function overlapPairs(rects: Rect[]): number {
   return n;
 }
 
-/** How many viewport frames reach from `start` down to `end` (document px), at least one and at most
- *  `cap`. A region taller than the cap is then reported missing by `covered`, not silently cut. */
-export function sliceCount(start: number, end: number, height: number, cap: number): number {
-  if (height <= 0) return 1;
-  return Math.min(cap, Math.max(1, Math.ceil((end - start) / height)));
+/** The document-px band of a frame scrolled to `y` that a reader can actually read: the top
+ *  `obscuredTop` px lie under a sticky/fixed bar at the top, the bottom `obscuredBottom` under one
+ *  pinned to the bottom. Recording the whole [y, y + height) claimed the hidden band was shown (#1241). */
+export function visibleBand(y: number, height: number, obscuredTop: number, obscuredBottom: number): [number, number] {
+  return [y + obscuredTop, y + height - obscuredBottom];
+}
+
+/** Where to scroll for the next frame so its readable top equals this frame's readable bottom: the
+ *  step is the readable height, so the overlap is exactly the obscured bands. Overlap is harmless; a
+ *  gap is not. Always advances at least one pixel so a degenerate measurement cannot stall the loop. */
+export function nextScroll(y: number, height: number, obscuredTop: number, obscuredBottom: number): number {
+  return y + Math.max(1, height - obscuredTop - obscuredBottom);
 }
 
 /** Whether a document-relative box [top, bottom) lies wholly inside the union of the frames'
@@ -552,28 +559,71 @@ async function boxOf(page: Page, selector: string): Promise<{ top: number; botto
   }, selector);
 }
 
+/** The heights of whatever is pinned over the top and bottom of the viewport right now. Fixed or
+ *  sticky elements only, shown, at least half the viewport wide. Bars STACK (a sticky bar `top: 69px` under a header sits
+ *  at rect.top 69, not 0), so a candidate counts when it touches the band built so far, grown
+ *  greedily. An element spanning the whole viewport height is a rail or an overlay, not a bar, and
+ *  counts for neither end; each band is capped at half the viewport regardless. Measured per frame
+ *  because the phone bar is not the desktop bar. */
+async function obscuredBands(page: Page, dump = false): Promise<{ top: number; bottom: number; seen: string[] }> {
+  return page.evaluate((dumpIt: boolean) => {
+    const h = window.innerHeight;
+    const rects: { t: number; b: number; tag: string }[] = [];
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>("body *"))) {
+      const cs = getComputedStyle(el);
+      if (cs.position !== "fixed" && cs.position !== "sticky") continue;
+      if (cs.display === "none" || cs.visibility === "hidden") continue;
+      const r = el.getBoundingClientRect();
+      // A BAR spans most of the width; a side rail or drawer (the 320px aside) hides only its own column.
+      if (r.width < window.innerWidth / 2 || r.height <= 0) continue;
+      if (r.bottom <= 0 || r.top >= h) continue;
+      rects.push({ t: r.top, b: r.bottom, tag: `${el.tagName}.${String(el.className).slice(0, 40)} ${cs.position} ${Math.round(r.top)}-${Math.round(r.bottom)} w${Math.round(r.width)}` });
+    }
+    const bars = rects.filter((r) => !(r.t <= 1 && r.b >= h - 1));
+    let top = 0;
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const r of bars) if (r.t <= top + 1 && r.b > top) { top = r.b; grew = true; }
+    }
+    let bottom = h;
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const r of bars) if (r.b >= bottom - 1 && r.t < bottom) { bottom = r.t; grew = true; }
+    }
+    return { top: Math.min(top, h / 2), bottom: Math.min(h - bottom, h / 2), seen: dumpIt ? rects.map((r) => r.tag) : [] };
+  }, dump);
+}
+
 async function shoot(page: Page, dir: string, stem: string, through?: string): Promise<{ files: string[]; ranges: [number, number][] }> {
-  const files: string[] = [];
+  const shots: string[] = [];
   const ranges: [number, number][] = [];
   const { height } = page.viewportSize() ?? { height: 0 };
   // FROM WHERE THE STEP LEFT THE READER, not from the top. A step that navigates to a chapter has
   // already scrolled the page to it; slicing from 0 would quietly discard that and shoot the
-  // landing screen again, which is how the first round produced two byte-identical steps.
+  // landing screen again, which is how the first round produced two byte-identical steps. The
+  // first band starts under the bar rather than scrolling back up: record honestly.
   const startY = await page.evaluate(() => window.scrollY);
   const full = await page.evaluate(() => document.documentElement.scrollHeight);
   const end = through ? (await boxOf(page, through))?.bottom : undefined;
-  const slices = end === undefined
-    ? sliceCount(startY, full, height, MAX_SLICES)
-    : sliceCount(startY, end, height, MAX_THROUGH);
-  for (let i = 0; i < slices; i++) {
-    const y = await page.evaluate((to: number) => { window.scrollTo(0, to); return window.scrollY; }, startY + i * height);
+  const target = end ?? full;
+  const cap = end === undefined ? MAX_SLICES : MAX_THROUGH;
+  let ask = startY;
+  for (let i = 0; i < cap; i++) {
+    const y = await page.evaluate((to: number) => { window.scrollTo(0, to); return window.scrollY; }, ask);
     await page.waitForTimeout(120);
-    const file = slices === 1 ? `${stem}.png` : `${stem}-p${i + 1}.png`;
-    await page.screenshot({ path: join(dir, file) });
-    files.push(file);
-    // WHERE IT LANDED, not where it was asked to go: the last screen of a page clamps.
-    ranges.push([y, y + height]);
+    const ob = await obscuredBands(page, process.env.SEAM_DUMP === "1");
+    console.log(`  ${stem} slice ${i + 1}: y=${Math.round(y)} under a bar top ${Math.round(ob.top)}px, bottom ${Math.round(ob.bottom)}px${ob.seen.length ? ` [${ob.seen.join(" | ")}]` : ""}`);
+    const tmp = `${stem}-tmp${i}.png`;
+    await page.screenshot({ path: join(dir, tmp) });
+    shots.push(tmp);
+    // WHAT A READER CAN READ, at where it landed (the last screen of a page clamps).
+    const band = visibleBand(y, height, ob.top, ob.bottom);
+    ranges.push(band);
+    if (band[1] >= target || y < ask - 1) break;
+    ask = nextScroll(y, height, ob.top, ob.bottom);
   }
+  const files = shots.map((t, i) => (shots.length === 1 ? `${stem}.png` : `${stem}-p${i + 1}.png`));
+  shots.forEach((t, i) => renameSync(join(dir, t), join(dir, files[i])));
   await page.evaluate((y: number) => window.scrollTo(0, y), startY);
   return { files, ranges };
 }
@@ -1096,13 +1146,19 @@ function selfTest(): void {
   // "plan" ran and matched nothing: stale. "gone" never ran: not judged.
   eq(g.stale.map((a) => a.step), ["plan"], "an entry for a step that ran and matched nothing is stale");
 
-  eq(sliceCount(0, 2500, 1000, 16), 3, "three screens reach 2500px");
-  eq(sliceCount(0, 50_000, 1000, 16), 16, "capped");
-  eq(sliceCount(900, 900, 1000, 16), 1, "a step always shoots one");
   eq(covered([[0, 1000], [1000, 2000]], 100, 1900), true, "two adjacent frames cover a box across both");
   eq(covered([[0, 1000], [1200, 2200]], 100, 1900), false, "a gap between frames is not covered");
   eq(covered([[1500, 2500], [0, 1000], [800, 1800]], 0, 2500), true, "order of frames does not matter");
   eq(covered([[0, 1000]], 0, 1001), false, "one pixel past the last frame is missing");
+  eq(visibleBand(0, 1000, 130, 0), [130, 1000], "the band under a 130px bar starts 130px down");
+  eq(visibleBand(500, 1000, 130, 20), [630, 1480], "a bottom bar trims the other end");
+  eq(nextScroll(0, 1000, 130, 0), 870, "the next screen starts where this one's readable part ended");
+  {
+    const a = visibleBand(0, 1000, 130, 0);
+    const b = visibleBand(nextScroll(0, 1000, 130, 0), 1000, 130, 0);
+    eq(covered([a, b], 900, 1200), true, "stepping by the readable height leaves no seam");
+  }
+  eq(covered([[0, 1000], [1130, 2000]], 900, 1200), false, "the old recording hid [1000,1130) under the bar");
 
   console.log("self-test: ok");
 }
