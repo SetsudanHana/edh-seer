@@ -1597,6 +1597,28 @@ test("exiling from THEIR graveyard after combat damage to a player is a recursio
   expect(oppRecursion(abilities)?.control).toBe("opp");
 });
 
+// #1250 task 3: Tinybones casts from "that player's graveyard" -- the player it damaged, an opponent.
+// The zone's owner was dropped, so the recursion read control `any` and a graveyard filler of YOUR own
+// (Lively Dirge) was paired to it.
+test("'that player's graveyard' after combat damage to a player by your creature is an opponent's yard", () => {
+  const text = "Whenever Tinybones deals combat damage to a player, you may cast target nonland permanent card from that player's graveyard, and mana of any type can be spent to cast that spell.";
+  const { abilities } = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "Tinybones", control: "you" }, actions: [
+    { verb: "cast", object: "target nonland permanent card from that player's graveyard", fromZone: "graveyard", toZone: "stack", optional: true },
+  ] }], "Tinybones, the Pickpocket", { 2: text }, undefined, text);
+  const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
+  expect(rec.effect.subject?.control).toBe("opp");
+  expect(rec.emits?.map((e) => e.subject.control)).toEqual(rec.emits?.map(() => "opp"));
+  expect((rec.emits ?? []).length).toBeGreaterThan(0);
+});
+
+test("'that player's graveyard' after ANYONE's combat damage, or a target player, is left unresolved", () => {
+  const text = "Whenever a creature deals combat damage to a player, you may cast target instant card from that player's graveyard.";
+  const { abilities } = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "a creature", control: "any" }, actions: [
+    { verb: "cast", object: "target instant card from that player's graveyard", fromZone: "graveyard", toZone: "stack", optional: true },
+  ] }], "Some Thief", { 2: text }, undefined, text);
+  expect(abilities.find((a) => a.effect.kind === "graveyard-recursion")?.effect.subject?.control).toBe("any");
+});
+
 test("an exile from a graveyard that uses nothing stays hate", () => {
   const { abilities } = deriveAbilities([{
     id: 1, abilityType: "activated",

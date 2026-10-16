@@ -478,7 +478,8 @@ import { emblemRecipient } from "../emblem.js";
 // 321: #1250 review: the delayed-action guard covers an instant/flash spell's emits too ("Sacrifice it at the beginning of the next end step" on a reanimation instant), not only activated abilities.
 // 322: #1250 task 2 -- a self `dies` trigger with "if it was a creature" (the Enduring cycle, Harold and Bob, Tom Bert and William) is read, not refused: its triggerless recursion read "return it" as ANY graveyard card (Smoke Bomb -> Enduring Curiosity, owner-judged FALSE).
 // 323: #1250 review -- WAS_A_CREATURE is admitted only on a card whose type line includes Creature; Weatherseed Totem (an animated Artifact) keeps its refusal, its intervening if is not vacuous (it formed dies:artifact with Krark-Clan Ironworks and Deadly Dispute).
-export const DERIVE_VERSION = 323;
+// 324: #1250 task 3 -- "from that player's graveyard" in a combat-damage trigger whose damager is yours (or "to an opponent") is an OPPONENT's graveyard, on the recursion subject and its cast/leaves emits (Tinybones, Ink-Eyes, Scion of Darkness, Zareth San, Skullsnatcher, Zombie Cannibal, Wrexial, Whispersteel Dagger, Deluxe Dragster, Shark Shredder, Fire Nation Salvagers); it read `any` and so matched a graveyard filler of your own (Lively Dirge -> Tinybones).
+export const DERIVE_VERSION = 324;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -900,8 +901,22 @@ const ZONE_OWNER: ReadonlyArray<readonly [RegExp, Control]> = [
   [/\bcombat damage to a player\b[^.]*?,\s*exile\b[^.]*?\bfrom their/i, "opp"],
 ];
 
-function zoneOwner(clauseText: string, zone: string | null | undefined): Control | undefined {
+/** "THAT PLAYER'S GRAVEYARD" IN A COMBAT-DAMAGE TRIGGER IS THE DAMAGED PLAYER (#1250, Tinybones): when the
+ *  damager is yours -- the card itself, "this Vehicle", "equipped creature" (CR 301.5c: you equip your
+ *  own), anything "you control" -- the player it hit is an opponent's, and "to an opponent" says so
+ *  outright. "A creature deals combat damage to a player" could hit you, so that stays `any`. */
+function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, cardName?: string): boolean {
+  const m = /^\s*(?:whenever|when)\s+(.+?)\s+deals?\s+combat damage to (a player|an opponent)\b/i.exec(clauseText);
+  if (!m) return false;
+  if (/^an opponent$/i.test(m[2]!)) return true;
+  const who = m[1]!;
+  return triggerIsSelf || /\byou control\b/i.test(who) || /^(?:this |equipped creature$)/i.test(who)
+    || (cardName !== undefined && (who === cardName || who.toLowerCase() === cardName.split(",")[0]!.toLowerCase()));
+}
+
+function zoneOwner(clauseText: string, zone: string | null | undefined, triggerIsSelf = false, cardName?: string): Control | undefined {
   if (!zone || clauseText === "") return undefined;
+  if (zone === "graveyard" && /\bfrom that player's graveyard\b/i.test(clauseText) && damagedPlayerIsOpponent(clauseText, triggerIsSelf, cardName)) return "opp";
   for (const [re, control] of ZONE_OWNER) {
     // Anchored on the ZONE the action names, so "return it to your hand" cannot be read as a claim
     // about whose graveyard was searched.
@@ -1297,7 +1312,7 @@ function effectSubject(
   if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) {
     subject.zone = action.fromZone;
     // Only when the object text stated no owner of its own -- an explicit one is more specific.
-    const owner = zoneOwner(clauseText, action.fromZone);
+    const owner = zoneOwner(clauseText, action.fromZone, triggerIsSelf, cardName);
     if (owner && subject.control === "any") subject.control = owner;
   }
   // Owner's ruling 2026-08-14 (threshold-lines): a coarse extra-phase conflated units the game
@@ -2395,6 +2410,12 @@ export function deriveAbilities(
       const subject = effectKind
         ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
+      // #1250: the same damaged-player reading reaches the cast/leaves emits of the card taken out of
+      // "that player's graveyard" -- their graveyard is the one they leave. Only an emit still `any`.
+      if (action.fromZone === "graveyard" && /\bfrom that player's graveyard\b/i.test(text)
+        && damagedPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
+        for (const e of emits) if (e.subject.control === "any" && (e.subject.fromZone === "graveyard" || e.subject.zone === "graveyard")) e.subject.control = "opp";
+      }
       // A GRANT TO THE TRIGGERING OBJECT says so (Stonehoof Chieftain: "whenever another creature you
       // control attacks, IT gains trample"), so the matcher can see a keyword that object already
       // has is no gift (owner 2026-10-02: "flying flying gives you nothing additional").
