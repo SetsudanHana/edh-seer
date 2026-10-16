@@ -1324,7 +1324,7 @@ function selfTest(): void {
     const base = { prevEnd: 1080, ask: 1000, landed: 1000, y: 1000, ob, height: 1000, target: 5000 };
     eq(frameStep(base).stop, false, "a frame short of the target goes on");
     eq(frameStep({ ...base, target: 2000 }).stop, true, "a frame that reaches the target stops");
-    eq(frameStep({ ...base, landed: 900 }).stop, true, "a clamp with no rewind is the end of the page");
+    eq(frameStep({ ...base, landed: 900, y: 900 }).stop, true, "a clamp with no rewind is the end of the page");
     eq(frameStep({ ...base, landed: 900, y: 840 }).stop, false, "a clamp whose frame was rewound has not reached the end: the tail is still unshot");
     eq(frameStep({ ...base, landed: 900, y: 840, target: 1800 }).stop, true, "unless the rewound frame reaches the target");
     eq(frameStep({ ...base, y: 1000 }).band, [1130, 2000], "the band is the readable part");
