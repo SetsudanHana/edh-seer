@@ -45,8 +45,12 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
   const unread = unreadNote(deckMath?.unreadSources);
   if (colours.length) {
     // The colour furthest short of what its earliest demanding card needs; none short says so.
-    const short = colours.filter((c) => c.worst && c.worst.available < c.worst.required)
-      .sort((a, b) => (b.worst!.required - b.worst!.available) - (a.worst!.required - a.worst!.available))[0];
+    // The rest of the short colours follow, same order (#1242): the box named one and the reader
+    // took it for the only one.
+    const shorts = colours.filter((c) => c.worst && c.worst.available < c.worst.required)
+      .sort((a, b) => (b.worst!.required - b.worst!.available) - (a.worst!.required - a.worst!.available));
+    const short = shorts[0];
+    const others = shorts.slice(1);
     tiles.push(short?.worst ? (
       <Tile key="colours" label="Weakest colour" warn
         // NO SLASH (#1033): "30 /37" read as 30 of 37 lands even with the line below naming both
@@ -56,7 +60,7 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
         // then" left the seat asking "more black lands or fewer tapped ones?", and the Improve finding
         // two chapters down already knew: a deck that runs enough of the colour has a SPEED problem.
         // The tile says which problem it is, in the finding's own words, then the numbers.
-        sub={<><ColourVerdict c={short} worst={short.worst} />{unread && <> {unread}.</>}</>} />
+        sub={<><ColourVerdict c={short} worst={short.worst} />{others.length > 0 && <> Also short:{others.map((c, i) => <span key={c.color}>{i > 0 && ","} <ManaSymbols cost={`{${c.color}}`} /> {c.worst!.available} of {c.worst!.required} by turn {c.worst!.turn}</span>)}.</>}{unread && <> {unread}.</>}</>} />
     ) : (
       <Tile key="colours" label="Colours" big={<span className="inline-flex gap-0.5">{colours.map((c) => <ManaSymbols key={c.color} cost={`{${c.color}}`} />)}</span>}
         sub={unread ? <>enough sources for every card it could read. {unread}.</> : "enough sources for every card"} />

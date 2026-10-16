@@ -119,3 +119,25 @@ test("the need branch of the Mana tile names its ends too (#1226)", () => {
   render(<ManaGlance manaAvailability={withNeed} landCount={0} deckSize={0} />);
   expect(screen.getByTestId("mana-tile")).toHaveTextContent("62% if you hold up two mana, 85% if you spend it all on ramp");
 });
+
+/** #1242 (owner ruling 2026-10-16): the tile keeps its ranking and names every OTHER short colour after the
+ *  headline, worst first (persona round 2026-10-16: "the box points at blue" while red was short too). */
+test("the weakest-colour tile names the other short colours, worst first, and only when there are some", () => {
+  const w = (required: number, available: number, turn: number) => ({ pips: 2, turn, required, requiredRaw: required, cards: 1, available });
+  const three = { ...(deckMath as object), colors: [
+    { color: "B", supplied: 14, worst: w(17, 12, 1) },
+    { color: "U", supplied: 14, worst: w(22, 12, 2) },
+    { color: "R", supplied: 14, worst: w(17, 11, 1) },
+  ] } as never;
+  const { unmount } = render(<ManaGlance deckMath={three} landCount={34} deckSize={100} />);
+  const text = screen.getAllByTestId("mana-tile")[1]!.textContent!;
+  expect(text).toContain("12 of 22 needed");
+  const also = text.indexOf("Also short:");
+  expect(also).toBeGreaterThan(text.indexOf("Short of blue"));
+  expect(text.indexOf("11 of 17 by turn 1")).toBeGreaterThan(also);
+  expect(text.indexOf("12 of 17 by turn 1")).toBeGreaterThan(text.indexOf("11 of 17 by turn 1"));
+  expect(text).toMatch(/12 of 17 by turn 1\.$/);
+  unmount();
+  render(<ManaGlance deckMath={deckMath} landCount={34} deckSize={100} />);
+  expect(screen.getAllByTestId("mana-tile")[1]!.textContent).not.toContain("Also short");
+});
