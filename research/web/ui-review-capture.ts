@@ -348,6 +348,15 @@ export function nextScroll(y: number, height: number, obscuredTop: number, obscu
  *  lines of body text, enough for any single line and small enough not to add a frame to a step. */
 export const SEAM_OVERLAP = 48;
 
+/** The step was sized from the bars of the PREVIOUS frame; the sticky report bar appears only once the
+ *  page has scrolled, so the next frame can have a taller one and its readable top lands below the
+ *  previous bottom: a gap. Where to scroll instead so the readable top is `overlap` above the previous
+ *  readable bottom, or null when the frame is already there (within 1px). */
+export function rewindTo(prevEnd: number, y: number, obscuredTop: number, overlap = SEAM_OVERLAP): number | null {
+  const need = Math.max(0, prevEnd - overlap - obscuredTop);
+  return y > need + 1 ? need : null;
+}
+
 /** Whether a document-relative box [top, bottom) lies wholly inside ONE frame's readable band: the
  *  question for a line of text, which a reader cannot read half of in each of two frames. */
 export function wholeInOne(ranges: readonly [number, number][], top: number, bottom: number): boolean {
@@ -629,10 +638,20 @@ async function shoot(page: Page, dir: string, stem: string, through?: string): P
   const target = end ?? full;
   const cap = end === undefined ? MAX_SLICES : MAX_THROUGH;
   let ask = startY;
+  let prevY = -1;
   for (let i = 0; i < cap; i++) {
-    const y = await page.evaluate((to: number) => { window.scrollTo(0, to); return window.scrollY; }, ask);
+    let y = await page.evaluate((to: number) => { window.scrollTo(0, to); return window.scrollY; }, ask);
+    const landed = y;
     await page.waitForTimeout(120);
-    const ob = await obscuredBands(page, process.env.SEAM_DUMP === "1");
+    let ob = await obscuredBands(page, process.env.SEAM_DUMP === "1");
+    // A bar taller than the last frame's opens a gap; scroll back up (a few tries, it can move again).
+    for (let t = 0; t < 3 && i > 0; t++) {
+      const back = rewindTo(ranges[i - 1][1], y, ob.top);
+      if (back === null || back <= prevY) break;
+      y = await page.evaluate((to: number) => { window.scrollTo(0, to); return window.scrollY; }, back);
+      await page.waitForTimeout(120);
+      ob = await obscuredBands(page, process.env.SEAM_DUMP === "1");
+    }
     console.log(`  ${stem} slice ${i + 1}: y=${Math.round(y)} under a bar top ${Math.round(ob.top)}px, bottom ${Math.round(ob.bottom)}px${ob.seen.length ? ` [${ob.seen.join(" | ")}]` : ""}`);
     const tmp = `${stem}-tmp${i}.png`;
     await page.screenshot({ path: join(dir, tmp) });
@@ -640,7 +659,8 @@ async function shoot(page: Page, dir: string, stem: string, through?: string): P
     // WHAT A READER CAN READ, at where it landed (the last screen of a page clamps).
     const band = visibleBand(y, height, ob.top, ob.bottom);
     ranges.push(band);
-    if (band[1] >= target || y < ask - 1) break;
+    if (band[1] >= target || landed < ask - 1) break;
+    prevY = y;
     ask = nextScroll(y, height, ob.top, ob.bottom);
   }
   const files = shots.map((t, i) => (shots.length === 1 ? `${stem}.png` : `${stem}-p${i + 1}.png`));
@@ -661,35 +681,67 @@ async function missingRegions(page: Page, regions: readonly string[], ranges: [n
   return out;
 }
 
-/** Text a reader would have to read half of in each of two frames: leaf elements of the `regions`
- *  (a non-whitespace direct text node, shown, with area, not inside a shut <details>) whose document
- *  box is not wholly inside ONE readable band. `covered` cannot see these, since it asks only for the
- *  union. An element taller than the tallest band can be whole nowhere, so it is counted, not failed. */
+/** Lines of text a reader would have to read half of in each of two frames: every line box of every
+ *  non-whitespace text node in the `regions` (shown, painted, not in a shut <details>) whose document
+ *  extent is not wholly inside ONE readable band. PER LINE, not per element: a paragraph taller than
+ *  the overlap straddles a seam with every one of its lines still whole in some frame. `covered`
+ *  cannot see these, since it asks only for the union.
+ *
+ *  NOT PAINTED, so skipped: `.sr-only` clips, opacity 0, sticky/fixed descendants (their rect depends
+ *  on the scroll), and whatever an overflow-clipping ancestor cuts off (the line is intersected with
+ *  each such ancestor; empty means skipped, partial means the visible part). A single line taller than
+ *  a band can be whole nowhere; it is counted, not failed. */
 async function splitText(page: Page, regions: readonly string[], ranges: [number, number][]): Promise<{ split: string[]; tall: number }> {
   const maxBand = Math.max(0, ...ranges.map(([a, z]) => z - a));
-  const leaves = await page.evaluate((sels: string[]) => {
+  const lines = await page.evaluate((sels: string[]) => {
     const out: { text: string; top: number; bottom: number }[] = [];
     for (const sel of sels) {
       const root = document.querySelector(sel);
       if (!root) continue;
-      for (const el of Array.from(root.querySelectorAll<HTMLElement>("*"))) {
-        if (!Array.from(el.childNodes).some((n) => n.nodeType === 3 && (n.textContent ?? "").trim() !== "")) continue;
-        const cs = getComputedStyle(el);
-        if (cs.display === "none" || cs.visibility === "hidden") continue;
-        const shut = el.closest("details:not([open])");
-        if (shut && !el.closest("summary")) continue;
-        const r = el.getBoundingClientRect();
-        if (r.width <= 0 || r.height <= 0) continue;
-        out.push({ text: (el.textContent ?? "").trim().replace(/\s+/g, " "), top: r.top + window.scrollY, bottom: r.bottom + window.scrollY });
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const text = (node.textContent ?? "").trim();
+        if (text === "") continue;
+        const parent = node.parentElement;
+        if (!parent) continue;
+        let skip = false;
+        const clips: DOMRect[] = [];
+        for (let el: HTMLElement | null = parent; el && el !== document.body; el = el.parentElement) {
+          const cs = getComputedStyle(el);
+          if (cs.display === "none" || cs.visibility === "hidden" || Number(cs.opacity) === 0) { skip = true; break; }
+          if (el !== root && (cs.position === "sticky" || cs.position === "fixed")) { skip = true; break; }
+          if (cs.clipPath.startsWith("inset") || (cs.clip !== "auto" && cs.clip !== "")) { skip = true; break; }
+          const box = el.getBoundingClientRect();
+          if (box.width <= 1 && box.height <= 1 && cs.overflow !== "visible") { skip = true; break; }
+          if (cs.overflowX !== "visible" || cs.overflowY !== "visible") clips.push(box);
+          if (el.tagName === "DETAILS" && !(el as HTMLDetailsElement).open && parent.closest("summary")?.parentElement !== el) { skip = true; break; }
+          if (el === root) break;
+        }
+        if (skip) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        for (const r of Array.from(range.getClientRects())) {
+          if (r.width <= 0 || r.height <= 0) continue;
+          let top = r.top;
+          let bottom = r.bottom;
+          let left = r.left;
+          let right = r.right;
+          for (const c of clips) {
+            top = Math.max(top, c.top); bottom = Math.min(bottom, c.bottom);
+            left = Math.max(left, c.left); right = Math.min(right, c.right);
+          }
+          if (bottom <= top || right <= left) continue;
+          out.push({ text: `${text.replace(/\s+/g, " ").slice(0, 60)} @${Math.round(top + window.scrollY)}`, top: top + window.scrollY, bottom: bottom + window.scrollY });
+        }
       }
     }
     return out;
   }, [...regions]);
   const split: string[] = [];
   let tall = 0;
-  for (const l of leaves) {
+  for (const l of lines) {
     if (l.bottom - l.top > maxBand) { tall++; continue; }
-    if (!wholeInOne(ranges, l.top, l.bottom)) split.push(`"${l.text.slice(0, 60)}" (${Math.round(l.top)}-${Math.round(l.bottom)})`);
+    if (!wholeInOne(ranges, l.top, l.bottom)) split.push(`"${l.text}" (${Math.round(l.top)}-${Math.round(l.bottom)})`);
   }
   return { split, tall };
 }
@@ -1015,7 +1067,13 @@ async function main(runPath: string): Promise<void> {
               const opened = await shoot(page, deckDir, `${step.id}-${label}-expanded`, step.through);
               manifest.push({ deck: stem, step: step.id, goal: step.goal, viewport: label, variant: "details-expanded", files: opened.files });
               // The opened pass is where the seam gap was found (#1241); check it before it is shut again.
-              if (step.regions?.length) await reportSplitText(page, step.regions, opened.ranges, `${stem}/${step.id}/${label}-expanded`, missing);
+              if (step.regions?.length) {
+                await reportSplitText(page, step.regions, opened.ranges, `${stem}/${step.id}/${label}-expanded`, missing);
+                for (const m of await missingRegions(page, step.regions, opened.ranges)) {
+                  console.log(`  MISSING REGION ${stem}/${step.id}/${label}-expanded: ${m}`);
+                  missing.push(`${stem}/${step.id}/${label}-expanded: ${m}`);
+                }
+              }
               await restoreDetails(page);
               if (lists) {
                 await page.reload();
@@ -1231,6 +1289,9 @@ function selfTest(): void {
     eq(wholeInOne([a, lap], 100, 200), false, "a box under the bar of the first frame is in no band");
     eq(wholeInOne([], 0, 10), false, "no frames show nothing");
   }
+  eq(rewindTo(1080, 963, 130), 902, "a bar that grew once scrolled leaves a gap, so scroll back up");
+  eq(rewindTo(1080, 963, 69), null, "a bar as measured for the step leaves none");
+  eq(rewindTo(1080, 902, 130), null, "already at the target");
   eq(covered([[0, 1000], [1000, 2000]], 900, 1200), true, "the OLD recording claimed the bar-covered band was shown");
   eq(covered([[0, 1000], [1130, 2000]], 900, 1200), false, "the honest bands show [1000,1130) was never readable");
   {
