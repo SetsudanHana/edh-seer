@@ -451,3 +451,9 @@ test("Sacred Ground's return is of YOUR land: control you, not the opponent whos
   const g = grammarClauseRecords({ name: "Sacred Ground", oracleText: text, typeLine: "Enchantment", manaCost: "{1}{W}", keywords: [] } as never);
   expect(g.records[0]!.trigger!.subject).toBe("a land you control");
 });
+
+test("only 'a spell or ability ... causes' is rewritten: another cause keeps the old subject text (#1253)", () => {
+  // Unanchored, `^.+? causes? (.+?) to` rewrote 23 corpus preambles (Firesong and Sunspeaker, Toofer, Strict Proctor ...).
+  expect(triggerSubjectText("Whenever a player causes a creature to be sacrificed")).toBe("a player causes a creature to be sacrificed");
+  expect(triggerSubjectText("Whenever a source an opponent controls causes you to gain life")).toBe("a source an opponent controls causes you to");
+});

@@ -4370,42 +4370,6 @@ test("Weatherseed Totem's 'if it was a creature' dies trigger stays refused", ()
   expect(abilities.some((a) => a.trigger?.verbs.includes("dies"))).toBe(false);
 });
 
-// A REFUSED TRIGGER CLAIMS NOTHING WHEN ITS OBJECT HAS NO CLASS LEFT (#1253, owner ruling). Peggy Carter's
-// "Whenever a creature you control attacks ALONE, IT gains indestructible": the grammar refuses the
-// narrowing, the ability derives with no trigger, and its grant subject is `ref: "trigger"` over
-// `{control: any}` -- every permanent. The ability keeps its kind and effect kind and says it was
-// refused, so the matcher forms no pair reason from it. A sibling the grammar DID read carries no flag.
-test("a refused trigger whose ref'd object is class-less flags the ability triggerRefused, and a read sibling is not flagged", () => {
-  const text1 = "Whenever a creature you control attacks alone, it gains indestructible until end of turn.";
-  const text2 = "Whenever Squall deals combat damage to a player, return target permanent card with mana value 3 or less from your graveyard to the battlefield.";
-  const { abilities, unknownTriggers } = deriveAbilities(
-    [
-      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a creature you control", control: "you" },
-        actions: [{ verb: "grant-ability", object: "indestructible", fromZone: null, toZone: null, amount: null, optional: false }] },
-      { id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "Squall", control: "you" },
-        actions: [{ verb: "return", object: "target permanent card with mana value 3 or less from your graveyard", fromZone: "graveyard", toZone: "battlefield", amount: null, optional: false }] },
-    ],
-    "Squall, SeeD Mercenary",
-    { 1: text1, 2: text2 },
-    `${text1}\n${text2}`,
-  );
-  expect(unknownTriggers).toContain("narrowing:attacks");
-  const refused = abilities.filter((a) => a.clause === 1);
-  expect(refused.length).toBeGreaterThan(0);
-  for (const a of refused) {
-    expect(a.trigger).toBeUndefined();
-    expect(a.kind).toBe("triggered");
-    expect(a.triggerRefused).toBe(true);
-  }
-  expect(refused[0]!.effect.kind).toBe("keyword-grant");
-  const read = abilities.filter((a) => a.clause === 2);
-  expect(read.length).toBeGreaterThan(0);
-  for (const a of read) {
-    expect(a.trigger).toBeDefined();
-    expect(a.triggerRefused).toBeUndefined();
-  }
-});
-
 test("a refusal that read only timing or a count keeps the exact class and the claim: not flagged (Squall, Cunning Evasion)", () => {
   // "a creature you control attacks alone, it gains double strike": the object is still a creature you control.
   const t1 = "Whenever a creature you control attacks alone, it gains double strike until end of turn.";
@@ -4451,23 +4415,6 @@ test("a refused 'deals damage to you' destroys an OPPONENT's creature (No Mercy)
   expect(abilities.every((a) => a.triggerRefused === undefined)).toBe(true);
 });
 
-test("a mode bullet that inherits a REFUSED class-less header trigger is flagged like the header", () => {
-  const { abilities } = deriveAbilities(
-    [
-      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a creature you control", control: "you" }, actions: [] },
-      { id: 2, abilityType: "triggered", actions: [{ verb: "grant-ability", object: "indestructible", fromZone: null, toZone: null, amount: null, optional: false }] },
-      { id: 3, abilityType: "triggered", actions: [{ verb: "draw", object: "a card", fromZone: null, toZone: null, amount: "1", optional: false }] },
-    ],
-    "Modal Attacker",
-    { 1: "Whenever a creature you control attacks alone, choose one —", 2: "Whenever a creature you control attacks alone, it gains indestructible until end of turn.", 3: "Draw a card." },
-  );
-  const grant = abilities.filter((a) => a.clause === 2);
-  expect(grant.length).toBeGreaterThan(0);
-  expect(grant.every((a) => a.trigger === undefined && a.triggerRefused === true)).toBe(true);
-  expect(abilities.filter((a) => a.clause === 3).every((a) => a.triggerRefused === undefined)).toBe(true);
-});
-
-
 test("a refused trigger about THIS card makes its 'it' the card itself, and withdraws nothing (#1253, Goblin Cadets)", () => {
   const text = "Whenever this creature blocks or becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
   const { abilities, unknownTriggers } = deriveAbilities(
@@ -4492,4 +4439,102 @@ test("Sacred Ground's returned land is YOURS: control you, not the opponent whos
   const emits = abilities.flatMap((a) => a.emits ?? []);
   expect(emits.length).toBeGreaterThan(0);
   for (const e of emits) { expect(e.subject.control).toBe("you"); expect(e.subject.type).toBe("land"); }
+});
+
+// A REFUSED TRIGGER WITH NO CLASS LEFT CLAIMS NOTHING (#1253, owner ruling). Pure Intentions' "return THOSE
+// CARDS": the trigger subject ("cards") names no class either, so the ref'd emit is every card in any
+// graveyard. The ability keeps its kind and effect kind and is marked; a sibling the grammar DID read is not.
+test("a refused trigger whose object has no class anywhere is flagged triggerRefused; a read sibling is not", () => {
+  const t1 = "Whenever a spell or ability an opponent controls causes you to discard cards this turn, return those cards from your graveyard to your hand.";
+  const t2 = "When a spell or ability an opponent controls causes you to discard this card, return this card from your graveyard to your hand.";
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [
+      { id: 1, abilityType: "triggered", trigger: { event: "discarded", subject: "cards", control: "you" },
+        actions: [{ verb: "return", object: "those cards", fromZone: "graveyard", toZone: "hand", amount: null, optional: false }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "Pure Intentions", control: "you" },
+        actions: [{ verb: "draw", object: "a card", fromZone: null, toZone: null, amount: "1", optional: false }] },
+    ],
+    "Pure Intentions", { 1: t1, 2: "When Pure Intentions dies, draw a card." }, undefined, `${t1}\n${t2}`);
+  expect(unknownTriggers.length).toBeGreaterThan(0);
+  const refused = abilities.filter((a) => a.clause === 1);
+  expect(refused.length).toBeGreaterThan(0);
+  for (const a of refused) { expect(a.trigger).toBeUndefined(); expect(a.kind).toBe("triggered"); expect(a.triggerRefused).toBe(true); }
+  expect(refused[0]!.effect.kind).toBe("graveyard-recursion");
+  expect(abilities.filter((a) => a.clause === 2).every((a) => a.triggerRefused === undefined)).toBe(true);
+});
+
+test("the refused trigger's class is copied onto 'it gains X': Battlegrace Angel's creature you control, not flagged", () => {
+  const t = "Whenever a creature you control attacks alone, it gains lifelink until end of turn.";
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a creature you control", control: "you" },
+      actions: [{ verb: "grant-ability", object: "lifelink", fromZone: null, toZone: null, amount: null, optional: false }] }],
+    "Battlegrace Angel", { 1: t }, undefined, t);
+  expect(unknownTriggers).toContain("narrowing:attacks");
+  const grant = abilities.find((a) => a.effect.kind === "keyword-grant")!;
+  expect(grant.effect.subject).toMatchObject({ ref: "trigger", type: "creature" });
+  expect(abilities.every((a) => a.triggerRefused === undefined)).toBe(true);
+});
+
+test("an `if:` flags only when it tests the object: Captain America's first-time count and Scytheclaw Raptor's turn do not", () => {
+  const cap = "Whenever a creature you control becomes tapped during your turn, if it's the first time that creature has become tapped this turn, untap it.";
+  const a = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "taps", subject: "a creature you control", control: "you" },
+      actions: [{ verb: "untap", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] }],
+    "Captain America, Living Legend", { 1: cap }, undefined, cap);
+  expect(a.unknownTriggers.some((u) => u.startsWith("if:"))).toBe(true);
+  expect(a.abilities.every((x) => x.triggerRefused === undefined)).toBe(true);
+  // "them" is the player who cast, not the spell: no ref, a player.
+  const raptor = "Whenever a player casts a spell, if it's not their turn, this creature deals 4 damage to them.";
+  const r = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell", control: "any" },
+      actions: [{ verb: "deal-damage", object: "them", fromZone: null, toZone: null, amount: "4", optional: false }] }],
+    "Scytheclaw Raptor", { 1: raptor }, undefined, raptor);
+  const dmg = r.abilities.flatMap((x) => x.emits ?? []);
+  expect(dmg.length).toBeGreaterThan(0);
+  for (const e of dmg) { expect(e.subject.ref).toBeUndefined(); expect(e.subject.type).toBeUndefined(); }
+  expect(r.abilities.every((x) => x.triggerRefused === undefined)).toBe(true);
+});
+
+test("'if this card is exiled, put it onto the battlefield' returns the card itself, not the attacker (Senu)", () => {
+  const t = "When a legendary creature you control attacks and isn't blocked, if this card is exiled, put it onto the battlefield attacking.";
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a legendary creature you control", control: "you" },
+      actions: [{ verb: "put", object: "it", fromZone: "exile", toZone: "battlefield", amount: null, optional: false }] }],
+    "Senu, Keen-Eyed Protector", { 1: t }, undefined, t);
+  const emits = abilities.flatMap((a) => a.emits ?? []);
+  expect(emits.length).toBeGreaterThan(0);
+  for (const e of emits) { expect(e.subject.self).toBe(true); expect(e.subject.ref).toBeUndefined(); }
+});
+
+test("Sacred Ground's recursion takes the returned land's class: type land, control you (no longer any card in any graveyard)", () => {
+  const t = "Whenever a spell or ability an opponent controls causes a land to be put into your graveyard from the battlefield, return that card to the battlefield.";
+  const g = grammarClauseRecords({ name: "Sacred Ground", oracleText: t, typeLine: "Enchantment", manaCost: "{1}{W}", keywords: [] } as never);
+  const { abilities } = deriveAbilities(g.records, "Sacred Ground", { 1: t }, undefined, t);
+  const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
+  expect(rec.effect.subject).toMatchObject({ type: "land", control: "you", zone: "graveyard" });
+});
+
+test("'in your graveyard' is YOUR graveyard, as 'from your graveyard' (Victimize)", () => {
+  const t = "Choose two target creature cards in your graveyard. Sacrifice a creature as an additional cost to cast this spell. Return the chosen cards to the battlefield tapped.";
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "spell", actions: [{ verb: "return", object: "two target creature cards in your graveyard", fromZone: "graveyard", toZone: "battlefield", amount: null, optional: false }] }],
+    "Victimize", { 1: t }, undefined, t);
+  const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion")!;
+  expect(rec.effect.subject?.control).toBe("you");
+});
+
+test("a mode bullet of a refused header reads the header's object: 'It gains X' is the creature you control (inherited)", () => {
+  const { abilities } = deriveAbilities(
+    [
+      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a creature you control", control: "you" }, actions: [] },
+      { id: 2, abilityType: "triggered", actions: [{ verb: "grant-ability", object: "indestructible", fromZone: null, toZone: null, amount: null, optional: false }] },
+    ],
+    "Modal Attacker",
+    { 1: "Whenever a creature you control attacks alone, choose one —", 2: "It gains indestructible until end of turn." },
+  );
+  const grant = abilities.find((a) => a.clause === 2 && a.effect.kind === "keyword-grant")!;
+  // CEILING (pre-existing, every modal bullet): the bullet re-reads its header's event WITHOUT the header's
+  // narrowing ("alone"), so it keeps a plain `attacks` trigger rather than a refusal. What it grants to is the
+  // part this choice fixes: without it the subject was `{control: any}` with no ref -- every permanent.
+  expect(grant.effect.subject).toMatchObject({ ref: "trigger", type: "creature" });
 });

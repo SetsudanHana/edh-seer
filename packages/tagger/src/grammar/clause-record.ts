@@ -53,7 +53,7 @@ export function triggerSubjectText(preamble: string): string {
   // derive read "an opponent controls" as the LAND's controller. The caused event reads as its own
   // sentence, the way the trigger grammar reads it (`causedEvent`): "a land is put into ...", "you
   // discard this card".
-  const caused = /^.+? causes? (.+?) to (be )?(.+)$/.exec(rest);
+  const caused = /^a spell or ability(?: an opponent controls| you control)? causes? (.+?) to (be )?(.+)$/i.exec(rest);
   if (caused) rest = `${caused[1]} ${caused[2] ? "is " : ""}${caused[3]}`;
   // The land is put into YOUR graveyard, so it is yours: the subject says so, as "a creature you control
   // dies" does (Koll). CEILING: a graveyard is its owner's, so a stolen land is yours only by ownership.
