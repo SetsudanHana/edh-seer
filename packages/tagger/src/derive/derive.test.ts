@@ -4484,3 +4484,12 @@ test("a refused trigger about THIS card makes its 'it' the card itself, and with
     for (const e of a.emits ?? []) { expect(e.subject.self).toBe(true); expect(e.subject.ref).toBeUndefined(); }
   }
 });
+
+test("Sacred Ground's returned land is YOURS: control you, not the opponent whose spell caused it (#1253)", () => {
+  const t = "Whenever a spell or ability an opponent controls causes a land to be put into your graveyard from the battlefield, return that card to the battlefield.";
+  const g = grammarClauseRecords({ name: "Sacred Ground", oracleText: t, typeLine: "Enchantment", manaCost: "{1}{W}", keywords: [] } as never);
+  const { abilities } = deriveAbilities(g.records, "Sacred Ground", { 1: t }, undefined, t);
+  const emits = abilities.flatMap((a) => a.emits ?? []);
+  expect(emits.length).toBeGreaterThan(0);
+  for (const e of emits) { expect(e.subject.control).toBe("you"); expect(e.subject.type).toBe("land"); }
+});

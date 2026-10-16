@@ -484,7 +484,8 @@ import { emblemRecipient } from "../emblem.js";
 // 327: #1250 branch review -- "at end of combat" is no longer a delayed action: the creature is still attacking (CR 511.2/511.3), so Goblin Sappers' destroy keeps instantSpeed and feeds Kardur's attacking-creature death.
 // 329: #1253 owner ruling -- triggerRefused only when the refused trigger's object is class-less or the refusal is an `if:` (a timing/count refusal keeps the exact class and the claim); the damager of a refused "deals damage to you" is an opponent's.
 // 328: #1253 an ability of a REFUSED trigger that points back at the trigger object (`ref: "trigger"` in its emits or effect, no `trigger`) is `triggerRefused`: it keeps its kind and the matcher claims nothing from it ("return it" was any card); where the refused trigger is about THIS card ("this creature blocks"), "it" is the card itself (`self`) and nothing is withdrawn.
-export const DERIVE_VERSION = 329;
+// 330: #1253 the stored trigger subject of "a spell or ability an opponent controls causes X to ..." is X, not the cause plus half the event: Sacred Ground's land is YOURS (its return read `control: opp`).
+export const DERIVE_VERSION = 330;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

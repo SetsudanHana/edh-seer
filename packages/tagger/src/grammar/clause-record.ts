@@ -46,7 +46,18 @@ export function triggerSubjectText(preamble: string): string {
   // A PHASE TRIGGER names whose phase: "your upkeep" is yours, "each upkeep" / "the end step" anyone's.
   const phase = /^at the beginning of (your|each|the|each player's|each opponent's|that player's)\b/i.exec(preamble);
   if (phase) return /^your$/i.test(phase[1]!) ? "you" : /opponent/i.test(phase[1]!) ? "each opponent" : "each player";
-  const rest = preamble.replace(/^(?:when|whenever|at)\s+/i, "");
+  let rest = preamble.replace(/^(?:when|whenever|at)\s+/i, "");
+  // "A SPELL OR ABILITY AN OPPONENT CONTROLS CAUSES A LAND TO BE PUT into your graveyard" (Sacred Ground,
+  // #1253): the cause is no part of the subject. Cut at the first event verb, the head was the whole
+  // cause plus half the event ("a spell or ability an opponent controls causes a land to be"), and
+  // derive read "an opponent controls" as the LAND's controller. The caused event reads as its own
+  // sentence, the way the trigger grammar reads it (`causedEvent`): "a land is put into ...", "you
+  // discard this card".
+  const caused = /^.+? causes? (.+?) to (be )?(.+)$/.exec(rest);
+  if (caused) rest = `${caused[1]} ${caused[2] ? "is " : ""}${caused[3]}`;
+  // The land is put into YOUR graveyard, so it is yours: the subject says so, as "a creature you control
+  // dies" does (Koll). CEILING: a graveyard is its owner's, so a stolen land is yours only by ownership.
+  const ownGraveyard = caused !== null && !!caused[2] && /\binto your graveyard\b/i.test(caused[3]!);
   const v = EVENT_VERB.exec(rest);
   const head = (v ? rest.slice(0, v.index) : rest).trim();
   if (v && PLAYER.test(head)) {
@@ -57,7 +68,7 @@ export function triggerSubjectText(preamble: string): string {
     if (on) return on[1]!;
     if (obj) return obj;
   }
-  return head;
+  return ownGraveyard && head !== "" ? `${head} you control` : head;
 }
 
 const SELF_SUBJECT = /^(?:~|this [a-z]+)$/i;
