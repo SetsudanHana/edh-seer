@@ -1300,8 +1300,9 @@ export const supplyKeysOf = perCard((d: DeckCard): string[] => [
     .filter((t) => !WHOLE_DECK_TYPES.has(t))
     .map((t) => `counts|-|${t}|-`),
   // WHAT A COPIER CAN COPY: the kinds of ability this card HAS (AC12; `abilityIsKind` is the
-  // engine's own reading, mana excluded from "activated").
-  ...ABILITY_OBJECT_KINDS.filter((k) => claimingAbilitiesOf(d).some((a) => abilityIsKind(a, k))).map((k) => `copies|-|${k}|-`),
+  // engine's own reading, mana excluded from "activated"). Read from ALL abilities, flagged ones too: a
+  // refused-trigger ability is still a triggered ability a copier can copy (CR 603.1), and `copyAbilityEdges` agrees.
+  ...ABILITY_OBJECT_KINDS.filter((k) => abilitiesOf(d).some((a) => abilityIsKind(a, k))).map((k) => `copies|-|${k}|-`),
   // WHAT AN OUTLET CAN EAT. A real card is fodder by its subtypes and by a non-whole-deck type; a
   // TOKEN MAKER is fodder by what it makes, creature tokens included -- the engine's maker path
   // under `tokensMediate: false`. A plain creature card never supplies `fodder|-|creature|-`.

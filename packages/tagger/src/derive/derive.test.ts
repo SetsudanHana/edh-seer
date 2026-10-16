@@ -4370,19 +4370,18 @@ test("Weatherseed Totem's 'if it was a creature' dies trigger stays refused", ()
   expect(abilities.some((a) => a.trigger?.verbs.includes("dies"))).toBe(false);
 });
 
-// A REFUSED TRIGGER CLAIMS NOTHING (#1253). Squall's first line is "Whenever a creature you control
-// attacks ALONE": the grammar refuses the narrowing (`narrowing:attacks`), so the ability derives with
-// no trigger -- and its "it" (the attacker) is `ref: "trigger"` over a `control: any` effect subject,
-// which reads as any creature. The ability keeps its kind and effect kind (roles and counts read
-// those) and says it was refused, so the matcher forms no pair reason from it. Its sibling, a trigger
-// the grammar DID read, carries no such flag.
-test("an ability whose trigger was refused and that points back at the trigger object is flagged triggerRefused", () => {
-  const text1 = "Rough Divide — Whenever a creature you control attacks alone, it gains double strike until end of turn.";
+// A REFUSED TRIGGER CLAIMS NOTHING WHEN ITS OBJECT HAS NO CLASS LEFT (#1253, owner ruling). Peggy Carter's
+// "Whenever a creature you control attacks ALONE, IT gains indestructible": the grammar refuses the
+// narrowing, the ability derives with no trigger, and its grant subject is `ref: "trigger"` over
+// `{control: any}` -- every permanent. The ability keeps its kind and effect kind and says it was
+// refused, so the matcher forms no pair reason from it. A sibling the grammar DID read carries no flag.
+test("a refused trigger whose ref'd object is class-less flags the ability triggerRefused, and a read sibling is not flagged", () => {
+  const text1 = "Whenever a creature you control attacks alone, it gains indestructible until end of turn.";
   const text2 = "Whenever Squall deals combat damage to a player, return target permanent card with mana value 3 or less from your graveyard to the battlefield.";
   const { abilities, unknownTriggers } = deriveAbilities(
     [
       { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a creature you control", control: "you" },
-        actions: [{ verb: "double", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] },
+        actions: [{ verb: "grant-ability", object: "indestructible", fromZone: null, toZone: null, amount: null, optional: false }] },
       { id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "Squall", control: "you" },
         actions: [{ verb: "return", object: "target permanent card with mana value 3 or less from your graveyard", fromZone: "graveyard", toZone: "battlefield", amount: null, optional: false }] },
     ],
@@ -4398,7 +4397,7 @@ test("an ability whose trigger was refused and that points back at the trigger o
     expect(a.kind).toBe("triggered");
     expect(a.triggerRefused).toBe(true);
   }
-  expect(refused[0]!.effect.kind).toBe("speed-increase");
+  expect(refused[0]!.effect.kind).toBe("keyword-grant");
   const read = abilities.filter((a) => a.clause === 2);
   expect(read.length).toBeGreaterThan(0);
   for (const a of read) {
@@ -4407,45 +4406,67 @@ test("an ability whose trigger was refused and that points back at the trigger o
   }
 });
 
-test("a refused becomes-blocked trigger flags its \"return it\", and a refused trigger that never points back at the trigger object is not flagged", () => {
-  // "Whenever a creature you control becomes blocked, you may return it": the refused trigger's object.
+test("a refusal that read only timing or a count keeps the exact class and the claim: not flagged (Squall, Cunning Evasion)", () => {
+  // "a creature you control attacks alone, it gains double strike": the object is still a creature you control.
+  const t1 = "Whenever a creature you control attacks alone, it gains double strike until end of turn.";
+  const sq = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a creature you control", control: "you" },
+      actions: [{ verb: "double", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] }],
+    "Squall, SeeD Mercenary", { 1: t1 }, undefined, t1);
+  expect(sq.unknownTriggers).toContain("narrowing:attacks");
+  expect(sq.abilities.length).toBeGreaterThan(0);
+  expect(sq.abilities.every((a) => a.trigger === undefined && a.triggerRefused === undefined)).toBe(true);
+  expect(sq.abilities.flatMap((a) => a.emits ?? []).every((e) => e.subject.ref === "trigger" && e.subject.type === "creature")).toBe(true);
+  // becomes blocked: "return it" is a creature you control.
   const { abilities } = deriveAbilities(
     [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "a creature you control", control: "you" },
       actions: [{ verb: "return", object: "it", fromZone: "battlefield", toZone: "hand", amount: null, optional: true }] }],
     "Cunning Evasion",
     { 1: "Whenever a creature you control becomes blocked, you may return it to its owner's hand." },
   );
-  expect(abilities.every((a) => a.trigger === undefined && a.triggerRefused === true)).toBe(true);
-  // "Whenever you cast your second spell each turn, draw a card." is refused (narrowing:cast) but names
-  // no trigger object: nothing wide to withdraw, so no flag.
-  const { abilities: draw, unknownTriggers } = deriveAbilities(
-    [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell", control: "you" },
-      actions: [{ verb: "draw", object: "a card", fromZone: null, toZone: null, amount: "1", optional: false }] }],
-    "Test Card",
-    { 1: "Whenever you cast your second spell each turn, draw a card." },
-  );
-  expect(unknownTriggers).toContain("narrowing:cast");
-  expect(draw.every((a) => a.triggerRefused === undefined)).toBe(true);
+  expect(abilities.every((a) => a.trigger === undefined && a.triggerRefused === undefined)).toBe(true);
 });
 
-test("a mode bullet that inherits a REFUSED header trigger is flagged like the header", () => {
-  // Whenever a creature you control becomes blocked, choose one --
-  //  * Return it to its owner's hand.  * Draw a card.
+test("an `if:` refusal flags a typed object: Koll's 'if it was enchanted or equipped' return", () => {
+  const t = "Whenever another nontoken creature you control dies, if it was enchanted or equipped, return it to its owner's hand.";
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "another nontoken creature you control", control: "you" },
+      actions: [{ verb: "return", object: "it", fromZone: "graveyard", toZone: "hand", amount: null, optional: false }] }],
+    "Koll, the Forgemaster", { 1: t }, undefined, t);
+  expect(unknownTriggers.some((u) => u.startsWith("if:"))).toBe(true);
+  expect(abilities.length).toBeGreaterThan(0);
+  expect(abilities.every((a) => a.trigger === undefined && a.triggerRefused === true)).toBe(true);
+});
+
+test("a refused 'deals damage to you' destroys an OPPONENT's creature (No Mercy), and is not flagged", () => {
+  const t = "Whenever a creature deals damage to you, destroy it.";
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "a creature", control: "opponent" },
+      actions: [{ verb: "destroy", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] }],
+    "No Mercy", { 1: t }, undefined, t);
+  expect(unknownTriggers).toContain("narrowing:damage-dealt");
+  const emits = abilities.flatMap((a) => a.emits ?? []);
+  expect(emits.length).toBeGreaterThan(0);
+  for (const e of emits) { expect(e.subject.control).toBe("opp"); expect(e.subject.type).toBe("creature"); }
+  expect(abilities.every((a) => a.triggerRefused === undefined)).toBe(true);
+});
+
+test("a mode bullet that inherits a REFUSED class-less header trigger is flagged like the header", () => {
   const { abilities } = deriveAbilities(
     [
-      { id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "a creature you control", control: "you" }, actions: [] },
-      { id: 2, abilityType: "triggered", actions: [{ verb: "return", object: "it", fromZone: "battlefield", toZone: "hand", amount: null, optional: false }] },
+      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a creature you control", control: "you" }, actions: [] },
+      { id: 2, abilityType: "triggered", actions: [{ verb: "grant-ability", object: "indestructible", fromZone: null, toZone: null, amount: null, optional: false }] },
       { id: 3, abilityType: "triggered", actions: [{ verb: "draw", object: "a card", fromZone: null, toZone: null, amount: "1", optional: false }] },
     ],
-    "Modal Evasion",
-    { 1: "Whenever a creature you control becomes blocked, choose one —", 2: "Return it to its owner's hand.", 3: "Draw a card." },
+    "Modal Attacker",
+    { 1: "Whenever a creature you control attacks alone, choose one —", 2: "Whenever a creature you control attacks alone, it gains indestructible until end of turn.", 3: "Draw a card." },
   );
-  const ret = abilities.filter((a) => a.clause === 2);
-  expect(ret.length).toBeGreaterThan(0);
-  expect(ret.every((a) => a.trigger === undefined && a.triggerRefused === true)).toBe(true);
-  const draw = abilities.filter((a) => a.clause === 3);
-  expect(draw.every((a) => a.triggerRefused === undefined)).toBe(true);
+  const grant = abilities.filter((a) => a.clause === 2);
+  expect(grant.length).toBeGreaterThan(0);
+  expect(grant.every((a) => a.trigger === undefined && a.triggerRefused === true)).toBe(true);
+  expect(abilities.filter((a) => a.clause === 3).every((a) => a.triggerRefused === undefined)).toBe(true);
 });
+
 
 test("a refused trigger about THIS card makes its 'it' the card itself, and withdraws nothing (#1253, Goblin Cadets)", () => {
   const text = "Whenever this creature blocks or becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";

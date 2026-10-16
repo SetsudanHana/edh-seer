@@ -482,8 +482,9 @@ import { emblemRecipient } from "../emblem.js";
 // 325: #1250 task 3 review -- only the `leaves` emit of that graveyard recursion is an opponent's; the cast and enters emits keep their reading (you cast it, it enters under your control).
 // 326: #1250 task 5 -- "if you didn't cast it from your hand" on an enters trigger is the entry's HOW (`notCast`), no longer dropped silently: Chainer, Nightmare Adept was fed by every creature cast from hand (Braids, owner-judged FALSE); Phage the Untouchable's self trigger carries it too.
 // 327: #1250 branch review -- "at end of combat" is no longer a delayed action: the creature is still attacking (CR 511.2/511.3), so Goblin Sappers' destroy keeps instantSpeed and feeds Kardur's attacking-creature death.
+// 329: #1253 owner ruling -- triggerRefused only when the refused trigger's object is class-less or the refusal is an `if:` (a timing/count refusal keeps the exact class and the claim); the damager of a refused "deals damage to you" is an opponent's.
 // 328: #1253 an ability of a REFUSED trigger that points back at the trigger object (`ref: "trigger"` in its emits or effect, no `trigger`) is `triggerRefused`: it keeps its kind and the matcher claims nothing from it ("return it" was any card); where the refused trigger is about THIS card ("this creature blocks"), "it" is the card itself (`self`) and nothing is withdrawn.
-export const DERIVE_VERSION = 328;
+export const DERIVE_VERSION = 329;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -660,6 +661,27 @@ function namesTriggerObject(a: Ability): boolean {
     && ((o as { ref?: unknown }).ref === "trigger" || Object.values(o as object).some(has));
   return has(a.effect) || has(a.emits);
 }
+
+/** Does some `ref: "trigger"` subject of the ability name NO class -- nothing beyond who controls it,
+ *  whether it is a token, a count scope and its zone? "it gains deathtouch" over a refused "attacks
+ *  alone" is `{control: any}`: every permanent. A subject that keeps a type, subtype, keyword, counter
+ *  or the like has an exact class, and a refusal that only read timing or a count ("second spell each
+ *  turn", "deals damage to you") leaves that class intact (owner ruling, #1253). */
+const CLASSLESS_KEYS: ReadonlySet<string> = new Set(["ref", "control", "token", "scope", "zone", "fromZone"]);
+function triggerObjectClassless(a: Ability): boolean {
+  const found: object[] = [];
+  const walk = (o: unknown): void => {
+    if (o === null || typeof o !== "object") return;
+    if ((o as { ref?: unknown }).ref === "trigger") found.push(o);
+    for (const v of Object.values(o as object)) walk(v);
+  };
+  walk(a.effect); walk(a.emits);
+  return found.some((o) => Object.keys(o).every((k) => CLASSLESS_KEYS.has(k)));
+}
+
+/** "Whenever a creature deals damage to YOU, destroy it": the damager is an opponent's (owner ruling,
+ *  #1253). CEILING: your own creature can deal you damage (a Fireblast-style self-hit). */
+const DEALS_DAMAGE_TO_YOU = /\bdeals (?:combat |noncombat )?damage to you\b/i;
 
 function abilityKind(clause: ClauseRecord): AbilityKind {
   return CLAUSE_TO_ABILITY_KIND[clause.abilityType ?? ""] ?? "static";
@@ -1954,6 +1976,7 @@ export function deriveAbilities(
   /** Re-homed records dropped-if-redundant: clause id -> the id of the record that already read their event off the same sentence. */
   const twinOf = new Map<number | string, number | string>();
   for (let clause of clauses) {
+    const refusedBefore = unknownTriggers.length;
     // "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860): see `exiledAcrossClauses`.
     ({ clause, lastExiled } = exiledAcrossClauses(clause, lastExiled, cardName));
     // The whole clause goes, not just its trigger. What is quoted on a created token is a complete
@@ -2432,7 +2455,11 @@ export function deriveAbilities(
       // ref and the ability is marked `triggerRefused` below.
       if (refersToTrigger) for (const e of emits) {
         if (!trigger && clause.trigger?.subject && isSelfSubject(clause.trigger.subject, cardName)) e.subject.self = true;
-        else e.subject.ref = "trigger";
+        else {
+          e.subject.ref = "trigger";
+          // The damager of a refused "deals damage to you" is an opponent's (No Mercy, Mikaeus, Dread).
+          if (!trigger && e.subject.control === "any" && DEALS_DAMAGE_TO_YOU.test(text)) e.subject.control = "opp";
+        }
       }
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 
@@ -2927,7 +2954,13 @@ export function deriveAbilities(
       // refused. Whatever the cause, an ability of kind `triggered` with NO trigger whose emits or effect
       // say `ref: "trigger"` is pointing at an object nothing defines, and over a `control: any` subject
       // that is every card. Marked, not dropped: roles and counts keep its kind.
-      if (kind === "triggered" && !abilities[i].trigger && namesTriggerObject(abilities[i])) {
+      // ONLY WHEN THE OBJECT'S CLASS IS GONE (owner ruling, #1253): the ref names no class at all, or the
+      // refusal is an `if:` condition, which narrows the object ("if it was enchanted or equipped",
+      // "if it was cast"). A refusal that read only timing or a count leaves "a creature you control"
+      // exact, and the ability keeps claiming it. CEILING: any `if:` refusal counts, not only one that
+      // names a class.
+      if (kind === "triggered" && !abilities[i].trigger && namesTriggerObject(abilities[i])
+        && (triggerObjectClassless(abilities[i]) || unknownTriggers.slice(refusedBefore).some((r) => r.startsWith("if:")))) {
         abilities[i] = { ...abilities[i], triggerRefused: true };
       }
       const trig = abilities[i].trigger;

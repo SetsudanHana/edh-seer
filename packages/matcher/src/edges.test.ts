@@ -6778,3 +6778,26 @@ describe("triggerRefused: an ability whose trigger was refused claims nothing", 
     expect(createsReasons(maker, token, H)).toEqual([]);
   });
 });
+
+// THE DAMAGER OF A REFUSED "deals damage to you" IS AN OPPONENT'S (#1253, owner ruling). No Mercy's
+// "destroy it" derives `dies {control: opp, type: creature, ref: trigger}`: an opponent's creature dying
+// feeds a payoff for opposing creatures (Massacre Wurm), not one for creatures you control (Zulaport).
+test("a No Mercy-shaped destroy feeds a payoff on opposing deaths and not one on your own creatures' deaths", () => {
+  const noMercy = base("No Mercy", [{
+    kind: "triggered",
+    effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature", ref: "trigger" } }],
+  }]);
+  const wurm = base("Massacre Wurm", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { type: "creature", control: "opp", token: null } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null } },
+  }]);
+  const zulaport = base("Zulaport Cutthroat", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null } },
+  }]);
+  expect(directedReasons(noMercy, wurm, H).some((r) => r.tag.startsWith("dies:"))).toBe(true);
+  expect(directedReasons(noMercy, zulaport, H).some((r) => r.tag.startsWith("dies:"))).toBe(false);
+});

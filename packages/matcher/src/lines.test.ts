@@ -440,3 +440,45 @@ describe("detectLines", () => {
     expect(l.pieces.some((p) => p.card === "Sphinx of the Second Sun" && p.role === "extra-phase")).toBe(true);
   });
 });
+
+describe("a refused trigger's ability supplies nothing to a line (#1253)", () => {
+  const calendarLike = {
+    card: { name: "Anchor" },
+    tags: { characteristics: { types: ["artifact"], subtypes: [] }, abilities: [
+      { kind: "triggered", effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } },
+        trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "time" } }, threshold: { atLeast: 1000 },
+        amount: "1,000", emits: [{ verb: "lose-life", subject: { control: "opp", token: null, scope: "each" } }] },
+    ] },
+  } as unknown as DeckCard;
+  const timeMaker = (refused: boolean) => ({
+    card: { name: "Time Maker" },
+    tags: { characteristics: { types: ["artifact"], subtypes: [] }, abilities: [
+      { kind: "triggered", ...(refused ? { triggerRefused: true } : {}),
+        effect: { kind: "counter-placement", subject: { control: "any", token: null, counter: "time" } }, amount: "1",
+        emits: [{ verb: "counter-added", subject: { control: "any", token: null, counter: "time" } }] },
+    ] },
+  }) as unknown as DeckCard;
+  const supplierPieces = (maker: DeckCard) => (linesOf([calendarLike, maker])[0]?.pieces ?? []).filter((p) => p.card === "Time Maker");
+
+  test("an unflagged counter source is a supplier of the line", () => {
+    expect(supplierPieces(timeMaker(false)).length).toBeGreaterThan(0);
+  });
+  test("the same ability flagged triggerRefused is no supplier", () => {
+    expect(supplierPieces(timeMaker(true))).toEqual([]);
+  });
+
+  // The ability loop (`actsOnResource` / `abilitySuppliesDemand`) reads the raw ability list, so it
+  // skips the flag itself rather than through `producerEvents`.
+  const doubler = (refused: boolean) => ({
+    card: { name: "Doubler" },
+    tags: { characteristics: { types: ["artifact"], subtypes: [] }, abilities: [
+      { kind: "activated", cost: "{2}", ...(refused ? { triggerRefused: true } : {}),
+        effect: { kind: "pump", subject: { control: "any", token: null, counter: "time" } }, amount: "double" },
+    ] },
+  }) as unknown as DeckCard;
+  test("a flagged doubling ability is no amplifier of the line", () => {
+    const roles = (d: DeckCard) => (linesOf([calendarLike, d])[0]?.pieces ?? []).filter((p) => p.card === "Doubler").map((p) => p.role);
+    expect(roles(doubler(false))).toContain("amplifier");
+    expect(roles(doubler(true))).toEqual([]);
+  });
+});

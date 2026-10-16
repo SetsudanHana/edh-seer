@@ -1133,8 +1133,13 @@ export interface Ability {
    *  claim (62 corpus cards). The `restricted` rule one layer over: KEEP THE ABILITY AND ITS KINDS
    *  (roles, themes and counts read those) and CLAIM NO CARDS -- the matcher forms no pair reason from
    *  this ability on either side. Set only when `ref: "trigger"` appears in the ability's emits or
-   *  effect; a refused trigger whose ability never names the trigger object claims what it always
-   *  did (a saga chapter's token is still a token). */
+   *  effect AND the object's class is gone: the ref'd subject names no class (no type, subtype,
+   *  keyword, counter ...) or the refusal is an `if:` condition that narrows it. A refusal that read
+   *  only timing or a count ("second spell each turn", "deals damage to you") leaves "a creature you
+   *  control" exact and the ability keeps its claim (owner ruling). A refused trigger whose ability
+   *  never names the trigger object claims what it always did (a saga chapter's token is still a token).
+   *  ONE THING STILL SEES IT: a flagged ability is a triggered ability (CR 603.1), so it still counts
+   *  as one for the `copies|-|triggered|-` key a copier is offered. */
   triggerRefused?: true;
   /** A numeric condition on WHEN the ability is on — The Millennium Calendar's "when there are
    *  1,000 or more time counters", Chrome Steed's "as long as you control three or more artifacts",
