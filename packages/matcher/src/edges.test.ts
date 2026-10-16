@@ -4817,6 +4817,23 @@ describe("fodder", () => {
       expect(pairReasons(bomb, sai, H).map((r) => r.tag)).not.toContain("fodder:artifact");
       expect(pairReasons(bomb, ravager, H).map((r) => r.tag)).toContain("fodder:artifact");
     });
+    test("owner 2026-10-16: a Food, or a card with its own death trigger, stays fodder; a damage Spellbomb and a search Bauble do not", () => {
+      const anvil = outlet("Oni-Cult Anvil", "lifegain");
+      const food = artifact("Instant Ramen", own("lifegain"));
+      food.tags!.characteristics.subtypes = ["food"];
+      expect(pairReasons(food, anvil, H).map((r) => r.tag)).toContain("fodder:artifact");
+      const block = artifact("Nutrient Block", own("lifegain"));
+      block.tags!.abilities = [...block.tags!.abilities, {
+        kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, type: "artifact", self: true } }, effect: { kind: "draw-card" },
+      } as never];
+      expect(pairReasons(block, anvil, H).map((r) => r.tag)).toContain("fodder:artifact");
+      const plain = artifact("Mind Stone", own("lifegain"));
+      expect(pairReasons(plain, anvil, H).map((r) => r.tag)).not.toContain("fodder:artifact");
+      const pyrite = artifact("Pyrite Spellbomb", own("damage"));
+      expect(pairReasons(pyrite, outlet("Oni-Cult Anvil", "damage"), H).map((r) => r.tag)).not.toContain("fodder:artifact");
+      const bauble = artifact("Wayfarer's Bauble", own("search"));
+      expect(pairReasons(bauble, outlet("Search Outlet", "search"), H).map((r) => r.tag)).not.toContain("fodder:artifact");
+    });
     test("a token that has one still is fodder", () => {
       const treasure = tokenNode("Treasure", ["artifact"], ["treasure"]);
       treasure.tags!.abilities = own("draw-card");

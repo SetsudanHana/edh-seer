@@ -3107,6 +3107,11 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
  *  outlet ability `outlet`'s? Any one of several self-sacrifice abilities matching counts.
  *  A self-sacrifice GRANTED to the host's target (Compulsory Rest, an Aura/Class/Equipment) is not
  *  the host's own: the thing sacrificed is the enchanted or equipped permanent.
+ *  OWNER DEFINITION (2026-10-16): fodder is a card meant to be sacrificed -- a Food/Treasure/Clue, or
+ *  one whose own sacrifice is overcosted or minor. A card played FOR its own sacrifice (Wayfarer's
+ *  Bauble for ramp, a draw Spellbomb) is not fodder when the outlet pays the same.
+ *  CEILING: "overcosted or not impactful" is not modelled beyond the Food/Treasure/Clue/Blood/Gold
+ *  subtype and a self death trigger.
  *  CEILING: equal `effect.kind` stands in for "the same effect" (draw-card vs draw-card); it does
  *  not compare amounts or targets. Derive carries no granted-ability marker, so the host's
  *  Aura/Class/Equipment subtype is the exclusion. */
@@ -3119,6 +3124,12 @@ function sacrificesForSamePayoff(p: PairScope["p"], c: PairScope["c"], outlet: {
   if (kinds.size === 0) return false;
   const subs = (p.tags?.characteristics.subtypes ?? []).map((t) => t.toLowerCase());
   if (subs.some((t) => t === "aura" || t === "class" || t === "equipment")) return false;
+  // A card MEANT to be sacrificed stays fodder (owner 2026-10-16): a Food, Treasure, Clue, Blood or
+  // Gold, or one with its own "when this dies / is put into a graveyard from the battlefield" trigger
+  // (Nutrient Block's draw), whose sacrifice is not the point of playing it.
+  if (subs.some((t) => t === "food" || t === "treasure" || t === "clue" || t === "blood" || t === "gold")) return false;
+  if ((p.tags?.abilities ?? []).some((pa) => pa.kind === "triggered" && pa.trigger?.subject?.self === true
+    && (pa.trigger.verbs ?? []).includes("dies"))) return false;
   return (p.tags?.abilities ?? []).some((pa) => pa.kind === "activated" && kinds.has(pa.effect.kind)
     && (pa.payment?.sacrifice ?? []).some((sc) => sc.subject?.self === true));
 }
