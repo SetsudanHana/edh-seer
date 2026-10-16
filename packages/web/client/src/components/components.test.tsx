@@ -1867,6 +1867,12 @@ test("BuildBenchmarks says whether you can CAST it, and names colour when that i
   expect(screen.getByText(/low end holds up two mana/i)).toBeInTheDocument();
   expect(screen.getByText(/ignoring colour.*same cast with colours waved through/i)).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/mana alone/i);
+  // ...and BEFORE the rows (#1240 persona round): below a long list the reader met "34% – 53%"
+  // first and never reached the words that name its ends.
+  const firstRow = screen.getByLabelText(/Damnation, 61% – 78% to cast by turn 4/i);
+  for (const legend of [screen.getByText(/low end holds up two mana/i), screen.getByText(/same cast with colours waved through/i)]) {
+    expect(legend.compareDocumentPosition(firstRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  }
 });
 
 /** A DEGENERATE RANGE COLLAPSES TO ONE FIGURE. "91% – 91%" reads as a broken readout, and the first

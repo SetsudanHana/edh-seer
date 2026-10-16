@@ -643,6 +643,21 @@ function DeckMathRows({
   const castsBlock = castability && castability.cards.length > 0 ? (
         <div className="flex flex-col gap-1.5">
           <h4 className="eyebrow">Hardest casts</h4>
+          {/* THE ENDS, NAMED ONCE IN THE BLOCK (#1226). Every persona seat asked which end of
+            *  "34% – 53%" was theirs; the words come from `percent.ts` so no surface can drift. The
+            *  colour line is explained here too, once, so the rows carry only the figure. ABOVE the rows
+            *  (#1240 persona round): below a long list the reader met "34% – 53%" and stopped there. */}
+          {castability.cards.some((c) => isPolicyRange(c.castable.low, c.castable.high) || (c.mana.high - c.castable.high >= COLOUR_GAP && isPolicyRange(c.mana.low, c.mana.high))) ? (
+            <p className="text-xs text-(--muted) max-w-[65ch]">
+              {POLICY_LEGEND}
+            </p>
+          ) : null}
+          {castability.cards.some((c) => c.mana.high - c.castable.high >= COLOUR_GAP) ? (
+            <p className="text-xs text-(--muted) max-w-[65ch]">
+              &ldquo;Ignoring colour&rdquo; is the same cast with colours waved through, so a gap
+              between the two figures means colours, not mana, are what hold the card back.
+            </p>
+          ) : null}
           {/* GROUPED BY COST, because the mana figure is a property of the cost and not of the card:
             *  four cards that all cost 5 print the same percentage four times, which three of four
             *  player reviews read as a broken readout. Said once per group, it becomes what it
@@ -732,20 +747,6 @@ function DeckMathRows({
             *  9-drop and then appeared nowhere on the report at all. A reader looking for their
             *  most expensive card could not find out what happened to it. Named with the reason,
             *  biggest first, the same call `cheatsIntoPlay` makes one paragraph down. */}
-          {/* THE ENDS, NAMED ONCE IN THE BLOCK (#1226). Every persona seat asked which end of
-            *  "34% – 53%" was theirs; the words come from `percent.ts` so no surface can drift. The
-            *  colour line is explained here too, once, so the rows carry only the figure. */}
-          {castability.cards.some((c) => isPolicyRange(c.castable.low, c.castable.high) || (c.mana.high - c.castable.high >= COLOUR_GAP && isPolicyRange(c.mana.low, c.mana.high))) ? (
-            <p className="text-xs text-(--muted) max-w-[65ch]">
-              {POLICY_LEGEND}
-            </p>
-          ) : null}
-          {castability.cards.some((c) => c.mana.high - c.castable.high >= COLOUR_GAP) ? (
-            <p className="text-xs text-(--muted) max-w-[65ch]">
-              &ldquo;Ignoring colour&rdquo; is the same cast with colours waved through, so a gap
-              between the two figures means colours, not mana, are what hold the card back.
-            </p>
-          ) : null}
           {castability.refusedCards && castability.refusedCards.length > 0 ? (
             <p className="text-xs text-(--muted) max-w-[65ch]">
               <span className="text-(--foreground)">Not checked:</span>{" "}
