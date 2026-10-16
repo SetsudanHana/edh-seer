@@ -357,6 +357,20 @@ export function rewindTo(prevEnd: number, y: number, obscuredTop: number, overla
   return y > need + 1 ? need : null;
 }
 
+/** What one frame of `shoot` decides. `ask` is where it scrolled to, `landed` where the page let it
+ *  (less than `ask` is the clamp at the end of the page), `y` where it ended up after any rewind.
+ *  Stop at the target, or at a clamp that was NOT rewound: a clamped frame the bar then forced back
+ *  up ends short of the target, so the tail is still unshot and the next frame goes on to the end.
+ *  `gap` is the unread span between the previous frame's readable bottom and this one's top. */
+export function frameStep(f: {
+  prevEnd: number | null; ask: number; landed: number; y: number;
+  ob: { top: number; bottom: number }; height: number; target: number;
+}): { band: [number, number]; stop: boolean; gap: [number, number] | null } {
+  const band = visibleBand(f.y, f.height, f.ob.top, f.ob.bottom);
+  const gap: [number, number] | null = f.prevEnd !== null && band[0] > f.prevEnd + 1 ? [f.prevEnd, band[0]] : null;
+  return { band, stop: band[1] >= f.target || (f.landed < f.ask - 1 && f.y === f.landed), gap };
+}
+
 /** Whether a document-relative box [top, bottom) lies wholly inside ONE frame's readable band: the
  *  question for a line of text, which a reader cannot read half of in each of two frames. */
 export function wholeInOne(ranges: readonly [number, number][], top: number, bottom: number): boolean {
@@ -624,7 +638,7 @@ async function obscuredBands(page: Page, dump = false): Promise<{ top: number; b
   return { ...barBands(rects, w, h), seen: dump ? tags : [] };
 }
 
-async function shoot(page: Page, dir: string, stem: string, through?: string): Promise<{ files: string[]; ranges: [number, number][] }> {
+async function shoot(page: Page, dir: string, stem: string, through?: string): Promise<{ files: string[]; ranges: [number, number][]; gaps: string[] }> {
   const shots: string[] = [];
   const ranges: [number, number][] = [];
   const { height } = page.viewportSize() ?? { height: 0 };
@@ -639,6 +653,7 @@ async function shoot(page: Page, dir: string, stem: string, through?: string): P
   const cap = end === undefined ? MAX_SLICES : MAX_THROUGH;
   let ask = startY;
   let prevY = -1;
+  const gaps: string[] = [];
   for (let i = 0; i < cap; i++) {
     let y = await page.evaluate((to: number) => { window.scrollTo(0, to); return window.scrollY; }, ask);
     const landed = y;
@@ -657,16 +672,20 @@ async function shoot(page: Page, dir: string, stem: string, through?: string): P
     await page.screenshot({ path: join(dir, tmp) });
     shots.push(tmp);
     // WHAT A READER CAN READ, at where it landed (the last screen of a page clamps).
-    const band = visibleBand(y, height, ob.top, ob.bottom);
-    ranges.push(band);
-    if (band[1] >= target || landed < ask - 1) break;
+    const step = frameStep({ prevEnd: i > 0 ? ranges[i - 1][1] : null, ask, landed, y, ob, height, target });
+    ranges.push(step.band);
+    if (step.gap) {
+      console.log(`  SEAM GAP ${stem} frame ${i + 1}: gap ${Math.round(step.gap[0])}-${Math.round(step.gap[1])}`);
+      gaps.push(`${stem} frame ${i + 1}: SEAM GAP ${Math.round(step.gap[0])}-${Math.round(step.gap[1])}`);
+    }
+    if (step.stop) break;
     prevY = y;
     ask = nextScroll(y, height, ob.top, ob.bottom);
   }
   const files = shots.map((t, i) => (shots.length === 1 ? `${stem}.png` : `${stem}-p${i + 1}.png`));
   shots.forEach((t, i) => renameSync(join(dir, t), join(dir, files[i])));
   await page.evaluate((y: number) => window.scrollTo(0, y), startY);
-  return { files, ranges };
+  return { files, ranges, gaps };
 }
 
 /** The `regions` this step's frames do not wholly show, by selector. A selector that matches
@@ -1004,7 +1023,8 @@ async function main(runPath: string): Promise<void> {
           const full = label === "desktop" || label === "phone";
           const stepScrollY = await page.evaluate(() => window.scrollY);
           // The space pass (wide, uhd) needs two screens, not the whole chapter.
-          const { files, ranges } = await shoot(page, deckDir, `${step.id}-${label}`, full ? step.through : undefined);
+          const { files, ranges, gaps } = await shoot(page, deckDir, `${step.id}-${label}`, full ? step.through : undefined);
+          for (const g of gaps) missing.push(`${stem}/${step.id}/${label}: ${g}`);
           if (full && step.regions?.length) {
             for (const m of await missingRegions(page, step.regions, ranges)) {
               console.log(`  MISSING REGION ${stem}/${step.id}/${label}: ${m}`);
@@ -1065,6 +1085,7 @@ async function main(runPath: string): Promise<void> {
             if (shut || lists) {
               await page.waitForTimeout(200);
               const opened = await shoot(page, deckDir, `${step.id}-${label}-expanded`, step.through);
+              for (const g of opened.gaps) missing.push(`${stem}/${step.id}/${label}-expanded: ${g}`);
               manifest.push({ deck: stem, step: step.id, goal: step.goal, viewport: label, variant: "details-expanded", files: opened.files });
               // The opened pass is where the seam gap was found (#1241); check it before it is shut again.
               if (step.regions?.length) {
@@ -1292,6 +1313,25 @@ function selfTest(): void {
   eq(rewindTo(1080, 963, 130), 902, "a bar that grew once scrolled leaves a gap, so scroll back up");
   eq(rewindTo(1080, 963, 69), null, "a bar as measured for the step leaves none");
   eq(rewindTo(1080, 902, 130), null, "already at the target");
+  eq(rewindTo(1080, 903, 130), null, "y = need + 1 is inside the tolerance");
+  eq(rewindTo(1080, 904, 130), 902, "y = need + 2 rewinds");
+  eq(rewindTo(100, 5, 130), 0, "the target never goes above the top of the page");
+  eq(rewindTo(100, 1, 130), null, "and at the top there is nothing to rewind");
+  eq(rewindTo(1080, 1000, 130, 0), 950, "a custom overlap moves the target");
+  eq(rewindTo(1080, 900, 130, 0), null, "a custom overlap can leave nothing to do");
+  {
+    const ob = { top: 130, bottom: 0 };
+    const base = { prevEnd: 1080, ask: 1000, landed: 1000, y: 1000, ob, height: 1000, target: 5000 };
+    eq(frameStep(base).stop, false, "a frame short of the target goes on");
+    eq(frameStep({ ...base, target: 2000 }).stop, true, "a frame that reaches the target stops");
+    eq(frameStep({ ...base, landed: 900 }).stop, true, "a clamp with no rewind is the end of the page");
+    eq(frameStep({ ...base, landed: 900, y: 840 }).stop, false, "a clamp whose frame was rewound has not reached the end: the tail is still unshot");
+    eq(frameStep({ ...base, landed: 900, y: 840, target: 1800 }).stop, true, "unless the rewound frame reaches the target");
+    eq(frameStep({ ...base, y: 1000 }).band, [1130, 2000], "the band is the readable part");
+    eq(frameStep({ ...base, y: 1000 }).gap, [1080, 1130], "a readable top below the previous bottom is a gap");
+    eq(frameStep({ ...base, y: 902, landed: 902 }).gap, null, "an overlapping frame has none");
+    eq(frameStep({ ...base, prevEnd: null }).gap, null, "the first frame has no previous");
+  }
   eq(covered([[0, 1000], [1000, 2000]], 900, 1200), true, "the OLD recording claimed the bar-covered band was shown");
   eq(covered([[0, 1000], [1130, 2000]], 900, 1200), false, "the honest bands show [1000,1130) was never readable");
   {
