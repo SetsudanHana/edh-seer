@@ -3103,6 +3103,26 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
   }
 }
 
+/** Does `p` have its own activated "Sacrifice this" ability whose payoff is the same KIND as the
+ *  outlet ability `outlet`'s? Any one of several self-sacrifice abilities matching counts.
+ *  A self-sacrifice GRANTED to the host's target (Compulsory Rest, an Aura/Class/Equipment) is not
+ *  the host's own: the thing sacrificed is the enchanted or equipped permanent.
+ *  CEILING: equal `effect.kind` stands in for "the same effect" (draw-card vs draw-card); it does
+ *  not compare amounts or targets. Derive carries no granted-ability marker, so the host's
+ *  Aura/Class/Equipment subtype is the exclusion. */
+function sacrificesForSamePayoff(p: PairScope["p"], c: PairScope["c"], outlet: { cost?: string }): boolean {
+  // Derive splits "{1}, Sacrifice an artifact: Draw a card" into a cost ability (effect kind "") and
+  // a payoff ability sharing the same cost string, so the outlet's payoff is read off the siblings.
+  const kinds = new Set((c.tags?.abilities ?? [])
+    .filter((ca) => ca.kind === "activated" && ca.cost === outlet.cost && ca.effect.kind)
+    .map((ca) => ca.effect.kind));
+  if (kinds.size === 0) return false;
+  const subs = (p.tags?.characteristics.subtypes ?? []).map((t) => t.toLowerCase());
+  if (subs.some((t) => t === "aura" || t === "class" || t === "equipment")) return false;
+  return (p.tags?.abilities ?? []).some((pa) => pa.kind === "activated" && kinds.has(pa.effect.kind)
+    && (pa.payment?.sacrifice ?? []).some((sc) => sc.subject?.self === true));
+}
+
 // FODDER edges: P is what C's sacrifice EATS (recall v4 token family, 2026-09-09). A sacrifice
 // outlet -- "{R}, {T}, Sacrifice an artifact" (Goblin Engineer), "you may sacrifice a creature"
 // (Disciple of Freyalise) -- derives a `sacrifice` emit whose subject is what it eats, and until
@@ -3148,19 +3168,12 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     // not fodder, those are things you typically would like to keep around." Four verdicts set the
     // line: Surgehacker Mech (mv 4, an ETB) and Midnight Crusader Shuttle (mv 4, an attack trigger)
     // are not fodder for Threefold Thunderhulk / Daretti; Syr Ginger (mv 2, LEGENDARY, a payoff) is
-    // not fodder for Trading Post; Aether Spellbomb (mv 1) was judged fodder for Sai that day, and
-    // RE-JUDGED FALSE 2026-10-16 (see the self-sacrifice line below). So a real card is fodder only
+    // not fodder for Trading Post; Aether Spellbomb (mv 1) was UNCERTAIN that day and judged FALSE on
+    // the 2026-10-16 re-judge (see the self-sacrifice line below). So a real card is fodder only
     // when it is cheap and not legendary; a token always is. Measured before the rule: 1,702 of the 2,694
     // fodder reasons on the 71 decks were real cards, 956 of them above mana value 2.
     // CEILING: "cheap" is a mana-value line, set at 2 on those four verdicts; a rate model (Y9 /
     // AE4) would compare the card against what the outlet pays out instead.
-    // A REAL CARD WITH ITS OWN "SACRIFICE THIS" ABILITY IS SPENT THROUGH THAT ABILITY (owner verdict
-    // 2026-10-16, Aether Spellbomb -> Sai, FALSE: "theoretically yes Sai can sacrifice paying 2 mana
-    // and 2 artifacts to draw a card, but practically you can just pay 1, sacrifice Spellbomb to its
-    // own ability and have the same effect"). A token that does (Treasure, Clue) is made in quantity,
-    // so it stays fodder. Read off the derived self-sacrifice COST, not the oracle text.
-    const spentOnItsOwn = !isToken && (p.tags?.abilities ?? []).some((pa) =>
-      pa.kind === "activated" && (pa.payment?.sacrifice ?? []).some((sc) => sc.subject?.self === true));
     // A CREATURE THAT COMES BACK IS FODDER TOO (owner ruling 2026-09-27, #509): "creatures that can
     // come back can be considered fodder, you just have to remember how many times they can come
     // back." Undying and persist each return it once, so it is fodder even for a whole-board
@@ -3172,6 +3185,13 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     const comesBack = eats.verb === "exiled" || eats.verb === "leaves" ? undefined : (p.tags.characteristics.keywords ?? []).find((k) => /^(?:undying|persist)$/i.test(k))?.toLowerCase();
     const expendable = isToken || comesBack !== undefined || (p.card.manaValue <= EXPENDABLE_MV
       && !p.tags.characteristics.types.some((t) => t.toLowerCase() === "legendary"));
+    // A REAL CARD SPENT THROUGH ITS OWN "SACRIFICE THIS" ABILITY IS NOT FODDER FOR AN OUTLET THAT PAYS
+    // THE SAME (owner verdict 2026-10-16, Aether Spellbomb -> Sai, FALSE: "you can just pay 1,
+    // sacrifice Spellbomb to its own ability and have the same effect"; narrowed the same day: the
+    // refusal holds only when the outlet's payoff is the card's own, so Mind Stone stays fodder for
+    // Krark-Clan Ironworks' mana). A token (Treasure, Clue) is made in quantity, and a card that
+    // comes back (persist, undying, #509) is fodder whatever it can do on its own.
+    const spentOnItsOwn = !isToken && comesBack === undefined && sacrificesForSamePayoff(p, c, a);
     const is = expendable && !spentOnItsOwn && (isToken || comesBack !== undefined || subtype !== undefined || narrowType)
       && subjectMatches(characteristicsSubject(p.tags, p.card.name), { ...wanted, token: null }, h);
     if (!is && !makes) continue;

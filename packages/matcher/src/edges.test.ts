@@ -4796,19 +4796,47 @@ describe("fodder", () => {
     expect(pairReasons(artifact("Ornithopter", []), engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
     expect(pairReasons(base("Grizzly Bears", []), engineer, H).map((r) => r.tag)).not.toContain("fodder:artifact");
   });
-  // OWNER VERDICT 2026-10-16 (Aether Spellbomb -> Sai, FALSE; note 2026-09-09: "you can just pay 1,
-  // sacrifice Spellbomb to its own ability and have the same effect"): a REAL card with its own
-  // "Sacrifice this" ability is spent through that ability, not fed to another outlet. A token that
-  // sacrifices itself (Treasure) is still made in quantity, so it stays fodder.
-  test("a real card with its own sacrifice-this ability is not fodder; a token that has one still is", () => {
-    const selfSac = [{
-      kind: "activated" as const, cost: "{1}, Sacrifice this artifact", effect: { kind: "draw-card" },
+  // OWNER VERDICT 2026-10-16 (Aether Spellbomb -> Sai, FALSE: "you can just pay 1, sacrifice Spellbomb
+  // to its own ability and have the same effect"), narrowed the same day: only when the OUTLET pays
+  // the same kind of thing as the card's own sacrifice ability. Persist/undying (#509), tokens and a
+  // GRANTED self-sacrifice (Compulsory Rest) stay fodder.
+  describe("a real card with its own sacrifice-this ability", () => {
+    const own = (kind: string) => [{
+      kind: "activated" as const, cost: "{1}, Sacrifice this artifact", effect: { kind },
       payment: { mana: "{1}", sacrifice: [{ amount: "1", subject: { self: true } }] },
     }] as unknown as CardTags["abilities"];
-    expect(pairReasons(artifact("Aether Spellbomb", selfSac), engineer, H).map((r) => r.tag)).not.toContain("fodder:artifact");
-    const treasure = tokenNode("Treasure", ["artifact"], ["treasure"]);
-    treasure.tags!.abilities = selfSac;
-    expect(pairReasons(treasure, engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
+    // Derive's shape: the sacrifice ability (effect kind "") and the payoff ability share one cost.
+    const outlet = (name: string, kind: string) => base(name, [{
+      kind: "activated", cost: "{1}{U}, Sacrifice two artifacts", effect: { kind: "" },
+      emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "artifact" } }],
+    }, { kind: "activated", cost: "{1}{U}, Sacrifice two artifacts", effect: { kind } }]);
+    const sai = outlet("Sai, Master Thopterist", "draw-card");
+    const ravager = outlet("Arcbound Ravager", "counters-plus1");
+    test("is not fodder for an outlet with the same payoff, and is for a different one", () => {
+      const bomb = artifact("Aether Spellbomb", own("draw-card"));
+      expect(pairReasons(bomb, sai, H).map((r) => r.tag)).not.toContain("fodder:artifact");
+      expect(pairReasons(bomb, ravager, H).map((r) => r.tag)).toContain("fodder:artifact");
+    });
+    test("a token that has one still is fodder", () => {
+      const treasure = tokenNode("Treasure", ["artifact"], ["treasure"]);
+      treasure.tags!.abilities = own("draw-card");
+      expect(pairReasons(treasure, sai, H).map((r) => r.tag)).toContain("fodder:artifact");
+    });
+    test("a persist creature with one is still fodder for a creature outlet", () => {
+      const out = outlet("Sac Outlet", "draw-card");
+      (out.tags!.abilities[0]!.emits![0]!.subject as { type: string }).type = "creature";
+      const archmage = base("Glen Elendra Archmage", own("draw-card"));
+      archmage.tags!.characteristics.keywords = ["Persist"];
+      expect(pairReasons(archmage, out, H).map((r) => r.tag)).toContain("fodder:creature");
+    });
+    test("a granted self-sacrifice (an Aura host) does not count", () => {
+      const out = outlet("Enchantment Outlet", "lifegain");
+      (out.tags!.abilities[0]!.emits![0]!.subject as { type: string }).type = "enchantment";
+      const rest = base("Compulsory Rest", own("lifegain"), ["aura"]);
+      rest.tags!.characteristics.types = ["enchantment"];
+      rest.card.manaValue = 1;
+      expect(pairReasons(rest, out, H).map((r) => r.tag)).toContain("fodder:enchantment");
+    });
   });
   // OWNER RULING 2026-09-09: fodder is a token or something cheap and expendable, never a card with an
   // effect you keep around (Surgehacker Mech -> Threefold Thunderhulk, Midnight Crusader Shuttle ->
