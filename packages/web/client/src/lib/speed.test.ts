@@ -133,6 +133,27 @@ test("a poison route takes its whole-table turn from the poison clock", () => {
   expect(fastestRoute(routes)?.kind).toBe("poison");
 });
 
+/** A SOURCE COUNTED AT ITS FLOOR IS SAID (#1260): mill and poison name an `unbounded` source the way
+ *  the drain caveat does, timed or not, so "not by turn 20" reads as the floor it is. */
+test("mill and poison caveats name a source counted as one a turn, timed or not", () => {
+  const r = deck([{ class: "voltron", cards: ["Plate"] }, { class: "mill", cards: ["Ghost Vacuum"] }]) as DeckReport;
+  const speed = (r.deckMath as { speed?: Record<string, unknown> });
+  speed.speed = {
+    combat: {}, poison: { perTurn: [], cards: ["Blighted Agent"], unbounded: ["Atraxa, Praetors' Voice"] },
+    mill: { perTurn: [], cards: ["Ghost Vacuum", "Ruin Crab"], unbounded: ["Ghost Vacuum", "Bruvac the Grandiloquent"] },
+  };
+  const untimed = Object.fromEntries(speedRoutes(r, () => undefined).map((x) => [x.kind, x.caveat]));
+  expect(untimed.poison).toBe("not timed: it does not put ten poison counters on every opponent by turn 20; Atraxa, Praetors' Voice counted as one a turn, though it grows with your board");
+  expect(untimed.mill).toBe("its 2 mill cards do not empty every opponent's library by turn 20; Ghost Vacuum, Bruvac the Grandiloquent counted as one a turn, though they grow with your board");
+  speed.speed = {
+    combat: {}, poison: { turn: 9, perTurn: [], cards: ["Blighted Agent"], unbounded: ["Atraxa, Praetors' Voice"] },
+    mill: { turn: 13, perTurn: [], cards: ["Ghost Vacuum"], unbounded: ["Ghost Vacuum"] },
+  };
+  const timed = Object.fromEntries(speedRoutes(r, () => undefined).map((x) => [x.kind, x.caveat]));
+  expect(timed.poison).toMatch(/already poisoned; Atraxa, Praetors' Voice counted as one a turn, though it grows with your board$/);
+  expect(timed.mill).toMatch(/would make it sooner; Ghost Vacuum counted as one a turn, though it grows with your board$/);
+});
+
 /** THE SIMULATED GAMES' SPREAD rides on the combat route (owner 2026-10-07). */
 test("the combat route carries the fast and slow quarters of the simulated games", () => {
   const r = deck([{ class: "go-wide", cards: ["Goblin Rabblemaster"] }], 6) as DeckReport;

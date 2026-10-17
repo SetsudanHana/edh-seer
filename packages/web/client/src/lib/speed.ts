@@ -61,12 +61,19 @@ export function manaTurn(rows: Rows | undefined, mana: number): { turn?: number;
   return { turn: first((r) => r.mana.median), early: first((r) => r.mana.p75), late: first((r) => r.mana.p25) };
 }
 
+/** A SOURCE COUNTED AT ITS FLOOR IS SAID (#1260): a clock counts a source that grows with the board
+ *  as one a turn and names it in `unbounded`, so a turn, or a "not by turn 20", is a floor on its
+ *  speed. One suffix for drain, mill and poison, so the three caveats say it alike. */
+export function growsCaveat(unbounded: readonly string[] | undefined): string {
+  return unbounded?.length ? `; ${unbounded.join(", ")} counted as one a turn, though ${unbounded.length === 1 ? "it grows" : "they grow"} with your board` : "";
+}
+
 /** What the drain turn assumes, in one line: once per thing that sets it off, nobody gains life, and
  *  any source that grows with the board counted as one. */
 export function drainCaveat(d: { turn?: number; cards: string[]; unbounded: string[] }): string {
   const n = d.cards.length;
   const what = `${n} repeating drain${n === 1 ? "" : "s"} at each opponent`;
-  const grows = d.unbounded.length ? `; ${d.unbounded.join(", ")} counted as one a turn, though ${d.unbounded.length === 1 ? "it grows" : "they grow"} with your board` : "";
+  const grows = growsCaveat(d.unbounded);
   return d.turn !== undefined
     ? `when its ${what} have taken 40 from every opponent, each firing once per creature, token or spell that sets it off, and nobody gaining life${grows}`
     : `its ${what} ${n === 1 ? "does" : "do"} not take 40 from every opponent by turn 20 at one fire per source${grows}`;
@@ -191,9 +198,9 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
       kind: "poison", label: "poison counters", cards: poison.cards, ...(poison.turn !== undefined ? { turn: poison.turn } : {}),
       ...(poison.turn === undefined && !poison.unbounded?.length && (!prevented || preventedLacks) ? { lacks: preventedLacks ?? "it does not put ten poison counters on every opponent by turn 20" } : {}),
       caveat: poison.turn !== undefined
-        ? "when every opponent has ten poison counters: infect and toxic attacks unblocked, each proliferate adding one to everyone already poisoned"
+        ? `when every opponent has ten poison counters: infect and toxic attacks unblocked, each proliferate adding one to everyone already poisoned${growsCaveat(poison.unbounded)}`
         : prevented ? `not timed: ${prevented} prevents your damage to opponents, and no counters are placed fast enough`
-        : "not timed: it does not put ten poison counters on every opponent by turn 20",
+        : `not timed: it does not put ten poison counters on every opponent by turn 20${growsCaveat(poison.unbounded)}`,
     });
   }
 
@@ -213,8 +220,8 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
       const n = mill.cards.length;
       routes.push({ kind, label, cards: cardsOf(kind).length ? cardsOf(kind) : mill.cards, ...(mill.turn !== undefined ? { turn: mill.turn } : {}),
         ...(mill.turn === undefined && !mill.unbounded?.length ? { lacks: "its mill cards do not empty every opponent's library by turn 20" } : {}), caveat: mill.turn !== undefined
-        ? `when ${n} mill card${n === 1 ? " has" : "s have"} emptied every opponent's library, each firing once per thing that sets it off; their own extra draws would make it sooner`
-        : `its ${n} mill card${n === 1 ? " does" : "s do"} not empty every opponent's library by turn 20` });
+        ? `when ${n} mill card${n === 1 ? " has" : "s have"} emptied every opponent's library, each firing once per thing that sets it off; their own extra draws would make it sooner${growsCaveat(mill.unbounded)}`
+        : `its ${n} mill card${n === 1 ? " does" : "s do"} not empty every opponent's library by turn 20${growsCaveat(mill.unbounded)}` });
       continue;
     }
     routes.push({ kind, label, cards: cardsOf(kind), ...(drain?.turn !== undefined ? { turn: drain.turn } : {}),
