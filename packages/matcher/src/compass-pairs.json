@@ -795,5 +795,23 @@
     "note": "#1252 owner ruling: Phage's 'Whenever Phage deals combat damage to a player, that player loses the game.' is the damaged opponent, so it feeds Blood Tyrant's 'Whenever a player loses the game, put five +1/+1 counters on this creature.'",
     "source": "#1252 owner ruling 2026-10-16/17",
     "verified": true
+  },
+  {
+    "a": "Chilling Apparition",
+    "b": "Megrim",
+    "category": "wheels-draw",
+    "tag": "discard:any",
+    "note": "#1263: Chilling Apparition's 'that player discards a card' after combat damage is the damaged opponent, so it feeds Megrim's 'Whenever an opponent discards a card, this enchantment deals 2 damage to that player.'",
+    "source": "#1263 (2026-10-17)",
+    "verified": true
+  },
+  {
+    "a": "Marsh Viper",
+    "b": "Contaminant Grafter",
+    "category": "counters-plus1",
+    "tag": "counter-added:any",
+    "note": "#1263: Marsh Viper's 'that player gets two poison counters' is the damaged opponent's, a counter on the board that Contaminant Grafter's proliferate (after combat damage to a player) grows.",
+    "source": "#1263 (2026-10-17)",
+    "verified": true
   }
 ]

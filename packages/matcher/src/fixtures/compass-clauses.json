@@ -1399,6 +1399,79 @@
   "typeLine": "Legendary Planeswalker — Chandra"
  },
  {
+  "name": "Chilling Apparition",
+  "oracleId": "13cfc92c-142a-4016-b86f-ace6bda1a69c",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "regenerate",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "spirit"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 3,
+   "power": "1",
+   "toughness": "1",
+   "token": false,
+   "keywords": [
+    "regenerate"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Regenerate this creature.",
+   "2": "Whenever this creature deals combat damage to a player, that player discards a card."
+  },
+  "clauseCosts": {
+   "1": "{B}"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "{B}: Regenerate this creature.\nWhenever this creature deals combat damage to a player, that player discards a card.",
+  "typeLine": "Creature — Spirit"
+ },
+ {
   "name": "Chocobo Knights",
   "oracleId": "6cbefcba-0c1c-48fd-9b78-905ed61aae1e",
   "clauses": [
@@ -1575,6 +1648,107 @@
   "grantedToken": [],
   "oracleText": "Consuming Aberration's power and toughness are each equal to the number of cards in your opponents' graveyards.\nWhenever you cast a spell, each opponent reveals cards from the top of their library until they reveal a land card, then puts those cards into their graveyard.",
   "typeLine": "Creature — Horror"
+ },
+ {
+  "name": "Contaminant Grafter",
+  "oracleId": "ba922414-878f-4261-9bce-500c5c9e9506",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample, toxic 1",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "one or more creatures you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "proliferate",
+      "object": "any player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "a land card",
+      "fromZone": "hand",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "phyrexian",
+    "druid"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 5,
+   "power": "5",
+   "toughness": "5",
+   "token": false,
+   "keywords": [
+    "toxic",
+    "trample",
+    "corrupted",
+    "proliferate"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Trample, toxic 1",
+   "2": "Whenever one or more creatures you control deal combat damage to one or more players, proliferate.",
+   "3": "At the beginning of your end step, if an opponent has three or more poison counters, draw a card, then you may put a land card from your hand onto the battlefield."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Trample, toxic 1\nWhenever one or more creatures you control deal combat damage to one or more players, proliferate.\nCorrupted — At the beginning of your end step, if an opponent has three or more poison counters, draw a card, then you may put a land card from your hand onto the battlefield.",
+  "typeLine": "Creature — Phyrexian Druid"
  },
  {
   "name": "Count on Luck",
@@ -5025,6 +5199,60 @@
   "typeLine": "Legendary Creature — Human Wizard"
  },
  {
+  "name": "Marsh Viper",
+  "oracleId": "5249df56-7571-46c0-882e-cf88e452fb4d",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "poison",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "snake"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 4,
+   "power": "1",
+   "toughness": "2",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever this creature deals damage to a player, that player gets two poison counters."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Whenever this creature deals damage to a player, that player gets two poison counters. (A player with ten or more poison counters loses the game.)",
+  "typeLine": "Creature — Snake"
+ },
+ {
   "name": "Mass Polymorph",
   "oracleId": "b133129d-1ffb-4b78-9f5b-852d163cc9b7",
   "clauses": [
@@ -5133,6 +5361,58 @@
   "grantedToken": [],
   "oracleText": "Massive Raid deals damage to any target equal to the number of creatures you control.",
   "typeLine": "Instant"
+ },
+ {
+  "name": "Megrim",
+  "oracleId": "633ad9e2-9f55-4a1c-9248-661ad4b0e1dc",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "discarded",
+     "subject": "a card",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "that player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever an opponent discards a card, this enchantment deals 2 damage to that player."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Whenever an opponent discards a card, this enchantment deals 2 damage to that player.",
+  "typeLine": "Enchantment"
  },
  {
   "name": "Mirkwood Bats",
