@@ -5353,7 +5353,6 @@
 "Heroic Sacrifice": ["role:draw"],
 "Heroic Teamwork": ["role:draw"],
 "Heronblade Elite": ["role:ramp"],
-"Hew the Entwood": ["role:ramp"],
 "Hex": ["answer:creature","role:targetedRemoval"],
 "Hex Magic": ["role:boardWipe","role:draw"],
 "Hexgold Slash": ["answer:creature","role:targetedRemoval"],

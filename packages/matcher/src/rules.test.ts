@@ -997,15 +997,26 @@ describe("ramp.landPut is derived", () => {
   });
   test("destroying every land and returning some is not ramp (Fall of the Thran)", () => {
     expect(ruleMatches(rule, plus(land("land", "graveyard", "any"), "dies", { control: "any", type: "land", scope: "all" }), set)).toBe(false);
-    // "Sacrifice two lands" / "any number of lands" (Planar Engineering, Scapeshift, Natural Balance, Hew the Entwood) derives the SAME
-    // scope-all `dies`, but under `you`: your own sacrifice, then lands put onto the battlefield, is the drop. Only a wipe under any/opp is refused.
-    expect(ruleMatches(rule, plus(land("land", "library"), "dies", { control: "you", type: "land", scope: "all" }), set)).toBe(true);
+    // "Sacrifice two lands" / "any number of lands" derives the SAME scope-all `dies`, under `you`, and is refused too (owner 2026-10-17, Hew the Entwood:
+    // it sacrifices X lands and puts back at most X, so you never end with more). Planar Engineering, Scapeshift and Natural Balance are refused BY THIS RULE
+    // and stay Ramp through `landFetch`, pinned just below.
+    expect(ruleMatches(rule, plus(land("land", "library"), "dies", { control: "you", type: "land", scope: "all" }), set)).toBe(false);
     // Destroying ONE land (Waking the Trolls) is not "all".
     expect(ruleMatches(rule, plus(land("land", "graveyard"), "dies", { control: "any", type: "land", scope: "target" }), set)).toBe(true);
   });
-  test("Sacred Ground is NOT refused: its derive has no trigger to tell a retention from a drop (CEILING, owner ruling 2026-10-17)", () => {
-    // Pinned so the day the derive gains the trigger and the rule refuses it, this test is the one to flip.
-    expect(ruleMatches(rule, plus(land("land", "graveyard"), "leaves", { control: "you", type: "land", zone: "graveyard", fromZone: "graveyard", ref: "trigger" }), set)).toBe(true);
+  test("a sacrifice-N card with a land search keeps Ramp through landFetch, not through ramp.landPut (Planar Engineering, Scapeshift)", () => {
+    const c = plus(land("land", "library"), "dies", { control: "you", type: "land", scope: "all" });
+    (c.tags as { landFetch?: unknown }).landFetch = { zone: "battlefield" };
+    expect(ruleMatches(rule, c, set)).toBe(false);
+    expect(detectBuildCategories([c]).get("ramp")?.has("x")).toBe(true);
+  });
+  test("Sacred Ground is NOT refused: its derive has no trigger to tell a retention from a drop (CEILING, #1277, owner ruling 2026-10-17)", () => {
+    // The real shape: an `enters` with `ref: "trigger"` on an ability that has NO trigger. Pinned so the day the derive gains the trigger and the rule refuses it, this test flips.
+    const sacred: DeckCard = {
+      card: { name: "Sacred Ground", oracleText: "", typeLine: "Enchantment" } as Card,
+      tags: { abilities: [{ effect: { kind: "graveyard-recursion" }, emits: [{ verb: "enters", subject: { control: "you", token: null, type: "land", fromZone: "graveyard", ref: "trigger" } }] }] } as never,
+    };
+    expect(ruleMatches(rule, sacred, set)).toBe(true);
   });
   test("allOf and not compose inside a rule", () => {
     const yes: Rule = { id: "a", match: [{ op: "allOf", clauses: [{ op: "emits", verbs: ["enters"] }, { op: "not", clause: { op: "emits", verbs: ["dies"] } }] }] };
