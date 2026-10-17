@@ -134,3 +134,23 @@ test("an untimed combo that kills shows the mana its pieces cost, not 'speed not
   expect(tile).toHaveTextContent("14 mana, not timed");
   expect(tile).not.toHaveTextContent("speed not modelled");
 });
+
+/** NO ROUTE FINISHES (#1223): the headline says so instead of "Spread about evenly across 2 plans". */
+test("when every route lacks a finisher the headline gives the verdict, not the lean sentence", () => {
+  const wincons = { focus: 0.5, primary: "combo", classes: [
+    { class: "burn", count: 2, share: 0.5, cards: ["A"] },
+    { class: "combo", count: 2, share: 0.5, cards: ["B"] },
+  ] } as never;
+  const routes = [
+    { kind: "combo", label: "a combo: A + B", cards: [], needsFinisher: true, caveat: "x", lacks: "the A + B loop repeats creature ETB, and no card here turns that into a win" },
+    { kind: "burn", label: "damage or drain", cards: [], caveat: "x", lacks: "its drains take about 27 of each opponent's 40 by turn 20" },
+  ] as never;
+  const { unmount } = render(<WinPlans wincons={wincons} routes={routes} />);
+  const head = screen.getByTestId("win-plans-headline");
+  expect(head).toHaveTextContent("Nothing here was found that finishes a game: the A + B loop repeats creature ETB, and no card here turns that into a win; its drains take about 27 of each opponent's 40 by turn 20.");
+  expect(head).not.toHaveTextContent("Spread about evenly");
+  unmount();
+  const timed = [{ ...(routes as never[])[0] as object }, { kind: "burn", label: "damage or drain", turn: 12, cards: [], caveat: "x" }] as never;
+  render(<WinPlans wincons={wincons} routes={timed} />);
+  expect(screen.getByTestId("win-plans-headline")).toHaveTextContent("Fastest: damage or drain, around turn 12. Spread about evenly across 2 plans.");
+});

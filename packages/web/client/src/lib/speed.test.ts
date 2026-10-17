@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { DeckReport } from "../types.js";
-import { fastestRoute, manaTurn, speedRoutes } from "./speed.js";
+import { fastestRoute, manaTurn, noFinisher, speedRoutes } from "./speed.js";
 
 const row = (turn: number, p25: number, median: number, p75: number) =>
   ({ turn, mana: { p25, median, p75 }, payableShare: { p25: 0, median: 0, p75: 0 } });
@@ -189,4 +189,60 @@ test("a win-the-game combo with no \"infinite\" in its result is a candidate, an
   ]), (n) => m[n]);
   expect(routes[0]).toMatchObject({ label: "a combo: Demonic Consultation + Thassa's Oracle", mana: 3, turn: 3, winsBy: "Win the game" });
   expect(routes[0]!.needsFinisher).toBeUndefined();
+});
+
+/** NO ROUTE FINISHES (#1223): Rani's combo repeats creature triggers nothing turns into a win and its
+ *  drains take about 27 of 40. Each such route says what it lacks; the verdict needs every route to. */
+const RANI_RESULT = "Infinite creature ETB, Infinite creature LTB, Infinite magecraft triggers";
+const raniDrain: DrainSpeed = { perTurn: Array.from({ length: 20 }, () => 1.33), cards: ["Impact Tremors"], unbounded: [] };
+const raniCombo = { cards: ["Dualcaster Mage", "Essence Flux"], result: RANI_RESULT };
+const raniRoutes = () => speedRoutes(deck([{ class: "combo" }, { class: "burn" }], undefined, [raniCombo], raniDrain), (n) => mv[n]);
+
+test("a loop with no finisher and drains short of 40 both say what they lack, and the verdict joins them", () => {
+  const routes = raniRoutes();
+  expect(routes[0]!.lacks).toBe("the Dualcaster Mage + Essence Flux loop repeats creature ETB, creature LTB and magecraft triggers, and no card here turns that into a win");
+  expect(routes[1]!.lacks).toBe("its drains take about 27 of each opponent's 40 by turn 20");
+  const verdict = noFinisher(routes)!;
+  expect(verdict).toBe(`Nothing here was found that finishes a game: ${routes[0]!.lacks}; ${routes[1]!.lacks}.`);
+  expect(verdict).toContain("creature ETB, creature LTB and magecraft triggers");
+  expect(verdict).toContain("about 27 of each opponent's 40");
+});
+
+test("one route that might finish, or is simply not modelled, withholds the verdict", () => {
+  const withAlt = speedRoutes(deck([{ class: "combo" }, { class: "burn" }, { class: "alt-win", cards: ["Simic Ascendancy"] }], undefined, [raniCombo], raniDrain), (n) => mv[n]);
+  expect(withAlt.find((r) => r.kind === "alt-win")!.lacks).toBeUndefined();
+  expect(noFinisher(withAlt)).toBeUndefined();
+  const killing = speedRoutes(deck([{ class: "combo" }, { class: "burn" }], undefined, [{ ...raniCombo, payoffs: pay }], raniDrain), (n) => mv[n]);
+  expect(noFinisher(killing)).toBeUndefined();
+  const oneShot = speedRoutes(deck([{ class: "combo" }, { class: "burn" }], undefined, [raniCombo]), (n) => mv[n]);
+  expect(oneShot[1]!.lacks).toBeUndefined();
+  expect(noFinisher(oneShot)).toBeUndefined();
+  expect(noFinisher([])).toBeUndefined();
+});
+
+test("combat that finishes in the fastest quarter of games lacks nothing; with no turn at all it lacks the 120", () => {
+  const r = deck([{ class: "go-wide", cards: ["Goblin Rabblemaster"] }], 6) as DeckReport;
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = { combat: { early: 18 } };
+  expect(speedRoutes(r, () => undefined)[0]!.lacks).toBeUndefined();
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = { combat: {} };
+  expect(speedRoutes(r, () => undefined)[0]!.lacks).toBe("its creatures never deal the 120 the table has, in our test games");
+});
+
+test("a damage-preventing commander is named as what the damage routes lack", () => {
+  const r = deck([{ class: "voltron", cards: ["Plate"] }, { class: "burn", cards: ["Leech"] }], 6) as DeckReport;
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = { prevented: "The Mindskinner", combat: {}, commander: { commander: "The Mindskinner" } };
+  const routes = speedRoutes(r, () => undefined);
+  expect(routes.map((x) => x.lacks)).toEqual(Array(3).fill("The Mindskinner prevents your damage to opponents"));
+});
+
+test("commander, poison and mill routes with no turn say what they miss", () => {
+  const r = deck([{ class: "mill", cards: ["Ruin Crab"] }]) as DeckReport;
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = {
+    commander: { commander: "Light-Paws" }, poison: { perTurn: [], cards: ["Blighted Agent"], unbounded: [] }, mill: { perTurn: [], cards: ["Ruin Crab"], unbounded: [] },
+  };
+  expect(speedRoutes(r, () => undefined).map((x) => [x.kind, x.lacks])).toEqual([
+    ["commander", "Light-Paws does not deal 21 to each opponent by turn 20"],
+    ["poison", "it does not put ten poison counters on every opponent by turn 20"],
+    ["mill", "its mill cards do not empty every opponent's library by turn 20"],
+  ]);
 });

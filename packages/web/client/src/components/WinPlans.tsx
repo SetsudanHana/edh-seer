@@ -2,7 +2,7 @@ import { useState } from "react";
 import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
-import { fastestRoute, type SpeedRoute } from "../lib/speed.js";
+import { fastestRoute, noFinisher, type SpeedRoute } from "../lib/speed.js";
 import type { EngineCard, EngineModel } from "../lib/engine-model.js";
 import { Art } from "./engine-parts.js";
 
@@ -53,6 +53,7 @@ export function WinPlans({ wincons, routes, pressure, model, picked: pickedOutsi
     return own?.turn !== undefined ? own : board?.turn !== undefined ? board : own ?? board;
   };
   const fastest = routes ? fastestRoute(routes) : undefined;
+  const verdict = routes && !fastest ? noFinisher(routes) : undefined;
   const [first] = classes;
   const lean = focus >= 0.8
     ? `Nearly all-in on ${phrase(first!.class)}.`
@@ -65,7 +66,7 @@ export function WinPlans({ wincons, routes, pressure, model, picked: pickedOutsi
     <div className="flex flex-col gap-3" data-testid="win-plans">
       <p className="text-sm max-w-[65ch]" data-testid="win-plans-headline">
         {fastest ? <>Fastest: {fastest.label}, around <b>turn {fastest.turn}</b>{fastest.kind === "combo" ? " at the earliest" : ""}. </> : null}
-        {lean}
+        {verdict ?? lean}
       </p>
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3" role={pickable ? "group" : undefined} aria-label={pickable ? "Pick a plan" : undefined}>
         {classes.map((c) => <Tile key={c.class} plan={c} route={routes ? routeOf(c.class) ?? null : undefined}
