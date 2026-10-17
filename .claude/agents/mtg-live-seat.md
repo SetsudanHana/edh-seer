@@ -29,7 +29,9 @@ Before launching the pod-fit seat, the dispatcher:
 3. runs `npx tsx research/web/plant.ts --snippet` and pastes its output into the Playwright MCP
    `browser_run_code_unsafe` tool. It reloads and returns `{ applied, shard, failures }`.
    **If `applied` is not true, do NOT run the pod-fit seat** -- a round without the plant calibrates
-   nothing;
+   nothing. First run `--cleanup-snippet` and then the plant snippet ONE more time (the service worker
+   can claim the page on reload before the shard fetch, which shows up as a loud `applied: false`);
+   give up only if it fails again;
 4. after the seat finishes, runs `npx tsx research/web/plant.ts --cleanup-snippet` the same way. The
    patched shard sits in Cache Storage (`edh-seer-cards-<version>`) and the service-worker cache
    (`edh-seer-shell-*`) and survives in a persistent profile, where a later seat would see a live FALSE

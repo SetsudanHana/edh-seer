@@ -196,7 +196,7 @@
   "plant": true,
   "mustShow": {
     "mari-takes-control": [
-      "Tinybones, the Pickpocket can bring back"
+      "Lively Dirge puts cards into the graveyard that Tinybones, the Pickpocket can bring back"
     ]
   },
   "_r_t4_note": "R-T4 (2026-10-06): `through` shoots each chapter to its end, `regions` fails the capture when a frame set misses one, `drawers` captures the card drawer (on plan: the commander + the first 8 cards named in #plan; on cards: the deck's drawerExtra) with every link sentence open, and `mustShow` fails the capture when the pod-fit plant is not in any captured drawer. The graph and graph-find steps went with the Graph page (8cdb94de, #989)."

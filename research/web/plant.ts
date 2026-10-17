@@ -100,10 +100,21 @@ export function makePlantHandler(
   patch: (text: string, card: string, emit: unknown, add: (tags: unknown, emit: unknown) => void) => string,
   state: PlantState, note: (msg: string) => void,
 ) {
-  return async (route: { fetch(): Promise<any>; fulfill(o: any): Promise<void>; request(): { url(): string } }) => {
-    const res = await route.fetch();
-    if (!res.ok()) { await route.fulfill({ response: res }); return; }
-    const text: string = await res.text();
+  return async (route: { fetch(): Promise<any>; fulfill(o: any): Promise<void>; fallback(): Promise<void>; request(): { url(): string } }) => {
+    let res: any;
+    let text: string;
+    try {
+      res = await route.fetch();
+      if (!res.ok()) { await route.fulfill({ response: res }); return; }
+      text = await res.text();
+    } catch (e) {
+      // A reset dev server or a timed-out fetch must not leave the request dangling.
+      const msg = "PLANT NOT APPLIED: fetch failed: " + (e instanceof Error ? e.message : String(e));
+      state.failures.push(msg);
+      note(msg);
+      await route.fallback();
+      return;
+    }
     if (!text.includes(card)) { await route.fulfill({ response: res, body: text, headers: stripped(res.headers()) }); return; }
     let body = text;
     try {
