@@ -300,7 +300,7 @@ const damagesOthers = (t: string) => /\bdeals? (?:\d+|x) damage to (?!you\b)/.te
  *  as the text did: a ritual (Dark Ritual adds 3 for 1), a land fetch (Evolving Wilds finds 1 for 0) and a trigger. A scaling amount reads as 1. */
 export function netPositiveMana(d: DeckCard, deck?: readonly DeckCard[]): boolean {
   // A GATED line protects a card from a swap only in a deck that MEETS the gate (owner 2026-10-13: Mox Jasper is a rock in a deck of Dragons and nothing in one without). With no deck, or
-  // a gate no decklist settles (Pyramid of the Pantheon's counters on itself), it protects nothing.
+  // a gate no decklist settles (Glistening Sphere's poison counters), it protects nothing. A counter gate the card meets by its own ability (Pyramid of the Pantheon's brick counters) is estimated from the turn it is ready (`gate.ts`).
   const made = cardLines(d).filter((l) => l.source !== "token-maker" && !l.unread && gateMet(l, deck)).map((l) => l.net + l.cost.mana);
   return made.length > 0 && Math.max(...made) > (d.card.manaValue ?? 0);
 }
@@ -341,8 +341,8 @@ export function sameRockAnyColour(cut: DeckCard, add: DeckCard, deck?: readonly 
  *  CEILING: a line paid by tapping ANOTHER permanent (Springleaf Drum), a counter (Wall of Roots) or a discard still yields, as the text reader let it: the colour
  *  audit refuses those as a SOURCE (`paidWithResource`) because the mana is not one you control, but a rock swap compares two rocks' yield and the Drum is a rock.
  *  A GATED line yields where the DECK meets its gate (owner 2026-10-13, `gate.ts`): Mox Jasper is a rock in a deck of Dragons, Sceptre of Eternal Glory's 3 counts in a deck of basics. With no deck to
- *  judge it against, or a gate no decklist settles (Glistening Sphere's poison counters, Pyramid of the Pantheon's counters on itself, Princess Yue's trigger), it yields nothing, as before
- *  (unknown is unmet). A card whose only yield is gated has none until a deck meets it (`netYield` null). The card stays a different one from an ungated rock (`hasGatedYield`). */
+ *  judge it against, or a gate no decklist settles (Glistening Sphere's poison counters, Princess Yue's trigger), it yields nothing, as before
+ *  (unknown is unmet). Pyramid of the Pantheon's brick-counter gate is an estimated kind (`gate.ts`): it yields in a deck from the turn the card has put its own counters on itself. A card whose only yield is gated has none until a deck meets it (`netYield` null). The card stays a different one from an ungated rock (`hasGatedYield`). */
 const yieldShaped = (l: ManaLine): boolean =>
   (l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger")
   && !l.unread && l.restriction === null && l.anyColour !== "grantee" && !l.cost.sacrificeSelf && !l.cost.sacrificeOther

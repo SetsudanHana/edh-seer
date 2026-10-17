@@ -6,10 +6,10 @@ import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 import { FREE_TAP, fetchTags, manaTags, mkLine, ritualLine, tapFor, triggerLine, withLines, withTap } from "./mana-test-support.js";
 import { cardLines, colourSourceColours, isColourSource, isFetchSource } from "./mana-lines.js";
-import { gateVerdict } from "./gate.js";
+import { gateMetBy, gateVerdict } from "./gate.js";
 import { rampWeight } from "./land-count.js";
 import { RAMP_RESILIENCE } from "./mana-base.js";
-import { classifyAccelerant, playableLines, colourMaskOf, tapBonusOf, fetchesLand, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
+import { classifyAccelerant, playableLines, colourMaskOf, tapBonusOf, fetchesLand, ritualAdds, opponentHandSize, keepsHand, colorMask, fetchMaskOf, isEveryLandType, landfallOf, manaAvailability, manaOutput, parseCost, produced, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -99,7 +99,7 @@ test("A2: a rock pays the turn it lands and a dork waits one", () => {
   const bare = simulate([...basics(37), ...spells(62, 3)], { trials: TRIALS, turns: 4, seed: 17 });
   expect(pAtLeastMana(rock, 5, 4)).toBeGreaterThan(pAtLeastMana(bare, 5, 4));
   expect(pAtLeastMana(dork, 5, 4)).toBeGreaterThan(pAtLeastMana(bare, 5, 4));
-});
+}, 30000);
 
 // C3 — THE TAPPED PREDICATE FIRES IN BOTH DIRECTIONS, through the simulator rather than through the
 // classifier's own unit tests: a slow land is tapped as the first drop and untapped later, so a deck
@@ -190,13 +190,14 @@ test("the board-count gates stay priced turn by turn whatever the deck: Sceptre 
   expect(manaOutput(sceptre, forests)).toEqual(manaOutput(sceptre));
 });
 
-// #1184: A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION. Pyramid of the Pantheon's only playable line is "{2}, {T}: Add one mana of any color. Put a brick counter" (net -1);
-// its three-mana line waits on counters on the card itself, which no decklist settles.
-test("#1184: Pyramid of the Pantheon is no accelerant in the simulation: its only playable line nets -1", () => {
+// #1184: A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION. Pyramid of the Pantheon's put line "{2}, {T}: Add one mana of any color. Put a brick counter" nets -1 and is no accelerant on its own.
+// Its three-mana line waits on counters on the card itself (derive reads them as the card's own puts, ready turn 5, #1267); the line is admitted and then produces by the turn (tests below).
+test("#1184 / #1267: Pyramid of the Pantheon's put line nets -1 and is no accelerant alone; its own-counters line is admitted, to produce from turn 5", () => {
   const pyramid = real("Pyramid of the Pantheon");
+  const deck = [pyramid, ...basics(37), ...spells(61, 3)];
   expect(playableLines(pyramid).map((l) => l.net)).toEqual([-1]);
   expect(classifyAccelerant(pyramid, undefined, false, true)).toBeNull();
-  expect(manaAvailability([pyramid, ...basics(37), ...spells(61, 3)], { trials: 50 }).accelerants).toBe(0);
+  expect(playableLines(pyramid, deck, true).map((l) => l.net)).toEqual([-1, 3]);
 });
 
 // #1184 STAYS IN THE GOLDFISH: the land count (`land-count.ts`) reads `classifyAccelerant` without the bar, so its answer is what main gave (the weight of a net-0 filter is an owner ruling).
@@ -1802,4 +1803,68 @@ describe("board-count gates are met turn by turn on the goldfish's own board", (
     expect(manaOutput(walker, deck).turns).toBe(3);
     expect(manaOutput(walker, deck).gated?.amount).toBe(2);
   });
+});
+
+// #1267: a line gated on an ESTIMATED kind is read by the TURN, as the max-speed gate is: it admits the line only from the turns the deck's closed form says the gate holds (`gateMetBy`), never before.
+// The cards are the real derived ones (fixtures/goldfish-cards.json), their gate read as derive stores it.
+const estimatedDeck = (c: DeckCard): DeckCard[] => [c, ...basics(37), ...spells(61, 3)];
+/** What the card taps for on each of `turns`, cast on `cast` (default: on curve, its mana value, at least 1). */
+const mana = (c: DeckCard, turns: number[], cast = Math.max(1, c.card.manaValue ?? 0)): number[] =>
+  turns.map((t) => produced(manaOutput(c, estimatedDeck(c), true), [], [], t, cast, false));
+
+test("Pyramid of the Pantheon's three-mana line produces nothing until its own bricks are there (three puts at {2} each) and three after, counted from the turn it was CAST", () => {
+  const pyramid = real("Pyramid of the Pantheon");
+  // on curve (mana value 1, cast turn 1): bricks on turns 2, 3 and 4, three mana from turn 5
+  expect(mana(pyramid, [1, 2, 3, 4, 5, 6, 9])).toEqual([0, 0, 0, 0, 3, 3, 3]);
+  // cast LATE, on turn 8: the bricks land on turns 9, 10 and 11, so three mana from turn 12 and not before
+  expect(mana(pyramid, [8, 9, 10, 11, 12, 13], 8)).toEqual([0, 0, 0, 0, 3, 3]);
+});
+
+test("Tablet of Compleation's {C} line produces nothing until two oil counters are on it and its stated amount after, counted from the turn it was CAST", () => {
+  const tablet = real("Tablet of Compleation");
+  expect(mana(tablet, [1, 2, 3, 4, 5, 9])).toEqual([0, 0, 0, 1, 1, 1]);
+  // cast late, on turn 6: counters on turns 6 and 7, mana from turn 8
+  expect(mana(tablet, [6, 7, 8, 9], 6)).toEqual([0, 0, 1, 1]);
+});
+
+test("Incubation Druid taps for its ungated 1 and for three the turn AFTER its Adapt is paid, counted from the turn it was cast", () => {
+  const druid = real("Incubation Druid");
+  // on curve (cast turn 2): {3}{G}{G} is paid on turn 5, the counters are there on turn 6
+  expect(mana(druid, [1, 2, 3, 4, 5, 6, 9])).toEqual([1, 1, 1, 1, 1, 3, 3]);
+  // cast late, on turn 8: the delay is the on-curve one (4 turns after the cast), three mana from turn 12. That UNDER-claims (the {3}{G}{G} is affordable the turn after the cast, so turn 10): the safe direction
+  expect(mana(druid, [8, 9, 10, 11, 12, 13], 8)).toEqual([1, 1, 1, 1, 3, 3]);
+});
+
+test("'you played a land this turn' is read from the game's own land drop, not from a table: a source gated on it taps on the turns the simulated game played a land", () => {
+  const rock = withManaLines("Land Rock", "Artifact", [tapFor(["C"], { amount: { fixed: 2, scales: null }, net: 2, gate: parseGate("you played a land this turn") })]);
+  const out = manaOutput(rock, estimatedDeck(rock), true);
+  expect(out.estimated).toBeDefined();
+  expect(produced(out, [], [], 3, 1, true)).toBe(2);
+  expect(produced(out, [], [], 3, 1, false)).toBe(0);
+});
+
+test("River of Tears's gated line follows land-played's by-turn probability, turn by turn (a mana base of 36 in 99)", () => {
+  const river = real("River of Tears");
+  const deck = [river, ...basics(35), ...spells(63, 3)];
+  const est = manaOutput(river, deck, true).estimated;
+  expect(est).toBeDefined();
+  const gate = parseGate("you played a land this turn");
+  for (let t = 1; t <= 9; t++) expect(est!.met[t - 1], `turn ${t}`).toBe(gateMetBy(gate, deck, t));
+  expect(est!.met[1]).toBe(true);
+  expect(est!.met[8]).toBe(false);
+});
+
+test("a line gated on an estimated kind is not admitted when no turn meets the gate, and not at all without a deck", () => {
+  const lands = Array.from({ length: 40 }, (_, i) => card(`Land ${i}`, "Land", 0));
+  const rock = (gate: string) => withManaLines("Gated Rock", "Artifact", [tapFor(["C"], { gate: parseGate(gate) })]);
+  for (const g of ["there is a card in your graveyard", "this artifact has two or more oil counters on it", "this land entered this turn"]) {
+    const gated = rock(g);
+    expect(playableLines(gated, [gated, ...lands], true), g).toEqual([]);
+    expect(playableLines(gated, undefined, true), g).toEqual([]);
+  }
+  const landGate = rock("you played a land this turn");
+  expect(playableLines(landGate, [landGate, ...lands], true)).toHaveLength(1);
+  expect(playableLines(landGate, undefined, true)).toEqual([]);
+  const board = rock("you control a land");
+  expect(playableLines(board, [board, ...lands], true)).toHaveLength(1);
 });

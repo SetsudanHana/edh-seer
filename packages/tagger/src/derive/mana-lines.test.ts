@@ -7,7 +7,7 @@ import { deriveInputOf } from "../derive-input.js";
 import { deriveCardTags } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import type { CardTags, ManaLine } from "../schema.js";
-import { replacementAddedToken, scaleBounds, unpricedLoyaltyLines } from "./mana-lines.js";
+import { replacementAddedToken, scaleBounds, selfPutReady, unpricedLoyaltyLines } from "./mana-lines.js";
 import { COMMANDER_OPPONENTS, COMMANDER_PLAYERS } from "../table.js";
 import fixtures from "./mana-lines.fixtures.json" with { type: "json" };
 
@@ -67,7 +67,7 @@ describe("a tap whose mana depends on something the line must state (#1188)", ()
     expect(only("Red Death, Shipwrecker")).toMatchObject({ colours: ["R"], gate: { kind: "unknown", text: "a legal target exists: target creature an opponent controls" } });
   });
   it("Corrupted Grafstone makes no mana with an empty graveyard", () => {
-    expect(only("Corrupted Grafstone")).toMatchObject({ anyColour: "among", gate: { kind: "unknown", text: "there is a card in your graveyard" } });
+    expect(only("Corrupted Grafstone")).toMatchObject({ anyColour: "among", gate: { kind: "threshold", need: 1, text: "there is a card in your graveyard" } });
   });
   it("Rite of Flame: '{R}{R}, then {R} for each ...' scales but its net keeps the printed floor of 2 (net 1 on a 1-mana spell); Bloom Tender keeps the ceiling of 1", () => {
     // #1265: the model reads two adds; the {R}{R} is a FIXED sibling line (it keeps its 2, net 1 on the 1-mana spell) and only the "{R} for each" add scales (net 0)
@@ -314,7 +314,7 @@ describe("review fixes (#1169 task 1)", () => {
   it("Cabal Ritual's threshold line is gated, the plain line is not", () => {
     const [plain, threshold] = linesOf("Cabal Ritual");
     expect(plain.gate).toBeNull();
-    expect(threshold).toMatchObject({ amount: { fixed: 5 }, gate: { kind: "unknown", text: "there are seven or more cards in your graveyard" } });
+    expect(threshold).toMatchObject({ amount: { fixed: 5 }, gate: { kind: "threshold", need: 7, text: "there are seven or more cards in your graveyard" } });
   });
   it("counters and tapping other permanents are structured", () => {
     expect(only("Cryptic Trilobite").cost).toMatchObject({ counters: "remove", other: [] });
@@ -350,6 +350,55 @@ describe("review round 2 (#1169 task 1)", () => {
     expect(linesOf("Gleaming Bastion").map((l) => l.gate)).toContainEqual(expect.objectContaining({ kind: "control", need: 1, nouns: ["land"], basic: true }));
     expect(linesOf("Fanatic of Rhonas").map((l) => l.gate)).toContainEqual(expect.objectContaining({ kind: "control", need: 1, nouns: ["creature"], minPower: 4 }));
   });
+  it("#1267 the 18 gated lines the owner made estimable (2026-10-17): each real card's gate parses to its kind, from the card's own derive", () => {
+    const gates = (n: string): ManaLine["gate"][] => linesOf(n).map((l) => l.gate).filter((g) => g !== null);
+    const kinds: [string, string, Record<string, unknown>][] = [
+      ["Cabal Ritual", "threshold", { need: 7 }], ["Far Wanderings", "threshold", { need: 7 }], ["Corrupted Grafstone", "threshold", { need: 1 }], ["The Grey Havens", "threshold", { need: 1, types: ["creature"], supertypes: ["legendary"] }],
+      ["Dark Petition", "threshold", { need: 2, types: ["instant", "sorcery"] }], ["Lys Alana Dignitary", "threshold", { need: 1, subtypes: ["elf"] }],
+      ["Charitable Levy", "counter", { counter: "collection", need: 3 }], ["Gemstone Caverns", "counter", { counter: "luck", need: 1 }], ["Incubation Druid", "counter", { counter: "+1/+1", need: 1 }],
+      ["Pyramid of the Pantheon", "counter", { counter: "brick", need: 3 }], ["Tablet of Compleation", "counter", { counter: "oil", need: 2 }],
+      ["Famished Foragers", "turn-event", { event: "opponent-lost-life" }], ["Flamecache Gecko", "turn-event", { event: "opponent-lost-life" }], ["Mirrex", "turn-event", { event: "entered-this-turn" }],
+      ["Hidden Herbalists", "turn-event", { event: "permanent-left" }], ["Mardu Warshrieker", "turn-event", { event: "attacked" }], ["River of Tears", "turn-event", { event: "land-played" }],
+    ];
+    for (const [n, kind, rest] of kinds) expect(gates(n), n).toContainEqual(expect.objectContaining({ kind, ...rest }));
+  });
+  it("#1267 a counter gate says where its counters come from, read off the card's own words (reminder text stripped), with the REAL ready turn of each card", () => {
+    const counter = (n: string) => linesOf(n).map((l) => l.gate).find((g) => g?.kind === "counter");
+    // Pyramid (mana value 1): cast turn 1; its put costs {2}, so the first put is turn 2, then 3 and 4 -- three counters, ready turn 5.
+    expect(counter("Pyramid of the Pantheon")).toMatchObject({ put: { by: "self", readyTurn: 5 } });
+    // Tablet (mana value 2): a free {T} put, cast turn 2, puts on turns 2 and 3, ready turn 4.
+    expect(counter("Tablet of Compleation")).toMatchObject({ put: { by: "self", readyTurn: 4 } });
+    // Charitable Levy's counters come from a TRIGGER on every noncreature spell anyone casts: not an activation a turn, so it has no put and the gate is unmet (owner review 2026-10-17).
+    expect((counter("Charitable Levy") as { put?: unknown }).put).toBeUndefined();
+    expect(counter("Gemstone Caverns")).toMatchObject({ put: { by: "opening-hand" } });
+    // Incubation Druid's "{3}{G}{G}: Adapt 3" puts its own counters on it when {3}{G}{G} is PAID (turn 5, after the turn after its cast, mana value 2): the counter is there the turn AFTER, turn 6
+    expect(counter("Incubation Druid")).toMatchObject({ put: { by: "self", readyTurn: 6 } });
+    expect(counter("The Grey Havens")).toBeUndefined();
+  });
+  it("#1267 Incubation Druid's 'three mana of that type instead' is READ: the type is the line before's, any a land you control could produce", () => {
+    const [plain, instead] = linesOf("Incubation Druid");
+    expect(plain).toMatchObject({ anyColour: "lands-you-could", unread: false, amount: { fixed: 1 }, gate: null });
+    expect(instead).toMatchObject({ anyColour: "lands-you-could", unread: false, amount: { fixed: 3 }, gate: { kind: "counter" } });
+  });
+  it("#1267 keyword self-puts of +1/+1 counters: Adapt and Monstrosity at the activation, Outlast one counter per activation, Evolve not at all", () => {
+    // mana value 2 => cast turn 2, first activation turn 3 at the earliest; Adapt and Monstrosity resolve on the activation, so the counters are there the turn AFTER it is paid
+    expect(selfPutReady("{3}{g}{g}: adapt 3", "+1/+1", 2, 1, false)).toBe(6);
+    expect(selfPutReady("{1}{g}: adapt 3", "+1/+1", 2, 1, false)).toBe(4);
+    expect(selfPutReady("{3}{g}{g}: adapt 3", "+1/+1", 2, 4, false)).toBeNull();
+    expect(selfPutReady("{5}{r}{r}: monstrosity 3", "+1/+1", 3, 2, false)).toBe(8);
+    expect(selfPutReady("{4}{r}, {t}: monstrosity 2", "+1/+1", 1, 2, false)).toBe(6);
+    // Outlast {W}: one counter per {T} activation, so need 2 is two activations: 3, 4 => ready 5 (mana value 2)
+    expect(selfPutReady("outlast {w}", "+1/+1", 2, 2, true)).toBe(5);
+    expect(selfPutReady("outlast {3}{w}", "+1/+1", 2, 1, true)).toBe(5);
+    // Evolve needs a LARGER creature to enter: no put, the gate stays unmet
+    expect(selfPutReady("evolve", "+1/+1", 2, 1, true)).toBeNull();
+    // a trigger's put (Charitable Levy) is no activation; an activated put with a cost waits for the cost
+    expect(selfPutReady("whenever a player casts a noncreature spell, put a collection counter on this enchantment.", "collection", 3, 3, false)).toBeNull();
+    expect(selfPutReady("{2}, {t}: add one mana of any color. put a brick counter on this artifact.", "brick", 1, 3, false)).toBe(5);
+    expect(selfPutReady("{t}: put an oil counter on this artifact.", "oil", 2, 2, false)).toBe(4);
+    // a creature's free {T} put waits out summoning sickness
+    expect(selfPutReady("{t}: put a luck counter on this creature.", "luck", 2, 1, true)).toBe(4);
+  });
   it("'as long as ...' on a granted ability gates the grant", () => {
     expect(only("Honored Hierarch").gate?.text).toBe("this creature is renowned");
     expect(only("Mul Daya Channelers").gate?.text).toBe("the top card of your library is a land card");
@@ -376,7 +425,7 @@ describe("review round 3 (#1169 task 1)", () => {
   it("Gemstone Caverns: a plain {C} line and a gated any-colour line", () => {
     const [plain, any] = linesOf("Gemstone Caverns");
     expect(plain).toMatchObject({ colourless: 1, anyColour: null, gate: null });
-    expect(any).toMatchObject({ anyColour: "any", gate: { kind: "unknown", text: "gemstone caverns has a luck counter on it" } });
+    expect(any).toMatchObject({ anyColour: "any", gate: { kind: "counter", counter: "luck", need: 1, text: "gemstone caverns has a luck counter on it" } });
   });
   it("an intervening if gates the trigger", () => {
     expect(only("Mardu Warshrieker").gate?.text).toBe("you attacked this turn");
@@ -451,7 +500,9 @@ describe("review of task 2a (#1169): 'among', unread, self-exile", () => {
   it("The Grey Havens' 'among legendary creature cards in your graveyard' needs a card there (Fix B); a board-bounded 'among' stays ungated", () => {
     const gated = linesOf("The Grey Havens").filter((l) => l.anyColour === "among");
     expect(gated).toHaveLength(1);
-    expect(gated[0]!.gate).toMatchObject({ kind: "unknown", text: "there is a card in your graveyard" });
+    // the qualifier is KEPT (#1267 review): a legendary creature card, not any card
+    expect(gated[0]!.gate).toEqual({ kind: "threshold", zone: "graveyard", need: 1, types: ["creature"], supertypes: ["legendary"], text: "there is a legendary creature card in your graveyard" });
+    expect(only("Corrupted Grafstone").gate).toMatchObject({ kind: "threshold", need: 1, text: "there is a card in your graveyard" });
     expect(only("Mox Amber").gate).toBeNull();
   });
   it("a target player or opponent (ALWAYS_THERE) and 'any number of target' (Quintorius Kand's UP_TO) gate nothing", () => {

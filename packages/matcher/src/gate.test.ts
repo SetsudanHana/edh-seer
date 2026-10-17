@@ -1,7 +1,7 @@
 import { parseGate } from "@edh-seer/tagger/gate";
 import { expect, test } from "vitest";
-import { boardCount, boardGateOf, gateMetBy, gateProbability, gateVerdict, lineGateMetBy, lineGateVerdict, permOf } from "./gate.js";
-import { mkLine } from "./mana-test-support.js";
+import { boardCount, boardGateOf, gateMetBy, gateProbability, gateVerdict, isEstimatedGate, lineGateMetBy, lineGateVerdict, permOf } from "./gate.js";
+import { manaTags, mkLine } from "./mana-test-support.js";
 import type { DeckCard } from "./types.js";
 
 const dc = (name: string, typeLine: string, oracleText = ""): DeckCard => ({ card: { name, typeLine, oracleText, manaValue: 1 } as never, tags: null });
@@ -47,11 +47,10 @@ test("'you have the initiative' is met by a deck with a card that takes it (Sare
   expect(gateVerdict(parseGate("you have the initiative"), deckOf([]))).toBe("unmet");
 });
 
-test("a gate that is a game state, the card's own state or a trigger is unknown, never met (Yue's trigger, counters, 'entered this turn')", () => {
+test("a gate that is a game state or a trigger is unknown, never met (Yue's trigger, poison, 'bargained', a named land)", () => {
   const deck = deckOf(copies(40, (i) => dc(`Rock ${i}`, "Artifact")));
-  for (const g of ["when princess yue dies", "an opponent has three or more poison counters", "this land entered this turn",
-    "there are three or more brick counters on this artifact", "this creature has a +1/+1 counter on it", "there are seven or more cards in your graveyard", "it was bargained",
-    "you control a legendary creature", "you control an urza's mine and an urza's tower"]) {
+  for (const g of ["when princess yue dies", "an opponent has three or more poison counters", "it was bargained", "you control a legendary creature", "you control an urza's mine and an urza's tower",
+    "it's the third time", "a legal target exists: target land card from a graveyard", "you win"]) {
     expect(gateVerdict(parseGate(g), deck), g).toBe("unknown");
   }
 });
@@ -165,4 +164,166 @@ test("permOf: basic supertype (snow-covered counts), Wastes is not a basic land 
   const delver = perm({ name: "Delver of Secrets // Insectile Aberration", typeLine: "Creature — Human Wizard // Creature — Human Insect", power: null, faces: [{ power: "1" }, { power: "3" }] });
   expect(delver.power).toBe(1);
   expect(delver.subtypes.has("wizard")).toBe(true);
+});
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// #1267 (owner 2026-10-17): the three kinds a decklist can estimate. Synthetic decks of LANDS (the default filler is 60 instants, which would be graveyard fuel).
+const land = (i: number): DeckCard => dc(`Land ${i}`, "Land");
+const landsDeck = (...own: DeckCard[][]): DeckCard[] => { const cards = own.flat(); return [...cards, ...copies(100 - cards.length, land)]; };
+const ability = (over: Record<string, unknown>) => ({ kind: "on-cast", effect: { kind: "" }, emits: [], ...over }) as never;
+const withAbilities = (c: DeckCard, abilities: unknown[], mv = 1): DeckCard => ({ card: { ...c.card, manaValue: mv } as never, tags: manaTags([], { abilities: abilities as never }) });
+const spell = (i: number, type = "Instant", mv = 1): DeckCard => ({ card: { name: `${type} ${i}`, typeLine: type, oracleText: "", manaValue: mv } as never, tags: null });
+const creature = (i: number, mv = 1, extra: unknown[] = []): DeckCard => withAbilities(dc(`Creature ${i}`, "Creature — Elf"), extra, mv);
+
+test("threshold: a graveyard fills from the instants and sorceries the deck casts and the discard, mill and surveil it does to itself; Poisson on the expected count, at the median clock", () => {
+  const seven = parseGate("there are seven or more cards in your graveyard");
+  const one = parseGate("there is a card in your graveyard");
+  expect(gateProbability(seven, landsDeck(copies(60, (i) => spell(i))))!).toBeGreaterThan(0.5);
+  expect(gateVerdict(seven, landsDeck(copies(60, (i) => spell(i))))).toBe("met");
+  // a deck with no spell and nothing that fills: nothing ever reaches the graveyard
+  expect(gateProbability(seven, landsDeck([]))).toBe(0);
+  expect(gateProbability(one, landsDeck([]))).toBe(0);
+  expect(gateVerdict(seven, landsDeck(copies(6, (i) => spell(i))))).toBe("unmet");
+  // a deck of lands plus self-fillers: a looter's discard, a surveil, a mill-yourself
+  const fillers = copies(25, (i) => withAbilities(dc(`Looter ${i}`, "Creature — Human"), [ability({ kind: "activated", emits: [{ verb: i % 3 === 0 ? "discard" : i % 3 === 1 ? "surveil" : "mill", subject: { control: "you" } }] })], 1));
+  expect(gateVerdict(one, landsDeck(fillers))).toBe("met");
+  // an opponent's graveyard, or every player's discard, is not yours
+  const theirs = copies(25, (i) => withAbilities(dc(`Edict ${i}`, "Creature — Human"), [ability({ emits: [{ verb: "discard", subject: { control: "opp" } }, { verb: "mill", subject: { control: "opp" } }] })], 1));
+  expect(gateVerdict(one, landsDeck(theirs))).toBe("unmet");
+});
+
+test("threshold by a turn: an expensive spell is not cast yet, and no more than one spell a turn after the first is counted", () => {
+  const two = parseGate("there are two or more instant and/or sorcery cards in your graveyard");
+  const cheap = landsDeck(copies(60, (i) => spell(i, i % 2 ? "Instant" : "Sorcery", 1)));
+  const dear = landsDeck(copies(60, (i) => spell(i, "Instant", 7)));
+  expect(gateProbability(two, cheap, 1)).toBe(0);
+  expect(gateProbability(two, cheap, 9)!).toBeGreaterThan(gateProbability(two, cheap, 4)!);
+  expect(gateProbability(two, dear, 6)).toBe(0);
+  expect(gateProbability(two, dear, 9)!).toBeGreaterThan(0.5);
+});
+
+test("threshold, typed: only matching cards count -- instants and sorceries feed an instant/sorcery gate and not an Elf gate (Dark Petition, Lys Alana Dignitary)", () => {
+  const elf = parseGate("there is an elf card in your graveyard");
+  const spells = landsDeck(copies(60, (i) => spell(i)));
+  expect(gateVerdict(parseGate("there are two or more instant and/or sorcery cards in your graveyard"), spells)).toBe("met");
+  expect(gateVerdict(parseGate("there are two or more creature cards in your graveyard"), spells)).toBe("unmet");
+  expect(gateVerdict(elf, spells)).toBe("unmet");
+  // a looter deck that is mostly Elves puts Elves there; one with none does not
+  const loot = (i: number) => withAbilities(dc(`Elf Looter ${i}`, "Creature — Elf Shaman"), [ability({ kind: "activated", emits: [{ verb: "discard", subject: { control: "you" } }] })], 1);
+  expect(gateVerdict(elf, landsDeck(copies(40, loot)))).toBe("met");
+  const nonElf = (i: number) => withAbilities(dc(`Human Looter ${i}`, "Creature — Human"), [ability({ kind: "activated", emits: [{ verb: "discard", subject: { control: "you" } }] })], 1);
+  expect(gateVerdict(elf, landsDeck(copies(40, nonElf)))).toBe("unmet");
+});
+
+test("counter, the card's own ability puts it there: met from the cast turn plus the counters needed, by a turn (Pyramid of the Pantheon, Tablet of Compleation)", () => {
+  const pyramid: ReturnType<typeof parseGate> = { kind: "counter", counter: "brick", need: 3, put: { by: "self", readyTurn: 5 }, text: "there are three or more brick counters on this artifact" };
+  const deck = landsDeck([]);
+  expect(gateProbability(pyramid, deck, 4)).toBe(0);
+  expect(gateProbability(pyramid, deck, 5)).toBe(1);
+  expect(gateProbability(pyramid, deck)).toBe(1);
+  expect(gateVerdict(pyramid, deck)).toBe("met");
+  expect(gateVerdict({ ...pyramid, put: { by: "self", readyTurn: 12 } } as typeof pyramid, deck)).toBe("unmet");
+});
+
+test("counter, the deck does NOT supply it: a counter gate with no put of its own is unmet whatever the deck holds (the dropped supply case over-claimed: the counter rarely lands on the holder)", () => {
+  const druid = parseGate("this creature has a +1/+1 counter on it");
+  const adder = (i: number) => withAbilities(dc(`Adder ${i}`, "Enchantment"), [ability({ emits: [{ verb: "counter-added", subject: { control: "you", counter: "+1/+1", type: "creature" } }] })], 3);
+  expect(gateProbability(druid, landsDeck(copies(40, adder)))).toBe(0);
+  expect(gateVerdict(druid, landsDeck(copies(40, adder)))).toBe("unmet");
+  // ...and Incubation Druid's own Adapt (derive's `put: self` at turn 5) is met from the turn it can pay {3}{G}{G}
+  const adapt: ReturnType<typeof parseGate> = { kind: "counter", counter: "+1/+1", need: 1, put: { by: "self", readyTurn: 5 }, text: druid.text };
+  expect(gateProbability(adapt, landsDeck([]), 4)).toBe(0);
+  expect(gateProbability(adapt, landsDeck([]), 5)).toBe(1);
+});
+
+test("threshold, supertyped: a legendary creature card needs a legendary creature to reach the yard (The Grey Havens)", () => {
+  const g = parseGate("there is a legendary creature card in your graveyard");
+  const loot = (legend: boolean) => (i: number) => withAbilities(dc(`Looter ${i}`, legend ? "Legendary Creature — Human" : "Creature — Human"), [ability({ kind: "activated", emits: [{ verb: "discard", subject: { control: "you" } }] })], 1);
+  expect(gateVerdict(g, landsDeck(copies(40, loot(true))))).toBe("met");
+  expect(gateVerdict(g, landsDeck(copies(40, loot(false))))).toBe("unmet");
+  expect(gateVerdict(g, landsDeck(copies(60, (i) => spell(i))))).toBe("unmet");
+});
+
+test("counter, only as the card begins the game on the battlefield: the chance it is in the opening hand and the player is not first (Gemstone Caverns), well under the bar", () => {
+  const caverns: ReturnType<typeof parseGate> = { kind: "counter", counter: "luck", need: 1, put: { by: "opening-hand" }, text: "gemstone caverns has a luck counter on it" };
+  const p = gateProbability(caverns, landsDeck([]))!;
+  expect(p).toBeCloseTo((7 / 100) * 0.75, 5);
+  expect(gateVerdict(caverns, landsDeck([]))).toBe("unmet");
+  expect(gateProbability(caverns, landsDeck([]), 1)).toBeCloseTo(p, 5);
+});
+
+test("turn-event: a land played this turn needs a land DROP on that turn: the lands seen must reach the turn number, not merely exist (River of Tears)", () => {
+  const g = parseGate("you played a land this turn");
+  expect(gateVerdict(g, landsDeck([]))).toBe("met");
+  expect(gateMetBy(g, landsDeck([]), 1)).toBe(true);
+  expect(gateVerdict(g, copies(100, (i) => spell(i)))).toBe("unmet");
+  // 36 lands in 99 (a real mana base): a land drop on turn 9 is far from certain (a simulation reads about .39), so the conservative form is below the bar there; early turns are fine
+  const real = [...copies(36, land), ...copies(64, (i) => spell(i))];
+  expect(gateProbability(g, real, 2)!).toBeGreaterThan(0.5);
+  expect(gateProbability(g, real, 9)!).toBeLessThan(0.5);
+  expect(gateVerdict(g, real)).toBe("unmet");
+  expect(gateProbability(g, real, 9)!).toBeLessThan(gateProbability(g, real, 3)!);
+});
+
+test("turn-event: 'you attacked this turn' is the creature board count a turn late -- a creature cast on turn 1 attacks on turn 2 (Mardu Warshrieker)", () => {
+  const g = parseGate("you attacked this turn");
+  const many = landsDeck(copies(30, (i) => creature(i)));
+  expect(gateVerdict(g, many)).toBe("met");
+  expect(gateProbability(g, many, 1)).toBe(0);
+  expect(gateProbability(g, many, 3)!).toBeGreaterThan(0.5);
+  expect(gateVerdict(g, landsDeck([]))).toBe("unmet");
+  expect(gateVerdict(g, landsDeck(copies(30, (i) => spell(i))))).toBe("unmet");
+  // the holder is a creature of the deck and is not ITS OWN attacker: a deck whose only creature is one card cannot meet it, whatever the turn
+  expect(gateProbability(g, landsDeck([creature(0)]), 9)).toBe(0);
+  expect(gateProbability(g, landsDeck(copies(2, (i) => creature(i))), 9)!).toBeGreaterThan(0);
+});
+
+test("turn-event: an opponent lost life this turn -- a drain / damage / life-loss source the deck can cast, never an attacker (Famished Foragers, Flamecache Gecko)", () => {
+  const g = parseGate("an opponent lost life this turn");
+  const drain = (i: number) => withAbilities(dc(`Drain ${i}`, "Sorcery"), [ability({ emits: [{ verb: "lose-life", subject: { control: "opp" } }] })], 2);
+  const burn = (i: number) => withAbilities(dc(`Burn ${i}`, "Instant"), [ability({ emits: [{ verb: "non-combat-damage", subject: { control: "any" } }] })], 1);
+  const gain = (i: number) => withAbilities(dc(`Gain ${i}`, "Instant"), [ability({ emits: [{ verb: "gain-life", subject: { control: "you" } }, { verb: "lose-life", subject: { control: "you" } }] })], 1);
+  // an attack is not a hit: attackers alone do not meet it
+  expect(gateVerdict(g, landsDeck(copies(30, (i) => creature(i))))).toBe("unmet");
+  expect(gateVerdict(g, landsDeck(copies(30, drain)))).toBe("met");
+  expect(gateVerdict(g, landsDeck(copies(30, burn)))).toBe("met");
+  expect(gateVerdict(g, landsDeck(copies(30, gain)))).toBe("unmet");
+  expect(gateVerdict(g, landsDeck([drain(0)]))).toBe("unmet");
+  expect(gateVerdict(g, landsDeck([]))).toBe("unmet");
+  expect(gateProbability(g, landsDeck(copies(30, drain)), 1)).toBe(0);
+});
+
+test("turn-event: a creature died / a permanent left this turn needs a repeatable sacrifice outlet (and a creature to feed it, for 'died'); otherwise nothing (Caravan Vigil, Hidden Herbalists)", () => {
+  const died = parseGate("a creature died this turn");
+  const left = parseGate("a permanent left the battlefield under your control this turn");
+  const outlet = (i: number) => withAbilities(dc(`Outlet ${i}`, "Creature — Goblin"), [ability({ kind: "activated", cost: "Sacrifice a creature", emits: [{ verb: "sacrifice", subject: { control: "you", type: "creature" } }, { verb: "dies", subject: { control: "you" } }] })], 1);
+  const selfSac = (i: number) => withAbilities(dc(`Petal ${i}`, "Artifact"), [ability({ kind: "activated", emits: [{ verb: "sacrifice", subject: { control: "you", self: true } }, { verb: "dies", subject: { control: "you", self: true } }] })], 0);
+  expect(gateVerdict(died, landsDeck(copies(30, outlet)))).toBe("met");
+  expect(gateVerdict(left, landsDeck(copies(30, outlet)))).toBe("met");
+  expect(gateVerdict(died, landsDeck(copies(30, selfSac)))).toBe("unmet");
+  expect(gateVerdict(left, landsDeck(copies(30, selfSac)))).toBe("unmet");
+  expect(gateVerdict(died, landsDeck([]))).toBe("unmet");
+  expect(gateVerdict(left, landsDeck([outlet(0)]))).toBe("unmet");
+  // an outlet and nothing to sacrifice: 'a creature died' needs a creature too
+  const noBody = (i: number) => withAbilities(dc(`Altar ${i}`, "Artifact"), [ability({ kind: "activated", emits: [{ verb: "sacrifice", subject: { control: "you", type: "creature" } }, { verb: "dies", subject: { control: "you" } }] })], 1);
+  expect(gateVerdict(died, landsDeck(copies(30, noBody)))).toBe("unmet");
+  expect(gateVerdict(left, landsDeck(copies(30, noBody)))).toBe("met");
+  // an outlet is for what it sacrifices: "sacrifice a land" is a permanent leaving and no creature dying (Zuran Orb)
+  const landOutlet = (i: number) => withAbilities(dc(`Orb ${i}`, "Artifact"), [ability({ kind: "activated", emits: [{ verb: "sacrifice", subject: { control: "you", type: "land" } }] })], 0);
+  expect(gateVerdict(left, landsDeck(copies(30, landOutlet)))).toBe("met");
+  expect(gateVerdict(died, landsDeck([...copies(30, landOutlet), ...copies(30, (i) => creature(i))]))).toBe("unmet");
+});
+
+test("turn-event: 'this land entered this turn' is the entry turn only, and the evaluator has no entry turn: unmet by every turn in every deck (Mirrex)", () => {
+  const g = parseGate("this land entered this turn");
+  for (const deck of [landsDeck([]), landsDeck(copies(30, (i) => creature(i)))]) {
+    expect(gateProbability(g, deck)).toBe(0);
+    expect(gateProbability(g, deck, 1)).toBe(0);
+    expect(gateVerdict(g, deck)).toBe("unmet");
+  }
+});
+
+test("the estimated kinds are named (the goldfish does not play them per game)", () => {
+  for (const [g, yes] of [["there is a card in your graveyard", true], ["this creature has a +1/+1 counter on it", true], ["you attacked this turn", true], ["you control a dragon", false], ["speed 4", false], ["you win", false]] as const)
+    expect(isEstimatedGate(parseGate(g)), g).toBe(yes);
 });

@@ -20,9 +20,18 @@
  *  `gateMetBy(gate, deck, turn)`: the chance the deck has `need` of the permanents on the battlefield by that turn (a land a turn, a spell the turn after its mana value) at the same bar. The
  *  deck-level `gateVerdict` is the REPORT's filter (the audit, the Karsten inputs, the ramp role: owner 2026-10-13, a gated source counts from P >= 0.5); the goldfish does not apply it to a board-count gate, only
  *  asks that the deck can ever meet it (`boardGateReachable`) and prices the rest per game (#1191).
+ *  THREE ESTIMATED KINDS (#1267, owner 2026-10-17: "estimate all three kinds from the decklist"; everything else stays `unknown`, which is unmet). Each has ONE closed form below, from facts the deck derives
+ *  (`CardTags.abilities`: what a card emits, and the type line), never from oracle text. Each errs LOW where it can, and each over-claim it keeps is named in a CEILING at its function
+ *  (the damage source that needs a trigger, a creature that cannot attack, the opening hand's table size). The goldfish plays them BY THE TURN, as it plays the max-speed gate (`estimatedGateByTurn`, `ManaOutput.estimated`).
+ *   - `threshold` (N cards in YOUR graveyard): Poisson on the expected count `graveyardMean`. Why Poisson: the count is a sum of many rare, near-independent events ("this card was seen, cast and is in
+ *     the yard"), which Poisson models by its mean alone, and the mean is the one thing the derived facts give. CEILING: Poisson is wider than the true sum (its variance equals its mean, a sum of
+ *     Bernoullis has less), so a need above the mean is slightly over-claimed and one below slightly under-claimed.
+ *   - `counter` (counters on the card): its own ability puts them there (`put.by self`, derive): met from `put.readyTurn`; only the opening hand does (Gemstone Caverns): 3/4 x 7/N; otherwise 0 (the deck's supply of
+ *     counters is NOT counted: it over-claimed).
+ *   - `turn-event` (something this turn): see `turnEventProbability`.
  *  CEILING: a gate that names two kinds of thing at once ("an urza's mine and an urza's tower", the tron lands) is `unknown` here: the goldfish prices that pair against the board turn by turn. */
 import { pAtLeast, seen } from "@edh-seer/engine";
-import type { ManaGate, ManaLine } from "@edh-seer/tagger";
+import type { Ability, ManaGate, ManaLine, TurnEvent } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { CORPUS_MEDIAN_CLOCK, REQUIRED_CONFIDENCE } from "./corpus-clock.js";
 import { countsAsLand, parseTypeLine } from "./typeline.js";
@@ -41,7 +50,18 @@ const PERMANENT_TYPES: ReadonlySet<string> = new Set(["artifact", "creature", "e
 
 /** A PERMANENT THE DECK CAN PUT ONTO THE BATTLEFIELD, as a board-count gate sees it: its card types and subtypes (a land carries "land") and the mana value it is cast for. */
 export interface Perm { name: string; types: ReadonlySet<string>; subtypes: ReadonlySet<string>; land: boolean; manaValue: number; basic: boolean; power: number | null }
-interface DeckFacts { size: number; permanents: Perm[]; initiative: boolean }
+/** A card the deck can cast, as the estimated gates count it: the mana value it is cast for, and whether it stays (a permanent is on the battlefield from the turn after it is cast, as the board-count
+ *  gates count it; an instant or sorcery is cast the turn its mana value is paid). */
+interface Src { mv: number; permanent: boolean }
+/** An instant or sorcery, whose cast puts it into the graveyard (the types and subtypes a typed graveyard gate matches). */
+interface SpellFact extends Src { types: ReadonlySet<string>; subtypes: ReadonlySet<string>; supertypes: ReadonlySet<string> }
+/** A card that puts cards of YOUR deck into YOUR graveyard (discard, mill, surveil, all `control: you`): `n` cards, the printed amount when it is a number, else 1. */
+interface FillerFact extends Src { n: number }
+interface DeckFacts {
+  size: number; permanents: Perm[]; initiative: boolean; spells: SpellFact[]; fillers: FillerFact[]; lifeLoss: Src[]; creatureOutlets: Src[]; permanentOutlets: Src[];
+  /** Every card's types and subtypes, to find the share of a deck a typed graveyard gate matches. */
+  kinds: { types: ReadonlySet<string>; subtypes: ReadonlySet<string>; supertypes: ReadonlySet<string> }[];
+}
 
 /** THE CARD AS A PERMANENT, or null for an instant, a sorcery or anything else that never stays (the front face, as the type line of a card in hand reads: CR 712.8a). */
 export function permOf(dc: DeckCard): Perm | null {
@@ -57,20 +77,51 @@ export function permOf(dc: DeckCard): Perm | null {
 }
 
 const FACTS = new WeakMap<readonly DeckCard[], DeckFacts>();
+const FILL_VERBS: ReadonlySet<string> = new Set(["discard", "mill", "surveil"]);
+/** Abilities that fire (a static ability's emits are not an act). */
+const acts = (a: Ability): boolean => a.kind !== "static";
+/** The printed number of a fill ("mill 3", "surveil 2"); anything else ("X", "for each ...") is 1, the under-claim. */
+const countOf = (a: Ability): number => (/^\d+$/.test(a.amount ?? "") ? Number(a.amount) : 1);
 function factsOf(deck: readonly DeckCard[]): DeckFacts {
   let f = FACTS.get(deck);
   if (!f) {
     const permanents: Perm[] = [];
     let initiative = false;
+    const spells: SpellFact[] = [], fillers: FillerFact[] = [], lifeLoss: Src[] = [], creatureOutlets: Src[] = [], permanentOutlets: Src[] = [], kinds: DeckFacts["kinds"] = [];
     for (const dc of deck) {
       if (/\btake the initiative\b/i.test(dc.card.oracleText ?? "")) initiative = true;
       const p = permOf(dc);
       if (p) permanents.push(p);
+      const parsed = parseTypeLine((dc.card.typeLine ?? "").split("//")[0]!);
+      const types = new Set(p ? p.types : parsed.types), subtypes = new Set(parsed.subtypes), supertypes = new Set(parsed.supertypes);
+      kinds.push({ types, subtypes, supertypes });
+      const src: Src = { mv: dc.card.manaValue ?? 0, permanent: p !== null };
+      if (!p && (types.has("instant") || types.has("sorcery"))) spells.push({ ...src, types, subtypes, supertypes });
+      let fill = 0, loses = false, creatureOutlet = false, permanentOutlet = false;
+      for (const a of (dc.tags?.abilities ?? []).filter(acts)) for (const e of a.emits ?? []) {
+        const you = e.subject.control === "you";
+        if (FILL_VERBS.has(e.verb) && you) fill = Math.max(fill, countOf(a));
+        if ((e.verb === "lose-life" || e.verb === "non-combat-damage") && (e.subject.control === "opp" || e.subject.control === "any")) loses = true;
+        if (e.verb === "sacrifice" && you && e.subject.self !== true && a.kind === "activated") {
+          // WHAT THE OUTLET SACRIFICES: "sacrifice a creature" feeds both gates; "sacrifice a land" or an artifact only a permanent leaving; no type named is any permanent.
+          const sacrificed = Array.isArray(e.subject.type) ? e.subject.type : e.subject.type === undefined ? [] : [e.subject.type];
+          if (sacrificed.includes("creature")) creatureOutlet = true;
+          if (sacrificed.length === 0 || sacrificed.some((t) => t === "permanent" || PERMANENT_TYPES.has(t))) permanentOutlet = true;
+        }
+      }
+      if (fill > 0) fillers.push({ ...src, n: fill });
+      if (loses) lifeLoss.push(src);
+      if (creatureOutlet) creatureOutlets.push(src);
+      if (creatureOutlet || permanentOutlet) permanentOutlets.push(src);
     }
-    FACTS.set(deck, (f = { size: deck.length, permanents, initiative }));
+    FACTS.set(deck, (f = { size: deck.length, permanents, initiative, spells, fillers, lifeLoss, creatureOutlets, permanentOutlets, kinds }));
   }
   return f;
 }
+/** HOW MANY OF THESE ARE CAST BY THE TURN: a permanent from the turn after its mana value is paid (never on turn 1: `boardGateProbability`'s rule), a spell the turn its mana value is paid. */
+const castBy = (srcs: readonly Src[], turn: number): number => srcs.filter((x) => (x.permanent ? x.mv < turn && turn >= 2 : x.mv <= turn)).length;
+/** The chance at least `need` of these are among the cards seen by the turn. */
+const seenAtLeast = (need: number, srcs: readonly Src[], turn: number, size: number): number => pAtLeast(need, castBy(srcs, turn), seen(turn), size);
 
 /** One noun of the gate against one permanent: a card type or a subtype ("dragon", "swamp"). */
 const matches = (noun: string, p: Perm): boolean => (PERMANENT_TYPES.has(noun) ? p.types.has(noun) : p.subtypes.has(noun));
@@ -110,10 +161,87 @@ export function gateProbability(gate: ManaGate, deck: readonly DeckCard[], by?: 
     if (by !== undefined && gate.need + (holderIsLand ? 1 : 0) > by) return 0;
     return pAtLeast(gate.need, Math.max(0, ...byName.values()), n, f.size);
   }
+  if (gate.kind === "threshold") return poissonAtLeast(gate.need, graveyardMean(gate, f, by ?? CORPUS_MEDIAN_CLOCK));
+  if (gate.kind === "counter") return counterProbability(gate, f, by ?? CORPUS_MEDIAN_CLOCK);
+  if (gate.kind === "turn-event") return turnEventProbability(gate.event, f, by);
   const b = boardGateOf(gate);
   return b ? boardGateProbability(b, deck, by, holderIsLand) : null;
 }
 
+/** THE KINDS THIS MODULE ESTIMATES FROM THE DECKLIST (#1267): a graveyard count, counters on the card, an event this turn. The goldfish plays them BY THE TURN, as it plays the max-speed gate: a line
+ *  of one is admitted on a simulated turn only when the closed form holds on that turn (`estimatedGateByTurn`), never before, and never on a deck-level verdict that has no turn. */
+export const isEstimatedGate = (gate: ManaGate): boolean => gate.kind === "threshold" || gate.kind === "counter" || gate.kind === "turn-event";
+
+/** THE TURNS an estimated gate holds on, 1..`ESTIMATE_TURNS`: `gateMetBy` on each, the audit's own answer, as a table the simulation reads by its turn (a turn past the table reads the last entry). Not monotone:
+ *  "you played a land this turn" falls as the turns go. */
+export const ESTIMATE_TURNS = 20;
+export const estimatedGateByTurn = (gate: ManaGate, deck: readonly DeckCard[]): boolean[] =>
+  Array.from({ length: ESTIMATE_TURNS }, (_, i) => gateMetBy(gate, deck, i + 1));
+
+/** P(X >= need) for X ~ Poisson(mean). Summed from the complement of the (few) terms below `need`, which are small numbers for the needs a gate prints. */
+function poissonAtLeast(need: number, mean: number): number {
+  if (need <= 0) return 1;
+  if (mean <= 0) return 0;
+  let term = Math.exp(-mean), below = term;
+  for (let k = 1; k < need; k++) { term *= mean / k; below += term; }
+  return Math.max(0, 1 - below);
+}
+
+/** THE EXPECTED CARDS IN YOUR GRAVEYARD BY THE TURN, of the kind the gate names. The sum of
+ *   - the instants and sorceries the deck casts: each one seen (7 + turn cards of the deck) and castable by the turn (mana value at most the turn), but never more than turn - 1 of them in all (one spell
+ *     a turn, none on the first: under-claims a turn-1 cast and a double-spell turn);
+ *   - the cards the deck's own fillers put there: each filler seen and cast by the turn adds its printed amount (1 when it prints none), once; a filled card matches a typed gate at the share of the deck that matches.
+ *  An untyped gate matches every card; a typed one counts a spell only when its own types or subtypes match, and a filled card only at the deck's share of matching cards.
+ *  CEILING: creatures dying, a land sacrificed, a flashback or a recursion spell are not counted; a filler fires once, however repeatable; a spell is assumed cast when it can be, not held; the
+ *  holder itself (Cabal Ritual, on the stack when its gate is read) is counted among the spells; the discards are assumed to be as typed as the whole deck. All of these under-claim except the last two. */
+function graveyardMean(g: Extract<ManaGate, { kind: "threshold" }>, f: DeckFacts, turn: number): number {
+  const matches = (types: ReadonlySet<string>, subtypes: ReadonlySet<string>, supertypes: ReadonlySet<string>): boolean =>
+    (g.supertypes?.every((t) => supertypes.has(t)) ?? true)
+    && ((g.types === undefined && g.subtypes === undefined) || (g.types?.some((t) => types.has(t)) ?? false) || (g.subtypes?.some((t) => subtypes.has(t)) ?? false));
+  const share = f.size === 0 ? 0 : f.kinds.filter((k) => matches(k.types, k.subtypes, k.supertypes)).length / f.size;
+  const seenShare = Math.min(1, seen(turn) / Math.max(1, f.size));
+  const castSpells = Math.min(Math.max(0, turn - 1), f.spells.filter((s) => s.mv <= turn && matches(s.types, s.subtypes, s.supertypes)).length * seenShare);
+  const filled = f.fillers.reduce((sum, x) => sum + (castBy([x], turn) > 0 ? x.n : 0), 0) * seenShare * share;
+  return castSpells + filled;
+}
+
+/** A COUNTER GATE'S CHANCE (see the header): met when the card's own words put the counters on it (`put.by self`, from `put.readyTurn`; derive reads Adapt, Monstrosity, Outlast and an activated "put ... counter on
+ *  this ..."), or in the opening hand (Gemstone Caverns: 3/4 x 7/N). Anything else is 0.
+ *  CEILING: THE DECK'S SUPPLY IS DROPPED (owner review 2026-10-17). "The deck has a card that puts that counter on a creature you control" over-claimed: the counter rarely lands on the holder, so a gate whose card puts
+ *  no counter on itself is unmet in every deck. CEILING: the opening-hand case ignores a mulligan, the card exiled from the hand to pay for it, and a table that is not four players. */
+function counterProbability(g: Extract<ManaGate, { kind: "counter" }>, f: DeckFacts, turn: number): number {
+  if (g.put?.by === "self") return turn >= g.put.readyTurn ? 1 : 0;
+  if (g.put?.by === "opening-hand") return 0.75 * Math.min(1, 7 / Math.max(1, f.size));
+  return 0;
+}
+
+/** THE CHANCE OF SOMETHING HAVING HAPPENED EARLIER THIS TURN, by the median clock or by `by`. Each is a deck-level estimate; where it errs it errs low (the exceptions are named).
+ *   - `land-played`: a land drop on the turn needs a land in hand for it, and the lands seen must cover every turn so far: at least `turn` lands among the cards seen (`pAtLeast(turn, ...)`). Conservative: it
+ *     is the chance of a land for EVERY turn so far, so a missed drop earlier (or a land held back) is not made up; a simulation puts the true chance of a drop on turn 3 / 5 / 7 / 9 at about .82 / .60 / .46 / .39
+ *     (36 lands in 99) and this form reads lower than each.
+ *   - `attacked`: a creature OTHER THAN THE HOLDER on the battlefield (the holder, a creature of the deck, is not its own attacker: one creature fewer is counted, which under-claims a holder that is no creature), cast
+ *     the turn before at the earliest, so no attack on turn 1. CEILING: a creature that cannot attack is counted.
+ *   - `opponent-lost-life`: ONLY a card the deck derives as making an opponent lose life or dealing damage a player can take ("any target" counts), seen and cast. An attack is not a hit (blockers, removal, no creature
+ *     that can attack), so attackers are not counted. CEILING: over-claims a damage source that needs a trigger or a target that is not a player.
+ *   - `creature-died`: a repeatable outlet that sacrifices a CREATURE you control, seen and cast, AND a creature other than the holder on the board (the two taken as independent: their product).
+ *     CEILING: a creature dying in combat or to removal is not counted.
+ *   - `permanent-left`: a repeatable outlet that sacrifices a permanent (a creature, a land, an artifact, any permanent). CEILING: bounce and blink, which also leave the battlefield, are not counted.
+ *   - `entered-this-turn` (Mirrex): true only on the turn the land enters, and the evaluator has no entry turn: 0 (unmet) always. CEILING: an under-claim of the entry turn, as Gleaming Bastion's. */
+function turnEventProbability(event: TurnEvent, f: DeckFacts, by?: number): number {
+  const turn = by ?? CORPUS_MEDIAN_CLOCK;
+  const attackers = (): number => {
+    const creatures = f.permanents.filter((p) => p.types.has("creature") && p.manaValue < turn && turn >= 2).length;
+    return pAtLeast(1, Math.max(0, creatures - 1), seen(turn), f.size);
+  };
+  switch (event) {
+    case "land-played": return pAtLeast(turn, f.permanents.filter((p) => p.land).length, seen(turn), f.size);
+    case "attacked": return attackers();
+    case "opponent-lost-life": return seenAtLeast(1, f.lifeLoss, turn, f.size);
+    case "creature-died": return seenAtLeast(1, f.creatureOutlets, turn, f.size) * attackers();
+    case "permanent-left": return seenAtLeast(1, f.permanentOutlets, turn, f.size);
+    case "entered-this-turn": return 0;
+  }
+}
 /** THE CHANCE OF A PARSED BOARD-COUNT GATE (`gateProbability`'s board branch): by the median clock over every card, or with `by` by that turn. */
 export function boardGateProbability(b: BoardGate, deck: readonly DeckCard[], by?: number, holderIsLand = false): number {
   const f = factsOf(deck);

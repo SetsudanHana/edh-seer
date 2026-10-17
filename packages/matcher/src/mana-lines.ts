@@ -83,7 +83,7 @@ export const isColourSource = (line: ManaLine): boolean => sourceShaped(line) &&
 
 /** THE COLOUR-SOURCE RULE FOR A LINE IN A DECK (owner 2026-10-13: the colour audit follows the gate check, one answer for the audit and castability). An ungated line is one by
  *  `isColourSource`; a gated line is one when the deck meets its gate -- over the deck (`gateMet`, the median clock) with no `turn`, or by `turn` (`gateMetBy`, the closed form of the
- *  goldfish's timing), the same answer the goldfish gives. With no deck a gated line is none, as before; a gate no decklist settles (renown, counters) is none, always; a max-speed gate needs no deck and holds from turn 4 (`isSpeedGate`).
+ *  goldfish's timing), the same answer the goldfish gives. With no deck a gated line is none, as before; a gate no decklist settles (renown, poison counters, a trigger) is none, always; a counter, graveyard or this-turn gate is an ESTIMATED kind (`gate.ts`, #1267) and holds from the turn the deck's estimate clears the bar; a max-speed gate needs no deck and holds from turn 4 (`isSpeedGate`).
  *  CEILING: A GATED SOURCE IS CREDITED WHOLE FROM THE TURN P(GATE MET) >= 0.5 (owner 2026-10-13: "keep the 0.5 bar", `gateVerdict`'s bar, deck-math's REQUIRED_CONFIDENCE), as one full integer source;
  *  there are no fractional sources here. The goldfish credits it PER GAME instead, and for a rock or dork up to a TURN EARLIER than this closed form (the closed form counts a spell at mana
  *  value < turn; the simulation counts an accelerant the turn it lands). So the audit and the goldfish agree on average, not game by game. Tainted Peak in judith-tokens-connoiseur and
@@ -100,7 +100,7 @@ export function colourSourceLine(line: ManaLine, deck?: readonly DeckCard[], tur
 export const hasGatedColourLine = (dc: DeckCard): boolean => cardLines(dc).some((l) => l.gate !== null && sourceShaped(l, true) && !l.unread && l.anyColour !== "grantee");
 
 /** THE NAMES OF CARDS WITH A LINE THAT WOULD BE A COLOUR SOURCE BUT WHOSE PRODUCTION DERIVE COULD NOT READ ("choose a color of a permanent
- *  you control", Meteor Crater; "the type a land could produce" with a counter clause, Incubation Druid). They count as NO colour --
+ *  you control", Meteor Crater). They count as NO colour --
  *  never a silent zero: the colour audit lists them (`unreadSources`) so the report can say its count may be short.
  *  CEILING: counted as none, not guessed; 20 mana lines in the corpus are unread (research/mana/unread.mts, 2026-10-11, DERIVE_VERSION 301), most of them not mana at all. */
 export function unreadSourceNames(cards: readonly DeckCard[]): string[] {

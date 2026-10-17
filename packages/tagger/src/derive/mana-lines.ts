@@ -236,6 +236,8 @@ export function production(object: string, amountText = "", context = ""): Pick<
   // The sentence must be exactly "Choose a color.", which refuses "choose a color other than white" (Thriving lands).
   else if (/\bthe chosen colou?r\b|\bcolou?r of your choice\b|\bthat colou?r\b/.test(lower) && /(?:^|[.:]\s*)choose a colou?r\s*\./.test(context.toLowerCase())) anyColour = "any";
   else if (/\bthe chosen (?:color|type)\b|\bcolor of your choice\b/.test(lower)) anyColour = "chosen";
+  // "...add three mana of THAT TYPE instead" (Incubation Druid) names the type the line before it chose: "any type that a land you control could produce". The back-reference reads the sentence it points back at.
+  else if (/\bof that type\b/.test(lower) && /\bcould produce\b/.test(context.toLowerCase())) anyColour = /\bopponents?\b/.test(context.toLowerCase()) ? "opponent-lands" : /\b(?:lands?|gates?)\b/.test(context.toLowerCase()) ? "lands-you-could" : null;
   else if (/\bcould produce\b/.test(lower)) anyColour = /\bopponents?\b/.test(lower) ? "opponent-lands" : /\b(?:lands?|gates?)\b/.test(lower) ? "lands-you-could" : null;
   else if (/\bany (?:one )?(?:color|type)\b|\bany combination of colou?rs\b|\bany colou?r\b|\bdifferent colou?rs\b/.test(lower)) anyColour = "any";
   if (anyColour === "any") for (const c of WUBRG) colours.add(c);
@@ -385,7 +387,10 @@ const DELAYED = /\b(?:at the beginning of|on) (?:your |the )?next [^,.]*,?[^.]*\
 const needsOf = (source: ManaLineSource | null, text: string, costText: string, anyColour: ManaAnyColour | null, object: string): string | null => {
   const target = source === "activated" ? targetNeeded(text, costText) : null;
   if (target !== null) return `a legal target exists: ${target}`;
-  return anyColour === "among" && COLOUR_FROM_GRAVEYARD.test(`${object} ${text}`) ? "there is a card in your graveyard" : null;
+  if (anyColour !== "among" || !COLOUR_FROM_GRAVEYARD.test(`${object} ${text}`)) return null;
+  // THE QUALIFIER IS KEPT (#1267 review): "among legendary creature cards in your graveyard" (The Grey Havens) needs a legendary creature card there, not any card. An article or a determiner is no qualifier.
+  const q = AMONG_QUALIFIER.exec(`${object} ${text}`)?.[1]?.toLowerCase();
+  return q !== undefined && !/^(?:the|all|those|these|your|an?|each|any|other|another)\b/.test(q) ? `there is ${/^[aeiou]/.test(q) ? "an" : "a"} ${q} card in your graveyard` : "there is a card in your graveyard";
 };
 
 /** A MODEL READING THAT LEFT THE COUNT OFF THE ADD (#1188): "For each nonland card revealed this way, add {G} and you gain 1 life" (Selvala, Explorer Returned) files the object as "{G}" and
@@ -493,6 +498,7 @@ const targetNeeded = (text: string, costText: string): string | null => {
   return null;
 };
 /** "Choose a color of a card in your graveyard. Add one mana of that color" (Corrupted Grafstone): with no card there, no colour to choose and no mana. */
+const AMONG_QUALIFIER = /\bamong ([a-z]+(?: [a-z]+){0,2}) cards? in your graveyard\b/i;
 const COLOUR_FROM_GRAVEYARD = /\bcolou?rs? of (?:an?|any) (?:card|creature|permanent)s? in your graveyard\b|\bamong [^.]{0,40}cards? in your graveyard\b/i;
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -642,6 +648,41 @@ const BASICS_ANY = /^if a basic land you control is tapped for mana, it produces
 const NOT_IN_A_DECK = new Set(["vanguard", "plane", "phenomenon", "conspiracy", "scheme", "ongoing scheme"]);
 
 // ---------------------------------------------------------------------------------------------------------------
+
+/** THE TURN A CARD HAS PUT `need` COUNTERS OF ONE KIND ON ITSELF BY ITS OWN ACTIVATED ABILITY OR KEYWORD (#1267), or null when its words do not put them there (a trigger, a larger creature entering, another card).
+ *  Read off the printed text with its reminder text removed, lowercased. The clock is the audit's on-curve one: a land a turn, so the mana available on a turn is the turn; the card is cast on turn `max(1, mv)` and
+ *  an ability that costs mana is first paid the turn AFTER the cast (the cast spent that turn's mana) once the turn's mana covers the cost -- `max(cast + 1, cost)`; a free put is first used the cast turn
+ *  (an artifact) or the turn after (a creature: summoning sickness, `{T}`).
+ *   - "put a/an/N <kind> counter(s) on this <type>/it" in an ACTIVATED ability (Pyramid of the Pantheon's brick: `{2}, {T}`; Tablet of Compleation's oil: `{T}`): ONE counter per activation, one activation a turn, so the
+ *     counters are all there the turn after the `need`-th activation: first + need.
+ *   - Adapt N / Monstrosity N ("{3}{G}{G}: Adapt 3", Incubation Druid): all N at once when the activation resolves, so the counters are there the turn AFTER the cost is paid (first + 1, as a put's counters are, first + need). Only +1/+1 counters, and only when N is at least `need`.
+ *   - Outlast {cost}: ONE counter per `{T}` activation: first + need.
+ *   - NOT a trigger ("whenever a player casts a noncreature spell, put a collection counter on this enchantment", Charitable Levy: its rate is the table's, not one a turn), and NOT Evolve (it needs a LARGER creature to
+ *     enter, which no card knows): both return null, so the gate is unmet.
+ *  CEILING: one counter per activation whatever the printed number; one ability per card (the first that reads).
+ *  CEILING: THE PUT'S OWN COST IS NOT CHARGED by any consumer. Pyramid's `{2}, {T}: Add one mana ... Put a brick counter` nets -1 on each of its three activation turns, Outlast and Adapt cost mana too; the goldfish credits the
+ *  gated line from the ready turn on without debiting those turns (`ManaOutput.estimated`), an over-claim of the mana the card cost to get there. */
+const costMV = (cost: string): number => manaValueOf(cost.replace(/\{[tqe]\}/gi, ""));
+export function selfPutReady(printed: string, counter: string, mv: number, need: number, creature: boolean): number | null {
+  const cast = Math.max(1, mv);
+  const first = (cost: string): number => {
+    const c = costMV(cost);
+    return c > 0 ? Math.max(cast + 1, c) : creature ? cast + 1 : cast;
+  };
+  const kind = counter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  for (const m of printed.matchAll(new RegExp(`\\bput (?:an?|\\w+) ${kind} counters? on (?:this [a-z]+|it)\\b`, "g"))) {
+    const head = printed.slice(printed.lastIndexOf("\n", m.index) + 1, m.index);
+    if (/^(?:whenever|when|at)\b/.test(head)) continue;
+    const colon = head.indexOf(":");
+    return first(colon >= 0 ? head.slice(0, colon) : "") + need;
+  }
+  if (counter !== "+1/+1") return null;
+  const costed = /((?:\{[^{}]+\})+)(?:, [^:]{0,40})?: (?:adapt|monstrosity) (\d+)\b/.exec(printed);
+  if (costed && Number(costed[2]) >= need) return first(costed[1]!) + 1;
+  const outlast = /\boutlast ((?:\{[^{}]+\})+)/.exec(printed);
+  if (outlast) return Math.max(cast + 1, costMV(outlast[1]!)) + need;
+  return null;
+}
 
 export function deriveMana(input: ManaInput): ManaResult {
   const { chars, abilities, clauses } = input;
@@ -913,6 +954,21 @@ export function deriveMana(input: ManaInput): ManaResult {
   for (const l of lines) {
     const n = input.startLoyalty?.[l.face];
     if (n !== null && n !== undefined && l.cost.loyalty !== null && l.cost.other.length === 0) l.startLoyalty = n;
+  }
+
+  // --- where a counter gate's counters come from (#1267) ----------------------------------------------------
+  // A gate on counters ON THE CARD ("two or more oil counters on it") is met only by the card's OWN words putting them there (`selfPutReady`: an activated put, Adapt, Monstrosity, Outlast) or by the opening hand
+  // (Gemstone Caverns). Otherwise it has no `put` and the matcher reads it as unmet: the deck's supply of counters (some other card putting one on a creature) is NOT read, because the counter rarely lands on the holder.
+  // Read off the printed text with its reminder text (parentheses) removed, so Incubation Druid's Adapt is read from the keyword and not from the reminder's "put three +1/+1 counters on it".
+  // CEILING: one pass over the whole printed text, not the face the line is on.
+  const printed = (input.oracleText ?? clauses.map((c) => input.textOf(c)).join("\n")).replace(/\([^()]*\)/g, "").toLowerCase();
+  for (const l of lines) {
+    const g = l.gate;
+    if (g === null || g.kind !== "counter") continue;
+    const kind = g.counter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const ready = selfPutReady(printed, g.counter, faceMV(l.face), g.need, chars.types.some((t) => t.toLowerCase() === "creature"));
+    if (ready !== null) g.put = { by: "self", readyTurn: ready };
+    else if (new RegExp(`\\bopening hand\\b[^.]{0,200} ${kind} counter on it`).test(printed)) g.put = { by: "opening-hand" };
   }
 
   // --- the card-level facts ----------------------------------------------------------------------------------

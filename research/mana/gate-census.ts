@@ -20,8 +20,8 @@ const R = "../../packages";
 // (a stored row from before it) is only CLASSIFIED here, by a copy of the old grammars, so a pre-retype row still reads; `lineGateVerdict` takes the typed gate, so verdicts need a re-derived corpus.
 type Line = { gate?: unknown; [k: string]: unknown };
 const gm = await import(`${R}/matcher/src/gate.ts`);
-export type GateClass = "control" | "same-name" | "tron" | "speed" | "initiative" | "unknown";
-const KINDS: readonly GateClass[] = ["control", "same-name", "tron", "speed", "initiative", "unknown"];
+export type GateClass = "control" | "same-name" | "tron" | "speed" | "initiative" | "threshold" | "counter" | "turn-event" | "unknown";
+const KINDS: readonly GateClass[] = ["control", "same-name", "tron", "speed", "initiative", "threshold", "counter", "turn-event", "unknown"];
 function gateOf(gate: unknown): { text: string; cls: GateClass } {
   if (gate !== null && typeof gate === "object") {
     const g = gate as { kind?: string; text?: string };
@@ -42,7 +42,7 @@ function gateOf(gate: unknown): { text: string; cls: GateClass } {
 const verdictOf = (line: Line, dcs: unknown[]): string => gm.lineGateVerdict(line, dcs);
 
 const round = (x: number | undefined | null, d = 4): number | null => (typeof x === "number" ? Math.round(x * 10 ** d) / 10 ** d : null);
-const CLASSES: GateClass[] = ["control", "same-name", "tron", "speed", "initiative", "unknown"];
+const CLASSES: GateClass[] = ["control", "same-name", "tron", "speed", "initiative", "threshold", "counter", "turn-event", "unknown"];
 
 interface DeckRow {
   colours: Record<string, { supplied: number; available: number | null; required: number | null }>;
