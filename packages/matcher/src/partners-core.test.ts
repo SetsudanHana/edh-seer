@@ -2150,14 +2150,14 @@ test("an intercepted recursion demands a graveyard-intercept fill and reads as s
 
 // A REFUSED TRIGGER'S ABILITY CLAIMS NOTHING ON THE PAGE EITHER (#1253): no emit key, no demand, not a
 // candidate -- but it is still a triggered ability, so a copier is still offered it.
-test("a triggerRefused ability yields no emit, demand or supply key, and still offers the copies|triggered key", () => {
+test("a claimsNothing ability yields no emit, demand or supply key, and still offers the copies|triggered key", () => {
   const card = (refused: boolean): DeckCard => ({
     card: { name: refused ? "Refused" : "Read", typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 0 },
     tags: {
       oracleId: "x", schemaVersion: 1, promptVersion: 1, model: "t",
       characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
       abilities: [{
-        kind: "triggered", ...(refused ? { triggerRefused: true } : {}),
+        kind: "triggered", ...(refused ? { claimsNothing: "refused-trigger" as const } : {}),
         effect: { kind: "graveyard-recursion", subject: { control: "any", token: null, zone: "graveyard" } },
         emits: [{ verb: "leaves", subject: { control: "any", token: null, type: "creature", fromZone: "battlefield", ref: "trigger" } }],
       }],

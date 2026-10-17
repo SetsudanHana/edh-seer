@@ -17,7 +17,7 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
-  "603.1": "matcher partners-core.test.ts — a triggerRefused ability is still a triggered ability: a copier is offered the copies|triggered key (#1253)",
+  "603.1": "matcher partners-core.test.ts — a claimsNothing ability is still a triggered ability: a copier is offered the copies|triggered key (#1253)",
   "306.5b": "derive/mana-lines.test.ts — a planeswalker's printed loyalty rides on each of its loyalty-cost mana lines (ManaLine.startLoyalty, #1169)",
   "606.6": "derive/mana-lines.test.ts — a loyalty cost needs that many counters, so the line carries the starting loyalty a consumer compares it with (#1169)",
   "113.6": "derive.test.ts — a card whose own static says it isn't a creature under a condition is marked creatureOnlyIf (#797)",

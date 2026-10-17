@@ -10,8 +10,9 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
-import { POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, losesYouTheGame, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { keywordAbilities } from "./implied.js";
+import { isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
 import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "./legality.js";
@@ -1098,15 +1099,15 @@ function perCard<T>(fn: (d: DeckCard) => T): (d: DeckCard) => T {
 export const abilitiesOf = perCard((d: DeckCard): CardTags["abilities"] =>
   d.tags ? [...d.tags.abilities, ...keywordAbilities(d.tags.characteristics)] : []);
 /** THE ABILITIES THAT MAY CLAIM A CARD: `abilitiesOf` without those whose trigger was refused (#1253,
- *  `Ability.triggerRefused`). Every key, candidate and ranking below reads this one; only the page's
+ *  `Ability.claimsNothing`). Every key, candidate and ranking below reads this one; only the page's
  *  ability rows read the full list, because they SHOW what the card prints. */
 export const claimingAbilitiesOf = perCard((d: DeckCard): CardTags["abilities"] =>
-  // A self "you lose the game" trigger claims nothing either (owner 2026-10-16, #1252): see `losesYouTheGame`.
-  abilitiesOf(d).filter((a) => a.triggerRefused !== true && !losesYouTheGame(a)));
+  // A self "you lose the game" trigger claims nothing either (owner 2026-10-16, #1252): see `isSelfLoss`.
+  abilitiesOf(d).filter((a) => !isRefusedTrigger(a) && !isSelfLoss(a)));
 // A self-loss ability still SUPPLIES its loss key: a rescue (Stunning Reversal) hears it, and
 // `directedReasons` (`pEventsFor`) decides per pair; the key only widens candidates (#1252).
 export const emitKeysOf = perCard((d: DeckCard): string[] =>
-  abilitiesOf(d).filter((a) => a.triggerRefused !== true).flatMap((a) => (a.emits ?? []).flatMap((e) => splitKey(eventKey(e)))));
+  abilitiesOf(d).filter((a) => !isRefusedTrigger(a)).flatMap((a) => (a.emits ?? []).flatMap((e) => splitKey(eventKey(e)))));
 /** WHAT A CARD SUPPLIES BY BEING PLAYED (owner, 2026-10-03, #1014: "the implied events have to stop
  *  being implied, so cards like Sol Ring which are generically good still produce the event of
  *  artifact being cast or artifact entering"). The engine's own producer side, `producerEvents`,

@@ -2,7 +2,8 @@ import { expect, test } from "vitest";
 import { deriveCardTags } from "@edh-seer/tagger";
 import type { Characteristics, ClauseRecord, CardTags } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasons } from "./index.js";
-import { abilityIsKind, losesYouTheGame } from "./edges.js";
+import { abilityIsKind } from "./edges.js";
+import { isSelfLoss as losesYouTheGame } from "./claims.js";
 import { claimingAbilitiesOf, emitKeysOf, supplyKeysOf } from "./partners-core.js";
 import type { DeckCard } from "./types.js";
 
@@ -162,8 +163,19 @@ test("negative control: an opp loses-game, or one among several emits, is not si
   expect(oppLoss).toBeDefined();
   expect(losesYouTheGame(oppLoss!)).toBe(false);
   const base = pact.tags!.abilities.find(losesYouTheGame)!;
-  expect(losesYouTheGame({ ...base, emits: [...base.emits!, { verb: "draw", subject: { control: "you", token: null } }] } as never)).toBe(false);
-  expect(losesYouTheGame({ ...base, emits: [{ verb: "loses-game", subject: { control: "any", token: null } }] } as never)).toBe(false);
+  // Derive decides (#1264): an ability stored without the field is no self-loss, whatever its emits say; with it, it is, whatever its emits say.
+  const { claimsNothing: _c, ...bare } = base;
+  expect(losesYouTheGame(bare as never)).toBe(false);
+  expect(losesYouTheGame({ ...bare, claimsNothing: "self-loss", emits: [] } as never)).toBe(true);
+});
+test("the matcher reads the stored field, not the emits (#1264)", () => {
+  const stored = pact.tags!.abilities.find(losesYouTheGame)!;
+  expect(stored.claimsNothing).toBe("self-loss");
+  const handEdited = { ...pact, tags: { ...pact.tags!, abilities: pact.tags!.abilities.map((a) => a === stored ? { ...a, emits: [{ verb: "loses-game", subject: { control: "any", token: null } }] } : a) } } as DeckCard;
+  expect(abilityIsKind(handEdited.tags!.abilities.find((a) => a.claimsNothing)!, "triggered")).toBe(false);
+  expect(claimingAbilitiesOf(handEdited).some((a) => a.claimsNothing === "self-loss")).toBe(false);
+  const unflagged = { ...pact, tags: { ...pact.tags!, abilities: pact.tags!.abilities.map((a) => { const { claimsNothing: _x, ...r } = a; return r; }) } } as DeckCard;
+  expect(claimingAbilitiesOf(unflagged).length).toBe(pact.tags!.abilities.length);
 });
 test("the partner side: a Pact-only card claims no ability, keeps its loss key for a rescue, and offers no copy key", () => {
   const lone = { ...pact, tags: { ...pact.tags!, abilities: pact.tags!.abilities.filter(losesYouTheGame) } } as DeckCard;
@@ -171,4 +183,11 @@ test("the partner side: a Pact-only card claims no ability, keeps its loss key f
   expect(emitKeysOf(lone).some((k) => k.startsWith("loses-game"))).toBe(true);
   expect(supplyKeysOf(lone)).not.toContain("copies|-|triggered|-");
   expect(supplyKeysOf(solemn)).toContain("copies|-|triggered|-");
+});
+
+test("derive stores 'self-loss' on Phage's own enters loss and not on the damaged opponent's loss (#1264)", () => {
+  const byClause = (n: number) => phage.tags!.abilities.find((a) => a.clause === n);
+  expect(byClause(1)?.claimsNothing).toBe("self-loss");
+  expect(byClause(2)?.claimsNothing).toBeUndefined();
+  expect(byClause(3)?.claimsNothing).toBeUndefined(); // "that player" after the card's own damage is an opponent
 });
