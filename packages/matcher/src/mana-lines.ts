@@ -100,7 +100,7 @@ export function colourSourceLine(line: ManaLine, deck?: readonly DeckCard[], tur
 export const hasGatedColourLine = (dc: DeckCard): boolean => cardLines(dc).some((l) => l.gate !== null && sourceShaped(l, true) && !l.unread && l.anyColour !== "grantee");
 
 /** THE NAMES OF CARDS WITH A LINE THAT WOULD BE A COLOUR SOURCE BUT WHOSE PRODUCTION DERIVE COULD NOT READ ("choose a color of a permanent
- *  you control", Meteor Crater; "the type a land could produce" with a counter clause, Incubation Druid). They count as NO colour --
+ *  you control", Meteor Crater). They count as NO colour --
  *  never a silent zero: the colour audit lists them (`unreadSources`) so the report can say its count may be short.
  *  CEILING: counted as none, not guessed; 20 mana lines in the corpus are unread (research/mana/unread.mts, 2026-10-11, DERIVE_VERSION 301), most of them not mana at all. */
 export function unreadSourceNames(cards: readonly DeckCard[]): string[] {

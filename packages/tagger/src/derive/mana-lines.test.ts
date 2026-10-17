@@ -371,8 +371,8 @@ describe("review round 2 (#1169 task 1)", () => {
     // Charitable Levy's counters come from a TRIGGER on every noncreature spell anyone casts: not an activation a turn, so it has no put and the gate is unmet (owner review 2026-10-17).
     expect((counter("Charitable Levy") as { put?: unknown }).put).toBeUndefined();
     expect(counter("Gemstone Caverns")).toMatchObject({ put: { by: "opening-hand" } });
-    // Incubation Druid's "{3}{G}{G}: Adapt 3" puts its own counters on it: ready when {3}{G}{G} can be paid -- turn 5, after the turn after its cast (mana value 2)
-    expect(counter("Incubation Druid")).toMatchObject({ put: { by: "self", readyTurn: 5 } });
+    // Incubation Druid's "{3}{G}{G}: Adapt 3" puts its own counters on it when {3}{G}{G} is PAID (turn 5, after the turn after its cast, mana value 2): the counter is there the turn AFTER, turn 6
+    expect(counter("Incubation Druid")).toMatchObject({ put: { by: "self", readyTurn: 6 } });
     expect(counter("The Grey Havens")).toBeUndefined();
   });
   it("#1267 Incubation Druid's 'three mana of that type instead' is READ: the type is the line before's, any a land you control could produce", () => {
@@ -381,12 +381,12 @@ describe("review round 2 (#1169 task 1)", () => {
     expect(instead).toMatchObject({ anyColour: "lands-you-could", unread: false, amount: { fixed: 3 }, gate: { kind: "counter" } });
   });
   it("#1267 keyword self-puts of +1/+1 counters: Adapt and Monstrosity at the activation, Outlast one counter per activation, Evolve not at all", () => {
-    // mana value 2 => cast turn 2, first activation turn 3 at the earliest
-    expect(selfPutReady("{3}{g}{g}: adapt 3", "+1/+1", 2, 1, false)).toBe(5);
-    expect(selfPutReady("{1}{g}: adapt 3", "+1/+1", 2, 1, false)).toBe(3);
+    // mana value 2 => cast turn 2, first activation turn 3 at the earliest; Adapt and Monstrosity resolve on the activation, so the counters are there the turn AFTER it is paid
+    expect(selfPutReady("{3}{g}{g}: adapt 3", "+1/+1", 2, 1, false)).toBe(6);
+    expect(selfPutReady("{1}{g}: adapt 3", "+1/+1", 2, 1, false)).toBe(4);
     expect(selfPutReady("{3}{g}{g}: adapt 3", "+1/+1", 2, 4, false)).toBeNull();
-    expect(selfPutReady("{5}{r}{r}: monstrosity 3", "+1/+1", 3, 2, false)).toBe(7);
-    expect(selfPutReady("{4}{r}, {t}: monstrosity 2", "+1/+1", 1, 2, false)).toBe(5);
+    expect(selfPutReady("{5}{r}{r}: monstrosity 3", "+1/+1", 3, 2, false)).toBe(8);
+    expect(selfPutReady("{4}{r}, {t}: monstrosity 2", "+1/+1", 1, 2, false)).toBe(6);
     // Outlast {W}: one counter per {T} activation, so need 2 is two activations: 3, 4 => ready 5 (mana value 2)
     expect(selfPutReady("outlast {w}", "+1/+1", 2, 2, true)).toBe(5);
     expect(selfPutReady("outlast {3}{w}", "+1/+1", 2, 1, true)).toBe(5);

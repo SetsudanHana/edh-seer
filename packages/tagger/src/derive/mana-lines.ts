@@ -655,11 +655,13 @@ const NOT_IN_A_DECK = new Set(["vanguard", "plane", "phenomenon", "conspiracy", 
  *  (an artifact) or the turn after (a creature: summoning sickness, `{T}`).
  *   - "put a/an/N <kind> counter(s) on this <type>/it" in an ACTIVATED ability (Pyramid of the Pantheon's brick: `{2}, {T}`; Tablet of Compleation's oil: `{T}`): ONE counter per activation, one activation a turn, so the
  *     counters are all there the turn after the `need`-th activation: first + need.
- *   - Adapt N / Monstrosity N ("{3}{G}{G}: Adapt 3", Incubation Druid): all N at once, there the turn of the activation. Only +1/+1 counters, and only when N is at least `need`.
+ *   - Adapt N / Monstrosity N ("{3}{G}{G}: Adapt 3", Incubation Druid): all N at once when the activation resolves, so the counters are there the turn AFTER the cost is paid (first + 1, as a put's counters are, first + need). Only +1/+1 counters, and only when N is at least `need`.
  *   - Outlast {cost}: ONE counter per `{T}` activation: first + need.
  *   - NOT a trigger ("whenever a player casts a noncreature spell, put a collection counter on this enchantment", Charitable Levy: its rate is the table's, not one a turn), and NOT Evolve (it needs a LARGER creature to
  *     enter, which no card knows): both return null, so the gate is unmet.
- *  CEILING: one counter per activation whatever the printed number; one ability per card (the first that reads). */
+ *  CEILING: one counter per activation whatever the printed number; one ability per card (the first that reads).
+ *  CEILING: THE PUT'S OWN COST IS NOT CHARGED by any consumer. Pyramid's `{2}, {T}: Add one mana ... Put a brick counter` nets -1 on each of its three activation turns, Outlast and Adapt cost mana too; the goldfish credits the
+ *  gated line from the ready turn on without debiting those turns (`ManaOutput.estimated`), an over-claim of the mana the card cost to get there. */
 const costMV = (cost: string): number => manaValueOf(cost.replace(/\{[tqe]\}/gi, ""));
 export function selfPutReady(printed: string, counter: string, mv: number, need: number, creature: boolean): number | null {
   const cast = Math.max(1, mv);
@@ -676,7 +678,7 @@ export function selfPutReady(printed: string, counter: string, mv: number, need:
   }
   if (counter !== "+1/+1") return null;
   const costed = /((?:\{[^{}]+\})+)(?:, [^:]{0,40})?: (?:adapt|monstrosity) (\d+)\b/.exec(printed);
-  if (costed && Number(costed[2]) >= need) return first(costed[1]!);
+  if (costed && Number(costed[2]) >= need) return first(costed[1]!) + 1;
   const outlast = /\boutlast ((?:\{[^{}]+\})+)/.exec(printed);
   if (outlast) return Math.max(cast + 1, costMV(outlast[1]!)) + need;
   return null;

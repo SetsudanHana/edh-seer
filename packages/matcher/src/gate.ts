@@ -205,7 +205,7 @@ function graveyardMean(g: Extract<ManaGate, { kind: "threshold" }>, f: DeckFacts
   return castSpells + filled;
 }
 
-/** A COUNTER GATE'S CHANCE (see the header): met when the card's own words put the counters on it (`put.by self`, from `put.readyTurn`; derive reads Adapt, Monstrosity, Outlast, Evolve and "put ... counter on
+/** A COUNTER GATE'S CHANCE (see the header): met when the card's own words put the counters on it (`put.by self`, from `put.readyTurn`; derive reads Adapt, Monstrosity, Outlast and an activated "put ... counter on
  *  this ..."), or in the opening hand (Gemstone Caverns: 3/4 x 7/N). Anything else is 0.
  *  CEILING: THE DECK'S SUPPLY IS DROPPED (owner review 2026-10-17). "The deck has a card that puts that counter on a creature you control" over-claimed: the counter rarely lands on the holder, so a gate whose card puts
  *  no counter on itself is unmet in every deck. CEILING: the opening-hand case ignores a mulligan, the card exiled from the hand to pay for it, and a table that is not four players. */

@@ -214,7 +214,7 @@ export function classifyAccelerant(dc: DeckCard, deck?: readonly DeckCard[], per
   const lines = playableLines(dc, deck, perGame);
   if (lines.length === 0) return null;
   // A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION (#1184), IN THE SIMULATION (`netBar`): Pyramid of the Pantheon's "{2}, {T}: Add one mana of any color" nets -1, and its three-mana
-  // line waits on counters on the card itself, which no decklist settles. The bar is a line that nets AT LEAST ONE, as `rampGrade`'s coloured bit does (owner 2026-10-13); a net-0 filter (Prophetic
+  // line waits on counters on the card itself, which is admitted by the turn (`ManaOutput.estimated`). The bar is a line that nets AT LEAST ONE, as `rampGrade`'s coloured bit does (owner 2026-10-13); a net-0 filter (Prophetic
   // Prism, Mana Cylix) adds no mana. The land count, the commander-ramp core and mana-base-fit do NOT pass the bar: their weights are owner rulings (the land count's class of a net-0 filter is a
   // question for the owner), so they keep the answer they gave.
   // CEILING: a net-0 filter's COLOUR CONVERSION is no longer modelled in the goldfish (an under-claim; it used to be priced as a free +1 rock, an over-claim).
@@ -270,10 +270,14 @@ export interface ManaOutput {
    *  `MAX_SPEED_TURN`). A speed line's COLOURS are in `colourMaskOf` from the start, like any gated colour that is not a board count, but they ride with the source's mana, which is 0 until turn 4
    *  when the speed line is the card's only one (Endrider Catalyzer, Howlsquad Heavy) and colourless on the card that has a plain line beside it (Muraganda Raceway: the three speed-gated lines of the corpus, 2026-10-13). */
   speed?: { turn: number; amount: number };
-  /** AN ESTIMATED GATE (#1267: a graveyard count, counters on the card, an event this turn): the source taps for `amount` on the turns `met` says the gate holds on (`estimatedGateByTurn`, index = turn - 1, a turn past the
-   *  end reads the last), the incumbent `amount` above otherwise. Its mana is credited by the turn, never before the closed form holds: Pyramid of the Pantheon's three, turn 5. CEILING: one estimated line per card, the
-   *  best; its COLOURS are not credited here (`gatedColourLines` refuses them), the safe direction. */
-  estimated?: { amount: number; met: readonly boolean[] };
+  /** AN ESTIMATED GATE (#1267: a graveyard count, counters on the card, an event this turn): the source taps for `amount` on the turns its gate holds, the incumbent `amount` above otherwise, never before it does.
+   *  Three readings, ONE field (`estimatedHolds`): `after` -- counters the card puts on ITSELF (Pyramid of the Pantheon's bricks, Incubation Druid's Adapt): from `after` turns past the turn the PERMANENT WAS CAST
+   *  (derive's `readyTurn` less the on-curve cast turn, max(1, mana value)), so a Pyramid cast on turn 8 taps for three from turn 12, not 5; `perGame` -- "you played a land this turn": the simulated game's own land
+   *  drop of the turn; otherwise `met` (`estimatedGateByTurn`, index = game turn - 1, a turn past the end reads the last), which is the audit's answer for a gate that describes the GAME (a graveyard count, an event).
+   *  CEILING: one estimated line per card, the best; its COLOURS are not credited here (`gatedColourLines` refuses them), the safe direction.
+   *  CEILING: THE COST OF GETTING THERE IS NOT CHARGED. Pyramid's put line "{2}, {T}: Add one mana ... Put a brick counter" nets -1 on each of the three turns before its counters are ready (three mana in all), and Adapt and
+   *  Outlast cost mana too: the line is credited from the ready turn without debiting those turns, an over-claim (the debit does not fit `produced`, which returns mana and never charges it). */
+  estimated?: { amount: number; met: readonly boolean[]; after?: number; perGame?: "land-played" };
 }
 
 /** THE ONE-SHOT-SPELL LINE OF A RITUAL, or null: an instant or sorcery whose derived line adds a FIXED run of mana -- Dark Ritual's "Add {B}{B}{B}."
@@ -438,7 +442,11 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = f
   if (best) out = { ...out, gated: { gate: timed(best)!, amount: best.amount.fixed! } };
   // THE ESTIMATED LINE: on the turns its gate holds. CEILING: one per card, the best amount (the earliest-met wins a tie).
   if (estimatedLines.length > 0) {
-    const tables = estimatedLines.map((l) => ({ amount: l.amount.fixed!, met: estimatedGateByTurn(l.gate!, deck!) }));
+    const tables = estimatedLines.map((l) => {
+      const g = l.gate!;
+      const after = g.kind === "counter" && g.put?.by === "self" ? g.put.readyTurn - Math.max(1, dc.card.manaValue ?? 0) : undefined;
+      return { amount: l.amount.fixed!, met: estimatedGateByTurn(g, deck!), ...(after !== undefined ? { after } : {}), ...(g.kind === "turn-event" && g.event === "land-played" ? { perGame: "land-played" as const } : {}) };
+    });
     out = { ...out, estimated: tables.reduce((b, t) => (t.amount > b.amount || (t.amount === b.amount && t.met.findIndex(Boolean) < b.met.findIndex(Boolean)) ? t : b)) };
   }
   // THE MAX-SPEED LINE: from turn 4, whether or not it beats the plain amount. CEILING: one speed line per card, the best.
@@ -485,7 +493,12 @@ function landsGateHolds(o: ManaOutput, lands: readonly OnBoardLand[]): boolean {
   return Math.max(0, ...count.values()) >= o.needsLands!;
 }
 
-export function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly Perm[], turn: number): number {
+/** WHETHER AN ESTIMATED GATE HOLDS on this turn for a permanent cast on `castTurn` (`ManaOutput.estimated`): counters it puts on itself count from the CAST turn, a land drop from the game's own, anything else from the table. */
+const estimatedHolds = (e: NonNullable<ManaOutput["estimated"]>, turn: number, castTurn: number, landPlayed: boolean): boolean =>
+  e.after !== undefined ? turn >= castTurn + e.after : e.perGame === "land-played" ? landPlayed : e.met[Math.min(turn, e.met.length) - 1] === true;
+
+/** What a source taps for on `turn`. `castTurn` is the turn this permanent entered (a land's entry, a rock's or dork's cast): the counters a card puts on itself count from it. `landPlayed`: the game played a land drop this turn. */
+export function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly Perm[], turn: number, castTurn = turn, landPlayed = false): number {
   if (o.tron) {
     const has = (s: string): boolean =>
       lands.some((l) => l.everyLandType || l.typeLine.toLowerCase().includes(s.toLowerCase()));
@@ -498,7 +511,7 @@ export function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: re
   // A BOARD-COUNT GATE: the better amount once the permanents it names are out (Leafkin Druid's two, Mox Jasper's one), the plain one before.
   const board = o.gated !== undefined && o.gated.amount > o.amount && gateHolds(o, perms) ? o.gated.amount : o.amount;
   // AN ESTIMATED GATE: the better amount on the turns the deck's closed form says it holds (`ManaOutput.estimated`).
-  const est = o.estimated !== undefined && o.estimated.amount > board && o.estimated.met[Math.min(turn, o.estimated.met.length) - 1] === true ? o.estimated.amount : board;
+  const est = o.estimated !== undefined && o.estimated.amount > board && estimatedHolds(o.estimated, turn, castTurn, landPlayed) ? o.estimated.amount : board;
   // MAX SPEED: the better amount from turn 4 on (`ManaOutput.speed`).
   return o.speed !== undefined && turn >= o.speed.turn && o.speed.amount > est ? o.speed.amount : est;
 }
@@ -1324,6 +1337,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         hand.findIndex(live),
         hand.findIndex((c) => c.isLand),
       ].find((i) => i >= 0) ?? -1;
+      const landDropped = idx >= 0;
       if (idx >= 0) {
         const played = hand.splice(idx, 1)[0];
         lands.push({
@@ -1376,11 +1390,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         fixBasics |= fixLands;
         for (const l of lands) {
           if (l.enteredTapped && l.enteredTurn === turn) continue;
-          const m = produced(l.output, lands, perms, turn);
+          const m = produced(l.output, lands, perms, turn, l.enteredTurn, landDropped);
           if (m > 0) push(m, (l.colourGate && l.baseColors !== undefined && !holds(l.colourGate, perms) ? l.baseColors : l.colors) | (l.basic ? fixBasics : fixLands), false, l);
         }
         const now = (r: Mana): { mana: number; colors: number } => ({
-          mana: r.out ? produced(r.out, lands, perms, turn) : r.mana,
+          mana: r.out ? produced(r.out, lands, perms, turn, r.turn, landDropped) : r.mana,
           colors: r.colourGate && r.baseColors !== undefined && !holds(r.colourGate, perms) ? r.baseColors : r.colors,
         });
         for (const r of rocks) if (r.turn <= turn && (r.until === undefined || turn <= r.until)) { const x = now(r); if (x.mana > 0) push(x.mana, x.colors | fixAll, false); }
@@ -1445,7 +1459,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         const a = cast.accelerant!;
         if (cast.fixer) statics.push({ turn, fixer: cast.fixer });
         if (cast.perm) perms.push(cast.perm);
-        const mana = produced(cast.output, lands, perms, turn);
+        const mana = produced(cast.output, lands, perms, turn, turn, landDropped);
         const gated = {
           // A LANDS-COUNTED GATE (Sceptre of Eternal Glory) is priced every turn too: the source is re-priced against the lands on the board, not frozen at its cast-turn value.
           ...(cast.output.gated || cast.output.speed || cast.output.estimated || cast.output.needsLands !== undefined ? { out: cast.output } : {}),

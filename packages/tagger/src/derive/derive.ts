@@ -498,7 +498,8 @@ import { emblemRecipient } from "../emblem.js";
 // 341: #1267 review -- an over-claim fix. A graveyard gate KEEPS its qualifier (The Grey Havens: "there is a legendary creature card in your graveyard", `ManaGate.threshold.supertypes`); a counter gate's `put` also reads the keyword actions that put +1/+1 counters on the card (Adapt, Monstrosity, Outlast; Incubation Druid's Adapt is ready when {3}{G}{G} can be paid, turn 5); the matcher no longer counts the deck's supply of counters.
 // 342: #1267 review 2 -- a counter gate's `put` is priced by the cost of the put itself and never by a trigger: Pyramid of the Pantheon (`{2}, {T}` per brick) is ready turn 5, not 4; Charitable Levy's put is a TRIGGER on every noncreature spell and has none (unmet); Outlast is one counter per {T} activation; Evolve needs a larger creature to enter and has none (`selfPutReady`).
 // 343: #1267 review 3 -- "add three mana of that type instead" (Incubation Druid) reads the type from the sentence before it ("any type that a land you control could produce"): the gated line is no longer `unread`, so the goldfish can play it by the turn.
-export const DERIVE_VERSION = 343;
+// 344: #1267 review 4 -- Adapt and Monstrosity put their counters when the activation RESOLVES, so a `put` from them is ready the turn AFTER the cost is paid (first + 1): Incubation Druid readyTurn 5 -> 6. A counter gate's readyTurn is relative to an on-curve cast; the goldfish counts it from the permanent's own cast turn.
+export const DERIVE_VERSION = 344;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
