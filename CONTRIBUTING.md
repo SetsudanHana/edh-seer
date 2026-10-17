@@ -105,6 +105,17 @@ npx tsx packages/instruments/src/population-compare.ts   # edges and reasons, be
 npx tsx packages/instruments/src/eval-pairs.ts           # the compass
 ```
 
+A fourth watches **role membership**. `role-ratchet.ts` runs the build-category and answer-class
+detectors over the 71 calibration decks and the 197 precons and diffs, card by card, against the
+tracked `packages/instruments/role-membership.json`. It fails both ways: `card  +role:ramp` is a
+card that gained a role, `card  -role:ramp` one that lost it. A `rules.json` edit that moves
+membership turns it red; if the move is intended, re-bank and explain every line in the commit:
+
+```bash
+npx tsx packages/instruments/src/role-ratchet.ts          # exit 1 on any gained or lost membership
+npx tsx packages/instruments/src/role-ratchet.ts --bank   # rewrite the snapshot
+```
+
 **Never quote the panel's precision without the retention figure beside it.** A gate that deletes
 every claim it is unsure of scores 100%, so precision alone is not comparable across any change that
 shrinks the claim set — and most correctness fixes shrink it.
