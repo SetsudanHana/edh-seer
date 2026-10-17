@@ -61,11 +61,13 @@ export function manaTurn(rows: Rows | undefined, mana: number): { turn?: number;
   return { turn: first((r) => r.mana.median), early: first((r) => r.mana.p75), late: first((r) => r.mana.p25) };
 }
 
-/** A SOURCE COUNTED AT ITS FLOOR IS SAID (#1260): a clock counts a source that grows with the board
- *  as one a turn and names it in `unbounded`, so a turn, or a "not by turn 20", is a floor on its
- *  speed. One suffix for drain, mill and poison, so the three caveats say it alike. */
+/** A SOURCE COUNTED AT ITS FLOOR IS SAID (#1260): a clock counts a source with no ceiling (Krenko's X
+ *  goblins, Ghost Vacuum's every exiled creature, Waterbender's Restoration's X blinks) as one a turn
+ *  and names it in `unbounded`, so a turn, or a "not by turn 20", is a floor on its speed. What it
+ *  grows WITH differs by card (the board, a graveyard, X), so the words say only that a use can
+ *  count for more. One suffix for drain, mill and poison, so the three caveats say it alike. */
 export function growsCaveat(unbounded: readonly string[] | undefined): string {
-  return unbounded?.length ? `; ${unbounded.join(", ")} counted as one a turn, though ${unbounded.length === 1 ? "it grows" : "they grow"} with your board` : "";
+  return unbounded?.length ? `; ${unbounded.join(", ")} counted as one a turn, though each use can count for more` : "";
 }
 
 /** What the drain turn assumes, in one line: once per thing that sets it off, nobody gains life, and
