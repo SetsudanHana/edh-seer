@@ -1656,6 +1656,48 @@ test("'that player loses the game' after anyone's combat damage stays unresolved
   expect(losesGame(loseGameClause({ event: "beginning-of-upkeep", subject: "your", control: "you" }, pact, "you", "Pact of Negation").abilities).map((e) => e.subject.control)).toEqual(["you"]);
 });
 
+// #1263: every cued "that player <verb>" after the card's own side's damage to a player is the DAMAGED player.
+const emitControls = (abilities: ReturnType<typeof deriveAbilities>["abilities"], verb: string) =>
+  abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === verb).map((e) => e.subject.control);
+const thatPlayerClause = (trigger: { event: string; subject: string; control: string }, text: string, verb: string, object: string, cardName: string, extra: Record<string, unknown> = {}) =>
+  deriveAbilities([{ id: 3, abilityType: "triggered", trigger, actions: [{ verb, object, ...extra }] }], cardName, { 3: text }, undefined, text).abilities;
+
+test("'that player discards' after the card's own combat damage (Chilling Apparition) is an opponent's discard", () => {
+  const text = "Whenever this creature deals combat damage to a player, that player discards a card.";
+  expect(emitControls(thatPlayerClause({ event: "damage-dealt", subject: "this creature", control: "you" }, text, "discard", "a card", "Chilling Apparition"), "discard")).toEqual(["opp"]);
+});
+
+test("'that player loses half their life' after equipped creature's damage (Quietus Spike) is an opponent's loss", () => {
+  const text = "Whenever equipped creature deals combat damage to a player, that player loses half their life, rounded up.";
+  expect(emitControls(thatPlayerClause({ event: "damage-dealt", subject: "equipped creature", control: "you" }, text, "lose-life", "half their life, rounded up", "Quietus Spike"), "lose-life")).toEqual(["opp"]);
+});
+
+test("'that player mills' after damage by a creature you control (Anowon) is an opponent's mill", () => {
+  const text = "Whenever one or more Rogues you control deal combat damage to a player, that player mills a card for each 1 damage dealt to them.";
+  expect(emitControls(thatPlayerClause({ event: "damage-dealt", subject: "one or more Rogues you control", control: "you" }, text, "mill", "a card for each 1 damage dealt to them", "Anowon, the Ruin Thief"), "mill")).toEqual(["opp"]);
+});
+
+test("'that player discards': the trigger's own `self` flag reaches the recipient reading (derive plumbing)", () => {
+  // The text names the damager "Chilling", neither "this ..." nor the card's full name, so only trigger.subject.self resolves it.
+  const text = "Whenever Chilling deals combat damage to a player, that player discards a card.";
+  expect(emitControls(thatPlayerClause({ event: "damage-dealt", subject: "this creature", control: "you" }, text, "discard", "a card", "Chilling Apparition"), "discard")).toEqual(["opp"]);
+});
+
+test("'that player discards' after ANYONE's combat damage stays `any`", () => {
+  const text = "Whenever a creature deals combat damage to a player, that player discards a card.";
+  expect(emitControls(thatPlayerClause({ event: "damage-dealt", subject: "a creature", control: "any" }, text, "discard", "a card", "Some Card"), "discard")).toEqual(["any"]);
+});
+
+test("'that player gets two poison counters' after the card's own damage (Marsh Viper) is an opponent's counter", () => {
+  const text = "Whenever this creature deals damage to a player, that player gets two poison counters.";
+  expect(emitControls(thatPlayerClause({ event: "damage-dealt", subject: "this creature", control: "you" }, text, "add-counter", "poison", "Marsh Viper", { amount: "2" }), "counter-added")).toEqual(["opp"]);
+});
+
+test("'that player exiles the top ten cards of their library' after the card's own damage (Raven Guild Master) is theirs", () => {
+  const text = "Whenever this creature deals combat damage to a player, that player exiles the top ten cards of their library.";
+  expect(emitControls(thatPlayerClause({ event: "damage-dealt", subject: "this creature", control: "you" }, text, "exile", "the top ten cards of that player's library", "Raven Guild Master", { fromZone: "library", toZone: "exile" }), "exiled")).toEqual(["opp"]);
+});
+
 test("an exile from a graveyard that uses nothing stays hate", () => {
   const { abilities } = deriveAbilities([{
     id: 1, abilityType: "activated",

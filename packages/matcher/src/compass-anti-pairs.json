@@ -296,6 +296,24 @@
       "source": "#1252 owner ruling 2026-10-16/17",
       "verified": true,
       "tag": "loses-game:any"
+    },
+    {
+      "a": "Chilling Apparition",
+      "b": "Glint-Horn Buccaneer",
+      "class": "wrong-recipient",
+      "why": "Chilling Apparition's 'Whenever this creature deals combat damage to a player, that player discards a card.' is the damaged OPPONENT discarding. Glint-Horn Buccaneer's 'Whenever you discard a card' watches YOUR discards, so an opponent's discard never triggers it.",
+      "source": "#1263 (2026-10-17)",
+      "verified": true,
+      "tag": "discard:any"
+    },
+    {
+      "a": "Quietus Spike",
+      "b": "Vilis, Broker of Blood",
+      "class": "wrong-recipient",
+      "why": "Quietus Spike's 'Whenever equipped creature deals combat damage to a player, that player loses half their life' is the damaged OPPONENT losing life. Vilis's 'Whenever you lose life, draw that many cards' watches YOUR life loss, which an opponent's loss never triggers.",
+      "source": "#1263 (2026-10-17)",
+      "verified": true,
+      "tag": "lose-life:any"
     }
   ],
   "knownDefects": [],

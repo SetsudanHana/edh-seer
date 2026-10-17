@@ -152,3 +152,28 @@ test("'its controller' is an opponent after a target, anyone after an untargeted
   // `any` would also satisfy an opponent-side payoff.
   expect(actionRecipients("Whenever a creature you control dies, its controller gains 1 life.")["gain-life"]).toBe("you");
 });
+
+// #1263: "that player" after the card's own side's damage to a player is the damaged player, an opponent.
+test("'that player' after the damage a creature you control deals to a player is an opponent; anyone's damage stays any", () => {
+  const own = { triggerIsSelf: true, cardName: "Chilling Apparition" };
+  expect(actionRecipients("Whenever this creature deals combat damage to a player, that player discards a card.", own)).toEqual({ discard: "opp" });
+  expect(actionRecipients("Whenever equipped creature deals combat damage to a player, that player loses half their life, rounded up.")).toEqual({ "lose-life": "opp" });
+  expect(actionRecipients("Whenever Fynn deals combat damage to a player, that player gets two poison counters.", { cardName: "Fynn" })).toEqual({ "add-counter": "opp" });
+  expect(actionRecipients("Whenever a creature you control deals combat damage to a player, that player exiles the top card of their library.")).toEqual({ exile: "opp" });
+  expect(actionRecipients("Whenever a creature deals combat damage to a player, that player discards a card.")).toEqual({ discard: "any" });
+  expect(actionRecipients("Choose target player. That player discards a card.", own)).toEqual({ discard: "any" });
+});
+
+// #1263 review: the "you" side stays put, and the self flag alone can resolve the damager.
+test("a self 'you' payout after the card's own damage is not read as an opponent", () => {
+  const own = { triggerIsSelf: true };
+  expect(actionRecipients("Whenever this creature deals combat damage to a player, you get an experience counter.", own)).toEqual({});
+  expect(actionRecipients("Whenever this creature deals combat damage to a player, you get {E}{E}.", own)).toEqual({});
+  expect(actionRecipients("Whenever this creature deals combat damage to a player, you lose half your life, rounded up.", own)).toEqual({ "lose-life": "you" });
+});
+
+test("triggerIsSelf alone resolves a damager the text does not name as the card", () => {
+  const text = "Whenever Chilling deals combat damage to a player, that player discards a card.";
+  expect(actionRecipients(text, { cardName: "Chilling Apparition" })).toEqual({ discard: "any" });
+  expect(actionRecipients(text, { triggerIsSelf: true, cardName: "Chilling Apparition" })).toEqual({ discard: "opp" });
+});

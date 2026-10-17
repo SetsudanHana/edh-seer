@@ -44,9 +44,16 @@ const CUES: [string, RegExp][] = [
   // power" (Swords to Plowshares) has no word there, and demanding one handed Swords' lifegain to
   // YOU for the whole life of this table -- a lifegain payoff fed by your own removal spell
   // (owner-reported off the Arcane Denial card page, 2026-09-05).
-  ["lose-life", new RegExp(`\\b(${WHO})\\s+${ADVERB}loses?\\s+(?:\\S+\\s+)?life\\b`, "i")],
+  ["lose-life", new RegExp(`\\b(${WHO})\\s+${ADVERB}loses?\\s+(?:\\S+\\s+){0,2}?life\\b`, "i")],
   ["gain-life", new RegExp(`\\b(${WHO})\\s+${ADVERB}gains?\\s+(?:\\S+\\s+)?life\\b`, "i")],
-  ["add-counter", new RegExp(`\\b(${WHO})\\s+${ADVERB}puts?\\b[^.]{0,40}?counters?\\s+on\\b`, "i")],
+  // "that player GETS two poison counters" (Fynn, Marsh Viper, Vexing Radgull's rad): the recipient of a counter the
+  // card gives, written as a get rather than a put (#1263). One entry, so the verb has one cue.
+  ["add-counter", new RegExp(`\\b(${WHO})\\s+${ADVERB}(?:puts?\\b[^.]{0,40}?counters?\\s+on|gets?\\b[^.]{0,40}?counters?)\\b`, "i")],
+  // "that player EXILES the top ten cards of their library" (Raven Guild Master, Bismuth Mindrender): the exile is THEIRS
+  // (#1263). Anchored on the verb like every cue, so "exile target creature. That player ..." is not read. ONLY "that
+  // player": "target player exiles a card from their graveyard" (Relic of Progenitus, Karn Liberated) is a graveyard/hand
+  // exile the REMOVAL_VERBS default already reads as an opponent's, and a `any` cue here would override it.
+  ["exile", new RegExp(`\\b(that player)\\s+${ADVERB}exiles?\\b`, "i")],
   // Dictate of Erebos, Szat's Will: "each opponent SACRIFICES a creature of their choice". The
   // object is the opponent's creature, but it parses to `any` -- "of their choice" names no
   // controller the vocabulary knows -- and `any` matched every payoff for YOUR creatures dying.
@@ -62,12 +69,47 @@ const CUES: [string, RegExp][] = [
   ["put", new RegExp(`\\b(${WHO})\\s+${ADVERB}puts?\\b`, "i")],
 ];
 
+/** "THAT PLAYER'S GRAVEYARD" IN A COMBAT-DAMAGE TRIGGER IS THE DAMAGED PLAYER (#1250, Tinybones): when the
+ *  damager is yours -- the card itself, "this Vehicle", "equipped creature" (CR 301.5b: equip attaches to a creature
+ *  you control), anything "you control" -- the player it hit is an opponent's, and "to an opponent" says so
+ *  outright. "A creature deals combat damage to a player" could hit you, so that stays `any`.
+ *  CEILING: an equipped creature an opponent later gains control of (CR 301.5d: the Equipment's controller is
+ *  separate from the creature's) could damage you, and "that player" would be you; not modelled. Likewise a
+ *  non-combat "deals damage to a player" from your own creature (Marsh Viper, Pit Scorpion) is read as an opponent
+ *  though a self-aimed ping could hit you.
+ *  CEILING: residue still at `any`, which still feeds "whenever you ..." payoffs: "they" wordings after the card's own
+ *  damage (Glowing One, Infesting Radroach, Unstoppable Slasher, Rex); a clause with two actions of one verb, where
+ *  `actorFor` refuses (Sabertooth Cobra); and the "reveals ... puts into graveyard" mill (Mirko Vosk, Balshan Beguiler). */
+export function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, cardName?: string): boolean {
+  // SCANNED, NOT MATCHED: `^\s*(?:whenever|when)\s+(.+?)\s+deals?\s+combat damage…` backtracks
+  // polynomially on runs of spaces (CodeQL js/polynomial-redos), so the shape is read with string search.
+  const text = clauseText.trimStart();
+  const lower = text.toLowerCase();
+  const start = lower.startsWith("whenever ") ? 9 : lower.startsWith("when ") ? 5 : -1;
+  if (start < 0) return false;
+  // "deals combat damage to a player / an opponent", or damage of ANY kind to either (Atemsis, #1252; Marsh Viper, #1263).
+  const combatAt = lower.indexOf(" combat damage to ", start);
+  const anyAt = combatAt < 0 ? lower.indexOf(" damage to ", start) : -1;
+  const at = combatAt >= 0 ? combatAt : anyAt;
+  if (at < 0) return false;
+  const target = lower.slice(at + (combatAt >= 0 ? " combat damage to " : " damage to ").length);
+  const toOpponent = /^an opponent\b/.test(target);
+  if (!toOpponent && !/^a player\b/.test(target)) return false;
+  const head = text.slice(start, at).trimEnd();
+  const verbAt = head.toLowerCase().endsWith(" deals") ? head.length - 6 : head.toLowerCase().endsWith(" deal") ? head.length - 5 : -1;
+  if (verbAt < 0) return false;
+  if (toOpponent) return true;
+  const who = head.slice(0, verbAt).trim();
+  return triggerIsSelf || /\byou control\b/i.test(who) || /^(?:this |equipped creature$)/i.test(who)
+    || (cardName !== undefined && (who === cardName || who.toLowerCase() === cardName.split(",")[0]!.toLowerCase()));
+}
+
 /** An actor phrase to the control it states, or undefined when it states nothing sharper than "any".
  *
  *  "its controller" is a DECISION, not a reading: the rules let you point Pongify at your own
  *  creature, so the honest rules answer is "any". It is called `opp` because these are removal spells
  *  and that is where they get pointed, and because being wrong here only ever removes an edge. */
-function controlOf(phrase: string, text: string, at: number): Control | undefined {
+function controlOf(phrase: string, text: string, at: number, ctx: ActorContext): Control | undefined {
   const p = phrase.toLowerCase();
   // AFTER AN UNTARGETED TRIGGER SUBJECT IT IS ANYONE (#650): "Whenever a creature enters, its
   // controller sacrifices ..." (Tainted Aether) points at the creature that entered, which can be
@@ -86,7 +128,11 @@ function controlOf(phrase: string, text: string, at: number): Control | undefine
   // "that player" points back at whoever the clause already named. The antecedent is in the same
   // clause, so this one needs no judgment: Massacre Wurm's "a creature an opponent controls dies,
   // that player..." is an opponent, while "choose target player. That player..." is not.
-  if (p === "that player") return /\bopponents?\b/i.test(text.slice(0, at)) ? "opp" : "any";
+  // ...or the player the card's own combat damage hit (#1263): an opponent, see damagedPlayerIsOpponent.
+  if (p === "that player") {
+    if (/\bopponents?\b/i.test(text.slice(0, at))) return "opp";
+    return damagedPlayerIsOpponent(text, ctx.triggerIsSelf ?? false, ctx.cardName) ? "opp" : "any";
+  }
   // target player, each player, those players: "any" is the right answer -- and it is RETURNED,
   // not left silent, because silence now means "no player was named at all", which derive.ts reads
   // as the card's controller (CR 111.2 / the panel's Priest of Forgotten Gods -> Orcish Bowmasters:
@@ -118,7 +164,10 @@ export function sentenceNamesAPlayer(clauseText: string, verb: string): boolean 
   return (holding.length ? holding : sentences).some((s) => PLAYER_WORD.test(s));
 }
 
-export function actionRecipients(clauseText: string): Record<string, Control> {
+/** What the caller knows about the clause's trigger, for "that player" after damage (#1263). */
+export interface ActorContext { triggerIsSelf?: boolean; cardName?: string }
+
+export function actionRecipients(clauseText: string, ctx: ActorContext = {}): Record<string, Control> {
   const out: Record<string, Control> = {};
   for (const [verb, re] of CUES) {
     const m = re.exec(clauseText);
@@ -134,8 +183,10 @@ export function actionRecipients(clauseText: string): Record<string, Control> {
     if (yours && m && yours.index < m.index) continue;
     if (yours && !m) { out[verb] = "you"; continue; }
     if (!m) continue;
-    const control = controlOf(m[1], clauseText, m.index);
-    if (control) out[verb] = control;
+    const control = controlOf(m[1], clauseText, m.index, ctx);
+    // An exile cue speaks only when it states an opponent: "that player exiles the top card of one of their
+    // OPPONENTS' libraries" (Shared Fate) is another player's library, which the object already says.
+    if (control && !(verb === "exile" && control !== "opp")) out[verb] = control;
   }
   return out;
 }

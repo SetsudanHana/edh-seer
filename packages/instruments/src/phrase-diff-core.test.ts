@@ -41,13 +41,15 @@ test("a parser that answers differently on a second call is caught (H2)", () => 
 
 // The shipped fixture parses, and parseSubject against itself is total agreement: the harness is
 // sound before any grammar is compared through it.
+// A WHOLE-CENSUS PARSE, so not the 5 s default: ~0.85 s locally, 5,055 ms on a loaded CI runner
+// (PR #1270, which changed none of its inputs).
 test("parseSubject against itself over the checked-in census agrees on every phrase", () => {
   const phrases = readPhrases(readFileSync(new URL("../../tagger/phrases.jsonl", import.meta.url), "utf8"));
   expect(phrases.length).toBeGreaterThan(10_000);
   const d = diffParsers(phrases, parseSubject, parseSubject);
   expect(d.agree).toEqual(d.total);
   expect(d.nondeterministic).toEqual([]);
-});
+}, 30000);
 
 /** The classifier decides what S1 is measured over, so it is pinned BOTH ways: a phrase that is no
  *  filter leaves the denominator, and one that is a filter must stay in it -- a rule too broad would
