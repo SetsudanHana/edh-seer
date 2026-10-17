@@ -11,7 +11,7 @@ import { recommendedLands, type LandRecommendation } from "./land-count.js";
 import { manaBaseScore } from "./mana-base.js";
 import { drainClock, millClock, poisonClock, winconReport } from "./wincon.js";
 import { commanderClock } from "./commander-damage.js";
-import { pressureCurve, STARTING_LIFE, type SimOpts } from "./pressure.js";
+import { pressureCurve, STARTING_LIFE, TABLE_LIFE, type SimOpts } from "./pressure.js";
 import { cardCastability, deckCastability } from "./castability.js";
 import type { CastCurve } from "./goldfish.js";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -347,7 +347,7 @@ export function computeDeckMath(
   // the same curve with infect left out -- its damage is poison, not life (CR 702.90b). Splitting
   // attackers across opponents (CR 802.2) makes `3 x 40` a floor: overflow on one player is wasted.
   const tableTurn = pressureCurve(deck, { commanderNames, ...sim, include: (dc) => !hasInfect(dc) })
-    .find((p) => p.cumulative >= 3 * STARTING_LIFE)?.turn;
+    .find((p) => p.cumulative >= TABLE_LIFE)?.turn;
   // COMMANDER DAMAGE (#1056 R2): voltron decks only, the faster commander's whole-table turn.
   const commander = commanderClock(deck, commanderNames, opts.primary, sim);
   // MILL (#1056 R4): cards milled from each opponent against their library, 92 - t.

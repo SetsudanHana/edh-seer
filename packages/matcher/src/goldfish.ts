@@ -11,6 +11,7 @@ import { classifyLand, entersTapped, type LandCondition } from "./land-condition
 import { FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands } from "./fetch-land.js";
 import { DEFAULT_POD_SIZE, opponents } from "./format.js";
 import { ratesOf } from "./rate.js";
+import { TABLE_LIFE } from "./pressure.js";
 import { characteristicsSubject } from "./edges.js";
 import { subjectMatches } from "./subject.js";
 import { buildHierarchy } from "./hierarchy.js";
@@ -1610,7 +1611,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         dealtOne += boardOne;
         dealtTable += boardTable;
         if (oneAt === Infinity && dealtOne >= 40) oneAt = turn;
-        if (tableAt === Infinity && dealtTable >= 120) tableAt = turn;
+        if (tableAt === Infinity && dealtTable >= TABLE_LIFE) tableAt = turn;
       }
       // PAST THE PRICED TURNS ONLY THE COMBAT RUNS.
       if (turn > turns) continue;
