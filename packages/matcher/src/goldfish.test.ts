@@ -1803,3 +1803,19 @@ describe("board-count gates are met turn by turn on the goldfish's own board", (
     expect(manaOutput(walker, deck).gated?.amount).toBe(2);
   });
 });
+
+// #1267: a line gated on an ESTIMATED kind (a graveyard count, counters on the card, an event this turn) is met in the report's verdict and not played by a simulated game.
+test("a line gated on an estimated kind is unmet in the goldfish whatever the deck's estimate, and a board-count gate beside it is still played", () => {
+  const lands = Array.from({ length: 40 }, (_, i) => card(`Land ${i}`, "Land", 0));
+  const rock = (gate: string) => withManaLines("Gated Rock", "Artifact", [tapFor(["C"], { gate: parseGate(gate) })]);
+  const landDeck = (c: DeckCard) => [c, ...lands];
+  for (const g of ["you played a land this turn", "there is a card in your graveyard", "this artifact has two or more oil counters on it"]) {
+    const gated = rock(g);
+    expect(playableLines(gated, landDeck(gated), true), g).toEqual([]);
+  }
+  // sanity: the estimate itself is met for the land gate, so the refusal is the goldfish's and not the deck's
+  const landGate = rock("you played a land this turn");
+  expect(gateVerdict(parseGate("you played a land this turn"), landDeck(landGate))).toBe("met");
+  const board = rock("you control a land");
+  expect(playableLines(board, landDeck(board), true)).toHaveLength(1);
+});

@@ -4,7 +4,7 @@ import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
 import { cardLines, colourSourceColours, isFetchSource, isLandfall, isLoyaltyAbility, isPhaseTrigger, loyaltyActivations, lineColours, minManaValue, paidWithResource, paysItsWay, usableLoyalty } from "./mana-lines.js";
-import { boardCount, boardGateOf, boardGateReachable, gateMet, isSpeedGate, MAX_SPEED_TURN, permCounts, permOf, type BoardGate, type Perm } from "./gate.js";
+import { boardCount, boardGateOf, boardGateReachable, gateMet, isEstimatedGate, isSpeedGate, MAX_SPEED_TURN, permCounts, permOf, type BoardGate, type Perm } from "./gate.js";
 import { staticFixer } from "./static-fixers.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands } from "./fetch-land.js";
@@ -169,9 +169,10 @@ export function playableLines(dc: DeckCard, deck?: readonly DeckCard[], perGame 
     // they are out. The deck-level `gateMet` (the median clock, P >= 0.5) is the AUDIT's bar (owner 2026-10-13: the audit credits a gated source at P >= 0.5, the goldfish per game); using it
     // here as well kept a Dragon-light deck's Jasper out of every game, the ones with a Dragon too. Only REACHABILITY is asked of the deck (`boardGateReachable`: it holds `need` such
     // permanents, so some game can meet the gate), which keeps a deck with no Dragon from counting a Jasper that can never make mana. With no deck a gated line is none, as before.
-    // Speed and the initiative keep the deck check; an unknown gate is never met.
+    // Speed and the initiative keep the deck check; an unknown gate is never met. THE THREE ESTIMATED KINDS (#1267: a graveyard count, counters on the card, an event this turn) ARE NOT PLAYED: the simulation
+    // has no graveyard, no counters on a card and no turn's events, so the line is unmet here whatever the deck's estimate (the report's verdict and the colour audit read the estimate; CEILING, the safe direction).
     const board = l.gate === null ? null : boardGateOf(l.gate);
-    const checkable = l.gate === null || dynamicGate(l) || (perGame && board !== null && deck !== undefined && boardGateReachable(board, deck)) || gateMet(l, deck);
+    const checkable = l.gate === null || dynamicGate(l) || (perGame && board !== null && deck !== undefined && boardGateReachable(board, deck)) || (!isEstimatedGate(l.gate) && gateMet(l, deck));
     switch (l.source) {
       // A LOYALTY ABILITY ("+1: Add {R}{R}") is a source too (owner, 2026-10-13): once per turn at sorcery timing (CR 606.3), so it pays every turn the walker
       // is out and the turn it is cast (no summoning sickness: it is no creature). A "+N" or "0" always; a "−N" (Chandra, Novice Pyromancer's −1: Add

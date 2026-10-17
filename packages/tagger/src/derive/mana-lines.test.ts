@@ -67,7 +67,7 @@ describe("a tap whose mana depends on something the line must state (#1188)", ()
     expect(only("Red Death, Shipwrecker")).toMatchObject({ colours: ["R"], gate: { kind: "unknown", text: "a legal target exists: target creature an opponent controls" } });
   });
   it("Corrupted Grafstone makes no mana with an empty graveyard", () => {
-    expect(only("Corrupted Grafstone")).toMatchObject({ anyColour: "among", gate: { kind: "unknown", text: "there is a card in your graveyard" } });
+    expect(only("Corrupted Grafstone")).toMatchObject({ anyColour: "among", gate: { kind: "threshold", need: 1, text: "there is a card in your graveyard" } });
   });
   it("Rite of Flame: '{R}{R}, then {R} for each ...' scales but its net keeps the printed floor of 2 (net 1 on a 1-mana spell); Bloom Tender keeps the ceiling of 1", () => {
     // #1265: the model reads two adds; the {R}{R} is a FIXED sibling line (it keeps its 2, net 1 on the 1-mana spell) and only the "{R} for each" add scales (net 0)
@@ -314,7 +314,7 @@ describe("review fixes (#1169 task 1)", () => {
   it("Cabal Ritual's threshold line is gated, the plain line is not", () => {
     const [plain, threshold] = linesOf("Cabal Ritual");
     expect(plain.gate).toBeNull();
-    expect(threshold).toMatchObject({ amount: { fixed: 5 }, gate: { kind: "unknown", text: "there are seven or more cards in your graveyard" } });
+    expect(threshold).toMatchObject({ amount: { fixed: 5 }, gate: { kind: "threshold", need: 7, text: "there are seven or more cards in your graveyard" } });
   });
   it("counters and tapping other permanents are structured", () => {
     expect(only("Cryptic Trilobite").cost).toMatchObject({ counters: "remove", other: [] });
@@ -350,6 +350,28 @@ describe("review round 2 (#1169 task 1)", () => {
     expect(linesOf("Gleaming Bastion").map((l) => l.gate)).toContainEqual(expect.objectContaining({ kind: "control", need: 1, nouns: ["land"], basic: true }));
     expect(linesOf("Fanatic of Rhonas").map((l) => l.gate)).toContainEqual(expect.objectContaining({ kind: "control", need: 1, nouns: ["creature"], minPower: 4 }));
   });
+  it("#1267 the 18 gated lines the owner made estimable (2026-10-17): each real card's gate parses to its kind, from the card's own derive", () => {
+    const gates = (n: string): ManaLine["gate"][] => linesOf(n).map((l) => l.gate).filter((g) => g !== null);
+    const kinds: [string, string, Record<string, unknown>][] = [
+      ["Cabal Ritual", "threshold", { need: 7 }], ["Far Wanderings", "threshold", { need: 7 }], ["Corrupted Grafstone", "threshold", { need: 1 }], ["The Grey Havens", "threshold", { need: 1 }],
+      ["Dark Petition", "threshold", { need: 2, types: ["instant", "sorcery"] }], ["Lys Alana Dignitary", "threshold", { need: 1, subtypes: ["elf"] }],
+      ["Charitable Levy", "counter", { counter: "collection", need: 3 }], ["Gemstone Caverns", "counter", { counter: "luck", need: 1 }], ["Incubation Druid", "counter", { counter: "+1/+1", need: 1 }],
+      ["Pyramid of the Pantheon", "counter", { counter: "brick", need: 3 }], ["Tablet of Compleation", "counter", { counter: "oil", need: 2 }],
+      ["Famished Foragers", "turn-event", { event: "opponent-lost-life" }], ["Flamecache Gecko", "turn-event", { event: "opponent-lost-life" }], ["Mirrex", "turn-event", { event: "entered-this-turn" }],
+      ["Hidden Herbalists", "turn-event", { event: "permanent-left" }], ["Mardu Warshrieker", "turn-event", { event: "attacked" }], ["River of Tears", "turn-event", { event: "land-played" }],
+    ];
+    for (const [n, kind, rest] of kinds) expect(gates(n), n).toContainEqual(expect.objectContaining({ kind, ...rest }));
+  });
+  it("#1267 a counter gate says where its counters come from, read off the card's own words (reminder text stripped): its own ability puts them on it, or only the opening hand does, or the deck must", () => {
+    const counter = (n: string) => linesOf(n).map((l) => l.gate).find((g) => g?.kind === "counter");
+    // cast turn (mana value, at least 1) + the counters needed: Pyramid {2}-cost artifact needing 3, Tablet needing 2, Levy (mana value 3) needing 3 noncreature spells
+    expect(counter("Pyramid of the Pantheon")).toMatchObject({ put: { by: "self", readyTurn: expect.any(Number) } });
+    expect(counter("Tablet of Compleation")).toMatchObject({ put: { by: "self" } });
+    expect(counter("Charitable Levy")).toMatchObject({ put: { by: "self" } });
+    expect(counter("Gemstone Caverns")).toMatchObject({ put: { by: "opening-hand" } });
+    // Incubation Druid's Adapt reminder text says "put three +1/+1 counters on it": reminder text is not the card's rule, and the brief reads the deck's supply instead
+    expect((counter("Incubation Druid") as { put?: unknown }).put).toBeUndefined();
+  });
   it("'as long as ...' on a granted ability gates the grant", () => {
     expect(only("Honored Hierarch").gate?.text).toBe("this creature is renowned");
     expect(only("Mul Daya Channelers").gate?.text).toBe("the top card of your library is a land card");
@@ -376,7 +398,7 @@ describe("review round 3 (#1169 task 1)", () => {
   it("Gemstone Caverns: a plain {C} line and a gated any-colour line", () => {
     const [plain, any] = linesOf("Gemstone Caverns");
     expect(plain).toMatchObject({ colourless: 1, anyColour: null, gate: null });
-    expect(any).toMatchObject({ anyColour: "any", gate: { kind: "unknown", text: "gemstone caverns has a luck counter on it" } });
+    expect(any).toMatchObject({ anyColour: "any", gate: { kind: "counter", counter: "luck", need: 1, text: "gemstone caverns has a luck counter on it" } });
   });
   it("an intervening if gates the trigger", () => {
     expect(only("Mardu Warshrieker").gate?.text).toBe("you attacked this turn");
@@ -451,7 +473,7 @@ describe("review of task 2a (#1169): 'among', unread, self-exile", () => {
   it("The Grey Havens' 'among legendary creature cards in your graveyard' needs a card there (Fix B); a board-bounded 'among' stays ungated", () => {
     const gated = linesOf("The Grey Havens").filter((l) => l.anyColour === "among");
     expect(gated).toHaveLength(1);
-    expect(gated[0]!.gate).toMatchObject({ kind: "unknown", text: "there is a card in your graveyard" });
+    expect(gated[0]!.gate).toMatchObject({ kind: "threshold", need: 1, text: "there is a card in your graveyard" });
     expect(only("Mox Amber").gate).toBeNull();
   });
   it("a target player or opponent (ALWAYS_THERE) and 'any number of target' (Quintorius Kand's UP_TO) gate nothing", () => {

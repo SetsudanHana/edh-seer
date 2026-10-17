@@ -915,6 +915,19 @@ export function deriveMana(input: ManaInput): ManaResult {
     if (n !== null && n !== undefined && l.cost.loyalty !== null && l.cost.other.length === 0) l.startLoyalty = n;
   }
 
+  // --- where a counter gate's counters come from (#1267) ----------------------------------------------------
+  // A gate on counters ON THE CARD ("two or more oil counters on it") is met either by the card's own words putting them there or by something else in the deck. Read off the printed text with
+  // its reminder text (parentheses) removed: Incubation Druid's Adapt reminder says "put three +1/+1 counters on it", which is a reminder and not a rule of the gate's reading (the brief
+  // reads the deck's supply for it). CEILING: one pass over the whole printed text, not the face the line is on.
+  const printed = (input.oracleText ?? clauses.map((c) => input.textOf(c)).join("\n")).replace(/\([^()]*\)/g, "").toLowerCase();
+  for (const l of lines) {
+    const g = l.gate;
+    if (g === null || g.kind !== "counter") continue;
+    const kind = g.counter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`\\bput (?:an?|\\w+) ${kind} counters? on (?:this [a-z]+|it)\\b`).test(printed)) g.put = { by: "self", readyTurn: Math.max(1, faceMV(l.face)) + g.need };
+    else if (new RegExp(`\\bopening hand\\b[^.]{0,200} ${kind} counter on it`).test(printed)) g.put = { by: "opening-hand" };
+  }
+
   // --- the card-level facts ----------------------------------------------------------------------------------
   const result: ManaResult = {};
   if (lines.length > 0) result.manaLines = lines;
