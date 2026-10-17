@@ -3,7 +3,7 @@
  *
  *  A deliberate simplification is marked `CEILING:` (CLAUDE.md). The marker is the repo's own ledger
  *  of what it knows it does badly, and nothing counted it: 276 three days before this gate was
- *  written, 299 when it was. A count nobody reads grows by accretion.
+ *  written, 302 when it was. A count nobody reads grows by accretion.
  *
  *  BOTH DIRECTIONS, like the other ratchets (`KNOWN_DEFECT_CAP`, `derive-compass`):
  *    - a file's count RISES: a new simplification landed. Bank it with `--bank` and say why in the

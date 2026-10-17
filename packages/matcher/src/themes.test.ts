@@ -131,7 +131,7 @@ test("a static credits no REMOVAL verb, no opponent-facing subject, and no unmap
     kind: "static",
     effect: { kind: "pump", subject: { control: "you", token: null } },
   }]);
-  const tags = ["dies:wizard", "sacrifice:wizard", "cast:wizard", "enters:permanent"];
+  const tags = ["dies:wizard", "sacrifice:wizard", "cast:wizard", "enters:any"]; // dead-key-ok: asserts the untyped static payoff is NOT credited, so the dead key must be absent
   const [dies, sac, castTag, entersAny] =
     themeMembership([lord, prison, untyped], [], tags);
 
