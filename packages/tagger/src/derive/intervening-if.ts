@@ -61,11 +61,11 @@ const FAMILIES: { family: ConditionFamily; re: RegExp }[] = [
 ];
 
 export function conditionFamily(condition: string): ConditionFamily {
-  return classifyCondition(condition, { text: "", threshold: false, selfDiesOnCreatureCard: false }).family;
+  return classifyCondition(condition, { threshold: false, selfDiesOnCreatureCard: false }).family;
 }
 
 // ---- WHAT DERIVE REPRESENTS (#1268 F6) ----------------------------------------------------------
-// One classifier: the audit ratchet reads `.family`, derive reads `.represented` and `.testsObject`.
+// One classifier: the audit ratchet reads `.family`, derive reads `.represented`; `conditionTestsObject` reads the whole clause.
 
 export /** "leave the battlefield WITHOUT DYING" (Dour Port-Mage), "if it didn't die" (Taeko): a `leaves`
  *  demand that refuses a death. 5 corpus cards. */
@@ -100,13 +100,16 @@ const WAS_A_CREATURE = /^(?:it was|they were) an? creature$/i;
  *  "if it was cast" (Mirror of Life Trapping), "if it was attacking or blocking alone" (Thijarian Witness),
  *  "if it's exiled" (Alaundo). A predicate outside this list ("if it's not their turn", "if it's the first
  *  time that creature has become tapped this turn") is a timing or a count and keeps the class. */
-export const TESTS_THE_OBJECT = /\bif (?:it|that (?:creature|card|permanent|land)|those cards|they)(?:['\u2019]s| (?:was|is|were|are|had|has))(?: not| n['\u2019]t)? (?:an? |the )?(?:enchanted|equipped|cast|attacking|blocking|tapped|untapped|exiled|legendary|nontoken|token|face[- ]down|modified|historic|multicolored|colorless|creature|artifact|land|permanent)\b/i;
+const TESTS_THE_OBJECT = /\bif (?:it|that (?:creature|card|permanent|land)|those cards|they)(?:['\u2019]s| (?:was|is|were|are|had|has))(?: not| n['\u2019]t)? (?:an? |the )?(?:enchanted|equipped|cast|attacking|blocking|tapped|untapped|exiled|legendary|nontoken|token|face[- ]down|modified|historic|multicolored|colorless|creature|artifact|land|permanent)\b/i;
 
 const FIRST_SPELL = /\bthe first \w+ spell\b/i;
 
+/** Does the clause carry an `if` that tests the trigger's OBJECT (not the turn or a count)? */
+export function conditionTestsObject(text: string): boolean {
+  return TESTS_THE_OBJECT.test(text);
+}
+
 export interface ConditionContext {
-  /** The clause text the condition came from (`testsObject` reads it whole). */
-  text: string;
   /** `thresholdFor(text) !== undefined`: derive holds a count for this clause. */
   threshold: boolean;
   /** A self `dies` trigger on a card whose printed type line includes Creature (see WAS_A_CREATURE). */
@@ -116,8 +119,6 @@ export interface ConditionClass {
   family: ConditionFamily;
   /** Derive represents the condition (a count, an entry that was no cast, the first spell, a source zone, ...), so the trigger may claim. */
   represented: boolean;
-  /** The if tests the trigger's OBJECT, not the turn or a count (read on `context.text`). */
-  testsObject: boolean;
 }
 
 /** THE ONE CLASSIFIER OF AN INTERVENING IF: its audit family and whether derive represents it. */
@@ -125,7 +126,7 @@ export function classifyCondition(condition: string, context: ConditionContext):
   const represented = context.threshold || SAME_NAME.test(condition) || ARRIVED_WITHOUT_CASTING.test(condition) || WITHOUT_DYING.test(condition)
     || FIRST_SPELL.test(condition) || SOURCE_ZONE.test(condition)
     || (context.selfDiesOnCreatureCard && WAS_A_CREATURE.test(condition));
-  return { family: FAMILIES.find((f) => f.re.test(condition))?.family ?? "other", represented, testsObject: TESTS_THE_OBJECT.test(context.text) };
+  return { family: FAMILIES.find((f) => f.re.test(condition))?.family ?? "other", represented };
 }
 
 /** THE DEMAND A CONDITION MAKES ON THE DECK, as ordinary `cares` tags.

@@ -10,7 +10,7 @@ import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Cont
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
-import { interveningIfOf, classifyCondition, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
+import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { actionRecipients, damagedPlayerIsOpponent, sentenceNamesAPlayer } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
@@ -21,7 +21,7 @@ import { selfAsTilde } from "../grammar/self-as-tilde.js";
 import { effectText, printedPreamble } from "../grammar/preamble.js";
 import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
-import { delaysIn } from "./delay.js";
+import { delaysIn, returnDelay } from "./delay.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
@@ -1506,15 +1506,6 @@ const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|him|her|this card|that card|t
  *  "tapped and transformed" (Ojer Taq). */
 /** "return ... at the beginning of the next end step" / "at the beginning of your next upkeep, return"
  *  (#801). Bounded and anchored on literals: no quantifier overlap for CodeQL's ReDoS check. */
-/** A return/put whose own sentence carries a next-end-step / next-upkeep cue within 120 characters before it, or right after it
- *  ("At the beginning of the next end step, return ..."). The cue is read by `delay.ts`. */
-function returnDelay(sentence: string): "next-end-step" | "next-upkeep" | undefined {
-  for (const d of delaysIn(sentence)) {
-    if (d.until !== "next-end-step" && d.until !== "next-upkeep") continue;
-    if (/\b(?:return|put)\b[^.]{0,120}$/i.test(sentence.slice(0, d.index)) || /^, (?:return|put)\b/i.test(sentence.slice(d.index + d.length))) return d.until;
-  }
-  return undefined;
-}
 /** The sentence of `text` holding the k-th (0-based) whole-word `verb`; "" when there are fewer. */
 function nthSentenceWith(text: string, verb: string, k: number): string {
   const word = new RegExp(`\\b${verb}\\b`, "gi");
@@ -1771,7 +1762,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   if (!verb) return { refused: r.event === "tapped-for-mana" ? "taps-for-mana" : r.event };
   // Entering TRANSFORMED keeps the name the stored path gave it.
   if (verb === "enters" && /\btransformed\b/.test(r.narrowing ?? "")) return { refused: "enters-transformed", subject };
-  if (r.condition && !classifyCondition(r.condition.text, { text, threshold: thresholdFor(text) !== undefined, selfDiesOnCreatureCard: verb === "dies" && subject.self === true && creatureCard === true }).represented) return { refused: `if:${r.event}`, subject };
+  if (r.condition && !classifyCondition(r.condition.text, { threshold: thresholdFor(text) !== undefined, selfDiesOnCreatureCard: verb === "dies" && subject.self === true && creatureCard === true }).represented) return { refused: `if:${r.event}`, subject };
   if (r.narrowing && !narrowingRepresented(r, text)) return { refused: `narrowing:${r.event}`, subject };
   if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
   if (r.condition && SAME_NAME.test(r.condition.text)) subject.uniqueName = true;
@@ -3009,7 +3000,7 @@ export function deriveAbilities(
       // "if it's exiled"). A refusal that read only timing or a count ("if it's not their turn", "if it's
       // the first time ... this turn") leaves "a creature you control" exact, and the ability keeps claiming it.
       if (kind === "triggered" && !abilities[i].trigger && namesTriggerObject(abilities[i])
-        && (triggerObjectClassless(abilities[i]) || unknownTriggers.slice(refusedBefore).some((r) => r.startsWith("if:")) && classifyCondition("", { text, threshold: false, selfDiesOnCreatureCard: false }).testsObject)) {
+        && (triggerObjectClassless(abilities[i]) || unknownTriggers.slice(refusedBefore).some((r) => r.startsWith("if:")) && conditionTestsObject(text))) {
         abilities[i] = { ...abilities[i], claimsNothing: "refused-trigger" as const };
       }
       const trig = abilities[i].trigger;

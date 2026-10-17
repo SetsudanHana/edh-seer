@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
-import { classifyCondition } from "./intervening-if.js";
+import { classifyCondition, conditionTestsObject } from "./intervening-if.js";
 
-const none = { text: "", threshold: false, selfDiesOnCreatureCard: false };
+const none = { threshold: false, selfDiesOnCreatureCard: false };
 
 test("the family is the audit's, and the same call says whether derive represents it", () => {
   expect(classifyCondition("it had one or more counters on it", none)).toMatchObject({ family: "counter-presence", represented: false });
@@ -30,12 +30,12 @@ test("'it was a creature' is represented only for a self dies trigger on a creat
   expect(classifyCondition("it was an artifact", { ...none, selfDiesOnCreatureCard: true }).represented).toBe(false);
 });
 
-test("testsObject reads the whole text: an if that tests the trigger's object", () => {
+test("conditionTestsObject reads the whole text: an if that tests the trigger's object", () => {
   for (const t of ["Whenever a creature dies, if it was enchanted or equipped, draw a card.", "When it becomes blocked, if it was cast, scry 1.",
     "Whenever a creature attacks, if it's exiled, x.", "If that creature is legendary, y."]) {
-    expect(classifyCondition("c", { ...none, text: t }).testsObject, t).toBe(true);
+    expect(conditionTestsObject(t), t).toBe(true);
   }
   for (const t of ["Whenever a creature attacks, if it's not their turn, draw.", "if it's the first time that creature has become tapped this turn"]) {
-    expect(classifyCondition("c", { ...none, text: t }).testsObject, t).toBe(false);
+    expect(conditionTestsObject(t), t).toBe(false);
   }
 });

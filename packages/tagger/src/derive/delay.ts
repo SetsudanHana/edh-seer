@@ -31,3 +31,13 @@ export function delaysIn(sentence: string): Delay[] {
 export function delayOf(sentence: string): Delay | null {
   return delaysIn(sentence)[0] ?? null;
 }
+
+/** A return/put whose own sentence carries a next-end-step / next-upkeep cue within 120 characters before it, or right after it
+ *  ("At the beginning of the next end step, return ..."). The cue is read by this module. */
+export function returnDelay(sentence: string): "next-end-step" | "next-upkeep" | undefined {
+  for (const d of delaysIn(sentence)) {
+    if (d.until !== "next-end-step" && d.until !== "next-upkeep") continue;
+    if (/\b(?:return|put)\b[^.]{0,120}$/i.test(sentence.slice(0, d.index)) || /^, (?:return|put)\b/i.test(sentence.slice(d.index + d.length))) return d.until;
+  }
+  return undefined;
+}
