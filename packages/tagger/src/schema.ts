@@ -1466,6 +1466,23 @@ export interface ManaRestriction {
 /** What a mana line's cost uses up (`ManaLine.cost.consumes`). */
 export type ConsumedCost = "discard" | "exile" | "energy" | "return-to-hand" | "forage" | "collect-evidence" | "unknown";
 
+/** How much one use of a mana line adds (`ManaLine.amount`). `fixed` is the number (the smallest across the printed alternatives), `null` when it scales; `scales` then names what it counts
+ *  ("for each Forest you control", "equal to ...", "X"). */
+export interface ManaAmount {
+  fixed: number | null;
+  scales: string | null;
+  /** THE INTERVAL A SCALING ADD SPANS (owner ruling 2026-10-17, #1265): never a fake fixed 1 and never "nothing". Present on every line that SCALES and adds mana (`scales` set); absent on a fixed line
+   *  (its interval is `fixed`) and on a line whose text adds no mana (Halo Forager's "pay {X}", mistyped). `floor` is what the add makes whatever the board: the printed fixed part ("Add {R}{R}, then add
+   *  {R} for each ...", Rite of Flame: 2 -- the fixed part is its own fixed sibling line when the model kept both adds, and then `floor` counts only the scaling part's own contribution, so the lines'
+   *  floors add), plus what the CARD ITSELF contributes to its own count: its colours for "for each color among permanents you control" (Faeburrow Elder 2, Bloom Tender 1), 1 for "the number of
+   *  Shrines you control" on a Shrine, its printed power for "this creature's power", 1 for "1 plus ...". `ceiling` is the most the count can reach, `null` when open. */
+  floor?: number;
+  ceiling?: number | null;
+  /** WHAT BOUNDS `ceiling`: `colours` (five colours, "for each color among ..."), `basic-land-types` (five, Domain). Absent when the ceiling is open.
+   *  CEILING: a bound that depends on the game, not the deck (Belbe's two per opponent who lost life, Selvala's "for each nonland card revealed", a player count) leaves the ceiling open. */
+  bound?: "colours" | "basic-land-types";
+}
+
 export interface ManaLine {
   /** The face that prints it: 0 the front, 1 the back of a transform / modal card (Treasure Cove's `{T}: Add {C}`). */
   face: 0 | 1;
@@ -1512,7 +1529,8 @@ export interface ManaLine {
   anyColour: ManaAnyColour | null;
   /** How much one use adds. `fixed` is the number (the smallest across the printed alternatives), `null` when it
    *  scales; `scales` then names what it counts ("for each Forest you control", "equal to ...", "X"). */
-  amount: { fixed: number | null; scales: string | null };
+  /** How much one use adds: `fixed`, or `scales` with the interval it spans (`floor`, `ceiling`, `bound`). See `ManaAmount`. */
+  amount: ManaAmount;
   /** Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as its printed fixed part when one
    *  precedes the "for each" ("Add {R}{R}, then add {R} for each ...", Rite of Flame: 2), else as 1 (its true floor
    *  may be 0; a consumer that cares reads `amount.scales`). EXCEPT "for each color among permanents you control" (Faeburrow Elder, Bloom Tender) on a permanent: the card is itself a permanent

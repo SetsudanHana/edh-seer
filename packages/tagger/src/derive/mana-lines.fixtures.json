@@ -14201,6 +14201,3433 @@
   ],
   "source": "model"
  },
+ "Arbor Adherent": {
+  "card": {
+   "_id": "9640225a-8f31-495f-b9de-53ed348ff24b",
+   "name": "Arbor Adherent",
+   "typeLine": "Creature — Dog Druid",
+   "oracleText": "{T}: Add one mana of any color.\n{T}: Add X mana of any one color, where X is the greatest toughness among other creatures you control.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{3}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the greatest toughness among other creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "The Last Agni Kai": {
+  "card": {
+   "_id": "fd1998c0-c18e-4310-82de-b6320be5fe10",
+   "name": "The Last Agni Kai",
+   "typeLine": "Instant",
+   "oracleText": "Target creature you control fights target creature an opponent controls. If the creature the opponent controls is dealt excess damage this way, add that much {R}.\nUntil end of turn, you don't lose unspent red mana as steps and phases end.",
+   "keywords": [
+    "Fight"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{R}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "fight",
+      "object": "target creature you control and target creature an opponent controls",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "that much {R}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "lose unspent red mana as steps and phases end",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Kami of Whispered Hopes": {
+  "card": {
+   "_id": "f122624f-f30d-444e-a62a-939829241045",
+   "name": "Kami of Whispered Hopes",
+   "typeLine": "Creature — Spirit",
+   "oracleText": "If one or more +1/+1 counters would be put on a permanent you control, that many plus one +1/+1 counters are put on that permanent instead.\n{T}: Add X mana of any one color, where X is this creature's power.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "amount": "X plus one",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color",
+      "amount": "X",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Matzalantli, the Great Door // The Core": {
+  "card": {
+   "_id": "16182e01-22ff-4786-985d-919b47c4aa4d",
+   "name": "Matzalantli, the Great Door // The Core",
+   "typeLine": "Legendary Artifact // Legendary Land",
+   "oracleText": "{T}: Draw a card, then discard a card.\n{4}, {T}: Transform Matzalantli. Activate only if there are four or more permanent types among cards in your graveyard. (Artifact, battle, creature, enchantment, land, and planeswalker are permanent types.)\n//\n(Transforms from Matzalantli.)\nFathomless descent — {T}: Add X mana of any one color, where X is the number of permanent cards in your graveyard.",
+   "keywords": [
+    "Transform",
+    "Fathomless descent"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "faces": [
+    {
+     "name": "Matzalantli, the Great Door",
+     "typeLine": "Legendary Artifact",
+     "manaCost": "{3}"
+    },
+    {
+     "name": "The Core",
+     "typeLine": "Legendary Land",
+     "manaCost": ""
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "Matzalantli",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "(Transforms from Matzalantli.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the number of permanent cards in your graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Jetfire, Ingenious Scientist // Jetfire, Air Guardian": {
+  "card": {
+   "_id": "38de7183-81ef-4a79-b231-7195ba89a281",
+   "name": "Jetfire, Ingenious Scientist // Jetfire, Air Guardian",
+   "typeLine": "Legendary Artifact Creature — Robot // Legendary Artifact — Vehicle",
+   "oracleText": "More Than Meets the Eye {3}{U} (You may cast this card converted for {3}{U}.)\nFlying\nRemove one or more +1/+1 counters from among artifacts you control: Target player adds that much {C}. This mana can't be spent to cast nonartifact spells. Convert Jetfire.\n//\nLiving metal (During your turn, this Vehicle is also a creature.)\nFlying\n{U}{U}{U}: Convert Jetfire, then adapt 3. (If it has no +1/+1 counters on it, put three +1/+1 counters on it.)",
+   "keywords": [
+    "Flying",
+    "Adapt",
+    "Living metal",
+    "Convert",
+    "More Than Meets the Eye"
+   ],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 5,
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "producedMana": [
+    "C"
+   ],
+   "faces": [
+    {
+     "name": "Jetfire, Ingenious Scientist",
+     "typeLine": "Legendary Artifact Creature — Robot",
+     "manaCost": "{4}{U}"
+    },
+    {
+     "name": "Jetfire, Air Guardian",
+     "typeLine": "Legendary Artifact — Vehicle",
+     "manaCost": ""
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "More Than Meets the Eye {3}{U}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "colorless mana equal to the number of counters removed",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "mana can't be spent to cast nonartifact spells",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "convert",
+      "object": "Jetfire",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Living metal",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 6,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "convert",
+      "object": "Jetfire",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "adapt",
+      "object": "Jetfire",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Baldur's Gate": {
+  "card": {
+   "_id": "da307ea2-4df7-4d6b-be0f-9dc6ac93db61",
+   "name": "Baldur's Gate",
+   "typeLine": "Legendary Land — Gate",
+   "oracleText": "{T}: Add {C}.\n{2}, {T}: Add X mana of any one color, where X is the number of other Gates you control.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the number of other Gates you control",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Harabaz Druid": {
+  "card": {
+   "_id": "ead985ec-f29f-4a3b-b8b1-061142cc5bd1",
+   "name": "Harabaz Druid",
+   "typeLine": "Creature — Human Druid Ally",
+   "oracleText": "{T}: Add X mana of any one color, where X is the number of Allies you control.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "0",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the number of Allies you control",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Sanctum Weaver": {
+  "card": {
+   "_id": "acfe7ec0-0606-4d5e-b1fa-25f0c7aeec47",
+   "name": "Sanctum Weaver",
+   "typeLine": "Enchantment Creature — Dryad",
+   "oracleText": "{T}: Add X mana of any one color, where X is the number of enchantments you control.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "0",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the number of enchantments you control",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Klauth, Unrivaled Ancient": {
+  "card": {
+   "_id": "8cefa5d6-5151-4e75-8b72-f210a4c751ea",
+   "name": "Klauth, Unrivaled Ancient",
+   "typeLine": "Legendary Creature — Dragon",
+   "oracleText": "Flying, haste\nWhenever Klauth attacks, add X mana in any combination of colors, where X is the total power of attacking creatures. Spend this mana only to cast spells. Until end of turn, you don't lose this mana as steps and phases end.",
+   "keywords": [
+    "Flying",
+    "Haste"
+   ],
+   "colors": [
+    "G",
+    "R"
+   ],
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "manaValue": 7,
+   "power": "4",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{5}{R}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, haste"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana in any combination of colors, where X is the total power of attacking creatures",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "spend this mana only to cast spells",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "lose this mana as steps and phases end",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "attacks",
+     "subject": "~",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Metamorphosis": {
+  "card": {
+   "_id": "7140d726-0136-43af-84b5-85005a66a186",
+   "name": "Metamorphosis",
+   "typeLine": "Sorcery",
+   "oracleText": "As an additional cost to cast this spell, sacrifice a creature.\nAdd X mana of any one color, where X is 1 plus the sacrificed creature's mana value. Spend this mana only to cast creature spells.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is 1 plus the sacrificed creature's mana value",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "spend this mana only to cast creature spells",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Heronblade Elite": {
+  "card": {
+   "_id": "e3e255e0-ab04-4488-bdc1-bb1542f51e16",
+   "name": "Heronblade Elite",
+   "typeLine": "Creature — Human Warrior",
+   "oracleText": "Vigilance\nWhenever another Human you control enters, put a +1/+1 counter on this creature.\n{T}: Add X mana of any one color, where X is this creature's power.",
+   "keywords": [
+    "Vigilance"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "1",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "another Human you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "any one color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Raphael, Ninja Destroyer": {
+  "card": {
+   "_id": "fdb8e862-c642-4b7b-b061-400de6061ffe",
+   "name": "Raphael, Ninja Destroyer",
+   "typeLine": "Legendary Creature — Mutant Ninja Turtle",
+   "oracleText": "Raphael must be blocked if able.\nEnrage — Whenever Raphael is dealt damage, add that much {R}. Until end of turn, you don't lose this mana as steps and phases end.",
+   "keywords": [
+    "Enrage"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 4,
+   "power": "4",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{2}{R}{R}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be unblocked",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "that much {R}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "lose this mana as steps and phases end",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "damaged",
+     "subject": "~",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Doc Samson, Super Psychiatrist": {
+  "card": {
+   "_id": "699610c9-c991-4faf-b712-d015ef0799ad",
+   "name": "Doc Samson, Super Psychiatrist",
+   "typeLine": "Legendary Creature — Gamma Doctor Hero",
+   "oracleText": "If you would put one or more counters on a permanent you control, put that many plus one of each of those kinds of counters on that permanent instead.\n{T}: Add X mana of any one color, where X is Doc Samson's power.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 5,
+   "power": "3",
+   "toughness": "6",
+   "layout": "normal",
+   "manaCost": "{4}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "each kind of counter being put on a permanent you control",
+      "amount": "that many plus one",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is Doc Samson's power",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Prismatic Geoscope": {
+  "card": {
+   "_id": "be838f57-4e74-44ad-aee1-506e63b0ff37",
+   "name": "Prismatic Geoscope",
+   "typeLine": "Artifact",
+   "oracleText": "This artifact enters tapped.\nDomain — {T}: Add X mana in any combination of colors, where X is the number of basic land types among lands you control.",
+   "keywords": [
+    "Domain"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 5,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{5}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "This artifact",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana in any combination of colors, where X is the number of basic land types among lands you control",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Photon, Mighty Marvel": {
+  "card": {
+   "_id": "c46d6f42-5e50-4c0d-8908-360337285f83",
+   "name": "Photon, Mighty Marvel",
+   "typeLine": "Legendary Creature — Human Hero",
+   "oracleText": "Flying\nWhenever Photon deals combat damage to a player, add that much mana of any one color. Until end of turn, you don't lose this mana as steps and phases end.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{3}{R}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "that much mana of any one color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "lose this mana as steps and phases end",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "~",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Sanctum of Fruitful Harvest": {
+  "card": {
+   "_id": "132859dd-de66-45c6-8af4-ab5e202a17b0",
+   "name": "Sanctum of Fruitful Harvest",
+   "typeLine": "Legendary Enchantment — Shrine",
+   "oracleText": "At the beginning of your first main phase, add X mana of any one color, where X is the number of Shrines you control.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the number of Shrines you control",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "main-phase",
+     "subject": "you",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Empowered Autogenerator": {
+  "card": {
+   "_id": "6832f9e2-294a-44a2-8af9-eb16ccfdfc36",
+   "name": "Empowered Autogenerator",
+   "typeLine": "Artifact",
+   "oracleText": "This artifact enters tapped.\n{T}: Put a charge counter on this artifact. Add X mana of any one color, where X is the number of charge counters on this artifact.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "This artifact",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the number of charge counters on this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Food Chain": {
+  "card": {
+   "_id": "5c8e5092-962e-49ef-ab82-8434e475e4e7",
+   "name": "Food Chain",
+   "typeLine": "Enchantment",
+   "oracleText": "Exile a creature you control: Add X mana of any one color, where X is 1 plus the exiled creature's mana value. Spend this mana only to cast creature spells.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a creature you control",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is 1 plus the exiled creature's mana value",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "spend this mana only to cast creature spells",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Carpet of Flowers": {
+  "card": {
+   "_id": "2ffc6372-f63b-4f32-8dd0-2d7938aeb412",
+   "name": "Carpet of Flowers",
+   "typeLine": "Enchantment",
+   "oracleText": "At the beginning of each of your main phases, if you haven't added mana with this ability this turn, you may add X mana of any one color, where X is the number of Islands target opponent controls.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the number of Islands target opponent controls",
+      "fromZone": null,
+      "toZone": null,
+      "optional": true
+     }
+    ],
+    "trigger": {
+     "event": "main-phase",
+     "subject": "each player",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Selvala, Heart of the Wilds": {
+  "card": {
+   "_id": "1d725121-e50c-42f0-9128-56802f07c89e",
+   "name": "Selvala, Heart of the Wilds",
+   "typeLine": "Legendary Creature — Elf Scout",
+   "oracleText": "Whenever another creature enters, its controller may draw a card if its power is greater than each other creature's power.\n{G}, {T}: Add X mana in any combination of colors, where X is the greatest power among creatures you control.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "2",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{1}{G}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "another creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "mana in any combination of colors",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Sakiko, Mother of Summer": {
+  "card": {
+   "_id": "e4021e30-16bf-4178-9a3b-565bfdce4384",
+   "name": "Sakiko, Mother of Summer",
+   "typeLine": "Legendary Creature — Snake Shaman",
+   "oracleText": "Whenever a creature you control deals combat damage to a player, add that much {G}. Until end of turn, you don't lose this mana as steps and phases end.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 6,
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{4}{G}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "that much {G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "lose this mana as steps and phases end",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a creature you control",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Aetherflux Conduit": {
+  "card": {
+   "_id": "775617cd-7264-4365-94c4-ffae4eb9ec8b",
+   "name": "Aetherflux Conduit",
+   "typeLine": "Artifact",
+   "oracleText": "Whenever you cast a spell, you get an amount of {E} (energy counters) equal to the amount of mana spent to cast that spell.\n{T}, Pay fifty {E}: Draw seven cards. You may cast any number of spells from your hand without paying their mana costs.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 6,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{6}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Aetherflux Conduit",
+     "typeLine": "Artifact",
+     "printingId": "f7628e13-9cf1-4bd4-9d01-e4961677dd12"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "6a2c1fa5-deed-48ba-afe4-6c8ea8d9135e"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "an amount of {E} equal to the amount of mana spent to cast that spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "seven cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "any number of spells from your hand without paying their mana costs",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Wirewood Channeler": {
+  "card": {
+   "_id": "8badfd34-9b63-4ada-8012-b8cddaf5b492",
+   "name": "Wirewood Channeler",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add X mana of any one color, where X is the number of Elves on the battlefield.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{3}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the number of Elves on the battlefield",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "White Lotus Tile": {
+  "card": {
+   "_id": "f8a5e009-45b7-4e62-a494-1579f5fc0ba6",
+   "name": "White Lotus Tile",
+   "typeLine": "Artifact",
+   "oracleText": "This artifact enters tapped.\n{T}: Add X mana of any one color, where X is the greatest number of creatures you control that have a creature type in common.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "This artifact",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the greatest number of creatures you control that have a creature type in common",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Deathbloom Ritualist": {
+  "card": {
+   "_id": "b52148c3-fe97-4cc0-a814-a5a0f5d426f6",
+   "name": "Deathbloom Ritualist",
+   "typeLine": "Creature — Elf Warlock",
+   "oracleText": "{T}: Add X mana of any one color, where X is the number of creature cards in your graveyard.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "manaValue": 5,
+   "power": "3",
+   "toughness": "5",
+   "layout": "normal",
+   "manaCost": "{3}{B}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the number of creature cards in your graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Haruspex": {
+  "card": {
+   "_id": "2309436e-3442-46d7-8ffc-9dc4a2314ae9",
+   "name": "Haruspex",
+   "typeLine": "Creature — Tyranid",
+   "oracleText": "Rapacious Hunger — Whenever another creature dies, put a +1/+1 counter on this creature.\nDevouring Monster — {T}, Remove X +1/+1 counters from this creature: Add X mana of any one color.",
+   "keywords": [
+    "Rapacious Hunger",
+    "Devouring Monster"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{3}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "another creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Belbe, Corrupted Observer": {
+  "card": {
+   "_id": "f1c303d8-6d77-4bc6-82d1-2a409a6f2cfd",
+   "name": "Belbe, Corrupted Observer",
+   "typeLine": "Legendary Creature — Phyrexian Zombie Elf",
+   "oracleText": "At the beginning of each postcombat main phase, the active player adds {C}{C} for each of your opponents who lost life this turn. (Damage causes loss of life.)",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{B}{G}",
+   "producedMana": [
+    "C"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "main-phase",
+     "subject": "postcombat main phase",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}{C} for each of your opponents who lost life this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Accomplished Alchemist": {
+  "card": {
+   "_id": "97e18a8d-9068-4782-a744-280d28c68228",
+   "name": "Accomplished Alchemist",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add one mana of any color.\n{T}: Add X mana of any one color, where X is the amount of life you gained this turn.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "5",
+   "layout": "normal",
+   "manaCost": "{3}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the amount of life you gained this turn",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Grand Warlord Radha": {
+  "card": {
+   "_id": "0fb90df6-a62b-4a9f-ae79-db71d40466ce",
+   "name": "Grand Warlord Radha",
+   "typeLine": "Legendary Creature — Elf Warrior",
+   "oracleText": "Haste\nWhenever one or more creatures you control attack, add that much mana in any combination of {R} and/or {G}. Until end of turn, you don't lose this mana as steps and phases end.",
+   "keywords": [
+    "Haste"
+   ],
+   "colors": [
+    "G",
+    "R"
+   ],
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "manaValue": 4,
+   "power": "3",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{2}{R}{G}",
+   "producedMana": [
+    "G",
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "that much mana in any combination of {R} and/or {G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "lose this mana as steps and phases end",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "attacks",
+     "subject": "one or more creatures you control",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Dreadship Reef": {
+  "card": {
+   "_id": "130a8cf5-1354-4d17-91c8-c073642eb3db",
+   "name": "Dreadship Reef",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {U} and/or {B}.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "U"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "storage",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "storage",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "X mana in any combination of {U} and/or {B}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Redshift, Rocketeer Chief": {
+  "card": {
+   "_id": "582c7e54-d64c-4ffb-ae5f-d2752b3ed10b",
+   "name": "Redshift, Rocketeer Chief",
+   "typeLine": "Legendary Creature — Goblin Pilot",
+   "oracleText": "Vigilance\n{T}: Add X mana of any one color, where X is Redshift's power. Spend this mana only to activate abilities.\nExhaust — {10}{R}{G}: Put any number of permanent cards from your hand onto the battlefield. (Activate each exhaust ability only once.)",
+   "keywords": [
+    "Vigilance",
+    "Exhaust"
+   ],
+   "colors": [
+    "G",
+    "R"
+   ],
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{R}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is Redshift's power",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "any number of permanent cards from your hand",
+      "fromZone": "hand",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Sunbird Standard // Sunbird Effigy": {
+  "card": {
+   "_id": "c69742bf-f0f5-4216-a602-c21f9c5a6501",
+   "name": "Sunbird Standard // Sunbird Effigy",
+   "typeLine": "Artifact // Artifact Creature — Bird Construct",
+   "oracleText": "{T}: Add one mana of any color.\nCraft with one or more {5} ({5}, Exile this artifact, Exile one or more other permanents you control and/or cards from your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)\n//\nFlying, vigilance, haste\nSunbird Effigy's power and toughness are each equal to the number of colors among the exiled cards used to craft it.\n{T}: For each color among the exiled cards used to craft this creature, add one mana of that color.",
+   "keywords": [
+    "Flying",
+    "Craft",
+    "Vigilance",
+    "Transform",
+    "Haste"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "faces": [
+    {
+     "name": "Sunbird Standard",
+     "typeLine": "Artifact",
+     "manaCost": "{3}"
+    },
+    {
+     "name": "Sunbird Effigy",
+     "typeLine": "Artifact Creature — Bird Construct",
+     "manaCost": ""
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Craft with one or more {5}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, vigilance, haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the number of colors among the exiled cards used to craft it",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of each color among the exiled cards used to craft this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Crucible of the Spirit Dragon": {
+  "card": {
+   "_id": "ecfbebc9-7fc7-474e-8c59-8ede800e082e",
+   "name": "Crucible of the Spirit Dragon",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{T}, Remove X storage counters from this land: Add X mana in any combination of colors. Spend this mana only to cast Dragon spells or activate abilities of Dragons.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "storage counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "storage counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "X mana in any combination of colors",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Mona Lisa, Science Geek": {
+  "card": {
+   "_id": "e6490e98-37a9-4a8b-a04c-cceeb22b0c35",
+   "name": "Mona Lisa, Science Geek",
+   "typeLine": "Legendary Creature — Lizard Mutant",
+   "oracleText": "Reach\n{T}: Add X mana of any one color, where X is Mona Lisa's power.",
+   "keywords": [
+    "Reach"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "1",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Reach"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is Mona Lisa's power",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Burnt Offering": {
+  "card": {
+   "_id": "86eb30a0-0beb-42db-9ddf-cf8be6c99dd3",
+   "name": "Burnt Offering",
+   "typeLine": "Instant",
+   "oracleText": "As an additional cost to cast this spell, sacrifice a creature.\nAdd X mana in any combination of {B} and/or {R}, where X is the sacrificed creature's mana value.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "colorIdentity": [
+    "B",
+    "R"
+   ],
+   "manaValue": 1,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{B}",
+   "producedMana": [
+    "B",
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{B} and/or {R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Calciform Pools": {
+  "card": {
+   "_id": "2031bc31-81cc-407a-8615-29832f586bbc",
+   "name": "Calciform Pools",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add {C}.\n{1}, {T}: Put a storage counter on this land.\n{1}, Remove X storage counters from this land: Add X mana in any combination of {W} and/or {U}.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "C",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "storage counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "storage counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "X mana in any combination of {W} and/or {U}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Vivi Ornitier": {
+  "card": {
+   "_id": "0452be2a-e97a-4269-a9e3-b616265ecb2e",
+   "name": "Vivi Ornitier",
+   "typeLine": "Legendary Creature — Wizard",
+   "oracleText": "{0}: Add X mana in any combination of {U} and/or {R}, where X is Vivi Ornitier's power. Activate only during your turn and only once each turn.\nWhenever you cast a noncreature spell, put a +1/+1 counter on Vivi Ornitier and it deals 1 damage to each opponent.",
+   "keywords": [],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "manaValue": 3,
+   "power": "0",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{1}{U}{R}",
+   "producedMana": [
+    "R",
+    "U"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana in any combination of {U} and/or {R}, where X is Vivi Ornitier's power",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a noncreature spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Plasm Capture": {
+  "card": {
+   "_id": "3673219d-d2b5-43ad-b0c8-58b583491158",
+   "name": "Plasm Capture",
+   "typeLine": "Instant",
+   "oracleText": "Counter target spell. At the beginning of your next first main phase, add X mana in any combination of colors, where X is that spell's mana value.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{G}{G}{U}{U}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "target spell",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana in any combination of colors, where X is that spell's mana value",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "main-phase",
+     "subject": "you",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
+ "Woodland Weavemaster": {
+  "card": {
+   "_id": "28ffddca-a3c4-467d-a2dc-2c5e62393e11",
+   "name": "Woodland Weavemaster",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "Vigilance\nWhenever another Elf you control enters, this creature gets +1/+1 until end of turn.\n{T}: Add X mana of any one color, where X is this creature's power. Spend this mana only to cast Elf spells and activate abilities of Elf sources.",
+   "keywords": [
+    "Vigilance"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "1",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "another Elf you control",
+     "control": "you"
+    }
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is this creature's power",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "spend this mana only to cast Elf spells and activate abilities of Elf sources",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Tarnation Vista": {
+  "card": {
+   "_id": "b0be3f25-edb1-4299-959c-9aad909730ca",
+   "name": "Tarnation Vista",
+   "typeLine": "Land",
+   "oracleText": "This land enters tapped. As it enters, choose a color.\n{T}: Add one mana of the chosen color.\n{1}, {T}: For each color among monocolored permanents you control, add one mana of that color.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "choose a color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of the chosen color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of each color among monocolored permanents you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "The Eternity Elevator": {
+  "card": {
+   "_id": "11323af4-b8b8-4ca9-932f-377c7fd77dea",
+   "name": "The Eternity Elevator",
+   "typeLine": "Legendary Artifact — Spacecraft",
+   "oracleText": "{T}: Add {C}{C}{C}.\nStation (Tap another creature you control: Put charge counters equal to its power on this Spacecraft. Station only as a sorcery.)\n20+ | {T}: Add X mana of any one color, where X is the number of charge counters on The Eternity Elevator.",
+   "keywords": [
+    "Station"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 5,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{5}",
+   "producedMana": [
+    "B",
+    "C",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Station"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is the number of charge counters on ~",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Brigid, Clachan's Heart // Brigid, Doun's Mind": {
+  "card": {
+   "_id": "60fc89a1-cc6f-4a32-84c3-09abf7a4a1df",
+   "name": "Brigid, Clachan's Heart // Brigid, Doun's Mind",
+   "typeLine": "Legendary Creature — Kithkin Warrior // Legendary Creature — Kithkin Soldier",
+   "oracleText": "Whenever this creature enters or transforms into Brigid, Clachan's Heart, create a 1/1 green and white Kithkin creature token.\nAt the beginning of your first main phase, you may pay {G}. If you do, transform Brigid.\n//\n{T}: Add X {G} or X {W}, where X is the number of other creatures you control.\nAt the beginning of your first main phase, you may pay {W}. If you do, transform Brigid.",
+   "keywords": [
+    "Transform"
+   ],
+   "colors": [
+    "W",
+    "G"
+   ],
+   "colorIdentity": [
+    "G",
+    "W"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "producedMana": [
+    "G"
+   ],
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Kithkin",
+     "typeLine": "Token Creature — Kithkin",
+     "printingId": "2ed11e1b-2289-48d2-8d96-ee7e590ecfd4"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Brigid, Clachan's Heart // Brigid, Doun's Mind",
+     "typeLine": "Legendary Creature — Kithkin Warrior // Legendary Creature — Kithkin Soldier",
+     "printingId": "887002ae-794b-427c-9f98-e909b22313d9"
+    }
+   ],
+   "faces": [
+    {
+     "name": "Brigid, Clachan's Heart",
+     "typeLine": "Legendary Creature — Kithkin Warrior",
+     "manaCost": "{2}{W}"
+    },
+    {
+     "name": "Brigid, Doun's Mind",
+     "typeLine": "Legendary Creature — Kithkin Soldier",
+     "manaCost": ""
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 green and white Kithkin creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "transform",
+     "subject": "this creature into Brigid, Clachan's Heart",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 green and white Kithkin creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "main-phase",
+     "subject": "your first main phase",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "Brigid",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X {G} or X {W}, where X is the number of other creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "main-phase",
+     "subject": "your first main phase",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "Brigid",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "White Mana Battery": {
+  "card": {
+   "_id": "cf58682f-c305-4803-b54b-37f0841788e9",
+   "name": "White Mana Battery",
+   "typeLine": "Artifact",
+   "oracleText": "{2}, {T}: Put a charge counter on this artifact.\n{T}, Remove any number of charge counters from this artifact: Add {W}, then add an additional {W} for each charge counter removed this way.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "producedMana": [
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "any number of",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{W}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "an additional {W}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each charge counter removed this way",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Black Mana Battery": {
+  "card": {
+   "_id": "dc3b2bab-755d-4b2f-97c0-70a74d721a79",
+   "name": "Black Mana Battery",
+   "typeLine": "Artifact",
+   "oracleText": "{2}, {T}: Put a charge counter on this artifact.\n{T}, Remove any number of charge counters from this artifact: Add {B}, then add an additional {B} for each charge counter removed this way.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [
+    "B"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "producedMana": [
+    "B"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "any number of",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{B}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "an additional {B}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each charge counter removed this way",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Mana Seism": {
+  "card": {
+   "_id": "6faa6b62-d516-415c-8029-223c3f18f8af",
+   "name": "Mana Seism",
+   "typeLine": "Sorcery",
+   "oracleText": "Sacrifice any number of lands, then add that much {C}.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 2,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{R}",
+   "producedMana": [
+    "C"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of lands",
+      "fromZone": null,
+      "toZone": null,
+      "optional": true
+     },
+     {
+      "verb": "add-mana",
+      "object": "that much {C}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Elemental Resonance": {
+  "card": {
+   "_id": "1f4ff059-e505-4746-ba4f-6b78a502f523",
+   "name": "Elemental Resonance",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant permanent\nAt the beginning of your first main phase, add mana equal to enchanted permanent's mana cost. (Mana cost includes color. If a mana symbol has multiple colors, choose one.)",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{G}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant permanent",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "main-phase",
+     "subject": "your first main phase",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "mana equal to enchanted permanent's mana cost",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Blue Mana Battery": {
+  "card": {
+   "_id": "79e91e8a-cee7-411b-b0a3-d3383c0d4a43",
+   "name": "Blue Mana Battery",
+   "typeLine": "Artifact",
+   "oracleText": "{2}, {T}: Put a charge counter on this artifact.\n{T}, Remove any number of charge counters from this artifact: Add {U}, then add an additional {U} for each charge counter removed this way.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "producedMana": [
+    "U"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "charge",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "charge",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "any number",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{U}, then add an additional {U} for each charge counter removed this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Red Mana Battery": {
+  "card": {
+   "_id": "8ceb295c-a611-4ac7-940b-557bf60f8a8b",
+   "name": "Red Mana Battery",
+   "typeLine": "Artifact",
+   "oracleText": "{2}, {T}: Put a charge counter on this artifact.\n{T}, Remove any number of charge counters from this artifact: Add {R}, then add an additional {R} for each charge counter removed this way.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "charge",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "charge",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "any number",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{R}, then add an additional {R} for each charge counter removed this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Green Mana Battery": {
+  "card": {
+   "_id": "b953d19f-6ba7-4aee-b353-c60dc9572610",
+   "name": "Green Mana Battery",
+   "typeLine": "Artifact",
+   "oracleText": "{2}, {T}: Put a charge counter on this artifact.\n{T}, Remove any number of charge counters from this artifact: Add {G}, then add an additional {G} for each charge counter removed this way.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{4}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "any number of",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "an additional {G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each charge counter removed this way",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Wildborn Preserver": {
+  "card": {
+   "_id": "55cec4bc-3de6-4c0d-a4cc-c5a30849fbda",
+   "name": "Wildborn Preserver",
+   "typeLine": "Creature — Elf Archer",
+   "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nReach (This creature can block creatures with flying.)\nWhenever another non-Human creature you control enters, you may pay {X}. When you do, put X +1/+1 counters on this creature.",
+   "keywords": [
+    "Reach",
+    "Flash"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{1}{G}"
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Reach",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "another non-Human creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{X}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "other",
+     "subject": "you pay mana",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Scurry of Gremlins": {
+  "card": {
+   "_id": "ff24d18d-9c5d-4ffe-846f-a8d568b32724",
+   "name": "Scurry of Gremlins",
+   "typeLine": "Enchantment",
+   "oracleText": "When this enchantment enters, create two 1/1 red Gremlin creature tokens. Then you get an amount of {E} (energy counters) equal to the number of creatures you control.\nPay {E}{E}{E}{E}: Creatures you control get +1/+0 and gain haste until end of turn.",
+   "keywords": [],
+   "colors": [
+    "R",
+    "W"
+   ],
+   "colorIdentity": [
+    "R",
+    "W"
+   ],
+   "manaValue": 4,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{R}{W}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Gremlin",
+     "typeLine": "Token Creature — Gremlin",
+     "printingId": "25b1dfdc-09cf-4b87-a6c1-a78ba51e1133"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "1c516212-ad39-4396-8e05-ae57f100309f"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Scurry of Gremlins",
+     "typeLine": "Enchantment",
+     "printingId": "be4a6113-1db4-42d0-92b8-5fdc431d96ea"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "two 1/1 red Gremlin creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "energy equal to the number of creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures you control get +1/+0 and gain haste until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
  "Bilbo, Retired Burglar": {
   "card": {
    "_id": "2e7e3be5-04dd-4ff4-b121-3e65b3e00699",

@@ -3434,8 +3434,8 @@ test("a mana ability's amount is the mana it adds; a counted or X object keeps i
   expect(added("three mana of any one color")).toBe("3");
   expect(added("{G/U}")).toBe("1");
   expect(added("{B} for each Swamp you control")).toBe("for each swamp you control"); // #1265: what scales keeps its text
-  expect(added("X mana of any one color", "X")).toBe("X");
-  expect(added("{C}", "for each Urza's land you control")).toBe("for each Urza's land you control");
+  expect(added("X mana of any one color", "X")).toBe("x"); // one case (#1265): the line's lowercase scale text
+  expect(added("{C}", "for each Urza's land you control")).toBe("for each urza's land you control");
   expect(manaAdded("{E}{E}")).toBeUndefined();
 });
 
