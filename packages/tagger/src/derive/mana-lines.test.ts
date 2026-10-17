@@ -7,7 +7,7 @@ import { deriveInputOf } from "../derive-input.js";
 import { deriveCardTags } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import type { CardTags, ManaLine } from "../schema.js";
-import { replacementAddedToken, unpricedLoyaltyLines } from "./mana-lines.js";
+import { replacementAddedToken, scaleBounds, unpricedLoyaltyLines } from "./mana-lines.js";
 import fixtures from "./mana-lines.fixtures.json" with { type: "json" };
 
 const WUBRG = ["W", "U", "B", "R", "G"];
@@ -797,6 +797,33 @@ describe("a scaling mana add carries a floor and a ceiling (#1265)", () => {
   });
   it("one case: the scale text is lowercase on a card the model path and the grammar path both read (Kami of Whispered Hopes, Haruspex)", () => {
     for (const name of ["Kami of Whispered Hopes", "Haruspex"]) for (const a of mg(name)) expect(a.amount, name).toBe((a.amount ?? "").toLowerCase());
+  });
+});
+
+describe("scaleBounds guards (#1265 task 1 review)", () => {
+  const scaling = (name: string) => linesOf(name).filter((l) => l.source !== "token-maker" && l.amount.scales !== null);
+  const chars = (over: Partial<CardTags["characteristics"]> = {}) => ({ types: ["creature"], subtypes: [], colors: ["G"], identity: ["G"], cmc: 2, power: "1", toughness: "1", token: false, ...over }) as CardTags["characteristics"];
+  const bounds = (scales: string, c: CardTags["characteristics"], oracle = "", text = "") => scaleBounds(scales, text, c, ["card"], true, oracle, 0);
+  it("a PROTOTYPE taps for the smaller power: Cradle Clearcutter (printed 3/6, Prototype {2}{G} -- 1/3) has floor 1, not 3", () => {
+    expect(scaling("Cradle Clearcutter")[0]!.amount).toMatchObject({ floor: 1, ceiling: null });
+  });
+  it("a card with no prototype keeps its printed power (Mona Lisa 1, Doc Samson 3)", () => {
+    expect(scaling("Doc Samson, Super Psychiatrist")[0]!.amount.floor).toBe(3);
+  });
+  it("'each color among monocolored permanents you control' counts the card only when it has exactly one colour (synthetic: no corpus permanent has both)", () => {
+    expect(bounds("for each color among monocolored permanents you control", chars()).floor).toBe(1);
+    expect(bounds("for each color among monocolored permanents you control", chars({ colors: ["G", "W"] })).floor).toBe(0);
+    expect(bounds("for each color among monocolored permanents you control", chars({ colors: [] })).floor).toBe(0);
+  });
+  it("'other X' is not counted: Baldur's Gate (a Gate) and Brigid floor 0; a synthetic 'other creatures' on a creature too", () => {
+    expect(scaling("Baldur's Gate")[0]!.amount.floor).toBe(0);
+    expect(bounds("number of other creatures you control", chars()).floor).toBe(0);
+    expect(bounds("number of creatures you control", chars()).floor).toBe(1);
+  });
+  it("'with <keyword>' counts the card only when it prints the keyword: Overgrown Battlement 1; a synthetic creature without defender 0", () => {
+    expect(scaling("Overgrown Battlement")[0]!.amount.floor).toBe(1);
+    expect(bounds("number of creatures you control with defender", chars(), "Defender").floor).toBe(1);
+    expect(bounds("number of creatures you control with defender", chars(), "Flying").floor).toBe(0);
   });
 });
 

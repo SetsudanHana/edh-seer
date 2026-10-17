@@ -422,6 +422,10 @@ export type ScaleBounds = { floor: number; ceiling: number | null; bound?: "colo
  *   - "the number of <class> you control" / "for each <class> you control": +1 when the card is one (its type or subtype), not for "other <class>", and "with <keyword>" only when the card prints it.
  *   - "this creature's power" / "<its own name>'s power" / "the greatest power among creatures you control" / "the total power of attacking creatures" (when the card's own attack trigger is the add):
  *     the card's printed power. "1 plus ..." (Food Chain): 1. "the number of <kind> counters on this ..." after the card put one there: 1.
+ *   CEILING (whole card, not the printing face): colours, types, subtypes and power come from `chars` -- `chars.colors` is the UNION of a double-faced card's faces and a DFC's top-level power is null (read as
+ *   0), not from the face that prints the ability. The corpus has no such card with a floor above 0 today (the 9 DFCs with scaling lines all floor 0). And "+1 for each X you control" has no guard for a
+ *   cost or trigger that removes the card first ("Sacrifice this creature: Add {G} for each creature you control"); the corpus has none today either. The prototype rule covers the one alternate
+ *   p/t shape with a floor (Cradle Clearcutter); a "level up" or "becomes a ... with base power" card with a scaling mana line has floor 0 here and so cannot over-claim.
  *   CEILING: every other count is open (null). A count that depends on the game, not the deck (Belbe's opponents who lost life, Selvala's revealed cards), stays open on purpose. */
 export function scaleBounds(scales: string, text: string, chars: Characteristics, selfNames: readonly string[], permanent: boolean, oracleText: string, fixedPart: number): ScaleBounds {
   const defined = /\bwhere x is ([^.]*)/i.exec(text)?.[1]?.trim().toLowerCase();
@@ -429,7 +433,10 @@ export function scaleBounds(scales: string, text: string, chars: Characteristics
   const s = (defined ?? scales).trim().toLowerCase().replace(/\s+/g, " ").replace(/^equal to /, "").replace(/^the /, "");
   const lowerTypes = [...chars.types, ...chars.subtypes].map((t) => t.toLowerCase());
   const creature = chars.types.some((t) => t.toLowerCase() === "creature");
-  const power = chars.power !== null && /^-?\d+$/.test(chars.power) ? Number(chars.power) : 0;
+  // A PROTOTYPE card ("Prototype {2}{G} -- 1/3", Cradle Clearcutter, printed 3/6) may be cast smaller, and then taps for the smaller power: the floor is the one it ALWAYS makes, so the smaller power.
+  const proto = /\bPrototype\s+(?:\{[^{}]+\})+\s*[\u2014-]+\s*(-?\d+)\/(?:-?\d+|\*)/.exec(oracleText);
+  const printed = chars.power !== null && /^-?\d+$/.test(chars.power) ? Number(chars.power) : 0;
+  const power = proto ? Math.min(printed, Number(proto[1])) : printed;
   const out: ScaleBounds = { floor: fixedPart, ceiling: null };
   if (/\bbasic land types? among\b/.test(s)) return { ...out, ceiling: 5, bound: "basic-land-types" };
   if (/\bcolou?rs? among\b/.test(s)) {

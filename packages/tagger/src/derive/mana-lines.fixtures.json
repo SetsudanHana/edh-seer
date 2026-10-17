@@ -14201,6 +14201,56 @@
   ],
   "source": "model"
  },
+ "Cradle Clearcutter": {
+  "card": {
+   "_id": "225f53ef-da42-47a0-b773-d2aad3338c72",
+   "name": "Cradle Clearcutter",
+   "typeLine": "Artifact Creature — Golem",
+   "oracleText": "Prototype {2}{G} — 1/3 (You may cast this spell with different mana cost, color, and size. It keeps its abilities and types.)\n{T}: Add an amount of {G} equal to this creature's power.",
+   "keywords": [
+    "Prototype"
+   ],
+   "colors": [],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 6,
+   "power": "3",
+   "toughness": "6",
+   "layout": "prototype",
+   "manaCost": "{6}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Prototype {2}{G} — 1/3"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "this creature's power",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
  "Arbor Adherent": {
   "card": {
    "_id": "9640225a-8f31-495f-b9de-53ed348ff24b",
@@ -14352,10 +14402,10 @@
      {
       "verb": "add-counter",
       "object": "+1/+1",
-      "amount": "X plus one",
-      "optional": false,
       "fromZone": null,
-      "toZone": null
+      "toZone": null,
+      "amount": "that many plus one",
+      "optional": false
      }
     ]
    },
@@ -14365,16 +14415,15 @@
     "actions": [
      {
       "verb": "add-mana",
-      "object": "X mana of any one color",
-      "amount": "X",
-      "optional": false,
+      "object": "X mana of any one color, where X is this creature's power",
       "fromZone": null,
-      "toZone": null
+      "toZone": null,
+      "optional": false
      }
     ]
    }
   ],
-  "source": "model"
+  "source": "grammar"
  },
  "Matzalantli, the Great Door // The Core": {
   "card": {
@@ -14935,30 +14984,28 @@
     "actions": [
      {
       "verb": "none",
-      "object": "Vigilance",
-      "fromZone": null,
-      "toZone": null
+      "object": "Vigilance"
      }
     ]
    },
    {
     "id": 2,
     "abilityType": "triggered",
-    "trigger": {
-     "event": "enters",
-     "subject": "another Human you control",
-     "control": "you"
-    },
     "actions": [
      {
       "verb": "add-counter",
       "object": "+1/+1",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
+      "amount": "1",
       "optional": false
      }
-    ]
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "another Human you control",
+     "control": "you"
+    }
    },
    {
     "id": 3,
@@ -14966,16 +15013,15 @@
     "actions": [
      {
       "verb": "add-mana",
-      "object": "any one color",
+      "object": "X mana of any one color, where X is this creature's power",
       "fromZone": null,
       "toZone": null,
-      "amount": "X",
       "optional": false
      }
     ]
    }
   ],
-  "source": "model"
+  "source": "grammar"
  },
  "Raphael, Ninja Destroyer": {
   "card": {
@@ -15457,11 +15503,6 @@
    {
     "id": 1,
     "abilityType": "triggered",
-    "trigger": {
-     "event": "enters",
-     "subject": "another creature",
-     "control": "any"
-    },
     "actions": [
      {
       "verb": "draw",
@@ -15471,7 +15512,12 @@
       "amount": "1",
       "optional": true
      }
-    ]
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "another creature",
+     "control": "any"
+    }
    },
    {
     "id": 2,
@@ -15479,16 +15525,15 @@
     "actions": [
      {
       "verb": "add-mana",
-      "object": "mana in any combination of colors",
+      "object": "X mana in any combination of colors, where X is the greatest power among creatures you control",
       "fromZone": null,
       "toZone": null,
-      "amount": "X",
       "optional": false
      }
     ]
    }
   ],
-  "source": "model"
+  "source": "grammar"
  },
  "Sakiko, Mother of Summer": {
   "card": {
@@ -15788,21 +15833,21 @@
    {
     "id": 1,
     "abilityType": "triggered",
-    "trigger": {
-     "event": "dies",
-     "subject": "another creature",
-     "control": "any"
-    },
     "actions": [
      {
       "verb": "add-counter",
       "object": "+1/+1",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
+      "amount": "1",
       "optional": false
      }
-    ]
+    ],
+    "trigger": {
+     "event": "dies",
+     "subject": "another creature",
+     "control": "any"
+    }
    },
    {
     "id": 2,
@@ -15821,13 +15866,13 @@
       "object": "X mana of any one color",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
+      "amount": "X",
       "optional": false
      }
     ]
    }
   ],
-  "source": "model"
+  "source": "grammar"
  },
  "Belbe, Corrupted Observer": {
   "card": {
@@ -16031,7 +16076,6 @@
       "object": "{C}",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
       "optional": false
      }
     ]
@@ -16042,10 +16086,10 @@
     "actions": [
      {
       "verb": "add-counter",
-      "object": "storage",
+      "object": "storage counter",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
+      "amount": "1",
       "optional": false
      }
     ]
@@ -16056,7 +16100,7 @@
     "actions": [
      {
       "verb": "remove-counter",
-      "object": "storage",
+      "object": "storage counter",
       "fromZone": null,
       "toZone": null,
       "amount": "X",
@@ -16067,13 +16111,13 @@
       "object": "X mana in any combination of {U} and/or {B}",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
+      "amount": "X",
       "optional": false
      }
     ]
    }
   ],
-  "source": "model"
+  "source": "grammar"
  },
  "Redshift, Rocketeer Chief": {
   "card": {
@@ -16292,7 +16336,6 @@
       "object": "{C}",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
       "optional": false
      }
     ]
@@ -16306,7 +16349,7 @@
       "object": "storage counter",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
+      "amount": "1",
       "optional": false
      }
     ]
@@ -16328,13 +16371,20 @@
       "object": "X mana in any combination of colors",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "spend this mana only to cast Dragon spells or activate abilities of Dragons",
+      "fromZone": null,
+      "toZone": null,
       "optional": false
      }
     ]
    }
   ],
-  "source": "model"
+  "source": "grammar"
  },
  "Mona Lisa, Science Geek": {
   "card": {
@@ -16425,7 +16475,6 @@
       "object": "a creature",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
       "optional": false
      }
     ]
@@ -16436,16 +16485,15 @@
     "actions": [
      {
       "verb": "add-mana",
-      "object": "{B} and/or {R}",
+      "object": "X mana in any combination of {B} and/or {R}, where X is the sacrificed creature's mana value",
       "fromZone": null,
       "toZone": null,
-      "amount": "X",
       "optional": false
      }
     ]
    }
   ],
-  "source": "model"
+  "source": "grammar"
  },
  "Calciform Pools": {
   "card": {
@@ -16480,7 +16528,6 @@
       "object": "{C}",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
       "optional": false
      }
     ]
@@ -16494,7 +16541,7 @@
       "object": "storage counter",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
+      "amount": "1",
       "optional": false
      }
     ]
@@ -16516,13 +16563,13 @@
       "object": "X mana in any combination of {W} and/or {U}",
       "fromZone": null,
       "toZone": null,
-      "amount": null,
+      "amount": "X",
       "optional": false
      }
     ]
    }
   ],
-  "source": "model"
+  "source": "grammar"
  },
  "Vivi Ornitier": {
   "card": {

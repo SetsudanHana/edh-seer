@@ -1531,7 +1531,9 @@ export interface ManaLine {
    *  scales; `scales` then names what it counts ("for each Forest you control", "equal to ...", "X"). */
   /** How much one use adds: `fixed`, or `scales` with the interval it spans (`floor`, `ceiling`, `bound`). See `ManaAmount`. */
   amount: ManaAmount;
-  /** Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as its printed fixed part when one
+  /** LEGACY one-unit floor (kept so matcher results do not move; the matcher decides in task 2): for a SCALING line `net` assumes the printed fixed part, else 1, then less `cost.mana`. It is NOT the guaranteed amount:
+   *  `amount.floor` is the authoritative guaranteed amount of a scaling line (Doc Samson floor 3 but net 1; Selvala, Explorer Returned floor 0 but net 1).
+   *  Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as its printed fixed part when one
    *  precedes the "for each" ("Add {R}{R}, then add {R} for each ...", Rite of Flame: 2), else as 1 (its true floor
    *  may be 0; a consumer that cares reads `amount.scales`). EXCEPT "for each color among permanents you control" (Faeburrow Elder, Bloom Tender) on a permanent: the card is itself a permanent
    *  you control, so its floor is the number of its OWN colours (Faeburrow 2, Bloom Tender 1), and `net` is that less the cost. */
