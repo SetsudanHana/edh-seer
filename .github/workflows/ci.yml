@@ -66,6 +66,10 @@ jobs:
       # Inside this job for the same reason as the token gates below: `test` is the only check
       # branch protection knows about.
       - run: npm run lint:bins
+      # THE CEILING LEDGER (#1268 C1): a per-file count of `CEILING:` markers, a both-ways ratchet like
+      # the calibration caps. A new simplification or a removed one both fail until
+      # scripts/ceiling-counts.json is re-banked, so the count moves only on purpose.
+      - run: npm run lint:ceilings
       # NO EMPTY BAND (#770): a page or section width cap of 36rem+ fails unless it is in
       # scripts/width-caps-allowlist.json, and an allowlist entry that outlives its cap fails too.
       # The owner kept finding 2K/4K screens two-thirds empty; the written rule never stopped it.
