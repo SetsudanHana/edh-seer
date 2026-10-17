@@ -234,8 +234,10 @@
       "id": "ramp.landPut",
       "category": "ramp",
       "match": [{ "op": "emits", "verbs": ["enters"], "type": ["land"], "fromZone": ["hand", "library", "graveyard", "exile"] }],
-      "not": [{ "op": "countsAsLand" }, { "op": "emits", "verbs": ["exiled"], "type": ["land"], "control": ["you"] }],
-      "why": "Putting a land card onto the battlefield from hand (Growth Spiral), from among cards looked at (Planar Genesis) or from a graveyard is an extra land drop, which is ramp (owner ruling 2026-09-27, #512). DERIVED (#1266): an `enters` emit of a land from hand, library, graveyard or exile, whoever the emit control names (Realmbreaker puts a land onto the battlefield under YOUR control and its emit says opp). NOT when the card also EXILES one of your own lands (Wormfang Newt exiles a land you control and returns it when it leaves: a swap, not a drop; Murasa Rootgrazer BOUNCES a land and stays ramp, as it repeats the drop)."
+      "not": [{ "op": "countsAsLand" }, { "op": "emits", "verbs": ["exiled"], "type": ["land"], "fromZone": ["battlefield"] },
+        { "op": "allOf", "clauses": [{ "op": "emits", "verbs": ["search"], "type": ["land"], "control": ["opp"] }, { "op": "not", "clause": { "op": "emits", "verbs": ["search"], "type": ["land"], "control": ["you", "any"] } }] },
+        { "op": "emits", "verbs": ["dies", "exiled"], "type": ["land"], "scope": ["all"] }],
+      "why": "Putting a land card onto the battlefield from hand (Growth Spiral), from among cards looked at (Planar Genesis) or from a graveyard is an extra land drop, which is ramp (owner ruling 2026-09-27, #512). DERIVED (#1266): an `enters` emit of a land from hand, library, graveyard or exile, whoever the emit control names (Realmbreaker puts a land onto the battlefield under YOUR control and its emit says opp). NOT when the card exiles a land from the battlefield, whoever controls it (Wormfang Newt, Petradon, Realm Razer: a swap or land destruction, not a drop; Venture Forth exiles from the LIBRARY and stays; Murasa Rootgrazer BOUNCES a land and stays). NOT when the only land search is an opponent's (Old-Growth Dryads, Hired Giant: the derive says the land enters under `any`, which is a defect). NOT when the card destroys or exiles ALL lands (Fall of the Thran, Realm Razer): you end no richer than you began."
     },
     {
       "id": "ramp.manaToken",

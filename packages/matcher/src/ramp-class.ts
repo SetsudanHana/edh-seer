@@ -38,6 +38,8 @@ export function nonAccelerantRamp(dc: DeckCard, _deck?: readonly DeckCard[]): No
   const lines = cardLines(dc, true);
   // "Puts a land from hand / from among the cards looked at / from a graveyard" (Growth Spiral, Planar Genesis) is the `ramp.landPut` rule: a derived `enters` emit of a land from a zone other than play
   // (#1266; it read a printed-text pattern until then). `landFetch` is only the fetch from the library.
+  // CEILING: "land-drop" is documented as once, but repeating land-drop engines are in it (Skyward Eye Prophets, Explorer's Scope, The Regalia, Raiders' Karve, Hedge Shredder, Into the Wilds, Risen Reef):
+  // they share the once-class and its weight (RAMP_RESILIENCE.oneShot) pending an owner ruling on whether a repeating drop is worth more.
   // A LANDER TOKEN (owner 2026-10-13) is a land-fetch token: its maker puts a land onto the battlefield later, once.
   if (tags?.landFetch !== undefined || ruleMatches(landPutRule(), dc) || lines.some((l) => l.producesToken === "lander")) return "land-drop";
   if (tags?.isOneShot || lines.some((l) => l.source === "one-shot-spell" || l.source === "token-maker" || l.cost.sacrificeSelf)) return "one-shot";

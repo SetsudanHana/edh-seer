@@ -38,7 +38,9 @@ export type RuleClause =
       control?: string[]; zone?: (string | null)[];
       /** The emit's subject TYPE (`land`) and the zone it comes FROM (`hand`, `graveyard`, `exile`, `library`). An emit that names no
        *  `fromZone` does not match a list: `ramp.landPut` asks for a land entering from somewhere other than play. A subject typed as SEVERAL types (Ghostly Flicker's creature, artifact or land) matches only when EVERY one is listed: a blink is not a land drop. */
-      type?: string[]; fromZone?: string[] }
+      type?: string[]; fromZone?: string[];
+      /** The subject's scope (`all`, `each`, `target`); absent on the emit never matches a list. "Destroy all lands" is `dies` + type land + scope all. */
+      scope?: string[] }
   | { op: "typeLine"; contains: string }
   /** Card subtypes, from the tagged characteristics -- "equipment", "aura", a creature type. */
   | { op: "subtype"; in: string[] }
@@ -82,7 +84,10 @@ export type RuleClause =
   | { op: "manaLine"; source?: ManaLineSource[]; repeats?: (string | null)[]; producesToken?: true }
   /** The card puts lands onto the battlefield FROM THE LIBRARY (`CardTags.landFetch`: Cultivate, Wood Elves, Wayfarer's Bauble). A fetch to hand only is no `landFetch`. */
   | { op: "landFetch" }
-  | { op: "anyOf"; clauses: RuleClause[] };
+  | { op: "anyOf"; clauses: RuleClause[] }
+  /** Every clause holds. With `not`, the two let one clause say "this AND NOT that" inside a rule's `not` list (ramp.landPut: an opponent-only land search). */
+  | { op: "allOf"; clauses: RuleClause[] }
+  | { op: "not"; clause: RuleClause };
 
 export interface Rule {
   id: string;
@@ -299,6 +304,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.control === undefined || clause.control.includes(e.subject.control))
           && (clause.zone === undefined || clause.zone.includes(e.subject.zone ?? null))
           && (clause.type === undefined || (e.subject.type !== undefined && [e.subject.type].flat().every((t) => clause.type!.includes(t))))
+          && (clause.scope === undefined || (e.subject.scope !== undefined && clause.scope.includes(e.subject.scope)))
           && (clause.fromZone === undefined || (e.subject.fromZone !== undefined && clause.fromZone.includes(e.subject.fromZone))))
         && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
     case "subtype":
@@ -352,6 +358,10 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     }
     case "anyOf":
       return clause.clauses.some((c) => clauseHolds(c, dc, set));
+    case "allOf":
+      return clause.clauses.every((c) => clauseHolds(c, dc, set));
+    case "not":
+      return !clauseHolds(clause.clause, dc, set);
   }
 }
 

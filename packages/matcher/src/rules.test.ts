@@ -978,9 +978,31 @@ describe("ramp.landPut is derived", () => {
     expect(ruleMatches(rule, land("creature", "graveyard"), set)).toBe(false);
     expect(ruleMatches(rule, land("land", undefined), set)).toBe(false);
   });
-  test("a card that also exiles a land you control is a swap, not a drop (Wormfang Newt)", () => {
-    const c = land("land", "exile");
-    (c.tags as { abilities: unknown[] }).abilities.push({ effect: { kind: "" }, emits: [{ verb: "exiled", subject: { control: "you", token: null, type: "land", fromZone: "battlefield" } }] });
-    expect(ruleMatches(rule, c, set)).toBe(false);
+  const plus = (c: DeckCard, verb: string, subject: Record<string, unknown>): DeckCard => {
+    (c.tags as { abilities: unknown[] }).abilities.push({ effect: { kind: "" }, emits: [{ verb, subject: { token: null, ...subject } }] });
+    return c;
+  };
+  test("a land exiled from the battlefield and returned is a swap, whoever controls it (Wormfang Newt, Petradon, Realm Razer)", () => {
+    for (const control of ["you", "any", "opp"])
+      expect(ruleMatches(rule, plus(land("land", "exile"), "exiled", { control, type: "land", fromZone: "battlefield" }), set), control).toBe(false);
+  });
+  test("an exile from the LIBRARY is the land drop itself (Venture Forth)", () => {
+    expect(ruleMatches(rule, plus(land("land", "exile"), "exiled", { control: "you", type: "land", fromZone: "library" }), set)).toBe(true);
+  });
+  test("a land drop only an opponent gets is not yours (Old-Growth Dryads, Hired Giant)", () => {
+    const dryads = plus(land("land", "library", "any"), "search", { control: "opp", type: "land", fromZone: "library" });
+    expect(ruleMatches(rule, dryads, set)).toBe(false);
+    // ...but one you ALSO search for is (Tempt with Discovery's shape).
+    expect(ruleMatches(rule, plus(dryads, "search", { control: "you", type: "land", fromZone: "library" }), set)).toBe(true);
+  });
+  test("destroying every land and returning some is not ramp (Fall of the Thran)", () => {
+    expect(ruleMatches(rule, plus(land("land", "graveyard", "any"), "dies", { control: "any", type: "land", scope: "all" }), set)).toBe(false);
+    // Destroying ONE land (Waking the Trolls) is not "all".
+    expect(ruleMatches(rule, plus(land("land", "graveyard"), "dies", { control: "any", type: "land", scope: "target" }), set)).toBe(true);
+  });
+  test("allOf and not compose inside a rule", () => {
+    const yes: Rule = { id: "a", match: [{ op: "allOf", clauses: [{ op: "emits", verbs: ["enters"] }, { op: "not", clause: { op: "emits", verbs: ["dies"] } }] }] };
+    expect(ruleMatches(yes, land("land", "hand"), set)).toBe(true);
+    expect(ruleMatches(yes, plus(land("land", "hand"), "dies", { control: "you" }), set)).toBe(false);
   });
 });
