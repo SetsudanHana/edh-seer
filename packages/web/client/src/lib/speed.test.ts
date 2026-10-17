@@ -324,3 +324,16 @@ test("a damage-preventing commander whose mill data exists leaves the preventer 
   expect(routes.map((x) => x.lacks)).toEqual([undefined, undefined, undefined]);
   expect(noFinisher(routes, [{ class: "voltron" }, { class: "burn" }])).toBeUndefined();
 });
+
+test("phrases that only look like a kill still leave the loop finisher-less", () => {
+  for (const result of [
+    "Infinite damage to all creatures", "Near-infinite damage to all players", "Near-infinite lifeloss for all players",
+    "Infinite mana, Infinite card draw for all players", "Prevent all combat damage target opponent would deal",
+    "Deal lethal damage to all creatures opponents control with power 1 or greater",
+    "Prevent all damage that would be dealt to you during an opponent's turn", "All players lose the game",
+  ]) {
+    const routes = speedRoutes(deck([{ class: "combo" }], undefined, [{ cards: ["A", "B"], result: `Infinite mana, ${result}` }]), (n) => mv[n]);
+    expect(routes[0]!.lacks, result).toBeDefined();
+    expect(noFinisher(routes, [{ class: "combo" }]), result).toBeDefined();
+  }
+});

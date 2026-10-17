@@ -73,9 +73,13 @@ export function drainCaveat(d: { turn?: number; cards: string[]; unbounded: stri
 }
 
 /** A phrase that ends one opponent: "loses the game", or damage / lifeloss aimed at a player. Plain
- *  substring tests, no nested quantifiers. */
+ *  substring tests, no nested quantifiers.
+ *  CEILING: a substring heuristic over Commander Spellbook result phrases. It errs toward saying "no",
+ *  which withholds the verdict: a wipe ("creature"), a prevention, or damage to "all players" (which
+ *  kills you too, as brackets.ts rules) is never a kill. */
 function killsAPlayer(phrase: string): boolean {
   const p = phrase.toLowerCase();
+  if (p.includes("prevent") || p.includes("all players") || p.includes("creature") || /\byou lose\b/.test(p)) return false;
   return p.includes("loses the game") || (/\b(?:damage|life ?loss)\b/.test(p) && /\b(?:opponents?|players?)\b/.test(p));
 }
 
