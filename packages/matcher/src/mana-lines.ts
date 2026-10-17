@@ -17,6 +17,7 @@
  *  empty). `ManaLine.net` is the production less `cost.mana`, so the rule is `net >= 1`. A scaling amount ("{B} for each
  *  Swamp") cannot be judged from the line and is not struck, as before. */
 import type { ManaLine } from "@edh-seer/tagger";
+import { frontFaceOnly } from "@edh-seer/tagger/characteristics";
 import type { DeckCard } from "./types.js";
 import { gateMet, gateMetBy, isSpeedGate } from "./gate.js";
 import { countsAsLand, parseTypeLine } from "./typeline.js";
@@ -117,12 +118,10 @@ export const paysItsWay = (line: ManaLine): boolean => line.amount.scales !== nu
  *  (Rampant Growth on Studious First-Year, Seasonal Ritual on Rosethorn Acolyte, which you cast). A transform or flip card's back is never a
  *  source from the deck (`transformsIntoLand`, owner 2026-10-10, #1174: things that transform are not ramp) -- the same allow-list of
  *  FRONT-FACE-ONLY layouts `goldfish.ts` keeps for the type line, never a reject-list of the playable ones. */
-const FRONT_FACE_ONLY = new Set(["transform", "flip"]);
 const faceCounts = (dc: DeckCard, face: 0 | 1, nonLandBacks = false): boolean => {
   if (dc.face !== undefined) return dc.face === face;
   if (face === 0) return true;
-  const layout = dc.card.layout ?? "";
-  if (!FRONT_FACE_ONLY.has(layout)) return true;
+  if (!frontFaceOnly(dc.card.layout, dc.card.keywords)) return true;
   // The #1174 ruling is about a back that is a LAND (Treasure Map // Treasure Cove). A consumer that prices a back which is not (Ashling, Rimebound's
   // phase trigger: the goldfish's O1 model of a mana commander) asks for it.
   return nonLandBacks && !/\bland\b/i.test((dc.card.typeLine ?? "").split(" // ")[1] ?? "");

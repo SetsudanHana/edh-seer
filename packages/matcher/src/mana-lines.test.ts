@@ -1,6 +1,9 @@
 /** The mana-line predicates over a structured line (#1193 review). Synthetic lines are labelled; the real ones come from the derived fixtures in mana-colour-sources.test.ts. */
 import { describe, expect, test } from "vitest";
-import { isLandfall, isLoyaltyAbility, paidWithResource } from "./mana-lines.js";
+import { cardLines, isLandfall, isLoyaltyAbility, paidWithResource } from "./mana-lines.js";
+import { frontTypeLine } from "./goldfish.js";
+import { withLines } from "./mana-test-support.js";
+import type { DeckCard } from "./types.js";
 import { FREE_TAP, mkLine, triggerLine } from "./mana-test-support.js";
 import type { ManaLine } from "@edh-seer/tagger";
 
@@ -30,5 +33,25 @@ describe("a line derived before 312 reads safely (static-out rows built earlier)
   test("a piece in `other` with no `consumes` reads as consumed, the safe direction", () => {
     expect(paidWithResource(pre(["+1"]))).toBe(true);
     expect(paidWithResource(pre(["Discard a card"]))).toBe(true);
+  });
+});
+
+// #1268 F7: the matcher reads the tagger's one face rule, so More Than Meets the Eye (CR 702.162a: cast converted, the back face cast from hand) is honoured here too.
+describe("a transform card's back counts only when it is More Than Meets the Eye (#1174 ruling, #1268 F7)", () => {
+  const TYPE_LINE = "Artifact Creature — Robot // Artifact — Vehicle";
+  const card = (keywords: string[]): DeckCard => withLines({
+    card: { name: "Synthetic Robot // Synthetic Vehicle", typeLine: TYPE_LINE, oracleText: "", keywords, colors: [], manaValue: 2, layout: "transform" },
+    tags: null,
+  } as unknown as DeckCard, [mkLine({ face: 0, colours: ["R"] }), mkLine({ face: 1, colours: ["G"] })]);
+  test("with the keyword, both faces' lines count", () => {
+    expect(cardLines(card(["More Than Meets the Eye"])).map((l) => l.face)).toEqual([0, 1]);
+  });
+  test("without it, the back's line does not", () => {
+    expect(cardLines(card(["Flying"])).map((l) => l.face)).toEqual([0]);
+  });
+  test("goldfish frontTypeLine keeps the whole line with the keyword and the front only without", () => {
+    expect(frontTypeLine(TYPE_LINE, "transform", ["More Than Meets the Eye"])).toBe(TYPE_LINE);
+    expect(frontTypeLine(TYPE_LINE, "transform", [])).toBe("Artifact Creature — Robot ");
+    expect(frontTypeLine(TYPE_LINE, "modal_dfc", [])).toBe(TYPE_LINE);
   });
 });

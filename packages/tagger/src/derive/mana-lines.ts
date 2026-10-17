@@ -20,6 +20,7 @@
  *  same call (`manaAdded`), so the two cannot disagree. A SCALING amount ("X", "for each ...", "that much") has no number: the line names what it counts and the
  *  ability keeps the clause's own text, or nothing. `research/mana/amount-agreement.ts` measures the agreement.  */
 import { COMMANDER_OPPONENTS, COMMANDER_PLAYERS } from "../table.js";
+import { tokenKindsWith } from "./token-kinds.js";
 import type { ClauseRecord } from "../canonicalize.js";
 import type {
   Ability, Characteristics, ConsumedCost, LandFetch, ManaAnyColour, ManaGate, ManaLine, ManaLineSource, StaticFixer, SubjectFilter,
@@ -548,7 +549,7 @@ const REPLACES_CREATION = /\bif you would create\b|\binstead create\b|\bthose to
  *  CEILING: a replaced token that is a creature type or any name outside REPLACED_TOKEN_NAMES (Soldier, Thopter) is not recognised, so a replacement over it adds no line; "one of each" adds every token named. A
  *  replaced "Treasure or Gold" that adds a Treasure reads as a maker (Gold is another name), though it only doubles mana tokens; no card prints it. */
 const REPLACED_FILLER = new Set(["if", "you", "would", "create", "be", "created", "a", "an", "one", "or", "more", "and", "of", "each", "the", "tapped", "untapped", "that", "many", "additional", "another"]);
-const REPLACED_TOKEN_NAMES = new Set(["clue", "food", "blood", "map", "junk", "incubator", "role", "shard", "powerstone", "gold", "treasure", "lander", "mutagen", "eldrazi", "spawn", "scion"]);
+const REPLACED_TOKEN_NAMES = tokenKindsWith("replaced");
 const ADDED_MANA_TOKENS = ["treasure", "gold", "powerstone"] as const;
 export function replacementAddedToken(text: string): string | null {
   const flat = text.replace(/\([^)]*\)/g, " ").toLowerCase();

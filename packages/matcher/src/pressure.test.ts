@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
-import { drawnBy, expectedPower, pressureCurve, measuredClock, STARTING_LIFE } from "./pressure.js";
+import { drawnBy, expectedPower, pressureCurve, measuredClock, STARTING_LIFE, TABLE_LIFE } from "./pressure.js";
 import type { DeckCard } from "./types.js";
 
 const beater = (name: string, power: string, mv: number): DeckCard => ({
@@ -184,4 +184,9 @@ test("a card reads the share of the kind the simulation files it under", () => {
   // A MODAL card keeps its land face -- you really can play it -- so the simulation counts it a land.
   const modal: DeckCard = { card: { name: "Elf // Grove", typeLine: "Creature — Elf // Land", layout: "modal_dfc", oracleText: "", keywords: [], colors: [], manaValue: 2 } as Card, tags: null };
   expect(drawnBy(modal, 1, 99, seenShare)).toBe(0.3);
+});
+
+test("TABLE_LIFE is the whole table: three opponents at 40 life, 120 (owner speed ruling 2026-10-06)", () => {
+  expect(STARTING_LIFE).toBe(40);
+  expect(TABLE_LIFE).toBe(120);
 });

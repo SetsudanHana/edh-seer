@@ -1,5 +1,6 @@
 import { POLICY_COLLAPSE } from "@edh-seer/engine/percent";
 import type { ManaGate, ManaLine, SubjectFilter } from "@edh-seer/tagger";
+import { frontFaceOnly } from "@edh-seer/tagger/characteristics";
 import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
@@ -10,6 +11,7 @@ import { classifyLand, entersTapped, type LandCondition } from "./land-condition
 import { FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands } from "./fetch-land.js";
 import { DEFAULT_POD_SIZE, opponents } from "./format.js";
 import { ratesOf } from "./rate.js";
+import { TABLE_LIFE } from "./pressure.js";
 import { characteristicsSubject } from "./edges.js";
 import { subjectMatches } from "./subject.js";
 import { buildHierarchy } from "./hierarchy.js";
@@ -287,7 +289,7 @@ export interface ManaOutput {
 function ritualLine(dc: DeckCard): ManaLine | null {
   // A split or Adventure card is priced at a mana value that is not the ritual half's (review).
   if ((dc.card.typeLine ?? "").includes("//")) return null;
-  if (!/\b(?:instant|sorcery)\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) return null;
+  if (!/\b(?:instant|sorcery)\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout, dc.card.keywords))) return null;
   // An extra COST (Culling the Weak's creature) is not on the line: `cost` is an activation cost, and a spell's additional cost is printed text.
   // CEILING: this stays a printed check -- derive does not carry a spell's additional cost.
   if (/additional cost/i.test(dc.card.oracleText ?? "")) return null;
@@ -334,7 +336,7 @@ export function opponentHandSize(turn: number): number {
  *  ("each card in target opponent's hand"), of one colour. */
 export function opponentHandRitual(dc: DeckCard): number {
   if ((dc.card.typeLine ?? "").includes("//")) return 0;
-  if (!/\b(?:instant|sorcery)\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) return 0;
+  if (!/\b(?:instant|sorcery)\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout, dc.card.keywords))) return 0;
   // CEILING: a spell's additional cost is PRINTED text -- derive's `cost` is an activation cost and carries none. Not modelled: what the extra cost
   // is (a discard, a sacrifice, life) or whether the deck can pay it; any card printing one is refused rather than priced as a free ritual.
   if (/additional cost/i.test(dc.card.oracleText ?? "")) return 0;
@@ -616,10 +618,9 @@ export function colourMaskOf(dc: DeckCard, deck?: readonly DeckCard[], withBoard
  *  AN ALLOW-LIST OF FRONT-FACE-ONLY LAYOUTS, never a reject-list -- the `FRONT_FACE_ONLY` precedent,
  *  so the next layout printed keeps today's reading rather than being silently narrowed. A MODAL DFC
  *  keeps its land face, because you really do play that side: 28 distinct cards / 186 slots. */
-const FRONT_FACE_ONLY = new Set(["transform", "flip"]);
-export function frontTypeLine(typeLine: string | undefined, layout: string | undefined): string {
+export function frontTypeLine(typeLine: string | undefined, layout: string | undefined, keywords: readonly string[] = []): string {
   const line = typeLine ?? "";
-  return layout && FRONT_FACE_ONLY.has(layout) ? line.split("//")[0] : line;
+  return frontFaceOnly(layout, keywords) ? line.split("//")[0]! : line;
 }
 
 /** One coloured requirement of a mana cost, as the set of colours that may pay it. A mono pip is one
@@ -802,7 +803,7 @@ function fixerOf(dc: DeckCard): { fixer?: FixerMask } {
 
 /** A creature's attack, by its front face's type and printed power; null for anything else. */
 function attackOf(dc: DeckCard): { power: number; infect: boolean } | null {
-  if (!/\bcreature\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) return null;
+  if (!/\bcreature\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout, dc.card.keywords))) return null;
   const power = Number(dc.card.power);
   if (!Number.isFinite(power) || power <= 0) return null;
   return { power, infect: (dc.card.keywords ?? []).some((k) => k.toLowerCase() === "infect") };
@@ -1610,7 +1611,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         dealtOne += boardOne;
         dealtTable += boardTable;
         if (oneAt === Infinity && dealtOne >= 40) oneAt = turn;
-        if (tableAt === Infinity && dealtTable >= 120) tableAt = turn;
+        if (tableAt === Infinity && dealtTable >= TABLE_LIFE) tableAt = turn;
       }
       // PAST THE PRICED TURNS ONLY THE COMBAT RUNS.
       if (turn > turns) continue;

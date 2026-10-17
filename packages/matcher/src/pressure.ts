@@ -1,4 +1,5 @@
 import { seen } from "@edh-seer/engine";
+import { COMMANDER_OPPONENTS } from "@edh-seer/tagger/table";
 import type { DeckCard } from "./types.js";
 import { countsAsLand } from "./typeline.js";
 
@@ -7,6 +8,10 @@ import { countsAsLand } from "./typeline.js";
  *  separate SPEED (#1056, owner 2026-10-06): `deck-math.ts` reads the turn this curve reaches three
  *  opponents' 40, beside the clock, never instead of it. */
 export const STARTING_LIFE = 40;
+
+/** THE WHOLE TABLE'S LIFE (owner speed ruling 2026-10-06): three opponents at STARTING_LIFE, 120. Splitting attackers across
+ *  opponents (CR 802.2) makes it a floor. The one home of the number; goldfish and deck-math read it. */
+export const TABLE_LIFE = COMMANDER_OPPONENTS * STARTING_LIFE;
 
 /** How far the curve is computed before giving up on a deck ever getting there. Twenty turns is
  *  well past any real EDH game, so a deck with no clock inside it has no clock at all. */
