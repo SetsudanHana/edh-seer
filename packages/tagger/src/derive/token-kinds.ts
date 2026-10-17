@@ -8,6 +8,8 @@
  *    was a refactor. Changing it is a behaviour change that needs its own measurement.
  *  - `resource`: mana, a card or a land, never a board presence (`RESOURCE_TOKENS`, archetypes.ts; wincon go-wide reads it).
  *  - `replaced`: a token NAME that can stand in a creation-replacement's replaced set (`REPLACED_TOKEN_NAMES`, derive/mana-lines.ts).
+ *  CEILING: the MANA-token lists are not in the table yet -- matcher quality.ts `MANA_TOKENS` (treasure, gold, powerstone,
+ *    heartwood) and derive's `ADDED_MANA_TOKENS` are separate, and they omit Vibranium. Follow-up: #1282.
  *  The name says ARTIFACT but Role, Aura, Shard, Mutagen are not artifacts: the list is the predefined and named
  *  tokens (CR 111.10), and the flags say which cut a reader wants. */
 export interface TokenKind { readonly fodder?: true; readonly resource?: true; readonly replaced?: true }
