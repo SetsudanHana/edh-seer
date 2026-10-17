@@ -61,7 +61,72 @@ const FAMILIES: { family: ConditionFamily; re: RegExp }[] = [
 ];
 
 export function conditionFamily(condition: string): ConditionFamily {
-  return FAMILIES.find((f) => f.re.test(condition))?.family ?? "other";
+  return classifyCondition(condition, { threshold: false, selfDiesOnCreatureCard: false }).family;
+}
+
+// ---- WHAT DERIVE REPRESENTS (#1268 F6) ----------------------------------------------------------
+// One classifier: the audit ratchet reads `.family`, derive reads `.represented`; `conditionTestsObject` reads the whole clause.
+
+export /** "leave the battlefield WITHOUT DYING" (Dour Port-Mage), "if it didn't die" (Taeko): a `leaves`
+ *  demand that refuses a death. 5 corpus cards. */
+const WITHOUT_DYING = /\bwithout dying\b|\bdidn'?t die\b|\bdoesn'?t die\b/i;
+
+/** "if none of them were cast", "if it wasn't cast", "no mana was spent to cast", "without being
+ *  played", "if you didn't cast it from your hand" (Chainer, Nightmare Adept; Phage the Untouchable) — the
+ *  entry happened by some route other than casting. CEILING: the last cue also holds for a cast from
+ *  another zone (a flashback from the graveyard), which `notCast` refuses as a cast; only the hand
+ *  is the implied cast, so the miss is a creature cast from the graveyard entering. Card-scoped like
+ *  every other printed cue here. */
+export const ARRIVED_WITHOUT_CASTING =
+  /\b(?:wasn't|weren't) cast\b|\bnone of them were cast\b|\bno mana was spent\b|\bwithout being played\b|\byou didn't cast (?:it|them) from your hand\b/i;
+
+/** WHERE THE SOURCE IS, not which event: Inalla's eminence "if Inalla is in the command zone or on the
+ *  battlefield", "if this card is in your graveyard". The ability only exists where it functions, so
+ *  the condition narrows no event a producer supplies. */
+const SOURCE_ZONE = /^(?:~|this \w+|it) is (?:in|on) (?:the command zone|the battlefield|your graveyard|exile|your hand)(?: or (?:in|on) (?:the command zone|the battlefield|your graveyard|exile|your hand))?$/i;
+
+/** Guardian Project's "if it doesn't have the same name as another creature you control or a creature
+ *  card in your graveyard": `uniqueName` (CR 903.5b; owner, 2026-10-01). */
+export const SAME_NAME = /^it doesn't have the same name as /i;
+
+/** The Enduring cycle's "When ~ dies, if it was a creature, return it ... It's an enchantment" (#1250): the card is a creature
+ *  card, so it dies as one and the condition narrows nothing a producer supplies. Admitted ONLY for a self `dies` trigger on a
+ *  card whose printed type line includes Creature; Weatherseed Totem (an Artifact that is a creature only once animated) keeps
+ *  the refusal, its if is not vacuous (CR 603.4). CEILING: reads the printed type line; a creature card that stops being a
+ *  creature before it dies (Enduring Curiosity after it returns as an enchantment) is not modelled. */
+const WAS_A_CREATURE = /^(?:it was|they were) an? creature$/i;
+
+/** AN `if:` THAT TESTS THE TRIGGER'S OBJECT, not the turn or a count: "if it was enchanted or equipped" (Koll),
+ *  "if it was cast" (Mirror of Life Trapping), "if it was attacking or blocking alone" (Thijarian Witness),
+ *  "if it's exiled" (Alaundo). A predicate outside this list ("if it's not their turn", "if it's the first
+ *  time that creature has become tapped this turn") is a timing or a count and keeps the class. */
+const TESTS_THE_OBJECT = /\bif (?:it|that (?:creature|card|permanent|land)|those cards|they)(?:['\u2019]s| (?:was|is|were|are|had|has))(?: not| n['\u2019]t)? (?:an? |the )?(?:enchanted|equipped|cast|attacking|blocking|tapped|untapped|exiled|legendary|nontoken|token|face[- ]down|modified|historic|multicolored|colorless|creature|artifact|land|permanent)\b/i;
+
+const FIRST_SPELL = /\bthe first \w+ spell\b/i;
+
+/** Does the clause carry an `if` that tests the trigger's OBJECT (not the turn or a count)? */
+export function conditionTestsObject(text: string): boolean {
+  return TESTS_THE_OBJECT.test(text);
+}
+
+export interface ConditionContext {
+  /** `thresholdFor(text) !== undefined`: derive holds a count for this clause. */
+  threshold: boolean;
+  /** A self `dies` trigger on a card whose printed type line includes Creature (see WAS_A_CREATURE). */
+  selfDiesOnCreatureCard: boolean;
+}
+export interface ConditionClass {
+  family: ConditionFamily;
+  /** Derive represents the condition (a count, an entry that was no cast, the first spell, a source zone, ...), so the trigger may claim. */
+  represented: boolean;
+}
+
+/** THE ONE CLASSIFIER OF AN INTERVENING IF: its audit family and whether derive represents it. */
+export function classifyCondition(condition: string, context: ConditionContext): ConditionClass {
+  const represented = context.threshold || SAME_NAME.test(condition) || ARRIVED_WITHOUT_CASTING.test(condition) || WITHOUT_DYING.test(condition)
+    || FIRST_SPELL.test(condition) || SOURCE_ZONE.test(condition)
+    || (context.selfDiesOnCreatureCard && WAS_A_CREATURE.test(condition));
+  return { family: FAMILIES.find((f) => f.re.test(condition))?.family ?? "other", represented };
 }
 
 /** THE DEMAND A CONDITION MAKES ON THE DECK, as ordinary `cares` tags.

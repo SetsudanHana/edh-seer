@@ -4056,7 +4056,7 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
  *  `partners-core.ts`, which keys a card page's `copies|` supply on the same reading. */
 export function abilityIsKind(ca: CardTags["abilities"][number], kind: string): boolean {
   if (isSelfLoss(ca)) return false; // #1252: a self lose-the-game ability is no ability to copy
-  const loyalty = ca.kind === "activated" && /^[+\u2212-]?(?:\d+|X)$/.test((ca.cost ?? "").trim());
+  const loyalty = ca.kind === "activated" && ca.payment?.loyalty !== undefined;
   const mana = ca.kind === "activated" && ca.effect?.kind === "mana-generation";
   if (kind === "triggered") return ca.kind === "triggered";
   if (kind === "loyalty") return loyalty;
