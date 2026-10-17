@@ -1582,9 +1582,7 @@ function delayedAction(text: string, action: { verb?: string }, actions: readonl
 /** "Activate only as a sorcery" (CR 307.5 timing on an activated ability) and its "only during
  *  your turn" cousin: an activation that cannot happen in combat. */
 const SORCERY_SPEED = /\bactivate (?:this ability )?only as a sorcery\b|\bonly during your turn\b/i;
-/** A loyalty symbol as a cost — "+1", "−3", "0" — the shape `segment.ts` hands over for a
- *  planeswalker ability, which CR 606.3 makes sorcery-speed. */
-const LOYALTY_COST = /^[+\u2212-]?(?:\d+|X)$/;
+// A loyalty symbol as a cost ("+1", "−3", "0"; CR 606.3 makes it sorcery-speed) is read once, by `paymentOf` (`Payment.loyalty`).
 
 /** "if none of them were cast", "if it wasn't cast", "no mana was spent to cast", "without being
  *  played", "if you didn't cast it from your hand" (Chainer, Nightmare Adept; Phage the Untouchable) — the
@@ -2816,7 +2814,7 @@ export function deriveAbilities(
       // Tyrant, upheld 2026-08-22) and Blasphemous Edict -> Kardur is refused. Loyalty abilities
       // (CR 606.3) and "activate only as a sorcery" are sorcery-speed activations.
       const instantSpeed = kind === "activated"
-        ? !SORCERY_SPEED.test(clauseText ?? "") && !LOYALTY_COST.test(cost)
+        ? !SORCERY_SPEED.test(clauseText ?? "") && paymentOf(cost, cardName)?.loyalty === undefined
         : kind === "on-cast" && castAtInstantSpeed === true;
       if (instantSpeed && !delayedAction(text, action, clause.actions ?? [])) for (const e of emits) e.instantSpeed = true;
       if (emits.length) ability.emits = emits;
