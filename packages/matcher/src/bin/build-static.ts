@@ -74,7 +74,11 @@ const derivedRows = await store.db.collection<CardTags>(DERIVED_COLLECTION).find
 // A CORPUS DERIVED UNDER AN OLDER DERIVE_VERSION IS NOT SHIPPED (#1264 review): run derive-corpus --force first.
 const stale = staleRows(derivedRows as { deriveVersion?: number }[], DERIVE_VERSION);
 if (stale.length > 0) {
-  console.error(`build-static refused: ${stale.length} of ${derivedRows.length} cardTagsDerived rows have deriveVersion below ${DERIVE_VERSION}. Run derive-corpus.ts --force first.`);
+  const nameOf = new Map(cards.map((c) => [c._id, c.name]));
+  const listed = stale.slice(0, 10).map((r) => { const id = (r as { oracleId?: string }).oracleId ?? "?"; return `  ${id}  ${nameOf.get(id) ?? "(no card)"}  deriveVersion ${r.deriveVersion ?? "none"}`; });
+  console.error(`build-static refused: ${stale.length} of ${derivedRows.length} cardTagsDerived rows have deriveVersion below ${DERIVE_VERSION}. Run derive-corpus.ts --force first.\n`
+    + `First ${listed.length}:\n${listed.join("\n")}\n`
+    + "derive-corpus only rewrites rows it visits, so an orphan row (a card that left the scan, or a missing clause doc) stays old after --force: delete it.");
   await store.close();
   process.exit(1);
 }
