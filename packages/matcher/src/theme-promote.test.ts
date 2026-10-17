@@ -46,9 +46,9 @@ test("leaves an ALREADY-SPECIFIC headline alone, and never crosses verb or card 
 });
 
 test("an `any` headline can be promoted over by any subtype at all", () => {
-  const ranked = ["enters:any", "enters:saga"];
-  const freq = new Map([["enters:any", 10], ["enters:saga", 6]]);
-  expect(promoteSpecificHeadline(ranked, freq, [m("enters:any", 3), m("enters:saga", 4)])[0]).toBe("enters:saga");
+  const ranked = ["draw:any", "draw:saga"];
+  const freq = new Map([["draw:any", 10], ["draw:saga", 6]]);
+  expect(promoteSpecificHeadline(ranked, freq, [m("draw:any", 3), m("draw:saga", 4)])[0]).toBe("draw:saga");
 });
 
 test("promotion MOVES the tag to the head and keeps every other tag, in order", () => {

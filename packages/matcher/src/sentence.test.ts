@@ -79,15 +79,15 @@ describe("eventVerbPhrase", () => {
     expect(eventVerbPhrase("enters:creature")).toBe("enters");
     expect(eventVerbPhrase("enters-graveyard:any")).toBe("hits the graveyard");
     expect(eventVerbPhrase("cast:instant")).toBe("is cast");
-    expect(eventVerbPhrase("attacks:any")).toBe("attacks");
+    expect(eventVerbPhrase("attacks:creature")).toBe("attacks");
     expect(eventVerbPhrase("dies:creature")).toBe("dies");
-    expect(eventVerbPhrase("leaves:any")).toBe("leaves the battlefield");
+    expect(eventVerbPhrase("leaves:permanent")).toBe("leaves the battlefield");
     expect(eventVerbPhrase("taps:any")).toBe("becomes tapped");
     expect(eventVerbPhrase("untaps:any")).toBe("untaps");
     expect(eventVerbPhrase("counter-added:any")).toBe("gets a counter");
     expect(eventVerbPhrase("gain-life:you")).toBe("gains life");
     expect(eventVerbPhrase("lose-life:opp")).toBe("makes a player lose life");
-    expect(eventVerbPhrase("sacrifice:any")).toBe("sacrifices something");
+    expect(eventVerbPhrase("sacrifice:permanent")).toBe("sacrifices something");
     expect(eventVerbPhrase("create-token:any")).toBe("makes a token");
     expect(eventVerbPhrase("proliferate:any")).toBe("proliferates");
   });
@@ -133,7 +133,7 @@ describe("reasonSentence", () => {
   test("a self trigger names the consumer as the thing the event happens to", () => {
     expect(reasonSentence({
       producer: "Eldrazi Confluence", consumer: "Solemn Simulacrum",
-      eventKey: "enters:any", self: true, effectKind: "draw-card", amount: "1",
+      eventKey: "enters:permanent", self: true, effectKind: "draw-card", amount: "1",
     })).toBe("When Solemn Simulacrum enters thanks to Eldrazi Confluence, it draws you 1 card");
   });
 
@@ -403,8 +403,8 @@ test("effectPhrase names the recipient of a draw or a life change", () => {
  *  "engine did not read what it does" appears exactly when a sentence ends in "triggers", and no
  *  other phrase in `PHRASES` may end in it. */
 test("the fallback sentence ends in the word \"triggers\", and no real phrase does", () => {
-  expect(reasonSentence({ producer: "Arcane Signet", consumer: "Displacer Kitten", eventKey: "cast:any", effectKind: undefined })).toMatch(/\btriggers$/);
-  expect(reasonSentence({ producer: "Kaya's Ghostform", consumer: "Dress Down", eventKey: "enters:any", effectKind: undefined, self: true })).toMatch(/\btriggers$/);
+  expect(reasonSentence({ producer: "Arcane Signet", consumer: "Displacer Kitten", eventKey: "cast:spell", effectKind: undefined })).toMatch(/\btriggers$/);
+  expect(reasonSentence({ producer: "Kaya's Ghostform", consumer: "Dress Down", eventKey: "enters:permanent", effectKind: undefined, self: true })).toMatch(/\btriggers$/);
   for (const kind of ["draw-card", "token-generation", "trigger-doubling", "clone", "copy-spell", "damage"]) {
     expect(effectPhrase(kind, undefined)).not.toMatch(/\btriggers$/);
   }
@@ -471,7 +471,7 @@ test("a referring amount attaches to its noun", () => {
 test("a non-creature death is put into a graveyard, never 'dies'", () => {
   expect(eventVerbPhrase("dies:artifact")).toBe("is put into a graveyard from the battlefield");
   expect(eventVerbPhrase("dies:enchantment")).toBe("is put into a graveyard from the battlefield");
-  expect(eventVerbPhrase("dies:any")).toBe("is put into a graveyard from the battlefield");
+  expect(eventVerbPhrase("dies:permanent")).toBe("is put into a graveyard from the battlefield");
   expect(eventVerbPhrase("dies:creature")).toBe("dies");
   expect(eventVerbPhrase("dies:planeswalker")).toBe("dies");
 });
@@ -569,19 +569,19 @@ test("a life loss names who loses it", () => {
 // `speed-increase` kind haste shares, and the phrase said "grants haste" for both.
 test("a speed grant names the keyword it grants", () => {
   expect(reasonSentence({
-    producer: "Tromell, Seymour's Butler", consumer: "Chocobo Knights", eventKey: "attacks:any",
+    producer: "Tromell, Seymour's Butler", consumer: "Chocobo Knights", eventKey: "attacks:creature",
     effectKind: "speed-increase", keywords: ["double strike"],
   })).toBe("When Tromell, Seymour's Butler attacks, Chocobo Knights grants double strike");
   // With no keyword recorded, the kind's own phrase.
   expect(reasonSentence({
-    producer: "Tromell, Seymour's Butler", consumer: "Hellrider", eventKey: "attacks:any", effectKind: "speed-increase",
+    producer: "Tromell, Seymour's Butler", consumer: "Hellrider", eventKey: "attacks:creature", effectKind: "speed-increase",
   })).toBe("When Tromell, Seymour's Butler attacks, Hellrider grants haste");
 });
 
 // #1141: Akim's grant, derived from the verb `double`, carries ["double strike"] and must never read haste.
 test("a double-strike grant read from the verb double says double strike, never haste", () => {
   const sentence = reasonSentence({
-    producer: "Akim, the Soaring Wind", consumer: "Hellrider", eventKey: "attacks:any",
+    producer: "Akim, the Soaring Wind", consumer: "Hellrider", eventKey: "attacks:creature",
     effectKind: "speed-increase", keywords: ["double strike"],
   });
   expect(sentence).toContain("double strike");

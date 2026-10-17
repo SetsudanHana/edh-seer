@@ -4387,7 +4387,7 @@ test("cardThemeTags keys a graveyard leave as leaves-graveyard and a battlefield
   expect(out.has("leaves-graveyard:creature")).toBe(true);
   expect(out.has("leaves:creature")).toBe(true);
   expect(out.has("dies:creature")).toBe(true);
-  expect(out.has("leaves:any")).toBe(false);
+  expect(out.has("leaves:any")).toBe(false); // dead-key-ok: proves the unfilled key is never emitted
 });
 
 /** DAMAGE TO A PLAYER IS LIFE LOSS (CR 120.3). Every "whenever an opponent loses life" payoff --
@@ -6599,7 +6599,7 @@ describe("attack tags are one event (CR 508.1a)", () => {
   test("neither the theme tags nor the cares tags of a card name attacks:any", () => {
     for (const c of [typed, untyped]) {
       const all = [...cardThemeTags(c.tags), ...cardCaresTags(c.tags), ...cardSupplyTags(c.tags)];
-      expect(all).not.toContain("attacks:any");
+      expect(all).not.toContain("attacks:any"); // dead-key-ok: proves the unfilled key is never emitted
     }
     expect([...cardCaresTags(untyped.tags)]).toContain("attacks:creature");
   });

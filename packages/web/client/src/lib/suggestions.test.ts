@@ -32,7 +32,7 @@ test("an answers finding takes the cards of every class with no answer, each car
 });
 
 test("the synergy finding takes the cards for every unmet key, each card once", () => {
-  const s = { ...empty, synergy: { "enters:any": [card("Impact Tremors")], "dies:any": [card("Blood Artist"), card("Impact Tremors")] } };
+  const s = { ...empty, synergy: { "enters:permanent": [card("Impact Tremors")], "dies:creature": [card("Blood Artist"), card("Impact Tremors")] } };
   expect(suggestionsFor(finding("synergy"), s, {} as DeckReport)?.map((c) => c.name)).toEqual(["Impact Tremors", "Blood Artist"]);
 });
 
