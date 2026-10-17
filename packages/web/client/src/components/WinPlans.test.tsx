@@ -154,3 +154,13 @@ test("when every route lacks a finisher the headline gives the verdict, not the 
   render(<WinPlans wincons={wincons} routes={timed} />);
   expect(screen.getByTestId("win-plans-headline")).toHaveTextContent("Fastest: damage or drain, around turn 12. Spread about evenly across 2 plans.");
 });
+
+test("a plan class with no route keeps the lean headline", () => {
+  const wincons = { focus: 0.5, primary: "combo", classes: [
+    { class: "burn", count: 2, share: 0.5, cards: ["A"] },
+    { class: "alt-win", count: 2, share: 0.5, cards: ["B"] },
+  ] } as never;
+  const routes = [{ kind: "burn", label: "damage or drain", cards: [], caveat: "x", lacks: "its drains take about 27 of each opponent's 40 by turn 20" }] as never;
+  render(<WinPlans wincons={wincons} routes={routes} />);
+  expect(screen.getByTestId("win-plans-headline")).toHaveTextContent("Spread about evenly across 2 plans.");
+});

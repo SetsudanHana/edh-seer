@@ -53,7 +53,7 @@ export function WinPlans({ wincons, routes, pressure, model, picked: pickedOutsi
     return own?.turn !== undefined ? own : board?.turn !== undefined ? board : own ?? board;
   };
   const fastest = routes ? fastestRoute(routes) : undefined;
-  const verdict = routes && !fastest ? noFinisher(routes) : undefined;
+  const verdict = routes && !fastest ? noFinisher(routes, classes) : undefined;
   const [first] = classes;
   const lean = focus >= 0.8
     ? `Nearly all-in on ${phrase(first!.class)}.`
