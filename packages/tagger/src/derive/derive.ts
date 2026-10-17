@@ -12,7 +12,7 @@ import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, 
 import { actionEmits, casualtySacrifice, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
-import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
+import { actionRecipients, damagedPlayerIsOpponent, sentenceNamesAPlayer } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
 import { parse as parseFilterRaw } from "../grammar/filter.js";
@@ -488,7 +488,8 @@ import { emblemRecipient } from "../emblem.js";
 // 331: #1253 review -- a refused trigger's class is copied onto a keyword grant's ref'd subject ("it gains X" over "a creature you control attacks alone" is a creature you control); an `if:` flags only when it tests the object; "them" after a cast/draw/discard trigger is the player, and "put it" under "if this card is exiled" is the card (Scytheclaw Raptor, Adrenaline Jockey, Senu); a recursion of the trigger's own object takes its class (Sacred Ground); "in your graveyard" is yours (Victimize); an inherited "It gains" bullet reads the header's object.
 // 332: #1253 final review -- a grant's class is copied only when the trigger subject precedes the event (Hedron Blade's blockers are not "it"); "in your graveyard" is read off the action's object first (Neyam Shai Murad's "their graveyard" is not yours); Sacred Ground's recursion is of a card put into the graveyard FROM THE BATTLEFIELD; Senu's flicker effect is self.
 // 333: #1252 "that player loses the game" after damage to a player/opponent is the DAMAGED player, an opponent (Phage the Untouchable, Vorpal Sword, Atemsis): the grammar dropped the actor so the loss read `you`; damage of any kind "to an opponent" now counts for the damaged-player reading.
-export const DERIVE_VERSION = 333;
+// 334: #1263 "that player <verb>" after combat damage to a player dealt by the card itself, its equipped creature or a creature you control is the DAMAGED player, an opponent, for every cued verb (Chilling Apparition discard, Quietus Spike lose-life, Anowon mill, the poison and exile givers), not only lose-game and the graveyard owner; "a creature deals ..." stays `any`.
+export const DERIVE_VERSION = 334;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -958,37 +959,6 @@ const ZONE_OWNER: ReadonlyArray<readonly [RegExp, Control]> = [
   // wordings (each player, target player) name no one and stay `any`.
   [/\bcombat damage to a player\b[^.]*?,\s*exile\b[^.]*?\bfrom their/i, "opp"],
 ];
-
-/** "THAT PLAYER'S GRAVEYARD" IN A COMBAT-DAMAGE TRIGGER IS THE DAMAGED PLAYER (#1250, Tinybones): when the
- *  damager is yours -- the card itself, "this Vehicle", "equipped creature" (CR 301.5b: equip attaches to a creature
- *  you control), anything "you control" -- the player it hit is an opponent's, and "to an opponent" says so
- *  outright. "A creature deals combat damage to a player" could hit you, so that stays `any`.
- *  CEILING: an equipped creature an opponent later gains control of (CR 301.5d: the Equipment's controller is
- *  separate from the creature's) could damage you, and "that player" would be you; not modelled. */
-function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, cardName?: string): boolean {
-  // SCANNED, NOT MATCHED: `^\s*(?:whenever|when)\s+(.+?)\s+deals?\s+combat damage…` backtracks
-  // polynomially on runs of spaces (CodeQL js/polynomial-redos), so the shape is read with string search.
-  const text = clauseText.trimStart();
-  const lower = text.toLowerCase();
-  const start = lower.startsWith("whenever ") ? 9 : lower.startsWith("when ") ? 5 : -1;
-  if (start < 0) return false;
-  // "deals combat damage to a player / an opponent", or damage of ANY kind "to an opponent" (Atemsis, #1252).
-  const combatAt = lower.indexOf(" combat damage to ", start);
-  const anyAt = combatAt < 0 ? lower.indexOf(" damage to ", start) : -1;
-  const at = combatAt >= 0 ? combatAt : anyAt;
-  if (at < 0) return false;
-  const target = lower.slice(at + (combatAt >= 0 ? " combat damage to " : " damage to ").length);
-  if (combatAt < 0 && !/^an opponent\b/.test(target)) return false;
-  const toOpponent = /^an opponent\b/.test(target);
-  if (!toOpponent && !/^a player\b/.test(target)) return false;
-  const head = text.slice(start, at).trimEnd();
-  const verbAt = head.toLowerCase().endsWith(" deals") ? head.length - 6 : head.toLowerCase().endsWith(" deal") ? head.length - 5 : -1;
-  if (verbAt < 0) return false;
-  if (toOpponent) return true;
-  const who = head.slice(0, verbAt).trim();
-  return triggerIsSelf || /\byou control\b/i.test(who) || /^(?:this |equipped creature$)/i.test(who)
-    || (cardName !== undefined && (who === cardName || who.toLowerCase() === cardName.split(",")[0]!.toLowerCase()));
-}
 
 /** An object that names whose zone it is in: "from their graveyard", "from that player's graveyard". */
 const OBJECT_NAMES_AN_OWNER = /\b(?:from|in) (?:your|their|that player's|target (?:player|opponent)'s|an opponent's|each opponent's|its owner's)\b/i;
@@ -2107,9 +2077,14 @@ export function deriveAbilities(
     if (clause.abilityType === "static" && (clause.actions ?? []).every((a) => !a.verb || a.verb === "none") && QUOTED_GRANT.test(clauseText)) {
       clause = { ...clause, actions: [{ verb: "grant-ability", object: "that ability" }] };
     }
-    const actors = clauseText ? actionRecipients(clauseText) : {};
-    const actorFor = (verb?: string): Control | undefined =>
-      (clause.actions ?? []).filter((a) => a.verb === verb).length === 1 ? actors[verb ?? ""] : undefined;
+    // LAZY (#1263): "that player" after the card's own combat damage needs the trigger's `self`, which is
+    // read further down; actorFor is only called once the trigger is settled.
+    let actors: Record<string, Control> | undefined;
+    const actorFor = (verb?: string): Control | undefined => {
+      if ((clause.actions ?? []).filter((a) => a.verb === verb).length !== 1) return undefined;
+      actors ??= clauseText ? actionRecipients(clauseText, { triggerIsSelf: trigger?.subject.self === true, cardName }) : {};
+      return actors[verb ?? ""];
+    };
     const text = clauseText;
     const cost = clauseCosts?.[clause.id] ?? "";
     // A CLEANUP OF THE TOKENS THE PREVIOUS CLAUSE MADE is that maker's own temporary departure, not
