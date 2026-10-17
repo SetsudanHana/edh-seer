@@ -2,6 +2,8 @@ import { expect, test } from "vitest";
 import { deriveCardTags } from "@edh-seer/tagger";
 import type { Characteristics, ClauseRecord, CardTags } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasons } from "./index.js";
+import { abilityIsKind, losesYouTheGame } from "./edges.js";
+import { claimingAbilitiesOf, emitKeysOf, supplyKeysOf } from "./partners-core.js";
 import type { DeckCard } from "./types.js";
 
 /** #1252, owner ruling 2026-10-16: "A self 'you lose the game' trigger is never a payoff." Phage the
@@ -107,4 +109,66 @@ test("Strionic Resonator does not copy the Pact's lose-the-game trigger", () => 
 });
 test("Strionic Resonator still copies an ordinary triggered card", () => {
   expect(tags(solemn, resonator, "copies:triggered").length + tags(resonator, solemn, "copies:triggered").length).toBeGreaterThan(0);
+});
+
+// ---- #1252, owner ruling 2026-10-17: all ability kinds; a rescue keeps its link; a payoff never hears it ----
+const stunning = card("Stunning Reversal", ["instant"], [
+  { id: 1, abilityType: "spell", trigger: { event: "loses-game", subject: "you", control: "you" }, actions: [{ verb: "draw", object: "card", amount: "7" }, { verb: "set-life", object: "your life total", amount: "1" }] },
+  { id: 2, abilityType: "spell", actions: [{ verb: "exile", object: "Stunning Reversal" }] },
+] as ClauseRecord[], {
+  1: "The next time you would lose the game this turn, instead draw seven cards and your life total becomes 1.",
+  2: "Exile Stunning Reversal.",
+});
+const bloodTyrant = card("Blood Tyrant", ["creature"], [
+  { id: 3, abilityType: "triggered", trigger: { event: "loses-game", subject: "a player", control: "any" }, actions: [{ verb: "add-counter", object: "+1/+1", amount: "5" }] },
+] as ClauseRecord[], { 3: "Whenever a player loses the game, put five +1/+1 counters on this creature." });
+const nefariousLich = card("Nefarious Lich", ["enchantment"], [
+  { id: 1, abilityType: "static", actions: [{ verb: "exile", object: "cards from your graveyard", fromZone: "graveyard", toZone: "exile", amount: "that many" }, { verb: "lose-game", object: "you" }] },
+  { id: 3, abilityType: "triggered", trigger: { event: "leaves", subject: "this enchantment", control: "you" }, actions: [{ verb: "lose-game", object: "you" }] },
+] as ClauseRecord[], {
+  1: "If damage would be dealt to you, exile that many cards from your graveyard instead. If you can't, you lose the game.",
+  3: "When this enchantment leaves the battlefield, you lose the game.",
+});
+const finalFortune = card("Final Fortune", ["instant"], [
+  { id: 1, abilityType: "spell", actions: [{ verb: "extra-turn", object: "a turn after this one" }] },
+  { id: 2, abilityType: "triggered", trigger: { event: "end-step", subject: "that turn", control: "you" }, actions: [{ verb: "lose-game", object: "you" }] },
+] as ClauseRecord[], { 1: "Take an extra turn after this one.", 2: "At the beginning of that turn's end step, you lose the game." });
+
+const selfLoss = (d: DeckCard) => d.tags?.abilities.filter(losesYouTheGame) ?? [];
+
+test("a rescue (Stunning Reversal) still hears a self lose-the-game, from a Pact, a Final Fortune or a Lich", () => {
+  for (const src of [pact, finalFortune, nefariousLich]) {
+    expect(selfLoss(src).length, src.card.name).toBeGreaterThan(0);
+    expect(tags(src, stunning, "loses-game:").length, src.card.name).toBeGreaterThan(0);
+  }
+});
+test("a payoff that profits from a loss (Blood Tyrant) never hears a self lose-the-game", () => {
+  for (const src of [pact, finalFortune, nefariousLich, phage]) {
+    expect(tags(src, bloodTyrant, "loses-game:").length === 0 || src === phage, src.card.name).toBe(true);
+  }
+  expect(tags(phage, bloodTyrant, "loses-game:").length).toBeGreaterThan(0); // Phage's combat-damage loss is the opponent's
+});
+test("a self lose-the-game of any kind (static, trigger) is recognised", () => {
+  expect(selfLoss(nefariousLich).map((a) => a.kind).sort()).toEqual(["static", "triggered"]);
+});
+test("abilityIsKind never counts it", () => {
+  const t = pact.tags?.abilities.find(losesYouTheGame);
+  expect(t).toBeDefined();
+  expect(abilityIsKind(t!, "triggered")).toBe(false);
+  expect(abilityIsKind(solemn.tags!.abilities[0]!, "triggered")).toBe(true);
+});
+test("negative control: an opp loses-game, or one among several emits, is not silenced", () => {
+  const oppLoss = phage.tags!.abilities.find((a) => a.emits?.some((e) => e.verb === "loses-game" && e.subject.control === "opp"));
+  expect(oppLoss).toBeDefined();
+  expect(losesYouTheGame(oppLoss!)).toBe(false);
+  const base = pact.tags!.abilities.find(losesYouTheGame)!;
+  expect(losesYouTheGame({ ...base, emits: [...base.emits!, { verb: "draw", subject: { control: "you", token: null } }] } as never)).toBe(false);
+  expect(losesYouTheGame({ ...base, emits: [{ verb: "loses-game", subject: { control: "any", token: null } }] } as never)).toBe(false);
+});
+test("the partner side: a Pact-only card claims no ability, keeps its loss key for a rescue, and offers no copy key", () => {
+  const lone = { ...pact, tags: { ...pact.tags!, abilities: pact.tags!.abilities.filter(losesYouTheGame) } } as DeckCard;
+  expect(claimingAbilitiesOf(lone)).toEqual([]);
+  expect(emitKeysOf(lone).some((k) => k.startsWith("loses-game"))).toBe(true);
+  expect(supplyKeysOf(lone)).not.toContain("copies|-|triggered|-");
+  expect(supplyKeysOf(solemn)).toContain("copies|-|triggered|-");
 });
