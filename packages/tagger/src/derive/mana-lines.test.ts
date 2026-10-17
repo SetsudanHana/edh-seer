@@ -7,7 +7,7 @@ import { deriveInputOf } from "../derive-input.js";
 import { deriveCardTags } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import type { CardTags, ManaLine } from "../schema.js";
-import { replacementAddedToken, scaleBounds, unpricedLoyaltyLines } from "./mana-lines.js";
+import { replacementAddedToken, scaleBounds, selfPutReady, unpricedLoyaltyLines } from "./mana-lines.js";
 import { COMMANDER_OPPONENTS, COMMANDER_PLAYERS } from "../table.js";
 import fixtures from "./mana-lines.fixtures.json" with { type: "json" };
 
@@ -362,16 +362,37 @@ describe("review round 2 (#1169 task 1)", () => {
     ];
     for (const [n, kind, rest] of kinds) expect(gates(n), n).toContainEqual(expect.objectContaining({ kind, ...rest }));
   });
-  it("#1267 a counter gate says where its counters come from, read off the card's own words (reminder text stripped): its own ability puts them on it, or only the opening hand does, or the deck must", () => {
+  it("#1267 a counter gate says where its counters come from, read off the card's own words (reminder text stripped), with the REAL ready turn of each card", () => {
     const counter = (n: string) => linesOf(n).map((l) => l.gate).find((g) => g?.kind === "counter");
-    // cast turn (mana value, at least 1) + the counters needed: Pyramid {2}-cost artifact needing 3, Tablet needing 2, Levy (mana value 3) needing 3 noncreature spells
-    expect(counter("Pyramid of the Pantheon")).toMatchObject({ put: { by: "self", readyTurn: expect.any(Number) } });
-    expect(counter("Tablet of Compleation")).toMatchObject({ put: { by: "self" } });
-    expect(counter("Charitable Levy")).toMatchObject({ put: { by: "self" } });
+    // Pyramid (mana value 1): cast turn 1; its put costs {2}, so the first put is turn 2, then 3 and 4 -- three counters, ready turn 5.
+    expect(counter("Pyramid of the Pantheon")).toMatchObject({ put: { by: "self", readyTurn: 5 } });
+    // Tablet (mana value 2): a free {T} put, cast turn 2, puts on turns 2 and 3, ready turn 4.
+    expect(counter("Tablet of Compleation")).toMatchObject({ put: { by: "self", readyTurn: 4 } });
+    // Charitable Levy's counters come from a TRIGGER on every noncreature spell anyone casts: not an activation a turn, so it has no put and the gate is unmet (owner review 2026-10-17).
+    expect((counter("Charitable Levy") as { put?: unknown }).put).toBeUndefined();
     expect(counter("Gemstone Caverns")).toMatchObject({ put: { by: "opening-hand" } });
-    // Incubation Druid's "{3}{G}{G}: Adapt 3" puts its own counters on it (the reminder text says so; the keyword is the rule): ready when {3}{G}{G} can be paid -- turn 5, after the turn after its cast (mana value 2)
+    // Incubation Druid's "{3}{G}{G}: Adapt 3" puts its own counters on it: ready when {3}{G}{G} can be paid -- turn 5, after the turn after its cast (mana value 2)
     expect(counter("Incubation Druid")).toMatchObject({ put: { by: "self", readyTurn: 5 } });
     expect(counter("The Grey Havens")).toBeUndefined();
+  });
+  it("#1267 keyword self-puts of +1/+1 counters: Adapt and Monstrosity at the activation, Outlast one counter per activation, Evolve not at all", () => {
+    // mana value 2 => cast turn 2, first activation turn 3 at the earliest
+    expect(selfPutReady("{3}{g}{g}: adapt 3", "+1/+1", 2, 1, false)).toBe(5);
+    expect(selfPutReady("{1}{g}: adapt 3", "+1/+1", 2, 1, false)).toBe(3);
+    expect(selfPutReady("{3}{g}{g}: adapt 3", "+1/+1", 2, 4, false)).toBeNull();
+    expect(selfPutReady("{5}{r}{r}: monstrosity 3", "+1/+1", 3, 2, false)).toBe(7);
+    expect(selfPutReady("{4}{r}, {t}: monstrosity 2", "+1/+1", 1, 2, false)).toBe(5);
+    // Outlast {W}: one counter per {T} activation, so need 2 is two activations: 3, 4 => ready 5 (mana value 2)
+    expect(selfPutReady("outlast {w}", "+1/+1", 2, 2, true)).toBe(5);
+    expect(selfPutReady("outlast {3}{w}", "+1/+1", 2, 1, true)).toBe(5);
+    // Evolve needs a LARGER creature to enter: no put, the gate stays unmet
+    expect(selfPutReady("evolve", "+1/+1", 2, 1, true)).toBeNull();
+    // a trigger's put (Charitable Levy) is no activation; an activated put with a cost waits for the cost
+    expect(selfPutReady("whenever a player casts a noncreature spell, put a collection counter on this enchantment.", "collection", 3, 3, false)).toBeNull();
+    expect(selfPutReady("{2}, {t}: add one mana of any color. put a brick counter on this artifact.", "brick", 1, 3, false)).toBe(5);
+    expect(selfPutReady("{t}: put an oil counter on this artifact.", "oil", 2, 2, false)).toBe(4);
+    // a creature's free {T} put waits out summoning sickness
+    expect(selfPutReady("{t}: put a luck counter on this creature.", "luck", 2, 1, true)).toBe(4);
   });
   it("'as long as ...' on a granted ability gates the grant", () => {
     expect(only("Honored Hierarch").gate?.text).toBe("this creature is renowned");

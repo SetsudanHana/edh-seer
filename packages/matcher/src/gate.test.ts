@@ -252,11 +252,17 @@ test("counter, only as the card begins the game on the battlefield: the chance i
   expect(gateProbability(caverns, landsDeck([]), 1)).toBeCloseTo(p, 5);
 });
 
-test("turn-event: a land played this turn is met by any deck that has lands, and not by one that has none (River of Tears)", () => {
+test("turn-event: a land played this turn needs a land DROP on that turn: the lands seen must reach the turn number, not merely exist (River of Tears)", () => {
   const g = parseGate("you played a land this turn");
   expect(gateVerdict(g, landsDeck([]))).toBe("met");
   expect(gateMetBy(g, landsDeck([]), 1)).toBe(true);
   expect(gateVerdict(g, copies(100, (i) => spell(i)))).toBe("unmet");
+  // 36 lands in 99 (a real mana base): a land drop on turn 9 is far from certain (a simulation reads about .39), so the conservative form is below the bar there; early turns are fine
+  const real = [...copies(36, land), ...copies(64, (i) => spell(i))];
+  expect(gateProbability(g, real, 2)!).toBeGreaterThan(0.5);
+  expect(gateProbability(g, real, 9)!).toBeLessThan(0.5);
+  expect(gateVerdict(g, real)).toBe("unmet");
+  expect(gateProbability(g, real, 9)!).toBeLessThan(gateProbability(g, real, 3)!);
 });
 
 test("turn-event: 'you attacked this turn' is the creature board count a turn late -- a creature cast on turn 1 attacks on turn 2 (Mardu Warshrieker)", () => {
@@ -267,14 +273,18 @@ test("turn-event: 'you attacked this turn' is the creature board count a turn la
   expect(gateProbability(g, many, 3)!).toBeGreaterThan(0.5);
   expect(gateVerdict(g, landsDeck([]))).toBe("unmet");
   expect(gateVerdict(g, landsDeck(copies(30, (i) => spell(i))))).toBe("unmet");
+  // the holder is a creature of the deck and is not ITS OWN attacker: a deck whose only creature is one card cannot meet it, whatever the turn
+  expect(gateProbability(g, landsDeck([creature(0)]), 9)).toBe(0);
+  expect(gateProbability(g, landsDeck(copies(2, (i) => creature(i))), 9)!).toBeGreaterThan(0);
 });
 
-test("turn-event: an opponent lost life this turn -- attackers, or a drain / damage / life-loss source the deck can cast (Famished Foragers, Flamecache Gecko)", () => {
+test("turn-event: an opponent lost life this turn -- a drain / damage / life-loss source the deck can cast, never an attacker (Famished Foragers, Flamecache Gecko)", () => {
   const g = parseGate("an opponent lost life this turn");
   const drain = (i: number) => withAbilities(dc(`Drain ${i}`, "Sorcery"), [ability({ emits: [{ verb: "lose-life", subject: { control: "opp" } }] })], 2);
   const burn = (i: number) => withAbilities(dc(`Burn ${i}`, "Instant"), [ability({ emits: [{ verb: "non-combat-damage", subject: { control: "any" } }] })], 1);
   const gain = (i: number) => withAbilities(dc(`Gain ${i}`, "Instant"), [ability({ emits: [{ verb: "gain-life", subject: { control: "you" } }, { verb: "lose-life", subject: { control: "you" } }] })], 1);
-  expect(gateVerdict(g, landsDeck(copies(30, (i) => creature(i))))).toBe("met");
+  // an attack is not a hit: attackers alone do not meet it
+  expect(gateVerdict(g, landsDeck(copies(30, (i) => creature(i))))).toBe("unmet");
   expect(gateVerdict(g, landsDeck(copies(30, drain)))).toBe("met");
   expect(gateVerdict(g, landsDeck(copies(30, burn)))).toBe("met");
   expect(gateVerdict(g, landsDeck(copies(30, gain)))).toBe("unmet");
@@ -286,7 +296,7 @@ test("turn-event: an opponent lost life this turn -- attackers, or a drain / dam
 test("turn-event: a creature died / a permanent left this turn needs a repeatable sacrifice outlet (and a creature to feed it, for 'died'); otherwise nothing (Caravan Vigil, Hidden Herbalists)", () => {
   const died = parseGate("a creature died this turn");
   const left = parseGate("a permanent left the battlefield under your control this turn");
-  const outlet = (i: number) => withAbilities(dc(`Outlet ${i}`, "Creature — Goblin"), [ability({ kind: "activated", cost: "Sacrifice a creature", emits: [{ verb: "sacrifice", subject: { control: "you" } }, { verb: "dies", subject: { control: "you" } }] })], 1);
+  const outlet = (i: number) => withAbilities(dc(`Outlet ${i}`, "Creature — Goblin"), [ability({ kind: "activated", cost: "Sacrifice a creature", emits: [{ verb: "sacrifice", subject: { control: "you", type: "creature" } }, { verb: "dies", subject: { control: "you" } }] })], 1);
   const selfSac = (i: number) => withAbilities(dc(`Petal ${i}`, "Artifact"), [ability({ kind: "activated", emits: [{ verb: "sacrifice", subject: { control: "you", self: true } }, { verb: "dies", subject: { control: "you", self: true } }] })], 0);
   expect(gateVerdict(died, landsDeck(copies(30, outlet)))).toBe("met");
   expect(gateVerdict(left, landsDeck(copies(30, outlet)))).toBe("met");
@@ -295,9 +305,13 @@ test("turn-event: a creature died / a permanent left this turn needs a repeatabl
   expect(gateVerdict(died, landsDeck([]))).toBe("unmet");
   expect(gateVerdict(left, landsDeck([outlet(0)]))).toBe("unmet");
   // an outlet and nothing to sacrifice: 'a creature died' needs a creature too
-  const noBody = (i: number) => withAbilities(dc(`Altar ${i}`, "Artifact"), [ability({ kind: "activated", emits: [{ verb: "sacrifice", subject: { control: "you" } }, { verb: "dies", subject: { control: "you" } }] })], 1);
+  const noBody = (i: number) => withAbilities(dc(`Altar ${i}`, "Artifact"), [ability({ kind: "activated", emits: [{ verb: "sacrifice", subject: { control: "you", type: "creature" } }, { verb: "dies", subject: { control: "you" } }] })], 1);
   expect(gateVerdict(died, landsDeck(copies(30, noBody)))).toBe("unmet");
   expect(gateVerdict(left, landsDeck(copies(30, noBody)))).toBe("met");
+  // an outlet is for what it sacrifices: "sacrifice a land" is a permanent leaving and no creature dying (Zuran Orb)
+  const landOutlet = (i: number) => withAbilities(dc(`Orb ${i}`, "Artifact"), [ability({ kind: "activated", emits: [{ verb: "sacrifice", subject: { control: "you", type: "land" } }] })], 0);
+  expect(gateVerdict(left, landsDeck(copies(30, landOutlet)))).toBe("met");
+  expect(gateVerdict(died, landsDeck([...copies(30, landOutlet), ...copies(30, (i) => creature(i))]))).toBe("unmet");
 });
 
 test("turn-event: 'this land entered this turn' is the entry turn only, and the evaluator has no entry turn: unmet by every turn in every deck (Mirrex)", () => {

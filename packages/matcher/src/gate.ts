@@ -21,8 +21,8 @@
  *  deck-level `gateVerdict` is the REPORT's filter (the audit, the Karsten inputs, the ramp role: owner 2026-10-13, a gated source counts from P >= 0.5); the goldfish does not apply it to a board-count gate, only
  *  asks that the deck can ever meet it (`boardGateReachable`) and prices the rest per game (#1191).
  *  THREE ESTIMATED KINDS (#1267, owner 2026-10-17: "estimate all three kinds from the decklist"; everything else stays `unknown`, which is unmet). Each has ONE closed form below, from facts the deck derives
- *  (`CardTags.abilities`: what a card emits, and the type line), never from oracle text. Each UNDER-CLAIMS when unsure, and the goldfish does not play them per game (`isEstimatedGate`: the deck-level
- *  verdict and the colour audit read them; a simulated game does not, the safe direction).
+ *  (`CardTags.abilities`: what a card emits, and the type line), never from oracle text. Each errs LOW where it can, and each over-claim it keeps is named in a CEILING at its function
+ *  (the damage source that needs a trigger, a creature that cannot attack, the opening hand's table size). The goldfish reads their deck-level verdict as it reads the initiative's (`playableLines`).
  *   - `threshold` (N cards in YOUR graveyard): Poisson on the expected count `graveyardMean`. Why Poisson: the count is a sum of many rare, near-independent events ("this card was seen, cast and is in
  *     the yard"), which Poisson models by its mean alone, and the mean is the one thing the derived facts give. CEILING: Poisson is wider than the true sum (its variance equals its mean, a sum of
  *     Bernoullis has less), so a need above the mean is slightly over-claimed and one below slightly under-claimed.
@@ -58,7 +58,7 @@ interface SpellFact extends Src { types: ReadonlySet<string>; subtypes: Readonly
 /** A card that puts cards of YOUR deck into YOUR graveyard (discard, mill, surveil, all `control: you`): `n` cards, the printed amount when it is a number, else 1. */
 interface FillerFact extends Src { n: number }
 interface DeckFacts {
-  size: number; permanents: Perm[]; initiative: boolean; spells: SpellFact[]; fillers: FillerFact[]; lifeLoss: Src[]; outlets: Src[];
+  size: number; permanents: Perm[]; initiative: boolean; spells: SpellFact[]; fillers: FillerFact[]; lifeLoss: Src[]; creatureOutlets: Src[]; permanentOutlets: Src[];
   /** Every card's types and subtypes, to find the share of a deck a typed graveyard gate matches. */
   kinds: { types: ReadonlySet<string>; subtypes: ReadonlySet<string>; supertypes: ReadonlySet<string> }[];
 }
@@ -87,7 +87,7 @@ function factsOf(deck: readonly DeckCard[]): DeckFacts {
   if (!f) {
     const permanents: Perm[] = [];
     let initiative = false;
-    const spells: SpellFact[] = [], fillers: FillerFact[] = [], lifeLoss: Src[] = [], outlets: Src[] = [], kinds: DeckFacts["kinds"] = [];
+    const spells: SpellFact[] = [], fillers: FillerFact[] = [], lifeLoss: Src[] = [], creatureOutlets: Src[] = [], permanentOutlets: Src[] = [], kinds: DeckFacts["kinds"] = [];
     for (const dc of deck) {
       if (/\btake the initiative\b/i.test(dc.card.oracleText ?? "")) initiative = true;
       const p = permOf(dc);
@@ -97,18 +97,24 @@ function factsOf(deck: readonly DeckCard[]): DeckFacts {
       kinds.push({ types, subtypes, supertypes });
       const src: Src = { mv: dc.card.manaValue ?? 0, permanent: p !== null };
       if (!p && (types.has("instant") || types.has("sorcery"))) spells.push({ ...src, types, subtypes, supertypes });
-      let fill = 0, loses = false, outlet = false;
+      let fill = 0, loses = false, creatureOutlet = false, permanentOutlet = false;
       for (const a of (dc.tags?.abilities ?? []).filter(acts)) for (const e of a.emits ?? []) {
         const you = e.subject.control === "you";
         if (FILL_VERBS.has(e.verb) && you) fill = Math.max(fill, countOf(a));
         if ((e.verb === "lose-life" || e.verb === "non-combat-damage") && (e.subject.control === "opp" || e.subject.control === "any")) loses = true;
-        if (e.verb === "sacrifice" && you && e.subject.self !== true && a.kind === "activated") outlet = true;
+        if (e.verb === "sacrifice" && you && e.subject.self !== true && a.kind === "activated") {
+          // WHAT THE OUTLET SACRIFICES: "sacrifice a creature" feeds both gates; "sacrifice a land" or an artifact only a permanent leaving; no type named is any permanent.
+          const sacrificed = Array.isArray(e.subject.type) ? e.subject.type : e.subject.type === undefined ? [] : [e.subject.type];
+          if (sacrificed.includes("creature")) creatureOutlet = true;
+          if (sacrificed.length === 0 || sacrificed.some((t) => t === "permanent" || PERMANENT_TYPES.has(t))) permanentOutlet = true;
+        }
       }
       if (fill > 0) fillers.push({ ...src, n: fill });
       if (loses) lifeLoss.push(src);
-      if (outlet) outlets.push(src);
+      if (creatureOutlet) creatureOutlets.push(src);
+      if (creatureOutlet || permanentOutlet) permanentOutlets.push(src);
     }
-    FACTS.set(deck, (f = { size: deck.length, permanents, initiative, spells, fillers, lifeLoss, outlets, kinds }));
+    FACTS.set(deck, (f = { size: deck.length, permanents, initiative, spells, fillers, lifeLoss, creatureOutlets, permanentOutlets, kinds }));
   }
   return f;
 }
@@ -157,13 +163,13 @@ export function gateProbability(gate: ManaGate, deck: readonly DeckCard[], by?: 
   }
   if (gate.kind === "threshold") return poissonAtLeast(gate.need, graveyardMean(gate, f, by ?? CORPUS_MEDIAN_CLOCK));
   if (gate.kind === "counter") return counterProbability(gate, f, by ?? CORPUS_MEDIAN_CLOCK);
-  if (gate.kind === "turn-event") return turnEventProbability(gate.event, deck, f, by);
+  if (gate.kind === "turn-event") return turnEventProbability(gate.event, f, by);
   const b = boardGateOf(gate);
   return b ? boardGateProbability(b, deck, by, holderIsLand) : null;
 }
 
-/** THE KINDS THIS MODULE ESTIMATES FROM THE DECKLIST (#1267) AND THE GOLDFISH DOES NOT PLAY PER GAME: its simulation has no graveyard, no counters on a card and no turn's events, so it
- *  treats them as unmet (the conservative default, owner brief 2026-10-17); the report's verdict and the colour audit read the estimate. */
+/** THE KINDS THIS MODULE ESTIMATES FROM THE DECKLIST (#1267): a graveyard count, counters on the card, an event this turn. The goldfish has no graveyard, no counters on a card and no turn's events to play
+ *  per game, so it credits such a line on the deck-level verdict (`gateMet`), the same answer the colour audit reads (owner 2026-10-13: one answer for the audit and castability). */
 export const isEstimatedGate = (gate: ManaGate): boolean => gate.kind === "threshold" || gate.kind === "counter" || gate.kind === "turn-event";
 
 /** P(X >= need) for X ~ Poisson(mean). Summed from the complement of the (few) terms below `need`, which are small numbers for the needs a gate prints. */
@@ -203,29 +209,33 @@ function counterProbability(g: Extract<ManaGate, { kind: "counter" }>, f: DeckFa
   return 0;
 }
 
-/** THE CHANCE OF SOMETHING HAVING HAPPENED EARLIER THIS TURN, by the median clock or by `by`. Each is a deck-level estimate and under-claims when unsure; the holder's own cast is priced by the consumer.
- *   - `land-played`: the chance of a land among the cards seen (a land drop each turn).
- *   - `attacked`: a creature on the battlefield, the board-count machinery (`boardGateProbability`: cast the turn before at the earliest, so no attack on turn 1). CEILING: a creature cast late attacks late and a
- *     creature that cannot attack is counted.
- *   - `opponent-lost-life`: the larger of an attacker (as above) and a card that makes an opponent lose life or takes damage to a player, seen and cast. CEILING: over-claims a blocked attack and a damage
- *     source that needs a trigger; "any target" damage counts as one that can hit an opponent.
- *   - `creature-died`: a repeatable sacrifice outlet you control (an activated sacrifice of something that is not itself), seen and cast, AND a creature on the board (the two taken as independent: their product).
- *     CEILING: a creature dying in combat or to removal is not counted; sacrifice outlets are the only deaths on demand.
- *   - `permanent-left`: the outlet alone (it can feed itself a token or a Treasure). CEILING: bounce and blink, which also leave the battlefield, are not counted.
+/** THE CHANCE OF SOMETHING HAVING HAPPENED EARLIER THIS TURN, by the median clock or by `by`. Each is a deck-level estimate; where it errs it errs low (the exceptions are named).
+ *   - `land-played`: a land drop on the turn needs a land in hand for it, and the lands seen must cover every turn so far: at least `turn` lands among the cards seen (`pAtLeast(turn, ...)`). Conservative: it
+ *     is the chance of a land for EVERY turn so far, so a missed drop earlier (or a land held back) is not made up; a simulation puts the true chance of a drop on turn 3 / 5 / 7 / 9 at about .82 / .60 / .46 / .39
+ *     (36 lands in 99) and this form reads lower than each.
+ *   - `attacked`: a creature OTHER THAN THE HOLDER on the battlefield (the holder, a creature of the deck, is not its own attacker: one creature fewer is counted, which under-claims a holder that is no creature), cast
+ *     the turn before at the earliest, so no attack on turn 1. CEILING: a creature that cannot attack is counted.
+ *   - `opponent-lost-life`: ONLY a card the deck derives as making an opponent lose life or dealing damage a player can take ("any target" counts), seen and cast. An attack is not a hit (blockers, removal, no creature
+ *     that can attack), so attackers are not counted. CEILING: over-claims a damage source that needs a trigger or a target that is not a player.
+ *   - `creature-died`: a repeatable outlet that sacrifices a CREATURE you control, seen and cast, AND a creature other than the holder on the board (the two taken as independent: their product).
+ *     CEILING: a creature dying in combat or to removal is not counted.
+ *   - `permanent-left`: a repeatable outlet that sacrifices a permanent (a creature, a land, an artifact, any permanent). CEILING: bounce and blink, which also leave the battlefield, are not counted.
  *   - `entered-this-turn` (Mirrex): true only on the turn the land enters, and the evaluator has no entry turn: 0 (unmet) always. CEILING: an under-claim of the entry turn, as Gleaming Bastion's. */
-function turnEventProbability(event: TurnEvent, deck: readonly DeckCard[], f: DeckFacts, by?: number): number {
+function turnEventProbability(event: TurnEvent, f: DeckFacts, by?: number): number {
   const turn = by ?? CORPUS_MEDIAN_CLOCK;
-  const attackers = (): number => boardGateProbability({ need: 1, nouns: ["creature"] }, deck, by);
+  const attackers = (): number => {
+    const creatures = f.permanents.filter((p) => p.types.has("creature") && p.manaValue < turn && turn >= 2).length;
+    return pAtLeast(1, Math.max(0, creatures - 1), seen(turn), f.size);
+  };
   switch (event) {
-    case "land-played": return pAtLeast(1, f.permanents.filter((p) => p.land).length, seen(turn), f.size);
+    case "land-played": return pAtLeast(turn, f.permanents.filter((p) => p.land).length, seen(turn), f.size);
     case "attacked": return attackers();
-    case "opponent-lost-life": return Math.max(attackers(), seenAtLeast(1, f.lifeLoss, turn, f.size));
-    case "creature-died": return seenAtLeast(1, f.outlets, turn, f.size) * attackers();
-    case "permanent-left": return seenAtLeast(1, f.outlets, turn, f.size);
+    case "opponent-lost-life": return seenAtLeast(1, f.lifeLoss, turn, f.size);
+    case "creature-died": return seenAtLeast(1, f.creatureOutlets, turn, f.size) * attackers();
+    case "permanent-left": return seenAtLeast(1, f.permanentOutlets, turn, f.size);
     case "entered-this-turn": return 0;
   }
 }
-
 /** THE CHANCE OF A PARSED BOARD-COUNT GATE (`gateProbability`'s board branch): by the median clock over every card, or with `by` by that turn. */
 export function boardGateProbability(b: BoardGate, deck: readonly DeckCard[], by?: number, holderIsLand = false): number {
   const f = factsOf(deck);

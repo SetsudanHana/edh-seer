@@ -647,17 +647,37 @@ const NOT_IN_A_DECK = new Set(["vanguard", "plane", "phenomenon", "conspiracy", 
 
 // ---------------------------------------------------------------------------------------------------------------
 
-/** THE KEYWORD ACTIONS THAT PUT +1/+1 COUNTERS ON THE CARD ITSELF (#1267 review), read off the printed text with its reminder text removed: "{3}{G}{G}: Adapt 3" (Incubation Druid), "Monstrosity N", "Outlast {cost}", "Evolve".
- *  The turn it is ready: the first turn that can pay the activation cost (a land a turn: mana available = the turn) and is after the turn the card is cast (its mana value, at least 1, the audit's on-curve clock), and
- *  for Evolve, which has no cost, the cast turn plus the counters needed. Null when none applies or the keyword's N is below `need`.
- *  CEILING: Evolve counts only when a larger creature enters, which this does not ask: it is read as ready as soon as the card is out, an over-claim for the one gated card with it (none in the corpus today). */
-function keywordPut(printed: string, mv: number, need: number): number | null {
+/** THE TURN A CARD HAS PUT `need` COUNTERS OF ONE KIND ON ITSELF BY ITS OWN ACTIVATED ABILITY OR KEYWORD (#1267), or null when its words do not put them there (a trigger, a larger creature entering, another card).
+ *  Read off the printed text with its reminder text removed, lowercased. The clock is the audit's on-curve one: a land a turn, so the mana available on a turn is the turn; the card is cast on turn `max(1, mv)` and
+ *  an ability that costs mana is first paid the turn AFTER the cast (the cast spent that turn's mana) once the turn's mana covers the cost -- `max(cast + 1, cost)`; a free put is first used the cast turn
+ *  (an artifact) or the turn after (a creature: summoning sickness, `{T}`).
+ *   - "put a/an/N <kind> counter(s) on this <type>/it" in an ACTIVATED ability (Pyramid of the Pantheon's brick: `{2}, {T}`; Tablet of Compleation's oil: `{T}`): ONE counter per activation, one activation a turn, so the
+ *     counters are all there the turn after the `need`-th activation: first + need.
+ *   - Adapt N / Monstrosity N ("{3}{G}{G}: Adapt 3", Incubation Druid): all N at once, there the turn of the activation. Only +1/+1 counters, and only when N is at least `need`.
+ *   - Outlast {cost}: ONE counter per `{T}` activation: first + need.
+ *   - NOT a trigger ("whenever a player casts a noncreature spell, put a collection counter on this enchantment", Charitable Levy: its rate is the table's, not one a turn), and NOT Evolve (it needs a LARGER creature to
+ *     enter, which no card knows): both return null, so the gate is unmet.
+ *  CEILING: one counter per activation whatever the printed number; one ability per card (the first that reads). */
+const costMV = (cost: string): number => manaValueOf(cost.replace(/\{[tqe]\}/gi, ""));
+export function selfPutReady(printed: string, counter: string, mv: number, need: number, creature: boolean): number | null {
   const cast = Math.max(1, mv);
+  const first = (cost: string): number => {
+    const c = costMV(cost);
+    return c > 0 ? Math.max(cast + 1, c) : creature ? cast + 1 : cast;
+  };
+  const kind = counter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  for (const m of printed.matchAll(new RegExp(`\\bput (?:an?|\\w+) ${kind} counters? on (?:this [a-z]+|it)\\b`, "g"))) {
+    const head = printed.slice(printed.lastIndexOf("\n", m.index) + 1, m.index);
+    if (/^(?:whenever|when|at)\b/.test(head)) continue;
+    const colon = head.indexOf(":");
+    return first(colon >= 0 ? head.slice(0, colon) : "") + need;
+  }
+  if (counter !== "+1/+1") return null;
   const costed = /((?:\{[^{}]+\})+)(?:, [^:]{0,40})?: (?:adapt|monstrosity) (\d+)\b/.exec(printed);
-  if (costed && Number(costed[2]) >= need) return Math.max(cast + 1, manaValueOf(costed[1]));
+  if (costed && Number(costed[2]) >= need) return first(costed[1]!);
   const outlast = /\boutlast ((?:\{[^{}]+\})+)/.exec(printed);
-  if (outlast) return Math.max(cast + 1, manaValueOf(outlast[1]));
-  return /\bevolve\b/.test(printed) ? cast + need : null;
+  if (outlast) return Math.max(cast + 1, costMV(outlast[1]!)) + need;
+  return null;
 }
 
 export function deriveMana(input: ManaInput): ManaResult {
@@ -933,16 +953,17 @@ export function deriveMana(input: ManaInput): ManaResult {
   }
 
   // --- where a counter gate's counters come from (#1267) ----------------------------------------------------
-  // A gate on counters ON THE CARD ("two or more oil counters on it") is met either by the card's own words putting them there or by something else in the deck. Read off the printed text with
-  // its reminder text (parentheses) removed: Incubation Druid's Adapt reminder says "put three +1/+1 counters on it", which is a reminder and not a rule of the gate's reading (the brief
-  // reads the deck's supply for it). CEILING: one pass over the whole printed text, not the face the line is on.
+  // A gate on counters ON THE CARD ("two or more oil counters on it") is met only by the card's OWN words putting them there (`selfPutReady`: an activated put, Adapt, Monstrosity, Outlast) or by the opening hand
+  // (Gemstone Caverns). Otherwise it has no `put` and the matcher reads it as unmet: the deck's supply of counters (some other card putting one on a creature) is NOT read, because the counter rarely lands on the holder.
+  // Read off the printed text with its reminder text (parentheses) removed, so Incubation Druid's Adapt is read from the keyword and not from the reminder's "put three +1/+1 counters on it".
+  // CEILING: one pass over the whole printed text, not the face the line is on.
   const printed = (input.oracleText ?? clauses.map((c) => input.textOf(c)).join("\n")).replace(/\([^()]*\)/g, "").toLowerCase();
   for (const l of lines) {
     const g = l.gate;
     if (g === null || g.kind !== "counter") continue;
     const kind = g.counter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (new RegExp(`\\bput (?:an?|\\w+) ${kind} counters? on (?:this [a-z]+|it)\\b`).test(printed)) g.put = { by: "self", readyTurn: Math.max(1, faceMV(l.face)) + g.need };
-    else if (g.counter === "+1/+1" && keywordPut(printed, faceMV(l.face), g.need) !== null) g.put = { by: "self", readyTurn: keywordPut(printed, faceMV(l.face), g.need)! };
+    const ready = selfPutReady(printed, g.counter, faceMV(l.face), g.need, chars.types.some((t) => t.toLowerCase() === "creature"));
+    if (ready !== null) g.put = { by: "self", readyTurn: ready };
     else if (new RegExp(`\\bopening hand\\b[^.]{0,200} ${kind} counter on it`).test(printed)) g.put = { by: "opening-hand" };
   }
 

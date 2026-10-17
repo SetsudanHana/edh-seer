@@ -6,8 +6,8 @@
  *  THREE KINDS A DECKLIST CAN ESTIMATE (#1267, owner 2026-10-17): a count of cards in your graveyard (`threshold`), counters on the card itself (`counter`) and something that happened earlier this turn
  *  (`turn-event`). Each is read by its WORDING, never by a card name, with one bounded regex apiece (no nested quantifier, no `\s*...$` tail: CodeQL's polynomial-ReDoS rule).
  *  CEILING: a gate that is anything else (a game state, "a land named wastes", a trigger, "it was bargained") is `unknown`, which every consumer treats as unmet.
- *  CEILING: a graveyard gate reads only "N cards, of one type or subtype": the Grey Havens's real condition is a LEGENDARY CREATURE card in your graveyard, and derive stores it as "there is a card in your graveyard",
- *  so the estimate counts any card (an over-claim on that one card, from derive's gate text, not from this parse). */
+ *  A graveyard gate reads "N cards", of the supertype, type or subtype it names: The Grey Havens's "there is a legendary creature card in your graveyard" keeps all of it. A qualifier it cannot read (a colour, "nonland")
+ *  is `unknown`, never an untyped count. */
 import type { ManaGate, TurnEvent } from "../schema.js";
 
 const COUNT: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };

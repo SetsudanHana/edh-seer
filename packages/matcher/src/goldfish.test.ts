@@ -190,13 +190,15 @@ test("the board-count gates stay priced turn by turn whatever the deck: Sceptre 
   expect(manaOutput(sceptre, forests)).toEqual(manaOutput(sceptre));
 });
 
-// #1184: A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION. Pyramid of the Pantheon's only playable line is "{2}, {T}: Add one mana of any color. Put a brick counter" (net -1);
-// its three-mana line waits on counters on the card itself, which no decklist settles.
-test("#1184: Pyramid of the Pantheon is no accelerant in the simulation: its only playable line nets -1", () => {
+// #1184: A LINE THAT RETURNS LESS THAN IT COSTS IS NOT ACCELERATION. Pyramid of the Pantheon's put line "{2}, {T}: Add one mana of any color. Put a brick counter" nets -1 and is no accelerant on its own.
+// Its three-mana line waits on counters on the card itself, which derive reads as the card's own puts (ready turn 5, #1267) and the goldfish, reading the deck-level verdict like the audit, then credits.
+// CEILING (named in gate.ts and goldfish.ts): the credit starts at turn 1 though the counters are there on turn 5, an over-claim of the early turns.
+test("#1184 / #1267: Pyramid of the Pantheon's put line nets -1 and is no accelerant alone; with its own-counters gate read as met, the three-mana line is played", () => {
   const pyramid = real("Pyramid of the Pantheon");
+  const deck = [pyramid, ...basics(37), ...spells(61, 3)];
   expect(playableLines(pyramid).map((l) => l.net)).toEqual([-1]);
   expect(classifyAccelerant(pyramid, undefined, false, true)).toBeNull();
-  expect(manaAvailability([pyramid, ...basics(37), ...spells(61, 3)], { trials: 50 }).accelerants).toBe(0);
+  expect(playableLines(pyramid, deck, true).map((l) => l.net)).toEqual([-1, 3]);
 });
 
 // #1184 STAYS IN THE GOLDFISH: the land count (`land-count.ts`) reads `classifyAccelerant` without the bar, so its answer is what main gave (the weight of a net-0 filter is an owner ruling).
@@ -1804,18 +1806,24 @@ describe("board-count gates are met turn by turn on the goldfish's own board", (
   });
 });
 
-// #1267: a line gated on an ESTIMATED kind (a graveyard count, counters on the card, an event this turn) is met in the report's verdict and not played by a simulated game.
-test("a line gated on an estimated kind is unmet in the goldfish whatever the deck's estimate, and a board-count gate beside it is still played", () => {
+// #1267: a line gated on an ESTIMATED kind (a graveyard count, counters on the card, an event this turn) is read like the initiative's: on the deck-level verdict, the audit's own answer (owner 2026-10-13).
+test("a line gated on an estimated kind is played when the deck's estimate meets the gate and not otherwise: one answer for the audit and the goldfish", () => {
   const lands = Array.from({ length: 40 }, (_, i) => card(`Land ${i}`, "Land", 0));
   const rock = (gate: string) => withManaLines("Gated Rock", "Artifact", [tapFor(["C"], { gate: parseGate(gate) })]);
   const landDeck = (c: DeckCard) => [c, ...lands];
-  for (const g of ["you played a land this turn", "there is a card in your graveyard", "this artifact has two or more oil counters on it"]) {
-    const gated = rock(g);
-    expect(playableLines(gated, landDeck(gated), true), g).toEqual([]);
-  }
-  // sanity: the estimate itself is met for the land gate, so the refusal is the goldfish's and not the deck's
+  // met by the deck: a land gate in a deck of lands; played
   const landGate = rock("you played a land this turn");
   expect(gateVerdict(parseGate("you played a land this turn"), landDeck(landGate))).toBe("met");
+  expect(playableLines(landGate, landDeck(landGate), true)).toHaveLength(1);
+  // unmet by the deck: no graveyard fuel, no counters of its own, no entry turn; not played
+  for (const g of ["there is a card in your graveyard", "this artifact has two or more oil counters on it", "this land entered this turn"]) {
+    const gated = rock(g);
+    expect(gateVerdict(parseGate(g), landDeck(gated)), g).toBe("unmet");
+    expect(playableLines(gated, landDeck(gated), true), g).toEqual([]);
+  }
+  // a counter gate the card meets by its own ability (derive's `put`) is met by the deck and played
+  const own = withManaLines("Pyramid", "Artifact", [tapFor(["C"], { gate: { kind: "counter", counter: "brick", need: 3, put: { by: "self", readyTurn: 5 }, text: "there are three or more brick counters on this artifact" } })]);
+  expect(playableLines(own, landDeck(own), true)).toHaveLength(1);
   const board = rock("you control a land");
   expect(playableLines(board, landDeck(board), true)).toHaveLength(1);
 });
