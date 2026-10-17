@@ -14251,6 +14251,174 @@
   ],
   "source": "grammar"
  },
+ "Jeska's Will": {
+  "card": {
+   "_id": "0fd114c4-092b-4e28-b0dc-ef529f3bc73e",
+   "name": "Jeska's Will",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n• Add {R} for each card in target opponent's hand.\n• Exile the top three cards of your library. You may play them this turn.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 3,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{R}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "each card in target opponent's hand",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top three cards of your library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Mana Geyser": {
+  "card": {
+   "_id": "a8dba58b-2956-492e-ae30-49db2ae68e53",
+   "name": "Mana Geyser",
+   "typeLine": "Sorcery",
+   "oracleText": "Add {R} for each tapped land your opponents control.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 5,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{3}{R}{R}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each tapped land your opponents control",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Neheb, the Eternal": {
+  "card": {
+   "_id": "b0d3fd57-1420-4dd1-8410-9d659655287f",
+   "name": "Neheb, the Eternal",
+   "typeLine": "Legendary Creature — Zombie Minotaur Warrior",
+   "oracleText": "Afflict 3 (Whenever this creature becomes blocked, defending player loses 3 life.)\nAt the beginning of each of your postcombat main phases, add {R} for each 1 life your opponents have lost this turn.",
+   "keywords": [
+    "Afflict"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 5,
+   "power": "4",
+   "toughness": "6",
+   "layout": "normal",
+   "manaCost": "{3}{R}{R}",
+   "producedMana": [
+    "R"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Afflict 3"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each 1 life your opponents have lost this turn",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "main-phase",
+     "subject": "each player",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
+ },
  "Arbor Adherent": {
   "card": {
    "_id": "9640225a-8f31-495f-b9de-53ed348ff24b",

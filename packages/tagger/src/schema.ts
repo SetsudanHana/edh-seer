@@ -1478,9 +1478,9 @@ export interface ManaAmount {
    *  Shrines you control" on a Shrine, its printed power for "this creature's power", 1 for "1 plus ...". `ceiling` is the most the count can reach, `null` when open. */
   floor?: number;
   ceiling?: number | null;
-  /** WHAT BOUNDS `ceiling`: `colours` (five colours, "for each color among ..."), `basic-land-types` (five, Domain). Absent when the ceiling is open.
-   *  CEILING: a bound that depends on the game, not the deck (Belbe's two per opponent who lost life, Selvala's "for each nonland card revealed", a player count) leaves the ceiling open. */
-  bound?: "colours" | "basic-land-types";
+  /** WHAT BOUNDS `ceiling`: `colours` (five colours, "for each color among ..."), `basic-land-types` (five, Domain), `players` (the table: you plus three opponents, times the mana each makes: Selvala, Explorer Returned 4, Belbe 6; owner speed ruling 2026-10-06). Absent when the ceiling is open.
+   *  CEILING: a bound that depends on the game and no table size leaves the ceiling open (an opponent's hand, life lost, permanents). */
+  bound?: "colours" | "basic-land-types" | "players";
 }
 
 export interface ManaLine {

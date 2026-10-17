@@ -1,4 +1,5 @@
 export * from "./schema.js";
+export { COMMANDER_OPPONENTS, COMMANDER_PLAYERS } from "./table.js";
 export {
   OTAG_EVENTS,
   OTAG_EVENT_TO_VERB,

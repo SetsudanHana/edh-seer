@@ -8,6 +8,7 @@ import { deriveCardTags } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import type { CardTags, ManaLine } from "../schema.js";
 import { replacementAddedToken, scaleBounds, unpricedLoyaltyLines } from "./mana-lines.js";
+import { COMMANDER_OPPONENTS, COMMANDER_PLAYERS } from "../table.js";
 import fixtures from "./mana-lines.fixtures.json" with { type: "json" };
 
 const WUBRG = ["W", "U", "B", "R", "G"];
@@ -763,7 +764,7 @@ describe("a scaling mana add carries a floor and a ceiling (#1265)", () => {
     ["Food Chain", 1], ["Metamorphosis", 1],
     // the rest: floor 0, ceiling open
     ["Arbor Adherent", 0], ["Baldur's Gate", 0], ["Brigid, Clachan's Heart // Brigid, Doun's Mind", 0], ["Carpet of Flowers", 0], ["Deathbloom Ritualist", 0], ["Haruspex", 0],
-    ["Belbe, Corrupted Observer", 0], ["Selvala, Explorer Returned", 0], ["Charmed Pendant", 0], ["Burnt Offering", 0], ["Plasm Capture", 0], ["The Eternity Elevator", 0],
+    ["Charmed Pendant", 0], ["Burnt Offering", 0], ["Plasm Capture", 0], ["The Eternity Elevator", 0],
     ["White Lotus Tile", 0], ["Dreadship Reef", 0], ["Crucible of the Spirit Dragon", 0], ["Calciform Pools", 0], ["Accomplished Alchemist", 0],
   ];
   for (const [name, floor] of FLOOR_ONLY) {
@@ -797,6 +798,25 @@ describe("a scaling mana add carries a floor and a ceiling (#1265)", () => {
   });
   it("one case: the scale text is lowercase on a card the model path and the grammar path both read (Kami of Whispered Hopes, Haruspex)", () => {
     for (const name of ["Kami of Whispered Hopes", "Haruspex"]) for (const a of mg(name)) expect(a.amount, name).toBe((a.amount ?? "").toLowerCase());
+  });
+});
+
+describe("a count bounded by the players at the table has a ceiling (#1265, bound players)", () => {
+  const scaling = (name: string) => linesOf(name).filter((l) => l.source !== "token-maker" && l.amount.scales !== null);
+  it("the table is you and three opponents (owner speed ruling 2026-10-06)", () => {
+    expect(COMMANDER_OPPONENTS).toBe(3);
+    expect(COMMANDER_PLAYERS).toBe(4);
+  });
+  it("Selvala, Explorer Returned: each player reveals one card, so at most 4 nonland cards, floor 0", () => {
+    expect(scaling("Selvala, Explorer Returned")[0]!.amount).toMatchObject({ floor: 0, ceiling: 4, bound: "players" });
+    const a = (tagsOf("Selvala, Explorer Returned").abilities ?? []).find((x) => x.effect.kind === "mana-generation")!;
+    expect(a.count).toMatchObject({ floor: 0, ceiling: 4 });
+  });
+  it("Belbe: {C}{C} for each of YOUR opponents who lost life, at most 3 opponents, so 6", () => {
+    expect(scaling("Belbe, Corrupted Observer")[0]!.amount).toMatchObject({ floor: 0, ceiling: 6, bound: "players" });
+  });
+  it("counts of an opponent's cards, life or permanents are not bounded by players (Jeska's Will, Mana Geyser, Neheb the Eternal)", () => {
+    for (const n of ["Jeska's Will", "Mana Geyser", "Neheb, the Eternal"]) expect(scaling(n)[0]!.amount, n).toMatchObject({ ceiling: null });
   });
 });
 

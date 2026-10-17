@@ -19,6 +19,7 @@
  *  ONE READER OF "HOW MUCH IT ADDS" (#1193, DERIVE_VERSION 311): `production()` below. `ManaLine.amount` is its result and derive.ts sets `Ability.amount` from the
  *  same call (`manaAdded`), so the two cannot disagree. A SCALING amount ("X", "for each ...", "that much") has no number: the line names what it counts and the
  *  ability keeps the clause's own text, or nothing. `research/mana/amount-agreement.ts` measures the agreement.  */
+import { COMMANDER_OPPONENTS, COMMANDER_PLAYERS } from "../table.js";
 import type { ClauseRecord } from "../canonicalize.js";
 import type {
   Ability, Characteristics, ConsumedCost, LandFetch, ManaAnyColour, ManaGate, ManaLine, ManaLineSource, StaticFixer, SubjectFilter,
@@ -413,7 +414,7 @@ export const addsManaText = (text: string): boolean => ADDS_MANA_OR_S.test(text.
 const FIXED_THEN_FOR_EACH = /\badd\s+((?:\{[^{}]+\})+)\s*,?\s*then add\b[^.]*\bfor each\b/i;
 const singular = (w: string): string => w.endsWith("ies") ? `${w.slice(0, -3)}y` : w.endsWith("ves") ? `${w.slice(0, -3)}f` : w.endsWith("s") ? w.slice(0, -1) : w;
 
-export type ScaleBounds = { floor: number; ceiling: number | null; bound?: "colours" | "basic-land-types" };
+export type ScaleBounds = { floor: number; ceiling: number | null; bound?: "colours" | "basic-land-types" | "players" };
 /** THE INTERVAL A SCALING ADD SPANS (#1265, owner ruling 2026-10-17), read from the SHAPE of what it counts, never from a card name. `scales` is the line's scale text, `text` the clause (where an "X" is
  *  defined: "where X is ..."), `fixedPart` the printed fixed mana of the same sentence that no sibling line carries.
  *   - "for each color among permanents you control" (Faeburrow Elder, Bloom Tender): ceiling 5 (`colours`); floor the card's OWN colours, it being a permanent you control; "monocolored" permanents
@@ -427,7 +428,7 @@ export type ScaleBounds = { floor: number; ceiling: number | null; bound?: "colo
  *   cost or trigger that removes the card first ("Sacrifice this creature: Add {G} for each creature you control"); the corpus has none today either. The prototype rule covers the one alternate
  *   p/t shape with a floor (Cradle Clearcutter); a "level up" or "becomes a ... with base power" card with a scaling mana line has floor 0 here and so cannot over-claim.
  *   CEILING: every other count is open (null). A count that depends on the game, not the deck (Belbe's opponents who lost life, Selvala's revealed cards), stays open on purpose. */
-export function scaleBounds(scales: string, text: string, chars: Characteristics, selfNames: readonly string[], permanent: boolean, oracleText: string, fixedPart: number): ScaleBounds {
+export function scaleBounds(scales: string, text: string, chars: Characteristics, selfNames: readonly string[], permanent: boolean, oracleText: string, fixedPart: number, unit = 1): ScaleBounds {
   const defined = /\bwhere x is ([^.]*)/i.exec(text)?.[1]?.trim().toLowerCase();
   // "equal to this creature's power" (the model's object) and "this creature's power" (a "where X is" clause) are one count: both paths must read the same interval.
   const s = (defined ?? scales).trim().toLowerCase().replace(/\s+/g, " ").replace(/^equal to /, "").replace(/^the /, "");
@@ -445,6 +446,13 @@ export function scaleBounds(scales: string, text: string, chars: Characteristics
     if (among && permanent) out.floor += among[1] ? (chars.colors.length === 1 ? 1 : 0) : chars.colors.length;
     return out;
   }
+  // A COUNT OF PLAYERS is bounded by the table (owner speed ruling 2026-10-06: you plus three opponents; `table.ts`), each one making `unit` mana: "for each of your opponents who lost life"
+  // (Belbe, {C}{C} each: 6) counts opponents; "for each ... card revealed this way" after "each player reveals the top card of their library" (Selvala, Explorer Returned) counts one card per player.
+  // Only the PLAYER is the counted noun: an opponent's cards, life or permanents ("for each card in target opponent's hand") are not bounded by the table.
+  const countsWho = /^for each (?:of your |of the )?(opponents?|players?)(?![\w'\u2019])/.exec(s)?.[1];
+  const revealed = /^for each (?:nonland |land |creature )?cards? revealed this way$/.test(s) ? /\beach (player|opponent) reveals the top card of their library\b/i.exec(text)?.[1] : undefined;
+  const who = countsWho ?? revealed;
+  if (who !== undefined) return { ...out, ceiling: (/^opponent/.test(who) ? COMMANDER_OPPONENTS : COMMANDER_PLAYERS) * unit, bound: "players" };
   const plus = new RegExp(`^(\\d+|${WORD}) plus\\b`).exec(s);
   if (plus) return { ...out, floor: out.floor + (/^\d+$/.test(plus[1]!) ? Number(plus[1]) : NUMBER_WORD[plus[1]!]!) };
   const owner = /^(.+?)'s power$/.exec(s)?.[1];
@@ -728,6 +736,9 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (source === "static-grant" && made.anyColour === "among" && /\bthis creature'?s colou?rs\b/i.test(object)) made.anyColour = "grantee";
       // THE PRINTED FLOOR: "Add {R}{R}, then add {R} for each ..." (Rite of Flame) always makes the {R}{R}, so its net is that fixed part less the cost. Kept off `amount` (fixed stays null, the schema contract);
       // only when the add comes BEFORE the "for each" (else the count belongs to this add and the floor is the ceiling of 1).
+      // MANA PER COUNTED THING (Belbe's {C}{C}): the object's own fixed amount, else the symbols the sentence prints right after "add" (the production read above found the scale and no number).
+      const printedUnit = /\badds?\s+((?:\{[^{}]+\})+)/i.exec(sentence)?.[1];
+      const unit = made.amount.fixed ?? (printedUnit !== undefined ? production(printedUnit).amount.fixed : null) ?? 1;
       let floor: number | null = null;
       if (made.amount.scales === null && !sibling) {
         const counted = scaleOfSentence(sentence);
@@ -742,7 +753,7 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (scaleText !== null && addsManaText(text)) {
         const fixedPart = sibling || entries.length > 1 && entries.some((e) => e.sibling) ? 0 : FIXED_THEN_FOR_EACH.test(sentence) ? production(FIXED_THEN_FOR_EACH.exec(sentence)![1]!).amount.fixed ?? 0 : 0;
         const permanent = !chars.types.some((t) => /^(?:instant|sorcery)$/i.test(t));
-        const bounds = scaleBounds(scaleText, text, chars, selfNames, permanent, input.oracleText ?? "", fixedPart);
+        const bounds = scaleBounds(scaleText, text, chars, selfNames, permanent, input.oracleText ?? "", fixedPart, unit);
         made.amount = { ...made.amount, ...bounds };
         if (ability) {
           // derive.ts read the action as the model and the grammar normalise it; a scale text it already holds stays (the line reads the raw clause, which can word the same count differently).
