@@ -997,8 +997,15 @@ describe("ramp.landPut is derived", () => {
   });
   test("destroying every land and returning some is not ramp (Fall of the Thran)", () => {
     expect(ruleMatches(rule, plus(land("land", "graveyard", "any"), "dies", { control: "any", type: "land", scope: "all" }), set)).toBe(false);
+    // "Sacrifice two lands" / "any number of lands" (Planar Engineering, Scapeshift, Natural Balance, Hew the Entwood) derives the SAME
+    // scope-all `dies`, but under `you`: your own sacrifice, then lands put onto the battlefield, is the drop. Only a wipe under any/opp is refused.
+    expect(ruleMatches(rule, plus(land("land", "library"), "dies", { control: "you", type: "land", scope: "all" }), set)).toBe(true);
     // Destroying ONE land (Waking the Trolls) is not "all".
     expect(ruleMatches(rule, plus(land("land", "graveyard"), "dies", { control: "any", type: "land", scope: "target" }), set)).toBe(true);
+  });
+  test("Sacred Ground is NOT refused: its derive has no trigger to tell a retention from a drop (CEILING, owner ruling 2026-10-17)", () => {
+    // Pinned so the day the derive gains the trigger and the rule refuses it, this test is the one to flip.
+    expect(ruleMatches(rule, plus(land("land", "graveyard"), "leaves", { control: "you", type: "land", zone: "graveyard", fromZone: "graveyard", ref: "trigger" }), set)).toBe(true);
   });
   test("allOf and not compose inside a rule", () => {
     const yes: Rule = { id: "a", match: [{ op: "allOf", clauses: [{ op: "emits", verbs: ["enters"] }, { op: "not", clause: { op: "emits", verbs: ["dies"] } }] }] };
