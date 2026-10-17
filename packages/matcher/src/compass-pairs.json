@@ -777,5 +777,23 @@
     "note": "#729 owner ruling 2026-10-09: a card that uses a card from an OPPONENT's graveyard joins only cards that explicitly MILL opponents.",
     "source": "#729 (2026-10-09)",
     "verified": true
+  },
+  {
+    "a": "Pact of Negation",
+    "b": "Stunning Reversal",
+    "category": "life-lost",
+    "tag": "loses-game:any",
+    "note": "#1252 owner ruling: a self-loss still SUPPLIES a card that replaces the loss. Pact: 'If you don't, you lose the game.' Stunning Reversal: 'The next time you would lose the game this turn, instead draw seven cards and your life total becomes 1.'",
+    "source": "#1252 owner ruling 2026-10-16/17",
+    "verified": true
+  },
+  {
+    "a": "Phage the Untouchable",
+    "b": "Blood Tyrant",
+    "category": "life-lost",
+    "tag": "loses-game:any",
+    "note": "#1252 owner ruling: Phage's 'Whenever Phage deals combat damage to a player, that player loses the game.' is the damaged opponent, so it feeds Blood Tyrant's 'Whenever a player loses the game, put five +1/+1 counters on this creature.'",
+    "source": "#1252 owner ruling 2026-10-16/17",
+    "verified": true
   }
 ]

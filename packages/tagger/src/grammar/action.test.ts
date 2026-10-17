@@ -207,6 +207,17 @@ test("coverage push 2: object lists, recipient lists, control magic, clones, cas
   expect(read("You may cast spells that have a cycling ability from your graveyard.")).toEqual([]);
 });
 
+test("the player who loses the game is the actor, kept (#1252)", () => {
+  expect(read("that player loses the game.")).toMatchObject([{ verb: "lose-game", actor: { text: "that player" } }]);
+  expect(read("you lose the game.")).toMatchObject([{ verb: "lose-game", actor: { control: "you", text: "you" } }]);
+  // The actor carries ACTORS' control AND scope (actorOf matches a word followed by a space).
+  expect(read("that player loses the game.")[0]?.actor).toEqual({ control: "any", scope: "that", text: "that player" });
+  expect(read("each opponent loses the game.")[0]?.actor).toEqual({ control: "opp", scope: "each", text: "each opponent" });
+  expect(read("target player loses the game.")[0]?.actor).toEqual({ control: "any", scope: "target", text: "target player" });
+  expect(read("you lose the game.")[0]?.actor).toEqual({ control: "you", text: "you" });
+  expect(read("Target player loses the game and draws a card.").map((r) => [r.verb, r.actor?.control, r.actor?.scope])).toEqual([["lose-game", "any", "target"], ["draw", "any", "target"]]);
+});
+
 test("coverage push 3: game and keyword actions read by verb, the stored object kept", () => {
   for (const [text, verb] of [["roll a d20.", "roll-dice"], ["flip a coin.", "flip-coin"], ["Take an extra turn after this one.", "extra-turn"],
     ["you win the game.", "win-game"], ["that player loses the game.", "lose-game"], ["After this phase, there is an additional combat phase.", "extra-combat"],

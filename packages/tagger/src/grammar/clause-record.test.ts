@@ -1,4 +1,6 @@
 import { expect, test } from "vitest";
+import { deriveCardTags } from "../derive/derive.js";
+import { deriveInputOf } from "../derive-input.js";
 import { grammarClauseRecords, phaseControl, triggerSubjectText } from "./clause-record.js";
 
 // #896 task 7: clause records from printed text alone.
@@ -456,4 +458,17 @@ test("only 'a spell or ability ... causes' is rewritten: another cause keeps the
   // Unanchored, `^.+? causes? (.+?) to` rewrote 23 corpus preambles (Firesong and Sunspeaker, Toofer, Strict Proctor ...).
   expect(triggerSubjectText("Whenever a player causes a creature to be sacrificed")).toBe("a player causes a creature to be sacrificed");
   expect(triggerSubjectText("Whenever a source an opponent controls causes you to gain life")).toBe("a source an opponent controls causes you to");
+});
+
+// #1252: the whole chain -- grammar reading -> clause record (NO_OBJECT_YOU) -> derive. Phage's printed text, verbatim from the corpus.
+test("Phage the Untouchable: its own loss is yours, the player it damages is an opponent's", () => {
+  const phage = {
+    name: "Phage the Untouchable", typeLine: "Legendary Creature — Phage", keywords: ["Deathtouch"], colors: ["B"], colorIdentity: ["B"], manaValue: 7, power: "4", toughness: "4",
+    oracleText: "When Phage enters, if you didn't cast it from your hand, you lose the game.\nWhenever Phage deals combat damage to a creature, destroy that creature. It can't be regenerated.\nWhenever Phage deals combat damage to a player, that player loses the game.",
+  };
+  const g = grammarClauseRecords(phage);
+  expect(g.complete).toBe(true);
+  const tags = deriveCardTags(deriveInputOf(phage as never, "phage", phage.name, g.records, undefined, g.readings));
+  const lg = tags.abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "loses-game").map((e) => [a.clause, e.subject.control] as const));
+  expect(lg).toEqual([[1, "you"], [3, "opp"]]);
 });

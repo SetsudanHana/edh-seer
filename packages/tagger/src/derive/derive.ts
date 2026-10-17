@@ -487,7 +487,8 @@ import { emblemRecipient } from "../emblem.js";
 // 330: #1253 the stored trigger subject of "a spell or ability an opponent controls causes X to ..." is X, not the cause plus half the event: Sacred Ground's land is YOURS (its return read `control: opp`).
 // 331: #1253 review -- a refused trigger's class is copied onto a keyword grant's ref'd subject ("it gains X" over "a creature you control attacks alone" is a creature you control); an `if:` flags only when it tests the object; "them" after a cast/draw/discard trigger is the player, and "put it" under "if this card is exiled" is the card (Scytheclaw Raptor, Adrenaline Jockey, Senu); a recursion of the trigger's own object takes its class (Sacred Ground); "in your graveyard" is yours (Victimize); an inherited "It gains" bullet reads the header's object.
 // 332: #1253 final review -- a grant's class is copied only when the trigger subject precedes the event (Hedron Blade's blockers are not "it"); "in your graveyard" is read off the action's object first (Neyam Shai Murad's "their graveyard" is not yours); Sacred Ground's recursion is of a card put into the graveyard FROM THE BATTLEFIELD; Senu's flicker effect is self.
-export const DERIVE_VERSION = 332;
+// 333: #1252 "that player loses the game" after damage to a player/opponent is the DAMAGED player, an opponent (Phage the Untouchable, Vorpal Sword, Atemsis): the grammar dropped the actor so the loss read `you`; damage of any kind "to an opponent" now counts for the damaged-player reading.
+export const DERIVE_VERSION = 333;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -971,9 +972,13 @@ function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, car
   const lower = text.toLowerCase();
   const start = lower.startsWith("whenever ") ? 9 : lower.startsWith("when ") ? 5 : -1;
   if (start < 0) return false;
-  const at = lower.indexOf(" combat damage to ", start);
+  // "deals combat damage to a player / an opponent", or damage of ANY kind "to an opponent" (Atemsis, #1252).
+  const combatAt = lower.indexOf(" combat damage to ", start);
+  const anyAt = combatAt < 0 ? lower.indexOf(" damage to ", start) : -1;
+  const at = combatAt >= 0 ? combatAt : anyAt;
   if (at < 0) return false;
-  const target = lower.slice(at + " combat damage to ".length);
+  const target = lower.slice(at + (combatAt >= 0 ? " combat damage to " : " damage to ").length);
+  if (combatAt < 0 && !/^an opponent\b/.test(target)) return false;
   const toOpponent = /^an opponent\b/.test(target);
   if (!toOpponent && !/^a player\b/.test(target)) return false;
   const head = text.slice(start, at).trimEnd();
@@ -2544,6 +2549,12 @@ export function deriveAbilities(
       if (action.fromZone === "graveyard" && /\bfrom that player's graveyard\b/i.test(text)
         && damagedPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
         for (const e of emits) if (e.verb === "leaves" && e.subject.control === "any" && e.subject.zone === "graveyard") e.subject.control = "opp";
+      }
+      // #1252: "that player loses the game" after damage the card's side deals to a player is the damaged
+      // player -- an opponent (Phage, Vorpal Sword, Atemsis). Unresolved ("a creature deals ...") stays `any`.
+      if (action.verb === "lose-game" && /^that player$/i.test((action.object ?? "").trim())
+        && damagedPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
+        for (const e of emits) if (e.verb === "loses-game" && e.subject.control === "any") e.subject.control = "opp";
       }
       // A GRANT TO THE TRIGGERING OBJECT says so (Stonehoof Chieftain: "whenever another creature you
       // control attacks, IT gains trample"), so the matcher can see a keyword that object already

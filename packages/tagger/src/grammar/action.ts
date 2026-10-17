@@ -868,7 +868,13 @@ function subjectAction(t: string): ActionReading[] | null {
   if (/^(?:after this (?:main )?phase, )?there is an additional (?:main|beginning) phase(?: after this (?:main )?phase)?$/i.test(t)) return [{ verb: "extra-phase" }];
   // "that ability triggers an additional time": a trigger doubled.
   if (/^(?:that ability|it) triggers an additional time$/i.test(t)) return [{ verb: "trigger-again" }];
-  if (/^(?:that player|target player|each opponent|you) (?:wins?|loses?) the game$/i.test(t)) return [{ verb: /wins? the game$/i.test(t) ? "win-game" : "lose-game" }];
+  // THE PLAYER WHO WINS OR LOSES IS THE ACTOR, and it is kept (#1252): without it the record's object defaulted to "you",
+  // so Phage's "that player loses the game" derived a loss of YOURS.
+  const gameEnd = /^(that player|target player|each opponent|you) (?:wins?|loses?) the game$/i.exec(t);
+  if (gameEnd) {
+    const who = gameEnd[1]!.toLowerCase();
+    return [{ verb: /wins? the game$/i.test(t) ? "win-game" : "lose-game", actor: { control: "you", ...ACTORS.find(([w]) => w === who)?.[1], text: who } }];
+  }
   const phases = /^(.+?) phases? (in|out)$/i.exec(t);
   // CEILING: a phased-out class ("all phased-out creatures", Time and Tide) the object parser cannot name
   // keeps its words as the phrase, on a back-reference object; no filter field is invented for the status.

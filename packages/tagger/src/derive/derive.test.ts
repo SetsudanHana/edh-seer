@@ -1620,6 +1620,42 @@ test("'that player's graveyard' after ANYONE's combat damage, or a target player
   expect(abilities.find((a) => a.effect.kind === "graveyard-recursion")?.effect.subject?.control).toBe("any");
 });
 
+// #1252: "that player loses the game" after damage to a player is the DAMAGED player, an opponent (the emit
+// read `you`, which a self "you lose the game" ability must not share).
+const losesGame = (abilities: ReturnType<typeof deriveAbilities>["abilities"]) =>
+  abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "loses-game");
+const loseGameClause = (trigger: { event: string; subject: string; control: string }, text: string, object = "that player", cardName = "X") =>
+  deriveAbilities([{ id: 3, abilityType: "triggered", trigger, actions: [{ verb: "lose-game", object }] }], cardName, { 3: text }, undefined, text);
+
+test("'that player loses the game' after combat damage dealt by the card itself is the opponent", () => {
+  const text = "Whenever Phage deals combat damage to a player, that player loses the game.";
+  const { abilities } = loseGameClause({ event: "damage-dealt", subject: "this", control: "you" }, text, "that player", "Phage the Untouchable");
+  expect(losesGame(abilities).map((e) => e.subject.control)).toEqual(["opp"]);
+});
+
+test("'that player loses the game' after equipped creature's combat damage (Vorpal Sword) is the opponent", () => {
+  const text = "Whenever equipped creature deals combat damage to a player, that player loses the game.";
+  const { abilities } = loseGameClause({ event: "damage-dealt", subject: "equipped creature, combat damage to a player", control: "you" }, text, "that player", "Vorpal Sword");
+  expect(losesGame(abilities).map((e) => e.subject.control)).toEqual(["opp"]);
+});
+
+test("'that player loses the game' after NON-combat damage to an opponent (Atemsis) is the opponent", () => {
+  const text = "Whenever Atemsis deals damage to an opponent, you may reveal your hand. If cards with at least six different mana values are revealed this way, that player loses the game.";
+  const { abilities } = deriveAbilities([{ id: 3, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "Atemsis", control: "you" }, actions: [
+    { verb: "reveal", object: "your hand", optional: true }, { verb: "lose-game", object: "that player" },
+  ] }], "Atemsis, All-Seeing", { 3: text }, undefined, text);
+  expect(losesGame(abilities).map((e) => e.subject.control)).toEqual(["opp"]);
+});
+
+test("'that player loses the game' after anyone's combat damage stays unresolved, and 'you lose the game' stays yours", () => {
+  const anyone = "Whenever a creature deals combat damage to a player, that player loses the game.";
+  expect(losesGame(loseGameClause({ event: "damage-dealt", subject: "a creature", control: "any" }, anyone).abilities).map((e) => e.subject.control)).not.toContain("opp");
+  const etb = "When Phage enters, if you didn't cast it from your hand, you lose the game.";
+  expect(losesGame(loseGameClause({ event: "enters", subject: "this", control: "you" }, etb, "you", "Phage the Untouchable").abilities).map((e) => e.subject.control)).toEqual(["you"]);
+  const pact = "At the beginning of your upkeep, you lose the game unless you pay {2}{U}.";
+  expect(losesGame(loseGameClause({ event: "beginning-of-upkeep", subject: "your", control: "you" }, pact, "you", "Pact of Negation").abilities).map((e) => e.subject.control)).toEqual(["you"]);
+});
+
 test("an exile from a graveyard that uses nothing stays hate", () => {
   const { abilities } = deriveAbilities([{
     id: 1, abilityType: "activated",

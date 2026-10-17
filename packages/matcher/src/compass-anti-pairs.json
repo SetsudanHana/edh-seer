@@ -251,6 +251,51 @@
       "why": "#729: Soundwave exiles an instant or sorcery from THEIR (the damaged player's) graveyard; your own discard fills yours, so Faithless Looting brings nothing back for it. Own-yard fills are not what an opponent recursion joins (owner ruling 2026-10-09).",
       "source": "#729 (2026-10-09)",
       "verified": true
+    },
+    {
+      "a": "Sneak Attack",
+      "b": "Phage the Untouchable",
+      "class": "drawback",
+      "why": "Phage the Untouchable reads 'When Phage enters, if you didn't cast it from your hand, you lose the game.' That is a self-loss DRAWBACK, not a payoff: nothing is gained by putting it onto the battlefield, so no cheat effect (Sneak Attack: 'You may put a creature card from your hand onto the battlefield') reaches it.",
+      "source": "#1252 owner ruling 2026-10-16/17",
+      "verified": true,
+      "tag": "cheat:creature"
+    },
+    {
+      "a": "Animate Dead",
+      "b": "Phage the Untouchable",
+      "class": "drawback",
+      "why": "Phage the Untouchable reads 'When Phage enters, if you didn't cast it from your hand, you lose the game.' That is a self-loss DRAWBACK, not a payoff: nothing is gained by putting it onto the battlefield, so no enters effect (Animate Dead: 'Return enchanted creature card to the battlefield under your control') reaches it.",
+      "source": "#1252 owner ruling 2026-10-16/17",
+      "verified": true,
+      "tag": "enters:permanent"
+    },
+    {
+      "a": "Panharmonicon",
+      "b": "Phage the Untouchable",
+      "class": "drawback",
+      "why": "Phage the Untouchable reads 'When Phage enters, if you didn't cast it from your hand, you lose the game.' That is a self-loss DRAWBACK, not a payoff: nothing is gained by putting it onto the battlefield, so no enters-doubler (Panharmonicon: 'that ability triggers an additional time') reaches it: doubling the loss is a drawback twice, not a payoff.",
+      "source": "#1252 owner ruling 2026-10-16/17",
+      "verified": true,
+      "tag": "doubles:enters"
+    },
+    {
+      "a": "Strionic Resonator",
+      "b": "Pact of Negation",
+      "class": "drawback",
+      "why": "Pact of Negation's 'At the beginning of your next upkeep, pay {3}{U}{U}. If you don't, you lose the game.' is a self-loss drawback. Strionic Resonator ('Copy target triggered ability you control') copying it only repeats the loss, so it is not a payoff for the copier.",
+      "source": "#1252 owner ruling 2026-10-16/17",
+      "verified": true,
+      "tag": "copies:triggered"
+    },
+    {
+      "a": "Forbidden Crypt",
+      "b": "Blood Tyrant",
+      "class": "drawback",
+      "why": "Forbidden Crypt's 'If you can't, you lose the game.' does make you lose, and in play Blood Tyrant ('Whenever a player loses the game, put five +1/+1 counters on this creature.') would trigger on it. But your own loss is a drawback, not a payoff (owner ruling 2026-10-16/17, #1252): a self-loss of any kind feeds no card that profits from a loss.",
+      "source": "#1252 owner ruling 2026-10-16/17",
+      "verified": true,
+      "tag": "loses-game:any"
     }
   ],
   "knownDefects": [],

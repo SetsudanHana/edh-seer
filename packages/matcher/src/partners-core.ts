@@ -10,7 +10,7 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
-import { POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, losesYouTheGame, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { keywordAbilities } from "./implied.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
@@ -1101,15 +1101,20 @@ export const abilitiesOf = perCard((d: DeckCard): CardTags["abilities"] =>
  *  `Ability.triggerRefused`). Every key, candidate and ranking below reads this one; only the page's
  *  ability rows read the full list, because they SHOW what the card prints. */
 export const claimingAbilitiesOf = perCard((d: DeckCard): CardTags["abilities"] =>
-  abilitiesOf(d).filter((a) => a.triggerRefused !== true));
+  // A self "you lose the game" trigger claims nothing either (owner 2026-10-16, #1252): see `losesYouTheGame`.
+  abilitiesOf(d).filter((a) => a.triggerRefused !== true && !losesYouTheGame(a)));
+// A self-loss ability still SUPPLIES its loss key: a rescue (Stunning Reversal) hears it, and
+// `directedReasons` (`pEventsFor`) decides per pair; the key only widens candidates (#1252).
 export const emitKeysOf = perCard((d: DeckCard): string[] =>
-  claimingAbilitiesOf(d).flatMap((a) => (a.emits ?? []).flatMap((e) => splitKey(eventKey(e)))));
+  abilitiesOf(d).filter((a) => a.triggerRefused !== true).flatMap((a) => (a.emits ?? []).flatMap((e) => splitKey(eventKey(e)))));
 /** WHAT A CARD SUPPLIES BY BEING PLAYED (owner, 2026-10-03, #1014: "the implied events have to stop
  *  being implied, so cards like Sol Ring which are generically good still produce the event of
  *  artifact being cast or artifact entering"). The engine's own producer side, `producerEvents`,
  *  which the deck report has always joined on: casting the card, the permanent entering, and what
  *  its keywords and characteristics imply. Read on the corpus side too, so the page, the pool and
  *  the report ask one question; it used to be the suggestion pool alone. */
+// Raw `producerEvents` on purpose (#1252): a self-loss ability's emits only widen candidates here; the
+// pairwise `directedReasons` check decides whether a payoff or a rescue hears them.
 export const impliedKeysOf = perCard((d: DeckCard): string[] =>
   d.tags ? producerEvents(d.tags).flatMap((e) => splitKey(eventKey(e))) : []);
 /** A `conditionCares` theme tag ("gain-life:any", "cast:-creature", "dies:creature") as event keys.

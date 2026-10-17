@@ -270,6 +270,8 @@ export function detectLines(deck: readonly DeckCard[], hierarchy: Hierarchy): De
       for (const other of deck) {
         // A REFUSED TRIGGER'S ABILITY SUPPLIES NOTHING (#1253, `Ability.triggerRefused`).
         const otherAbilities = ((other.tags?.abilities ?? []) as unknown as Record<string, any>[]).filter((x) => x.triggerRefused !== true);
+        // Raw `producerEvents` is harmless for a self "you lose the game" ability (#1252): a line needs a
+        // `threshold` anchor and no loses-game trigger carries one.
         const producerEvts = other.tags ? producerEvents(other.tags) : [];
 
         // Suppliers: reuse the engine's own event matching instead of a synthetic demand built from
