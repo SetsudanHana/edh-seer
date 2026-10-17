@@ -4,19 +4,19 @@
   "roles": {
     "ramp": {
       "weights": {
-        "manaValue": -0.18356362146222388,
-        "frequency": 0.3322835765658113,
-        "timing": 0.06385995894423925,
-        "extraValue": 0.4974867815847415,
-        "restriction": -0.03390677772962394,
-        "amount": 0.000005420739503481098,
-        "rateFloor": 0.29111001681544235,
-        "rateCeiling": 0.36811975304903566
+        "manaValue": -0.18391575277103386,
+        "frequency": 0.2867893026568433,
+        "timing": 0.05166670677708997,
+        "extraValue": 0.6015184035202642,
+        "restriction": -0.009273266055040256,
+        "amount": 0.000009877307031463944,
+        "rateFloor": 0.30919143775903896,
+        "rateCeiling": 0.36853609961415074
       },
       "pairs": 431,
-      "heldOutAccuracy": 0.6330647112493301,
+      "heldOutAccuracy": 0.6629525779741329,
       "baselineAccuracy": 0.601776016485017,
-      "fallbackAccuracy": 0.5252912771366486,
+      "fallbackAccuracy": 0.5464104564024783,
       "fallback": false
     },
     "draw": {

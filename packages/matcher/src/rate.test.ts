@@ -297,3 +297,42 @@ test("an imprint card's activation charges more than mana; a token rate carries 
   expect(alarm).toMatchObject({ family: "tokens", amount: 2, size: "1/1" });
   expect(bestPerFamily(ratesOf(card("Treasure Maker", "{1}", [{ kind: "on-cast", effect: { kind: "token-generation", subject: { control: "you", token: true, subtype: "treasure" } }, amount: "1", repeats: "once" }])))[0]).not.toHaveProperty("size");
 });
+
+/** A SCALING MANA ADD CARRIES AN INTERVAL, NOT NO RATE (#1265 task 2, owner ruling 2026-10-17). `Ability.count` is the interval derive stamped ({floor, ceiling}, the same as the ManaLine's
+ *  `amount.floor`/`ceiling`); the rate row reads it, so the add is no longer skipped and scored as the worst rate in its family. Oracle texts from the corpus (2026-10-17): Faeburrow Elder
+ *  "{T}: For each color among permanents you control, add one mana of that color." {2}{G}{W}; Harabaz Druid "{T}: Add X mana of any one color, where X is the number of Allies you control." {1}{G}.
+ *  Selvala, Explorer Returned "{T}: Each player reveals the top card of their library. For each nonland card revealed this way, add {G} and you gain 1 life." */
+const manaAbility = (kind: string, amount: string, count: { floor: number; ceiling: number | null }, extra: Record<string, unknown> = {}) => ({
+  kind, effect: { kind: "mana-generation", subject: { control: "any", token: null }, ...extra }, amount, count, ...(kind === "activated" ? { cost: "{T}" } : {}), repeats: "per-cycle",
+});
+test("Faeburrow Elder: a scaling add with floor 2 and ceiling 5 is a mana row, floor 2 ceiling 5", () => {
+  const rows = ratesOf(card("Faeburrow Elder", "{2}{G}{W}", [manaAbility("activated", "for each color among permanents you control", { floor: 2, ceiling: 5 })], { types: ["creature"] }));
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).toMatchObject({ family: "mana", amount: 2, mana: 0, floor: 2, ceiling: 5, repeats: "per-cycle" });
+});
+test("Harabaz Druid: an open count (floor 0, no ceiling) is a row with floor 0 and an open ceiling, not no row", () => {
+  const rows = ratesOf(card("Harabaz Druid", "{1}{G}", [manaAbility("activated", "x", { floor: 0, ceiling: null })], { types: ["creature"] }));
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).toMatchObject({ family: "mana", amount: 0, floor: 0, ceiling: null });
+});
+test("an x-cost scaling mana add (Doc Samson: X is its power, floor 3) keeps its interval despite the scaling label", () => {
+  const rows = ratesOf(card("Doc Samson", "{2}{G}", [manaAbility("activated", "x", { floor: 3, ceiling: null }, { scaling: "x-cost" })], { types: ["creature"] }));
+  expect(rows[0]).toMatchObject({ amount: 3, floor: 3, ceiling: null });
+});
+test("a scaling add in a trigger has floor 0 whatever its interval floor (a trigger may never fire), the ceiling stays open", () => {
+  const rows = ratesOf(card("Selvala, Explorer Returned", "{1}{G}{W}", [manaAbility("triggered", "for each nonland card revealed this way", { floor: 0, ceiling: null })], { types: ["creature"] }));
+  expect(rows[0]).toMatchObject({ floor: 0, ceiling: null });
+  const bounded = ratesOf(card("Trigger with a floor", "{1}{G}", [manaAbility("triggered", "x", { floor: 2, ceiling: null })], { types: ["creature"] }));
+  expect(bounded[0]).toMatchObject({ amount: 2, floor: 0, ceiling: null });
+});
+test("a mana add with a non-numeric amount and NO interval (Photon: 'that much') is still no row", () => {
+  const ab = { kind: "triggered", effect: { kind: "mana-generation", subject: { control: "any", token: null } }, amount: "that much mana of any one color", repeats: "per-cycle" };
+  expect(ratesOf(card("Photon", "{1}{R}", [ab], { types: ["creature"] }))).toEqual([]);
+});
+test("an unknown interval (floor 0, open) does not displace a known mana row on the same card (Ultima, Origin of Oblivion went rateCeiling 100 -> 0 without this)", () => {
+  const rows = ratesOf(card("Two adds", "{3}{G}{G}", [
+    manaAbility("activated", "1", { floor: 1, ceiling: 1 }),
+    manaAbility("triggered", "x", { floor: 0, ceiling: null }),
+  ], { types: ["creature"] }));
+  expect(rows.map((r) => [r.amount, r.floor, r.ceiling])).toEqual([[1, 1, 1]]);
+});
