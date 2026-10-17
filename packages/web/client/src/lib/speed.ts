@@ -71,7 +71,7 @@ export function growsCaveat(unbounded: readonly string[] | undefined): string {
 }
 
 /** What the drain turn assumes, in one line: once per thing that sets it off, nobody gains life, and
- *  any source that grows with the board counted as one. */
+ *  any uncapped source counted as one (`growsCaveat`). */
 export function drainCaveat(d: { turn?: number; cards: string[]; unbounded: string[] }): string {
   const n = d.cards.length;
   const what = `${n} repeating drain${n === 1 ? "" : "s"} at each opponent`;
