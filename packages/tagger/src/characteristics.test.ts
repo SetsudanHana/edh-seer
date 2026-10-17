@@ -198,3 +198,19 @@ test("an Aura carries its Enchant line as a subject; a non-Aura never does", () 
   expect(aura("Enchant creature card in a graveyard\nWhen this Aura enters, if it's on the battlefield, ...")).toBeUndefined();
   expect(extractCharacteristics({ ...inalla, oracleText: "Enchant creature" } as never).enchants).toBeUndefined();
 });
+
+// #1268 F7: the one face rule, read by derive (`playableFaces`) and by the matcher's mana lines and goldfish type line.
+test("frontFaceOnly: transform and flip are front-only, every other layout plays either face", async () => {
+  const { frontFaceOnly } = await import("./characteristics.js");
+  expect(frontFaceOnly("transform")).toBe(true);
+  expect(frontFaceOnly("flip")).toBe(true);
+  for (const layout of ["modal_dfc", "adventure", "split", "prepare", "normal", undefined]) expect(frontFaceOnly(layout)).toBe(false);
+});
+
+test("frontFaceOnly: More Than Meets the Eye (CR 702.162) is cast either face, on a transform card", async () => {
+  const { frontFaceOnly, playableFaces } = await import("./characteristics.js");
+  expect(frontFaceOnly("transform", ["More Than Meets the Eye"])).toBe(false);
+  expect(frontFaceOnly("transform", ["Flying"])).toBe(true);
+  expect(playableFaces("Artifact Creature — Robot // Artifact — Vehicle", "transform", ["More Than Meets the Eye"])).toHaveLength(2);
+  expect(playableFaces("Artifact Creature — Robot // Artifact — Vehicle", "transform", [])).toHaveLength(1);
+});

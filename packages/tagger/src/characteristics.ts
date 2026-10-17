@@ -22,6 +22,14 @@ const FRONT_FACE_ONLY = new Set(["transform", "flip"]);
  *  "whenever a Vehicle you control enters" watches (recall v4 #151, 2026-09-09). */
 const CAST_EITHER_FACE = "more than meets the eye";
 
+/** THE ONE FACE RULE (#1268 F7): is only this card's FRONT face ever cast or played? True for a transform or flip
+ *  card, except one that says More Than Meets the Eye. `playableFaces` is built on it, and the matcher's mana lines
+ *  and goldfish type line read it too rather than keep their own copy of the layout set. */
+export function frontFaceOnly(layout: string | undefined, keywords: readonly string[] = []): boolean {
+  return layout !== undefined && FRONT_FACE_ONLY.has(layout)
+    && !keywords.some((k) => k.toLowerCase() === CAST_EITHER_FACE);
+}
+
 /** The faces this card can actually be PLAYED as, one at a time — each with its own types and
  *  subtypes, never merged. `undefined` for a single-face card, where the card is its one face and
  *  the union already says everything.
@@ -33,9 +41,7 @@ const CAST_EITHER_FACE = "more than meets the eye";
 export function playableFaces(typeLine: string, layout?: string, keywords: readonly string[] = []): Characteristics["faces"] {
   const parts = typeLine.split(FACE_SEP);
   if (parts.length < 2) return undefined;
-  const frontOnly = layout !== undefined && FRONT_FACE_ONLY.has(layout)
-    && !keywords.some((k) => k.toLowerCase() === CAST_EITHER_FACE);
-  const playable = frontOnly ? parts.slice(0, 1) : parts;
+  const playable = frontFaceOnly(layout, keywords) ? parts.slice(0, 1) : parts;
   return playable.map((face) => {
     const [types, subtypes] = splitTypeLine(face);
     return { types, subtypes };

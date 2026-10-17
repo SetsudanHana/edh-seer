@@ -12,6 +12,7 @@
     "./self-reference": "./src/derive/self-reference.ts",
     "./grammar": "./src/grammar/filter.ts",
     "./subtypes": "./src/derive/subtypes.ts",
+    "./characteristics": "./src/characteristics.ts",
     "./gate": "./src/derive/gate.ts",
     "./emblem": "./src/emblem.ts",
     "./segment": "./src/segment.ts",
