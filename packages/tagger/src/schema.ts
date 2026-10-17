@@ -1466,6 +1466,23 @@ export interface ManaRestriction {
 /** What a mana line's cost uses up (`ManaLine.cost.consumes`). */
 export type ConsumedCost = "discard" | "exile" | "energy" | "return-to-hand" | "forage" | "collect-evidence" | "unknown";
 
+/** How much one use of a mana line adds (`ManaLine.amount`). `fixed` is the number (the smallest across the printed alternatives), `null` when it scales; `scales` then names what it counts
+ *  ("for each Forest you control", "equal to ...", "X"). */
+export interface ManaAmount {
+  fixed: number | null;
+  scales: string | null;
+  /** THE INTERVAL A SCALING ADD SPANS (owner ruling 2026-10-17, #1265): never a fake fixed 1 and never "nothing". Present on every line that SCALES and adds mana (`scales` set); absent on a fixed line
+   *  (its interval is `fixed`) and on a line whose text adds no mana (Halo Forager's "pay {X}", mistyped). `floor` is what the add makes whatever the board: the printed fixed part ("Add {R}{R}, then add
+   *  {R} for each ...", Rite of Flame: 2 -- the fixed part is its own fixed sibling line when the model kept both adds, and then `floor` counts only the scaling part's own contribution, so the lines'
+   *  floors add), plus what the CARD ITSELF contributes to its own count: its colours for "for each color among permanents you control" (Faeburrow Elder 2, Bloom Tender 1), 1 for "the number of
+   *  Shrines you control" on a Shrine, its printed power for "this creature's power", 1 for "1 plus ...". `ceiling` is the most the count can reach, `null` when open. */
+  floor?: number;
+  ceiling?: number | null;
+  /** WHAT BOUNDS `ceiling`: `colours` (five colours, "for each color among ..."), `basic-land-types` (five, Domain), `players` (the table: you plus three opponents, times the mana each makes: Selvala, Explorer Returned 4, Belbe 6; owner speed ruling 2026-10-06). Absent when the ceiling is open. A triggered or static add's bounded ceiling is not carried into its matcher rate row ("a trigger may never fire"), so `players` on a trigger is derive-only data.
+   *  CEILING: a bound that depends on the game and no table size leaves the ceiling open (an opponent's hand, life lost, permanents). */
+  bound?: "colours" | "basic-land-types" | "players";
+}
+
 export interface ManaLine {
   /** The face that prints it: 0 the front, 1 the back of a transform / modal card (Treasure Cove's `{T}: Add {C}`). */
   face: 0 | 1;
@@ -1512,8 +1529,12 @@ export interface ManaLine {
   anyColour: ManaAnyColour | null;
   /** How much one use adds. `fixed` is the number (the smallest across the printed alternatives), `null` when it
    *  scales; `scales` then names what it counts ("for each Forest you control", "equal to ...", "X"). */
-  amount: { fixed: number | null; scales: string | null };
-  /** Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as its printed fixed part when one
+  /** How much one use adds: `fixed`, or `scales` with the interval it spans (`floor`, `ceiling`, `bound`). See `ManaAmount`. */
+  amount: ManaAmount;
+  /** CEILING: `net` is the LEGACY one-unit floor, kept so matcher results do not move: for a SCALING line it assumes the printed fixed part, else 1, then less `cost.mana`. It is NOT the guaranteed amount --
+   *  `amount.floor` is the authoritative guaranteed amount of a scaling line (Doc Samson floor 3 but net 1; Selvala, Explorer Returned floor 0 but net 1). Read by goldfish.ts and build.ts; the deck math reads
+   *  the interval in #1272.
+   *  Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as its printed fixed part when one
    *  precedes the "for each" ("Add {R}{R}, then add {R} for each ...", Rite of Flame: 2), else as 1 (its true floor
    *  may be 0; a consumer that cares reads `amount.scales`). EXCEPT "for each color among permanents you control" (Faeburrow Elder, Bloom Tender) on a permanent: the card is itself a permanent
    *  you control, so its floor is the number of its OWN colours (Faeburrow 2, Bloom Tender 1), and `net` is that less the cost. */

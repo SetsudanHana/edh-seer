@@ -38,6 +38,12 @@ const FAMILY_OF: Record<string, RateFamily> = {
   // rather than yield.
   search: "search", "graveyard-recursion": "recursion", untap: "untap", flicker: "flicker", "copy-spell": "copies",
 };
+/** A mana recipient that is never you: see `ratesOf`.
+ *  CEILING: a matcher read of printed text, because a derived mana ability carries no recipient
+ *  (its subject is `any`). The fix is to derive the recipient onto the mana ability and delete this
+ *  (#1273). It tests the whole card, so a card with its own mana ability AND a separate "an
+ *  opponent adds" sentence would lose both rows; none in the corpus today. */
+const OTHERS_ADD = /\b(?:the active player|(?:target|each|an|that|defending) opponent|defending player)\s+adds?\b/i;
 /** The families whose yield must be YOURS: another player's cards, life or tokens are not your
  *  rate (Swords to Plowshares' life goes to the creature's controller). Mana is not here: "Add
  *  {G}" is always the controller's, and derive marks its subject `any` (18 of 758 rows survived
@@ -151,6 +157,8 @@ const integer = (s: string | undefined): number | null => {
  *  default (`dropsUnitAmount`, not yet written). */
 export function ratesOf(d: DeckCard): Rate[] {
   const out: Rate[] = [];
+  /** Interval rows that say NOTHING (floor 0, open ceiling): kept for a card that has no other mana row, dropped beside one -- see the end of this function. */
+  const unknown = new Set<Rate>();
   const types = d.tags?.characteristics.types ?? [];
   const creature = types.includes("creature") || /\bCreature\b/.test(d.card.typeLine ?? "");
   const land = types.includes("land") || countsAsLand(d.card);
@@ -207,6 +215,10 @@ export function ratesOf(d: DeckCard): Rate[] {
     // "{T}: Put a storage counter" topped "puts counters" as free); one that does (Castle
     // Locthwain) is priced on it, with a cast of nothing.
     if (family === "mana" && land) continue;
+    // WHOSE MANA: "the active player adds {C}{C} for each of your opponents who lost life" (Belbe, Corrupted Observer) is mostly an opponent's mana, and no rate of yours. A derived mana ability does not
+    // carry its recipient (the subject is `any`), so it is read off the printed sentence, for the recipients that are NEVER you: the active player, an opponent, the defending player. "Target player", "that
+    // player" and "each player adds" may be you (a Treasure-style ruling, YOU_CREATE) and stay rows. The corpus has exactly one such card, Belbe.
+    if (family === "mana" && OTHERS_ADD.test(d.card.oracleText ?? "")) continue;
     if (a.unless && a.unless.payer === "you") continue;
     const cost = a.kind === "activated" ? a.cost : manaCost;
     // NO MANA TO READ: a loyalty cost ("+1", "−3", "0"; CR 606.5) is paid in loyalty, not mana, and
@@ -234,8 +246,12 @@ export function ratesOf(d: DeckCard): Rate[] {
       out.push({ family, kind: a.kind, amount: 0, mana: fixed, ...castOf, slope: 1, repeats, floor: 0, ceiling: null, ...(extra ? { extraCost: true as const } : {}), ...(sick(a) ? { delayed: true as const } : {}) });
       continue;
     }
-    const gross = integer(a.amount);
-    if (gross === null || (a.effect?.scaling !== undefined && a.effect.scaling !== "fixed")) continue;
+    // A SCALING MANA ADD CARRIES AN INTERVAL (owner ruling 2026-10-17, #1265): derive stamped `Ability.count` with the same {floor, ceiling} the ManaLine's `amount` carries (read here from the
+    // ability, which `ratesOf` already holds; no line to match). Without it the add was skipped, and quality scored a missing rate as the worst in its family (Faeburrow Elder 50.5 -> 0.9). A colour
+    // ceiling stays 5: a rate is deck-free. Only the mana family, and only where the amount is not already a number; an add with no interval ("that much", Photon) stays no row.
+    const interval = family === "mana" && integer(a.amount) === null && a.count ? a.count : null;
+    const gross = interval ? interval.floor : integer(a.amount);
+    if (gross === null || (!interval && a.effect?.scaling !== undefined && a.effect.scaling !== "fixed")) continue;
     const back = family === "cards" ? backOf(a) : 0;
     if (back === null) continue;
     const amount = Math.max(0, gross - back);
@@ -245,17 +261,22 @@ export function ratesOf(d: DeckCard): Rate[] {
     // A TRIGGER MAY NEVER FIRE; an activation or a cast yields every time it is paid for.
     const open = a.kind === "triggered" || a.kind === "static";
     const stopped = a.unless !== undefined;
-    out.push({
+    const row: Rate = {
       family, kind: a.kind, amount, ...(back > 0 ? { back } : {}), ...(size ? { size } : {}), mana, ...castOf, repeats,
       floor: open || stopped || conditional ? 0 : amount,
-      ceiling: open ? null : amount,
+      // A triggered or static add's bounded ceiling is NOT carried ("a trigger may never fire": `open` -> null), so `bound: players` on a trigger is derive-only data.
+      ceiling: open ? null : interval ? interval.ceiling : amount,
       ...(stopped ? { fallback: { cost: a.unless!.cost, payer: a.unless!.payer } } : {}),
       ...(conditional && !open && !stopped ? { conditional: true as const } : {}),
       ...(extra ? { extraCost: true as const } : {}),
       ...(sick(a) ? { delayed: true as const } : {}),
-    });
+    };
+    out.push(row);
+    if (interval && row.floor === 0 && row.ceiling === null) unknown.add(row);
   }
-  return out;
+  // AN UNKNOWN INTERVAL MUST NOT DISPLACE A KNOWN ONE: an open ceiling ranks above a bounded one (a trigger's yield is what a deck makes of it), but a scaling add that states neither a floor nor a
+  // ceiling knows nothing, and beside another mana row it won the family and hid the better-informed one (Ultima, Origin of Oblivion: rateCeiling 100 -> 0). Alone it is kept: floor 0, open. A known row that is `extraCost` does not count: `bestPerFamily` skips it, so the unknown row would be the card's only one.
+  return unknown.size === 0 ? out : out.filter((r) => !unknown.has(r) || !out.some((o) => o.family === r.family && !o.extraCost && !unknown.has(o)));
 }
 
 /** THE RATE A SEARCH ROW CARRIES: the floor and the mana it costs, the ceiling (null when open)

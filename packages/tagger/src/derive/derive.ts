@@ -29,7 +29,7 @@ import crKeywords from "./cr-keywords.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
-import { deriveMana, production } from "./mana-lines.js";
+import { addsManaText, deriveMana, production } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.js";
@@ -490,7 +490,11 @@ import { emblemRecipient } from "../emblem.js";
 // 333: #1252 "that player loses the game" after damage to a player/opponent is the DAMAGED player, an opponent (Phage the Untouchable, Vorpal Sword, Atemsis): the grammar dropped the actor so the loss read `you`; damage of any kind "to an opponent" now counts for the damaged-player reading.
 // 334: #1263 "that player <verb>" after combat damage to a player dealt by the card itself, its equipped creature or a creature you control is the DAMAGED player, an opponent, for every cued verb (Chilling Apparition discard, Quietus Spike lose-life, Anowon mill, the poison and exile givers), not only lose-game and the graveyard owner; "a creature deals ..." stays `any`.
 // 335: #1264 one stored `claimsNothing` field replaces `triggerRefused: true` ("refused-trigger") and adds "self-loss" (#1252: every emit is `loses-game` of `control: you`), read after the last control fill; the matcher no longer recomputes it. No reading changes.
-export const DERIVE_VERSION = 335;
+// 336: #1265 a mana add's `Ability.amount` is ONLY `production()`'s reading: a scaling add (Faeburrow Elder, Bloom Tender, Charmed Pendant, Selvala) keeps its scaling text, never the clause's per-unit "1" that readers took for the whole amount; the token-maker mana lines' unread amounts are read.
+// 337: #1265 task 1 (owner ruling 2026-10-17): a scaling mana add carries an INTERVAL, never a fake fixed 1 and never nothing -- `ManaLine.amount` gains `floor` / `ceiling` / `bound` (colours among permanents: the card's own colours up to 5; the printed fixed part; the card's own contribution to its count), and `Ability.count` of that add IS the interval (it was computed from the stale amount before the stamp). A fixed sibling add keeps its number (Rite of Flame's {R}{R}, a Battery's first {W}). One case for the scale text (lowercase, as the line keeps it). A text that adds no mana ("pay {X}", energy) is neither stamped nor given an interval.
+// 338: #1265 task 1 review -- a prototype card's "this creature's power" floor is the smaller power (Cradle Clearcutter: printed 3/6, Prototype 1/3, floor 1 not 3). Recorded from 337: "Add X mana" read as a bare X on the model path gives `effect.scaling: "x-cost"` to 16 mana abilities (Arbor Adherent, Klauth, Metamorphosis, Doc Samson, Food Chain, Helga, Haruspex, Accomplished Alchemist, Dreadship Reef, Redshift, Crucible of the Spirit Dragon, Mona Lisa, Calciform Pools, Vivi Ornitier, Plasm Capture, Woodland Weavemaster) -- parity with the grammar path, which already said it. CEILING: the label means an X the player chose as a cost, and it is knowingly loose where X is defined by the card (Doc Samson's X is its power, Metamorphosis's a sacrificed creature's mana value); the grammar path said the same before.
+// 339: #1265 a scaling mana add counting PLAYERS has a ceiling: the table is you plus three opponents (`table.ts`, owner speed ruling 2026-10-06), each making the mana the add prints -- Selvala, Explorer Returned 4, Belbe 6 (`bound: "players"`).
+export const DERIVE_VERSION = 339;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2712,7 +2716,10 @@ export function deriveAbilities(
         && (effectKind !== "clone" || subject.subtype !== undefined);
       // What the payoff's magnitude counts. Already consumed by edges.ts, impact.ts and buckets.ts;
       // derivation had simply never set it, so the channel was dark under TAGS_SOURCE=derived.
-      const scaling = actionScaling(action, text);
+      // "Add X mana of any one color" is a bare X the model files on the OBJECT and the grammar files on `amount` ("X"); read the same, or the two paths disagree on `scaling` for every such card
+      // (#1265 task 1: Kami of Whispered Hopes, Haruspex) and the per-card grammar switch moves on a difference that is only where the X was written.
+      const bareXAdd = action.verb === "add-mana" && effectKind === "mana-generation" && (action.amount == null || action.amount === "") && /^x\b/i.test(action.object ?? "");
+      const scaling = actionScaling(bareXAdd ? { ...action, amount: "X" } : action, text);
       // WHAT the count counts, beside the basis — see `scalingSubject`. Graveyard and battlefield
       // counts both carry one: those are the two `edges.ts` can judge against something it already
       // has, a fill it can match and a card's own printed characteristics.
@@ -2749,11 +2756,21 @@ export function deriveAbilities(
       // each carry their own. Assigned here, in the per-action loop, for that reason.
       // A MANA ADD READS ITS AMOUNT THROUGH `production()` ALONE (#1193), the reader the mana line uses: a number is "6", never the clause's own word ("four", Cosmic
       // Crucible). What scales keeps the clause's text, and nothing when it states none.
-      const added = action.verb === "add-mana" && effectKind === "mana-generation" ? manaAdded(action.object ?? "", typeof action.amount === "string" ? action.amount : "") : undefined;
-      if (added !== undefined) ability.amount = String(added);
-      else if (action.amount != null && action.amount !== "") ability.amount = action.amount;
-      else if (action.verb === "add-mana" && effectKind === "mana-generation") {
-        // scales or unread: no number
+      const manaAdd = action.verb === "add-mana" && effectKind === "mana-generation";
+      if (manaAdd && (text === "" || addsManaText(text))) {
+        // #1265: NEVER the clause's own `action.amount` for a mana add -- on a scaling line it is the per-unit "1" ("for each color among permanents you control, add ONE mana of that
+        // color", Faeburrow Elder), which every reader took for the whole amount. A fixed read is "n"; what scales is the scaling text `production()` found, in ONE case (lowercase, as the line
+        // keeps it; `deriveMana` then stamps the sentence's own scale and the interval over it); an unread amount stores nothing.
+        const read = production(action.object ?? "", typeof action.amount === "string" ? action.amount : "").amount;
+        if (read.fixed !== null) ability.amount = String(read.fixed);
+        else if (read.scales !== null) ability.amount = read.scales;
+      } else if (manaAdd) {
+        // A "mana-generation" the model typed from text that ADDS no mana ("you may pay {X}", Halo Forager; energy, Aetherflux Conduit) keeps its pre-#1265 reading and gets no interval.
+        const added = manaAdded(action.object ?? "", typeof action.amount === "string" ? action.amount : "");
+        if (added !== undefined) ability.amount = String(added);
+        else if (action.amount != null && action.amount !== "") ability.amount = action.amount;
+      } else if (action.amount != null && action.amount !== "") {
+        ability.amount = action.amount;
       } else {
         const unit = unitAmount(action.verb ?? "", action.object ?? "");
         if (unit !== undefined) ability.amount = unit;

@@ -7,7 +7,8 @@ import { deriveInputOf } from "../derive-input.js";
 import { deriveCardTags } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import type { CardTags, ManaLine } from "../schema.js";
-import { replacementAddedToken, unpricedLoyaltyLines } from "./mana-lines.js";
+import { replacementAddedToken, scaleBounds, unpricedLoyaltyLines } from "./mana-lines.js";
+import { COMMANDER_OPPONENTS, COMMANDER_PLAYERS } from "../table.js";
 import fixtures from "./mana-lines.fixtures.json" with { type: "json" };
 
 const WUBRG = ["W", "U", "B", "R", "G"];
@@ -69,8 +70,10 @@ describe("a tap whose mana depends on something the line must state (#1188)", ()
     expect(only("Corrupted Grafstone")).toMatchObject({ anyColour: "among", gate: { kind: "unknown", text: "there is a card in your graveyard" } });
   });
   it("Rite of Flame: '{R}{R}, then {R} for each ...' scales but its net keeps the printed floor of 2 (net 1 on a 1-mana spell); Bloom Tender keeps the ceiling of 1", () => {
-    const [first] = linesOf("Rite of Flame");
-    expect(first).toMatchObject({ amount: { fixed: null, scales: "for each card named rite of flame in each graveyard" }, cost: { mana: 1 }, net: 1 });
+    // #1265: the model reads two adds; the {R}{R} is a FIXED sibling line (it keeps its 2, net 1 on the 1-mana spell) and only the "{R} for each" add scales (net 0)
+    const [first, second] = linesOf("Rite of Flame");
+    expect(first).toMatchObject({ amount: { fixed: 2, scales: null }, cost: { mana: 1 }, net: 1 });
+    expect(second).toMatchObject({ amount: { fixed: null, scales: "for each card named ~ in each graveyard" }, cost: { mana: 1 }, net: 0 });
     expect(only("Bloom Tender")).toMatchObject({ amount: { fixed: null }, net: 1 });
   });
   it("'for each color among permanents you control' is guaranteed the card's own colours: Faeburrow Elder (G, W) nets 2, Bloom Tender (G) nets 1", () => {
@@ -279,8 +282,8 @@ describe("a card with no mana carries none of it", () => {
 
 describe("review fixes (#1169 task 1)", () => {
   it("a scaling amount the grammar path puts in action.amount is still a scaling amount", () => {
-    expect(only("Gaea's Cradle").amount).toEqual({ fixed: null, scales: "for each creature you control" });
-    expect(only("Priest of Titania").amount).toEqual({ fixed: null, scales: "for each elf on the battlefield" });
+    expect(only("Gaea's Cradle").amount).toMatchObject({ fixed: null, scales: "for each creature you control" });
+    expect(only("Priest of Titania").amount).toMatchObject({ fixed: null, scales: "for each elf on the battlefield" });
     // and the model path, which keeps it in the object
     expect(only("Selvala, Eager Trailblazer").amount.fixed).toBeNull();
     for (const n of ["Overgrown Battlement", "Cloudpost", "Gyre Sage", "Bighorner Rancher", "Karametra's Acolyte", "Rite of Flame", "Inner Fire"]) {
@@ -696,9 +699,9 @@ describe("Ability.amount and ManaLine.amount are one reading (DERIVE_VERSION 311
       expect(lines[0]!.amount).toEqual({ fixed: n, scales: null });
     });
   }
-  it("a scaling amount keeps no number on the ability and names what it counts on the line", () => {
-    expect(manaAbilities("Axebane Guardian")[0]!.amount).toBeUndefined();
-    expect(linesOf("Axebane Guardian")[0]!.amount).toEqual({ fixed: null, scales: "x" });
+  it("a scaling amount keeps no number on the ability (its scaling text, #1265) and names what it counts on the line", () => {
+    expect(manaAbilities("Axebane Guardian")[0]!.amount).toBe("x");
+    expect(linesOf("Axebane Guardian")[0]!.amount).toMatchObject({ fixed: null, scales: "x" });
     expect(linesOf("Radiant Lotus")[0]!.amount.fixed).toBeNull();
     // "up to" / "any number of" target nothing that must exist: no target gate (UP_TO)
     expect(linesOf("Radiant Lotus")[0]!.gate).toBeNull();
@@ -710,6 +713,156 @@ describe("Ability.amount and ManaLine.amount are one reading (DERIVE_VERSION 311
   });
   it("Piracy's line reads no amount and is unread", () => {
     expect(only("Piracy")).toMatchObject({ unread: true, amount: { fixed: null, scales: null } });
+  });
+});
+
+/** A MANA ADD THAT SCALES STORES NO NUMBER (#1265, DERIVE_VERSION 336): the clause's own "1" ("add one mana of that color", repeated "for each color among permanents you
+ *  control") used to fall through onto `Ability.amount`, so Faeburrow Elder was rated a one-mana dork. The census (`research/mana/amount-agreement.ts`) found these four. */
+describe("a scaling mana add keeps no fixed number on the ability (#1265)", () => {
+  for (const name of ["Bloom Tender", "Charmed Pendant", "Faeburrow Elder", "Selvala, Explorer Returned"]) {
+    it(`${name}: the line scales and the ability amount is not a number`, () => {
+      const abilities = (tagsOf(name).abilities ?? []).filter((a) => a.effect.kind === "mana-generation");
+      expect(abilities, `${name} abilities`).toHaveLength(1);
+      expect(abilities[0]!.amount === undefined || !/^\d+$/.test(abilities[0]!.amount), `${name} amount ${abilities[0]!.amount}`).toBe(true);
+      expect(linesOf(name).filter((l) => l.source !== "token-maker")[0]!.amount.scales).not.toBeNull();
+    });
+  }
+});
+
+/** THE INTERVAL OF A SCALING MANA ADD (owner ruling 2026-10-17, #1265 task 1): a floor and a ceiling, never a fake fixed 1 and never nothing. Every row is a real corpus card; the expected
+ *  numbers are the review's per-card table, each checked against the card's printed text. `floor` of a CARD is what its lines guarantee together: a fixed sibling line (Rite of Flame's {R}{R},
+ *  a Battery's first {W}) counts its `fixed`, the scaling line its `floor`. */
+describe("a scaling mana add carries a floor and a ceiling (#1265)", () => {
+  const mg = (name: string) => (tagsOf(name).abilities ?? []).filter((a) => a.effect.kind === "mana-generation");
+  const scaling = (name: string) => linesOf(name).filter((l) => l.source !== "token-maker" && l.amount.scales !== null);
+  const scalingFloor = (name: string) => scaling(name).reduce((n, l) => n + (l.amount.floor ?? 0), 0);
+  /** The fixed sibling line of a "{X}, then add {X} for each" sentence (Rite of Flame, the W/B/G Batteries): the card's floor is it plus the scaling line's. */
+  const SIBLING_FIXED: Record<string, number> = { "Rite of Flame": 2, "White Mana Battery": 1, "Black Mana Battery": 1, "Green Mana Battery": 1 };
+  const BOUNDED: [string, number, number, "colours" | "basic-land-types"][] = [
+    ["Faeburrow Elder", 2, 5, "colours"], // the card is a permanent you control: its own two colours
+    ["Bloom Tender", 1, 5, "colours"],
+    ["Tarnation Vista", 0, 5, "colours"], // "monocolored permanents": a colourless land is none
+    ["Sunbird Standard // Sunbird Effigy", 0, 5, "colours"], // the exiled cards, not the card
+    ["Prismatic Geoscope", 0, 5, "basic-land-types"],
+  ];
+  for (const [name, floor, ceiling, bound] of BOUNDED) {
+    it(`${name}: floor ${floor}, ceiling ${ceiling} (${bound})`, () => {
+      const lines = scaling(name);
+      expect(lines, name).toHaveLength(1);
+      expect(lines[0]!.amount).toMatchObject({ fixed: null, floor, ceiling, bound });
+      // the ability reads the SAME interval: its count is the line's, its amount is defined text
+      const a = mg(name).find((x) => x.amount !== undefined && !/^\d+$/.test(x.amount) && x.count?.ceiling === ceiling);
+      expect(a, `${name} ability`).toBeDefined();
+      expect(a!.count).toMatchObject({ floor, ceiling });
+    });
+  }
+  const FLOOR_ONLY: [string, number][] = [
+    ["Rite of Flame", 2], ["White Mana Battery", 1], ["Black Mana Battery", 1], ["Green Mana Battery", 1], ["Blue Mana Battery", 1], ["Red Mana Battery", 1],
+    ["Axebane Guardian", 1], ["Harabaz Druid", 1], ["Sanctum Weaver", 1], ["Sanctum of Fruitful Harvest", 1], ["Wirewood Channeler", 1], ["Kami of Whispered Hopes", 1],
+    ["Heronblade Elite", 1], ["Doc Samson, Super Psychiatrist", 3], ["Mona Lisa, Science Geek", 1], ["Helga, Skittish Seer", 1], ["Redshift, Rocketeer Chief", 2],
+    ["Vivi Ornitier", 0], ["Woodland Weavemaster", 1], ["Selvala, Heart of the Wilds", 2], ["Klauth, Unrivaled Ancient", 4], ["Empowered Autogenerator", 1],
+    ["Food Chain", 1], ["Metamorphosis", 1],
+    // the rest: floor 0, ceiling open
+    ["Arbor Adherent", 0], ["Baldur's Gate", 0], ["Brigid, Clachan's Heart // Brigid, Doun's Mind", 0], ["Carpet of Flowers", 0], ["Deathbloom Ritualist", 0], ["Haruspex", 0],
+    ["Charmed Pendant", 0], ["Burnt Offering", 0], ["Plasm Capture", 0], ["The Eternity Elevator", 0],
+    ["White Lotus Tile", 0], ["Dreadship Reef", 0], ["Crucible of the Spirit Dragon", 0], ["Calciform Pools", 0], ["Accomplished Alchemist", 0],
+  ];
+  for (const [name, floor] of FLOOR_ONLY) {
+    it(`${name}: floor ${floor}, ceiling open`, () => {
+      const lines = scaling(name);
+      expect(lines.length, name).toBeGreaterThan(0);
+      for (const l of lines) expect(l.amount, name).toMatchObject({ fixed: null, ceiling: null });
+      expect(scalingFloor(name) + (SIBLING_FIXED[name] ?? 0), name).toBe(floor);
+      for (const a of mg(name).filter((x) => x.amount !== undefined && !/^\d+$/.test(x.amount))) expect(a.count, `${name} count`).toMatchObject({ ceiling: null });
+    });
+  }
+  it("a fixed sibling add keeps its number: Rite of Flame's {R}{R} and a Battery's first {W} are not overwritten", () => {
+    expect(mg("Rite of Flame").map((a) => a.amount)).toContain("2");
+    expect(linesOf("Rite of Flame").some((l) => l.amount.fixed === 2)).toBe(true);
+    expect(mg("White Mana Battery").map((a) => a.amount)).toContain("1");
+    expect(mg("White Mana Battery").find((a) => a.amount === "1")!.count).toEqual({ floor: 1, ceiling: 1 });
+  });
+  it("the ability's amount is DEFINED text for every scaling add, never a number and never absent", () => {
+    for (const name of ["Faeburrow Elder", "Bloom Tender", "Selvala, Explorer Returned", "Charmed Pendant", "Axebane Guardian"]) {
+      const a = mg(name).filter((x) => !/^\d+$/.test(x.amount ?? ""));
+      expect(a.length, name).toBeGreaterThan(0);
+      for (const x of a) expect(x.amount, name).toBeTypeOf("string");
+    }
+  });
+  it("a card whose text adds no mana gets no interval and no amount: 'pay {X}' (Halo Forager, Wildborn Preserver) and energy (Scurry of Gremlins, Aetherflux Conduit)", () => {
+    for (const name of ["Halo Forager", "Wildborn Preserver", "Scurry of Gremlins", "Aetherflux Conduit"]) {
+      for (const l of linesOf(name)) expect(l.amount, name).not.toHaveProperty("floor");
+      for (const a of mg(name)) expect(a.amount === undefined || !/^x$/i.test(a.amount) || a.count === undefined, name).toBe(true);
+    }
+    for (const a of mg("Halo Forager")) expect(a.amount).toBeUndefined();
+  });
+  it("one case: the scale text is lowercase on a card the model path and the grammar path both read (Kami of Whispered Hopes, Haruspex)", () => {
+    for (const name of ["Kami of Whispered Hopes", "Haruspex"]) for (const a of mg(name)) expect(a.amount, name).toBe((a.amount ?? "").toLowerCase());
+  });
+});
+
+describe("a count bounded by the players at the table has a ceiling (#1265, bound players)", () => {
+  const scaling = (name: string) => linesOf(name).filter((l) => l.source !== "token-maker" && l.amount.scales !== null);
+  it("the table is you and three opponents (owner speed ruling 2026-10-06)", () => {
+    expect(COMMANDER_OPPONENTS).toBe(3);
+    expect(COMMANDER_PLAYERS).toBe(4);
+  });
+  it("Selvala, Explorer Returned: each player reveals one card, so at most 4 nonland cards, floor 0", () => {
+    expect(scaling("Selvala, Explorer Returned")[0]!.amount).toMatchObject({ floor: 0, ceiling: 4, bound: "players" });
+    const a = (tagsOf("Selvala, Explorer Returned").abilities ?? []).find((x) => x.effect.kind === "mana-generation")!;
+    expect(a.count).toMatchObject({ floor: 0, ceiling: 4 });
+  });
+  it("Belbe: {C}{C} for each of YOUR opponents who lost life, at most 3 opponents, so 6", () => {
+    expect(scaling("Belbe, Corrupted Observer")[0]!.amount).toMatchObject({ floor: 0, ceiling: 6, bound: "players" });
+  });
+  it("counts of an opponent's cards, life or permanents are not bounded by players (Jeska's Will, Mana Geyser, Neheb the Eternal)", () => {
+    for (const n of ["Jeska's Will", "Mana Geyser", "Neheb, the Eternal"]) expect(scaling(n)[0]!.amount, n).toMatchObject({ ceiling: null });
+  });
+});
+
+describe("scaleBounds guards (#1265 task 1 review)", () => {
+  const scaling = (name: string) => linesOf(name).filter((l) => l.source !== "token-maker" && l.amount.scales !== null);
+  const chars = (over: Partial<CardTags["characteristics"]> = {}) => ({ types: ["creature"], subtypes: [], colors: ["G"], identity: ["G"], cmc: 2, power: "1", toughness: "1", token: false, ...over }) as CardTags["characteristics"];
+  const bounds = (scales: string, c: CardTags["characteristics"], oracle = "", text = "") => scaleBounds(scales, text, c, ["card"], true, oracle, 0);
+  it("a PROTOTYPE taps for the smaller power: Cradle Clearcutter (printed 3/6, Prototype {2}{G} -- 1/3) has floor 1, not 3", () => {
+    expect(scaling("Cradle Clearcutter")[0]!.amount).toMatchObject({ floor: 1, ceiling: null });
+  });
+  it("a card with no prototype keeps its printed power (Mona Lisa 1, Doc Samson 3)", () => {
+    expect(scaling("Doc Samson, Super Psychiatrist")[0]!.amount.floor).toBe(3);
+  });
+  it("'each color among monocolored permanents you control' counts the card only when it has exactly one colour (synthetic: no corpus permanent has both)", () => {
+    expect(bounds("for each color among monocolored permanents you control", chars()).floor).toBe(1);
+    expect(bounds("for each color among monocolored permanents you control", chars({ colors: ["G", "W"] })).floor).toBe(0);
+    expect(bounds("for each color among monocolored permanents you control", chars({ colors: [] })).floor).toBe(0);
+  });
+  it("'other X' is not counted: Baldur's Gate (a Gate) and Brigid floor 0; a synthetic 'other creatures' on a creature too", () => {
+    expect(scaling("Baldur's Gate")[0]!.amount.floor).toBe(0);
+    expect(bounds("number of other creatures you control", chars()).floor).toBe(0);
+    expect(bounds("number of creatures you control", chars()).floor).toBe(1);
+  });
+  it("'with <keyword>' counts the card only when it prints the keyword: Overgrown Battlement 1; a synthetic creature without defender 0", () => {
+    expect(scaling("Overgrown Battlement")[0]!.amount.floor).toBe(1);
+    expect(bounds("number of creatures you control with defender", chars(), "Defender").floor).toBe(1);
+    expect(bounds("number of creatures you control with defender", chars(), "Flying").floor).toBe(0);
+  });
+});
+
+/** THE TOKEN-MAKER LINES' AMOUNT (#1265): 7 lines were "unread" (no fixed, no scales). A created token is one unless a number word says more; a "for each" in the creating sentence scales it. */
+describe("a token-maker line reads how many it makes (#1265)", () => {
+  const amountOf = (name: string, key = "treasure") => linesOf(name, "token-maker").filter((l) => l.producesToken === key).map((l) => l.amount);
+  it("one Treasure is one", () => {
+    for (const n of ["Bilbo, Retired Burglar", "Song of Eärendil", "Old Rutstein", "Mr. House, President and CEO"]) {
+      const a = amountOf(n);
+      expect(a.length, n).toBeGreaterThan(0);
+      for (const x of a) expect(x, n).toEqual({ fixed: 1, scales: null });
+    }
+  });
+  it("a Treasure made 'for each player who chose money' or 'for each opponent who does' scales", () => {
+    expect(amountOf("Master of Ceremonies")).toEqual([{ fixed: null, scales: "for each player who chose money" }]);
+    expect(amountOf("Tempting Contract")).toEqual([{ fixed: null, scales: "for each opponent who does" }]);
+  });
+  it("two Lander tokens are two", () => {
+    expect(amountOf("Terrapact Intimidator", "lander")).toEqual([{ fixed: 2, scales: null }]);
   });
 });
 

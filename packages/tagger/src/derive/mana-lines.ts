@@ -19,6 +19,7 @@
  *  ONE READER OF "HOW MUCH IT ADDS" (#1193, DERIVE_VERSION 311): `production()` below. `ManaLine.amount` is its result and derive.ts sets `Ability.amount` from the
  *  same call (`manaAdded`), so the two cannot disagree. A SCALING amount ("X", "for each ...", "that much") has no number: the line names what it counts and the
  *  ability keeps the clause's own text, or nothing. `research/mana/amount-agreement.ts` measures the agreement.  */
+import { COMMANDER_OPPONENTS, COMMANDER_PLAYERS } from "../table.js";
 import type { ClauseRecord } from "../canonicalize.js";
 import type {
   Ability, Characteristics, ConsumedCost, LandFetch, ManaAnyColour, ManaGate, ManaLine, ManaLineSource, StaticFixer, SubjectFilter,
@@ -404,6 +405,75 @@ const scaleOfSentence = (sentence: string): string | null => {
  *  has a self-floor that is not read, and nets its ceiling of 1 as any scaling line does. */
 const FOR_EACH_COLOUR_AMONG_OWN = /^for each colou?r among permanents you control$/i;
 
+/** DOES THIS CLAUSE TEXT ADD MANA? (quoted abilities removed.) A mana-generation ability the model typed from "you may pay {X}" (Halo Forager, Wildborn Preserver) or a payoff in energy (Scurry of
+ *  Gremlins, Aetherflux Conduit) adds none: it keeps whatever amount it had before #1265 and gets no interval. */
+export const addsManaText = (text: string): boolean => ADDS_MANA_OR_S.test(text.replace(QUOTED, ""));
+
+/** "Add {R}{R}, then add {R} for each ..." / "Add {W}, then add an additional {W} for each ..." (Rite of Flame, the Mana Batteries): the symbols BEFORE ", then add" are a fixed part of the same
+ *  sentence. */
+const FIXED_THEN_FOR_EACH = /\badd\s+((?:\{[^{}]+\})+)\s*,?\s*then add\b[^.]*\bfor each\b/i;
+const singular = (w: string): string => w.endsWith("ies") ? `${w.slice(0, -3)}y` : w.endsWith("ves") ? `${w.slice(0, -3)}f` : w.endsWith("s") ? w.slice(0, -1) : w;
+
+export type ScaleBounds = { floor: number; ceiling: number | null; bound?: "colours" | "basic-land-types" | "players" };
+/** THE INTERVAL A SCALING ADD SPANS (#1265, owner ruling 2026-10-17), read from the SHAPE of what it counts, never from a card name. `scales` is the line's scale text, `text` the clause (where an "X" is
+ *  defined: "where X is ..."), `fixedPart` the printed fixed mana of the same sentence that no sibling line carries.
+ *   - "for each color among permanents you control" (Faeburrow Elder, Bloom Tender): ceiling 5 (`colours`); floor the card's OWN colours, it being a permanent you control; "monocolored" permanents
+ *     count the card only when it has exactly one. Colours among cards that are not the card (the exiled cards a craft used, Sunbird Effigy) floor at 0.
+ *   - "the number of basic land types among lands you control" (Domain): ceiling 5 (`basic-land-types`), floor 0.
+ *   - "the number of <class> you control" / "for each <class> you control": +1 when the card is one (its type or subtype), not for "other <class>", and "with <keyword>" only when the card prints it.
+ *   - "this creature's power" / "<its own name>'s power" / "the greatest power among creatures you control" / "the total power of attacking creatures" (when the card's own attack trigger is the add):
+ *     the card's printed power. "1 plus ..." (Food Chain): 1. "the number of <kind> counters on this ..." after the card put one there: 1.
+ *   CEILING (whole card, not the printing face): colours, types, subtypes and power come from `chars` -- `chars.colors` is the UNION of a double-faced card's faces and a DFC's top-level power is null (read as
+ *   0), not from the face that prints the ability. The corpus has no such card with a floor above 0 today (the 9 DFCs with scaling lines all floor 0). And "+1 for each X you control" has no guard for a
+ *   cost or trigger that removes the card first ("Sacrifice this creature: Add {G} for each creature you control"); the corpus has none today either. The prototype rule covers the one alternate
+ *   p/t shape with a floor (Cradle Clearcutter); a "level up" or "becomes a ... with base power" card with a scaling mana line has floor 0 here and so cannot over-claim.
+ *   CEILING: every other count is open (null). A count of an opponent's cards, life or permanents depends on the game and stays open; a count of the PLAYERS is bounded by the table (`bound: "players"`). */
+export function scaleBounds(scales: string, text: string, chars: Characteristics, selfNames: readonly string[], permanent: boolean, oracleText: string, fixedPart: number, unit = 1): ScaleBounds {
+  const defined = /\bwhere x is ([^.]*)/i.exec(text)?.[1]?.trim().toLowerCase();
+  // "equal to this creature's power" (the model's object) and "this creature's power" (a "where X is" clause) are one count: both paths must read the same interval.
+  const s = (defined ?? scales).trim().toLowerCase().replace(/\s+/g, " ").replace(/^equal to /, "").replace(/^the /, "");
+  const lowerTypes = [...chars.types, ...chars.subtypes].map((t) => t.toLowerCase());
+  const creature = chars.types.some((t) => t.toLowerCase() === "creature");
+  // A PROTOTYPE card ("Prototype {2}{G} -- 1/3", Cradle Clearcutter, printed 3/6) may be cast smaller, and then taps for the smaller power: the floor is the one it ALWAYS makes, so the smaller power.
+  const proto = /\bPrototype\s+(?:\{[^{}]+\})+\s*[\u2014-]+\s*(-?\d+)\/(?:-?\d+|\*)/.exec(oracleText);
+  const printed = chars.power !== null && /^-?\d+$/.test(chars.power) ? Number(chars.power) : 0;
+  const power = proto ? Math.min(printed, Number(proto[1])) : printed;
+  const out: ScaleBounds = { floor: fixedPart, ceiling: null };
+  if (/\bbasic land types? among\b/.test(s)) return { ...out, ceiling: 5, bound: "basic-land-types" };
+  if (/\bcolou?rs? among\b/.test(s)) {
+    out.ceiling = 5; out.bound = "colours";
+    const among = /\bamong (monocolou?red )?permanents you control$/.exec(s);
+    if (among && permanent) out.floor += among[1] ? (chars.colors.length === 1 ? 1 : 0) : chars.colors.length;
+    return out;
+  }
+  // A COUNT OF PLAYERS is bounded by the table (owner speed ruling 2026-10-06: you plus three opponents; `table.ts`), each one making `unit` mana: "for each of your opponents who lost life"
+  // (Belbe, {C}{C} each: 6) counts opponents; "for each ... card revealed this way" after "each player reveals the top card of their library" (Selvala, Explorer Returned) counts one card per player.
+  // Only the PLAYER is the counted noun: an opponent's cards, life or permanents ("for each card in target opponent's hand") are not bounded by the table.
+  const countsWho = /^for each (?:of your |of the )?(opponents?|players?)(?![\w'\u2019])/.exec(s)?.[1];
+  const revealed = /^for each (?:nonland |land |creature )?cards? revealed this way$/.test(s) ? /\beach (player|opponent) reveals the top card of their library\b/i.exec(text)?.[1] : undefined;
+  const who = countsWho ?? revealed;
+  if (who !== undefined) return { ...out, ceiling: (/^opponent/.test(who) ? COMMANDER_OPPONENTS : COMMANDER_PLAYERS) * unit, bound: "players" };
+  const plus = new RegExp(`^(\\d+|${WORD}) plus\\b`).exec(s);
+  if (plus) return { ...out, floor: out.floor + (/^\d+$/.test(plus[1]!) ? Number(plus[1]) : NUMBER_WORD[plus[1]!]!) };
+  const owner = /^(.+?)'s power$/.exec(s)?.[1];
+  if (owner !== undefined && (owner === "this creature" || selfNames.includes(owner))) return { ...out, floor: out.floor + (creature ? power : 0) };
+  if (/^greatest power among creatures you control$/.test(s)) return { ...out, floor: out.floor + (creature ? power : 0) };
+  if (/^total power of attacking creatures$/.test(s) && creature && new RegExp(`\\bwhenever (?:this creature|${selfNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}) attacks\\b`, "i").test(text)) return { ...out, floor: out.floor + power };
+  const counters = /^number of ([a-z+/-]+) counters on (?:this [a-z]+|it)$/.exec(s);
+  if (counters && new RegExp(`\\bput an? ${counters[1]} counter on (?:this [a-z]+|it)\\b`, "i").test(text)) return { ...out, floor: out.floor + 1 };
+  const counted = /^(?:number of (.+?) (?:you control|on the battlefield)|for each (.+?) you control)(?: with ([a-z ]+))?$/.exec(s);
+  if (counted) {
+    const phrase = (counted[1] ?? counted[2])!;
+    const kinds = phrase.split(/ or | and |, /).map((k) => k.trim());
+    if (kinds.length === 1 && !kinds[0]!.startsWith("other ") && permanent) {
+      const kind = kinds[0]!;
+      const qualified = counted[3] === undefined || new RegExp(`(?:^|\\n)${counted[3]}\\b`, "i").test(oracleText);
+      if (qualified && (lowerTypes.includes(kind) || lowerTypes.includes(singular(kind)))) out.floor += 1;
+    }
+  }
+  return out;
+}
+
 /** AN ACTIVATED ABILITY THAT TARGETS holds only while a legal target exists (CR 602.2b applying 601.2c: the targets are chosen when the ability is activated, and with none to choose it
  *  cannot be). Deathrite Shaman's "{T}: Exile target land card from a graveyard. Add one mana of any color." is no mana without a land card in a graveyard; Red Death, Shipwrecker's "Goad
  *  target creature an opponent controls ... You add {R}" is none without that creature. The target is read off the clause's own printed text and its cost (reminder text and quoted abilities
@@ -515,6 +585,26 @@ function opponentOnlyToken(oracleText: string, key: string, clauseText: string, 
   if (named.length > 0) return named.every((x) => OPP_RECIPIENT.test(x) && !YOU_CREATE.test(x));
   return false;
 }
+/** HOW MANY OF A MANA TOKEN A CLAUSE MAKES, when its ability states none (#1265; the create action's amount is null and `unitAmount` reads no "create"). "create a Treasure token" is one, "create two Lander
+ *  tokens" two. A "for each ..." in a sentence that creates the token scales it by that phrase: Master of Ceremonies' "For each player who chose money, you and that player each create a Treasure token",
+ *  Tempting Contract's "For each opponent who does, you create a Treasure token". Nothing otherwise. The token is counted where the create action names it, so "a Treasure token and a 2/2 ... Bird
+ *  creature token" (Song of Eärendil) is one Treasure.
+ *  CEILING: a condition on the creation ("If a land card is milled this way", Old Rutstein; a die roll, Mr. House) is a gate, not a count: the line reads the one token it makes when it fires. */
+function tokenCountOf(key: string, text: string, objects: readonly string[]): { fixed: number } | { scales: string } | null {
+  const name = key.replace(/-/g, " ");
+  for (const sentence of sentencesOf(text)) {
+    if (!new RegExp(`\\bcreates?\\b[^.]*\\b${name}\\b`, "i").test(sentence)) continue;
+    const each = FOR_EACH.exec(sentence);
+    if (each) return { scales: each[0].trim().toLowerCase() };
+  }
+  const counted = new RegExp(`\\b(an?|${WORD})\\s+(?:[\\w/{}-]+\\s+){0,3}?${name}\\s+tokens?\\b`, "i");
+  for (const object of objects) {
+    const m = counted.exec(object);
+    if (m) return { fixed: /^an?$/i.test(m[1]!) ? 1 : NUMBER_WORD[m[1]!.toLowerCase()]! };
+  }
+  return null;
+}
+
 /** A "create" action in a clause the abilities did not turn into a token-generation of a mana token: the Treasure a Saga chapter makes beside a Bird, the one inside an Aura token's quoted trigger, one
  *  the model typed `static` with no subtype (Spiked Pit Trap). */
 const CREATES_MANA_TOKEN = /\bcreates?\b[^.]*?\b(treasure|gold|powerstone|lander|eldrazi spawn|eldrazi scion)\b/i;
@@ -607,16 +697,19 @@ export function deriveMana(input: ManaInput): ManaResult {
     const addSentences = sentencesOf(text).filter((x) => ADDS_MANA.test(x));
     const lead = addSentences.length > adds.length ? addSentences.length - adds.length : 0;
     const aligned = addSentences.length === adds.length + lead;
-    const entries: { object: string; amountText: string; sentence: string; ability: Ability | undefined }[] = [];
+    const entries: { object: string; amountText: string; sentence: string; ability: Ability | undefined; sibling: boolean }[] = [];
     for (const sentence of addSentences.slice(0, lead)) {
       const m = /^add\s+((?:\{[^{}]+\})+|(?:one|two|three|four|five|six|seven)\s+mana\b[^.]*)\.?$/i.exec(sentence.trim());
-      if (m) entries.push({ object: m[1]!, amountText: "", sentence, ability: matching[0] });
+      if (m) entries.push({ object: m[1]!, amountText: "", sentence, ability: matching[0], sibling: false });
     }
     for (const [k, action] of adds.entries()) {
-      entries.push({ object: action.object ?? "", amountText: typeof action.amount === "string" ? action.amount : "",
-        sentence: aligned ? addSentences[lead + k]! : text, ability: matching[k] });
+      const sentence = aligned ? addSentences[lead + k]! : text;
+      // A FIXED SIBLING: "Add {R}{R}, then add {R} for each ..." read as two adds (Rite of Flame, the W/B/G Mana Batteries). Every add BEFORE the last is the fixed part and keeps its number; only the
+      // last scales. The model sometimes keeps only the last add (Blue and Red Mana Battery): then the fixed part is the scaling line's own floor.
+      entries.push({ object: action.object ?? "", amountText: typeof action.amount === "string" ? action.amount : "", sentence, ability: matching[k],
+        sibling: adds.length > 1 && k < adds.length - 1 && FIXED_THEN_FOR_EACH.test(sentence) });
     }
-    for (const { object, amountText, sentence, ability } of entries) {
+    for (const { object, amountText, sentence, ability, sibling } of entries) {
       const source: ManaLineSource | null =
         tokenGrant ? "token-maker"
         : granted ? "static-grant"
@@ -643,13 +736,32 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (source === "static-grant" && made.anyColour === "among" && /\bthis creature'?s colou?rs\b/i.test(object)) made.anyColour = "grantee";
       // THE PRINTED FLOOR: "Add {R}{R}, then add {R} for each ..." (Rite of Flame) always makes the {R}{R}, so its net is that fixed part less the cost. Kept off `amount` (fixed stays null, the schema contract);
       // only when the add comes BEFORE the "for each" (else the count belongs to this add and the floor is the ceiling of 1).
+      // MANA PER COUNTED THING (Belbe's {C}{C}): the object's own fixed amount, else the symbols the sentence prints right after "add" (the production read above found the scale and no number).
+      const printedUnit = /\badds?\s+((?:\{[^{}]+\})+)/i.exec(sentence)?.[1];
+      const unit = made.amount.fixed ?? (printedUnit !== undefined ? production(printedUnit).amount.fixed : null) ?? 1;
       let floor: number | null = null;
-      if (made.amount.scales === null) {
+      if (made.amount.scales === null && !sibling) {
         const counted = scaleOfSentence(sentence);
         if (counted !== null) { if (ADD_BEFORE_FOR_EACH.test(sentence)) floor = made.amount.fixed; made.amount = { fixed: null, scales: counted }; }
       }
       // The own-colour floor reads whichever scale text the line ends with (the model path's `counted`, or the grammar path's `action.amount` that `production()` already stored).
       if (made.amount.scales !== null && FOR_EACH_COLOUR_AMONG_OWN.test(made.amount.scales) && source === "activated" && !chars.types.some((t) => /^(?:instant|sorcery)$/i.test(t))) floor = Math.max(floor ?? 0, chars.colors.length);
+      // THE INTERVAL (#1265, owner ruling 2026-10-17), and ONE READING of it: the line is the truth, and the ability it was read from takes the scale text for its `amount` (never the clause's per-unit "1",
+      // which every reader took for the whole amount) and the interval for its `count` (edge magnitude read the stale {1,1}). A fixed sibling keeps its number; a text that adds no mana (Halo Forager's
+      // "pay {X}", energy) is neither stamped nor given an interval. Mutates the ability derive just built.
+      const scaleText = made.amount.scales;
+      if (scaleText !== null && addsManaText(text)) {
+        const fixedPart = sibling || entries.length > 1 && entries.some((e) => e.sibling) ? 0 : FIXED_THEN_FOR_EACH.test(sentence) ? production(FIXED_THEN_FOR_EACH.exec(sentence)![1]!).amount.fixed ?? 0 : 0;
+        const permanent = !chars.types.some((t) => /^(?:instant|sorcery)$/i.test(t));
+        const bounds = scaleBounds(scaleText, text, chars, selfNames, permanent, input.oracleText ?? "", fixedPart, unit);
+        made.amount = { ...made.amount, ...bounds };
+        if (ability) {
+          // derive.ts read the action as the model and the grammar normalise it; a scale text it already holds stays (the line reads the raw clause, which can word the same count differently).
+          if (ability.amount === undefined || /^\d+$/.test(ability.amount)) ability.amount = scaleText;
+          const { floor: lo, ceiling: hi } = bounds;
+          ability.count = { ...(ability.count?.scalesWith !== undefined ? { scalesWith: ability.count.scalesWith } : {}), floor: lo, ceiling: hi };
+        }
+      }
       const cost = source === "activated" || source === "static-grant" || source === "token-maker"
         ? parseCost(costText, selfNames)
         : noCost();
@@ -689,14 +801,17 @@ export function deriveMana(input: ManaInput): ManaResult {
       const dedupe = `token:${a.clause}:${key}`;
       if (seenClauses.has(dedupe)) continue;
       seenClauses.add(dedupe);
-      const tokens = a.amount !== undefined && /^\d+$/.test(a.amount) ? Number(a.amount) : null;
+      const clause = clauses.find((c) => c.id === a.clause);
+      const read = a.amount === undefined && clause ? tokenCountOf(key, input.textOf(clause), (clause.actions ?? []).filter((x) => x.verb === "create").map((x) => x.object ?? "")) : null;
+      const amountText = a.amount ?? (read && "scales" in read ? read.scales : undefined);
+      const tokens = a.amount !== undefined && /^\d+$/.test(a.amount) ? Number(a.amount) : read && "fixed" in read ? read.fixed : null;
       const cost = a.kind === "activated" ? parseCost(a.cost, selfNames) : noCost();
       if (a.kind === "on-cast") cost.mana = faceMV(face);
       const make = MANA_TOKENS[key]!;
       lines.push({
         face, source: "token-maker", repeats: a.repeats ?? null, cost, ...make, unread: false,
         // Each token is one use of mana when it is spent; a token count that scales is unknown.
-        amount: tokens !== null ? { fixed: tokens, scales: null } : { fixed: null, scales: a.amount ?? null },
+        amount: tokens !== null ? { fixed: tokens, scales: null } : { fixed: null, scales: amountText ?? null },
         net: (tokens ?? 1) - cost.mana, gate: null, timing: "now", producesToken: key, trigger: null,
       });
       continue;
