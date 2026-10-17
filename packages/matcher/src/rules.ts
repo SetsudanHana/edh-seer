@@ -35,7 +35,10 @@ export type RuleClause =
        *  i.e. the battlefield). A removal facet asks for `control: ["opp", "any"]` and
        *  `zone: [null]`: a card's OWN sacrifice emits `dies` under `you` (Trading Post, Grim
        *  Hireling) and a graveyard recursion emits `leaves` in the graveyard, and neither is removal. */
-      control?: string[]; zone?: (string | null)[] }
+      control?: string[]; zone?: (string | null)[];
+      /** The emit's subject TYPE (`land`) and the zone it comes FROM (`hand`, `graveyard`, `exile`, `library`). An emit that names no
+       *  `fromZone` does not match a list: `ramp.landPut` asks for a land entering from somewhere other than play. A subject typed as SEVERAL types (Ghostly Flicker's creature, artifact or land) matches only when EVERY one is listed: a blink is not a land drop. */
+      type?: string[]; fromZone?: string[] }
   | { op: "typeLine"; contains: string }
   /** Card subtypes, from the tagged characteristics -- "equipment", "aura", a creature type. */
   | { op: "subtype"; in: string[] }
@@ -294,7 +297,9 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         (a.emits ?? []).some((e) =>
           clause.verbs.includes(e.verb)
           && (clause.control === undefined || clause.control.includes(e.subject.control))
-          && (clause.zone === undefined || clause.zone.includes(e.subject.zone ?? null)))
+          && (clause.zone === undefined || clause.zone.includes(e.subject.zone ?? null))
+          && (clause.type === undefined || (e.subject.type !== undefined && [e.subject.type].flat().every((t) => clause.type!.includes(t))))
+          && (clause.fromZone === undefined || (e.subject.fromZone !== undefined && clause.fromZone.includes(e.subject.fromZone))))
         && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
     case "subtype":
       return (dc.tags?.characteristics?.subtypes ?? []).some((s) => clause.in.includes(s.toLowerCase()));

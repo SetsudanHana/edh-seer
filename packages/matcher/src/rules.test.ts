@@ -896,9 +896,13 @@ test("an ability quoted for a token is the token's, not the maker's", () => {
 /** Owner ruling 2026-09-27 (issue #512): putting a land card onto the battlefield is ramp, from hand
  *  (Growth Spiral) or from among the cards looked at (Planar Genesis). */
 test("putting a land card onto the battlefield is ramp", () => {
+  // The rule reads the derived emit since #1266: the text is kept for the reader, the tags carry the claim.
+  const withEnters = (dc: DeckCard, fromZone: string): DeckCard => ({
+    ...dc, tags: { abilities: [{ effect: { kind: "" }, emits: [{ verb: "enters", subject: { control: "you", token: null, type: "land", fromZone } }] }] } as never,
+  });
   const cats = detectBuildCategories([
-    mk("Growth Spiral", "Draw a card. You may put a land card from your hand onto the battlefield.", "Instant"),
-    mk("Planar Genesis", "Look at the top four cards of your library. You may put a land card from among them onto the battlefield tapped. If you don't, put a card from among them into your hand. Put the rest on the bottom of your library in a random order.", "Instant"),
+    withEnters(mk("Growth Spiral", "Draw a card. You may put a land card from your hand onto the battlefield.", "Instant"), "hand"),
+    withEnters(mk("Planar Genesis", "Look at the top four cards of your library. You may put a land card from among them onto the battlefield tapped. If you don't, put a card from among them into your hand. Put the rest on the bottom of your library in a random order.", "Instant"), "library"),
   ]);
   expect(cats.get("ramp")?.has("Growth Spiral")).toBe(true);
   expect(cats.get("ramp")?.has("Planar Genesis")).toBe(true);
@@ -953,4 +957,30 @@ test("an adventure half's mana ability is still ramp (it is cast from hand)", ()
 
 test("a transform card whose back is not a land keeps its back-face ramp", () => {
   expect(detectBuildCategories([layoutCard("transform", 1, "Creature // Creature")]).get("ramp")).toEqual(new Set(["Probe // Cave"]));
+});
+
+/** ramp.landPut reads a DERIVED enters emit, not printed text (#1266). The oracle text is empty on every card here. */
+describe("ramp.landPut is derived", () => {
+  const set = loadRules();
+  const rule = set.rules.find((r) => r.id === "ramp.landPut")!;
+  const land = (type: string | string[], fromZone: string | undefined, control = "you"): DeckCard => ({
+    card: { name: "x", oracleText: "", typeLine: "Sorcery" } as Card,
+    tags: { abilities: [{ effect: { kind: "" }, emits: [{ verb: "enters", subject: { control, token: null, type, fromZone } }] }] } as never,
+  });
+  test("a land entering from hand, library, graveyard or exile is ramp with no oracle text", () => {
+    for (const z of ["hand", "library", "graveyard", "exile"]) expect(ruleMatches(rule, land("land", z), set), z).toBe(true);
+  });
+  test("a land entering under an opponent's emit control still counts (Realmbreaker: under YOUR control)", () => {
+    expect(ruleMatches(rule, land("land", "graveyard", "opp"), set)).toBe(true);
+  });
+  test("a blink of land-or-other, a creature, and a land with no origin are not land drops", () => {
+    expect(ruleMatches(rule, land(["creature", "artifact", "land"], "exile"), set)).toBe(false);
+    expect(ruleMatches(rule, land("creature", "graveyard"), set)).toBe(false);
+    expect(ruleMatches(rule, land("land", undefined), set)).toBe(false);
+  });
+  test("a card that also exiles a land you control is a swap, not a drop (Wormfang Newt)", () => {
+    const c = land("land", "exile");
+    (c.tags as { abilities: unknown[] }).abilities.push({ effect: { kind: "" }, emits: [{ verb: "exiled", subject: { control: "you", token: null, type: "land", fromZone: "battlefield" } }] });
+    expect(ruleMatches(rule, c, set)).toBe(false);
+  });
 });

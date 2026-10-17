@@ -36,7 +36,6 @@
     "tutor": "search your library for",
     "landFetch": "search your library for (a |an |up to \\w+ )?(basic )?(land|forest|island|swamp|mountain|plains)",
     "ontoBattlefield": "onto the battlefield",
-    "landPut": "put (?:a|an|up to (?:one|two|three)|any number of) (?:basic )?land cards? [^.]{0,40}?onto the battlefield",
     "rampLand": "sacrifice\\b[\\s\\S]*?search your library for (?:up to two|two|a \\w+ and an? \\w+)[\\s\\S]*?onto the battlefield",
     "bigManaLand": "(?:^|[.;\\n(])\\s*\\{t\\}\\s*:\\s*add\\s+(?:(?:\\{[wubrgcs\\d/]+\\}\\s*){2,}|two|three|four)",
     "entersTapped": "enters(?: the battlefield)? tapped(?!\\s+unless)",
@@ -234,9 +233,9 @@
     {
       "id": "ramp.landPut",
       "category": "ramp",
-      "match": [{ "op": "oracle", "pattern": "landPut" }],
-      "not": [{ "op": "countsAsLand" }],
-      "why": "Putting a land card onto the battlefield from hand (Growth Spiral), from among cards looked at (Planar Genesis) or from a graveyard is an extra land drop, which is ramp (owner ruling 2026-09-27, #512)."
+      "match": [{ "op": "emits", "verbs": ["enters"], "type": ["land"], "fromZone": ["hand", "library", "graveyard", "exile"] }],
+      "not": [{ "op": "countsAsLand" }, { "op": "emits", "verbs": ["exiled"], "type": ["land"], "control": ["you"] }],
+      "why": "Putting a land card onto the battlefield from hand (Growth Spiral), from among cards looked at (Planar Genesis) or from a graveyard is an extra land drop, which is ramp (owner ruling 2026-09-27, #512). DERIVED (#1266): an `enters` emit of a land from hand, library, graveyard or exile, whoever the emit control names (Realmbreaker puts a land onto the battlefield under YOUR control and its emit says opp). NOT when the card also EXILES one of your own lands (Wormfang Newt exiles a land you control and returns it when it leaves: a swap, not a drop; Murasa Rootgrazer BOUNCES a land and stays ramp, as it repeats the drop)."
     },
     {
       "id": "ramp.manaToken",
