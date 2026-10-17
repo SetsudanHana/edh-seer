@@ -873,7 +873,7 @@ function subjectAction(t: string): ActionReading[] | null {
   const gameEnd = /^(that player|target player|each opponent|you) (?:wins?|loses?) the game$/i.exec(t);
   if (gameEnd) {
     const who = gameEnd[1]!.toLowerCase();
-    return [{ verb: /wins? the game$/i.test(t) ? "win-game" : "lose-game", actor: { control: "you", ...actorOf(who), text: who } }];
+    return [{ verb: /wins? the game$/i.test(t) ? "win-game" : "lose-game", actor: { control: "you", ...ACTORS.find(([w]) => w === who)?.[1], text: who } }];
   }
   const phases = /^(.+?) phases? (in|out)$/i.exec(t);
   // CEILING: a phased-out class ("all phased-out creatures", Time and Tide) the object parser cannot name
