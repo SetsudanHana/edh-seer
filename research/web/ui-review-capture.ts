@@ -22,6 +22,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, type BrowserContext, type Page } from "@playwright/test";
 import { AxeBuilder } from "@axe-core/playwright";
+import { installPlant } from "./plant.js";
 import { parseDecklistSections } from "../../packages/data/src/index.js";
 import { encodeShare } from "../../packages/web/client/src/lib/share-link.js";
 
@@ -103,6 +104,10 @@ type RunFile = {
   /** Per deck: text that must appear in some captured drawer, or the capture fails. The plant's
    *  sentence goes here, which makes "the plant is reachable from the frames" a checked fact. */
   mustShow?: Record<string, string[]>;
+  /** Inject the pod-fit seat's calibration plant (research/web/plant.ts, issue #1251): the Lively
+   *  Dirge shard is rewritten in EVERY browser context so the report carries the claim the owner
+   *  judged FALSE. The engine itself no longer makes it. */
+  plant?: boolean;
 };
 
 const DESKTOP = { viewport: { width: 1920, height: 1080 } };
@@ -975,6 +980,7 @@ async function main(runPath: string): Promise<void> {
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });
 
+  if (run.plant) console.log("NOTE: plant: injected (Lively Dirge -> Tinybones)");
   const deckFiles = run.decks === undefined ? [] : Array.isArray(run.decks) ? run.decks : [run.decks];
   if (deckFiles.length === 0) deckFiles.push("");            // a surface that needs no deck
   if (deckFiles.length === 1) {
@@ -1005,6 +1011,7 @@ async function main(runPath: string): Promise<void> {
 
     for (const [label, device] of [["desktop", DESKTOP], ["phone", PHONE], ["wide", WIDE], ["uhd", UHD]] as const) {
       const context = await browser.newContext({ ...device, reducedMotion: "reduce" });
+      if (run.plant) await installPlant(context);
       try {
         const page = await openPage(context);
         let at = "";
@@ -1144,6 +1151,7 @@ async function main(runPath: string): Promise<void> {
     // forced-colors: d3 sets `fill` and `stroke` as SVG ATTRIBUTES, which forced-colors mode does
     // not override. The graph is the most likely thing in this product to fail it.
     const fc = await browser.newContext({ ...DESKTOP, forcedColors: "active", reducedMotion: "reduce" });
+    if (run.plant) await installPlant(fc);
     try {
       const fcPage = await openPage(fc);
       await fcPage.goto(url(screen.path));
@@ -1159,6 +1167,7 @@ async function main(runPath: string): Promise<void> {
     // rendered pixels. An LLM cannot roleplay this -- it can see the colours -- so the TRANSFORMED
     // image is what goes to the personas.
     const cvd = await browser.newContext({ ...DESKTOP, reducedMotion: "reduce" });
+    if (run.plant) await installPlant(cvd);
     try {
       const cvdPage = await openPage(cvd);
       await cvdPage.goto(url(screen.path));
@@ -1175,6 +1184,7 @@ async function main(runPath: string): Promise<void> {
     // token PAIRS and can never see what actually lands on screen. Ceiling: axe catches roughly a
     // third of WCAG issues and will never find the "measures perfectly, still unfindable" class.
     const ax = await browser.newContext({ ...DESKTOP, reducedMotion: "reduce" });
+    if (run.plant) await installPlant(ax);
     try {
       const axPage = await openPage(ax);
       await axPage.goto(url(screen.path));

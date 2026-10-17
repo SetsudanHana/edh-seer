@@ -19,6 +19,14 @@ Answer as the player, never propose fixes.
 Wherever that file says "screenshots" or "frames", read "what you saw in the browser". The browser
 is already open on your deck's report, at the top of the first page.
 
+## Dispatcher pre-launch (not for the seat)
+
+Before launching the pod-fit seat, the dispatcher runs `npx tsx research/web/seed-check.ts` (must print
+`plant ok`), then `npx tsx research/web/plant.ts --snippet` and pastes its output into the Playwright
+MCP `browser_run_code_unsafe` tool with the deck report open. That installs the calibration plant
+(issue #1251; README, "The pod-fit seat's injected plant") and reloads. Other seats get no snippet.
+Never tell the seat what was planted.
+
 ## Moving around
 
 - **Stay on edhseer.cards, and move only by clicking** what is on the page — tabs, chapter links,
