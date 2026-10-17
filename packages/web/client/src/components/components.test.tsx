@@ -1638,7 +1638,7 @@ test("every verb the controller measured reaching the demand list as a raw key n
   expect(demandSentence("proliferate:*")).toBe("proliferating");
   // None of these may contain the raw separators a reader mistook for a template.
   for (const key of [
-    "draw:any", "counter-added:type:creature", "non-combat-damage:type:permanent", "leaves:any",
+    "draw:any", "counter-added:type:creature", "non-combat-damage:type:permanent", "leaves:permanent",
     "dice-rolled:any", "discard:any", "gain-life:any", "proliferate:any",
     "combat-damage:type:creature", "begin-combat:any",
   ]) {
@@ -1668,7 +1668,7 @@ test("demandSentence never emits a colon or a dash, mapped verb or not", () => {
     "enters:type:creature", "enters:subtype:wizard", "cast:type:artifact+enchantment+instant",
     "end-step:any", "begin-combat:any", "upkeep:any",
     "combat-damage:type:creature", "combat-damage:type:creature (narrowed)", "combat-damage:type:permanent",
-    "non-combat-damage:type:permanent", "draw:any", "leaves:any", "leaves:type:creature",
+    "non-combat-damage:type:permanent", "draw:any", "leaves:permanent", "leaves:type:creature",
     "leaves:type:artifact", "counter-added:type:creature", "counter-added:any", "discard:any",
     "gain-life:any", "proliferate:any", "dice-rolled:any",
     // A verb this map has never seen, exactly the shape a future engine verb would arrive as.

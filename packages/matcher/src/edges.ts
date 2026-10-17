@@ -8,7 +8,7 @@ import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
-import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
@@ -413,7 +413,7 @@ export function cardCaresTags(tags: CardTags): Set<string> {
         // The zone is passed only so a graveyard leave/enter (a CARD, not a permanent) is not given
         // the permanent class; the key keeps its legacy spelling (`leaves:`, no `-graveyard`) here.
         const key = eventTagKey({ verb: v, subject: a.trigger.subject } as GameEvent, tags.characteristics?.types);
-        out.add(key.startsWith(`${v}-graveyard:`) ? `${v}:${key.slice(key.indexOf(":") + 1)}` : key);
+        out.add(key.startsWith(`${v}-graveyard:`) ? tagKey(v, key.slice(key.indexOf(":") + 1)) : key);
       }
     }
     // AN INTERVENING-IF CONDITION IS A DEMAND EVEN WHEN NO SINGLE CARD SATISFIES IT (owner,
@@ -2498,7 +2498,7 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // because `exile-processing:` runs the other way (producer exiles, consumer processes) and one
       // tag for both folded Nullifier -> Dauthi's two opposite reasons into a single row.
       const intercepted = a.effect.intercepted === true;
-      const tag = `${intercepted ? "graveyard-intercept" : "graveyard-recursion"}:${themeSubjectKey(keyedOn(a.effect.subject, e.subject))}`;
+      const tag = tagKey(intercepted ? "graveyard-intercept" : "graveyard-recursion", themeSubjectKey(keyedOn(a.effect.subject, e.subject)));
       if (said.has(tag)) continue;
       said.add(tag);
       reasons.push({
@@ -2787,7 +2787,7 @@ function countGateEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     const counted = a.thresholdSubject;
     if (!counted || !a.threshold || counted.zone === "graveyard" || !boardCountNarrows(counted)) continue;
     const win = a.effect.kind === "win-game";
-    const tag = `${win ? "wincon" : "threshold"}:${themeSubjectKey(counted)}`;
+    const tag = tagKey(win ? "wincon" : "threshold", themeSubjectKey(counted));
     if (countsSeen.has(`${tag}|${a.threshold.atLeast}`)) continue;
     const { zone: _z, ...printed } = counted;
     if (!subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h)) continue;
@@ -2998,7 +2998,7 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
       // counter-presence passes use; `static:` stays reserved for what cardThemeTags calls static.
       tag: a.kind === "static"
         ? `static:${a.effect.kind}`
-        : `${a.effect.kind}:${themeSubjectKey(a.effect.subject)}`,
+        : tagKey(a.effect.kind, themeSubjectKey(a.effect.subject)),
       text: a.effect.kind === "cost-reduction"
         ? costReductionSentence(p.card.name, c.card.name)
         : staticGrantSentence(p.card.name, c.card.name, a.effect.kind,
@@ -3432,9 +3432,9 @@ function delveEdges({ p, c, pEvents, reasons }: PairScope): void {
       // Cruelty). The last are read off the printed cue below until derive's WHO marks them `opp`;
       // a death at `any` ("each player sacrifices", a wrath) kills yours too and always counts.
       const yours = s.control === "you" || (s.control === "any" && !fillsOnlyOpponents(p.card.oracleText));
-      const key = e.verb === "mill" && yours ? "mill:any" : e.verb === "discard" && yours ? "discard:any"
-        : e.verb === "dies" && s.control !== "opp" ? "dies:permanent"
-        : (e.verb === "enters-graveyard" || (e.verb === "enters" && s.zone === "graveyard" && !e.implied)) && yours ? "enters-graveyard:any"
+      const key = e.verb === "mill" && yours ? tagKey("mill", "any") : e.verb === "discard" && yours ? tagKey("discard", "any")
+        : e.verb === "dies" && s.control !== "opp" ? tagKey("dies", "permanent")
+        : (e.verb === "enters-graveyard" || (e.verb === "enters" && s.zone === "graveyard" && !e.implied)) && yours ? tagKey("enters-graveyard", "any")
         : undefined;
       if (!key) continue;
       reasons.push({

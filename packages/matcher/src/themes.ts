@@ -1,7 +1,7 @@
 import type { Reason } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import { supplyTagKeys, themeSubjectKey } from "./edges.js";
-import { normalizeZoneEvent } from "./zones.js";
+import { normalizeZoneEvent, tagKey } from "./zones.js";
 import { BASIC_LAND_TYPE_SET } from "./typeline.js";
 import type { DeckCard } from "./types.js";
 
@@ -88,7 +88,7 @@ function staticPayoffTags(tags: CardTags): Set<string> {
     // `enters:land` credit.
     if (verb === "enters" && (kind === "keyword-grant" || kind === "type-grant")
       && (key === "land" || BASIC_LAND_TYPE_SET.has(key))) continue;
-    out.add(`${verb}:${key}`);
+    out.add(tagKey(verb, key));
   }
   return out;
 }

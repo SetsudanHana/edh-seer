@@ -52,7 +52,7 @@ test("a structured tag renders its subject alongside the mechanism", () => {
 /** `:any` names no subject, so there is nothing to say about it — the mechanism alone is the whole
  *  claim, and "anys entering" would be worse than silence. */
 test("an `any` subject renders the bare mechanism", () => {
-  expect(describeTag("enters:any")).toBe("enters");
+  expect(describeTag("mill:any")).toBe("mill");
   expect(describeTag("draw:any")).toBe("draw");
 });
 

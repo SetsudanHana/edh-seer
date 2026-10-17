@@ -180,7 +180,7 @@ test("a real theme is not pushed to a fractional rank by many small same-family 
 // per-tag ranking byte for byte -- that is the wiring acceptance test -- and the naming rule uses
 // tf-idf MASS, because count share was measured to generalise nine of twelve decks to "creatures
 // entering" and cost every tribal deck its tribe.
-const FOLD = (t: string): string => t.startsWith("enters:") && t !== "enters:any" && t !== "enters:creature"
+const FOLD = (t: string): string => t.startsWith("enters:") && t !== "enters:permanent" && t !== "enters:creature"
   ? "enters:creature" : t;
 const STATS = { N: 1000, counts: { "enters:creature": 400, "enters:wizard": 6, "enters:goblin": 6, "enters:rat": 6, "draw:any": 300 } };
 
@@ -305,7 +305,7 @@ test("cohesion declines to name the deck below THEME_NAME_FLOOR", () => {
 });
 
 // #1166: for a verb that implies a class the untyped form is stored AS that class, so the general
-// sibling a specific tag folds with is `enters:permanent`, not the `enters:any` that no longer exists.
+// sibling a specific tag folds with is `enters:permanent`, not the dead `enters`+`any` key that no longer exists.
 test("a specific tag folds with its verb's implied-class sibling", () => {
   const deckFreq = new Map([["enters:creature", 17], ["enters:permanent", 16], ["draw:any", 18]]);
   const stats = { N: 1000, counts: { "enters:creature": 100, "enters:permanent": 100, "draw:any": 100 } };

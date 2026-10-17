@@ -64,5 +64,5 @@ test("a verb's implied-class axis reaches its untyped keys; a stored `:any` axis
   expect(axisEventKeys("dies:creature", keys)).toEqual(expect.arrayContaining(["dies|-|-|-", "dies|creature|-|-"]));
   expect(axisEventKeys("enters:creature", keys)).toEqual(["enters|creature|-|-"]);
   expect(axisEventKeys("draw:any", keys)).toEqual(["draw|-|-|-"]);
-  expect(eventKeysForDemand("enters:any", keys)).toEqual([]);
+  expect(eventKeysForDemand("enters:any", keys)).toEqual([]); // dead-key-ok: proves the unfilled key matches nothing
 });

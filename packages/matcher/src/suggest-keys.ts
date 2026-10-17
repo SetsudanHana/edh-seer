@@ -1,5 +1,5 @@
 import { VERB_IMPLIED_CLASS } from "@edh-seer/tagger/schema";
-import { WILDCARD_SUBJECT } from "./zones.js";
+import { tagKey, WILDCARD_SUBJECT } from "./zones.js";
 
 /** A DEMAND ROW'S KEY, AS CANDIDATE EVENT KEYS (spec 2026-09-24 deck suggestions, §3, "The demand
  *  key is not an `events/` key").
@@ -58,7 +58,7 @@ export function axisEventKeys(tag: string, eventKeys: readonly string[]): string
   // shards, and a tribal anthem's tribe is its own axis tag.
   if (verb === "static") return eventKeys.filter((k) => k.startsWith(`applies:${word}|`) && k.split("|")[2] === "-");
   // A STORED `:any` (draw, gain-life ... a verb with no implied class) names no class: every key of the verb.
-  if (word === "any") return eventKeysForDemand(`${verb}:${WILDCARD_SUBJECT}`, eventKeys);
+  if (word === "any") return eventKeysForDemand(tagKey(verb, WILDCARD_SUBJECT), eventKeys);
   // THE VERB'S IMPLIED CLASS (#1166; was #1088's combat special case). A subject that names no class
   // IS the class its verb implies (`VERB_IMPLIED_CLASS`), so the axis `enters:permanent` /
   // `attacks:creature` stands for the untyped keys (`enters|-|-|-`) too. The wide classes
@@ -66,11 +66,11 @@ export function axisEventKeys(tag: string, eventKeys: readonly string[]): string
   // the keys that name no type beside its own.
   const implied = (VERB_IMPLIED_CLASS as Readonly<Record<string, string>>)[verb];
   if (implied !== undefined && word === implied) {
-    const all = eventKeysForDemand(`${verb}:${WILDCARD_SUBJECT}`, eventKeys);
+    const all = eventKeysForDemand(tagKey(verb, WILDCARD_SUBJECT), eventKeys);
     if (word === "permanent" || word === "spell") return all;
   }
   const untyped = implied !== undefined && word === implied
-    ? eventKeysForDemand(`${verb}:${WILDCARD_SUBJECT}`, eventKeys).filter((k) => k.split("|")[1] === "-") : [];
+    ? eventKeysForDemand(tagKey(verb, WILDCARD_SUBJECT), eventKeys).filter((k) => k.split("|")[1] === "-") : [];
   return [...new Set([
     ...untyped,
     ...eventKeysForDemand(`${verb}:type:${word}`, eventKeys),

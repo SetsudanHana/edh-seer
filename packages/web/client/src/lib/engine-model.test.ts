@@ -186,7 +186,7 @@ test("one-time links are named, count a little, and a card that can be brought b
   const m = tiny(["Flicker", "A", "B", "C", "Lone", "Digger"], [
     ...["A", "B", "C"].map((x) => ({ producer: "Flicker", consumer: x, tag: "enters:creature", text: `When ${x} enters thanks to Flicker, ${x} triggers again`, repeatability: "oneshot" })),
     { producer: "Digger", consumer: "Flicker", tag: "recursion-target:instant", text: "Digger can bring back Flicker" },
-    { producer: "Lone", consumer: "A", tag: "attacks:any", text: "When Lone attacks, A grows" },
+    { producer: "Lone", consumer: "A", tag: "attacks:creature", text: "When Lone attacks, A grows" },
   ]);
   const flicker = m.cuts.find((c) => c.card.name === "Flicker")!;
   expect(flicker.why).toMatch(/^It works with other cards only once, when it is played: with A, B and C\. Digger can bring it back to do it again\./);
@@ -268,7 +268,7 @@ test("a cut whose partner gets the same from another card loses nothing", () => 
 
 test("a cut that is the only source of a link names it as lost", () => {
   const m = tiny(["Lone", "A", "Elf", "Payoff"], [
-    { producer: "Lone", consumer: "A", tag: "attacks:any", text: "When Lone attacks, A grows" },
+    { producer: "Lone", consumer: "A", tag: "attacks:creature", text: "When Lone attacks, A grows" },
     { producer: "Elf", consumer: "Payoff", tag: "enters:creature", text: "When Elf enters, Payoff draws you 1 card" },
   ]);
   expect(m.cuts.find((c) => c.card.name === "Lone")!.loses.map((l) => l.text)).toEqual(["When Lone attacks, A grows"]);
@@ -330,7 +330,7 @@ describe("pairStrength", () => {
     const smax = Math.max(1, ...[...m.cards.values()].map((c) => c.score));
     return pairStrength(m.partners.get("A")!.get("B")!, m.cards, new Map(m.groups.map((g) => [g.tag, g])), smax);
   };
-  const oneWay = { producer: "A", consumer: "B", tag: "attacks:any", text: "When A attacks, B grows" };
+  const oneWay = { producer: "A", consumer: "B", tag: "attacks:creature", text: "When A attacks, B grows" };
   const back = { producer: "B", consumer: "A", tag: "dies:creature", text: "When B dies, A draws a card" };
 
   test("is 0 when every link works only once, and above 0 when one repeats", () => {

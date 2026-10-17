@@ -14,7 +14,7 @@ test("a subtype folds to its card type; a card type and :any stay put", () => {
   expect(foldThemeTag("enters:forest", H)).toBe("enters:land");
   expect(foldThemeTag("create-token:treasure", H)).toBe("create-token:artifact");
   expect(foldThemeTag("enters:creature", H)).toBe("enters:creature");
-  expect(foldThemeTag("enters:any", H)).toBe("enters:any");
+  expect(foldThemeTag("enters:permanent", H)).toBe("enters:permanent");
 });
 
 test("a multi-type subtype resolves by priority, not by hierarchy.json ordering", () => {

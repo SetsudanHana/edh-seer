@@ -1,4 +1,5 @@
 import { globalIDF, type Reason, type TagStats } from "@edh-seer/engine";
+import { tagKey } from "./zones.js";
 
 /** Extra TF mass given to the commander's own theme tags so the commander anchors the axis —
  *  but the weight is still × globalIDF, so a generic commander ability (near-zero idf) can't
@@ -51,7 +52,7 @@ export function axisWeightOf(tag: string, axis: ReadonlyMap<string, number>): nu
   if (!parents) return 0;
   const subject = tag.slice(i + 1);
   let w = 0;
-  for (const p of parents) w = Math.max(w, axis.get(`${p}:${subject}`) ?? 0);
+  for (const p of parents) w = Math.max(w, axis.get(tagKey(p, subject)) ?? 0);
   return w;
 }
 

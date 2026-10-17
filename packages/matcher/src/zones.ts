@@ -49,7 +49,15 @@ export function zoneEventKey(verb: string, zone: string | undefined, subjectKey:
  *  `WILDCARD_SUBJECT`, because they COUNT shapes and `suggest-keys.ts` reads the wildcard as "every
  *  subject". Tags a player sees use `zoneEventKey`, which fills `VERB_IMPLIED_CLASS` (#1166). */
 export function zoneEventKeyRaw(verb: string, zone: string | undefined, subjectKey: string): string {
-  if (verb === "enters" && zone === "graveyard") return `enters-graveyard:${subjectKey}`;
-  if (verb === "leaves" && zone === "graveyard") return `leaves-graveyard:${subjectKey}`;
-  return `${verb}:${subjectKey}`;
+  if (verb === "enters" && zone === "graveyard") return tagKey("enters-graveyard", subjectKey);
+  if (verb === "leaves" && zone === "graveyard") return tagKey("leaves-graveyard", subjectKey);
+  return tagKey(verb, subjectKey);
+}
+
+/** THE ONE WAY TO BUILD A `verb:subject` TAG KEY (#1268 part C). Every key a theme, a reason or an
+ *  axis carries is this string; building it with a template at each site is how `enters:any`
+ *  survived its own retirement. A verb with an implied class goes through `zoneEventKey`, which
+ *  fills the class, so a literal `<verb>:any` for those verbs is a dead key (`check_dead_keys.mjs`). */
+export function tagKey(verb: string, subject: string): string {
+  return `${verb}:${subject}`;
 }

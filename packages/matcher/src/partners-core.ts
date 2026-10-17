@@ -22,7 +22,7 @@ import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } 
  *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
 export { effectPhrase } from "./sentence.js";
 import { phraseKindOf } from "./sentence.js";
-import { normalizeZoneEvent } from "./zones.js";
+import { normalizeZoneEvent, tagKey } from "./zones.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 /** PURE, AND IT HAS TO STAY THAT WAY. `build-partners.ts` is the Mongo and fs wiring; everything
@@ -1205,7 +1205,7 @@ export const fillDemandsOf = (d: DeckCard): { key: string; tag: string; tags: st
     const s = a.effect?.subject;
     // An intercepted fill (Dauthi, Valgavoth) is its own family, as the engine tags it (#1083).
     if (a.effect?.kind === "graveyard-recursion" && s?.zone === "graveyard" && s.self !== true) {
-      push(keyOf(s), [`${a.effect.intercepted === true ? "graveyard-intercept" : "graveyard-recursion"}:${themeSubjectKey(s)}`]);
+      push(keyOf(s), [tagKey(a.effect.intercepted === true ? "graveyard-intercept" : "graveyard-recursion", themeSubjectKey(s))]);
     }
     const scaled = a.effect?.scalingSubject;
     if (a.effect?.scaling === "per-graveyard" && scaled && (asList(scaled.type).length > 0 || asList(scaled.subtype).length > 0)) {
@@ -1270,7 +1270,7 @@ export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
     const scaled = a.effect?.scalingSubject;
     if (scaled && scaled.zone === "battlefield") counts.push({ counted: scaled, tag: `scales:${themeSubjectKey(scaled)}` });
     const gated = a.thresholdSubject;
-    if (gated && a.threshold) counts.push({ counted: gated, tag: `${a.effect?.kind === "win-game" ? "wincon" : "threshold"}:${themeSubjectKey(gated)}` });
+    if (gated && a.threshold) counts.push({ counted: gated, tag: tagKey(a.effect?.kind === "win-game" ? "wincon" : "threshold", themeSubjectKey(gated)) });
     return counts.flatMap(({ counted, tag }) => {
       // WHAT YOU GAVE AWAY is the one opponent-board count that is this deck's theme (#681, Zedruu);
       // keyed and tagged exactly as `donatedCountEdges` joins it.

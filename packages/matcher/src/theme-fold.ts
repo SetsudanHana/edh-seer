@@ -3,6 +3,7 @@ import { SUBTYPE_TYPES } from "@edh-seer/tagger/subtypes";
 import { ALL_CARD_TYPES } from "./hierarchy.js";
 import type { Hierarchy } from "./types.js";
 import { SUPERTYPES } from "./typeline.js";
+import { tagKey } from "./zones.js";
 
 /** THE THEME FOLD — a deck's identity is the family, not its largest fragment.
  *
@@ -73,7 +74,7 @@ export function foldThemeTag(tag: string, h: Hierarchy): string {
   const parents = SUBTYPE_TYPES[value.toLowerCase()] ?? h[value.toLowerCase()];
   if (!parents || parents.length === 0) return tag;
   const parent = TYPE_PRIORITY.find((t) => parents.includes(t)) ?? parents[0];
-  return `${family}:${parent}`;
+  return tagKey(family, parent);
 }
 
 /** A fold function bound to one hierarchy, for the readers that take it as an argument. */

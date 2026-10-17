@@ -18,7 +18,7 @@ test("a demand's width is read off the tag's class", () => {
 });
 
 test("specificity floors a whole-deck class and rewards a subtype", () => {
-  expect(specificityOf("enters:any")).toBe(0.05);
+  expect(specificityOf("enters:permanent")).toBe(0.05);
   expect(specificityOf("enters:creature")).toBe(0.44);
   expect(specificityOf("dies:artifact")).toBe(0.89);
   expect(specificityOf("enters:goblin")).toBe(0.98);
