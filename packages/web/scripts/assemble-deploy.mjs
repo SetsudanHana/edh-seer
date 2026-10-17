@@ -38,6 +38,18 @@ if (!existsSync(staticOut)) {
   );
   process.exit(1);
 }
+// A STATIC-OUT BUILT UNDER ANOTHER DERIVE_VERSION IS NOT DEPLOYED (#1264 review). `build-static` stamps `deriveVersion` into the
+// manifest; this compares it to the constant in the source (read as text: this is plain node, no TS loader, no Mongo, no network).
+const deriveSrc = readFileSync(join(repoRoot, "packages/tagger/src/derive/derive.ts"), "utf8");
+const currentDerive = Number(/^export const DERIVE_VERSION = (\d+);/m.exec(deriveSrc)?.[1]);
+const builtDerive = JSON.parse(readFileSync(join(staticOut, "manifest.json"), "utf8")).deriveVersion;
+if (!Number.isFinite(currentDerive) || builtDerive !== currentDerive) {
+  console.error(
+    `static-out/ was built at DERIVE_VERSION ${builtDerive ?? "(not recorded)"}, the source is at ${currentDerive}. Rebuild it:\n` +
+      "  npx tsx packages/tagger/src/bin/derive-corpus.ts --force\n  npx tsx packages/matcher/src/bin/build-static.ts",
+  );
+  process.exit(1);
+}
 if (!existsSync(join(dist, "index.html"))) {
   console.error("client/dist/index.html is missing — the client build did not run.");
   process.exit(1);

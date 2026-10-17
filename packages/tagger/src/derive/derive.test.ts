@@ -1,8 +1,8 @@
 import { describe, expect, it, test } from "vitest";
-import { manaAdded, unitAmount, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
+import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { deriveInputOf } from "../derive-input.js";
-import type { Characteristics } from "../schema.js";
+import type { Ability, Characteristics } from "../schema.js";
 
 test("one ability per action, sharing the clause kind and trigger", () => {
   // Kaya, Ghost Assassin -2: "Each opponent loses 2 life and you gain 2 life."
@@ -4644,4 +4644,22 @@ test("a mode bullet of a refused header reads the header's object: 'It gains X' 
   // narrowing ("alone"), so it keeps a plain `attacks` trigger rather than a refusal. What it grants to is the
   // part this choice fixes: without it the subject was `{control: any}` with no ref -- every permanent.
   expect(grant.effect.subject).toMatchObject({ ref: "trigger", type: "creature" });
+});
+
+// #1264 review: the "self-loss" stamp is a pure step on the final ability.
+describe("stampSelfLoss", () => {
+  const loses = { verb: "loses-game", subject: { control: "you", token: null } } as never;
+  const base = { kind: "triggered", effect: { kind: "" } } as unknown as Ability;
+  test("a refused trigger whose emits are all 'you lose the game' stays 'refused-trigger'", () => {
+    expect(stampSelfLoss({ ...base, emits: [loses], claimsNothing: "refused-trigger" }).claimsNothing).toBe("refused-trigger");
+    expect(stampSelfLoss({ ...base, emits: [loses] }).claimsNothing).toBe("self-loss");
+  });
+  test("every emit must be the loss: a loss plus a draw, an opponent's loss or no emits gets no reason", () => {
+    const draw = { verb: "draw", subject: { control: "you", token: null } } as never;
+    const oppLoses = { verb: "loses-game", subject: { control: "opp", token: null } } as never;
+    expect(stampSelfLoss({ ...base, emits: [loses, draw] }).claimsNothing).toBeUndefined();
+    expect(stampSelfLoss({ ...base, emits: [oppLoses] }).claimsNothing).toBeUndefined();
+    expect(stampSelfLoss({ ...base, emits: [] }).claimsNothing).toBeUndefined();
+    expect(stampSelfLoss(base).claimsNothing).toBeUndefined();
+  });
 });

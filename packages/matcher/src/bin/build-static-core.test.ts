@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { anchorOf, comboIndex, SHARD_COUNT, shardOf } from "./build-static-core.js";
+import { anchorOf, comboIndex, SHARD_COUNT, shardOf, staleRows } from "./build-static-core.js";
 
 /** THE ANCHOR IS WHY THE INDEX IS EXACT RATHER THAN APPROXIMATE. A combo is contained in a deck
  *  only if EVERY one of its cards is present, so it can only ever match if its alphabetically-first
@@ -70,4 +70,10 @@ test("a combo's template pieces are kept in its bucket", () => {
   expect(idx.get("Goblin Bombardment")).toEqual([
     { cards: ["Metallic Mimic", "Goblin Bombardment"], result: "Infinite death triggers", requires: ["Creature with undying"] },
   ]);
+});
+
+test("staleRows lists rows derived below the current version, and rows with no version", () => {
+  const rows = [{ id: "a", deriveVersion: 335 }, { id: "b", deriveVersion: 334 }, { id: "c" }, { id: "d", deriveVersion: 336 }];
+  expect(staleRows(rows, 335).map((r) => r.id)).toEqual(["b", "c"]);
+  expect(staleRows([], 335)).toEqual([]);
 });

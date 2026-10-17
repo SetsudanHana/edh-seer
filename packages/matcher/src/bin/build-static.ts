@@ -16,9 +16,9 @@ import { getHeapStatistics } from "node:v8";
 import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, docToCard, loadConfig } from "@edh-seer/data";
-import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
+import { DERIVED_COLLECTION, DERIVE_VERSION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
-import { SHARD_COUNT, comboIndex, shardOf, type StaticCombo } from "./build-static-core.js";
+import { SHARD_COUNT, comboIndex, shardOf, staleRows, type StaticCombo } from "./build-static-core.js";
 import { browseSlices, buildPartnerArtifact, type PartnerId } from "../partners-core.js";
 import { eventShards } from "./events-index-core.js";
 import { eventPatterns, patternFrequency } from "../event-pattern.js";
@@ -71,6 +71,13 @@ const store = await connect(loadConfig());
 // and a paste naming one reads as an unknown card.)
 const cards = await store.cards.find({}).toArray();
 const derivedRows = await store.db.collection<CardTags>(DERIVED_COLLECTION).find({}).toArray();
+// A CORPUS DERIVED UNDER AN OLDER DERIVE_VERSION IS NOT SHIPPED (#1264 review): run derive-corpus --force first.
+const stale = staleRows(derivedRows as { deriveVersion?: number }[], DERIVE_VERSION);
+if (stale.length > 0) {
+  console.error(`build-static refused: ${stale.length} of ${derivedRows.length} cardTagsDerived rows have deriveVersion below ${DERIVE_VERSION}. Run derive-corpus.ts --force first.`);
+  await store.close();
+  process.exit(1);
+}
 const tagsByOracle = new Map(derivedRows.map((r) => [r.oracleId, r]));
 const combos = await store.combos.find().toArray();
 const combosByAnchor = comboIndex(combos.map((c) => ({ cards: c.cards, result: c.result, ...(c.requires?.length ? { requires: c.requires } : {}) })));
@@ -328,7 +335,7 @@ for (const entry of readdirSync(outDir)) {
 const versionDir = join(outDir, version);
 renameSync(stagingDir, versionDir);
 // The one file that is not content-addressed, and so the only one a cache must revalidate.
-writeFileSync(join(outDir, "manifest.json"), JSON.stringify({ version }));
+writeFileSync(join(outDir, "manifest.json"), JSON.stringify({ version, deriveVersion: DERIVE_VERSION }));
 
 const versionedCards = join(versionDir, "cards");
 // EVERY SHIPPED BYTE, not a hand-picked subset: the old three-line sum skipped name-index.json --
