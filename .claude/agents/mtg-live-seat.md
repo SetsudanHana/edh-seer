@@ -19,26 +19,6 @@ Answer as the player, never propose fixes.
 Wherever that file says "screenshots" or "frames", read "what you saw in the browser". The browser
 is already open on your deck's report, at the top of the first page.
 
-## Dispatcher pre-launch (not for the seat)
-
-Before launching the pod-fit seat, the dispatcher:
-
-1. runs `npx tsx research/web/seed-check.ts` (must print `plant ok`);
-2. has the browser ALREADY on the site origin with the deck report open (service workers and `caches`
-   are origin-scoped, so the snippet cannot clear them from `about:blank`);
-3. runs `npx tsx research/web/plant.ts --snippet` and pastes its output into the Playwright MCP
-   `browser_run_code_unsafe` tool. It reloads and returns `{ applied, shard, failures }`.
-   **If `applied` is not true, do NOT run the pod-fit seat** -- a round without the plant calibrates
-   nothing. First run `--cleanup-snippet` and then the plant snippet ONE more time (the service worker
-   can claim the page on reload before the shard fetch, which shows up as a loud `applied: false`);
-   give up only if it fails again;
-4. after the seat finishes, runs `npx tsx research/web/plant.ts --cleanup-snippet` the same way. The
-   patched shard sits in Cache Storage (`edh-seer-cards-<version>`) and the service-worker cache
-   (`edh-seer-shell-*`) and survives in a persistent profile, where a later seat would see a live FALSE
-   claim.
-
-Other seats get no snippet. Never tell the seat what was planted.
-
 ## Moving around
 
 - **Stay on edhseer.cards, and move only by clicking** what is on the page — tabs, chapter links,

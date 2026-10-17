@@ -154,17 +154,31 @@ It analyses the deck twice from Mongo. Unpatched it must NOT emit the sentence (
 (else "PLANT ROTTED", exit 1). The plant now rots only when a derive change touches Lively Dirge's
 `enters-graveyard` emit from the library.
 
-- **Capture harness**: `"plant": true` in `research/web/runs/deck-report.json` makes
-  `ui-review-capture.ts` call `installPlant` on every browser context. It needs the dev server: in a
-  PROD build the client registers a service worker, and Playwright's `route` does not see requests a
-  service worker serves.
-- **Live seat**: before launching the pod-fit seat, run `npx tsx research/web/plant.ts --snippet` and
-  paste the output into the Playwright MCP `browser_run_code_unsafe` tool. It unregisters service
-  workers, clears `caches`, installs the same route handler on `page.context()` and reloads. It is
-  generated from the same code as the harness (one handler, no second copy) and returns
-  `{ applied, shard, failures }`; `applied: false` means do not run the seat. Afterwards run
-  `--cleanup-snippet` (unroutes, unregisters workers, deletes caches) so a persistent browser profile
-  hands no later seat the plant.
+- **Capture harness**: `"plant": "mari-takes-control"` in `research/web/runs/deck-report.json` names
+  the deck STEM the plant is for; `ui-review-capture.ts` calls `installPlant` only on that deck's
+  contexts (and on the forced-colors/cvd/axe passes only if they run that deck). Other decks hold
+  Lively Dirge too (gengar, acererak-combo, gisa-and-geralf) and must not see it. It needs the dev
+  server: in a PROD build the client registers a service worker, and Playwright's `route` does not
+  see requests a service worker serves.
+- **Live seat -- dispatcher steps, kept HERE and never in `mtg-live-seat.md`** (that file is the
+  seat's own prompt and the seat can read `plant.ts`; nothing about the plant may reach it). Before
+  launching the pod-fit seat:
+  1. run `npx tsx research/web/seed-check.ts` (must print `plant ok`);
+  2. have the browser ALREADY on the site origin with the deck report open (service workers and
+     `caches` are origin-scoped);
+  3. run `npx tsx research/web/plant.ts --snippet` and paste the output into the Playwright MCP
+     `browser_run_code_unsafe` tool. It unregisters service workers, clears `caches`, installs the
+     same route handler on `page.context()`, reloads, then opens Tinybones's drawer on the Cards
+     page in a second page and looks for the full sentence. It is generated from the same code as the
+     harness (one handler, no second copy) and returns `{ applied, rendered, shard, failures }`.
+     `applied` proves only the shard rewrite; the deployed bundle can differ from the local engine
+     seed-check ran against, so **run the seat only when `rendered` is true**. If not, run
+     `--cleanup-snippet` and then the snippet once more (a service worker can claim the page on reload
+     before the shard fetch) and give up if it fails again;
+  4. after the seat, run `npx tsx research/web/plant.ts --cleanup-snippet` the same way (unroutes,
+     unregisters workers, deletes caches). The patched shard sits in Cache Storage
+     (`edh-seer-cards-<version>`) and the service-worker cache (`edh-seer-shell-*`) and survives in a
+     persistent profile, where a later seat would see a live FALSE claim.
 
 **How the fixture is chosen, because the method matters more than the pick.** CURRENT (since
 2026-10-17): the plant is INJECTED, so it cannot rot with the engine; pick a claim the owner judged

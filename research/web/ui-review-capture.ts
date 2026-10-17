@@ -104,10 +104,11 @@ type RunFile = {
   /** Per deck: text that must appear in some captured drawer, or the capture fails. The plant's
    *  sentence goes here, which makes "the plant is reachable from the frames" a checked fact. */
   mustShow?: Record<string, string[]>;
-  /** Inject the pod-fit seat's calibration plant (research/web/plant.ts, issue #1251): the Lively
-   *  Dirge shard is rewritten in EVERY browser context so the report carries the claim the owner
-   *  judged FALSE. The engine itself no longer makes it. */
-  plant?: boolean;
+  /** Inject the pod-fit seat's calibration plant (research/web/plant.ts, issue #1251) for THIS DECK
+   *  STEM ONLY: the Lively Dirge shard is rewritten in that deck's browser contexts so the report
+   *  carries the claim the owner judged FALSE. Other decks hold Lively Dirge too (gengar,
+   *  acererak-combo, gisa-and-geralf) and must not see it. The engine itself no longer makes it. */
+  plant?: string;
 };
 
 const DESKTOP = { viewport: { width: 1920, height: 1080 } };
@@ -982,7 +983,7 @@ async function main(runPath: string): Promise<void> {
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });
 
-  if (run.plant) console.log("NOTE: plant: injected (Lively Dirge -> Tinybones)");
+  if (run.plant) console.log(`NOTE: plant: injected (Lively Dirge -> Tinybones) for ${run.plant} only`);
   const deckFiles = run.decks === undefined ? [] : Array.isArray(run.decks) ? run.decks : [run.decks];
   if (deckFiles.length === 0) deckFiles.push("");            // a surface that needs no deck
   if (deckFiles.length === 1) {
@@ -1013,7 +1014,7 @@ async function main(runPath: string): Promise<void> {
 
     for (const [label, device] of [["desktop", DESKTOP], ["phone", PHONE], ["wide", WIDE], ["uhd", UHD]] as const) {
       const context = await browser.newContext({ ...device, reducedMotion: "reduce" });
-      if (run.plant) await installPlant(context, plantNote);
+      if (run.plant === stem) await installPlant(context, plantNote);
       try {
         const page = await openPage(context);
         let at = "";
@@ -1144,6 +1145,8 @@ async function main(runPath: string): Promise<void> {
   // component with a different decklist behind it is the same frame.
   const variantHash = deckFiles[0] === "" ? "" : (await deckHash(deckFiles[0])).hash;
   const url = (path: string) => `${run.baseUrl}${path}${variantHash}`;
+  /** The variant passes (forced colours, cvd, axe) all use the FIRST deck; plant only if it is the plant deck. */
+  const variantPlant = run.plant !== undefined && deckFiles[0].split("/").pop()!.replace(/\.txt$/, "") === run.plant;
 
   // One frame each. A second frame of the same rendering failure tells a judge nothing. The app
   // ships exactly one theme (`color-scheme: dark`, no `prefers-color-scheme` switch, no
@@ -1153,7 +1156,7 @@ async function main(runPath: string): Promise<void> {
     // forced-colors: d3 sets `fill` and `stroke` as SVG ATTRIBUTES, which forced-colors mode does
     // not override. The graph is the most likely thing in this product to fail it.
     const fc = await browser.newContext({ ...DESKTOP, forcedColors: "active", reducedMotion: "reduce" });
-    if (run.plant) await installPlant(fc, plantNote);
+    if (variantPlant) await installPlant(fc, plantNote);
     try {
       const fcPage = await openPage(fc);
       await fcPage.goto(url(screen.path));
@@ -1169,7 +1172,7 @@ async function main(runPath: string): Promise<void> {
     // rendered pixels. An LLM cannot roleplay this -- it can see the colours -- so the TRANSFORMED
     // image is what goes to the personas.
     const cvd = await browser.newContext({ ...DESKTOP, reducedMotion: "reduce" });
-    if (run.plant) await installPlant(cvd, plantNote);
+    if (variantPlant) await installPlant(cvd, plantNote);
     try {
       const cvdPage = await openPage(cvd);
       await cvdPage.goto(url(screen.path));
@@ -1186,7 +1189,7 @@ async function main(runPath: string): Promise<void> {
     // token PAIRS and can never see what actually lands on screen. Ceiling: axe catches roughly a
     // third of WCAG issues and will never find the "measures perfectly, still unfindable" class.
     const ax = await browser.newContext({ ...DESKTOP, reducedMotion: "reduce" });
-    if (run.plant) await installPlant(ax, plantNote);
+    if (variantPlant) await installPlant(ax, plantNote);
     try {
       const axPage = await openPage(ax);
       await axPage.goto(url(screen.path));

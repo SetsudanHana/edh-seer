@@ -146,11 +146,13 @@ export async function installPlant(context: BrowserContext, note: (msg: string) 
 
 /** The paste-able version for `browser_run_code_unsafe`, generated from the SAME functions. The page
  *  must already be on the site origin (service workers and `caches` are origin-scoped). It returns
- *  `{ applied, shard, failures }`; `applied: false` means do NOT run the pod-fit seat. */
+ *  `{ applied, rendered, shard, failures }`; run the pod-fit seat only when `rendered` is true. */
 export function plantSnippet(): string {
   return `async (page) => {
   const __name = (f) => f;
   const card = ${JSON.stringify(PLANT.card)};
+  const consumer = ${JSON.stringify(PLANT.consumer)};
+  const sentence = ${JSON.stringify(PLANT.sentence)};
   const emit = ${JSON.stringify(PLANT.emit)};
   const add = ${addSiblingEmit.toString()};
   const patch = ${patchShardText.toString()};
@@ -165,7 +167,30 @@ export function plantSnippet(): string {
   await page.reload();
   await page.waitForLoadState("networkidle");
   await page.waitForSelector("#read", { timeout: 60000 }).catch(() => {});
-  return { applied: state.applied !== null && state.failures.length === 0, shard: state.applied, failures: state.failures };
+  // \`applied\` proves only the shard rewrite. The deployed bundle can differ from the local engine
+  // seed-check ran against, so read the sentence off the page: it sits in ${PLANT.consumer}'s drawer
+  // on the Cards page ("every way it works"), which a full-page search of the report cannot see.
+  // A second page in the same context (so the route applies) leaves the seat's page where it was.
+  let rendered = false;
+  try {
+    const p2 = await page.context().newPage();
+    try {
+      const u = new URL(page.url());
+      u.pathname = "/analysis/cards";
+      await p2.goto(u.toString());
+      const link = p2.locator('a[data-card=' + JSON.stringify(consumer) + ']').first();
+      await link.waitFor({ timeout: 60000 });
+      await link.click({ timeout: 20000 });
+      await p2.locator("[data-testid='card-inspector']").first().waitFor({ timeout: 20000 });
+      const text = await p2.evaluate(() => {
+        const ins = document.querySelector("[data-testid='card-inspector']");
+        for (const d of Array.from(ins.querySelectorAll("details"))) d.open = true;
+        return ins.innerText;
+      });
+      rendered = text.includes(sentence);
+    } finally { await p2.close(); }
+  } catch (e) { state.failures.push("PLANT NOT RENDERED: " + (e instanceof Error ? e.message : String(e))); }
+  return { applied: state.applied !== null && !state.failures.some((f) => f.indexOf("PLANT NOT APPLIED") === 0), rendered, shard: state.applied, failures: state.failures };
 }
 `;
 }
