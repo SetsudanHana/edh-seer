@@ -10,7 +10,7 @@ import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Cont
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
-import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
+import { interveningIfOf, classifyCondition, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { actionRecipients, damagedPlayerIsOpponent, sentenceNamesAPlayer } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
@@ -709,11 +709,6 @@ function triggerSubjectPrecedesEvent(text: string, subject: string): boolean {
   return by < 0 || at < by;
 }
 
-/** AN `if:` THAT TESTS THE TRIGGER'S OBJECT, not the turn or a count: "if it was enchanted or equipped" (Koll),
- *  "if it was cast" (Mirror of Life Trapping), "if it was attacking or blocking alone" (Thijarian Witness),
- *  "if it's exiled" (Alaundo). A predicate outside this list ("if it's not their turn", "if it's the first
- *  time that creature has become tapped this turn") is a timing or a count and keeps the class. */
-const TESTS_THE_OBJECT = /\bif (?:it|that (?:creature|card|permanent|land)|those cards|they)(?:['\u2019]s| (?:was|is|were|are|had|has))(?: not| n['\u2019]t)? (?:an? |the )?(?:enchanted|equipped|cast|attacking|blocking|tapped|untapped|exiled|legendary|nontoken|token|face[- ]down|modified|historic|multicolored|colorless|creature|artifact|land|permanent)\b/i;
 
 /** "Whenever a creature deals damage to YOU, destroy it": the damager is an opponent's (owner ruling,
  *  #1253). CEILING: your own creature can deal you damage (a Fireblast-style self-hit). */
@@ -1565,9 +1560,6 @@ function counterTriggerOnSelf(text: string, cardName?: string): boolean {
  *  deck fed them (panel: Fang x3, Soul Enervation, Defiled Crypt, all FALSE). Read from the clause
  *  text, which is exactly the channel the subject string lost. */
 const LEAVES_GRAVEYARD = /\bleaves? (?:your|a|an opponent'?s|their|each player'?s|its owner'?s|the|that player'?s)? ?graveyard\b/i;
-/** "leave the battlefield WITHOUT DYING" (Dour Port-Mage), "if it didn't die" (Taeko): a `leaves`
- *  demand that refuses a death. 5 corpus cards. */
-const WITHOUT_DYING = /\bwithout dying\b|\bdidn'?t die\b|\bdoesn'?t die\b/i;
 
 /** AN ACTION THAT HAPPENS ON A DELAYED TRIGGER IS NOT AT INSTANT SPEED (#1250). "Sacrifice it at the
  *  beginning of the next end step" (Reflection of Kiki-Jiki) is a delayed triggered ability (CR 603.7),
@@ -1592,14 +1584,6 @@ function delayedAction(text: string, action: { verb?: string }, actions: readonl
 const SORCERY_SPEED = /\bactivate (?:this ability )?only as a sorcery\b|\bonly during your turn\b/i;
 // A loyalty symbol as a cost ("+1", "−3", "0"; CR 606.3 makes it sorcery-speed) is read once, by `paymentOf` (`Payment.loyalty`).
 
-/** "if none of them were cast", "if it wasn't cast", "no mana was spent to cast", "without being
- *  played", "if you didn't cast it from your hand" (Chainer, Nightmare Adept; Phage the Untouchable) — the
- *  entry happened by some route other than casting. CEILING: the last cue also holds for a cast from
- *  another zone (a flashback from the graveyard), which `notCast` refuses as a cast; only the hand
- *  is the implied cast, so the miss is a creature cast from the graveyard entering. Card-scoped like
- *  every other printed cue here. */
-const ARRIVED_WITHOUT_CASTING =
-  /\b(?:wasn't|weren't) cast\b|\bnone of them were cast\b|\bno mana was spent\b|\bwithout being played\b|\byou didn't cast (?:it|them) from your hand\b/i;
 
 /** WORDS ABOUT WHEN, NOT WHICH: "your NEXT upkeep", "dies THIS TURN", "this combat". A delayed or
  *  windowed trigger fires on the same class of event, as `oncePerTurn` does; `delayedBy` and
@@ -1610,26 +1594,6 @@ const TEMPORAL = /\b(?:next|this turn|this combat|each turn)\b/g;
  *  a count (`threshold`), an entry that was no cast (`notCast`), "the first instant spell" (the
  *  class inside the if, #178), "enters tapped" (`entersTapped`), an event amount ("5 or more
  *  damage", `amount`). Anything else refuses the claim (owner, 2026-10-01). */
-/** WHERE THE SOURCE IS, not which event: Inalla's eminence "if Inalla is in the command zone or on the
- *  battlefield", "if this card is in your graveyard". The ability only exists where it functions, so
- *  the condition narrows no event a producer supplies. */
-const SOURCE_ZONE = /^(?:~|this \w+|it) is (?:in|on) (?:the command zone|the battlefield|your graveyard|exile|your hand)(?: or (?:in|on) (?:the command zone|the battlefield|your graveyard|exile|your hand))?$/i;
-
-/** Guardian Project's "if it doesn't have the same name as another creature you control or a creature
- *  card in your graveyard": `uniqueName` (CR 903.5b; owner, 2026-10-01). */
-const SAME_NAME = /^it doesn't have the same name as /i;
-
-/** The Enduring cycle's "When ~ dies, if it was a creature, return it ... It's an enchantment" (#1250): the card is a creature
- *  card, so it dies as one and the condition narrows nothing a producer supplies. Admitted ONLY for a self `dies` trigger on a
- *  card whose printed type line includes Creature; Weatherseed Totem (an Artifact that is a creature only once animated) keeps
- *  the refusal, its if is not vacuous (CR 603.4). CEILING: reads the printed type line; a creature card that stops being a
- *  creature before it dies (Enduring Curiosity after it returns as an enchantment) is not modelled. */
-const WAS_A_CREATURE = /^(?:it was|they were) an? creature$/i;
-
-function conditionRepresented(condition: string, text: string): boolean {
-  return thresholdFor(text) !== undefined || SAME_NAME.test(condition) || ARRIVED_WITHOUT_CASTING.test(condition) || WITHOUT_DYING.test(condition)
-    || /\bthe first \w+ spell\b/i.test(condition) || SOURCE_ZONE.test(condition);
-}
 function narrowingRepresented(r: TriggerReading, text: string): boolean {
   const left = (r.narrowing ?? "").replace(TEMPORAL, "").replace(/\s+/g, " ").trim();
   if (left === "") return true;
@@ -1807,7 +1771,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   if (!verb) return { refused: r.event === "tapped-for-mana" ? "taps-for-mana" : r.event };
   // Entering TRANSFORMED keeps the name the stored path gave it.
   if (verb === "enters" && /\btransformed\b/.test(r.narrowing ?? "")) return { refused: "enters-transformed", subject };
-  if (r.condition && !conditionRepresented(r.condition.text, text) && !(verb === "dies" && subject.self === true && creatureCard === true && WAS_A_CREATURE.test(r.condition.text))) return { refused: `if:${r.event}`, subject };
+  if (r.condition && !classifyCondition(r.condition.text, { text, threshold: thresholdFor(text) !== undefined, selfDiesOnCreatureCard: verb === "dies" && subject.self === true && creatureCard === true }).represented) return { refused: `if:${r.event}`, subject };
   if (r.narrowing && !narrowingRepresented(r, text)) return { refused: `narrowing:${r.event}`, subject };
   if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
   if (r.condition && SAME_NAME.test(r.condition.text)) subject.uniqueName = true;
@@ -3045,7 +3009,7 @@ export function deriveAbilities(
       // "if it's exiled"). A refusal that read only timing or a count ("if it's not their turn", "if it's
       // the first time ... this turn") leaves "a creature you control" exact, and the ability keeps claiming it.
       if (kind === "triggered" && !abilities[i].trigger && namesTriggerObject(abilities[i])
-        && (triggerObjectClassless(abilities[i]) || unknownTriggers.slice(refusedBefore).some((r) => r.startsWith("if:")) && TESTS_THE_OBJECT.test(text))) {
+        && (triggerObjectClassless(abilities[i]) || unknownTriggers.slice(refusedBefore).some((r) => r.startsWith("if:")) && classifyCondition("", { text, threshold: false, selfDiesOnCreatureCard: false }).testsObject)) {
         abilities[i] = { ...abilities[i], claimsNothing: "refused-trigger" as const };
       }
       const trig = abilities[i].trigger;
