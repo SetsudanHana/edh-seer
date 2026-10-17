@@ -48,3 +48,18 @@ export function serialiseSnapshot(m: Membership): string {
   const cards = Object.keys(m).sort(cmp);
   return `{\n${cards.map((c) => `${JSON.stringify(c)}: ${JSON.stringify([...m[c]].sort(cmp))}`).join(",\n")}\n}\n`;
 }
+
+/** A `deriveVersion` group-count row, as `$group` returns it (`_id` is null for a row that has none). */
+export interface VersionGroup { _id: number | null; n: number }
+
+/** The groups that are NOT the expected version -- newer ones too, since the snapshot is only
+ *  comparable to a corpus derived at exactly the version the checked-out code carries. */
+export function versionDrift(groups: readonly VersionGroup[], expected: number): VersionGroup[] {
+  return groups.filter((g) => g._id !== expected).sort((a, b) => (a._id ?? -1) - (b._id ?? -1));
+}
+
+/** Up to `max` names, then a count of the rest. */
+export function listSome(names: readonly string[], max = 10): string {
+  const head = [...names].sort(cmp).slice(0, max).join(", ");
+  return names.length > max ? `${head}, ... (+${names.length - max} more)` : head;
+}

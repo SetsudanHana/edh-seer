@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { diffMembership, mergeMembership, serialiseSnapshot } from "./role-ratchet-core.js";
+import { diffMembership, listSome, mergeMembership, serialiseSnapshot, versionDrift } from "./role-ratchet-core.js";
 
 test("an identical measurement changes nothing", () => {
   const d = diffMembership({ A: ["role:ramp"] }, { A: ["role:ramp"] });
@@ -32,4 +32,18 @@ test("the serialised snapshot is key-sorted and stable", () => {
   const s = serialiseSnapshot({ B: ["role:draw"], A: ["role:ramp"] });
   expect(s.indexOf('"A"')).toBeLessThan(s.indexOf('"B"'));
   expect(s.endsWith("\n")).toBe(true);
+});
+
+test("a corpus at exactly the expected version has no drift", () => {
+  expect(versionDrift([{ _id: 339, n: 5000 }], 339)).toEqual([]);
+});
+
+test("older, newer and missing versions are all drift", () => {
+  const d = versionDrift([{ _id: 339, n: 10 }, { _id: 340, n: 1 }, { _id: null, n: 2 }, { _id: 338, n: 3 }], 339);
+  expect(d.map((g) => g._id)).toEqual([null, 338, 340]);
+});
+
+test("listSome caps the list and counts the rest", () => {
+  expect(listSome(["b", "a"], 10)).toBe("a, b");
+  expect(listSome(["a", "b", "c"], 2)).toBe("a, b, ... (+1 more)");
 });

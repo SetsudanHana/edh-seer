@@ -109,7 +109,9 @@ A fourth watches **role membership**. `role-ratchet.ts` runs the build-category 
 detectors over the 71 calibration decks and the 197 precons and diffs, card by card, against the
 tracked `packages/instruments/role-membership.json`. It fails both ways: `card  +role:ramp` is a
 card that gained a role, `card  -role:ramp` one that lost it. A `rules.json` edit that moves
-membership turns it red; if the move is intended, re-bank and explain every line in the commit:
+membership turns it red; if the move is intended, re-bank and explain every line in the commit. It refuses
+to run (check or bank) unless `cardTagsDerived` is at exactly `DERIVE_VERSION`, and exits 1 on an
+unresolved name; cards with no derived row are ratcheted in `role-membership-untagged.json`:
 
 ```bash
 npx tsx packages/instruments/src/role-ratchet.ts          # exit 1 on any gained or lost membership
