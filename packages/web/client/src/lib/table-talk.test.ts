@@ -118,3 +118,22 @@ test("an untimed killing combo is named when the bracket sentence names a differ
   const t = tableTalk(r, graph({}), (n) => m[n])!;
   expect(t.plan).toMatch(/, and the combo's speed is not timed \(X \+ Y\): its pieces cost 12 mana together\.$/);
 });
+
+/** NO ROUTE FINISHES (#1223): Rani's loop and drains. The line says what it plays for, then that nothing finishes. */
+test("a deck whose every route lacks a finisher is not said to win", () => {
+  const r = report({ focus: 0.5, combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite creature ETB, Infinite creature LTB, Infinite magecraft triggers" }] });
+  r.deckMath!.wincons.classes = [{ class: "burn", count: 8, share: 0.6, cards: [] }, { class: "combo", count: 4, share: 0.4, cards: [] }] as never;
+  (r.deckMath as { speed?: unknown }).speed = { drain: { perTurn: Array.from({ length: 20 }, () => 1.33), cards: ["Impact Tremors"], unbounded: [] } };
+  const t = tableTalk(r, graph({}), (n) => mv[n])!;
+  expect(t.plan).toBe("It plays for damage or drain and a combo, but nothing here was found that finishes a game: the Dualcaster Mage + Essence Flux loop repeats creature ETB, creature LTB and magecraft triggers, and no card here turns that into a win; its drains take about 27 of each opponent's 40 by turn 20.");
+  expect(t.text).not.toMatch(/spreads its wins|wins mostly/);
+});
+
+test("when a route is timed the line keeps its usual wording", () => {
+  const r = report({ focus: 0.7, combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite creature ETB" }] });
+  r.deckMath!.wincons.classes = [{ class: "burn", count: 8, share: 0.6, cards: [] }, { class: "combo", count: 4, share: 0.4, cards: [] }] as never;
+  (r.deckMath as { speed?: unknown }).speed = { drain: { turn: 11, perTurn: [3], cards: ["Impact Tremors"], unbounded: [] } };
+  const t = tableTalk(r, graph({}), (n) => mv[n])!;
+  expect(t.plan).toMatch(/^It wins mostly by damage or drain, or a combo, and its drains can kill the table around turn 11/);
+  expect(t.plan).not.toMatch(/finishes a game/);
+});

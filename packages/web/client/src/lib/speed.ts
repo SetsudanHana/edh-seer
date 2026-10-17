@@ -47,6 +47,9 @@ export interface SpeedRoute {
   winsBy?: string;
   /** What the number does and does not count. */
   caveat: string;
+  /** Set ONLY when the route is modelled and finishes no game: the clause `noFinisher` joins. Unmodelled,
+   *  timed, alternate-win and combo-that-kills routes never carry it: those are "unknown", not "no". */
+  lacks?: string;
 }
 
 type Rows = NonNullable<DeckReport["manaAvailability"]>["rows"];
@@ -67,6 +70,26 @@ export function drainCaveat(d: { turn?: number; cards: string[]; unbounded: stri
   return d.turn !== undefined
     ? `when its ${what} have taken 40 from every opponent, each firing once per creature, token or spell that sets it off, and nobody gaining life${grows}`
     : `its ${what} ${n === 1 ? "does" : "do"} not take 40 from every opponent by turn 20 at one fire per source${grows}`;
+}
+
+/** A phrase that ends one opponent: "loses the game", or damage / lifeloss aimed at a player. Plain
+ *  substring tests, no nested quantifiers.
+ *  CEILING: a substring heuristic over Commander Spellbook result phrases. It errs toward saying "no",
+ *  which withholds the verdict: a wipe ("creature"), a prevention, or damage to "all players" (which
+ *  kills you too, as brackets.ts rules) is never a kill. */
+function killsAPlayer(phrase: string): boolean {
+  const p = phrase.toLowerCase();
+  if (p.includes("prevent") || p.includes("all players") || p.includes("creature") || /\byou lose\b/.test(p)) return false;
+  return p.includes("loses the game") || (/\b(?:damage|life ?loss)\b/.test(p) && /\b(?:opponents?|players?)\b/.test(p));
+}
+
+/** What a loop repeats, from its result phrase ("Infinite creature ETB, Infinite magecraft triggers" ->
+ *  "creature ETB and magecraft triggers"): at most three, "a, b and c". An acronym keeps its case. */
+export function repeats(result: string): string {
+  const parts = result.split(",").map((x) => x.trim().replace(/^(?:near-)?infinite\s+/i, "")).filter(Boolean)
+    .map((x) => (/^[A-Z]{2,}\b/.test(x) ? x : x.charAt(0).toLowerCase() + x.slice(1)));
+  const xs = [...new Set(parts)].slice(0, 3);
+  return xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`;
 }
 
 const COMBAT: Record<string, string> = { "go-wide": "attacking with a wide board", stompy: "attacking with big creatures", voltron: "one big creature" };
@@ -103,6 +126,8 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   } else if (byCost[0]) {
     routes.push({
       kind: "combo", label: `a combo: ${byCost[0].cards.join(" + ")}`, cards: byCost[0].cards, needsFinisher: true,
+      // A result that kills one player (Target opponent loses the game) is not `comboWinsItself`, but it is not "no finisher" either.
+      ...(byCost[0].result.split(",").some(killsAPlayer) ? {} : { lacks: `the ${byCost[0].cards.join(" + ")} loop repeats ${repeats(byCost[0].result)}, and no card here turns that into a win` }),
       caveat: "the loop needs a finisher: no card here was found to turn what it repeats into a win",
     });
   }
@@ -127,11 +152,18 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   // A commander that prevents your damage to opponents (The Mindskinner) times no damage route.
   const prevented = report.deckMath?.speed?.prevented;
   const preventedWhy = prevented ? `not timed: ${prevented} prevents your damage to opponents` : undefined;
+  // With mill data beside a preventer the commander turns the board into mill, which is unmodelled
+  // here: naming the preventer would read its own engine as the defect.
+  const preventedLacks = prevented && !report.deckMath?.speed?.mill ? `${prevented} prevents your damage to opponents` : undefined;
   if (combat.length) {
     routes.push({
       kind: "combat", label: combat.map((c) => COMBAT[c.class]!).join(" or "), turn: table, cards: combat.flatMap((c) => c.cards ?? []),
       ...(!preventedWhy && combatSpeed?.early !== undefined ? { early: combatSpeed.early } : {}),
       ...(!preventedWhy && combatSpeed?.late !== undefined ? { late: combatSpeed.late } : {}),
+      // `early` is the p25: absent means under a quarter of games deal 120, not none. And with no
+      // simulation (`manaAvailability` absent) `combat` is {} for want of data, which says nothing.
+      ...(table === undefined && (prevented ? preventedLacks : combatSpeed?.early === undefined && rows)
+        ? { lacks: preventedLacks ?? "its creatures deal the table's 120 in fewer than a quarter of our test games by turn 20" } : {}),
       caveat: preventedWhy ?? (table
         ? "half our test games have dealt 120 by then, enough for all three opponents, if nobody blocks and nothing is removed"
         : combatSpeed?.early !== undefined
@@ -145,6 +177,7 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   if (cmd) {
     routes.push({
       kind: "commander", label: `commander damage: ${cmd.commander}`, ...(cmd.turn !== undefined ? { turn: cmd.turn } : {}), cards: [cmd.commander],
+      ...(cmd.turn === undefined && (!prevented || preventedLacks) ? { lacks: preventedLacks ?? `${cmd.commander} does not deal 21 to each opponent by turn 20` } : {}),
       caveat: preventedWhy ?? (cmd.turn !== undefined
         ? "when it has dealt 21 to each opponent: cast with haste, carrying the Equipment and Auras out by then, nobody blocking"
         : "not timed: it does not deal 21 to all three opponents by turn 20"),
@@ -156,6 +189,7 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   if (poison) {
     routes.push({
       kind: "poison", label: "poison counters", cards: poison.cards, ...(poison.turn !== undefined ? { turn: poison.turn } : {}),
+      ...(poison.turn === undefined && !poison.unbounded?.length && (!prevented || preventedLacks) ? { lacks: preventedLacks ?? "it does not put ten poison counters on every opponent by turn 20" } : {}),
       caveat: poison.turn !== undefined
         ? "when every opponent has ten poison counters: infect and toxic attacks unblocked, each proliferate adding one to everyone already poisoned"
         : prevented ? `not timed: ${prevented} prevents your damage to opponents, and no counters are placed fast enough`
@@ -177,12 +211,16 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
     const mill = kind === "mill" ? report.deckMath?.speed?.mill : undefined;
     if (mill) {
       const n = mill.cards.length;
-      routes.push({ kind, label, cards: cardsOf(kind).length ? cardsOf(kind) : mill.cards, ...(mill.turn !== undefined ? { turn: mill.turn } : {}), caveat: mill.turn !== undefined
+      routes.push({ kind, label, cards: cardsOf(kind).length ? cardsOf(kind) : mill.cards, ...(mill.turn !== undefined ? { turn: mill.turn } : {}),
+        ...(mill.turn === undefined && !mill.unbounded?.length ? { lacks: "its mill cards do not empty every opponent's library by turn 20" } : {}), caveat: mill.turn !== undefined
         ? `when ${n} mill card${n === 1 ? " has" : "s have"} emptied every opponent's library, each firing once per thing that sets it off; their own extra draws would make it sooner`
         : `its ${n} mill card${n === 1 ? " does" : "s do"} not empty every opponent's library by turn 20` });
       continue;
     }
-    routes.push({ kind, label, cards: cardsOf(kind), ...(drain?.turn !== undefined ? { turn: drain.turn } : {}), caveat: kind === "burn" && preventedWhy ? preventedWhy : drain
+    routes.push({ kind, label, cards: cardsOf(kind), ...(drain?.turn !== undefined ? { turn: drain.turn } : {}),
+      ...(kind === "burn" && preventedLacks ? { lacks: preventedLacks }
+        : drain && drain.turn === undefined && !drain.unbounded.length ? { lacks: `its drains take about ${Math.round(drain.perTurn.reduce((t, x) => t + x, 0))} of each opponent's 40 by turn 20` } : {}),
+      caveat: kind === "burn" && preventedWhy ? preventedWhy : drain
       ? drainCaveat(drain)
       : kind === "burn"
         ? "its burn is one-shot or aimed at one player, which is not timed yet"
@@ -196,4 +234,33 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
  *  counters), so it never leads. */
 export function fastestRoute(routes: SpeedRoute[]): SpeedRoute | undefined {
   return routes.filter((r) => r.turn !== undefined && r.kind !== "alt-win").sort((a, b) => a.turn! - b.turn!)[0];
+}
+
+/** The route kinds that answer for a win-plan class, as WinPlans' ROUTE_OF reads them (voltron: the
+ *  commander's or the board's). A class not listed here is not known to have a route. */
+const CLASS_ROUTES: Record<string, SpeedRoute["kind"][]> = {
+  combo: ["combo"], "alt-win": ["alt-win"], "go-wide": ["combat"], stompy: ["combat"], voltron: ["commander", "combat"],
+  burn: ["burn"], mill: ["mill"], poison: ["poison"],
+};
+
+/** THE VERDICT WHEN NO ROUTE FINISHES (#1223), as a lowercase clause: "nothing here was found that
+ *  finishes a game: a; b." "How you win" listed plans whose routes each said they do not finish, and
+ *  nothing said so in one sentence ("Spread about evenly across 2 plans" read as "it wins two ways").
+ *  When there are routes, EVERY route carries `lacks` and EVERY plan class has a route of its own, this
+ *  joins the distinct clauses with "; " (each holds its own commas and "and"). The headline and the
+ *  Say-this line both read it, so the line and the chapters cannot disagree.
+ *
+ *  CEILING: a deck with an unmodelled finish (one-shot burn, an alternate win, a combo that kills but
+ *  is untimed), an undercounted source (`unbounded`), or a plan class with no route gets no verdict and
+ *  keeps today's text. */
+export function noFinisherClause(routes: SpeedRoute[], classes: { class: string }[]): string | undefined {
+  if (!routes.length || !routes.every((r) => r.lacks)) return undefined;
+  if (!classes.every((c) => CLASS_ROUTES[c.class]?.some((k) => routes.some((r) => r.kind === k)))) return undefined;
+  return `nothing here was found that finishes a game: ${[...new Set(routes.map((r) => r.lacks))].join("; ")}.`;
+}
+
+/** `noFinisherClause`, capitalised to stand as a sentence. */
+export function noFinisher(routes: SpeedRoute[], classes: { class: string }[]): string | undefined {
+  const c = noFinisherClause(routes, classes);
+  return c && c.charAt(0).toUpperCase() + c.slice(1);
 }

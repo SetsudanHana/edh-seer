@@ -2,7 +2,7 @@ import { comboWinsItself } from "@edh-seer/matcher/brackets";
 import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
 import type { CardGraph, DeckReport } from "../types.js";
 import { infiniteCombos } from "./bracket-why.js";
-import { fastestRoute, speedRoutes } from "./speed.js";
+import { fastestRoute, noFinisherClause, speedRoutes } from "./speed.js";
 
 /** WHAT TO SAY AT THE TABLE, IN ONE BREATH (owner, 2026-09-26: the phone and one-line answer is a
  *  UX problem "to be addressed"). The baseline round's phone seat assembled its sentence from four
@@ -88,10 +88,15 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
   const focus = report.deckMath?.wincons.focus ?? 1;
   const leans = classes.length <= 1 || focus >= 1 / classes.length + 0.15;
   const phrase = (c: { class: string }) => WIN_PHRASE[c.class] ?? c.class;
-  const plan = primary
+  const verdict = noFinisherClause(routes, classes);
+  const planList = list([...classes.slice(0, 3).map(phrase), ...(classes.length > 3 ? [`${classes.length - 3} more`] : [])]);
+  // NO ROUTE FINISHES (#1223): "wins mostly by" and "spreads its wins" would both say the deck wins.
+  const plan = primary && verdict
+    ? `It plays for ${planList}, but ${verdict}`
+    : primary
     ? (leans
       ? `It wins mostly by ${phrase(primary)}${second ? `, or ${phrase(second)}` : ""}`
-      : `It spreads its wins across ${classes.length} plans: ${list([...classes.slice(0, 3).map(phrase), ...(classes.length > 3 ? [`${classes.length - 3} more`] : [])])}`)
+      : `It spreads its wins across ${classes.length} plans: ${planList}`)
       + (fastest?.turn === undefined ? ""
         : fastest.kind === "combo" ? `, and can combo as early as turn ${fastest.turn}${whichCombo}`
         // THE WHOLE TABLE (#1056): every timed route is now the turn all three opponents can be dead.
