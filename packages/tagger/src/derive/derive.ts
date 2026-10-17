@@ -21,6 +21,7 @@ import { selfAsTilde } from "../grammar/self-as-tilde.js";
 import { effectText, printedPreamble } from "../grammar/preamble.js";
 import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
+import { delaysIn } from "./delay.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
@@ -1510,7 +1511,15 @@ const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|him|her|this card|that card|t
  *  "tapped and transformed" (Ojer Taq). */
 /** "return ... at the beginning of the next end step" / "at the beginning of your next upkeep, return"
  *  (#801). Bounded and anchored on literals: no quantifier overlap for CodeQL's ReDoS check. */
-const DELAYED_RETURN = /\b(?:return|put)\b[^.]{0,120}?\bat the beginning of (?:the|your) next (?:end step|upkeep)\b|\bat the beginning of (?:the|your) next (?:end step|upkeep), (?:return|put)\b/i;
+/** A return/put whose own sentence carries a next-end-step / next-upkeep cue within 120 characters before it, or right after it
+ *  ("At the beginning of the next end step, return ..."). The cue is read by `delay.ts`. */
+function returnDelay(sentence: string): "next-end-step" | "next-upkeep" | undefined {
+  for (const d of delaysIn(sentence)) {
+    if (d.until !== "next-end-step" && d.until !== "next-upkeep") continue;
+    if (/\b(?:return|put)\b[^.]{0,120}$/i.test(sentence.slice(0, d.index)) || /^, (?:return|put)\b/i.test(sentence.slice(d.index + d.length))) return d.until;
+  }
+  return undefined;
+}
 /** The sentence of `text` holding the k-th (0-based) whole-word `verb`; "" when there are fewer. */
 function nthSentenceWith(text: string, verb: string, k: number): string {
   const word = new RegExp(`\\b${verb}\\b`, "gi");
@@ -1568,14 +1577,13 @@ const WITHOUT_DYING = /\bwithout dying\b|\bdidn'?t die\b|\bdoesn'?t die\b/i;
  *  end of combat step begins (CR 511.2) and creatures leave combat only as that step ends (CR 511.3), so
  *  "destroy it at end of combat" (Goblin Sappers, Silent Assassin, Winter's Chill) still kills an attacker.
  *  CEILING: the verb is found by its own word in the sentence. */
-const DELAYED_SENTENCE = /\bat (?:the beginning of (?:the|your) next (?:end step|upkeep|turn)|(?:the )?end of (?:the )?turn)\b/i;
 function delayedAction(text: string, action: { verb?: string }, actions: readonly { verb?: string }[]): boolean {
   if (!action.verb) return false;
   const k = actions.slice(0, actions.indexOf(action as never)).filter((x) => x.verb === action.verb).length;
   // A clause that lists the verb's action twice (Chimeric Coils) prints it once: past the last, use the last.
   const printed = (text.match(new RegExp(`\\b${action.verb}\\b`, "gi")) ?? []).length;
   const sentence = nthSentenceWith(text, action.verb, Math.max(0, Math.min(k, printed - 1)));
-  if (!DELAYED_SENTENCE.test(sentence)) return false;
+  if (!delaysIn(sentence).some((d) => d.kind === "step")) return false;
   const at = sentence.search(new RegExp(`\\b${action.verb}\\b`, "i"));
   return !actions.some((o) => o !== action && o.verb && o.verb !== action.verb && sentence.search(new RegExp(`\\b${o.verb}\\b`, "i")) > at);
 }
@@ -2824,8 +2832,8 @@ export function deriveAbilities(
       // text that derived as `add-counter` would shift a later put's sentence.
       if ((action.verb === "return" || action.verb === "put") && ability.effect.kind !== "token-generation") {
         const k = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === action.verb).length;
-        const delay = DELAYED_RETURN.exec(nthSentenceWith(text, action.verb, k));
-        if (delay) ability.delayedUntil = /upkeep/i.test(delay[0]) ? "next-upkeep" : "next-end-step";
+        const delay = returnDelay(nthSentenceWith(text, action.verb, k));
+        if (delay) ability.delayedUntil = delay;
       }
       // A RETURN THAT MARKS WHAT IT RETURNS happens once per object (#886): a finality counter exiles
       // it the next time it would die (CR 122.1h, Meathook Massacre II), and a keyword counter the

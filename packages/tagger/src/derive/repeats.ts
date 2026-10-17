@@ -8,6 +8,7 @@
  *  size of the pod. */
 import type { Ability, Repeats } from "../schema.js";
 import { namesAClass } from "./subject.js";
+import { delayOf } from "./delay.js";
 
 /** Rules 1-2 read `cost`, not `clauseText`. `segment.ts`'s `classify()` already split an activated
  *  ability's cost out of the body -- Gogo, Master of Mimicry's clause is `text="Copy target
@@ -126,7 +127,7 @@ const RAW_PHASE_EVENTS: ReadonlySet<string> = new Set([
  *  42 corpus cards print "when you next". */
 export function delayedTriggerRepeats(clauseText: string, cardText: string): { repeats: Repeats; delayedBy: string } | undefined {
   const body = withoutAbilityWord(clauseText);
-  if (!/^when you next\b/i.test(body)) return undefined;
+  if (delayOf(body)?.kind !== "event") return undefined;
   const probe = body.slice(0, 60);
   const line = cardText.split("\n").find((l) => l.includes(probe));
   if (line === undefined) return undefined;
