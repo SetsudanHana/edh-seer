@@ -62,7 +62,7 @@ test("a drain route takes its whole-table turn from the drain clock, and says wh
   const timed = { turn: 9, perTurn: [], cards: ["Impact Tremors", "Blood Artist"], unbounded: ["Krenko, Mob Boss"] };
   const [burn] = speedRoutes(deck([{ class: "burn", cards: ["Impact Tremors", "Blood Artist"] }], undefined, [], timed), () => undefined);
   expect(burn!.turn).toBe(9);
-  expect(burn!.caveat).toBe("when its 2 repeating drains at each opponent have taken 40 from every opponent, each firing once per creature, token or spell that sets it off, and nobody gaining life; Krenko, Mob Boss counted as one a turn, though it grows with your board");
+  expect(burn!.caveat).toBe("when its 2 repeating drains at each opponent have taken 40 from every opponent, each firing once per creature, token or spell that sets it off, and nobody gaining life; Krenko, Mob Boss counted as one a turn, though each use can count for more");
   expect(fastestRoute([burn!])?.kind).toBe("burn");
   const [slow] = speedRoutes(deck([{ class: "burn", cards: ["Leech"] }], undefined, [], { perTurn: [], cards: ["Leech"], unbounded: [] }), () => undefined);
   expect(slow!.turn).toBeUndefined();
@@ -131,6 +131,31 @@ test("a poison route takes its whole-table turn from the poison clock", () => {
   expect(routes.map((x) => [x.kind, x.turn])).toEqual([["combat", undefined], ["poison", 9]]);
   expect(routes[1]!.caveat).toMatch(/ten poison counters/);
   expect(fastestRoute(routes)?.kind).toBe("poison");
+});
+
+/** A SOURCE COUNTED AT ITS FLOOR IS SAID (#1260): mill and poison name an `unbounded` source the way
+ *  the drain caveat does, timed or not, so "not by turn 20" reads as the floor it is. */
+test("mill and poison caveats name a source counted as one a turn, timed or not", () => {
+  const r = deck([{ class: "voltron", cards: ["Plate"] }, { class: "mill", cards: ["Ghost Vacuum"] }]) as DeckReport;
+  const speed = (r.deckMath as { speed?: Record<string, unknown> });
+  speed.speed = {
+    combat: {}, poison: { perTurn: [], cards: ["Blighted Agent"], unbounded: ["Atraxa, Praetors' Voice"] },
+    mill: { perTurn: [], cards: ["Ghost Vacuum", "Ruin Crab"], unbounded: ["Ghost Vacuum", "Bruvac the Grandiloquent"] },
+  };
+  const untimed = Object.fromEntries(speedRoutes(r, () => undefined).map((x) => [x.kind, x.caveat]));
+  expect(untimed.poison).toBe("not timed: it does not put ten poison counters on every opponent by turn 20; Atraxa, Praetors' Voice counted as one a turn, though each use can count for more");
+  expect(untimed.mill).toBe("its 2 mill cards do not empty every opponent's library by turn 20; Ghost Vacuum, Bruvac the Grandiloquent counted as one a turn, though each use can count for more");
+  speed.speed = {
+    combat: {}, poison: { turn: 9, perTurn: [], cards: ["Blighted Agent"], unbounded: ["Atraxa, Praetors' Voice"] },
+    mill: { turn: 13, perTurn: [], cards: ["Ghost Vacuum"], unbounded: ["Ghost Vacuum"] },
+  };
+  const timed = Object.fromEntries(speedRoutes(r, () => undefined).map((x) => [x.kind, x.caveat]));
+  expect(timed.poison).toMatch(/already poisoned; Atraxa, Praetors' Voice counted as one a turn, though each use can count for more$/);
+  expect(timed.mill).toMatch(/would make it sooner; Ghost Vacuum counted as one a turn, though each use can count for more$/);
+  // A commander that prevents the damage is the reason, not the floor: no suffix on that caveat.
+  speed.speed = { prevented: "The Mindskinner", combat: {}, poison: { perTurn: [], cards: ["Blighted Agent"], unbounded: ["Atraxa, Praetors' Voice"] } };
+  const poison = speedRoutes(r, () => undefined).find((x) => x.kind === "poison");
+  expect(poison?.caveat).toBe("not timed: The Mindskinner prevents your damage to opponents, and no counters are placed fast enough");
 });
 
 /** THE SIMULATED GAMES' SPREAD rides on the combat route (owner 2026-10-07). */
