@@ -226,7 +226,7 @@ test("combat that finishes in the fastest quarter of games lacks nothing; with n
   (r.deckMath as { speed?: Record<string, unknown> }).speed = { combat: { early: 18 } };
   expect(speedRoutes(r, () => undefined)[0]!.lacks).toBeUndefined();
   (r.deckMath as { speed?: Record<string, unknown> }).speed = { combat: {} };
-  expect(speedRoutes(r, () => undefined)[0]!.lacks).toBe("its creatures never deal the 120 the table has, in our test games");
+  expect(speedRoutes(r, () => undefined)[0]!.lacks).toBe("its creatures deal the table's 120 in fewer than a quarter of our test games by turn 20");
 });
 
 test("a damage-preventing commander is named as what the damage routes lack", () => {
@@ -297,4 +297,30 @@ test("repeats reads a result phrase: Near-infinite and Infinite stripped, acrony
   expect(repeats("Infinite ETB triggers")).toBe("ETB triggers");
   expect(repeats("Infinite Creature ETB, infinite creature ETB")).toBe("creature ETB");
   expect(repeats("Infinite a, Infinite b, Infinite c, Infinite d")).toBe("a, b and c");
+});
+
+test("a loop whose result kills one player is not called finisher-less", () => {
+  for (const result of ["Target opponent loses the game", "Infinite damage to one opponent", "Near-infinite lifeloss for target opponent"]) {
+    const routes = speedRoutes(deck([{ class: "combo" }], undefined, [{ cards: ["A", "B"], result: `Infinite mana, ${result}` }]), (n) => mv[n]);
+    // A partial kill is not `comboWinsItself`, so the route stays a needsFinisher loop with its caveat.
+    expect(routes[0]).toMatchObject({ kind: "combo", needsFinisher: true });
+    expect(routes[0]!.lacks).toBeUndefined();
+    expect(noFinisher(routes, [{ class: "combo" }])).toBeUndefined();
+  }
+});
+
+test("with no simulation the combat route lacks nothing: no result is not a result of none", () => {
+  const r = deck([{ class: "go-wide", cards: ["Goblin Rabblemaster"] }], 6) as DeckReport;
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = { combat: {} };
+  expect(speedRoutes(r, () => undefined)[0]!.lacks).toBeDefined();
+  delete (r as { manaAvailability?: unknown }).manaAvailability;
+  expect(speedRoutes(r, () => undefined)[0]!.lacks).toBeUndefined();
+});
+
+test("a damage-preventing commander whose mill data exists leaves the preventer unnamed and the verdict withheld", () => {
+  const r = deck([{ class: "voltron", cards: ["Plate"] }, { class: "burn", cards: ["Leech"] }], 6) as DeckReport;
+  (r.deckMath as { speed?: Record<string, unknown> }).speed = { prevented: "The Mindskinner", combat: {}, commander: { commander: "The Mindskinner" }, mill: { perTurn: [], cards: ["The Mindskinner"], unbounded: [] } };
+  const routes = speedRoutes(r, () => undefined);
+  expect(routes.map((x) => x.lacks)).toEqual([undefined, undefined, undefined]);
+  expect(noFinisher(routes, [{ class: "voltron" }, { class: "burn" }])).toBeUndefined();
 });

@@ -72,6 +72,13 @@ export function drainCaveat(d: { turn?: number; cards: string[]; unbounded: stri
     : `its ${what} ${n === 1 ? "does" : "do"} not take 40 from every opponent by turn 20 at one fire per source${grows}`;
 }
 
+/** A phrase that ends one opponent: "loses the game", or damage / lifeloss aimed at a player. Plain
+ *  substring tests, no nested quantifiers. */
+function killsAPlayer(phrase: string): boolean {
+  const p = phrase.toLowerCase();
+  return p.includes("loses the game") || (/\b(?:damage|life ?loss)\b/.test(p) && /\b(?:opponents?|players?)\b/.test(p));
+}
+
 /** What a loop repeats, from its result phrase ("Infinite creature ETB, Infinite magecraft triggers" ->
  *  "creature ETB and magecraft triggers"): at most three, "a, b and c". An acronym keeps its case. */
 export function repeats(result: string): string {
@@ -115,7 +122,8 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   } else if (byCost[0]) {
     routes.push({
       kind: "combo", label: `a combo: ${byCost[0].cards.join(" + ")}`, cards: byCost[0].cards, needsFinisher: true,
-      lacks: `the ${byCost[0].cards.join(" + ")} loop repeats ${repeats(byCost[0].result)}, and no card here turns that into a win`,
+      // A result that kills one player (Target opponent loses the game) is not `comboWinsItself`, but it is not "no finisher" either.
+      ...(byCost[0].result.split(",").some(killsAPlayer) ? {} : { lacks: `the ${byCost[0].cards.join(" + ")} loop repeats ${repeats(byCost[0].result)}, and no card here turns that into a win` }),
       caveat: "the loop needs a finisher: no card here was found to turn what it repeats into a win",
     });
   }
@@ -140,14 +148,18 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   // A commander that prevents your damage to opponents (The Mindskinner) times no damage route.
   const prevented = report.deckMath?.speed?.prevented;
   const preventedWhy = prevented ? `not timed: ${prevented} prevents your damage to opponents` : undefined;
-  const preventedLacks = prevented ? `${prevented} prevents your damage to opponents` : undefined;
+  // With mill data beside a preventer the commander turns the board into mill, which is unmodelled
+  // here: naming the preventer would read its own engine as the defect.
+  const preventedLacks = prevented && !report.deckMath?.speed?.mill ? `${prevented} prevents your damage to opponents` : undefined;
   if (combat.length) {
     routes.push({
       kind: "combat", label: combat.map((c) => COMBAT[c.class]!).join(" or "), turn: table, cards: combat.flatMap((c) => c.cards ?? []),
       ...(!preventedWhy && combatSpeed?.early !== undefined ? { early: combatSpeed.early } : {}),
       ...(!preventedWhy && combatSpeed?.late !== undefined ? { late: combatSpeed.late } : {}),
-      ...(table === undefined && (preventedLacks || combatSpeed?.early === undefined)
-        ? { lacks: preventedLacks ?? "its creatures never deal the 120 the table has, in our test games" } : {}),
+      // `early` is the p25: absent means under a quarter of games deal 120, not none. And with no
+      // simulation (`manaAvailability` absent) `combat` is {} for want of data, which says nothing.
+      ...(table === undefined && (prevented ? preventedLacks : combatSpeed?.early === undefined && rows)
+        ? { lacks: preventedLacks ?? "its creatures deal the table's 120 in fewer than a quarter of our test games by turn 20" } : {}),
       caveat: preventedWhy ?? (table
         ? "half our test games have dealt 120 by then, enough for all three opponents, if nobody blocks and nothing is removed"
         : combatSpeed?.early !== undefined
@@ -161,7 +173,7 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   if (cmd) {
     routes.push({
       kind: "commander", label: `commander damage: ${cmd.commander}`, ...(cmd.turn !== undefined ? { turn: cmd.turn } : {}), cards: [cmd.commander],
-      ...(cmd.turn === undefined ? { lacks: preventedLacks ?? `${cmd.commander} does not deal 21 to each opponent by turn 20` } : {}),
+      ...(cmd.turn === undefined && (!prevented || preventedLacks) ? { lacks: preventedLacks ?? `${cmd.commander} does not deal 21 to each opponent by turn 20` } : {}),
       caveat: preventedWhy ?? (cmd.turn !== undefined
         ? "when it has dealt 21 to each opponent: cast with haste, carrying the Equipment and Auras out by then, nobody blocking"
         : "not timed: it does not deal 21 to all three opponents by turn 20"),
@@ -173,7 +185,7 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   if (poison) {
     routes.push({
       kind: "poison", label: "poison counters", cards: poison.cards, ...(poison.turn !== undefined ? { turn: poison.turn } : {}),
-      ...(poison.turn === undefined && !poison.unbounded?.length ? { lacks: preventedLacks ?? "it does not put ten poison counters on every opponent by turn 20" } : {}),
+      ...(poison.turn === undefined && !poison.unbounded?.length && (!prevented || preventedLacks) ? { lacks: preventedLacks ?? "it does not put ten poison counters on every opponent by turn 20" } : {}),
       caveat: poison.turn !== undefined
         ? "when every opponent has ten poison counters: infect and toxic attacks unblocked, each proliferate adding one to everyone already poisoned"
         : prevented ? `not timed: ${prevented} prevents your damage to opponents, and no counters are placed fast enough`
