@@ -38,12 +38,16 @@ const FAMILY_OF: Record<string, RateFamily> = {
   // rather than yield.
   search: "search", "graveyard-recursion": "recursion", untap: "untap", flicker: "flicker", "copy-spell": "copies",
 };
+/** A mana recipient that is never you: see `ratesOf`.
+ *  CEILING: a matcher read of printed text, because a derived mana ability carries no recipient
+ *  (its subject is `any`). The fix is to derive the recipient onto the mana ability and delete this
+ *  (#1273). It tests the whole card, so a card with its own mana ability AND a separate "an
+ *  opponent adds" sentence would lose both rows; none in the corpus today. */
+const OTHERS_ADD = /\b(?:the active player|(?:target|each|an|that|defending) opponent|defending player)\s+adds?\b/i;
 /** The families whose yield must be YOURS: another player's cards, life or tokens are not your
  *  rate (Swords to Plowshares' life goes to the creature's controller). Mana is not here: "Add
  *  {G}" is always the controller's, and derive marks its subject `any` (18 of 758 rows survived
  *  the first draft that filtered it). */
-/** A mana recipient that is not you: see `ratesOf`. */
-const OTHERS_ADD = /\b(?:the active player|(?:target|each|an|that|defending) opponent|defending player)\s+adds?\b/i;
 const YOURS = new Set<RateFamily>(["cards", "life", "tokens"]);
 /** The families whose yield must NOT be yours: Flame Rift's damage to you and a cost in life are
  *  what the card charges, not what it does for you. Mill and counters are read whoever they land
