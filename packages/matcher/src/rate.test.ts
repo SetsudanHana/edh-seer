@@ -320,7 +320,7 @@ test("an x-cost scaling mana add (Doc Samson: X is its power, floor 3) keeps its
   expect(rows[0]).toMatchObject({ amount: 3, floor: 3, ceiling: null });
 });
 test("a scaling add in a trigger has floor 0 whatever its interval floor (a trigger may never fire), the ceiling stays open", () => {
-  const rows = ratesOf(card("Selvala, Explorer Returned", "{1}{G}{W}", [manaAbility("triggered", "for each nonland card revealed this way", { floor: 0, ceiling: null })], { types: ["creature"] }));
+  const rows = ratesOf(card("Generic trigger dork", "{1}{G}{W}", [manaAbility("triggered", "for each nonland card revealed this way", { floor: 0, ceiling: null })], { types: ["creature"] }));
   expect(rows[0]).toMatchObject({ floor: 0, ceiling: null });
   const bounded = ratesOf(card("Trigger with a floor", "{1}{G}", [manaAbility("triggered", "x", { floor: 2, ceiling: null })], { types: ["creature"] }));
   expect(bounded[0]).toMatchObject({ amount: 2, floor: 0, ceiling: null });
@@ -335,4 +335,35 @@ test("an unknown interval (floor 0, open) does not displace a known mana row on 
     manaAbility("triggered", "x", { floor: 0, ceiling: null }),
   ], { types: ["creature"] }));
   expect(rows.map((r) => [r.amount, r.floor, r.ceiling])).toEqual([[1, 1, 1]]);
+});
+
+/** Selvala, Explorer Returned is an ACTIVATED {T} ability ("Parley -- {T}: Each player reveals the top card of their library. For each nonland card revealed this way, add {G} and you gain 1
+ *  life."): derive gives it the players interval {floor 0, ceiling 4} and the rate row carries it. A trigger's bounded ceiling is NOT carried (`open` -> ceiling null), so `bound: players` on
+ *  a triggered add is derive-only data. */
+test("Selvala, Explorer Returned: an activated add with interval {0, 4} is a row with floor 0 and ceiling 4", () => {
+  const rows = ratesOf(card("Selvala, Explorer Returned", "{1}{G}{W}", [manaAbility("activated", "for each nonland card revealed this way", { floor: 0, ceiling: 4 })], { types: ["creature"] }));
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).toMatchObject({ family: "mana", floor: 0, ceiling: 4 });
+});
+test("a triggered add's bounded ceiling is not carried into its rate row", () => {
+  const rows = ratesOf(card("Bounded trigger", "{1}{G}", [manaAbility("triggered", "x", { floor: 0, ceiling: 4 })], { types: ["creature"] }));
+  expect(rows[0]).toMatchObject({ floor: 0, ceiling: null });
+});
+/** WHOSE MANA: Belbe, Corrupted Observer's corpus text is "At the beginning of each postcombat main phase, the active player adds {C}{C} for each of your opponents who lost life this turn." --
+ *  mostly an opponent's mana, so it is no rate for you (it read 0.9 -> 12.6 raw once it had a row). */
+test("Belbe, Corrupted Observer: the active player's mana is no mana row of yours", () => {
+  const text = "At the beginning of each postcombat main phase, the active player adds {C}{C} for each of your opponents who lost life this turn. (Damage causes loss of life.)";
+  expect(ratesOf(card("Belbe, Corrupted Observer", "{1}{B}{G}", [manaAbility("triggered", "for each of your opponents who lost life this turn", { floor: 0, ceiling: 6 })], { types: ["creature"], text }))).toEqual([]);
+});
+test("a player's mana that may be yours stays a row: 'target player adds' and 'each player adds' (Valleymaker, Yurlok)", () => {
+  const text = "{T}, Sacrifice a Forest: Choose a player. That player adds {G}{G}{G}.";
+  expect(ratesOf(card("Valleymaker", "{3}{R}", [manaAbility("activated", "3", { floor: 3, ceiling: 3 })], { types: ["creature"], text })).length).toBe(1);
+  expect(ratesOf(card("Yurlok", "{1}{B}{R}{G}", [manaAbility("activated", "3", { floor: 3, ceiling: 3 })], { types: ["creature"], text: "{1}, {T}: Each player adds {B}{R}{G}." })).length).toBe(1);
+});
+test("the unknown-row filter keeps an unknown row when the only known mana row is an extraCost one (bestPerFamily would skip it)", () => {
+  const rows = ratesOf(card("Extra cost then unknown", "{3}{G}", [
+    { ...manaAbility("activated", "1", { floor: 1, ceiling: 1 }), cost: "{T}, Sacrifice a creature" },
+    manaAbility("triggered", "x", { floor: 0, ceiling: null }),
+  ], { types: ["creature"] }));
+  expect(rows.some((r) => r.ceiling === null && r.floor === 0)).toBe(true);
 });

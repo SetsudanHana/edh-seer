@@ -1,3 +1,5 @@
+import { COMMANDER_PLAYERS } from "@edh-seer/tagger/table";
+
 /** HOW MANY PEOPLE ARE PLAYING. CR 903.2 + 806: the default Commander game is Free-for-All
  *  multiplayer, attack-multiple-players, no limited range of influence — four players, each at 40
  *  life, so each player faces THREE opponents.
@@ -18,7 +20,7 @@
  *  Seating** enters tapped "unless you have two or more opponents", so it is untapped at a pod of 3+
  *  and tapped in a duel. Everything else that will read this is unbuilt (roadmap I11's simulator).
  *  The constant exists NOW so that three separate items do not each invent their own 4. */
-export const DEFAULT_POD_SIZE = 4;
+export const DEFAULT_POD_SIZE = COMMANDER_PLAYERS;
 
 /** The fewest players a game can have. Below this there is no opponent and every "each opponent"
  *  effect reads as a no-op, so it is clamped rather than trusted — this value will one day arrive

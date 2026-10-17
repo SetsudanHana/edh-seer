@@ -427,7 +427,7 @@ export type ScaleBounds = { floor: number; ceiling: number | null; bound?: "colo
  *   0), not from the face that prints the ability. The corpus has no such card with a floor above 0 today (the 9 DFCs with scaling lines all floor 0). And "+1 for each X you control" has no guard for a
  *   cost or trigger that removes the card first ("Sacrifice this creature: Add {G} for each creature you control"); the corpus has none today either. The prototype rule covers the one alternate
  *   p/t shape with a floor (Cradle Clearcutter); a "level up" or "becomes a ... with base power" card with a scaling mana line has floor 0 here and so cannot over-claim.
- *   CEILING: every other count is open (null). A count that depends on the game, not the deck (Belbe's opponents who lost life, Selvala's revealed cards), stays open on purpose. */
+ *   CEILING: every other count is open (null). A count of an opponent's cards, life or permanents depends on the game and stays open; a count of the PLAYERS is bounded by the table (`bound: "players"`). */
 export function scaleBounds(scales: string, text: string, chars: Characteristics, selfNames: readonly string[], permanent: boolean, oracleText: string, fixedPart: number, unit = 1): ScaleBounds {
   const defined = /\bwhere x is ([^.]*)/i.exec(text)?.[1]?.trim().toLowerCase();
   // "equal to this creature's power" (the model's object) and "this creature's power" (a "where X is" clause) are one count: both paths must read the same interval.

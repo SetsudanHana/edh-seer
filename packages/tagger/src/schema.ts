@@ -1478,7 +1478,7 @@ export interface ManaAmount {
    *  Shrines you control" on a Shrine, its printed power for "this creature's power", 1 for "1 plus ...". `ceiling` is the most the count can reach, `null` when open. */
   floor?: number;
   ceiling?: number | null;
-  /** WHAT BOUNDS `ceiling`: `colours` (five colours, "for each color among ..."), `basic-land-types` (five, Domain), `players` (the table: you plus three opponents, times the mana each makes: Selvala, Explorer Returned 4, Belbe 6; owner speed ruling 2026-10-06). Absent when the ceiling is open.
+  /** WHAT BOUNDS `ceiling`: `colours` (five colours, "for each color among ..."), `basic-land-types` (five, Domain), `players` (the table: you plus three opponents, times the mana each makes: Selvala, Explorer Returned 4, Belbe 6; owner speed ruling 2026-10-06). Absent when the ceiling is open. A triggered or static add's bounded ceiling is not carried into its matcher rate row ("a trigger may never fire"), so `players` on a trigger is derive-only data.
    *  CEILING: a bound that depends on the game and no table size leaves the ceiling open (an opponent's hand, life lost, permanents). */
   bound?: "colours" | "basic-land-types" | "players";
 }
@@ -1531,8 +1531,9 @@ export interface ManaLine {
    *  scales; `scales` then names what it counts ("for each Forest you control", "equal to ...", "X"). */
   /** How much one use adds: `fixed`, or `scales` with the interval it spans (`floor`, `ceiling`, `bound`). See `ManaAmount`. */
   amount: ManaAmount;
-  /** LEGACY one-unit floor (kept so matcher results do not move; the matcher decides in task 2): for a SCALING line `net` assumes the printed fixed part, else 1, then less `cost.mana`. It is NOT the guaranteed amount:
-   *  `amount.floor` is the authoritative guaranteed amount of a scaling line (Doc Samson floor 3 but net 1; Selvala, Explorer Returned floor 0 but net 1).
+  /** CEILING: `net` is the LEGACY one-unit floor, kept so matcher results do not move: for a SCALING line it assumes the printed fixed part, else 1, then less `cost.mana`. It is NOT the guaranteed amount --
+   *  `amount.floor` is the authoritative guaranteed amount of a scaling line (Doc Samson floor 3 but net 1; Selvala, Explorer Returned floor 0 but net 1). Read by goldfish.ts and build.ts; the deck math reads
+   *  the interval in #1272.
    *  Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as its printed fixed part when one
    *  precedes the "for each" ("Add {R}{R}, then add {R} for each ...", Rite of Flame: 2), else as 1 (its true floor
    *  may be 0; a consumer that cares reads `amount.scales`). EXCEPT "for each color among permanents you control" (Faeburrow Elder, Bloom Tender) on a permanent: the card is itself a permanent

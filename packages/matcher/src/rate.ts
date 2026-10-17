@@ -42,6 +42,8 @@ const FAMILY_OF: Record<string, RateFamily> = {
  *  rate (Swords to Plowshares' life goes to the creature's controller). Mana is not here: "Add
  *  {G}" is always the controller's, and derive marks its subject `any` (18 of 758 rows survived
  *  the first draft that filtered it). */
+/** A mana recipient that is not you: see `ratesOf`. */
+const OTHERS_ADD = /\b(?:the active player|(?:target|each|an|that|defending) opponent|defending player)\s+adds?\b/i;
 const YOURS = new Set<RateFamily>(["cards", "life", "tokens"]);
 /** The families whose yield must NOT be yours: Flame Rift's damage to you and a cost in life are
  *  what the card charges, not what it does for you. Mill and counters are read whoever they land
@@ -209,6 +211,10 @@ export function ratesOf(d: DeckCard): Rate[] {
     // "{T}: Put a storage counter" topped "puts counters" as free); one that does (Castle
     // Locthwain) is priced on it, with a cast of nothing.
     if (family === "mana" && land) continue;
+    // WHOSE MANA: "the active player adds {C}{C} for each of your opponents who lost life" (Belbe, Corrupted Observer) is mostly an opponent's mana, and no rate of yours. A derived mana ability does not
+    // carry its recipient (the subject is `any`), so it is read off the printed sentence, for the recipients that are NEVER you: the active player, an opponent, the defending player. "Target player", "that
+    // player" and "each player adds" may be you (a Treasure-style ruling, YOU_CREATE) and stay rows. The corpus has exactly one such card, Belbe.
+    if (family === "mana" && OTHERS_ADD.test(d.card.oracleText ?? "")) continue;
     if (a.unless && a.unless.payer === "you") continue;
     const cost = a.kind === "activated" ? a.cost : manaCost;
     // NO MANA TO READ: a loyalty cost ("+1", "−3", "0"; CR 606.5) is paid in loyalty, not mana, and
@@ -254,6 +260,7 @@ export function ratesOf(d: DeckCard): Rate[] {
     const row: Rate = {
       family, kind: a.kind, amount, ...(back > 0 ? { back } : {}), ...(size ? { size } : {}), mana, ...castOf, repeats,
       floor: open || stopped || conditional ? 0 : amount,
+      // A triggered or static add's bounded ceiling is NOT carried ("a trigger may never fire": `open` -> null), so `bound: players` on a trigger is derive-only data.
       ceiling: open ? null : interval ? interval.ceiling : amount,
       ...(stopped ? { fallback: { cost: a.unless!.cost, payer: a.unless!.payer } } : {}),
       ...(conditional && !open && !stopped ? { conditional: true as const } : {}),
@@ -264,8 +271,8 @@ export function ratesOf(d: DeckCard): Rate[] {
     if (interval && row.floor === 0 && row.ceiling === null) unknown.add(row);
   }
   // AN UNKNOWN INTERVAL MUST NOT DISPLACE A KNOWN ONE: an open ceiling ranks above a bounded one (a trigger's yield is what a deck makes of it), but a scaling add that states neither a floor nor a
-  // ceiling knows nothing, and beside another mana row it won the family and hid the better-informed one (Ultima, Origin of Oblivion: rateCeiling 100 -> 0). Alone it is kept: floor 0, open.
-  return unknown.size === 0 ? out : out.filter((r) => !unknown.has(r) || !out.some((o) => o.family === r.family && !unknown.has(o)));
+  // ceiling knows nothing, and beside another mana row it won the family and hid the better-informed one (Ultima, Origin of Oblivion: rateCeiling 100 -> 0). Alone it is kept: floor 0, open. A known row that is `extraCost` does not count: `bestPerFamily` skips it, so the unknown row would be the card's only one.
+  return unknown.size === 0 ? out : out.filter((r) => !unknown.has(r) || !out.some((o) => o.family === r.family && !o.extraCost && !unknown.has(o)));
 }
 
 /** THE RATE A SEARCH ROW CARRIES: the floor and the mana it costs, the ceiling (null when open)
