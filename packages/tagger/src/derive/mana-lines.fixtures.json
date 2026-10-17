@@ -14201,6 +14201,475 @@
   ],
   "source": "model"
  },
+ "Bilbo, Retired Burglar": {
+  "card": {
+   "_id": "2e7e3be5-04dd-4ff4-b121-3e65b3e00699",
+   "name": "Bilbo, Retired Burglar",
+   "typeLine": "Legendary Creature — Halfling Rogue",
+   "oracleText": "When Bilbo enters or leaves the battlefield, the Ring tempts you.\nWhenever Bilbo deals combat damage to a player, create a Treasure token.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "manaValue": 3,
+   "power": "1",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{1}{U}{R}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Bilbo, Retired Burglar",
+     "typeLine": "Legendary Creature — Halfling Rogue",
+     "printingId": "4f60ac5b-b16b-451d-8ae6-4ee8e375a198"
+    },
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "b29d7556-9051-4451-812e-91513ef10e62"
+    },
+    {
+     "component": "combo_piece",
+     "name": "The Ring // The Ring Tempts You",
+     "typeLine": "Emblem // Card",
+     "printingId": "7215460e-8c06-47d0-94e5-d1832d0218af"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Bilbo, Retired Burglar",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "ring-tempts",
+      "object": "you",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "Bilbo, Retired Burglar",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "ring-tempts",
+      "object": "you",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Bilbo, Retired Burglar",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Master of Ceremonies": {
+  "card": {
+   "_id": "18ed0c8a-db8f-4247-87c4-544b833f01bd",
+   "name": "Master of Ceremonies",
+   "typeLine": "Creature — Rhino Druid",
+   "oracleText": "At the beginning of your upkeep, each opponent chooses money, friends, or secrets. For each player who chose money, you and that player each create a Treasure token. For each player who chose friends, you and that player each create a 1/1 green and white Citizen creature token. For each player who chose secrets, you and that player each draw a card.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "manaValue": 4,
+   "power": "3",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{3}{W}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Master of Ceremonies",
+     "typeLine": "Creature — Rhino Druid",
+     "printingId": "85f0efc3-556f-4a8e-8068-286361720543"
+    },
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "93116d98-2dad-4b80-a3af-9e36e34da6d4"
+    },
+    {
+     "component": "token",
+     "name": "Citizen",
+     "typeLine": "Token Creature — Citizen",
+     "printingId": "3f03e9fe-cb71-498e-bf16-5af6af37a192"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 1/1 green and white Citizen creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Mr. House, President and CEO": {
+  "card": {
+   "_id": "d4e54b48-956f-4467-8485-a5fdb44779fd",
+   "name": "Mr. House, President and CEO",
+   "typeLine": "Legendary Artifact Creature — Human",
+   "oracleText": "Whenever you roll a 4 or higher, create a 3/3 colorless Robot artifact creature token. If you rolled 6 or higher, instead create that token and a Treasure token.\n{4}, {T}: Roll a six-sided die plus an additional six-sided die for each mana from Treasures spent to activate this ability.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "B",
+    "R",
+    "W"
+   ],
+   "colorIdentity": [
+    "B",
+    "R",
+    "W"
+   ],
+   "manaValue": 3,
+   "power": "0",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{R}{W}{B}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "1d74d012-66ca-4a0c-9e90-e31e96730d4d"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Mr. House, President and CEO",
+     "typeLine": "Legendary Artifact Creature — Human",
+     "printingId": "d54fa1d0-ec56-4be8-973b-384ae0e66b6c"
+    },
+    {
+     "component": "token",
+     "name": "Robot",
+     "typeLine": "Token Artifact Creature — Robot",
+     "printingId": "76cde21f-2f01-4560-972b-7ecd6740d6de"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "roll-dice",
+     "subject": "you roll a 4 or higher",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 3/3 colorless Robot artifact creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "roll-dice",
+      "object": "a six-sided die plus an additional six-sided die for each mana from Treasures spent to activate this ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Old Rutstein": {
+  "card": {
+   "_id": "8f5ffb0b-0585-4a37-8048-eda53990d1dd",
+   "name": "Old Rutstein",
+   "typeLine": "Legendary Creature — Human Peasant",
+   "oracleText": "When Old Rutstein enters and at the beginning of your upkeep, mill a card. If a land card is milled this way, create a Treasure token. If a creature card is milled this way, create a 1/1 green Insect creature token. If a noncreature, nonland card is milled this way, create a Blood token.",
+   "keywords": [
+    "Treasure",
+    "Mill"
+   ],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "manaValue": 3,
+   "power": "1",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{1}{B}{G}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Blood",
+     "typeLine": "Token Artifact — Blood",
+     "printingId": "a6f374bc-cd29-469f-808a-6a6c004ee8aa"
+    },
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "0a89fdcf-0672-4241-834f-5db2c861694d"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Old Rutstein",
+     "typeLine": "Legendary Creature — Human Peasant",
+     "printingId": "90930e16-4a77-4ce6-bab4-e099184d1b54"
+    },
+    {
+     "component": "token",
+     "name": "Insect",
+     "typeLine": "Token Creature — Insect",
+     "printingId": "f3ac66f8-4bb2-42bd-9a18-7da9c3839c8b"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Old Rutstein",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 1/1 green Insect creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Blood token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 1/1 green Insect creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Blood token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
+ "Terrapact Intimidator": {
+  "card": {
+   "_id": "c08e0958-8fa2-49c7-ab17-a70dfc1ef33a",
+   "name": "Terrapact Intimidator",
+   "typeLine": "Creature — Kavu Scout",
+   "oracleText": "When this creature enters, target opponent may have you create two Lander tokens. If they don't, put two +1/+1 counters on this creature. (A Lander token is an artifact with \"{2}, {T}, Sacrifice this token: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.\")",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "manaValue": 2,
+   "power": "2",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{1}{R}",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Lander",
+     "typeLine": "Token Artifact — Lander",
+     "printingId": "85ef1950-219f-401b-8ff5-914f9aaec122"
+    }
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "two Lander tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
+ },
  "Spiked Pit Trap": {
   "card": {
    "_id": "a0aa1aa1-f011-4c65-9886-95521947beef",

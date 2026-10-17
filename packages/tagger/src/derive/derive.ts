@@ -490,7 +490,8 @@ import { emblemRecipient } from "../emblem.js";
 // 333: #1252 "that player loses the game" after damage to a player/opponent is the DAMAGED player, an opponent (Phage the Untouchable, Vorpal Sword, Atemsis): the grammar dropped the actor so the loss read `you`; damage of any kind "to an opponent" now counts for the damaged-player reading.
 // 334: #1263 "that player <verb>" after combat damage to a player dealt by the card itself, its equipped creature or a creature you control is the DAMAGED player, an opponent, for every cued verb (Chilling Apparition discard, Quietus Spike lose-life, Anowon mill, the poison and exile givers), not only lose-game and the graveyard owner; "a creature deals ..." stays `any`.
 // 335: #1264 one stored `claimsNothing` field replaces `triggerRefused: true` ("refused-trigger") and adds "self-loss" (#1252: every emit is `loses-game` of `control: you`), read after the last control fill; the matcher no longer recomputes it. No reading changes.
-export const DERIVE_VERSION = 335;
+// 336: #1265 a mana add's `Ability.amount` is ONLY `production()`'s reading: a scaling add (Faeburrow Elder, Bloom Tender, Charmed Pendant, Selvala) keeps its scaling text, never the clause's per-unit "1" that readers took for the whole amount; the token-maker mana lines' unread amounts are read.
+export const DERIVE_VERSION = 336;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2749,11 +2750,16 @@ export function deriveAbilities(
       // each carry their own. Assigned here, in the per-action loop, for that reason.
       // A MANA ADD READS ITS AMOUNT THROUGH `production()` ALONE (#1193), the reader the mana line uses: a number is "6", never the clause's own word ("four", Cosmic
       // Crucible). What scales keeps the clause's text, and nothing when it states none.
-      const added = action.verb === "add-mana" && effectKind === "mana-generation" ? manaAdded(action.object ?? "", typeof action.amount === "string" ? action.amount : "") : undefined;
-      if (added !== undefined) ability.amount = String(added);
-      else if (action.amount != null && action.amount !== "") ability.amount = action.amount;
-      else if (action.verb === "add-mana" && effectKind === "mana-generation") {
-        // scales or unread: no number
+      if (action.verb === "add-mana" && effectKind === "mana-generation") {
+        // #1265: NEVER the clause's own `action.amount` for a mana add -- on a scaling line it is the per-unit "1" ("for each color among permanents you control, add ONE mana of that
+        // color", Faeburrow Elder), which every reader took for the whole amount. A fixed read is "n"; what scales keeps the clause's own text when it has a non-numeric one, else
+        // the scaling text `production()` found; an unread amount stores nothing.
+        const read = production(action.object ?? "", typeof action.amount === "string" ? action.amount : "").amount;
+        const own = typeof action.amount === "string" ? action.amount : "";
+        if (read.fixed !== null) ability.amount = String(read.fixed);
+        else if (read.scales !== null) ability.amount = own !== "" && !/^\d+$/.test(own) && !NUMBER_WORD[own.toLowerCase()] ? own : read.scales;
+      } else if (action.amount != null && action.amount !== "") {
+        ability.amount = action.amount;
       } else {
         const unit = unitAmount(action.verb ?? "", action.object ?? "");
         if (unit !== undefined) ability.amount = unit;

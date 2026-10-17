@@ -696,8 +696,8 @@ describe("Ability.amount and ManaLine.amount are one reading (DERIVE_VERSION 311
       expect(lines[0]!.amount).toEqual({ fixed: n, scales: null });
     });
   }
-  it("a scaling amount keeps no number on the ability and names what it counts on the line", () => {
-    expect(manaAbilities("Axebane Guardian")[0]!.amount).toBeUndefined();
+  it("a scaling amount keeps no number on the ability (its scaling text, #1265) and names what it counts on the line", () => {
+    expect(manaAbilities("Axebane Guardian")[0]!.amount).toBe("x");
     expect(linesOf("Axebane Guardian")[0]!.amount).toEqual({ fixed: null, scales: "x" });
     expect(linesOf("Radiant Lotus")[0]!.amount.fixed).toBeNull();
     // "up to" / "any number of" target nothing that must exist: no target gate (UP_TO)
@@ -710,6 +710,38 @@ describe("Ability.amount and ManaLine.amount are one reading (DERIVE_VERSION 311
   });
   it("Piracy's line reads no amount and is unread", () => {
     expect(only("Piracy")).toMatchObject({ unread: true, amount: { fixed: null, scales: null } });
+  });
+});
+
+/** A MANA ADD THAT SCALES STORES NO NUMBER (#1265, DERIVE_VERSION 336): the clause's own "1" ("add one mana of that color", repeated "for each color among permanents you
+ *  control") used to fall through onto `Ability.amount`, so Faeburrow Elder was rated a one-mana dork. The census (`research/mana/amount-agreement.ts`) found these four. */
+describe("a scaling mana add keeps no fixed number on the ability (#1265)", () => {
+  for (const name of ["Bloom Tender", "Charmed Pendant", "Faeburrow Elder", "Selvala, Explorer Returned"]) {
+    it(`${name}: the line scales and the ability amount is not a number`, () => {
+      const abilities = (tagsOf(name).abilities ?? []).filter((a) => a.effect.kind === "mana-generation");
+      expect(abilities, `${name} abilities`).toHaveLength(1);
+      expect(abilities[0]!.amount === undefined || !/^\d+$/.test(abilities[0]!.amount), `${name} amount ${abilities[0]!.amount}`).toBe(true);
+      expect(linesOf(name).filter((l) => l.source !== "token-maker")[0]!.amount.scales).not.toBeNull();
+    });
+  }
+});
+
+/** THE TOKEN-MAKER LINES' AMOUNT (#1265): 7 lines were "unread" (no fixed, no scales). A created token is one unless a number word says more; a "for each" in the creating sentence scales it. */
+describe("a token-maker line reads how many it makes (#1265)", () => {
+  const amountOf = (name: string, key = "treasure") => linesOf(name, "token-maker").filter((l) => l.producesToken === key).map((l) => l.amount);
+  it("one Treasure is one", () => {
+    for (const n of ["Bilbo, Retired Burglar", "Song of Eärendil", "Old Rutstein", "Mr. House, President and CEO"]) {
+      const a = amountOf(n);
+      expect(a.length, n).toBeGreaterThan(0);
+      for (const x of a) expect(x, n).toEqual({ fixed: 1, scales: null });
+    }
+  });
+  it("a Treasure made 'for each player who chose money' or 'for each opponent who does' scales", () => {
+    expect(amountOf("Master of Ceremonies")).toEqual([{ fixed: null, scales: "for each player who chose money" }]);
+    expect(amountOf("Tempting Contract")).toEqual([{ fixed: null, scales: "for each opponent who does" }]);
+  });
+  it("two Lander tokens are two", () => {
+    expect(amountOf("Terrapact Intimidator", "lander")).toEqual([{ fixed: 2, scales: null }]);
   });
 });
 

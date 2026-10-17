@@ -3425,7 +3425,7 @@ test("an action's unless-payment is carried onto the ability", () => {
  *  Signet "Add one mana of any color in your commander's color identity."; Talisman of Dominance
  *  "Add {U} or {B}."; Gilded Lotus "Add three mana of any one color."; Cabal Coffers "Add {B} for
  *  each Swamp you control." */
-test("a mana ability's amount is the mana it adds; a counted, X or energy object stays unset", () => {
+test("a mana ability's amount is the mana it adds; a counted or X object keeps its scaling text, an energy object stays unset", () => {
   const added = (object: string, amount?: string) => deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "add-mana", object, ...(amount ? { amount } : {}) }] }], "Rock").abilities[0]?.amount;
   expect(added("{C}{C}")).toBe("2");
   expect(added("one mana of any color in your commander's color identity")).toBe("1");
@@ -3433,7 +3433,7 @@ test("a mana ability's amount is the mana it adds; a counted, X or energy object
   expect(added("{G}{G}, {U}{U}, or {R}{R}")).toBe("2");
   expect(added("three mana of any one color")).toBe("3");
   expect(added("{G/U}")).toBe("1");
-  expect(added("{B} for each Swamp you control")).toBeUndefined();
+  expect(added("{B} for each Swamp you control")).toBe("for each swamp you control"); // #1265: what scales keeps its text
   expect(added("X mana of any one color", "X")).toBe("X");
   expect(added("{C}", "for each Urza's land you control")).toBe("for each Urza's land you control");
   expect(manaAdded("{E}{E}")).toBeUndefined();

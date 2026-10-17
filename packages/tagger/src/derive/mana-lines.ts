@@ -515,6 +515,26 @@ function opponentOnlyToken(oracleText: string, key: string, clauseText: string, 
   if (named.length > 0) return named.every((x) => OPP_RECIPIENT.test(x) && !YOU_CREATE.test(x));
   return false;
 }
+/** HOW MANY OF A MANA TOKEN A CLAUSE MAKES, when its ability states none (#1265; the create action's amount is null and `unitAmount` reads no "create"). "create a Treasure token" is one, "create two Lander
+ *  tokens" two. A "for each ..." in a sentence that creates the token scales it by that phrase: Master of Ceremonies' "For each player who chose money, you and that player each create a Treasure token",
+ *  Tempting Contract's "For each opponent who does, you create a Treasure token". Nothing otherwise. The token is counted where the create action names it, so "a Treasure token and a 2/2 ... Bird
+ *  creature token" (Song of Eärendil) is one Treasure.
+ *  CEILING: a condition on the creation ("If a land card is milled this way", Old Rutstein; a die roll, Mr. House) is a gate, not a count: the line reads the one token it makes when it fires. */
+function tokenCountOf(key: string, text: string, objects: readonly string[]): { fixed: number } | { scales: string } | null {
+  const name = key.replace(/-/g, " ");
+  for (const sentence of sentencesOf(text)) {
+    if (!new RegExp(`\\bcreates?\\b[^.]*\\b${name}\\b`, "i").test(sentence)) continue;
+    const each = FOR_EACH.exec(sentence);
+    if (each) return { scales: each[0].trim().toLowerCase() };
+  }
+  const counted = new RegExp(`\\b(an?|${WORD})\\s+(?:[\\w/{}-]+\\s+){0,3}?${name}\\s+tokens?\\b`, "i");
+  for (const object of objects) {
+    const m = counted.exec(object);
+    if (m) return { fixed: /^an?$/i.test(m[1]!) ? 1 : NUMBER_WORD[m[1]!.toLowerCase()]! };
+  }
+  return null;
+}
+
 /** A "create" action in a clause the abilities did not turn into a token-generation of a mana token: the Treasure a Saga chapter makes beside a Bird, the one inside an Aura token's quoted trigger, one
  *  the model typed `static` with no subtype (Spiked Pit Trap). */
 const CREATES_MANA_TOKEN = /\bcreates?\b[^.]*?\b(treasure|gold|powerstone|lander|eldrazi spawn|eldrazi scion)\b/i;
@@ -648,6 +668,9 @@ export function deriveMana(input: ManaInput): ManaResult {
         const counted = scaleOfSentence(sentence);
         if (counted !== null) { if (ADD_BEFORE_FOR_EACH.test(sentence)) floor = made.amount.fixed; made.amount = { fixed: null, scales: counted }; }
       }
+      // ONE READING (#1265): the line's scale may come from the SENTENCE (the override above: Selvala, Bloom Tender), which derive.ts's `production()` call cannot see. The ability this line
+      // reads keeps a number only when the line has one, so a scaling add stores the scaling text, never the clause's per-unit "1". Mutates the ability derive just built.
+      if (ability && made.amount.scales !== null && (ability.amount === undefined || /^\d+$/.test(ability.amount))) ability.amount = made.amount.scales;
       // The own-colour floor reads whichever scale text the line ends with (the model path's `counted`, or the grammar path's `action.amount` that `production()` already stored).
       if (made.amount.scales !== null && FOR_EACH_COLOUR_AMONG_OWN.test(made.amount.scales) && source === "activated" && !chars.types.some((t) => /^(?:instant|sorcery)$/i.test(t))) floor = Math.max(floor ?? 0, chars.colors.length);
       const cost = source === "activated" || source === "static-grant" || source === "token-maker"
@@ -689,14 +712,17 @@ export function deriveMana(input: ManaInput): ManaResult {
       const dedupe = `token:${a.clause}:${key}`;
       if (seenClauses.has(dedupe)) continue;
       seenClauses.add(dedupe);
-      const tokens = a.amount !== undefined && /^\d+$/.test(a.amount) ? Number(a.amount) : null;
+      const clause = clauses.find((c) => c.id === a.clause);
+      const read = a.amount === undefined && clause ? tokenCountOf(key, input.textOf(clause), (clause.actions ?? []).filter((x) => x.verb === "create").map((x) => x.object ?? "")) : null;
+      const amountText = a.amount ?? (read && "scales" in read ? read.scales : undefined);
+      const tokens = a.amount !== undefined && /^\d+$/.test(a.amount) ? Number(a.amount) : read && "fixed" in read ? read.fixed : null;
       const cost = a.kind === "activated" ? parseCost(a.cost, selfNames) : noCost();
       if (a.kind === "on-cast") cost.mana = faceMV(face);
       const make = MANA_TOKENS[key]!;
       lines.push({
         face, source: "token-maker", repeats: a.repeats ?? null, cost, ...make, unread: false,
         // Each token is one use of mana when it is spent; a token count that scales is unknown.
-        amount: tokens !== null ? { fixed: tokens, scales: null } : { fixed: null, scales: a.amount ?? null },
+        amount: tokens !== null ? { fixed: tokens, scales: null } : { fixed: null, scales: amountText ?? null },
         net: (tokens ?? 1) - cost.mana, gate: null, timing: "now", producesToken: key, trigger: null,
       });
       continue;
