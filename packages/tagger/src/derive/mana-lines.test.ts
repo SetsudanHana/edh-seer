@@ -375,6 +375,11 @@ describe("review round 2 (#1169 task 1)", () => {
     expect(counter("Incubation Druid")).toMatchObject({ put: { by: "self", readyTurn: 5 } });
     expect(counter("The Grey Havens")).toBeUndefined();
   });
+  it("#1267 Incubation Druid's 'three mana of that type instead' is READ: the type is the line before's, any a land you control could produce", () => {
+    const [plain, instead] = linesOf("Incubation Druid");
+    expect(plain).toMatchObject({ anyColour: "lands-you-could", unread: false, amount: { fixed: 1 }, gate: null });
+    expect(instead).toMatchObject({ anyColour: "lands-you-could", unread: false, amount: { fixed: 3 }, gate: { kind: "counter" } });
+  });
   it("#1267 keyword self-puts of +1/+1 counters: Adapt and Monstrosity at the activation, Outlast one counter per activation, Evolve not at all", () => {
     // mana value 2 => cast turn 2, first activation turn 3 at the earliest
     expect(selfPutReady("{3}{g}{g}: adapt 3", "+1/+1", 2, 1, false)).toBe(5);

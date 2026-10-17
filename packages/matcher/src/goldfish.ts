@@ -4,7 +4,7 @@ import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
 import { cardLines, colourSourceColours, isFetchSource, isLandfall, isLoyaltyAbility, isPhaseTrigger, loyaltyActivations, lineColours, minManaValue, paidWithResource, paysItsWay, usableLoyalty } from "./mana-lines.js";
-import { boardCount, boardGateOf, boardGateReachable, gateMet, isSpeedGate, MAX_SPEED_TURN, permCounts, permOf, type BoardGate, type Perm } from "./gate.js";
+import { boardCount, boardGateOf, boardGateReachable, estimatedGateByTurn, gateMet, isEstimatedGate, isSpeedGate, MAX_SPEED_TURN, permCounts, permOf, type BoardGate, type Perm } from "./gate.js";
 import { staticFixer } from "./static-fixers.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands } from "./fetch-land.js";
@@ -169,11 +169,10 @@ export function playableLines(dc: DeckCard, deck?: readonly DeckCard[], perGame 
     // they are out. The deck-level `gateMet` (the median clock, P >= 0.5) is the AUDIT's bar (owner 2026-10-13: the audit credits a gated source at P >= 0.5, the goldfish per game); using it
     // here as well kept a Dragon-light deck's Jasper out of every game, the ones with a Dragon too. Only REACHABILITY is asked of the deck (`boardGateReachable`: it holds `need` such
     // permanents, so some game can meet the gate), which keeps a deck with no Dragon from counting a Jasper that can never make mana. With no deck a gated line is none, as before.
-    // Speed, the initiative and THE THREE ESTIMATED KINDS (#1267: a graveyard count, counters on the card, an event this turn) keep the deck check, `gateMet` -- the answer the colour audit reads (owner 2026-10-13: one
-    // answer for the audit and castability). CEILING: the line is then credited for the whole game once the DECK-level estimate clears the bar, though the gate may only open on a later turn (Pyramid's counters on turn 5):
-    // an over-claim of the early turns, as the initiative's is. An unknown gate is never met.
+    // Speed and the initiative keep the deck check. THE THREE ESTIMATED KINDS (#1267: a graveyard count, counters on the card, an event this turn) are admitted when SOME turn meets the gate in this deck
+    // (`estimatedGateByTurn`), and `manaOutput` then credits their mana only on the turns that do (`ManaOutput.estimated`), as the max-speed line is credited from turn 4. An unknown gate is never met.
     const board = l.gate === null ? null : boardGateOf(l.gate);
-    const checkable = l.gate === null || dynamicGate(l) || (perGame && board !== null && deck !== undefined && boardGateReachable(board, deck)) || gateMet(l, deck);
+    const checkable = l.gate === null || dynamicGate(l) || (perGame && board !== null && deck !== undefined && boardGateReachable(board, deck)) || (!isEstimatedGate(l.gate) && gateMet(l, deck)) || (isEstimatedGate(l.gate) && deck !== undefined && estimatedGateByTurn(l.gate, deck).some(Boolean));
     switch (l.source) {
       // A LOYALTY ABILITY ("+1: Add {R}{R}") is a source too (owner, 2026-10-13): once per turn at sorcery timing (CR 606.3), so it pays every turn the walker
       // is out and the turn it is cast (no summoning sickness: it is no creature). A "+N" or "0" always; a "−N" (Chandra, Novice Pyromancer's −1: Add
@@ -271,6 +270,10 @@ export interface ManaOutput {
    *  `MAX_SPEED_TURN`). A speed line's COLOURS are in `colourMaskOf` from the start, like any gated colour that is not a board count, but they ride with the source's mana, which is 0 until turn 4
    *  when the speed line is the card's only one (Endrider Catalyzer, Howlsquad Heavy) and colourless on the card that has a plain line beside it (Muraganda Raceway: the three speed-gated lines of the corpus, 2026-10-13). */
   speed?: { turn: number; amount: number };
+  /** AN ESTIMATED GATE (#1267: a graveyard count, counters on the card, an event this turn): the source taps for `amount` on the turns `met` says the gate holds on (`estimatedGateByTurn`, index = turn - 1, a turn past the
+   *  end reads the last), the incumbent `amount` above otherwise. Its mana is credited by the turn, never before the closed form holds: Pyramid of the Pantheon's three, turn 5. CEILING: one estimated line per card, the
+   *  best; its COLOURS are not credited here (`gatedColourLines` refuses them), the safe direction. */
+  estimated?: { amount: number; met: readonly boolean[] };
 }
 
 /** THE ONE-SHOT-SPELL LINE OF A RITUAL, or null: an instant or sorcery whose derived line adds a FIXED run of mana -- Dark Ritual's "Add {B}{B}{B}."
@@ -396,12 +399,14 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = f
   // anything else the deck met at `gateMet` ("you have the initiative", Sarevok's Tome: CEILING in gate.ts) is no gate here -- the line is credited whole.
   const timed = (l: ManaLine): BoardGate | null => (l.gate !== null && !dynamicGate(l) ? boardGateOf(l.gate) : null);
   const speedGated = (l: ManaLine): boolean => l.gate !== null && isSpeedGate(l.gate);
-  const open = (l: ManaLine): boolean => l.gate === null || (!dynamicGate(l) && !speedGated(l) && timed(l) === null);
+  const estimatedGated = (l: ManaLine): boolean => l.gate !== null && isEstimatedGate(l.gate);
+  const open = (l: ManaLine): boolean => l.gate === null || (!dynamicGate(l) && !speedGated(l) && !estimatedGated(l) && timed(l) === null);
   // A SCALING speed line (Howlsquad Heavy: "{R} for each Goblin you control") is a rate, not an amount: it keeps the incumbent 1, as a scaling tap does everywhere in this module.
   const speedLines = playableLines(dc, deck, perGame).filter((x) => speedGated(x) && x.source === "activated" && tapOnly(x) && x.restriction === null);
   const boardGated = lines.filter((x) => timed(x) !== null && x.restriction === null);
   // A CARD WHOSE ONLY PRICED MANA WAITS ON THE BOARD (Mox Jasper) OR ON MAX SPEED (Howlsquad Heavy) makes none until it is met; every other source starts at the incumbent 1.
-  let out: ManaOutput = { amount: (boardGated.length > 0 || speedLines.length > 0) && !lines.some(open) ? 0 : 1 };
+  const estimatedLines = deck === undefined ? [] : lines.filter((x) => estimatedGated(x) && x.restriction === null);
+  let out: ManaOutput = { amount: (boardGated.length > 0 || speedLines.length > 0 || estimatedLines.length > 0) && !lines.some(open) ? 0 : 1 };
   // UNGATED: the best plain line. A mana-value floor is RECORDED rather than refused, because the deck can settle it; it only wins by beating the
   // plain amount.
   for (const l of lines.filter((x) => open(x) && x.restriction === null)) if (l.amount.fixed! > out.amount) out = { amount: l.amount.fixed! };
@@ -431,6 +436,11 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = f
   let best: ManaLine | undefined;
   for (const l of boardGated) if (best === undefined || l.amount.fixed! > best.amount.fixed!) best = l;
   if (best) out = { ...out, gated: { gate: timed(best)!, amount: best.amount.fixed! } };
+  // THE ESTIMATED LINE: on the turns its gate holds. CEILING: one per card, the best amount (the earliest-met wins a tie).
+  if (estimatedLines.length > 0) {
+    const tables = estimatedLines.map((l) => ({ amount: l.amount.fixed!, met: estimatedGateByTurn(l.gate!, deck!) }));
+    out = { ...out, estimated: tables.reduce((b, t) => (t.amount > b.amount || (t.amount === b.amount && t.met.findIndex(Boolean) < b.met.findIndex(Boolean)) ? t : b)) };
+  }
   // THE MAX-SPEED LINE: from turn 4, whether or not it beats the plain amount. CEILING: one speed line per card, the best.
   if (speedLines.length > 0) out = { ...out, speed: { turn: MAX_SPEED_TURN, amount: Math.max(...speedLines.map((l) => l.amount.fixed ?? 1)) } };
   // A WALKER WHOSE MANA IS ALL LOYALTY ABILITIES pays for as long as its priced ability can be activated. The priced ability is the best amount (a scaling one is
@@ -475,7 +485,7 @@ function landsGateHolds(o: ManaOutput, lands: readonly OnBoardLand[]): boolean {
   return Math.max(0, ...count.values()) >= o.needsLands!;
 }
 
-function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly Perm[], turn: number): number {
+export function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly Perm[], turn: number): number {
   if (o.tron) {
     const has = (s: string): boolean =>
       lands.some((l) => l.everyLandType || l.typeLine.toLowerCase().includes(s.toLowerCase()));
@@ -487,8 +497,10 @@ function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly 
   if (o.needsLands !== undefined && !landsGateHolds(o, lands)) return o.below ?? 0;
   // A BOARD-COUNT GATE: the better amount once the permanents it names are out (Leafkin Druid's two, Mox Jasper's one), the plain one before.
   const board = o.gated !== undefined && o.gated.amount > o.amount && gateHolds(o, perms) ? o.gated.amount : o.amount;
+  // AN ESTIMATED GATE: the better amount on the turns the deck's closed form says it holds (`ManaOutput.estimated`).
+  const est = o.estimated !== undefined && o.estimated.amount > board && o.estimated.met[Math.min(turn, o.estimated.met.length) - 1] === true ? o.estimated.amount : board;
   // MAX SPEED: the better amount from turn 4 on (`ManaOutput.speed`).
-  return o.speed !== undefined && turn >= o.speed.turn && o.speed.amount > board ? o.speed.amount : board;
+  return o.speed !== undefined && turn >= o.speed.turn && o.speed.amount > est ? o.speed.amount : est;
 }
 
 /** COLOURS AS A BITMASK over `COLORS`. Colourless is the EMPTY mask, not a sixth bit: `{C}` pays
@@ -559,7 +571,7 @@ export const fetchUntapsOf = (dc: DeckCard): boolean => FETCH_UNTAPS.test(dc.car
 /** THE GATED TAPS WHOSE COLOURS THIS MODEL PLAYS (the deck met the gate, `playableLines`): not a lands-counted or tron gate (priced by `manaOutput`), not a loyalty ability, not a
  *  grantee's colours, not a costed line that makes less than it costs. */
 function gatedColourLines(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): ManaLine[] {
-  return playableLines(dc, deck, perGame).filter((l) => l.gate !== null && !dynamicGate(l) && (l.source === "activated" || l.source === "static-grant")
+  return playableLines(dc, deck, perGame).filter((l) => l.gate !== null && !dynamicGate(l) && !isEstimatedGate(l.gate) && (l.source === "activated" || l.source === "static-grant")
     && !isLoyaltyAbility(l) && l.anyColour !== "grantee" && paysItsWay(l));
 }
 
@@ -1436,7 +1448,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         const mana = produced(cast.output, lands, perms, turn);
         const gated = {
           // A LANDS-COUNTED GATE (Sceptre of Eternal Glory) is priced every turn too: the source is re-priced against the lands on the board, not frozen at its cast-turn value.
-          ...(cast.output.gated || cast.output.speed || cast.output.needsLands !== undefined ? { out: cast.output } : {}),
+          ...(cast.output.gated || cast.output.speed || cast.output.estimated || cast.output.needsLands !== undefined ? { out: cast.output } : {}),
           ...(cast.colourGate && cast.baseColors !== undefined ? { colourGate: cast.colourGate, baseColors: cast.baseColors } : {}),
         };
         // A PER-SOURCE BONUS BRINGS NO MANA OF ITS OWN, so it goes to `bonuses` INSTEAD of the source

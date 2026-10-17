@@ -22,7 +22,7 @@
  *  asks that the deck can ever meet it (`boardGateReachable`) and prices the rest per game (#1191).
  *  THREE ESTIMATED KINDS (#1267, owner 2026-10-17: "estimate all three kinds from the decklist"; everything else stays `unknown`, which is unmet). Each has ONE closed form below, from facts the deck derives
  *  (`CardTags.abilities`: what a card emits, and the type line), never from oracle text. Each errs LOW where it can, and each over-claim it keeps is named in a CEILING at its function
- *  (the damage source that needs a trigger, a creature that cannot attack, the opening hand's table size). The goldfish reads their deck-level verdict as it reads the initiative's (`playableLines`).
+ *  (the damage source that needs a trigger, a creature that cannot attack, the opening hand's table size). The goldfish plays them BY THE TURN, as it plays the max-speed gate (`estimatedGateByTurn`, `ManaOutput.estimated`).
  *   - `threshold` (N cards in YOUR graveyard): Poisson on the expected count `graveyardMean`. Why Poisson: the count is a sum of many rare, near-independent events ("this card was seen, cast and is in
  *     the yard"), which Poisson models by its mean alone, and the mean is the one thing the derived facts give. CEILING: Poisson is wider than the true sum (its variance equals its mean, a sum of
  *     Bernoullis has less), so a need above the mean is slightly over-claimed and one below slightly under-claimed.
@@ -168,9 +168,15 @@ export function gateProbability(gate: ManaGate, deck: readonly DeckCard[], by?: 
   return b ? boardGateProbability(b, deck, by, holderIsLand) : null;
 }
 
-/** THE KINDS THIS MODULE ESTIMATES FROM THE DECKLIST (#1267): a graveyard count, counters on the card, an event this turn. The goldfish has no graveyard, no counters on a card and no turn's events to play
- *  per game, so it credits such a line on the deck-level verdict (`gateMet`), the same answer the colour audit reads (owner 2026-10-13: one answer for the audit and castability). */
+/** THE KINDS THIS MODULE ESTIMATES FROM THE DECKLIST (#1267): a graveyard count, counters on the card, an event this turn. The goldfish plays them BY THE TURN, as it plays the max-speed gate: a line
+ *  of one is admitted on a simulated turn only when the closed form holds on that turn (`estimatedGateByTurn`), never before, and never on a deck-level verdict that has no turn. */
 export const isEstimatedGate = (gate: ManaGate): boolean => gate.kind === "threshold" || gate.kind === "counter" || gate.kind === "turn-event";
+
+/** THE TURNS an estimated gate holds on, 1..`ESTIMATE_TURNS`: `gateMetBy` on each, the audit's own answer, as a table the simulation reads by its turn (a turn past the table reads the last entry). Not monotone:
+ *  "you played a land this turn" falls as the turns go. */
+export const ESTIMATE_TURNS = 20;
+export const estimatedGateByTurn = (gate: ManaGate, deck: readonly DeckCard[]): boolean[] =>
+  Array.from({ length: ESTIMATE_TURNS }, (_, i) => gateMetBy(gate, deck, i + 1));
 
 /** P(X >= need) for X ~ Poisson(mean). Summed from the complement of the (few) terms below `need`, which are small numbers for the needs a gate prints. */
 function poissonAtLeast(need: number, mean: number): number {

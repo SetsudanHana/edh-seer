@@ -236,6 +236,8 @@ export function production(object: string, amountText = "", context = ""): Pick<
   // The sentence must be exactly "Choose a color.", which refuses "choose a color other than white" (Thriving lands).
   else if (/\bthe chosen colou?r\b|\bcolou?r of your choice\b|\bthat colou?r\b/.test(lower) && /(?:^|[.:]\s*)choose a colou?r\s*\./.test(context.toLowerCase())) anyColour = "any";
   else if (/\bthe chosen (?:color|type)\b|\bcolor of your choice\b/.test(lower)) anyColour = "chosen";
+  // "...add three mana of THAT TYPE instead" (Incubation Druid) names the type the line before it chose: "any type that a land you control could produce". The back-reference reads the sentence it points back at.
+  else if (/\bof that type\b/.test(lower) && /\bcould produce\b/.test(context.toLowerCase())) anyColour = /\bopponents?\b/.test(context.toLowerCase()) ? "opponent-lands" : /\b(?:lands?|gates?)\b/.test(context.toLowerCase()) ? "lands-you-could" : null;
   else if (/\bcould produce\b/.test(lower)) anyColour = /\bopponents?\b/.test(lower) ? "opponent-lands" : /\b(?:lands?|gates?)\b/.test(lower) ? "lands-you-could" : null;
   else if (/\bany (?:one )?(?:color|type)\b|\bany combination of colou?rs\b|\bany colou?r\b|\bdifferent colou?rs\b/.test(lower)) anyColour = "any";
   if (anyColour === "any") for (const c of WUBRG) colours.add(c);
