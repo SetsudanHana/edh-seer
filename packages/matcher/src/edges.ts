@@ -1,6 +1,7 @@
 import type { Reason } from "@edh-seer/engine";
 import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
+import { tokenKindsWith } from "@edh-seer/tagger/token-kinds";
 import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
@@ -3140,6 +3141,9 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
   }
 }
 
+/** The tokens a card is MEANT to be sacrificed as (ARTIFACT_TOKEN_KINDS `fodder`: exactly Food, Treasure, Clue, Blood, Gold). */
+const FODDER_TOKENS = tokenKindsWith("fodder");
+
 /** Does `p` have its own activated "Sacrifice this" ability whose payoff is the same KIND as the
  *  outlet ability `outlet`'s? Any one of several self-sacrifice abilities matching counts.
  *  A self-sacrifice GRANTED to the host's target (Compulsory Rest, an Aura/Class/Equipment) is not
@@ -3164,7 +3168,7 @@ function sacrificesForSamePayoff(p: PairScope["p"], c: PairScope["c"], outlet: {
   // A card MEANT to be sacrificed stays fodder (owner 2026-10-16): a Food, Treasure, Clue, Blood or
   // Gold, or one with its own "when this dies / is put into a graveyard from the battlefield" trigger
   // (Nutrient Block's draw), whose sacrifice is not the point of playing it.
-  if (subs.some((t) => t === "food" || t === "treasure" || t === "clue" || t === "blood" || t === "gold")) return false;
+  if (subs.some((t) => FODDER_TOKENS.has(t))) return false;
   if ((p.tags?.abilities ?? []).some((pa) => pa.kind === "triggered" && pa.trigger?.subject?.self === true
     && (pa.trigger.verbs ?? []).includes("dies"))) return false;
   return (p.tags?.abilities ?? []).some((pa) => pa.kind === "activated" && kinds.has(pa.effect.kind)
