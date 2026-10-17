@@ -385,7 +385,10 @@ const DELAYED = /\b(?:at the beginning of|on) (?:your |the )?next [^,.]*,?[^.]*\
 const needsOf = (source: ManaLineSource | null, text: string, costText: string, anyColour: ManaAnyColour | null, object: string): string | null => {
   const target = source === "activated" ? targetNeeded(text, costText) : null;
   if (target !== null) return `a legal target exists: ${target}`;
-  return anyColour === "among" && COLOUR_FROM_GRAVEYARD.test(`${object} ${text}`) ? "there is a card in your graveyard" : null;
+  if (anyColour !== "among" || !COLOUR_FROM_GRAVEYARD.test(`${object} ${text}`)) return null;
+  // THE QUALIFIER IS KEPT (#1267 review): "among legendary creature cards in your graveyard" (The Grey Havens) needs a legendary creature card there, not any card. An article or a determiner is no qualifier.
+  const q = AMONG_QUALIFIER.exec(`${object} ${text}`)?.[1]?.toLowerCase();
+  return q !== undefined && !/^(?:the|all|those|these|your|an?|each|any|other|another)\b/.test(q) ? `there is ${/^[aeiou]/.test(q) ? "an" : "a"} ${q} card in your graveyard` : "there is a card in your graveyard";
 };
 
 /** A MODEL READING THAT LEFT THE COUNT OFF THE ADD (#1188): "For each nonland card revealed this way, add {G} and you gain 1 life" (Selvala, Explorer Returned) files the object as "{G}" and
@@ -493,6 +496,7 @@ const targetNeeded = (text: string, costText: string): string | null => {
   return null;
 };
 /** "Choose a color of a card in your graveyard. Add one mana of that color" (Corrupted Grafstone): with no card there, no colour to choose and no mana. */
+const AMONG_QUALIFIER = /\bamong ([a-z]+(?: [a-z]+){0,2}) cards? in your graveyard\b/i;
 const COLOUR_FROM_GRAVEYARD = /\bcolou?rs? of (?:an?|any) (?:card|creature|permanent)s? in your graveyard\b|\bamong [^.]{0,40}cards? in your graveyard\b/i;
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -642,6 +646,19 @@ const BASICS_ANY = /^if a basic land you control is tapped for mana, it produces
 const NOT_IN_A_DECK = new Set(["vanguard", "plane", "phenomenon", "conspiracy", "scheme", "ongoing scheme"]);
 
 // ---------------------------------------------------------------------------------------------------------------
+
+/** THE KEYWORD ACTIONS THAT PUT +1/+1 COUNTERS ON THE CARD ITSELF (#1267 review), read off the printed text with its reminder text removed: "{3}{G}{G}: Adapt 3" (Incubation Druid), "Monstrosity N", "Outlast {cost}", "Evolve".
+ *  The turn it is ready: the first turn that can pay the activation cost (a land a turn: mana available = the turn) and is after the turn the card is cast (its mana value, at least 1, the audit's on-curve clock), and
+ *  for Evolve, which has no cost, the cast turn plus the counters needed. Null when none applies or the keyword's N is below `need`.
+ *  CEILING: Evolve counts only when a larger creature enters, which this does not ask: it is read as ready as soon as the card is out, an over-claim for the one gated card with it (none in the corpus today). */
+function keywordPut(printed: string, mv: number, need: number): number | null {
+  const cast = Math.max(1, mv);
+  const costed = /((?:\{[^{}]+\})+)(?:, [^:]{0,40})?: (?:adapt|monstrosity) (\d+)\b/.exec(printed);
+  if (costed && Number(costed[2]) >= need) return Math.max(cast + 1, manaValueOf(costed[1]));
+  const outlast = /\boutlast ((?:\{[^{}]+\})+)/.exec(printed);
+  if (outlast) return Math.max(cast + 1, manaValueOf(outlast[1]));
+  return /\bevolve\b/.test(printed) ? cast + need : null;
+}
 
 export function deriveMana(input: ManaInput): ManaResult {
   const { chars, abilities, clauses } = input;
@@ -925,6 +942,7 @@ export function deriveMana(input: ManaInput): ManaResult {
     if (g === null || g.kind !== "counter") continue;
     const kind = g.counter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (new RegExp(`\\bput (?:an?|\\w+) ${kind} counters? on (?:this [a-z]+|it)\\b`).test(printed)) g.put = { by: "self", readyTurn: Math.max(1, faceMV(l.face)) + g.need };
+    else if (g.counter === "+1/+1" && keywordPut(printed, faceMV(l.face), g.need) !== null) g.put = { by: "self", readyTurn: keywordPut(printed, faceMV(l.face), g.need)! };
     else if (new RegExp(`\\bopening hand\\b[^.]{0,200} ${kind} counter on it`).test(printed)) g.put = { by: "opening-hand" };
   }
 

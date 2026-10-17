@@ -353,7 +353,7 @@ describe("review round 2 (#1169 task 1)", () => {
   it("#1267 the 18 gated lines the owner made estimable (2026-10-17): each real card's gate parses to its kind, from the card's own derive", () => {
     const gates = (n: string): ManaLine["gate"][] => linesOf(n).map((l) => l.gate).filter((g) => g !== null);
     const kinds: [string, string, Record<string, unknown>][] = [
-      ["Cabal Ritual", "threshold", { need: 7 }], ["Far Wanderings", "threshold", { need: 7 }], ["Corrupted Grafstone", "threshold", { need: 1 }], ["The Grey Havens", "threshold", { need: 1 }],
+      ["Cabal Ritual", "threshold", { need: 7 }], ["Far Wanderings", "threshold", { need: 7 }], ["Corrupted Grafstone", "threshold", { need: 1 }], ["The Grey Havens", "threshold", { need: 1, types: ["creature"], supertypes: ["legendary"] }],
       ["Dark Petition", "threshold", { need: 2, types: ["instant", "sorcery"] }], ["Lys Alana Dignitary", "threshold", { need: 1, subtypes: ["elf"] }],
       ["Charitable Levy", "counter", { counter: "collection", need: 3 }], ["Gemstone Caverns", "counter", { counter: "luck", need: 1 }], ["Incubation Druid", "counter", { counter: "+1/+1", need: 1 }],
       ["Pyramid of the Pantheon", "counter", { counter: "brick", need: 3 }], ["Tablet of Compleation", "counter", { counter: "oil", need: 2 }],
@@ -369,8 +369,9 @@ describe("review round 2 (#1169 task 1)", () => {
     expect(counter("Tablet of Compleation")).toMatchObject({ put: { by: "self" } });
     expect(counter("Charitable Levy")).toMatchObject({ put: { by: "self" } });
     expect(counter("Gemstone Caverns")).toMatchObject({ put: { by: "opening-hand" } });
-    // Incubation Druid's Adapt reminder text says "put three +1/+1 counters on it": reminder text is not the card's rule, and the brief reads the deck's supply instead
-    expect((counter("Incubation Druid") as { put?: unknown }).put).toBeUndefined();
+    // Incubation Druid's "{3}{G}{G}: Adapt 3" puts its own counters on it (the reminder text says so; the keyword is the rule): ready when {3}{G}{G} can be paid -- turn 5, after the turn after its cast (mana value 2)
+    expect(counter("Incubation Druid")).toMatchObject({ put: { by: "self", readyTurn: 5 } });
+    expect(counter("The Grey Havens")).toBeUndefined();
   });
   it("'as long as ...' on a granted ability gates the grant", () => {
     expect(only("Honored Hierarch").gate?.text).toBe("this creature is renowned");
@@ -473,7 +474,9 @@ describe("review of task 2a (#1169): 'among', unread, self-exile", () => {
   it("The Grey Havens' 'among legendary creature cards in your graveyard' needs a card there (Fix B); a board-bounded 'among' stays ungated", () => {
     const gated = linesOf("The Grey Havens").filter((l) => l.anyColour === "among");
     expect(gated).toHaveLength(1);
-    expect(gated[0]!.gate).toMatchObject({ kind: "threshold", need: 1, text: "there is a card in your graveyard" });
+    // the qualifier is KEPT (#1267 review): a legendary creature card, not any card
+    expect(gated[0]!.gate).toEqual({ kind: "threshold", zone: "graveyard", need: 1, types: ["creature"], supertypes: ["legendary"], text: "there is a legendary creature card in your graveyard" });
+    expect(only("Corrupted Grafstone").gate).toMatchObject({ kind: "threshold", need: 1, text: "there is a card in your graveyard" });
     expect(only("Mox Amber").gate).toBeNull();
   });
   it("a target player or opponent (ALWAYS_THERE) and 'any number of target' (Quintorius Kand's UP_TO) gate nothing", () => {

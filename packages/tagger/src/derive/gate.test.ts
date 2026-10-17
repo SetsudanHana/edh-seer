@@ -34,6 +34,12 @@ describe("parseGate (#1191): the one parse of ManaLine.gate", () => {
     expect(parseGate("there is an elf card in your graveyard")).toMatchObject({ kind: "threshold", need: 1, subtypes: ["elf"] });
     expect(parseGate("there are three or more creature cards in your graveyard")).toMatchObject({ kind: "threshold", need: 3, types: ["creature"] });
   });
+  it("a graveyard count keeps a supertype and a type (The Grey Havens: a legendary creature card); a qualifier it cannot read is unknown, never an untyped count", () => {
+    expect(parseGate("there is a legendary creature card in your graveyard")).toEqual({ kind: "threshold", zone: "graveyard", need: 1, types: ["creature"], supertypes: ["legendary"], text: "there is a legendary creature card in your graveyard" });
+    expect(parseGate("there are two or more basic land cards in your graveyard")).toMatchObject({ need: 2, types: ["land"], supertypes: ["basic"] });
+    expect(parseGate("there is a legendary card in your graveyard")).toMatchObject({ need: 1, supertypes: ["legendary"] });
+    expect(parseGate("there is a red card in your graveyard")).toEqual({ kind: "unknown", text: "there is a red card in your graveyard" });
+  });
   it("counters on the card itself: the kind, how many, and a bare 'it' / 'this <type>' / the card's own name as the holder (Incubation Druid, Gemstone Caverns, Pyramid, Tablet, Charitable Levy)", () => {
     expect(parseGate("this creature has a +1/+1 counter on it")).toEqual({ kind: "counter", counter: "+1/+1", need: 1, text: "this creature has a +1/+1 counter on it" });
     expect(parseGate("gemstone caverns has a luck counter on it")).toMatchObject({ kind: "counter", counter: "luck", need: 1 });

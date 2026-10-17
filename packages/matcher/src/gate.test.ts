@@ -225,17 +225,23 @@ test("counter, the card's own ability puts it there: met from the cast turn plus
   expect(gateVerdict({ ...pyramid, put: { by: "self", readyTurn: 12 } } as typeof pyramid, deck)).toBe("unmet");
 });
 
-test("counter, the deck must supply it: the chance of a card that puts that counter on a creature you control, seen and cast by the turn (Incubation Druid)", () => {
+test("counter, the deck does NOT supply it: a counter gate with no put of its own is unmet whatever the deck holds (the dropped supply case over-claimed: the counter rarely lands on the holder)", () => {
   const druid = parseGate("this creature has a +1/+1 counter on it");
   const adder = (i: number) => withAbilities(dc(`Adder ${i}`, "Enchantment"), [ability({ emits: [{ verb: "counter-added", subject: { control: "you", counter: "+1/+1", type: "creature" } }] })], 3);
-  const wrongCounter = (i: number) => withAbilities(dc(`Other ${i}`, "Enchantment"), [ability({ emits: [{ verb: "counter-added", subject: { control: "you", counter: "-1/-1", type: "creature" } }] })], 3);
-  const onSelf = (i: number) => withAbilities(dc(`Ballista ${i}`, "Artifact Creature"), [ability({ emits: [{ verb: "counter-added", subject: { control: "any", self: true, counter: "+1/+1" } }] })], 3);
-  const onOpponent = (i: number) => withAbilities(dc(`Poisoner ${i}`, "Enchantment"), [ability({ emits: [{ verb: "counter-added", subject: { control: "opp", counter: "+1/+1" } }] })], 3);
-  expect(gateVerdict(druid, landsDeck(copies(20, adder)))).toBe("met");
-  expect(gateProbability(druid, landsDeck(copies(20, adder)), 3)).toBe(0);
-  expect(gateProbability(druid, landsDeck(copies(20, adder)), 4)!).toBeGreaterThan(0);
-  expect(gateVerdict(druid, landsDeck([adder(0)]))).toBe("unmet");
-  for (const other of [wrongCounter, onSelf, onOpponent, (i: number) => spell(i)]) expect(gateVerdict(druid, landsDeck(copies(20, other))), other.name).toBe("unmet");
+  expect(gateProbability(druid, landsDeck(copies(40, adder)))).toBe(0);
+  expect(gateVerdict(druid, landsDeck(copies(40, adder)))).toBe("unmet");
+  // ...and Incubation Druid's own Adapt (derive's `put: self` at turn 5) is met from the turn it can pay {3}{G}{G}
+  const adapt: ReturnType<typeof parseGate> = { kind: "counter", counter: "+1/+1", need: 1, put: { by: "self", readyTurn: 5 }, text: druid.text };
+  expect(gateProbability(adapt, landsDeck([]), 4)).toBe(0);
+  expect(gateProbability(adapt, landsDeck([]), 5)).toBe(1);
+});
+
+test("threshold, supertyped: a legendary creature card needs a legendary creature to reach the yard (The Grey Havens)", () => {
+  const g = parseGate("there is a legendary creature card in your graveyard");
+  const loot = (legend: boolean) => (i: number) => withAbilities(dc(`Looter ${i}`, legend ? "Legendary Creature — Human" : "Creature — Human"), [ability({ kind: "activated", emits: [{ verb: "discard", subject: { control: "you" } }] })], 1);
+  expect(gateVerdict(g, landsDeck(copies(40, loot(true))))).toBe("met");
+  expect(gateVerdict(g, landsDeck(copies(40, loot(false))))).toBe("unmet");
+  expect(gateVerdict(g, landsDeck(copies(60, (i) => spell(i))))).toBe("unmet");
 });
 
 test("counter, only as the card begins the game on the battlefield: the chance it is in the opening hand and the player is not first (Gemstone Caverns), well under the bar", () => {

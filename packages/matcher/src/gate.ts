@@ -26,8 +26,8 @@
  *   - `threshold` (N cards in YOUR graveyard): Poisson on the expected count `graveyardMean`. Why Poisson: the count is a sum of many rare, near-independent events ("this card was seen, cast and is in
  *     the yard"), which Poisson models by its mean alone, and the mean is the one thing the derived facts give. CEILING: Poisson is wider than the true sum (its variance equals its mean, a sum of
  *     Bernoullis has less), so a need above the mean is slightly over-claimed and one below slightly under-claimed.
- *   - `counter` (counters on the card): its own ability puts them there (`put.by self`, derive): met from `put.readyTurn`; only the opening hand does (Gemstone Caverns): 3/4 x 7/N; otherwise the
- *     chance the deck has a card that puts that counter on a creature you control, seen and cast by the turn.
+ *   - `counter` (counters on the card): its own ability puts them there (`put.by self`, derive): met from `put.readyTurn`; only the opening hand does (Gemstone Caverns): 3/4 x 7/N; otherwise 0 (the deck's supply of
+ *     counters is NOT counted: it over-claimed).
  *   - `turn-event` (something this turn): see `turnEventProbability`.
  *  CEILING: a gate that names two kinds of thing at once ("an urza's mine and an urza's tower", the tron lands) is `unknown` here: the goldfish prices that pair against the board turn by turn. */
 import { pAtLeast, seen } from "@edh-seer/engine";
@@ -54,13 +54,13 @@ export interface Perm { name: string; types: ReadonlySet<string>; subtypes: Read
  *  gates count it; an instant or sorcery is cast the turn its mana value is paid). */
 interface Src { mv: number; permanent: boolean }
 /** An instant or sorcery, whose cast puts it into the graveyard (the types and subtypes a typed graveyard gate matches). */
-interface SpellFact extends Src { types: ReadonlySet<string>; subtypes: ReadonlySet<string> }
+interface SpellFact extends Src { types: ReadonlySet<string>; subtypes: ReadonlySet<string>; supertypes: ReadonlySet<string> }
 /** A card that puts cards of YOUR deck into YOUR graveyard (discard, mill, surveil, all `control: you`): `n` cards, the printed amount when it is a number, else 1. */
 interface FillerFact extends Src { n: number }
 interface DeckFacts {
-  size: number; permanents: Perm[]; initiative: boolean; spells: SpellFact[]; fillers: FillerFact[]; lifeLoss: Src[]; outlets: Src[]; counterAdders: Map<string, Src[]>;
+  size: number; permanents: Perm[]; initiative: boolean; spells: SpellFact[]; fillers: FillerFact[]; lifeLoss: Src[]; outlets: Src[];
   /** Every card's types and subtypes, to find the share of a deck a typed graveyard gate matches. */
-  kinds: { types: ReadonlySet<string>; subtypes: ReadonlySet<string> }[];
+  kinds: { types: ReadonlySet<string>; subtypes: ReadonlySet<string>; supertypes: ReadonlySet<string> }[];
 }
 
 /** THE CARD AS A PERMANENT, or null for an instant, a sorcery or anything else that never stays (the front face, as the type line of a card in hand reads: CR 712.8a). */
@@ -88,32 +88,27 @@ function factsOf(deck: readonly DeckCard[]): DeckFacts {
     const permanents: Perm[] = [];
     let initiative = false;
     const spells: SpellFact[] = [], fillers: FillerFact[] = [], lifeLoss: Src[] = [], outlets: Src[] = [], kinds: DeckFacts["kinds"] = [];
-    const counterAdders = new Map<string, Src[]>();
     for (const dc of deck) {
       if (/\btake the initiative\b/i.test(dc.card.oracleText ?? "")) initiative = true;
       const p = permOf(dc);
       if (p) permanents.push(p);
       const parsed = parseTypeLine((dc.card.typeLine ?? "").split("//")[0]!);
-      const types = new Set(p ? p.types : parsed.types), subtypes = new Set(parsed.subtypes);
-      kinds.push({ types, subtypes });
+      const types = new Set(p ? p.types : parsed.types), subtypes = new Set(parsed.subtypes), supertypes = new Set(parsed.supertypes);
+      kinds.push({ types, subtypes, supertypes });
       const src: Src = { mv: dc.card.manaValue ?? 0, permanent: p !== null };
-      if (!p && (types.has("instant") || types.has("sorcery"))) spells.push({ ...src, types, subtypes });
+      if (!p && (types.has("instant") || types.has("sorcery"))) spells.push({ ...src, types, subtypes, supertypes });
       let fill = 0, loses = false, outlet = false;
-      const adds = new Set<string>();
       for (const a of (dc.tags?.abilities ?? []).filter(acts)) for (const e of a.emits ?? []) {
         const you = e.subject.control === "you";
         if (FILL_VERBS.has(e.verb) && you) fill = Math.max(fill, countOf(a));
         if ((e.verb === "lose-life" || e.verb === "non-combat-damage") && (e.subject.control === "opp" || e.subject.control === "any")) loses = true;
         if (e.verb === "sacrifice" && you && e.subject.self !== true && a.kind === "activated") outlet = true;
-        const kind = Array.isArray(e.subject.type) ? e.subject.type : e.subject.type === undefined ? [] : [e.subject.type];
-        if (e.verb === "counter-added" && e.subject.counter !== undefined && e.subject.self !== true && (e.subject.control === "you" || e.subject.control === "any") && (kind.length === 0 || kind.includes("creature"))) adds.add(e.subject.counter);
       }
       if (fill > 0) fillers.push({ ...src, n: fill });
       if (loses) lifeLoss.push(src);
       if (outlet) outlets.push(src);
-      for (const c of adds) counterAdders.set(c, [...(counterAdders.get(c) ?? []), src]);
     }
-    FACTS.set(deck, (f = { size: deck.length, permanents, initiative, spells, fillers, lifeLoss, outlets, counterAdders, kinds }));
+    FACTS.set(deck, (f = { size: deck.length, permanents, initiative, spells, fillers, lifeLoss, outlets, kinds }));
   }
   return f;
 }
@@ -188,22 +183,24 @@ function poissonAtLeast(need: number, mean: number): number {
  *  CEILING: creatures dying, a land sacrificed, a flashback or a recursion spell are not counted; a filler fires once, however repeatable; a spell is assumed cast when it can be, not held; the
  *  holder itself (Cabal Ritual, on the stack when its gate is read) is counted among the spells; the discards are assumed to be as typed as the whole deck. All of these under-claim except the last two. */
 function graveyardMean(g: Extract<ManaGate, { kind: "threshold" }>, f: DeckFacts, turn: number): number {
-  const matches = (types: ReadonlySet<string>, subtypes: ReadonlySet<string>): boolean =>
-    (g.types === undefined && g.subtypes === undefined) || (g.types?.some((t) => types.has(t)) ?? false) || (g.subtypes?.some((t) => subtypes.has(t)) ?? false);
-  const share = f.size === 0 ? 0 : f.kinds.filter((k) => matches(k.types, k.subtypes)).length / f.size;
+  const matches = (types: ReadonlySet<string>, subtypes: ReadonlySet<string>, supertypes: ReadonlySet<string>): boolean =>
+    (g.supertypes?.every((t) => supertypes.has(t)) ?? true)
+    && ((g.types === undefined && g.subtypes === undefined) || (g.types?.some((t) => types.has(t)) ?? false) || (g.subtypes?.some((t) => subtypes.has(t)) ?? false));
+  const share = f.size === 0 ? 0 : f.kinds.filter((k) => matches(k.types, k.subtypes, k.supertypes)).length / f.size;
   const seenShare = Math.min(1, seen(turn) / Math.max(1, f.size));
-  const castSpells = Math.min(Math.max(0, turn - 1), f.spells.filter((s) => s.mv <= turn && matches(s.types, s.subtypes)).length * seenShare);
+  const castSpells = Math.min(Math.max(0, turn - 1), f.spells.filter((s) => s.mv <= turn && matches(s.types, s.subtypes, s.supertypes)).length * seenShare);
   const filled = f.fillers.reduce((sum, x) => sum + (castBy([x], turn) > 0 ? x.n : 0), 0) * seenShare * share;
   return castSpells + filled;
 }
 
-/** A COUNTER GATE'S CHANCE (see the header). The deck's supply is a card that puts that counter on a creature you control; `need` of them, seen and cast by the turn.
- *  CEILING: it does not ask that the counter lands on the holder (Incubation Druid's own +1/+1), only that the deck can put one on a creature: an over-claim, the one this kind makes.
- *  CEILING: the opening-hand case is 3/4 (a four-player table: not the starting player) x 7/N, ignoring a mulligan and the card exiled from the hand to pay for it. */
+/** A COUNTER GATE'S CHANCE (see the header): met when the card's own words put the counters on it (`put.by self`, from `put.readyTurn`; derive reads Adapt, Monstrosity, Outlast, Evolve and "put ... counter on
+ *  this ..."), or in the opening hand (Gemstone Caverns: 3/4 x 7/N). Anything else is 0.
+ *  CEILING: THE DECK'S SUPPLY IS DROPPED (owner review 2026-10-17). "The deck has a card that puts that counter on a creature you control" over-claimed: the counter rarely lands on the holder, so a gate whose card puts
+ *  no counter on itself is unmet in every deck. CEILING: the opening-hand case ignores a mulligan, the card exiled from the hand to pay for it, and a table that is not four players. */
 function counterProbability(g: Extract<ManaGate, { kind: "counter" }>, f: DeckFacts, turn: number): number {
   if (g.put?.by === "self") return turn >= g.put.readyTurn ? 1 : 0;
   if (g.put?.by === "opening-hand") return 0.75 * Math.min(1, 7 / Math.max(1, f.size));
-  return seenAtLeast(g.need, f.counterAdders.get(g.counter) ?? [], turn, f.size);
+  return 0;
 }
 
 /** THE CHANCE OF SOMETHING HAVING HAPPENED EARLIER THIS TURN, by the median clock or by `by`. Each is a deck-level estimate and under-claims when unsure; the holder's own cast is priced by the consumer.

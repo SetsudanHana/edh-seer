@@ -20,7 +20,9 @@ const POWER = /^you control a creature with power (\d+) or greater$/;
 const TRON = /^you control (?:an?|the) (.{1,40}?) and (?:an?|the) (.{1,40})$/;
 
 /** "there are seven or more cards in your graveyard", "there is an elf card in your graveyard", "there are two or more instant and/or sorcery cards in your graveyard". Your graveyard only. */
-const GRAVEYARD = /^there (?:is|are) (?:(an?)|(\w+) or more) (?:([a-z]+(?: and\/or [a-z]+)?) )?cards? in your graveyard$/;
+const GRAVEYARD = /^there (?:is|are) (?:(an?)|(\w+) or more) (?:(legendary|basic|snow) )?(?:([a-z]+(?: and\/or [a-z]+)?) )?cards? in your graveyard$/;
+/** Words a graveyard gate's qualifier can be that are neither a card type nor a subtype: a count of these is not read (unknown), never taken for a subtype. */
+const NOT_A_TYPE: ReadonlySet<string> = new Set(["white", "blue", "black", "red", "green", "multicolored", "colorless", "colourless", "historic", "nonland", "noncreature", "nontoken", "permanent", "nonbasic"]);
 /** "there are three or more brick counters on this artifact" / "there are three or more collection counters on it". */
 const COUNTERS_THERE = /^there (?:is|are) (?:(an?)|(\w+) or more) (\S{1,20}) counters? on (?:it|this [a-z]+)$/;
 /** "this creature has a +1/+1 counter on it", "gemstone caverns has a luck counter on it": the holder is the card (`this <type>`, `it` or its own name), never another object. */
@@ -65,10 +67,11 @@ export function parseGate(raw: string): ManaGate {
   if (yard) {
     const need = yard[1] ? 1 : countOf(yard[2]!);
     if (need === undefined) return unknown;
-    const words = yard[3] === undefined ? [] : yard[3].split(" and/or ");
+    const words = yard[4] === undefined ? [] : yard[4].split(" and/or ");
+    if (words.some((w) => NOT_A_TYPE.has(w))) return unknown;
     const types = words.filter((w) => CARD_TYPES.has(w));
     const subtypes = words.filter((w) => !CARD_TYPES.has(w));
-    return { kind: "threshold", zone: "graveyard", need, ...(types.length > 0 ? { types } : {}), ...(subtypes.length > 0 ? { subtypes } : {}), text };
+    return { kind: "threshold", zone: "graveyard", need, ...(types.length > 0 ? { types } : {}), ...(subtypes.length > 0 ? { subtypes } : {}), ...(yard[3] !== undefined ? { supertypes: [yard[3]] } : {}), text };
   }
   const there = COUNTERS_THERE.exec(text);
   const has = there ? null : COUNTERS_HAS.exec(text);
