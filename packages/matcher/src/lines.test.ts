@@ -453,7 +453,7 @@ describe("a refused trigger's ability supplies nothing to a line (#1253)", () =>
   const timeMaker = (refused: boolean) => ({
     card: { name: "Time Maker" },
     tags: { characteristics: { types: ["artifact"], subtypes: [] }, abilities: [
-      { kind: "triggered", ...(refused ? { triggerRefused: true } : {}),
+      { kind: "triggered", ...(refused ? { claimsNothing: "refused-trigger" as const } : {}),
         effect: { kind: "counter-placement", subject: { control: "any", token: null, counter: "time" } }, amount: "1",
         emits: [{ verb: "counter-added", subject: { control: "any", token: null, counter: "time" } }] },
     ] },
@@ -463,7 +463,7 @@ describe("a refused trigger's ability supplies nothing to a line (#1253)", () =>
   test("an unflagged counter source is a supplier of the line", () => {
     expect(supplierPieces(timeMaker(false)).length).toBeGreaterThan(0);
   });
-  test("the same ability flagged triggerRefused is no supplier", () => {
+  test("the same ability flagged claimsNothing is no supplier", () => {
     expect(supplierPieces(timeMaker(true))).toEqual([]);
   });
 
@@ -472,7 +472,7 @@ describe("a refused trigger's ability supplies nothing to a line (#1253)", () =>
   const doubler = (refused: boolean) => ({
     card: { name: "Doubler" },
     tags: { characteristics: { types: ["artifact"], subtypes: [] }, abilities: [
-      { kind: "activated", cost: "{2}", ...(refused ? { triggerRefused: true } : {}),
+      { kind: "activated", cost: "{2}", ...(refused ? { claimsNothing: "refused-trigger" as const } : {}),
         effect: { kind: "pump", subject: { control: "any", token: null, counter: "time" } }, amount: "double" },
     ] },
   }) as unknown as DeckCard;

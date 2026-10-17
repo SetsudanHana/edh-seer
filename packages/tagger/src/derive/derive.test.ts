@@ -1,8 +1,8 @@
 import { describe, expect, it, test } from "vitest";
-import { manaAdded, unitAmount, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
+import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { deriveInputOf } from "../derive-input.js";
-import type { Characteristics } from "../schema.js";
+import type { Ability, Characteristics } from "../schema.js";
 
 test("one ability per action, sharing the clause kind and trigger", () => {
   // Kaya, Ghost Assassin -2: "Each opponent loses 2 life and you gain 2 life."
@@ -4457,7 +4457,7 @@ test("a refusal that read only timing or a count keeps the exact class and the c
     "Squall, SeeD Mercenary", { 1: t1 }, undefined, t1);
   expect(sq.unknownTriggers).toContain("narrowing:attacks");
   expect(sq.abilities.length).toBeGreaterThan(0);
-  expect(sq.abilities.every((a) => a.trigger === undefined && a.triggerRefused === undefined)).toBe(true);
+  expect(sq.abilities.every((a) => a.trigger === undefined && a.claimsNothing === undefined)).toBe(true);
   expect(sq.abilities.flatMap((a) => a.emits ?? []).every((e) => e.subject.ref === "trigger" && e.subject.type === "creature")).toBe(true);
   // becomes blocked: "return it" is a creature you control.
   const { abilities } = deriveAbilities(
@@ -4466,7 +4466,7 @@ test("a refusal that read only timing or a count keeps the exact class and the c
     "Cunning Evasion",
     { 1: "Whenever a creature you control becomes blocked, you may return it to its owner's hand." },
   );
-  expect(abilities.every((a) => a.trigger === undefined && a.triggerRefused === undefined)).toBe(true);
+  expect(abilities.every((a) => a.trigger === undefined && a.claimsNothing === undefined)).toBe(true);
 });
 
 test("an `if:` refusal flags a typed object: Koll's 'if it was enchanted or equipped' return", () => {
@@ -4477,7 +4477,7 @@ test("an `if:` refusal flags a typed object: Koll's 'if it was enchanted or equi
     "Koll, the Forgemaster", { 1: t }, undefined, t);
   expect(unknownTriggers.some((u) => u.startsWith("if:"))).toBe(true);
   expect(abilities.length).toBeGreaterThan(0);
-  expect(abilities.every((a) => a.trigger === undefined && a.triggerRefused === true)).toBe(true);
+  expect(abilities.every((a) => a.trigger === undefined && a.claimsNothing === "refused-trigger")).toBe(true);
 });
 
 test("a refused 'deals damage to you' destroys an OPPONENT's creature (No Mercy), and is not flagged", () => {
@@ -4490,7 +4490,7 @@ test("a refused 'deals damage to you' destroys an OPPONENT's creature (No Mercy)
   const emits = abilities.flatMap((a) => a.emits ?? []);
   expect(emits.length).toBeGreaterThan(0);
   for (const e of emits) { expect(e.subject.control).toBe("opp"); expect(e.subject.type).toBe("creature"); }
-  expect(abilities.every((a) => a.triggerRefused === undefined)).toBe(true);
+  expect(abilities.every((a) => a.claimsNothing === undefined)).toBe(true);
 });
 
 test("a refused trigger about THIS card makes its 'it' the card itself, and withdraws nothing (#1253, Goblin Cadets)", () => {
@@ -4505,7 +4505,7 @@ test("a refused trigger about THIS card makes its 'it' the card itself, and with
   expect(abilities.length).toBeGreaterThan(0);
   for (const a of abilities) {
     expect(a.trigger).toBeUndefined();
-    expect(a.triggerRefused).toBeUndefined();
+    expect(a.claimsNothing).toBeUndefined();
     for (const e of a.emits ?? []) { expect(e.subject.self).toBe(true); expect(e.subject.ref).toBeUndefined(); }
   }
 });
@@ -4522,7 +4522,7 @@ test("Sacred Ground's returned land is YOURS: control you, not the opponent whos
 // A REFUSED TRIGGER WITH NO CLASS LEFT CLAIMS NOTHING (#1253, owner ruling). Pure Intentions' "return THOSE
 // CARDS": the trigger subject ("cards") names no class either, so the ref'd emit is every card in any
 // graveyard. The ability keeps its kind and effect kind and is marked; a sibling the grammar DID read is not.
-test("a refused trigger whose object has no class anywhere is flagged triggerRefused; a read sibling is not", () => {
+test("a refused trigger whose object has no class anywhere is flagged claimsNothing; a read sibling is not", () => {
   const t1 = "Whenever a spell or ability an opponent controls causes you to discard cards this turn, return those cards from your graveyard to your hand.";
   const t2 = "When a spell or ability an opponent controls causes you to discard this card, return this card from your graveyard to your hand.";
   const { abilities, unknownTriggers } = deriveAbilities(
@@ -4536,9 +4536,9 @@ test("a refused trigger whose object has no class anywhere is flagged triggerRef
   expect(unknownTriggers.length).toBeGreaterThan(0);
   const refused = abilities.filter((a) => a.clause === 1);
   expect(refused.length).toBeGreaterThan(0);
-  for (const a of refused) { expect(a.trigger).toBeUndefined(); expect(a.kind).toBe("triggered"); expect(a.triggerRefused).toBe(true); }
+  for (const a of refused) { expect(a.trigger).toBeUndefined(); expect(a.kind).toBe("triggered"); expect(a.claimsNothing).toBe("refused-trigger"); }
   expect(refused[0]!.effect.kind).toBe("graveyard-recursion");
-  expect(abilities.filter((a) => a.clause === 2).every((a) => a.triggerRefused === undefined)).toBe(true);
+  expect(abilities.filter((a) => a.clause === 2).every((a) => a.claimsNothing === undefined)).toBe(true);
 });
 
 test("the refused trigger's class is copied onto 'it gains X': Battlegrace Angel's creature you control, not flagged", () => {
@@ -4550,7 +4550,7 @@ test("the refused trigger's class is copied onto 'it gains X': Battlegrace Angel
   expect(unknownTriggers).toContain("narrowing:attacks");
   const grant = abilities.find((a) => a.effect.kind === "keyword-grant")!;
   expect(grant.effect.subject).toMatchObject({ ref: "trigger", type: "creature" });
-  expect(abilities.every((a) => a.triggerRefused === undefined)).toBe(true);
+  expect(abilities.every((a) => a.claimsNothing === undefined)).toBe(true);
 });
 
 test("an `if:` flags only when it tests the object: Captain America's first-time count and Scytheclaw Raptor's turn do not", () => {
@@ -4560,7 +4560,7 @@ test("an `if:` flags only when it tests the object: Captain America's first-time
       actions: [{ verb: "untap", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] }],
     "Captain America, Living Legend", { 1: cap }, undefined, cap);
   expect(a.unknownTriggers.some((u) => u.startsWith("if:"))).toBe(true);
-  expect(a.abilities.every((x) => x.triggerRefused === undefined)).toBe(true);
+  expect(a.abilities.every((x) => x.claimsNothing === undefined)).toBe(true);
   // "them" is the player who cast, not the spell: no ref, a player.
   const raptor = "Whenever a player casts a spell, if it's not their turn, this creature deals 4 damage to them.";
   const r = deriveAbilities(
@@ -4570,7 +4570,7 @@ test("an `if:` flags only when it tests the object: Captain America's first-time
   const dmg = r.abilities.flatMap((x) => x.emits ?? []);
   expect(dmg.length).toBeGreaterThan(0);
   for (const e of dmg) { expect(e.subject.ref).toBeUndefined(); expect(e.subject.type).toBeUndefined(); }
-  expect(r.abilities.every((x) => x.triggerRefused === undefined)).toBe(true);
+  expect(r.abilities.every((x) => x.claimsNothing === undefined)).toBe(true);
 });
 
 test("'if this card is exiled, put it onto the battlefield' returns the card itself, not the attacker (Senu)", () => {
@@ -4644,4 +4644,22 @@ test("a mode bullet of a refused header reads the header's object: 'It gains X' 
   // narrowing ("alone"), so it keeps a plain `attacks` trigger rather than a refusal. What it grants to is the
   // part this choice fixes: without it the subject was `{control: any}` with no ref -- every permanent.
   expect(grant.effect.subject).toMatchObject({ ref: "trigger", type: "creature" });
+});
+
+// #1264 review: the "self-loss" stamp is a pure step on the final ability.
+describe("stampSelfLoss", () => {
+  const loses = { verb: "loses-game", subject: { control: "you", token: null } } as never;
+  const base = { kind: "triggered", effect: { kind: "" } } as unknown as Ability;
+  test("a refused trigger whose emits are all 'you lose the game' stays 'refused-trigger'", () => {
+    expect(stampSelfLoss({ ...base, emits: [loses], claimsNothing: "refused-trigger" }).claimsNothing).toBe("refused-trigger");
+    expect(stampSelfLoss({ ...base, emits: [loses] }).claimsNothing).toBe("self-loss");
+  });
+  test("every emit must be the loss: a loss plus a draw, an opponent's loss or no emits gets no reason", () => {
+    const draw = { verb: "draw", subject: { control: "you", token: null } } as never;
+    const oppLoses = { verb: "loses-game", subject: { control: "opp", token: null } } as never;
+    expect(stampSelfLoss({ ...base, emits: [loses, draw] }).claimsNothing).toBeUndefined();
+    expect(stampSelfLoss({ ...base, emits: [oppLoses] }).claimsNothing).toBeUndefined();
+    expect(stampSelfLoss({ ...base, emits: [] }).claimsNothing).toBeUndefined();
+    expect(stampSelfLoss(base).claimsNothing).toBeUndefined();
+  });
 });

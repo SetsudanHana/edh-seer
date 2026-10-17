@@ -18,6 +18,7 @@ import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { serviceWorkerSource } from "./sw-template.mjs";
+import { staticDeriveProblem } from "./check-static-derive.mjs";
 
 const repoRoot = fileURLToPath(new URL("../../../", import.meta.url));
 const staticOut = join(repoRoot, "static-out");
@@ -36,6 +37,12 @@ if (!existsSync(staticOut)) {
       "  set -a && source packages/tagger/.env && set +a\n" +
       "  npx tsx packages/matcher/src/bin/build-static.ts",
   );
+  process.exit(1);
+}
+// A STATIC-OUT BUILT UNDER ANOTHER DERIVE_VERSION IS NOT DEPLOYED (#1264 review); `npm run deploy` also runs this first.
+const staleStatic = staticDeriveProblem(repoRoot);
+if (staleStatic) {
+  console.error(staleStatic);
   process.exit(1);
 }
 if (!existsSync(join(dist, "index.html"))) {

@@ -23,6 +23,7 @@ import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-condit
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { BASIC_LAND_TYPE_SET, SUPERTYPES, parseTypeLineAllFaces } from "./typeline.js";
 import { enteringFaceName, faceDeckCards } from "./faces.js";
+import { claimsNothing, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { magnitudeOf, mergeMagnitude } from "./edge-magnitude.js";
 import type { LandTypes } from "./chosen-type.js";
 
@@ -492,8 +493,8 @@ function baseEvents(tags: CardTags): GameEvent[] {
   return [
     // A DAMAGE EMIT CARRIES ITS SIZE, the ability's own `amount`, so a trigger that requires one
     // ("exactly 1 damage", Ghyrson Starn) can tell Impact Tremors from Eidolon of the Great Revel.
-    // A REFUSED TRIGGER'S ABILITY SUPPLIES NOTHING (#1253): see `Ability.triggerRefused`.
-    ...tags.abilities.filter((a) => a.triggerRefused !== true).flatMap((a) => (a.emits ?? []).map((e) =>
+    // A REFUSED TRIGGER'S ABILITY SUPPLIES NOTHING (#1253): see `Ability.claimsNothing`.
+    ...tags.abilities.filter((a) => !isRefusedTrigger(a)).flatMap((a) => (a.emits ?? []).map((e) =>
       a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e)),
     ...impliedEvents(tags.characteristics).map((e) => targeting.length && e.verb === "cast" ? { ...e, targeting } : e),
   ].map(normalizeZoneEvent);
@@ -586,7 +587,7 @@ function producerEventsUncached(tags: CardTags): GameEvent[] {
 export function producerEventOrigins(tags: CardTags): Map<string, number> {
   const out = new Map<string, number>();
   tags.abilities.forEach((a, i) => {
-    if (a.triggerRefused === true) return;
+    if (isRefusedTrigger(a)) return;
     const own = (a.emits ?? []).map((e) =>
       normalizeZoneEvent(a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e));
     for (const e of selfLeavesTypes(own, tags.characteristics)) {
@@ -1777,22 +1778,20 @@ const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top", "ext
  *  enters, if you didn't cast it from your hand, you lose the game", the Pacts' upkeep payment, Lich's
  *  Mastery's leaves trigger) is a drawback nobody builds toward: no `enters`, `cheat`, `doubles` or
  *  `copies` edge reaches it. Not an anti-synergy warning, no new edge kind. The card's other abilities
- *  keep theirs. `withLiveKills` blanks it for every channel; `abilityIsKind` and `cheatEdges` read this
- *  one predicate on the unblanked tags.
+ *  keep theirs. `withLiveKills` blanks it for every channel; `abilityIsKind` and `cheatEdges` read the
+ *  stored field on the unblanked tags.
  *  ONE SUPPLY SURVIVES: the loss stays an EMIT, but only a RESCUE consumer may hear it -- an ability
  *  whose trigger is `loses-game` of `control: "you"` (Stunning Reversal: "the next time you would lose
  *  the game ... instead"; the only such row in the corpus). A payoff that profits from a loss (Blood
- *  Tyrant `any`, Sengir/Curse of Vengeance/Share the Spoils `opp`) never hears it. See `pEventsFor`. */
-export function losesYouTheGame(a: Ability): boolean {
-  const emits = a.emits ?? [];
-  return emits.length > 0 && emits.every((e) => e.verb === "loses-game" && e.subject.control === "you");
-}
-/** The producer's events as the consumer may hear them: a self-loss ability's emits reach ONLY a rescue
- *  consumer (`losesYouTheGame`, #1252). */
+ *  Tyrant `any`, Sengir/Curse of Vengeance/Share the Spoils `opp`) never hears it. Stored by derive as
+ *  `Ability.claimsNothing: "self-loss"` (#1264), read through `claims.ts`.
+ *
+ *  The producer's events as the consumer may hear them: a self-loss ability's emits reach ONLY a rescue
+ *  consumer (`isSelfLoss`, #1252). */
 function pEventsFor(p: CardTags, c: CardTags): GameEvent[] {
-  if (!p.abilities.some(losesYouTheGame)) return producerEvents(p);
+  if (!p.abilities.some(isSelfLoss)) return producerEvents(p);
   const rescue = c.abilities.some((a) => a.trigger?.verbs.includes("loses-game") && a.trigger.subject?.control === "you");
-  return rescue ? producerEvents(p) : producerEvents({ ...p, abilities: p.abilities.map((a) => losesYouTheGame(a) ? { ...a, emits: [] } : a) });
+  return rescue ? producerEvents(p) : producerEvents({ ...p, abilities: p.abilities.map((a) => isSelfLoss(a) ? { ...a, emits: [] } : a) });
 }
 const forPairs = new WeakMap<CardTags, Map<number | undefined, CardTags>>();
 function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
@@ -1800,7 +1799,7 @@ function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
   if (!tags) return dc;
   const floor = opts.revenantToughness;
   const dead = (a: Ability) => { const n = ownBoardKill(a); return n !== undefined && !(floor !== undefined && n >= floor); };
-  if (!tags.abilities.some((a) => dead(a) || FACT_KINDS.has(a.effect.kind) || a.triggerRefused === true || losesYouTheGame(a))) return dc;
+  if (!tags.abilities.some((a) => dead(a) || FACT_KINDS.has(a.effect.kind) || claimsNothing(a) !== undefined)) return dc;
   const byFloor = forPairs.get(tags) ?? forPairs.set(tags, new Map()).get(tags)!;
   let out = byFloor.get(floor);
   if (!out) {
@@ -1808,9 +1807,10 @@ function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
       // A REFUSED TRIGGER CLAIMS NOTHING (#1253): the ability stays in its slot (the ability indices
       // other readers hold are positions) and reads as the blank effect a fact kind does, with no emits
       // and no trigger. Its kind survives in `tags`, which the role/theme/count readers see, not this copy.
-      if (a.triggerRefused === true) { const { emits: _emits, ...rest } = a; return { ...rest, effect: { kind: "" as const } }; }
+      const why = claimsNothing(a);
+      if (why === "refused-trigger") { const { emits: _emits, ...rest } = a; return { ...rest, effect: { kind: "" as const } }; }
       // A SELF "YOU LOSE THE GAME" TRIGGER IS NEVER A PAYOFF: it reads as a blank static with no trigger (its emits stay for a rescue consumer, see `pEventsFor`).
-      if (losesYouTheGame(a)) { const { trigger: _trigger, ...rest } = a; return { ...rest, kind: "static" as const, effect: { kind: "" as const } }; }
+      if (why === "self-loss") { const { trigger: _trigger, ...rest } = a; return { ...rest, kind: "static" as const, effect: { kind: "" as const } }; }
       const b = FACT_KINDS.has(a.effect.kind) ? { ...a, effect: { kind: "" as const } } : a;
       return dead(b) ? { ...b, emits: (b.emits ?? []).filter((e) => e.verb !== "dies") } : b;
     }) };
@@ -1965,7 +1965,7 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
   if (!p.tags || !c.tags) return [];
   if (silencedBy(p, c, h)) return [];
   // Both sides carry tags from here on, which is what `TaggedCard` records for the channels.
-  const cLosesOnEnter = (c0.tags?.abilities ?? []).some((a) => losesYouTheGame(a) && a.trigger?.subject?.self === true && a.trigger.verbs.includes("enters"));
+  const cLosesOnEnter = (c0.tags?.abilities ?? []).some((a) => isSelfLoss(a) && a.trigger?.subject?.self === true && a.trigger.verbs.includes("enters"));
   const s: PairScope = { p: p as TaggedCard, c: c as TaggedCard, h, opts, pEvents: pEventsFor(p.tags, c.tags), reasons: [], cLosesOnEnter };
   // THE ORDER IS PART OF THE OUTPUT. Each channel appends to one list, and `dedupeReasons` keeps the
   // first of two identical claims, so reordering these calls can change which one survives.
@@ -3343,7 +3343,7 @@ function cheatBonusType(oracle: string | undefined): string | undefined {
 // out big things into play". The card it reveals is random, so it links only to the deck's big
 // creatures -- mana value 6 or more, the owner's line -- which are what it is played to hit.
 function cheatEdges({ p, c, h, reasons, cLosesOnEnter }: PairScope): void {
-  if (cLosesOnEnter === true) return; // a self lose-the-game enters trigger (owner 2026-10-16, #1252): see `losesYouTheGame`
+  if (cLosesOnEnter === true) return; // a self lose-the-game enters trigger (owner 2026-10-16, #1252): see `isSelfLoss`
   if (p === c || c.isToken || c.tags.characteristics.token === true || !c.tags.characteristics.types.includes("creature")) return;
   const fromLibrary = c.card.manaValue >= POLYMORPH_HIT_MV && isPolymorph(p);
   for (const a of p.tags.abilities) {
@@ -3992,11 +3992,11 @@ export function createsForYou(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
   // AN EMBLEM IS OURS WHEN THE GRANT SAYS SO (CR 114.2). An opponent's emblem is on the board but
   // never credits its granter with supporting our payoffs.
   if (c.tags.characteristics.emblem === true) {
-    return p.tags.abilities.some((pa) => pa.triggerRefused !== true && pa.effect.kind === "emblem" && pa.effect.subject?.control !== "opp");
+    return p.tags.abilities.some((pa) => !isRefusedTrigger(pa) && pa.effect.kind === "emblem" && pa.effect.subject?.control !== "opp");
   }
   if (c.tags.characteristics.token !== true) return false;
   const consumerSubject = characteristicsSubject(c.tags, c.card.name);
-  return p.tags.abilities.some((pa) => pa.triggerRefused !== true &&
+  return p.tags.abilities.some((pa) => !isRefusedTrigger(pa) &&
     (pa.emits ?? []).some((e) =>
       e.verb === "create-token" && e.subject.control !== "opp" && subjectMatches(consumerSubject, e.subject, h)));
 }
@@ -4010,7 +4010,7 @@ function emblemReasons(p: DeckCard, c: DeckCard): Reason[] {
   if (!p.tags || !c.tags || c.tags.characteristics.emblem !== true) return [];
   const reasons: Reason[] = [];
   for (const pa of p.tags.abilities) {
-    if (pa.effect.kind !== "emblem" || pa.triggerRefused === true) continue;
+    if (pa.effect.kind !== "emblem" || isRefusedTrigger(pa)) continue;
     const control = pa.effect.subject?.control;
     reasons.push({
       tag: "creates:emblem",
@@ -4031,7 +4031,7 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
   const consumerSubject = characteristicsSubject(c.tags, c.card.name);
   const reasons: Reason[] = [];
   for (const [pi, pa] of p.tags.abilities.entries()) {
-    if (pa.triggerRefused === true) continue;
+    if (isRefusedTrigger(pa)) continue;
     for (const e of pa.emits ?? []) {
       if (e.verb !== "create-token") continue;
       if (!subjectMatches(consumerSubject, e.subject, h)) continue;
@@ -4055,7 +4055,7 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
 /** Does an authored ability count as the kind a copier names? See the copy-ability pass. Shared with
  *  `partners-core.ts`, which keys a card page's `copies|` supply on the same reading. */
 export function abilityIsKind(ca: CardTags["abilities"][number], kind: string): boolean {
-  if (losesYouTheGame(ca)) return false; // #1252: a self lose-the-game ability is no ability to copy
+  if (isSelfLoss(ca)) return false; // #1252: a self lose-the-game ability is no ability to copy
   const loyalty = ca.kind === "activated" && /^[+\u2212-]?(?:\d+|X)$/.test((ca.cost ?? "").trim());
   const mana = ca.kind === "activated" && ca.effect?.kind === "mana-generation";
   if (kind === "triggered") return ca.kind === "triggered";

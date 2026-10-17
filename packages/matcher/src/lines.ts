@@ -7,6 +7,7 @@
 import type { GameEvent } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { producerEvents, eventMatches } from "./edges.js";
+import { isRefusedTrigger } from "./claims.js";
 import { normalizeZoneEvent } from "./zones.js";
 
 export type Growth =
@@ -268,8 +269,8 @@ export function detectLines(deck: readonly DeckCard[], hierarchy: Hierarchy): De
       let needsUntap = typeof a.cost === "string" && a.cost.includes("{T}");
 
       for (const other of deck) {
-        // A REFUSED TRIGGER'S ABILITY SUPPLIES NOTHING (#1253, `Ability.triggerRefused`).
-        const otherAbilities = ((other.tags?.abilities ?? []) as unknown as Record<string, any>[]).filter((x) => x.triggerRefused !== true);
+        // A REFUSED TRIGGER'S ABILITY SUPPLIES NOTHING (#1253, `Ability.claimsNothing`).
+        const otherAbilities = ((other.tags?.abilities ?? []) as unknown as Record<string, any>[]).filter((x) => !isRefusedTrigger(x as never));
         // Raw `producerEvents` is harmless for a self "you lose the game" ability (#1252): a line needs a
         // `threshold` anchor and no loses-game trigger carries one.
         const producerEvts = other.tags ? producerEvents(other.tags) : [];

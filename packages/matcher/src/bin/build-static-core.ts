@@ -58,3 +58,10 @@ export function shardOf(normalizedName: string): string {
   }
   return ((h >>> 0) % SHARD_COUNT).toString(16).padStart(4, "0");
 }
+
+/** THE ROWS A BUILD MUST NOT SHIP (#1264 review). `cardTagsDerived` rows are copied into the shards unchecked; a corpus
+ *  derived under an older DERIVE_VERSION carries fields the current matcher no longer reads (`triggerRefused` after #1264),
+ *  and the browser would silently match on them. A row with no `deriveVersion` is stale too. */
+export function staleRows<T extends { deriveVersion?: number }>(rows: readonly T[], deriveVersion: number): T[] {
+  return rows.filter((r) => typeof r.deriveVersion !== "number" || r.deriveVersion < deriveVersion);
+}

@@ -489,7 +489,8 @@ import { emblemRecipient } from "../emblem.js";
 // 332: #1253 final review -- a grant's class is copied only when the trigger subject precedes the event (Hedron Blade's blockers are not "it"); "in your graveyard" is read off the action's object first (Neyam Shai Murad's "their graveyard" is not yours); Sacred Ground's recursion is of a card put into the graveyard FROM THE BATTLEFIELD; Senu's flicker effect is self.
 // 333: #1252 "that player loses the game" after damage to a player/opponent is the DAMAGED player, an opponent (Phage the Untouchable, Vorpal Sword, Atemsis): the grammar dropped the actor so the loss read `you`; damage of any kind "to an opponent" now counts for the damaged-player reading.
 // 334: #1263 "that player <verb>" after combat damage to a player dealt by the card itself, its equipped creature or a creature you control is the DAMAGED player, an opponent, for every cued verb (Chilling Apparition discard, Quietus Spike lose-life, Anowon mill, the poison and exile givers), not only lose-game and the graveyard owner; "a creature deals ..." stays `any`.
-export const DERIVE_VERSION = 334;
+// 335: #1264 one stored `claimsNothing` field replaces `triggerRefused: true` ("refused-trigger") and adds "self-loss" (#1252: every emit is `loses-game` of `control: you`), read after the last control fill; the matcher no longer recomputes it. No reading changes.
+export const DERIVE_VERSION = 335;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2473,7 +2474,7 @@ export function deriveAbilities(
       // same "sacrifice it" under a refused "this creature becomes the target" as the card itself
       // (Phantasmal Bear), and a `ref: "trigger"` over a trigger that is gone is a class with no trigger
       // to bound it. With no trigger left to point at, it is `self`. Any other refused trigger keeps the
-      // ref and the ability is marked `triggerRefused` below.
+      // ref and the ability is marked `claimsNothing: "refused-trigger"` below.
       if (refersToTrigger) for (const e of emits) {
         if (!trigger && clause.trigger?.subject && isSelfSubject(clause.trigger.subject, cardName)) e.subject.self = true;
         else {
@@ -3017,7 +3018,7 @@ export function deriveAbilities(
       // the first time ... this turn") leaves "a creature you control" exact, and the ability keeps claiming it.
       if (kind === "triggered" && !abilities[i].trigger && namesTriggerObject(abilities[i])
         && (triggerObjectClassless(abilities[i]) || unknownTriggers.slice(refusedBefore).some((r) => r.startsWith("if:")) && TESTS_THE_OBJECT.test(text))) {
-        abilities[i] = { ...abilities[i], triggerRefused: true };
+        abilities[i] = { ...abilities[i], claimsNothing: "refused-trigger" as const };
       }
       const trig = abilities[i].trigger;
       // THE CLASS INSIDE THE IF IS THE TRIGGER'S CLASS (owner, 2026-09-16, recall v7 #178): "whenever
@@ -3172,6 +3173,13 @@ export interface DeriveInput {
   startLoyalty?: (number | null)[];
 }
 
+/** A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264): emits non-empty and every one a `loses-game` of
+ *  `control: "you"`. A reason already set stands -- a refused trigger keeps "refused-trigger" (the matcher's precedence). */
+export function stampSelfLoss(a: Ability): Ability {
+  const emits = a.emits ?? [];
+  return a.claimsNothing === undefined && emits.length > 0 && emits.every((e) => e.verb === "loses-game" && e.subject.control === "you")
+    ? { ...a, claimsNothing: "self-loss" as const } : a;
+}
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
  *  from the card document -- derivation never asks a model for what the database already knows. */
 export function deriveCardTags(input: DeriveInput): CardTags {
@@ -3254,7 +3262,9 @@ export function deriveCardTags(input: DeriveInput): CardTags {
   // back) has no entry in `faces` and is never read as a spell.
   const isSpellFace = (face: number | undefined): boolean =>
     (chars.faces ? chars.faces[face ?? 0]?.types ?? [] : chars.types).some((t) => /^(?:instant|sorcery)$/i.test(t));
-  const spellOnce = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const });
+  const spellOnce = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const })
+    // A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264), decided on the FINAL emits: every control fill above has run.
+    .map(stampSelfLoss);
   // A CREATURE ONLY UNDER A CONDITION (#797): the action grammar reads "As long as your devotion to red
   // is less than five, Purphoros isn't a creature" as the card itself that "can't be a creature".
   // Read off the printed text, which reaches the Theros gods the store filed as something else.

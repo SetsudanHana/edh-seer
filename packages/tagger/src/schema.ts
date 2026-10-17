@@ -1124,7 +1124,18 @@ export interface Ability {
      *  prints no size. */
     amount?: { op: "eq" | "gte"; value: number };
   };
-  /** THE TRIGGER THIS ABILITY WAITS ON WAS REFUSED, AND THE ABILITY POINTS BACK AT AN OBJECT WITH NO CLASS (#1253).
+  /** THIS ABILITY CLAIMS NO CARDS, AND IS STILL AN ABILITY OF ITS KIND (#1264). One stored field for the two
+   *  classes derive can decide from the card alone; the matcher reads it in one place (`claimsNothing`,
+   *  `matcher/src/claims.ts`). The ability KEEPS ITS KIND AND ITS SLOT (roles, themes, counts and the ability
+   *  indices other readers hold are positions), and the matcher forms no pair reason from it. Not stored here:
+   *  `FACT_KINDS` (a per-channel effect-kind rule) and `ownBoardKill` (it depends on the deck).
+   *  - `"refused-trigger"`: the #1253 narrowing, below.
+   *  - `"self-loss"`: the #1252 owner ruling. An ability whose ONLY effect is that its controller loses the
+   *    game (Phage the Untouchable, the Pacts' upkeep payment) is a drawback nobody builds toward. Its emits
+   *    still reach a RESCUE consumer (a `loses-game` trigger of `control: "you"`) and no other.
+   *  Both: `"refused-trigger"` wins.
+   *
+   *  `"refused-trigger"`: THE TRIGGER THIS ABILITY WAITS ON WAS REFUSED, AND THE ABILITY POINTS BACK AT AN OBJECT WITH NO CLASS (#1253).
    *  "Whenever a spell or ability an opponent controls causes you to discard cards this turn, return THOSE
    *  CARDS from your graveyard" (Pure Intentions): the grammar refuses the narrowing (`unknownTriggers`:
    *  `narrowing:discarded`, `if:dies`, ...) and the ability derives with `kind: "triggered"` and NO `trigger`,
@@ -1144,7 +1155,7 @@ export interface Ability {
    *  object claims what it always did (a saga chapter's token is still a token).
    *  ONE THING STILL SEES IT: a flagged ability is a triggered ability (CR 603.1), so it still counts
    *  as one for the `copies|-|triggered|-` key a copier is offered. */
-  triggerRefused?: true;
+  claimsNothing?: "refused-trigger" | "self-loss";
   /** A numeric condition on WHEN the ability is on — The Millennium Calendar's "when there are
    *  1,000 or more time counters", Chrome Steed's "as long as you control three or more artifacts",
    *  Urza's Workshop's "activate only if you control three or more artifacts", Gadrak's "can't
