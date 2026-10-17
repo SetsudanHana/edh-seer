@@ -76,7 +76,10 @@ const CUES: [string, RegExp][] = [
  *  CEILING: an equipped creature an opponent later gains control of (CR 301.5d: the Equipment's controller is
  *  separate from the creature's) could damage you, and "that player" would be you; not modelled. Likewise a
  *  non-combat "deals damage to a player" from your own creature (Marsh Viper, Pit Scorpion) is read as an opponent
- *  though a self-aimed ping could hit you. */
+ *  though a self-aimed ping could hit you.
+ *  CEILING: residue still at `any`, which still feeds "whenever you ..." payoffs: "they" wordings after the card's own
+ *  damage (Glowing One, Infesting Radroach, Unstoppable Slasher, Rex); a clause with two actions of one verb, where
+ *  `actorFor` refuses (Sabertooth Cobra); and the "reveals ... puts into graveyard" mill (Mirko Vosk, Balshan Beguiler). */
 export function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, cardName?: string): boolean {
   // SCANNED, NOT MATCHED: `^\s*(?:whenever|when)\s+(.+?)\s+deals?\s+combat damage…` backtracks
   // polynomially on runs of spaces (CodeQL js/polynomial-redos), so the shape is read with string search.

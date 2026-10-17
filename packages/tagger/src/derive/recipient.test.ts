@@ -163,3 +163,17 @@ test("'that player' after the damage a creature you control deals to a player is
   expect(actionRecipients("Whenever a creature deals combat damage to a player, that player discards a card.")).toEqual({ discard: "any" });
   expect(actionRecipients("Choose target player. That player discards a card.", own)).toEqual({ discard: "any" });
 });
+
+// #1263 review: the "you" side stays put, and the self flag alone can resolve the damager.
+test("a self 'you' payout after the card's own damage is not read as an opponent", () => {
+  const own = { triggerIsSelf: true };
+  expect(actionRecipients("Whenever this creature deals combat damage to a player, you get an experience counter.", own)).toEqual({});
+  expect(actionRecipients("Whenever this creature deals combat damage to a player, you get {E}{E}.", own)).toEqual({});
+  expect(actionRecipients("Whenever this creature deals combat damage to a player, you lose half your life, rounded up.", own)).toEqual({ "lose-life": "you" });
+});
+
+test("triggerIsSelf alone resolves a damager the text does not name as the card", () => {
+  const text = "Whenever Chilling deals combat damage to a player, that player discards a card.";
+  expect(actionRecipients(text, { cardName: "Chilling Apparition" })).toEqual({ discard: "any" });
+  expect(actionRecipients(text, { triggerIsSelf: true, cardName: "Chilling Apparition" })).toEqual({ discard: "opp" });
+});

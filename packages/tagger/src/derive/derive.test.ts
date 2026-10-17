@@ -1677,6 +1677,12 @@ test("'that player mills' after damage by a creature you control (Anowon) is an 
   expect(emitControls(thatPlayerClause({ event: "damage-dealt", subject: "one or more Rogues you control", control: "you" }, text, "mill", "a card for each 1 damage dealt to them", "Anowon, the Ruin Thief"), "mill")).toEqual(["opp"]);
 });
 
+test("'that player discards': the trigger's own `self` flag reaches the recipient reading (derive plumbing)", () => {
+  // The text names the damager "Chilling", neither "this ..." nor the card's full name, so only trigger.subject.self resolves it.
+  const text = "Whenever Chilling deals combat damage to a player, that player discards a card.";
+  expect(emitControls(thatPlayerClause({ event: "damage-dealt", subject: "this creature", control: "you" }, text, "discard", "a card", "Chilling Apparition"), "discard")).toEqual(["opp"]);
+});
+
 test("'that player discards' after ANYONE's combat damage stays `any`", () => {
   const text = "Whenever a creature deals combat damage to a player, that player discards a card.";
   expect(emitControls(thatPlayerClause({ event: "damage-dealt", subject: "a creature", control: "any" }, text, "discard", "a card", "Some Card"), "discard")).toEqual(["any"]);
