@@ -896,9 +896,13 @@ test("an ability quoted for a token is the token's, not the maker's", () => {
 /** Owner ruling 2026-09-27 (issue #512): putting a land card onto the battlefield is ramp, from hand
  *  (Growth Spiral) or from among the cards looked at (Planar Genesis). */
 test("putting a land card onto the battlefield is ramp", () => {
+  // The rule reads the derived emit since #1266: the text is kept for the reader, the tags carry the claim.
+  const withEnters = (dc: DeckCard, fromZone: string): DeckCard => ({
+    ...dc, tags: { abilities: [{ effect: { kind: "" }, emits: [{ verb: "enters", subject: { control: "you", token: null, type: "land", fromZone } }] }] } as never,
+  });
   const cats = detectBuildCategories([
-    mk("Growth Spiral", "Draw a card. You may put a land card from your hand onto the battlefield.", "Instant"),
-    mk("Planar Genesis", "Look at the top four cards of your library. You may put a land card from among them onto the battlefield tapped. If you don't, put a card from among them into your hand. Put the rest on the bottom of your library in a random order.", "Instant"),
+    withEnters(mk("Growth Spiral", "Draw a card. You may put a land card from your hand onto the battlefield.", "Instant"), "hand"),
+    withEnters(mk("Planar Genesis", "Look at the top four cards of your library. You may put a land card from among them onto the battlefield tapped. If you don't, put a card from among them into your hand. Put the rest on the bottom of your library in a random order.", "Instant"), "library"),
   ]);
   expect(cats.get("ramp")?.has("Growth Spiral")).toBe(true);
   expect(cats.get("ramp")?.has("Planar Genesis")).toBe(true);
@@ -953,4 +957,70 @@ test("an adventure half's mana ability is still ramp (it is cast from hand)", ()
 
 test("a transform card whose back is not a land keeps its back-face ramp", () => {
   expect(detectBuildCategories([layoutCard("transform", 1, "Creature // Creature")]).get("ramp")).toEqual(new Set(["Probe // Cave"]));
+});
+
+/** ramp.landPut reads a DERIVED enters emit, not printed text (#1266). The oracle text is empty on every card here. */
+describe("ramp.landPut is derived", () => {
+  const set = loadRules();
+  const rule = set.rules.find((r) => r.id === "ramp.landPut")!;
+  const land = (type: string | string[], fromZone: string | undefined, control = "you"): DeckCard => ({
+    card: { name: "x", oracleText: "", typeLine: "Sorcery" } as Card,
+    tags: { abilities: [{ effect: { kind: "" }, emits: [{ verb: "enters", subject: { control, token: null, type, fromZone } }] }] } as never,
+  });
+  test("a land entering from hand, library, graveyard or exile is ramp with no oracle text", () => {
+    for (const z of ["hand", "library", "graveyard", "exile"]) expect(ruleMatches(rule, land("land", z), set), z).toBe(true);
+  });
+  test("a land entering under an opponent's emit control still counts (Realmbreaker: under YOUR control)", () => {
+    expect(ruleMatches(rule, land("land", "graveyard", "opp"), set)).toBe(true);
+  });
+  test("a blink of land-or-other, a creature, and a land with no origin are not land drops", () => {
+    expect(ruleMatches(rule, land(["creature", "artifact", "land"], "exile"), set)).toBe(false);
+    expect(ruleMatches(rule, land("creature", "graveyard"), set)).toBe(false);
+    expect(ruleMatches(rule, land("land", undefined), set)).toBe(false);
+  });
+  const plus = (c: DeckCard, verb: string, subject: Record<string, unknown>): DeckCard => {
+    (c.tags as { abilities: unknown[] }).abilities.push({ effect: { kind: "" }, emits: [{ verb, subject: { token: null, ...subject } }] });
+    return c;
+  };
+  test("a land exiled from the battlefield and returned is a swap, whoever controls it (Wormfang Newt, Petradon, Realm Razer)", () => {
+    for (const control of ["you", "any", "opp"])
+      expect(ruleMatches(rule, plus(land("land", "exile"), "exiled", { control, type: "land", fromZone: "battlefield" }), set), control).toBe(false);
+  });
+  test("an exile from the LIBRARY is the land drop itself (Venture Forth)", () => {
+    expect(ruleMatches(rule, plus(land("land", "exile"), "exiled", { control: "you", type: "land", fromZone: "library" }), set)).toBe(true);
+  });
+  test("a land drop only an opponent gets is not yours (Old-Growth Dryads, Hired Giant)", () => {
+    const dryads = plus(land("land", "library", "any"), "search", { control: "opp", type: "land", fromZone: "library" });
+    expect(ruleMatches(rule, dryads, set)).toBe(false);
+    // ...but one you ALSO search for is (Tempt with Discovery's shape).
+    expect(ruleMatches(rule, plus(dryads, "search", { control: "you", type: "land", fromZone: "library" }), set)).toBe(true);
+  });
+  test("destroying every land and returning some is not ramp (Fall of the Thran)", () => {
+    expect(ruleMatches(rule, plus(land("land", "graveyard", "any"), "dies", { control: "any", type: "land", scope: "all" }), set)).toBe(false);
+    // "Sacrifice two lands" / "any number of lands" derives the SAME scope-all `dies`, under `you`, and is refused too (owner 2026-10-17, Hew the Entwood:
+    // it sacrifices X lands and puts back at most X, so you never end with more). Planar Engineering, Scapeshift and Natural Balance are refused BY THIS RULE
+    // and stay Ramp through `landFetch`, pinned just below.
+    expect(ruleMatches(rule, plus(land("land", "library"), "dies", { control: "you", type: "land", scope: "all" }), set)).toBe(false);
+    // Destroying ONE land (Waking the Trolls) is not "all".
+    expect(ruleMatches(rule, plus(land("land", "graveyard"), "dies", { control: "any", type: "land", scope: "target" }), set)).toBe(true);
+  });
+  test("a sacrifice-N card with a land search keeps Ramp through landFetch, not through ramp.landPut (Planar Engineering, Scapeshift)", () => {
+    const c = plus(land("land", "library"), "dies", { control: "you", type: "land", scope: "all" });
+    (c.tags as { landFetch?: unknown }).landFetch = { zone: "battlefield" };
+    expect(ruleMatches(rule, c, set)).toBe(false);
+    expect(detectBuildCategories([c]).get("ramp")?.has("x")).toBe(true);
+  });
+  test("Sacred Ground is NOT refused: its derive has no trigger to tell a retention from a drop (CEILING, #1277, owner ruling 2026-10-17)", () => {
+    // The real shape: an `enters` with `ref: "trigger"` on an ability that has NO trigger. Pinned so the day the derive gains the trigger and the rule refuses it, this test flips.
+    const sacred: DeckCard = {
+      card: { name: "Sacred Ground", oracleText: "", typeLine: "Enchantment" } as Card,
+      tags: { abilities: [{ effect: { kind: "graveyard-recursion" }, emits: [{ verb: "enters", subject: { control: "you", token: null, type: "land", fromZone: "graveyard", ref: "trigger" } }] }] } as never,
+    };
+    expect(ruleMatches(rule, sacred, set)).toBe(true);
+  });
+  test("allOf and not compose inside a rule", () => {
+    const yes: Rule = { id: "a", match: [{ op: "allOf", clauses: [{ op: "emits", verbs: ["enters"] }, { op: "not", clause: { op: "emits", verbs: ["dies"] } }] }] };
+    expect(ruleMatches(yes, land("land", "hand"), set)).toBe(true);
+    expect(ruleMatches(yes, plus(land("land", "hand"), "dies", { control: "you" }), set)).toBe(false);
+  });
 });
