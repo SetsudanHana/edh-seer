@@ -292,7 +292,7 @@
       "a": "Forbidden Crypt",
       "b": "Blood Tyrant",
       "class": "drawback",
-      "why": "Forbidden Crypt's 'If you can't, you lose the game.' is a static self-loss clause on the card's own replacement of drawing, not an effect that makes a player lose. Blood Tyrant ('Whenever a player loses the game, put five +1/+1 counters on this creature.') is not fed by it.",
+      "why": "Forbidden Crypt's 'If you can't, you lose the game.' does make you lose, and in play Blood Tyrant ('Whenever a player loses the game, put five +1/+1 counters on this creature.') would trigger on it. But your own loss is a drawback, not a payoff (owner ruling 2026-10-16/17, #1252): a self-loss of any kind feeds no card that profits from a loss.",
       "source": "#1252 owner ruling 2026-10-16/17",
       "verified": true,
       "tag": "loses-game:any"
