@@ -908,6 +908,108 @@
   "typeLine": "Creature — Vampire"
  },
  {
+  "name": "Blood Tyrant",
+  "oracleId": "ac74bd52-a450-486f-8161-816fd8d966d0",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "each player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "each 1 life lost this way",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "loses-game",
+     "subject": "a player",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "vampire"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B",
+    "R",
+    "U"
+   ],
+   "identity": [
+    "B",
+    "R",
+    "U"
+   ],
+   "cmc": 7,
+   "power": "5",
+   "toughness": "5",
+   "token": false,
+   "keywords": [
+    "flying",
+    "trample"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Flying, trample",
+   "2": "At the beginning of your upkeep, each player loses 1 life. Put a +1/+1 counter on this creature for each 1 life lost this way.",
+   "3": "Whenever a player loses the game, put five +1/+1 counters on this creature."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Flying, trample\nAt the beginning of your upkeep, each player loses 1 life. Put a +1/+1 counter on this creature for each 1 life lost this way.\nWhenever a player loses the game, put five +1/+1 counters on this creature.",
+  "typeLine": "Creature — Vampire"
+ },
+ {
   "name": "Brainstorm",
   "oracleId": "36cd2364-d113-47d1-b2c4-b088d9eb88dd",
   "clauses": [
@@ -5585,6 +5687,177 @@
   "typeLine": "Legendary Creature — God // Land"
  },
  {
+  "name": "Pact of Negation",
+  "oracleId": "f3e213a4-ba5a-468a-93b3-c0a34e1bd725",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "target spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-game",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 0,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Counter target spell.",
+   "2": "At the beginning of your next upkeep, pay {3}{U}{U}. If you don't, you lose the game."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Counter target spell.\nAt the beginning of your next upkeep, pay {3}{U}{U}. If you don't, you lose the game.",
+  "typeLine": "Instant"
+ },
+ {
+  "name": "Phage the Untouchable",
+  "oracleId": "09d01406-b529-4c3b-900e-d8c889a4c400",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-game",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-game",
+      "object": "that player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature"
+   ],
+   "subtypes": [
+    "avatar",
+    "minion"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 7,
+   "power": "4",
+   "toughness": "4",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "When Phage enters, if you didn't cast it from your hand, you lose the game.",
+   "2": "Whenever Phage deals combat damage to a creature, destroy that creature. It can't be regenerated.",
+   "3": "Whenever Phage deals combat damage to a player, that player loses the game."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "When Phage enters, if you didn't cast it from your hand, you lose the game.\nWhenever Phage deals combat damage to a creature, destroy that creature. It can't be regenerated.\nWhenever Phage deals combat damage to a player, that player loses the game.",
+  "typeLine": "Legendary Creature — Avatar Minion"
+ },
+ {
   "name": "Phyrexian Altar",
   "oracleId": "8d02b297-97c4-4379-9862-0a462400f66f",
   "clauses": [
@@ -7597,6 +7870,80 @@
   "grantedToken": [],
   "oracleText": "This creature gets +1/+0 for each artifact you control.\nMagecraft — Whenever you cast or copy an instant or sorcery spell, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
   "typeLine": "Creature — Dwarf Shaman"
+ },
+ {
+  "name": "Stunning Reversal",
+  "oracleId": "3db00947-d568-45d7-82cd-b54b4fcb1312",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "trigger": {
+     "event": "loses-game",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "card",
+      "amount": "7",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "set-life",
+      "object": "your life total",
+      "amount": "1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "Stunning Reversal",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "The next time you would lose the game this turn, instead draw seven cards and your life total becomes 1.",
+   "2": "Exile Stunning Reversal."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "The next time you would lose the game this turn, instead draw seven cards and your life total becomes 1.\nExile Stunning Reversal.",
+  "typeLine": "Instant"
  },
  {
   "name": "Summon: Fenrir",
