@@ -972,6 +972,8 @@ async function settle(page: Page): Promise<void> {
   await page.waitForTimeout(1200);
 }
 
+const plantNote = (m: string) => console.log(`NOTE: ${m}`);
+
 async function main(runPath: string): Promise<void> {
   const run: RunFile = JSON.parse(readFileSync(runPath, "utf8"));
   // Point a round at a deployed site (e.g. https://edhseer.cards) without editing the run file.
@@ -1011,7 +1013,7 @@ async function main(runPath: string): Promise<void> {
 
     for (const [label, device] of [["desktop", DESKTOP], ["phone", PHONE], ["wide", WIDE], ["uhd", UHD]] as const) {
       const context = await browser.newContext({ ...device, reducedMotion: "reduce" });
-      if (run.plant) await installPlant(context);
+      if (run.plant) await installPlant(context, plantNote);
       try {
         const page = await openPage(context);
         let at = "";
@@ -1151,7 +1153,7 @@ async function main(runPath: string): Promise<void> {
     // forced-colors: d3 sets `fill` and `stroke` as SVG ATTRIBUTES, which forced-colors mode does
     // not override. The graph is the most likely thing in this product to fail it.
     const fc = await browser.newContext({ ...DESKTOP, forcedColors: "active", reducedMotion: "reduce" });
-    if (run.plant) await installPlant(fc);
+    if (run.plant) await installPlant(fc, plantNote);
     try {
       const fcPage = await openPage(fc);
       await fcPage.goto(url(screen.path));
@@ -1167,7 +1169,7 @@ async function main(runPath: string): Promise<void> {
     // rendered pixels. An LLM cannot roleplay this -- it can see the colours -- so the TRANSFORMED
     // image is what goes to the personas.
     const cvd = await browser.newContext({ ...DESKTOP, reducedMotion: "reduce" });
-    if (run.plant) await installPlant(cvd);
+    if (run.plant) await installPlant(cvd, plantNote);
     try {
       const cvdPage = await openPage(cvd);
       await cvdPage.goto(url(screen.path));
@@ -1184,7 +1186,7 @@ async function main(runPath: string): Promise<void> {
     // token PAIRS and can never see what actually lands on screen. Ceiling: axe catches roughly a
     // third of WCAG issues and will never find the "measures perfectly, still unfindable" class.
     const ax = await browser.newContext({ ...DESKTOP, reducedMotion: "reduce" });
-    if (run.plant) await installPlant(ax);
+    if (run.plant) await installPlant(ax, plantNote);
     try {
       const axPage = await openPage(ax);
       await axPage.goto(url(screen.path));

@@ -160,14 +160,20 @@ It analyses the deck twice from Mongo. Unpatched it must NOT emit the sentence (
   service worker serves.
 - **Live seat**: before launching the pod-fit seat, run `npx tsx research/web/plant.ts --snippet` and
   paste the output into the Playwright MCP `browser_run_code_unsafe` tool. It unregisters service
-  workers, clears `caches`, installs the same route on `page.context()` and reloads. It is generated
-  from the same patch code as the harness, so there is no second copy.
+  workers, clears `caches`, installs the same route handler on `page.context()` and reloads. It is
+  generated from the same code as the harness (one handler, no second copy) and returns
+  `{ applied, shard, failures }`; `applied: false` means do not run the seat. Afterwards run
+  `--cleanup-snippet` (unroutes, unregisters workers, deletes caches) so a persistent browser profile
+  hands no later seat the plant.
 
-**How that fixture was chosen, because the method matters more than the pick.** 523 claims in
-the panel have a latest verdict of FALSE, but most have since been fixed — six of eight
-candidates tested were **gone** from a live analysis. Re-verify before each round: a seeded
-defect the engine no longer makes calibrates nothing. A run where pod-fit questions nothing
-about a claim we know to be false means the instrument has gone soft.
+**How the fixture is chosen, because the method matters more than the pick.** CURRENT (since
+2026-10-17): the plant is INJECTED, so it cannot rot with the engine; pick a claim the owner judged
+FALSE, restore it by patching one card's shard in `plant.ts`, and re-run `seed-check` -- the injection
+must still yield the claim, and the engine must not make it on its own. HISTORY (to 2026-10-16): the
+plant was a live engine claim. 523 claims in the panel had a latest verdict of FALSE, but most had been
+fixed -- six of eight candidates tested were **gone** from a live analysis -- so each pick rotted. In
+either method, a run where pod-fit questions nothing about a claim we know to be false means the
+instrument has gone soft.
 
 ## What "solved" is judged on (R-T2, 2026-10-06)
 

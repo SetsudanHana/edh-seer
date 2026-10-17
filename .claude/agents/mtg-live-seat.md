@@ -21,11 +21,21 @@ is already open on your deck's report, at the top of the first page.
 
 ## Dispatcher pre-launch (not for the seat)
 
-Before launching the pod-fit seat, the dispatcher runs `npx tsx research/web/seed-check.ts` (must print
-`plant ok`), then `npx tsx research/web/plant.ts --snippet` and pastes its output into the Playwright
-MCP `browser_run_code_unsafe` tool with the deck report open. That installs the calibration plant
-(issue #1251; README, "The pod-fit seat's injected plant") and reloads. Other seats get no snippet.
-Never tell the seat what was planted.
+Before launching the pod-fit seat, the dispatcher:
+
+1. runs `npx tsx research/web/seed-check.ts` (must print `plant ok`);
+2. has the browser ALREADY on the site origin with the deck report open (service workers and `caches`
+   are origin-scoped, so the snippet cannot clear them from `about:blank`);
+3. runs `npx tsx research/web/plant.ts --snippet` and pastes its output into the Playwright MCP
+   `browser_run_code_unsafe` tool. It reloads and returns `{ applied, shard, failures }`.
+   **If `applied` is not true, do NOT run the pod-fit seat** -- a round without the plant calibrates
+   nothing;
+4. after the seat finishes, runs `npx tsx research/web/plant.ts --cleanup-snippet` the same way. The
+   patched shard sits in Cache Storage (`edh-seer-cards-<version>`) and the service-worker cache
+   (`edh-seer-shell-*`) and survives in a persistent profile, where a later seat would see a live FALSE
+   claim.
+
+Other seats get no snippet. Never tell the seat what was planted.
 
 ## Moving around
 

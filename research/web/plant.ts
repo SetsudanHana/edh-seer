@@ -64,12 +64,16 @@ export function plantTags<T>(tags: T): T {
 }
 
 /** Self-contained (snippet-embedded). Patches every entry whose card is `card` -- a card sits under
- *  several name keys -- and returns the text untouched when the shard holds none. */
+ *  several name keys -- and returns the text untouched when the shard holds none. THROWS when an entry
+ *  for the card has no tags, which is "not applied", never a silent no-op. */
 export function patchShardText(text: string, card: string, emit: unknown, add: (tags: unknown, emit: unknown) => void): string {
   const file = JSON.parse(text) as Record<string, { card?: { name?: string }; tags?: unknown }>;
   let hit = false;
   for (const entry of Object.values(file)) {
-    if (entry?.card?.name === card && entry.tags) { add(entry.tags, emit); hit = true; }
+    if (entry?.card?.name !== card) continue;
+    if (!entry.tags) throw new Error("PLANT NOT APPLIED: the " + card + " entry has no tags");
+    add(entry.tags, emit);
+    hit = true;
   }
   return hit ? JSON.stringify(file) : text;
 }
@@ -80,18 +84,58 @@ export function plantShardJson(file: string): string {
   return patchShardText(file, PLANT.card, PLANT.emit, addSiblingEmit as (t: unknown, e: unknown) => void);
 }
 
-/** Rewrite the Lively Dirge shard on its way into every page of `context`. */
-export async function installPlant(context: BrowserContext): Promise<void> {
-  await context.route("**/cards/*.json", async (route) => {
+/** What a route handler reports: the shard it patched (null = nothing yet) and every failure. */
+export type PlantState = { applied: string | null; failures: string[] };
+
+/** THE ONE ROUTE HANDLER, self-contained so the live-seat snippet embeds this very function.
+ *
+ *  It NEVER leaves a request unfulfilled: a patch that throws (PLANT ROTTED, a null `tags`, bad JSON)
+ *  fulfils the original response and records the failure, because a handler that throws hangs the
+ *  analysis silently. Headers: `route.fetch()` decodes gzip/br but keeps `content-encoding` and the
+ *  stale `content-length`, and `fulfill` copies them verbatim -- a plain-JSON body labelled br/gzip
+ *  fails in Chromium (ERR_CONTENT_DECODING_FAILED), so those three are dropped. */
+export function makePlantHandler(
+  card: string, emit: unknown,
+  add: (tags: unknown, emit: unknown) => void,
+  patch: (text: string, card: string, emit: unknown, add: (tags: unknown, emit: unknown) => void) => string,
+  state: PlantState, note: (msg: string) => void,
+) {
+  return async (route: { fetch(): Promise<any>; fulfill(o: any): Promise<void>; request(): { url(): string } }) => {
     const res = await route.fetch();
     if (!res.ok()) { await route.fulfill({ response: res }); return; }
-    const text = await res.text();
-    if (!text.includes(PLANT.card)) { await route.fulfill({ response: res, body: text }); return; }
-    await route.fulfill({ response: res, body: plantShardJson(text) });
-  });
+    const text: string = await res.text();
+    if (!text.includes(card)) { await route.fulfill({ response: res, body: text, headers: stripped(res.headers()) }); return; }
+    let body = text;
+    try {
+      body = patch(text, card, emit, add);
+      if (body !== text) state.applied = /\/cards\/([0-9a-f]+)\.json/.exec(route.request().url())?.[1] ?? "?";
+    } catch (e) {
+      const raw = e instanceof Error ? e.message : String(e);
+      const msg = raw.startsWith("PLANT NOT APPLIED") ? raw : "PLANT NOT APPLIED: " + raw;
+      state.failures.push(msg);
+      note(msg);
+      body = text;
+    }
+    await route.fulfill({ response: res, body, headers: stripped(res.headers()) });
+    function stripped(h: Record<string, string>) {
+      const out: Record<string, string> = {};
+      for (const k of Object.keys(h)) if (!["content-encoding", "content-length", "transfer-encoding"].includes(k.toLowerCase())) out[k] = h[k];
+      return out;
+    }
+  };
 }
 
-/** The paste-able version for `browser_run_code_unsafe`, generated from the SAME functions. */
+/** Rewrite the Lively Dirge shard on its way into every page of `context`. `note` receives each
+ *  failure (the capture harness prints it as a NOTE line); read `state.applied` afterwards. */
+export async function installPlant(context: BrowserContext, note: (msg: string) => void = (m) => console.warn(m)): Promise<PlantState> {
+  const state: PlantState = { applied: null, failures: [] };
+  await context.route("**/cards/*.json", makePlantHandler(PLANT.card, PLANT.emit, addSiblingEmit as (t: unknown, e: unknown) => void, patchShardText, state, note));
+  return state;
+}
+
+/** The paste-able version for `browser_run_code_unsafe`, generated from the SAME functions. The page
+ *  must already be on the site origin (service workers and `caches` are origin-scoped). It returns
+ *  `{ applied, shard, failures }`; `applied: false` means do NOT run the pod-fit seat. */
 export function plantSnippet(): string {
   return `async (page) => {
   const __name = (f) => f;
@@ -99,23 +143,37 @@ export function plantSnippet(): string {
   const emit = ${JSON.stringify(PLANT.emit)};
   const add = ${addSiblingEmit.toString()};
   const patch = ${patchShardText.toString()};
+  const makeHandler = ${makePlantHandler.toString()};
+  const state = { applied: null, failures: [] };
   // A service worker answers shard requests before Playwright's route sees them: remove it and its cache.
   await page.evaluate(async () => {
     for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
     for (const k of await caches.keys()) await caches.delete(k);
   });
-  await page.context().route("**/cards/*.json", async (route) => {
-    const res = await route.fetch();
-    if (!res.ok()) { await route.fulfill({ response: res }); return; }
-    const text = await res.text();
-    await route.fulfill({ response: res, body: text.includes(card) ? patch(text, card, emit, add) : text });
-  });
+  await page.context().route("**/cards/*.json", makeHandler(card, emit, add, patch, state, (m) => console.warn(m)));
   await page.reload();
-  return "plant installed: ${PLANT.card} -> ${PLANT.consumer}";
+  await page.waitForLoadState("networkidle");
+  await page.waitForSelector("#read", { timeout: 60000 }).catch(() => {});
+  return { applied: state.applied !== null && state.failures.length === 0, shard: state.applied, failures: state.failures };
 }
 `;
 }
 
-if (process.argv[1]?.endsWith("plant.ts") && process.argv.includes("--snippet")) {
-  process.stdout.write(plantSnippet());
+/** Run AFTER the pod-fit seat: the patched shard sits in Cache Storage and, in a persistent profile,
+ *  would hand a later seat a live FALSE claim. */
+export function cleanupSnippet(): string {
+  return `async (page) => {
+  await page.context().unroute("**/cards/*.json");
+  await page.evaluate(async () => {
+    for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+    for (const k of await caches.keys()) await caches.delete(k);
+  });
+  return "plant removed: route, service workers and caches cleared";
+}
+`;
+}
+
+if (process.argv[1]?.endsWith("plant.ts")) {
+  if (process.argv.includes("--snippet")) process.stdout.write(plantSnippet());
+  else if (process.argv.includes("--cleanup-snippet")) process.stdout.write(cleanupSnippet());
 }
