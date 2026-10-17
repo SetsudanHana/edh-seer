@@ -126,38 +126,68 @@ the browser, so that cross-check is what keeps the classification honest.
 | precon-upgrader | `packages/cli/decks/precon-party-time.txt` — the Baldur's Gate "Party Time" precon (Nalia de'Arnise) | unchanged from the precon seat: partial coverage, flat-export commander detection, and the bad-deck case (a theme the engine calls unfocused) |
 | clunky-deck | **chosen per round**: a deck whose report carries a draw or land finding (ran out of cards, lands short, a colour short) | the seat tests whether a real problem reads as a verdict on this list. Re-check each round that the finding is still there; a fixed deck calibrates nothing |
 | plan-seeker | `packages/cli/decks/calibration/enchanting-rani.txt`; the "unsure card" is the first card in its "Weak here, but something argues for them" cut group | four win plans "spread about evenly", a blink theme earlier rounds missed, and a card with arguments both ways |
-| pod-fit | `packages/cli/decks/calibration/mari-takes-control.txt` | one live claim the owner judged FALSE (see below); `research/web/seed-check.ts` fails when it disappears. Moved from Yuna on 2026-09-26, whose plant the engine stopped emitting |
+| pod-fit | `packages/cli/decks/calibration/mari-takes-control.txt` | one claim the owner judged FALSE, injected by the harness (see below); `research/web/seed-check.ts` fails when the injection stops working |
 | phone | `inalla.txt` captured at 390px | same as before, so modality stays the only variable against earlier rounds |
 
-**The pod-fit seat's seeded claim** (**re-verified 2026-09-29**, issue #515): the family of
-`X -> Tinybones, the Pickpocket` graveyard-recursion links in `calibration/mari-takes-control`,
-rendered as "X puts cards into the graveyard that Tinybones, the Pickpocket can bring back". The
-owner judged the first of them FALSE on 2026-09-26 (`Lively Dirge -> Tinybones`, subject mismatch):
-X fills YOUR graveyard, while Tinybones casts from the graveyard of the OPPONENT it damaged, so the
-defect is catchable from the two cards' oracle text alone.
+**The pod-fit seat's injected plant** (issue #1251, owner 2026-10-17): the report of
+`calibration/mari-takes-control` carries "Lively Dirge puts cards into the graveyard that Tinybones,
+the Pickpocket can bring back". The owner judged that claim FALSE on 2026-09-26 (subject mismatch):
+Lively Dirge fills YOUR graveyard, while Tinybones casts from the graveyard of the OPPONENT it
+damaged, so the defect is catchable from the two cards' oracle text alone.
 
-The Lively Dirge link itself was gone by 2026-09-29; four of the same defect were live in its place,
-from Meathook Massacre II, Trading Post, Spymaster's Vault and The Sackville-Bagginses. They are the
-same subject mismatch as the owner's verdict but were not judged one by one. `seed-check.ts` passes
-while any of them is emitted. pod-fit missed the plant in both the 09-27 and 09-29 rounds, while
-catching other real defects each time: the sentences live in the cards' "every way it works" lists,
-a click deep.
+**The engine does not make that claim any more, and must not.** It was a live engine bug and it
+rotted three times (Misty Rainforest -> Yuna by 2026-09-26, Lively Dirge -> Tinybones by 2026-09-29,
+then the whole Tinybones family, fixed in #1250). The owner ruled on 2026-10-16 that no live FALSE
+claims stay while the panel targets 100%, and on 2026-10-17 chose a plant the HARNESS injects:
+`research/web/plant.ts` rewrites Lively Dirge's static JSON shard in the browser (Playwright `route`),
+adding a sibling `mill` emit from an opponent's library next to the real one. Product code, Mongo and
+the panel are untouched. A side effect is a sibling misreading ("Lively Dirge fills an opponent's
+graveyard toward the 8 or more cards Blackbloom Rogue needs"), which is accepted. The persona files
+say nothing about which claim is planted.
 
-It replaced `Misty Rainforest -> Yuna, Grand Summoner` (`dies:permanent`), which the engine stopped
-emitting between 2026-09-20 and 2026-09-26, so the seat moved decks with it. On that day only two
-owner-FALSE claims were still live anywhere in the 71 decks; the other, `Transcendent Dragon ->
-Alchemist's Talent`, the owner noted works when Treasure mana is spent, so it is conditional.
-
-**Run the check before every round** -- it exits 1 when the plant is gone, and a round run without
-a plant calibrates nothing:
+**Run the check before every round**:
 
     npx tsx research/web/seed-check.ts
 
-**How that fixture was chosen, because the method matters more than the pick.** 523 claims in
-the panel have a latest verdict of FALSE, but most have since been fixed — six of eight
-candidates tested were **gone** from a live analysis. Re-verify before each round: a seeded
-defect the engine no longer makes calibrates nothing. A run where pod-fit questions nothing
-about a claim we know to be false means the instrument has gone soft.
+It analyses the deck twice from Mongo. Unpatched it must NOT emit the sentence (else "LIVE FALSE CLAIM
+-- fix the engine, the plant must be injected only", exit 1). Patched with `plantTags` it must emit it
+(else "PLANT ROTTED", exit 1). The plant now rots only when a derive change touches Lively Dirge's
+`enters-graveyard` emit from the library.
+
+- **Capture harness**: `"plant": "mari-takes-control"` in `research/web/runs/deck-report.json` names
+  the deck STEM the plant is for; `ui-review-capture.ts` calls `installPlant` only on that deck's
+  contexts (and on the forced-colors/cvd/axe passes only if they run that deck). Other decks hold
+  Lively Dirge too (gengar, acererak-combo, gisa-and-geralf) and must not see it. It needs the dev
+  server: in a PROD build the client registers a service worker, and Playwright's `route` does not
+  see requests a service worker serves.
+- **Live seat -- dispatcher steps, kept HERE and never in `mtg-live-seat.md`** (that file is the
+  seat's own prompt and the seat can read `plant.ts`; nothing about the plant may reach it). Before
+  launching the pod-fit seat:
+  1. run `npx tsx research/web/seed-check.ts` (must print `plant ok`);
+  2. have the browser ALREADY on the site origin with the deck report open (service workers and
+     `caches` are origin-scoped);
+  3. run `npx tsx research/web/plant.ts --snippet` and paste the output into the Playwright MCP
+     `browser_run_code_unsafe` tool. It unregisters service workers, clears `caches`, installs the
+     same route handler on `page.context()`, reloads, then opens Tinybones's drawer on the Cards
+     page in a second page and looks for the full sentence. It is generated from the same code as the
+     harness (one handler, no second copy) and returns `{ applied, rendered, shard, failures }`.
+     `applied` proves only the shard rewrite; the deployed bundle can differ from the local engine
+     seed-check ran against, so **run the seat only when `rendered` is true**. If not, run
+     `--cleanup-snippet` and then the snippet once more (a service worker can claim the page on reload
+     before the shard fetch) and give up if it fails again;
+  4. after the seat, run `npx tsx research/web/plant.ts --cleanup-snippet` the same way (unroutes,
+     unregisters workers, deletes caches). The patched shard sits in Cache Storage
+     (`edh-seer-cards-<version>`) and the service-worker cache (`edh-seer-shell-*`) and survives in a
+     persistent profile, where a later seat would see a live FALSE claim.
+
+**How the fixture is chosen, because the method matters more than the pick.** CURRENT (since
+2026-10-17): the plant is INJECTED, so it cannot rot with the engine; pick a claim the owner judged
+FALSE, restore it by patching one card's shard in `plant.ts`, and re-run `seed-check` -- the injection
+must still yield the claim, and the engine must not make it on its own. HISTORY (to 2026-10-16): the
+plant was a live engine claim. 523 claims in the panel had a latest verdict of FALSE, but most had been
+fixed -- six of eight candidates tested were **gone** from a live analysis -- so each pick rotted. In
+either method, a run where pod-fit questions nothing about a claim we know to be false means the
+instrument has gone soft.
 
 ## What "solved" is judged on (R-T2, 2026-10-06)
 

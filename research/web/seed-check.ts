@@ -1,11 +1,17 @@
-/** THE POD-FIT SEAT'S PLANTED FALSE CLAIM IS STILL THERE, or this exits 1 (issue #515).
+/** THE POD-FIT SEAT'S INJECTED PLANT STILL WORKS, or this exits 1 (issues #515, #1251).
  *
  *  The seat is self-calibrating: its deck carries a claim the owner hand-judged FALSE, so a run where
- *  it questions nothing is a run where the instrument has gone soft. That only works while the engine
- *  still MAKES the claim -- and twice now it silently stopped (2026-09-18, and Misty Rainforest ->
- *  Yuna between 2026-09-20 and 2026-09-26), leaving a seat that calibrated nothing. Run this before
- *  every persona round; when it fails, pick a new plant from the owner's live FALSE verdicts
- *  (.claude/agents/README.md, "How that fixture was chosen").
+ *  it questions nothing is a run where the instrument has gone soft. The plant used to be a LIVE ENGINE
+ *  BUG and rotted three times; since 2026-10-17 the harness injects it (`plant.ts`), and the engine
+ *  must NOT make it on its own (owner 2026-10-16: no live FALSE claims while the panel targets 100%).
+ *  Two analyses of the deck, both from Mongo:
+ *
+ *    (a) UNPATCHED must NOT emit the plant sentence -- if it does the engine has a live owner-FALSE
+ *        claim: fix the engine, the plant must be injected only.
+ *    (b) PATCHED (`plantTags` applied to Lively Dirge) MUST emit it. The plant now rots only on a
+ *        derive change to Lively Dirge, and this is the check that says so (PLANT ROTTED).
+ *
+ *  Run before every persona round:
  *
  *    npx tsx research/web/seed-check.ts
  *
@@ -15,37 +21,43 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
 import { createTagsLookup } from "../../packages/tagger/src/index.js";
 import { ComboIndex } from "../../packages/engine/src/index.js";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../../packages/matcher/src/index.js";
-
-/** Keep in step with the README's "The pod-fit seat's seeded claim". A FAMILY, not one link: the
- *  owner's verdict (Lively Dirge, 2026-09-26) is a subject mismatch any graveyard filler repeats
- *  against Tinybones, and by 2026-09-29 Lively Dirge's own link was gone while four others were
- *  live. The check passes while any of them is emitted. */
-const SEED = {
-  deck: "packages/cli/decks/calibration/mari-takes-control.txt",
-  producers: ["Lively Dirge", "Meathook Massacre II", "Trading Post", "Spymaster's Vault", "The Sackville-Bagginses"],
-  consumer: "Tinybones, the Pickpocket",
-  tag: /^graveyard-recursion/,
-};
+import { PLANT, plantTags } from "./plant.js";
 
 const store = await connect(loadConfig());
 try {
-  const sections = parseDecklistSections(readFileSync(SEED.deck, "utf8"));
+  const sections = parseDecklistSections(readFileSync(PLANT.deck, "utf8"));
   const lookup = mongoLookup(store);
   const { cards, combos } = await resolveNames([...sections.commanders, ...sections.deck], lookup);
   const cmd = new Set(sections.commanders.map(normalizeName));
-  const report = analyzeDeckStructured(
-    await buildDeckCards(cards, lookup, createTagsLookup(store.db, "derived")),
-    cards.filter((c) => cmd.has(normalizeName(c.name))).map((c) => c.name),
-    undefined, undefined, new ComboIndex(combos), undefined, await loadTokenTags(store.db),
-  );
-  const hit = report.edges.flatMap((e) => e.reasons)
-    .find((r) => r.producer !== undefined && SEED.producers.includes(r.producer) && r.consumer === SEED.consumer && SEED.tag.test(r.tag));
-  if (!hit) {
-    console.error(`SEED GONE: no ${SEED.producers.join(" / ")} -> ${SEED.consumer} | ${SEED.tag} in ${SEED.deck}.`);
-    console.error("The pod-fit seat calibrates nothing until a new plant is chosen. Do not run the round.");
+  const commanders = cards.filter((c) => cmd.has(normalizeName(c.name))).map((c) => c.name);
+  const tokens = await loadTokenTags(store.db);
+  const base = await buildDeckCards(cards, lookup, createTagsLookup(store.db, "derived"));
+  const analyse = (deck: typeof base) => analyzeDeckStructured(deck, commanders, undefined, undefined, new ComboIndex(combos), undefined, tokens)
+    .edges.flatMap((e) => e.reasons)
+    .filter((r) => r.producer === PLANT.card && r.consumer === PLANT.consumer && PLANT.tag.test(r.tag) && r.text === PLANT.sentence);
+
+  const live = analyse(base);
+  if (live.length > 0) {
+    console.error(`LIVE FALSE CLAIM — fix the engine, the plant must be injected only: "${live[0].text}" (${live[0].tag}) is emitted unpatched in ${PLANT.deck} (${PLANT.verdict}).`);
     process.exitCode = 1;
   } else {
-    console.log(`seed ok: "${hit.text}" (${hit.tag}) in ${SEED.deck}`);
+    let patched: typeof base | undefined;
+    try {
+      if (!base.some((d) => d.card.name === PLANT.card)) throw new Error(`PLANT ROTTED: ${PLANT.card} is not in ${PLANT.deck}`);
+      patched = base.map((d) => d.card.name === PLANT.card ? { ...d, tags: plantTags(d.tags) } : d);
+    } catch (e) {
+      console.error((e as Error).message);
+      process.exitCode = 1;
+    }
+    if (patched) {
+      const hit = analyse(patched)[0];
+      if (hit) console.log(`plant ok: "${hit.text}" (injected)`);
+      else {
+        console.error(`PLANT ROTTED: injecting the sibling emit into ${PLANT.card} no longer yields "${PLANT.sentence}" (${PLANT.tag}) ${PLANT.card} -> ${PLANT.consumer} in ${PLANT.deck}.`);
+        console.error("The pod-fit seat calibrates nothing until a new plant is chosen. Do not run the round.");
+        process.exitCode = 1;
+      }
+    }
   }
 } finally {
   await store.close();
