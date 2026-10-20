@@ -1487,6 +1487,7 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
  *  destroy THAT CREATURE" derived `dies creature/any` and fed Massacre Wurm's "whenever a creature
  *  an opponent controls dies" (owner-judged FALSE). The type stays the pronoun's own; only an
  *  unstated controller is inherited. */
+const DEATH_REPLACEMENT = /\bwould (?:die|be destroyed|be put into a graveyard)\b[^.]*\binstead\b/i;
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
 /** The count an antecedent object states up front: "up to five Doctor cards", "two basic land cards". */
 // Never an open threshold: "two or more creature cards" is no fixed two (review).
@@ -2562,7 +2563,9 @@ export function deriveAbilities(
         const anteSubject = ante ? subjectFrom(ante, cardName, enchantText) : undefined;
         // ...NOT A COPY TOKEN (it takes its creator's control, see actionEmits) and NOT AN ABILITY ("counter target activated ability ... destroy that permanent", Green Slime).
         // ...NOR A PLAYER ("destroy target creature an opponent controls. That player loses 3 life", Suspended Sentence).
-        if (ante && !/\b(?:players?|opponents?)\b/i.test(objectText) && anteSubject?.scope === "target" && anteSubject.self !== true && !COPY_TOKEN_HEAD.test(ante.trim()) && !/\babilit/i.test(ante)) {
+        // ...NOR A DEATH REPLACEMENT RIDING ON DAMAGE ("If that creature would die this turn, exile it instead", Smite the Deathless, Burn from Within): the damage is the removal.
+        // CEILING: read off the clause text, so a clause that also destroys the antecedent elsewhere loses the scope on that destroy too; owner ruling #1294 (damage) is still open.
+        if (ante && !DEATH_REPLACEMENT.test(text) && !/\b(?:players?|opponents?)\b/i.test(objectText) && anteSubject?.scope === "target" && anteSubject.self !== true && !COPY_TOKEN_HEAD.test(ante.trim()) && !/\babilit/i.test(ante)) {
           const anteTypes = [anteSubject.type ?? []].flat();
           for (const e of emits) {
             if (e.subject.scope !== undefined || e.subject.self === true || e.subject.edict === true) continue;
@@ -2612,6 +2615,20 @@ export function deriveAbilities(
           ?? (clause.trigger?.subject ? parseSubject(clause.trigger.subject).abilityKind : undefined);
         if (fromTrigger?.length) subject.abilityKind = fromTrigger;
         else if (clause.trigger?.event === "activate") subject.abilityKind = ["activated"];
+      }
+      // ONLY THE ACTIVE PLAYER'S CREATURES ATTACK (CR 508.1a), so "target attacking creature" in a trigger of YOUR attack is yours
+      // (Scrappy Bruiser: "up to one target attacking creature gets +2/+0... Return that creature to its owner's hand"). Not "attacking or
+      // blocking" (a blocker is the defender's), not a spell, not a trigger on anyone else's attack.
+      if (trigger?.verbs.includes("attacks") && trigger.subject.control === "you") {
+        const named = antecedent ?? (THAT_TYPED.test(objectText) ? antecedentFor((clause.actions ?? []).indexOf(action)) : undefined) ?? action.object ?? "";
+        // Only a CREATURE emit: "the player or planeswalker it's attacking" is the defender's, and a token made "for each attacking creature" is no attacker.
+        if (/\battacking\b/i.test(named) && !/\b(?:blocking|planeswalker|player|opponents?|don'?t control|for each|equal)\b/i.test(named)) {
+          for (const e of emits) {
+            const types = [e.subject.type ?? []].flat();
+            if (e.subject.control !== "any" || e.subject.self === true || e.verb === "create-token" || e.verb === "enters" || types.includes("planeswalker")) continue;
+            e.subject.control = "you";
+          }
+        }
       }
       // A COST SACRIFICE IS THE CONTROLLER'S (CR 701.17a): "{T}, Sacrifice two other creatures" eats
       // your creatures whatever the effect goes on to do to "any number of target players". The

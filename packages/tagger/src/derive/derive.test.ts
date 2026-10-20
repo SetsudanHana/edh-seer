@@ -4843,6 +4843,29 @@ describe("#1295 removal-shaped emits", () => {
     for (const x of e) { expect(x.subject.control).toBe("you"); expect(x.subject.scope).toBeUndefined(); expect(x.subject.token).toBe(true); }
   });
 
+  test("'target attacking creature' in a trigger of YOUR attack is yours (CR 508.1a): Scrappy Bruiser; blockers, spells and other triggers stay", () => {
+    const bruiser = emitsOf("Scrappy Bruiser", "Whenever this creature attacks, up to one target attacking creature gets +2/+0 and gains trample until end of turn. Return that creature to its owner's hand at end of combat.", "Creature — Human", [
+      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [{ verb: "modify-pt", object: "up to one target attacking creature", amount: "+2/+0" }, { verb: "return", object: "that creature", toZone: "hand", optional: false }] },
+    ]).filter((x) => x.verb === "leaves");
+    expect(bruiser.length).toBeGreaterThan(0);
+    for (const x of bruiser) expect(x.subject.control).toBe("you");
+    const frenzy = emitsOf("Blood Frenzy", "Target attacking or blocking creature gets +4/+0 until end of turn. Destroy that creature at the beginning of the next end step.", "Instant", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "modify-pt", object: "target attacking or blocking creature", amount: "+4/+0" }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    for (const x of frenzy) expect(x.subject.control).toBe("opp");
+  });
+
+  test("a death replacement riding on damage does not scope its anaphor (Burn from Within, Smite the Deathless); 'destroy that creature instead' of damage does (Kill-Suit Cultist)", () => {
+    const burn = emitsOf("Burn from Within", "Burn from Within deals X damage to any target. If a creature is dealt damage this way, it loses indestructible until end of turn. If that creature would die this turn, exile it instead.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "any target", amount: "X" }, { verb: "exile", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "exiled" || x.verb === "leaves");
+    for (const x of burn) expect(x.subject.scope).toBeUndefined();
+    const cultist = emitsOf("Kill-Suit Cultist", "{B}, Sacrifice this creature: The next time damage would be dealt to target creature this turn, destroy that creature instead.", "Creature — Human", [
+      { id: 1, abilityType: "activated", actions: [{ verb: "prevent", object: "damage to target creature" }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    expect(cultist.some((x) => x.subject.scope === "target")).toBe(true);
+  });
+
   test("a copy token keeps a recipient the head names, and a token that is not a copy is untouched", () => {
     const opp = emitsOf("Test Copier", "Target opponent creates a token that's a copy of target creature you control.", "Sorcery", [
       { id: 1, abilityType: "spell", actions: [{ verb: "create", object: "token that's a copy of target creature you control", amount: "1", optional: false }] },

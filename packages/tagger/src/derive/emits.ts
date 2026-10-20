@@ -420,6 +420,8 @@ export const casualtySacrifice = (n: number): GameEvent => ({
 /** The head naming a created token before "copy of": "token copies of ...", "a token that's a copy of ...". */
 export const COPY_TOKEN_HEAD = /^((?:[a-z0-9]+ ){0,3}tokens?(?: that(?:'s| are| is))?(?: a)?)\s+cop(?:y|ies)\s+of\b/i;
 /** What a copy copies, to the end of its sentence: not the actor's players. */
+// CEILING: clause-wide, so a clause with several creates and one of them by a named player (Tempt with Reflections: "Each opponent may create...")
+// leaves ALL its copy tokens `any`, including your own (it read `you` before only because the copied phrase leaked its control).
 const PLAYER_CREATES = /\b(?:opponents?|players?|controllers?|owners?|friends?|foes?)\s+(?:may\s+)?creates?\b/i;
 const COPIED_PHRASE = /\bcop(?:y|ies)\s+of\b[^.]*/i;
 
