@@ -1943,9 +1943,10 @@ export function deriveAbilities(
   // Alchemist's Retrieval read as a bounce of YOUR permanent. The bracketed words are optional and the unbracketed reading
   // is the cast with cleave, which is the wider one: any nonland permanent (#1295). CEILING: the card's NORMAL cast, with
   // the words, is the narrower reading and is not modelled; a derive says one thing about a card.
-  const cleaveWords = /\bcleave\b/i.test(oracleText ?? "") ? [...(oracleText ?? "").matchAll(/\[([^\]]+)\]/g)].map((m) => m[1]!) : [];
+  const cleaveWords = /\bcleave\b/i.test(oracleText ?? "") ? [...(oracleText ?? "").matchAll(/\[([^[\]]+)\]/g)].map((m) => m[1]!) : [];
   if (cleaveWords.length > 0) {
-    const unbracketed = (t: string): string => t.replace(/\s*\[[^\]]*\]/g, "");
+    // No `\s*` before the bracket (CodeQL js/polynomial-redos): cut the bracket, then close the gap it leaves.
+    const unbracketed = (t: string): string => t.replace(/\[[^[\]]*\]/g, "").replace(/ {2,}/g, " ").replace(/ ([.,;:])/g, "$1");
     // An action's object is the model's paraphrase, with the brackets already gone: remove the words the CLAUSE's own text brackets.
     const words = (id: number | string): string[] => cleaveWords.filter((w) => (clauseTexts?.[id as number] ?? "").includes(`[${w}]`));
     const drop = (object: string, ws: string[]): string => ws.reduce((acc, w) => acc.replace(new RegExp(`\\s*${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i"), ""), object);
