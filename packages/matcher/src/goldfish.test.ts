@@ -1921,7 +1921,9 @@ test("Tablet of Compleation invests from the turn it lands for no mana and is a 
   expect(ready).toBeGreaterThan(0);
 });
 
-test("a FREE put (Tablet of Compleation) is paid whatever the hold-up: holdUp does not delay its ready turn, and a costed put (Druid) still waits for pool - holdUp", () => {
+// A REGRESSION GUARD, NOT A PROOF of the free-put hold-up rule: no simulated Tablet game reaches the investment step with pool < holdUp (it is cast only at pool >= mana value + holdUp), so this
+// passes with or without the `inv.mana > 0` guard; it pins the ready turn under hold-up (review, #1279).
+test("Tablet of Compleation's ready turn does not move with the hold-up, and a costed put (Druid) still waits for pool - holdUp", () => {
   for (const holdUp of [1, 2, 3, 4]) {
     const turns = 10;
     const games = watch("Tablet of Compleation", { trials: 300, turns, seed: 3, holdUp });

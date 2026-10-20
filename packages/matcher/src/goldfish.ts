@@ -1516,6 +1516,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // the accelerants again (at most one investing source per deck in the corpus). The activation's refund comes back to the pool. The counters land as the activation resolves, and the source has either tapped
       // for the put or already put its plain tap in this turn's pool, so the better amount counts from the NEXT turn (`readyFrom`, derive 344's Adapt convention). A put that TAPS the source cannot be paid by a
       // dork on the turn it was cast (summoning sickness, CR 302.6, as the dork's own tap above); a rock can.
+      // CEILING: a put that does NOT tap (Incubation Druid's Adapt) could be paid from other sources before the source taps, so the better amount is reachable THE SAME TURN (lands and rocks make 6:
+      // pay 5, the Druid taps for 3); this model credits it from the next turn, an under-claim of one turn's difference, the safe direction.
       for (const r of [...rocks, ...dorks]) {
         const inv = r.out?.estimated?.invest;
         if (!inv || r.paid === undefined || r.paid >= inv.activations || r.turn > turn) continue;
