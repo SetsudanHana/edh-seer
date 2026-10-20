@@ -4991,3 +4991,33 @@ describe("an action on one side of a coin flip is marked onFlip (#1295 item 5)",
     expect(r.every(([, f]) => f === undefined)).toBe(true);
   });
 });
+
+// Review of derive 354: the side was found by the FIRST sentence containing the amount, so a shared amount (Bangchuckers' two "2 damage") or a short one ("1") took the wrong sentence.
+describe("each action takes its own sentence's coin-flip side (#1295 item 5 review)", () => {
+  const sides = (text: string, actions: object[]) =>
+    deriveAbilities([{ id: 1, abilityType: "activated", actions } as never], "Test Card", { 1: text }, { 1: "{T}" }).abilities.map((a) => [a.effect.kind, a.onFlip]);
+  const flip = { verb: "flip-coin", object: "coin flip" };
+  test("Winter Sky: the draw is the LOSE side, the damage the win side", () => {
+    const r = sides("Flip a coin. If you win the flip, Winter Sky deals 1 damage to each creature and each player. If you lose the flip, each player draws a card.",
+      [flip, { verb: "deal-damage", object: "each creature and each player", amount: "1" }, { verb: "draw", object: "a card" }]);
+    expect(r.filter(([k]) => k === "damage").every(([, f]) => f === "win")).toBe(true);
+    expect(r.find(([k]) => k === "draw-card")?.[1]).toBe("lose");
+  });
+  test("Goblin Bangchuckers: two '2 damage' actions land on opposite sides", () => {
+    const r = sides("Flip a coin. If you win the flip, this creature deals 2 damage to any target. If you lose the flip, this creature deals 2 damage to itself.",
+      [flip, { verb: "deal-damage", object: "any target", amount: "2" }, { verb: "deal-damage", object: "itself", amount: "2" }]);
+    expect(r.filter(([k]) => k === "damage").map(([, f]) => f)).toEqual(["win", "lose"]);
+  });
+  test("Chaotic Strike: an unconditional 'Draw a card.' after the win-side pump is not on a side, and its '1' does not take the +1/+1 sentence", () => {
+    const r = sides("Flip a coin. If you win the flip, target creature gets +1/+1 until end of turn. Draw a card.",
+      [flip, { verb: "modify-pt", object: "target creature", amount: "+1/+1" }, { verb: "draw", object: "a card", amount: "1" }]);
+    expect(r.find(([k]) => k === "pump")?.[1]).toBe("win");
+    expect(r.find(([k]) => k === "draw-card")?.[1]).toBeUndefined();
+  });
+  test("Krark, the Thumbless: no amounts, the return is the lose side and the copy the win side", () => {
+    const r = sides("Whenever you cast an instant or sorcery spell, flip a coin. If you lose the flip, return that spell to its owner's hand. If you win the flip, copy that spell, and you may choose new targets for the copy.",
+      [flip, { verb: "return", object: "that spell", toZone: "hand" }, { verb: "copy", object: "that spell" }]);
+    expect(r.find(([k]) => k === "bounce")?.[1]).toBe("lose");
+    expect(r.find(([k]) => k === "copy-spell")?.[1]).toBe("win");
+  });
+});

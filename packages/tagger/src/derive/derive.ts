@@ -511,7 +511,8 @@ import { emblemRecipient } from "../emblem.js";
 // 353: #1295 review of the anaphor scope: "that card" taken from a library or hand (Transmogrify, Polymorph) is not the exiled target; a player or token antecedent scopes nothing.
 // 354: #1295 item 5 -- an action on one side of a coin flip ("If you win the flip, ...", "If you lose the flip, ...", "If it comes up heads, ...") is `onFlip`, so Orcish Captain's losing-side -0/-2 on your own Orc is not `removal.targeted`.
 // 355: #1295 item 4 review -- the `leaves` emit of a put into a library (a tuck) carries `tuck: true`, so the quality ladder (exile > destroy > bounce > tuck) scores Condemn, Oust, Teferi -3 below a bounce.
-export const DERIVE_VERSION = 355;
+// 356: #1295 item 5 review -- an onFlip action takes the k-th sentence carrying its verb's printed word, not the first sentence holding its amount (Winter Sky's draw is the lose side, Bangchuckers' two "2 damage" are opposite sides, Chaotic Strike's unconditional draw is unmarked).
+export const DERIVE_VERSION = 356;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1520,7 +1521,11 @@ const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|him|her|this card|that card|t
  *  (#801). Bounded and anchored on literals: no quantifier overlap for CodeQL's ReDoS check. */
 /** The sentence of `text` holding the k-th (0-based) whole-word `verb`; "" when there are fewer. */
 function nthSentenceWith(text: string, verb: string, k: number): string {
-  const word = new RegExp(`\\b${verb}\\b`, "gi");
+  return nthSentenceMatching(text, `\\b${verb}\\b`, k);
+}
+/** The sentence of `text` holding the k-th (0-based) match of the regex source `pattern`; "" when there are fewer. */
+function nthSentenceMatching(text: string, pattern: string, k: number): string {
+  const word = new RegExp(pattern, "gi");
   let seen = 0;
   for (const sentence of text.split(".")) {
     const n = (sentence.match(word) ?? []).length;
@@ -1528,6 +1533,15 @@ function nthSentenceWith(text: string, verb: string, k: number): string {
     seen += n;
   }
   return "";
+}
+/** The printed word(s) an action verb reads as, where they differ from the verb's name ("modify-pt" is "gets", "deal-damage" is "deals"). The default is the verb's first word, with its
+ *  plural/third-person ending: "draw" reads "draws", "destroy" reads "destroys". */
+const FLIP_VERB_WORDS: Record<string, string> = {
+  "modify-pt": "gets?", "deal-damage": "deals?", "gain-life": "gains?", "lose-life": "loses?|lose", "add-counter": "puts?", "remove-counter": "removes?", "gain-control": "gains? control",
+  "counter-spell": "counters?", "extra-turn": "extra turn", "phase-out": "phases? out", "grant-ability": "gains?", "create": "creates?", "sacrifice": "sacrifices?",
+};
+function flipVerbWord(verb: string): string {
+  return `\\b(?:${FLIP_VERB_WORDS[verb] ?? `${verb.split("-")[0]}(?:s|es)?`})\\b`;
 }
 /** "Whenever ONE OR MORE ...": one firing per batch (CR 603.2c; edge magnitude). */
 const BATCHED = /\bone or more\b/i;
@@ -2860,13 +2874,12 @@ export function deriveAbilities(
         : kind === "on-cast" && castAtInstantSpeed === true;
       if (instantSpeed && !delayedAction(text, action, clause.actions ?? [])) for (const e of emits) e.instantSpeed = true;
       if (emits.length) ability.emits = emits;
-      // A COIN-FLIP SIDE (CR 705, #1295 item 5), read on THIS action's own sentence: found by its amount ("-0/-2": two `modify-pt` actions share a verb), else by its verb's word.
-      {
+      // A COIN-FLIP SIDE (CR 705, #1295 item 5), read on THIS action's own sentence: the k-th action of a verb takes the k-th sentence carrying that verb's printed word (`FLIP_VERB_WORDS`).
+      // CEILING: a verb whose printed word is not in the table or the verb's own name (`other`, ...) finds no sentence and is unmarked; a word that also appears for another job ("gains flying" beside a `modify-pt` "gets") can shift a later action's sentence.
+      if (action.verb) {
         const clauseActions = clause.actions ?? [];
-        const own = typeof action.amount === "string" && action.amount !== "" ? text.split(".").find((s) => s.includes(action.amount as string)) : undefined;
         const k = clauseActions.slice(0, clauseActions.indexOf(action)).filter((x) => x.verb === action.verb).length;
-        const sentence = own ?? (action.verb ? nthSentenceWith(text, action.verb, k) : "");
-        const onFlip = flipBranch(sentence, clauseActions.some((x) => x.verb === "flip-coin"));
+        const onFlip = flipBranch(nthSentenceMatching(text, flipVerbWord(action.verb), k), clauseActions.some((x) => x.verb === "flip-coin"));
         if (onFlip) ability.onFlip = onFlip;
       }
       // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate
