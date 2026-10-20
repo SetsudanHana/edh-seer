@@ -70,6 +70,9 @@ describe("conditionalReturn: a return that happens on one branch only (#1295 ite
     expect(conditionalReturn("Exile target creature you control, then return it to the battlefield")).toBe(false);
     expect(conditionalReturn(" If you do, return it to the battlefield")).toBe(false);
     expect(conditionalReturn(" If you don't, return it to the battlefield")).toBe(false);
+    expect(conditionalReturn(" If they don't, return that card to the battlefield under your control")).toBe(false);
+    expect(conditionalReturn(" If that player does, return it to the battlefield")).toBe(false);
+    expect(conditionalReturn(" If a player doesn't, return it to the battlefield")).toBe(false);
     expect(conditionalReturn(" If a creature is put into exile this way, return each other card exiled with this Vehicle to the battlefield")).toBe(false);
     expect(conditionalReturn(" If it was exiled this way, return it to the battlefield")).toBe(false);
   });

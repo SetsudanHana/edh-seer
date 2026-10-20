@@ -506,7 +506,8 @@ import { emblemRecipient } from "../emblem.js";
 // 348: #1295 removal-shaped emits read the SENTENCE: an edict ("target player sacrifices") marks `SubjectFilter.edict` and no target scope; "its controller may sacrifice it" / "unless that player sacrifices it" marks `GameEvent.victimMay`; "you own" is `owner: you` (control you), not an opponent's; a possessive in a condition ("since your last turn ended", "your life total") or "attacking you" / "crewed it" no longer sets the target's control; "its controller sacrifices it" after "target creature you control" is yours; a cleave spell reads with its bracketed words removed (CR 702.148).
 // 349: #1295 item 3 -- a return paired with an "until this leaves the battlefield" exile is `delayedUntil: "source-leaves"` (Constable of the Realm, Mysterious Limousine), and a return on one "If ..." branch is `returnIf` (Unyielding Gatekeeper, Vindictive Triumph): neither is an immediate blink for `notFlickered`.
 // 350: #1295 two anaphors resolved to the wrong object. "destroy THAT CREATURE" after a targeted "Target creature gets -3/-0" inherits the antecedent's target scope (Depressurize was lost to `removal.targeted`); a token that is a copy ("Create two tokens that are copies of target permanent an opponent controls", Venser, Fervent Forger) takes its creator's control and no target scope, not the original's (CR 111.2), and "sacrifice them" is those tokens.
-export const DERIVE_VERSION = 350;
+// 351: #1295 item 3 review -- a return's "If <anyone> do/does/don't/doesn't" is a cost confirmation, never `returnIf` (Meathook Massacre II's "If they don't, return that card").
+export const DERIVE_VERSION = 351;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2858,6 +2859,7 @@ export function deriveAbilities(
         if (delay) ability.delayedUntil = delay;
         // #1295 item 3: an O-ring return waits for its source ("until this creature leaves the battlefield"; the model-synthesized return has no "return" word, so it is
         // read off the clause text), and a return on one "If ..." branch is marked, not a blink.
+        // CEILING: `untilSourceLeaves` reads the whole clause, so every return beside an "until this leaves" exile is marked, not only the paired one (Mysterious Limousine's immediate second return).
         else if (action.verb === "return" && untilSourceLeaves(text)) ability.delayedUntil = "source-leaves";
         if (conditionalReturn(nthSentenceWith(text, action.verb, k))) ability.returnIf = true;
       }

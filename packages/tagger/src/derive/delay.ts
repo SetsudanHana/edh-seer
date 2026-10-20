@@ -46,6 +46,7 @@ export function returnDelay(sentence: string): "next-end-step" | "next-upkeep" |
  *  lasts as long as its source, so the return the model synthesizes is DELAYED until the source leaves (#1295 item 3), not an immediate blink. The cue is read
  *  on a sentence that also exiles, off the clause text, because the synthesized return has no "return" word of its own. Bounded, anchored on literals. */
 const UNTIL_LEAVES = /\buntil [^.,;]{1,60}? leaves? the battlefield\b/i;
+// CEILING: the cue is read on the whole clause, so EVERY return in an "until this leaves" clause is marked source-leaves, including an immediate one beside it (Mysterious Limousine's "return each other card exiled with this Vehicle").
 export function untilSourceLeaves(text: string): boolean {
   return text.split(".").some((sentence) => /\bexiles?\b/i.test(sentence) && UNTIL_LEAVES.test(sentence));
 }
@@ -56,5 +57,7 @@ export function untilSourceLeaves(text: string): boolean {
 export function conditionalReturn(sentence: string): boolean {
   const open = /^\s*if\b([^,]{0,120}),/i.exec(sentence);
   if (!open) return false;
-  return !/\byou (?:do|don't)\b/i.test(open[1]!) && !/\bthis way\b/i.test(open[1]!);
+  const cond = open[1]!.trimEnd();
+  // A cost confirmation ends in do/does/don't/doesn't, whoever the subject is ("If you do", "If they don't": Meathook Massacre II, "If that player does").
+  return !/\b(?:do|does|don't|doesn't)$/i.test(cond) && !/\bthis way\b/i.test(cond);
 }
