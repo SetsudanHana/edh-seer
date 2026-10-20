@@ -1218,6 +1218,9 @@ describe("removal.targeted is derived", () => {
     expect(ruleMatches(rule, blank("Depressurize"), set)).toBe(true);
     expect(ruleMatches(rule, realCard("Venser, Fervent Forger"), set)).toBe(false);
   });
+  test("a tuck and a bounce 'or suspended card' that derived nothing are removal again (#1295 item 4): Venser's Diffusion, Teferi, Hero of Dominaria (-3, third from the top)", () => {
+    for (const n of ["Venser's Diffusion", "Teferi, Hero of Dominaria"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
+  });
   test("the CEILING in rules.ts is pinned: the polymorph family stays `you` by owner ruling #962 (primary use is your own creature), so the role loses it (Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations)", () => {
     for (const n of ["Polymorph", "Transmogrify", "Chaos Mutation", "Divergent Transformations"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
   });

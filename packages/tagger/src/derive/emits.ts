@@ -6,7 +6,7 @@ import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
 import { controlFromRelation, counterKindOf, parseCounter, parseSubject, COUNT_PHRASE } from "./subject.js";
 import { LAND_SUBTYPES } from "./subtypes.js";
 import { tokenTypeFor } from "./token-types.js";
-import { isEnergyObject } from "./effect-kind.js";
+import { isEnergyObject, permanentHalf } from "./effect-kind.js";
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
  *  nothing; a guessed event is worse than silence because it forms edges that are not real. */
@@ -287,6 +287,10 @@ const ZONE_EMITS: { verb: string; to: string; verbs: Verb[]; when?: (a: Action, 
   // "return target creature card from your graveyard to your hand" is recursion and stays silent
   // here (its origin is stated and it is not the battlefield).
   { verb: "return", to: "hand", verbs: ["leaves"], when: leftTheBattlefield },
+  // A TUCK. "Put target nonland permanent into its owner's library third from the top" (Teferi, Hero of Dominaria), Oust, Spin into Myth, Terminus: the permanent leaves the
+  // battlefield. These derived NOTHING (the grammar read them completely, so no model clause backed them up, and `unclaimed` is not persisted). A stated graveyard or hand
+  // origin is not this row (`leftTheBattlefield` refuses it; a graveyard origin has its own `leaves` below); `top-set` of a library or hand card is a different kind.
+  { verb: "put", to: "library", verbs: ["leaves"], when: leftTheBattlefield },
 ];
 
 /** An object that is nothing but a back-reference: "it", "them", "that card". */
@@ -332,7 +336,7 @@ function counterRecipient(clauseText: string): string | undefined {
 function leftTheBattlefield(a: Action, s: SubjectFilter, self: boolean): boolean {
   if (a.fromZone === "battlefield") return true;
   if (a.fromZone != null) return false;
-  if (/\bcards?\b/i.test(a.object ?? "")) return false;
+  if (/\bcards?\b/i.test(permanentHalf(a.object ?? ""))) return false;
   if (s.fromZone !== undefined) return false;
   // A DISJUNCTION IS PERMANENT-SHAPED WHEN EVERY BRANCH IS (recall v6, 2026-09-10): "target creature
   // or Vehicle" has no outer type, and reading only the outer emptied Bounce Off and Gravkill.

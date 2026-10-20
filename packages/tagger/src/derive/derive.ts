@@ -507,7 +507,8 @@ import { emblemRecipient } from "../emblem.js";
 // 349: #1295 item 3 -- a return paired with an "until this leaves the battlefield" exile is `delayedUntil: "source-leaves"` (Constable of the Realm, Mysterious Limousine), and a return on one "If ..." branch is `returnIf` (Unyielding Gatekeeper, Vindictive Triumph): neither is an immediate blink for `notFlickered`.
 // 350: #1295 two anaphors resolved to the wrong object. "destroy THAT CREATURE" after a targeted "Target creature gets -3/-0" inherits the antecedent's target scope (Depressurize was lost to `removal.targeted`); a token that is a copy ("Create two tokens that are copies of target permanent an opponent controls", Venser, Fervent Forger) takes its creator's control and no target scope, not the original's (CR 111.2), and "sacrifice them" is those tokens.
 // 351: #1295 item 3 review -- a return's "If <anyone> do/does/don't/doesn't" is a cost confirmation, never `returnIf` (Meathook Massacre II's "If they don't, return that card").
-export const DERIVE_VERSION = 351;
+// 352: #1295 item 4 -- two grammar-complete removal spells derived NOTHING: "Put target nonland permanent into its owner's library third from the top" (Teferi, Hero of Dominaria -3; also Oust, Spin into Myth, Terminus) is a `leaves` off the battlefield, and "Return target nonland permanent or suspended card to its owner's hand" (Venser's Diffusion) is a bounce of the permanent half.
+export const DERIVE_VERSION = 352;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

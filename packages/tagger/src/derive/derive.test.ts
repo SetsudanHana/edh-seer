@@ -4913,3 +4913,39 @@ test("a return paired with an 'until this leaves the battlefield' exile is delay
   "When this creature enters, you may exile target creature you control. If you do, return it to the battlefield under its owner's control.");
   expect(ifYouDo?.returnIf).toBeUndefined();
 });
+
+// #1295 item 4 leftovers: two grammar-complete cards derived NOTHING for their removal (Venser's Diffusion, Teferi, Hero of Dominaria -3).
+describe("a bounce 'or suspended card' and a tuck from the battlefield derive a leave (#1295 item 4)", () => {
+  const leaves = (name: string, text: string, actions: object[], abilityType: "spell" | "activated" = "spell") => {
+    const { abilities } = deriveAbilities([{ id: 1, abilityType, actions } as never], name, { 1: text }, abilityType === "activated" ? { 1: "−3" } : undefined);
+    return abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "leaves");
+  };
+  test("Venser's Diffusion: the permanent half is a bounce off the battlefield, the suspended-card half is not read", () => {
+    const e = leaves("Venser's Diffusion", "Return target nonland permanent or suspended card to its owner's hand.",
+      [{ verb: "return", object: "target nonland permanent or suspended card", fromZone: null, toZone: "hand", optional: false }]);
+    expect(e).toHaveLength(1);
+    // An unstated origin leaves the emit's fromZone unset, which the removal rule reads as the battlefield (like every other unstated-origin bounce).
+    expect(e[0]?.subject).toMatchObject({ scope: "target", notType: ["land"] });
+    expect(e[0]?.subject.zone).toBeUndefined();
+  });
+  test("a card alone ('target suspended card') gives no battlefield emit", () => {
+    expect(leaves("Test Card", "Return target suspended card to its owner's hand.",
+      [{ verb: "return", object: "target suspended card", fromZone: null, toZone: "hand", optional: false }])).toEqual([]);
+  });
+  test("Teferi, Hero of Dominaria -3: 'third from the top' tucks a target permanent off the battlefield", () => {
+    const e = leaves("Teferi, Hero of Dominaria", "Put target nonland permanent into its owner's library third from the top.",
+      [{ verb: "put", object: "target nonland permanent", fromZone: "battlefield", toZone: "library", optional: false }], "activated");
+    expect(e).toHaveLength(1);
+    expect(e[0]?.subject).toMatchObject({ scope: "target", notType: ["land"], fromZone: "battlefield" });
+  });
+  test("Oust (unstated origin, a creature) tucks too; a put from a graveyard or the hand is not a battlefield tuck", () => {
+    expect(leaves("Oust", "Put target creature into its owner's library second from the top.",
+      [{ verb: "put", object: "target creature", fromZone: null, toZone: "library", optional: false }])).toHaveLength(1);
+    expect(leaves("Test Gy", "Put target creature card from your graveyard on top of your library.",
+      [{ verb: "put", object: "target creature card", fromZone: "graveyard", toZone: "library", optional: false }]).every((x) => x.subject.zone === "graveyard")).toBe(true);
+    expect(leaves("Test Gy", "Put target creature card from your graveyard on top of your library.",
+      [{ verb: "put", object: "target creature card", fromZone: "graveyard", toZone: "library", optional: false }]).some((x) => x.subject.fromZone === "battlefield")).toBe(false);
+    expect(leaves("Brainstorm", "Put two cards from your hand on top of your library.",
+      [{ verb: "put", object: "two cards from your hand", fromZone: "hand", toZone: "library", optional: false }])).toEqual([]);
+  });
+});
