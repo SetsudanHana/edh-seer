@@ -661,10 +661,13 @@ const NOT_IN_A_DECK = new Set(["vanguard", "plane", "phenomenon", "conspiracy", 
  *   - NOT a trigger ("whenever a player casts a noncreature spell, put a collection counter on this enchantment", Charitable Levy: its rate is the table's, not one a turn), and NOT Evolve (it needs a LARGER creature to
  *     enter, which no card knows): both return null, so the gate is unmet.
  *  CEILING: one counter per activation whatever the printed number; one ability per card (the first that reads).
- *  CEILING: THE PUT'S OWN COST IS NOT CHARGED by any consumer. Pyramid's `{2}, {T}: Add one mana ... Put a brick counter` nets -1 on each of its three activation turns, Outlast and Adapt cost mana too; the goldfish credits the
- *  gated line from the ready turn on without debiting those turns (`ManaOutput.estimated`), an over-claim of the mana the card cost to get there. */
+ *  `activation` (#1279, owner ruling 2026-10-20) is the data a consumer needs to PAY for the put: one activation's cost, refund, whether it taps, and how many activations reach `need`. */
 const costMV = (cost: string): number => manaValueOf(cost.replace(/\{[tqe]\}/gi, ""));
-export function selfPutReady(printed: string, counter: string, mv: number, need: number, creature: boolean): number | null {
+const WORD_COUNT: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7 };
+/** WHAT ONE ACTIVATION OF A SELF PUT COSTS AND GIVES BACK (#1279, owner ruling 2026-10-20): `mana` its cost's mana value, `refund` the mana the same ability line adds ("{2}, {T}: Add one mana of any color. Put a brick counter ..." 1; what is not read is 0, the side that debits more),
+ *  `taps` whether the cost has {T}, `activations` how many reach `need` counters. */
+export type SelfPutActivation = { mana: number; refund: number; taps: boolean; activations: number };
+export function selfPutReady(printed: string, counter: string, mv: number, need: number, creature: boolean): { readyTurn: number; activation: SelfPutActivation } | null {
   const cast = Math.max(1, mv);
   const first = (cost: string): number => {
     const c = costMV(cost);
@@ -675,13 +678,18 @@ export function selfPutReady(printed: string, counter: string, mv: number, need:
     const head = printed.slice(printed.lastIndexOf("\n", m.index) + 1, m.index);
     if (/^(?:whenever|when|at)\b/.test(head)) continue;
     const colon = head.indexOf(":");
-    return first(colon >= 0 ? head.slice(0, colon) : "") + need;
+    const cost = colon >= 0 ? head.slice(0, colon) : "";
+    const added = /\badd ((?:\{[^{}]+\})+|(?:one|two|three|four|five|six|seven) mana\b)/.exec(colon >= 0 ? head.slice(colon + 1) : "")?.[1];
+    const refund = added === undefined ? 0 : added.startsWith("{") ? (added.match(/\{/g) ?? []).length : WORD_COUNT[added.split(" ")[0]!]!;
+    return { readyTurn: first(cost) + need, activation: { mana: costMV(cost), refund, taps: /\{t\}/.test(cost), activations: need } };
   }
   if (counter !== "+1/+1") return null;
-  const costed = /((?:\{[^{}]+\})+)(?:, [^:]{0,40})?: (?:adapt|monstrosity) (\d+)\b/.exec(printed);
-  if (costed && Number(costed[2]) >= need) return first(costed[1]!) + 1;
+  const costed = /(((?:\{[^{}]+\})+)(?:, [^:]{0,40})?): (?:adapt|monstrosity) (\d+)\b/.exec(printed);
+  if (costed && Number(costed[3]) >= need) {
+    return { readyTurn: first(costed[2]!) + 1, activation: { mana: costMV(costed[2]!), refund: 0, taps: /\{t\}/.test(costed[1]!), activations: 1 } };
+  }
   const outlast = /\boutlast ((?:\{[^{}]+\})+)/.exec(printed);
-  if (outlast) return Math.max(cast + 1, costMV(outlast[1]!)) + need;
+  if (outlast) return { readyTurn: Math.max(cast + 1, costMV(outlast[1]!)) + need, activation: { mana: costMV(outlast[1]!), refund: 0, taps: true, activations: need } };
   return null;
 }
 
@@ -968,7 +976,7 @@ export function deriveMana(input: ManaInput): ManaResult {
     if (g === null || g.kind !== "counter") continue;
     const kind = g.counter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const ready = selfPutReady(printed, g.counter, faceMV(l.face), g.need, chars.types.some((t) => t.toLowerCase() === "creature"));
-    if (ready !== null) g.put = { by: "self", readyTurn: ready };
+    if (ready !== null) g.put = { by: "self", ...ready };
     else if (new RegExp(`\\bopening hand\\b[^.]{0,200} ${kind} counter on it`).test(printed)) g.put = { by: "opening-hand" };
   }
 
