@@ -1230,8 +1230,15 @@ export interface Ability {
    *  beginning of the next end step" (Shirei, Shizo's Caretaker; 148 corpus cards). A TIMING fact,
    *  not a repeat count -- Shirei still fires on every death -- which is why it is not `delayedBy`,
    *  whose value `edges.ts` reads as the ability's repeatability. It is what stops a loop: a return
-   *  that lands at end of turn cannot be sacrificed again this turn. Set on the returning ability only. */
-  delayedUntil?: "next-end-step" | "next-upkeep";
+   *  that lands at end of turn cannot be sacrificed again this turn. Set on the returning ability only.
+   *  "source-leaves" (#1295 item 3): the exile lasts "until this creature leaves the battlefield" (Constable of the Realm, Mysterious Limousine, Banisher Priest), so the
+   *  synthesized return waits for the source. It is no immediate blink, which is what `notFlickered` refuses. */
+  delayedUntil?: "next-end-step" | "next-upkeep" | "source-leaves";
+  /** THE RETURN HAPPENS ON ONE BRANCH ONLY (#1295 item 3): the returning sentence opens with an intervening "If ..." ("Exile another target nonland permanent. If you
+   *  controlled it, return it to the battlefield tapped. Otherwise, its controller creates a 2/2 token": Unyielding Gatekeeper; "If that permanent's mana value was 3 or less,
+   *  return it": Vindictive Triumph). On the other branch the exile is permanent, so a `flicker` carrying this is not an immediate blink and `notFlickered` does not refuse
+   *  the card. Not set by "if you do" / "if you don't" or any "... this way", which confirm a cost and pick no branch. */
+  returnIf?: true;
   /** THE RETURN MARKS WHAT IT RETURNS so the same object cannot come back through it again (#886):
    *  a finality counter (CR 122.1h, Meathook Massacre II), or a keyword counter the trigger excludes
    *  (Luminous Broodmoth's flying counter on a creature "without flying"). The ability still fires

@@ -21,7 +21,7 @@ import { selfAsTilde } from "../grammar/self-as-tilde.js";
 import { effectText, printedPreamble } from "../grammar/preamble.js";
 import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
-import { delaysIn, returnDelay } from "./delay.js";
+import { conditionalReturn, delaysIn, returnDelay, untilSourceLeaves } from "./delay.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
@@ -504,7 +504,8 @@ import { emblemRecipient } from "../emblem.js";
 // 346: #1282 the mana-token lists are ONE table (`token-kinds.ts`, `line` + `manaToken`): Vibranium (CR 111.10w, Powerstone's line) and Heartwood (CR 111.10x, {R} or {G}) makers now carry a token-maker mana line, and a creation replacement that adds either is a maker; quality.ts ramp ingredients read the same table (Eldrazi Spawn/Scion included).
 // 347: #1285 + #1291 the scaling floor reads the card's own contribution ("for each X on the battlefield", "your devotion to <colour>" from its own mana cost, "<name>'s toughness", "creature with power N or greater", "different power"), and a fetch of "a X card and a Y card" counts two lands (Krosan Verge).
 // 348: #1295 removal-shaped emits read the SENTENCE: an edict ("target player sacrifices") marks `SubjectFilter.edict` and no target scope; "its controller may sacrifice it" / "unless that player sacrifices it" marks `GameEvent.victimMay`; "you own" is `owner: you` (control you), not an opponent's; a possessive in a condition ("since your last turn ended", "your life total") or "attacking you" / "crewed it" no longer sets the target's control; "its controller sacrifices it" after "target creature you control" is yours; a cleave spell reads with its bracketed words removed (CR 702.148).
-export const DERIVE_VERSION = 348;
+// 349: #1295 item 3 -- a return paired with an "until this leaves the battlefield" exile is `delayedUntil: "source-leaves"` (Constable of the Realm, Mysterious Limousine), and a return on one "If ..." branch is `returnIf` (Unyielding Gatekeeper, Vindictive Triumph): neither is an immediate blink for `notFlickered`.
+export const DERIVE_VERSION = 349;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2821,6 +2822,10 @@ export function deriveAbilities(
         const k = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === action.verb).length;
         const delay = returnDelay(nthSentenceWith(text, action.verb, k));
         if (delay) ability.delayedUntil = delay;
+        // #1295 item 3: an O-ring return waits for its source ("until this creature leaves the battlefield"; the model-synthesized return has no "return" word, so it is
+        // read off the clause text), and a return on one "If ..." branch is marked, not a blink.
+        else if (action.verb === "return" && untilSourceLeaves(text)) ability.delayedUntil = "source-leaves";
+        if (conditionalReturn(nthSentenceWith(text, action.verb, k))) ability.returnIf = true;
       }
       // A RETURN THAT MARKS WHAT IT RETURNS happens once per object (#886): a finality counter exiles
       // it the next time it would die (CR 122.1h, Meathook Massacre II), and a keyword counter the

@@ -4813,3 +4813,31 @@ describe("#1295 removal-shaped emits", () => {
     expect(e.every((x) => x.subject.control === "you")).toBe(true);
   });
 });
+
+// #1295 item 3: an O-ring return waits for its source; a return on one branch only is not a blink.
+test("a return paired with an 'until this leaves the battlefield' exile is delayed until the source leaves; a conditional return is marked; a plain blink and 'if you do' are neither (Constable of the Realm, Unyielding Gatekeeper, Flicker, Eldrazi Displacer)", () => {
+  const flicker = (name: string, clause: object, text: string) => deriveAbilities([{ id: 1, ...clause } as never], name, { 1: text }).abilities.find((a) => a.effect.kind === "flicker");
+  const constable = flicker("Constable of the Realm", { abilityType: "triggered", trigger: { event: "counter-added", subject: "a +1/+1 counter on this creature", control: "you" },
+    actions: [{ verb: "exile", object: "up to one other target nonland permanent", toZone: "exile", optional: true }, { verb: "return", object: "that permanent", fromZone: "exile", toZone: "battlefield" }] },
+  "Whenever one or more +1/+1 counters are put on this creature, exile up to one other target nonland permanent until this creature leaves the battlefield.");
+  expect(constable?.delayedUntil).toBe("source-leaves");
+  expect(constable?.returnIf).toBeUndefined();
+  const gatekeeper = flicker("Unyielding Gatekeeper", { abilityType: "triggered", trigger: { event: "turned-face-up", subject: "this creature", control: "you" },
+    actions: [{ verb: "exile", object: "another target nonland permanent" }, { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" }, { verb: "tap", object: "it" }] },
+  "When this creature is turned face up, exile another target nonland permanent. If you controlled it, return it to the battlefield tapped. Otherwise, its controller creates a 2/2 white and blue Detective creature token.");
+  expect(gatekeeper?.returnIf).toBe(true);
+  expect(gatekeeper?.delayedUntil).toBeUndefined();
+  const vindictive = flicker("Vindictive Triumph", { abilityType: "spell",
+    actions: [{ verb: "exile", object: "target creature or planeswalker" }, { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" }] },
+  "Exile target creature or planeswalker. If that permanent's mana value was 3 or less, return it to the battlefield tapped under your control. Exile it at the beginning of the next end step.");
+  expect(vindictive?.returnIf).toBe(true);
+  const displacer = flicker("Eldrazi Displacer", { abilityType: "activated",
+    actions: [{ verb: "exile", object: "another target creature" }, { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" }] },
+  "{2}{C}: Exile another target creature, then return it to the battlefield tapped under its owner's control.");
+  expect(displacer?.returnIf).toBeUndefined();
+  expect(displacer?.delayedUntil).toBeUndefined();
+  const ifYouDo = flicker("Some Blinker", { abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" },
+    actions: [{ verb: "exile", object: "target creature you control" }, { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" }] },
+  "When this creature enters, you may exile target creature you control. If you do, return it to the battlefield under its owner's control.");
+  expect(ifYouDo?.returnIf).toBeUndefined();
+});

@@ -41,3 +41,20 @@ export function returnDelay(sentence: string): "next-end-step" | "next-upkeep" |
   }
   return undefined;
 }
+
+/** "...exile target creature until this creature leaves the battlefield" (Constable of the Realm, Banisher Priest, Glass Casket, Mysterious Limousine): the exile
+ *  lasts as long as its source, so the return the model synthesizes is DELAYED until the source leaves (#1295 item 3), not an immediate blink. The cue is read
+ *  on a sentence that also exiles, off the clause text, because the synthesized return has no "return" word of its own. Bounded, anchored on literals. */
+const UNTIL_LEAVES = /\buntil [^.,;]{1,60}? leaves? the battlefield\b/i;
+export function untilSourceLeaves(text: string): boolean {
+  return text.split(".").some((sentence) => /\bexiles?\b/i.test(sentence) && UNTIL_LEAVES.test(sentence));
+}
+
+/** A return whose own sentence opens with an intervening "If ..." that picks a branch ("If you controlled it, return it to the battlefield tapped": Unyielding
+ *  Gatekeeper; "If that permanent's mana value was 3 or less, return it ...": Vindictive Triumph). On the other branch the exile stays, so the card is removal (#1295 item 3).
+ *  NOT a branch: "if you do" / "if you don't" (a cost confirmation) and any "... this way" ("If a creature is put into exile this way", "If it was exiled this way"). */
+export function conditionalReturn(sentence: string): boolean {
+  const open = /^\s*if\b([^,]{0,120}),/i.exec(sentence);
+  if (!open) return false;
+  return !/\byou (?:do|don't)\b/i.test(open[1]!) && !/\bthis way\b/i.test(open[1]!);
+}

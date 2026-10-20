@@ -49,7 +49,8 @@ export type RuleClause =
       scope?: (string | null)[];
       /** Refuse an ability whose exile COMES BACK AT ONCE: another ability of the card, of the SAME `clause`, is a `flicker` with no `delayedUntil` whose subject is NOT an opponent's permanent ("Exile target creature, then
        *  return it to the battlefield": Flicker, Eldrazi Displacer). Owner ruling 2026-09-25: an IMMEDIATE flicker is no removal, a DELAYED return (Otherworldly Journey, Flickerwisp: back at the next end step) keeps
-       *  its place, so a flicker with `delayedUntil` is not refused. A flicker of an OPPONENT's permanent is the "until this leaves the battlefield" shape (Banisher Priest, Glass Casket, Portable Hole), which derive also
+       *  its place, so a flicker with `delayedUntil` is not refused (that includes `source-leaves`, the "until this leaves the battlefield" return of Constable of the Realm and Mysterious Limousine, #1295 item 3). A
+       *  flicker with `returnIf` is not refused either: the return is on one "If ..." branch and the other keeps the exile (Unyielding Gatekeeper, Vindictive Triumph). A flicker of an OPPONENT's permanent is the "until this leaves the battlefield" shape (Banisher Priest, Glass Casket, Portable Hole), which derive also
        *  reads as a `flicker` and which is the commonest removal there is, so it stays. */
       notFlickered?: true;
       /** Refuse an ability that is PAID by exiling or discarding THIS card from your hand ("{3}, Exile this card from your hand: Target land gains ...": Emrakul the Exigent Doom, Shattered Seraph, Spara's
@@ -429,7 +430,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       return (dc.tags?.abilities ?? []).some((a) =>
         (clause.notOwnedByYou !== true || !(dc.tags?.abilities ?? []).some((f) => f.clause === a.clause && f.effect.subject?.owner === "you"))
         && (clause.notFromHandCost !== true || !/from your hand/i.test(a.cost ?? ""))
-        && (clause.notFlickered !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.clause === a.clause && f.delayedUntil === undefined && f.effect.subject?.control !== "opp"))
+        && (clause.notFlickered !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.clause === a.clause && f.delayedUntil === undefined && f.returnIf !== true && f.effect.subject?.control !== "opp"))
         && (a.emits ?? []).some((e) =>
           clause.verbs.includes(e.verb)
           && (clause.edict !== true || e.subject.edict === true)
