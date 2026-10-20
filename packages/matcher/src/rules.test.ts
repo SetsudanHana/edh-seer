@@ -680,6 +680,15 @@ test("ownText blanks a reminder after a create-token sentence and no other paren
   expect(out).toContain("(If a permanent with a finality counter");
 });
 
+test("ownText keeps a reminder that explains the CARD's own action after a create-token sentence (#1289)", () => {
+  const lode = "Discover 10. If the discovered card's mana value is less than 10, create a number of tapped Treasure tokens equal to the difference. (To discover 10, exile cards from the top of your library until you exile a nonland card with mana value 10 or less. Cast it without paying its mana cost or put it into your hand. Put the rest on the bottom in a random order.)";
+  expect(ownText({ oracleText: lode })).toBe(lode);
+  const adventure = "Flying\nThis creature can't block.\n//\nCreate a Treasure token. (Then exile this card. You may cast the creature later from exile.)";
+  expect(ownText({ oracleText: adventure })).toBe(adventure);
+  const carrot = "When this artifact enters and when you sacrifice it, create a 1/1 white Rabbit creature token and scry 1. (Look at the top card of your library. You may put that card on the bottom.)";
+  expect(ownText({ oracleText: carrot })).toBe(carrot);
+});
+
 test("a sentence whose subject is the card itself protects only the card (#1289)", () => {
   const selfOnly: [string, string][] = [
     ["Falkenrath Aristocrat", "Flying, haste\nSacrifice a creature: This creature gains indestructible until end of turn. If the sacrificed creature was a Human, put a +1/+1 counter on this creature."],

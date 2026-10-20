@@ -267,12 +267,14 @@ function oneShotNet(dc: DeckCard): number | undefined {
  *  token's role, and the Attendant sat on the Counterspells shelf for it. A quoted GRANT to your own
  *  permanents ("creatures you control have "{T}: Add {G}"") stays: that sentence creates no token.
  *
- *  THE PARENTHESISED REMINDER that follows a create-token sentence is the token's too (#1289):
- *  Shuri's Fabricator's "(They're artifacts with indestructible and "{T}: Add {C}...")" describes the
- *  Vibranium tokens and read as the card's own indestructible. The whole parenthesis goes, quote
- *  and all; a reminder after any other sentence is left alone. Same ruling as the quote above (#533): a token's own abilities are the token's roles, shown on
- *  the token node and never counted for the maker. Junk, Shard and Wicked Role reminders escaped only because the reminder is its own sentence, so the quote's head had no "create ... token".
+ *  THE PARENTHESISED REMINDER THAT DESCRIBES THE TOKEN is the token's too (#1289): Shuri's Fabricator's "(They're artifacts with indestructible and "{T}: Add {C}...")"
+ *  read as the card's own indestructible. Same ruling as the quote above (#533): a token's abilities are the token's roles, never the maker's. Junk, Shard and
+ *  Wicked Role reminders escaped only because the reminder is its own sentence, so the quote's head had no "create ... token". Blanked, whole (quote and all), ONLY when
+ *  it directly follows a create-token sentence AND opens as a token description (`TOKEN_REMINDER`: "It's", "They're", "It has", "A Food token is", a Role's
+ *  "If you control another Role on it", "Enchanted creature gets"). A reminder for the CARD's own action stays: discover, mill, scry, an Adventure's
+ *  "Then exile this card", decayed, keyword reminders.
  *  Cached, because every rule reads it. */
+const TOKEN_REMINDER = /^ \((?:it's|they're|it is|they are|it has|each is|an? [^.()"]{1,40}? token is|(?:food|treasure|clue|blood)s? (?:tokens? )?(?:is|are)|the token |as the token enters|if you control another role on it|enchanted creature (?:gets|is|has) )/i;
 const ownTextCache = new WeakMap<object, string>();
 export function ownText(card: { oracleText?: string }): string {
   const cached = ownTextCache.get(card);
@@ -286,7 +288,7 @@ export function ownText(card: { oracleText?: string }): string {
   const out = unquoted.replace(/(?<=\.) \((?:[^()"]|"[^"]*")*\)/g, (reminder, at: number) => {
     const start = Math.max(unquoted.lastIndexOf(".", at - 2), unquoted.lastIndexOf("\n", at - 1)) + 1;
     const head = unquoted.slice(start, at).toLowerCase();
-    return head.includes("create") && head.includes("token") ? "" : reminder;
+    return head.includes("create") && head.includes("token") && TOKEN_REMINDER.test(reminder) ? "" : reminder;
   });
   ownTextCache.set(card, out);
   return out;
