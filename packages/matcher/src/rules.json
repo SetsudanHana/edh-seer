@@ -313,7 +313,7 @@
       "category": "protection",
       "match": [{ "op": "oracle", "pattern": "protection" }],
       "not": [{ "op": "countsAsLand" }, { "op": "protectionIsOwnKeyword" }],
-      "why": "A CREATURE WITH HEXPROOF PROTECTS ITSELF, NOT THE BOARD (roadmap I1). Granted to other permanents (Lightning Greaves, Heroic Intervention) is Interaction; printed on the card's own body is a stat. Only the cases the printed KEYWORD list settles outright are refused -- see the op, and the 41-card residue it deliberately leaves alone."
+      "why": "A CREATURE WITH HEXPROOF PROTECTS ITSELF, NOT THE BOARD (roadmap I1). Granted to other permanents (Lightning Greaves, Heroic Intervention) is Interaction; printed on the card's own body is a stat. Only the cases the printed KEYWORD list settles outright are refused -- see the op, and the 41-card residue it deliberately leaves alone. Sentences whose subject is the card itself (\"This creature gains indestructible\", \"Kogla gains hexproof\") are stripped too (#1289), as is a token's reminder text in ownText."
     },
     {
       "id": "protection.flicker",

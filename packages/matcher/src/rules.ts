@@ -69,7 +69,9 @@ export type RuleClause =
    *  out" are not keywords at all, and a card can grant with no cue this side of a parser
    *  (Delighted Halfling's "Legendary creature spells you cast can't be countered"). The honest fix
    *  for the residue is a derive-side read of the grant's SUBJECT, which is its own item; this
-   *  clause takes only the cases the printed keyword list settles outright. */
+   *  clause takes only the cases the printed keyword list settles outright. SENTENCE-FORM SELF GRANTS ARE NOW READ (#1289): a sentence whose subject is the
+   *  card ("This creature gains indestructible", "Kogla gains ...", an "It gains" after a card-naming sentence with no target) is stripped like
+   *  an anti-protection sentence, so a card that also grants to something else keeps its role. */
   | { op: "protectionIsOwnKeyword" }
   /** The card is a land FOR THE DECK COUNT (`countsAsLand`, #1167): a modal DFC with a land face, else
    *  the front face. Replaces `typeLine contains land`, which read the whole "A // B" line and made
@@ -204,6 +206,38 @@ function withoutAntiProtection(text: string): string {
   return text.split(/(?<=[.!?])\s+|\n/).filter((line) => !ANTI_PROTECTION.test(line)).join(" ");
 }
 
+/** SENTENCES WHOSE SUBJECT IS THE CARD ITSELF (#1289): "This creature gains indestructible until end of turn" (Falkenrath Aristocrat), "Dragonlord Ojutai has
+ *  hexproof as long as it's untapped", "Kogla gains indestructible ...", and the "It gains ..." that follows a sentence naming the card and no target (Hungering
+ *  Puppetbeast). Protection the card gives itself is the Sylvan Caryatid defect in sentence form. A SINGULAR verb is the cue the subject is one object ("this
+ *  creature and other creatures you control gain" is plural and stays a grant). Stripped by sentence, so a card with a real grant too keeps its role. */
+function withoutSelfGrants(text: string, cardName: string): string {
+  const names = cardName.split(" // ").flatMap((face) => [face, face.split(",")[0]!])
+    .map((n) => n.trim()).filter((n) => n.length > 0)
+    .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const thisCard = "this (?:creature|artifact|permanent|vehicle|enchantment|land|planeswalker)";
+  const subject = `(?:${[thisCard, ...names].join("|")})`;
+  const direct = new RegExp(`^(?:until end of turn, )?${subject}\\b(?:[^.]{0,60}?\\band)?\\s+(?:gains|gets|has)\\b`, "i");
+  const named = new RegExp(`\\b${subject}\\b`, "i");
+  const out: string[] = [];
+  for (const line of text.split("\n")) {
+    let previous = "";
+    let quotes = 0;
+    for (const sentence of line.split(/(?<=[.!?])\s+/)) {
+      // INSIDE A QUOTED ABILITY "this creature" and "It" are the GRANTEE (Agent of the Shadow Thieves), never the card: such a sentence starts, or lies, inside an open quote.
+      const quoted = quotes % 2 === 1 || sentence.includes('"');
+      quotes += (sentence.match(/"/g) ?? []).length;
+      const body = sentence.replace(/^[^:"]*:\s*/, "");
+      const lead = /^(?:until end of turn, )?it\s+(?:gains|gets|has)\b/i.test(body);
+      const self = (direct.test(body) || (lead && named.test(previous) && !/\btarget\b/i.test(previous)))
+        && !/\b(?:gain|get|have)\b/i.test(body)
+        && !/\b(?:gains|gets|has)\b[^.]*?\band\s+(?:target|each|all|other|another|creatures?|permanents?|equipped|enchanted|up to)\b/i.test(body);
+      previous = sentence;
+      if (!self || quoted) out.push(sentence);
+    }
+  }
+  return out.join(" ");
+}
+
 const GRANTS_PROTECTION =
   /\b(?:gains?|have|has|get|grants?)\b[^.]{0,70}?(?:hexproof|indestructible|shroud|protection from|phases? out)/i;
 
@@ -232,16 +266,44 @@ function oneShotNet(dc: DeckCard): number | undefined {
  *  "{1}, Sacrifice this token: Counter target noncreature spell ..."" -- the counterspell is the
  *  token's role, and the Attendant sat on the Counterspells shelf for it. A quoted GRANT to your own
  *  permanents ("creatures you control have "{T}: Add {G}"") stays: that sentence creates no token.
+ *
+ *  THE PARENTHESISED REMINDER THAT DESCRIBES THE TOKEN is the token's too (#1289): Shuri's Fabricator's "(They're artifacts with indestructible and "{T}: Add {C}...")"
+ *  read as the card's own indestructible. Same ruling as the quote above (#533): a token's abilities are the token's roles, never the maker's. Junk, Shard and
+ *  Wicked Role reminders escaped only because the reminder is its own sentence, so the quote's head had no "create ... token". Only a reminder that directly follows a
+ *  create-token sentence is touched, and only by what it SAYS (`TOKEN_OPENER`: "It's", "She's", "They're", "It has", "A Food token is", a Role's "If you control another
+ *  Role on it", "Enchanted creature gets"). One that OPENS as a token description is blanked whole, quote and all. One that opens with the card's own action (discover,
+ *  mill, scry, an Adventure's "Then exile this card") stays, minus any LATER sentence that opens as a token description ("... A Treasure token is an artifact with "...""),
+ *  so Greedy Freebooter keeps "To scry 1, ..." and loses the Treasure's text. Decayed and keyword reminders ("It can't block. When it attacks...") follow "create ... token with
+ *  decayed" and describe the TOKEN's keyword, but do not open as a token description, so they are kept; the head sentence's "token with hexproof" is a separate known read.
  *  Cached, because every rule reads it. */
+const TOKEN_PRONOUN = /^(?:(?:it|he|she|they)'s|they're|it is|they are|it has|each is) /i;
+const TOKEN_OPENER = /^(?:an? [^.()"]{1,40}? token is|[^.()"]{1,40}? tokens are|(?:food|treasure|clue|blood)s? (?:tokens? )?(?:is|are)|the token |as the token enters|if you control another role on it|enchanted creature (?:gets|is|has) )/i;
+/** A reminder `" (...)"` less its token-description sentences: whole when it OPENS as one, else only the later sentences that do (quote-aware split, a token's quote holds periods). */
+function withoutTokenSentences(reminder: string): string {
+  const inner = reminder.trim().slice(1, -1);
+  const sentences = inner.match(/(?:[^."]|"[^"]*")+\.?\s*/g) ?? [];
+  const opens = (x: string): boolean => TOKEN_OPENER.test(x.trim()) || TOKEN_PRONOUN.test(x.trim());
+  if (sentences.length === 0 || opens(sentences[0]!)) return "";
+  // A PRONOUN opener is a token description only as the FIRST sentence, or right after a sentence that itself creates a token (Chalk Outline "Create a Clue token. It's an
+  // artifact with ..."); later it can be the card's own rule (Genevieve: "the party die is a d4. It's a d8 for 2").
+  const kept = sentences.filter((x, n) => !(TOKEN_OPENER.test(x.trim())
+    || (TOKEN_PRONOUN.test(x.trim()) && /create[^.]*token/i.test(sentences[n - 1] ?? "")))).join("").trim();
+  return kept.length === inner.length ? reminder : kept === "" ? "" : ` (${kept})`;
+}
 const ownTextCache = new WeakMap<object, string>();
 export function ownText(card: { oracleText?: string }): string {
   const cached = ownTextCache.get(card);
   if (cached !== undefined) return cached;
   const text = card.oracleText ?? "";
-  const out = text.replace(/"[^"]*"/g, (quote, at: number) => {
+  const unquoted = text.replace(/"[^"]*"/g, (quote, at: number) => {
     const start = Math.max(text.lastIndexOf(".", at), text.lastIndexOf("\n", at)) + 1;
     const head = text.slice(start, at).toLowerCase();
     return head.includes("create") && head.includes("token") ? '""' : quote;
+  });
+  const out = unquoted.replace(/(?<=\.) \((?:[^()"]|"[^"]*")*\)/g, (reminder, at: number) => {
+    const start = Math.max(unquoted.lastIndexOf(".", at - 2), unquoted.lastIndexOf("\n", at - 1)) + 1;
+    const head = unquoted.slice(start, at).toLowerCase();
+    return head.includes("create") && head.includes("token") ? withoutTokenSentences(reminder) : reminder;
   });
   ownTextCache.set(card, out);
   return out;
@@ -339,7 +401,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       // opponents control LOSE hexproof" has no grant verb, but a sentence like "creatures your
       // opponents control don't HAVE hexproof" does — and `GRANTS_PROTECTION` matches on "have".
       // Asking both questions of the same stripped text is what keeps them from disagreeing.
-      const granting = withoutAntiProtection(txt);
+      const granting = withoutAntiProtection(withoutSelfGrants(txt, dc.card.name));
       if (GRANTS_PROTECTION.test(granting)) return false;
       const found = (t: string): Set<string> =>
         new Set([...t.matchAll(PROTECTION_WORDS)].map((m) => m[0].toLowerCase()));
@@ -350,7 +412,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       if (found(txt).size === 0) return false;
       // WHAT IS LEFT AFTER THE CARD'S CLAIMS ABOUT ITSELF. If nothing is, every cue was about the
       // card itself and it protects nothing else.
-      const rest = found(withoutAntiProtection(txt).replace(SELF_PROTECTION, " "));
+      const rest = found(granting.replace(SELF_PROTECTION, " "));
       if (rest.size === 0) return true;
       // "protection from Humans" is the printed keyword `protection`; the rest are their own word.
       const keywords = new Set((dc.tags?.characteristics?.keywords ?? []).map((k) => k.toLowerCase()));

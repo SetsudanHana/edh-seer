@@ -657,6 +657,103 @@ test("a card that says both keeps its other half", () => {
   expect(ruleMatches(protectionRule(), c)).toBe(true);
 });
 
+const SHURI_REMINDER = "(They're artifacts with indestructible and \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")";
+const VIBRANIUM_REMINDER = "(It's an artifact with indestructible and \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")";
+
+test("a token's reminder text is the TOKEN'S, not the card's (#1289)", () => {
+  const cases: [string, string][] = [
+    ["Shuri's Fabricator", `When this artifact enters, create two tapped Vibranium tokens. ${SHURI_REMINDER}\n{6}, {T}: Return target artifact card from your graveyard to the battlefield with a finality counter on it. Activate only as a sorcery. (If a permanent with a finality counter on it would be put into a graveyard, exile it instead.)`],
+    ["Vibranium Mining Mech", `Trample\nWhenever this Vehicle enters or attacks, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\n{2}: This Vehicle gets +1/+0 until end of turn.\nCrew 2`],
+    ["T'Challa, the Black Panther", `Whenever T'Challa enters or attacks, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\nWhenever you cast an artifact spell with mana value 4 or greater, put two +1/+1 counters on T'Challa.`],
+    ["Dora Milaje Elite", `First strike\nWhen this creature enters, if an opponent controls more lands than you, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\nSacrifice this creature: Legendary permanents you control gain indestructible until end of turn.`],
+  ];
+  for (const [name, text] of cases) {
+    const c = asCard(name, text);
+    expect(ruleMatches(protectionRule(), c), name).toBe(name === "Dora Milaje Elite");
+  }
+});
+
+test("ownText blanks a reminder after a create-token sentence and no other parenthesis (#1289)", () => {
+  const out = ownText({ oracleText: `When this enters, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\nActivate only as a sorcery. (If a permanent with a finality counter on it would be put into a graveyard, exile it instead.)` });
+  expect(out).not.toContain("indestructible");
+  expect(out).not.toContain("Add {C}");
+  expect(out).toContain("(If a permanent with a finality counter");
+});
+
+test("ownText keeps a reminder that explains the CARD's own action after a create-token sentence (#1289)", () => {
+  const lode = "Discover 10. If the discovered card's mana value is less than 10, create a number of tapped Treasure tokens equal to the difference. (To discover 10, exile cards from the top of your library until you exile a nonland card with mana value 10 or less. Cast it without paying its mana cost or put it into your hand. Put the rest on the bottom in a random order.)";
+  expect(ownText({ oracleText: lode })).toBe(lode);
+  const adventure = "Flying\nThis creature can't block.\n//\nCreate a Treasure token. (Then exile this card. You may cast the creature later from exile.)";
+  expect(ownText({ oracleText: adventure })).toBe(adventure);
+  const carrot = "When this artifact enters and when you sacrifice it, create a 1/1 white Rabbit creature token and scry 1. (Look at the top card of your library. You may put that card on the bottom.)";
+  expect(ownText({ oracleText: carrot })).toBe(carrot);
+});
+
+test("ownText blanks a token description by every opener family, verbatim corpus text (#1289)", () => {
+  const cases: [string, string, string][] = [
+    ["Nivea", "{5}{W}{W}{W}, Sacrifice Nivea: Create an Akroma, Angel of Wrath token. (She's a {5}{W}{W}{W} legendary 6/6 Angel creature with flying, first strike, vigilance, trample, haste, and protection from black and from red.)", "protection from"],
+    ["Lord Skitter's Blessing", "When this enchantment enters, create a Wicked Role token attached to target creature you control. (Enchanted creature gets +1/+1. When this token is put into a graveyard, each opponent loses 1 life.)\nAt the beginning of your draw step, if you control an enchanted creature, you lose 1 life and you draw an additional card.", "each opponent loses"],
+    ["Twisted Sewer-Witch", "When this creature enters, create a 1/1 black Rat creature token with \"This creature can't block.\" Then for each Rat you control, create a Wicked Role token attached to that Rat. (If you control another Role on it, put that one into the graveyard. Enchanted creature gets +1/+1. When this token is put into a graveyard, each opponent loses 1 life.)", "another Role"],
+    ["Ant-Man's Army", "When this creature enters, create a Food token or a Treasure token. (A Food token is an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\" A Treasure token is an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")", "Sacrifice this token"],
+    ["Tireless Provisioner", "Landfall — Whenever a land you control enters, create a Food token or a Treasure token. (Food is an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\" Treasure is an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")", "Sacrifice this token"],
+    ["Dragon Broodmother", "Flying\nAt the beginning of each upkeep, create a 1/1 red and green Dragon creature token with flying and devour 2. (As the token enters, you may sacrifice any number of creatures. It enters with twice that many +1/+1 counters on it.)", "twice that many"],
+  ];
+  for (const [name, text, gone] of cases) expect(ownText({ oracleText: text }), name).not.toContain(gone);
+});
+
+test("a kept reminder loses only its token-description sentences (#1289)", () => {
+  const freebooter = "When this creature dies, scry 1 and create a Treasure token. (To scry 1, look at the top card of your library. You may put that card on the bottom. A Treasure token is an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")";
+  const out = ownText({ oracleText: freebooter });
+  expect(out).toContain("To scry 1, look at the top card");
+  expect(out).not.toContain("Sacrifice this token");
+  const grab = "Mill four cards. You may put a permanent card from among the cards milled this way into your hand. If you control a Squirrel or returned a Squirrel card to your hand this way, create a Food token. (To mill four cards, put the top four cards of your library into your graveyard. A Food token is an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")";
+  const out2 = ownText({ oracleText: grab });
+  expect(out2).toContain("To mill four cards");
+  expect(out2).not.toContain("You gain 3 life");
+});
+
+test("a pronoun sentence late in a kept reminder is the card's unless it follows a create sentence (#1289)", () => {
+  const genevieve = "Flying\nAt the beginning of combat on your turn, roll the party die and create a number of Treasure tokens equal to the result. (Your party consists of up to one of each of Cleric, Rogue, Warrior, and Wizard. If your party size is 1, the party die is a d4. It's a d8 for 2, a d12 for 3, and a d20 for 4.)";
+  expect(ownText({ oracleText: genevieve })).toBe(genevieve);
+  const chalk = "Whenever one or more creature cards leave your graveyard, create a 2/2 white and blue Detective creature token, then investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")";
+  const out = ownText({ oracleText: chalk });
+  expect(out).toContain("(Create a Clue token.)");
+  expect(out).not.toContain("Draw a card");
+  const stage = "Whenever a player performs a magic trick, they create a Hat token. (You perform a magic trick when you cast an instant or spell with flash, or turn a face-down creature face-up. Hat tokens are artifact tokens with \"{1}, {T}, Sacrifice this artifact: Create a 1/1 white Rabbit creature token.\")\nWhenever Chaos ensues, until your next turn, creature cards in your hand have flash.";
+  const out2 = ownText({ oracleText: stage });
+  expect(out2).toContain("You perform a magic trick");
+  expect(out2).not.toContain("Rabbit");
+});
+
+test("a sentence whose subject is the card itself protects only the card (#1289)", () => {
+  const selfOnly: [string, string][] = [
+    ["Falkenrath Aristocrat", "Flying, haste\nSacrifice a creature: This creature gains indestructible until end of turn. If the sacrificed creature was a Human, put a +1/+1 counter on this creature."],
+    ["Dragonlord Ojutai", "Flying\nDragonlord Ojutai has hexproof as long as it's untapped.\nWhenever Dragonlord Ojutai deals combat damage to a player, look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order."],
+    ["Crew Captain", "Haste\nThis creature has indestructible as long as it entered this turn."],
+    ["Kogla, the Titan Ape", "When Kogla enters, it fights up to one target creature you don't control.\nWhenever Kogla attacks, destroy target artifact or enchantment defending player controls.\n{1}{G}: Return target Human you control to its owner's hand. Kogla gains indestructible until end of turn."],
+    ["Hungering Puppetbeast", `When this creature enters, create a Heartwood token. (It's a red and green artifact with "{T}: Add {R} or {G}.")\n{1}, Sacrifice another artifact: Put a +1/+1 counter on this creature. It gains your choice of trample, hexproof, or haste until end of turn.`],
+    ["Ellie", "Ellie deals 2 damage to target player and gains indestructible until end of turn."],
+    ["Until Card", "{1}: Until end of turn, this creature gains hexproof."],
+  ];
+  for (const [name, text] of selfOnly) expect(ruleMatches(protectionRule(), asCard(name, text)), name).toBe(false);
+});
+
+test("a grant to something else keeps the role even beside a self sentence (#1289)", () => {
+  const keeps: [string, string][] = [
+    ["Feat of Resistance", "Put a +1/+1 counter on target creature you control. It gains protection from the color of your choice until end of turn. (It can't be blocked, targeted, dealt damage, enchanted, or equipped by anything of that color.)"],
+    ["Gaea's Gift", "Put a +1/+1 counter on target creature you control. It gains reach, trample, hexproof, and indestructible until end of turn. (It can't be the target of spells or abilities your opponents control. Damage and effects that say \"destroy\" don't destroy it.)"],
+    ["Fated Return", "Put target creature card from a graveyard onto the battlefield under your control. It gains indestructible. If it's your turn, scry 2."],
+    ["Airtight Alibi", "Flash\nEnchant creature\nWhen this Aura enters, untap enchanted creature. It gains hexproof until end of turn. If it's suspected, it's no longer suspected.\nEnchanted creature gets +2/+2 and can't become suspected."],
+    ["Lightning Greaves", "Equipped creature has haste and shroud. (It can't be the target of spells or abilities.)\nEquip {0}"],
+    ["Heroic Intervention", "Permanents you control gain hexproof and indestructible until end of turn."],
+    // Inside a quoted ability granted to others, "this creature" and "It" are the GRANTEE, not the card.
+    ["Agent of the Shadow Thieves", "Commander creatures you own have \"Whenever this creature attacks a player, if no opponent has more life than that player, put a +1/+1 counter on this creature. It gains deathtouch and indestructible until end of turn.\""],
+    ["Both Sentences", "This creature gains indestructible until end of turn.\nSacrifice this creature: Other creatures you control gain hexproof until end of turn."],
+    ["Plural Subject", "This creature and other creatures you control gain indestructible until end of turn."],
+  ];
+  for (const [name, text] of keeps) expect(ruleMatches(protectionRule(), asCard(name, text)), name).toBe(true);
+});
+
 test("a card with no protection at all does not match the rule at all", () => {
   // NOT A TEST OF THE EMPTY GUARD, and saying so is the point: `protectionIsOwnKeyword` only runs
   // once the protection pattern has matched, so its `found(txt).size === 0` branch is UNREACHABLE
