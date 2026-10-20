@@ -911,6 +911,53 @@ describe("scaleBounds guards (#1265 task 1 review)", () => {
   });
 });
 
+/** THE SCALING FLOOR'S MISSING SHAPES (#1285): the card is itself one of the things it counts. Oracle text is the fixture's, read from Mongo. */
+describe("scaleBounds reads the card's own contribution (#1285)", () => {
+  const scaling = (name: string) => linesOf(name).filter((l) => l.source !== "token-maker" && l.amount.scales !== null);
+  it("'for each Elf on the battlefield' counts the Elf itself: Priest of Titania 1; Cloudpost (a Locus) 1", () => {
+    expect(scaling("Priest of Titania")[0]!.amount).toMatchObject({ scales: "for each elf on the battlefield", floor: 1 });
+    expect(scaling("Cloudpost")[0]!.amount.floor).toBe(1);
+  });
+  it("'your devotion to green' floors at the green pips of its OWN mana cost: Karametra's Acolyte {3}{G} 1", () => {
+    expect(scaling("Karametra's Acolyte")[0]!.amount).toMatchObject({ scales: "your devotion to green", floor: 1 });
+  });
+  it("devotion counts a hybrid pip for each of its colours (CR 700.5), and no pip of another colour (synthetic)", () => {
+    const c = { types: ["creature"], subtypes: [], colors: ["G", "W"], identity: ["G", "W"], cmc: 4, power: "1", toughness: "1", token: false } as unknown as CardTags["characteristics"];
+    expect(scaleBounds("your devotion to green", "", c, ["card"], true, "", 0, 1, "{G/W}{G}{2}{W}").floor).toBe(2);
+    expect(scaleBounds("your devotion to white", "", c, ["card"], true, "", 0, 1, "{G/W}{G}{2}{W}").floor).toBe(2);
+    expect(scaleBounds("your devotion to blue", "", c, ["card"], true, "", 0, 1, "{G/W}{G}{2}{W}").floor).toBe(0);
+    expect(scaleBounds("your devotion to green", "", c, ["card"], true, "", 0, 1, undefined).floor).toBe(0);
+  });
+  it("'<name>'s toughness' is the printed toughness: Vhal 2/3 floors at 3", () => {
+    expect(scaling("Vhal, Candlekeep Researcher")[0]!.amount).toMatchObject({ scales: "vhal's toughness", floor: 3 });
+  });
+  it("'for each creature with power 4 or greater you control' counts a creature with power >= 4: Leafkin Avenger (4/3) 1; a 3-power creature 0 (synthetic)", () => {
+    expect(scaling("Leafkin Avenger")[0]!.amount).toMatchObject({ floor: 1 });
+    const c = { types: ["creature"], subtypes: [], colors: ["G"], identity: ["G"], cmc: 2, power: "3", toughness: "1", token: false } as unknown as CardTags["characteristics"];
+    expect(scaleBounds("for each creature with power 4 or greater you control", "", c, ["card"], true, "", 0).floor).toBe(0);
+    expect(scaleBounds("for each creature with power 3 or greater you control", "", c, ["card"], true, "", 0).floor).toBe(1);
+  });
+  it("'for each creature you control with power 4 or greater' (the other word order) counts a 6/6: Giant-Man, Gargantuan Genius 1; a 3-power creature 0 (synthetic)", () => {
+    expect(scaling("Giant-Man, Gargantuan Genius")[0]!.amount).toMatchObject({ scales: "for each creature you control with power 4 or greater", floor: 1 });
+    const c = { types: ["creature"], subtypes: [], colors: ["G"], identity: ["G"], cmc: 2, power: "3", toughness: "1", token: false } as unknown as CardTags["characteristics"];
+    expect(scaleBounds("for each creature you control with power 4 or greater", "", c, ["card"], true, "", 0).floor).toBe(0);
+  });
+  it("'for each different power among creatures you control' counts the creature's own power once: Selvala (4/5) 1", () => {
+    expect(scaling("Selvala, Eager Trailblazer")[0]!.amount).toMatchObject({ floor: 1 });
+  });
+  it("the contrast cards stay at floor 0 (Gyre Sage, Gaea's Cradle, Nyx Lotus, Three Tree City)", () => {
+    for (const n of ["Gyre Sage", "Gaea's Cradle", "Nyx Lotus", "Three Tree City"]) expect(scaling(n)[0]!.amount.floor, n).toBe(0);
+  });
+});
+
+/** #1291: a search for two named cards puts two lands. */
+describe("a fetch of two cards counts both (#1291)", () => {
+  it("Krosan Verge's 'a Forest card and a Plains card' is two lands", () => {
+    expect(only("Krosan Verge", "fetch").amount).toEqual({ fixed: 2, scales: null });
+    expect(only("Krosan Verge", "fetch").net).toBe(0);
+  });
+});
+
 /** THE TOKEN-MAKER LINES' AMOUNT (#1265): 7 lines were "unread" (no fixed, no scales). A created token is one unless a number word says more; a "for each" in the creating sentence scales it. */
 describe("a token-maker line reads how many it makes (#1265)", () => {
   const amountOf = (name: string, key = "treasure") => linesOf(name, "token-maker").filter((l) => l.producesToken === key).map((l) => l.amount);
