@@ -626,7 +626,7 @@ export function rampGrade(dc: DeckCard, deck?: readonly DeckCard[]): number {
   if (rockLines.length === 0) return 0;
   const { patterns } = loadRules();
   const o = frontOnly ? (dc.card.oracleText ?? "").split("\n//\n")[0]! : dc.card.oracleText ?? "";
-  // `entersTappedEver`, not the land rules' `entersTapped`: that one forgives "tapped unless", and
+  // `entersTappedEver`, not the land classifier's reading (`ramp.land.bigMana`'s `landEntersTapped`, #1266): the printed `entersTapped` pattern that used to be there forgave "tapped unless", and
   // Star Compass sometimes enters tapped, which is worse than a rock that never does. (Not mana: when the permanent enters is no
   // mana line's business, so the printed text stays the reader.)
   const entersTapped = new RegExp(patterns.entersTappedEver!, "i").test(o);

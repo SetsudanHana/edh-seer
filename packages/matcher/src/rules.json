@@ -36,9 +36,6 @@
     "tutor": "search your library for",
     "landFetch": "search your library for (a |an |up to \\w+ )?(basic )?(land|forest|island|swamp|mountain|plains)",
     "ontoBattlefield": "onto the battlefield",
-    "rampLand": "sacrifice\\b[\\s\\S]*?search your library for (?:up to two|two|a \\w+ and an? \\w+)[\\s\\S]*?onto the battlefield",
-    "bigManaLand": "(?:^|[.;\\n(])\\s*\\{t\\}\\s*:\\s*add\\s+(?:(?:\\{[wubrgcs\\d/]+\\}\\s*){2,}|two|three|four)",
-    "entersTapped": "enters(?: the battlefield)? tapped(?!\\s+unless)",
     "spendOnly": "spend this mana only|can't be spent|this mana can't",
     "entersTappedEver": "enters(?: the battlefield)? tapped",
     "activateOnlyIf": "activate only if",
@@ -85,15 +82,15 @@
     {
       "id": "ramp.land.fetchesTwo",
       "category": "ramp",
-      "match": [{ "op": "countsAsLand" }, { "op": "oracle", "pattern": "rampLand" }],
-      "why": "A land that sacrifices itself for TWO+ lands nets +1 mana. A fetchland gets one (net 0), which is fixing, not ramp."
+      "match": [{ "op": "countsAsLand" }, { "op": "manaLine", "source": ["fetch"], "amountAtLeast": 2 }],
+      "why": "A land that sacrifices itself for TWO+ lands nets +1 mana. A fetchland gets one (net 0), which is fixing, not ramp. DERIVED (#1266; it was a printed-text pattern): a land with a `fetch` mana line whose fixed amount is 2 or more."
     },
     {
       "id": "ramp.land.bigMana",
       "category": "ramp",
-      "match": [{ "op": "countsAsLand" }, { "op": "oracle", "pattern": "bigManaLand" }],
-      "not": [{ "op": "oracle", "pattern": "entersTapped" }],
-      "why": "2+ mana from a bare {T} is a net extra mana per land drop -- unless it enters tapped, which makes it unusable the turn it lands."
+      "match": [{ "op": "countsAsLand" }, { "op": "manaLine", "source": ["activated"], "amountAtLeast": 2, "bareTap": true }],
+      "not": [{ "op": "landEntersTapped" }],
+      "why": "2+ mana from a bare {T} is a net extra mana per land drop -- unless it enters tapped, which makes it unusable the turn it lands. DERIVED (#1266; it was two printed-text patterns): an `activated` mana line whose cost is exactly {T} and whose fixed amount is 2 or more, on a land the shared land classifier (`classifyLand`) does not read as entering tapped (`unconditional` or `unclassified`). A GATED line counts (owner ruling 2026-10-13, #1169: a gated mana source is still a mana source, conditioned on the deck): Urza's Tower, Muraganda Raceway."
     },
     {
       "id": "removal.land",
