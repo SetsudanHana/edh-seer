@@ -7117,7 +7117,8 @@
        ],
        "scope": "target",
        "fromZone": "battlefield"
-      }
+      },
+      "tuck": true
      }
     ],
     "clause": 3,
@@ -7215,6 +7216,285 @@
     "repeats": "repeatable",
     "payment": {
      "mana": "{1}"
+    }
+   }
+  ]
+ },
+ "Condemn": {
+  "oracleText": "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "combat": "attacking",
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "tuck": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "amount": "its toughness",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "opp",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Oust": {
+  "oracleText": "Put target creature into its owner's library second from the top. Its controller gains 3 life.",
+  "typeLine": "Sorcery",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "tuck": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "opp",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    }
+   }
+  ]
+ },
+ "Natural Obsolescence": {
+  "oracleText": "Put target artifact on the bottom of its owner's library.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "artifact",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "tuck": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Oblation": {
+  "oracleText": "The owner of target nonland permanent shuffles it into their library, then draws two cards.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "tuck": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Boomerang": {
+  "oracleText": "Return target permanent to its owner's hand.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent",
+      "scope": "target",
+      "zone": "battlefield"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "permanent",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
     }
    }
   ]

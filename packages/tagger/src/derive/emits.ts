@@ -689,6 +689,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       ...(tokenType ? { type: tokenType } : {}),
       ...(landType ? { type: landType } : {}),
     },
+    ...(verb === "leaves" && action.verb === "put" && toZone === "library" && !leftTheGraveyard ? { tuck: true as const } : {}),
     // WHO DEALT IT. A damage action's `object` is the VICTIM ("each opponent"), so `subject` above
     // cannot also be the source — and a damage TRIGGER names the source ("whenever another source
     // you control deals 1 damage"). Without this the two were compared against each other and the

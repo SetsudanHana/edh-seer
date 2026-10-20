@@ -825,6 +825,9 @@ export interface GameEvent {
    *  the role's `notVictimMay` refuses it. Set by derive on the emits of an action whose own verb the
    *  clause hands to the victim (`victimDeclines`); never set by the LLM. */
   victimMay?: true;
+  /** THIS `leaves` IS A TUCK: a permanent put into its owner's library (Condemn, Oust, Teferi, Hero of Dominaria -3). It left the battlefield, so a leaves payoff hears it, but the
+   *  owner's quality ladder puts it BELOW a bounce (exile > destroy / sacrifice > bounce > tuck), which `quality.ts` `permanenceOf` reads. Set by derive (`actionEmits`); never by the LLM. */
+  tuck?: true;
   /** WHO DEALT THE DAMAGE — damage verbs only, and only on an AUTHORED emit.
    *
    *  A damage event has two participants and `subject` can only hold one of them. The engine had

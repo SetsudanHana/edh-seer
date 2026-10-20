@@ -510,7 +510,8 @@ import { emblemRecipient } from "../emblem.js";
 // 352: #1295 item 4 -- two grammar-complete removal spells derived NOTHING: "Put target nonland permanent into its owner's library third from the top" (Teferi, Hero of Dominaria -3; also Oust, Spin into Myth, Terminus) is a `leaves` off the battlefield, and "Return target nonland permanent or suspended card to its owner's hand" (Venser's Diffusion) is a bounce of the permanent half.
 // 353: #1295 review of the anaphor scope: "that card" taken from a library or hand (Transmogrify, Polymorph) is not the exiled target; a player or token antecedent scopes nothing.
 // 354: #1295 item 5 -- an action on one side of a coin flip ("If you win the flip, ...", "If you lose the flip, ...", "If it comes up heads, ...") is `onFlip`, so Orcish Captain's losing-side -0/-2 on your own Orc is not `removal.targeted`.
-export const DERIVE_VERSION = 354;
+// 355: #1295 item 4 review -- the `leaves` emit of a put into a library (a tuck) carries `tuck: true`, so the quality ladder (exile > destroy > bounce > tuck) scores Condemn, Oust, Teferi -3 below a bounce.
+export const DERIVE_VERSION = 355;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
