@@ -49,7 +49,7 @@
   "packages/tagger/src/bin/gen-schema-docs.ts": 1,
   "packages/tagger/src/derive-input.ts": 1,
   "packages/tagger/src/derive/delay.ts": 2,
-  "packages/tagger/src/derive/derive.ts": 28,
+  "packages/tagger/src/derive/derive.ts": 29,
   "packages/tagger/src/derive/effect-kind.ts": 2,
   "packages/tagger/src/derive/emits.ts": 4,
   "packages/tagger/src/derive/event-count.ts": 1,

@@ -17,7 +17,9 @@ function byClause(abilities: readonly Ability[]): Map<number, Ability[]> {
     // second difference: counted, it moved every group key that has a `ref` change in it (the
     // 'grammar right' label of "this creature becomes the target ... sacrifice it") to an unlabelled
     // one and silently un-switched 13 cards. The comparison reads the abilities without it.
-    const { claimsNothing: _claims, ...a } = a0;
+    // `toZone` (#1301) is the same: the grammar reads it off the put that follows a search, the stored model answer often folds that put into the
+    // search action and leaves the ability without it. Counted, 49 cards read from their printed text would have un-switched.
+    const { claimsNothing: _claims, toZone: _to, ...a } = a0;
     const k = a.clause ?? -1;
     (out.get(k) ?? out.set(k, []).get(k)!).push(a);
   }

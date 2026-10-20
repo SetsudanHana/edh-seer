@@ -514,7 +514,8 @@ import { emblemRecipient } from "../emblem.js";
 // 356: #1295 item 5 review -- an onFlip action takes the k-th sentence carrying its verb's printed word, not the first sentence holding its amount (Winter Sky's draw is the lose side, Bangchuckers' two "2 damage" are opposite sides, Chaotic Strike's unconditional draw is unmarked).
 // 357: #1295 item 4 review -- "the owner of <target> puts it on their choice of the top or bottom of their library" tucks THAT target (the grammar named no object, so the record writer read "it" as the trigger's subject: Plan for All Outcomes derived a false self tuck of "this enchantment").
 // 358: #1299 task 2 -- `CardTags.unclaimed` is persisted (every action no rule claimed, with its clause id), as `unknownTriggers` is. No ability changes.
-export const DERIVE_VERSION = 358;
+// 359: #1301 -- a `put` that is another effect's destination is claimed: `Ability.toZone` on the search it follows ("put it into your hand / onto the battlefield") and on the counter-spell it follows ("put it on top of its owner's library"); a dig's "put the rest on the bottom" is claimed as the remainder. No emit changes.
+export const DERIVE_VERSION = 359;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -659,6 +660,57 @@ export function entersUnderAnotherPlayer(cardText: string): boolean {
  *  Path to Exile hands over a basic land, Blessed Reincarnation names "an opponent controls".
  *  CEILING: the opponent use is real and dropped, the way Path to Exile's self-ramp is. */
 const POLYMORPH_REVEAL = /\b(?:its|that creature's) controller reveals cards from the top of their library until they reveal a creature card\b/i;
+
+/** A pronoun-ish object that points back at the card a search found or the spell a counter countered ("it", "them", "that card", "those cards", "the card", "that spell"; "it into your hand" is how some clauses are stored). */
+const FOUND_OBJECT = /^(?:it|them|that card|those cards|the card|that spell)$/i;
+/** The zone phrase the stored object sometimes carries: "it into your hand", "up to two basic land cards onto the battlefield tapped", "those cards on top in any order". */
+const ZONE_TAIL = /\s+(?:onto|into|on|in)\s.*$/i;
+/** "put a card named Ezio into your hand": the searched card, by name (the planeswalker-named wizards, "search your library and/or graveyard"). */
+const NAMED_FOUND = /^(?:an? )?card named /i;
+/** "The rest", "the other(s)", "the remaining cards": what a dig leaves after the part it took. */
+const DIG_REMAINDER = /^the (?:rest|others?|remaining cards?)\b/i;
+
+/** THE PUT THAT IS ANOTHER EFFECT'S DESTINATION (#1301). Called only for a `put` that nothing else claimed. Returns true when the put is claimed here:
+ *  - SEARCH or COUNTER DESTINATION. "Search your library for a card, reveal it, put it into your hand" and "Counter target spell. If that spell is countered
+ *    this way, put it on top of its owner's library instead": the put's object refers back (`antecedentSource`) to a search or counter-spell action of the
+ *    same clause that made an ability, and the put's zones are that effect's (library>X for a search, stack>library for a counter). A search's put may leave its origin unstated
+ *    (the stored model answer often does where the grammar reads library), and a NAMED put ignores it (Ral's Dispersal: hand>hand); a card that differs between the two
+ *    readings stays on the model answer (derive-worker's switch). An exile>hand put (Distant Memories) is not a search's destination and is left alone. The ability gets
+ *    `toZone`; the put is its destination and not a second event. A second put naming the same search with a DIFFERENT destination leaves the first
+ *    alone and stays unclaimed, so the field never states half of a split. Boseiju's opponent-owned search sets it too: the field says where
+ *    the card goes, and `subject`/emits keep whose search it is.
+ *  - DIG REMAINDER. "Look at the top five cards, put one into your hand, put the rest on the bottom of your library": a library>library put of "the
+ *    rest" beside another action out of the library is the dig's remainder. It carries no event of its own (the bottom is not an event anything
+ *    watches; a top put is `top-set` and never reaches here), so it is claimed with no emit and no field.
+ *  CEILING: the remainder needs a sibling action from the library, not a derived ability: Impulse derives nothing (its "put one into your hand" is untyped) and
+ *  its remainder is claimed all the same, so the card still reports the put that matters. A remainder with no such sibling stays unclaimed. */
+function claimedAsDestination(action: Action, actions: readonly Action[], source: { to: string; action?: number }, owners: ReadonlyMap<number, Ability[]>): boolean {
+  const object = (action.object ?? "").trim().replace(ZONE_TAIL, "");
+  const at = actions.indexOf(action);
+  // The searched card named or described again: "put a card named Ezio into your hand", "put a basic land card onto the battlefield" (the search's own "a basic land card").
+  // The nearest earlier search is its search.
+  const lastSearch = actions.slice(0, at).map((o) => o.verb).lastIndexOf("search");
+  const named = lastSearch >= 0 && (NAMED_FOUND.test(object) || (object.length > 4 && (actions[lastSearch]!.object ?? "").toLowerCase().includes(object.toLowerCase()))) ? lastSearch : -1;
+  const target = FOUND_OBJECT.test(object) && source.to === "action" && source.action !== undefined ? source.action : named;
+  if (target >= 0) {
+    const from = actions[target];
+    // "Search your library AND/OR graveyard" is two search actions (one per zone) of ONE search: the run of searches ending at the target.
+    let first = target;
+    while (from?.verb === "search" && first > 0 && actions[first - 1]?.verb === "search") first--;
+    const found: Ability[] = [];
+    for (let i = first; i <= target; i++) found.push(...(owners.get(i) ?? []));
+    const zoneOk = from?.verb === "search"
+      ? (named >= 0 || !action.fromZone || action.fromZone === "library") && (action.toZone === "hand" || action.toZone === "battlefield" || action.toZone === "graveyard" || action.toZone === "library")
+      : (action.fromZone === "stack" || !action.fromZone) && action.toZone === "library";
+    if (found.length > 0 && zoneOk && found.every((a) => a.toZone === undefined || a.toZone === action.toZone)) {
+      for (const a of found) a.toZone = action.toZone as NonNullable<Ability["toZone"]>;
+      return true;
+    }
+    return false;
+  }
+  return DIG_REMAINDER.test(object) && action.fromZone === "library" && action.toZone === "library"
+    && actions.some((o) => o !== action && o.fromZone === "library" && !DIG_REMAINDER.test((o.object ?? "").trim()));
+}
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 export const INERT_VERBS: ReadonlySet<string> = new Set(["none"]);
@@ -2375,6 +2427,8 @@ export function deriveAbilities(
     }
 
     const before = abilities.length;
+    /** The abilities (the ability and its twins) a `search` or `counter-spell` action made, by action index: the put that follows names its destination (#1301). */
+    const destinationOwners = new Map<number, Ability[]>();
     for (const action of clause.actions ?? []) {
       // A PRINTED "Casualty N" keyword line is the spell's own sacrifice outlet (Make Disappear):
       // Scryfall's keyword list drops the N, so the line itself is read. See `casualtySacrifice`.
@@ -2512,7 +2566,10 @@ export function deriveAbilities(
       // THE VICTIM MAY DECLINE (#1295): "its controller may sacrifice it", "unless that player sacrifices it". The event
       // is real when it happens, and not removal: see `GameEvent.victimMay`.
       if (victimDeclines(text, action.verb ?? "")) for (const e of emits) e.victimMay = true;
-      if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
+      if (!effectKind && emits.length === 0) {
+        if (action.verb === "put" && claimedAsDestination(action, clause.actions ?? [], sourceOf((clause.actions ?? []).indexOf(action)), destinationOwners)) continue;
+        unclaimed.push(action); continue;
+      }
 
       // A subject is attached ONLY when there is a kind. matcher's edges.ts emits a
       // `static:${effect.kind}` tag for any static ability that has a subject, so an empty kind
@@ -2932,6 +2989,7 @@ export function deriveAbilities(
         ability.emits = [...emits, { verb: dies ? "dies" : "leaves", subject: { ...made.subject, ...(inCombat ? { combat: "attacking" as const } : {}) } }];
       }
       if (face) ability.face = face;
+      const firstOfAction = abilities.length;
       abilities.push(ability);
       // A SELF-OR-CLASS TRIGGER IS TWO TRIGGERS (recall v4 #144, 2026-09-09). "Whenever this
       // creature or another enchantment you control enters" (Fear of Sleep Paralysis, and every
@@ -2962,6 +3020,7 @@ export function deriveAbilities(
       const limbCombat = ability.trigger?.subject.combat ? { combat: ability.trigger.subject.combat } : {};
       // The grammar reads every limb itself (above); these twins are the stored path's.
       if (trigger && !grammarRead) for (const limb of orLimbTriggers(text)) abilities.push({ ...ability, trigger: { ...trigger, verbs: limb.verbs, subject: { ...limb.subject, ...limbCombat } } });
+      if (action.verb === "search" || action.verb === "counter-spell") destinationOwners.set((clause.actions ?? []).indexOf(action), abilities.slice(firstOfAction));
     }
 
     // A RESTRICTION THE ENGINE CANNOT CHECK MAKES THE STATIC LABEL-ONLY TOO, not just the trigger

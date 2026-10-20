@@ -1130,6 +1130,16 @@ export interface Ability {
    *  ABSENT ON AN IMPLIED ABILITY, which is read off characteristics rather than rules text and so
    *  has no printed line to attribute to (spec C4). */
   clause?: number;
+  /** WHERE THE CARD THIS ABILITY FINDS OR COUNTERS ENDS UP (#1301). Set on a `search` ability from the put that
+   *  follows it in the same clause ("search your library for a card, reveal it, put it INTO YOUR HAND": `hand`;
+   *  Path to Exile's land: `battlefield`), and on a counter-spell ability from "put it on top of its owner's
+   *  library instead" (`library`; top or bottom is not recorded). The put is the destination of the effect, so
+   *  it is claimed by this field and no longer lands in `CardTags.unclaimed`. Absent when the clause names no
+   *  such put. A stored model answer that folds the put into the search action (`search ... toZone hand`) leaves it absent: that field is
+   *  unreliable (Bring to Light's search says `hand` and the card exiles). When two puts name one search with different destinations the first wins and the second stays unclaimed. The
+   *  tutor/ramp split is therefore readable from the ability alone. NOTHING READS IT YET: quality.ts's tutor and
+   *  ramp roles, the goldfish search and edges.ts's search producer still tell the two apart by other emits. */
+  toZone?: "hand" | "battlefield" | "graveyard" | "library";
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {
     verbs: Verb[];

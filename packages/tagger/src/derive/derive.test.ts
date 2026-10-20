@@ -5062,3 +5062,62 @@ describe("CardTags.unclaimed", () => {
     expect("unclaimed" in tags).toBe(false);
   });
 });
+
+// #1301: a `put` that is the DESTINATION of an effect derive claims in the same clause is that ability's `toZone`, not an orphan.
+describe("a put that is another effect's destination (#1301)", () => {
+  const putOf = (object: string, fromZone: string, toZone: string) => ({ verb: "put", object, fromZone, toZone });
+  const searchAction = { verb: "search", object: "your library for a basic land card", fromZone: "library" };
+  const searchAbility = (abilities: Ability[]) => abilities.find((a) => a.effect.kind === "search")!;
+
+  test("search then 'put it into your hand' sets the search's toZone and claims the put (Abzan Monument)", () => {
+    const { abilities, unclaimed } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [searchAction, putOf("it", "library", "hand"), { verb: "shuffle", object: "your library" }] }], undefined, { 1: "Search your library for a basic land card, reveal it, put it into your hand, then shuffle." });
+    expect(searchAbility(abilities).toZone).toBe("hand");
+    expect(unclaimed.filter((u) => u.verb === "put")).toEqual([]);
+  });
+
+  test("...onto the battlefield, for the opponent's own search too (Path to Exile, Boseiju)", () => {
+    const { abilities, unclaimed } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "target creature", fromZone: "battlefield", toZone: "exile" }, searchAction, putOf("that card", "library", "battlefield"), { verb: "tap", object: "that card" }] }], undefined, { 1: "Exile target creature. Its controller may search their library for a basic land card, put that card onto the battlefield tapped, then shuffle." }, undefined, "Exile target creature. Its controller may search their library for a basic land card, put that card onto the battlefield tapped, then shuffle.");
+    expect(searchAbility(abilities).toZone).toBe("battlefield");
+    expect(unclaimed.filter((u) => u.verb === "put")).toEqual([]);
+  });
+
+  test("a put of something else beside a search stays unclaimed and sets nothing", () => {
+    const { abilities, unclaimed } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [searchAction, putOf("the top card of your library", "library", "hand")] }], undefined, { 1: "Search your library for a basic land card, reveal it, then shuffle. Put the top card of your library into your hand." });
+    expect(searchAbility(abilities).toZone).toBeUndefined();
+    expect(unclaimed.filter((u) => u.verb === "put")).toHaveLength(1);
+  });
+
+  test("a put with no search in its clause is untouched", () => {
+    const { abilities, unclaimed } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [putOf("it", "library", "hand")] }], undefined, { 1: "Reveal the top card of your library. Put it into your hand." });
+    expect(abilities.some((a) => a.toZone !== undefined)).toBe(false);
+    expect(unclaimed).toHaveLength(1);
+  });
+
+  test("dig remainder: 'put the rest on the bottom' beside the dig's own put is claimed, with no emit (Acclaimed Contender)", () => {
+    const { abilities, unclaimed } = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature" },
+      actions: [putOf("a revealed Knight card", "library", "hand"), putOf("the rest", "library", "library")] }], undefined, { 1: "Put the rest on the bottom of your library in a random order." });
+    expect(unclaimed.filter((u) => u.object === "the rest")).toEqual([]);
+    expect(abilities.flatMap((a) => a.emits ?? []).some((e) => e.verb === "enters")).toBe(false);
+    expect(abilities.some((a) => a.toZone !== undefined)).toBe(false);
+  });
+
+  test("'the rest' with nothing it could be the rest of, and 'the rest' into the graveyard, stay unclaimed", () => {
+    const lone = deriveAbilities([{ id: 1, abilityType: "spell", actions: [putOf("the rest", "library", "library")] }], undefined, { 1: "Put the rest on the bottom of your library." });
+    expect(lone.unclaimed).toHaveLength(1);
+    // "the rest into your graveyard" is a mill by the zone rules and stays one: the remainder rule only reads library>library.
+    const yard = deriveAbilities([{ id: 1, abilityType: "spell", actions: [putOf("a card", "library", "hand"), putOf("the rest", "library", "graveyard")] }], undefined, { 1: "Put one into your hand and the rest into your graveyard." });
+    expect(yard.abilities.some((a) => a.effect.kind === "mill")).toBe(true);
+    expect(yard.abilities.some((a) => a.toZone !== undefined)).toBe(false);
+  });
+
+  test("counter then 'put it on top of its owner's library instead' sets the counter's toZone (Memory Lapse)", () => {
+    const { abilities, unclaimed } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target spell" }, putOf("that spell", "stack", "library")] }], undefined, { 1: "Counter target spell. If that spell is countered this way, put it on top of its owner's library instead of into that player's graveyard." });
+    expect(abilities.find((a) => a.emits?.some((e) => e.verb === "counter-spell"))!.toZone).toBe("library");
+    expect(unclaimed.filter((u) => u.verb === "put")).toEqual([]);
+  });
+
+  test("a counter with no put has no destination", () => {
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target spell" }] }]);
+    expect(abilities.some((a) => a.toZone !== undefined)).toBe(false);
+  });
+});
