@@ -657,6 +657,58 @@ test("a card that says both keeps its other half", () => {
   expect(ruleMatches(protectionRule(), c)).toBe(true);
 });
 
+const SHURI_REMINDER = "(They're artifacts with indestructible and \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")";
+const VIBRANIUM_REMINDER = "(It's an artifact with indestructible and \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")";
+
+test("a token's reminder text is the TOKEN'S, not the card's (#1289)", () => {
+  const cases: [string, string][] = [
+    ["Shuri's Fabricator", `When this artifact enters, create two tapped Vibranium tokens. ${SHURI_REMINDER}\n{6}, {T}: Return target artifact card from your graveyard to the battlefield with a finality counter on it. Activate only as a sorcery. (If a permanent with a finality counter on it would be put into a graveyard, exile it instead.)`],
+    ["Vibranium Mining Mech", `Trample\nWhenever this Vehicle enters or attacks, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\n{2}: This Vehicle gets +1/+0 until end of turn.\nCrew 2`],
+    ["T'Challa, the Black Panther", `Whenever T'Challa enters or attacks, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\nWhenever you cast an artifact spell with mana value 4 or greater, put two +1/+1 counters on T'Challa.`],
+    ["Dora Milaje Elite", `First strike\nWhen this creature enters, if an opponent controls more lands than you, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\nSacrifice this creature: Legendary permanents you control gain indestructible until end of turn.`],
+  ];
+  for (const [name, text] of cases) {
+    const c = asCard(name, text);
+    expect(ruleMatches(protectionRule(), c), name).toBe(name === "Dora Milaje Elite");
+  }
+});
+
+test("ownText blanks a reminder after a create-token sentence and no other parenthesis (#1289)", () => {
+  const out = ownText({ oracleText: `When this enters, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\nActivate only as a sorcery. (If a permanent with a finality counter on it would be put into a graveyard, exile it instead.)` });
+  expect(out).not.toContain("indestructible");
+  expect(out).not.toContain("Add {C}");
+  expect(out).toContain("(If a permanent with a finality counter");
+});
+
+test("a sentence whose subject is the card itself protects only the card (#1289)", () => {
+  const selfOnly: [string, string][] = [
+    ["Falkenrath Aristocrat", "Flying, haste\nSacrifice a creature: This creature gains indestructible until end of turn. If the sacrificed creature was a Human, put a +1/+1 counter on this creature."],
+    ["Dragonlord Ojutai", "Flying\nDragonlord Ojutai has hexproof as long as it's untapped.\nWhenever Dragonlord Ojutai deals combat damage to a player, look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order."],
+    ["Crew Captain", "Haste\nThis creature has indestructible as long as it entered this turn."],
+    ["Kogla, the Titan Ape", "When Kogla enters, it fights up to one target creature you don't control.\nWhenever Kogla attacks, destroy target artifact or enchantment defending player controls.\n{1}{G}: Return target Human you control to its owner's hand. Kogla gains indestructible until end of turn."],
+    ["Hungering Puppetbeast", `When this creature enters, create a Heartwood token. (It's a red and green artifact with "{T}: Add {R} or {G}.")\n{1}, Sacrifice another artifact: Put a +1/+1 counter on this creature. It gains your choice of trample, hexproof, or haste until end of turn.`],
+    ["Ellie", "Ellie deals 2 damage to target player and gains indestructible until end of turn."],
+    ["Until Card", "{1}: Until end of turn, this creature gains hexproof."],
+  ];
+  for (const [name, text] of selfOnly) expect(ruleMatches(protectionRule(), asCard(name, text)), name).toBe(false);
+});
+
+test("a grant to something else keeps the role even beside a self sentence (#1289)", () => {
+  const keeps: [string, string][] = [
+    ["Feat of Resistance", "Put a +1/+1 counter on target creature you control. It gains protection from the color of your choice until end of turn. (It can't be blocked, targeted, dealt damage, enchanted, or equipped by anything of that color.)"],
+    ["Gaea's Gift", "Put a +1/+1 counter on target creature you control. It gains reach, trample, hexproof, and indestructible until end of turn. (It can't be the target of spells or abilities your opponents control. Damage and effects that say \"destroy\" don't destroy it.)"],
+    ["Fated Return", "Put target creature card from a graveyard onto the battlefield under your control. It gains indestructible. If it's your turn, scry 2."],
+    ["Airtight Alibi", "Flash\nEnchant creature\nWhen this Aura enters, untap enchanted creature. It gains hexproof until end of turn. If it's suspected, it's no longer suspected.\nEnchanted creature gets +2/+2 and can't become suspected."],
+    ["Lightning Greaves", "Equipped creature has haste and shroud. (It can't be the target of spells or abilities.)\nEquip {0}"],
+    ["Heroic Intervention", "Permanents you control gain hexproof and indestructible until end of turn."],
+    // Inside a quoted ability granted to others, "this creature" and "It" are the GRANTEE, not the card.
+    ["Agent of the Shadow Thieves", "Commander creatures you own have \"Whenever this creature attacks a player, if no opponent has more life than that player, put a +1/+1 counter on this creature. It gains deathtouch and indestructible until end of turn.\""],
+    ["Both Sentences", "This creature gains indestructible until end of turn.\nSacrifice this creature: Other creatures you control gain hexproof until end of turn."],
+    ["Plural Subject", "This creature and other creatures you control gain indestructible until end of turn."],
+  ];
+  for (const [name, text] of keeps) expect(ruleMatches(protectionRule(), asCard(name, text)), name).toBe(true);
+});
+
 test("a card with no protection at all does not match the rule at all", () => {
   // NOT A TEST OF THE EMPTY GUARD, and saying so is the point: `protectionIsOwnKeyword` only runs
   // once the protection pattern has matched, so its `found(txt).size === 0` branch is UNREACHABLE
