@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { ClauseRecord } from "@edh-seer/tagger";
-import { droppedKeys, groupDropped } from "./dropped-clauses-core.js";
+import { droppedKeys, groupDropped, groupSplit, splitReported } from "./dropped-clauses-core.js";
 
 const clause = (id: number, ...verbs: string[]): ClauseRecord => ({ id, actions: verbs.map((verb) => ({ verb })) });
 const none = { abilityClauses: new Set<number>(), granted: new Set<number>(), hasManaLines: false };
@@ -46,4 +46,21 @@ test("groups count actions and cards by verb and zone, with examples", () => {
   const g = groupDropped({ A: ["0:cant", "1:cant"], B: ["0:cant", "2:put:library>hand"] });
   expect(g[0]).toEqual({ shape: "cant", actions: 3, cards: 2, examples: ["A", "B"] });
   expect(g[1]).toEqual({ shape: "put library>hand", actions: 1, cards: 1, examples: ["B"] });
+});
+
+test("a dropped action is REPORTED when derive's `unclaimed` names its clause, else SILENT", () => {
+  const m = { A: ["0:cant", "1:draw"], B: ["3:cant"] };
+  const { reported, silent } = splitReported(m, { A: new Set(["1"]) });
+  expect(reported).toEqual({ A: ["1:draw"] });
+  expect(silent).toEqual({ A: ["0:cant"], B: ["3:cant"] });
+});
+
+test("a clause id of 10 is not reported by an unclaimed entry for clause 1", () => {
+  expect(splitReported({ A: ["10:cant"] }, { A: new Set(["1"]) }).silent).toEqual({ A: ["10:cant"] });
+});
+
+test("the split table counts reported and silent actions per shape", () => {
+  const g = groupSplit({ A: ["0:cant", "1:cant"], B: ["0:cant", "2:put:library>hand"] }, { A: new Set(["1"]), B: new Set(["2"]) });
+  expect(g[0]).toEqual({ shape: "cant", actions: 3, reported: 1, silent: 2, cards: 2, examples: ["A", "B"] });
+  expect(g[1]).toEqual({ shape: "put library>hand", actions: 1, reported: 1, silent: 0, cards: 1, examples: ["B"] });
 });

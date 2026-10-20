@@ -138,7 +138,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -318,13 +318,20 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "c259e16f-2a44-4552-8678-815f757a02e8",
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "42b3a7310fc00bd003f64d067bff406ee1c24d059734f031e1f020e453d06543",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "you may spend mana as though it were mana of any color to activate abilities of creatures you control",
+     "verb": "other"
+    }
+   ],
    "unknownTriggers": [
     "narrowing:exiled"
    ]
@@ -403,7 +410,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -546,7 +553,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "11f17f85-ca97-4551-838f-7cb32f0e5f10",
@@ -737,7 +744,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "permanent",
     "reach": [
@@ -786,6 +793,13 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "2beb7cfdb977bbe37a04424a1eb3e44b6c0609e37e259155a01d71e194618866",
+   "unclaimed": [
+    {
+     "clause": 3,
+     "object": "it",
+     "verb": "tap"
+    }
+   ],
    "unknownTriggers": [
     "chapter",
     "chapter",
@@ -881,7 +895,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -1007,7 +1021,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -1198,7 +1212,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -1254,7 +1268,14 @@
    "oracleId": "e6acafb7-856f-4125-a908-a620635b8ba3",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "d87777ea13444de6034c71b9b32417ab7f3aa98b5e56ca95ae736ae8c084517c"
+   "segmentHash": "d87777ea13444de6034c71b9b32417ab7f3aa98b5e56ca95ae736ae8c084517c",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "them",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Cabal Coffers": {
@@ -1342,7 +1363,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -1486,7 +1507,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -1661,7 +1682,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -1791,13 +1812,30 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "b4d27fad-9a94-4760-80a6-6a2948109864",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "e28e67f4ae0b27a99b43165fe59a220ce61ba3ff74ab879b7ccd92b2ae3145fe"
+   "segmentHash": "e28e67f4ae0b27a99b43165fe59a220ce61ba3ff74ab879b7ccd92b2ae3145fe",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "Lands you control are Plains",
+     "verb": "other"
+    },
+    {
+     "clause": 2,
+     "object": "Nonland permanents you control are white. The same is true for spells you control and nonland cards you own that aren't on the battlefield",
+     "verb": "other"
+    },
+    {
+     "clause": 3,
+     "object": "You may spend white mana as though it were mana of any color. You may spend other mana only as though it were colorless mana",
+     "verb": "other"
+    }
+   ]
   }
  },
  "Chromatic Lantern": {
@@ -1907,7 +1945,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2120,7 +2158,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2169,7 +2207,14 @@
      "G"
     ],
     "covers": "all"
-   }
+   },
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "you may spend mana as though it were mana of any color",
+     "verb": "other"
+    }
+   ]
   }
  },
  "Circuitous Route": {
@@ -2322,7 +2367,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -2378,7 +2423,14 @@
    "oracleId": "30afacd9-4680-4aac-8c22-584f9418822d",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "d572ef54a34bbb7d877fa316e34cc3ac456449d51e43732614439462a5417cbb"
+   "segmentHash": "d572ef54a34bbb7d877fa316e34cc3ac456449d51e43732614439462a5417cbb",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "up to two basic land cards and/or Gate cards",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Coldsteel Heart": {
@@ -2455,7 +2507,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2494,7 +2546,19 @@
    "oracleId": "21d700e8-0255-418e-96a0-6fe05b3f836d",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "0be5a431d1cbc88c42ed2f1a2121103feaf3bac9325f8ed017c2d92f475a6951"
+   "segmentHash": "0be5a431d1cbc88c42ed2f1a2121103feaf3bac9325f8ed017c2d92f475a6951",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "this",
+     "verb": "tap"
+    },
+    {
+     "clause": 2,
+     "object": "choose a color",
+     "verb": "other"
+    }
+   ]
   }
  },
  "Cryptolith Rite": {
@@ -2592,7 +2656,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2769,7 +2833,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -2825,7 +2889,21 @@
    "oracleId": "8b755881-a72d-4e21-a369-d2924eb4585a",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c"
+   "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "one",
+     "verb": "tap"
+    },
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "the other",
+     "toZone": "hand",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Darkwater Catacombs": {
@@ -2904,7 +2982,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -3269,7 +3347,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -3482,7 +3560,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -3538,7 +3616,14 @@
    "oracleId": "793b0c73-601c-41dc-b49a-45fee4970d52",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "53ef57c4ff702ef6525e883be779f03bad2d2d42d70ec4e875360dc78eb8a8d9"
+   "segmentHash": "53ef57c4ff702ef6525e883be779f03bad2d2d42d70ec4e875360dc78eb8a8d9",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "it",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Delighted Halfling": {
@@ -3650,7 +3735,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -3730,7 +3815,14 @@
    "oracleId": "f9d3b046-0b95-4103-a630-4b3fb88bb60b",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "9f940e186646ec382e45d4f57cea5e3c18192fbb4be91d5a0e33c7503cb87efa"
+   "segmentHash": "9f940e186646ec382e45d4f57cea5e3c18192fbb4be91d5a0e33c7503cb87efa",
+   "unclaimed": [
+    {
+     "clause": 2,
+     "object": "spend this mana only to cast a legendary spell, and that spell can't be countered",
+     "verb": "other"
+    }
+   ]
   }
  },
  "Dire Mimic": {
@@ -3856,7 +3948,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "isOneShot": true,
    "manaLines": [
     {
@@ -4000,7 +4092,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -4237,7 +4329,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "5af48f87-7b94-44de-90e3-91f10ced00d3",
@@ -4383,7 +4475,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "77ccbea1-70af-4194-adad-39a904221c75",
@@ -4542,7 +4634,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -4601,7 +4693,14 @@
    "oracleId": "7255705c-b788-4bb1-824a-9262f4a0864e",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "676d55ed58c2531e3f60fe139876cdc29fd6219f5d7217d3a088291d7929852d"
+   "segmentHash": "676d55ed58c2531e3f60fe139876cdc29fd6219f5d7217d3a088291d7929852d",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "the rest",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Elvish Archdruid": {
@@ -4718,7 +4817,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -4847,7 +4946,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -5045,7 +5144,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -5101,7 +5200,14 @@
    "oracleId": "a0abd957-01a0-4aa9-8fc8-0e6840d21606",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "d55860ea4665c449f16e4d7455136cd0329fe2ee44480573af31e9b24e0031f3"
+   "segmentHash": "d55860ea4665c449f16e4d7455136cd0329fe2ee44480573af31e9b24e0031f3",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "them",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Faeburrow Elder": {
@@ -5213,7 +5319,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -5401,7 +5507,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -5455,7 +5561,14 @@
    "oracleId": "495e52e6-4c2b-4574-9474-eadbdcc8b4ac",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "3fed79c656e0ee417eeff1b4bed0a0bec40ee9741d8b35a0d4d92ef818559cf3"
+   "segmentHash": "3fed79c656e0ee417eeff1b4bed0a0bec40ee9741d8b35a0d4d92ef818559cf3",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "it",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Fellwar Stone": {
@@ -5531,7 +5644,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -5660,7 +5773,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -5791,7 +5904,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -5832,7 +5945,14 @@
    "oracleId": "97b477d8-2e05-475e-8ed6-7d680cb21cd9",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "05aa624dc7e700ef6dc60410ae9f9f47a9d084f78773efdd905178b517de2005"
+   "segmentHash": "05aa624dc7e700ef6dc60410ae9f9f47a9d084f78773efdd905178b517de2005",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "This artifact",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Frenzied Tilling": {
@@ -5992,7 +6112,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -6048,7 +6168,14 @@
    "oracleId": "c6b915b3-b504-42fb-8059-62a3e8e224e1",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "2c9e104149fe4022edf92b3fe1179d72f52f3b21d271c4e6812604e4d7cfb31e"
+   "segmentHash": "2c9e104149fe4022edf92b3fe1179d72f52f3b21d271c4e6812604e4d7cfb31e",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "that card",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Fyndhorn Elves": {
@@ -6134,7 +6261,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -6324,7 +6451,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "9fc28e1f-f4ea-4bf8-9442-a36dba3b3b29",
@@ -6548,7 +6675,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -6763,7 +6890,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -7021,7 +7148,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "3fa71348-fa4d-4f39-a451-cf1570591991",
@@ -7083,7 +7210,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "b2c6aa39-2d2a-459c-a555-fb48ba993373",
@@ -7168,7 +7295,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -7314,7 +7441,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -7493,7 +7620,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "8959a147-75b1-4f4a-a699-cb354ff55e59",
@@ -7599,7 +7726,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -7770,7 +7897,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "isOneShot": true,
    "manaLines": [
     {
@@ -7976,7 +8103,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -8071,7 +8198,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "a3fb7228-e76b-4e96-a40e-20b5fed75685",
@@ -8123,7 +8250,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "ae1f2ab5-c6a5-4d49-a746-3cb4668bf805",
@@ -8139,7 +8266,24 @@
      "G"
     ],
     "covers": "all"
-   }
+   },
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "all permanents become artifacts in addition to their other types",
+     "verb": "other"
+    },
+    {
+     "clause": 2,
+     "object": "all cards that aren't on the battlefield, spells, and permanents are colorless",
+     "verb": "other"
+    },
+    {
+     "clause": 3,
+     "object": "players may spend mana as though it were mana of any color",
+     "verb": "other"
+    }
+   ]
   }
  },
  "Mystic Skull // Mystic Monstrosity": {
@@ -8318,7 +8462,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -8499,7 +8643,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -8631,13 +8775,27 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "c4efdbab-711d-4269-9b24-b05d36f7e5c7",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "56f804fc42fdf70f6229986c50f973d4a14d0ae51ab420c7d3111dc220b56ef0"
+   "segmentHash": "56f804fc42fdf70f6229986c50f973d4a14d0ae51ab420c7d3111dc220b56ef0",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "the rest",
+     "toZone": "library",
+     "verb": "put"
+    },
+    {
+     "clause": 2,
+     "object": "mana cost of planeswalker spells you cast may be paid with mana as though it were mana of any color",
+     "verb": "cost-modify"
+    }
+   ]
   }
  },
  "Opal Palace": {
@@ -8773,7 +8931,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -8922,7 +9080,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -9050,7 +9208,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -9201,7 +9359,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -9342,7 +9500,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -9487,7 +9645,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "d90882ae-6572-4214-8d9c-0bdfb75f9be2",
@@ -9635,7 +9793,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -9691,7 +9849,14 @@
    "oracleId": "8539f295-5d58-4436-a73a-b9277c4c7795",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "e516baa5854eee966674c7f611c6860d389f03ee473345e77a4393be59c65201"
+   "segmentHash": "e516baa5854eee966674c7f611c6860d389f03ee473345e77a4393be59c65201",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "that card",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Reckless Fireweaver": {
@@ -9794,7 +9959,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "180e1a7e-890d-477c-80a5-da8a5f2857b3",
@@ -9989,7 +10154,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -10172,7 +10337,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -10291,7 +10456,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -10395,7 +10560,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "131a7475-0b9e-46eb-9ade-fef1b9820184",
@@ -10407,7 +10572,19 @@
      "U"
     ],
     "covers": "lands"
-   }
+   },
+   "unclaimed": [
+    {
+     "clause": 2,
+     "object": "all lands become Islands in addition to their other types",
+     "verb": "other"
+    },
+    {
+     "clause": 3,
+     "object": "creatures without flying or islandwalk can't attack",
+     "verb": "cant"
+    }
+   ]
   }
  },
  "Study Hall": {
@@ -10538,7 +10715,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -10718,7 +10895,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -10847,7 +11024,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "56719f6a-1a6c-4c0a-8d21-18f7d7350b68",
@@ -10960,7 +11137,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "feb00c6d-ff43-49bc-84d5-57e2d4651258",
@@ -11117,7 +11294,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -11195,7 +11372,19 @@
    "oracleId": "19cf5798-4600-4a66-b1c7-de77bde157d0",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "590aa8528e01f62ce8e195e180524e62b106b99f1d5cf0d24023df3b758da73e"
+   "segmentHash": "590aa8528e01f62ce8e195e180524e62b106b99f1d5cf0d24023df3b758da73e",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "that card this turn",
+     "verb": "play"
+    },
+    {
+     "clause": 3,
+     "object": "spend this mana only to cast instant and sorcery spells",
+     "verb": "other"
+    }
+   ]
   }
  },
  "Talisman of Creativity": {
@@ -11330,7 +11519,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -11538,7 +11727,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -11895,7 +12084,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -11980,7 +12169,14 @@
    "oracleId": "3437d504-bf62-4c27-b15f-f6330182ff7e",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "07ba9f1d5d23b17053928630591dbd408f39fdef3a31257311764cb4368fd326"
+   "segmentHash": "07ba9f1d5d23b17053928630591dbd408f39fdef3a31257311764cb4368fd326",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "This land",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Three Visits": {
@@ -12107,7 +12303,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -12264,7 +12460,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -12462,7 +12658,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -12555,7 +12751,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "db6174d7-211d-4817-b8e4-8384594c83f9",
@@ -12567,7 +12763,14 @@
      "B"
     ],
     "covers": "lands"
-   }
+   },
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "each land is a Swamp in addition to its other land types",
+     "verb": "other"
+    }
+   ]
   }
  },
  "Utopia Sprawl": {
@@ -12658,7 +12861,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -12706,6 +12909,13 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "415dc8aaaaccbb7a5f27b2cb0145c0ea8d2e6595993a63c50f778271d53402ce",
+   "unclaimed": [
+    {
+     "clause": 2,
+     "object": "choose a color",
+     "verb": "other"
+    }
+   ],
    "unknownTriggers": [
     "taps-for-mana"
    ]
@@ -12864,7 +13074,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -12920,7 +13130,21 @@
    "oracleId": "b392fabc-51f2-4ae4-b21c-1c662e4c6953",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "79974d6b04857d21cdd9cd8b217a7b25fbeab1afe51a4e54366f140b3166abcd"
+   "segmentHash": "79974d6b04857d21cdd9cd8b217a7b25fbeab1afe51a4e54366f140b3166abcd",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "you may pay {3}{G} rather than pay this spell's mana cost",
+     "verb": "cost-modify"
+    },
+    {
+     "clause": 2,
+     "fromZone": "library",
+     "object": "the rest into your hand",
+     "toZone": "hand",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Viewpoint Synchronization": {
@@ -13053,7 +13277,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -13109,7 +13333,21 @@
    "oracleId": "2e338e09-5758-4cc2-9143-21f050a28677",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "41d78ba5fd0a1db7f9c19c5b70d7b415021a77c5e6e97a58880dfc159ebe333a"
+   "segmentHash": "41d78ba5fd0a1db7f9c19c5b70d7b415021a77c5e6e97a58880dfc159ebe333a",
+   "unclaimed": [
+    {
+     "clause": 2,
+     "object": "two of them",
+     "verb": "tap"
+    },
+    {
+     "clause": 2,
+     "fromZone": "library",
+     "object": "the other",
+     "toZone": "hand",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Vizier of the Menagerie": {
@@ -13208,13 +13446,20 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "4f890d42-e4f1-4eed-aa6c-718865de8927",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "ea408508cdf8ef31906bea4aaecebf1ec11698f0f569a6a32fe7be57d3877c59"
+   "segmentHash": "ea408508cdf8ef31906bea4aaecebf1ec11698f0f569a6a32fe7be57d3877c59",
+   "unclaimed": [
+    {
+     "clause": 3,
+     "object": "you can spend mana of any type to cast creature spells",
+     "verb": "cost-modify"
+    }
+   ]
   }
  },
  "Wild Growth": {
@@ -13300,7 +13545,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -13458,7 +13703,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "67a52a74-9474-4f4e-8785-6ff54078a8ca",
@@ -13630,7 +13875,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "permanent",
     "reach": [
@@ -13749,7 +13994,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -13788,7 +14033,14 @@
    "oracleId": "b166b670-febc-4821-855e-f8d465644c03",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "6f6ec1494fb5f6da3cf980fdb1b3e06ace4d0654b70352791ed18d8717dbfbae"
+   "segmentHash": "6f6ec1494fb5f6da3cf980fdb1b3e06ace4d0654b70352791ed18d8717dbfbae",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "This artifact",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Yavimaya, Cradle of Growth": {
@@ -13836,7 +14088,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 18,
    "oracleId": "8dd5f5af-d2d8-4356-8617-8381081b930c",
@@ -13848,7 +14100,14 @@
      "G"
     ],
     "covers": "lands"
-   }
+   },
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "each land becomes a Forest in addition to its other land types",
+     "verb": "other"
+    }
+   ]
   }
  }
 }

@@ -71,3 +71,29 @@ export function groupDropped(m: Dropped, examples = 3): DropGroup[] {
   return [...acc].map(([shape, g]) => ({ shape, actions: g.actions, cards: g.cards.size, examples: [...g.cards].slice(0, examples) }))
     .sort((a, b) => b.actions - a.actions || cmp(a.shape, b.shape));
 }
+
+/** A dropped key's clause id (`<id>:<verb>...`). Ids may be strings ("2.1", a normalizer split), so it stays text. */
+const clauseOf = (key: string): string => key.slice(0, key.indexOf(":"));
+
+/** Split the drops by whether DERIVE REPORTED them: some entry of the card's `CardTags.unclaimed` names the clause
+ *  (`reported`), or nothing says it was lost (`silent`). Summary only: the ratchet key is the same for both. */
+export function splitReported(m: Dropped, reported: Readonly<Record<string, ReadonlySet<string>>>): { reported: Dropped; silent: Dropped } {
+  const out = { reported: {} as Dropped, silent: {} as Dropped };
+  for (const [card, keys] of Object.entries(m)) {
+    for (const k of keys) {
+      const side = reported[card]?.has(clauseOf(k)) ? out.reported : out.silent;
+      (side[card] ??= []).push(k);
+    }
+  }
+  return out;
+}
+
+export interface SplitGroup extends DropGroup { reported: number; silent: number }
+
+/** `groupDropped` with the reported/silent split per shape. */
+export function groupSplit(m: Dropped, reported: Readonly<Record<string, ReadonlySet<string>>>): SplitGroup[] {
+  const parts = splitReported(m, reported);
+  const count = (d: Dropped): Map<string, number> => new Map(groupDropped(d, 0).map((g) => [g.shape, g.actions]));
+  const rep = count(parts.reported), sil = count(parts.silent);
+  return groupDropped(m).map((g) => ({ ...g, reported: rep.get(g.shape) ?? 0, silent: sil.get(g.shape) ?? 0 }));
+}

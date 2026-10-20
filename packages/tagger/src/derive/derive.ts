@@ -6,7 +6,7 @@
  *  silence is indistinguishable from a card that does nothing, which is exactly how Bitterblossom
  *  sat in the corpus as a vanilla bear. */
 import type { Action, ClauseRecord } from "../canonicalize.js";
-import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
+import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
@@ -513,7 +513,8 @@ import { emblemRecipient } from "../emblem.js";
 // 355: #1295 item 4 review -- the `leaves` emit of a put into a library (a tuck) carries `tuck: true`, so the quality ladder (exile > destroy > bounce > tuck) scores Condemn, Oust, Teferi -3 below a bounce.
 // 356: #1295 item 5 review -- an onFlip action takes the k-th sentence carrying its verb's printed word, not the first sentence holding its amount (Winter Sky's draw is the lose side, Bangchuckers' two "2 damage" are opposite sides, Chaotic Strike's unconditional draw is unmarked).
 // 357: #1295 item 4 review -- "the owner of <target> puts it on their choice of the top or bottom of their library" tucks THAT target (the grammar named no object, so the record writer read "it" as the trigger's subject: Plan for All Outcomes derived a false self tuck of "this enchantment").
-export const DERIVE_VERSION = 357;
+// 358: #1299 task 2 -- `CardTags.unclaimed` is persisted (every action no rule claimed, with its clause id), as `unknownTriggers` is. No ability changes.
+export const DERIVE_VERSION = 358;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -661,6 +662,11 @@ const POLYMORPH_REVEAL = /\b(?:its|that creature's) controller reveals cards fro
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 export const INERT_VERBS: ReadonlySet<string> = new Set(["none"]);
+
+/** The persisted shape of an unclaimed action (`CardTags.unclaimed`): the clause, the verb, the object and the zones it states. */
+function unclaimedRecord(clause: number | string, a: Action): UnclaimedAction {
+  return { clause, verb: a.verb ?? "?", ...(a.object ? { object: a.object } : {}), ...(a.fromZone ? { fromZone: a.fromZone } : {}), ...(a.toZone ? { toZone: a.toZone } : {}) };
+}
 
 /** Proliferate is a keyword ACTION -- a discrete thing a player does -- so a STATIC clause naming
  *  it is modifying somebody else's proliferate, never performing one. Tekuthal ("if you would
@@ -1957,9 +1963,12 @@ export function deriveAbilities(
   curse?: boolean,
   /** The card's printed type line includes Creature (WAS_A_CREATURE reads only then). */
   creatureCard?: boolean,
-): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
+): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
-  const unclaimed: Action[] = [];
+  /** Every action nothing claimed, with the clause that printed it (#1299). `unclaimed` is the same list as bare actions. */
+  const unclaimedHere: { clause: number | string; action: Action }[] = [];
+  let clauseId: number | string = 0;
+  const unclaimed = { push(action: Action): void { unclaimedHere.push({ clause: clauseId, action }); } };
   const unknownTriggers: string[] = [];
   // CLEAVE (CR 702.148): "if you cast this spell for its cleave cost, remove the words in square brackets". The model keeps
   // the bracketed words as if they were printed ("Return target nonland permanent [you control]" -> "...you control"), so
@@ -1997,6 +2006,7 @@ export function deriveAbilities(
   /** Re-homed records dropped-if-redundant: clause id -> the id of the record that already read their event off the same sentence. */
   const twinOf = new Map<number | string, number | string>();
   for (let clause of clauses) {
+    clauseId = clause.id;
     const refusedBefore = unknownTriggers.length;
     // "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860): see `exiledAcrossClauses`.
     ({ clause, lastExiled } = exiledAcrossClauses(clause, lastExiled, cardName));
@@ -2004,6 +2014,7 @@ export function deriveAbilities(
     // ability -- Vivi's Persistence's Wizard both watches the cast AND deals the damage -- so
     // keeping the effect and dropping the trigger would leave the card claiming to do a thing it
     // never does. The token's own derived row carries both halves.
+    // SILENT BY DESIGN, NOT UNCLAIMED (#1299): the token's or emblem's own derived row carries this clause.
     if (grantedToken?.has(clause.id)) continue;
     // A MISPLACED RECORD READS NO TEXT BUT ITS OWN SENTENCE. The stored numbering drifts from `segment()`'s when the model splits a compound
     // (Astrid Peth) or merges two sentences (Kratos): a record whose event has NO printed cue in the text numbered to it, but does in other
@@ -2118,6 +2129,7 @@ export function deriveAbilities(
       if (made && !(maker.emits ?? []).some((e) => e.verb === "leaves" || e.verb === "dies")) {
         maker.emits = [...(maker.emits ?? []), { verb: /^sacrifice$/i.test(cleanup[1]) ? "dies" : "leaves", subject: { ...made.subject } }];
       }
+      // SILENT BY DESIGN, NOT UNCLAIMED (#1299): the cleanup's home is the maker's `temporary` flag and its leave/die emit above.
       continue;
     }
     // WHAT A REFERENCE OBJECT POINTS AT: see `references.ts`.
@@ -2371,6 +2383,7 @@ export function deriveAbilities(
         abilities.push({ kind: "on-cast", repeats: "once", effect: { kind: "" }, emits: [casualtySacrifice(Number(printedCasualty[1]))] });
         continue;
       }
+      // Inert: states no action (`INERT_VERBS`), so there is nothing to report. A printed casualty line above has its own ability.
       if (INERT_VERBS.has(action.verb ?? "")) continue;
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
       // See antecedentFor: a pronoun object inherits the thing named earlier in the same clause.
@@ -3206,10 +3219,11 @@ export function deriveAbilities(
     for (let i = abilities.length - 1; i >= 0; i--) {
       const a = abilities[i]!;
       const partnerId = a.clause !== undefined ? twinOf.get(a.clause) : undefined;
+      // SILENT BY DESIGN (#1299): `redundant` proves the partner clause's ability already says all of this one does.
       if (partnerId !== undefined && redundant(a, partnerId)) abilities.splice(i, 1);
     }
   }
-  return { abilities, unclaimed, unknownTriggers };
+  return { abilities, unclaimed: unclaimedHere.map((u) => u.action), unclaimedAt: unclaimedHere.map((u) => unclaimedRecord(u.clause, u.action)), unknownTriggers };
 }
 const POLYMORPH_VERBS: ReadonlySet<string> = new Set(["dies", "exiled", "leaves", "enters"]);
 
@@ -3280,7 +3294,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
     chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"));
-  const { unknownTriggers } = derived;
+  const { unknownTriggers, unclaimedAt } = derived;
   // AN AURA ON AN OPPONENT'S CREATURE WATCHES THE OPPONENT'S CREATURE (owner 2026-09-23, AN7).
   // Nurgle's Rot prints "Enchant creature an opponent controls / When enchanted creature dies": the
   // clause subject "enchanted creature" carries no controller and derived `you`, so the report
@@ -3386,5 +3400,6 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     }),
     // Written only when there is something to surface, so a clean card stays byte-identical.
     ...(unknownTriggers.length ? { unknownTriggers } : {}),
+    ...(unclaimedAt.length ? { unclaimed: unclaimedAt } : {}),
   };
 }

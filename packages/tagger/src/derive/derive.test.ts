@@ -5035,3 +5035,30 @@ test("Plan for All Outcomes: the tuck is the targeted permanent, with no self le
   expect(leaves).toHaveLength(1);
   expect(leaves[0]).toMatchObject({ tuck: true, subject: { scope: "target", notType: ["land"] } });
 });
+
+// #1299 task 2: `unclaimed` is persisted, as `unknownTriggers` is, and carries the clause that printed it.
+describe("CardTags.unclaimed", () => {
+  const derive = (clauses: Parameters<typeof deriveCardTags>[0]["clauses"], extra: Partial<Parameters<typeof deriveCardTags>[0]> = {}) =>
+    deriveCardTags({ oracleId: "x", clauses, characteristics: MINIMAL_CHARACTERISTICS, ...extra });
+
+  test("an action no rule claims is persisted with its clause id", () => {
+    const tags = derive([{ id: 7, abilityType: "static", actions: [{ verb: "other", object: "flip a coin", fromZone: null, toZone: "hand" }] }]);
+    expect(tags.unclaimed).toEqual([{ clause: 7, verb: "other", object: "flip a coin", toZone: "hand" }]);
+  });
+
+  test("an inert-only clause leaves the key absent", () => {
+    const tags = derive([{ id: 1, abilityType: "static", actions: [{ verb: "none" }] }]);
+    expect("unclaimed" in tags).toBe(false);
+  });
+
+  test("a mana clause that became a mana line is not unclaimed", () => {
+    const tags = derive([{ id: 1, abilityType: "activated", actions: [{ verb: "add-mana", object: "{C}{C}" }] }],
+      { clauseTexts: { 1: "Add {C}{C}." }, clauseCosts: { 1: "{T}" } });
+    expect("unclaimed" in tags).toBe(false);
+  });
+
+  test("a clause whose every action is claimed leaves the key absent", () => {
+    const tags = derive([{ id: 1, abilityType: "spell", actions: [{ verb: "destroy", object: "target creature" }] }]);
+    expect("unclaimed" in tags).toBe(false);
+  });
+});

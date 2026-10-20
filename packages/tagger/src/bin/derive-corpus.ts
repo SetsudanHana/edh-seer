@@ -30,6 +30,7 @@ const derivedCol = store.db.collection<DerivedTagsDoc>(DERIVED_COLLECTION);
 const clauseDocs = await clausesCol.find({}).toArray();
 console.log(`clause docs: ${clauseDocs.length} | DERIVE_VERSION ${DERIVE_VERSION}`);
 
+let unclaimedCards = 0, unclaimedActions = 0;
 let written = 0, skipped = 0, empty = 0, tokenWritten = 0, grammarSwitched = 0;
 // STICKER CARDS ARE NOT IN `cards` (owner 2026-10-14): ingest skips them and `purge-sticker-cards`
 // removed the existing ones, with their clause and derived rows, so there is nothing to exclude here.
@@ -107,6 +108,7 @@ try {
       // counting out loud rather than silently writing a doc that reads as a vanilla bear.
       if (tags.abilities.length === 0 && (doc.canonical.length > 0)) empty++;
       written++;
+      if (tags.unclaimed) { unclaimedCards++; unclaimedActions += tags.unclaimed.length; }
       unpricedLoyaltyLines(tags.manaLines).forEach(() => unpricedLoyalty.push(doc.name));
       if (token) tokenWritten++;
       return {
@@ -124,6 +126,7 @@ try {
 }
 
 console.log(`derived ${written} (${tokenWritten} token), up-to-date ${skipped}, wrote ${empty} card(s)/token(s) with clauses but zero abilities`);
+console.log(`cards with unclaimed actions (rows derived this run; complete only under --force): ${unclaimedCards}, ${unclaimedActions} unclaimed actions in all`);
 console.log(`from the printed text alone (task 7): ${grammarSwitched} of ${written - tokenWritten} cards derived this run`);
 console.log(`loyalty-cost mana lines with no starting loyalty on the card document (rows derived this run; complete only under --force): ${unpricedLoyalty.length}${unpricedLoyalty.length ? ` (${[...new Set(unpricedLoyalty)].join(", ")})` : ""}`);
 await store.close();
