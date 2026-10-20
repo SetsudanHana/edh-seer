@@ -15,10 +15,19 @@
  *      purpose (derive.ts, `grantedToken?.has(clause.id)`) because the token's or emblem's own derived row
  *      carries both halves of the quoted ability.
  *   2. A MANA CLAUSE ON A CARD WITH `manaLines`: `ManaLine` carries no clause id (schema.ts), so the join is
- *      the best available one -- a clause whose every real action is `add-mana`, `tap` or `untap` (a mana
- *      ability or a mana-adjacent cost/tap line), on a card that derived at least one mana line. CEILING:
- *      card-level, not clause-level; a second, unrelated add-mana clause on the same card hides behind the
- *      first one's line. The same clause on a card with NO mana line is a drop, and is reported. */
+ *      the best available one -- a clause that contains an `add-mana` action and whose every real action is
+ *      `add-mana`, `tap` or `untap` (the mana ability and its tap riders), on a card that derived at least one
+ *      mana line. A tap-only clause ("{T}: Tap target creature") and a mixed one (add-mana + draw) are NOT
+ *      exempt. CEILING: card-level, not clause-level; a second, unrelated add-mana clause on the same card hides
+ *      behind the first one's line. The same clause on a card with NO mana line is a drop, and is reported.
+ *   3. A SPLICED TWIN: a stored record that duplicates a partner clause under another id (the model split a
+ *      compound, or numbered a sentence differently from `segment()`). Derive folds it into the partner
+ *      (`twinOf` / `redundant` in derive.ts) and the ability carries the partner's id. The twin map comes from
+ *      derive's own run (`deriveAbilitiesOf`), never a re-implementation; a clause is excluded when its twin's
+ *      partner has an ability.
+ *
+ *  KEYS REPEAT WITHIN A CARD (two identical actions in one clause give two identical keys) and the diff is
+ *  SET-BASED (`diffMembership`), so a second identical drop on a card that already has one does not move it. */
 import { INERT_VERBS, type ClauseRecord } from "@edh-seer/tagger";
 
 export type Dropped = Record<string, string[]>;
@@ -33,6 +42,8 @@ export interface Homes {
   granted: ReadonlySet<number>;
   /** The derived card has at least one `manaLines` entry. */
   hasManaLines: boolean;
+  /** `deriveAbilitiesOf(...).twinOf`: a re-homed record -> the record that already read its event off the same sentence. */
+  twinOf: ReadonlyMap<number | string, number | string>;
 }
 
 /** The dropped-action keys of one card, sorted. Empty when nothing is dropped. */
@@ -40,9 +51,12 @@ export function droppedKeys(records: readonly ClauseRecord[], homes: Homes): str
   const out: string[] = [];
   for (const r of records) {
     if (homes.abilityClauses.has(r.id) || homes.granted.has(r.id)) continue;
-    const real = (r.actions ?? []).filter((a) => !INERT_VERBS.has(a.verb ?? "none"));
+    // Derive's own test (`INERT_VERBS.has(action.verb ?? "")`): an action with no verb is NOT inert.
+    const real = (r.actions ?? []).filter((a) => !INERT_VERBS.has(a.verb ?? ""));
     if (real.length === 0) continue;
-    if (homes.hasManaLines && real.every((a) => MANA_VERBS.has(a.verb ?? ""))) continue;
+    const partner = homes.twinOf.get(r.id);
+    if (partner !== undefined && homes.abilityClauses.has(partner as number)) continue;
+    if (homes.hasManaLines && real.some((a) => a.verb === "add-mana") && real.every((a) => MANA_VERBS.has(a.verb ?? ""))) continue;
     for (const a of real) {
       const zone = a.fromZone || a.toZone ? `:${a.fromZone ?? ""}>${a.toZone ?? ""}` : "";
       out.push(`${r.id}:${a.verb ?? "?"}${zone}`);

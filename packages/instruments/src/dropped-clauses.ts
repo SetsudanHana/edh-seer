@@ -6,14 +6,18 @@
  *  `clauseSource: "grammar"` read `grammarClauseRecords(card).records`, a model row the stored
  *  `cardClauses.canonical`.
  *
+ *  KEYS REPEAT WITHIN A CARD and the diff is set-based (diffMembership): a second identical drop on a card that already has
+ *  one does not move the ratchet. The records are only comparable to the derived row when it was derived from them, so a row
+ *  whose normalizeVersion / segmentHash differs from the clause doc (or, for a grammar row, from the card's own text) REFUSES the run.
+ *
  *  Usage: npx tsx packages/instruments/src/dropped-clauses.ts [--bank] [--silent]
  *    (--silent lists every SILENT drop: a clause derive lost without saying so)
  *    (exit 1 on any change; `card  +key` is a new drop, `card  -key` a fixed one; --bank rewrites the snapshot) */
 import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { connect, isStickerCard, loadConfig, type CardDoc } from "@edh-seer/data";
-import { DERIVE_VERSION, grantedTokenClauses, grammarClauseRecords, type ClauseRecord } from "@edh-seer/tagger";
-import { diffMembership, serialiseSnapshot, versionDrift, type VersionGroup } from "./role-ratchet-core.js";
+import { DERIVE_VERSION, deriveAbilitiesOf, deriveInputOf, grantedTokenClauses, grammarClauseRecords, segmentHash, type ClauseRecord } from "@edh-seer/tagger";
+import { diffMembership, listSome, serialiseSnapshot, versionDrift, type VersionGroup } from "./role-ratchet-core.js";
 import { droppedKeys, groupSplit, splitReported, type Dropped } from "./dropped-clauses-core.js";
 
 const SNAPSHOT = "packages/instruments/dropped-clauses.json";
@@ -29,33 +33,57 @@ if (drift.length > 0) {
   process.exit(1);
 }
 
-interface Row { oracleId: string; clauseSource?: "grammar" | "model"; abilities?: { clause?: number }[]; unclaimed?: { clause: number | string }[]; manaLines?: unknown[] }
-const rows = new Map((await derivedCol.find({}, { projection: { oracleId: 1, clauseSource: 1, "abilities.clause": 1, "unclaimed.clause": 1, "manaLines.source": 1 } }).toArray() as unknown as Row[]).map((r) => [r.oracleId, r]));
-const canonical = new Map((await store.db.collection("cardClauses").find({}, { projection: { oracleId: 1, canonical: 1 } }).toArray() as unknown as { oracleId: string; canonical: ClauseRecord[] }[])
-  .map((d) => [d.oracleId, d.canonical]));
+interface Row { oracleId: string; normalizeVersion?: number; segmentHash?: string; clauseSource?: "grammar" | "model"; abilities?: { clause?: number }[]; unclaimed?: { clause: number | string }[]; manaLines?: unknown[] }
+const rows = new Map((await derivedCol.find({}, { projection: { oracleId: 1, normalizeVersion: 1, segmentHash: 1, clauseSource: 1, "abilities.clause": 1, "unclaimed.clause": 1, "manaLines.source": 1 } }).toArray() as unknown as Row[]).map((r) => [r.oracleId, r]));
+const clauseDocs = new Map((await store.db.collection("cardClauses").find({}, { projection: { oracleId: 1, canonical: 1, normalizeVersion: 1, segmentHash: 1 } }).toArray() as unknown as { oracleId: string; canonical: ClauseRecord[]; normalizeVersion: number; segmentHash: string }[])
+  .map((d) => [d.oracleId, d] as const));
 const docs = await store.db.collection<CardDoc>("cards").find({ "legalities.commander": "legal" }).sort({ name: 1 }).toArray();
 const inEngine = docs.filter((d) => !isStickerCard(d));
 await store.close();
 
+// STALENESS: the derived row must have been derived from the records read here. A model row from the clause doc it stored (normalizeVersion +
+// segmentHash), a grammar row from the card's own text. After a normalize --run or an erratum ingest they differ and the ratchet would print
+// spurious keys, so refuse like the version check.
+const stale: string[] = [];
+for (const d of inEngine) {
+  const row = rows.get(d._id);
+  if (!row) continue;
+  const cd = clauseDocs.get(d._id);
+  const fresh = row.clauseSource === "grammar"
+    ? row.segmentHash === segmentHash(d.oracleText ?? "", d.typeLine ?? "", d.keywords ?? [])
+    : cd !== undefined && row.normalizeVersion === cd.normalizeVersion && row.segmentHash === cd.segmentHash;
+  if (!fresh && (row.clauseSource === "grammar" || cd !== undefined)) stale.push(d.name);
+}
+if (stale.length > 0) {
+  console.error(`${stale.length} derived row(s) were not derived from the current clause records or card text: ${listSome(stale, 5)}. Re-run derive-corpus.`);
+  process.exit(1);
+}
+
 const measured: Dropped = {};
+const underivedNames: string[] = [], noRecordNames: string[] = [];
 /** Per card, the clause ids derive REPORTED in `CardTags.unclaimed` (task 2). */
 const reportedBy: Record<string, ReadonlySet<string>> = {};
 let underived = 0, noRecords = 0, actions = 0;
 for (const d of inEngine) {
   const row = rows.get(d._id);
-  if (!row) { underived++; continue; }
-  const records = row.clauseSource === "grammar" ? grammarClauseRecords(d as never).records : canonical.get(d._id);
-  if (!records) { noRecords++; continue; }
-  const keys = droppedKeys(records, {
-    abilityClauses: new Set((row.abilities ?? []).flatMap((a) => (a.clause === undefined ? [] : [a.clause]))),
-    granted: grantedTokenClauses(d as never),
-    hasManaLines: (row.manaLines?.length ?? 0) > 0,
-  });
+  if (!row) { underived++; underivedNames.push(d.name); continue; }
+  const g = row.clauseSource === "grammar" ? grammarClauseRecords(d as never) : undefined;
+  const records = g ? g.records : clauseDocs.get(d._id)?.canonical;
+  if (!records) { noRecords++; noRecordNames.push(d.name); continue; }
+  const abilityClauses = new Set((row.abilities ?? []).flatMap((a) => (a.clause === undefined ? [] : [a.clause])));
+  const granted = grantedTokenClauses(d as never);
+  const hasManaLines = (row.manaLines?.length ?? 0) > 0;
+  // The twin map is derive's own: it is only needed when something would be reported, so derive again just for those cards.
+  const plain = droppedKeys(records, { abilityClauses, granted, hasManaLines, twinOf: new Map() });
+  if (plain.length === 0) continue;
+  const { twinOf } = deriveAbilitiesOf(deriveInputOf(d as never, d._id, d.name, records, undefined, g?.readings));
+  const keys = droppedKeys(records, { abilityClauses, granted, hasManaLines, twinOf });
   if (keys.length > 0) {
     measured[d.name] = keys; actions += keys.length;
     reportedBy[d.name] = new Set((row.unclaimed ?? []).map((u) => String(u.clause)));
   }
 }
+if (underived + noRecords > 0) console.log(`underived: ${listSome(underivedNames)}; no clause records: ${listSome(noRecordNames)}`);
 const cards = Object.keys(measured).length;
 const summary = `${cards} cards, ${actions} dropped actions, of ${inEngine.length} commander-legal cards (${docs.length - inEngine.length} stickers skipped); ${underived} underived, ${noRecords} with no clause records`;
 // REPORTED = derive named the clause in `unclaimed`; SILENT = nothing said it was lost. Summary only, never in the snapshot.

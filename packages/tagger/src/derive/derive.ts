@@ -1963,7 +1963,7 @@ export function deriveAbilities(
   curse?: boolean,
   /** The card's printed type line includes Creature (WAS_A_CREATURE reads only then). */
   creatureCard?: boolean,
-): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[] } {
+): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[]; twinOf: ReadonlyMap<number | string, number | string> } {
   const abilities: Ability[] = [];
   /** Every action nothing claimed, with the clause that printed it (#1299). `unclaimed` is the same list as bare actions. */
   const unclaimedHere: { clause: number | string; action: Action }[] = [];
@@ -3223,7 +3223,7 @@ export function deriveAbilities(
       if (partnerId !== undefined && redundant(a, partnerId)) abilities.splice(i, 1);
     }
   }
-  return { abilities, unclaimed: unclaimedHere.map((u) => u.action), unclaimedAt: unclaimedHere.map((u) => unclaimedRecord(u.clause, u.action)), unknownTriggers };
+  return { abilities, unclaimed: unclaimedHere.map((u) => u.action), unclaimedAt: unclaimedHere.map((u) => unclaimedRecord(u.clause, u.action)), unknownTriggers, twinOf };
 }
 const POLYMORPH_VERBS: ReadonlySet<string> = new Set(["dies", "exiled", "leaves", "enters"]);
 
@@ -3286,14 +3286,20 @@ export function stampSelfLoss(a: Ability): Ability {
 }
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
  *  from the card document -- derivation never asks a model for what the database already knows. */
-export function deriveCardTags(input: DeriveInput): CardTags {
+/** `deriveAbilities` called the way `deriveCardTags` calls it. Exported so an instrument reads `twinOf` (which clause a spliced twin
+ *  was folded into) from the SAME run, not a re-implementation of the twin detection. */
+export function deriveAbilitiesOf(input: DeriveInput): ReturnType<typeof deriveAbilities> {
   const chars = input.characteristics;
   const castAtInstantSpeed = chars.types.some((t) => t.toLowerCase() === "instant")
     || (chars.keywords ?? []).some((k) => k.toLowerCase() === "flash");
-  const derived = deriveAbilities(
+  return deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
     chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"));
+}
+export function deriveCardTags(input: DeriveInput): CardTags {
+  const chars = input.characteristics;
+  const derived = deriveAbilitiesOf(input);
   const { unknownTriggers, unclaimedAt } = derived;
   // AN AURA ON AN OPPONENT'S CREATURE WATCHES THE OPPONENT'S CREATURE (owner 2026-09-23, AN7).
   // Nurgle's Rot prints "Enchant creature an opponent controls / When enchanted creature dies": the

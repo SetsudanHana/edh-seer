@@ -3,7 +3,7 @@ import type { ClauseRecord } from "@edh-seer/tagger";
 import { droppedKeys, groupDropped, groupSplit, splitReported } from "./dropped-clauses-core.js";
 
 const clause = (id: number, ...verbs: string[]): ClauseRecord => ({ id, actions: verbs.map((verb) => ({ verb })) });
-const none = { abilityClauses: new Set<number>(), granted: new Set<number>(), hasManaLines: false };
+const none = { abilityClauses: new Set<number>(), granted: new Set<number>(), hasManaLines: false, twinOf: new Map<number | string, number | string>() };
 
 test("a clause with an action and no ability is dropped", () => {
   expect(droppedKeys([clause(0, "gain-life")], none)).toEqual(["0:gain-life"]);
@@ -63,4 +63,22 @@ test("the split table counts reported and silent actions per shape", () => {
   const g = groupSplit({ A: ["0:cant", "1:cant"], B: ["0:cant", "2:put:library>hand"] }, { A: new Set(["1"]), B: new Set(["2"]) });
   expect(g[0]).toEqual({ shape: "cant", actions: 3, reported: 1, silent: 2, cards: 2, examples: ["A", "B"] });
   expect(g[1]).toEqual({ shape: "put library>hand", actions: 1, reported: 1, silent: 0, cards: 1, examples: ["B"] });
+});
+
+test("a mixed clause (add-mana + draw) on a mana-line card stays a drop", () => {
+  expect(droppedKeys([clause(0, "add-mana", "draw")], { ...none, hasManaLines: true })).toEqual(["0:add-mana", "0:draw"]);
+});
+
+test("a tap-only clause on a mana-line card stays a drop", () => {
+  expect(droppedKeys([clause(0, "tap")], { ...none, hasManaLines: true })).toEqual(["0:tap"]);
+});
+
+test("an action with no verb is real, as in derive, not inert", () => {
+  expect(droppedKeys([{ id: 0, actions: [{}] }], none)).toEqual(["0:?"]);
+});
+
+test("a twin whose partner has an ability is not dropped; one whose partner has none is", () => {
+  const twinOf = new Map<number | string, number | string>([[2, 1]]);
+  expect(droppedKeys([clause(2, "draw")], { ...none, abilityClauses: new Set([1]), twinOf })).toEqual([]);
+  expect(droppedKeys([clause(2, "draw")], { ...none, twinOf })).toEqual(["2:draw"]);
 });
