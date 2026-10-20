@@ -3,7 +3,7 @@ import type { ClauseRecord } from "@edh-seer/tagger";
 import { droppedKeys, groupDropped, groupSplit, splitReported } from "./dropped-clauses-core.js";
 
 const clause = (id: number, ...verbs: string[]): ClauseRecord => ({ id, actions: verbs.map((verb) => ({ verb })) });
-const none = { abilityClauses: new Set<number>(), granted: new Set<number>(), hasManaLines: false, twinOf: new Map<number | string, number | string>(), texts: {} as Record<number, string>, cardName: "Card" };
+const none = { abilityClauses: new Set<number>(), granted: new Set<number>(), hasManaLines: false, spliced: new Set<number | string>(), isLand: true, texts: {} as Record<number, string>, cardName: "Card" };
 
 test("a clause with an action and no ability is dropped", () => {
   expect(droppedKeys([clause(0, "gain-life")], none)).toEqual(["0:gain-life"]);
@@ -77,10 +77,9 @@ test("an action with no verb is real, as in derive, not inert", () => {
   expect(droppedKeys([{ id: 0, actions: [{}] }], none)).toEqual(["0:?"]);
 });
 
-test("a twin whose partner has an ability is not dropped; one whose partner has none is", () => {
-  const twinOf = new Map<number | string, number | string>([[2, 1]]);
-  expect(droppedKeys([clause(2, "draw")], { ...none, abilityClauses: new Set([1]), twinOf })).toEqual([]);
-  expect(droppedKeys([clause(2, "draw")], { ...none, twinOf })).toEqual(["2:draw"]);
+test("a clause derive spliced into its twin is not dropped; one it did not is", () => {
+  expect(droppedKeys([clause(2, "draw")], { ...none, spliced: new Set([2]) })).toEqual([]);
+  expect(droppedKeys([clause(2, "draw")], none)).toEqual(["2:draw"]);
 });
 
 const tapped = (id: number, object: string): ClauseRecord => ({ id, actions: [{ verb: "tap", object }] });
@@ -96,4 +95,22 @@ test("tap target creature is kept", () => {
 
 test("a cost-like tap of your own creatures is kept", () => {
   expect(droppedKeys([tapped(0, "an untapped creature you control")], { ...none, texts: { 0: "Tap an untapped creature you control: draw." } })).toEqual(["0:tap"]);
+});
+
+test("a global 'each creature enters tapped' labelled this stays a drop", () => {
+  const h = { ...none, hasManaLines: true, texts: { 0: "Each creature without mana value of the chosen quality enters tapped." } };
+  expect(droppedKeys([tapped(0, "this")], h)).toEqual(["0:tap"]);
+});
+
+test("a self enters-tapped on a non-land card with no mana line stays a drop", () => {
+  expect(droppedKeys([tapped(0, "this creature")], { ...none, isLand: false, texts: { 0: "This creature enters tapped." } })).toEqual(["0:tap"]);
+});
+
+test("a mana rock's self enters-tapped is excluded, and a DFC front-face name opens it", () => {
+  expect(droppedKeys([tapped(0, "this artifact")], { ...none, isLand: false, hasManaLines: true, texts: { 0: "This artifact enters tapped." } })).toEqual([]);
+  expect(droppedKeys([tapped(0, "Front")], { ...none, cardName: "Front // Back", texts: { 0: "Front enters tapped." } })).toEqual([]);
+});
+
+test("a legend's short name before the comma is a self subject", () => {
+  expect(droppedKeys([tapped(0, "this")], { ...none, cardName: "Boseiju, Who Shelters All", texts: { 0: "Boseiju enters tapped." } })).toEqual([]);
 });

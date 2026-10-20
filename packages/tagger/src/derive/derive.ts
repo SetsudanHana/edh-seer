@@ -1963,7 +1963,7 @@ export function deriveAbilities(
   curse?: boolean,
   /** The card's printed type line includes Creature (WAS_A_CREATURE reads only then). */
   creatureCard?: boolean,
-): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[]; twinOf: ReadonlyMap<number | string, number | string> } {
+): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[]; twinOf: ReadonlyMap<number | string, number | string>; spliced: ReadonlySet<number | string> } {
   const abilities: Ability[] = [];
   /** Every action nothing claimed, with the clause that printed it (#1299). `unclaimed` is the same list as bare actions. */
   const unclaimedHere: { clause: number | string; action: Action }[] = [];
@@ -3211,6 +3211,7 @@ export function deriveAbilities(
   // of the partner's abilities of that trigger. A twin carrying more (Champions of the Shoal's `taps` emit, Borborygmos' typed `discard land`) stays, re-homed.
   // CEILING: a cue heuristic -- a twin is "the same verb already claimed on that sentence", and a re-homed record is "the one orphan sentence that
   // prints its cue". A card whose record numbering drifts in a way neither sees keeps its stored trigger over the sentence its own text prints.
+  const spliced = new Set<number | string>();
   if (twinOf.size > 0) {
     const emitKey = (e: { verb: string; subject: SubjectFilter }): string => [e.verb, JSON.stringify(e.subject.type ?? null), e.subject.subtype ?? "", e.subject.counter ?? "", e.subject.self ?? ""].join("|");
     const verbsKey = (a: Ability): string => (a.trigger?.verbs ?? []).join(",");
@@ -3220,10 +3221,10 @@ export function deriveAbilities(
       const a = abilities[i]!;
       const partnerId = a.clause !== undefined ? twinOf.get(a.clause) : undefined;
       // SILENT BY DESIGN (#1299): `redundant` proves the partner clause's ability already says all of this one does.
-      if (partnerId !== undefined && redundant(a, partnerId)) abilities.splice(i, 1);
+      if (partnerId !== undefined && redundant(a, partnerId)) { abilities.splice(i, 1); spliced.add(a.clause!); }
     }
   }
-  return { abilities, unclaimed: unclaimedHere.map((u) => u.action), unclaimedAt: unclaimedHere.map((u) => unclaimedRecord(u.clause, u.action)), unknownTriggers, twinOf };
+  return { abilities, unclaimed: unclaimedHere.map((u) => u.action), unclaimedAt: unclaimedHere.map((u) => unclaimedRecord(u.clause, u.action)), unknownTriggers, twinOf, spliced };
 }
 const POLYMORPH_VERBS: ReadonlySet<string> = new Set(["dies", "exiled", "leaves", "enters"]);
 

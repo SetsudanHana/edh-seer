@@ -74,11 +74,12 @@ for (const d of inEngine) {
   const granted = grantedTokenClauses(d as never);
   const hasManaLines = (row.manaLines?.length ?? 0) > 0;
   const texts = clauseTexts(d as never);
+  const isLand = /\bLand\b/.test(d.typeLine ?? "");
   // The twin map is derive's own: it is only needed when something would be reported, so derive again just for those cards.
-  const plain = droppedKeys(records, { abilityClauses, granted, hasManaLines, twinOf: new Map(), texts, cardName: d.name });
+  const plain = droppedKeys(records, { abilityClauses, granted, hasManaLines, spliced: new Set(), isLand, texts, cardName: d.name });
   if (plain.length === 0) continue;
-  const { twinOf } = deriveAbilitiesOf(deriveInputOf(d as never, d._id, d.name, records, undefined, g?.readings));
-  const keys = droppedKeys(records, { abilityClauses, granted, hasManaLines, twinOf, texts, cardName: d.name });
+  const { spliced } = deriveAbilitiesOf(deriveInputOf(d as never, d._id, d.name, records, undefined, g?.readings));
+  const keys = droppedKeys(records, { abilityClauses, granted, hasManaLines, spliced, isLand, texts, cardName: d.name });
   if (keys.length > 0) {
     measured[d.name] = keys; actions += keys.length;
     reportedBy[d.name] = new Set((row.unclaimed ?? []).map((u) => String(u.clause)));

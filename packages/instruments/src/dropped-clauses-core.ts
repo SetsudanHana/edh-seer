@@ -22,15 +22,18 @@
  *      behind the first one's line. The same clause on a card with NO mana line is a drop, and is reported.
  *   3. A SPLICED TWIN: a stored record that duplicates a partner clause under another id (the model split a
  *      compound, or numbered a sentence differently from `segment()`). Derive folds it into the partner
- *      (`twinOf` / `redundant` in derive.ts) and the ability carries the partner's id. The twin map comes from
- *      derive's own run (`deriveAbilitiesOf`), never a re-implementation; a clause is excluded when its twin's
- *      partner has an ability.
- *   4. A SELF "ENTERS TAPPED" STATIC (Rootbound Crag, Marble Diamond): every real action is `tap` on a self object
- *      ("this land", "this artifact", "this", the card's own name) AND the clause's printed text says "enters tapped".
- *      Derive has no field for it (it reports `unclaimed {tap}`); its home is the matcher's printed-text readers,
- *      `mana-base.ts` (TAPPED: a land that always enters tapped) and `land-score.ts` (enters-tapped patterns). CEILING:
- *      the home is a printed-text reader, so this exclusion reads the text too; "tap target creature" and a cost-like
- *      "tap an untapped creature you control" are kept because their object is not self and the text does not say it.
+ *      (`redundant` in derive.ts) and the ability carries the partner's id. The set of clause ids ACTUALLY spliced
+ *      comes from derive's own run (`deriveAbilitiesOf(...).spliced`), never a re-implementation: a twin that was
+ *      detected but kept (it said more than its partner) has its own ability and is not a drop anyway.
+ *   4. A SELF "ENTERS TAPPED" STATIC on a LAND or a card with `manaLines` (Rootbound Crag, Marble Diamond): every real
+ *      action is `tap` on a self object ("this land", "this", the card's own name) AND the clause text names a
+ *      SELF subject entering tapped ("this <type> enters tapped", "~", "it", the card's name, after any lead-in such as a shock land's "As this land enters, you may pay 2 life. If you don't, ..."). Derive has no field
+ *      for it (it reports `unclaimed {tap}`); the homes are printed-text readers: for lands `mana-base.ts`
+ *      `tappedLandCount` (TAPPED) and `land-score.ts`; for mana rocks `build.ts` rock grade (`entersTappedEver` in
+ *      rules.json). CEILING: covers exactly lands and mana-line cards. A creature or a non-mana artifact that enters
+ *      tapped (Deep-Slumber Titan, Gutterbones) has NO reader and stays a drop, as does a global "each creature
+ *      enters tapped" (Ashling's Prerogative). "tap target creature" and a cost-like "tap an untapped creature you
+ *      control" are kept because their object is not self.
  *
  *  KEYS REPEAT WITHIN A CARD (two identical actions in one clause give two identical keys) and the diff is
  *  SET-BASED (`diffMembership`), so a second identical drop on a card that already has one does not move it. */
@@ -48,8 +51,10 @@ export interface Homes {
   granted: ReadonlySet<number>;
   /** The derived card has at least one `manaLines` entry. */
   hasManaLines: boolean;
-  /** `deriveAbilitiesOf(...).twinOf`: a re-homed record -> the record that already read its event off the same sentence. */
-  twinOf: ReadonlyMap<number | string, number | string>;
+  /** `deriveAbilitiesOf(...).spliced`: the clause ids whose ability derive actually folded into its twin partner's. */
+  spliced: ReadonlySet<number | string>;
+  /** The card's type line includes Land. */
+  isLand: boolean;
   /** Clause id -> printed clause text (`clauseTexts(card)`). */
   texts: Readonly<Record<number, string>>;
   /** The card's own name, for a self object. */
@@ -58,8 +63,17 @@ export interface Homes {
 
 const ENTERS_TAPPED = /\benters(?: the battlefield)? tapped\b/i;
 const SELF_OBJECT = /^(?:this(?: [a-z]+)?|~|it)$/i;
+/** The clause text says a SELF subject enters tapped: "this <type> enters (the battlefield) tapped", "~ ...", "it enters tapped" (the
+ *  shock land's "If you don't, it enters tapped", a snarl's "this land enters tapped"), or the card's own name (any face of a DFC), after any
+ *  lead-in ("As this land enters, you may pay 2 life. If you don't, ..."). Fixed alternation, linear. Ashling's Prerogative's "Each creature ...
+ *  enters tapped" names no self subject and never matches. */
+const SELF_ENTERS_TAPPED = /\b(?:this [a-z]+|~|it) enters(?: the battlefield)? tapped\b/i;
+/** Every way the card names itself: each face, and a legend's short name before the comma ("Boseiju enters tapped"). */
+const selfNames = (cardName: string): string[] => cardName.split(" // ").flatMap((n) => [n, n.split(",")[0]!]).map((n) => n.toLowerCase());
+const opensWithSelf = (text: string, cardName: string): boolean =>
+  SELF_ENTERS_TAPPED.test(text) || selfNames(cardName).some((n) => text.toLowerCase().includes(`${n} enters`) && ENTERS_TAPPED.test(text));
 const isSelfEntersTapped = (real: readonly { verb?: string; object?: string }[], text: string | undefined, cardName: string): boolean =>
-  real.every((a) => a.verb === "tap" && (SELF_OBJECT.test((a.object ?? "").trim()) || (a.object ?? "").trim().toLowerCase() === cardName.toLowerCase()))
+  text !== undefined && opensWithSelf(text.trim(), cardName) && real.every((a) => a.verb === "tap" && (SELF_OBJECT.test((a.object ?? "").trim()) || selfNames(cardName).includes((a.object ?? "").trim().toLowerCase())))
   && ENTERS_TAPPED.test(text ?? "");
 
 /** The dropped-action keys of one card, sorted. Empty when nothing is dropped. */
@@ -70,9 +84,8 @@ export function droppedKeys(records: readonly ClauseRecord[], homes: Homes): str
     // Derive's own test (`INERT_VERBS.has(action.verb ?? "")`): an action with no verb is NOT inert.
     const real = (r.actions ?? []).filter((a) => !INERT_VERBS.has(a.verb ?? ""));
     if (real.length === 0) continue;
-    const partner = homes.twinOf.get(r.id);
-    if (partner !== undefined && homes.abilityClauses.has(partner as number)) continue;
-    if (isSelfEntersTapped(real, homes.texts[r.id as number], homes.cardName)) continue;
+    if (homes.spliced.has(r.id)) continue;
+    if ((homes.isLand || homes.hasManaLines) && isSelfEntersTapped(real, homes.texts[r.id as number], homes.cardName)) continue;
     if (homes.hasManaLines && real.some((a) => a.verb === "add-mana") && real.every((a) => MANA_VERBS.has(a.verb ?? ""))) continue;
     for (const a of real) {
       const zone = a.fromZone || a.toZone ? `:${a.fromZone ?? ""}>${a.toZone ?? ""}` : "";
