@@ -20,7 +20,7 @@
  *  same call (`manaAdded`), so the two cannot disagree. A SCALING amount ("X", "for each ...", "that much") has no number: the line names what it counts and the
  *  ability keeps the clause's own text, or nothing. `research/mana/amount-agreement.ts` measures the agreement.  */
 import { COMMANDER_OPPONENTS, COMMANDER_PLAYERS } from "../table.js";
-import { tokenKindsWith } from "./token-kinds.js";
+import { ARTIFACT_TOKEN_KINDS, tokenKindsWith, type TokenLine } from "./token-kinds.js";
 import type { ClauseRecord } from "../canonicalize.js";
 import type {
   Ability, Characteristics, ConsumedCost, LandFetch, ManaAnyColour, ManaGate, ManaLine, ManaLineSource, StaticFixer, SubjectFilter,
@@ -507,16 +507,8 @@ const COLOUR_FROM_GRAVEYARD = /\bcolou?rs? of (?:an?|any) (?:card|creature|perma
 // ---------------------------------------------------------------------------------------------------------------
 
 /** Tokens that are themselves a mana source, by the subtype the token-generation subject carries. */
-const MANA_TOKENS: Record<string, Pick<ManaLine, "colours" | "colourless" | "anyColour" | "restriction">> = {
-  treasure: { colours: [...WUBRG], colourless: 0, anyColour: "any", restriction: null },
-  gold: { colours: [...WUBRG], colourless: 0, anyColour: "any", restriction: null },
-  powerstone: { colours: [], colourless: 1, anyColour: null, restriction: { spend: "can't be spent to cast a nonartifact spell", typeName: "artifact", minManaValue: null } },
-  "eldrazi-spawn": { colours: [], colourless: 1, anyColour: null, restriction: null },
-  "eldrazi-scion": { colours: [], colourless: 1, anyColour: null, restriction: null },
-  // A LANDER IS A LAND-FETCH TOKEN, not a mana one (owner 2026-10-13, #1190: "a land-fetch token like Treasure is a mana token; its makers keep the Ramp role"): "{2}, {T}, Sacrifice this token:
-  // Search your library for a basic land card, put it onto the battlefield tapped". It states no mana, so its colours are empty and the line is no colour source (a token-maker never is).
-  lander: { colours: [], colourless: 0, anyColour: null, restriction: null },
-};
+const MANA_TOKENS: Readonly<Record<string, TokenLine>> = Object.fromEntries(
+  Object.entries(ARTIFACT_TOKEN_KINDS).flatMap(([name, k]) => (k.line ? [[name, k.line] as const] : [])));
 const tokenKeyOne = (sub: string): string | null => {
   const key = sub.toLowerCase();
   if (key === "eldrazi-spawn" || key === "spawn-eldrazi") return "eldrazi-spawn";
@@ -550,7 +542,8 @@ const REPLACES_CREATION = /\bif you would create\b|\binstead create\b|\bthose to
  *  replaced "Treasure or Gold" that adds a Treasure reads as a maker (Gold is another name), though it only doubles mana tokens; no card prints it. */
 const REPLACED_FILLER = new Set(["if", "you", "would", "create", "be", "created", "a", "an", "one", "or", "more", "and", "of", "each", "the", "tapped", "untapped", "that", "many", "additional", "another"]);
 const REPLACED_TOKEN_NAMES = tokenKindsWith("replaced");
-const ADDED_MANA_TOKENS = ["treasure", "gold", "powerstone"] as const;
+/** A printed "X token" names a single word: the joined Eldrazi keys are no such name. */
+const ADDED_MANA_TOKENS = [...tokenKindsWith("manaToken")].filter((k) => !k.includes("-"));
 export function replacementAddedToken(text: string): string | null {
   const flat = text.replace(/\([^)]*\)/g, " ").toLowerCase();
   const at = flat.indexOf("instead create");
@@ -583,7 +576,7 @@ const handsTokenToOpponentOnly = (text: string, abilityControl: string | undefin
   (abilityControl === "opp" || OPP_RECIPIENT.test(text)) && !YOU_CREATE.test(text);
 /** THE WHOLE CARD'S SENTENCES THAT NAME THE TOKEN decide first (reminder text stripped): a clause the segmenter cut short (Cityscape Leveler's attack trigger loses "Its controller creates a tapped Powerstone")
  *  would read as yours. The token is the opponent's only when EVERY sentence naming it hands it to an opponent. With no such sentence the clause's own words decide. */
-const TOKEN_WORD: Record<string, string> = { treasure: "treasure", gold: "gold", powerstone: "powerstone", lander: "lander", "eldrazi-spawn": "eldrazi", "eldrazi-scion": "eldrazi" };
+const TOKEN_WORD: Record<string, string> = Object.fromEntries(Object.keys(MANA_TOKENS).map((k) => [k, k.startsWith("eldrazi-") ? "eldrazi" : k]));
 function opponentOnlyToken(oracleText: string, key: string, clauseText: string, abilityControl: string | undefined): boolean {
   const word = TOKEN_WORD[key];
   const named = word === undefined ? [] : sentencesOf(oracleText.replace(/\([^)]*\)/g, " ")).filter((x) => new RegExp(`\\b${word}`, "i").test(x) && /\bcreates?\b/i.test(x));
@@ -614,7 +607,7 @@ function tokenCountOf(key: string, text: string, objects: readonly string[]): { 
 
 /** A "create" action in a clause the abilities did not turn into a token-generation of a mana token: the Treasure a Saga chapter makes beside a Bird, the one inside an Aura token's quoted trigger, one
  *  the model typed `static` with no subtype (Spiked Pit Trap). */
-const CREATES_MANA_TOKEN = /\bcreates?\b[^.]*?\b(treasure|gold|powerstone|lander|eldrazi spawn|eldrazi scion)\b/i;
+const CREATES_MANA_TOKEN = new RegExp(`\\bcreates?\\b[^.]*?\\b(${Object.keys(MANA_TOKENS).map((k) => k.replace(/-/g, " ")).join("|")})\\b`, "i");
 const LATER_LANDING = /\bput\b[^.]*?\b(?:that card|those cards?|one of those cards|it|them)\b[^.]*?\bonto the battlefield\b/i;
 const landishSearch = (f?: SubjectFilter): boolean => f !== undefined && (f.type === "land" || f.basic === true);
 /** "Until end of turn, you may tap lands you don't control for mana" (Piracy): mana with no "add" in the text, a spell's own. */

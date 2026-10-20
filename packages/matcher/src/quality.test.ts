@@ -131,3 +131,12 @@ test("an Attraction is never in a deck: it has no role even when its tags would 
     tags: { ...signet.tags!, characteristics: { ...signet.tags!.characteristics, types: ["artifact"], subtypes: ["Attraction"] } } } as DeckCard;
   expect(rolesOfCard(attraction)).toEqual([]);
 });
+
+test("a Vibranium or Heartwood or Eldrazi Spawn token-generation ability is ramp (#1282)", () => {
+  for (const subtype of ["vibranium", "heartwood", ["eldrazi", "spawn"]]) {
+    const base = dc("Smothering Tithe") as unknown as { tags: { abilities: { effect: { subject: { subtype: unknown } } }[] } };
+    const card = JSON.parse(JSON.stringify(base)) as typeof base;
+    for (const a of card.tags.abilities) if (a.effect.subject) a.effect.subject.subtype = subtype;
+    expect(roleAbilities(card as unknown as DeckCard, "ramp").length, String(subtype)).toBeGreaterThan(0);
+  }
+});

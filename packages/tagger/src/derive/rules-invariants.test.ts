@@ -114,7 +114,7 @@ const PROSE: Record<string, string> = {
   "100.2a": "schema: the CR's own numbering for a rules reference", "104.2": "verb-accounting: win-game NOT AN EVENT",
   "106.4": "normalize-prompt / verb-accounting: mana-spent, add-mana",
   "107.14": "normalize-prompt ENERGY rule: {E} is a counter", "120": "derive: damage direction split by text",
-  "122": "counters — COUNTER_KINDS", "205.3": "subtypes generated from MTGJSON", "205.3g": "artifact types, unioned from the rules (gen-vocabulary withCr)", "111.10": "predefined tokens pin their type (token-types.ts)", "111.10a": "a Treasure token is an artifact", "205.3i": "subtypes: Saga", "205.3k": "subtypes: Class",
+  "122": "counters — COUNTER_KINDS", "205.3": "subtypes generated from MTGJSON", "205.3g": "artifact types, unioned from the rules (gen-vocabulary withCr)", "111.10": "predefined tokens pin their type (token-types.ts)", "111.10a": "a Treasure token is an artifact", "111.10w": "a Vibranium token taps for {C}, spendable only on artifacts (token-kinds.ts line, mana-lines.test.ts)", "111.10x": "a Heartwood token taps for {R} or {G} (token-kinds.ts line, mana-lines.test.ts)", "205.3i": "subtypes: Saga", "205.3k": "subtypes: Class",
   "305": "lands", "305.1": "play a land is `play`, not `enters`", "307.5": "a sorcery's own text", "309": "dungeons: words, no room model",
   "400.1": "ZONES lists the seven", "400.7": "zone changes: the enters/leaves family", "406.2": "exile is a public zone",
   "500": "phase words", "500.7": "extra turn: NOT AN EVENT", "506.4": "removed from combat", "602": "activate, a word with no producer",

@@ -23,3 +23,9 @@ test("replaced kinds are the creation-replacement name list", () => {
 test("every kind carries at least one flag", () => {
   for (const [name, k] of Object.entries(ARTIFACT_TOKEN_KINDS)) expect(Object.keys(k).length, name).toBeGreaterThan(0);
 });
+
+test("the mana kinds (#1282): `manaToken` is exactly those whose token adds mana", () => {
+  expect([...tokenKindsWith("manaToken")].sort()).toEqual(["eldrazi-scion", "eldrazi-spawn", "gold", "heartwood", "powerstone", "treasure", "vibranium"]);
+  expect(Object.entries(ARTIFACT_TOKEN_KINDS).filter(([, k]) => k.line !== undefined).map(([n]) => n).sort())
+    .toEqual(["eldrazi-scion", "eldrazi-spawn", "gold", "heartwood", "lander", "powerstone", "treasure", "vibranium"]);
+});
