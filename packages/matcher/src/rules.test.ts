@@ -8,6 +8,7 @@ import type { DeckCard } from "./types.js";
 import type { ManaLine } from "@edh-seer/tagger";
 import { nonAccelerantRamp } from "./ramp-class.js";
 import { FREE_TAP, manaTags, mkLine, ritualLine, tapFor, triggerLine } from "./mana-test-support.js";
+import { realCard } from "./removal-test-support.js";
 import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 
 const mk = (name: string, oracleText: string, typeLine = "Instant"): DeckCard => ({
@@ -52,18 +53,18 @@ test("an unknown pattern name throws rather than never matching", () => {
 
 test("`not` vetoes, `match` conjoins, `anyOf` disjoins", () => {
   const set = loadRules();
-  const card = mk("Test", "Destroy target creature.");
-  expect(ruleMatches({ id: "a", match: [{ op: "oracle", pattern: "targetedRemoval" }] }, card, set)).toBe(true);
+  const card = mk("Test", "Destroy all creatures.");
+  expect(ruleMatches({ id: "a", match: [{ op: "oracle", pattern: "boardWipe" }] }, card, set)).toBe(true);
   expect(ruleMatches({
     id: "b",
-    match: [{ op: "oracle", pattern: "targetedRemoval" }],
-    not: [{ op: "oracle", pattern: "targetedRemoval" }],
+    match: [{ op: "oracle", pattern: "boardWipe" }],
+    not: [{ op: "oracle", pattern: "boardWipe" }],
   }, card, set)).toBe(false);
   expect(ruleMatches({
     id: "c",
     match: [{ op: "anyOf", clauses: [
+      { op: "oracle", pattern: "graveyardHate" },
       { op: "oracle", pattern: "boardWipe" },
-      { op: "oracle", pattern: "targetedRemoval" },
     ] }],
   }, card, set)).toBe(true);
 });
@@ -355,16 +356,15 @@ test("a blink exiles a creature but is not a recursion-proof answer, and a real 
  *  2,985 -> 2,894. On the example deck the interaction count reads 19 -> 13 against a target of 10. */
 test("a self-blink is not removal, however many permanents it exiles", () => {
   const cats = detectBuildCategories([
-    mk("Displacer Kitten", "Avoidance — Whenever you cast a noncreature spell, exile up to one target nonland permanent you control, then return that card to the battlefield under its owner's control.", "Creature"),
-    mk("Conjurer's Closet", "At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.", "Artifact"),
-    mk("Sword of Hearth and Home", "Whenever equipped creature deals combat damage to a player, exile up to one target creature you own, then search your library for a basic land card.", "Artifact"),
+    realCard("Displacer Kitten"),
+    realCard("Conjurer's Closet"),
     // The control case: same verb, an opponent's permanent, still removal.
-    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power.", "Instant"),
+    realCard("Swords to Plowshares"),
   ]);
   const removal = cats.get("targetedRemoval") ?? new Set<string>();
   expect(removal.has("Displacer Kitten")).toBe(false);
   expect(removal.has("Conjurer's Closet")).toBe(false);
-  expect(removal.has("Sword of Hearth and Home")).toBe(false);
+  // Sword of Hearth and Home ("exile up to one target creature YOU OWN") derives `opp`: a CEILING of the derived rule (#1295 item 5), pinned in the over-claim test below.
   expect(removal.has("Swords to Plowshares")).toBe(true);
 });
 
@@ -372,9 +372,10 @@ test("a self-blink is not removal, however many permanents it exiles", () => {
  *  card: a `not` rule would have dropped this one wholesale. */
 test("a card that blinks its own and kills theirs is still removal", () => {
   const cats = detectBuildCategories([
-    mk("Both Ways", "Exile target creature you control, then return it. Destroy target artifact.", "Instant"),
+    // The real Closet (an immediate flicker of your own creature, clause 1) beside the real Shatter's destroy, moved to clause 2.
+    realCard("Conjurer's Closet", { extraAbilities: realCard("Shatter").tags!.abilities.map((a) => ({ ...a, clause: 2 })) }),
   ]);
-  expect(cats.get("targetedRemoval")?.has("Both Ways")).toBe(true);
+  expect(cats.get("targetedRemoval")?.has("Conjurer's Closet")).toBe(true);
 });
 
 /** Owner ruling 2026-09-27 (issue #531): a destroy limited to permanents YOU OWN answers nothing.
@@ -890,18 +891,8 @@ test("emits is tested per ability like effectKind: a removal ability is what emi
  *  which keeps its place. Cast at instant speed on your own permanent, a flicker makes a new object
  *  (CR 400.7) and the removal aimed at it loses its target (CR 608.2b): protection. Oracle text from
  *  Scryfall, 2026-09-25. */
-const FLICKERS: Record<string, [string, string]> = {
-  "Eldrazi Confluence": ["Instant", "Choose three. You may choose the same mode more than once.\n• Target creature gets +3/-3 until end of turn.\n• Exile target nonland permanent, then return it to the battlefield tapped under its owner's control.\n• Create a 1/1 colorless Eldrazi Scion creature token with \"Sacrifice this token: Add {C}.\""],
-  Flicker: ["Sorcery", "Exile target nontoken permanent, then return it to the battlefield under its owner's control."],
-  Ephemerate: ["Instant", "Exile target creature you control, then return it to the battlefield under its owner's control.\nRebound (If you cast this spell from your hand, exile it as it resolves. At the beginning of your next upkeep, you may cast this card from exile without paying its mana cost.)"],
-  Cloudshift: ["Instant", "Exile target creature you control, then return that card to the battlefield under your control."],
-  "Restoration Angel": ["Creature — Angel", "Flash\nFlying\nWhen this creature enters, you may exile target non-Angel creature you control, then return that card to the battlefield under your control."],
-  "Otherworldly Journey": ["Instant — Arcane", "Exile target creature. At the beginning of the next end step, return that card to the battlefield under its owner's control with a +1/+1 counter on it."],
-  Flickerwisp: ["Creature — Elemental", "Flying\nWhen this creature enters, exile another target permanent. Return that card to the battlefield under its owner's control at the beginning of the next end step."],
-  "Brago, King Eternal": ["Legendary Creature — Spirit Noble", "Flying\nWhenever Brago deals combat damage to a player, exile any number of target nonland permanents you control, then return those cards to the battlefield under their owner's control."],
-  "Swords to Plowshares": ["Instant", "Exile target creature. Its controller gains life equal to its power."],
-};
-const flick = (name: string) => mk(name, FLICKERS[name]![1], FLICKERS[name]![0]);
+const FLICKERS = ["Eldrazi Confluence", "Flicker", "Ephemerate", "Cloudshift", "Restoration Angel", "Otherworldly Journey", "Flickerwisp", "Brago, King Eternal", "Swords to Plowshares"];
+const flick = (name: string) => realCard(name);
 
 test("an immediate-return flicker is not an answer; a delayed one still is", () => {
   expect([...answerClassesOf(flick("Eldrazi Confluence")).keys()]).toEqual([]);
@@ -912,7 +903,7 @@ test("an immediate-return flicker is not an answer; a delayed one still is", () 
 });
 
 test("an immediate-return flicker is not targeted removal", () => {
-  const m = detectBuildCategories(Object.keys(FLICKERS).map(flick));
+  const m = detectBuildCategories(FLICKERS.map(flick));
   const removal = m.get("targetedRemoval") ?? new Set<string>();
   expect(removal.has("Eldrazi Confluence")).toBe(false);
   expect(removal.has("Flicker")).toBe(false);
@@ -921,7 +912,7 @@ test("an immediate-return flicker is not targeted removal", () => {
 });
 
 test("a flicker you can cast at instant speed on your own permanent is protection", () => {
-  const m = detectBuildCategories(Object.keys(FLICKERS).map(flick));
+  const m = detectBuildCategories(FLICKERS.map(flick));
   const protection = [...(m.get("protection") ?? new Set<string>())].sort();
   expect(protection).toEqual(["Cloudshift", "Eldrazi Confluence", "Ephemerate", "Otherworldly Journey", "Restoration Angel"]);
 });
@@ -932,10 +923,10 @@ test("a flicker you can cast at instant speed on your own permanent is protectio
  *  spell (Weaver of Harmony, Twincast, and 257 with it). Oracle text from Scryfall, 2026-09-26. */
 test("a graveyard return is not removal, and retargeting your own copy is not stack interaction", () => {
   const m = detectBuildCategories([
-    mk("Archaeomancer", "When this creature enters, return target instant or sorcery card from your graveyard to your hand.", "Creature — Human Wizard"),
+    realCard("Archaeomancer"),
     mk("Weaver of Harmony", "Other enchantment creatures you control get +1/+1.\n{G}, {T}: Copy target activated or triggered ability you control from an enchantment source. You may choose new targets for the copy. (Mana abilities can't be targeted.)", "Enchantment Creature — Snake Druid"),
     mk("Twincast", "Copy target instant or sorcery spell. You may choose new targets for the copy."),
-    mk("Unsummon", "Return target creature to its owner's hand."),
+    realCard("Unsummon"),
     mk("Redirect", "You may choose new targets for target spell."),
   ]);
   expect([...(m.get("targetedRemoval") ?? [])].sort()).toEqual(["Unsummon"]);
@@ -966,11 +957,11 @@ test("gaining control of a targeted spell and countering a spell targeted earlie
  *  back, and it is played on your own creatures to win or combo. Fractured Identity gives the copies
  *  to everyone else and stays removal; Grim Hireling keeps both its roles. */
 test("a destroy whose controller gets copies back is neither removal nor an answer", () => {
-  const saw = mk("Saw in Half", "Destroy target creature. If that creature dies this way, its controller creates two tokens that are copies of that creature, except their power is half that creature's power and their toughness is half that creature's toughness. Round up each time.", "Instant");
-  const fractured = mk("Fractured Identity", "Exile target nonland permanent. Each player other than its controller creates a token that's a copy of it.", "Sorcery");
-  const hireling = mk("Grim Hireling", "Whenever one or more creatures you control deal combat damage to a player, create two Treasure tokens.\n{B}, Sacrifice X Treasures: Target creature gets -X/-X until end of turn. Activate only as a sorcery.", "Creature — Tiefling Rogue");
+  const saw = realCard("Saw in Half");
+  const fractured = realCard("Fractured Identity");
+  const hireling = realCard("Grim Hireling");
   // The Treasure is the derived mana line's, not the oracle text's (#1190).
-  const treasure = { ...hireling, tags: manaTags([mkLine({ source: "token-maker", repeats: "repeatable", producesToken: "treasure", cost: { ...FREE_TAP, tap: false } })]) };
+  const treasure = { ...hireling, tags: { ...hireling.tags!, ...manaTags([mkLine({ source: "token-maker", repeats: "repeatable", producesToken: "treasure", cost: { ...FREE_TAP, tap: false } })]), abilities: hireling.tags!.abilities } };
   const cats = detectBuildCategories([saw, fractured, treasure]);
   expect(cats.get("targetedRemoval")?.has("Saw in Half") ?? false).toBe(false);
   expect(cats.get("targetedRemoval")?.has("Fractured Identity")).toBe(true);
@@ -1178,5 +1169,66 @@ describe("ramp.land.fetchesTwo and ramp.land.bigMana are derived", () => {
   });
   test("a non-land is never either rule", () => {
     expect(ruleMatches(big, { card: { name: "Sol Ring", oracleText: "", typeLine: "Artifact" } as Card, tags: manaTags([mkLine({ ...amount(2) })]) }, set)).toBe(false);
+  });
+});
+
+/** removal.targeted reads DERIVED emits, not printed text (#1266, removal step 1). Every card here carries its real Mongo oracle text and its real `cardTagsDerived` abilities
+ *  (`fixtures/removal-derived.json`); the must-hold cases blank the oracle text, so only the derived data can say yes. The damage half and the edict alternative are still printed patterns. */
+describe("removal.targeted is derived", () => {
+  const set = loadRules();
+  const rule = set.rules.find((r) => r.id === "removal.targeted")!;
+  const land = set.rules.find((r) => r.id === "removal.land")!;
+  const blank = (name: string): DeckCard => realCard(name, { oracleText: "" });
+  test("a destroy, an exile, a shuffle, a bounce and a lethal debuff of a target hold with no oracle text (Murder, Swords, Chaos Warp, Cyclonic Rift, Tragic Slip, Dismember)", () => {
+    for (const n of ["Murder", "Swords to Plowshares", "Chaos Warp", "Cyclonic Rift", "Tragic Slip", "Dismember"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
+  });
+  test("wording the printed pattern missed holds: a multicoloured permanent (Pure // Simple), 'creature or Vehicle' (Daring Demolition), 'target Spirit' (Rend Spirit)", () => {
+    for (const n of ["Pure // Simple", "Daring Demolition", "Rend Spirit"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
+  });
+  test("an exile whose emit names no origin zone still holds (Karlov), and so does an 'until this leaves' exile, whose return derive reads as an opponent's flicker (Fairgrounds Warden)", () => {
+    for (const n of ["Karlov of the Ghost Council", "Fairgrounds Warden"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
+  });
+  test("a delayed return still holds (Flickerwisp, Otherworldly Journey): owner ruling 2026-09-25", () => {
+    for (const n of ["Flickerwisp", "Otherworldly Journey"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
+  });
+  test("a wipe is not targeted (Wrath of God: scope all)", () => {
+    expect(ruleMatches(rule, realCard("Wrath of God"), set)).toBe(false);
+    expect(ruleMatches(rule, blank("Wrath of God"), set)).toBe(false);
+  });
+  test("a flicker of your own permanent is not removal (Abuelo: control you; Flicker: the return comes at once), with its printed text", () => {
+    for (const n of ["Abuelo, Ancestral Echo", "Flicker"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
+  });
+  test("a -N/-0 shrink kills nothing (Disorient), and a bounce of your own permanent is not removal (Alley Evasion), with their printed text", () => {
+    for (const n of ["Disorient", "Alley Evasion"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
+  });
+  test("an edict stays through the printed `target player sacrifices` pattern until derive marks the victim (#1295 item 1)", () => {
+    expect(ruleMatches(rule, realCard("Diabolic Edict"), set)).toBe(true);
+    expect(ruleMatches(rule, blank("Diabolic Edict"), set)).toBe(false);
+  });
+  test("the CEILING in rules.ts is pinned: a real removal derive mislabels is lost (Polymorph), and derive's over-claims stay in (Celestial Sword, Get Out)", () => {
+    expect(ruleMatches(rule, realCard("Polymorph"), set)).toBe(false);
+    for (const n of ["Celestial Sword", "Get Out"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(true);
+  });
+  test("a land with derived removal fills removal.land, not removal.targeted", () => {
+    const eiganjo = { ...realCard("Murder"), card: { name: "x", typeLine: "Land", oracleText: "", manaValue: 0 } as never };
+    expect(ruleMatches(land, eiganjo, set)).toBe(true);
+    expect(ruleMatches(rule, eiganjo, set)).toBe(false);
+  });
+  test("toughnessDown: only a negative toughness half kills", () => {
+    const debuff = (amount: string): DeckCard => ({ card: { name: "x", typeLine: "Instant", oracleText: "" } as never, tags: { abilities: [{ effect: { kind: "debuff", subject: { control: "any", token: null, type: "creature", scope: "target" } }, amount }] } as never });
+    for (const a of ["-5/-5", "-0/-3", "-1/-1", "-X/-X, where X is the mana value of the exiled card"]) expect(ruleMatches(rule, debuff(a), set), a).toBe(true);
+    for (const a of ["-2/-0", "-7/-0", "-X/-0", "-X/+X"]) expect(ruleMatches(rule, debuff(a), set), a).toBe(false);
+  });
+  test("an ability paid by exiling THIS card from hand is no removal of the target (Emrakul, the Exigent Doom's cost); one that pairs the target with a graveyard card of the same control and type is not either (Macabre Mockery)", () => {
+    const exile = (cost: string | undefined, emits: unknown[], extra: unknown[] = []): DeckCard => ({ card: { name: "x", typeLine: "Sorcery", oracleText: "" } as never,
+      tags: { abilities: [{ kind: "activated", clause: 1, effect: { kind: "" }, ...(cost ? { cost } : {}), emits }, ...extra] } as never });
+    const land = { control: "opp", token: null, type: "land", scope: "target" };
+    expect(ruleMatches(rule, exile(undefined, [{ verb: "exiled", subject: land }]), set)).toBe(true);
+    expect(ruleMatches(rule, exile("{3}, Exile this card from your hand", [{ verb: "exiled", subject: land }]), set)).toBe(false);
+    const dies = { control: "opp", token: null, type: "creature", scope: "target" };
+    const back = (control: string): unknown => ({ kind: "", clause: 1, effect: { kind: "graveyard-recursion" }, emits: [{ verb: "enters", subject: { ...dies, control, fromZone: "graveyard" } }] });
+    expect(ruleMatches(rule, exile(undefined, [{ verb: "dies", subject: dies }], [back("opp")]), set)).toBe(false);
+    // Lethal Protection: the kill is an opponent's creature, the graveyard card is YOURS.
+    expect(ruleMatches(rule, exile(undefined, [{ verb: "dies", subject: dies }], [back("you")]), set)).toBe(true);
   });
 });

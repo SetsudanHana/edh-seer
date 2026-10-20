@@ -9,6 +9,7 @@ import type { CardTags, ManaLine } from "@edh-seer/tagger";
 import { FREE_TAP, filterLine, mkLine, ritualLine, tapFor, triggerLine } from "./mana-test-support.js";
 import { COVERAGE_CLASSES } from "./answer-coverage.js";
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
+import { realCard, renamed } from "./removal-test-support.js";
 
 /** Minimal DeckCard: oracleText + typeLine drive the heuristics; abilities drive ramp/draw. */
 const mk = (
@@ -69,11 +70,11 @@ test("basic lands do not fill the lands role (only utility lands do)", () => {
   expect(m.get("lands")).toEqual(new Set(["Bojuka Bog"]));
 });
 
-test("targeted removal is detected from oracle text (Swords/Counterspell gap)", () => {
+test("targeted removal is read from derived emits (Swords/Counterspell gap)", () => {
   const m = detectBuildCategories([
-    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power.", "Instant"),
+    realCard("Swords to Plowshares"),
     mk("Counterspell", "Counter target spell.", "Instant"),
-    mk("Beast Within", "Destroy target permanent. Its controller creates a 3/3 green Beast creature token.", "Instant"),
+    realCard("Beast Within"),
   ]);
   expect(m.get("targetedRemoval")).toEqual(new Set(["Swords to Plowshares", "Beast Within"]));
   expect(m.get("stackInteraction")).toEqual(new Set(["Counterspell"]));
@@ -124,11 +125,11 @@ const completeShell = (): DeckCard[] => {
   for (let i = 0; i < 4; i++) cards.push(mk(`Scry ${i}`, "Scry 2.", "Sorcery"));
   // TASK 3: spread across all five answer classes so this shell also hits full COVERAGE, not just
   // full count -- ten creature-only kill spells would now cap Interaction below its target.
-  for (let i = 0; i < pop.interaction - 4; i++) cards.push(mk(`Kill ${i}`, "Destroy target creature.", "Instant"));
-  cards.push(mk("Wipe Art", "Destroy target artifact.", "Instant"));
-  cards.push(mk("Wipe Ench", "Destroy target enchantment.", "Instant"));
-  cards.push(mk("Wipe Walker", "Destroy target planeswalker.", "Instant"));
-  cards.push(mk("Wipe Land", "Destroy target land.", "Instant"));
+  for (let i = 0; i < pop.interaction - 4; i++) cards.push(renamed("Murder", `Kill ${i}`));
+  cards.push(renamed("Shatter", "Wipe Art"));
+  cards.push(renamed("Demystify", "Wipe Ench"));
+  cards.push(renamed("Hero's Downfall", "Wipe Walker"));
+  cards.push(renamed("Stone Rain", "Wipe Land"));
   for (let i = 0; i < pop.boardWipes; i++) cards.push(mk(`Wipe ${i}`, "Destroy all creatures.", "Sorcery"));
   for (let i = 0; i < 36; i++) cards.push(mk(`Land ${i}`, "", "Basic Land — Forest"));
   return cards;
@@ -456,8 +457,8 @@ test("damage-to-creature is targeted removal; graveyard-hate exile is not remova
 
 test("removal with unrelated later graveyard text is still removal (no over-suppression)", () => {
   const m = detectBuildCategories([
-    mk("Gaze of Justice", "Exile target creature. Flashback {W}{W} (You may cast this card from your graveyard for its flashback cost. Then exile it.)", "Sorcery"),
-    mk("Elspeth Conquers Death", "Exile target permanent an opponent controls with mana value 3 or greater. Return target creature or planeswalker card from your graveyard to the battlefield.", "Enchantment"),
+    realCard("Gaze of Justice"),
+    realCard("Elspeth Conquers Death"),
   ]);
   expect(m.get("targetedRemoval")).toContain("Gaze of Justice");
   expect(m.get("targetedRemoval")).toContain("Elspeth Conquers Death");
@@ -491,11 +492,11 @@ test("redirection via 'choose new targets for' is stack interaction (Deflecting 
 
 test("removal regex tolerates words between verb and target", () => {
   const m = detectBuildCategories([
-    mk("Solitude", "When this creature enters, exile up to one other target creature. That creature's controller gains life equal to its power.", "Creature"),
-    mk("Shambling Ghast", "When this creature dies, choose one — Target creature an opponent controls gets -1/-1 until end of turn.", "Creature"),
-    mk("Yawgmoth", "Pay 1 life, Sacrifice another creature: Put a -1/-1 counter on up to one target creature and draw a card.", "Creature"),
+    realCard("Solitude"),
+    realCard("Shambling Ghast"),
+    realCard("Yawgmoth, Thran Physician"),
   ]);
-  expect(m.get("targetedRemoval")).toEqual(new Set(["Solitude", "Shambling Ghast", "Yawgmoth"]));
+  expect(m.get("targetedRemoval")).toEqual(new Set(["Solitude", "Shambling Ghast", "Yawgmoth, Thran Physician"]));
 });
 
 test("loosened damage removal catches qualified creature targets; any-target stays out", () => {
@@ -527,9 +528,9 @@ test("verb->target does not bridge a period or an unrelated same-sentence clause
 
 test("target-creature-then--1/-1-counter order is removal", () => {
   const m = detectBuildCategories([
-    mk("Reverse Counter", "Put target creature you don't control gets a -1/-1 counter.", "Instant"),
+    realCard("Grim Affliction"),
   ]);
-  expect(m.get("targetedRemoval")).toContain("Reverse Counter");
+  expect(m.get("targetedRemoval")).toContain("Grim Affliction");
 });
 
 test("counters with a comma-separated type list are stack interaction", () => {
@@ -615,18 +616,16 @@ test("the sacrifice-to-fetch-two ramp land still fills the ramp role", () => {
 
 describe("Interaction scores coverage x count", () => {
   // Two decks with the SAME number of interaction cards, one of which answers only creatures.
-  const removal = (name: string, text: string) => ({
-    card: { name, typeLine: "Instant", oracleText: text, keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 2, power: null, toughness: null },
-    tags: null,
-  }) as never;
+  // REAL cards (their derived emits are what the role reads); the colour identity is the deck's, so each carries `colorIdentity: ["B"]` as the old stubs did.
+  const removal = (from: string, name: string) => { const c = renamed(from, name); return { ...c, card: { ...c.card, colorIdentity: ["B"], colors: ["B"] } } as never; };
 
-  const narrow = Array.from({ length: 10 }, (_, i) => removal(`Kill ${i}`, "Destroy target creature."));
+  const narrow = Array.from({ length: 10 }, (_, i) => removal("Murder", `Kill ${i}`));
   const broad = [
-    ...Array.from({ length: 6 }, (_, i) => removal(`Kill ${i}`, "Destroy target creature.")),
-    removal("Wipe Art", "Destroy target artifact."),
-    removal("Wipe Ench", "Destroy target enchantment."),
-    removal("Wipe Walker", "Destroy target planeswalker."),
-    removal("Wipe Land", "Destroy target land."),
+    ...Array.from({ length: 6 }, (_, i) => removal("Murder", `Kill ${i}`)),
+    removal("Shatter", "Wipe Art"),
+    removal("Demystify", "Wipe Ench"),
+    removal("Hero's Downfall", "Wipe Walker"),
+    removal("Stone Rain", "Wipe Land"),
   ];
 
   it("rates the broad deck above the narrow one at the same card count", () => {
@@ -650,9 +649,9 @@ describe("Interaction scores coverage x count", () => {
 
   it("multiplies rather than replaces -- full coverage on two cards is still a thin deck", () => {
     const thin = [
-      removal("A", "Destroy target creature."), removal("B2", "Destroy target artifact."),
-      removal("C", "Destroy target enchantment."), removal("D", "Destroy target planeswalker."),
-      removal("E", "Destroy target land."),
+      removal("Murder", "A"), removal("Shatter", "B2"),
+      removal("Demystify", "C"), removal("Hero's Downfall", "D"),
+      removal("Stone Rain", "E"),
     ];
     const r = computeBuild(thin, undefined, undefined, ["B"], 0);
     expect(r.answerCoverage.coverage).toBeCloseTo(1, 6);
@@ -884,7 +883,7 @@ test("removal facets: an ability that emits dies/leaves and repeats is an engine
       [{ kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "leaves", subject: { control: "opp", token: null, type: "creature", scope: "target" } }], repeats: "once" } as never]),
     mk("Royal Assassin", "{T}: Destroy target tapped creature.", "Creature", kill("per-cycle")),
     mk("Ravenous Chupacabra", "When this creature enters, destroy target creature an opponent controls.", "Creature", kill("once", "triggered")),
-    mk("Chaos Warp", "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield.", "Instant"),
+    realCard("Chaos Warp"),
     mk("Mystery Kill", "Destroy target creature.", "Enchantment", kill(undefined, "triggered")),
     // RECURSION, NOT REMOVAL (RULES 13, overview persona rounds 2026-09-25, item 9): the regex used
     // to call this removal because a graveyard return read as a bounce. It is no longer a member.
