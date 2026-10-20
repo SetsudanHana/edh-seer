@@ -268,7 +268,7 @@ export interface ManaOutput {
   gated?: { gate: BoardGate; amount: number };
   /** A MAX-SPEED LINE (owner 2026-10-13; CR 702.179d, `MAX_SPEED_TURN`): Muraganda Raceway's "Max speed -- {T}: Add {C}{C}", Howlsquad Heavy, Endrider Catalyzer. The source taps for
    *  `speed.amount` from turn `speed.turn` on (4 by owner ruling 2026-10-13; the rule gives entry turn + 2 at the earliest (702.179a, 702.179d), which the model does not price: it over-claims a source cast after turn 2 and under-claims a turn-1 Raceway by one turn), and for `amount` before (0 when the speed line is the card's only mana). Present whether or not
-   *  it beats `amount`. A scaling speed line (Howlsquad Heavy) is the incumbent 1. CEILING: speed rises only on a turn an opponent loses life, assumed to happen every turn (gate.ts
+   *  it beats `amount`. A scaling speed line (Howlsquad Heavy) is its floor when that beats 1, else the incumbent 1. CEILING: speed rises only on a turn an opponent loses life, assumed to happen every turn (gate.ts
    *  `MAX_SPEED_TURN`). A speed line's COLOURS are in `colourMaskOf` from the start, like any gated colour that is not a board count, but they ride with the source's mana, which is 0 until turn 4
    *  when the speed line is the card's only one (Endrider Catalyzer, Howlsquad Heavy) and colourless on the card that has a plain line beside it (Muraganda Raceway: the three speed-gated lines of the corpus, 2026-10-13). */
   speed?: { turn: number; amount: number };
@@ -392,14 +392,21 @@ export function isEveryLandType(typeLine: string | undefined, oracleText: string
 const tapOnly = (l: ManaLine): boolean => l.cost.mana === 0 && l.cost.life === 0 && l.cost.counters === null && !l.cost.sacrificeOther && !l.cost.tapOther
   && (l.cost.other.length === 0 || isLoyaltyAbility(l));
 
+/** Mana one use of a line adds: `fixed`, or for a SCALING line `max(amount.floor, 1)` (owner ruling 2026-10-20, #1272). CEILING: floor 0 / 1 keep the incumbent 1 (Gaea's Cradle over-claims 1).
+ *  Reads `amount.floor` directly; `ManaLine.net` is the legacy value and is not read here.
+ *  CEILING: the units a multi-unit scaling tap makes each carry the card's WHOLE colour mask independently -- Faeburrow Elder's two units can both pay {G} though it makes one {G} and one {W},
+ *  and Doc Samson's "X mana of any one color" units can split colours though the card makes one. Pips never fall outside the commander's identity, so the five-colour mask over-claims nothing beyond that per-unit independence. */
+export const perUse = (l: ManaLine): number => l.amount.fixed ?? Math.max(l.amount.floor ?? 1, 1);
+
 export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): ManaOutput {
   if (BOUNCES.test(dc.card.oracleText ?? "")) return { amount: 1 };
   // THE LINES THAT HAVE AN AMOUNT TO PRICE: a tap, a grant, an Aura's "an additional" and a phase trigger. Landfall and a tap-replacement bonus are
   // priced apart (`landfallOf`, `tapBonusOf`) and bring no mana of their own to a tap.
-  // CEILING: a SCALING amount ("{G} for each creature you control", Gaea's Cradle; a phase trigger's "for each Raccoon") is a RATE and not an amount
-  // (ruling I4, one subsystem over): a tap keeps the incumbent 1 and a phase trigger is refused, as before.
+  // A SCALING amount makes its guaranteed floor per use when the floor beats 1 (Doc Samson 3, Faeburrow Elder 2; owner ruling 2026-10-20, #1272), else it keeps the incumbent 1 and is
+  // not a line here. CEILING: a floor-0 line ("{G} for each creature you control", Gaea's Cradle; a phase trigger's "for each Raccoon") is an over-claim of 1; the ceiling (a `colours`
+  // ceiling clamped to deck identity included) is not read -- under a floor policy it cannot change the number.
   const lines = playableLines(dc, deck, perGame).filter((l) => (l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger" || isPhaseTrigger(l))
-    && tapOnly(l) && l.amount.fixed !== null && l.amount.fixed > 0);
+    && tapOnly(l) && (l.amount.fixed !== null ? l.amount.fixed > 0 : perUse(l) >= 2));
   // THREE KINDS OF GATE, and `playableLines` let each through for its own reason. The lands-counted and tron gates are priced turn by turn below (`needsLands`, `tron`); a BOARD-COUNT
   // gate ("you control a Dragon", metalcraft, four or more creatures) is priced turn by turn against the permanents the simulation puts onto the battlefield (`gated`, `produced`);
   // anything else the deck met at `gateMet` ("you have the initiative", Sarevok's Tome: CEILING in gate.ts) is no gate here -- the line is credited whole.
@@ -407,7 +414,7 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = f
   const speedGated = (l: ManaLine): boolean => l.gate !== null && isSpeedGate(l.gate);
   const estimatedGated = (l: ManaLine): boolean => l.gate !== null && isEstimatedGate(l.gate);
   const open = (l: ManaLine): boolean => l.gate === null || (!dynamicGate(l) && !speedGated(l) && !estimatedGated(l) && timed(l) === null);
-  // A SCALING speed line (Howlsquad Heavy: "{R} for each Goblin you control") is a rate, not an amount: it keeps the incumbent 1, as a scaling tap does everywhere in this module.
+  // A SCALING speed line (Howlsquad Heavy: "{R} for each Goblin you control") makes `perUse`: its floor when that beats 1, else the incumbent 1.
   const speedLines = playableLines(dc, deck, perGame).filter((x) => speedGated(x) && x.source === "activated" && tapOnly(x) && x.restriction === null);
   const boardGated = lines.filter((x) => timed(x) !== null && x.restriction === null);
   // A CARD WHOSE ONLY PRICED MANA WAITS ON THE BOARD (Mox Jasper) OR ON MAX SPEED (Howlsquad Heavy) makes none until it is met; every other source starts at the incumbent 1.
@@ -415,14 +422,14 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = f
   let out: ManaOutput = { amount: (boardGated.length > 0 || speedLines.length > 0 || estimatedLines.length > 0) && !lines.some(open) ? 0 : 1 };
   // UNGATED: the best plain line. A mana-value floor is RECORDED rather than refused, because the deck can settle it; it only wins by beating the
   // plain amount.
-  for (const l of lines.filter((x) => open(x) && x.restriction === null)) if (l.amount.fixed! > out.amount) out = { amount: l.amount.fixed! };
+  for (const l of lines.filter((x) => open(x) && x.restriction === null)) if (perUse(l) > out.amount) out = { amount: perUse(l) };
   // CEILING: THE RESTRICTED + OPEN LINE IS NO LONGER ONE THAT HOLDS A BOARD GATE. A line with both a board-count gate and a restriction (`timed(l) !== null && l.restriction !== null`) is in neither
   // this loop (`open` is false for a board gate) nor `boardGated` (restriction must be null): it is not priced, an under-claim. NOTHING IN THE CORPUS HAS ONE THE GOLDFISH WOULD PLAY
   // (2026-10-13, cardTagsDerived with gate and restriction both set: 2 lines, Shrine of the Forsaken Gods -- "seven or more lands", a colourless-spells restriction -- and Tazri, Stalwart
   // Survivor -- "another activated ability", an ability-only restriction); `playableLines` refuses both, as it refuses every restriction but a mana-value floor, and neither gate is a board count.
   // A future card with a mana-value floor AND a board gate would need `boardGated` to carry `needsMinMV`.
   for (const l of lines.filter((x) => open(x) && x.restriction !== null)) {
-    if (l.amount.fixed! > out.amount) out = { amount: l.amount.fixed!, needsMinMV: minManaValue(l)! };
+    if (perUse(l) > out.amount) out = { amount: perUse(l), needsMinMV: minManaValue(l)! };
   }
   // GATED: a gated line only wins if it beats what the card already makes unconditionally.
   const bestOf = (o: ManaOutput): number => Math.max(o.amount, o.tron?.amount ?? 0);
@@ -430,35 +437,35 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = f
     const needs = landsNeeded(l.gate!);
     const tron = tronOf(l.gate!);
     const here: ManaOutput | null = needs > 0 ? {
-        amount: l.amount.fixed!, needsLands: needs,
+        amount: perUse(l), needsLands: needs,
         ...(l.gate!.kind === "same-name" ? { sameName: true } : {}),
         // An ungated line beside the gated one is what the card taps for until the gate holds (Sceptre of Eternal Glory, #1183).
         ...(lines.some(open) ? { below: out.amount } : {}),
       }
-      : tron ? { amount: out.amount, tron: { subtypes: [tron[0]!, tron[1]!], amount: l.amount.fixed! } } : null;
+      : tron ? { amount: out.amount, tron: { subtypes: [tron[0]!, tron[1]!], amount: perUse(l) } } : null;
     if (here && bestOf(here) > bestOf(out)) out = here;
   }
   // THE BOARD-COUNT GATE: the best gated line, taken whether or not it beats the plain amount (a colour waits on it too). CEILING: one board gate per card; a second, lesser one is ignored.
   let best: ManaLine | undefined;
-  for (const l of boardGated) if (best === undefined || l.amount.fixed! > best.amount.fixed!) best = l;
-  if (best) out = { ...out, gated: { gate: timed(best)!, amount: best.amount.fixed! } };
+  for (const l of boardGated) if (best === undefined || perUse(l) > perUse(best)) best = l;
+  if (best) out = { ...out, gated: { gate: timed(best)!, amount: perUse(best) } };
   // THE ESTIMATED LINE: on the turns its gate holds. CEILING: one per card, the best amount (the earliest-met wins a tie).
   if (estimatedLines.length > 0) {
     const tables = estimatedLines.map((l) => {
       const g = l.gate!;
       const after = g.kind === "counter" && g.put?.by === "self" ? g.put.readyTurn - Math.max(1, dc.card.manaValue ?? 0) : undefined;
-      return { amount: l.amount.fixed!, met: estimatedGateByTurn(g, deck!), ...(after !== undefined ? { after } : {}), ...(g.kind === "turn-event" && g.event === "land-played" ? { perGame: "land-played" as const } : {}) };
+      return { amount: perUse(l), met: estimatedGateByTurn(g, deck!), ...(after !== undefined ? { after } : {}), ...(g.kind === "turn-event" && g.event === "land-played" ? { perGame: "land-played" as const } : {}) };
     });
     out = { ...out, estimated: tables.reduce((b, t) => (t.amount > b.amount || (t.amount === b.amount && t.met.findIndex(Boolean) < b.met.findIndex(Boolean)) ? t : b)) };
   }
   // THE MAX-SPEED LINE: from turn 4, whether or not it beats the plain amount. CEILING: one speed line per card, the best.
-  if (speedLines.length > 0) out = { ...out, speed: { turn: MAX_SPEED_TURN, amount: Math.max(...speedLines.map((l) => l.amount.fixed ?? 1)) } };
+  if (speedLines.length > 0) out = { ...out, speed: { turn: MAX_SPEED_TURN, amount: Math.max(...speedLines.map((l) => perUse(l))) } };
   // A WALKER WHOSE MANA IS ALL LOYALTY ABILITIES pays for as long as its priced ability can be activated. The priced ability is the best amount (a scaling one is
-  // the incumbent 1, Koth), the longest-lasting of equals. CEILING: that is the only ability the walker plays, so a "+N" mana ability beside a minus one is not
+  // its floor when that beats 1, else the incumbent 1, Koth), the longest-lasting of equals. CEILING: that is the only ability the walker plays, so a "+N" mana ability beside a minus one is not
   // carried on with after the minus one runs out.
   const pays = playableLines(dc, deck, perGame).filter((l) => l.source === "activated" || l.source === "static-grant" || l.source === "aura-trigger" || isPhaseTrigger(l));
   if (pays.length > 0 && pays.every(isLoyaltyAbility)) {
-    const price = (l: ManaLine): number => l.amount.fixed ?? 1;
+    const price = (l: ManaLine): number => perUse(l);
     const best = pays.reduce((b, l) => price(l) > price(b) || (price(l) === price(b) && loyaltyActivations(l) > loyaltyActivations(b)) ? l : b);
     const n = loyaltyActivations(best);
     if (n !== Infinity) out = { ...out, turns: n };
@@ -469,7 +476,7 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = f
 /** Mana a card adds per LAND ENTERING, or 0: the best ungated landfall line it plays. Restricted mana is refused (`playableLines`), for the same
  *  reason every other restricted source is: this model cannot check what mana is spent on. */
 export function landfallOf(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): number {
-  return Math.max(0, ...playableLines(dc, deck, perGame).filter(isLandfall).map((l) => l.amount.fixed ?? 1));
+  return Math.max(0, ...playableLines(dc, deck, perGame).filter(isLandfall).map((l) => perUse(l)));
 }
 
 /** A source whose mana carries a mana-value restriction the DECK does not make vacuous is worth what

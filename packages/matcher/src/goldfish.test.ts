@@ -285,7 +285,7 @@ test("a planeswalker's non-negative loyalty mana ability is an accelerant priced
   expect(manaOutput(real("Chandra, Flameshaper")).amount).toBe(3);
   expect(manaOutput(real("Ugin, Eye of the Storms")).amount).toBe(3);
   expect(manaOutput(real("Domri, Anarch of Bolas")).amount).toBe(1);
-  // CEILING in the model: a scaling amount ("+1: Add {R} for each planeswalker you control") is a rate, priced at the incumbent one.
+  // CEILING in the model: a scaling amount ("+1: Add {R} for each planeswalker you control") with floor 0 or 1 keeps the incumbent 1 (#1272).
   expect(manaOutput(real("Chandra, Legacy of Fire")).amount).toBe(1);
   // The colour it makes is the line's: Chandra's {R}, Ugin's {C}.
   expect(colourMaskOf(real("Chandra, Torch of Defiance"))).toBe(colorMask(["R"]));
@@ -296,7 +296,7 @@ test("a planeswalker's non-negative loyalty mana ability is an accelerant priced
   for (const n of ["Chandra, Novice Pyromancer", "Koth of the Hammer"]) expect(classifyAccelerant(real(n))?.kind, n).toBe("rock");
   for (const n of ["Chandra, Heart of Fire", "Quintorius Kand", "Jaya Ballard"]) expect(classifyAccelerant(real(n)), n).toBeNull();
   expect(manaOutput(real("Chandra, Novice Pyromancer"))).toMatchObject({ amount: 2, turns: 5 });
-  // Koth's amount scales (a rate: priced at the incumbent one) and he can pay his -2 once from loyalty 3.
+  // Koth's amount scales (floor 0: keeps the incumbent 1, #1272) and he can pay his -2 once from loyalty 3.
   expect(manaOutput(real("Koth of the Hammer"))).toMatchObject({ amount: 1, turns: 1 });
   // A "+N" or "0" never runs out.
   expect(manaOutput(real("Chandra, Torch of Defiance"))).not.toHaveProperty("turns");
@@ -412,7 +412,7 @@ test("a derived amount is what the line says: Relic of Sauron taps for two, Mura
   expect(manaOutput(real("Muraganda Raceway")).amount).toBe(1);
   // ...and for two from turn 4 (turn 4 by owner ruling 2026-10-13; CR 702.179a/d give entry turn + 2 at the earliest, not priced).
   expect(manaOutput(real("Muraganda Raceway")).speed).toEqual({ turn: 4, amount: 2 });
-  // A card whose only mana is the speed line taps for nothing before it (Endrider Catalyzer: two at max speed; Howlsquad Heavy: one, the incumbent of its scaling line).
+  // A card whose only mana is the speed line taps for nothing before it (Endrider Catalyzer: two at max speed; Howlsquad Heavy: one, the incumbent of its floor-1 scaling line, #1272).
   expect(manaOutput(real("Endrider Catalyzer")).amount).toBe(0);
   expect(manaOutput(real("Endrider Catalyzer")).speed?.amount).toBe(2);
   expect(manaOutput(real("Howlsquad Heavy")).speed?.amount).toBe(1);
@@ -863,7 +863,7 @@ test("N10: a word-form amount is read, and its gate with it", () => {
   expect(manaOutput(withManaLines("Smoke", "Creature", [tapFor(WUBRG, { ...amountOf(2), restriction: { spend: "to cast elemental spells", typeName: "elemental", minManaValue: null } })])).amount).toBe(1);
   // A cost that is not exactly {T} is not a tap this model can pay.
   expect(manaOutput(withManaLines("Costed", "Artifact", [tapFor(WUBRG, { cost: { ...FREE_TAP, mana: 1 }, ...amountOf(2, { net: 1 }) })])).amount).toBe(1);
-  // An X amount is a RATE, not an amount -- it stays at one rather than being guessed.
+  // An X amount with no floor stays at the incumbent 1 rather than being guessed (#1272).
   expect(manaOutput(withManaLines("Elves", "Creature", [tapFor(WUBRG, { amount: { fixed: null, scales: "x" }, net: 1 })])).amount).toBe(1);
   // A gate this model cannot check leaves its line uncounted.
   expect(manaOutput(withManaLines("Gated", "Artifact", [tapFor(["C"], { ...amountOf(3), gate: parseGate("you control a swamp") })])).amount).toBe(1);
@@ -1056,7 +1056,7 @@ test("O2: a phase trigger that adds a FIXED amount is a source; the rest are ref
   expect(classifyAccelerant(real("Thran Turbine"))).toBeNull();
 
   // A ONE-SHOT IS NOT A SOURCE, at any confidence. "Your NEXT main phase" fires once (Mana Drain; the
-  // amount scales, so it is refused as a rate too).
+  // amount scales with floor 0, so it keeps the incumbent 1 as well).
   expect(manaOutput(real("Mana Drain")).amount).toBe(1);
   expect(classifyAccelerant(real("Mana Drain"))).toBeNull();
 });
@@ -1867,4 +1867,28 @@ test("a line gated on an estimated kind is not admitted when no turn meets the g
   expect(playableLines(landGate, undefined, true)).toEqual([]);
   const board = rock("you control a land");
   expect(playableLines(board, [board, ...lands], true)).toHaveLength(1);
+});
+
+// #1272, owner ruling 2026-10-20: a scaling mana tap makes max(amount.floor, 1) per use. Floor 0 / 1 keep the incumbent 1 (a CEILING).
+test("a scaling tap makes its guaranteed floor when the floor beats 1 (#1272)", () => {
+  const scaling = (floor: number, over: Partial<ReturnType<typeof tapFor>> = {}) =>
+    withManaLines("Scaler", "Creature", [tapFor(["G"], { amount: { fixed: null, scales: "x", floor, ceiling: null }, ...over })]);
+  expect(manaOutput(scaling(3)).amount).toBe(3);
+  expect(manaOutput(scaling(2, { amount: { fixed: null, scales: "for each color among permanents you control", floor: 2, ceiling: 5, bound: "colours" }, anyColour: "among" })).amount).toBe(2);
+  expect(manaOutput(scaling(0)).amount).toBe(1);
+  expect(manaOutput(scaling(1)).amount).toBe(1);
+  // Selvala shape: a costed scaling line is refused by tapOnly, as before
+  expect(manaOutput(scaling(2, { cost: { ...FREE_TAP, mana: 1 } })).amount).toBe(1);
+  const landfall = (floor: number) => withManaLines("Scaling Landfall", "Creature", [triggerLine("enters", "a land you control", ["G"], 1, { amount: { fixed: null, scales: "x", floor, ceiling: null } })]);
+  expect(landfallOf(landfall(2))).toBe(2);
+  expect(landfallOf(landfall(0))).toBe(1);
+  // the other perUse sites: speed and the loyalty price (the landfall floor is pinned above).
+  const speed = (floor: number) => withManaLines("Speedy", "Creature", [tapFor(["R"], { amount: { fixed: null, scales: "x", floor, ceiling: null }, gate: { kind: "speed", n: 4, text: "speed 4" } as never })]);
+  expect(manaOutput(speed(3)).speed?.amount).toBe(3);
+  expect(manaOutput(speed(1)).speed?.amount).toBe(1);
+  // A walker whose mana is all loyalty: the floor-2 scaling -2 (one activation from loyalty 3) outprices a fixed +1 that lasts forever, so `turns` is the scaling line's.
+  const walkerLine = (loyalty: number, amount: ReturnType<typeof tapFor>["amount"]) =>
+    tapFor(["R"], { amount, cost: { ...FREE_TAP, tap: false, loyalty }, startLoyalty: 3 } as never);
+  const walker = withManaLines("Walker", "Legendary Planeswalker", [walkerLine(1, { fixed: 1, scales: null }), walkerLine(-2, { fixed: null, scales: "x", floor: 2, ceiling: null })]);
+  expect(manaOutput(walker)).toMatchObject({ amount: 2, turns: 1 });
 });

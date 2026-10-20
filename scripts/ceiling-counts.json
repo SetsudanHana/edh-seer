@@ -16,7 +16,7 @@
   "packages/matcher/src/effect-class.ts": 1,
   "packages/matcher/src/fetch-land.ts": 2,
   "packages/matcher/src/gate.ts": 16,
-  "packages/matcher/src/goldfish.ts": 30,
+  "packages/matcher/src/goldfish.ts": 32,
   "packages/matcher/src/graph-events.ts": 1,
   "packages/matcher/src/graph-html.ts": 1,
   "packages/matcher/src/graph.ts": 1,

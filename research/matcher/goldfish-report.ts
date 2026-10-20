@@ -7,6 +7,9 @@
  *    goldfish-report.ts                  the 71-deck sweep, one row per deck
  *    goldfish-report.ts --deck <name>    one deck's full curve, with the spread
  *    goldfish-report.ts --criteria       C4 and C8, the two criteria that need the corpus
+ *    goldfish-report.ts --precons        the 197 precons of packages/data/precons.json instead (#1272: no
+ *                                        calibration deck runs a floor-2 scaling tap); `--only <text>` keeps
+ *                                        the decks whose name contains it
  *
  *  EVERY FIGURE IS A CEILING UNDER A MANA-MAXIMISING POLICY, not an expectation — rule 3 casts every
  *  accelerant it can afford and the owner's own decks hold mana up for interaction. Read the policy
@@ -14,6 +17,7 @@
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS, DECKS_DIR } from "@edh-seer/data";
+import { preconDecklist, type Precon } from "@edh-seer/data/precons";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { classifyAccelerant, pAtLeastMana, quantiles, simulate } from "../../packages/matcher/src/goldfish.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
@@ -42,7 +46,11 @@ const lookup = mongoLookup(store);
 const cardTags = createTagsLookup(store.db, "derived");
 
 async function loadDeck(file: string, dir: string = DECK_DIR): Promise<{ deck: DeckCard[]; commanders: DeckCard[] }> {
-  const s = parseDecklistSections(readFileSync(join(dir, file), "utf8"));
+  return loadText(readFileSync(join(dir, file), "utf8"));
+}
+
+async function loadText(text: string): Promise<{ deck: DeckCard[]; commanders: DeckCard[] }> {
+  const s = parseDecklistSections(text);
   const out: DeckCard[] = [];
   const commanders: DeckCard[] = [];
   const cmdrNames = new Set(s.commanders.map(normalizeName));
@@ -90,9 +98,15 @@ if (one) {
 /** C4 and C8 — the two registered criteria that need the corpus rather than a fixture. */
 const criteria = process.argv.includes("--criteria");
 
+/** THE DECK SET: the calibration files, or `--precons`, each narrowed by `--only`. */
+const only = arg("--only");
+const jobs: { name: string; load: () => Promise<{ deck: DeckCard[]; commanders: DeckCard[] }> }[] = process.argv.includes("--precons")
+  ? (JSON.parse(readFileSync("packages/data/precons.json", "utf8")) as Precon[]).map((p) => ({ name: `${p.setCode}:${p.name}`, load: () => loadText(preconDecklist(p)) }))
+  : files.map((f) => ({ name: f.replace(/\.txt$/, ""), load: () => loadDeck(f) }));
+
 const rows: { deck: string; accelerants: number; headline: number; held: number; landsOnly: number }[] = [];
-for (const file of files) {
-  const { deck, commanders } = await loadDeck(file);
+for (const job of jobs.filter((j) => !only || j.name.includes(only))) {
+  const { deck, commanders } = await job.load();
   const gateDeck = [...deck, ...commanders];
   const accelerants = deck.map((dc) => classifyAccelerant(dc, gateDeck, false, true)).filter((a) => a !== null).length;
   const r = simulate(deck, { trials: TRIALS, turns: TURNS, seed: SEED, alsoPrice: commanders });
@@ -106,7 +120,7 @@ for (const file of files) {
     : dc);
   const bare = simulate(inert, { trials: TRIALS, turns: TURNS, seed: SEED, alsoPrice: commanders });
   rows.push({
-    deck: file.replace(/\.txt$/, ""),
+    deck: job.name,
     accelerants,
     headline: pAtLeastMana(r, HEADLINE_MANA, HEADLINE_TURN),
     held: pAtLeastMana(held, HEADLINE_MANA, HEADLINE_TURN),
