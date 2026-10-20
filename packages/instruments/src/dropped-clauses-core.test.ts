@@ -124,8 +124,19 @@ test("a Condemn-shaped row: the unclaimed put on a claimed clause is a :partial 
   expect(partialKeys([condemn], [{ clause: 1, verb: "put", fromZone: "battlefield", toZone: "library" }], withAbility)).toEqual(["1:put:battlefield>library:partial"]);
 });
 
-test("regression: once the put derives (no unclaimed entry) the :partial key is gone", () => {
-  expect(partialKeys([condemn], [], withAbility)).toEqual([]);
+test("regression: once the put derives (its unclaimed entry gone) only its :partial key goes", () => {
+  const put = { clause: 1, verb: "put", fromZone: "battlefield", toZone: "library" };
+  const draw = { clause: 1, verb: "draw" };
+  expect(partialKeys([condemn], [put, draw], withAbility)).toEqual(["1:draw:partial", "1:put:battlefield>library:partial"]);
+  expect(partialKeys([condemn], [draw], withAbility)).toEqual(["1:draw:partial"]);
+});
+
+test("the :spliced key does not depend on other drops or on the mana / enters-tapped exclusions", () => {
+  const h = { ...none, spliced: new Set([2]) };
+  const mana: ClauseRecord = { id: 2, actions: [{ verb: "add-mana" }] };
+  expect(droppedKeys([mana], { ...h, hasManaLines: true })).toEqual(["2:spliced"]);
+  expect(droppedKeys([mana], h)).toEqual(["2:spliced"]);
+  expect(droppedKeys([mana, clause(5, "draw")], h)).toEqual(["2:spliced", "5:draw"]);
 });
 
 test("an unclaimed action on a clause with NO ability is the clause-level drop's, not a partial", () => {

@@ -109,7 +109,7 @@ export interface UnclaimedLike { clause: number | string; verb: string; object?:
  *  clauses (derive skips them whole, so they never reach unclaimed; kept for safety); the self enters-tapped static on a land / mana-line card;
  *  the mana join (the clause contains add-mana and every real action is add-mana/tap/untap, on a mana-line card). Twins do not apply: a
  *  spliced clause has no ability, so it has no partial.
- *  CEILING: a partial drop that never reaches `unclaimed` (derive emits something WRONG instead of nothing) is invisible here. */
+ *  CEILING: a drop derive still claims (a wrong or partial emit, or an effect kind with no emits) never reaches `unclaimed` and is invisible here. */
 export function partialKeys(records: readonly ClauseRecord[], unclaimed: readonly UnclaimedLike[], homes: Homes): string[] {
   const out: string[] = [];
   for (const u of unclaimed) {

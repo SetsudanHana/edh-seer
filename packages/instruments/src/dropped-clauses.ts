@@ -16,7 +16,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { connect, isStickerCard, loadConfig, type CardDoc } from "@edh-seer/data";
-import { DERIVE_VERSION, deriveAbilitiesOf, deriveInputOf, clauseTexts, grantedTokenClauses, grammarClauseRecords, segmentHash, type ClauseRecord } from "@edh-seer/tagger";
+import { DERIVE_VERSION, INERT_VERBS, deriveAbilitiesOf, deriveInputOf, clauseTexts, grantedTokenClauses, grammarClauseRecords, segmentHash, type ClauseRecord } from "@edh-seer/tagger";
 import { diffMembership, listSome, serialiseSnapshot, versionDrift, type VersionGroup } from "./role-ratchet-core.js";
 import { droppedKeys, groupSplit, partialKeys, partitionKinds, splitReported, type Dropped, type UnclaimedLike } from "./dropped-clauses-core.js";
 
@@ -80,7 +80,9 @@ for (const d of inEngine) {
   const partial = partialKeys(records, row.unclaimed ?? [], homes);
   // The spliced set is derive's own: a clause with no ability is the only one that can have been spliced, so derive again just for those cards.
   let keys = droppedKeys(records, homes);
-  if (keys.length > 0) {
+  // Gate on ANY clause with a real action and no ability, before any exclusion, so a `:spliced` key never depends on an unrelated drop.
+  const mayBeSpliced = records.some((r) => !abilityClauses.has(r.id) && !granted.has(r.id) && (r.actions ?? []).some((a) => !INERT_VERBS.has(a.verb ?? "")));
+  if (mayBeSpliced) {
     const { spliced } = deriveAbilitiesOf(deriveInputOf(d as never, d._id, d.name, records, undefined, g?.readings));
     keys = droppedKeys(records, { ...homes, spliced });
   }
