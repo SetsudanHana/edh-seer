@@ -18,7 +18,7 @@ import { join } from "node:path";
 import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, DERIVE_VERSION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
-import { SHARD_COUNT, comboIndex, shardOf, staleRows, type StaticCombo } from "./build-static-core.js";
+import { SHARD_COUNT, comboIndex, shardOf, shippedTags, shippedTokenTags, staleRows, type StaticCombo } from "./build-static-core.js";
 import { browseSlices, buildPartnerArtifact, type PartnerId } from "../partners-core.js";
 import { eventShards } from "./events-index-core.js";
 import { eventPatterns, patternFrequency } from "../event-pattern.js";
@@ -82,7 +82,7 @@ if (stale.length > 0) {
   await store.close();
   process.exit(1);
 }
-const tagsByOracle = new Map(derivedRows.map((r) => [r.oracleId, r]));
+const tagsByOracle = new Map(derivedRows.map((r) => [r.oracleId, shippedTags(r) as CardTags]));
 const combos = await store.combos.find().toArray();
 const combosByAnchor = comboIndex(combos.map((c) => ({ cards: c.cards, result: c.result, ...(c.requires?.length ? { requires: c.requires } : {}) })));
 
@@ -136,13 +136,7 @@ const resolveToken = await loadTokenTags(store.db);
 const tokens = await store.db.collection<{ _id: string; artCrop?: string; oracleText?: string; printingIds: string[] }>(
   "tokens",
 ).find({}).toArray();
-const tokenTags: Record<string, CardTags> = {};
-for (const t of tokens) {
-  for (const pid of t.printingIds) {
-    const tt = resolveToken({ name: "", typeLine: "", printingId: pid });
-    if (tt) tokenTags[pid] = tt;
-  }
-}
+const tokenTags = shippedTokenTags(tokens.flatMap((t) => t.printingIds), (pid) => resolveToken({ name: "", typeLine: "", printingId: pid }));
 writeFileSync(join(stagingDir, "token-tags.json"), JSON.stringify(tokenTags));
 
 // KEYED ON THE COLLECTION'S OWN `_id` — that IS the oracle id, and `AnalysisSources.tokenArt`

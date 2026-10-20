@@ -276,7 +276,8 @@ describe("static fixers and suspend", () => {
 describe("a card with no mana carries none of it", () => {
   it("writes nothing for Urborg's lines and nothing at all on a card that has none", () => {
     expect(tagsOf("Urborg, Tomb of Yawgmoth").manaLines).toBeUndefined();
-    expect(Object.keys(tagsOf("Urborg, Tomb of Yawgmoth")).sort()).toEqual(
+    // `unclaimed` (#1299) is not a mana key: Urborg's "each land is a Swamp" is an action nothing claims, and says nothing about mana.
+    expect(Object.keys(tagsOf("Urborg, Tomb of Yawgmoth")).filter((k) => k !== "unclaimed").sort()).toEqual(
       ["abilities", "characteristics", "model", "oracleId", "promptVersion", "schemaVersion", "staticFixer"]);
   });
 });

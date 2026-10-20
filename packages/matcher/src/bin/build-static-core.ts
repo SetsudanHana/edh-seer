@@ -65,3 +65,21 @@ export function shardOf(normalizedName: string): string {
 export function staleRows<T extends { deriveVersion?: number }>(rows: readonly T[], deriveVersion: number): T[] {
   return rows.filter((r) => typeof r.deriveVersion !== "number" || r.deriveVersion < deriveVersion);
 }
+
+/** THE ROW AS THE BROWSER GETS IT. `CardTags.unclaimed` (#1299) is a derive diagnostic: no reader under matcher/src or web
+ *  reads it, and it was 622 KB (1.66%) of the row JSON, so it stays in Mongo. Every other key, `unknownTriggers` included, ships. */
+export function shippedTags<T extends object>(row: T): Omit<T, "unclaimed"> {
+  const { unclaimed: _unclaimed, ...rest } = row as T & { unclaimed?: unknown };
+  return rest;
+}
+
+/** The token-tags map the browser ships: every printing id the resolver knows, each row through `shippedTags`. A token's derived row carries
+ *  `unclaimed` like a card's (55 do), and this map is written beside the card shards, so it is stripped here too (#1299). */
+export function shippedTokenTags<T extends object>(printingIds: Iterable<string>, resolve: (printingId: string) => T | null): Record<string, Omit<T, "unclaimed">> {
+  const out: Record<string, Omit<T, "unclaimed">> = {};
+  for (const pid of printingIds) {
+    const tt = resolve(pid);
+    if (tt) out[pid] = shippedTags(tt);
+  }
+  return out;
+}

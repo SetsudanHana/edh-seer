@@ -117,6 +117,22 @@ npx tsx packages/instruments/src/role-ratchet.ts          # exit 1 on any gained
 npx tsx packages/instruments/src/role-ratchet.ts --bank   # rewrite the snapshot
 ```
 
+A fifth watches **clauses derive drops**. `dropped-clauses.ts` reads every commander-legal card's clause
+records (the printed-text grammar's, or the stored model answer, whichever derive used) against its
+derived row, and keys by card: `<clause>:<verb>` for a clause with a real action and no derived ability,
+`<clause>:<verb>:partial` for an action derive reported in `unclaimed` on a clause that does carry an
+ability (a tuck beside its gain-life), and `<clause>:spliced` for a twin folded into its partner. The
+exclusions (mana lines, a granted token or emblem, a land's own "enters tapped") are listed in the
+header of `dropped-clauses-core.ts`. It fails both ways against the tracked
+`packages/instruments/dropped-clauses.json`, and refuses to run on a corpus not at `DERIVE_VERSION` or
+one whose rows were not derived from the current clause records. **It needs Mongo, so CI does not run
+it**: run it after any derive change, beside `role-ratchet.ts`, and explain every moved line when you re-bank:
+
+```bash
+npx tsx packages/instruments/src/dropped-clauses.ts          # exit 1 on any new or fixed drop
+npx tsx packages/instruments/src/dropped-clauses.ts --bank   # rewrite the snapshot (--silent lists the drops derive did not report)
+```
+
 **Never quote the panel's precision without the retention figure beside it.** A gate that deletes
 every claim it is unsure of scores 100%, so precision alone is not comparable across any change that
 shrinks the claim set — and most correctness fixes shrink it.

@@ -102,7 +102,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "f9db72dc-9a5b-48a4-a86e-7464d9a2166a",
@@ -205,7 +205,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "132ca99a-a3c7-4ed6-b4d0-0edcd7140ca2",
@@ -291,7 +291,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "fd949f82-fc10-4e37-8aa9-6c7569fe3c55",
@@ -369,13 +369,22 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "0f623e23-81ae-4c35-b68b-e0a2f431cbad",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "a0faf3546892a8d63650cf71f1c343a824cfaf367206947a74c3c5a7b8e4b920"
+   "segmentHash": "a0faf3546892a8d63650cf71f1c343a824cfaf367206947a74c3c5a7b8e4b920",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "fromZone": "hand",
+     "object": "a card from your hand",
+     "toZone": "library",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Ambition's Cost": {
@@ -469,7 +478,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 22,
    "oracleId": "84de4fec-2f38-4293-93d3-b3882c5aac14",
@@ -589,7 +598,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "46db3dc2-9eb1-4be3-96f9-0013119fcd97",
@@ -672,7 +681,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "0ea6d165-2c30-41a4-8829-6d0510afc03f",
@@ -745,7 +754,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -860,7 +869,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "64de050c-7167-4ebd-8584-f064d8be3302",
@@ -953,7 +962,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 22,
    "oracleId": "129b41cf-8327-42f0-b186-1111b42c08ab",
@@ -1084,13 +1093,22 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "ac10d218-f9a6-4058-9cda-a15ca1b0b7b5",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "b715b0f924a96c42e63d8c03181d23158d5525c9141b5f2484fb1dcc2a2727a4"
+   "segmentHash": "b715b0f924a96c42e63d8c03181d23158d5525c9141b5f2484fb1dcc2a2727a4",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "it",
+     "toZone": "battlefield",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Austere Command": {
@@ -1280,7 +1298,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "09cc8709-fe10-472a-b05c-e89f3523018d",
@@ -1396,7 +1414,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "f28b21a6-f7ce-437a-8c5b-0423cb55cefb",
@@ -1467,7 +1485,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "8e862a8e-7954-43ad-9bc0-09ce7b9859f0",
@@ -1638,7 +1656,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "7735eeba-693b-47e2-bd51-414379cf1016",
@@ -1723,7 +1741,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "bceecc64-96f1-4e7b-8904-0aef90377764",
@@ -1832,7 +1850,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "4f958678-2a32-4a30-8fe7-47df9ada6b2f",
@@ -1931,7 +1949,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "5c5b308c-07d5-422a-8b45-b8b19cb967ca",
@@ -2012,13 +2030,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "c010d833-1873-4132-b4ff-8d78b3d7c2d7",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "6f526291a5b32d5dc6aa08c9ca2625ad48ae7894ff413a8d4dc893c9820f0e65"
+   "segmentHash": "6f526291a5b32d5dc6aa08c9ca2625ad48ae7894ff413a8d4dc893c9820f0e65",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "untap during your next untap step",
+     "verb": "cant"
+    }
+   ]
   }
  },
  "Boompile": {
@@ -2131,7 +2156,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "85b8902f-2515-4ded-b28a-a83334f089f1",
@@ -2228,7 +2253,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "36cd2364-d113-47d1-b2c4-b088d9eb88dd",
@@ -2314,7 +2339,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "59674589-b174-4150-b8d6-30d25c5ead4c",
@@ -2417,7 +2442,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "af98156b-3064-4f16-940e-10039241f2b0",
@@ -2515,13 +2540,22 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "910ff092-7c9d-49d3-a6df-497683e45bbd",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "a91e740182f7e1aab82f5ab8c4e29f4468f95fb31953eafea8b752d08a46ec97"
+   "segmentHash": "a91e740182f7e1aab82f5ab8c4e29f4468f95fb31953eafea8b752d08a46ec97",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "it",
+     "toZone": "hand",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Cleansing Nova": {
@@ -2631,7 +2665,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "aff34f28-f707-4458-8af3-1bd5b13a6b10",
@@ -2701,7 +2735,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "cae166de-e681-40a0-83a8-3c17cf40e2fc",
@@ -2821,7 +2855,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "e938ee4c-d5df-4d93-bd61-9e518fb1dc30",
@@ -2893,7 +2927,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "cc187110-1148-4090-bbb8-e205694a39f5",
@@ -3019,7 +3053,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "ecbc234d-e1d3-4bcc-81d4-fffc2c7ea16a",
@@ -3151,7 +3185,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "1b9a5170-39c0-4cbf-a041-f3c15f1359ae",
@@ -3277,7 +3311,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -3333,7 +3367,21 @@
    "oracleId": "8b755881-a72d-4e21-a369-d2924eb4585a",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c"
+   "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "one",
+     "verb": "tap"
+    },
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "the other",
+     "toZone": "hand",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Damnation": {
@@ -3408,13 +3456,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "d57a8f0b-7989-4db5-8756-6f2690097252",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "9eb28d717c0c73a9b80952df7038a4e9f58cfd3e01e3656cf6fbae2125625d22"
+   "segmentHash": "9eb28d717c0c73a9b80952df7038a4e9f58cfd3e01e3656cf6fbae2125625d22",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "be regenerated",
+     "verb": "cant"
+    }
+   ]
   }
  },
  "Damning Verdict": {
@@ -3489,7 +3544,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "355ed7ef-bfa6-4538-99fb-a2d203eb7005",
@@ -3573,7 +3628,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -3706,7 +3761,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "05a4f8ff-49da-42af-add5-6248c4b0644b",
@@ -3787,7 +3842,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "d057289d-5e28-43d5-8ff3-4a1bc723477d",
@@ -3939,7 +3994,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "a4e5693f-12a0-451e-818d-d6efc7b4ed25",
@@ -4045,7 +4100,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "579cbd92-797f-4cdf-91ed-fca7a523eae5",
@@ -4141,13 +4196,22 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "14589b6b-1814-46f9-a364-83cc15dacac2",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "72bdeaad2a453b223de50aeb572faa7a19ff7d7a3c04a6370fd876949656cbca"
+   "segmentHash": "72bdeaad2a453b223de50aeb572faa7a19ff7d7a3c04a6370fd876949656cbca",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "that card",
+     "toZone": "hand",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Dimir Signet": {
@@ -4217,7 +4281,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -4332,7 +4396,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "11e02134-7b1a-46a4-a89e-7539dd1efada",
@@ -4422,7 +4486,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "ac6c5852-71c7-4f19-8c87-ccb345052862",
@@ -4499,7 +4563,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "59e7f2ae-4535-4191-98be-3e65b6b2befa",
@@ -4609,7 +4673,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "7b2e2c4b-b8fd-440c-8a79-de6532022745",
@@ -4694,7 +4758,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "cb923c4d-1d2e-4039-90bb-72d1981b9738",
@@ -4765,7 +4829,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "e1a89535-7126-48e0-b335-b732a677b157",
@@ -4867,13 +4931,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "45a8c126-5396-4736-a37e-460a50706a98",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "32aad27de241751642cf566bb49cd3d443570482b2fe8e1ed14805f9779f7d86"
+   "segmentHash": "32aad27de241751642cf566bb49cd3d443570482b2fe8e1ed14805f9779f7d86",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "cards exiled this way until the end of your next turn",
+     "verb": "play"
+    }
+   ]
   }
  },
  "Evermind": {
@@ -4952,7 +5023,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "14e23074-95b8-4477-b981-6231c19bacdc",
@@ -5053,7 +5124,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "b8f566ea-8283-4afa-9ac8-737e26419283",
@@ -5169,7 +5240,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "b23dc81d-01bb-4bf0-9932-5d32a6b22cf7",
@@ -5264,7 +5335,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "7f591bfb-a241-4980-9cb3-fb5af3355f6b",
@@ -5337,7 +5408,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -5461,7 +5532,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "4e183439-17d2-47ff-9d99-5e22821d91e3",
@@ -5537,7 +5608,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 21,
    "oracleId": "896ea218-3019-47e4-b0a0-2487335872bb",
@@ -5650,7 +5721,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "b17ea905-0696-4e58-b564-557e87236e27",
@@ -5821,7 +5892,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "fae37e28-e137-4177-b973-fa8b4dd8f409",
@@ -5898,7 +5969,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "2f092562-9e17-43cd-aeb8-d0567f99363e",
@@ -5976,7 +6047,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "7eff84f1-f772-497a-b350-bbc93d0230f7",
@@ -6057,13 +6128,20 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "dcd65c9b-4aaa-42af-869f-de179ae57c9f",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "496b6fd5a03f6699f1f3b767bb8de0e62e98423cf90ed440f3b9e81b969a9a68"
+   "segmentHash": "496b6fd5a03f6699f1f3b767bb8de0e62e98423cf90ed440f3b9e81b969a9a68",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "be regenerated",
+     "verb": "cant"
+    }
+   ]
   }
  },
  "Hex": {
@@ -6133,7 +6211,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "89457fa8-b0e2-4277-b6a9-c6601c59b46d",
@@ -6218,7 +6296,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "3bc13640-03f8-4b19-b0a4-7e7cb5271c0c",
@@ -6318,7 +6396,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "94f0a572-e91c-4b56-a5d1-6cbbeabd210d",
@@ -6491,7 +6569,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "ad3e705f-da57-4eff-84d7-2072522de988",
@@ -6574,7 +6652,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "ccaa44f2-96be-44e2-884f-c31baa3908d5",
@@ -6700,7 +6778,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -6756,7 +6834,21 @@
    "oracleId": "1593ea18-2f2f-4ab4-83fb-6ccc0bec8a90",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "c608be79525998240b9dc869486242dac66f627c06caf3c48acc50db9099f1a9"
+   "segmentHash": "c608be79525998240b9dc869486242dac66f627c06caf3c48acc50db9099f1a9",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "this",
+     "verb": "tap"
+    },
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "the other into your hand",
+     "toZone": "hand",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Laquatus's Disdain": {
@@ -6850,7 +6942,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "68f330ca-8279-46c5-900d-a9b443676104",
@@ -6924,7 +7016,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "ca204b66-8d0c-431a-8d34-282f7c2d17da",
@@ -7098,7 +7190,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "9e6a3df4-67a3-452e-a6ef-f04dbadb21ef",
@@ -7196,13 +7288,21 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "d1dfb359-d8f9-491e-88f7-95193b220200",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "c4e07fbc68d07798f2d34c53ba9cbe9f96a0112d0a11d36a9b9a8bb485500a3f"
+   "segmentHash": "c4e07fbc68d07798f2d34c53ba9cbe9f96a0112d0a11d36a9b9a8bb485500a3f",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "that card",
+     "toZone": "library",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Mana Drain": {
@@ -7288,7 +7388,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -7412,7 +7512,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "isOneShot": true,
    "manaLines": [
     {
@@ -7535,7 +7635,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "f5c77355-96dc-46af-a7de-f547a1368ff1",
@@ -7623,7 +7723,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "7c72df45-c3bd-4fb9-8365-5a5639566742",
@@ -7707,7 +7807,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "faa01ed1-ccfa-4e58-951f-cd81f9068027",
@@ -7801,7 +7901,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "698e79ec-c2bc-4973-a095-f3c57b50e39c",
@@ -7925,7 +8025,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -8045,7 +8145,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "2b8abae2-dd15-41ee-81ae-6a463723b43e",
@@ -8132,13 +8232,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "96230edf-568a-47dd-b877-9d92aa58fac8",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "bde03a7e89f45b4fc808696f565183861f8d2875d80f2ed8b71667835af8aa3f"
+   "segmentHash": "bde03a7e89f45b4fc808696f565183861f8d2875d80f2ed8b71667835af8aa3f",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "This artifact",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Night's Whisper": {
@@ -8232,7 +8339,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "7ffae8f8-3006-4969-a339-6d30678f87ea",
@@ -8304,7 +8411,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "fe1a9af0-1774-4d54-b59f-f42dc8afcbe9",
@@ -8443,13 +8550,27 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "d683d985-9888-4d21-8b5f-69e69ce4a03b",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "77b6263cff389d1f226fa6a49b5acd0c3155a862fd112d924d474567f655d560"
+   "segmentHash": "77b6263cff389d1f226fa6a49b5acd0c3155a862fd112d924d474567f655d560",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "that card",
+     "toZone": "battlefield",
+     "verb": "put"
+    },
+    {
+     "clause": 1,
+     "object": "that card",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Pongify": {
@@ -8614,13 +8735,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "05849bd6-8f38-4031-be2b-e2aa03beb8cc",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "06f612afa3580b6c19cc737663fd4df7d862c1cc8ea72c2386f2a050b3e1fe08"
+   "segmentHash": "06f612afa3580b6c19cc737663fd4df7d862c1cc8ea72c2386f2a050b3e1fe08",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "be regenerated",
+     "verb": "cant"
+    }
+   ]
   }
  },
  "Raise the Palisade": {
@@ -8711,7 +8839,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "f55a3781-fe33-4301-9bb5-6a54b9c13c4f",
@@ -8837,7 +8965,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -8893,7 +9021,14 @@
    "oracleId": "8539f295-5d58-4436-a73a-b9277c4c7795",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "e516baa5854eee966674c7f611c6860d389f03ee473345e77a4393be59c65201"
+   "segmentHash": "e516baa5854eee966674c7f611c6860d389f03ee473345e77a4393be59c65201",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "that card",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Rapid Hybridization": {
@@ -9067,13 +9202,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "06692cd9-ac2f-4a32-8fd1-043ba3c0fe71",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "48350bc77534839130da521b0af8e893455a49a404e3a0d74b0591cdc54fd5a8"
+   "segmentHash": "48350bc77534839130da521b0af8e893455a49a404e3a0d74b0591cdc54fd5a8",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "be regenerated",
+     "verb": "cant"
+    }
+   ]
   }
  },
  "Return of the Wildspeaker": {
@@ -9160,7 +9302,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "2b76f9e9-cd28-4eaf-8674-215c34263f96",
@@ -9260,7 +9402,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "97407cd0-2bd2-4074-94d3-4ec3d243fa78",
@@ -9370,7 +9512,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "isOneShot": true,
    "manaLines": [
     {
@@ -9545,13 +9687,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "df45a344-5937-4a3f-a80f-581ea456ea05",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "b747073f8732862a5699e51a109fd0b76e4806aa2fcc274e85a9b93133526872"
+   "segmentHash": "b747073f8732862a5699e51a109fd0b76e4806aa2fcc274e85a9b93133526872",
+   "unclaimed": [
+    {
+     "clause": 2,
+     "object": "those cards this turn",
+     "verb": "play"
+    }
+   ]
   }
  },
  "See Beyond": {
@@ -9641,7 +9790,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "4f9942ee-d3fd-4c01-93eb-870d642ebd83",
@@ -9769,7 +9918,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "13575cf9-65c1-4861-b21e-eb2155e07766",
@@ -9854,7 +10003,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "406247ee-2b86-4068-b5fa-65cdc83a82f4",
@@ -9962,7 +10111,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "c6207f6a-a624-4754-88f5-dbe700c841ff",
@@ -10029,7 +10178,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "557cc9a7-c8cc-4823-b108-2dfe648c789d",
@@ -10105,7 +10254,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 21,
    "oracleId": "f9bf996e-ae14-40a3-a8d8-f5725ddaa270",
@@ -10179,7 +10328,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "c8b143ad-43ec-4e0d-a440-e348daa31391",
@@ -10291,7 +10440,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "b1544f21-7e98-461b-aed5-e748b0168c52",
@@ -10397,7 +10546,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "abc37d6c-6300-47b5-a679-9db5b83eb54f",
@@ -10529,7 +10678,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -10677,13 +10826,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "6257c2fd-005f-41e3-8a72-af76df1eb134",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "883432b705fd00fff6ebc03e60e3b04ab7301603f9763a94006c4b5e9f90ba3e"
+   "segmentHash": "883432b705fd00fff6ebc03e60e3b04ab7301603f9763a94006c4b5e9f90ba3e",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "be regenerated",
+     "verb": "cant"
+    }
+   ]
   }
  },
  "Their Name Is Death": {
@@ -10758,7 +10914,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "97f9aa5e-e34d-4029-9213-b32ebaf9859c",
@@ -10883,7 +11039,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "939e6f71-185e-41f2-9d54-72cce06f1dce",
@@ -10965,7 +11121,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "cce9bbff-82dc-4b2f-addd-d6715588de20",
@@ -11080,7 +11236,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "90c97fc4-597c-45cf-96c6-3ba9558ede0d",
@@ -11187,7 +11343,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "afaef788-34d1-460b-b884-9d7ae6ddeb18",
@@ -11331,7 +11487,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "9fb7e7ca-ad2f-4677-859c-7a9adf8fb5fd",
@@ -11431,13 +11587,22 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "8aa0125c-29fe-4f31-985c-de2da3dbc602",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "2e1563f42a4a9042b891fc9082d8469e3f7c66652fc2f49bdde09b90a9d89937"
+   "segmentHash": "2e1563f42a4a9042b891fc9082d8469e3f7c66652fc2f49bdde09b90a9d89937",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "it",
+     "toZone": "hand",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Unbreakable Formation": {
@@ -11547,7 +11712,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "97435e03-2fff-4fe0-8fa9-69ab0a046a33",
@@ -11664,7 +11829,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "90aa9113-5148-486b-a1c6-b4230e6d3e41",
@@ -11769,7 +11934,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "c715e525-fc3a-4cab-94a0-04e0a22a5013",
@@ -11885,7 +12050,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "a332e80a-dc51-4dc6-bc85-e114a1c6fdb8",
@@ -11976,7 +12141,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "54748cb1-d92a-4212-ad76-417ee79b5ef1",
@@ -12037,13 +12202,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "9ad4f730-a18e-4a7c-a468-a926c718c741",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "0d30346f3c1a2dca1ba1de14672fe92df2f5459568975f02694bc23726386fd5"
+   "segmentHash": "0d30346f3c1a2dca1ba1de14672fe92df2f5459568975f02694bc23726386fd5",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "be blocked",
+     "verb": "cant"
+    }
+   ]
   }
  },
  "Wild Magic Surge": {
@@ -12114,13 +12286,29 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "41d16975-d6c0-4343-bea2-4f360ead9a1c",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "eae08686f497cdf56aa184356d0e0951dae1060cb535ddeabce10815697efed3"
+   "segmentHash": "eae08686f497cdf56aa184356d0e0951dae1060cb535ddeabce10815697efed3",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "that card",
+     "toZone": "battlefield",
+     "verb": "put"
+    },
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "the rest",
+     "toZone": "library",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Windfall": {
@@ -12209,7 +12397,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "08becc07-28bc-4a2f-a6b0-28a2998d2f50",
@@ -12290,13 +12478,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "a6fd90dc-0ec3-4dce-a77a-4d04f5e254bf",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "31c91d918a3c79f8d14f66d9f48299888735d9fd981648d9aba09518ce84c000"
+   "segmentHash": "31c91d918a3c79f8d14f66d9f48299888735d9fd981648d9aba09518ce84c000",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "be regenerated",
+     "verb": "cant"
+    }
+   ]
   }
  },
  "Winnow": {
@@ -12403,7 +12598,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "1b2ad355-3f1e-4c8b-93ee-848934646b23",
@@ -12484,13 +12679,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "34515b16-c9a4-4f98-8c77-416a7a523407",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "9eb28d717c0c73a9b80952df7038a4e9f58cfd3e01e3656cf6fbae2125625d22"
+   "segmentHash": "9eb28d717c0c73a9b80952df7038a4e9f58cfd3e01e3656cf6fbae2125625d22",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "be regenerated",
+     "verb": "cant"
+    }
+   ]
   }
  },
  "Yawgmoth's Vile Offering": {
@@ -12647,7 +12849,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "740f9ab2-fc94-4abc-82b4-6b53116bf1a4",

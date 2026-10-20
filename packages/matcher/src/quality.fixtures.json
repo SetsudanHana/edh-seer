@@ -63,7 +63,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -267,7 +267,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "7735eeba-693b-47e2-bd51-414379cf1016",
@@ -431,7 +431,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -701,7 +701,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -742,7 +742,16 @@
    "oracleId": "bf1341dd-41a3-49f6-87ec-63170dde4324",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "e3e15c484021cafc11b050fa48c522c5fd06b2167f81b605c66977afe56a56a1"
+   "segmentHash": "e3e15c484021cafc11b050fa48c522c5fd06b2167f81b605c66977afe56a56a1",
+   "unclaimed": [
+    {
+     "clause": 2,
+     "fromZone": "library",
+     "object": "it",
+     "toZone": "battlefield",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Cancel": {
@@ -808,7 +817,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "7d00fb28-ea6c-49a9-b4af-ffb38860a9a7",
@@ -881,13 +890,22 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "07a0cba9-8768-4fd9-a3d5-b0f83b4bf8e8",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "98fe0cb4b3431daba559bfb3b6afc57e3e4e13c10ed37cb30e19dec9c89a10c7"
+   "segmentHash": "98fe0cb4b3431daba559bfb3b6afc57e3e4e13c10ed37cb30e19dec9c89a10c7",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "it",
+     "toZone": "battlefield",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Counterspell": {
@@ -953,7 +971,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "cc187110-1148-4090-bbb8-e205694a39f5",
@@ -1501,7 +1519,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "2987c385-011a-4032-a516-a46d1e9dc9e8",
@@ -1627,7 +1645,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -1683,7 +1701,21 @@
    "oracleId": "8b755881-a72d-4e21-a369-d2924eb4585a",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c"
+   "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "one",
+     "verb": "tap"
+    },
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "the other",
+     "toZone": "hand",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Cyclonic Rift": {
@@ -1784,7 +1816,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "d75b9c82-1b49-4c3e-a1b5-aeef57d6644b",
@@ -1880,7 +1912,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "aa7714b0-2bfb-458a-8ebf-37ec2c53383e",
@@ -1954,7 +1986,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "ca204b66-8d0c-431a-8d34-282f7c2d17da",
@@ -2047,7 +2079,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2238,7 +2270,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2410,13 +2442,27 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "d683d985-9888-4d21-8b5f-69e69ce4a03b",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "77b6263cff389d1f226fa6a49b5acd0c3155a862fd112d924d474567f655d560"
+   "segmentHash": "77b6263cff389d1f226fa6a49b5acd0c3155a862fd112d924d474567f655d560",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "that card",
+     "toZone": "battlefield",
+     "verb": "put"
+    },
+    {
+     "clause": 1,
+     "object": "that card",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Sink into Stupor // Soporific Springs": {
@@ -2567,7 +2613,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2608,7 +2654,14 @@
    "oracleId": "bcc6eece-75ea-494c-b33a-d4477d504e0b",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "d43fd8084342999209eab9a081e5bdb3a47861e95095f1707bdc29229ce21332"
+   "segmentHash": "d43fd8084342999209eab9a081e5bdb3a47861e95095f1707bdc29229ce21332",
+   "unclaimed": [
+    {
+     "clause": 2,
+     "object": "this",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Smothering Tithe": {
@@ -2726,7 +2779,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2877,7 +2930,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "b1544f21-7e98-461b-aed5-e748b0168c52",
@@ -3013,13 +3066,20 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "0d4ecdb1-ec90-497f-a7a4-1c68092b8757",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "be94126d84496b032ac8d33d081a448c739c6ddb4b5a995f0b904bbc11522508"
+   "segmentHash": "be94126d84496b032ac8d33d081a448c739c6ddb4b5a995f0b904bbc11522508",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "your life total can't change",
+     "verb": "other"
+    }
+   ]
   }
  },
  "Vandalblast": {
@@ -3093,7 +3153,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "3567c3c8-b3c7-45b7-935b-b1fdbc973720",
@@ -3281,7 +3341,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "4b515bb0-f275-4400-8032-3173b799ab40",
@@ -3489,7 +3549,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "permanent",
     "reach": [
@@ -3545,7 +3605,14 @@
    "oracleId": "31f15274-301b-47c5-ba19-0ced04520878",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "98d9a7f4250f919c40f0240d94be391ffec1ae561811bfdd31474b5a34393202"
+   "segmentHash": "98d9a7f4250f919c40f0240d94be391ffec1ae561811bfdd31474b5a34393202",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "that card",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Wrath of God": {
@@ -3620,13 +3687,20 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "34515b16-c9a4-4f98-8c77-416a7a523407",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "9eb28d717c0c73a9b80952df7038a4e9f58cfd3e01e3656cf6fbae2125625d22"
+   "segmentHash": "9eb28d717c0c73a9b80952df7038a4e9f58cfd3e01e3656cf6fbae2125625d22",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "be regenerated",
+     "verb": "cant"
+    }
+   ]
   }
  }
 }

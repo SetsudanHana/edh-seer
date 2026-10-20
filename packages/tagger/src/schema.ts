@@ -1641,6 +1641,15 @@ export interface LandFetch {
   reach: string[];
 }
 
+/** One entry of `CardTags.unclaimed`. Zones are written only when the action states one. */
+export interface UnclaimedAction {
+  clause: number | string;
+  verb: string;
+  object?: string;
+  fromZone?: string;
+  toZone?: string;
+}
+
 export interface CardTags {
   oracleId: string;
   schemaVersion: number;
@@ -1667,6 +1676,14 @@ export interface CardTags {
    *  saw an empty list and the eerie "fully unlock a Room" half vanished without a trace. Absent
    *  when empty. */
   unknownTriggers?: string[];
+  /** Actions the clause layer named and derivation could claim for nothing: no effect kind and no emit. The same
+   *  "surface, never swallow" channel as `unknownTriggers`, and the same bug: `deriveAbilities` has returned it
+   *  since 2026-08 and `deriveCardTags` threw it away, so a dropped clause was visible only to a census script that
+   *  re-ran derive. Each entry carries the clause that printed it, so a reader can join it to `abilities[].clause`.
+   *  Only the actions that REACH the claim test are listed. A clause skipped whole (a granted token's, a next-end-step
+   *  cleanup folded into its maker) or a twin spliced out records nothing, by design: each has its home elsewhere.
+   *  Absent when empty. */
+  unclaimed?: UnclaimedAction[];
   /** True for a hand-verified tag that must survive automated re-tagging (e.g. a prompt-version
    *  bump). needsRetag short-circuits to false for a pinned tag regardless of version drift —
    *  set this only for cards where the LLM has demonstrably gotten the shape wrong and a human

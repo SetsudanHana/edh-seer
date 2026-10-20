@@ -11,7 +11,7 @@ export {
   type SlugSemantics,
 } from "./otags/semantics.js";
 export { loadFunctionalOtags, loadDescriptorOtags } from "./otags/functional.js";
-export { DERIVE_VERSION, deriveAbilities, deriveCardTags, type DeriveInput } from "./derive/derive.js";
+export { DERIVE_VERSION, INERT_VERBS, deriveAbilities, deriveAbilitiesOf, deriveCardTags, type DeriveInput } from "./derive/derive.js";
 export { emblemRecipient, GETS_AN_EMBLEM, hasEmblemPart, isEmblemPart } from "./emblem.js";
 export { CARD_TYPES, UMBRELLA_TYPES, parseSubject } from "./derive/subject.js";
 export { canonicalize, canonicalClause, type Action, type ClauseRecord } from "./canonicalize.js";
@@ -32,6 +32,6 @@ export {
 
 export { SUBTYPES, LAND_SUBTYPES, SUBTYPE_TYPES, joinMultiWordSubtypes } from "./derive/subtypes.js";
 export { extractCharacteristics } from "./characteristics.js";
-export { deriveInputOf } from "./derive-input.js";
+export { clauseTexts, deriveInputOf, grantedTokenClauses } from "./derive-input.js";
 export { grammarClauseRecords, type GrammarRecords } from "./grammar/clause-record.js";
 export { deriveDiff, lostClaims } from "./grammar/derive-diff.js";

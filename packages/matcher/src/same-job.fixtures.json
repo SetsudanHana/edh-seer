@@ -104,7 +104,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -235,7 +235,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "489a60f1-83f8-465b-918f-7d63d4f76d14",
@@ -435,7 +435,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -579,7 +579,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -786,7 +786,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -842,7 +842,21 @@
    "oracleId": "8b755881-a72d-4e21-a369-d2924eb4585a",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c"
+   "segmentHash": "e64fcc8177926c1ef0c397f1a7d1cc904c5e70cdfad64366ac2c533d4c23709c",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "one",
+     "verb": "tap"
+    },
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "the other",
+     "toZone": "hand",
+     "verb": "put"
+    }
+   ]
   }
  },
  "Flawless Maneuver": {
@@ -927,7 +941,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "4e183439-17d2-47ff-9d99-5e22821d91e3",
@@ -1061,7 +1075,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -1146,7 +1160,14 @@
    "oracleId": "15679808-baba-4a11-b111-f313ce24197f",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "43c7014e9f88348292fcb862446c84f926832dd89816ece97f043468d4c29f3d"
+   "segmentHash": "43c7014e9f88348292fcb862446c84f926832dd89816ece97f043468d4c29f3d",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "this",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Growth Spasm": {
@@ -1371,7 +1392,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -1458,7 +1479,14 @@
    "oracleId": "6c022656-2b97-46c5-8f7b-72a71996457a",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "1606cbc255f25d50f321c674c580f8eb5b85da0985c1cda5a7f69dcb4d1ba34e"
+   "segmentHash": "1606cbc255f25d50f321c674c580f8eb5b85da0985c1cda5a7f69dcb4d1ba34e",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "that basic land card",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Heroic Intervention": {
@@ -1536,7 +1564,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "24882fa2-3fe9-4c1b-aa3d-0e6488b9db27",
@@ -1673,7 +1701,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "isOneShot": true,
    "manaLines": [
     {
@@ -1717,7 +1745,14 @@
    "oracleId": "0fd114c4-092b-4e28-b0dc-ef529f3bc73e",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "a9af93c59de9df5f7f21b8ae895ec5b49cf154ef9cae19abb595b1073c96c930"
+   "segmentHash": "a9af93c59de9df5f7f21b8ae895ec5b49cf154ef9cae19abb595b1073c96c930",
+   "unclaimed": [
+    {
+     "clause": 3,
+     "object": "them",
+     "verb": "play"
+    }
+   ]
   }
  },
  "Lion's Eye Diamond": {
@@ -1933,7 +1968,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "isOneShot": true,
    "manaLines": [
     {
@@ -2153,7 +2188,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2193,6 +2228,13 @@
    "promptVersion": 0,
    "schemaVersion": 1,
    "segmentHash": "77f16a7fdab30d52c8c9c4aa828b1227f024cfd46333f39b5db30d10d6c064e4",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "untap during your untap step",
+     "verb": "cant"
+    }
+   ],
    "unknownTriggers": [
     "draw-step"
    ]
@@ -2345,7 +2387,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2558,7 +2600,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2670,7 +2712,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -2816,7 +2858,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -3012,7 +3054,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "58a2d15f-1b4b-4303-b524-8cc0d1b3e7d2",
@@ -3259,7 +3301,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -3460,7 +3502,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -3693,7 +3735,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 21,
    "oracleId": "53236dd7-845a-444c-96d5-f41ed7325d8f",
@@ -3892,7 +3934,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -4062,7 +4104,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -4370,7 +4412,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -4426,7 +4468,14 @@
    "oracleId": "422aca0b-8e8f-4774-9a20-6f7a1cae967e",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "84b2e482b84ea3b822979bbbb048426e2421e954f0de54efd7a05f0b421db307"
+   "segmentHash": "84b2e482b84ea3b822979bbbb048426e2421e954f0de54efd7a05f0b421db307",
+   "unclaimed": [
+    {
+     "clause": 2,
+     "object": "it",
+     "verb": "tap"
+    }
+   ]
   }
  },
  "Skullclamp": {
@@ -4559,7 +4608,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "65986c1b-8e51-4604-b685-d82fa7d1263a",
@@ -4627,7 +4676,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "manaLines": [
     {
      "amount": {
@@ -4840,7 +4889,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "9a107e48-3d50-4941-95b1-10f2b29a4245",
@@ -4945,13 +4994,25 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 22,
    "oracleId": "9381b4a5-a8e0-412d-bc7f-ae15afa0f135",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "39f1aa65196d024a7f15fcfd5dfd672456c26deebe9b2eca1b950e8b2d9ca419"
+   "segmentHash": "39f1aa65196d024a7f15fcfd5dfd672456c26deebe9b2eca1b950e8b2d9ca419",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "object": "target opponent gains protection from everything until that player's next turn",
+     "verb": "other"
+    },
+    {
+     "clause": 1,
+     "object": "target opponent's life total can't change until that player's next turn",
+     "verb": "other"
+    }
+   ]
   }
  },
  "The One Ring": {
@@ -5179,7 +5240,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "3aa83ed2-f48b-4ce6-a614-2c54ddf50538",
@@ -5259,13 +5320,29 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 357,
+   "deriveVersion": 358,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "41d16975-d6c0-4343-bea2-4f360ead9a1c",
    "promptVersion": 0,
    "schemaVersion": 1,
-   "segmentHash": "eae08686f497cdf56aa184356d0e0951dae1060cb535ddeabce10815697efed3"
+   "segmentHash": "eae08686f497cdf56aa184356d0e0951dae1060cb535ddeabce10815697efed3",
+   "unclaimed": [
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "that card",
+     "toZone": "battlefield",
+     "verb": "put"
+    },
+    {
+     "clause": 1,
+     "fromZone": "library",
+     "object": "the rest",
+     "toZone": "library",
+     "verb": "put"
+    }
+   ]
   }
  }
 }
