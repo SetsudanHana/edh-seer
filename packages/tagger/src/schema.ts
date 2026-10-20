@@ -1541,8 +1541,8 @@ export interface ManaLine {
   /** How much one use adds: `fixed`, or `scales` with the interval it spans (`floor`, `ceiling`, `bound`). See `ManaAmount`. */
   amount: ManaAmount;
   /** CEILING: `net` is the LEGACY one-unit floor, kept so matcher results do not move: for a SCALING line it assumes the printed fixed part, else 1, then less `cost.mana`. It is NOT the guaranteed amount --
-   *  `amount.floor` is the authoritative guaranteed amount of a scaling line (Doc Samson floor 3 but net 1; Selvala, Explorer Returned floor 0 but net 1). Read by goldfish.ts and build.ts; the deck math reads
-   *  the interval in #1272.
+   *  `amount.floor` is the authoritative guaranteed amount of a scaling line (Doc Samson floor 3 but net 1; Selvala, Explorer Returned floor 0 but net 1). goldfish.ts reads `amount.floor` (via `perUse`) since #1272; `net` stays the legacy value for the `net >= 1` bars in
+   *  same-job, build and rules (owner 2026-10-20).
    *  Produced less `cost.mana`; the tap is not subtracted. CEILING: a scaling amount is produced as its printed fixed part when one
    *  precedes the "for each" ("Add {R}{R}, then add {R} for each ...", Rite of Flame: 2), else as 1 (its true floor
    *  may be 0; a consumer that cares reads `amount.scales`). EXCEPT "for each color among permanents you control" (Faeburrow Elder, Bloom Tender) on a permanent: the card is itself a permanent

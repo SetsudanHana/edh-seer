@@ -1868,3 +1868,18 @@ test("a line gated on an estimated kind is not admitted when no turn meets the g
   const board = rock("you control a land");
   expect(playableLines(board, [board, ...lands], true)).toHaveLength(1);
 });
+
+// #1272, owner ruling 2026-10-20: a scaling mana tap makes max(amount.floor, 1) per use. Floor 0 / 1 keep the incumbent 1 (a CEILING).
+test("a scaling tap makes its guaranteed floor when the floor beats 1 (#1272)", () => {
+  const scaling = (floor: number, over: Partial<ReturnType<typeof tapFor>> = {}) =>
+    withManaLines("Scaler", "Creature", [tapFor(["G"], { amount: { fixed: null, scales: "x", floor, ceiling: null }, ...over })]);
+  expect(manaOutput(scaling(3)).amount).toBe(3);
+  expect(manaOutput(scaling(2, { amount: { fixed: null, scales: "for each color among permanents you control", floor: 2, ceiling: 5, bound: "colours" }, anyColour: "among" })).amount).toBe(2);
+  expect(manaOutput(scaling(0)).amount).toBe(1);
+  expect(manaOutput(scaling(1)).amount).toBe(1);
+  // Selvala shape: a costed scaling line is refused by tapOnly, as before
+  expect(manaOutput(scaling(2, { cost: { ...FREE_TAP, mana: 1 } })).amount).toBe(1);
+  const landfall = (floor: number) => withManaLines("Scaling Landfall", "Creature", [triggerLine("enters", "a land you control", ["G"], 1, { amount: { fixed: null, scales: "x", floor, ceiling: null } })]);
+  expect(landfallOf(landfall(2))).toBe(2);
+  expect(landfallOf(landfall(0))).toBe(1);
+});
