@@ -273,13 +273,15 @@ export interface ManaOutput {
    *  when the speed line is the card's only one (Endrider Catalyzer, Howlsquad Heavy) and colourless on the card that has a plain line beside it (Muraganda Raceway: the three speed-gated lines of the corpus, 2026-10-13). */
   speed?: { turn: number; amount: number };
   /** AN ESTIMATED GATE (#1267: a graveyard count, counters on the card, an event this turn): the source taps for `amount` on the turns its gate holds, the incumbent `amount` above otherwise, never before it does.
-   *  Three readings, ONE field (`estimatedHolds`): `after` -- counters the card puts on ITSELF (Pyramid of the Pantheon's bricks, Incubation Druid's Adapt): from `after` turns past the turn the PERMANENT WAS CAST
-   *  (derive's `readyTurn` less the on-curve cast turn, max(1, mana value)), so a Pyramid cast on turn 8 taps for three from turn 12, not 5; `perGame` -- "you played a land this turn": the simulated game's own land
-   *  drop of the turn; otherwise `met` (`estimatedGateByTurn`, index = game turn - 1, a turn past the end reads the last), which is the audit's answer for a gate that describes the GAME (a graveyard count, an event).
+   *  Four readings, ONE field (`estimatedHolds`): `invest` -- counters the card puts on ITSELF by an activation that costs (Pyramid of the Pantheon's bricks, Incubation Druid's Adapt, Tablet of Compleation's oil;
+   *  derive's `put.activation`): AN INVESTMENT THE GAME PAYS (owner 2026-10-20), like an accelerant cast. `simulate` pays one activation a turn per source the first turn its pool covers `mana` (less the hold-up),
+   *  takes `refund` back, and the gate holds from the turn AFTER the last activation (`readyFrom`, the game's own, handed to `produced`); never paid, never ready. `after` -- the same counters on a row derive stored
+   *  with no `activation` (stale): from `after` turns past the turn the PERMANENT WAS CAST (derive's `readyTurn` less the on-curve cast turn, max(1, mana value)); `perGame` -- "you played a land this turn": the
+   *  simulated game's own land drop of the turn; otherwise `met` (`estimatedGateByTurn`, index = game turn - 1, a turn past the end reads the last), which is the audit's answer for a gate that describes the GAME (a graveyard count, an event).
    *  CEILING: one estimated line per card, the best; its COLOURS are not credited here (`gatedColourLines` refuses them), the safe direction.
-   *  CEILING: THE COST OF GETTING THERE IS NOT CHARGED. Pyramid's put line "{2}, {T}: Add one mana ... Put a brick counter" nets -1 on each of the three turns before its counters are ready (three mana in all), and Adapt and
-   *  Outlast cost mana too: the line is credited from the ready turn without debiting those turns, an over-claim (the debit does not fit `produced`, which returns mana and never charges it). */
-  estimated?: { amount: number; met: readonly boolean[]; after?: number; perGame?: "land-played" };
+   *  CEILING: a LAND with a self put never invests (`produced` is asked of a land with no `readyFrom`), so its gate never holds; no corpus land has one. A COMMANDER invests like any source in the hand.
+   *  CEILING: a source with BOTH a plain tap line and a tap-cost put is credited both (the put's tap is not taken from the pool); no corpus card has that. */
+  estimated?: { amount: number; met: readonly boolean[]; after?: number; perGame?: "land-played"; invest?: { mana: number; refund: number; taps: boolean; activations: number } };
 }
 
 /** THE ONE-SHOT-SPELL LINE OF A RITUAL, or null: an instant or sorcery whose derived line adds a FIXED run of mana -- Dark Ritual's "Add {B}{B}{B}."
@@ -453,8 +455,10 @@ export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = f
   if (estimatedLines.length > 0) {
     const tables = estimatedLines.map((l) => {
       const g = l.gate!;
-      const after = g.kind === "counter" && g.put?.by === "self" ? g.put.readyTurn - Math.max(1, dc.card.manaValue ?? 0) : undefined;
-      return { amount: perUse(l), met: estimatedGateByTurn(g, deck!), ...(after !== undefined ? { after } : {}), ...(g.kind === "turn-event" && g.event === "land-played" ? { perGame: "land-played" as const } : {}) };
+      const self = g.kind === "counter" && g.put?.by === "self" ? g.put : undefined;
+      const invest = self?.activation;
+      const after = self !== undefined && invest === undefined ? self.readyTurn - Math.max(1, dc.card.manaValue ?? 0) : undefined;
+      return { amount: perUse(l), met: estimatedGateByTurn(g, deck!), ...(after !== undefined ? { after } : {}), ...(invest !== undefined ? { invest: { ...invest } } : {}), ...(g.kind === "turn-event" && g.event === "land-played" ? { perGame: "land-played" as const } : {}) };
     });
     out = { ...out, estimated: tables.reduce((b, t) => (t.amount > b.amount || (t.amount === b.amount && t.met.findIndex(Boolean) < b.met.findIndex(Boolean)) ? t : b)) };
   }
@@ -502,12 +506,12 @@ function landsGateHolds(o: ManaOutput, lands: readonly OnBoardLand[]): boolean {
   return Math.max(0, ...count.values()) >= o.needsLands!;
 }
 
-/** WHETHER AN ESTIMATED GATE HOLDS on this turn for a permanent cast on `castTurn` (`ManaOutput.estimated`): counters it puts on itself count from the CAST turn, a land drop from the game's own, anything else from the table. */
-const estimatedHolds = (e: NonNullable<ManaOutput["estimated"]>, turn: number, castTurn: number, landPlayed: boolean): boolean =>
-  e.after !== undefined ? turn >= castTurn + e.after : e.perGame === "land-played" ? landPlayed : e.met[Math.min(turn, e.met.length) - 1] === true;
+/** WHETHER AN ESTIMATED GATE HOLDS on this turn for a permanent cast on `castTurn` (`ManaOutput.estimated`): counters it pays to put on itself from the turn the game made them ready (`readyFrom`), counters on a stale row from the CAST turn, a land drop from the game's own, anything else from the table. */
+const estimatedHolds = (e: NonNullable<ManaOutput["estimated"]>, turn: number, castTurn: number, landPlayed: boolean, readyFrom?: number): boolean =>
+  e.invest !== undefined ? readyFrom !== undefined && turn >= readyFrom : e.after !== undefined ? turn >= castTurn + e.after : e.perGame === "land-played" ? landPlayed : e.met[Math.min(turn, e.met.length) - 1] === true;
 
-/** What a source taps for on `turn`. `castTurn` is the turn this permanent entered (a land's entry, a rock's or dork's cast): the counters a card puts on itself count from it. `landPlayed`: the game played a land drop this turn. */
-export function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly Perm[], turn: number, castTurn = turn, landPlayed = false): number {
+/** What a source taps for on `turn`. `castTurn` is the turn this permanent entered (a land's entry, a rock's or dork's cast): the counters a card puts on itself count from it. `landPlayed`: the game played a land drop this turn. `readyFrom`: the turn the game's own payments made an investing source's counters ready (`ManaOutput.estimated.invest`); absent, such a source is not ready. */
+export function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: readonly Perm[], turn: number, castTurn = turn, landPlayed = false, readyFrom?: number): number {
   if (o.tron) {
     const has = (s: string): boolean =>
       lands.some((l) => l.everyLandType || l.typeLine.toLowerCase().includes(s.toLowerCase()));
@@ -520,7 +524,7 @@ export function produced(o: ManaOutput, lands: readonly OnBoardLand[], perms: re
   // A BOARD-COUNT GATE: the better amount once the permanents it names are out (Leafkin Druid's two, Mox Jasper's one), the plain one before.
   const board = o.gated !== undefined && o.gated.amount > o.amount && gateHolds(o, perms) ? o.gated.amount : o.amount;
   // AN ESTIMATED GATE: the better amount on the turns the deck's closed form says it holds (`ManaOutput.estimated`).
-  const est = o.estimated !== undefined && o.estimated.amount > board && estimatedHolds(o.estimated, turn, castTurn, landPlayed) ? o.estimated.amount : board;
+  const est = o.estimated !== undefined && o.estimated.amount > board && estimatedHolds(o.estimated, turn, castTurn, landPlayed, readyFrom) ? o.estimated.amount : board;
   // MAX SPEED: the better amount from turn 4 on (`ManaOutput.speed`).
   return o.speed !== undefined && turn >= o.speed.turn && o.speed.amount > est ? o.speed.amount : est;
 }
@@ -1292,7 +1296,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     const proxied = new Set<DeckSlot>();
     // the turn each landed, the last turn it pays (a walker's minus ability runs out), what it taps for, and in which colours; a source with a board-count gate carries its
     // output and is priced again every turn (`out`), the colours it has before the gate in `baseColors`
-    type Mana = { turn: number; until?: number; mana: number; colors: number; out?: ManaOutput; baseColors?: number; colourGate?: BoardGate };
+    type Mana = { turn: number; until?: number; mana: number; colors: number; out?: ManaOutput; baseColors?: number; colourGate?: BoardGate; paid?: number; readyFrom?: number };
     const rocks: Mana[] = [];
     const dorks: Mana[] = [];
     // A PER-SOURCE BONUS, kept beside the sources rather than among them: it makes OTHER permanents
@@ -1402,7 +1406,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           if (m > 0) push(m, (l.colourGate && l.baseColors !== undefined && !holds(l.colourGate, perms) ? l.baseColors : l.colors) | (l.basic ? fixBasics : fixLands), false, l);
         }
         const now = (r: Mana): { mana: number; colors: number } => ({
-          mana: r.out ? produced(r.out, lands, perms, turn, r.turn, landDropped) : r.mana,
+          mana: r.out ? produced(r.out, lands, perms, turn, r.turn, landDropped, r.readyFrom) : r.mana,
           colors: r.colourGate && r.baseColors !== undefined && !holds(r.colourGate, perms) ? r.baseColors : r.colors,
         });
         for (const r of rocks) if (r.turn <= turn && (r.until === undefined || turn <= r.until)) { const x = now(r); if (x.mana > 0) push(x.mana, x.colors | fixAll, false); }
@@ -1469,6 +1473,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         if (cast.perm) perms.push(cast.perm);
         const mana = produced(cast.output, lands, perms, turn, turn, landDropped);
         const gated = {
+          // AN INVESTING SOURCE carries its game's payments so far (`paid`) and, once the last is made, the turn it is ready from (`readyFrom`).
+          ...(cast.output.estimated?.invest ? { paid: 0 } : {}),
           // A LANDS-COUNTED GATE (Sceptre of Eternal Glory) is priced every turn too: the source is re-priced against the lands on the board, not frozen at its cast-turn value.
           ...(cast.output.gated || cast.output.speed || cast.output.estimated || cast.output.needsLands !== undefined ? { out: cast.output } : {}),
           ...(cast.colourGate && cast.baseColors !== undefined ? { colourGate: cast.colourGate, baseColors: cast.baseColors } : {}),
@@ -1505,6 +1511,20 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         }
       } };
       castAccelerants();
+      // THE INVESTMENT STEP (#1279, owner 2026-10-20): a self-put counter gate (`ManaOutput.estimated.invest`) is paid LIKE AN ACCELERANT CAST -- the first turn the pool covers it (less the hold-up), at most ONE
+      // activation per source per turn, in board order (rocks, then dorks). It is stated policy that accelerant cards come first and investments after, once: the pool an investment leaves is not offered to
+      // the accelerants again (at most one investing source per deck in the corpus). The activation's refund comes back to the pool. The counters land as the activation resolves, and the source has either tapped
+      // for the put or already put its plain tap in this turn's pool, so the better amount counts from the NEXT turn (`readyFrom`, derive 344's Adapt convention). A put that TAPS the source cannot be paid by a
+      // dork on the turn it was cast (summoning sickness, CR 302.6, as the dork's own tap above); a rock can.
+      for (const r of [...rocks, ...dorks]) {
+        const inv = r.out?.estimated?.invest;
+        if (!inv || r.paid === undefined || r.paid >= inv.activations || r.turn > turn) continue;
+        if (inv.taps && r.turn >= turn && dorks.includes(r)) continue;
+        if (inv.mana > pool - holdUp) continue;
+        pool += inv.refund - inv.mana;
+        r.paid++;
+        if (r.paid >= inv.activations) r.readyFrom = turn + 1;
+      }
       // A FIXER THAT MAKES NO MANA OF ITS OWN (Prismatic Omen) is cast once the mana is there, cheapest first.
       for (;;) {
         let best = -1;
