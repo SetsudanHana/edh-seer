@@ -393,7 +393,9 @@ const tapOnly = (l: ManaLine): boolean => l.cost.mana === 0 && l.cost.life === 0
   && (l.cost.other.length === 0 || isLoyaltyAbility(l));
 
 /** Mana one use of a line adds: `fixed`, or for a SCALING line `max(amount.floor, 1)` (owner ruling 2026-10-20, #1272). CEILING: floor 0 / 1 keep the incumbent 1 (Gaea's Cradle over-claims 1).
- *  Reads `amount.floor` directly; `ManaLine.net` is the legacy value and is not read here. */
+ *  Reads `amount.floor` directly; `ManaLine.net` is the legacy value and is not read here.
+ *  CEILING: the units a multi-unit scaling tap makes each carry the card's WHOLE colour mask independently -- Faeburrow Elder's two units can both pay {G} though it makes one {G} and one {W},
+ *  and Doc Samson's "X mana of any one color" units can split colours though the card makes one. Pips never fall outside the commander's identity, so the five-colour mask over-claims nothing beyond that per-unit independence. */
 export const perUse = (l: ManaLine): number => l.amount.fixed ?? Math.max(l.amount.floor ?? 1, 1);
 
 export function manaOutput(dc: DeckCard, deck?: readonly DeckCard[], perGame = false): ManaOutput {
