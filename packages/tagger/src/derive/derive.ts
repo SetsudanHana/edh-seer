@@ -508,7 +508,8 @@ import { emblemRecipient } from "../emblem.js";
 // 350: #1295 two anaphors resolved to the wrong object. "destroy THAT CREATURE" after a targeted "Target creature gets -3/-0" inherits the antecedent's target scope (Depressurize was lost to `removal.targeted`); a token that is a copy ("Create two tokens that are copies of target permanent an opponent controls", Venser, Fervent Forger) takes its creator's control and no target scope, not the original's (CR 111.2), and "sacrifice them" is those tokens.
 // 351: #1295 item 3 review -- a return's "If <anyone> do/does/don't/doesn't" is a cost confirmation, never `returnIf` (Meathook Massacre II's "If they don't, return that card").
 // 352: #1295 item 4 -- two grammar-complete removal spells derived NOTHING: "Put target nonland permanent into its owner's library third from the top" (Teferi, Hero of Dominaria -3; also Oust, Spin into Myth, Terminus) is a `leaves` off the battlefield, and "Return target nonland permanent or suspended card to its owner's hand" (Venser's Diffusion) is a bounce of the permanent half.
-export const DERIVE_VERSION = 352;
+// 353: #1295 review of the anaphor scope: "that card" taken from a library or hand (Transmogrify, Polymorph) is not the exiled target; a player or token antecedent scopes nothing.
+export const DERIVE_VERSION = 353;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2567,7 +2568,12 @@ export function deriveAbilities(
         // ...NOR A PLAYER ("destroy target creature an opponent controls. That player loses 3 life", Suspended Sentence).
         // ...NOR A DEATH REPLACEMENT RIDING ON DAMAGE ("If that creature would die this turn, exile it instead", Smite the Deathless, Burn from Within): the damage is the removal.
         // CEILING: read off the clause text, so a clause that also destroys the antecedent elsewhere loses the scope on that destroy too; owner ruling #1294 (damage) is still open.
-        if (ante && !DEATH_REPLACEMENT.test(text) && !/\b(?:players?|opponents?)\b/i.test(objectText) && anteSubject?.scope === "target" && anteSubject.self !== true && !COPY_TOKEN_HEAD.test(ante.trim()) && !/\babilit/i.test(ante)) {
+        // ...NOR A CARD TAKEN FROM A LIBRARY OR HAND (Transmogrify: "puts THAT CARD onto the battlefield" is the revealed creature card, not the exiled target), NOR A PLAYER OR A TOKEN ANTECEDENT
+        // ("target player mills a card... exile that creature"; a Role "attached to target creature" is never itself the target).
+        // CEILING: "Create a token that's a copy of target creature an opponent controls. Destroy that creature." loses the scope (the anaphor means the copied target); the copy-token exclusion is wholesale.
+        const fromElsewhere = action.fromZone === "library" || action.fromZone === "hand";
+        const anteIsPlayer = !!ante && /^\s*(?:up to \w+ )?(?:another )?target (?:players?|opponents?)\b/i.test(ante);
+        if (ante && !fromElsewhere && !anteIsPlayer && anteSubject?.token !== true && !DEATH_REPLACEMENT.test(text) && !/\b(?:players?|opponents?)\b/i.test(objectText) && anteSubject?.scope === "target" && anteSubject.self !== true && !COPY_TOKEN_HEAD.test(ante.trim()) && !/\babilit/i.test(ante)) {
           const anteTypes = [anteSubject.type ?? []].flat();
           for (const e of emits) {
             if (e.subject.scope !== undefined || e.subject.self === true || e.subject.edict === true) continue;
@@ -2618,6 +2624,8 @@ export function deriveAbilities(
         if (fromTrigger?.length) subject.abilityKind = fromTrigger;
         else if (clause.trigger?.event === "activate") subject.abilityKind = ["activated"];
       }
+      // CEILING: read off the derived trigger's `you` alone, so "Whenever a creature attacks you, destroy target attacking creature" (an opponent's attacker) keeps `opp`,
+      // but a "you" trigger whose attacking creature is somehow an opponent's (a goaded or stolen attacker in a multiplayer combat) reads as yours.
       // ONLY THE ACTIVE PLAYER'S CREATURES ATTACK (CR 508.1a), so "target attacking creature" in a trigger of YOUR attack is yours
       // (Scrappy Bruiser: "up to one target attacking creature gets +2/+0... Return that creature to its owner's hand"). Not "attacking or
       // blocking" (a blocker is the defender's), not a spell, not a trigger on anyone else's attack.

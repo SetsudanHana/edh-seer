@@ -4866,6 +4866,30 @@ describe("#1295 removal-shaped emits", () => {
     expect(cultist.some((x) => x.subject.scope === "target")).toBe(true);
   });
 
+  test("review fixes: 'that card' put from a library is not the exile target (Transmogrify), a player antecedent and a token antecedent scope nothing", () => {
+    const trans = emitsOf("Transmogrify", "Destroy target creature. Its controller reveals cards from the top of their library until they reveal a creature card. That player puts that card onto the battlefield, then shuffles the rest into their library.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "target creature", fromZone: "battlefield", toZone: "exile", optional: false }, { verb: "reveal", object: "cards from the top of their library until a creature card is revealed", optional: false }, { verb: "put", object: "that creature card", fromZone: "library", toZone: "battlefield", optional: false }, { verb: "shuffle", object: "the rest into their library", optional: false }] },
+    ]).filter((x) => x.verb === "enters");
+    expect(trans.length).toBeGreaterThan(0);
+    for (const x of trans) expect(x.subject.scope).toBeUndefined();
+    const player = emitsOf("Test Mill", "Target player mills a card. Destroy that creature.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "mill", object: "target player", amount: "1", optional: false }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    for (const x of player) expect(x.subject.scope).toBeUndefined();
+    const role = emitsOf("Test Role", "Create a Royal Role token attached to target creature. Destroy that creature.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "create", object: "a Royal Role token attached to target creature", optional: false }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    for (const x of role) expect(x.subject.scope).toBeUndefined();
+  });
+
+  test("an attack trigger that is NOT yours keeps `opp`: 'Whenever a creature attacks you, destroy target attacking creature'", () => {
+    const e = emitsOf("Test Deterrent", "Whenever a creature attacks you, destroy target attacking creature.", "Enchantment", [
+      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a creature", control: "opp" }, actions: [{ verb: "destroy", object: "target attacking creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.control).toBe("opp");
+  });
+
   test("a copy token keeps a recipient the head names, and a token that is not a copy is untouched", () => {
     const opp = emitsOf("Test Copier", "Target opponent creates a token that's a copy of target creature you control.", "Sorcery", [
       { id: 1, abilityType: "spell", actions: [{ verb: "create", object: "token that's a copy of target creature you control", amount: "1", optional: false }] },
