@@ -660,7 +660,7 @@ export function entersUnderAnotherPlayer(cardText: string): boolean {
 const POLYMORPH_REVEAL = /\b(?:its|that creature's) controller reveals cards from the top of their library until they reveal a creature card\b/i;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
-const INERT_VERBS = new Set(["none"]);
+export const INERT_VERBS: ReadonlySet<string> = new Set(["none"]);
 
 /** Proliferate is a keyword ACTION -- a discrete thing a player does -- so a STATIC clause naming
  *  it is modifying somebody else's proliferate, never performing one. Tekuthal ("if you would

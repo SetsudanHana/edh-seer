@@ -1,6 +1,7 @@
 {
   "packages/data/src/scryfall.ts": 1,
   "packages/instruments/src/action-blockers-core.ts": 1,
+  "packages/instruments/src/dropped-clauses-core.ts": 1,
   "packages/matcher/src/analyze.ts": 4,
   "packages/matcher/src/answer-coverage.ts": 1,
   "packages/matcher/src/archetype-vocabulary.ts": 1,
