@@ -6,7 +6,7 @@ import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
 import { controlFromRelation, counterKindOf, parseCounter, parseSubject, COUNT_PHRASE } from "./subject.js";
 import { LAND_SUBTYPES } from "./subtypes.js";
 import { tokenTypeFor } from "./token-types.js";
-import { isEnergyObject } from "./effect-kind.js";
+import { isEnergyObject, permanentHalf } from "./effect-kind.js";
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
  *  nothing; a guessed event is worse than silence because it forms edges that are not real. */
@@ -287,6 +287,10 @@ const ZONE_EMITS: { verb: string; to: string; verbs: Verb[]; when?: (a: Action, 
   // "return target creature card from your graveyard to your hand" is recursion and stays silent
   // here (its origin is stated and it is not the battlefield).
   { verb: "return", to: "hand", verbs: ["leaves"], when: leftTheBattlefield },
+  // A TUCK. "Put target nonland permanent into its owner's library third from the top" (Teferi, Hero of Dominaria), Oust, Spin into Myth, Terminus: the permanent leaves the
+  // battlefield. These derived NOTHING (the grammar read them completely, so no model clause backed them up, and `unclaimed` is not persisted). A stated graveyard or hand
+  // origin is not this row (`leftTheBattlefield` refuses it; a graveyard origin has its own `leaves` below); `top-set` of a library or hand card is a different kind.
+  { verb: "put", to: "library", verbs: ["leaves"], when: leftTheBattlefield },
 ];
 
 /** An object that is nothing but a back-reference: "it", "them", "that card". */
@@ -332,7 +336,7 @@ function counterRecipient(clauseText: string): string | undefined {
 function leftTheBattlefield(a: Action, s: SubjectFilter, self: boolean): boolean {
   if (a.fromZone === "battlefield") return true;
   if (a.fromZone != null) return false;
-  if (/\bcards?\b/i.test(a.object ?? "")) return false;
+  if (/\bcards?\b/i.test(permanentHalf(a.object ?? ""))) return false;
   if (s.fromZone !== undefined) return false;
   // A DISJUNCTION IS PERMANENT-SHAPED WHEN EVERY BRANCH IS (recall v6, 2026-09-10): "target creature
   // or Vehicle" has no outer type, and reading only the outer emptied Bounce Off and Gravkill.
@@ -417,6 +421,14 @@ export const casualtySacrifice = (n: number): GameEvent => ({
   verb: "sacrifice", subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "gte", value: n }] },
 });
 
+/** The head naming a created token before "copy of": "token copies of ...", "a token that's a copy of ...". */
+export const COPY_TOKEN_HEAD = /^((?:[a-z0-9]+ ){0,3}tokens?(?: that(?:'s| are| is))?(?: a)?)\s+cop(?:y|ies)\s+of\b/i;
+/** What a copy copies, to the end of its sentence: not the actor's players. */
+// CEILING: clause-wide, so a clause with several creates and one of them by a named player (Tempt with Reflections: "Each opponent may create...")
+// leaves ALL its copy tokens `any`, including your own (it read `you` before only because the copied phrase leaked its control).
+const PLAYER_CREATES = /\b(?:opponents?|players?|controllers?|owners?|friends?|foes?)\s+(?:may\s+)?creates?\b/i;
+const COPIED_PHRASE = /\bcop(?:y|ies)\s+of\b[^.]*/i;
+
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean } = {}): GameEvent[] {
   const casualty = action.verb === "grant-ability" ? CASUALTY.exec(action.object ?? "") : null;
   if (casualty) return [casualtySacrifice(Number(casualty[1]))];
@@ -480,6 +492,20 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     ? counterRecipient(clauseText ?? "")
     : undefined;
   const subject = parseSubject(recipient ?? action.object ?? "");
+  // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
+  // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
+  // that are copies of target permanent an opponent controls" (Venser, Fervent Forger) parsed the original's control and
+  // its target scope onto the token, and "sacrifice them" after it read as killing an opponent's permanent. The original's
+  // words are cut: control and scope come from the head naming the token, and the player words of the copied phrase are
+  // not the actor's. "Target opponent creates a token that's a copy of ..." keeps its head's player.
+  const copyHead = COPY_TOKEN_HEAD.exec((recipient ?? action.object ?? "").trim());
+  if (copyHead && !/\btarget\b/i.test(copyHead[1]!)) {
+    const h = parseSubject(copyHead[1]!);
+    // The creator is "you" unless the sentence has a player create it: "Whenever Donatello deals combat damage to a player,
+    // create a token that's a copy of target artifact you control" names a player that is not the actor.
+    subject.control = h.control === "any" && !PLAYER_CREATES.test(clauseText ?? "") ? "you" : h.control;
+    delete subject.scope; // a created token is not targeted, and the effect subject already carries the plural
+  }
   // A control the object's own words state without a control word (#1295): "attacking you" is theirs, "that crewed it" is yours.
   // "attacking you or a planeswalker you control" (Soul Snare) reads `you` off the planeswalker, so an attacker overrides any control; "crewed it" only fills a blank.
   const related = controlFromRelation(action.object ?? "");
@@ -612,7 +638,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // payoff. The opponents are the multiplier; CR 111.2 makes the tokens the controller's. Same cut
   // `parseControl` makes one file over, so the two cannot disagree about where a sentence's head
   // ends. Four cards: Call the Coppercoats, Rose, Hylda's Crown of Winter, Kaito.
-  const head = clauseText?.split(COUNT_PHRASE)[0];
+  const head = (copyHead ? clauseText?.replace(COPIED_PHRASE, "") : clauseText)?.split(COUNT_PHRASE)[0];
   const sentenceHead = head && head.trim().length > 0 ? head : clauseText;
   const control = !!clauseText
     && subject.control === "any"
@@ -663,6 +689,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       ...(tokenType ? { type: tokenType } : {}),
       ...(landType ? { type: landType } : {}),
     },
+    ...(verb === "leaves" && action.verb === "put" && toZone === "library" && !leftTheGraveyard ? { tuck: true as const } : {}),
     // WHO DEALT IT. A damage action's `object` is the VICTIM ("each opponent"), so `subject` above
     // cannot also be the source — and a damage TRIGGER names the source ("whenever another source
     // you control deals 1 damage"). Without this the two were compared against each other and the

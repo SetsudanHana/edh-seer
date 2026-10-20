@@ -9,7 +9,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop } from "./effect-kind.js";
-import { actionEmits, casualtySacrifice, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
+import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, victimDeclines } from "./recipient.js";
@@ -21,7 +21,7 @@ import { selfAsTilde } from "../grammar/self-as-tilde.js";
 import { effectText, printedPreamble } from "../grammar/preamble.js";
 import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
-import { delaysIn, returnDelay } from "./delay.js";
+import { conditionalReturn, delaysIn, flipBranch, returnDelay, untilSourceLeaves } from "./delay.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
@@ -504,7 +504,16 @@ import { emblemRecipient } from "../emblem.js";
 // 346: #1282 the mana-token lists are ONE table (`token-kinds.ts`, `line` + `manaToken`): Vibranium (CR 111.10w, Powerstone's line) and Heartwood (CR 111.10x, {R} or {G}) makers now carry a token-maker mana line, and a creation replacement that adds either is a maker; quality.ts ramp ingredients read the same table (Eldrazi Spawn/Scion included).
 // 347: #1285 + #1291 the scaling floor reads the card's own contribution ("for each X on the battlefield", "your devotion to <colour>" from its own mana cost, "<name>'s toughness", "creature with power N or greater", "different power"), and a fetch of "a X card and a Y card" counts two lands (Krosan Verge).
 // 348: #1295 removal-shaped emits read the SENTENCE: an edict ("target player sacrifices") marks `SubjectFilter.edict` and no target scope; "its controller may sacrifice it" / "unless that player sacrifices it" marks `GameEvent.victimMay`; "you own" is `owner: you` (control you), not an opponent's; a possessive in a condition ("since your last turn ended", "your life total") or "attacking you" / "crewed it" no longer sets the target's control; "its controller sacrifices it" after "target creature you control" is yours; a cleave spell reads with its bracketed words removed (CR 702.148).
-export const DERIVE_VERSION = 348;
+// 349: #1295 item 3 -- a return paired with an "until this leaves the battlefield" exile is `delayedUntil: "source-leaves"` (Constable of the Realm, Mysterious Limousine), and a return on one "If ..." branch is `returnIf` (Unyielding Gatekeeper, Vindictive Triumph): neither is an immediate blink for `notFlickered`.
+// 350: #1295 two anaphors resolved to the wrong object. "destroy THAT CREATURE" after a targeted "Target creature gets -3/-0" inherits the antecedent's target scope (Depressurize was lost to `removal.targeted`); a token that is a copy ("Create two tokens that are copies of target permanent an opponent controls", Venser, Fervent Forger) takes its creator's control and no target scope, not the original's (CR 111.2), and "sacrifice them" is those tokens.
+// 351: #1295 item 3 review -- a return's "If <anyone> do/does/don't/doesn't" is a cost confirmation, never `returnIf` (Meathook Massacre II's "If they don't, return that card").
+// 352: #1295 item 4 -- two grammar-complete removal spells derived NOTHING: "Put target nonland permanent into its owner's library third from the top" (Teferi, Hero of Dominaria -3; also Oust, Spin into Myth, Terminus) is a `leaves` off the battlefield, and "Return target nonland permanent or suspended card to its owner's hand" (Venser's Diffusion) is a bounce of the permanent half.
+// 353: #1295 review of the anaphor scope: "that card" taken from a library or hand (Transmogrify, Polymorph) is not the exiled target; a player or token antecedent scopes nothing.
+// 354: #1295 item 5 -- an action on one side of a coin flip ("If you win the flip, ...", "If you lose the flip, ...", "If it comes up heads, ...") is `onFlip`, so Orcish Captain's losing-side -0/-2 on your own Orc is not `removal.targeted`.
+// 355: #1295 item 4 review -- the `leaves` emit of a put into a library (a tuck) carries `tuck: true`, so the quality ladder (exile > destroy > bounce > tuck) scores Condemn, Oust, Teferi -3 below a bounce.
+// 356: #1295 item 5 review -- an onFlip action takes the k-th sentence carrying its verb's printed word, not the first sentence holding its amount (Winter Sky's draw is the lose side, Bangchuckers' two "2 damage" are opposite sides, Chaotic Strike's unconditional draw is unmarked).
+// 357: #1295 item 4 review -- "the owner of <target> puts it on their choice of the top or bottom of their library" tucks THAT target (the grammar named no object, so the record writer read "it" as the trigger's subject: Plan for All Outcomes derived a false self tuck of "this enchantment").
+export const DERIVE_VERSION = 357;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1485,6 +1494,7 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
  *  destroy THAT CREATURE" derived `dies creature/any` and fed Massacre Wurm's "whenever a creature
  *  an opponent controls dies" (owner-judged FALSE). The type stays the pronoun's own; only an
  *  unstated controller is inherited. */
+const DEATH_REPLACEMENT = /\bwould (?:die|be destroyed|be put into a graveyard)\b[^.]*\binstead\b/i;
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
 /** The count an antecedent object states up front: "up to five Doctor cards", "two basic land cards". */
 // Never an open threshold: "two or more creature cards" is no fixed two (review).
@@ -1512,7 +1522,11 @@ const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|him|her|this card|that card|t
  *  (#801). Bounded and anchored on literals: no quantifier overlap for CodeQL's ReDoS check. */
 /** The sentence of `text` holding the k-th (0-based) whole-word `verb`; "" when there are fewer. */
 function nthSentenceWith(text: string, verb: string, k: number): string {
-  const word = new RegExp(`\\b${verb}\\b`, "gi");
+  return nthSentenceMatching(text, `\\b${verb}\\b`, k);
+}
+/** The sentence of `text` holding the k-th (0-based) match of the regex source `pattern`; "" when there are fewer. */
+function nthSentenceMatching(text: string, pattern: string, k: number): string {
+  const word = new RegExp(pattern, "gi");
   let seen = 0;
   for (const sentence of text.split(".")) {
     const n = (sentence.match(word) ?? []).length;
@@ -1520,6 +1534,15 @@ function nthSentenceWith(text: string, verb: string, k: number): string {
     seen += n;
   }
   return "";
+}
+/** The printed word(s) an action verb reads as, where they differ from the verb's name ("modify-pt" is "gets", "deal-damage" is "deals"). The default is the verb's first word, with its
+ *  plural/third-person ending: "draw" reads "draws", "destroy" reads "destroys". */
+const FLIP_VERB_WORDS: Record<string, string> = {
+  "modify-pt": "gets?", "deal-damage": "deals?", "gain-life": "gains?", "lose-life": "loses?|lose", "add-counter": "puts?", "remove-counter": "removes?", "gain-control": "gains? control",
+  "counter-spell": "counters?", "extra-turn": "extra turn", "phase-out": "phases? out", "grant-ability": "gains?", "create": "creates?", "sacrifice": "sacrifices?",
+};
+function flipVerbWord(verb: string): string {
+  return `\\b(?:${FLIP_VERB_WORDS[verb] ?? `${verb.split("-")[0]}(?:s|es)?`})\\b`;
 }
 /** "Whenever ONE OR MORE ...": one firing per batch (CR 603.2c; edge magnitude). */
 const BATCHED = /\bone or more\b/i;
@@ -2553,6 +2576,29 @@ export function deriveAbilities(
           for (const e of emits) if (e.subject.control === "any") e.subject.control = inherited;
           if (subject && subject.control === "any") subject.control = inherited;
         }
+        // ...AND ITS TARGET SCOPE (#1295): "Target creature gets -3/-0 until end of turn. Then if that creature's power is 0 or
+        // less, destroy THAT CREATURE" (Depressurize) kills the creature the first sentence targeted, and without the scope
+        // `removal.targeted` lost the card. Only when the antecedent is a target of a compatible type; "this creature" and a
+        // card's own name carry no target scope, so a self-reference is never read as one.
+        const anteSubject = ante ? subjectFrom(ante, cardName, enchantText) : undefined;
+        // ...NOT A COPY TOKEN (it takes its creator's control, see actionEmits) and NOT AN ABILITY ("counter target activated ability ... destroy that permanent", Green Slime).
+        // ...NOR A PLAYER ("destroy target creature an opponent controls. That player loses 3 life", Suspended Sentence).
+        // ...NOR A DEATH REPLACEMENT RIDING ON DAMAGE ("If that creature would die this turn, exile it instead", Smite the Deathless, Burn from Within): the damage is the removal.
+        // CEILING: read off the clause text, so a clause that also destroys the antecedent elsewhere loses the scope on that destroy too; owner ruling #1294 (damage) is still open.
+        // ...NOR A CARD TAKEN FROM A LIBRARY OR HAND (Transmogrify: "puts THAT CARD onto the battlefield" is the revealed creature card, not the exiled target), NOR A PLAYER OR A TOKEN ANTECEDENT
+        // ("target player mills a card... exile that creature"; a Role "attached to target creature" is never itself the target).
+        // CEILING: "Create a token that's a copy of target creature an opponent controls. Destroy that creature." loses the scope (the anaphor means the copied target); the copy-token exclusion is wholesale.
+        const fromElsewhere = action.fromZone === "library" || action.fromZone === "hand";
+        const anteIsPlayer = !!ante && /^\s*(?:up to \w+ )?(?:another )?target (?:players?|opponents?)\b/i.test(ante);
+        if (ante && !fromElsewhere && !anteIsPlayer && anteSubject?.token !== true && !DEATH_REPLACEMENT.test(text) && !/\b(?:players?|opponents?)\b/i.test(objectText) && anteSubject?.scope === "target" && anteSubject.self !== true && !COPY_TOKEN_HEAD.test(ante.trim()) && !/\babilit/i.test(ante)) {
+          const anteTypes = [anteSubject.type ?? []].flat();
+          for (const e of emits) {
+            if (e.subject.scope !== undefined || e.subject.self === true || e.subject.edict === true) continue;
+            const types = [e.subject.type ?? []].flat();
+            if (types.length === 0 || (anteTypes.length > 0 && !types.some((t) => anteTypes.includes(t) || anteTypes.includes("permanent")))) continue;
+            e.subject.scope = "target";
+          }
+        }
       }
       // "REVEAL CARDS ... UNTIL YOU REVEAL A CREATURE CARD ... PUT THAT CARD ONTO THE BATTLEFIELD"
       // (Descendants' Fury, #715): a class-restricted dig (AF10 ruling 4) whose class is named by the
@@ -2594,6 +2640,22 @@ export function deriveAbilities(
           ?? (clause.trigger?.subject ? parseSubject(clause.trigger.subject).abilityKind : undefined);
         if (fromTrigger?.length) subject.abilityKind = fromTrigger;
         else if (clause.trigger?.event === "activate") subject.abilityKind = ["activated"];
+      }
+      // CEILING: read off the derived trigger's `you` alone, so "Whenever a creature attacks you, destroy target attacking creature" (an opponent's attacker) keeps `opp`,
+      // but a "you" trigger whose attacking creature is somehow an opponent's (a goaded or stolen attacker in a multiplayer combat) reads as yours.
+      // ONLY THE ACTIVE PLAYER'S CREATURES ATTACK (CR 508.1a), so "target attacking creature" in a trigger of YOUR attack is yours
+      // (Scrappy Bruiser: "up to one target attacking creature gets +2/+0... Return that creature to its owner's hand"). Not "attacking or
+      // blocking" (a blocker is the defender's), not a spell, not a trigger on anyone else's attack.
+      if (trigger?.verbs.includes("attacks") && trigger.subject.control === "you") {
+        const named = antecedent ?? (THAT_TYPED.test(objectText) ? antecedentFor((clause.actions ?? []).indexOf(action)) : undefined) ?? action.object ?? "";
+        // Only a CREATURE emit: "the player or planeswalker it's attacking" is the defender's, and a token made "for each attacking creature" is no attacker.
+        if (/\battacking\b/i.test(named) && !/\b(?:blocking|planeswalker|player|opponents?|don'?t control|for each|equal)\b/i.test(named)) {
+          for (const e of emits) {
+            const types = [e.subject.type ?? []].flat();
+            if (e.subject.control !== "any" || e.subject.self === true || e.verb === "create-token" || e.verb === "enters" || types.includes("planeswalker")) continue;
+            e.subject.control = "you";
+          }
+        }
       }
       // A COST SACRIFICE IS THE CONTROLLER'S (CR 701.17a): "{T}, Sacrifice two other creatures" eats
       // your creatures whatever the effect goes on to do to "any number of target players". The
@@ -2813,6 +2875,14 @@ export function deriveAbilities(
         : kind === "on-cast" && castAtInstantSpeed === true;
       if (instantSpeed && !delayedAction(text, action, clause.actions ?? [])) for (const e of emits) e.instantSpeed = true;
       if (emits.length) ability.emits = emits;
+      // A COIN-FLIP SIDE (CR 705, #1295 item 5), read on THIS action's own sentence: the k-th action of a verb takes the k-th sentence carrying that verb's printed word (`FLIP_VERB_WORDS`).
+      // CEILING: a verb whose printed word is not in the table or the verb's own name (`other`, ...) finds no sentence and is unmarked; a word that also appears for another job ("gains flying" beside a `modify-pt` "gets") can shift a later action's sentence.
+      if (action.verb) {
+        const clauseActions = clause.actions ?? [];
+        const k = clauseActions.slice(0, clauseActions.indexOf(action)).filter((x) => x.verb === action.verb).length;
+        const onFlip = flipBranch(nthSentenceMatching(text, flipVerbWord(action.verb), k), clauseActions.some((x) => x.verb === "flip-coin"));
+        if (onFlip) ability.onFlip = onFlip;
+      }
       // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate
       // return beside a delayed one stays immediate (Gift of Immortality, Swift Warkite; review). The
       // k-th return/put action is the k-th "return"/"put" in the text. CEILING: a counter "put" in the
@@ -2821,6 +2891,11 @@ export function deriveAbilities(
         const k = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === action.verb).length;
         const delay = returnDelay(nthSentenceWith(text, action.verb, k));
         if (delay) ability.delayedUntil = delay;
+        // #1295 item 3: an O-ring return waits for its source ("until this creature leaves the battlefield"; the model-synthesized return has no "return" word, so it is
+        // read off the clause text), and a return on one "If ..." branch is marked, not a blink.
+        // CEILING: `untilSourceLeaves` reads the whole clause, so every return beside an "until this leaves" exile is marked, not only the paired one (Mysterious Limousine's immediate second return).
+        else if (action.verb === "return" && untilSourceLeaves(text)) ability.delayedUntil = "source-leaves";
+        if (conditionalReturn(nthSentenceWith(text, action.verb, k))) ability.returnIf = true;
       }
       // A RETURN THAT MARKS WHAT IT RETURNS happens once per object (#886): a finality counter exiles
       // it the next time it would die (CR 122.1h, Meathook Massacre II), and a keyword counter the

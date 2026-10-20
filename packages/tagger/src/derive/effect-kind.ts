@@ -94,16 +94,22 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
  *  names nothing, so those stay unclassified. */
 const PERMANENT_NOUN = /\b(?:permanents?|creatures?|lands?|artifacts?|enchantments?|planeswalkers?|battles?|vehicles?|auras?|equipment)\b/i;
 const SPELL_NOUN = /\bspells?\b/i;
+/** "TARGET NONLAND PERMANENT OR SUSPENDED CARD" (Venser's Diffusion) is a permanent on the battlefield OR a card in exile; `parseSubject` already reads
+ *  only the permanent half, so the origin test reads the same half. CEILING: the suspended-card half (a card in exile with a time counter) is not modelled; the
+ *  bounce emit is the battlefield one alone. Only this exact tail is cut: "creature or artifact card" is a list of card types, not a second zone. */
+export function permanentHalf(object: string): string {
+  return object.replace(/ or suspended cards?$/i, "");
+}
 export function bounceOrigin(action: Action): "battlefield" | "stack" | undefined {
   if (action.fromZone === "battlefield" || action.fromZone === "stack") return action.fromZone;
-  const object = action.object ?? "";
+  const object = permanentHalf(action.object ?? "");
   if (action.fromZone || /\bcards?\b/i.test(object)) return undefined;
   const permanent = PERMANENT_NOUN.test(object), spell = SPELL_NOUN.test(object);
   return permanent && !spell ? "battlefield" : spell && !permanent ? "stack" : undefined;
 }
 function bouncesUnstated(action: Action): boolean {
   if (action.fromZone || action.toZone !== "hand" || (action.verb !== "return" && action.verb !== "put")) return false;
-  const object = action.object ?? "";
+  const object = permanentHalf(action.object ?? "");
   return !/\bcards?\b/i.test(object) && (PERMANENT_NOUN.test(object) || SPELL_NOUN.test(object));
 }
 

@@ -112,7 +112,9 @@ function permanenceOf(a: Ability): number | undefined {
   const verbs = (a.emits ?? []).map((e) => e.verb);
   if (verbs.includes("exiled")) return 3;
   if (verbs.includes("dies")) return 2;
-  if (verbs.includes("leaves")) return 1;
+  // A `leaves` marked `tuck` (derive: a put into a library) is the ladder's bottom rung, not a bounce.
+  if ((a.emits ?? []).some((e) => e.verb === "leaves" && e.tuck !== true)) return 1;
+  if (verbs.includes("leaves")) return 0;
   if (verbs.includes("shuffle")) return 0;
   return undefined;
 }

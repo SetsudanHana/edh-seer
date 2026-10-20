@@ -100,7 +100,7 @@
           { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
           { "op": "emits", "verbs": ["exiled", "leaves", "shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true },
           { "op": "emits", "verbs": ["counter-added"], "control": ["opp", "any"], "scope": ["target"], "counter": ["-1/-1"], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
-          { "op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true },
+          { "op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true, "notOnFlip": true },
           { "op": "effectKind", "in": ["forced-sacrifice"], "scope": ["target"] },
           { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "edict": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
           { "op": "oracle", "pattern": "damageRemoval" }
@@ -287,7 +287,7 @@
           { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
           { "op": "emits", "verbs": ["exiled", "leaves", "shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true },
           { "op": "emits", "verbs": ["counter-added"], "control": ["opp", "any"], "scope": ["target"], "counter": ["-1/-1"], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
-          { "op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true },
+          { "op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true, "notOnFlip": true },
           { "op": "effectKind", "in": ["forced-sacrifice"], "scope": ["target"] },
           { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "edict": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
           { "op": "oracle", "pattern": "damageRemoval" }

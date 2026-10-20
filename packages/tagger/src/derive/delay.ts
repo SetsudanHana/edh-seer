@@ -41,3 +41,36 @@ export function returnDelay(sentence: string): "next-end-step" | "next-upkeep" |
   }
   return undefined;
 }
+
+/** "...exile target creature until this creature leaves the battlefield" (Constable of the Realm, Banisher Priest, Glass Casket, Mysterious Limousine): the exile
+ *  lasts as long as its source, so the return the model synthesizes is DELAYED until the source leaves (#1295 item 3), not an immediate blink. The cue is read
+ *  on a sentence that also exiles, off the clause text, because the synthesized return has no "return" word of its own. Bounded, anchored on literals. */
+const UNTIL_LEAVES = /\buntil [^.,;]{1,60}? leaves? the battlefield\b/i;
+// CEILING: the cue is read on the whole clause, so EVERY return in an "until this leaves" clause is marked source-leaves, including an immediate one beside it (Mysterious Limousine's "return each other card exiled with this Vehicle").
+export function untilSourceLeaves(text: string): boolean {
+  return text.split(".").some((sentence) => /\bexiles?\b/i.test(sentence) && UNTIL_LEAVES.test(sentence));
+}
+
+/** A return whose own sentence opens with an intervening "If ..." that picks a branch ("If you controlled it, return it to the battlefield tapped": Unyielding
+ *  Gatekeeper; "If that permanent's mana value was 3 or less, return it ...": Vindictive Triumph). On the other branch the exile stays, so the card is removal (#1295 item 3).
+ *  NOT a branch: "if you do" / "if you don't" (a cost confirmation) and any "... this way" ("If a creature is put into exile this way", "If it was exiled this way"). */
+export function conditionalReturn(sentence: string): boolean {
+  const open = /^\s*if\b([^,]{0,120}),/i.exec(sentence);
+  if (!open) return false;
+  const cond = open[1]!.trimEnd();
+  // A cost confirmation ends in do/does/don't/doesn't, whoever the subject is ("If you do", "If they don't": Meathook Massacre II, "If that player does").
+  return !/\b(?:do|does|don't|doesn't)$/i.test(cond) && !/\bthis way\b/i.test(cond);
+}
+
+/** AN ACTION ON ONE SIDE OF A COIN FLIP (CR 705; #1295 item 5). "If you win the flip, target Orc creature gets +2/+0. If you lose the flip, it gets -0/-2" (Orcish Captain), "If you lose the flip,
+ *  sacrifice this creature" (Viashino Sandswimmer), "If it comes up heads, counter target ..." (Odds // Ends): the sentence opens with the branch, so the action in it happens on that side only.
+ *  The bare "If you win" / "If you lose" count only where the clause itself flips a coin (`flipsCoin`), since "If you win the game" is no flip. Anchored at the sentence's start.
+ *  CEILING: only a sentence that OPENS with the branch is read; "Otherwise, ..." (Plasma Caster) and a branch inside a sentence ("Destroy it if you lose the flip") mark nothing. */
+export function flipBranch(sentence: string, flipsCoin: boolean): "win" | "lose" | "heads" | "tails" | undefined {
+  const named = /^\s*(?:if|when) you (win|lose) (?:the|a) (?:coin )?flip\b/i.exec(sentence);
+  if (named) return named[1]!.toLowerCase() as "win" | "lose";
+  const side = /^\s*(?:if|when) (?:it|the coin) comes up (heads|tails)\b/i.exec(sentence);
+  if (side) return side[1]!.toLowerCase() as "heads" | "tails";
+  const bare = flipsCoin ? /^\s*(?:if|when) you (win|lose)\b(?! the game)/i.exec(sentence) : null;
+  return bare ? (bare[1]!.toLowerCase() as "win" | "lose") : undefined;
+}

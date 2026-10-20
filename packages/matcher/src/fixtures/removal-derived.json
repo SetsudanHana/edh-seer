@@ -498,10 +498,12 @@
        "control": "opp",
        "token": null,
        "type": "creature",
-       "fromZone": "exile"
+       "fromZone": "exile",
+       "scope": "target"
       }
      }
     ],
+    "delayedUntil": "source-leaves",
     "clause": 1,
     "repeats": "once",
     "count": {
@@ -3366,8 +3368,7 @@
       "subject": {
        "control": "opp",
        "token": true,
-       "type": "creature",
-       "scope": "each"
+       "type": "creature"
       },
       "instantSpeed": true
      },
@@ -3376,8 +3377,7 @@
       "subject": {
        "control": "opp",
        "token": true,
-       "type": "creature",
-       "scope": "each"
+       "type": "creature"
       },
       "instantSpeed": true
      }
@@ -6016,6 +6016,1486 @@
     ],
     "clause": 2,
     "repeats": "once"
+   }
+  ]
+ },
+ "Constable of the Realm": {
+  "oracleText": "Renown 2 (When this creature deals combat damage to a player, if it isn't renowned, put two +1/+1 counters on it and it becomes renowned.)\nWhenever one or more +1/+1 counters are put on this creature, exile up to one other target nonland permanent until this creature leaves the battlefield.",
+  "typeLine": "Creature — Giant Soldier",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "counter-added"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true,
+      "counter": "+1/+1"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "counter-added"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true,
+      "counter": "+1/+1"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent",
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "delayedUntil": "source-leaves",
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Mysterious Limousine": {
+  "oracleText": "Whenever this Vehicle enters or attacks, exile up to one other target creature until this Vehicle leaves the battlefield. If a creature is put into exile this way, return each other card exiled with this Vehicle to the battlefield under its owner's control.\nCrew 2",
+  "typeLine": "Artifact — Vehicle",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "vehicle",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "vehicle",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "subtype": "vehicle",
+      "scope": "each"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "vehicle",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "subtype": "vehicle",
+       "scope": "each",
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "delayedUntil": "source-leaves",
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "subtype": "vehicle",
+      "scope": "each",
+      "fromZone": "exile"
+     }
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "subtype": "vehicle",
+      "scope": "each"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "vehicle",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "subtype": "vehicle",
+       "scope": "each",
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "delayedUntil": "source-leaves",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "subtype": "vehicle",
+      "scope": "each",
+      "fromZone": "exile"
+     }
+    }
+   }
+  ]
+ },
+ "Unyielding Gatekeeper": {
+  "oracleText": "Disguise {1}{W} (You may cast this card face down for {3} as a 2/2 creature with ward {2}. Turn it face up any time for its disguise cost.)\nWhen this creature is turned face up, exile another target nonland permanent. If you controlled it, return it to the battlefield tapped. Otherwise, its controller creates a 2/2 white and blue Detective creature token.",
+  "typeLine": "Creature — Elephant Cleric",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "turned-face-up"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "target",
+      "other": true
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "turned-face-up"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "entersTapped": true,
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "returnIf": true,
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "opp",
+      "token": true,
+      "type": "creature",
+      "subtype": "detective",
+      "colors": [
+       "W",
+       "U"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 2
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 2
+       }
+      ]
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "turned-face-up"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "opp",
+       "token": true,
+       "colors": [
+        "W",
+        "U"
+       ],
+       "type": "creature",
+       "subtype": "detective",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 2
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 2
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "opp",
+       "token": true,
+       "colors": [
+        "W",
+        "U"
+       ],
+       "type": "creature",
+       "subtype": "detective",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 2
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 2
+        }
+       ],
+       "entersTapped": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Vindictive Triumph": {
+  "oracleText": "Exile target creature or planeswalker. If that permanent's mana value was 3 or less, return it to the battlefield tapped under your control. Exile it at the beginning of the next end step.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "planeswalker"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "planeswalker"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "planeswalker"
+      ],
+      "scope": "target"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "creature",
+        "planeswalker"
+       ],
+       "scope": "target",
+       "entersTapped": true,
+       "fromZone": "exile"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "returnIf": true,
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Eldrazi Displacer": {
+  "oracleText": "Devoid (This card has no color.)\n{2}{C}: Exile another target creature, then return it to the battlefield tapped under its owner's control. ({C} represents colorless mana.)",
+  "typeLine": "Creature — Eldrazi",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{C}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{C}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target",
+      "other": true
+     }
+    },
+    "cost": "{2}{C}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target",
+       "entersTapped": true,
+       "fromZone": "exile"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{C}"
+    }
+   }
+  ]
+ },
+ "Depressurize": {
+  "oracleText": "Target creature gets -3/-0 until end of turn. Then if that creature's power is 0 or less, destroy it.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "debuff",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "amount": "-3/-0",
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Venser, Fervent Forger": {
+  "oracleText": "Flash\nWhen Venser enters, choose one —\n• Copy target instant or sorcery spell an opponent controls twice. You may choose new targets for the copies.\n• Create two tokens that are copies of target permanent an opponent controls. They gain haste. At the beginning of the next end step, sacrifice them.",
+  "typeLine": "Legendary Creature — Human Sorcerer",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "copy-spell",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": [
+       "instant",
+       "sorcery"
+      ],
+      "scope": "target"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "copy",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ],
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "type": "permanent",
+      "scope": "all",
+      "copyOf": {
+       "type": "permanent",
+       "control": "opp"
+      }
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "permanent"
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     }
+    },
+    "amount": "two",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "permanent"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Venser's Diffusion": {
+  "oracleText": "Return target nonland permanent or suspended card to its owner's hand.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "notType": [
+       "land"
+      ],
+      "scope": "target",
+      "anyOf": [
+       {
+        "type": [
+         "creature",
+         "artifact",
+         "enchantment",
+         "planeswalker",
+         "battle"
+        ],
+        "notType": [
+         "land"
+        ]
+       },
+       {
+        "status": [
+         "suspended"
+        ]
+       }
+      ],
+      "zone": "battlefield"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Teferi, Hero of Dominaria": {
+  "oracleText": "+1: Draw a card. At the beginning of the next end step, untap up to two lands.\n−3: Put target nonland permanent into its owner's library third from the top.\n−8: You get an emblem with \"Whenever you draw a card, exile target permanent an opponent controls.\"",
+  "typeLine": "Legendary Planeswalker — Teferi",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "all"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-turn",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−3",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "tuck": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-3"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "emblem",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−8",
+    "clause": 4,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-8"
+    }
+   }
+  ]
+ },
+ "Orcish Captain": {
+  "oracleText": "{1}: Flip a coin. If you win the flip, target Orc creature gets +2/+0 until end of turn. If you lose the flip, it gets -0/-2 until end of turn.",
+  "typeLine": "Creature — Orc Warrior",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}",
+    "emits": [
+     {
+      "verb": "flip-coin",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{1}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "subtype": "orc",
+      "scope": "target"
+     }
+    },
+    "cost": "{1}",
+    "amount": "+2/+0",
+    "onFlip": "win",
+    "clause": 1,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{1}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "debuff",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "subtype": "orc",
+      "scope": "target"
+     }
+    },
+    "cost": "{1}",
+    "amount": "-0/-2",
+    "onFlip": "lose",
+    "clause": 1,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{1}"
+    }
+   }
+  ]
+ },
+ "Condemn": {
+  "oracleText": "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "combat": "attacking",
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "tuck": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "amount": "its toughness",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "opp",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Oust": {
+  "oracleText": "Put target creature into its owner's library second from the top. Its controller gains 3 life.",
+  "typeLine": "Sorcery",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "tuck": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "opp",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    }
+   }
+  ]
+ },
+ "Natural Obsolescence": {
+  "oracleText": "Put target artifact on the bottom of its owner's library.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "artifact",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "tuck": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Oblation": {
+  "oracleText": "The owner of target nonland permanent shuffles it into their library, then draws two cards.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "tuck": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Boomerang": {
+  "oracleText": "Return target permanent to its owner's hand.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent",
+      "scope": "target",
+      "zone": "battlefield"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "permanent",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
    }
   ]
  }

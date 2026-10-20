@@ -646,3 +646,13 @@ test("a may does not reach a finite verb, a replacement, or 'the rest' (Guild Fe
   // A copy's exceptions ("... is an artifact ..., and has myriad") are still the may's (Auton Soldier).
   expect(opt("You may have this creature enter as a copy of any creature on the battlefield, except it isn't legendary, is an artifact in addition to its other types, and has myriad.")).toEqual(["copy*", "cant*", "grant-ability*", "grant-ability*"]);
 });
+
+// #1295 item 4 review: "the owner of <target> puts it" moves THAT target, not the trigger's subject (Plan for All Outcomes read as a tuck of "this enchantment").
+test("an owner's tuck names the target the sentence names", () => {
+  expect(parseActions("the owner of up to one other target nonland permanent puts it on their choice of the top or bottom of their library.", "triggered"))
+    .toMatchObject([{ verb: "put", text: "up to one other target nonland permanent", toZone: "library" }]);
+  expect(read("Target creature's owner puts it on their choice of the top or bottom of their library.")).toMatchObject([{ verb: "put", text: "target creature", toZone: "library" }]);
+});
+test("an owner's tuck of a back-reference stays a reference (Tolarian Contempt: 'That creature's owner puts it ...')", () => {
+  expect(parseActions("That creature's owner puts it on their choice of the top or bottom of their library.", "triggered")[0]?.text).toBeUndefined();
+});

@@ -4812,4 +4812,226 @@ describe("#1295 removal-shaped emits", () => {
     expect(e.length).toBeGreaterThan(0);
     expect(e.every((x) => x.subject.control === "you")).toBe(true);
   });
+
+  test("'destroy that creature' after a TARGETED pump is the target: Depressurize keeps its target scope", () => {
+    const e = emitsOf("Depressurize", "Target creature gets -3/-0 until end of turn. Then if that creature's power is 0 or less, destroy it.", "Instant", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "modify-pt", object: "target creature", amount: "-3/-0" }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.scope).toBe("target"); expect(x.subject.control).toBe("opp"); }
+  });
+
+  test("'that creature' after an UNTARGETED antecedent or the card itself gains no target scope", () => {
+    const sibsig = emitsOf("The Sibsig Ceremony", "Whenever a creature you control enters, destroy that creature.", "Enchantment", [
+      { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "a creature", control: "you" }, actions: [{ verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    for (const x of sibsig) expect(x.subject.scope).toBeUndefined();
+    const own = emitsOf("Test Card", "Sacrifice this creature. Destroy that creature.", "Instant", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "sacrifice", object: "this creature", optional: false }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    for (const x of own) expect(x.subject.scope).toBeUndefined();
+  });
+
+  test("a copy token is controlled by its creator, and 'sacrifice them' is those tokens (Venser, Fervent Forger)", () => {
+    const e = emitsOf("Venser, Fervent Forger", "Flash\nWhen Venser enters, choose one —\n• Copy target instant or sorcery spell an opponent controls twice. You may choose new targets for the copies.\n• Create two tokens that are copies of target permanent an opponent controls. They gain haste. At the beginning of the next end step, sacrifice them.", "Legendary Creature — Human Wizard", [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Flash" }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this", control: "you" }, actions: [] },
+      { id: 3, abilityType: "triggered", actions: [{ verb: "copy", object: "target instant or sorcery spell an opponent controls", amount: "2", optional: true }] },
+      { id: 4, abilityType: "triggered", actions: [{ verb: "create", object: "token copies of target permanent an opponent controls with haste", amount: "2", optional: false }, { verb: "sacrifice", object: "them", optional: false }] },
+    ]).filter((x) => x.clause === 4);
+    expect(e.map((x) => x.verb)).toEqual(["create-token", "enters", "sacrifice", "dies"]);
+    for (const x of e) { expect(x.subject.control).toBe("you"); expect(x.subject.scope).toBeUndefined(); expect(x.subject.token).toBe(true); }
+  });
+
+  test("'target attacking creature' in a trigger of YOUR attack is yours (CR 508.1a): Scrappy Bruiser; blockers, spells and other triggers stay", () => {
+    const bruiser = emitsOf("Scrappy Bruiser", "Whenever this creature attacks, up to one target attacking creature gets +2/+0 and gains trample until end of turn. Return that creature to its owner's hand at end of combat.", "Creature — Human", [
+      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [{ verb: "modify-pt", object: "up to one target attacking creature", amount: "+2/+0" }, { verb: "return", object: "that creature", toZone: "hand", optional: false }] },
+    ]).filter((x) => x.verb === "leaves");
+    expect(bruiser.length).toBeGreaterThan(0);
+    for (const x of bruiser) expect(x.subject.control).toBe("you");
+    const frenzy = emitsOf("Blood Frenzy", "Target attacking or blocking creature gets +4/+0 until end of turn. Destroy that creature at the beginning of the next end step.", "Instant", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "modify-pt", object: "target attacking or blocking creature", amount: "+4/+0" }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    for (const x of frenzy) expect(x.subject.control).toBe("opp");
+  });
+
+  test("a death replacement riding on damage does not scope its anaphor (Burn from Within, Smite the Deathless); 'destroy that creature instead' of damage does (Kill-Suit Cultist)", () => {
+    const burn = emitsOf("Burn from Within", "Burn from Within deals X damage to any target. If a creature is dealt damage this way, it loses indestructible until end of turn. If that creature would die this turn, exile it instead.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "any target", amount: "X" }, { verb: "exile", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "exiled" || x.verb === "leaves");
+    for (const x of burn) expect(x.subject.scope).toBeUndefined();
+    const cultist = emitsOf("Kill-Suit Cultist", "{B}, Sacrifice this creature: The next time damage would be dealt to target creature this turn, destroy that creature instead.", "Creature — Human", [
+      { id: 1, abilityType: "activated", actions: [{ verb: "prevent", object: "damage to target creature" }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    expect(cultist.some((x) => x.subject.scope === "target")).toBe(true);
+  });
+
+  test("review fixes: 'that card' put from a library is not the exile target (Transmogrify), a player antecedent and a token antecedent scope nothing", () => {
+    const trans = emitsOf("Transmogrify", "Destroy target creature. Its controller reveals cards from the top of their library until they reveal a creature card. That player puts that card onto the battlefield, then shuffles the rest into their library.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "target creature", fromZone: "battlefield", toZone: "exile", optional: false }, { verb: "reveal", object: "cards from the top of their library until a creature card is revealed", optional: false }, { verb: "put", object: "that creature card", fromZone: "library", toZone: "battlefield", optional: false }, { verb: "shuffle", object: "the rest into their library", optional: false }] },
+    ]).filter((x) => x.verb === "enters");
+    expect(trans.length).toBeGreaterThan(0);
+    for (const x of trans) expect(x.subject.scope).toBeUndefined();
+    const player = emitsOf("Test Mill", "Target player mills a card. Destroy that creature.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "mill", object: "target player", amount: "1", optional: false }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    for (const x of player) expect(x.subject.scope).toBeUndefined();
+    const role = emitsOf("Test Role", "Create a Royal Role token attached to target creature. Destroy that creature.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "create", object: "a Royal Role token attached to target creature", optional: false }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    for (const x of role) expect(x.subject.scope).toBeUndefined();
+  });
+
+  test("an attack trigger that is NOT yours keeps `opp`: 'Whenever a creature attacks you, destroy target attacking creature'", () => {
+    const e = emitsOf("Test Deterrent", "Whenever a creature attacks you, destroy target attacking creature.", "Enchantment", [
+      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a creature", control: "opp" }, actions: [{ verb: "destroy", object: "target attacking creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.control).toBe("opp");
+  });
+
+  test("a copy token keeps a recipient the head names, and a token that is not a copy is untouched", () => {
+    const opp = emitsOf("Test Copier", "Target opponent creates a token that's a copy of target creature you control.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "create", object: "token that's a copy of target creature you control", amount: "1", optional: false }] },
+    ]).filter((x) => x.verb === "create-token");
+    expect(opp.length).toBeGreaterThan(0);
+    // The recipient the sentence names ("target opponent creates") keeps the token: it is theirs.
+    for (const x of opp) expect(x.subject.control).toBe("opp");
+    const each = emitsOf("Test Each", "Each player creates a token that's a copy of target creature an opponent controls.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "create", object: "token that's a copy of target creature an opponent controls", amount: "1", optional: false }] },
+    ]).filter((x) => x.verb === "create-token");
+    expect(each.length).toBeGreaterThan(0);
+    for (const x of each) expect(x.subject.control).toBe("any");
+    const beast = emitsOf("Beast Within", "Destroy target permanent. Its controller creates a 3/3 green Beast creature token.", "Instant")
+      .filter((x) => x.verb === "create-token");
+    expect(beast.length).toBeGreaterThan(0);
+    // "its controller creates" is a recipient (controlOf calls it `opp`); a token that is not a copy never reaches the copy branch.
+    for (const x of beast) expect(x.subject.control).toBe("opp");
+  });
+});
+
+// #1295 item 3: an O-ring return waits for its source; a return on one branch only is not a blink.
+test("a return paired with an 'until this leaves the battlefield' exile is delayed until the source leaves; a conditional return is marked; a plain blink and 'if you do' are neither (Constable of the Realm, Unyielding Gatekeeper, Flicker, Eldrazi Displacer)", () => {
+  const flicker = (name: string, clause: object, text: string) => deriveAbilities([{ id: 1, ...clause } as never], name, { 1: text }).abilities.find((a) => a.effect.kind === "flicker");
+  const constable = flicker("Constable of the Realm", { abilityType: "triggered", trigger: { event: "counter-added", subject: "a +1/+1 counter on this creature", control: "you" },
+    actions: [{ verb: "exile", object: "up to one other target nonland permanent", toZone: "exile", optional: true }, { verb: "return", object: "that permanent", fromZone: "exile", toZone: "battlefield" }] },
+  "Whenever one or more +1/+1 counters are put on this creature, exile up to one other target nonland permanent until this creature leaves the battlefield.");
+  expect(constable?.delayedUntil).toBe("source-leaves");
+  expect(constable?.returnIf).toBeUndefined();
+  const gatekeeper = flicker("Unyielding Gatekeeper", { abilityType: "triggered", trigger: { event: "turned-face-up", subject: "this creature", control: "you" },
+    actions: [{ verb: "exile", object: "another target nonland permanent" }, { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" }, { verb: "tap", object: "it" }] },
+  "When this creature is turned face up, exile another target nonland permanent. If you controlled it, return it to the battlefield tapped. Otherwise, its controller creates a 2/2 white and blue Detective creature token.");
+  expect(gatekeeper?.returnIf).toBe(true);
+  expect(gatekeeper?.delayedUntil).toBeUndefined();
+  const vindictive = flicker("Vindictive Triumph", { abilityType: "spell",
+    actions: [{ verb: "exile", object: "target creature or planeswalker" }, { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" }] },
+  "Exile target creature or planeswalker. If that permanent's mana value was 3 or less, return it to the battlefield tapped under your control. Exile it at the beginning of the next end step.");
+  expect(vindictive?.returnIf).toBe(true);
+  const displacer = flicker("Eldrazi Displacer", { abilityType: "activated",
+    actions: [{ verb: "exile", object: "another target creature" }, { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" }] },
+  "{2}{C}: Exile another target creature, then return it to the battlefield tapped under its owner's control.");
+  expect(displacer?.returnIf).toBeUndefined();
+  expect(displacer?.delayedUntil).toBeUndefined();
+  const ifYouDo = flicker("Some Blinker", { abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" },
+    actions: [{ verb: "exile", object: "target creature you control" }, { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" }] },
+  "When this creature enters, you may exile target creature you control. If you do, return it to the battlefield under its owner's control.");
+  expect(ifYouDo?.returnIf).toBeUndefined();
+});
+
+// #1295 item 4 leftovers: two grammar-complete cards derived NOTHING for their removal (Venser's Diffusion, Teferi, Hero of Dominaria -3).
+describe("a bounce 'or suspended card' and a tuck from the battlefield derive a leave (#1295 item 4)", () => {
+  const leaves = (name: string, text: string, actions: object[], abilityType: "spell" | "activated" = "spell") => {
+    const { abilities } = deriveAbilities([{ id: 1, abilityType, actions } as never], name, { 1: text }, abilityType === "activated" ? { 1: "−3" } : undefined);
+    return abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "leaves");
+  };
+  test("Venser's Diffusion: the permanent half is a bounce off the battlefield, the suspended-card half is not read", () => {
+    const e = leaves("Venser's Diffusion", "Return target nonland permanent or suspended card to its owner's hand.",
+      [{ verb: "return", object: "target nonland permanent or suspended card", fromZone: null, toZone: "hand", optional: false }]);
+    expect(e).toHaveLength(1);
+    // An unstated origin leaves the emit's fromZone unset, which the removal rule reads as the battlefield (like every other unstated-origin bounce).
+    expect(e[0]?.subject).toMatchObject({ scope: "target", notType: ["land"] });
+    expect(e[0]?.subject.zone).toBeUndefined();
+  });
+  test("a card alone ('target suspended card') gives no battlefield emit", () => {
+    expect(leaves("Test Card", "Return target suspended card to its owner's hand.",
+      [{ verb: "return", object: "target suspended card", fromZone: null, toZone: "hand", optional: false }])).toEqual([]);
+  });
+  test("Teferi, Hero of Dominaria -3: 'third from the top' tucks a target permanent off the battlefield", () => {
+    const e = leaves("Teferi, Hero of Dominaria", "Put target nonland permanent into its owner's library third from the top.",
+      [{ verb: "put", object: "target nonland permanent", fromZone: "battlefield", toZone: "library", optional: false }], "activated");
+    expect(e).toHaveLength(1);
+    expect(e[0]?.subject).toMatchObject({ scope: "target", notType: ["land"], fromZone: "battlefield" });
+  });
+  test("Oust (unstated origin, a creature) tucks too; a put from a graveyard or the hand is not a battlefield tuck", () => {
+    expect(leaves("Oust", "Put target creature into its owner's library second from the top.",
+      [{ verb: "put", object: "target creature", fromZone: null, toZone: "library", optional: false }])).toHaveLength(1);
+    expect(leaves("Test Gy", "Put target creature card from your graveyard on top of your library.",
+      [{ verb: "put", object: "target creature card", fromZone: "graveyard", toZone: "library", optional: false }]).every((x) => x.subject.zone === "graveyard")).toBe(true);
+    expect(leaves("Test Gy", "Put target creature card from your graveyard on top of your library.",
+      [{ verb: "put", object: "target creature card", fromZone: "graveyard", toZone: "library", optional: false }]).some((x) => x.subject.fromZone === "battlefield")).toBe(false);
+    expect(leaves("Brainstorm", "Put two cards from your hand on top of your library.",
+      [{ verb: "put", object: "two cards from your hand", fromZone: "hand", toZone: "library", optional: false }])).toEqual([]);
+  });
+});
+
+// #1295 item 5: a coin-flip branch is not a sure effect, so a losing-side shrink on your own creature is not removal.
+describe("an action on one side of a coin flip is marked onFlip (#1295 item 5)", () => {
+  const flips = (text: string, actions: object[]) =>
+    deriveAbilities([{ id: 1, abilityType: "activated", actions } as never], "Test Card", { 1: text }, { 1: "{1}" }).abilities.map((a) => [a.effect.kind, a.onFlip]);
+  test("Orcish Captain: the +2/+0 is the win side, the -0/-2 the lose side, the flip itself neither", () => {
+    const r = flips("Flip a coin. If you win the flip, target Orc creature gets +2/+0 until end of turn. If you lose the flip, it gets -0/-2 until end of turn.",
+      [{ verb: "flip-coin", object: "coin flip" }, { verb: "modify-pt", object: "target Orc creature", amount: "+2/+0" }, { verb: "modify-pt", object: "target Orc creature", amount: "-0/-2" }]);
+    expect(r.find(([k]) => k === "pump")?.[1]).toBe("win");
+    expect(r.find(([k]) => k === "debuff")?.[1]).toBe("lose");
+    expect(r.find(([k]) => k === "")?.[1]).toBeUndefined();
+  });
+  test("a flip with no branch marks nothing: a shrink after a bare 'Flip a coin.' is not on a side", () => {
+    const r = flips("Flip a coin. Target creature gets -0/-2 until end of turn.",
+      [{ verb: "flip-coin", object: "coin flip" }, { verb: "modify-pt", object: "target creature", amount: "-0/-2" }]);
+    expect(r.every(([, f]) => f === undefined)).toBe(true);
+  });
+});
+
+// Review of derive 354: the side was found by the FIRST sentence containing the amount, so a shared amount (Bangchuckers' two "2 damage") or a short one ("1") took the wrong sentence.
+describe("each action takes its own sentence's coin-flip side (#1295 item 5 review)", () => {
+  const sides = (text: string, actions: object[]) =>
+    deriveAbilities([{ id: 1, abilityType: "activated", actions } as never], "Test Card", { 1: text }, { 1: "{T}" }).abilities.map((a) => [a.effect.kind, a.onFlip]);
+  const flip = { verb: "flip-coin", object: "coin flip" };
+  test("Winter Sky: the draw is the LOSE side, the damage the win side", () => {
+    const r = sides("Flip a coin. If you win the flip, Winter Sky deals 1 damage to each creature and each player. If you lose the flip, each player draws a card.",
+      [flip, { verb: "deal-damage", object: "each creature and each player", amount: "1" }, { verb: "draw", object: "a card" }]);
+    expect(r.filter(([k]) => k === "damage").every(([, f]) => f === "win")).toBe(true);
+    expect(r.find(([k]) => k === "draw-card")?.[1]).toBe("lose");
+  });
+  test("Goblin Bangchuckers: two '2 damage' actions land on opposite sides", () => {
+    const r = sides("Flip a coin. If you win the flip, this creature deals 2 damage to any target. If you lose the flip, this creature deals 2 damage to itself.",
+      [flip, { verb: "deal-damage", object: "any target", amount: "2" }, { verb: "deal-damage", object: "itself", amount: "2" }]);
+    expect(r.filter(([k]) => k === "damage").map(([, f]) => f)).toEqual(["win", "lose"]);
+  });
+  test("Chaotic Strike: an unconditional 'Draw a card.' after the win-side pump is not on a side, and its '1' does not take the +1/+1 sentence", () => {
+    const r = sides("Flip a coin. If you win the flip, target creature gets +1/+1 until end of turn. Draw a card.",
+      [flip, { verb: "modify-pt", object: "target creature", amount: "+1/+1" }, { verb: "draw", object: "a card", amount: "1" }]);
+    expect(r.find(([k]) => k === "pump")?.[1]).toBe("win");
+    expect(r.find(([k]) => k === "draw-card")?.[1]).toBeUndefined();
+  });
+  test("Krark, the Thumbless: no amounts, the return is the lose side and the copy the win side", () => {
+    const r = sides("Whenever you cast an instant or sorcery spell, flip a coin. If you lose the flip, return that spell to its owner's hand. If you win the flip, copy that spell, and you may choose new targets for the copy.",
+      [flip, { verb: "return", object: "that spell", toZone: "hand" }, { verb: "copy", object: "that spell" }]);
+    expect(r.find(([k]) => k === "bounce")?.[1]).toBe("lose");
+    expect(r.find(([k]) => k === "copy-spell")?.[1]).toBe("win");
+  });
+});
+
+// #1295 item 4 review: Plan for All Outcomes ("the owner of up to one other target nonland permanent puts it on their choice of the top or bottom") read "it" as the trigger's
+// subject, "this enchantment", and derived a false SELF tuck beside an unclaimed real one.
+test("Plan for All Outcomes: the tuck is the targeted permanent, with no self leaves", () => {
+  const card = { name: "Plan for All Outcomes", typeLine: "Enchantment", keywords: [], oracleText:
+    "When this enchantment enters, the owner of up to one other target nonland permanent puts it on their choice of the top or bottom of their library." } as never;
+  const g = grammarClauseRecords(card);
+  expect(g.complete).toBe(true);
+  const { abilities } = deriveAbilities(g.records, "Plan for All Outcomes", { 1: (card as { oracleText: string }).oracleText });
+  const leaves = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "leaves");
+  expect(leaves.some((e) => e.subject.self === true)).toBe(false);
+  expect(leaves).toHaveLength(1);
+  expect(leaves[0]).toMatchObject({ tuck: true, subject: { scope: "target", notType: ["land"] } });
 });

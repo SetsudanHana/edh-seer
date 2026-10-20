@@ -862,8 +862,15 @@ function subjectAction(t: string): ActionReading[] | null {
   const notUntap = /^you may choose not to untap (.+) during your untap step$/i.exec(t);
   if (notUntap && objectOf(notUntap[1]!)) return [{ verb: "untap", object: objectOf(notUntap[1]!)!.object, optional: true }];
   // "Target creature's owner puts it on their choice of the top or bottom of their library".
-  const owner = /^(?:the owner of .+|.+'s owner|its owner) puts (?:it|that card) on their choice of the top or bottom of their library$/i.exec(t);
-  if (owner) return [{ verb: "put", object: REF, toZone: "library" }];
+  const owner = /^(?:the owner of (.+)|(.+)'s owner|its owner) puts (?:it|that card) on their choice of the top or bottom of their library$/i.exec(t);
+  if (owner) {
+    // "it" is the owner's permanent the sentence names ("the owner of up to one other target nonland permanent", Plan for All Outcomes), never the trigger's subject: a bare REF
+    // let the record writer read it as "this enchantment" (a false self tuck). "its owner" (Aether Gust) points at an earlier sentence and stays a REF.
+    const target = owner[1] ?? owner[2];
+    // A back-reference ("that creature's owner", Tolarian Contempt) stays a REF: derive resolves it to the earlier target and its scope.
+    const named = target !== undefined && /\btarget\b/i.test(target) ? objectOf(target) : null;
+    return [named ? { verb: "put", object: named.object, text: target, toZone: "library" } : { verb: "put", object: REF, toZone: "library" }];
+  }
   if (/^(?:after this (?:main )?phase, )?there (?:is|are) an additional combat phase(?: after this (?:main )?phase)?(?: followed by an additional main phase)?$/i.test(t)) return [{ verb: "extra-combat" }];
   if (/^(?:after this (?:main )?phase, )?there is an additional (?:main|beginning) phase(?: after this (?:main )?phase)?$/i.test(t)) return [{ verb: "extra-phase" }];
   // "that ability triggers an additional time": a trigger doubled.

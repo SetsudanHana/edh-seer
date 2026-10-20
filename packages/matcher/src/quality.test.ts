@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import fixtures from "./quality.fixtures.json" with { type: "json" };
 import { ingredients, rolesOfCard, roleAbilities } from "./quality.js";
 import type { DeckCard } from "./types.js";
+import { realCard } from "./removal-test-support.js";
 import labelCards from "./same-job.labels.cards.json" with { type: "json" };
 
 const dc = (name: keyof typeof fixtures): DeckCard => fixtures[name] as unknown as DeckCard;
@@ -139,4 +140,12 @@ test("a Vibranium or Heartwood or Eldrazi Spawn token-generation ability is ramp
     for (const a of card.tags.abilities) if (a.effect.subject) a.effect.subject.subtype = subtype;
     expect(roleAbilities(card as unknown as DeckCard, "ramp").length, String(subtype)).toBeGreaterThan(0);
   }
+});
+
+// Owner ladder (card-quality-per-role design): exile > destroy / sacrifice > bounce > tuck. A tuck's `leaves` carries `tuck: true` (#1295 item 4 review), so it scores below a bounce.
+test("permanence: a tuck (Condemn, Oust, Natural Obsolescence, Teferi -3, Oblation) scores 0, below a bounce (Boomerang 1), below a destroy (Murder 2)", () => {
+  const perm = (n: string) => ingredients(realCard(n), "targetedRemoval").permanence;
+  for (const n of ["Condemn", "Oust", "Natural Obsolescence", "Teferi, Hero of Dominaria", "Oblation"]) expect(perm(n), n).toBe(0);
+  expect(perm("Boomerang")).toBe(1);
+  expect(perm("Murder")).toBe(2);
 });

@@ -1210,12 +1210,26 @@ describe("removal.targeted is derived", () => {
   test("a target another word on the card used to turn `you` comes back (#1295 item 2): Premature Burial, Blazing Hope, Soul Snare, and Alchemist's Retrieval (cleave: any nonland permanent)", () => {
     for (const n of ["Premature Burial", "Blazing Hope", "Soul Snare", "Alchemist's Retrieval"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
   });
+  test("an O-ring return and a one-branch return are still removal (#1295 item 3): Constable of the Realm, Mysterious Limousine (until this leaves), Unyielding Gatekeeper, Vindictive Triumph (an 'If ...' return); the blinks stay out (Flicker, Eldrazi Displacer, Ephemerate)", () => {
+    for (const n of ["Constable of the Realm", "Mysterious Limousine", "Unyielding Gatekeeper", "Vindictive Triumph"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
+    for (const n of ["Flicker", "Eldrazi Displacer", "Ephemerate"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
+  });
+  test("an anaphor resolved to the right object (#1295 item 4): Depressurize ('destroy that creature' after a targeted shrink) is removal; Venser, Fervent Forger's sacrificed copy tokens are not", () => {
+    expect(ruleMatches(rule, blank("Depressurize"), set)).toBe(true);
+    expect(ruleMatches(rule, realCard("Venser, Fervent Forger"), set)).toBe(false);
+  });
+  test("a tuck and a bounce 'or suspended card' that derived nothing are removal again (#1295 item 4): Venser's Diffusion, Teferi, Hero of Dominaria (-3, third from the top)", () => {
+    for (const n of ["Venser's Diffusion", "Teferi, Hero of Dominaria"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
+  });
   test("the CEILING in rules.ts is pinned: the polymorph family stays `you` by owner ruling #962 (primary use is your own creature), so the role loses it (Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations)", () => {
     for (const n of ["Polymorph", "Transmogrify", "Chaos Mutation", "Divergent Transformations"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
   });
   test("what derive over-claimed leaves the role (#1295 item 5): 'you own' (Become Anonymous, Northampton Farm, Sword of Hearth and Home, Despotic Scepter, Telim'Tor's Edict), its controller sacrificing YOUR pumped creature (Celestial Sword), a creature that crewed it (Getaway Car), and the victim's option to decline (Star Athlete, Enchanter's Bane, Thornplate Intimidator, Disorienting Choice, Livio)", () => {
     for (const n of ["Become Anonymous", "Northampton Farm", "Sword of Hearth and Home", "Despotic Scepter", "Telim'Tor's Edict", "Celestial Sword", "Getaway Car",
       "Star Athlete", "Enchanter's Bane", "Thornplate Intimidator", "Disorienting Choice", "Livio, Oathsworn Sentinel"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
+  });
+  test("a coin-flip loss on your own creature is not removal (#1295 item 5): Orcish Captain's -0/-2 is the losing side of a flip that otherwise pumps an Orc", () => {
+    expect(ruleMatches(rule, realCard("Orcish Captain"), set)).toBe(false);
   });
   test("permanents you OWN are refused, as the printed pattern refused 'you own': a bounce (Get Out, Leave // Chance) and a DELAYED flicker of your own creature (Charming Prince)", () => {
     for (const n of ["Get Out", "Leave // Chance", "Charming Prince"]) expect(ruleMatches(rule, blank(n), set), n).toBe(false);
