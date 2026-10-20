@@ -3,7 +3,7 @@
  *  vocabulary, but without its `dies` emit no aristocrats edge ever forms. */
 import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
-import { counterKindOf, parseCounter, parseSubject, COUNT_PHRASE } from "./subject.js";
+import { controlFromRelation, counterKindOf, parseCounter, parseSubject, COUNT_PHRASE } from "./subject.js";
 import { LAND_SUBTYPES } from "./subtypes.js";
 import { tokenTypeFor } from "./token-types.js";
 import { isEnergyObject } from "./effect-kind.js";
@@ -480,6 +480,10 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     ? counterRecipient(clauseText ?? "")
     : undefined;
   const subject = parseSubject(recipient ?? action.object ?? "");
+  // A control the object's own words state without a control word (#1295): "attacking you" is theirs, "that crewed it" is yours.
+  // "attacking you or a planeswalker you control" (Soul Snare) reads `you` off the planeswalker, so an attacker overrides any control; "crewed it" only fills a blank.
+  const related = controlFromRelation(action.object ?? "");
+  if (related === "opp" || (related && subject.control === "any")) subject.control = related;
   // AN AMASS THE GRAMMAR DID NOT READ EMITS NOTHING, as before #971: the stored object is the bare
   // subtype ("Orcs"), which would make an Orc that is no Army, for any player. CEILING: two cards on
   // 2026-10-04, both a compound trigger the store split in two whose second clause has no printed

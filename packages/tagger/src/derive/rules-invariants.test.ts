@@ -107,6 +107,7 @@ const TESTED: Record<string, string> = {
   "120.1": "derive.test.ts — the receiving side of damage is its own verb `damaged`, never the dealing one",
   "603.7a": "delayed-trigger.test.ts — a delayed trigger's rate is its creator's: a chapter, a spell, an activation",
   "603.7b": "delayed-trigger.test.ts — \"when you next\" fires once per creation, so a chapter's or a spell's is once",
+  "702.148": "derive.test.ts — the words in a cleave spell's square brackets are removed: Alchemist's Retrieval bounces ANY nonland permanent (#1295)",
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
 const PROSE: Record<string, string> = {

@@ -12,7 +12,7 @@ import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, 
 import { actionEmits, casualtySacrifice, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
-import { actionRecipients, damagedPlayerIsOpponent, sentenceNamesAPlayer } from "./recipient.js";
+import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
 import { parse as parseFilterRaw } from "../grammar/filter.js";
@@ -503,7 +503,8 @@ import { emblemRecipient } from "../emblem.js";
 // 345: #1279 (owner ruling 2026-10-20) a counter gate's self `put` carries `activation` {mana, refund, taps, activations}: what ONE activation of the put costs, the mana it adds back, whether it taps, and how many reach `need` (Druid 5/0/no/1, Pyramid 2/1/tap/3, Tablet 0/0/tap/2), so the goldfish can pay for the gate. `readyTurn` is unchanged.
 // 346: #1282 the mana-token lists are ONE table (`token-kinds.ts`, `line` + `manaToken`): Vibranium (CR 111.10w, Powerstone's line) and Heartwood (CR 111.10x, {R} or {G}) makers now carry a token-maker mana line, and a creation replacement that adds either is a maker; quality.ts ramp ingredients read the same table (Eldrazi Spawn/Scion included).
 // 347: #1285 + #1291 the scaling floor reads the card's own contribution ("for each X on the battlefield", "your devotion to <colour>" from its own mana cost, "<name>'s toughness", "creature with power N or greater", "different power"), and a fetch of "a X card and a Y card" counts two lands (Krosan Verge).
-export const DERIVE_VERSION = 347;
+// 348: #1295 removal-shaped emits read the SENTENCE: an edict ("target player sacrifices") marks `SubjectFilter.edict` and no target scope; "its controller may sacrifice it" / "unless that player sacrifices it" marks `GameEvent.victimMay`; "you own" is `owner: you` (control you), not an opponent's; a possessive in a condition ("since your last turn ended", "your life total") or "attacking you" / "crewed it" no longer sets the target's control; "its controller sacrifices it" after "target creature you control" is yours; a cleave spell reads with its bracketed words removed (CR 702.148).
+export const DERIVE_VERSION = 348;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1937,6 +1938,22 @@ export function deriveAbilities(
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
   const unknownTriggers: string[] = [];
+  // CLEAVE (CR 702.148): "if you cast this spell for its cleave cost, remove the words in square brackets". The model keeps
+  // the bracketed words as if they were printed ("Return target nonland permanent [you control]" -> "...you control"), so
+  // Alchemist's Retrieval read as a bounce of YOUR permanent. The bracketed words are optional and the unbracketed reading
+  // is the cast with cleave, which is the wider one: any nonland permanent (#1295). CEILING: the card's NORMAL cast, with
+  // the words, is the narrower reading and is not modelled; a derive says one thing about a card.
+  const cleaveWords = /\bcleave\b/i.test(oracleText ?? "") ? [...(oracleText ?? "").matchAll(/\[([^[\]]+)\]/g)].map((m) => m[1]!) : [];
+  if (cleaveWords.length > 0) {
+    // No `\s*` before the bracket (CodeQL js/polynomial-redos): cut the bracket, then close the gap it leaves.
+    const unbracketed = (t: string): string => t.replace(/\[[^[\]]*\]/g, "").replace(/ {2,}/g, " ").replace(/ ([.,;:])/g, "$1");
+    // An action's object is the model's paraphrase, with the brackets already gone: remove the words the CLAUSE's own text brackets.
+    const words = (id: number | string): string[] => cleaveWords.filter((w) => (clauseTexts?.[id as number] ?? "").includes(`[${w}]`));
+    const drop = (object: string, ws: string[]): string => ws.reduce((acc, w) => acc.replace(new RegExp(`\\s*${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i"), ""), object);
+    clauses = clauses.map((c) => ({ ...c, actions: (c.actions ?? []).map((a) => (typeof a.object === "string" ? { ...a, object: drop(a.object, words(c.id)) } : a)) }));
+    if (clauseTexts) clauseTexts = Object.fromEntries(Object.entries(clauseTexts).map(([id, t]) => [id, unbracketed(t)]));
+    oracleText = unbracketed(oracleText ?? "");
+  }
   // The whole card's text, for the phantom-trigger guard below. CARD-scoped on purpose and never
   // per clause -- see `triggerHasCue`, where scoping it to the clause was measured and refuses 18
   // real modal triggers to catch 1 phantom. Absent `clauseTexts` disables the guard rather than
@@ -2456,6 +2473,9 @@ export function deriveAbilities(
           if (!trigger && e.subject.control === "any" && DEALS_DAMAGE_TO_YOU.test(text)) e.subject.control = "opp";
         }
       }
+      // THE VICTIM MAY DECLINE (#1295): "its controller may sacrifice it", "unless that player sacrifices it". The event
+      // is real when it happens, and not removal: see `GameEvent.victimMay`.
+      if (victimDeclines(text, action.verb ?? "")) for (const e of emits) e.victimMay = true;
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 
       // A subject is attached ONLY when there is a kind. matcher's edges.ts emits a
@@ -2586,6 +2606,13 @@ export function deriveAbilities(
         for (const e of emits) if (e.subject.control === "any") e.subject.control = "you";
         if (subject && subject.control === "any") subject.control = "you";
       }
+      // AN EDICT NAMES ITS PLAYER, NOT ITS CREATURE (#1295): "Target player sacrifices a creature of their choice"
+      // targets the player, so the sacrifice and the death carry `edict` instead of a `target` scope they never had.
+      // Not read through `actorFor`, which refuses a clause with two sacrifices -- and an edict has two when it asks for
+      // "an artifact and a land" (Structural Collapse) or follows a sacrifice COST (Rakdos Riteknife). The cost's own
+      // sacrifice and the card's own are never the victim's. CEILING: "Target player sacrifices X. You sacrifice Y." marks
+      // Y's emits too; no corpus card is shaped so.
+      if (action.verb === "sacrifice" && !costSacrifice && sacrificerIsTargeted(clauseText) && !victimDeclines(clauseText, "sacrifice")) for (const e of emits) if (e.subject.self !== true) e.subject.edict = true;
       // A STATED "you" INSIDE A GRANTED ABILITY IS THE RECIPIENT'S CONTROLLER (Hellish Rebuke: "You
       // lose 2 life" is said by the opponent's permanent), the same flip line 1154 applied to the
       // object's own "you" -- the actor cue runs after it and must not undo it.
@@ -2641,9 +2668,11 @@ export function deriveAbilities(
         // Bloodwitch drains. Read off the whole card, the copies being the next sentence -- the same
         // test `rules.json`'s `controllerGetsCopies` makes for the removal role.
         // THE CLAUSE, not the card (review): a modal card's other destroy mode stays removal.
+        // ...AND A PERMANENT YOU OWN (#1295): "exile target creature you own" (Become Anonymous, Northampton Farm, Sword of Hearth and
+        // Home) is aimed at nothing but yours, not at an opponent's, which is what the default would say.
         const yours = own || CONTROLLER_GETS_COPIES.test(clauseText);
         for (const e of emits) {
-          if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = yours ? "you" : "opp";
+          if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = yours || e.subject.owner === "you" ? "you" : "opp";
         }
       }
       // WHAT YOU PUT ONTO THE BATTLEFIELD ENTERS UNDER YOUR CONTROL (CR 110.2a: "If an effect

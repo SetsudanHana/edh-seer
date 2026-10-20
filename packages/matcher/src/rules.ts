@@ -62,7 +62,13 @@ export type RuleClause =
       /** Refuse an emit whose target is a card the SAME ability also takes out of a graveyard: another ability of the SAME `clause` has an emit that targets a card `fromZone: graveyard` with the SAME control and type
        *  (Macabre Mockery reanimates an opponent's creature, then "sacrifices it"; Goblin Welder swaps an artifact for one in a graveyard). Derive reads the follow-up sacrifice as removal of a second target. A real
        *  kill that returns YOUR card (Lethal Protection: the graveyard card is `you`, the kill `opp`) is not refused. */
-      notPairedTarget?: true }
+      notPairedTarget?: true;
+      /** The emit is an EDICT (`SubjectFilter.edict`): the sacrifice or death is forced on a player the ability TARGETS ("Target player sacrifices a creature of their choice": Diabolic Edict, Chainer's Edict). The
+       *  creature is not itself targeted, so such an emit carries no `scope: "target"` and this is how the role reads it (#1295: it replaces the printed `targetPlayerSacrifices` pattern). */
+      edict?: true;
+      /** Refuse an emit the victim may decline (`GameEvent.victimMay`): "its controller may sacrifice it" (Star Athlete, Livio), "unless that player sacrifices it" (Enchanter's Bane). It is the opponent's choice with an
+       *  alternative, which is not removal (#1295). */
+      notVictimMay?: true }
   | { op: "typeLine"; contains: string }
   /** Card subtypes, from the tagged characteristics -- "equipment", "aura", a creature type. */
   | { op: "subtype"; in: string[] }
@@ -412,13 +418,13 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope)))
         && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true)
         && (clause.toughnessDown !== true || lowersToughness(a.amount)));
-    // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive (#1295) mislabels some cards, so the role is wrong on them by name.
-    //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Premature Burial, Blazing Hope, Soul Snare, Chaos Mutation, Divergent Transformations, Alchemist's Retrieval (target control derived `you`, #1295 item 2);
+    // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.
+    //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations (derive reads the polymorph family as played on YOUR creature, `control: you`: owner ruling 2026-10-02 / #962,
+    //   "primary use", so the opponent use is dropped on purpose; the role pays for it);
     //   Constable of the Realm, Mysterious Limousine, Lucius the Eternal, Unyielding Gatekeeper, Vindictive Triumph (the paired flicker is control `any`/`each`, or a self-exile, #1295 item 3);
     //   Venser's Diffusion, Teferi, Hero of Dominaria, Venser, the Sojourner (no emit for the removal: Venser's −8 emblem "exile target permanent" has none, and its +2 is
     //   a permanent you own, which the owner guard refuses, #1295 item 4); Depressurize (its `dies` emit names no target scope, not itemised in #1295).
-    //   OVER-CLAIMED (not removal, derive reads them as one, #1295 item 5): Celestial Sword, Venser Fervent Forger, Become Anonymous, Northampton Farm, Telim'Tor's Edict, Sword of Hearth and Home ("you own" read as opp, no owner on its effect); Star Athlete, Enchanter's Bane, Thornplate Intimidator, Disorienting Choice, Livio Oathsworn Sentinel (the controller MAY sacrifice or exile it); Getaway Car (bounces a creature that crewed it, yours: `history: crewed-ref`); Orcish Captain (a coin-flip pump whose losing side is -0/-2).
-    //   The "target player sacrifices" edicts stay on the printed pattern `targetPlayerSacrifices` until #1295 item 1 lands.
+    //   OVER-CLAIMED (not removal, derive reads them as one, #1295 item 5): Venser, Fervent Forger (its "sacrifice them" is the tokens it just made, read as an opponent's permanent); Orcish Captain (a coin-flip pump whose losing side is -0/-2).
     case "emits":
       return (dc.tags?.abilities ?? []).some((a) =>
         (clause.notOwnedByYou !== true || !(dc.tags?.abilities ?? []).some((f) => f.clause === a.clause && f.effect.subject?.owner === "you"))
@@ -426,6 +432,9 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notFlickered !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.clause === a.clause && f.delayedUntil === undefined && f.effect.subject?.control !== "opp"))
         && (a.emits ?? []).some((e) =>
           clause.verbs.includes(e.verb)
+          && (clause.edict !== true || e.subject.edict === true)
+          && (clause.notVictimMay !== true || e.victimMay !== true)
+          && (clause.notOwnedByYou !== true || e.subject.owner !== "you")
           && (clause.notPairedTarget !== true || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
             && (f.emits ?? []).some((g) => g.subject.scope === "target" && g.subject.fromZone === "graveyard" && g.subject.control === e.subject.control
               && JSON.stringify(g.subject.type) === JSON.stringify(e.subject.type))))

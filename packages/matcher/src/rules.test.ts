@@ -1173,7 +1173,7 @@ describe("ramp.land.fetchesTwo and ramp.land.bigMana are derived", () => {
 });
 
 /** removal.targeted reads DERIVED emits, not printed text (#1266, removal step 1). Every card here carries its real Mongo oracle text and its real `cardTagsDerived` abilities
- *  (`fixtures/removal-derived.json`); the must-hold cases blank the oracle text, so only the derived data can say yes. The damage half and the edict alternative are still printed patterns. */
+ *  (`fixtures/removal-derived.json`); the must-hold cases blank the oracle text, so only the derived data can say yes. The damage half is still a printed pattern (#1294). */
 describe("removal.targeted is derived", () => {
   const set = loadRules();
   const rule = set.rules.find((r) => r.id === "removal.targeted")!;
@@ -1201,13 +1201,21 @@ describe("removal.targeted is derived", () => {
   test("a -N/-0 shrink kills nothing (Disorient), and a bounce of your own permanent is not removal (Alley Evasion), with their printed text", () => {
     for (const n of ["Disorient", "Alley Evasion"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
   });
-  test("an edict stays through the printed `target player sacrifices` pattern until derive marks the victim (#1295 item 1)", () => {
-    expect(ruleMatches(rule, realCard("Diabolic Edict"), set)).toBe(true);
-    expect(ruleMatches(rule, blank("Diabolic Edict"), set)).toBe(false);
+  test("an edict is read from the derived victim marker, with no oracle text (#1295 item 1): Diabolic Edict, Cruel Edict, Structural Collapse (two sacrifices), Rakdos Riteknife (a sacrifice cost beside it)", () => {
+    for (const n of ["Diabolic Edict", "Cruel Edict", "Structural Collapse", "Rakdos Riteknife"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
   });
-  test("the CEILING in rules.ts is pinned: a real removal derive mislabels is lost (Polymorph), and derive's over-claims stay in (Celestial Sword, Sword of Hearth and Home)", () => {
-    expect(ruleMatches(rule, realCard("Polymorph"), set)).toBe(false);
-    for (const n of ["Celestial Sword", "Sword of Hearth and Home"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(true);
+  test("a sweep that makes EACH player sacrifice is not an edict (Innocent Blood)", () => {
+    expect(ruleMatches(rule, blank("Innocent Blood"), set)).toBe(false);
+  });
+  test("a target another word on the card used to turn `you` comes back (#1295 item 2): Premature Burial, Blazing Hope, Soul Snare, and Alchemist's Retrieval (cleave: any nonland permanent)", () => {
+    for (const n of ["Premature Burial", "Blazing Hope", "Soul Snare", "Alchemist's Retrieval"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
+  });
+  test("the CEILING in rules.ts is pinned: the polymorph family stays `you` by owner ruling #962 (primary use is your own creature), so the role loses it (Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations)", () => {
+    for (const n of ["Polymorph", "Transmogrify", "Chaos Mutation", "Divergent Transformations"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
+  });
+  test("what derive over-claimed leaves the role (#1295 item 5): 'you own' (Become Anonymous, Northampton Farm, Sword of Hearth and Home, Despotic Scepter, Telim'Tor's Edict), its controller sacrificing YOUR pumped creature (Celestial Sword), a creature that crewed it (Getaway Car), and the victim's option to decline (Star Athlete, Enchanter's Bane, Thornplate Intimidator, Disorienting Choice, Livio)", () => {
+    for (const n of ["Become Anonymous", "Northampton Farm", "Sword of Hearth and Home", "Despotic Scepter", "Telim'Tor's Edict", "Celestial Sword", "Getaway Car",
+      "Star Athlete", "Enchanter's Bane", "Thornplate Intimidator", "Disorienting Choice", "Livio, Oathsworn Sentinel"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
   });
   test("permanents you OWN are refused, as the printed pattern refused 'you own': a bounce (Get Out, Leave // Chance) and a DELAYED flicker of your own creature (Charming Prince)", () => {
     for (const n of ["Get Out", "Leave // Chance", "Charming Prince"]) expect(ruleMatches(rule, blank(n), set), n).toBe(false);

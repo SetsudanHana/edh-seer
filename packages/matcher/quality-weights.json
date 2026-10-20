@@ -1,6 +1,6 @@
 {
-  "deriveVersion": 347,
-  "rulesVersion": 26,
+  "deriveVersion": 348,
+  "rulesVersion": 27,
   "roles": {
     "ramp": {
       "weights": {
@@ -60,19 +60,19 @@
     },
     "targetedRemoval": {
       "weights": {
-        "manaValue": -0.20382357356267206,
-        "frequency": 0.02024994933985937,
-        "timing": 0.9528898354663073,
-        "breadth": 0.18365626203860277,
-        "permanence": 0.014921775485186318,
-        "drawback": -0.03739039878666249,
-        "extraValue": 1.1480423775580761,
-        "amount": 0.009861980400587667
+        "manaValue": -0.47841825779128,
+        "frequency": 0.01538308616937092,
+        "timing": 1.4008570042382762,
+        "breadth": 0.5674650112994788,
+        "permanence": 0.006782516528790672,
+        "drawback": -0.009963975632061532,
+        "extraValue": 1.9748324913659756,
+        "amount": 0.0024580838834852466
       },
-      "pairs": 226,
-      "heldOutAccuracy": 0.6902616076084653,
-      "baselineAccuracy": 0.662527757902932,
-      "fallbackAccuracy": 0.7654651154871256,
+      "pairs": 225,
+      "heldOutAccuracy": 0.7121318472614784,
+      "baselineAccuracy": 0.6694695216228063,
+      "fallbackAccuracy": 0.7702894700540062,
       "fallback": false
     },
     "stackInteraction": {

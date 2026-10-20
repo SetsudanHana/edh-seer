@@ -6652,6 +6652,52 @@ describe("a multi-type emit names the member the trigger heard (#1224)", () => {
     expect(r.some((t) => t.includes("thanks to"))).toBe(false);
   });
 
+  // "Whenever this creature or another ARTIFACT CREATURE dies" (Dross Scorpion) is `allTypes: [artifact, creature]`. Staff of Compleation
+  // destroys "target permanent you own" (every type), and a plain Artifact can never be the artifact CREATURE that dies (#1295 review).
+  describe("a trigger that demands a conjunction of types (allTypes)", () => {
+    const staff = (type: string) => {
+      const c = base("Staff of Compleation", [{
+        kind: "activated", effect: { kind: "" },
+        emits: [{ verb: "dies", subject: { control: "you", token: null, owner: "you", type: "permanent", scope: "target" } }],
+      }]);
+      (c.tags.characteristics as { types: string[] }).types = type.split(" ");
+      return c;
+    };
+    const scorpion = base("Dross Scorpion", [{
+      kind: "triggered", effect: { kind: "untap" },
+      trigger: { verbs: ["dies"], subject: { control: "any", token: null, type: ["creature", "artifact"], allTypes: ["artifact", "creature"] } },
+    }]);
+    test("a plain artifact is never the one that dies", () => {
+      const texts = pairReasons(staff("artifact"), scorpion, H).map((x) => x.text);
+      expect(texts.some((t) => t.includes("When Staff of Compleation dies"))).toBe(false);
+    });
+    // Canoptek Spyder's trigger as derived: "another nontoken artifact creature or Vehicle you control enters" (an anyOf, the conjunction in a branch).
+    const spyder = base("Canoptek Spyder", [{
+      kind: "triggered", effect: { kind: "draw-card" },
+      trigger: { verbs: ["enters"], subject: { control: "you", token: false, anyOf: [{ type: ["creature", "artifact"], allTypes: ["artifact", "creature"] }, { subtype: "vehicle" }], other: true } },
+    }]);
+    const maker = (type: string) => {
+      const c = base("Kitten Stand-in", [{
+        kind: "triggered", effect: { kind: "flicker" },
+        emits: [{ verb: "enters", subject: { type: "permanent", token: null, control: "you", scope: "target", fromZone: "exile" } }],
+      }]);
+      (c.tags.characteristics as { types: string[] }).types = type.split(" ");
+      return c;
+    };
+    test("a conjunction inside an anyOf branch binds too: an Enchantment producer is not the artifact creature entering", () => {
+      const texts = pairReasons(maker("enchantment"), spyder, H).filter((x) => x.tag.startsWith("enters:")).map((x) => x.text);
+      expect(texts.some((t) => t.includes("When Kitten Stand-in enters"))).toBe(false);
+    });
+    test("an artifact creature producer is admitted by that branch", () => {
+      const texts = pairReasons(maker("artifact creature"), spyder, H).filter((x) => x.tag.startsWith("enters:")).map((x) => x.text);
+      expect(texts.some((t) => t.includes("When Kitten Stand-in enters"))).toBe(true);
+    });
+    test("an artifact creature producer can be, and keeps the producer-as-subject wording", () => {
+      const texts = pairReasons(staff("artifact creature"), scorpion, H).map((x) => x.text);
+      expect(texts.some((t) => t.includes("When Staff of Compleation dies"))).toBe(true);
+    });
+  });
+
   // "Whenever you cast an instant, sorcery, or Wizard spell" (Windrider Wizard) is an `anyOf`, so the
   // trigger's own `type` is empty and the member path was skipped.
   describe("a trigger spelled as anyOf branches", () => {

@@ -1687,6 +1687,23 @@ function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy)
  *  naming no type and no branch, or no member accepted -- it asks `producerCanBeSubject` of
  *  `nounSubject(emit, heard)`, the subject the noun names, so the check and the noun agree. */
 function producerCanBeHeard(p: DeckCard, emit: SubjectFilter, heard: SubjectFilter, h: Hierarchy): boolean {
+  // A CONJUNCTION OF TYPES the trigger demands ("this creature or another ARTIFACT CREATURE dies", `allTypes`) is a fact about the object
+  // that dies, and the emit's umbrella type ("target permanent you own") cannot say it: a plain Artifact is never the artifact creature (#1295).
+  if (p.tags && (heard.allTypes?.length ?? 0) > 0
+    && !subjectMatches(characteristicsSubject(p.tags, p.card.name), { control: "any", token: null, allTypes: heard.allTypes }, h)) return false;
+  // ...and the same inside an `anyOf` branch: Canoptek Spyder's "another nontoken artifact creature or Vehicle" is two branches, the first
+  // with `allTypes`. The producer can be the subject if ANY branch admits it, each tested against the producer's own type line.
+  if (p.tags && heard.anyOf?.some((b) => (b.allTypes?.length ?? 0) > 0)) {
+    const mine = characteristicsSubject(p.tags, p.card.name);
+    const { anyOf, ...shared } = heard;
+    // Only the TYPE LINE decides (as in the member path below): zone, control, token and the event flags describe the event, not the card.
+    const line = (x: Partial<SubjectFilter>): SubjectFilter => ({
+      control: "any", token: null,
+      ...(x.type !== undefined ? { type: x.type } : {}), ...(x.subtype !== undefined ? { subtype: x.subtype } : {}),
+      ...(x.notType !== undefined ? { notType: x.notType } : {}), ...(x.allTypes !== undefined ? { allTypes: x.allTypes } : {}),
+    });
+    if (!anyOf!.some((b) => subjectMatches(mine, line({ ...shared, ...b }), h))) return false;
+  }
   const members = list(emit.type);
   const names = list(heard.type).length > 0 || (heard.anyOf?.length ?? 0) > 0;
   if (members.length < 2 || !names) return producerCanBeSubject(p, nounSubject(emit, heard), h);

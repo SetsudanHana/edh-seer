@@ -1,5 +1,5 @@
 {
-  "version": 26,
+  "version": 27,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -20,7 +20,6 @@
     "costNotADiscount": "^(?=[\\s\\S]*(?:this spell costs [^.]*less|without paying (?:its|their|your) mana costs?|rather than pay (?:its|their|the) mana costs?))(?![\\s\\S]*(?<!this spell )costs? (?:up to )?(?:(?:\\{[^}]+\\})+(?: \\(or \\{[^}]+\\}\\))?|x|\\w+) less)",
     "boardWipe": "(?:destroy|exile) (?:all|each) (?!(?:other )?cards?\\b|graveyards?\\b|(?:target )?(?:player|opponent))(?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?|lands?|tokens?|\\w+s)\\b(?! created (?:with|by) | you control\\b)|each player sacrifices (?:all|each|every|any number|x\\b|\\w+teen|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty)|(?:each player|each opponent|opponents|players)[^.]{0,120}?sacrifices? all (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|lands?)|(?:all|each|every) (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?) (?:gets?|get) [-−]|deals? (?:\\d+|x) damage to [^.]{0,60}?each (?:[\\w'-]+ ){0,2}?(?:creature|permanent|planeswalker(?! (?:they|that player) controls?\\b))|return (?:all|each) (?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?)|-1/-1 counters? on each (?:[\\w'-]+ ){0,2}?creature|(?=[\\s\\S]*\\boverload\\b)(?:destroy|exile|return|deals? (?:\\d+|x) damage to|gets? [-−]\\d)[^.]{0,20}?target (?:[\\w'-]+ ){0,3}?(?:creature|permanent|artifact|enchantment|planeswalker)\\b",
     "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?(?<class>creature(?: or planeswalker)?)",
-    "targetPlayerSacrifices": "target player sacrifices",
     "damageRemovalAny": "deals? (?:[2-9]|\\d{2,}|x) damage to (?<class>any (?:other )?target)",
     "tuckRemoval": "(?:the owner of |put )target\\s+(?<class>[^.;:]{0,60}?)\\s+(?:shuffles it into|on (?:the )?(?:top|bottom) of|into) (?:its owner's|their) library",
     "shrinkRemoval": "target\\s+(?<class>creature[^.;:]{0,40}?)\\s+gets?\\s+[-−](?:\\d+|x)/[-−](?:[1-9]\\d*|x)",
@@ -98,12 +97,12 @@
       "match": [
         { "op": "countsAsLand" },
         { "op": "anyOf", "clauses": [
-          { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "notOwnedByYou": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
-          { "op": "emits", "verbs": ["exiled", "leaves", "shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true },
+          { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
+          { "op": "emits", "verbs": ["exiled", "leaves", "shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true },
           { "op": "emits", "verbs": ["counter-added"], "control": ["opp", "any"], "scope": ["target"], "counter": ["-1/-1"], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
           { "op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true },
           { "op": "effectKind", "in": ["forced-sacrifice"], "scope": ["target"] },
-          { "op": "oracle", "pattern": "targetPlayerSacrifices" },
+          { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "edict": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
           { "op": "oracle", "pattern": "damageRemoval" }
         ] }
       ],
@@ -202,7 +201,7 @@
       "facet": { "of": "targetedRemoval", "name": "unlabelled" },
       "match": [],
       "not": [{"op": "emits", "verbs": ["dies", "leaves", "shuffle", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null]}, { "op": "effectKind", "in": ["debuff"] }],
-      "why": "A role member whose derived abilities hold no removal-shaped ability at all (no death, leave, shuffle, damage or -1/-1 counter emit, no debuff): the role read it from the printed damage pattern or the `targetPlayerSacrifices` edict pattern, or from an emit this facet does not list. Nothing to label, so it is said as unlabelled rather than silently read as a one-shot."
+      "why": "A role member whose derived abilities hold no removal-shaped ability at all (no death, leave, shuffle, damage or -1/-1 counter emit, no debuff): the role read it from the printed damage pattern, or from an emit this facet does not list. Nothing to label, so it is said as unlabelled rather than silently read as a one-shot."
     },
     {
       "id": "burn.effect",
@@ -285,12 +284,12 @@
       "category": "targetedRemoval",
       "match": [
         { "op": "anyOf", "clauses": [
-          { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "notOwnedByYou": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
-          { "op": "emits", "verbs": ["exiled", "leaves", "shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true },
+          { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
+          { "op": "emits", "verbs": ["exiled", "leaves", "shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true },
           { "op": "emits", "verbs": ["counter-added"], "control": ["opp", "any"], "scope": ["target"], "counter": ["-1/-1"], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
           { "op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true },
           { "op": "effectKind", "in": ["forced-sacrifice"], "scope": ["target"] },
-          { "op": "oracle", "pattern": "targetPlayerSacrifices" },
+          { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "edict": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
           { "op": "oracle", "pattern": "damageRemoval" }
         ] }
       ],
@@ -300,7 +299,7 @@
         { "op": "oracle", "pattern": "boardWipe" },
         { "op": "oracle", "pattern": "controllerGetsCopies" }
       ],
-      "why": "DERIVED (#1266): the ability EMITS a kill, exile, shuffle or bounce of an opponent's or any permanent that it targets (a `dies`; an `exiled`, `leaves` or `shuffle` from the battlefield, refusing an immediate flicker of your own permanent), a -1/-1 counter on a target, a debuff that lowers toughness, or a forced sacrifice; plus the printed `damageRemoval` (damage waits on #1294) and `targetPlayerSacrifices` (an edict names its victim only in text; it retires when #1295 item 1 lands). A wipe takes precedence, so a mass effect is not counted in both. That was an else-if in code and is a `not` clause here. A destroy whose controller gets copies back is not removal (owner ruling 2026-09-27, #513: Saw in Half is played on your own creatures to win or combo)."
+      "why": "DERIVED (#1266): the ability EMITS a kill, exile, shuffle or bounce of an opponent's or any permanent that it targets (a `dies`; an `exiled`, `leaves` or `shuffle` from the battlefield, refusing an immediate flicker of your own permanent), a -1/-1 counter on a target, a debuff that lowers toughness, or a forced sacrifice, or an EDICT (a `dies` marked `edict`: \"target player sacrifices a creature of their choice\" targets the player and no creature, #1295; it replaced the printed `targetPlayerSacrifices` pattern); plus the printed `damageRemoval` (damage waits on #1294). An emit the victim may decline (`victimMay`: \"its controller may sacrifice it\", \"unless that player sacrifices it\") and a permanent \"you own\" are not removal. A wipe takes precedence, so a mass effect is not counted in both. That was an else-if in code and is a `not` clause here. A destroy whose controller gets copies back is not removal (owner ruling 2026-09-27, #513: Saw in Half is played on your own creatures to win or combo)."
     },
     {
       "id": "removal.neutralise",

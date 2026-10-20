@@ -120,6 +120,17 @@ function controlOf(phrase: string, text: string, at: number, ctx: ActorContext):
     // (Auntie Ool) -- found by checking the flipped cards one by one.
     // CEILING: `before` is the whole clause up to the phrase, not the antecedent's own sentence, so an
     // unrelated target or opponent earlier in the clause keeps `opp` -- it only ever under-claims.
+    // ...EXCEPT WHEN THE ANTECEDENT IS A TARGET YOU CONTROL (#1295): "Target creature you control gets +3/+3 until end
+    // of turn. Its controller sacrifices it at the beginning of the next end step" (Celestial Sword) says "its" about
+    // YOUR creature, and the removal reading turned your own sacrifice into an opponent's. The antecedent is the LAST
+    // target named before the pronoun; it counts as yours only when "you control" follows it and no opponent or
+    // "you don't control" intervenes.
+    const lastTarget = before.toLowerCase().lastIndexOf("target ");
+    if (lastTarget >= 0) {
+      // Up to where the phrase turns into a COUNT or a qualifier: "Exile target creature with mana value less than or equal to the number of Plains you control. Its controller gains 3 life" (Lay Down Arms) counts YOUR Plains.
+      const since = before.slice(lastTarget).split(/\b(?:with|equal to|for each|where|the number of)\b/i)[0]!;
+      if (/\byou control\b/i.test(since) && !/\byou don'?t control\b|\bopponents?\b|\bdefending player\b|\bthat player\b/i.test(since)) return "you";
+    }
     if (!/^\s*(?:when|whenever)\b/i.test(before) || /\b(?:target|opponents?)\b|\battacks? you\b|\byou don'?t control\b/i.test(before)) return "opp";
     // A creature YOU control has you as its controller (review): `any` would satisfy an opponent's side too.
     return /\byou control\b/i.test(before) ? "you" : "any";
@@ -191,3 +202,25 @@ export function actionRecipients(clauseText: string, ctx: ActorContext = {}): Re
   return out;
 }
 
+
+/** THE PLAYER IS THE TARGET, NOT THE CREATURE (#1295): "Target player sacrifices a creature of their choice" (Diabolic
+ *  Edict), "target opponent sacrifices ..." (Chainer's Edict, Sudden Edict). The first sacrifice sentence is read, as
+ *  `actionRecipients` reads it. PLURAL targets and a verb after "and" count ("Any number of target players each lose 2 life and sacrifice a creature of their choice", Priest of Forgotten Gods; Will of the Abzan). `may` is NOT an adverb here: "target opponent MAY sacrifice" is the victim's option
+ *  (`victimDeclines`), not an edict. "Each player", "each opponent" and "defending player" name no target. */
+const TARGETED_SACRIFICER = /\btarget (?:players?|opponents?) (?:each )?(?:[^.,;]{0,120}? and )?(?:(?:also|then|instead) )*sacrifices?\b/i;
+export function sacrificerIsTargeted(clauseText: string): boolean {
+  return TARGETED_SACRIFICER.test(clauseText);
+}
+
+/** THE VICTIM MAY DECLINE (#1295): the action's own verb is handed to the player whose permanent it is, as an option.
+ *  "Its controller MAY sacrifice it" (Star Athlete, Livio), "its controller may exile it" (Disorienting Choice), and
+ *  "UNLESS that player sacrifices it" (Enchanter's Bane) / "unless they sacrifice a nonland permanent" (Thornplate
+ *  Intimidator). Read against the action's OWN verb so "its controller may search their library" (Path to Exile) and
+ *  "unless you pay" (an upkeep cost) never match. */
+const DECLINE_VERBS: Record<string, string> = { sacrifice: "sacrifices?", exile: "exiles?", destroy: "destroys?" };
+const DECLINER = "(?:(?:its|their|that [a-z]+'s) controller|that player|they|target (?:player|opponent)|each opponent|its owner|the player|he or she)";
+export function victimDeclines(clauseText: string, verb: string): boolean {
+  const stem = DECLINE_VERBS[verb];
+  if (!stem) return false;
+  return new RegExp(`\\b${DECLINER}\\s+may\\s+(?:(?:also|then)\\s+)*${stem}\\b|\\bunless\\s+${DECLINER}\\s+${stem}\\b`, "i").test(clauseText);
+}

@@ -4663,3 +4663,153 @@ describe("stampSelfLoss", () => {
     expect(stampSelfLoss(base).claimsNothing).toBeUndefined();
   });
 });
+
+// #1295 (derive 348): control, owner and edict markers read off the shape of the sentence.
+describe("#1295 removal-shaped emits", () => {
+  const typeLineOf = (name: string): string => (/^(Innocent Blood|Diabolic Edict)$/.test(name) ? "Sorcery" : "Instant");
+  /** Derive a card the way production does: the grammar's own records when `records` is absent (clauseSource: grammar),
+   *  the stored model records (verbatim from cardClauses) otherwise. */
+  const emitsOf = (name: string, oracleText: string, typeLine = typeLineOf(name), records?: Parameters<typeof deriveInputOf>[3]) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = records ? undefined : grammarClauseRecords(card as never);
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", name, records ?? g!.records, undefined, g?.readings));
+    return tags.abilities.flatMap((a) => (a.emits ?? []).map((e) => ({ ...e, clause: a.clause })));
+  };
+
+  test("Diabolic Edict: the targeted player is marked, and the creature is not itself targeted", () => {
+    const e = emitsOf("Diabolic Edict", "Target player sacrifices a creature of their choice.").filter((x) => x.verb === "sacrifice" || x.verb === "dies");
+    expect(e.map((x) => x.verb).sort()).toEqual(["dies", "sacrifice"]);
+    for (const x of e) { expect(x.subject.edict).toBe(true); expect(x.subject.scope).toBeUndefined(); }
+  });
+
+  test("an edict aimed at several targets, or with a verb after 'and', is marked (Priest of Forgotten Gods, Will of the Abzan)", () => {
+    const priest = emitsOf("Priest of Forgotten Gods", "{T}, Sacrifice two other creatures: Any number of target players each lose 2 life and sacrifice a creature of their choice. You add {B}{B} and draw a card. (Activate only as an instant.)", "Creature — Human Cleric")
+      .filter((x) => x.verb === "dies" && x.subject.edict === true);
+    expect(priest.length).toBeGreaterThan(0);
+    const will = emitsOf("Will of the Abzan", "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n• Any number of target opponents each sacrifice a creature with the greatest power among creatures that player controls and lose 3 life.\n• Return target creature card from your graveyard to the battlefield.", "Instant", [
+      { id: 1, abilityType: "spell", actions: [] },
+      { id: 2, abilityType: "spell", actions: [{ verb: "lose-life", object: "any number of target opponents", amount: "3", optional: false }, { verb: "sacrifice", object: "a creature with the greatest power among creatures that player controls", optional: false }] },
+      { id: 3, abilityType: "spell", actions: [{ verb: "return", object: "target creature card from your graveyard", fromZone: "graveyard", toZone: "battlefield", optional: false }] },
+    ])
+      .filter((x) => x.verb === "dies" && x.subject.edict === true);
+    expect(will.length).toBeGreaterThan(0);
+    // the victim's option is not an edict
+    const dragon = emitsOf("Demanding Dragon", "Flying\nWhen this creature enters, it deals 5 damage to target opponent unless that player sacrifices a creature of their choice.", "Creature — Dragon")
+      .filter((x) => x.verb === "sacrifice");
+    for (const x of dragon) expect(x.subject.edict).toBeUndefined();
+    // "unless target opponent sacrifices ..." matches the edict wording, and only the victim's-option guard keeps it unmarked.
+    const tormentor = emitsOf("Indulgent Tormentor", "Flying\nAt the beginning of your upkeep, draw a card unless target opponent sacrifices a creature of their choice or pays 3 life.", "Creature — Demon", [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Flying" }] },
+      // The stored record for this card has no sacrifice action; a model that wrote the unless-clause out as one would give this.
+      { id: 2, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }, { verb: "sacrifice", object: "a creature of their choice", optional: true }] },
+    ])
+      .filter((x) => x.verb === "sacrifice" || x.verb === "dies");
+    expect(tormentor.length).toBeGreaterThan(0);
+    for (const x of tormentor) expect(x.subject.edict).toBeUndefined();
+  });
+
+  test("an edict is marked only when the player is TARGETED: Innocent Blood and a bare sacrifice are not", () => {
+    const innocent = emitsOf("Innocent Blood", "Each player sacrifices a creature of their choice.").filter((x) => x.verb === "sacrifice" || x.verb === "dies");
+    expect(innocent.length).toBeGreaterThan(0);
+    for (const x of innocent) expect(x.subject.edict).toBeUndefined();
+    const opp = emitsOf("Sheoldred's Edict", "Each opponent sacrifices a creature of their choice.", "Instant").filter((x) => x.verb === "sacrifice");
+    for (const x of opp) expect(x.subject.edict).toBeUndefined();
+  });
+
+  test("an alternative the victim may decline is marked (Star Athlete, Enchanter's Bane, Thornplate, Disorienting Choice, Livio)", () => {
+    const star = emitsOf("Star Athlete", "Menace\nWhenever this creature attacks, choose up to one target nonland permanent. Its controller may sacrifice it. If they don't, this creature deals 5 damage to that player.", "Creature — Human Warrior", [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Menace" }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [{ verb: "deal-damage", object: "that player", amount: "5", optional: false }, { verb: "sacrifice", object: "target nonland permanent", optional: true }] },
+    ]).filter((x) => x.verb === "sacrifice" || x.verb === "dies");
+    expect(star.length).toBe(2);
+    for (const x of star) expect(x.victimMay).toBe(true);
+    const bane = emitsOf("Enchanter's Bane", "At the beginning of your end step, target enchantment deals damage equal to its mana value to its controller unless that player sacrifices it.", "Enchantment", [
+      { id: 1, abilityType: "triggered", trigger: { event: "end-step", subject: "you", control: "you" }, actions: [{ verb: "deal-damage", object: "target enchantment's controller", amount: "target enchantment's mana value", optional: false }, { verb: "sacrifice", object: "target enchantment", optional: true }] },
+    ]).filter((x) => x.verb === "sacrifice" || x.verb === "dies");
+    expect(bane.length).toBe(2);
+    for (const x of bane) expect(x.victimMay).toBe(true);
+    const livio = emitsOf("Livio, Oathsworn Sentinel", "{1}{W}: Choose another target creature. Its controller may exile it with an aegis counter on it.", "Legendary Creature — Human Soldier", [
+      { id: 1, abilityType: "activated", actions: [{ verb: "exile", object: "another target creature", fromZone: "battlefield", toZone: "exile", optional: true }] },
+    ]).filter((x) => x.verb === "exiled" || x.verb === "leaves");
+    expect(livio.length).toBeGreaterThan(0);
+    for (const x of livio) expect(x.victimMay).toBe(true);
+  });
+
+  test("a plain removal, and a sacrifice YOU may make, carry no victimMay", () => {
+    for (const x of emitsOf("Doom Blade", "Destroy target nonblack creature.", "Instant")) expect(x.victimMay).toBeUndefined();
+    const cost = emitsOf("Some Spell", "You may sacrifice a creature. If you do, draw a card.", "Instant").filter((x) => x.verb === "sacrifice");
+    for (const x of cost) expect(x.victimMay).toBeUndefined();
+  });
+
+  test("another word on the card does not set the target's control (Premature Burial, Blazing Hope, Soul Snare)", () => {
+    const burial = emitsOf("Premature Burial", "Destroy target nonblack creature that entered since your last turn ended.").filter((x) => x.verb === "dies");
+    expect(burial.map((x) => x.subject.control)).toEqual(["opp"]);
+    const hope = emitsOf("Blazing Hope", "Exile target creature with power greater than or equal to your life total.").filter((x) => x.verb === "exiled");
+    expect(hope.map((x) => x.subject.control)).toEqual(["opp"]);
+    const snare = emitsOf("Soul Snare", "{W}, Sacrifice this enchantment: Exile target creature that's attacking you or a planeswalker you control.", "Enchantment").filter((x) => x.verb === "exiled");
+    expect(snare.map((x) => x.subject.control)).toEqual(["opp"]);
+  });
+
+  test("a stated control still reads: 'creature you control' and 'creature an opponent controls' are untouched", () => {
+    const own = emitsOf("Some Blink", "Exile target creature you control, then return it to the battlefield under its owner's control.", "Instant").filter((x) => x.verb === "exiled");
+    expect(own.map((x) => x.subject.control)).toEqual(["you"]);
+    const theirs = emitsOf("Some Removal", "Destroy target creature an opponent controls.", "Instant").filter((x) => x.verb === "dies");
+    expect(theirs.map((x) => x.subject.control)).toEqual(["opp"]);
+  });
+
+  test("the unbracketed reading of a cleave card is the cast with cleave: Alchemist's Retrieval bounces ANY nonland permanent", () => {
+    const e = emitsOf("Alchemist's Retrieval", "Cleave {1}{U} (You may cast this spell for its cleave cost. If you do, remove the words in square brackets.)\nReturn target nonland permanent [you control] to its owner's hand.", "Instant", [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Cleave {1}{U}" }] },
+      { id: 2, abilityType: "spell", actions: [{ verb: "return", object: "target nonland permanent you control" }] },
+    ]).filter((x) => x.verb === "leaves");
+    expect(e.length).toBe(1);
+    expect(e[0]!.subject.control).not.toBe("you");
+  });
+
+  test("'you own' is the owner, not an opponent's permanent (Become Anonymous, Northampton Farm)", () => {
+    const become = emitsOf("Become Anonymous", "Exile target nontoken creature you own and the top two cards of your library in a face-down pile, shuffle that pile, then cloak those cards. They enter tapped.", "Instant", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "target nontoken creature you own", fromZone: "battlefield", toZone: "exile" }, { verb: "exile", object: "the top two cards of your library", fromZone: "library", toZone: "exile" }, { verb: "shuffle", object: "that pile" }, { verb: "cloak", object: "those cards" }, { verb: "tap", object: "those cards" }] },
+    ]).filter((x) => x.verb === "exiled" && x.subject.scope === "target");
+    expect(become.length).toBe(1);
+    expect(become[0]!.subject.owner).toBe("you");
+    expect(become[0]!.subject.control).not.toBe("opp");
+    const farm = emitsOf("Northampton Farm", "{T}: Add {C}.\n{1}, {T}: Exile target creature you own.\n{2}, {T}, Sacrifice this land: Return a creature card exiled with this land to the battlefield under your control. Return each other card exiled with this land to its owner's hand.", "Land")
+      .filter((x) => x.verb === "exiled" && x.subject.scope === "target");
+    expect(farm.length).toBe(1);
+    expect(farm[0]!.subject.owner).toBe("you");
+    expect(farm[0]!.subject.control).not.toBe("opp");
+  });
+
+  test("'its controller sacrifices it' after a pump of YOUR creature sacrifices your creature (Celestial Sword)", () => {
+    const e = emitsOf("Celestial Sword", "{3}, {T}: Target creature you control gets +3/+3 until end of turn. Its controller sacrifices it at the beginning of the next end step.", "Artifact")
+      .filter((x) => x.verb === "sacrifice");
+    expect(e.length).toBe(1);
+    expect(e[0]!.subject.control).toBe("you");
+    // ...while a destroy followed by the opponent's controller is still theirs (Pongify's shape).
+    const theirs = emitsOf("Some Edict", "Destroy target creature. Its controller sacrifices a land.", "Instant").filter((x) => x.verb === "sacrifice");
+    expect(theirs.every((x) => x.subject.control === "opp")).toBe(true);
+  });
+
+  test("the same cues do not fire on the wrong noun (Lay Down Arms, Flash Foliage, Tree of Redemption)", () => {
+    // "the number of Plains YOU control" is a count, not the antecedent of "its controller".
+    const arms = emitsOf("Lay Down Arms", "Exile target creature with mana value less than or equal to the number of Plains you control. Its controller gains 3 life.", "Sorcery");
+    expect(arms.filter((x) => x.verb === "gain-life").map((x) => x.subject.control)).toEqual(["opp"]);
+    expect(arms.filter((x) => x.verb === "exiled").map((x) => x.subject.control)).toEqual(["opp"]);
+    // The token blocking a creature that attacks you is YOURS; only the attacker is theirs.
+    const foliage = emitsOf("Flash Foliage", "Cast this spell only during combat after blockers are declared.\nCreate a 1/1 green Saproling creature token that's blocking target creature attacking you.\nDraw a card.", "Instant")
+      .filter((x) => x.verb === "create-token");
+    expect(foliage.length).toBeGreaterThan(0);
+    expect(foliage.every((x) => x.subject.control === "you")).toBe(true);
+    // "your life total" as the OBJECT is the player's, not a condition on something else.
+    const tree = emitsOf("Tree of Redemption", "Defender\n{T}: Exchange your life total with this creature's toughness.", "Creature — Plant")
+      .filter((x) => x.subject.control === "any");
+    expect(tree).toEqual([]);
+  });
+
+  test("a creature that crewed it is yours (Getaway Car)", () => {
+    const e = emitsOf("Getaway Car", "Haste\nWhenever this Vehicle attacks or blocks, return up to one target creature that crewed it this turn to its owner's hand.\nCrew 1", "Artifact — Vehicle")
+      .filter((x) => x.verb === "leaves");
+    expect(e.length).toBeGreaterThan(0);
+    expect(e.every((x) => x.subject.control === "you")).toBe(true);
+  });
+});
