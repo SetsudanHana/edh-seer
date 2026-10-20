@@ -18,7 +18,7 @@ import { parseArgs } from "node:util";
 import { connect, isStickerCard, loadConfig, type CardDoc } from "@edh-seer/data";
 import { DERIVE_VERSION, deriveAbilitiesOf, deriveInputOf, clauseTexts, grantedTokenClauses, grammarClauseRecords, segmentHash, type ClauseRecord } from "@edh-seer/tagger";
 import { diffMembership, listSome, serialiseSnapshot, versionDrift, type VersionGroup } from "./role-ratchet-core.js";
-import { droppedKeys, groupSplit, splitReported, type Dropped } from "./dropped-clauses-core.js";
+import { droppedKeys, groupSplit, partialKeys, partitionKinds, splitReported, type Dropped, type UnclaimedLike } from "./dropped-clauses-core.js";
 
 const SNAPSHOT = "packages/instruments/dropped-clauses.json";
 const { values } = parseArgs({ options: { bank: { type: "boolean", default: false }, silent: { type: "boolean", default: false } }, strict: true });
@@ -33,8 +33,8 @@ if (drift.length > 0) {
   process.exit(1);
 }
 
-interface Row { oracleId: string; normalizeVersion?: number; segmentHash?: string; clauseSource?: "grammar" | "model"; abilities?: { clause?: number }[]; unclaimed?: { clause: number | string }[]; manaLines?: unknown[] }
-const rows = new Map((await derivedCol.find({}, { projection: { oracleId: 1, normalizeVersion: 1, segmentHash: 1, clauseSource: 1, "abilities.clause": 1, "unclaimed.clause": 1, "manaLines.source": 1 } }).toArray() as unknown as Row[]).map((r) => [r.oracleId, r]));
+interface Row { oracleId: string; normalizeVersion?: number; segmentHash?: string; clauseSource?: "grammar" | "model"; abilities?: { clause?: number }[]; unclaimed?: UnclaimedLike[]; manaLines?: unknown[] }
+const rows = new Map((await derivedCol.find({}, { projection: { oracleId: 1, normalizeVersion: 1, segmentHash: 1, clauseSource: 1, "abilities.clause": 1, unclaimed: 1, "manaLines.source": 1 } }).toArray() as unknown as Row[]).map((r) => [r.oracleId, r]));
 const clauseDocs = new Map((await store.db.collection("cardClauses").find({}, { projection: { oracleId: 1, canonical: 1, normalizeVersion: 1, segmentHash: 1 } }).toArray() as unknown as { oracleId: string; canonical: ClauseRecord[]; normalizeVersion: number; segmentHash: string }[])
   .map((d) => [d.oracleId, d] as const));
 const docs = await store.db.collection<CardDoc>("cards").find({ "legalities.commander": "legal" }).sort({ name: 1 }).toArray();
@@ -75,11 +75,16 @@ for (const d of inEngine) {
   const hasManaLines = (row.manaLines?.length ?? 0) > 0;
   const texts = clauseTexts(d as never);
   const isLand = /\bLand\b/.test(d.typeLine ?? "");
-  // The twin map is derive's own: it is only needed when something would be reported, so derive again just for those cards.
-  const plain = droppedKeys(records, { abilityClauses, granted, hasManaLines, spliced: new Set(), isLand, texts, cardName: d.name });
-  if (plain.length === 0) continue;
-  const { spliced } = deriveAbilitiesOf(deriveInputOf(d as never, d._id, d.name, records, undefined, g?.readings));
-  const keys = droppedKeys(records, { abilityClauses, granted, hasManaLines, spliced, isLand, texts, cardName: d.name });
+  const homes = { abilityClauses, granted, hasManaLines, spliced: new Set<number | string>(), isLand, texts, cardName: d.name };
+  // PARTIAL drops: derive's own `unclaimed` entries on a clause that carries an ability (Condemn's tuck beside its gain-life).
+  const partial = partialKeys(records, row.unclaimed ?? [], homes);
+  // The spliced set is derive's own: a clause with no ability is the only one that can have been spliced, so derive again just for those cards.
+  let keys = droppedKeys(records, homes);
+  if (keys.length > 0) {
+    const { spliced } = deriveAbilitiesOf(deriveInputOf(d as never, d._id, d.name, records, undefined, g?.readings));
+    keys = droppedKeys(records, { ...homes, spliced });
+  }
+  keys = [...keys, ...partial].sort();
   if (keys.length > 0) {
     measured[d.name] = keys; actions += keys.length;
     reportedBy[d.name] = new Set((row.unclaimed ?? []).map((u) => String(u.clause)));
@@ -89,9 +94,10 @@ if (underived + noRecords > 0) console.log(`underived: ${listSome(underivedNames
 const cards = Object.keys(measured).length;
 const summary = `${cards} cards, ${actions} dropped actions, of ${inEngine.length} commander-legal cards (${docs.length - inEngine.length} stickers skipped); ${underived} underived, ${noRecords} with no clause records`;
 // REPORTED = derive named the clause in `unclaimed`; SILENT = nothing said it was lost. Summary only, never in the snapshot.
-const split = splitReported(measured, reportedBy);
+const kinds = partitionKinds(measured);
+const split = splitReported(kinds.clause, reportedBy);
 const count = (d: Dropped): string => `${Object.keys(d).length} cards, ${Object.values(d).reduce((n, k) => n + k.length, 0)} actions`;
-console.log(`REPORTED by derive (unclaimed): ${count(split.reported)}\nSILENT (no ability, no unclaimed): ${count(split.silent)}`);
+console.log(`KEYS: clause ${count(kinds.clause)}; partial ${count(kinds.partial)}; spliced ${count(kinds.spliced)}\nCLAUSE drops REPORTED by derive (unclaimed): ${count(split.reported)}\nCLAUSE drops SILENT (no ability, no unclaimed): ${count(split.silent)}`);
 if (values.silent) for (const [c, k] of Object.entries(split.silent)) console.log(`silent  ${c}  ${k.join(" ")}`);
 const table = groupSplit(measured, reportedBy);
 console.log(`${"actions".padStart(7)} ${"report".padStart(6)} ${"silent".padStart(6)} ${"cards".padStart(6)}  shape / examples`);

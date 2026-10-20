@@ -72,3 +72,14 @@ export function shippedTags<T extends object>(row: T): Omit<T, "unclaimed"> {
   const { unclaimed: _unclaimed, ...rest } = row as T & { unclaimed?: unknown };
   return rest;
 }
+
+/** The token-tags map the browser ships: every printing id the resolver knows, each row through `shippedTags`. A token's derived row carries
+ *  `unclaimed` like a card's (55 do), and this map is written beside the card shards, so it is stripped here too (#1299). */
+export function shippedTokenTags<T extends object>(printingIds: Iterable<string>, resolve: (printingId: string) => T | null): Record<string, Omit<T, "unclaimed">> {
+  const out: Record<string, Omit<T, "unclaimed">> = {};
+  for (const pid of printingIds) {
+    const tt = resolve(pid);
+    if (tt) out[pid] = shippedTags(tt);
+  }
+  return out;
+}

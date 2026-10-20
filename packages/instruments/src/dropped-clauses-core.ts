@@ -35,6 +35,10 @@
  *      enters tapped" (Ashling's Prerogative). "tap target creature" and a cost-like "tap an untapped creature you
  *      control" are kept because their object is not self.
  *
+ *   5. (Not an exclusion.) A SPLICED clause is keyed `<id>:spliced`, not skipped, so a change in splicing moves the ratchet.
+ *
+ *  PARTIAL DROPS (`partialKeys`): see there; keys `<id>:<verb>[:<from>><to>]:partial`.
+ *
  *  KEYS REPEAT WITHIN A CARD (two identical actions in one clause give two identical keys) and the diff is
  *  SET-BASED (`diffMembership`), so a second identical drop on a card that already has one does not move it. */
 import { INERT_VERBS, type ClauseRecord } from "@edh-seer/tagger";
@@ -84,21 +88,61 @@ export function droppedKeys(records: readonly ClauseRecord[], homes: Homes): str
     // Derive's own test (`INERT_VERBS.has(action.verb ?? "")`): an action with no verb is NOT inert.
     const real = (r.actions ?? []).filter((a) => !INERT_VERBS.has(a.verb ?? ""));
     if (real.length === 0) continue;
-    if (homes.spliced.has(r.id)) continue;
+    // A SPLICED CLAUSE IS KEYED, NOT SKIPPED: `spliced` comes from the code under test, so skipping would let a bad splice excuse itself.
+    if (homes.spliced.has(r.id)) { out.push(`${r.id}:spliced`); continue; }
     if ((homes.isLand || homes.hasManaLines) && isSelfEntersTapped(real, homes.texts[r.id as number], homes.cardName)) continue;
     if (homes.hasManaLines && real.some((a) => a.verb === "add-mana") && real.every((a) => MANA_VERBS.has(a.verb ?? ""))) continue;
-    for (const a of real) {
-      const zone = a.fromZone || a.toZone ? `:${a.fromZone ?? ""}>${a.toZone ?? ""}` : "";
-      out.push(`${r.id}:${a.verb ?? "?"}${zone}`);
-    }
+    for (const a of real) out.push(`${r.id}:${a.verb ?? "?"}${zoneOf(a)}`);
   }
   return out.sort(cmp);
 }
 
+const zoneOf = (a: { fromZone?: string | null; toZone?: string | null }): string => (a.fromZone || a.toZone ? `:${a.fromZone ?? ""}>${a.toZone ?? ""}` : "");
+
+/** One entry of `CardTags.unclaimed` (schema.ts `UnclaimedAction`), as far as this needs. */
+export interface UnclaimedLike { clause: number | string; verb: string; object?: string; fromZone?: string; toZone?: string }
+
+/** PARTIAL DROPS: an action derive REPORTED in `unclaimed` on a clause that DOES carry an ability. The clause-level test cannot see these:
+ *  Condemn / Oust / Swords to Plowshares are one clause with [put|exile, gain-life], gain-life derives an ability carrying the clause id,
+ *  so a tuck that derives nothing leaves the clause "claimed" (#1295). Key `<id>:<verb>[:<from>><to>]:partial`.
+ *  Exclusions applied, the same rules as `droppedKeys` where they make sense: inert verbs (never listed by derive, kept for safety); granted
+ *  clauses (derive skips them whole, so they never reach unclaimed; kept for safety); the self enters-tapped static on a land / mana-line card;
+ *  the mana join (the clause contains add-mana and every real action is add-mana/tap/untap, on a mana-line card). Twins do not apply: a
+ *  spliced clause has no ability, so it has no partial.
+ *  CEILING: a partial drop that never reaches `unclaimed` (derive emits something WRONG instead of nothing) is invisible here. */
+export function partialKeys(records: readonly ClauseRecord[], unclaimed: readonly UnclaimedLike[], homes: Homes): string[] {
+  const out: string[] = [];
+  for (const u of unclaimed) {
+    if (!homes.abilityClauses.has(u.clause as number) || homes.granted.has(u.clause as number)) continue;
+    if (INERT_VERBS.has(u.verb ?? "")) continue;
+    if ((homes.isLand || homes.hasManaLines) && isSelfEntersTapped([u], homes.texts[u.clause as number], homes.cardName)) continue;
+    const real = (records.find((r) => r.id === u.clause)?.actions ?? []).filter((a) => !INERT_VERBS.has(a.verb ?? ""));
+    if (homes.hasManaLines && real.some((a) => a.verb === "add-mana") && real.every((a) => MANA_VERBS.has(a.verb ?? ""))) continue;
+    out.push(`${u.clause}:${u.verb}${zoneOf(u)}:partial`);
+  }
+  return out.sort(cmp);
+}
+
+/** The three kinds of key in one card's list. */
+export const keyKind = (key: string): "clause" | "partial" | "spliced" =>
+  key.endsWith(":partial") ? "partial" : key.endsWith(":spliced") ? "spliced" : "clause";
+
+/** The snapshot split by key kind (a card appears in a part only if it has a key of that kind). */
+export function partitionKinds(m: Dropped): Record<"clause" | "partial" | "spliced", Dropped> {
+  const out = { clause: {} as Dropped, partial: {} as Dropped, spliced: {} as Dropped };
+  for (const [card, keys] of Object.entries(m)) for (const k of keys) (out[keyKind(k)][card] ??= []).push(k);
+  return out;
+}
+
 export interface DropGroup { shape: string; actions: number; cards: number; examples: string[] }
 
-/** `<id>:<verb>[:<from>><to>]` -> `<verb>[ <from>><to>]`. */
-const shapeOf = (key: string): string => key.replace(/^\d+:/, "").replace(":", " ");
+/** `<id>:<verb>[:<from>><to>][:partial]` -> `<verb>[ <from>><to>][ partial]`; `<id>:spliced` -> `spliced`. */
+const shapeOf = (key: string): string => {
+  const rest = key.replace(/^[^:]+:/, "");
+  const partial = rest.endsWith(":partial");
+  const shape = (partial ? rest.slice(0, -":partial".length) : rest).replace(":", " ");
+  return partial ? `${shape} partial` : shape;
+};
 
 /** The census table: one row per (verb, zone), biggest first, up to `examples` card names each. */
 export function groupDropped(m: Dropped, examples = 3): DropGroup[] {

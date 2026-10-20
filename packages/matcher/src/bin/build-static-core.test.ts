@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { anchorOf, comboIndex, SHARD_COUNT, shardOf, shippedTags, staleRows } from "./build-static-core.js";
+import { anchorOf, comboIndex, SHARD_COUNT, shardOf, shippedTags, shippedTokenTags, staleRows } from "./build-static-core.js";
 
 /** THE ANCHOR IS WHY THE INDEX IS EXACT RATHER THAN APPROXIMATE. A combo is contained in a deck
  *  only if EVERY one of its cards is present, so it can only ever match if its alphabetically-first
@@ -85,4 +85,10 @@ test("shippedTags drops the diagnostic `unclaimed` and touches nothing else (#12
   expect(out).toEqual({ oracleId: "x", deriveVersion: 358, abilities: [{ clause: 1 }], unknownTriggers: ["t"] });
   expect(shippedTags({ oracleId: "y" })).toEqual({ oracleId: "y" });
   expect("unclaimed" in row).toBe(true);
+});
+
+test("shippedTokenTags strips unclaimed from every resolved token row and skips an unresolved printing (#1299)", () => {
+  const rows: Record<string, { oracleId: string; unclaimed?: unknown[] }> = { p1: { oracleId: "a", unclaimed: [{ clause: 1 }] }, p2: { oracleId: "b" } };
+  const out = shippedTokenTags(["p1", "p2", "p3"], (p) => rows[p] ?? null);
+  expect(out).toEqual({ p1: { oracleId: "a" }, p2: { oracleId: "b" } });
 });

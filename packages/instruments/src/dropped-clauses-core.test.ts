@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { ClauseRecord } from "@edh-seer/tagger";
-import { droppedKeys, groupDropped, groupSplit, splitReported } from "./dropped-clauses-core.js";
+import { droppedKeys, groupDropped, groupSplit, keyKind, partialKeys, partitionKinds, splitReported } from "./dropped-clauses-core.js";
 
 const clause = (id: number, ...verbs: string[]): ClauseRecord => ({ id, actions: verbs.map((verb) => ({ verb })) });
 const none = { abilityClauses: new Set<number>(), granted: new Set<number>(), hasManaLines: false, spliced: new Set<number | string>(), isLand: true, texts: {} as Record<number, string>, cardName: "Card" };
@@ -77,8 +77,8 @@ test("an action with no verb is real, as in derive, not inert", () => {
   expect(droppedKeys([{ id: 0, actions: [{}] }], none)).toEqual(["0:?"]);
 });
 
-test("a clause derive spliced into its twin is not dropped; one it did not is", () => {
-  expect(droppedKeys([clause(2, "draw")], { ...none, spliced: new Set([2]) })).toEqual([]);
+test("a clause derive spliced into its twin is keyed :spliced, not skipped; one it did not is a plain drop", () => {
+  expect(droppedKeys([clause(2, "draw")], { ...none, spliced: new Set([2]) })).toEqual(["2:spliced"]);
   expect(droppedKeys([clause(2, "draw")], none)).toEqual(["2:draw"]);
 });
 
@@ -113,4 +113,41 @@ test("a mana rock's self enters-tapped is excluded, and a DFC front-face name op
 
 test("a legend's short name before the comma is a self subject", () => {
   expect(droppedKeys([tapped(0, "this")], { ...none, cardName: "Boseiju, Who Shelters All", texts: { 0: "Boseiju enters tapped." } })).toEqual([]);
+});
+
+// Condemn: ONE clause [put battlefield>library tuck, gain-life]; gain-life derives an ability carrying clause 1.
+const condemn: ClauseRecord = { id: 1, actions: [{ verb: "put", fromZone: "battlefield", toZone: "library" }, { verb: "gain-life" }] };
+const withAbility = { ...none, abilityClauses: new Set([1]) };
+
+test("a Condemn-shaped row: the unclaimed put on a claimed clause is a :partial key, and the clause-level test is blind to it", () => {
+  expect(droppedKeys([condemn], withAbility)).toEqual([]);
+  expect(partialKeys([condemn], [{ clause: 1, verb: "put", fromZone: "battlefield", toZone: "library" }], withAbility)).toEqual(["1:put:battlefield>library:partial"]);
+});
+
+test("regression: once the put derives (no unclaimed entry) the :partial key is gone", () => {
+  expect(partialKeys([condemn], [], withAbility)).toEqual([]);
+});
+
+test("an unclaimed action on a clause with NO ability is the clause-level drop's, not a partial", () => {
+  expect(partialKeys([condemn], [{ clause: 1, verb: "put" }], none)).toEqual([]);
+});
+
+test("a partial add-mana/tap on a mana-line card is claimed by its line; a partial draw there is not", () => {
+  const mana: ClauseRecord = { id: 1, actions: [{ verb: "add-mana" }, { verb: "tap" }] };
+  const h = { ...withAbility, hasManaLines: true };
+  expect(partialKeys([mana], [{ clause: 1, verb: "tap", object: "this" }], h)).toEqual([]);
+  expect(partialKeys([condemn], [{ clause: 1, verb: "draw" }], h)).toEqual(["1:draw:partial"]);
+});
+
+test("a partial self enters-tapped on a land is excluded", () => {
+  const h = { ...withAbility, texts: { 1: "This land enters tapped." } };
+  expect(partialKeys([condemn], [{ clause: 1, verb: "tap", object: "this land" }], h)).toEqual([]);
+});
+
+test("key kinds, partition and shapes", () => {
+  expect(["1:put", "1:put:a>b:partial", "2:spliced"].map(keyKind)).toEqual(["clause", "partial", "spliced"]);
+  const p = partitionKinds({ A: ["1:put", "2:spliced"], B: ["1:put:a>b:partial"] });
+  expect(Object.keys(p.clause)).toEqual(["A"]);
+  expect(Object.keys(p.partial)).toEqual(["B"]);
+  expect(groupDropped({ B: ["1:put:a>b:partial"], A: ["2:spliced"] }).map((g) => g.shape).sort()).toEqual(["put a>b partial", "spliced"]);
 });
