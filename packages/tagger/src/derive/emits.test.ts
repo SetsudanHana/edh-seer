@@ -645,3 +645,15 @@ test("a granted casualty emits the sacrifice of a creature with at least that po
   expect(e).toEqual([{ verb: "sacrifice", subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "gte", value: 2 }] } }]);
   expect(actionEmits({ verb: "grant-ability", object: "haste" })).toEqual([]);
 });
+
+import { soleCounterKind } from "./emits.js";
+test("soleCounterKind: reads and stays linear (CodeQL polynomial-redos)", () => {
+  expect(soleCounterKind("put a +1/+1 counter on it")).toBe("+1/+1");
+  expect(soleCounterKind("put two oil counters on it")).toBe("oil");
+  expect(soleCounterKind("put a first strike counter on it")).toBe("first strike");
+  expect(soleCounterKind("put a +1/+1 counter and an oil counter")).toBeUndefined();
+  expect(soleCounterKind("no counters here")).toBeUndefined();
+  const t0 = performance.now();
+  soleCounterKind("a".repeat(50_000));
+  expect(performance.now() - t0).toBeLessThan(100);
+});

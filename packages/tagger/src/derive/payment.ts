@@ -26,9 +26,23 @@ function counted(text: string): { amount: string; rest: string } {
   return { amount: /^\d+$/.test(m[1]!) ? m[1]! : WORDS[m[1]!.toLowerCase()]!, rest: m[1]!.toLowerCase() === "another" ? t : t.slice(m[0].length) };
 }
 const SELF_OBJECT = /^(?:this|~|it)\b|^this (?:card|creature|artifact|enchantment|land|permanent|planeswalker|equipment|vehicle|aura)\b/i;
+/** "remove <head> counter(s) from <tail>" split as `/^remove (.+?) counters? from (.+)$/i` would split it, without the
+ *  regex: two quantifiers around a literal are what CodeQL's js/polynomial-redos flags (#1303), so the FIRST
+ *  " counter(s) from " after a non-empty head is found by a fixed, quantifier-free search. `.` never matched a
+ *  newline, so a part holding one never matched; an empty tail never matched either. Shaped like a RegExp
+ *  match ([whole, head, tail]) so the caller reads it unchanged. */
+function removeCounterParts(part: string): [string, string, string] | null {
+  if (part.slice(0, 7).toLowerCase() !== "remove " || part.includes("\n")) return null;
+  const sep = / counters? from /gi;
+  sep.lastIndex = 8;
+  const hit = sep.exec(part);
+  if (!hit) return null;
+  const tail = part.slice(hit.index + hit[0].length);
+  return tail ? [part, part.slice(7, hit.index), tail] : null;
+}
 function objectOf(text: string, cardName: string | undefined, zone?: string): CostObject {
   const { amount, rest } = counted(text);
-  const body = rest.replace(/\s+from your (graveyard|hand)\b/i, "").trim();
+  const body = rest.replace(/ from your (graveyard|hand)\b/i, "").trim();
   if (SELF_OBJECT.test(body) || isSelfSubject(body, cardName)) return { amount, subject: zone ? { self: true, zone } : { self: true } };
   const { scope: _s, fromZone: _f, ...subject } = parseSubject(body);
   return { amount, subject: { ...subject, control: "you", ...(zone ? { zone } : {}) } };
@@ -49,6 +63,7 @@ export function paymentOf(cost: string | undefined, cardName?: string): Payment 
     if (bare && verb) part = `${verb} ${part.replace(/^(?:and|or) /i, "")}`;
     verb = /^(sacrifice|discard|exile|tap)\b/i.exec(part)?.[1] ?? "";
     let m: RegExpExecArray | null;
+    let rc: [string, string, string] | null;
     if (/^(?:\{[^{}]+\})+$/.test(part)) {
       const symbols = part.match(/\{[^{}]+\}/g)!;
       if (symbols.some((s) => /^\{E\}$/i.test(s))) { push(p, "other", part); continue; }
@@ -72,10 +87,16 @@ export function paymentOf(cost: string | undefined, cardName?: string): Payment 
     } else if ((m = /^exile (.+?)(?: from your (graveyard|hand))?$/i.exec(part))) push(p, "exile", objectOf(m[1]!, cardName, m[2]?.toLowerCase()));
     else if ((m = /^tap (.+)$/i.exec(part))) push(p, "tapOther", objectOf(m[1]!.replace(/\buntapped\s+/i, ""), cardName));
     else if ((m = /^return (.+?) to (?:its|their) owner'?s'? hands?$/i.exec(part))) push(p, "returnToHand", objectOf(m[1]!, cardName));
-    else if ((m = /^remove (.+?) (?:([+-]\d+\/[+-]\d+|\w+) )?counters? from (.+)$/i.exec(part))) {
-      const { amount } = counted(m[1]!);
-      const obj = objectOf(`a ${m[3]!}`, cardName);
-      push(p, "removeCounter", { amount, ...(m[2] ? { counter: m[2].toLowerCase() } : {}), subject: obj.subject });
+    else if ((rc = removeCounterParts(part))) {
+      // The optional kind ("+1/+1", "oil") is the LAST token of group 1 when it has two or more; split
+      // in code, not in the regex, so the lazy group cannot overlap an optional one (polynomial-redos).
+      const head = rc[1];
+      const cut = head.lastIndexOf(" ");
+      const kind = cut > 0 ? head.slice(cut + 1) : "";
+      const isKind = /^(?:[+-]\d+\/[+-]\d+|\w+)$/.test(kind);
+      const { amount } = counted(isKind ? head.slice(0, cut) : head);
+      const obj = objectOf(`a ${rc[2]}`, cardName);
+      push(p, "removeCounter", { amount, ...(isKind ? { counter: kind.toLowerCase() } : {}), subject: obj.subject });
     } else push(p, "other", part);
   }
   return Object.keys(p).length ? p : undefined;

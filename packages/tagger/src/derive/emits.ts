@@ -404,9 +404,9 @@ const PLAYER_OBJECT = /\b(?:controllers?|owners?|players?|opponents?)\b|^\s*you\
 
 
 /** The one counter kind a sentence names, or undefined when it names none or several. */
-function soleCounterKind(text: string): string | undefined {
+export function soleCounterKind(text: string): string | undefined {
   const kinds = new Set<string>();
-  for (const m of text.toLowerCase().matchAll(/(?:[+-]\d\/[+-]\d|[a-z]+(?: strike)?) counters?\b/g)) {
+  for (const m of text.toLowerCase().matchAll(/(?:[+-]\d\/[+-]\d|\b[a-z]+(?: strike)?) counters?\b/g)) {
     const k = parseCounter(m[0]);
     if (k) kinds.add(k);
   }
