@@ -425,10 +425,12 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.
     //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations (derive reads the polymorph family as played on YOUR creature, `control: you`: owner ruling 2026-10-02 / #962,
     //   "primary use", so the opponent use is dropped on purpose; the role pays for it);
-    //   Constable of the Realm, Mysterious Limousine, Lucius the Eternal, Unyielding Gatekeeper, Vindictive Triumph (the paired flicker is control `any`/`each`, or a self-exile, #1295 item 3);
-    //   Venser's Diffusion, Teferi, Hero of Dominaria, Venser, the Sojourner (no emit for the removal: Venser's −8 emblem "exile target permanent" has none, and its +2 is
-    //   a permanent you own, which the owner guard refuses, #1295 item 4); Depressurize (its `dies` emit names no target scope, not itemised in #1295).
-    //   OVER-CLAIMED (not removal, derive reads them as one, #1295 item 5): Venser, Fervent Forger (its "sacrifice them" is the tokens it just made, read as an opponent's permanent); Orcish Captain (a coin-flip pump whose losing side is -0/-2).
+    //   Venser, the Sojourner (its removal is the −8 emblem's "exile target permanent", which lives on the emblem's own node by design, 2026-09-08 emblems-as-nodes; its +2 is a
+    //   permanent you own, which the owner guard refuses).
+    //   RIGHT FOR A WRONG REASON: Audacious Swap (its tuck counts because derive reads "If it's a land card, they put it onto the battlefield" -- a different card -- as a
+    //   one-branch return of the target, `returnIf`, which `notFlickered` lets through).
+    //   KEPT, AWAITING A RULING: a kill decided by a coin flip (Mogg Assassin, Crooked Scales, Creepy Doll, Boompile, Plasma Caster) stays removal; only a losing-side
+    //   shrink is refused (`notOnFlip`, Orcish Captain, #1295).
     case "emits":
       return (dc.tags?.abilities ?? []).some((a) =>
         (clause.notOwnedByYou !== true || !(dc.tags?.abilities ?? []).some((f) => f.clause === a.clause && f.effect.subject?.owner === "you"))
