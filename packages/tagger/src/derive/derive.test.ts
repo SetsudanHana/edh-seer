@@ -5120,4 +5120,36 @@ describe("a put that is another effect's destination (#1301)", () => {
     const { abilities } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target spell" }] }]);
     expect(abilities.some((a) => a.toZone !== undefined)).toBe(false);
   });
+
+  test("a put that derives its own `enters` still gives the search its toZone, and keeps that ability as it was (Rampant Growth)", () => {
+    const text = "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.";
+    const clause = { id: 1, abilityType: "spell" as const, actions: [searchAction, putOf("that card", "library", "battlefield"), { verb: "shuffle", object: "your library" }] };
+    const { abilities, unclaimed } = deriveAbilities([clause], undefined, { 1: text }, undefined, text);
+    expect(searchAbility(abilities).toZone).toBe("battlefield");
+    const enters = abilities.find((a) => a.emits?.some((e) => e.verb === "enters"))!;
+    expect(enters.toZone).toBeUndefined();
+    expect(unclaimed.filter((u) => u.verb === "put")).toEqual([]);
+  });
+
+  test("Path to Exile: the opponent's search holds battlefield and stays the opponent's", () => {
+    const text = "Exile target creature. Its controller may search their library for a basic land card, put that card onto the battlefield tapped, then shuffle.";
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "target creature", fromZone: "battlefield", toZone: "exile" }, { verb: "search", object: "their library for a basic land card", fromZone: "library" }, putOf("that card", "library", "battlefield")] }], undefined, { 1: text }, undefined, text);
+    const search = searchAbility(abilities);
+    expect(search.toZone).toBe("battlefield");
+    expect(search.effect.subject?.control).toBe("opp");
+  });
+
+  test("a split over two destinations holds the first (Cultivate); a put from the hand after a search of the same words sets nothing", () => {
+    const text = "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.";
+    const split = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "search", object: "up to two basic land cards", fromZone: "library" }, putOf("one", "library", "battlefield"), putOf("the other", "library", "hand")] }], undefined, { 1: text }, undefined, text);
+    expect(searchAbility(split.abilities).toZone).toBe("battlefield");
+    const hand = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "search", object: "your library for a basic land card", fromZone: "library" }, putOf("a basic land card", "hand", "battlefield")] }]);
+    expect(searchAbility(hand.abilities).toZone).toBeUndefined();
+  });
+
+  test("the zone-tail strip is linear on a long run of spaces", () => {
+    const t0 = performance.now();
+    deriveAbilities([{ id: 1, abilityType: "spell", actions: [searchAction, putOf("a b" + " ".repeat(50_000) + "x", "library", "hand")] }]);
+    expect(performance.now() - t0).toBeLessThan(100);
+  });
 });
