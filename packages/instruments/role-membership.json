@@ -8555,6 +8555,7 @@
 "Plague Witch": ["answer:creature","role:targetedRemoval"],
 "Plaguebearer": ["answer:creature","role:targetedRemoval"],
 "Plagued Rusalka": ["answer:creature","role:targetedRemoval"],
+"Plan for All Outcomes": ["role:targetedRemoval"],
 "Plan the Heist": ["role:cardSelection","role:draw"],
 "Planar Atlas": ["role:cardSelection","role:ramp"],
 "Planar Birth": ["role:ramp"],
