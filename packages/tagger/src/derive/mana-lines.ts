@@ -607,7 +607,7 @@ function tokenCountOf(key: string, text: string, objects: readonly string[]): { 
 
 /** A "create" action in a clause the abilities did not turn into a token-generation of a mana token: the Treasure a Saga chapter makes beside a Bird, the one inside an Aura token's quoted trigger, one
  *  the model typed `static` with no subtype (Spiked Pit Trap). */
-const CREATES_MANA_TOKEN = /\bcreates?\b[^.]*?\b(treasure|gold|powerstone|lander|eldrazi spawn|eldrazi scion)\b/i;
+const CREATES_MANA_TOKEN = new RegExp(`\\bcreates?\\b[^.]*?\\b(${Object.keys(MANA_TOKENS).map((k) => k.replace(/-/g, " ")).join("|")})\\b`, "i");
 const LATER_LANDING = /\bput\b[^.]*?\b(?:that card|those cards?|one of those cards|it|them)\b[^.]*?\bonto the battlefield\b/i;
 const landishSearch = (f?: SubjectFilter): boolean => f !== undefined && (f.type === "land" || f.basic === true);
 /** "Until end of turn, you may tap lands you don't control for mana" (Piracy): mana with no "add" in the text, a spell's own. */

@@ -987,7 +987,17 @@ describe("token makers: Vibranium and Heartwood (#1282)", () => {
   it("a Heartwood maker taps for R or G, as a non-token {T}: Add {R} or {G} does", () => {
     expect(swapped("Heartwood")[0]).toMatchObject({ producesToken: "heartwood", colours: ["R", "G"], colourless: 0, anyColour: null, restriction: null });
   });
-  it("a replacement that adds a Heartwood or a Vibranium to another token's creation is a maker", () => {
+  it("a replacement that adds a Heartwood or a Vibranium to another token's creation is a maker, down to the derived line", () => {
+    const fx = (fixtures as unknown as Record<string, { card: Record<string, unknown> & { _id: string; name: string; oracleText: string }; clauses: never[] }>)["Bilbo, Fellow Conspirator"]!;
+    const made = (token: string): (string | null)[] => {
+      const card = { ...fx.card, oracleText: fx.card.oracleText.replace(/Treasure/g, token) };
+      const clauses = JSON.parse(JSON.stringify(fx.clauses).replace(/Treasure/g, token)) as never[];
+      return (deriveCardTags(deriveInputOf(card as never, card._id, card.name, clauses)).manaLines ?? []).filter((l) => l.source === "token-maker").map((l) => l.producesToken);
+    };
+    expect(made("Treasure")).toEqual(["treasure"]);
+    expect(made("Powerstone")).toEqual(["powerstone"]);
+    expect(made("Heartwood")).toEqual(["heartwood"]);
+    expect(made("Vibranium")).toEqual(["vibranium"]);
     expect(replacementAddedToken("If you would create a Food token, instead create a Food token and a Heartwood token.")).toBe("heartwood");
     expect(replacementAddedToken("If you would create a Treasure token, instead create a Treasure token and a Vibranium token.")).toBe("vibranium");
   });
