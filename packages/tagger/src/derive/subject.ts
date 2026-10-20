@@ -19,6 +19,46 @@ export const TYPES = [
  *  Same family as C6, one layer along, and it is the second half of roadmap I2. */
 export const COUNT_PHRASE = /\b(?:for each\b|where [xyz] is\b|equal to the (?:number|total)\b|times the (?:number|total)\b)/i;
 
+/** "YOU" / "YOUR" IN A CONDITION ON THE OBJECT IS NOT WHO CONTROLS IT (#1295). Premature Burial's "target nonblack creature
+ *  that entered SINCE YOUR LAST TURN ENDED" and Blazing Hope's "power greater than or equal to YOUR LIFE TOTAL" are
+ *  opponent-facing removal, and the possessive read `you`. A time or a number named in a relative clause says nothing
+ *  about the target's controller. Cut before `parseControl` looks for a possessive.
+ *  CEILING: only these two shapes. "during your main phase" / "until your next turn" are the same defect (Reckless Velocitaur's
+ *  Vehicle, Wrenn and Realmbreaker's speed gain read `you` off them) but removing them moved 10 cards no removal reads, with no
+ *  consumer to measure them against; left as they were. */
+const NOT_A_CONTROLLER = /\bsince\s+your\s+(?:(?:last|previous|most recent)\s+)?turn(?:\s+(?:ended|began))?\b|\b(?:to|than)\s+your\s+life total\b/gi;
+/** WHAT THE OBJECT'S OWN WORDS SAY ABOUT WHO CONTROLS IT, when the control words are absent (#1295): a creature "attacking you" is an
+ *  opponent's (nothing attacks its own controller), and a creature "that crewed it" or "that saddled it" is yours (only you tap your own
+ *  creatures to crew your Vehicle). Not in `parseControl`: the filter grammar reads these phrases as `control: any` beside a `combatWith`
+ *  or `history` it models, and agreement with it is what `phrase-diff-triage` ratchets -- so this is read by the EMIT path alone
+ *  (`actionEmits`), where `any` would otherwise become the targeted-removal default `opp` (Getaway Car's creature, yours) or stay a wildcard.
+ *  NOT when the object is a TOKEN or a copy that merely names the attacker ("create a token that's blocking target creature attacking
+ *  you", Flash Foliage, Mirror Match): the head noun is the thing created, and it is yours. */
+const ATTACKS_YOU_HERE = /\b(?:attacking|attacked|attacks)\s+you\b/;
+const MAKES_A_TOKEN = /\btokens?\b|\bcop(?:y|ies)\b/;
+const CREWED_IT = /\b(?:crewed|saddled)\s+(?:it|this)\b/;
+export function controlFromRelation(object: string): Control | undefined {
+  const t = object.toLowerCase();
+  if (MAKES_A_TOKEN.test(t)) return undefined;
+  if (ATTACKS_YOU_HERE.test(t)) return "opp";
+  if (CREWED_IT.test(t)) return "you";
+  return undefined;
+}
+
+/** WHO OWNS IT, "you own" (#1295). Become Anonymous's "target nontoken creature you own" has no "you control", so its control
+ *  read `any` and the targeted-removal default then said `opp`: an opponent's permanent, which it is not. This records the
+ *  OWNER and leaves `control` as parsed -- a card you own may be controlled by anyone, and a count ("cards you own in exile") is
+ *  not a control claim -- except where the words say it: "you own and control" and "you own or control" are yours, "you own but
+ *  don't control" is an opponent's. `derive.ts` reads the owner where it defaults a removal's control. */
+function parseOwnership(t: string): { owner?: "you" | "opp"; control?: Control } | undefined {
+  if (/\byou own but (?:don'?t|do not) control\b/.test(t)) return { owner: "you", control: "opp" };
+  if (/\byou control but (?:don'?t|do not) own\b/.test(t)) return { owner: "opp", control: "you" };
+  if (/\byou (?:both )?own and control\b/.test(t)) return { owner: "you", control: "you" };
+  if (/\byou own or control\b/.test(t)) return { control: "you" };
+  if (/\byou own\b/.test(t)) return { owner: "you" };
+  return undefined;
+}
+
 function parseControl(t: string): Control {
   // A PLAYER NAMED ONLY INSIDE A COUNT IS NOT THE ACTOR. Cut there first, so the branches below read
   // the sentence's HEAD. A subject that really is opponent-facing keeps its cue, because that cue
@@ -32,6 +72,7 @@ function parseControl(t: string): Control {
   if (head.trim().length > 0) t = head;
   // Negation first: "you don't control" must not fall through to the "you control" branch below.
   if (/\byou (?:don'?t|do not|don’t) control\b/.test(t)) return "opp";
+  t = t.replace(NOT_A_CONTROLLER, " ");
   // COMBAT NAMES THE OPPONENT WITHOUT SAYING "OPPONENT". Measured over the derived corpus: 12 clause
   // actions say "defending player" and all 12 mean an opponent (11 sit on an `attacks` trigger the
   // card's controller owns; the 12th, Elturel Survivors, is a characteristic-defining "+X/+0 where X
@@ -688,6 +729,11 @@ export function parseSubject(text: string): SubjectFilter {
   // Control reads the WHOLE text: `parseControl` makes the same cut and keeps its own empty-head
   // fallback ("equal to the number of creatures your opponents control" still names them).
   const out: SubjectFilter = { control: parseControl(whole), token: parseToken(t) };
+  const ownership = parseOwnership(whole.split(COUNT_PHRASE)[0]!.trim() || whole);
+  if (ownership) {
+    if (ownership.owner) out.owner = ownership.owner;
+    if (ownership.control && out.control === "any") out.control = ownership.control;
+  }
   if (CHOSEN.test(t)) out.chosenType = true;
   const counter = parseCounter(t);
   if (counter) out.counter = counter;

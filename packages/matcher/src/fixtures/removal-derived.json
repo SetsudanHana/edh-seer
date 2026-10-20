@@ -904,7 +904,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "type": "creature"
+       "type": "creature",
+       "edict": true
       },
       "instantSpeed": true
      },
@@ -913,7 +914,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "type": "creature"
+       "type": "creature",
+       "edict": true
       },
       "instantSpeed": true
      }
@@ -2269,8 +2271,9 @@
      {
       "verb": "exiled",
       "subject": {
-       "control": "opp",
+       "control": "you",
        "token": null,
+       "owner": "you",
        "type": "creature",
        "scope": "target"
       }
@@ -2278,8 +2281,9 @@
      {
       "verb": "leaves",
       "subject": {
-       "control": "opp",
+       "control": "you",
        "token": null,
+       "owner": "you",
        "type": "creature",
        "scope": "target"
       }
@@ -3717,7 +3721,7 @@
      {
       "verb": "sacrifice",
       "subject": {
-       "control": "opp",
+       "control": "you",
        "token": null,
        "type": "creature",
        "scope": "target"
@@ -3727,7 +3731,7 @@
      {
       "verb": "dies",
       "subject": {
-       "control": "opp",
+       "control": "you",
        "token": null,
        "type": "creature",
        "scope": "target"
@@ -3797,8 +3801,9 @@
      {
       "verb": "leaves",
       "subject": {
-       "control": "opp",
+       "control": "you",
        "token": null,
+       "owner": "you",
        "type": [
         "creature",
         "enchantment"
@@ -3937,8 +3942,9 @@
      {
       "verb": "exiled",
       "subject": {
-       "control": "opp",
+       "control": "you",
        "token": null,
+       "owner": "you",
        "other": true,
        "type": "creature",
        "scope": "target"
@@ -3947,8 +3953,9 @@
      {
       "verb": "leaves",
       "subject": {
-       "control": "opp",
+       "control": "you",
        "token": null,
+       "owner": "you",
        "other": true,
        "type": "creature",
        "scope": "target"
@@ -3993,6 +4000,7 @@
       "subject": {
        "control": "you",
        "token": null,
+       "owner": "you",
        "other": true,
        "type": "creature",
        "scope": "target",
@@ -4033,8 +4041,9 @@
      {
       "verb": "leaves",
       "subject": {
-       "control": "opp",
+       "control": "you",
        "token": null,
+       "owner": "you",
        "type": "permanent",
        "scope": "target",
        "fromZone": "battlefield"
@@ -4087,6 +4096,1925 @@
     ],
     "face": 1,
     "clause": 3,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Premature Burial": {
+  "oracleText": "Destroy target nonblack creature that entered since your last turn ended.",
+  "typeLine": "Sorcery",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Soul Snare": {
+  "oracleText": "{W}, Sacrifice this enchantment: Exile target creature that's attacking you or a planeswalker you control.",
+  "typeLine": "Enchantment",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{W}, Sacrifice this enchantment",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "enchantment",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "enchantment",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{W}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{W}, Sacrifice this enchantment",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "combat": "attacking",
+       "type": [
+        "creature",
+        "planeswalker"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "combat": "attacking",
+       "type": [
+        "creature",
+        "planeswalker"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{W}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Blazing Hope": {
+  "oracleText": "Exile target creature with power greater than or equal to your life total.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Alchemist's Retrieval": {
+  "oracleText": "Cleave {1}{U} (You may cast this spell for its cleave cost. If you do, remove the words in square brackets.)\nReturn target nonland permanent [you control] to its owner's hand.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "target",
+      "zone": "battlefield"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Become Anonymous": {
+  "oracleText": "Exile target nontoken creature you own and the top two cards of your library in a face-down pile, shuffle that pile, then cloak those cards. They enter tapped. (To cloak a card, put it onto the battlefield face down as a 2/2 creature with ward {2}. Turn it face up any time for its mana cost if it's a creature card.)",
+  "typeLine": "Instant",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": false,
+       "owner": "you",
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": false,
+       "owner": "you",
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "library"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "entersTapped": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Star Athlete": {
+  "oracleText": "Menace\nWhenever this creature attacks, choose up to one target nonland permanent. Its controller may sacrifice it. If they don't, this creature deals 5 damage to that player.\nBlitz {3}{R} (If you cast this spell for its blitz cost, it gains haste and \"When this creature dies, draw a card.\" Sacrifice it at the beginning of the next end step.)",
+  "typeLine": "Creature — Human Warrior",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "5",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 5,
+     "ceiling": 5
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target"
+      },
+      "victimMay": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target"
+      },
+      "victimMay": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Enchanter's Bane": {
+  "oracleText": "At the beginning of your end step, target enchantment deals damage equal to its mana value to its controller unless that player sacrifices it.",
+  "typeLine": "Enchantment",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "its mana value",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "enchantment",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "enchantment",
+       "scope": "target"
+      },
+      "victimMay": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "enchantment",
+       "scope": "target"
+      },
+      "victimMay": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Livio, Oathsworn Sentinel": {
+  "oracleText": "{1}{W}: Choose another target creature. Its controller may exile it with an aegis counter on it.\n{2}{W}, {T}: Return all exiled cards with aegis counters on them to the battlefield under their owners' control.\nPartner (You can have two commanders if both have partner.)",
+  "typeLine": "Legendary Creature — Human Knight",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}{W}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "victimMay": true,
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "victimMay": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}{W}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "counter": "aegis",
+      "zone": "exile"
+     }
+    },
+    "cost": "{2}{W}, {T}",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "aegis",
+       "scope": "all",
+       "fromZone": "exile"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "counter": "aegis",
+      "scope": "all",
+      "fromZone": "exile"
+     }
+    },
+    "payment": {
+     "mana": "{2}{W}",
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Disorienting Choice": {
+  "oracleText": "For each opponent, choose up to one target artifact or enchantment that player controls. For each permanent chosen this way, its controller may exile it. Then if one or more of the chosen permanents are still on the battlefield, you search your library for up to that many land cards, put them onto the battlefield tapped, then shuffle.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "victimMay": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "victimMay": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "land"
+     }
+    },
+    "amount": "that many",
+    "emits": [
+     {
+      "verb": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "fromZone": "library"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "entersTapped": true,
+       "fromZone": "library"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Thornplate Intimidator": {
+  "oracleText": "Offspring {3} (You may pay an additional {3} as you cast this spell. If you do, when this creature enters, create a 1/1 token copy of it.)\nWhen this creature enters, target opponent loses 3 life unless they sacrifice a nonland permanent of their choice or discard a card.",
+  "typeLine": "Creature — Rat Rogue",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "player-life-loss",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "forced-sacrifice",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ]
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target"
+      },
+      "victimMay": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target"
+      },
+      "victimMay": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Despotic Scepter": {
+  "oracleText": "{T}: Destroy target permanent you own. It can't be regenerated.",
+  "typeLine": "Artifact",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "owner": "you",
+       "type": "permanent",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Structural Collapse": {
+  "oracleText": "Target player sacrifices an artifact and a land of their choice. Structural Collapse deals 2 damage to that player.",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "artifact",
+       "edict": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "artifact",
+       "edict": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "edict": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "edict": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Rakdos Riteknife": {
+  "oracleText": "Equipped creature gets +1/+0 for each blood counter on this Equipment and has \"{T}, Sacrifice a creature: Put a blood counter on Rakdos Riteknife.\"\n{B}{R}, Sacrifice this Equipment: Target player sacrifices a permanent of their choice for each blood counter on this Equipment.\nEquip {2}",
+  "typeLine": "Artifact — Equipment",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "amount": "+1/+0 for each blood counter on this Equipment",
+    "clause": 1,
+    "repeats": "continuous",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "counter": "blood",
+      "subtype": [
+       "blood",
+       "equipment"
+      ]
+     }
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Sacrifice a creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "counter": "blood",
+      "subtype": "blood"
+     }
+    },
+    "cost": "{T}, Sacrifice a creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "blood",
+       "subtype": "blood",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{B}{R}, Sacrifice this Equipment",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "equipment",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "equipment",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{B}{R}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{B}{R}, Sacrifice this Equipment",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent",
+       "edict": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent",
+       "edict": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{B}{R}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Cruel Edict": {
+  "oracleText": "Target opponent sacrifices a creature of their choice.",
+  "typeLine": "Sorcery",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "edict": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "edict": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Innocent Blood": {
+  "oracleText": "Each player sacrifices a creature of their choice.",
+  "typeLine": "Sorcery",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Getaway Car": {
+  "oracleText": "Haste\nWhenever this Vehicle attacks or blocks, return up to one target creature that crewed it this turn to its owner's hand.\nCrew 1",
+  "typeLine": "Artifact — Vehicle",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target",
+      "history": [
+       "crewed-ref"
+      ],
+      "zone": "battlefield"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "vehicle",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target",
+      "history": [
+       "crewed-ref"
+      ],
+      "zone": "battlefield"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 4,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Northampton Farm": {
+  "oracleText": "{T}: Add {C}.\n{1}, {T}: Exile target creature you own.\n{2}, {T}, Sacrifice this land: Return a creature card exiled with this land to the battlefield under your control. Return each other card exiled with this land to its owner's hand.",
+  "typeLine": "Land",
+  "manaValue": 0,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "owner": "you",
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "owner": "you",
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}, {T}, Sacrifice this land",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "land"
+      ]
+     }
+    },
+    "cost": "{2}, {T}, Sacrifice this land",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "land"
+       ],
+       "fromZone": "exile"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Telim'Tor's Edict": {
+  "oracleText": "Exile target permanent you own or control.\nDraw a card at the beginning of the next turn's upkeep.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Transmogrify": {
+  "oracleText": "Exile target creature. That creature's controller reveals cards from the top of their library until they reveal a creature card. That player puts that card onto the battlefield, then shuffles the rest into their library.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "fromZone": "library"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Chaos Mutation": {
+  "oracleText": "Exile any number of target creatures controlled by different players. For each creature exiled this way, its controller reveals cards from the top of their library until they reveal a creature card, puts that card onto the battlefield, then puts the rest on the bottom of their library in a random order.",
+  "typeLine": "Instant",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "",
+     "scaling": "per-creature"
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "fromZone": "library"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Divergent Transformations": {
+  "oracleText": "Undaunted (This spell costs {1} less to cast for each opponent.)\nExile two target creatures. For each of those creatures, its controller reveals cards from the top of their library until they reveal a creature card, puts that card onto the battlefield, then shuffles the rest into their library.",
+  "typeLine": "Instant",
+  "manaValue": 7,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "fromZone": "library"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
     "repeats": "once"
    }
   ]

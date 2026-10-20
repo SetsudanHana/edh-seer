@@ -167,6 +167,16 @@ export interface SubjectFilter {
    *  "permanents you OWN that your opponents CONTROL" (#681). Absent means the text named no owner,
    *  which is every other subject. */
   owner?: "you" | "opp";
+  /** AN EDICT: THE OBJECT IS CHOSEN AND GIVEN UP BY A PLAYER THE ABILITY TARGETS (#1295). "Target player
+   *  sacrifices a creature of their choice" (Diabolic Edict) targets the PLAYER, not the creature, so
+   *  `scope: "target"` would be a lie -- a reader asking what this ability aims at would find a creature it
+   *  never targets, and `scope` is what the `targets` and hexproof readers key on. This marks the one fact
+   *  the role needs and nothing else could carry: that the sacrifice is FORCED ON a targeted player, which
+   *  separates it from "each player sacrifices" (a sweep), an upkeep self-sacrifice and "sacrifice unless
+   *  they pay". Set by derive on the `sacrifice` and `dies` emits of a sacrifice whose actor phrase is
+   *  "target player" or "target opponent". `control` still says whose creature it is (opp for "target
+   *  opponent", any for "target player"). Never set by the LLM. */
+  edict?: true;
   /** false = nontoken only, true = token only, null = any. */
   token: boolean | null;
   /** Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. */
@@ -808,6 +818,13 @@ export interface GameEvent {
    *  by the matcher only where a consumer demands a combat state (`SubjectFilter.combat`). Set on
    *  authored emits alone -- an implied event carries no ability to be fast. */
   instantSpeed?: true;
+  /** THE PLAYER WHOSE PERMANENT THIS IS MAY DECLINE IT (#1295): "its controller may sacrifice it" (Star
+   *  Athlete, Livio), "unless that player sacrifices it" (Enchanter's Bane), "unless they sacrifice a
+   *  nonland permanent" (Thornplate Intimidator). The event happens only if the victim chooses it, in
+   *  exchange for not taking the alternative, so it is a real event for a payoff to hear and NOT removal:
+   *  the role's `notVictimMay` refuses it. Set by derive on the emits of an action whose own verb the
+   *  clause hands to the victim (`victimDeclines`); never set by the LLM. */
+  victimMay?: true;
   /** WHO DEALT THE DAMAGE — damage verbs only, and only on an AUTHORED emit.
    *
    *  A damage event has two participants and `subject` can only hold one of them. The engine had
