@@ -417,6 +417,12 @@ export const casualtySacrifice = (n: number): GameEvent => ({
   verb: "sacrifice", subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "gte", value: n }] },
 });
 
+/** The head naming a created token before "copy of": "token copies of ...", "a token that's a copy of ...". */
+export const COPY_TOKEN_HEAD = /^((?:[a-z0-9]+ ){0,3}tokens?(?: that(?:'s| are| is))?(?: a)?)\s+cop(?:y|ies)\s+of\b/i;
+/** What a copy copies, to the end of its sentence: not the actor's players. */
+const PLAYER_CREATES = /\b(?:opponents?|players?|controllers?|owners?|friends?|foes?)\s+(?:may\s+)?creates?\b/i;
+const COPIED_PHRASE = /\bcop(?:y|ies)\s+of\b[^.]*/i;
+
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean } = {}): GameEvent[] {
   const casualty = action.verb === "grant-ability" ? CASUALTY.exec(action.object ?? "") : null;
   if (casualty) return [casualtySacrifice(Number(casualty[1]))];
@@ -480,6 +486,20 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     ? counterRecipient(clauseText ?? "")
     : undefined;
   const subject = parseSubject(recipient ?? action.object ?? "");
+  // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
+  // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
+  // that are copies of target permanent an opponent controls" (Venser, Fervent Forger) parsed the original's control and
+  // its target scope onto the token, and "sacrifice them" after it read as killing an opponent's permanent. The original's
+  // words are cut: control and scope come from the head naming the token, and the player words of the copied phrase are
+  // not the actor's. "Target opponent creates a token that's a copy of ..." keeps its head's player.
+  const copyHead = COPY_TOKEN_HEAD.exec((recipient ?? action.object ?? "").trim());
+  if (copyHead && !/\btarget\b/i.test(copyHead[1]!)) {
+    const h = parseSubject(copyHead[1]!);
+    // The creator is "you" unless the sentence has a player create it: "Whenever Donatello deals combat damage to a player,
+    // create a token that's a copy of target artifact you control" names a player that is not the actor.
+    subject.control = h.control === "any" && !PLAYER_CREATES.test(clauseText ?? "") ? "you" : h.control;
+    delete subject.scope; // a created token is not targeted, and the effect subject already carries the plural
+  }
   // A control the object's own words state without a control word (#1295): "attacking you" is theirs, "that crewed it" is yours.
   // "attacking you or a planeswalker you control" (Soul Snare) reads `you` off the planeswalker, so an attacker overrides any control; "crewed it" only fills a blank.
   const related = controlFromRelation(action.object ?? "");
@@ -612,7 +632,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // payoff. The opponents are the multiplier; CR 111.2 makes the tokens the controller's. Same cut
   // `parseControl` makes one file over, so the two cannot disagree about where a sentence's head
   // ends. Four cards: Call the Coppercoats, Rose, Hylda's Crown of Winter, Kaito.
-  const head = clauseText?.split(COUNT_PHRASE)[0];
+  const head = (copyHead ? clauseText?.replace(COPIED_PHRASE, "") : clauseText)?.split(COUNT_PHRASE)[0];
   const sentenceHead = head && head.trim().length > 0 ? head : clauseText;
   const control = !!clauseText
     && subject.control === "any"

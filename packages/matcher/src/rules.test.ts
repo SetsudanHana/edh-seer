@@ -1214,6 +1214,10 @@ describe("removal.targeted is derived", () => {
     for (const n of ["Constable of the Realm", "Mysterious Limousine", "Unyielding Gatekeeper", "Vindictive Triumph"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
     for (const n of ["Flicker", "Eldrazi Displacer", "Ephemerate"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
   });
+  test("an anaphor resolved to the right object (#1295 item 4): Depressurize ('destroy that creature' after a targeted shrink) is removal; Venser, Fervent Forger's sacrificed copy tokens are not", () => {
+    expect(ruleMatches(rule, blank("Depressurize"), set)).toBe(true);
+    expect(ruleMatches(rule, realCard("Venser, Fervent Forger"), set)).toBe(false);
+  });
   test("the CEILING in rules.ts is pinned: the polymorph family stays `you` by owner ruling #962 (primary use is your own creature), so the role loses it (Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations)", () => {
     for (const n of ["Polymorph", "Transmogrify", "Chaos Mutation", "Divergent Transformations"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
   });

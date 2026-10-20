@@ -9,7 +9,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop } from "./effect-kind.js";
-import { actionEmits, casualtySacrifice, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
+import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, victimDeclines } from "./recipient.js";
@@ -505,7 +505,8 @@ import { emblemRecipient } from "../emblem.js";
 // 347: #1285 + #1291 the scaling floor reads the card's own contribution ("for each X on the battlefield", "your devotion to <colour>" from its own mana cost, "<name>'s toughness", "creature with power N or greater", "different power"), and a fetch of "a X card and a Y card" counts two lands (Krosan Verge).
 // 348: #1295 removal-shaped emits read the SENTENCE: an edict ("target player sacrifices") marks `SubjectFilter.edict` and no target scope; "its controller may sacrifice it" / "unless that player sacrifices it" marks `GameEvent.victimMay`; "you own" is `owner: you` (control you), not an opponent's; a possessive in a condition ("since your last turn ended", "your life total") or "attacking you" / "crewed it" no longer sets the target's control; "its controller sacrifices it" after "target creature you control" is yours; a cleave spell reads with its bracketed words removed (CR 702.148).
 // 349: #1295 item 3 -- a return paired with an "until this leaves the battlefield" exile is `delayedUntil: "source-leaves"` (Constable of the Realm, Mysterious Limousine), and a return on one "If ..." branch is `returnIf` (Unyielding Gatekeeper, Vindictive Triumph): neither is an immediate blink for `notFlickered`.
-export const DERIVE_VERSION = 349;
+// 350: #1295 two anaphors resolved to the wrong object. "destroy THAT CREATURE" after a targeted "Target creature gets -3/-0" inherits the antecedent's target scope (Depressurize was lost to `removal.targeted`); a token that is a copy ("Create two tokens that are copies of target permanent an opponent controls", Venser, Fervent Forger) takes its creator's control and no target scope, not the original's (CR 111.2), and "sacrifice them" is those tokens.
+export const DERIVE_VERSION = 350;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2553,6 +2554,22 @@ export function deriveAbilities(
         if (inherited && inherited !== "any") {
           for (const e of emits) if (e.subject.control === "any") e.subject.control = inherited;
           if (subject && subject.control === "any") subject.control = inherited;
+        }
+        // ...AND ITS TARGET SCOPE (#1295): "Target creature gets -3/-0 until end of turn. Then if that creature's power is 0 or
+        // less, destroy THAT CREATURE" (Depressurize) kills the creature the first sentence targeted, and without the scope
+        // `removal.targeted` lost the card. Only when the antecedent is a target of a compatible type; "this creature" and a
+        // card's own name carry no target scope, so a self-reference is never read as one.
+        const anteSubject = ante ? subjectFrom(ante, cardName, enchantText) : undefined;
+        // ...NOT A COPY TOKEN (it takes its creator's control, see actionEmits) and NOT AN ABILITY ("counter target activated ability ... destroy that permanent", Green Slime).
+        // ...NOR A PLAYER ("destroy target creature an opponent controls. That player loses 3 life", Suspended Sentence).
+        if (ante && !/\b(?:players?|opponents?)\b/i.test(objectText) && anteSubject?.scope === "target" && anteSubject.self !== true && !COPY_TOKEN_HEAD.test(ante.trim()) && !/\babilit/i.test(ante)) {
+          const anteTypes = [anteSubject.type ?? []].flat();
+          for (const e of emits) {
+            if (e.subject.scope !== undefined || e.subject.self === true || e.subject.edict === true) continue;
+            const types = [e.subject.type ?? []].flat();
+            if (types.length === 0 || (anteTypes.length > 0 && !types.some((t) => anteTypes.includes(t) || anteTypes.includes("permanent")))) continue;
+            e.subject.scope = "target";
+          }
         }
       }
       // "REVEAL CARDS ... UNTIL YOU REVEAL A CREATURE CARD ... PUT THAT CARD ONTO THE BATTLEFIELD"

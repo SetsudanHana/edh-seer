@@ -4812,6 +4812,55 @@ describe("#1295 removal-shaped emits", () => {
     expect(e.length).toBeGreaterThan(0);
     expect(e.every((x) => x.subject.control === "you")).toBe(true);
   });
+
+  test("'destroy that creature' after a TARGETED pump is the target: Depressurize keeps its target scope", () => {
+    const e = emitsOf("Depressurize", "Target creature gets -3/-0 until end of turn. Then if that creature's power is 0 or less, destroy it.", "Instant", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "modify-pt", object: "target creature", amount: "-3/-0" }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.scope).toBe("target"); expect(x.subject.control).toBe("opp"); }
+  });
+
+  test("'that creature' after an UNTARGETED antecedent or the card itself gains no target scope", () => {
+    const sibsig = emitsOf("The Sibsig Ceremony", "Whenever a creature you control enters, destroy that creature.", "Enchantment", [
+      { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "a creature", control: "you" }, actions: [{ verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    for (const x of sibsig) expect(x.subject.scope).toBeUndefined();
+    const own = emitsOf("Test Card", "Sacrifice this creature. Destroy that creature.", "Instant", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "sacrifice", object: "this creature", optional: false }, { verb: "destroy", object: "that creature", optional: false }] },
+    ]).filter((x) => x.verb === "dies");
+    for (const x of own) expect(x.subject.scope).toBeUndefined();
+  });
+
+  test("a copy token is controlled by its creator, and 'sacrifice them' is those tokens (Venser, Fervent Forger)", () => {
+    const e = emitsOf("Venser, Fervent Forger", "Flash\nWhen Venser enters, choose one —\n• Copy target instant or sorcery spell an opponent controls twice. You may choose new targets for the copies.\n• Create two tokens that are copies of target permanent an opponent controls. They gain haste. At the beginning of the next end step, sacrifice them.", "Legendary Creature — Human Wizard", [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Flash" }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this", control: "you" }, actions: [] },
+      { id: 3, abilityType: "triggered", actions: [{ verb: "copy", object: "target instant or sorcery spell an opponent controls", amount: "2", optional: true }] },
+      { id: 4, abilityType: "triggered", actions: [{ verb: "create", object: "token copies of target permanent an opponent controls with haste", amount: "2", optional: false }, { verb: "sacrifice", object: "them", optional: false }] },
+    ]).filter((x) => x.clause === 4);
+    expect(e.map((x) => x.verb)).toEqual(["create-token", "enters", "sacrifice", "dies"]);
+    for (const x of e) { expect(x.subject.control).toBe("you"); expect(x.subject.scope).toBeUndefined(); expect(x.subject.token).toBe(true); }
+  });
+
+  test("a copy token keeps a recipient the head names, and a token that is not a copy is untouched", () => {
+    const opp = emitsOf("Test Copier", "Target opponent creates a token that's a copy of target creature you control.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "create", object: "token that's a copy of target creature you control", amount: "1", optional: false }] },
+    ]).filter((x) => x.verb === "create-token");
+    expect(opp.length).toBeGreaterThan(0);
+    // The recipient the sentence names ("target opponent creates") keeps the token: it is theirs.
+    for (const x of opp) expect(x.subject.control).toBe("opp");
+    const each = emitsOf("Test Each", "Each player creates a token that's a copy of target creature an opponent controls.", "Sorcery", [
+      { id: 1, abilityType: "spell", actions: [{ verb: "create", object: "token that's a copy of target creature an opponent controls", amount: "1", optional: false }] },
+    ]).filter((x) => x.verb === "create-token");
+    expect(each.length).toBeGreaterThan(0);
+    for (const x of each) expect(x.subject.control).toBe("any");
+    const beast = emitsOf("Beast Within", "Destroy target permanent. Its controller creates a 3/3 green Beast creature token.", "Instant")
+      .filter((x) => x.verb === "create-token");
+    expect(beast.length).toBeGreaterThan(0);
+    // "its controller creates" is a recipient (controlOf calls it `opp`); a token that is not a copy never reaches the copy branch.
+    for (const x of beast) expect(x.subject.control).toBe("opp");
+  });
 });
 
 // #1295 item 3: an O-ring return waits for its source; a return on one branch only is not a blink.

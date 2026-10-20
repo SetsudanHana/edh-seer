@@ -498,7 +498,8 @@
        "control": "opp",
        "token": null,
        "type": "creature",
-       "fromZone": "exile"
+       "fromZone": "exile",
+       "scope": "target"
       }
      }
     ],
@@ -3367,8 +3368,7 @@
       "subject": {
        "control": "opp",
        "token": true,
-       "type": "creature",
-       "scope": "each"
+       "type": "creature"
       },
       "instantSpeed": true
      },
@@ -3377,8 +3377,7 @@
       "subject": {
        "control": "opp",
        "token": true,
-       "type": "creature",
-       "scope": "each"
+       "type": "creature"
       },
       "instantSpeed": true
      }
@@ -5842,7 +5841,8 @@
        "control": "you",
        "token": null,
        "type": "creature",
-       "fromZone": "library"
+       "fromZone": "library",
+       "scope": "target"
       }
      }
     ],
@@ -5988,7 +5988,8 @@
        "control": "you",
        "token": null,
        "type": "creature",
-       "fromZone": "library"
+       "fromZone": "library",
+       "scope": "target"
       },
       "instantSpeed": true
      }
@@ -6736,6 +6737,216 @@
     },
     "payment": {
      "mana": "{2}{C}"
+    }
+   }
+  ]
+ },
+ "Depressurize": {
+  "oracleText": "Target creature gets -3/-0 until end of turn. Then if that creature's power is 0 or less, destroy it.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "debuff",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "amount": "-3/-0",
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Venser, Fervent Forger": {
+  "oracleText": "Flash\nWhen Venser enters, choose one —\n• Copy target instant or sorcery spell an opponent controls twice. You may choose new targets for the copies.\n• Create two tokens that are copies of target permanent an opponent controls. They gain haste. At the beginning of the next end step, sacrifice them.",
+  "typeLine": "Legendary Creature — Human Sorcerer",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "copy-spell",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": [
+       "instant",
+       "sorcery"
+      ],
+      "scope": "target"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "copy",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ],
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "type": "permanent",
+      "scope": "all",
+      "copyOf": {
+       "type": "permanent",
+       "control": "opp"
+      }
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "permanent"
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     }
+    },
+    "amount": "two",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "permanent"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
     }
    }
   ]
