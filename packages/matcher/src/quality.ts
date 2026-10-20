@@ -3,6 +3,7 @@
  *  overall. Ingredients are read off data derive already wrote; one that cannot be read is MISSING
  *  (absent), never 0, because a silent wrong answer is worse than a missing one. */
 import type { Ability, SubjectFilter } from "@edh-seer/tagger";
+import { tokenKindsWith } from "@edh-seer/tagger/token-kinds";
 import { BUILD_CATEGORIES, detectBuildCategories, type BuildCategory } from "./build.js";
 import { bestPerFamily, manaOf, ratesOf, spanOf, type RateFamily, type RateSpan } from "./rate.js";
 import { cardLines } from "./mana-lines.js";
@@ -50,7 +51,14 @@ const ROLE_KINDS: Record<Role, { kinds?: readonly string[]; verbs?: readonly str
  *  ramp weights on new ingredients, not a rename. Measured effect of the split: a Ramp-role card with no mana-generation ability (a cost reducer, a Lander maker, a line with no ability) has NO
  *  ingredients, so it is unscored (`qualityScore` null) rather than guessed -- the direction the rest of this file takes when it cannot read a card.
  *  Mana you make as a token (the `ramp.manaToken` rule): Smothering Tithe, Big Score. */
-const MANA_TOKENS = new Set(["treasure", "gold", "powerstone", "heartwood"]);
+const MANA_TOKENS = tokenKindsWith("manaToken");
+
+/** A subtype that is a mana token, singly or joined ("eldrazi-spawn": the subject's subtype list is ["eldrazi","spawn"], in either order). */
+const namesManaToken = (sub: SubjectFilter["subtype"]): boolean => {
+  const names = [sub].flat().map((s) => String(s ?? "").toLowerCase());
+  const [first, second] = names;
+  return names.some((n) => MANA_TOKENS.has(n)) || (names.length === 2 && (MANA_TOKENS.has(`${first}-${second}`) || MANA_TOKENS.has(`${second}-${first}`)));
+};
 
 export function roleAbilities(d: DeckCard, role: Role): Ability[] {
   if (!rolesOfCard(d).includes(role)) return [];
@@ -59,8 +67,7 @@ export function roleAbilities(d: DeckCard, role: Role): Ability[] {
     (want.kinds?.includes(a.effect.kind) ?? false)
     // A TUCK IS REMOVAL ONLY WHEN IT TARGETS (Chaos Warp); Path's own library shuffle is not.
     || (a.emits ?? []).some((e) => (want.verbs?.includes(e.verb) ?? false) && (e.verb !== "shuffle" || e.subject.scope === "target"))
-    || (role === "ramp" && a.effect.kind === "token-generation"
-      && [a.effect.subject?.subtype].flat().some((s) => MANA_TOKENS.has(String(s ?? "").toLowerCase()))));
+    || (role === "ramp" && a.effect.kind === "token-generation" && namesManaToken(a.effect.subject?.subtype)));
 }
 
 /** Once 0 < per cycle 1 < per turn 2 < unbounded trigger 3 < at will 4 (owner ladder, 2026-09-23). */

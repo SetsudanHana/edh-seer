@@ -967,3 +967,28 @@ describe("a mana line states its cost, restriction and trigger as fields (DERIVE
     expect(only("Burning-Tree Emissary", "trigger").trigger!.subject).toMatchObject({ self: true });
   });
 });
+
+// #1282: Vibranium and Heartwood are mana tokens (CR 111.10w, 111.10x) like Powerstone (CR 111.10h); the maker lists live in one table.
+describe("token makers: Vibranium and Heartwood (#1282)", () => {
+  /** Thran Spider's real input with its Powerstone renamed: the corpus holds no Vibranium maker in the fixtures, and the clause shape is the same. */
+  const swapped = (token: string): ManaLine[] => {
+    const fx = (fixtures as unknown as Record<string, { card: Record<string, unknown> & { _id: string; name: string; oracleText: string }; clauses: never[] }>)["Thran Spider"]!;
+    const card = { ...fx.card, oracleText: fx.card.oracleText.replace(/Powerstone/g, token) };
+    const clauses = JSON.parse(JSON.stringify(fx.clauses).replace(/Powerstone/g, token)) as never[];
+    return (deriveCardTags(deriveInputOf(card as never, card._id, card.name, clauses)).manaLines ?? []).filter((l) => l.source === "token-maker");
+  };
+  it("a Vibranium maker is a token-maker line with Powerstone's shape", () => {
+    const [vib] = swapped("Vibranium");
+    const [pow] = swapped("Powerstone");
+    expect(vib).toMatchObject({ producesToken: "vibranium", colours: [], colourless: 1, anyColour: null, restriction: { spend: "can't be spent to cast a nonartifact spell", typeName: "artifact", minManaValue: null } });
+    expect(vib!.colours).toEqual(pow!.colours);
+    expect(vib!.restriction).toEqual(pow!.restriction);
+  });
+  it("a Heartwood maker taps for R or G, as a non-token {T}: Add {R} or {G} does", () => {
+    expect(swapped("Heartwood")[0]).toMatchObject({ producesToken: "heartwood", colours: ["R", "G"], colourless: 0, anyColour: null, restriction: null });
+  });
+  it("a replacement that adds a Heartwood or a Vibranium to another token's creation is a maker", () => {
+    expect(replacementAddedToken("If you would create a Food token, instead create a Food token and a Heartwood token.")).toBe("heartwood");
+    expect(replacementAddedToken("If you would create a Treasure token, instead create a Treasure token and a Vibranium token.")).toBe("vibranium");
+  });
+});

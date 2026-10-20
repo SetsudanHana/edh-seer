@@ -501,7 +501,8 @@ import { emblemRecipient } from "../emblem.js";
 // 343: #1267 review 3 -- "add three mana of that type instead" (Incubation Druid) reads the type from the sentence before it ("any type that a land you control could produce"): the gated line is no longer `unread`, so the goldfish can play it by the turn.
 // 344: #1267 review 4 -- Adapt and Monstrosity put their counters when the activation RESOLVES, so a `put` from them is ready the turn AFTER the cost is paid (first + 1): Incubation Druid readyTurn 5 -> 6. A counter gate's readyTurn is relative to an on-curve cast; the goldfish counts it from the permanent's own cast turn.
 // 345: #1279 (owner ruling 2026-10-20) a counter gate's self `put` carries `activation` {mana, refund, taps, activations}: what ONE activation of the put costs, the mana it adds back, whether it taps, and how many reach `need` (Druid 5/0/no/1, Pyramid 2/1/tap/3, Tablet 0/0/tap/2), so the goldfish can pay for the gate. `readyTurn` is unchanged.
-export const DERIVE_VERSION = 345;
+// 346: #1282 the mana-token lists are ONE table (`token-kinds.ts`, `line` + `manaToken`): Vibranium (CR 111.10w, Powerstone's line) and Heartwood (CR 111.10x, {R} or {G}) makers now carry a token-maker mana line, and a creation replacement that adds either is a maker; quality.ts ramp ingredients read the same table (Eldrazi Spawn/Scion included).
+export const DERIVE_VERSION = 346;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
