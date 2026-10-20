@@ -6378,7 +6378,7 @@
 "Krond the Dawn-Clad": ["answer:artifact","answer:creature","answer:enchantment","answer:land","answer:planeswalker","role:targetedRemoval"],
 "Krosan Drover": ["role:ramp"],
 "Krosan Grip": ["answer:artifact","answer:enchantment","role:stax","role:targetedRemoval"],
-"Krosan Verge": ["role:lands"],
+"Krosan Verge": ["role:lands","role:ramp"],
 "Krosan Warchief": ["role:ramp"],
 "Krosan Wayfarer": ["role:ramp"],
 "Krovikan Fetish": ["role:draw"],
