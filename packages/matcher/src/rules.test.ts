@@ -1228,6 +1228,9 @@ describe("removal.targeted is derived", () => {
     for (const n of ["Become Anonymous", "Northampton Farm", "Sword of Hearth and Home", "Despotic Scepter", "Telim'Tor's Edict", "Celestial Sword", "Getaway Car",
       "Star Athlete", "Enchanter's Bane", "Thornplate Intimidator", "Disorienting Choice", "Livio, Oathsworn Sentinel"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
   });
+  test("a coin-flip loss on your own creature is not removal (#1295 item 5): Orcish Captain's -0/-2 is the losing side of a flip that otherwise pumps an Orc", () => {
+    expect(ruleMatches(rule, realCard("Orcish Captain"), set)).toBe(false);
+  });
   test("permanents you OWN are refused, as the printed pattern refused 'you own': a bounce (Get Out, Leave // Chance) and a DELAYED flicker of your own creature (Charming Prince)", () => {
     for (const n of ["Get Out", "Leave // Chance", "Charming Prince"]) expect(ruleMatches(rule, blank(n), set), n).toBe(false);
   });

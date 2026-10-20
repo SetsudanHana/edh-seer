@@ -7147,5 +7147,76 @@
     }
    }
   ]
+ },
+ "Orcish Captain": {
+  "oracleText": "{1}: Flip a coin. If you win the flip, target Orc creature gets +2/+0 until end of turn. If you lose the flip, it gets -0/-2 until end of turn.",
+  "typeLine": "Creature — Orc Warrior",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}",
+    "emits": [
+     {
+      "verb": "flip-coin",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{1}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "subtype": "orc",
+      "scope": "target"
+     }
+    },
+    "cost": "{1}",
+    "amount": "+2/+0",
+    "onFlip": "win",
+    "clause": 1,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{1}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "debuff",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "subtype": "orc",
+      "scope": "target"
+     }
+    },
+    "cost": "{1}",
+    "amount": "-0/-2",
+    "onFlip": "lose",
+    "clause": 1,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{1}"
+    }
+   }
+  ]
  }
 }

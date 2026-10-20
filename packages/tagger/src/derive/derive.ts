@@ -21,7 +21,7 @@ import { selfAsTilde } from "../grammar/self-as-tilde.js";
 import { effectText, printedPreamble } from "../grammar/preamble.js";
 import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
-import { conditionalReturn, delaysIn, returnDelay, untilSourceLeaves } from "./delay.js";
+import { conditionalReturn, delaysIn, flipBranch, returnDelay, untilSourceLeaves } from "./delay.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
@@ -509,7 +509,8 @@ import { emblemRecipient } from "../emblem.js";
 // 351: #1295 item 3 review -- a return's "If <anyone> do/does/don't/doesn't" is a cost confirmation, never `returnIf` (Meathook Massacre II's "If they don't, return that card").
 // 352: #1295 item 4 -- two grammar-complete removal spells derived NOTHING: "Put target nonland permanent into its owner's library third from the top" (Teferi, Hero of Dominaria -3; also Oust, Spin into Myth, Terminus) is a `leaves` off the battlefield, and "Return target nonland permanent or suspended card to its owner's hand" (Venser's Diffusion) is a bounce of the permanent half.
 // 353: #1295 review of the anaphor scope: "that card" taken from a library or hand (Transmogrify, Polymorph) is not the exiled target; a player or token antecedent scopes nothing.
-export const DERIVE_VERSION = 353;
+// 354: #1295 item 5 -- an action on one side of a coin flip ("If you win the flip, ...", "If you lose the flip, ...", "If it comes up heads, ...") is `onFlip`, so Orcish Captain's losing-side -0/-2 on your own Orc is not `removal.targeted`.
+export const DERIVE_VERSION = 354;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2858,6 +2859,15 @@ export function deriveAbilities(
         : kind === "on-cast" && castAtInstantSpeed === true;
       if (instantSpeed && !delayedAction(text, action, clause.actions ?? [])) for (const e of emits) e.instantSpeed = true;
       if (emits.length) ability.emits = emits;
+      // A COIN-FLIP SIDE (CR 705, #1295 item 5), read on THIS action's own sentence: found by its amount ("-0/-2": two `modify-pt` actions share a verb), else by its verb's word.
+      {
+        const clauseActions = clause.actions ?? [];
+        const own = typeof action.amount === "string" && action.amount !== "" ? text.split(".").find((s) => s.includes(action.amount as string)) : undefined;
+        const k = clauseActions.slice(0, clauseActions.indexOf(action)).filter((x) => x.verb === action.verb).length;
+        const sentence = own ?? (action.verb ? nthSentenceWith(text, action.verb, k) : "");
+        const onFlip = flipBranch(sentence, clauseActions.some((x) => x.verb === "flip-coin"));
+        if (onFlip) ability.onFlip = onFlip;
+      }
       // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate
       // return beside a delayed one stays immediate (Gift of Immortality, Swift Warkite; review). The
       // k-th return/put action is the k-th "return"/"put" in the text. CEILING: a counter "put" in the

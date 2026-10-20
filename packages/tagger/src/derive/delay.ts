@@ -61,3 +61,16 @@ export function conditionalReturn(sentence: string): boolean {
   // A cost confirmation ends in do/does/don't/doesn't, whoever the subject is ("If you do", "If they don't": Meathook Massacre II, "If that player does").
   return !/\b(?:do|does|don't|doesn't)$/i.test(cond) && !/\bthis way\b/i.test(cond);
 }
+
+/** AN ACTION ON ONE SIDE OF A COIN FLIP (CR 705; #1295 item 5). "If you win the flip, target Orc creature gets +2/+0. If you lose the flip, it gets -0/-2" (Orcish Captain), "If you lose the flip,
+ *  sacrifice this creature" (Viashino Sandswimmer), "If it comes up heads, counter target ..." (Odds // Ends): the sentence opens with the branch, so the action in it happens on that side only.
+ *  The bare "If you win" / "If you lose" count only where the clause itself flips a coin (`flipsCoin`), since "If you win the game" is no flip. Anchored at the sentence's start.
+ *  CEILING: only a sentence that OPENS with the branch is read; "Otherwise, ..." (Plasma Caster) and a branch inside a sentence ("Destroy it if you lose the flip") mark nothing. */
+export function flipBranch(sentence: string, flipsCoin: boolean): "win" | "lose" | "heads" | "tails" | undefined {
+  const named = /^\s*(?:if|when) you (win|lose) (?:the|a) (?:coin )?flip\b/i.exec(sentence);
+  if (named) return named[1]!.toLowerCase() as "win" | "lose";
+  const side = /^\s*(?:if|when) (?:it|the coin) comes up (heads|tails)\b/i.exec(sentence);
+  if (side) return side[1]!.toLowerCase() as "heads" | "tails";
+  const bare = flipsCoin ? /^\s*(?:if|when) you (win|lose)\b(?! the game)/i.exec(sentence) : null;
+  return bare ? (bare[1]!.toLowerCase() as "win" | "lose") : undefined;
+}

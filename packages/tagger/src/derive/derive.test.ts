@@ -4973,3 +4973,21 @@ describe("a bounce 'or suspended card' and a tuck from the battlefield derive a 
       [{ verb: "put", object: "two cards from your hand", fromZone: "hand", toZone: "library", optional: false }])).toEqual([]);
   });
 });
+
+// #1295 item 5: a coin-flip branch is not a sure effect, so a losing-side shrink on your own creature is not removal.
+describe("an action on one side of a coin flip is marked onFlip (#1295 item 5)", () => {
+  const flips = (text: string, actions: object[]) =>
+    deriveAbilities([{ id: 1, abilityType: "activated", actions } as never], "Test Card", { 1: text }, { 1: "{1}" }).abilities.map((a) => [a.effect.kind, a.onFlip]);
+  test("Orcish Captain: the +2/+0 is the win side, the -0/-2 the lose side, the flip itself neither", () => {
+    const r = flips("Flip a coin. If you win the flip, target Orc creature gets +2/+0 until end of turn. If you lose the flip, it gets -0/-2 until end of turn.",
+      [{ verb: "flip-coin", object: "coin flip" }, { verb: "modify-pt", object: "target Orc creature", amount: "+2/+0" }, { verb: "modify-pt", object: "target Orc creature", amount: "-0/-2" }]);
+    expect(r.find(([k]) => k === "pump")?.[1]).toBe("win");
+    expect(r.find(([k]) => k === "debuff")?.[1]).toBe("lose");
+    expect(r.find(([k]) => k === "")?.[1]).toBeUndefined();
+  });
+  test("a flip with no branch marks nothing: a shrink after a bare 'Flip a coin.' is not on a side", () => {
+    const r = flips("Flip a coin. Target creature gets -0/-2 until end of turn.",
+      [{ verb: "flip-coin", object: "coin flip" }, { verb: "modify-pt", object: "target creature", amount: "-0/-2" }]);
+    expect(r.every(([, f]) => f === undefined)).toBe(true);
+  });
+});

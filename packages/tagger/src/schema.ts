@@ -1239,6 +1239,10 @@ export interface Ability {
    *  return it": Vindictive Triumph). On the other branch the exile is permanent, so a `flicker` carrying this is not an immediate blink and `notFlickered` does not refuse
    *  the card. Not set by "if you do" / "if you don't" or any "... this way", which confirm a cost and pick no branch. */
   returnIf?: true;
+  /** THE ACTION HAPPENS ON ONE SIDE OF A COIN FLIP ONLY (CR 705; #1295 item 5): its sentence opens "If you win the flip, ..." / "If you lose the flip, ..." (`win` / `lose`) or "If it comes up
+   *  heads / tails, ..." (`heads` / `tails`). Orcish Captain ("If you win the flip, target Orc creature gets +2/+0 ... If you lose the flip, it gets -0/-2") shrinks your OWN Orc half the time, which
+   *  `removal.targeted` read as a debuff of a target; its `notOnFlip` refuses an ability carrying this. Unset on the flip itself, on a flip with no branch, and on "Otherwise, ..." (Plasma Caster). */
+  onFlip?: "win" | "lose" | "heads" | "tails";
   /** THE RETURN MARKS WHAT IT RETURNS so the same object cannot come back through it again (#886):
    *  a finality counter (CR 122.1h, Meathook Massacre II), or a keyword counter the trigger excludes
    *  (Luminous Broodmoth's flying counter on a creature "without flying"). The ability still fires

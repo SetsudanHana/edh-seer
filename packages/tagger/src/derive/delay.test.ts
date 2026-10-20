@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { conditionalReturn, delayOf, delaysIn, returnDelay, untilSourceLeaves } from "./delay.js";
+import { conditionalReturn, delayOf, delaysIn, flipBranch, returnDelay, untilSourceLeaves } from "./delay.js";
 
 describe("delayOf: the one reader of a delayed-action cue", () => {
   it("reads a delayed trigger's step", () => {
@@ -75,5 +75,27 @@ describe("conditionalReturn: a return that happens on one branch only (#1295 ite
     expect(conditionalReturn(" If a player doesn't, return it to the battlefield")).toBe(false);
     expect(conditionalReturn(" If a creature is put into exile this way, return each other card exiled with this Vehicle to the battlefield")).toBe(false);
     expect(conditionalReturn(" If it was exiled this way, return it to the battlefield")).toBe(false);
+  });
+});
+
+describe("flipBranch: an action that happens on one side of a coin flip (CR 705, #1295 item 5)", () => {
+  it("reads the winning and losing side", () => {
+    expect(flipBranch(" If you win the flip, target Orc creature gets +2/+0 until end of turn", false)).toBe("win");
+    expect(flipBranch(" If you lose the flip, it gets -0/-2 until end of turn", false)).toBe("lose");
+    expect(flipBranch("When you win the flip, copy that spell", false)).toBe("win");
+    expect(flipBranch(" If you win a coin flip, draw a card", false)).toBe("win");
+  });
+  it("reads heads and tails", () => {
+    expect(flipBranch(" If it comes up heads, counter target instant or sorcery spell", false)).toBe("heads");
+    expect(flipBranch(" If the coin comes up tails, this creature enters as a 2/5 creature", false)).toBe("tails");
+  });
+  it("reads a bare 'if you win' / 'if you lose' only where the clause flips a coin", () => {
+    expect(flipBranch(" If you lose, sacrifice it", true)).toBe("lose");
+    expect(flipBranch(" If you lose, sacrifice it", false)).toBeUndefined();
+  });
+  it("is not set by a flip with no branch, a game win, or a branch word that is not at the sentence's start", () => {
+    expect(flipBranch("{1}: Flip a coin", true)).toBeUndefined();
+    expect(flipBranch(" If you win the game, draw a card", true)).toBeUndefined();
+    expect(flipBranch(" Destroy target creature if you win the flip", true)).toBeUndefined();
   });
 });

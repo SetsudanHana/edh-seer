@@ -27,7 +27,9 @@ export type RuleClause =
       notSelfTargeted?: boolean;
       /** A `debuff` that can KILL: the amount's TOUGHNESS part is negative ("-5/-5", "-0/-3", "-X/-X, where X is ...", "-1/-1"). "-2/-0" shrinks power and kills nothing; an amount that
        *  is not a P/T pair at all does not match. A scaling or unreadable toughness ("-X") counts: the number is not printed, and the card states it as a lethal-shaped shrink. */
-      toughnessDown?: true }
+      toughnessDown?: true;
+      /** Refuse an ability that happens on one side of a coin flip (`Ability.onFlip`): Orcish Captain's "If you lose the flip, it gets -0/-2" shrinks your own Orc by chance, and is no removal (#1295 item 5). */
+      notOnFlip?: true }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -418,6 +420,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.control === undefined || a.effect.subject?.control === undefined || clause.control.includes(a.effect.subject.control))
         && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope)))
         && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true)
+        && (clause.notOnFlip !== true || a.onFlip === undefined)
         && (clause.toughnessDown !== true || lowersToughness(a.amount)));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.
     //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations (derive reads the polymorph family as played on YOUR creature, `control: you`: owner ruling 2026-10-02 / #962,
