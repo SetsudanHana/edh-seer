@@ -1520,7 +1520,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         const inv = r.out?.estimated?.invest;
         if (!inv || r.paid === undefined || r.paid >= inv.activations || r.turn > turn) continue;
         if (inv.taps && r.turn >= turn && dorks.includes(r)) continue;
-        if (inv.mana > pool - holdUp) continue;
+        // HOLDING MANA UP BEARS ON A COSTED ACTIVATION ONLY: a free put (Tablet of Compleation's tap) spends none, so it is paid whatever the pool.
+        if (inv.mana > 0 && inv.mana > pool - holdUp) continue;
         pool += inv.refund - inv.mana;
         r.paid++;
         if (r.paid >= inv.activations) r.readyFrom = turn + 1;

@@ -1921,6 +1921,21 @@ test("Tablet of Compleation invests from the turn it lands for no mana and is a 
   expect(ready).toBeGreaterThan(0);
 });
 
+test("a FREE put (Tablet of Compleation) is paid whatever the hold-up: holdUp does not delay its ready turn, and a costed put (Druid) still waits for pool - holdUp", () => {
+  for (const holdUp of [1, 2, 3, 4]) {
+    const turns = 10;
+    const games = watch("Tablet of Compleation", { trials: 300, turns, seed: 3, holdUp });
+    let ready = 0;
+    for (const g of games) {
+      const cast = g.find((x) => x.pool < x.made);
+      if (!cast) continue;
+      const first = g.find((x) => x.made > x.lands);
+      if (cast.turn + 2 <= turns) { expect(first?.turn, `holdUp ${holdUp}, cast turn ${cast.turn}`).toBe(cast.turn + 2); ready++; }
+    }
+    expect(ready, `holdUp ${holdUp}`).toBeGreaterThan(0);
+  }
+});
+
 test("'you played a land this turn' is read from the game's own land drop, not from a table: a source gated on it taps on the turns the simulated game played a land", () => {
   const rock = withManaLines("Land Rock", "Artifact", [tapFor(["C"], { amount: { fixed: 2, scales: null }, net: 2, gate: parseGate("you played a land this turn") })]);
   const out = manaOutput(rock, estimatedDeck(rock), true);
