@@ -24,7 +24,10 @@ export type RuleClause =
       scope?: string[];
       /** Refuse an ability whose subject is a spell THAT TARGETS THIS CARD (`subject.targets.self`): Spellwild Ouphe's "Spells that target this creature cost {2} less" cheapens
        *  spells aimed at the card itself, a discount for no other spell (`discountsOtherSpells`). */
-      notSelfTargeted?: boolean }
+      notSelfTargeted?: boolean;
+      /** A `debuff` that can KILL: the amount's TOUGHNESS part is negative ("-5/-5", "-0/-3", "-X/-X, where X is ...", "-1/-1"). "-2/-0" shrinks power and kills nothing; an amount that
+       *  is not a P/T pair at all does not match. A scaling or unreadable toughness ("-X") counts: the number is not printed, and the card states it as a lethal-shaped shrink. */
+      toughnessDown?: true }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -39,9 +42,27 @@ export type RuleClause =
       control?: string[]; zone?: (string | null)[];
       /** The emit's subject TYPE (`land`) and the zone it comes FROM (`hand`, `graveyard`, `exile`, `library`). An emit that names no
        *  `fromZone` does not match a list: `ramp.landPut` asks for a land entering from somewhere other than play. A subject typed as SEVERAL types (Ghostly Flicker's creature, artifact or land) matches only when EVERY one is listed: a blink is not a land drop. */
-      type?: string[]; fromZone?: string[];
+      type?: string[]; fromZone?: (string | null)[];
+      /** The counter a `counter-added`/`counter-removed` emit names (`-1/-1`, `+1/+1`, `stun`): the emit's `subject.counter` is in this list. An emit that names none does not match. */
+      counter?: string[];
       /** The subject's scope (`all`, `each`, `target`); absent on the emit never matches a list. "Destroy all lands" is `dies` + type land + scope all. */
-      scope?: string[] }
+      scope?: (string | null)[];
+      /** Refuse an ability whose exile COMES BACK AT ONCE: another ability of the card, of the SAME `clause`, is a `flicker` with no `delayedUntil` whose subject is NOT an opponent's permanent ("Exile target creature, then
+       *  return it to the battlefield": Flicker, Eldrazi Displacer). Owner ruling 2026-09-25: an IMMEDIATE flicker is no removal, a DELAYED return (Otherworldly Journey, Flickerwisp: back at the next end step) keeps
+       *  its place, so a flicker with `delayedUntil` is not refused. A flicker of an OPPONENT's permanent is the "until this leaves the battlefield" shape (Banisher Priest, Glass Casket, Portable Hole), which derive also
+       *  reads as a `flicker` and which is the commonest removal there is, so it stays. */
+      notFlickered?: true;
+      /** Refuse an ability that is PAID by exiling or discarding THIS card from your hand ("{3}, Exile this card from your hand: Target land gains ...": Emrakul the Exigent Doom, Shattered Seraph, Spara's
+       *  Adjudicators). Derive reads the exile in the cost as an exile of the target. */
+      notFromHandCost?: true;
+      /** Refuse an ability that acts on permanents YOU OWN: any ability of the same `clause` (this one, or a paired flicker, delayed or not) whose effect subject has `owner: "you"` ("Return one or two target creatures
+       *  and/or enchantments you own": Get Out; "Exile another target creature you own. Return it ... at the beginning of the next end step": Charming Prince). Derive reads the emit's control as `opp`. The printed pattern
+       *  refused "you own"; the delayed-return ruling (2026-09-25) is about an OPPONENT's permanent, not yours. */
+      notOwnedByYou?: true;
+      /** Refuse an emit whose target is a card the SAME ability also takes out of a graveyard: another ability of the SAME `clause` has an emit that targets a card `fromZone: graveyard` with the SAME control and type
+       *  (Macabre Mockery reanimates an opponent's creature, then "sacrifices it"; Goblin Welder swaps an artifact for one in a graveyard). Derive reads the follow-up sacrifice as removal of a second target. A real
+       *  kill that returns YOUR card (Lethal Protection: the graveyard card is `you`, the kill `opp`) is not refused. */
+      notPairedTarget?: true }
   | { op: "typeLine"; contains: string }
   /** Card subtypes, from the tagged characteristics -- "equipment", "aura", a creature type. */
   | { op: "subtype"; in: string[] }
@@ -339,6 +360,21 @@ export function discountsOtherSpells(effect: { kind: string; subject?: { scope?:
   return effect.kind === "cost-reduction" && (effect.subject?.scope === "all" || effect.subject?.scope === "each") && effect.subject?.targets?.self !== true;
 }
 
+/** The TYPES an emit's subject names: its `type`, else -- for a subject written as an `anyOf` of kinds ("Destroy target creature or Vehicle": `[{type: creature}, {subtype: vehicle}]`) --
+ *  each branch's type, a branch with only a SUBTYPE counting as "permanent" (a subtype names a kind of permanent: Vehicle, Spirit; so does a subject whose only type word is a subtype: "Destroy target Aura"). Empty when the subject names no type at all. */
+function subjectTypes(subject: { type?: string | string[]; subtype?: unknown; anyOf?: { type?: string | string[]; subtype?: unknown }[] }): string[] {
+  if (subject.type !== undefined) return [subject.type].flat();
+  if (subject.subtype !== undefined && subject.anyOf === undefined) return ["permanent"];
+  return (subject.anyOf ?? []).flatMap((b) => (b.type !== undefined ? [b.type].flat() : b.subtype !== undefined ? ["permanent"] : []));
+}
+
+/** A debuff amount ("-5/-5", "-0/-3", "-X/-X, where X is the mana value of the exiled card") whose TOUGHNESS half is negative: the half after the slash opens with a minus
+ *  and is not "-0". `+2/-2` counts (it kills a 2-toughness creature); "-2/-0" and "-2/+0" do not. */
+function lowersToughness(amount: string | undefined): boolean {
+  const m = /^\s*[+\-−]?\w+\s*\/\s*([+\-−])\s*(\w+)/.exec(amount ?? "");
+  return m !== null && (m[1] === "-" || m[1] === "−") && m[2] !== "0";
+}
+
 function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
   switch (clause.op) {
     case "oracle":
@@ -374,16 +410,31 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         // `player-life-loss` too. An effect with no subject is not refused -- nothing says who.
         && (clause.control === undefined || a.effect.subject?.control === undefined || clause.control.includes(a.effect.subject.control))
         && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope)))
-        && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true));
+        && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true)
+        && (clause.toughnessDown !== true || lowersToughness(a.amount)));
+    // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive (#1295) mislabels some cards, so the role is wrong on them by name.
+    //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Premature Burial, Blazing Hope, Soul Snare, Chaos Mutation, Divergent Transformations, Alchemist's Retrieval (target control derived `you`, #1295 item 2);
+    //   Constable of the Realm, Mysterious Limousine, Lucius the Eternal, Unyielding Gatekeeper, Vindictive Triumph (the paired flicker is control `any`/`each`, or a self-exile, #1295 item 3);
+    //   Venser's Diffusion, Teferi, Hero of Dominaria, Venser, the Sojourner (no emit for the removal: Venser's −8 emblem "exile target permanent" has none, and its +2 is
+    //   a permanent you own, which the owner guard refuses, #1295 item 4); Depressurize (its `dies` emit names no target scope, not itemised in #1295).
+    //   OVER-CLAIMED (not removal, derive reads them as one, #1295 item 5): Celestial Sword, Venser Fervent Forger, Become Anonymous, Northampton Farm, Telim'Tor's Edict, Sword of Hearth and Home ("you own" read as opp, no owner on its effect); Star Athlete, Enchanter's Bane, Thornplate Intimidator, Disorienting Choice, Livio Oathsworn Sentinel (the controller MAY sacrifice or exile it); Getaway Car (bounces a creature that crewed it, yours: `history: crewed-ref`); Orcish Captain (a coin-flip pump whose losing side is -0/-2).
+    //   The "target player sacrifices" edicts stay on the printed pattern `targetPlayerSacrifices` until #1295 item 1 lands.
     case "emits":
       return (dc.tags?.abilities ?? []).some((a) =>
-        (a.emits ?? []).some((e) =>
+        (clause.notOwnedByYou !== true || !(dc.tags?.abilities ?? []).some((f) => f.clause === a.clause && f.effect.subject?.owner === "you"))
+        && (clause.notFromHandCost !== true || !/from your hand/i.test(a.cost ?? ""))
+        && (clause.notFlickered !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.clause === a.clause && f.delayedUntil === undefined && f.effect.subject?.control !== "opp"))
+        && (a.emits ?? []).some((e) =>
           clause.verbs.includes(e.verb)
+          && (clause.notPairedTarget !== true || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
+            && (f.emits ?? []).some((g) => g.subject.scope === "target" && g.subject.fromZone === "graveyard" && g.subject.control === e.subject.control
+              && JSON.stringify(g.subject.type) === JSON.stringify(e.subject.type))))
           && (clause.control === undefined || clause.control.includes(e.subject.control))
           && (clause.zone === undefined || clause.zone.includes(e.subject.zone ?? null))
-          && (clause.type === undefined || (e.subject.type !== undefined && [e.subject.type].flat().every((t) => clause.type!.includes(t))))
-          && (clause.scope === undefined || (e.subject.scope !== undefined && clause.scope.includes(e.subject.scope)))
-          && (clause.fromZone === undefined || (e.subject.fromZone !== undefined && clause.fromZone.includes(e.subject.fromZone))))
+          && (clause.type === undefined || (subjectTypes(e.subject).length > 0 && subjectTypes(e.subject).every((t) => clause.type!.includes(t))))
+          && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null))
+          && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))
+          && (clause.counter === undefined || (e.subject.counter !== undefined && clause.counter.includes(e.subject.counter))))
         && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
     case "subtype":
       return (dc.tags?.characteristics?.subtypes ?? []).some((s) => clause.in.includes(s.toLowerCase()));
