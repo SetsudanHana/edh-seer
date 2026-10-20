@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { anchorOf, comboIndex, SHARD_COUNT, shardOf, staleRows } from "./build-static-core.js";
+import { anchorOf, comboIndex, SHARD_COUNT, shardOf, shippedTags, staleRows } from "./build-static-core.js";
 
 /** THE ANCHOR IS WHY THE INDEX IS EXACT RATHER THAN APPROXIMATE. A combo is contained in a deck
  *  only if EVERY one of its cards is present, so it can only ever match if its alphabetically-first
@@ -76,4 +76,13 @@ test("staleRows lists rows derived below the current version, and rows with no v
   const rows = [{ id: "a", deriveVersion: 335 }, { id: "b", deriveVersion: 334 }, { id: "c" }, { id: "d", deriveVersion: 336 }];
   expect(staleRows(rows, 335).map((r) => r.id)).toEqual(["b", "c"]);
   expect(staleRows([], 335)).toEqual([]);
+});
+
+test("shippedTags drops the diagnostic `unclaimed` and touches nothing else (#1299)", () => {
+  const row = { oracleId: "x", deriveVersion: 358, abilities: [{ clause: 1 }], unknownTriggers: ["t"], unclaimed: [{ clause: 1, verb: "cant" }] };
+  const out = shippedTags(row);
+  expect("unclaimed" in out).toBe(false);
+  expect(out).toEqual({ oracleId: "x", deriveVersion: 358, abilities: [{ clause: 1 }], unknownTriggers: ["t"] });
+  expect(shippedTags({ oracleId: "y" })).toEqual({ oracleId: "y" });
+  expect("unclaimed" in row).toBe(true);
 });

@@ -65,3 +65,10 @@ export function shardOf(normalizedName: string): string {
 export function staleRows<T extends { deriveVersion?: number }>(rows: readonly T[], deriveVersion: number): T[] {
   return rows.filter((r) => typeof r.deriveVersion !== "number" || r.deriveVersion < deriveVersion);
 }
+
+/** THE ROW AS THE BROWSER GETS IT. `CardTags.unclaimed` (#1299) is a derive diagnostic: no reader under matcher/src or web
+ *  reads it, and it was 622 KB (1.66%) of the row JSON, so it stays in Mongo. Every other key, `unknownTriggers` included, ships. */
+export function shippedTags<T extends object>(row: T): Omit<T, "unclaimed"> {
+  const { unclaimed: _unclaimed, ...rest } = row as T & { unclaimed?: unknown };
+  return rest;
+}

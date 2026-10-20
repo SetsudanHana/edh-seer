@@ -18,7 +18,7 @@ import { join } from "node:path";
 import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, DERIVE_VERSION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
-import { SHARD_COUNT, comboIndex, shardOf, staleRows, type StaticCombo } from "./build-static-core.js";
+import { SHARD_COUNT, comboIndex, shardOf, shippedTags, staleRows, type StaticCombo } from "./build-static-core.js";
 import { browseSlices, buildPartnerArtifact, type PartnerId } from "../partners-core.js";
 import { eventShards } from "./events-index-core.js";
 import { eventPatterns, patternFrequency } from "../event-pattern.js";
@@ -82,7 +82,7 @@ if (stale.length > 0) {
   await store.close();
   process.exit(1);
 }
-const tagsByOracle = new Map(derivedRows.map((r) => [r.oracleId, r]));
+const tagsByOracle = new Map(derivedRows.map((r) => [r.oracleId, shippedTags(r) as CardTags]));
 const combos = await store.combos.find().toArray();
 const combosByAnchor = comboIndex(combos.map((c) => ({ cards: c.cards, result: c.result, ...(c.requires?.length ? { requires: c.requires } : {}) })));
 
