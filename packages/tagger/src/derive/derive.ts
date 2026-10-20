@@ -512,7 +512,8 @@ import { emblemRecipient } from "../emblem.js";
 // 354: #1295 item 5 -- an action on one side of a coin flip ("If you win the flip, ...", "If you lose the flip, ...", "If it comes up heads, ...") is `onFlip`, so Orcish Captain's losing-side -0/-2 on your own Orc is not `removal.targeted`.
 // 355: #1295 item 4 review -- the `leaves` emit of a put into a library (a tuck) carries `tuck: true`, so the quality ladder (exile > destroy > bounce > tuck) scores Condemn, Oust, Teferi -3 below a bounce.
 // 356: #1295 item 5 review -- an onFlip action takes the k-th sentence carrying its verb's printed word, not the first sentence holding its amount (Winter Sky's draw is the lose side, Bangchuckers' two "2 damage" are opposite sides, Chaotic Strike's unconditional draw is unmarked).
-export const DERIVE_VERSION = 356;
+// 357: #1295 item 4 review -- "the owner of <target> puts it on their choice of the top or bottom of their library" tucks THAT target (the grammar named no object, so the record writer read "it" as the trigger's subject: Plan for All Outcomes derived a false self tuck of "this enchantment").
+export const DERIVE_VERSION = 357;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

@@ -5021,3 +5021,17 @@ describe("each action takes its own sentence's coin-flip side (#1295 item 5 revi
     expect(r.find(([k]) => k === "copy-spell")?.[1]).toBe("win");
   });
 });
+
+// #1295 item 4 review: Plan for All Outcomes ("the owner of up to one other target nonland permanent puts it on their choice of the top or bottom") read "it" as the trigger's
+// subject, "this enchantment", and derived a false SELF tuck beside an unclaimed real one.
+test("Plan for All Outcomes: the tuck is the targeted permanent, with no self leaves", () => {
+  const card = { name: "Plan for All Outcomes", typeLine: "Enchantment", keywords: [], oracleText:
+    "When this enchantment enters, the owner of up to one other target nonland permanent puts it on their choice of the top or bottom of their library." } as never;
+  const g = grammarClauseRecords(card);
+  expect(g.complete).toBe(true);
+  const { abilities } = deriveAbilities(g.records, "Plan for All Outcomes", { 1: (card as { oracleText: string }).oracleText });
+  const leaves = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "leaves");
+  expect(leaves.some((e) => e.subject.self === true)).toBe(false);
+  expect(leaves).toHaveLength(1);
+  expect(leaves[0]).toMatchObject({ tuck: true, subject: { scope: "target", notType: ["land"] } });
+});
