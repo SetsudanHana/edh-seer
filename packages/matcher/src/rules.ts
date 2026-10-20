@@ -429,8 +429,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     //   permanent you own, which the owner guard refuses).
     //   RIGHT FOR A WRONG REASON: Audacious Swap (its tuck counts because derive reads "If it's a land card, they put it onto the battlefield" -- a different card -- as a
     //   one-branch return of the target, `returnIf`, which `notFlickered` lets through).
-    //   KEPT, AWAITING A RULING: a kill decided by a coin flip (Mogg Assassin, Crooked Scales, Creepy Doll, Boompile, Plasma Caster) stays removal; only a losing-side
-    //   shrink is refused (`notOnFlip`, Orcish Captain, #1295).
+    //   NOT A DEFECT, owner ruling 2026-10-20 (#1295): a kill decided by a coin flip (Mogg Assassin, Crooked Scales, Creepy Doll, Boompile, Plasma Caster) IS removal;
+    //   only a losing-side shrink is refused (`notOnFlip`, Orcish Captain).
     case "emits":
       return (dc.tags?.abilities ?? []).some((a) =>
         (clause.notOwnedByYou !== true || !(dc.tags?.abilities ?? []).some((f) => f.clause === a.clause && f.effect.subject?.owner === "you"))
