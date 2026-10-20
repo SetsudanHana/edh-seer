@@ -415,7 +415,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive (#1295) mislabels some cards, so the role is wrong on them by name.
     //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Premature Burial, Blazing Hope, Soul Snare, Chaos Mutation, Divergent Transformations, Alchemist's Retrieval (target control derived `you`, #1295 item 2);
     //   Constable of the Realm, Mysterious Limousine, Lucius the Eternal, Unyielding Gatekeeper, Vindictive Triumph (the paired flicker is control `any`/`each`, or a self-exile, #1295 item 3);
-    //   Venser's Diffusion, Teferi, Hero of Dominaria (no emit at all, #1295 item 4); Depressurize (its `dies` emit names no target scope, not itemised in #1295).
+    //   Venser's Diffusion, Teferi, Hero of Dominaria, Venser, the Sojourner (no emit for the removal: Venser's −8 emblem "exile target permanent" has none, and its +2 is
+    //   a permanent you own, which the owner guard refuses, #1295 item 4); Depressurize (its `dies` emit names no target scope, not itemised in #1295).
     //   OVER-CLAIMED (not removal, derive reads them as one, #1295 item 5): Celestial Sword, Venser Fervent Forger, Become Anonymous, Northampton Farm, Telim'Tor's Edict, Sword of Hearth and Home ("you own" read as opp, no owner on its effect); Star Athlete, Enchanter's Bane, Thornplate Intimidator, Disorienting Choice, Livio Oathsworn Sentinel (the controller MAY sacrifice or exile it); Getaway Car (bounces a creature that crewed it, yours: `history: crewed-ref`); Orcish Captain (a coin-flip pump whose losing side is -0/-2).
     //   The "target player sacrifices" edicts stay on the printed pattern `targetPlayerSacrifices` until #1295 item 1 lands.
     case "emits":
