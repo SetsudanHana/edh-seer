@@ -71,4 +71,8 @@ test("cost parsing stays fast on pathological input", () => {
   paymentOf("Remove " + "a counter from ".repeat(5_000) + "x", "Foo");
   paymentOf("Remove " + "a ".repeat(50_000), "Foo");
   expect(performance.now() - t1).toBeLessThan(100);
+  // The newline case the lazy regex still retried at every " counter from " (#1303 review): no split, no regex.
+  const t2 = performance.now();
+  expect(paymentOf("Remove " + "a counter from ".repeat(50_000) + "\nx", "Foo")?.removeCounter).toBeUndefined();
+  expect(performance.now() - t2).toBeLessThan(100);
 });
