@@ -3,7 +3,7 @@ import type { ClauseRecord } from "@edh-seer/tagger";
 import { droppedKeys, groupDropped, groupSplit, splitReported } from "./dropped-clauses-core.js";
 
 const clause = (id: number, ...verbs: string[]): ClauseRecord => ({ id, actions: verbs.map((verb) => ({ verb })) });
-const none = { abilityClauses: new Set<number>(), granted: new Set<number>(), hasManaLines: false, twinOf: new Map<number | string, number | string>() };
+const none = { abilityClauses: new Set<number>(), granted: new Set<number>(), hasManaLines: false, twinOf: new Map<number | string, number | string>(), texts: {} as Record<number, string>, cardName: "Card" };
 
 test("a clause with an action and no ability is dropped", () => {
   expect(droppedKeys([clause(0, "gain-life")], none)).toEqual(["0:gain-life"]);
@@ -81,4 +81,19 @@ test("a twin whose partner has an ability is not dropped; one whose partner has 
   const twinOf = new Map<number | string, number | string>([[2, 1]]);
   expect(droppedKeys([clause(2, "draw")], { ...none, abilityClauses: new Set([1]), twinOf })).toEqual([]);
   expect(droppedKeys([clause(2, "draw")], { ...none, twinOf })).toEqual(["2:draw"]);
+});
+
+const tapped = (id: number, object: string): ClauseRecord => ({ id, actions: [{ verb: "tap", object }] });
+
+test("a self enters-tapped clause is excluded", () => {
+  expect(droppedKeys([tapped(0, "this land")], { ...none, texts: { 0: "This land enters tapped unless you control a Mountain." } })).toEqual([]);
+  expect(droppedKeys([tapped(0, "Card")], { ...none, texts: { 0: "Card enters the battlefield tapped." } })).toEqual([]);
+});
+
+test("tap target creature is kept", () => {
+  expect(droppedKeys([tapped(0, "target creature")], { ...none, texts: { 0: "Tap target creature." } })).toEqual(["0:tap"]);
+});
+
+test("a cost-like tap of your own creatures is kept", () => {
+  expect(droppedKeys([tapped(0, "an untapped creature you control")], { ...none, texts: { 0: "Tap an untapped creature you control: draw." } })).toEqual(["0:tap"]);
 });

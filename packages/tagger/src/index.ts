@@ -32,6 +32,6 @@ export {
 
 export { SUBTYPES, LAND_SUBTYPES, SUBTYPE_TYPES, joinMultiWordSubtypes } from "./derive/subtypes.js";
 export { extractCharacteristics } from "./characteristics.js";
-export { deriveInputOf, grantedTokenClauses } from "./derive-input.js";
+export { clauseTexts, deriveInputOf, grantedTokenClauses } from "./derive-input.js";
 export { grammarClauseRecords, type GrammarRecords } from "./grammar/clause-record.js";
 export { deriveDiff, lostClaims } from "./grammar/derive-diff.js";

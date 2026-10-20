@@ -16,7 +16,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { connect, isStickerCard, loadConfig, type CardDoc } from "@edh-seer/data";
-import { DERIVE_VERSION, deriveAbilitiesOf, deriveInputOf, grantedTokenClauses, grammarClauseRecords, segmentHash, type ClauseRecord } from "@edh-seer/tagger";
+import { DERIVE_VERSION, deriveAbilitiesOf, deriveInputOf, clauseTexts, grantedTokenClauses, grammarClauseRecords, segmentHash, type ClauseRecord } from "@edh-seer/tagger";
 import { diffMembership, listSome, serialiseSnapshot, versionDrift, type VersionGroup } from "./role-ratchet-core.js";
 import { droppedKeys, groupSplit, splitReported, type Dropped } from "./dropped-clauses-core.js";
 
@@ -73,11 +73,12 @@ for (const d of inEngine) {
   const abilityClauses = new Set((row.abilities ?? []).flatMap((a) => (a.clause === undefined ? [] : [a.clause])));
   const granted = grantedTokenClauses(d as never);
   const hasManaLines = (row.manaLines?.length ?? 0) > 0;
+  const texts = clauseTexts(d as never);
   // The twin map is derive's own: it is only needed when something would be reported, so derive again just for those cards.
-  const plain = droppedKeys(records, { abilityClauses, granted, hasManaLines, twinOf: new Map() });
+  const plain = droppedKeys(records, { abilityClauses, granted, hasManaLines, twinOf: new Map(), texts, cardName: d.name });
   if (plain.length === 0) continue;
   const { twinOf } = deriveAbilitiesOf(deriveInputOf(d as never, d._id, d.name, records, undefined, g?.readings));
-  const keys = droppedKeys(records, { abilityClauses, granted, hasManaLines, twinOf });
+  const keys = droppedKeys(records, { abilityClauses, granted, hasManaLines, twinOf, texts, cardName: d.name });
   if (keys.length > 0) {
     measured[d.name] = keys; actions += keys.length;
     reportedBy[d.name] = new Set((row.unclaimed ?? []).map((u) => String(u.clause)));

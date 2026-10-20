@@ -25,6 +25,12 @@
  *      (`twinOf` / `redundant` in derive.ts) and the ability carries the partner's id. The twin map comes from
  *      derive's own run (`deriveAbilitiesOf`), never a re-implementation; a clause is excluded when its twin's
  *      partner has an ability.
+ *   4. A SELF "ENTERS TAPPED" STATIC (Rootbound Crag, Marble Diamond): every real action is `tap` on a self object
+ *      ("this land", "this artifact", "this", the card's own name) AND the clause's printed text says "enters tapped".
+ *      Derive has no field for it (it reports `unclaimed {tap}`); its home is the matcher's printed-text readers,
+ *      `mana-base.ts` (TAPPED: a land that always enters tapped) and `land-score.ts` (enters-tapped patterns). CEILING:
+ *      the home is a printed-text reader, so this exclusion reads the text too; "tap target creature" and a cost-like
+ *      "tap an untapped creature you control" are kept because their object is not self and the text does not say it.
  *
  *  KEYS REPEAT WITHIN A CARD (two identical actions in one clause give two identical keys) and the diff is
  *  SET-BASED (`diffMembership`), so a second identical drop on a card that already has one does not move it. */
@@ -44,7 +50,17 @@ export interface Homes {
   hasManaLines: boolean;
   /** `deriveAbilitiesOf(...).twinOf`: a re-homed record -> the record that already read its event off the same sentence. */
   twinOf: ReadonlyMap<number | string, number | string>;
+  /** Clause id -> printed clause text (`clauseTexts(card)`). */
+  texts: Readonly<Record<number, string>>;
+  /** The card's own name, for a self object. */
+  cardName: string;
 }
+
+const ENTERS_TAPPED = /\benters(?: the battlefield)? tapped\b/i;
+const SELF_OBJECT = /^(?:this(?: [a-z]+)?|~|it)$/i;
+const isSelfEntersTapped = (real: readonly { verb?: string; object?: string }[], text: string | undefined, cardName: string): boolean =>
+  real.every((a) => a.verb === "tap" && (SELF_OBJECT.test((a.object ?? "").trim()) || (a.object ?? "").trim().toLowerCase() === cardName.toLowerCase()))
+  && ENTERS_TAPPED.test(text ?? "");
 
 /** The dropped-action keys of one card, sorted. Empty when nothing is dropped. */
 export function droppedKeys(records: readonly ClauseRecord[], homes: Homes): string[] {
@@ -56,6 +72,7 @@ export function droppedKeys(records: readonly ClauseRecord[], homes: Homes): str
     if (real.length === 0) continue;
     const partner = homes.twinOf.get(r.id);
     if (partner !== undefined && homes.abilityClauses.has(partner as number)) continue;
+    if (isSelfEntersTapped(real, homes.texts[r.id as number], homes.cardName)) continue;
     if (homes.hasManaLines && real.some((a) => a.verb === "add-mana") && real.every((a) => MANA_VERBS.has(a.verb ?? ""))) continue;
     for (const a of real) {
       const zone = a.fromZone || a.toZone ? `:${a.fromZone ?? ""}>${a.toZone ?? ""}` : "";
