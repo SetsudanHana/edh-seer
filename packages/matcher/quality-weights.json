@@ -60,19 +60,19 @@
     },
     "targetedRemoval": {
       "weights": {
-        "manaValue": -0.19008801641538461,
-        "frequency": 0.027450846749585728,
-        "timing": 1.0128872411965288,
-        "breadth": 0.04969029909261663,
-        "permanence": 0.016020608720543644,
-        "drawback": -0.05693615399452781,
-        "extraValue": 1.0304145696173175,
-        "amount": 0.018441151546725036
+        "manaValue": -0.20423319134917595,
+        "frequency": 0.02020538507914487,
+        "timing": 0.9536423382371069,
+        "breadth": 0.1837187519096824,
+        "permanence": 0.014882157168908079,
+        "drawback": -0.03727660129108958,
+        "extraValue": 1.151103871121216,
+        "amount": 0.009842568420292762
       },
-      "pairs": 210,
-      "heldOutAccuracy": 0.7390369093340157,
-      "baselineAccuracy": 0.6898039812438088,
-      "fallbackAccuracy": 0.7970824022178888,
+      "pairs": 227,
+      "heldOutAccuracy": 0.6902616076084653,
+      "baselineAccuracy": 0.662527757902932,
+      "fallbackAccuracy": 0.7654651154871256,
       "fallback": false
     },
     "stackInteraction": {
