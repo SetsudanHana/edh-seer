@@ -276,13 +276,18 @@ function oneShotNet(dc: DeckCard): number | undefined {
  *  so Greedy Freebooter keeps "To scry 1, ..." and loses the Treasure's text. Decayed and keyword reminders ("It can't block. When it attacks...") follow "create ... token with
  *  decayed" and describe the TOKEN's keyword, but do not open as a token description, so they are kept; the head sentence's "token with hexproof" is a separate known read.
  *  Cached, because every rule reads it. */
-const TOKEN_OPENER = /^(?:(?:it|he|she|they)'s|they're|it is|they are|it has|each is|an? [^.()"]{1,40}? token is|(?:food|treasure|clue|blood)s? (?:tokens? )?(?:is|are)|the token |as the token enters|if you control another role on it|enchanted creature (?:gets|is|has) )/i;
+const TOKEN_PRONOUN = /^(?:(?:it|he|she|they)'s|they're|it is|they are|it has|each is) /i;
+const TOKEN_OPENER = /^(?:an? [^.()"]{1,40}? token is|[^.()"]{1,40}? tokens are|(?:food|treasure|clue|blood)s? (?:tokens? )?(?:is|are)|the token |as the token enters|if you control another role on it|enchanted creature (?:gets|is|has) )/i;
 /** A reminder `" (...)"` less its token-description sentences: whole when it OPENS as one, else only the later sentences that do (quote-aware split, a token's quote holds periods). */
 function withoutTokenSentences(reminder: string): string {
   const inner = reminder.trim().slice(1, -1);
   const sentences = inner.match(/(?:[^."]|"[^"]*")+\.?\s*/g) ?? [];
-  if (sentences.length === 0 || TOKEN_OPENER.test(sentences[0]!.trim())) return "";
-  const kept = sentences.filter((x) => !TOKEN_OPENER.test(x.trim())).join("").trim();
+  const opens = (x: string): boolean => TOKEN_OPENER.test(x.trim()) || TOKEN_PRONOUN.test(x.trim());
+  if (sentences.length === 0 || opens(sentences[0]!)) return "";
+  // A PRONOUN opener is a token description only as the FIRST sentence, or right after a sentence that itself creates a token (Chalk Outline "Create a Clue token. It's an
+  // artifact with ..."); later it can be the card's own rule (Genevieve: "the party die is a d4. It's a d8 for 2").
+  const kept = sentences.filter((x, n) => !(TOKEN_OPENER.test(x.trim())
+    || (TOKEN_PRONOUN.test(x.trim()) && /create[^.]*token/i.test(sentences[n - 1] ?? "")))).join("").trim();
   return kept.length === inner.length ? reminder : kept === "" ? "" : ` (${kept})`;
 }
 const ownTextCache = new WeakMap<object, string>();

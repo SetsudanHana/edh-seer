@@ -712,6 +712,19 @@ test("a kept reminder loses only its token-description sentences (#1289)", () =>
   expect(out2).not.toContain("You gain 3 life");
 });
 
+test("a pronoun sentence late in a kept reminder is the card's unless it follows a create sentence (#1289)", () => {
+  const genevieve = "Flying\nAt the beginning of combat on your turn, roll the party die and create a number of Treasure tokens equal to the result. (Your party consists of up to one of each of Cleric, Rogue, Warrior, and Wizard. If your party size is 1, the party die is a d4. It's a d8 for 2, a d12 for 3, and a d20 for 4.)";
+  expect(ownText({ oracleText: genevieve })).toBe(genevieve);
+  const chalk = "Whenever one or more creature cards leave your graveyard, create a 2/2 white and blue Detective creature token, then investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")";
+  const out = ownText({ oracleText: chalk });
+  expect(out).toContain("(Create a Clue token.)");
+  expect(out).not.toContain("Draw a card");
+  const stage = "Whenever a player performs a magic trick, they create a Hat token. (You perform a magic trick when you cast an instant or spell with flash, or turn a face-down creature face-up. Hat tokens are artifact tokens with \"{1}, {T}, Sacrifice this artifact: Create a 1/1 white Rabbit creature token.\")\nWhenever Chaos ensues, until your next turn, creature cards in your hand have flash.";
+  const out2 = ownText({ oracleText: stage });
+  expect(out2).toContain("You perform a magic trick");
+  expect(out2).not.toContain("Rabbit");
+});
+
 test("a sentence whose subject is the card itself protects only the card (#1289)", () => {
   const selfOnly: [string, string][] = [
     ["Falkenrath Aristocrat", "Flying, haste\nSacrifice a creature: This creature gains indestructible until end of turn. If the sacrificed creature was a Human, put a +1/+1 counter on this creature."],
