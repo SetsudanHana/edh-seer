@@ -22724,5 +22724,227 @@
    }
   ],
   "source": "grammar"
+ },
+ "Vhal, Candlekeep Researcher": {
+  "card": {
+   "_id": "7253e7d1-b1df-4637-bf64-850be7fa5188",
+   "name": "Vhal, Candlekeep Researcher",
+   "typeLine": "Legendary Creature — Human Wizard",
+   "oracleText": "Vigilance\n{T}: Add an amount of {C} equal to Vhal's toughness. This mana can't be spent to cast spells from your hand.\nChoose a Background (You can have a Background as a second commander.)",
+   "keywords": [
+    "Vigilance",
+    "Choose a background"
+   ],
+   "colors": [
+    "U"
+   ],
+   "colorIdentity": [
+    "U"
+   ],
+   "manaValue": 4,
+   "power": "2",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{3}{U}",
+   "producedMana": [
+    "C"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "Vhal's toughness",
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be spent to cast spells from your hand",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Choose a Background"
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Leafkin Avenger": {
+  "card": {
+   "_id": "adff8c13-8909-47d0-acad-ba63597f2e96",
+   "name": "Leafkin Avenger",
+   "typeLine": "Creature — Elemental Druid",
+   "oracleText": "{T}: Add {G} for each creature with power 4 or greater you control.\n{7}{R}: This creature deals damage equal to its power to target player or planeswalker.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "R"
+   ],
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "manaValue": 4,
+   "power": "4",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{2}{R}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each creature with power 4 or greater you control",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target player or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "its power",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "grammar"
+ },
+ "Krosan Verge": {
+  "card": {
+   "_id": "d9a10971-f32b-4978-952d-fed0a5bc9e36",
+   "name": "Krosan Verge",
+   "typeLine": "Land",
+   "oracleText": "This land enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search your library for a Forest card and a Plains card, put them onto the battlefield tapped, then shuffle.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "manaValue": 0,
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "",
+   "producedMana": [
+    "C"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "a Forest card and a Plains card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "them",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "source": "model"
  }
 }

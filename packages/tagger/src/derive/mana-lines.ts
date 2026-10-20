@@ -407,8 +407,7 @@ const scaleOfSentence = (sentence: string): string | null => {
 };
 
 /** THE SELF-GUARANTEED FLOOR (#1188): "For each color among permanents you control, add one mana of that color" (Faeburrow Elder, Bloom Tender) counts the card itself, a permanent you control,
- *  so it always makes one mana per colour of its OWN. CEILING: only this colour-among shape is read; a type count that counts the card too (Priest of Titania, "for each Elf on the battlefield")
- *  has a self-floor that is not read, and nets its ceiling of 1 as any scaling line does. */
+ *  so it always makes one mana per colour of its OWN. The type counts that count the card too (Priest of Titania, "for each Elf on the battlefield") are read by `scaleBounds` (#1285). */
 const FOR_EACH_COLOUR_AMONG_OWN = /^for each colou?r among permanents you control$/i;
 
 /** DOES THIS CLAUSE TEXT ADD MANA? (quoted abilities removed.) A mana-generation ability the model typed from "you may pay {X}" (Halo Forager, Wildborn Preserver) or a payoff in energy (Scurry of
@@ -426,7 +425,12 @@ export type ScaleBounds = { floor: number; ceiling: number | null; bound?: "colo
  *   - "for each color among permanents you control" (Faeburrow Elder, Bloom Tender): ceiling 5 (`colours`); floor the card's OWN colours, it being a permanent you control; "monocolored" permanents
  *     count the card only when it has exactly one. Colours among cards that are not the card (the exiled cards a craft used, Sunbird Effigy) floor at 0.
  *   - "the number of basic land types among lands you control" (Domain): ceiling 5 (`basic-land-types`), floor 0.
- *   - "the number of <class> you control" / "for each <class> you control": +1 when the card is one (its type or subtype), not for "other <class>", and "with <keyword>" only when the card prints it.
+ *   - "the number of <class> you control" / "for each <class> you control" / "for each <class> on the battlefield" (Priest of Titania, Cloudpost): +1 when the card is one (its type or subtype), not for "other <class>",
+ *     and "with <keyword>" only when the card prints it.
+ *   - "your devotion to <colour>" (Karametra's Acolyte): the pips of that colour in the card's OWN printed mana cost (`manaCost`), a hybrid pip counting for each of its colours (CR 700.5). Not read
+ *     without a mana cost, and "devotion to that color" (Nyx Lotus) names no colour: 0.
+ *   - "<this creature|its own name>'s toughness" (Vhal): the printed toughness, as the power reading does. "for each creature with power N or greater you control" (Leafkin Avenger): +1 when the card is a
+ *     creature of printed power N or more. "for each different power among creatures you control" (Selvala, Eager Trailblazer): +1 for a creature, its own power being one value.
  *   - "this creature's power" / "<its own name>'s power" / "the greatest power among creatures you control" / "the total power of attacking creatures" (when the card's own attack trigger is the add):
  *     the card's printed power. "1 plus ..." (Food Chain): 1. "the number of <kind> counters on this ..." after the card put one there: 1.
  *   CEILING (whole card, not the printing face): colours, types, subtypes and power come from `chars` -- `chars.colors` is the UNION of a double-faced card's faces and a DFC's top-level power is null (read as
@@ -434,16 +438,18 @@ export type ScaleBounds = { floor: number; ceiling: number | null; bound?: "colo
  *   cost or trigger that removes the card first ("Sacrifice this creature: Add {G} for each creature you control"); the corpus has none today either. The prototype rule covers the one alternate
  *   p/t shape with a floor (Cradle Clearcutter); a "level up" or "becomes a ... with base power" card with a scaling mana line has floor 0 here and so cannot over-claim.
  *   CEILING: every other count is open (null). A count of an opponent's cards, life or permanents depends on the game and stays open; a count of the PLAYERS is bounded by the table (`bound: "players"`). */
-export function scaleBounds(scales: string, text: string, chars: Characteristics, selfNames: readonly string[], permanent: boolean, oracleText: string, fixedPart: number, unit = 1): ScaleBounds {
+export function scaleBounds(scales: string, text: string, chars: Characteristics, selfNames: readonly string[], permanent: boolean, oracleText: string, fixedPart: number, unit = 1, manaCost?: string): ScaleBounds {
   const defined = /\bwhere x is ([^.]*)/i.exec(text)?.[1]?.trim().toLowerCase();
   // "equal to this creature's power" (the model's object) and "this creature's power" (a "where X is" clause) are one count: both paths must read the same interval.
   const s = (defined ?? scales).trim().toLowerCase().replace(/\s+/g, " ").replace(/^equal to /, "").replace(/^the /, "");
   const lowerTypes = [...chars.types, ...chars.subtypes].map((t) => t.toLowerCase());
   const creature = chars.types.some((t) => t.toLowerCase() === "creature");
   // A PROTOTYPE card ("Prototype {2}{G} -- 1/3", Cradle Clearcutter, printed 3/6) may be cast smaller, and then taps for the smaller power: the floor is the one it ALWAYS makes, so the smaller power.
-  const proto = /\bPrototype\s+(?:\{[^{}]+\})+\s*[\u2014-]+\s*(-?\d+)\/(?:-?\d+|\*)/.exec(oracleText);
+  const proto = /\bPrototype\s+(?:\{[^{}]+\})+\s*[\u2014-]+\s*(-?\d+)\/(-?\d+|\*)/.exec(oracleText);
   const printed = chars.power !== null && /^-?\d+$/.test(chars.power) ? Number(chars.power) : 0;
   const power = proto ? Math.min(printed, Number(proto[1])) : printed;
+  const printedToughness = chars.toughness !== null && /^-?\d+$/.test(chars.toughness ?? "") ? Number(chars.toughness) : 0;
+  const toughness = proto && /^-?\d+$/.test(proto[2]!) ? Math.min(printedToughness, Number(proto[2])) : printedToughness;
   const out: ScaleBounds = { floor: fixedPart, ceiling: null };
   if (/\bbasic land types? among\b/.test(s)) return { ...out, ceiling: 5, bound: "basic-land-types" };
   if (/\bcolou?rs? among\b/.test(s)) {
@@ -463,11 +469,23 @@ export function scaleBounds(scales: string, text: string, chars: Characteristics
   if (plus) return { ...out, floor: out.floor + (/^\d+$/.test(plus[1]!) ? Number(plus[1]) : NUMBER_WORD[plus[1]!]!) };
   const owner = /^(.+?)'s power$/.exec(s)?.[1];
   if (owner !== undefined && (owner === "this creature" || selfNames.includes(owner))) return { ...out, floor: out.floor + (creature ? power : 0) };
+  const ownerT = /^(.+?)'s toughness$/.exec(s)?.[1];
+  if (ownerT !== undefined && (ownerT === "this creature" || selfNames.includes(ownerT))) return { ...out, floor: out.floor + (creature ? toughness : 0) };
+  const devotion = /^your devotion to (white|blue|black|red|green)$/.exec(s)?.[1];
+  if (devotion !== undefined) {
+    const sym = { white: "W", blue: "U", black: "B", red: "R", green: "G" }[devotion]!;
+    // A hybrid pip ({G/W}) counts toward each of its colours (CR 700.5); a Phyrexian pip ({G/P}) is that colour's symbol too.
+    const pips = (manaCost?.match(/\{[^{}]+\}/g) ?? []).filter((p) => p.slice(1, -1).split("/").includes(sym)).length;
+    return { ...out, floor: out.floor + (permanent ? pips : 0) };
+  }
+  const bigPower = /^for each creature with power (\d+) or greater you control$/.exec(s)?.[1];
+  if (bigPower !== undefined) return { ...out, floor: out.floor + (creature && permanent && power >= Number(bigPower) ? 1 : 0) };
+  if (/^for each different power among creatures you control$/.test(s)) return { ...out, floor: out.floor + (creature && permanent ? 1 : 0) };
   if (/^greatest power among creatures you control$/.test(s)) return { ...out, floor: out.floor + (creature ? power : 0) };
   if (/^total power of attacking creatures$/.test(s) && creature && new RegExp(`\\bwhenever (?:this creature|${selfNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}) attacks\\b`, "i").test(text)) return { ...out, floor: out.floor + power };
   const counters = /^number of ([a-z+/-]+) counters on (?:this [a-z]+|it)$/.exec(s);
   if (counters && new RegExp(`\\bput an? ${counters[1]} counter on (?:this [a-z]+|it)\\b`, "i").test(text)) return { ...out, floor: out.floor + 1 };
-  const counted = /^(?:number of (.+?) (?:you control|on the battlefield)|for each (.+?) you control)(?: with ([a-z ]+))?$/.exec(s);
+  const counted = /^(?:number of (.+?) (?:you control|on the battlefield)|for each (.+?) (?:you control|on the battlefield))(?: with ([a-z ]+))?$/.exec(s);
   if (counted) {
     const phrase = (counted[1] ?? counted[2])!;
     const kinds = phrase.split(/ or | and |, /).map((k) => k.trim());
@@ -796,7 +814,7 @@ export function deriveMana(input: ManaInput): ManaResult {
       if (scaleText !== null && addsManaText(text)) {
         const fixedPart = sibling || entries.length > 1 && entries.some((e) => e.sibling) ? 0 : FIXED_THEN_FOR_EACH.test(sentence) ? production(FIXED_THEN_FOR_EACH.exec(sentence)![1]!).amount.fixed ?? 0 : 0;
         const permanent = !chars.types.some((t) => /^(?:instant|sorcery)$/i.test(t));
-        const bounds = scaleBounds(scaleText, text, chars, selfNames, permanent, input.oracleText ?? "", fixedPart, unit);
+        const bounds = scaleBounds(scaleText, text, chars, selfNames, permanent, input.oracleText ?? "", fixedPart, unit, input.manaCosts?.[face] ?? input.manaCosts?.[0]);
         made.amount = { ...made.amount, ...bounds };
         if (ability) {
           // derive.ts read the action as the model and the grammar normalise it; a scale text it already holds stays (the line reads the raw clause, which can word the same count differently).
@@ -903,7 +921,10 @@ export function deriveMana(input: ManaInput): ManaResult {
       const dedupe = `fetch:${a.clause}:${JSON.stringify(subject)}`;
       if (seenClauses.has(dedupe)) continue;
       seenClauses.add(dedupe);
-      const lands = a.amount !== undefined && /^\d+$/.test(a.amount) ? Number(a.amount) : 1;
+      // "Search your library for a Forest card and a Plains card, put them onto the battlefield" (Krosan Verge) names two cards and carries no amount: one land per "a <X> card" conjunct.
+      // CEILING: only the two-conjunct "a X card and a Y card" shape is counted; a list of three or more stays 1.
+      const twoNamed = /\bsearch your library for (?:an? |one )[^.]*?\bcards? and (?:an? |one )[^.]*?\bcards?\b[^.]*?onto the battlefield/i.test(clauseText);
+      const lands = a.amount !== undefined && /^\d+$/.test(a.amount) ? Number(a.amount) : twoNamed ? 2 : 1;
       const cost = a.kind === "activated" ? parseCost(a.cost, selfNames) : noCost();
       if (a.kind === "on-cast") cost.mana = faceMV(face);
       const afterCost = antecedentCost(clauseText, /\bsearch\b/i, cost, selfNames);
