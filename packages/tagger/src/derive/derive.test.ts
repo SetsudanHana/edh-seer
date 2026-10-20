@@ -4697,6 +4697,15 @@ describe("#1295 removal-shaped emits", () => {
     const dragon = emitsOf("Demanding Dragon", "Flying\nWhen this creature enters, it deals 5 damage to target opponent unless that player sacrifices a creature of their choice.", "Creature — Dragon")
       .filter((x) => x.verb === "sacrifice");
     for (const x of dragon) expect(x.subject.edict).toBeUndefined();
+    // "unless target opponent sacrifices ..." matches the edict wording, and only the victim's-option guard keeps it unmarked.
+    const tormentor = emitsOf("Indulgent Tormentor", "Flying\nAt the beginning of your upkeep, draw a card unless target opponent sacrifices a creature of their choice or pays 3 life.", "Creature — Demon", [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Flying" }] },
+      // The stored record for this card has no sacrifice action; a model that wrote the unless-clause out as one would give this.
+      { id: 2, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }, { verb: "sacrifice", object: "a creature of their choice", optional: true }] },
+    ])
+      .filter((x) => x.verb === "sacrifice" || x.verb === "dies");
+    expect(tormentor.length).toBeGreaterThan(0);
+    for (const x of tormentor) expect(x.subject.edict).toBeUndefined();
   });
 
   test("an edict is marked only when the player is TARGETED: Innocent Blood and a bare sacrifice are not", () => {
