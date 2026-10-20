@@ -4682,6 +4682,23 @@ describe("#1295 removal-shaped emits", () => {
     for (const x of e) { expect(x.subject.edict).toBe(true); expect(x.subject.scope).toBeUndefined(); }
   });
 
+  test("an edict aimed at several targets, or with a verb after 'and', is marked (Priest of Forgotten Gods, Will of the Abzan)", () => {
+    const priest = emitsOf("Priest of Forgotten Gods", "{T}, Sacrifice two other creatures: Any number of target players each lose 2 life and sacrifice a creature of their choice. You add {B}{B} and draw a card. (Activate only as an instant.)", "Creature — Human Cleric")
+      .filter((x) => x.verb === "dies" && x.subject.edict === true);
+    expect(priest.length).toBeGreaterThan(0);
+    const will = emitsOf("Will of the Abzan", "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n• Any number of target opponents each sacrifice a creature with the greatest power among creatures that player controls and lose 3 life.\n• Return target creature card from your graveyard to the battlefield.", "Instant", [
+      { id: 1, abilityType: "spell", actions: [] },
+      { id: 2, abilityType: "spell", actions: [{ verb: "lose-life", object: "any number of target opponents", amount: "3", optional: false }, { verb: "sacrifice", object: "a creature with the greatest power among creatures that player controls", optional: false }] },
+      { id: 3, abilityType: "spell", actions: [{ verb: "return", object: "target creature card from your graveyard", fromZone: "graveyard", toZone: "battlefield", optional: false }] },
+    ])
+      .filter((x) => x.verb === "dies" && x.subject.edict === true);
+    expect(will.length).toBeGreaterThan(0);
+    // the victim's option is not an edict
+    const dragon = emitsOf("Demanding Dragon", "Flying\nWhen this creature enters, it deals 5 damage to target opponent unless that player sacrifices a creature of their choice.", "Creature — Dragon")
+      .filter((x) => x.verb === "sacrifice");
+    for (const x of dragon) expect(x.subject.edict).toBeUndefined();
+  });
+
   test("an edict is marked only when the player is TARGETED: Innocent Blood and a bare sacrifice are not", () => {
     const innocent = emitsOf("Innocent Blood", "Each player sacrifices a creature of their choice.").filter((x) => x.verb === "sacrifice" || x.verb === "dies");
     expect(innocent.length).toBeGreaterThan(0);

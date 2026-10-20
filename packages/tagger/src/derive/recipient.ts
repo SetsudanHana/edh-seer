@@ -205,9 +205,9 @@ export function actionRecipients(clauseText: string, ctx: ActorContext = {}): Re
 
 /** THE PLAYER IS THE TARGET, NOT THE CREATURE (#1295): "Target player sacrifices a creature of their choice" (Diabolic
  *  Edict), "target opponent sacrifices ..." (Chainer's Edict, Sudden Edict). The first sacrifice sentence is read, as
- *  `actionRecipients` reads it. `may` is NOT an adverb here: "target opponent MAY sacrifice" is the victim's option
+ *  `actionRecipients` reads it. PLURAL targets and a verb after "and" count ("Any number of target players each lose 2 life and sacrifice a creature of their choice", Priest of Forgotten Gods; Will of the Abzan). `may` is NOT an adverb here: "target opponent MAY sacrifice" is the victim's option
  *  (`victimDeclines`), not an edict. "Each player", "each opponent" and "defending player" name no target. */
-const TARGETED_SACRIFICER = /\btarget (?:player|opponent)\s+(?:(?:also|then|instead)\s+)*sacrifices?\b/i;
+const TARGETED_SACRIFICER = /\btarget (?:players?|opponents?)\s+(?:each\s+)?(?:[^.,;]*?\band\s+)?(?:(?:also|then|instead)\s+)*sacrifices?\b/i;
 export function sacrificerIsTargeted(clauseText: string): boolean {
   return TARGETED_SACRIFICER.test(clauseText);
 }

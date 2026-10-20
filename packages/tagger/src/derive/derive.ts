@@ -2611,7 +2611,7 @@ export function deriveAbilities(
       // "an artifact and a land" (Structural Collapse) or follows a sacrifice COST (Rakdos Riteknife). The cost's own
       // sacrifice and the card's own are never the victim's. CEILING: "Target player sacrifices X. You sacrifice Y." marks
       // Y's emits too; no corpus card is shaped so.
-      if (action.verb === "sacrifice" && !costSacrifice && sacrificerIsTargeted(clauseText)) for (const e of emits) if (e.subject.self !== true) e.subject.edict = true;
+      if (action.verb === "sacrifice" && !costSacrifice && sacrificerIsTargeted(clauseText) && !victimDeclines(clauseText, "sacrifice")) for (const e of emits) if (e.subject.self !== true) e.subject.edict = true;
       // A STATED "you" INSIDE A GRANTED ABILITY IS THE RECIPIENT'S CONTROLLER (Hellish Rebuke: "You
       // lose 2 life" is said by the opponent's permanent), the same flip line 1154 applied to the
       // object's own "you" -- the actor cue runs after it and must not undo it.

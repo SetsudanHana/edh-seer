@@ -1687,6 +1687,10 @@ function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy)
  *  naming no type and no branch, or no member accepted -- it asks `producerCanBeSubject` of
  *  `nounSubject(emit, heard)`, the subject the noun names, so the check and the noun agree. */
 function producerCanBeHeard(p: DeckCard, emit: SubjectFilter, heard: SubjectFilter, h: Hierarchy): boolean {
+  // A CONJUNCTION OF TYPES the trigger demands ("this creature or another ARTIFACT CREATURE dies", `allTypes`) is a fact about the object
+  // that dies, and the emit's umbrella type ("target permanent you own") cannot say it: a plain Artifact is never the artifact creature (#1295).
+  if (p.tags && (heard.allTypes?.length ?? 0) > 0
+    && !subjectMatches(characteristicsSubject(p.tags, p.card.name), { control: "any", token: null, allTypes: heard.allTypes }, h)) return false;
   const members = list(emit.type);
   const names = list(heard.type).length > 0 || (heard.anyOf?.length ?? 0) > 0;
   if (members.length < 2 || !names) return producerCanBeSubject(p, nounSubject(emit, heard), h);
