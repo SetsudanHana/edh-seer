@@ -689,6 +689,29 @@ test("ownText keeps a reminder that explains the CARD's own action after a creat
   expect(ownText({ oracleText: carrot })).toBe(carrot);
 });
 
+test("ownText blanks a token description by every opener family, verbatim corpus text (#1289)", () => {
+  const cases: [string, string, string][] = [
+    ["Nivea", "{5}{W}{W}{W}, Sacrifice Nivea: Create an Akroma, Angel of Wrath token. (She's a {5}{W}{W}{W} legendary 6/6 Angel creature with flying, first strike, vigilance, trample, haste, and protection from black and from red.)", "protection from"],
+    ["Lord Skitter's Blessing", "When this enchantment enters, create a Wicked Role token attached to target creature you control. (Enchanted creature gets +1/+1. When this token is put into a graveyard, each opponent loses 1 life.)\nAt the beginning of your draw step, if you control an enchanted creature, you lose 1 life and you draw an additional card.", "each opponent loses"],
+    ["Twisted Sewer-Witch", "When this creature enters, create a 1/1 black Rat creature token with \"This creature can't block.\" Then for each Rat you control, create a Wicked Role token attached to that Rat. (If you control another Role on it, put that one into the graveyard. Enchanted creature gets +1/+1. When this token is put into a graveyard, each opponent loses 1 life.)", "another Role"],
+    ["Ant-Man's Army", "When this creature enters, create a Food token or a Treasure token. (A Food token is an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\" A Treasure token is an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")", "Sacrifice this token"],
+    ["Tireless Provisioner", "Landfall — Whenever a land you control enters, create a Food token or a Treasure token. (Food is an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\" Treasure is an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")", "Sacrifice this token"],
+    ["Dragon Broodmother", "Flying\nAt the beginning of each upkeep, create a 1/1 red and green Dragon creature token with flying and devour 2. (As the token enters, you may sacrifice any number of creatures. It enters with twice that many +1/+1 counters on it.)", "twice that many"],
+  ];
+  for (const [name, text, gone] of cases) expect(ownText({ oracleText: text }), name).not.toContain(gone);
+});
+
+test("a kept reminder loses only its token-description sentences (#1289)", () => {
+  const freebooter = "When this creature dies, scry 1 and create a Treasure token. (To scry 1, look at the top card of your library. You may put that card on the bottom. A Treasure token is an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")";
+  const out = ownText({ oracleText: freebooter });
+  expect(out).toContain("To scry 1, look at the top card");
+  expect(out).not.toContain("Sacrifice this token");
+  const grab = "Mill four cards. You may put a permanent card from among the cards milled this way into your hand. If you control a Squirrel or returned a Squirrel card to your hand this way, create a Food token. (To mill four cards, put the top four cards of your library into your graveyard. A Food token is an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")";
+  const out2 = ownText({ oracleText: grab });
+  expect(out2).toContain("To mill four cards");
+  expect(out2).not.toContain("You gain 3 life");
+});
+
 test("a sentence whose subject is the card itself protects only the card (#1289)", () => {
   const selfOnly: [string, string][] = [
     ["Falkenrath Aristocrat", "Flying, haste\nSacrifice a creature: This creature gains indestructible until end of turn. If the sacrificed creature was a Human, put a +1/+1 counter on this creature."],
