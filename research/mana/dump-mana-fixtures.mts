@@ -37,7 +37,7 @@ const NAMES = ["Sol Ring", "Arcane Signet", "Cascade Bluffs", "Cascading Catarac
   "Shang-Chi, Master of Kung Fu", "Valleymaker", "Unclaimed Territory", "Gilded Lotus", "Radiant Lotus", "Axebane Guardian", "Blaster Hulk", "Open the Omenpaths", "Pili-Pala", "Millikin", "Oasis Ritualist", "Helga, Skittish Seer", "Korlash, Heir to Blackblade",
   "Selvala, Explorer Returned", "Deathrite Shaman", "Red Death, Shipwrecker", "Birds of Paradise", "Witch Engine", "Quintorius Kand",
   "Far Wanderings", "Dark Petition", "Lys Alana Dignitary", "Pyramid of the Pantheon", "Tablet of Compleation", "Mirrex", "River of Tears",
-  "Vhal, Candlekeep Researcher", "Leafkin Avenger", "Krosan Verge"];
+  "Vhal, Candlekeep Researcher", "Leafkin Avenger", "Krosan Verge", "Giant-Man, Gargantuan Genius"];
 const out: Record<string, unknown> = {};
 for (const n of NAMES) {
   const card: any = await store.cards.findOne({ name: n } as never) ?? await store.cards.findOne({ name: new RegExp("^" + n + " //") } as never);

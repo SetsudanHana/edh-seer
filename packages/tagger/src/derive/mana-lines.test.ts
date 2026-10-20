@@ -937,6 +937,11 @@ describe("scaleBounds reads the card's own contribution (#1285)", () => {
     expect(scaleBounds("for each creature with power 4 or greater you control", "", c, ["card"], true, "", 0).floor).toBe(0);
     expect(scaleBounds("for each creature with power 3 or greater you control", "", c, ["card"], true, "", 0).floor).toBe(1);
   });
+  it("'for each creature you control with power 4 or greater' (the other word order) counts a 6/6: Giant-Man, Gargantuan Genius 1; a 3-power creature 0 (synthetic)", () => {
+    expect(scaling("Giant-Man, Gargantuan Genius")[0]!.amount).toMatchObject({ scales: "for each creature you control with power 4 or greater", floor: 1 });
+    const c = { types: ["creature"], subtypes: [], colors: ["G"], identity: ["G"], cmc: 2, power: "3", toughness: "1", token: false } as unknown as CardTags["characteristics"];
+    expect(scaleBounds("for each creature you control with power 4 or greater", "", c, ["card"], true, "", 0).floor).toBe(0);
+  });
   it("'for each different power among creatures you control' counts the creature's own power once: Selvala (4/5) 1", () => {
     expect(scaling("Selvala, Eager Trailblazer")[0]!.amount).toMatchObject({ floor: 1 });
   });

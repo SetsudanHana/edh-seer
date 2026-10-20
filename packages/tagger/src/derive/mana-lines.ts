@@ -429,7 +429,7 @@ export type ScaleBounds = { floor: number; ceiling: number | null; bound?: "colo
  *     and "with <keyword>" only when the card prints it.
  *   - "your devotion to <colour>" (Karametra's Acolyte): the pips of that colour in the card's OWN printed mana cost (`manaCost`), a hybrid pip counting for each of its colours (CR 700.5). Not read
  *     without a mana cost, and "devotion to that color" (Nyx Lotus) names no colour: 0.
- *   - "<this creature|its own name>'s toughness" (Vhal): the printed toughness, as the power reading does. "for each creature with power N or greater you control" (Leafkin Avenger): +1 when the card is a
+ *   - "<this creature|its own name>'s toughness" (Vhal): the printed toughness, as the power reading does. "for each creature with power N or greater you control" / "for each creature you control with power N or greater" (Leafkin Avenger, Giant-Man): +1 when the card is a
  *     creature of printed power N or more. "for each different power among creatures you control" (Selvala, Eager Trailblazer): +1 for a creature, its own power being one value.
  *   - "this creature's power" / "<its own name>'s power" / "the greatest power among creatures you control" / "the total power of attacking creatures" (when the card's own attack trigger is the add):
  *     the card's printed power. "1 plus ..." (Food Chain): 1. "the number of <kind> counters on this ..." after the card put one there: 1.
@@ -478,8 +478,8 @@ export function scaleBounds(scales: string, text: string, chars: Characteristics
     const pips = (manaCost?.match(/\{[^{}]+\}/g) ?? []).filter((p) => p.slice(1, -1).split("/").includes(sym)).length;
     return { ...out, floor: out.floor + (permanent ? pips : 0) };
   }
-  const bigPower = /^for each creature with power (\d+) or greater you control$/.exec(s)?.[1];
-  if (bigPower !== undefined) return { ...out, floor: out.floor + (creature && permanent && power >= Number(bigPower) ? 1 : 0) };
+  const bigPower = /^for each creature (?:with power (\d+) or greater you control|you control with power (\d+) or greater)$/.exec(s);
+  if (bigPower !== null) return { ...out, floor: out.floor + (creature && permanent && power >= Number(bigPower[1] ?? bigPower[2]) ? 1 : 0) };
   if (/^for each different power among creatures you control$/.test(s)) return { ...out, floor: out.floor + (creature && permanent ? 1 : 0) };
   if (/^greatest power among creatures you control$/.test(s)) return { ...out, floor: out.floor + (creature ? power : 0) };
   if (/^total power of attacking creatures$/.test(s) && creature && new RegExp(`\\bwhenever (?:this creature|${selfNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}) attacks\\b`, "i").test(text)) return { ...out, floor: out.floor + power };

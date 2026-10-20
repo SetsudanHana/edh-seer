@@ -22946,5 +22946,62 @@
    }
   ],
   "source": "model"
+ },
+ "Giant-Man, Gargantuan Genius": {
+  "card": {
+   "_id": "effa84e6-0aee-422f-81e9-3feeca38eda2",
+   "name": "Giant-Man, Gargantuan Genius",
+   "typeLine": "Legendary Creature — Human Scientist Hero",
+   "oracleText": "Reach\nAt the beginning of your first main phase, add {G} for each creature you control with power 4 or greater.",
+   "keywords": [
+    "Reach"
+   ],
+   "colors": [
+    "G"
+   ],
+   "colorIdentity": [
+    "G"
+   ],
+   "manaValue": 5,
+   "power": "6",
+   "toughness": "6",
+   "layout": "normal",
+   "manaCost": "{3}{G}{G}",
+   "producedMana": [
+    "G"
+   ]
+  },
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Reach"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each creature you control with power 4 or greater",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "main-phase",
+     "subject": "you",
+     "control": "you"
+    }
+   }
+  ],
+  "source": "grammar"
  }
 }
