@@ -7,7 +7,7 @@ import { deriveInputOf } from "../derive-input.js";
 import { deriveCardTags } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import type { CardTags, ManaLine } from "../schema.js";
-import { replacementAddedToken, scaleBounds, selfPutReady, unpricedLoyaltyLines } from "./mana-lines.js";
+import { replacementAddedToken, scaleBounds, selfPutReady as selfPut, unpricedLoyaltyLines } from "./mana-lines.js";
 import { COMMANDER_OPPONENTS, COMMANDER_PLAYERS } from "../table.js";
 import fixtures from "./mana-lines.fixtures.json" with { type: "json" };
 
@@ -18,6 +18,7 @@ const tagsOf = (name: string): CardTags => {
   expect(fx, `fixture for ${name}`).toBeDefined();
   return deriveCardTags(deriveInputOf(fx.card as never, fx.card._id, fx.card.name, fx.clauses));
 };
+const selfPutReady = (...a: Parameters<typeof selfPut>): number | null => selfPut(...a)?.readyTurn ?? null;
 const linesOf = (name: string, source?: ManaLine["source"]): ManaLine[] =>
   (tagsOf(name).manaLines ?? []).filter((l) => source === undefined || l.source === source);
 const only = (name: string, source?: ManaLine["source"]): ManaLine => {
@@ -398,6 +399,18 @@ describe("review round 2 (#1169 task 1)", () => {
     expect(selfPutReady("{t}: put an oil counter on this artifact.", "oil", 2, 2, false)).toBe(4);
     // a creature's free {T} put waits out summoning sickness
     expect(selfPutReady("{t}: put a luck counter on this creature.", "luck", 2, 1, true)).toBe(4);
+  });
+  it("#1279 a self put carries what ONE activation costs, refunds, whether it taps and how many reach the gate", () => {
+    const druid = "{t}: add one mana of any type that a land you control could produce. if this creature has a +1/+1 counter on it, add three mana of that type instead.\n{3}{g}{g}: adapt 3.";
+    expect(selfPut(druid, "+1/+1", 2, 1, true)).toEqual({ readyTurn: 6, activation: { mana: 5, refund: 0, taps: false, activations: 1 } });
+    const pyramid = "{2}, {t}: add one mana of any color. put a brick counter on this artifact.\n{t}: add three mana of any one color. activate only if there are three or more brick counters on this artifact.";
+    expect(selfPut(pyramid, "brick", 1, 3, false)).toEqual({ readyTurn: 5, activation: { mana: 2, refund: 1, taps: true, activations: 3 } });
+    const tablet = "{t}: put an oil counter on this artifact.\n{t}: add {c}. activate only if this artifact has two or more oil counters on it.";
+    expect(selfPut(tablet, "oil", 2, 2, false)).toEqual({ readyTurn: 4, activation: { mana: 0, refund: 0, taps: true, activations: 2 } });
+    expect(selfPut("{2}, {t}: add {g}{g}. put a luck counter on this artifact.", "luck", 1, 1, false)?.activation).toEqual({ mana: 2, refund: 2, taps: true, activations: 1 });
+    expect(selfPut("outlast {w}", "+1/+1", 2, 2, true)).toEqual({ readyTurn: 5, activation: { mana: 1, refund: 0, taps: true, activations: 2 } });
+    expect(selfPut("{4}{r}, {t}: monstrosity 2", "+1/+1", 1, 2, false)).toEqual({ readyTurn: 6, activation: { mana: 4 + 1, refund: 0, taps: true, activations: 1 } });
+    expect(selfPut("{5}{r}{r}: monstrosity 3", "+1/+1", 3, 2, false)).toEqual({ readyTurn: 8, activation: { mana: 7, refund: 0, taps: false, activations: 1 } });
   });
   it("'as long as ...' on a granted ability gates the grant", () => {
     expect(only("Honored Hierarch").gate?.text).toBe("this creature is renowned");

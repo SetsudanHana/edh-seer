@@ -1812,27 +1812,130 @@ const estimatedDeck = (c: DeckCard): DeckCard[] => [c, ...basics(37), ...spells(
 const mana = (c: DeckCard, turns: number[], cast = Math.max(1, c.card.manaValue ?? 0)): number[] =>
   turns.map((t) => produced(manaOutput(c, estimatedDeck(c), true), [], [], t, cast, false));
 
-test("Pyramid of the Pantheon's three-mana line produces nothing until its own bricks are there (three puts at {2} each) and three after, counted from the turn it was CAST", () => {
+// #1279 TASK 2: A SELF-PUT COUNTER GATE IS AN INVESTMENT THE GAME PAYS (owner ruling 2026-10-20), not a static turn read off derive's `readyTurn`. `manaOutput` carries `estimated.invest` (derive's
+// `put.activation`), `produced` holds the gate only from the `readyFrom` turn the simulated game set when it paid the last activation, and `simulate` pays like an accelerant cast (tests below).
+/** What the card taps for on each of `turns` when the game has made its counters ready from `readyFrom` (undefined: never). */
+const manaReady = (c: DeckCard, turns: number[], readyFrom?: number): number[] =>
+  turns.map((t) => produced(manaOutput(c, estimatedDeck(c), true), [], [], t, 1, false, readyFrom));
+
+test("Pyramid of the Pantheon: the gate carries its activation (pay 2, refund 1, taps, three times) and is ready only from the turn the GAME says (readyFrom), never from the cast turn", () => {
   const pyramid = real("Pyramid of the Pantheon");
-  // on curve (mana value 1, cast turn 1): bricks on turns 2, 3 and 4, three mana from turn 5
-  expect(mana(pyramid, [1, 2, 3, 4, 5, 6, 9])).toEqual([0, 0, 0, 0, 3, 3, 3]);
-  // cast LATE, on turn 8: the bricks land on turns 9, 10 and 11, so three mana from turn 12 and not before
-  expect(mana(pyramid, [8, 9, 10, 11, 12, 13], 8)).toEqual([0, 0, 0, 0, 3, 3]);
+  expect(manaOutput(pyramid, estimatedDeck(pyramid), true).estimated?.invest).toEqual({ mana: 2, refund: 1, taps: true, activations: 3 });
+  expect(manaOutput(pyramid, estimatedDeck(pyramid), true).estimated?.after).toBeUndefined();
+  // never paid: nothing, however late the turn (this was [0,0,0,0,3,3,3] by the static clock)
+  expect(mana(pyramid, [1, 2, 3, 4, 5, 6, 9])).toEqual([0, 0, 0, 0, 0, 0, 0]);
+  expect(manaReady(pyramid, [4, 5, 6, 7], 6)).toEqual([0, 0, 3, 3]);
 });
 
-test("Tablet of Compleation's {C} line produces nothing until two oil counters are on it and its stated amount after, counted from the turn it was CAST", () => {
+test("Tablet of Compleation: the gate carries its free tap-put (cost 0, two activations); ready only from readyFrom", () => {
   const tablet = real("Tablet of Compleation");
-  expect(mana(tablet, [1, 2, 3, 4, 5, 9])).toEqual([0, 0, 0, 1, 1, 1]);
-  // cast late, on turn 6: counters on turns 6 and 7, mana from turn 8
-  expect(mana(tablet, [6, 7, 8, 9], 6)).toEqual([0, 0, 1, 1]);
+  expect(manaOutput(tablet, estimatedDeck(tablet), true).estimated?.invest).toEqual({ mana: 0, refund: 0, taps: true, activations: 2 });
+  expect(mana(tablet, [1, 2, 3, 4, 5, 9])).toEqual([0, 0, 0, 0, 0, 0]);
+  expect(manaReady(tablet, [2, 3, 4], 3)).toEqual([0, 1, 1]);
 });
 
-test("Incubation Druid taps for its ungated 1 and for three the turn AFTER its Adapt is paid, counted from the turn it was cast", () => {
+test("Incubation Druid: its plain tap is 1 and its Adapt (5 mana, once, no tap) makes it 3 only from readyFrom", () => {
   const druid = real("Incubation Druid");
-  // on curve (cast turn 2): {3}{G}{G} is paid on turn 5, the counters are there on turn 6
-  expect(mana(druid, [1, 2, 3, 4, 5, 6, 9])).toEqual([1, 1, 1, 1, 1, 3, 3]);
-  // cast late, on turn 8: the delay is the on-curve one (4 turns after the cast), three mana from turn 12. That UNDER-claims (the {3}{G}{G} is affordable the turn after the cast, so turn 10): the safe direction
-  expect(mana(druid, [8, 9, 10, 11, 12, 13], 8)).toEqual([1, 1, 1, 1, 3, 3]);
+  expect(manaOutput(druid, estimatedDeck(druid), true).estimated?.invest).toEqual({ mana: 5, refund: 0, taps: false, activations: 1 });
+  expect(mana(druid, [1, 2, 6, 9])).toEqual([1, 1, 1, 1]);
+  expect(manaReady(druid, [5, 6, 7], 6)).toEqual([1, 3, 3]);
+});
+
+test("a row whose put carries NO activation (a stale derive) keeps the static `after` clock", () => {
+  const druid = real("Incubation Druid");
+  for (const l of druid.tags!.manaLines!) if (l.gate?.kind === "counter" && l.gate.put?.by === "self") delete (l.gate.put as { activation?: unknown }).activation;
+  const out = manaOutput(druid, estimatedDeck(druid), true);
+  expect(out.estimated?.invest).toBeUndefined();
+  expect(out.estimated?.after).toBe(4);
+  expect(mana(druid, [1, 5, 6, 9])).toEqual([1, 1, 3, 3]);
+});
+
+/** One game per trial, every turn seen: the deck is the card and basics, so the only spending is the investment. */
+const watch = (cardName: string, opts: { trials: number; turns: number; seed: number; holdUp?: number }): { turn: number; made: number; pool: number; max: number; lands: number }[][] => {
+  const dc = real(cardName);
+  const deck = [dc, ...basics(99)];
+  const games: { turn: number; made: number; pool: number; max: number; lands: number }[][] = Array.from({ length: opts.trials }, () => []);
+  simulate(deck, { ...opts, mulligan: false, observe: (v) => games[v.trial]!.push({ turn: v.turn, made: v.made, pool: v.pool, lands: v.landsOnBoard, max: Math.max(0, ...v.sources.map((x) => x.mana)) }) });
+  return games;
+};
+
+test("Incubation Druid is a 3-mana source only from the turn AFTER the game's pool paid the Adapt's 5; a game whose pool never reaches 5 never gets there", () => {
+  const games = watch("Incubation Druid", { trials: 300, turns: 8, seed: 5 });
+  let paidGames = 0, starved = 0;
+  for (const g of games) {
+    const ready = g.find((x) => x.max === 3);
+    if (!ready) { starved++; continue; }
+    paidGames++;
+    const prev = g.find((x) => x.turn === ready.turn - 1)!;
+    // the turn before: the 5 came out of the pool, and only 5 (a Druid tap of 1 and 4 lands or more on the board)
+    expect(prev.made - prev.pool, `ready turn ${ready.turn}`).toBeGreaterThanOrEqual(5);
+    expect(prev.made, `the pool reached the cost`).toBeGreaterThanOrEqual(5);
+  }
+  expect(paidGames).toBeGreaterThan(0);
+  expect(starved).toBeGreaterThan(0);
+  // never 3 on a turn whose predecessor did not pay: a game with no 5-mana turn has no 3 anywhere
+  for (const g of games) if (!g.some((x) => x.made >= 5)) expect(g.some((x) => x.max === 3)).toBe(false);
+});
+
+test("Incubation Druid with 2 held up needs 7 in the pool, not 5", () => {
+  const games = watch("Incubation Druid", { trials: 300, turns: 8, seed: 5, holdUp: 2 });
+  for (const g of games) {
+    const ready = g.find((x) => x.max === 3);
+    if (!ready) continue;
+    const prev = g.find((x) => x.turn === ready.turn - 1)!;
+    expect(prev.made).toBeGreaterThanOrEqual(7);
+  }
+});
+
+test("Pyramid of the Pantheon is a 3-mana source only after three paid activations, one a turn, each net -1 (pay 2, get 1); a turn with a pool under 2 skips", () => {
+  const games = watch("Pyramid of the Pantheon", { trials: 300, turns: 9, seed: 9 });
+  let ready = 0;
+  for (const g of games) {
+    const r = g.find((x) => x.max === 3);
+    if (!r) continue;
+    ready++;
+    // before ready the pool lost the cast ({1}) and, net, 1 on each of the three paying turns (pay 2, refund 1): 4 in all, and no turn paid twice
+    const lost = g.filter((x) => x.turn < r.turn).map((x) => x.made - x.pool);
+    expect(lost.reduce((n, x) => n + x, 0), `ready at turn ${r.turn}`).toBe(4);
+    expect(Math.max(...lost)).toBeLessThanOrEqual(2);
+    // once ready it makes 3 and pays nothing more
+    for (const x of g.filter((y) => y.turn >= r.turn)) expect(x.made - x.pool).toBeLessThanOrEqual(0);
+  }
+  expect(ready).toBeGreaterThan(0);
+  // a game cannot be ready before the turn after its third payment: the earliest cast is turn 1, payments on turns 2, 3, 4, ready on 5
+  for (const g of games) { const r = g.find((x) => x.max === 3); if (r) expect(r.turn).toBeGreaterThanOrEqual(5); }
+});
+
+test("Tablet of Compleation invests from the turn it lands for no mana and is a source the turn after its second activation", () => {
+  const turns = 8;
+  const games = watch("Tablet of Compleation", { trials: 300, turns, seed: 3 });
+  let ready = 0;
+  for (const g of games) {
+    const cast = g.find((x) => x.pool < x.made); // the {2} came out of the pool
+    if (!cast) continue;
+    // puts on the cast turn and the next (a rock pays the turn it lands, at no mana), so its {C} is in the pool from cast + 2: made beyond the land taps
+    const first = g.find((x) => x.made > x.lands);
+    if (cast.turn + 2 <= turns) { expect(first?.turn, `cast turn ${cast.turn}`).toBe(cast.turn + 2); ready++; }
+    else expect(first).toBeUndefined();
+  }
+  expect(ready).toBeGreaterThan(0);
+});
+
+// A REGRESSION GUARD, NOT A PROOF of the free-put hold-up rule: no simulated Tablet game reaches the investment step with pool < holdUp (it is cast only at pool >= mana value + holdUp), so this
+// passes with or without the `inv.mana > 0` guard; it pins the ready turn under hold-up (review, #1279).
+test("Tablet of Compleation's ready turn does not move with the hold-up, and a costed put (Druid) still waits for pool - holdUp", () => {
+  for (const holdUp of [1, 2, 3, 4]) {
+    const turns = 10;
+    const games = watch("Tablet of Compleation", { trials: 300, turns, seed: 3, holdUp });
+    let ready = 0;
+    for (const g of games) {
+      const cast = g.find((x) => x.pool < x.made);
+      if (!cast) continue;
+      const first = g.find((x) => x.made > x.lands);
+      if (cast.turn + 2 <= turns) { expect(first?.turn, `holdUp ${holdUp}, cast turn ${cast.turn}`).toBe(cast.turn + 2); ready++; }
+    }
+    expect(ready, `holdUp ${holdUp}`).toBeGreaterThan(0);
+  }
 });
 
 test("'you played a land this turn' is read from the game's own land drop, not from a table: a source gated on it taps on the turns the simulated game played a land", () => {

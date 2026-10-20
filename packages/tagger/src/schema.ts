@@ -1431,9 +1431,9 @@ export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "
  *  a BASIC land ("if you control a basic land"); `minPower` for "a creature with power N or greater". `same-name`: N lands with one name. `tron`: two named lands ("an urza's mine and an
  *  urza's tower"; the subtypes as printed). `speed`: "speed 4". `initiative`.
  *  `threshold` (#1267, owner 2026-10-17): N cards in YOUR graveyard, of the card `types` (any of: "instant and/or sorcery") or `subtypes` ("an elf card") when set, and only of the `supertypes` named (a gate that names "a legendary creature card", The Grey Havens, carries `supertypes: ["legendary"]` and `types: ["creature"]`: a card must be all the supertypes named) (Cabal Ritual, Dark Petition, Lys Alana Dignitary).
- *  `counter`: N counters of one kind ON THE CARD ITSELF ("has a +1/+1 counter on it", Incubation Druid). `put` says where they come from when the card's own words say so: `{by: "self", readyTurn}` the card
+ *  `counter`: N counters of one kind ON THE CARD ITSELF ("has a +1/+1 counter on it", Incubation Druid). `put` says where they come from when the card's own words say so: `{by: "self", readyTurn, activation}` the card
  *  puts them on itself by its own ACTIVATED ability or keyword (Pyramid of the Pantheon's brick, Tablet of Compleation's oil; Adapt, Monstrosity, Outlast; a trigger such as Charitable Levy's, and Evolve, give no `put`), all `need` of them at the
- *  earliest on turn `readyTurn`; `{by: "opening-hand"}` only as it begins the game on the battlefield (Gemstone Caverns's luck counter). Absent: nothing in the card puts them there, and the gate is unmet.
+ *  earliest on turn `readyTurn`; `activation` prices ONE activation of the put (owner ruling 2026-10-20, #1279: the goldfish pays for it like an accelerant cast): `mana` its cost's mana value, `refund` the mana the same ability adds back (Pyramid's "Add one mana of any color" 1; unread 0), `taps` whether the cost has {T}, `activations` how many reach `need`; `{by: "opening-hand"}` only as it begins the game on the battlefield (Gemstone Caverns's luck counter). Absent: nothing in the card puts them there, and the gate is unmet.
  *  `turn-event`: something that happened earlier THIS TURN (Famished Foragers's "an opponent lost life this turn"). `unknown`: everything no decklist settles (game state, a trigger, "it was bargained"), unmet everywhere. */
 export type TurnEvent = "opponent-lost-life" | "entered-this-turn" | "creature-died" | "permanent-left" | "attacked" | "land-played";
 export type ManaGate =
@@ -1443,7 +1443,7 @@ export type ManaGate =
   | { kind: "speed"; n: number; text: string }
   | { kind: "initiative"; text: string }
   | { kind: "threshold"; zone: "graveyard"; need: number; types?: string[]; subtypes?: string[]; supertypes?: string[]; text: string }
-  | { kind: "counter"; counter: string; need: number; put?: { by: "self"; readyTurn: number } | { by: "opening-hand" }; text: string }
+  | { kind: "counter"; counter: string; need: number; put?: { by: "self"; readyTurn: number; activation: { mana: number; refund: number; taps: boolean; activations: number } } | { by: "opening-hand" }; text: string }
   | { kind: "turn-event"; event: TurnEvent; text: string }
   | { kind: "unknown"; text: string };
 

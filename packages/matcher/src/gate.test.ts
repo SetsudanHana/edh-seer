@@ -216,7 +216,7 @@ test("threshold, typed: only matching cards count -- instants and sorceries feed
 });
 
 test("counter, the card's own ability puts it there: met from the cast turn plus the counters needed, by a turn (Pyramid of the Pantheon, Tablet of Compleation)", () => {
-  const pyramid: ReturnType<typeof parseGate> = { kind: "counter", counter: "brick", need: 3, put: { by: "self", readyTurn: 5 }, text: "there are three or more brick counters on this artifact" };
+  const pyramid: ReturnType<typeof parseGate> = { kind: "counter", counter: "brick", need: 3, put: { by: "self", readyTurn: 5, activation: { mana: 2, refund: 1, taps: true, activations: 3 } }, text: "there are three or more brick counters on this artifact" };
   const deck = landsDeck([]);
   expect(gateProbability(pyramid, deck, 4)).toBe(0);
   expect(gateProbability(pyramid, deck, 5)).toBe(1);
@@ -231,7 +231,7 @@ test("counter, the deck does NOT supply it: a counter gate with no put of its ow
   expect(gateProbability(druid, landsDeck(copies(40, adder)))).toBe(0);
   expect(gateVerdict(druid, landsDeck(copies(40, adder)))).toBe("unmet");
   // ...and Incubation Druid's own Adapt (derive's `put: self` at turn 5) is met from the turn it can pay {3}{G}{G}
-  const adapt: ReturnType<typeof parseGate> = { kind: "counter", counter: "+1/+1", need: 1, put: { by: "self", readyTurn: 5 }, text: druid.text };
+  const adapt: ReturnType<typeof parseGate> = { kind: "counter", counter: "+1/+1", need: 1, put: { by: "self", readyTurn: 5, activation: { mana: 5, refund: 0, taps: false, activations: 1 } }, text: druid.text };
   expect(gateProbability(adapt, landsDeck([]), 4)).toBe(0);
   expect(gateProbability(adapt, landsDeck([]), 5)).toBe(1);
 });

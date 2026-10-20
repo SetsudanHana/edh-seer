@@ -500,7 +500,8 @@ import { emblemRecipient } from "../emblem.js";
 // 342: #1267 review 2 -- a counter gate's `put` is priced by the cost of the put itself and never by a trigger: Pyramid of the Pantheon (`{2}, {T}` per brick) is ready turn 5, not 4; Charitable Levy's put is a TRIGGER on every noncreature spell and has none (unmet); Outlast is one counter per {T} activation; Evolve needs a larger creature to enter and has none (`selfPutReady`).
 // 343: #1267 review 3 -- "add three mana of that type instead" (Incubation Druid) reads the type from the sentence before it ("any type that a land you control could produce"): the gated line is no longer `unread`, so the goldfish can play it by the turn.
 // 344: #1267 review 4 -- Adapt and Monstrosity put their counters when the activation RESOLVES, so a `put` from them is ready the turn AFTER the cost is paid (first + 1): Incubation Druid readyTurn 5 -> 6. A counter gate's readyTurn is relative to an on-curve cast; the goldfish counts it from the permanent's own cast turn.
-export const DERIVE_VERSION = 344;
+// 345: #1279 (owner ruling 2026-10-20) a counter gate's self `put` carries `activation` {mana, refund, taps, activations}: what ONE activation of the put costs, the mana it adds back, whether it taps, and how many reach `need` (Druid 5/0/no/1, Pyramid 2/1/tap/3, Tablet 0/0/tap/2), so the goldfish can pay for the gate. `readyTurn` is unchanged.
+export const DERIVE_VERSION = 345;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
