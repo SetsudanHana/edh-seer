@@ -28,7 +28,7 @@ function counted(text: string): { amount: string; rest: string } {
 const SELF_OBJECT = /^(?:this|~|it)\b|^this (?:card|creature|artifact|enchantment|land|permanent|planeswalker|equipment|vehicle|aura)\b/i;
 function objectOf(text: string, cardName: string | undefined, zone?: string): CostObject {
   const { amount, rest } = counted(text);
-  const body = rest.replace(/\s+from your (graveyard|hand)\b/i, "").trim();
+  const body = rest.replace(/ from your (graveyard|hand)\b/i, "").trim();
   if (SELF_OBJECT.test(body) || isSelfSubject(body, cardName)) return { amount, subject: zone ? { self: true, zone } : { self: true } };
   const { scope: _s, fromZone: _f, ...subject } = parseSubject(body);
   return { amount, subject: { ...subject, control: "you", ...(zone ? { zone } : {}) } };
@@ -72,10 +72,16 @@ export function paymentOf(cost: string | undefined, cardName?: string): Payment 
     } else if ((m = /^exile (.+?)(?: from your (graveyard|hand))?$/i.exec(part))) push(p, "exile", objectOf(m[1]!, cardName, m[2]?.toLowerCase()));
     else if ((m = /^tap (.+)$/i.exec(part))) push(p, "tapOther", objectOf(m[1]!.replace(/\buntapped\s+/i, ""), cardName));
     else if ((m = /^return (.+?) to (?:its|their) owner'?s'? hands?$/i.exec(part))) push(p, "returnToHand", objectOf(m[1]!, cardName));
-    else if ((m = /^remove (.+?) (?:([+-]\d+\/[+-]\d+|\w+) )?counters? from (.+)$/i.exec(part))) {
-      const { amount } = counted(m[1]!);
-      const obj = objectOf(`a ${m[3]!}`, cardName);
-      push(p, "removeCounter", { amount, ...(m[2] ? { counter: m[2].toLowerCase() } : {}), subject: obj.subject });
+    else if ((m = /^remove (.+?) counters? from (.+)$/i.exec(part))) {
+      // The optional kind ("+1/+1", "oil") is the LAST token of group 1 when it has two or more; split
+      // in code, not in the regex, so the lazy group cannot overlap an optional one (polynomial-redos).
+      const head = m[1]!;
+      const cut = head.lastIndexOf(" ");
+      const kind = cut > 0 ? head.slice(cut + 1) : "";
+      const isKind = /^(?:[+-]\d+\/[+-]\d+|\w+)$/.test(kind);
+      const { amount } = counted(isKind ? head.slice(0, cut) : head);
+      const obj = objectOf(`a ${m[2]!}`, cardName);
+      push(p, "removeCounter", { amount, ...(isKind ? { counter: kind.toLowerCase() } : {}), subject: obj.subject });
     } else push(p, "other", part);
   }
   return Object.keys(p).length ? p : undefined;

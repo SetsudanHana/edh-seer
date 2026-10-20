@@ -50,3 +50,25 @@ test("derive stamps it beside the raw cost", () => {
   expect(skel.cost).toBe("{1}{B}");
   expect(skel.payment).toEqual({ mana: "{1}{B}" });
 });
+
+// ReDoS guards (CodeQL js/polynomial-redos): pin today's reads, and a pathological input stays linear.
+test("remove-counter cost: amount and kind", () => {
+  const rc = (c: string) => paymentOf(c, "Foo")?.removeCounter?.[0];
+  expect(rc("Remove a counter from this creature")).toMatchObject({ amount: "1" });
+  expect(rc("Remove a counter from this creature")?.counter).toBeUndefined();
+  expect(rc("Remove two counters from this creature")).toMatchObject({ amount: "2" });
+  expect(rc("Remove two counters from this creature")?.counter).toBeUndefined();
+  expect(rc("Remove a +1/+1 counter from this creature")).toMatchObject({ amount: "1", counter: "+1/+1" });
+  expect(rc("Remove an oil counter from this creature")).toMatchObject({ amount: "1", counter: "oil" });
+  expect(rc("Remove X charge counters from this creature")).toMatchObject({ amount: "X", counter: "charge" });
+  expect(rc("Remove three -1/-1 counters from a creature you control")).toMatchObject({ amount: "3", counter: "-1/-1" });
+});
+test("cost parsing stays fast on pathological input", () => {
+  const t0 = performance.now();
+  paymentOf("Sacrifice a b" + " ".repeat(50_000) + "x", "Foo");
+  expect(performance.now() - t0).toBeLessThan(100);
+  const t1 = performance.now();
+  paymentOf("Remove " + "a counter from ".repeat(5_000) + "x", "Foo");
+  paymentOf("Remove " + "a ".repeat(50_000), "Foo");
+  expect(performance.now() - t1).toBeLessThan(100);
+});
