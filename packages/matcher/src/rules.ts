@@ -1,6 +1,7 @@
 import ruleSet from "./rules.json" with { type: "json" };
-import type { ManaLineSource } from "@edh-seer/tagger";
+import type { ManaLine, ManaLineSource } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
+import { classifyLand } from "./land-conditions.js";
 import { cardLines, isLoyaltyAbility, usableLoyalty } from "./mana-lines.js";
 import { countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
 
@@ -83,7 +84,11 @@ export type RuleClause =
    *  ability list and printed text instead until #1190, which is how four Auras that make no mana anywhere else were ramp. `source` names the line's `ManaLineSource`; `repeats` its
    *  `repeats` label (`null` = the ability the line was read from states none); `producesToken` the lines that make a mana token (Treasure, Gold, Powerstone, Eldrazi Spawn). Closed
    *  like `effectKind`: a filter on a field of the line, never an expression. */
-  | { op: "manaLine"; source?: ManaLineSource[]; repeats?: (string | null)[]; producesToken?: true }
+  | { op: "manaLine"; source?: ManaLineSource[]; repeats?: (string | null)[]; producesToken?: true; amountAtLeast?: number; bareTap?: true }
+  /** The land ENTERS TAPPED, by the shared land classifier (`classifyLand`, land-conditions.ts: the one reader of that cue): its template is `unconditional` or `unclassified`. A land that is
+   *  tapped only "unless" a condition the classifier READS (check, slow, fast, bfz, pod) is not; one whose "unless" it cannot read is `unclassified` and counts as tapped (the classifier's own
+   *  default, the direction that does not flatter a deck). The printed pattern this replaced (`enters tapped(?!\s+unless)`) forgave every "tapped unless". */
+  | { op: "landEntersTapped" }
   /** The card puts lands onto the battlefield FROM THE LIBRARY (`CardTags.landFetch`: Cultivate, Wood Elves, Wayfarer's Bauble). A fetch to hand only is no `landFetch`. */
   | { op: "landFetch" }
   | { op: "anyOf"; clauses: RuleClause[] }
@@ -241,6 +246,11 @@ function withoutSelfGrants(text: string, cardName: string): string {
 const GRANTS_PROTECTION =
   /\b(?:gains?|have|has|get|grants?)\b[^.]{0,70}?(?:hexproof|indestructible|shroud|protection from|phases? out)/i;
 
+/** A mana line's cost is exactly `{T}`: it taps the card itself and pays nothing else (`manaLine.bareTap`). Every payment field of `ManaLine.cost` is read. */
+function isBareTap(c: ManaLine["cost"]): boolean {
+  return c.tap && c.mana === 0 && !c.sacrificeSelf && !c.sacrificeOther && c.life === 0 && c.counters === null && !c.tapOther && c.loyalty === null && c.consumes.length === 0 && c.other.length === 0;
+}
+
 /** THE MOST A ONE-SHOT SPELL NETS, from its DERIVED MANA LINES (`CardTags.manaLines`, #1169 task 2b-2; it was a regex over the oracle text), or
  *  `undefined` when the card states no number to judge: no mana line at all, a line derive could not read, an amount that scales ("Add {R} for
  *  each card in target opponent's hand", Jeska's Will, Rite of Flame's second sentence), or a TAP BONUS FOR THE TURN (High Tide: "Until end of turn, whenever a
@@ -341,7 +351,13 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         (!isLoyaltyAbility(l) || usableLoyalty(l))
         && (clause.source === undefined || clause.source.includes(l.source))
         && (clause.repeats === undefined || clause.repeats.includes(l.repeats))
-        && (clause.producesToken === undefined || l.producesToken !== null));
+        && (clause.producesToken === undefined || l.producesToken !== null)
+        // `amountAtLeast`: the line's FIXED amount is at least N. A scaling line (`fixed` null) never counts: the printed pattern this replaced needed a stated 2+.
+        && (clause.amountAtLeast === undefined || (l.amount.fixed !== null && l.amount.fixed >= clause.amountAtLeast))
+        // `bareTap`: the cost is exactly {T} -- it taps itself and pays nothing else (no mana, sacrifice of itself or another, life, counter, other tap, loyalty, consumed resource or other piece).
+        && (clause.bareTap === undefined || isBareTap(l.cost)));
+    case "landEntersTapped":
+      return ["unconditional", "unclassified"].includes(classifyLand(dc.card, dc.tags).template);
     case "landFetch":
       // ...and the same for a walker's land fetch (Nissa, Worldwaker's -7 from loyalty 3): a fetch line that is a loyalty ability counts only if usable on the cast turn.
       return dc.tags?.landFetch !== undefined && (() => {

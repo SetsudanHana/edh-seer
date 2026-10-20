@@ -406,12 +406,14 @@ test("only graveyard carries a recurring mark", () => {
  *  category memberships, so this test is the only thing standing between the negative lookahead and
  *  a silent revert. */
 test("a conditionally-tapped land is not read as unconditionally tapped", () => {
-  const conditional = mk(
+  // The two-mana {T} line is DERIVED now (#1266): `ramp.land.bigMana` reads `manaLines`, so the fixtures carry one.
+  const withLine = (c: DeckCard): DeckCard => ({ ...c, tags: manaTags([mkLine({ amount: { fixed: 2, scales: null } })]) });
+  const conditional = withLine(mk(
     "Riverpyre Verge",
     "This land enters tapped unless you control a Mountain or an Island.\n{T}: Add {U}{R}.",
     "Land",
-  );
-  const unconditional = mk("Karoo Gate", "This land enters tapped.\n{T}: Add {G}{W}.", "Land");
+  ));
+  const unconditional = withLine(mk("Karoo Gate", "This land enters tapped.\n{T}: Add {G}{W}.", "Land"));
   const bigMana = (c: DeckCard): boolean =>
     (detectBuildCategories([c]).get("ramp") ?? new Set()).has(c.card.name);
   expect(bigMana(conditional)).toBe(true);
@@ -1119,5 +1121,62 @@ describe("ramp.landPut is derived", () => {
     const yes: Rule = { id: "a", match: [{ op: "allOf", clauses: [{ op: "emits", verbs: ["enters"] }, { op: "not", clause: { op: "emits", verbs: ["dies"] } }] }] };
     expect(ruleMatches(yes, land("land", "hand"), set)).toBe(true);
     expect(ruleMatches(yes, plus(land("land", "hand"), "dies", { control: "you" }), set)).toBe(false);
+  });
+});
+
+/** ramp.land.fetchesTwo and ramp.land.bigMana read DERIVED mana lines and the shared land classifier, not printed text (#1266). Oracle texts are verbatim from the corpus; where the
+ *  must-hold cases carry NO oracle text the old printed pattern could not have matched them, and the not-hold ones carry text the old pattern WOULD have matched. */
+describe("ramp.land.fetchesTwo and ramp.land.bigMana are derived", () => {
+  const set = loadRules();
+  const two = set.rules.find((r) => r.id === "ramp.land.fetchesTwo")!;
+  const big = set.rules.find((r) => r.id === "ramp.land.bigMana")!;
+  const land = (name: string, oracleText: string, lines: ManaLine[]): DeckCard => ({ card: { name, oracleText, typeLine: "Land" } as Card, tags: manaTags(lines) });
+  const amount = (n: number | null): Partial<ManaLine> => ({ amount: { fixed: n, scales: n === null ? "x" : null } });
+  const cost = (over: Partial<ManaLine["cost"]>): Partial<ManaLine> => ({ cost: { ...FREE_TAP, ...over } });
+  const fetch = (n: number, over: Partial<ManaLine["cost"]> = {}): ManaLine =>
+    mkLine({ source: "fetch", repeats: "once", ...amount(n), ...cost({ mana: 2, sacrificeSelf: true, ...over }) });
+  const TAPPED = "This land enters tapped.";
+
+  test("a bare {T} that adds two, on a land that enters untapped, is bigMana with no oracle text (Ancient Tomb)", () => {
+    const tomb = land("Ancient Tomb", "", [mkLine({ ...amount(2) })]);
+    expect(ruleMatches(big, tomb, set)).toBe(true);
+    expect(ruleMatches(big, land("City of Traitors", "", [mkLine({ ...amount(2) })]), set)).toBe(true);
+  });
+  test("a GATED bare-{T} line of 2+ still holds (owner 2026-10-13, #1169; Urza's Tower: 3 mana under the Tron gate)", () => {
+    const tower = land("Urza's Tower", "{T}: Add {C}. If you control an Urza's Mine and an Urza's Power-Plant, add {C}{C}{C} instead.", [
+      mkLine({ ...amount(1) }),
+      mkLine({ ...amount(3), gate: { kind: "tron", names: ["urza's mine", "urza's power-plant"], text: "you control an urza's mine and an urza's power-plant" } as never }),
+    ]);
+    expect(ruleMatches(big, tower, set)).toBe(true);
+  });
+  test("a land that sacrifices itself to fetch two is fetchesTwo with no oracle text (Myriad Landscape)", () => {
+    expect(ruleMatches(two, land("Myriad Landscape", "", [mkLine({ ...amount(1) }), fetch(2)]), set)).toBe(true);
+  });
+  test("a fetchland that finds ONE land is not fetchesTwo (Evolving Wilds)", () => {
+    expect(ruleMatches(two, land("Evolving Wilds", "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", [fetch(1, { mana: 0 })]), set)).toBe(false);
+  });
+  test("a scaling add is no stated 2+ (the printed pattern needed a number)", () => {
+    expect(ruleMatches(big, land("x", "", [mkLine({ ...amount(null) })]), set)).toBe(false);
+  });
+  test("a bare-{T} add of ONE is not bigMana", () => {
+    expect(ruleMatches(big, land("Forest", "", [mkLine({ ...amount(1) })]), set)).toBe(false);
+  });
+  test("a cost beyond the bare {T} is not bigMana: a sacrifice (Crystal Vein), mana, life, a counter, another tap", () => {
+    // The oracle text here is the one the old pattern read as a bare "{T}: Add {C}{C}".
+    for (const over of [{ sacrificeSelf: true }, { sacrificeOther: true }, { mana: 1 }, { life: 2 }, { counters: "remove" as const }, { tapOther: true }, { tap: false }, { other: ["Exert this land"] }, { consumes: ["discard" as const] }])
+      expect(ruleMatches(big, land("Crystal Vein", "{T}: Add {C}{C}.", [mkLine({ ...amount(2), ...cost(over) })]), set), JSON.stringify(over)).toBe(false);
+  });
+  test("a two-mana land that enters tapped is not bigMana (Rakdos Carnarium), and neither is one whose tapped condition the classifier cannot read (Dormant Volcano)", () => {
+    const line = mkLine({ ...amount(2) });
+    expect(ruleMatches(big, land("Rakdos Carnarium", `${TAPPED}\nWhen this land enters, return a land you control to its owner's hand.\n{T}: Add {B}{R}.`, [line]), set)).toBe(false);
+    expect(ruleMatches(big, land("Dormant Volcano", "This land enters tapped.\nWhen this land enters, sacrifice it unless you return an untapped Mountain you control to its owner's hand.\n{T}: Add {C}{R}.", [line]), set)).toBe(false);
+  });
+  test("a two-mana land with a conditional or absent tapped clause stays bigMana", () => {
+    const line = mkLine({ ...amount(2) });
+    expect(ruleMatches(big, land("Lotus Vale", "", [line]), set)).toBe(true);
+    expect(ruleMatches(big, land("x", "This land enters tapped unless you control a Mountain.\n{T}: Add {R}{R}.", [line]), set)).toBe(true);
+  });
+  test("a non-land is never either rule", () => {
+    expect(ruleMatches(big, { card: { name: "Sol Ring", oracleText: "", typeLine: "Artifact" } as Card, tags: manaTags([mkLine({ ...amount(2) })]) }, set)).toBe(false);
   });
 });
