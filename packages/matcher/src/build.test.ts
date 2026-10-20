@@ -35,8 +35,14 @@ const rockLines = [tapFor(["C"])];
 const treasureLine = (repeats: ManaLine["repeats"] = "once", token = "treasure") => mkLine({ source: "token-maker", repeats, producesToken: token, cost: { ...FREE_TAP, tap: false } });
 const fetchLine = mkLine({ source: "fetch", repeats: "once", cost: { ...FREE_TAP, tap: false } });
 // A land's two-mana tap and its sacrifice-for-two fetch are DERIVED lines now (#1266: `ramp.land.bigMana` and `ramp.land.fetchesTwo` read `manaLines`, not the printed text).
-const bigTapLine = mkLine({ amount: { fixed: 2, scales: null } });
-const fetchTwoLine = mkLine({ source: "fetch", repeats: "once", amount: { fixed: 2, scales: null }, cost: { ...FREE_TAP, mana: 2, sacrificeSelf: true } });
+// The lines below are the real derived ones, read from Mongo.
+const MYRIAD_TEXT = "This land enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.";
+const landTap1 = tapFor(["C"]);
+const bigTapLine = mkLine({ colourless: 2, amount: { fixed: 2, scales: null }, net: 2 });
+const templeLine = mkLine({ colourless: 2, amount: { fixed: 2, scales: null }, net: 2, gate: { kind: "control", need: 5, nouns: ["land"], text: "you control five or more lands" } as never });
+const fetchTwoLine = mkLine({ source: "fetch", repeats: "once", colours: ["W", "U", "B", "R", "G"], colourless: 0, amount: { fixed: 2, scales: null }, net: 0, cost: { ...FREE_TAP, mana: 2, sacrificeSelf: true } });
+// DERIVE DEFECT, kept as the real record: "a Forest card and a Plains card" is counted as ONE land, so Krosan Verge's fetch line says fixed 1 and it is not ramp here.
+const krosanFetchLine = mkLine({ source: "fetch", repeats: "once", colours: ["W", "G"], colourless: 0, amount: { fixed: 1, scales: null }, net: -1, cost: { ...FREE_TAP, mana: 2, sacrificeSelf: true } });
 const fetched = (kind: "spell" | "permanent", reach = ["W", "U", "B", "R", "G"]): Partial<CardTags> => ({ landFetch: { kind, tapped: true, reach } });
 const drawAbility: CardTags["abilities"] = [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "draw-card" } }];
 
@@ -386,11 +392,11 @@ test("land-ramp spells (search a land onto the battlefield) count as ramp", () =
 
 test("ramp-lands that sacrifice for two lands are ramp; fetchlands are not", () => {
   const m = detectBuildCategories([
-    mk("Myriad Landscape", "Myriad Landscape enters tapped. {T}: Add {C}. {2}, {T}, Sacrifice Myriad Landscape: Search your library for up to two basic land cards with the same name, put them onto the battlefield tapped, then shuffle.", "Land", [], [fetchTwoLine]),
-    mk("Krosan Verge", "Krosan Verge enters tapped. {T}, Sacrifice Krosan Verge: Search your library for a Forest and a Plains card, put them onto the battlefield tapped, then shuffle.", "Land", [], [fetchTwoLine]),
+    mk("Myriad Landscape", MYRIAD_TEXT, "Land", [], [landTap1, fetchTwoLine]),
+    mk("Krosan Verge", "This land enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search your library for a Forest card and a Plains card, put them onto the battlefield tapped, then shuffle.", "Land", [], [landTap1, krosanFetchLine]),
     mk("Arid Mesa", "{T}, Pay 1 life, Sacrifice Arid Mesa: Search your library for a Mountain or Plains card, put it onto the battlefield, then shuffle.", "Land"),
   ]);
-  expect(m.get("ramp")).toEqual(new Set(["Myriad Landscape", "Krosan Verge"]));
+  expect(m.get("ramp")).toEqual(new Set(["Myriad Landscape"]));
 });
 
 test("treasure makers count as ramp", () => {
@@ -552,7 +558,7 @@ test("exile-a-spell pseudo-counters are stack interaction; exile-a-creature (rem
 
 test("a land producing two mana from one tap fills the ramp role", () => {
   const members = detectBuildCategories([
-    mk("Ancient Tomb", "{T}: Add {C}{C}. Ancient Tomb deals 2 damage to you.", "Land", [], [bigTapLine]),
+    mk("Ancient Tomb", "{T}: Add {C}{C}. This land deals 2 damage to you.", "Land", [], [bigTapLine]),
   ]);
   expect(members.get("ramp")).toEqual(new Set(["Ancient Tomb"]));
 });
@@ -589,7 +595,7 @@ test("the Karoo/bounce-land cycle is not ramp -- it enters tapped, unusable the 
 
 test("Temple of the False God (untapped, taps for two) is still ramp", () => {
   const members = detectBuildCategories([
-    mk("Temple of the False God", "{T}: Add {C}{C}. Activate only if you control five or more lands.", "Land", [], [bigTapLine]),
+    mk("Temple of the False God", "{T}: Add {C}{C}. Activate only if you control five or more lands.", "Land", [], [templeLine]),
   ]);
   expect(members.get("ramp")).toEqual(new Set(["Temple of the False God"]));
 });
@@ -598,10 +604,10 @@ test("the sacrifice-to-fetch-two ramp land still fills the ramp role", () => {
   const members = detectBuildCategories([
     mk(
       "Myriad Landscape",
-      "Myriad Landscape enters tapped. {T}: Add {C}. {2}, {T}, Sacrifice Myriad Landscape: Search your library for up to two basic land cards with the same name, put them onto the battlefield tapped, then shuffle.",
+      MYRIAD_TEXT,
       "Land",
       [],
-      [fetchTwoLine],
+      [landTap1, fetchTwoLine],
     ),
   ]);
   expect(members.get("ramp")).toEqual(new Set(["Myriad Landscape"]));
@@ -857,7 +863,7 @@ test("ramp facets: a source that comes back is an engine, a ritual is neither, a
     mk("Sol Ring", "{T}: Add {C}{C}.", "Artifact", mana("per-cycle"), [tapFor(["C"], { repeats: "per-cycle" })]),
     mk("Dark Ritual", "Add {B}{B}{B}.", "Instant", [{ kind: "on-cast", effect: { kind: "ritual" }, repeats: "once" } as never], [ritualLine(["B"], 3, { net: 2 })], { isOneShot: true }),
     mk("Cultivate", "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", "Sorcery", [], [fetchLine], fetched("spell")),
-    mk("Myriad Landscape", "{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.", "Land", mana("once"), [fetchTwoLine]),
+    mk("Myriad Landscape", MYRIAD_TEXT, "Land", mana("once"), [landTap1, fetchTwoLine]),
     mk("Crypt Ghast", "Whenever you tap a Swamp for mana, add an additional {B}.", "Creature", mana(undefined), [triggerLine("tapped-for-mana", "a swamp", ["B"], 1, { repeats: null })]),
     mk("Smothering Tithe", "Whenever an opponent draws a card, that player may pay {2}. If they don't, you create a Treasure token.", "Enchantment",
       [{ kind: "triggered", effect: { kind: "token-generation" }, repeats: "repeatable" } as never], [treasureLine("repeatable")]),
