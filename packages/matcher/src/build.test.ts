@@ -895,7 +895,16 @@ test("removal facets: an ability that emits dies/leaves and repeats is an engine
   const inCat = (s: Set<string> | undefined) => [...(s ?? [])].filter((n) => members.has(n)).sort();
   expect([...members].sort()).toEqual(["Chaos Warp", "Mystery Kill", "Ravenous Chupacabra", "Royal Assassin", "Swords to Plowshares"]);
   expect(inCat(facets.get("engines"))).toEqual(["Royal Assassin"]);
-  expect(inCat(facets.get("unlabelled"))).toEqual(["Chaos Warp", "Mystery Kill"]);
+  // Chaos Warp's shuffle is a labelled one-shot now that `shuffle` is a removal verb of the facets (it read as "derivation found nothing" before): in neither facet.
+  expect(inCat(facets.get("unlabelled"))).toEqual(["Mystery Kill"]);
+  expect(inCat(facets.get("engines"))).not.toContain("Chaos Warp");
+});
+
+test("a repeating shuffle-into-library is a removal engine (Living Library's shape)", () => {
+  const warp = realCard("Chaos Warp");
+  const repeating = { ...warp, card: { ...warp.card, name: "Repeating Warp" }, tags: { ...warp.tags!, abilities: warp.tags!.abilities.map((a) => ({ ...a, kind: "activated", repeats: "repeatable" })) as never } };
+  const facets = detectBuildFacets([repeating]).get("targetedRemoval")!;
+  expect([...(facets.get("engines") ?? [])]).toEqual(["Repeating Warp"]);
 });
 
 describe("rampGrade (#534, on manaLines since #1169)", () => {

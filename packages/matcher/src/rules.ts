@@ -55,6 +55,10 @@ export type RuleClause =
       /** Refuse an ability that is PAID by exiling or discarding THIS card from your hand ("{3}, Exile this card from your hand: Target land gains ...": Emrakul the Exigent Doom, Shattered Seraph, Spara's
        *  Adjudicators). Derive reads the exile in the cost as an exile of the target. */
       notFromHandCost?: true;
+      /** Refuse an ability that acts on permanents YOU OWN: any ability of the same `clause` (this one, or a paired flicker, delayed or not) whose effect subject has `owner: "you"` ("Return one or two target creatures
+       *  and/or enchantments you own": Get Out; "Exile another target creature you own. Return it ... at the beginning of the next end step": Charming Prince). Derive reads the emit's control as `opp`. The printed pattern
+       *  refused "you own"; the delayed-return ruling (2026-09-25) is about an OPPONENT's permanent, not yours. */
+      notOwnedByYou?: true;
       /** Refuse an emit whose target is a card the SAME ability also takes out of a graveyard: another ability of the SAME `clause` has an emit that targets a card `fromZone: graveyard` with the SAME control and type
        *  (Macabre Mockery reanimates an opponent's creature, then "sacrifices it"; Goblin Welder swaps an artifact for one in a graveyard). Derive reads the follow-up sacrifice as removal of a second target. A real
        *  kill that returns YOUR card (Lethal Protection: the graveyard card is `you`, the kill `opp`) is not refused. */
@@ -409,15 +413,15 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true)
         && (clause.toughnessDown !== true || lowersToughness(a.amount)));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive (#1295) mislabels some cards, so the role is wrong on them by name.
-    //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Premature Burial, Blazing Hope, Soul Snare, Chaos Mutation, Divergent Transformations (target control derived `you`, #1295 item 2);
+    //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Premature Burial, Blazing Hope, Soul Snare, Chaos Mutation, Divergent Transformations, Alchemist's Retrieval (target control derived `you`, #1295 item 2);
     //   Constable of the Realm, Mysterious Limousine, Lucius the Eternal, Unyielding Gatekeeper, Vindictive Triumph (the paired flicker is control `any`/`each`, or a self-exile, #1295 item 3);
-    //   Venser's Diffusion, Teferi, Hero of Dominaria (no emit at all, #1295 item 4).
-    //   OVER-CLAIMED (not removal, derive reads them as one, #1295 item 5): Celestial Sword, Venser Fervent Forger, Become Anonymous, Northampton Farm, Telim'Tor's Edict, Sword of Hearth and Home, Get Out,
-    //   Leave // Chance ("you own" read as opp); Star Athlete, Enchanter's Bane, Thornplate Intimidator, Disorienting Choice, Livio Oathsworn Sentinel (the controller MAY sacrifice or exile it).
+    //   Venser's Diffusion, Teferi, Hero of Dominaria (no emit at all, #1295 item 4); Depressurize (its `dies` emit names no target scope, not itemised in #1295).
+    //   OVER-CLAIMED (not removal, derive reads them as one, #1295 item 5): Celestial Sword, Venser Fervent Forger, Become Anonymous, Northampton Farm, Telim'Tor's Edict, Sword of Hearth and Home ("you own" read as opp, no owner on its effect); Star Athlete, Enchanter's Bane, Thornplate Intimidator, Disorienting Choice, Livio Oathsworn Sentinel (the controller MAY sacrifice or exile it); Getaway Car (bounces a creature that crewed it, yours: `history: crewed-ref`); Orcish Captain (a coin-flip pump whose losing side is -0/-2).
     //   The "target player sacrifices" edicts stay on the printed pattern `targetPlayerSacrifices` until #1295 item 1 lands.
     case "emits":
       return (dc.tags?.abilities ?? []).some((a) =>
-        (clause.notFromHandCost !== true || !/from your hand/i.test(a.cost ?? ""))
+        (clause.notOwnedByYou !== true || !(dc.tags?.abilities ?? []).some((f) => f.clause === a.clause && f.effect.subject?.owner === "you"))
+        && (clause.notFromHandCost !== true || !/from your hand/i.test(a.cost ?? ""))
         && (clause.notFlickered !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.clause === a.clause && f.delayedUntil === undefined && f.effect.subject?.control !== "opp"))
         && (a.emits ?? []).some((e) =>
           clause.verbs.includes(e.verb)

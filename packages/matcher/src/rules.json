@@ -1,5 +1,5 @@
 {
-  "version": 25,
+  "version": 26,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -98,8 +98,8 @@
       "match": [
         { "op": "countsAsLand" },
         { "op": "anyOf", "clauses": [
-          { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
-          { "op": "emits", "verbs": ["exiled", "leaves", "shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"], "notFlickered": true, "notFromHandCost": true },
+          { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "notOwnedByYou": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
+          { "op": "emits", "verbs": ["exiled", "leaves", "shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true },
           { "op": "emits", "verbs": ["counter-added"], "control": ["opp", "any"], "scope": ["target"], "counter": ["-1/-1"], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
           { "op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true },
           { "op": "effectKind", "in": ["forced-sacrifice"], "scope": ["target"] },
@@ -184,25 +184,25 @@
     {
       "id": "removal.engine",
       "facet": { "of": "targetedRemoval", "name": "engines" },
-      "match": [{ "op": "anyOf", "clauses": [{"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}, {"op": "effectKind", "in": ["debuff"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}] }],
-      "why": "REMOVAL THAT COMES BACK (owner, 2026-09-05: 'do the same for removal'). Removal has no effect kind by design, so the ability is found by what it EMITS -- a destroy is a `dies`, an exile or a bounce a `leaves`, burn a `non-combat-damage`, -1/-1 counters a `counter-added`, a shrink a `debuff` kind -- and counted as an engine when that ability repeats: an activated kill on a permanent, a 'whenever ... destroy' trigger. Swords is `on-cast` and once; Chupacabra's ETB is once."
+      "match": [{ "op": "anyOf", "clauses": [{"op": "emits", "verbs": ["dies", "leaves", "shuffle", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}, {"op": "effectKind", "in": ["debuff"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}] }],
+      "why": "REMOVAL THAT COMES BACK (owner, 2026-09-05: 'do the same for removal'). Removal has no effect kind by design, so the ability is found by what it EMITS -- a destroy is a `dies`, an exile or a bounce a `leaves`, a shuffle-into-library a `shuffle`, burn a `non-combat-damage`, -1/-1 counters a `counter-added`, a shrink a `debuff` kind -- and counted as an engine when that ability repeats: an activated kill on a permanent, a 'whenever ... destroy' trigger. Swords is `on-cast` and once; Chupacabra's ETB is once."
     },
     {
       "id": "removal.unlabelled.refused",
       "facet": { "of": "targetedRemoval", "name": "unlabelled" },
       "match": [{ "op": "anyOf", "clauses": [
-        {"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": [null]},
+        {"op": "emits", "verbs": ["dies", "leaves", "shuffle", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": [null]},
         {"op": "effectKind", "in": ["debuff"], "repeats": [null]}
       ] }],
-      "not": [{"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}, {"op": "effectKind", "in": ["debuff"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}],
+      "not": [{"op": "emits", "verbs": ["dies", "leaves", "shuffle", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}, {"op": "effectKind", "in": ["debuff"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}],
       "why": "A removal ability `repeats.ts` refused to label, with no labelled engine beside it."
     },
     {
       "id": "removal.unlabelled.unread",
       "facet": { "of": "targetedRemoval", "name": "unlabelled" },
       "match": [],
-      "not": [{"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null]}, { "op": "effectKind", "in": ["debuff"] }],
-      "why": "The oracle regex called it removal and derivation found no removal-shaped ability at all (Chaos Warp: a shuffle-into-library is neither a death nor a leave). Nothing to label, so it is said as unlabelled rather than silently read as a one-shot."
+      "not": [{"op": "emits", "verbs": ["dies", "leaves", "shuffle", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null]}, { "op": "effectKind", "in": ["debuff"] }],
+      "why": "A role member whose derived abilities hold no removal-shaped ability at all (no death, leave, shuffle, damage or -1/-1 counter emit, no debuff): the role read it from the printed damage pattern or the `targetPlayerSacrifices` edict pattern, or from an emit this facet does not list. Nothing to label, so it is said as unlabelled rather than silently read as a one-shot."
     },
     {
       "id": "burn.effect",
@@ -285,8 +285,8 @@
       "category": "targetedRemoval",
       "match": [
         { "op": "anyOf", "clauses": [
-          { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
-          { "op": "emits", "verbs": ["exiled", "leaves", "shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"], "notFlickered": true, "notFromHandCost": true },
+          { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "notOwnedByYou": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
+          { "op": "emits", "verbs": ["exiled", "leaves", "shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true },
           { "op": "emits", "verbs": ["counter-added"], "control": ["opp", "any"], "scope": ["target"], "counter": ["-1/-1"], "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
           { "op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true },
           { "op": "effectKind", "in": ["forced-sacrifice"], "scope": ["target"] },

@@ -1205,9 +1205,12 @@ describe("removal.targeted is derived", () => {
     expect(ruleMatches(rule, realCard("Diabolic Edict"), set)).toBe(true);
     expect(ruleMatches(rule, blank("Diabolic Edict"), set)).toBe(false);
   });
-  test("the CEILING in rules.ts is pinned: a real removal derive mislabels is lost (Polymorph), and derive's over-claims stay in (Celestial Sword, Get Out)", () => {
+  test("the CEILING in rules.ts is pinned: a real removal derive mislabels is lost (Polymorph), and derive's over-claims stay in (Celestial Sword, Sword of Hearth and Home)", () => {
     expect(ruleMatches(rule, realCard("Polymorph"), set)).toBe(false);
-    for (const n of ["Celestial Sword", "Get Out"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(true);
+    for (const n of ["Celestial Sword", "Sword of Hearth and Home"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(true);
+  });
+  test("permanents you OWN are refused, as the printed pattern refused 'you own': a bounce (Get Out, Leave // Chance) and a DELAYED flicker of your own creature (Charming Prince)", () => {
+    for (const n of ["Get Out", "Leave // Chance", "Charming Prince"]) expect(ruleMatches(rule, blank(n), set), n).toBe(false);
   });
   test("a land with derived removal fills removal.land, not removal.targeted", () => {
     const eiganjo = { ...realCard("Murder"), card: { name: "x", typeLine: "Land", oracleText: "", manaValue: 0 } as never };
