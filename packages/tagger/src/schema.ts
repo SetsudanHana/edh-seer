@@ -978,6 +978,11 @@ export const EFFECT_KINDS = [
   // off the printed sentence. A fact for loop economics (Teferi, Temporal Archmage's untap + The Chain
   // Veil); the pair channels read it blank.
   "extra-loyalty",
+  // CHANGING THE TARGET OF A SPELL OR ABILITY (CR 115.7; #1266): Misdirection, Redirect, Bolt Bend, Willbender, Reroute,
+  // Deflecting Swat. The subject is the spell and/or ability it redirects (`scope: "target"`, `type: "spell"`, `abilityKind`).
+  // Your own COPY's new targets are not it (#491). The model answers `other` (or a misfiled `cost-modify`), so it is read off
+  // the action's object. A fact kind like `bounce`: the pair channels read it blank; `stackInteraction` reads it raw.
+  "retarget",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];

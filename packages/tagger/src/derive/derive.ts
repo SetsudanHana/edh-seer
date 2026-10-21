@@ -8,7 +8,7 @@
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
-import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop } from "./effect-kind.js";
+import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
@@ -518,7 +518,8 @@ import { emblemRecipient } from "../emblem.js";
 // 359: #1301 -- a `put` that is another effect's destination is claimed: `Ability.toZone` on the search it follows ("put it into your hand / onto the battlefield") and on the counter-spell it follows ("put it on top of its owner's library"); a dig's "put the rest on the bottom" is claimed as the remainder. No emit changes.
 // 360: #1301 review -- `toZone` is also set from a put that derives its own `enters` (Rampant Growth, Farseek); "one" counts as the searched card; the zone-tail strip is linear. No claim changes.
 // 361: #1266 -- `Ability.librarySearch` ("yours" | "other") on a `search` ability read off a printed search action naming a library; a typed dig carries none; a stored search of a bare library takes the card of the put after it (Tempt with Discovery's third search gets type land, its one claim change). No emit changes.
-export const DERIVE_VERSION = 361;
+// 362: #1266 -- a new effect kind `retarget` (CR 115.7), read off an action whose object changes the target of / chooses new targets for a TARGET spell or ability (Misdirection, Redirect, Bolt Bend, Willbender, Reroute, Deflecting Swat, Divert; the model's `other`, and its `cost-modify` / `exchange` misfiles read from the clause: Shunt, Silver Wyvern, Spellskite, Meddle). Subject: `scope: "target"`, `type: "spell"` and/or `abilityKind`. Those actions leave `unclaimed`. Your own copy's new targets ("choose new targets for the copy", #491) and "that spell" stay unclaimed. Also (#1266 task 2): a spell moved, returned, exiled or taken is an emit with `fromZone: "stack"` (the grammar no longer calls a returned spell a battlefield leave; "target spell or permanent" is two emits, the spell and the permanent half), a noncreature spell is `type: spell` + `notType`, and "that spell" / "the chosen spell" is `scope: target` only when the ability earlier says "target ... spell" (Swallowed by Leviathan, Invert Polarity, Mages' Contest).
+export const DERIVE_VERSION = 362;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1350,6 +1351,13 @@ function effectSubject(
   // whole-deck lord edge it would form is a false claim, and an ability loss forms no claim at all
   // -- it is a silence the matcher applies to the class it names. "Enchanted creature" and other
   // narrowings the filter cannot hold stay unnamed, so an Aura silences nothing class-wide.
+  // WHAT A RETARGET REDIRECTS is the spell and/or ability its object names (CR 115.7): the head words are not the subject.
+  if (kind === "retarget") {
+    const phrase = retargetObject(action.object ?? "", action.verb ?? "", clauseText) ?? "";
+    const s = parseSubject(phrase);
+    if (/\b(?:spells? (?:or|and\/or) abilit)/.test(phrase) && !s.abilityKind) s.abilityKind = ["activated", "triggered"];
+    return s;
+  }
   if (kind === "ability-loss") {
     const who = recipientBefore(clauseText, LOSES_ABILITIES);
     return who && !UNEXPRESSIBLE_NARROWING.test(who) ? parseSubject(who) : parseSubject("");
@@ -2506,7 +2514,11 @@ export function deriveAbilities(
       // Hardened Scales answered `add-counter` and advertised a counter it never places. The kind
       // names the multiplication, and the emits go — see `replacement.ts` and the consumer trigger
       // below, which is the shape `prompt.ts` already documents for Tekuthal.
-      const effectKind = replacement?.kind ?? actionEffectKind(action, text);
+      // A STEAL'S RIDER IS NOT A RETARGET: "Gain control of target spell. You may choose new targets for it." (Aethersnatch) redirects the spell you now
+      // control. Read off the sibling action, because the model words the rider "choose new targets for target spell" on some cards and "for it" on others.
+      const stealsASpell = (clause.actions ?? []).some((x) => x.verb === "gain-control" && /\bspells?\b/i.test(x.object ?? ""));
+      const read = replacement?.kind ?? actionEffectKind(action, text);
+      const effectKind = read === "retarget" && stealsASpell ? null : read;
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
       // THE TEMPORARY-TOKEN RIDER IS NOT AN EVENT. "Exile it at the beginning of the next end step"
       // resolves its pronoun to the token the clause just made, so the emit builder would see a
@@ -2871,6 +2883,8 @@ export function deriveAbilities(
       // printed card matches, so it cannot reach the applies-to pass either (Muldrotha, measured).
       const keepSubject = subject
         && (kind !== "static" || namesItsTargets(subject) || effectKind === "ability-loss"
+          // A RETARGET'S SUBJECT IS A TARGET (scope "target"), never a whole-deck class, and a fact kind claims nothing pairwise: Emissary of Grudges' activated ability is stored `static`.
+          || effectKind === "retarget"
           || (effectKind === "graveyard-recursion" && subject.zone === "graveyard"))
         && (effectKind !== "clone" || subject.subtype !== undefined);
       // What the payoff's magnitude counts. Already consumed by edges.ts, impact.ts and buckets.ts;

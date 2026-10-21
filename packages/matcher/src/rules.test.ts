@@ -917,40 +917,67 @@ test("a flicker you can cast at instant speed on your own permanent is protectio
   expect(protection).toEqual(["Cloudshift", "Eldrazi Confluence", "Ephemerate", "Otherworldly Journey", "Restoration Angel"]);
 });
 
+/** A card that carries only derived abilities, as derive writes them (#1266: stackInteraction reads emits and effect kinds, no longer the printed text). */
+const derivedCard = (name: string, abilities: object[], typeLine = "Instant"): DeckCard => ({
+  card: { name, oracleText: "", typeLine, manaValue: 2 } as Card,
+  tags: { oracleId: name, abilities, characteristics: { types: [typeLine.toLowerCase()], subtypes: [], colors: [], identity: [], cmc: 2, power: null, toughness: null, token: false, keywords: [] } } as never,
+});
+const emit = (verb: string, subject: object) => ({ kind: "on-cast", effect: { kind: "" }, emits: [{ verb, subject }] });
+const SPELL = { control: "any", token: null, type: "spell", scope: "target" };
+const stackOf = (cards: DeckCard[]): string[] => [...(detectBuildCategories(cards).get("stackInteraction") ?? [])].sort();
+
 /** TWO ROLE PATTERNS THAT READ A PHRASE, NOT A MOVE (overview persona rounds 2026-09-25, item 9).
  *  "Return target ... to your hand" from a GRAVEYARD is recursion, not removal (Archaeomancer, and 383
  *  corpus cards with it); "choose new targets for the COPY" retargets your own copy, not an opponent's
- *  spell (Weaver of Harmony, Twincast, and 257 with it). Oracle text from Scryfall, 2026-09-26. */
+ *  spell (Weaver of Harmony, Twincast, and 257 with it). Derive never reads the copy rider as a `retarget` (#491, #1266). */
 test("a graveyard return is not removal, and retargeting your own copy is not stack interaction", () => {
   const m = detectBuildCategories([
     realCard("Archaeomancer"),
-    mk("Weaver of Harmony", "Other enchantment creatures you control get +1/+1.\n{G}, {T}: Copy target activated or triggered ability you control from an enchantment source. You may choose new targets for the copy. (Mana abilities can't be targeted.)", "Enchantment Creature — Snake Druid"),
-    mk("Twincast", "Copy target instant or sorcery spell. You may choose new targets for the copy."),
+    derivedCard("Weaver of Harmony", [{ kind: "activated", effect: { kind: "copy-ability", subject: { control: "you", token: null, abilityKind: ["activated", "triggered"], scope: "target" } } }], "Enchantment Creature"),
+    derivedCard("Twincast", [{ kind: "on-cast", effect: { kind: "copy-spell", subject: { control: "any", token: null, type: ["instant", "sorcery"], scope: "target" } } }]),
     realCard("Unsummon"),
-    mk("Redirect", "You may choose new targets for target spell."),
+    derivedCard("Redirect", [{ kind: "on-cast", effect: { kind: "retarget", subject: SPELL } }]),
   ]);
   expect([...(m.get("targetedRemoval") ?? [])].sort()).toEqual(["Unsummon"]);
   expect([...(m.get("stackInteraction") ?? [])].sort()).toEqual(["Redirect"]);
 });
 
-/** Owner rulings 2026-10-14 (issue #1199): Commandeer, Invert Polarity and Split Decision ARE stack
- *  interaction -- gaining control of a targeted spell, or countering a spell targeted in an earlier
- *  sentence. A protection trigger ("becomes the target of a spell ... counter that spell"), a
- *  gain-control of a creature "with that spell's mana value", and a copy retarget stay out.
- *  Oracle text from the corpus, 2026-10-14. */
-test("gaining control of a targeted spell and countering a spell targeted earlier are stack interaction", () => {
-  const m = detectBuildCategories([
-    mk("Commandeer", "You may exile two blue cards from your hand rather than pay this spell's mana cost.\nGain control of target noncreature spell. You may choose new targets for it. (If that spell is an artifact, enchantment, or planeswalker, the permanent enters under your control.)"),
-    mk("Invert Polarity", "Choose target spell, then flip a coin. If you win the flip, gain control of that spell and you may choose new targets for it. If you lose the flip, counter that spell."),
-    mk("Split Decision", "Will of the council \u2014 Choose target instant or sorcery spell. Starting with you, each player votes for denial or duplication. If denial gets more votes, counter the spell. If duplication gets more votes or the vote is tied, copy the spell. You may choose new targets for the copy."),
-    mk("Mages' Contest", "You and target spell's controller bid life. You start the bidding with a bid of 1. In turn order, each player may top the high bid. The bidding ends if the high bid stands. The high bidder loses life equal to the high bid. If you win the bidding, counter that spell."),
-    mk("Swallowed by Leviathan", "Choose target spell. Surveil 2, then counter the chosen spell unless its controller pays {1} for each card in your graveyard. (To surveil 2, look at the top two cards of your library, then put any number of them into your graveyard and the rest on top of your library in any order.)", "Instant"),
-    mk("Twincast", "Copy target instant or sorcery spell. You may choose new targets for the copy."),
-    mk("Frost Titan", "Whenever this creature becomes the target of a spell or ability an opponent controls, counter that spell or ability unless its controller pays {2}.\nWhenever this creature enters or attacks, tap target permanent. It doesn't untap during its controller's next untap step.", "Creature \u2014 Giant"),
-    mk("Skyfire Kirin", "Flying\nWhenever you cast a Spirit or Arcane spell, you may gain control of target creature with that spell's mana value until end of turn.", "Creature \u2014 Dragon Spirit"),
-    mk("Counterbalance", "Whenever an opponent casts a spell, you may reveal the top card of your library. If you do, counter that spell if it has the same mana value as the revealed card.", "Enchantment"),
-  ]);
-  expect([...(m.get("stackInteraction") ?? [])].sort()).toEqual(["Commandeer", "Invert Polarity", "Mages' Contest", "Split Decision", "Swallowed by Leviathan"]);
+/** Owner rulings 2026-10-14 (issue #1199) and #1266: the role reads derived emits. A counter, a steal, an exile or a return of a TARGET spell counts; a counter of "that spell"
+ *  with no target earlier (Kira, Counterbalance), a cast trigger's own exile (Possibility Storm), and a battlefield leave of a creature do not. */
+describe("stackInteraction reads derived target emits (#1266)", () => {
+  test("a targeted counter, and a counter of a spell targeted earlier (derive gives it scope target), are stack interaction", () => {
+    expect(stackOf([
+      derivedCard("Counterspell", [emit("counter-spell", SPELL)]),
+      derivedCard("Swallowed by Leviathan", [emit("counter-spell", SPELL)]),
+      derivedCard("Stifle", [emit("counter-spell", { control: "any", token: null, abilityKind: ["activated", "triggered"], scope: "target" })]),
+    ])).toEqual(["Counterspell", "Stifle", "Swallowed by Leviathan"]);
+  });
+
+  test("an untargeted counter of 'that spell' (Kira, Counterbalance shape) is not", () => {
+    expect(stackOf([
+      derivedCard("Counterbalance", [{ kind: "triggered", effect: { kind: "" }, emits: [{ verb: "counter-spell", subject: { control: "any", token: null, type: "spell" } }] }], "Enchantment"),
+      derivedCard("Kira", [{ kind: "triggered", effect: { kind: "" }, emits: [{ verb: "counter-spell", subject: { control: "any", token: null, type: "spell" } }] }], "Creature"),
+    ])).toEqual([]);
+  });
+
+  test("a stack exile, leave or steal with scope target is; the same without scope (Possibility Storm shape) is not", () => {
+    const stack = { control: "opp", token: null, type: "spell", fromZone: "stack" };
+    expect(stackOf([
+      derivedCard("Commandeer", [emit("gains-control", { ...stack, scope: "target", control: "you" })]),
+      derivedCard("Spell Queller", [emit("exiled", { ...stack, scope: "target" })], "Creature"),
+      derivedCard("Reprieve", [emit("leaves", { ...stack, scope: "target" })]),
+      derivedCard("Possibility Storm", [emit("exiled", stack)], "Enchantment"),
+      derivedCard("Krark", [emit("leaves", stack)], "Creature"),
+    ])).toEqual(["Commandeer", "Reprieve", "Spell Queller"]);
+  });
+
+  test("a retarget of a target spell is; a battlefield leave of a creature is removal, not stack interaction", () => {
+    expect(stackOf([
+      derivedCard("Misdirection", [{ kind: "on-cast", effect: { kind: "retarget", subject: SPELL } }]),
+      derivedCard("Own copy rider", [{ kind: "on-cast", effect: { kind: "retarget", subject: { control: "any", token: null, type: "spell" } } }]),
+      derivedCard("Unsummon", [emit("leaves", { control: "opp", token: null, type: "creature", scope: "target", fromZone: "battlefield" })]),
+    ])).toEqual(["Misdirection"]);
+  });
 });
 
 /** Owner ruling 2026-09-27 (issue #513): Saw in Half is NOT removal -- its controller gets two copies

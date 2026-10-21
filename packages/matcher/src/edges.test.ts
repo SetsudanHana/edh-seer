@@ -4290,6 +4290,52 @@ test("a Room feeds a fully-unlock trigger", () => {
 
 // CR 700.4: dies = battlefield -> graveyard, so a death IS a leave. A flicker, a bounce or an exile is
 // a leave that is not a death. The matcher subsumes one way only.
+// A SPELL LEAVING THE STACK IS NOT A BATTLEFIELD LEAVE (#1266): Reprieve, Defabricate, Spell Queller emit `leaves` with `fromZone: stack`.
+describe("a leave from the stack feeds no leaves-the-battlefield trigger", () => {
+  const n = normalizeZoneEvent;
+  const spellLeaves = n({ verb: "leaves", subject: { control: "opp" as const, token: null, type: "spell", scope: "target" as const, fromZone: "stack" } });
+  const creatureLeaves = n({ verb: "leaves", subject: { control: "you" as const, token: null, type: "creature", fromZone: "battlefield" } });
+
+  test("a creature or permanent leaves-the-battlefield demand refuses it, a real battlefield leave satisfies it", () => {
+    for (const demand of [
+      n({ verb: "leaves", subject: { control: "you", token: null, type: "creature" } }),
+      n({ verb: "leaves", subject: { control: "any", token: null } }),
+    ]) {
+      expect(eventMatches(spellLeaves, demand, H)).toBe(false);
+      expect(eventMatches(creatureLeaves, demand, H)).toBe(true);
+    }
+  });
+
+  test("a demand that names the stack still takes it", () => {
+    expect(eventMatches(spellLeaves, n({ verb: "leaves", subject: { control: "any", token: null, type: "spell", fromZone: "stack" } }), H)).toBe(true);
+  });
+
+  test("a stack-origin ENTERS is not refused: the card a counter puts onto the battlefield is a creature entering (Desertion)", () => {
+    const desertion = n({ verb: "enters", subject: { control: "any", token: null, type: "creature", scope: "target", fromZone: "stack" } });
+    expect(eventMatches(desertion, n({ verb: "enters", subject: { control: "you", token: null, type: "creature" } }), H)).toBe(true);
+  });
+
+  test("a self 'when this leaves the battlefield' trigger refuses it", () => {
+    const self = n({ verb: "leaves", subject: { control: "you", token: null, self: true as const } });
+    expect(eventMatches(spellLeaves, self, H)).toBe(false);
+  });
+
+  test("a spell exiled from the stack is a card put into exile from anywhere (The War Doctor), but not a creature exile (Kaya's Ghostform)", () => {
+    const spellExiled: GameEvent = { verb: "exiled", subject: { control: "opp", token: null, type: "spell", scope: "target", fromZone: "stack" } };
+    const anywhere: GameEvent = { verb: "exiled", subject: { control: "any", token: null, scope: "all", other: true } };
+    expect(eventMatches(spellExiled, anywhere, H)).toBe(true);
+    expect(eventMatches(spellExiled, { verb: "exiled", subject: { control: "any", token: null, type: "creature" } }, H)).toBe(false);
+    expect(eventMatches(spellExiled, { verb: "exiled", subject: { control: "any", token: null, self: true } }, H)).toBe(false);
+    // ...and a spell leaving the stack is still no battlefield leave, however untyped the demand.
+    expect(eventMatches(spellLeaves, n({ verb: "leaves", subject: { control: "any", token: null, scope: "all", other: true } }), H)).toBe(false);
+  });
+
+  test("an exile from the stack satisfies no creature-exile demand", () => {
+    const spellExiled: GameEvent = { verb: "exiled", subject: { control: "opp", token: null, type: "spell", scope: "target", fromZone: "stack" } };
+    expect(eventMatches(spellExiled, { verb: "exiled", subject: { control: "any", token: null, type: "creature" } }, H)).toBe(false);
+  });
+});
+
 describe("dies is a leave, a leave is not a death", () => {
   const n = normalizeZoneEvent;
   const you = { control: "you" as const, token: null, type: "creature" };

@@ -1,6 +1,7 @@
 import { describe, expect, it, test } from "vitest";
 import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
+import { targetsASpellEarlier } from "./emits.js";
 import { deriveInputOf } from "../derive-input.js";
 import type { Ability, Characteristics } from "../schema.js";
 
@@ -5242,5 +5243,210 @@ describe("a stored search of a bare library takes its card from the put that fol
   test("a put of a pronoun leaves the search untyped", () => {
     const [s] = searches([{ verb: "search", object: "your library", fromZone: "library" }, put("it")]);
     expect(s!.effect.subject?.type).toBeUndefined();
+  });
+});
+
+describe("retarget: a change-the-target of a TARGET spell or ability (#1266, CR 115.7)", () => {
+  const spell = (object: string, verb = "other") => deriveAbilities([{ id: 1, abilityType: "spell" as const, actions: [{ verb, object }] }]);
+  const retargets = (r: ReturnType<typeof spell>) => r.abilities.filter((a) => a.effect.kind === "retarget");
+
+  test("'change the target of target spell with a single target' is a retarget of a targeted spell (Misdirection)", () => {
+    const r = spell("change the target of target spell with a single target");
+    const [a] = retargets(r);
+    expect(a!.effect.subject).toMatchObject({ type: "spell", scope: "target" });
+    expect(a!.effect.subject?.abilityKind).toBeUndefined();
+    expect(r.unclaimed).toHaveLength(0);
+  });
+
+  test("'choose new targets for target spell' is one too (Redirect)", () => {
+    const r = spell("choose new targets for target spell");
+    expect(retargets(r)).toHaveLength(1);
+    expect(r.unclaimed).toHaveLength(0);
+  });
+
+  test("'target spell or ability' names the spell AND both ability kinds (Bolt Bend, Willbender)", () => {
+    const [a] = retargets(spell("change the target of target spell or ability with a single target"));
+    expect(a!.effect.subject).toMatchObject({ type: "spell", scope: "target", abilityKind: ["activated", "triggered"] });
+  });
+
+  test("'target activated ability' is the activated kind alone (Reroute)", () => {
+    const [a] = retargets(spell("change the target of target activated ability with a single target"));
+    expect(a!.effect.subject?.abilityKind).toEqual(["activated"]);
+    expect(a!.effect.subject?.scope).toBe("target");
+  });
+
+  test("a class of spell keeps its type, and a 'that targets only ...' tail is cut so only type and scope are carried (Muck Drubb)", () => {
+    const [a] = retargets(spell("change the target of target instant or sorcery spell with a single target to this creature"));
+    expect(a!.effect.subject?.type).toEqual(["instant", "sorcery"]);
+    const [b] = retargets(spell("change the target of target spell that targets only a single creature to this creature"));
+    expect(b!.effect.subject).toMatchObject({ type: "spell", scope: "target" });
+  });
+
+  test("the model's cost-modify misfile of the same words is read by its words (Divert)", () => {
+    expect(retargets(spell("change the target of target spell or ability with a single target", "cost-modify"))).toHaveLength(1);
+    expect(retargets(spell("change the targets of target instant or sorcery spell", "cost-modify"))).toHaveLength(1);
+  });
+
+  test("the model's words under cost-modify or exchange with the head in the CLAUSE are read from it (Shunt, Silver Wyvern, Spellskite, Meddle)", () => {
+    const from = (verb: string, object: string, text: string, abilityType: "spell" | "activated" = "spell") =>
+      deriveAbilities([{ id: 1, abilityType, actions: [{ verb, object }] }], undefined, { 1: text });
+    const shunt = from("cost-modify", "target spell with a single target", "Change the target of target spell with a single target.");
+    expect(retargets(shunt)).toHaveLength(1);
+    expect(shunt.unclaimed).toHaveLength(0);
+    const wyvern = from("cost-modify", "the target of target spell or ability that targets only this creature", "{U}: Change the target of target spell or ability that targets only this creature. The new target must be a creature.", "activated");
+    expect(retargets(wyvern)[0]!.effect.subject).toMatchObject({ type: "spell", scope: "target", abilityKind: ["activated", "triggered"] });
+    const skite = from("exchange", "a target of target spell or ability and this creature", "{U/P}: Change a target of target spell or ability to this creature.", "activated");
+    expect(retargets(skite)).toHaveLength(1);
+    const meddle = from("cost-modify", "change that spell's target to another creature", "If target spell has only one target and that target is a creature, change that spell's target to another creature.");
+    expect(retargets(meddle)[0]!.effect.subject).toMatchObject({ type: "spell", scope: "target" });
+  });
+
+  test("a sibling `other` action of a retargeting clause is not read as a second retarget (Wyll's Reversal)", () => {
+    const text = "You may choose new targets for the target spell or ability. Then copy it. You may choose new targets for the copy.";
+    const r = deriveAbilities([{ id: 1, abilityType: "spell" as const, actions: [
+      { verb: "other", object: "choose new targets for the target spell or ability" }, { verb: "copy", object: "that spell or ability" }, { verb: "other", object: "choose new targets for the copy" }] }], undefined, { 1: text });
+    expect(retargets(r)).toHaveLength(1);
+  });
+
+  test("a retarget action in a clause that also gains control of a spell is the steal's rider, whatever the model wrote (Aethersnatch)", () => {
+    const text = "Gain control of target spell. You may choose new targets for it.";
+    const r = deriveAbilities([{ id: 1, abilityType: "spell" as const, actions: [{ verb: "gain-control", object: "target spell" }, { verb: "other", object: "choose new targets for target spell" }] }], undefined, { 1: text });
+    expect(retargets(r)).toHaveLength(0);
+  });
+
+  test("a steal's 'choose new targets for it' is no retarget (Commandeer)", () => {
+    const text = "Gain control of target noncreature spell. You may choose new targets for it.";
+    const r = deriveAbilities([{ id: 1, abilityType: "spell" as const, actions: [{ verb: "gain-control", object: "target noncreature spell" }, { verb: "other", object: "you may choose new targets for it" }] }], undefined, { 1: text });
+    expect(retargets(r)).toHaveLength(0);
+  });
+
+  test("your OWN COPY is not stack interaction (#491)", () => {
+    for (const object of ["choose new targets for the copy", "you may choose new targets for the copy", "the copy may have new targets chosen for it"]) {
+      expect(retargets(spell(object))).toHaveLength(0);
+    }
+    expect(retargets(spell("choose new targets for the copy", "grant-ability"))).toHaveLength(0);
+  });
+
+  test("a bare 'that spell' or 'it' is no target spell and stays unclaimed", () => {
+    expect(retargets(spell("the spell's controller may choose new targets for it"))).toHaveLength(0);
+    expect(retargets(spell("choose new targets for that spell"))).toHaveLength(0);
+  });
+
+  test("a text change is not a target change", () => {
+    expect(retargets(spell("Change the text of target spell or permanent by replacing all instances of one color word with another"))).toHaveLength(0);
+  });
+
+  test("the head scan is linear on a long run of spaces", () => {
+    const t0 = performance.now();
+    spell("change the target of " + " ".repeat(50_000) + "target spell");
+    spell("choose new targets for ".repeat(5_000) + "x");
+    expect(performance.now() - t0).toBeLessThan(200);
+  });
+});
+
+describe("a spell answered by a return, exile or steal is a spell ON THE STACK, and a chosen spell keeps its target (#1266)", () => {
+  const run = (records: object[], text: string) => deriveAbilities(records as never, "Test", { 1: text, 2: text }, undefined, text).abilities;
+  const emitsOf = (abilities: Ability[], verb: string) => abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === verb);
+
+  test("'return target spell or permanent' is a leave of the spell off the stack AND of the permanent off the battlefield (Venser)", () => {
+    const t = "When this creature enters, return target spell or permanent to its owner's hand.";
+    const leaves = emitsOf(run([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature" }, actions: [{ verb: "return", object: "target spell or permanent", toZone: "hand" }] }], t), "leaves");
+    expect(leaves.find((e) => e.subject.fromZone === "stack")!.subject).toMatchObject({ type: "spell", scope: "target", fromZone: "stack" });
+    expect(leaves.find((e) => e.subject.fromZone === "battlefield")!.subject.type).toEqual(["creature", "artifact", "enchantment", "planeswalker", "battle"]);
+  });
+
+  test("'target spell or creature' keeps its creature half off the battlefield (Unsubstantiate)", () => {
+    const leaves = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "return", object: "target spell or creature", toZone: "hand" }] }], "Return target spell or creature to its owner's hand."), "leaves");
+    expect(leaves.map((e) => [e.subject.type, e.subject.fromZone]).sort()).toEqual([["creature", "battlefield"], ["spell", "stack"]]);
+  });
+
+  test("'target spell or permanent with mana value 1 or greater' puts the mana value on the spell half (Divide by Zero)", () => {
+    const leaves = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "return", object: "target spell or permanent with mana value 1 or greater", toZone: "hand" }] }], "Return target spell or permanent with mana value 1 or greater to its owner's hand."), "leaves");
+    expect(leaves.find((e) => e.subject.fromZone === "stack")!.subject.stats).toEqual([{ metric: "mana-value", op: "gte", value: 1 }]);
+  });
+
+  test("'exile that spell' after 'counter target artifact or enchantment spell' keeps the card types (Defabricate, Deny Existence)", () => {
+    const t = "Counter target artifact or enchantment spell. If that spell is countered this way, exile it instead of putting it into its owner's graveyard.";
+    const [e] = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target artifact or enchantment spell" }, { verb: "exile", object: "that spell", fromZone: "stack", toZone: "exile" }] }], t), "exiled");
+    expect(e!.subject).toMatchObject({ type: ["artifact", "enchantment"], scope: "target", fromZone: "stack" });
+    const split = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "vote", object: "denial or duplication" }, { verb: "counter-spell", object: "the spell" }] }], "Choose target instant or sorcery spell. If denial gets more votes, counter the spell."), "counter-spell");
+    expect(split[0]!.subject).toMatchObject({ type: ["instant", "sorcery"], scope: "target" });
+    expect(split[0]!.subject.fromZone).toBeUndefined();
+  });
+
+  test("the card a countered spell puts onto the battlefield has the card types the sentence names (Desertion)", () => {
+    const t = "Counter target spell. If an artifact or creature spell is countered this way, put that card onto the battlefield under your control instead of into its owner's graveyard.";
+    const [e] = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target spell" }, { verb: "put", object: "that card", fromZone: "stack", toZone: "battlefield" }] }], t), "enters");
+    expect([e!.subject.type].flat().sort()).toEqual(["artifact", "creature"]);
+    expect(e!.subject.fromZone).toBe("stack");
+  });
+
+  test("a mixed object the model stored as `stack` still has its permanent half on the battlefield (Swat Away)", () => {
+    const leaves = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "put", object: "target spell or creature", fromZone: "stack", toZone: "library" }] }], "The owner of target spell or creature puts it on their choice of the top or bottom of their library."), "leaves");
+    expect(leaves.map((e) => [e.subject.type, e.subject.fromZone]).sort()).toEqual([["creature", "battlefield"], ["spell", "stack"]]);
+  });
+
+  test("'return target spell' is a leave off the stack, not the battlefield (Reprieve)", () => {
+    const leaves = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "return", object: "target spell", fromZone: "stack", toZone: "hand" }] }], "Return target spell to its owner's hand."), "leaves");
+    expect(leaves).toHaveLength(1);
+    expect(leaves[0]!.subject).toMatchObject({ type: "spell", scope: "target", fromZone: "stack" });
+  });
+
+  test("'gain control of target noncreature spell' is a spell that is not a creature, on the stack, targeted (Commandeer)", () => {
+    const [g] = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "gain-control", object: "target noncreature spell" }] }], "Gain control of target noncreature spell."), "gains-control");
+    expect(g!.subject).toMatchObject({ type: "spell", notType: ["creature"], scope: "target", fromZone: "stack", control: "you" });
+  });
+
+  test("a spell that targets only a permanent is a spell, not a permanent (Chef's Kiss)", () => {
+    const [g] = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "gain-control", object: "target spell that targets only a single permanent or player" }] }], "Gain control of target spell that targets only a single permanent or player."), "gains-control");
+    expect(g!.subject).toMatchObject({ type: "spell", scope: "target", fromZone: "stack", restricted: true });
+  });
+
+  test("'exile target instant or sorcery spell that targets you' is an exile of those spells off the stack (Shell of the Last Kappa)", () => {
+    const [e] = emitsOf(run([{ id: 1, abilityType: "activated", actions: [{ verb: "exile", object: "target instant or sorcery spell that targets you", fromZone: "stack", toZone: "exile" }] }], "{3}, {T}: Exile target instant or sorcery spell that targets you."), "exiled");
+    expect(e!.subject).toMatchObject({ type: ["instant", "sorcery"], scope: "target", fromZone: "stack" });
+  });
+
+  test("'exile target spell with mana value 4 or less' is off the stack and carries the mana value (Spell Queller)", () => {
+    const abilities = run([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature" }, actions: [{ verb: "exile", object: "target spell with mana value 4 or less", toZone: "exile" }] }], "When this creature enters, exile target spell with mana value 4 or less.");
+    for (const verb of ["exiled", "leaves"]) {
+      expect(emitsOf(abilities, verb)[0]!.subject).toMatchObject({ type: "spell", scope: "target", fromZone: "stack", stats: [{ metric: "mana-value", op: "lte", value: 4 }] });
+    }
+  });
+
+  test("'counter the chosen spell' after 'Choose target spell' is a targeted counter (Swallowed by Leviathan)", () => {
+    const t = "Choose target spell. Surveil 2, then counter the chosen spell unless its controller pays {1} for each card in your graveyard.";
+    const [c] = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "surveil", object: "2" }, { verb: "counter-spell", object: "the chosen spell" }] }], t), "counter-spell");
+    expect(c!.subject).toMatchObject({ type: "spell", scope: "target" });
+  });
+
+  test("Split Decision's 'counter the spell' and Invert Polarity's steal and counter are targeted", () => {
+    const split = run([{ id: 1, abilityType: "spell", actions: [{ verb: "vote", object: "denial or duplication" }, { verb: "counter-spell", object: "the spell" }] }], "Will of the council -- Choose target instant or sorcery spell. Starting with you, each player votes for denial or duplication. If denial gets more votes, counter the spell.");
+    expect(emitsOf(split, "counter-spell")[0]!.subject.scope).toBe("target");
+    const t = "Choose target spell, then flip a coin. If you win the flip, gain control of that spell and you may choose new targets for it. If you lose the flip, counter that spell.";
+    const invert = run([{ id: 1, abilityType: "spell", actions: [{ verb: "flip-coin", object: "a coin" }, { verb: "gain-control", object: "that spell" }, { verb: "counter-spell", object: "that spell" }] }], t);
+    expect(emitsOf(invert, "counter-spell")[0]!.subject.scope).toBe("target");
+    expect(emitsOf(invert, "gains-control")[0]!.subject).toMatchObject({ type: "spell", scope: "target", fromZone: "stack" });
+  });
+
+  test("a bid stored as one `other` still counters 'that spell', targeted (Mages' Contest)", () => {
+    const t = "You and target spell's controller bid life. You start the bidding with a bid of 1. In turn order, each player may raise the high bid. The bidding ends if the high bid stands. The high bidder loses life equal to the high bid. If you win the bidding, counter that spell.";
+    const [c] = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "other", object: t }] }], t), "counter-spell");
+    expect(c!.subject).toMatchObject({ type: "spell", scope: "target" });
+  });
+
+  test("'counter that spell' on a trigger that names no target spell is NOT targeted (Counterbalance, Kira)", () => {
+    const cb = run([{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell", control: "opponent" }, actions: [{ verb: "counter-spell", object: "that spell" }] }], "Whenever an opponent casts a spell, you may reveal the top card of your library. If you do, counter that spell if it has the same mana value as the revealed card.");
+    expect(emitsOf(cb, "counter-spell")[0]!.subject.scope).toBeUndefined();
+    const kira = run([{ id: 1, abilityType: "triggered", trigger: { event: "becomes-target", subject: "this creature" }, actions: [{ verb: "counter-spell", object: "that spell" }] }], "Whenever a creature you control becomes the target of a spell or ability for the first time each turn, counter that spell.");
+    expect(emitsOf(kira, "counter-spell")[0]!.subject.scope).toBeUndefined();
+  });
+
+  test("the sentence scan is linear on a long text", () => {
+    const t0 = performance.now();
+    const text = "target ".repeat(20_000) + "x. " + "a. ".repeat(20_000) + "counter that spell";
+    expect(targetsASpellEarlier(text, "that spell")).toBe(false);
+    expect(targetsASpellEarlier("target ".repeat(20_000) + "spell. counter that spell", "that spell")).toBe(true);
+    expect(performance.now() - t0).toBeLessThan(500);
   });
 });

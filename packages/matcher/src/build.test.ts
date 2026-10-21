@@ -34,6 +34,12 @@ const mk = (
   },
 });
 
+/** The stack answers as derive writes them (#1266: stackInteraction reads emits and effect kinds, not the printed text). */
+const stackSpell = { control: "any", token: null, type: "spell", scope: "target" };
+const counterAb: CardTags["abilities"] = [{ kind: "on-cast", repeats: "once", effect: { kind: "" }, emits: [{ verb: "counter-spell", subject: stackSpell }] } as never];
+const retargetAb: CardTags["abilities"] = [{ kind: "on-cast", repeats: "once", effect: { kind: "retarget", subject: stackSpell } } as never];
+const stackLeavesAb = (verb: string): CardTags["abilities"] => [{ kind: "on-cast", repeats: "once", effect: { kind: "" }, emits: [{ verb, subject: { ...stackSpell, control: "opp", fromZone: "stack" } }] } as never];
+
 const rampAbility: CardTags["abilities"] = [{ kind: "static", effect: { kind: "mana-generation" } }];
 // THE RAMP ROLE READS THE DERIVED MANA RECORD (#1190), so a fixture that is ramp carries the lines derive would write for it, not only a mana-generation label.
 const rockLines = [tapFor(["C"])];
@@ -77,7 +83,7 @@ test("basic lands do not fill the lands role (only utility lands do)", () => {
 test("targeted removal is read from derived emits (Swords/Counterspell gap)", () => {
   const m = detectBuildCategories([
     realCard("Swords to Plowshares"),
-    mk("Counterspell", "Counter target spell.", "Instant"),
+    mk("Counterspell", "Counter target spell.", "Instant", counterAb),
     realCard("Beast Within"),
   ]);
   expect(m.get("targetedRemoval")).toEqual(new Set(["Swords to Plowshares", "Beast Within"]));
@@ -86,17 +92,17 @@ test("targeted removal is read from derived emits (Swords/Counterspell gap)", ()
 
 test("stack interaction: counters (typed), redirection, and stack-bounce; not plain removal", () => {
   const m = detectBuildCategories([
-    mk("Counterspell", "Counter target spell.", "Instant"),
-    mk("Essence Scatter", "Counter target creature spell.", "Instant"),
-    mk("Deflecting Swat", "You may change the target of target spell or ability.", "Instant"),
-    mk("Narset Reversal", "Return target instant or sorcery spell to its owner's hand. You may copy that spell.", "Instant"),
+    mk("Counterspell", "Counter target spell.", "Instant", counterAb),
+    mk("Essence Scatter", "Counter target creature spell.", "Instant", counterAb),
+    mk("Deflecting Swat", "You may change the target of target spell or ability.", "Instant", retargetAb),
+    mk("Narset Reversal", "Return target instant or sorcery spell to its owner's hand. You may copy that spell.", "Instant", stackLeavesAb("leaves")),
     mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power.", "Instant"),
   ]);
   expect(m.get("stackInteraction")).toEqual(new Set(["Counterspell", "Essence Scatter", "Deflecting Swat", "Narset Reversal"]));
 });
 
 test("counters are no longer counted as targeted removal", () => {
-  const m = detectBuildCategories([mk("Counterspell", "Counter target spell.", "Instant")]);
+  const m = detectBuildCategories([mk("Counterspell", "Counter target spell.", "Instant", counterAb)]);
   expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Counterspell");
 });
 
@@ -489,7 +495,7 @@ test("edict/destroy (forced-sacrifice effect kind) is NOT stax", () => {
 
 test("redirection via 'choose new targets for' is stack interaction (Deflecting Swat)", () => {
   const m = detectBuildCategories([
-    mk("Deflecting Swat", "If you control a commander, you may cast this spell without paying its mana cost. You may choose new targets for target spell or ability.", "Instant"),
+    mk("Deflecting Swat", "If you control a commander, you may cast this spell without paying its mana cost. You may choose new targets for target spell or ability.", "Instant", retargetAb),
   ]);
   expect(m.get("stackInteraction")).toContain("Deflecting Swat");
 });
@@ -539,8 +545,8 @@ test("target-creature-then--1/-1-counter order is removal", () => {
 
 test("counters with a comma-separated type list are stack interaction", () => {
   const m = detectBuildCategories([
-    mk("Swan Song", "Counter target enchantment, instant, or sorcery spell. Its controller creates a 2/2 blue Bird creature token with flying.", "Instant"),
-    mk("Strix Serenade", "Counter target artifact, creature, or planeswalker spell. Its controller creates a 2/2 blue Bird creature token with flying.", "Instant"),
+    mk("Swan Song", "Counter target enchantment, instant, or sorcery spell. Its controller creates a 2/2 blue Bird creature token with flying.", "Instant", counterAb),
+    mk("Strix Serenade", "Counter target artifact, creature, or planeswalker spell. Its controller creates a 2/2 blue Bird creature token with flying.", "Instant", counterAb),
   ]);
   expect(m.get("stackInteraction")).toEqual(new Set(["Swan Song", "Strix Serenade"]));
 });
@@ -554,7 +560,7 @@ test("a +1/+1 counter placer is not a counterspell (counter clause needs 'counte
 
 test("exile-a-spell pseudo-counters are stack interaction; exile-a-creature (removal) is not", () => {
   const m = detectBuildCategories([
-    mk("Aven Interrupter", "Flash Flying When this creature enters, exile target spell. It becomes plotted.", "Creature"),
+    mk("Aven Interrupter", "Flash Flying When this creature enters, exile target spell. It becomes plotted.", "Creature", stackLeavesAb("exiled")),
     mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power.", "Instant"),
   ]);
   expect(m.get("stackInteraction")).toContain("Aven Interrupter");

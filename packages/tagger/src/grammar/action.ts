@@ -11,7 +11,7 @@
  *    field for it.
  *  - VERB FAMILIES are added one per PR, in the owner's order (2026-10-01): draw/search first. */
 import type { Control, SubjectFilter } from "../schema.js";
-import { counterKindOf } from "../derive/subject.js";
+import { counterKindOf, spellMove } from "../derive/subject.js";
 import { KEYWORD_ABILITIES } from "../derive/subtypes.js";
 import { parse } from "./filter.js";
 import { withoutAbilityWord } from "./preamble.js";
@@ -493,8 +493,11 @@ function moveObject(phrase: string, onField = false): Args | null {
   // "from their graveyard": whose is a back-reference ("target opponent mills three cards. Put a land
   // card from their graveyard ...", Realmbreaker), so the stored object, which names them, stays.
   if (/ from their /.test(t)) return { object: { ...r.object, ref: "sentence" }, ...(from ? { fromZone: from } : {}) };
-  const field = onField && !from && r.object.ref === undefined && r.object.self !== true && !/\bcards?\b/.test(rest);
-  return { object: r.object, ...(from ? { fromZone: from } : field ? { fromZone: "battlefield" } : {}), text: phrase.replace(/ from among (?:them|those cards)$/, "") };
+  // A SPELL IS ON THE STACK, NOT THE BATTLEFIELD (#1266): "Return target spell to its owner's hand" (Reprieve) leaves the stack, as the store writes it. A phrase that names a
+  // spell AND a permanent ("target spell or permanent", Venser) has no one origin, so none is stated; derive reads both halves off the words.
+  const spells = spellMove(rest);
+  const field = onField && !from && !spells && r.object.ref === undefined && r.object.self !== true && !/\bcards?\b/.test(rest);
+  return { object: r.object, ...(from ? { fromZone: from } : spells === "only" && onField && r.object.ref === undefined ? { fromZone: "stack" } : field ? { fromZone: "battlefield" } : {}), text: phrase.replace(/ from among (?:them|those cards)$/, "") };
 }
 
 /** "to its owner's hand", "to the battlefield tapped under your control", "on top of its owner's
