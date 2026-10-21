@@ -6001,3 +6001,44 @@ describe("#1266 burn: who a damage or life loss hits", () => {
     expect(arbiter.some((x) => ["player-life-loss", "damage", "drain"].includes(x.effect.kind))).toBe(false);
   });
 });
+
+// #1266 (wincon): the clause layer stores a win as the VERB `win-game` ("you win the game": Epic Struggle, Thassa's Oracle, Laboratory Maniac), and only the `other` escape hatch ever
+// reached the `win-game` kind: 1 corpus card derived it, ~60 printed it.
+test("a win-game VERB derives the win-game kind (Epic Struggle, Laboratory Maniac)", () => {
+  const epic = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" },
+      actions: [{ verb: "win-game", object: "the game" }] }],
+    "Epic Struggle", { 1: "At the beginning of your upkeep, if you control twenty or more creatures, you win the game." },
+  ).abilities;
+  expect(epic.map((a) => a.effect.kind)).toEqual(["win-game"]);
+  const maniac = deriveAbilities(
+    [{ id: 1, abilityType: "static", actions: [{ verb: "win-game", object: "you" }] }],
+    "Laboratory Maniac", { 1: "If you would draw a card while your library has no cards in it, you win the game instead." },
+  ).abilities;
+  expect(maniac.map((a) => a.effect.kind)).toEqual(["win-game"]);
+});
+
+// CR 701.17a: milling is the top cards of a library into the graveyard. "Exiles the top N cards of their library" is an exile, never a mill.
+test("exiling the top of a library is not a mill (Sire of Stagnation, Ulamog, Lidless Gaze)", () => {
+  const notMill = (a: { effect: { kind: string }; emits?: { verb: string }[] }): boolean => a.effect.kind !== "mill" && !(a.emits ?? []).some((e) => e.verb === "mill");
+  const sire = deriveAbilities(
+    [{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "a land", control: "opponent" },
+      actions: [{ verb: "mill", object: "that player", amount: "2" }, { verb: "draw", object: "you", amount: "2" }] }],
+    "Sire of Stagnation", { 2: "Whenever a land an opponent controls enters, that player exiles the top two cards of their library and you draw two cards." },
+  ).abilities;
+  expect(sire.every(notMill)).toBe(true);
+  expect(sire.some((a) => (a.emits ?? []).some((e) => e.verb === "exiled" && e.subject.fromZone === "library"))).toBe(true);
+  // The clause already carries the exile as an action of its own: the mill is dropped, not doubled.
+  const gaze = deriveAbilities(
+    [{ id: 1, abilityType: "spell", actions: [{ verb: "mill", object: "the top card of each player's library" },
+      { verb: "exile", object: "those cards", fromZone: "library", toZone: "exile" }] }],
+    "Lidless Gaze", { 1: "Exile the top card of each player's library." },
+  ).abilities;
+  expect(gaze.every(notMill)).toBe(true);
+  // A real mill, and a clause that says both words, stay mills.
+  const real = deriveAbilities(
+    [{ id: 1, abilityType: "spell", actions: [{ verb: "mill", object: "target player", amount: "3" }] }],
+    "Traumatize-like", { 1: "Target player mills three cards." },
+  ).abilities;
+  expect(real.some((a) => a.effect.kind === "mill")).toBe(true);
+});
