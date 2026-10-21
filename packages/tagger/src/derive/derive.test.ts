@@ -5624,7 +5624,7 @@ describe("#1266 graveyard replacement effects", () => {
 
   it("Anafenza and Dauthi Voidwalker: hate over opp, an exiled emit and no graveyard leave", () => {
     for (const [name, object, text] of [
-      ["Dauthi Voidwalker", "a card", "If a card would be put into an opponent's graveyard from anywhere, exile it instead with a void counter on it."],
+      ["Dauthi Voidwalker", "a card", "If a card would be put into an opponent's graveyard from anywhere, instead exile it with a void counter on it."],
       ["Anafenza, the Foremost", "that card", "If a nontoken creature an opponent owns would die or a creature card not on the battlefield would be put into an opponent's graveyard, exile that card instead."],
     ] as const) {
       const a = ab([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object }] }], name, { 2: text });
@@ -5654,6 +5654,10 @@ describe("#1266 graveyard replacement effects", () => {
   it("Yawgmoth's Testament (a library replacement) and Samurai of the Pale Curtain (permanents only) are not read", () => {
     expect(graveyardReplacement("If a card would be put into your graveyard or exile from anywhere this turn, put it on the bottom of your library instead.")).toBeUndefined();
     expect(graveyardReplacement("If a permanent would be put into a graveyard, exile it instead.")).toBeUndefined();
+    // the two other cards whose sentence says "instead exile": neither is graveyard hate
+    expect(graveyardReplacement("If Ugin's Nexus would be put into a graveyard from the battlefield, instead exile it and take an extra turn after this one.")).toBeUndefined();
+    expect(graveyardReplacement("If a card would be put into enchanted player's graveyard from anywhere, instead that card is revealed and put on the bottom of that player's library.")).toBeUndefined();
+    expect(graveyardReplacement("If a card would be put into an opponent's graveyard from anywhere, instead exile it with a void counter on it.")).toEqual({ kind: "hate", whose: "opp" });
     expect(graveyardReplacement("If a card or token would be put into a graveyard from anywhere, exile it instead.")?.kind).toBe("hate");
   });
 

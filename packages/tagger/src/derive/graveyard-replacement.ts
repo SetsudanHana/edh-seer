@@ -10,7 +10,9 @@
 export type GraveyardReplacement = { kind: "rider" | "hate" | "own"; whose: "you" | "opp" | "any" };
 
 const WOULD_BE_PUT_INTO = " would be put into ";
-const EXILE_INSTEAD = ["exile it instead", "exile that card instead", "exile them instead", "exile that spell instead", "exile those cards instead", "exile those spells instead", "exile that creature instead", "exile that token instead"];
+const EXILE_OBJECTS = ["it", "that card", "them", "that spell", "those cards", "those spells", "that creature", "that token"];
+/** "exile it instead" and "instead exile it" (Dauthi Voidwalker prints the second order, "instead exile it with a void counter on it"). */
+const EXILE_INSTEAD = EXILE_OBJECTS.flatMap((o) => [`exile ${o} instead`, `instead exile ${o}`]);
 const CLASS_WORDS = ["card", "token", "permanent", "spell"];
 
 export function graveyardReplacement(text: string): GraveyardReplacement | undefined {
