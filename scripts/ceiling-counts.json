@@ -54,6 +54,7 @@
   "packages/tagger/src/derive/emits.ts": 5,
   "packages/tagger/src/derive/event-count.ts": 1,
   "packages/tagger/src/derive/gate.ts": 2,
+  "packages/tagger/src/derive/graveyard-replacement.ts": 1,
   "packages/tagger/src/derive/intervening-if.ts": 2,
   "packages/tagger/src/derive/library-search.ts": 1,
   "packages/tagger/src/derive/mana-lines.ts": 29,

@@ -3,6 +3,7 @@ import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, deriveCardTags, 
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { targetsASpellEarlier } from "./emits.js";
 import { exileNamesOnlyGraveyards } from "./effect-kind.js";
+import { graveyardReplacement } from "./graveyard-replacement.js";
 import { deriveInputOf } from "../derive-input.js";
 import type { Ability, Characteristics } from "../schema.js";
 
@@ -5613,7 +5614,47 @@ describe("#1266 graveyard replacement effects", () => {
       { 2: "If a card would be put into an opponent's graveyard from anywhere, exile it instead." });
     const hate = a.find((x) => x.effect.kind === "graveyard-hate");
     expect(hate?.effect.subject?.control).toBe("opp");
-    expect(exiledEmits(a).every((e) => e.subject.owner !== "you" && e.subject.control === "opp" && e.subject.fromZone === "graveyard")).toBe(true);
+    // CR 614.6: the replaced event never happens, so the card never entered (or left) a graveyard: an exiled emit and no `leaves`, no graveyard origin.
+    const em = a.flatMap((x) => x.emits ?? []);
+    expect(em.some((e) => e.verb === "leaves")).toBe(false);
+    expect(em.filter((e) => e.verb === "exiled").length).toBeGreaterThan(0);
+    expect(em.every((e) => e.subject.owner !== "you" && e.subject.fromZone !== "graveyard" && e.subject.zone !== "graveyard")).toBe(true);
+    expect(em.filter((e) => e.verb === "exiled").every((e) => e.subject.control === "opp")).toBe(true);
+  });
+
+  it("Anafenza and Dauthi Voidwalker: hate over opp, an exiled emit and no graveyard leave", () => {
+    for (const [name, object, text] of [
+      ["Dauthi Voidwalker", "a card", "If a card would be put into an opponent's graveyard from anywhere, exile it instead with a void counter on it."],
+      ["Anafenza, the Foremost", "that card", "If a nontoken creature an opponent owns would die or a creature card not on the battlefield would be put into an opponent's graveyard, exile that card instead."],
+    ] as const) {
+      const a = ab([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object }] }], name, { 2: text });
+      expect(a.find((x) => x.effect.kind === "graveyard-hate")?.effect.subject?.control, name).toBe("opp");
+      const em = a.flatMap((x) => x.emits ?? []);
+      expect(em.some((e) => e.verb === "leaves" || e.subject.fromZone === "graveyard"), name).toBe(false);
+    }
+  });
+
+  it("Rest in Peace's replacement supplies no graveyard leave either", () => {
+    const a = ab([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object: "a card or token" }] }], "Rest in Peace",
+      { 2: "If a card or token would be put into a graveyard from anywhere, exile it instead." });
+    expect(a.flatMap((x) => x.emits ?? []).some((e) => e.verb === "leaves")).toBe(false);
+  });
+
+  it("Sins of the Past: the card's own NAMED exile is not the rider (Invoke Calamity shape)", () => {
+    const a = ab([{ id: 1, abilityType: "spell", actions: [
+      { verb: "cast", object: "target instant or sorcery card from your graveyard", fromZone: "graveyard", toZone: "stack" },
+      { verb: "exile", object: "that spell" },
+      { verb: "exile", object: "Sins of the Past" }] }], "Sins of the Past",
+    { 1: "Until end of turn, you may cast target instant or sorcery card from your graveyard without paying its mana cost. If that spell would be put into your graveyard, exile it instead. Exile Sins of the Past." });
+    const ex = a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "exiled");
+    expect(ex.filter((e) => e.subject.fromZone === "stack")).toHaveLength(1);
+    expect(ex.some((e) => e.subject.self === true)).toBe(true);
+  });
+
+  it("Yawgmoth's Testament (a library replacement) and Samurai of the Pale Curtain (permanents only) are not read", () => {
+    expect(graveyardReplacement("If a card would be put into your graveyard or exile from anywhere this turn, put it on the bottom of your library instead.")).toBeUndefined();
+    expect(graveyardReplacement("If a permanent would be put into a graveyard, exile it instead.")).toBeUndefined();
+    expect(graveyardReplacement("If a card or token would be put into a graveyard from anywhere, exile it instead.")?.kind).toBe("hate");
   });
 
   it("Rest in Peace: 'a graveyard' replacement is graveyard-hate over any", () => {

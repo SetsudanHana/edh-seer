@@ -10,6 +10,7 @@
 export type GraveyardReplacement = { kind: "rider" | "hate" | "own"; whose: "you" | "opp" | "any" };
 
 const WOULD_BE_PUT_INTO = " would be put into ";
+const EXILE_INSTEAD = ["exile it instead", "exile that card instead", "exile them instead", "exile that spell instead", "exile those cards instead", "exile those spells instead", "exile that creature instead", "exile that token instead"];
 const CLASS_WORDS = ["card", "token", "permanent", "spell"];
 
 export function graveyardReplacement(text: string): GraveyardReplacement | undefined {
@@ -22,11 +23,14 @@ export function graveyardReplacement(text: string): GraveyardReplacement | undef
   const gy = rest.indexOf(" graveyard");
   if (gy < 0) return undefined;
   const after = rest.slice(gy);
-  if (!after.includes("exile") || !after.includes("instead")) return undefined;
+  // "exile it / that card / them ... instead", adjacent: Yawgmoth's Testament ("put it on the bottom of your library instead") names exile elsewhere in the sentence and is no exile replacement.
+  if (!EXILE_INSTEAD.some((w) => after.includes(w))) return undefined;
   const named = rest.slice(0, gy);
   const whose = named.includes("your") ? "you" : named.includes("opponent") ? "opp" : "any";
   if (subject === "that spell" || subject === "those spells" || subject === "the spell" || /\bcast\b/.test(subject)) return { kind: "rider", whose };
   // "from anywhere", or a subject that says it is not on the battlefield (Sanctifier en-Vec): either way the card does not come from the battlefield alone.
+  // CEILING: a replacement with no "from anywhere" and no "not on the battlefield" ("If a permanent would be put into a graveyard, exile it instead": Samurai of the Pale Curtain)
+  // reaches only permanents dying, never a card from a hand or library, and is left unread rather than called graveyard hate; 1 commander-legal card on 2026-10-21.
   if (!(after.includes("from anywhere") || subject.includes("not on the battlefield")) || subject.startsWith("this ")) return undefined;
   if (!CLASS_WORDS.some((w) => subject.includes(w))) return undefined;
   return { kind: whose === "you" ? "own" : "hate", whose };
