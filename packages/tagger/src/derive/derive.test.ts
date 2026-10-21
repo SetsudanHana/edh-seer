@@ -5940,6 +5940,14 @@ describe("#1266 burn: who a damage or life loss hits", () => {
     expect(bond!.effect.kind).toBe("player-life-loss");
   });
 
+  it("Rabid Bite: 'target creature you control deals damage' makes a creature the dealer; a card's own damage keeps the card", () => {
+    const [bite] = dmg(abil([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "target creature you don't control", amount: "equal to its power" }] }], "Rabid Bite",
+      { 1: "Target creature you control deals damage equal to its power to target creature you don't control." }));
+    expect(bite!.emits![0]!.dealer).toMatchObject({ type: "creature", control: "you" });
+    const [bolt] = dmg(abil([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "any target", amount: "3" }] }], "Lightning Bolt", { 1: "Lightning Bolt deals 3 damage to any target." }));
+    expect(bolt!.emits![0]!.dealer?.type).toBeUndefined();
+  });
+
   it("Power Sink / Drain Power: 'lose all unspent mana' is no life loss", () => {
     const a = abil([{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target spell" }, { verb: "lose-life", object: "all unspent mana" }] }], "Power Sink",
       { 1: "Counter target spell unless its controller pays {X}. If that player doesn't, they tap all lands with mana abilities they control and lose all unspent mana." });
@@ -5954,6 +5962,10 @@ describe("#1266 burn: who a damage or life loss hits", () => {
     expect(tah.emits![0]!.subject.self).toBe(true);
     const garruk = selfOf("him", "Garruk Relentless // Garruk, the Veil-Cursed", "0: Garruk deals 3 damage to target creature. That creature deals damage equal to its power to him.");
     expect(garruk.effect.subject?.self).toBe(true);
+    // The emit is the bare card, not the antecedent "target creature" with a self flag on it (a planeswalker typed creature).
+    expect(garruk.emits![0]!.subject.type).toBeUndefined();
+    expect(garruk.emits![0]!.subject.scope).toBeUndefined();
+    expect(garruk.emits![0]!.subject.self).toBe(true);
     // "him" with no fight-back sentence stays what it was (Roiling Vortex's "them" is a player, never read as the card).
     const [other] = dmg(abil([{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell", control: "any" }, actions: [{ verb: "deal-damage", object: "him" }] }], "Some Card",
       { 1: "Whenever a spell is cast, Some Card deals 2 damage to him." }));

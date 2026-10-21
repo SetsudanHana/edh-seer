@@ -14,7 +14,7 @@ import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMP
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { librarySearchOwner, printsSearch } from "./library-search.js";
-import { damageHitsSelf, damageRecipient } from "./damage-recipient.js";
+import { creatureDamageSource, damageHitsSelf, damageRecipient } from "./damage-recipient.js";
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
@@ -2628,6 +2628,13 @@ export function deriveAbilities(
         // ROADMAP I7. The permanent arrives under a controller the schema cannot name, so the emit
         // claims nothing rather than claiming everyone. See `entersUnderAnotherPlayer`.
         .filter((e) => !(e.verb === "enters" && entersUnderAnotherPlayer(cardText)));
+      // THE CARD ITSELF HIT BY A FIGHT-BACK is bare `self` (Garruk's "him" kept the antecedent "target creature": a planeswalker typed creature, scope target) (#1266, burn).
+      const selfDamage = action.verb === "deal-damage" && damageHitsSelf(action.object ?? "", text);
+      if (selfDamage) for (const e of emits) e.subject = { control: "any", token: null, self: true };
+      // A CREATURE DEALS IT when the sentence says "target creature (you control) deals damage ...": the dealer is that creature, so a damage trigger hears "a creature ... thanks to <card>" (Rabid Bite), not the spell.
+      // CEILING: only a clause with ONE damage action (Garruk's two read the card as dealer of both).
+      const creatureSource = action.verb === "deal-damage" && !selfDamage && (clause.actions ?? []).filter((x) => x.verb === "deal-damage").length === 1 ? creatureDamageSource(text) : undefined;
+      if (creatureSource !== undefined) for (const e of emits) if (e.dealer !== undefined) e.dealer = { control: creatureSource, token: null, type: "creature" };
       if (emitsSelf) for (const e of emits) {
         if (!grantedTo) { e.subject.self = true; continue; }
         // The granted ability's "this permanent"/"it" is the recipient -- see `grantedTo`.

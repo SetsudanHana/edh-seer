@@ -6939,6 +6939,16 @@ describe("a damage emit split per half (#1266)", () => {
     expect(claimCount(reasons)).toBe(1);
     expect(reasons[0]!.text).toContain("When Lava Spike deals noncombat damage");
   });
+  test("a creature the spell makes deal the damage is named, not the spell (Rabid Bite)", () => {
+    const bite0 = base("Rabid Bite", [{
+      kind: "on-cast", effect: { kind: "damage", subject: { control: "opp", token: null, type: "creature", scope: "target" } },
+      emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, type: "creature", scope: "target" }, dealer: { control: "you", token: null, type: "creature" } }],
+    } as never]);
+    const bite = { ...bite0, tags: { ...bite0.tags, characteristics: { ...bite0.tags.characteristics!, types: ["instant"] } } };
+    const reasons = pairReasons(bite, doubler(), H).filter((r) => r.tag === "non-combat-damage:any");
+    expect(reasons.length).toBeGreaterThan(0);
+    for (const r of reasons) expect(r.text).toContain("When a creature deals noncombat damage thanks to Rabid Bite");
+  });
   test("an opponent's damage trigger hears the player half as 'a player', not the card itself", () => {
     const reasons = pairReasons(spike(), spitfire(), H).filter((r) => r.tag === "damaged:any");
     expect(reasons.length).toBeGreaterThan(0);

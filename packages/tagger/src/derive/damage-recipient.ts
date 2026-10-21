@@ -153,3 +153,17 @@ export function damageHitsSelf(object: string, clauseText: string): boolean {
   const o = object.trim().toLowerCase();
   return o === "~" || ((o === "him" || o === "her") && FIGHT_BACK.test(clauseText));
 }
+
+/** WHO DEALS THE DAMAGE when a CREATURE does, not the spell (#1266, burn): "Target creature you control deals damage equal to its power to target creature you don't control" (Rabid Bite),
+ *  "... to each other creature and each opponent" (Chandra's Ignition), "that creature deals damage" . The emit's dealer is then a creature, `you` when the sentence says "you control".
+ *  A sentence word scan, no backtracking: the text before the first " deals " must be exactly such a creature phrase. Undefined when the dealer is the card or unclear. */
+export function creatureDamageSource(clauseText: string): "you" | "any" | undefined {
+  const lower = clauseText.toLowerCase();
+  const at = lower.indexOf(" deals ");
+  if (at < 0) return undefined;
+  // The head: the sentence part before " deals ", after any cost or earlier sentence.
+  const head = lower.slice(0, at).split(/[.:]/).pop()!.trim();
+  const phrases = ["target creature you control", "up to one target creature you control", "target creature", "that creature", "each of those creatures"];
+  if (!phrases.includes(head)) return undefined;
+  return head.endsWith("you control") ? "you" : "any";
+}
