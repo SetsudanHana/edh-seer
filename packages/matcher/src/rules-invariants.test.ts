@@ -29,6 +29,7 @@ const TESTED: Record<string, string> = {
   "700.11": "deck-fit.test.ts — a permanent card put into your graveyard from anywhere is a descent, so a creature dying meets the descend condition (#1166)",
   "701.17a": "partners-core.test.ts — a mill also supplies the general graveyard put, one way only",
   "400.1": "partners-core.test.ts — a graveyard leave keys apart from a battlefield leave (AK6)",
+  "205.3i": "rules.test.ts — tutor.text refuses a search whose subject is only a land type (land types are the CR 205.3i list: Gate, Desert, Cave, Town ...), #1266",
   "700.12": "implied.test.ts — isOutlaw is the five CR 700.12 creature types",
   "722.3": "prepared: implied.ts preparedAbilities", "722.3a": "only a card with a prepare spell takes the designation", "722.3d": "a prepare spell's cast is a prepared spell (SubjectFilter.prepared)",
   "111.10u": "resource tokens: Lander, Mutagen, Vibranium, Heartwood (archetypes.ts RESOURCE_TOKENS)",

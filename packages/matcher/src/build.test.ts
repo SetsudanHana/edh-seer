@@ -12,6 +12,10 @@ import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { realCard, renamed } from "./removal-test-support.js";
 
 /** Minimal DeckCard: oracleText + typeLine drive the heuristics; abilities drive ramp/draw. */
+/** A printed search of your own library, as derive writes it (`Ability.librarySearch`, #1266): the tutor role reads this, not the oracle text. */
+const searchOf = (subject: object = { control: "you", token: null }): CardTags["abilities"] =>
+  [{ kind: "on-cast", repeats: "once", effect: { kind: "search", subject }, librarySearch: "yours" } as never];
+
 const mk = (
   name: string,
   oracleText: string,
@@ -107,8 +111,8 @@ test("board wipe is distinguished from targeted removal (wipe wins, not double-c
 test("protection is detected; a land-fetch is ramp not a tutor", () => {
   const m = detectBuildCategories([
     mk("Heroic Intervention", "Permanents you control gain hexproof and indestructible until end of turn.", "Instant"),
-    mk("Rampant Growth", "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", "Sorcery"),
-    mk("Demonic Tutor", "Search your library for a card, put that card into your hand, then shuffle.", "Sorcery"),
+    mk("Rampant Growth", "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", "Sorcery", searchOf({ control: "you", token: null, type: "land", basic: true })),
+    mk("Demonic Tutor", "Search your library for a card, put that card into your hand, then shuffle.", "Sorcery", searchOf()),
   ]);
   expect(m.get("protection")).toEqual(new Set(["Heroic Intervention"]));
   expect(m.get("tutor")).toEqual(new Set(["Demonic Tutor"]));
@@ -293,7 +297,7 @@ test("buildScore is computed from PARENT attainment: any leaf inside a parent ca
   //   attainSum  = 1*1 + 1*0 + 1*0 + 0.5*0 + 1*0 = 1
   //   buildScore = (attainSum / weightSum) * 5 = (1 / 4.5) * 5 = 10/9 ~= 1.1111
   const tutors = Array.from({ length: 14 }, (_, i) =>
-    mk(`Tutor ${i}`, "Search your library for a card, put that card into your hand, then shuffle.", "Sorcery"));
+    mk(`Tutor ${i}`, "Search your library for a card, put that card into your hand, then shuffle.", "Sorcery", searchOf()));
   const { buildParents, buildScore } = computeBuild(tutors, undefined);
   const consistency = buildParents.find((p) => p.name === "Card advantage")!;
   expect(consistency.count).toBe(14);

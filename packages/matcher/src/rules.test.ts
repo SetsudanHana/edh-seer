@@ -1257,3 +1257,48 @@ describe("removal.targeted is derived", () => {
     expect(ruleMatches(rule, exile(undefined, [{ verb: "dies", subject: dies }], [back("you")]), set)).toBe(true);
   });
 });
+
+/** tutor.text reads a DERIVED printed search of your own library, and the keyword list for the keyword tutors (#1266). The oracle text is empty on every card here. */
+describe("tutor.text is derived", () => {
+  const set = loadRules();
+  const rule = set.rules.find((r) => r.id === "tutor.text")!;
+  const search = (librarySearch: "yours" | "other" | undefined, subject: object = { control: "you" }): DeckCard => ({
+    card: { name: "x", oracleText: "", typeLine: "Sorcery", keywords: [] } as unknown as Card,
+    tags: { abilities: [{ effect: { kind: "search", subject }, ...(librarySearch ? { librarySearch } : {}) }] } as never,
+  });
+  const keyworded = (keywords: string[]): DeckCard => ({ card: { name: "x", oracleText: "", typeLine: "Instant", keywords } as unknown as Card, tags: null });
+  test("a printed search of your own library is a tutor with no oracle text", () => {
+    expect(ruleMatches(rule, search("yours"), set)).toBe(true);
+  });
+  test("another player's search (Sphinx Ambassador), and a dig with no librarySearch, are not", () => {
+    expect(ruleMatches(rule, search("other"), set)).toBe(false);
+    expect(ruleMatches(rule, search(undefined), set)).toBe(false);
+  });
+  test("a search that only fetches lands is fixing, and a subject with no type is not land-only", () => {
+    expect(ruleMatches(rule, search("yours", { control: "you", type: "land" }), set)).toBe(false);
+    expect(ruleMatches(rule, search("yours", { control: "you", type: ["land"] }), set)).toBe(false);
+    expect(ruleMatches(rule, search("yours", { control: "you", type: ["land", "creature"] }), set)).toBe(true);
+    expect(ruleMatches(rule, search("yours", { control: "you", type: "creature" }), set)).toBe(true);
+  });
+  test("Transmute and Transfigure are tutors; Typecycling is, unless it is Landcycling (Brainspoil, Fleshwrither, Homing Sliver, Sojourner's Companion)", () => {
+    expect(ruleMatches(rule, keyworded(["Transmute"]), set)).toBe(true);
+    expect(ruleMatches(rule, keyworded(["Transfigure"]), set)).toBe(true);
+    expect(ruleMatches(rule, keyworded(["Typecycling", "Cycling", "Slivercycling"]), set)).toBe(true);
+    expect(ruleMatches(rule, keyworded(["Affinity", "Landcycling", "Typecycling", "Cycling"]), set)).toBe(false);
+    expect(ruleMatches(rule, keyworded(["Cycling"]), set)).toBe(false);
+  });
+});
+
+describe("tutor.text land-only refusal reads basic land types (#1266)", () => {
+  const set = loadRules();
+  const rule = set.rules.find((r) => r.id === "tutor.text")!;
+  const search = (subject: object): DeckCard => ({ card: { name: "x", oracleText: "", typeLine: "Sorcery", keywords: [] } as unknown as Card, tags: { abilities: [{ effect: { kind: "search", subject }, librarySearch: "yours" }] } as never });
+  test("a Mountain card, a basic Plains, Swamp or Forest card are land fetches (Alpine Guide, Abzan Monument); a basic-land-or-Shrine search is not land-only", () => {
+    expect(ruleMatches(rule, search({ control: "you", subtype: "mountain" }), set)).toBe(false);
+    expect(ruleMatches(rule, search({ control: "you", subtype: ["plains", "swamp", "forest"], basic: true }), set)).toBe(false);
+    expect(ruleMatches(rule, search({ control: "any", anyOf: [{ type: "land" }, { subtype: "gate" }] }), set)).toBe(false);
+    expect(ruleMatches(rule, search({ control: "you", type: ["mountain", "cave"] }), set)).toBe(false);
+    expect(ruleMatches(rule, search({ control: "any", anyOf: [{ type: "land" }, { subtype: "shrine" }] }), set)).toBe(true);
+    expect(ruleMatches(rule, search({ control: "any", named: "ajani, valiant protector" }), set)).toBe(true);
+  });
+});
