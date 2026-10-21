@@ -362,7 +362,8 @@ const USES_THE_EXILED_CARD = /\bcopy of (?:it|them|that card|those cards)\b|\bpl
 // (Uchuulon) copies the card itself, uses nothing, and is deliberately not here.
 const PUTS_FROM_YARD_ONTO_BATTLEFIELD = /\bputs? [^.]*?\bgraveyards? onto the battlefield\b/i;
 const USES_THE_EXILED_CARD_2 = /\bcop(?:y|ies) (?:it|them|that card|those cards|the exiled cards?)\b|\b(?:play|cast) [^.]*?\bfrom among cards exiled (?:this way|with)\b/i;
-const YOUR_YARD = /\byour graveyard\b/i;
+// "your graveyard", and "your hand or graveyard" / "your hand and/or graveyard" (Mairsil): the graveyard half is still yours.
+const YOUR_YARD = /\byour (?:(?:hand|library)(?: or| and\/or| and) )?graveyard\b/i;
 const OTHER_YARD = /\b(?:target player'?s?|opponents?'?s?|each player'?s?|their)\s+graveyards?\b/i;
 
 export function exilesOwnGraveyard(object: string, clauseText: string): boolean {

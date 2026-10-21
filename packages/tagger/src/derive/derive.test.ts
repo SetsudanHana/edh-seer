@@ -5597,6 +5597,59 @@ describe("#1266 graveyard owner on an exiled emit", () => {
     expect(es.every((e) => e.subject.owner === undefined)).toBe(true);
   });
 
+  it.each([
+    ["Promise of Tomorrow", { event: "dies", subject: "a creature you control", control: "you" }, "Whenever a creature you control dies, exile it.", "you"],
+    ["Cyclopean Mummy", { event: "dies", subject: "this creature", control: "you" }, "When this creature dies, exile it.", "you"],
+    ["Eater of Virtue", { event: "dies", subject: "equipped creature", control: "you" }, "Whenever equipped creature dies, exile it.", "you"],
+    ["Mari, the Killing Quill", { event: "dies", subject: "a creature an opponent controls", control: "opp" }, "Whenever a creature an opponent controls dies, exile it with a hit counter on it.", undefined],
+    ["Mimic Vat", { event: "dies", subject: "a nontoken creature", control: "any" }, "Whenever a nontoken creature dies, you may exile that card.", undefined],
+  ] as const)("%s: the card a dies trigger exiles is in the graveyard of whoever the trigger names", (name, trigger, text, owner) => {
+    const [e] = exiledOf([{ id: 1, abilityType: "triggered", trigger: { ...trigger }, actions: [{ verb: "exile", object: "it" }] }], name, { 1: text });
+    expect(e?.subject.ref).toBe("trigger");
+    expect(e?.subject.fromZone).toBe("graveyard");
+    expect(e?.subject.owner).toBe(owner);
+  });
+
+  it("Nightmare Shepherd: the graveyard-hate EFFECT of an own-trigger exile is owned by you too", () => {
+    const a = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "another nontoken creature you control", control: "you" }, actions: [{ verb: "exile", object: "it", fromZone: "graveyard", toZone: "exile" }] }],
+      "Nightmare Shepherd", { 1: "Whenever another nontoken creature you control dies, you may exile it." }).abilities;
+    expect(a.find((x) => x.effect.kind === "graveyard-hate")?.effect.subject?.owner).toBe("you");
+  });
+
+  it("Mairsil: 'from your hand or graveyard' is your graveyard (owner you, no graveyard-hate)", () => {
+    const a = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "Mairsil", control: "you" }, actions: [{ verb: "exile", object: "an artifact or creature card from your hand or graveyard", fromZone: "graveyard", toZone: "exile" }] }],
+      "Mairsil, the Pretender", { 1: "When Mairsil enters, you may exile an artifact or creature card from your hand or graveyard and put a cage counter on it." }).abilities;
+    expect(a.some((x) => x.effect.kind === "graveyard-hate")).toBe(false);
+    expect(a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "exiled").every((e) => e.subject.owner === "you")).toBe(true);
+  });
+
+  it("Planar Void: another card put into any graveyard stays not yours", () => {
+    const [e] = exiledOf([{ id: 1, abilityType: "triggered", trigger: { event: "put-into-graveyard", subject: "another card", control: "any" }, actions: [{ verb: "exile", object: "that card" }] }],
+      "Planar Void", { 1: "Whenever another card is put into a graveyard from anywhere, exile that card." });
+    expect(e?.subject.owner).toBeUndefined();
+  });
+
+  it.each([
+    ["Carrion Rats", "Whenever this creature attacks or blocks, any player may exile a card from their graveyard."],
+    ["Grave Consequences", "Each player may exile any number of cards from their graveyard."],
+    ["Axebane Ferox", "Whenever this creature becomes the target of a spell or ability an opponent controls, counter it unless that player exiles cards with total mana value 4 or greater from their graveyard."],
+    ["Lost in Thought", "Its controller may exile three cards from their graveyard for that player to ignore this effect until end of turn."],
+  ])("%s: an exile the victim chooses is `victimMay`", (name, text) => {
+    const es = exiledOf([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object: "cards from their graveyard", fromZone: "graveyard", toZone: "exile" }] }], name, { 1: text });
+    expect(es.length).toBeGreaterThan(0);
+    expect(es.every((e) => e.victimMay === true)).toBe(true);
+  });
+
+  it.each([
+    ["Augusta, Order Returned", "Whenever Augusta attacks, each player exiles a card from their graveyard."],
+    ["Curse of Oblivion", "At the beginning of enchanted player's upkeep, that player exiles two cards from their graveyard."],
+    ["Mudhole", "Target player exiles all land cards from their graveyard."],
+  ])("%s: a FORCED exile is not victimMay", (name, text) => {
+    const es = exiledOf([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "cards from their graveyard", fromZone: "graveyard", toZone: "exile" }] }], name, { 1: text });
+    expect(es.length).toBeGreaterThan(0);
+    expect(es.every((e) => e.victimMay !== true)).toBe(true);
+  });
+
   it("an exile that names a hand AND a graveyard keeps the zone the model gave (Identity Crisis stays unzoned)", () => {
     const [e] = exiledOf([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "all cards from target player's hand and graveyard" }] }],
     "Identity Crisis", { 1: "Exile all cards from target player's hand and graveyard." });

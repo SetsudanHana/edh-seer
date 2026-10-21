@@ -222,5 +222,7 @@ const DECLINER = "(?:(?:its|their|that [a-z]+'s) controller|that player|they|tar
 export function victimDeclines(clauseText: string, verb: string): boolean {
   const stem = DECLINE_VERBS[verb];
   if (!stem) return false;
-  return new RegExp(`\\b${DECLINER}\\s+may\\s+(?:(?:also|then)\\s+)*${stem}\\b|\\bunless\\s+${DECLINER}\\s+${stem}\\b`, "i").test(clauseText);
+  // "ANY PLAYER MAY EXILE a card from their graveyard" (Carrion Rats, Carrion Wurm), "EACH PLAYER MAY exile any number" (Grave Consequences): the exile is every player's option (#1266, graveyardHate).
+  const anyPlayer = verb === "exile" ? "|\\b(?:any|each) player may exiles?\\b" : "";
+  return new RegExp(`\\b${DECLINER}\\s+may\\s+(?:(?:also|then)\\s+)*${stem}\\b|\\bunless\\s+${DECLINER}\\s+${stem}\\b`, "i").test(clauseText) || (anyPlayer !== "" && new RegExp(anyPlayer.slice(1), "i").test(clauseText));
 }
