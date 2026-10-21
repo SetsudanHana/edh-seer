@@ -12,6 +12,7 @@ import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, 
 import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
+import { librarySearchOwner, printsSearch } from "./library-search.js";
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
@@ -516,7 +517,8 @@ import { emblemRecipient } from "../emblem.js";
 // 358: #1299 task 2 -- `CardTags.unclaimed` is persisted (every action no rule claimed, with its clause id), as `unknownTriggers` is. No ability changes.
 // 359: #1301 -- a `put` that is another effect's destination is claimed: `Ability.toZone` on the search it follows ("put it into your hand / onto the battlefield") and on the counter-spell it follows ("put it on top of its owner's library"); a dig's "put the rest on the bottom" is claimed as the remainder. No emit changes.
 // 360: #1301 review -- `toZone` is also set from a put that derives its own `enters` (Rampant Growth, Farseek); "one" counts as the searched card; the zone-tail strip is linear. No claim changes.
-export const DERIVE_VERSION = 360;
+// 361: #1266 -- `Ability.librarySearch` ("yours" | "other") on a `search` ability read off a printed search action naming a library; a typed dig carries none. No claim or emit changes.
+export const DERIVE_VERSION = 361;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -3035,6 +3037,13 @@ export function deriveAbilities(
       const limbCombat = ability.trigger?.subject.combat ? { combat: ability.trigger.subject.combat } : {};
       // The grammar reads every limb itself (above); these twins are the stored path's.
       if (trigger && !grammarRead) for (const limb of orLimbTriggers(text)) abilities.push({ ...ability, trigger: { ...trigger, verbs: limb.verbs, subject: { ...limb.subject, ...limbCombat } } });
+      if (action.verb === "search") {
+        // #1266: a PRINTED search says whose library; a `search` ability read off a `put` (a dig) never gets here with this verb.
+        // A model-written dig also says `search`; with the printed text in hand, the text must say it too.
+        const nth = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === "search").length;
+        const owner = clauseText === "" || printsSearch(clauseText) ? librarySearchOwner(action, clauseText, nth) : undefined;
+        if (owner) for (const made of abilities.slice(firstOfAction)) if (made.effect.kind === "search") made.librarySearch = owner;
+      }
       if (action.verb === "search" || action.verb === "counter-spell") destinationOwners.set((clause.actions ?? []).indexOf(action), abilities.slice(firstOfAction));
     }
 

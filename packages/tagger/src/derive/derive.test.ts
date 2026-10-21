@@ -5159,3 +5159,52 @@ describe("a put that is another effect's destination (#1301)", () => {
     expect(performance.now() - t0).toBeLessThan(100);
   });
 });
+
+describe("Ability.librarySearch: whose library a printed search reads (#1266)", () => {
+  const spell = (actions: object[], text?: string) => deriveAbilities([{ id: 1, abilityType: "spell" as const, actions }], undefined, text ? { 1: text } : undefined, undefined, text).abilities;
+  const owner = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "search").map((a) => a.librarySearch);
+
+  test("your library, a bare object with fromZone library, and 'your library and/or graveyard' are yours", () => {
+    expect(owner(spell([{ verb: "search", object: "your library for a card", fromZone: null }], "Search your library for a card, put it into your hand, then shuffle."))).toEqual(["yours"]);
+    expect(owner(spell([{ verb: "search", object: "a card", fromZone: "library" }], "Search your library for a card."))).toEqual(["yours"]);
+    expect(owner(spell([{ verb: "search", object: "a card", fromZone: "library" }]))).toEqual(["yours"]);
+    expect(owner(spell([{ verb: "search", object: "your library and/or graveyard", fromZone: null }], "Search your library and/or graveyard for a card named X."))).toEqual(["yours"]);
+  });
+
+  test("another player's library, or another player searching, is other", () => {
+    expect(owner(spell([{ verb: "search", object: "that player's library for a card", fromZone: "library" }], "Target player loses 1 life. Search that player's library for a card."))).toEqual(["other"]);
+    expect(owner(spell([{ verb: "search", object: "a card", fromZone: "library" }], "Each of them searches their library for a card."))).toEqual(["other"]);
+    expect(owner(spell([{ verb: "search", object: "a card", fromZone: "library" }], "Each friend searches their library for a card."))).toEqual(["other"]);
+    expect(owner(spell([{ verb: "search", object: "their library for a basic land card", fromZone: "library" }], "Exile target creature. Its controller may search their library for a basic land card."))).toEqual(["other"]);
+  });
+
+  test("a graveyard-only search, and a typed dig, carry no field", () => {
+    expect(spell([{ verb: "search", object: "a card", fromZone: "graveyard" }], "Search your graveyard for a card.").some((a) => a.librarySearch !== undefined)).toBe(false);
+    const dig = spell([{ verb: "put", object: "a creature card from the top five cards of your library", fromZone: "library", toZone: "hand" }], "Look at the top five cards of your library. Put a creature card from among them into your hand.");
+    expect(dig.some((a) => a.effect.kind === "search")).toBe(true);
+    expect(dig.some((a) => a.librarySearch !== undefined)).toBe(false);
+  });
+});
+
+describe("Ability.librarySearch: stored-answer shapes (#1266)", () => {
+  const spell = (actions: object[], text: string) => deriveAbilities([{ id: 1, abilityType: "spell" as const, actions }], undefined, { 1: text }, undefined, text).abilities;
+  const owner = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "search").map((a) => a.librarySearch);
+
+  test("a model-written dig that says `search` but prints none carries no field (Winota)", () => {
+    const text = "Look at the top six cards of your library. You may put a Human creature card from among them onto the battlefield tapped and attacking.";
+    expect(owner(spell([{ verb: "search", object: "a Human creature card", fromZone: "library", toZone: "battlefield" }], text))).toEqual([undefined]);
+  });
+
+  test("a comma lead-in is no actor: 'Whenever ... deals combat damage to a player, search your library' is yours (Kodama)", () => {
+    expect(owner(spell([{ verb: "search", object: "basic land card", fromZone: "library" }], "Whenever a modified creature you control deals combat damage to a player, search your library for a basic land card."))).toEqual(["yours"]);
+  });
+
+  test("two searches in one clause are read by their own printed verb (Demolition Field)", () => {
+    const text = "Destroy target nonbasic land an opponent controls. That land's controller may search their library for a basic land card. You may search your library for a basic land card.";
+    expect(owner(spell([{ verb: "search", object: "their library for a basic land card", fromZone: "library" }, { verb: "search", object: "your library for a basic land card", fromZone: "library" }], text))).toEqual(["other", "yours"]);
+  });
+
+  test("'your graveyard, hand, and/or library' is yours (Boonweaver Giant)", () => {
+    expect(owner(spell([{ verb: "search", object: "your graveyard, hand, and/or library for an Aura card", fromZone: null }], "When this creature enters, you may search your graveyard, hand, and/or library for an Aura card."))).toEqual(["yours"]);
+  });
+});
