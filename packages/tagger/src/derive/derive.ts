@@ -2514,7 +2514,11 @@ export function deriveAbilities(
       // Hardened Scales answered `add-counter` and advertised a counter it never places. The kind
       // names the multiplication, and the emits go — see `replacement.ts` and the consumer trigger
       // below, which is the shape `prompt.ts` already documents for Tekuthal.
-      const effectKind = replacement?.kind ?? actionEffectKind(action, text);
+      // A STEAL'S RIDER IS NOT A RETARGET: "Gain control of target spell. You may choose new targets for it." (Aethersnatch) redirects the spell you now
+      // control. Read off the sibling action, because the model words the rider "choose new targets for target spell" on some cards and "for it" on others.
+      const stealsASpell = (clause.actions ?? []).some((x) => x.verb === "gain-control" && /\bspells?\b/i.test(x.object ?? ""));
+      const read = replacement?.kind ?? actionEffectKind(action, text);
+      const effectKind = read === "retarget" && stealsASpell ? null : read;
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
       // THE TEMPORARY-TOKEN RIDER IS NOT AN EVENT. "Exile it at the beginning of the next end step"
       // resolves its pronoun to the token the clause just made, so the emit builder would see a

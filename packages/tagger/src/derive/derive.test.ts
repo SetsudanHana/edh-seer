@@ -5274,7 +5274,7 @@ describe("retarget: a change-the-target of a TARGET spell or ability (#1266, CR 
     expect(a!.effect.subject?.scope).toBe("target");
   });
 
-  test("a class of spell keeps its type; a restriction on its targets is carried (Muck Drubb)", () => {
+  test("a class of spell keeps its type, and a 'that targets only ...' tail is cut so only type and scope are carried (Muck Drubb)", () => {
     const [a] = retargets(spell("change the target of target instant or sorcery spell with a single target to this creature"));
     expect(a!.effect.subject?.type).toEqual(["instant", "sorcery"]);
     const [b] = retargets(spell("change the target of target spell that targets only a single creature to this creature"));
@@ -5305,6 +5305,12 @@ describe("retarget: a change-the-target of a TARGET spell or ability (#1266, CR 
     const r = deriveAbilities([{ id: 1, abilityType: "spell" as const, actions: [
       { verb: "other", object: "choose new targets for the target spell or ability" }, { verb: "copy", object: "that spell or ability" }, { verb: "other", object: "choose new targets for the copy" }] }], undefined, { 1: text });
     expect(retargets(r)).toHaveLength(1);
+  });
+
+  test("a retarget action in a clause that also gains control of a spell is the steal's rider, whatever the model wrote (Aethersnatch)", () => {
+    const text = "Gain control of target spell. You may choose new targets for it.";
+    const r = deriveAbilities([{ id: 1, abilityType: "spell" as const, actions: [{ verb: "gain-control", object: "target spell" }, { verb: "other", object: "choose new targets for target spell" }] }], undefined, { 1: text });
+    expect(retargets(r)).toHaveLength(0);
   });
 
   test("a steal's 'choose new targets for it' is no retarget (Commandeer)", () => {

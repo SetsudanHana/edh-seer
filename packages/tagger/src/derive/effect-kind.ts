@@ -169,7 +169,10 @@ function retargetPhrase(text: string): string | undefined {
  *  Shunt; "the target of target spell or ability that targets only this creature" -- Silver Wyvern; "change that spell's target to another
  *  creature" -- Meddle, Quicksilver Dragon) and `exchange` ("a target of target spell or ability and this creature" -- Spellskite). Those read the CLAUSE
  *  text, and only when the action's own object names the spell or ability it found, so a sibling action of the same clause is not read twice.
- *  CEILING: "choose new targets for any number of other spells and/or abilities" (Boltbender) names no target, so it is not read. */
+ *  CEILING: "choose new targets for any number of other spells and/or abilities" (Boltbender) names no target, so it is not read. The same for the real
+ *  redirects of the spell an opponent casts that name no TARGET spell: Speedball, New Warrior ("choose new targets for that spell"), Captured by the Consulate
+ *  ("change the target to enchanted creature"), Psychic Battle ("change the target or targets"). They redirect "that spell" / the triggering spell, and a
+ *  counter of "that spell" counts only after an earlier "target ... spell" in the same ability (owner ruling); the printed pattern missed them too. */
 export function retargetObject(object: string, verb = "other", clauseText = ""): string | undefined {
   const own = retargetPhrase(object);
   if (own !== undefined || (verb !== "cost-modify" && verb !== "exchange")) return own;
