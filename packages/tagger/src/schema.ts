@@ -1130,6 +1130,18 @@ export interface Ability {
    *  ABSENT ON AN IMPLIED ABILITY, which is read off characteristics rather than rules text and so
    *  has no printed line to attribute to (spec C4). */
   clause?: number;
+  /** WHERE THE CARD THIS ABILITY FINDS OR COUNTERS ENDS UP (#1301). On a `search` ability: the zone of the put that follows it in the same
+   *  clause and names the searched card ("it", "that card", "them", "one", "a card named X", the search's own "a basic land card"):
+   *  `hand` when the found card goes to hand, `battlefield` when it goes onto the battlefield (Rampant Growth, Farseek, and the opponent's land from Path to Exile / Assassin's Trophy;
+   *  `effect.subject.control` says whose search it is). On a counter-spell ability: `library` from "put it on top of its owner's library instead"
+   *  (top or bottom is not recorded). Read from the put whether the put derives an event of its own (`enters`, left untouched) or nothing (then the
+   *  put is claimed by this field and is not in `CardTags.unclaimed`).
+   *  ABSENT MEANS "NOT SAID", NOT "NOT A TUTOR": no such put in the clause; a search that exiles its card (Bring to Light); a stored model answer that
+   *  folds the put into the search action (`search ... toZone hand`, which is unreliable: Bring to Light says `hand` and exiles), unless the grammar
+   *  reading, which keeps the put, is the one the card derives from; a put from another zone (Distant Memories); and a search whose cards split over
+   *  two destinations holds the FIRST only (Cultivate: `battlefield`, the other put is claimed with no field; Gifts Ungiven's "the rest" is not read), and so does a conditional alternative, "otherwise" / "instead": Archdruid's Charm and Treasure Chest read `battlefield`, Celestial Reunion `hand`, whichever branch is commoner. So `battlefield` is not by itself "this search is ramp". Nothing reads it yet: quality.ts's tutor
+   *  and ramp roles, the goldfish search and edges.ts's search producer still treat every search alike. */
+  toZone?: "hand" | "battlefield" | "graveyard" | "library";
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {
     verbs: Verb[];
