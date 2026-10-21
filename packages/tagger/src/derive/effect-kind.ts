@@ -499,8 +499,13 @@ function doubledKind(text: string): EffectKind | null {
  *  Sentence by sentence, so Flames of the Blood Hand's separate "if that player would gain life ... instead" does not take its real damage with it. */
 function replacesDamageOrLife(clauseText: string, verb: string): boolean {
   const own = verb === "deal-damage" ? /\bdamage\b/i : /\bloses?\b/i;
-  return clauseText.split(".").some((sentence) => /\binstead\b/i.test(sentence) && /\bwould (?:be dealt|deal|lose|gain|cause)\b/i.test(sentence) && own.test(sentence));
+  return clauseText.split(".").some((sentence) => /\binstead\b/i.test(sentence) && /\bwould (?:be dealt|deal|lose|gain|cause)\b/i.test(sentence) && own.test(sentence)
+    // A REDIRECT WHOSE NEW RECIPIENT REACHES A PLAYER IS STILL BURN (#1266): "is dealt to any target instead" (Harm's Way, Shining Shoal, Glarecaster, Mirrorwood Treefolk), "to another target ... player"
+    // (Captain's Maneuver), "to that source's controller" (Reflect Damage, Eye for an Eye), "to that creature's controller" (Megatron). A redirect onto the card or "its controller" (Treacherous Link,
+    // Daughter of Autumn) and an amplifier ("plus 2") are not. Damage only: a life-loss replacement is never a new source.
+    && !(verb === "deal-damage" && REDIRECT_TO_A_PLAYER.test(sentence)));
 }
+const REDIRECT_TO_A_PLAYER = /\bdealt to (?:any (?:other )?target|another target [^.]{0,60}\bplayer|that (?:source|creature)'s controller)\b|\bdamage to that source's controller\b/i;
 const PAYS_LIFE = /\bpays? (?:\d+|x|any amount of) life\b/i;
 const LOSES_LIFE = /\bloses? (?:\d+|x|that much|half|life)\b/i;
 export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
