@@ -397,7 +397,7 @@ export function exilesFromYourGraveyard(object: string, clauseText: string): boo
  *  (#1266). A hand or library named beside it, a battlefield half ("all creatures and graveyards", "from the battlefield and/or creature cards from graveyards": Angel of Serenity; "put there from the battlefield" is only the history of a card in the yard), or a destination ("into that player's graveyard")
  *  keeps the model's reading: one `fromZone` cannot hold two zones. CEILING: Identity Crisis, Thought Distortion, Ashiok's -10 and Ultimate Nullification
  *  (a graveyard half beside a hand or the battlefield) stay unzoned. */
-const OTHER_ZONE_WORD = /\b(?:hands?|librar(?:y|ies)|into|onto|instead)\b|\band graveyards?\b|\bthe battlefield and\b|\bon the battlefield\b/i;
+const OTHER_ZONE_WORD = /\b(?:hands?|librar(?:y|ies)|into|onto|instead)\b|\band graveyards?\b|\bthe battlefield (?:and|or)\b|\bon the battlefield\b|^this \w+ (?:and|or)\b/i;
 export function exileNamesOnlyGraveyards(object: string): boolean {
   return ANY_YARD.test(object) && !OTHER_ZONE_WORD.test(object);
 }

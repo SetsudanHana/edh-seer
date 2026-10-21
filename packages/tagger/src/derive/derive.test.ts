@@ -2,6 +2,7 @@ import { describe, expect, it, test } from "vitest";
 import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { targetsASpellEarlier } from "./emits.js";
+import { exileNamesOnlyGraveyards } from "./effect-kind.js";
 import { deriveInputOf } from "../derive-input.js";
 import type { Ability, Characteristics } from "../schema.js";
 
@@ -5573,6 +5574,25 @@ describe("#1266 graveyard owner on an exiled emit", () => {
   it("a replacement rider's 'exile it instead' keeps its emit unmarked (Maestros Ascendancy, #1306)", () => {
     const es = exiledOf([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object: "a spell cast this way", fromZone: "graveyard", toZone: "exile" }] }],
     "Maestros Ascendancy", { 1: "If a spell cast this way would be put into your graveyard, exile it instead." });
+    expect(es.every((e) => e.subject.owner === undefined)).toBe(true);
+  });
+
+  it("'from the battlefield OR creature card from a graveyard' is not a graveyard-only object (Savior of Ollenbock)", () => {
+    expect(exileNamesOnlyGraveyards("up to one other target creature from the battlefield or creature card from a graveyard")).toBe(false);
+    expect(exileNamesOnlyGraveyards("up to three other target creatures from the battlefield and/or creature cards from graveyards")).toBe(false);
+    expect(exileNamesOnlyGraveyards("up to twice X target cards from graveyards")).toBe(true);
+  });
+
+  it("'this artifact and all cards from all graveyards' does not zone the self-exile to a graveyard (Silent Gravestone)", () => {
+    const es = exiledOf([{ id: 2, abilityType: "activated", actions: [{ verb: "exile", object: "this artifact and all cards from all graveyards" }] }],
+    "Silent Gravestone", { 2: "{3}, {T}: Exile this artifact and all cards from all graveyards." });
+    expect(es.every((e) => e.subject.fromZone !== "graveyard")).toBe(true);
+  });
+
+  it("a rider's 'a spell cast from your graveyard this way' is left unmarked (Gale, #1306)", () => {
+    const es = exiledOf([{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" },
+      actions: [{ verb: "exile", object: "a spell cast from your graveyard this way", fromZone: "graveyard", toZone: "exile" }] }],
+    "Gale", { 1: "Whenever you cast a spell, you may cast up to one target card from your graveyard. If a spell cast from your graveyard this way would be put into your graveyard, exile it instead." });
     expect(es.every((e) => e.subject.owner === undefined)).toBe(true);
   });
 
