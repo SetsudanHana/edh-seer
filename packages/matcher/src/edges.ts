@@ -1698,6 +1698,12 @@ function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy)
  *  conservative, the class is named. Where the question cannot be split -- a lone-type emit, a trigger
  *  naming no type and no branch, or no member accepted -- it asks `producerCanBeSubject` of
  *  `nounSubject(emit, heard)`, the subject the noun names, so the check and the noun agree. */
+/** WHICH PARTICIPANT THE SENTENCE NAMES (#1266, burn). A damage trigger ("when a source deals damage") and a life-loss trigger ("makes a player lose life") name the DEALER, so a damage emit's per-half
+ *  victims (a player, a planeswalker) all read as one sentence and score one claim; a `damaged` trigger names the victim, and a player victim is "a player" / "an opponent", never the card. */
+function nounSide(e: GameEvent, triggerVerb: string): SubjectFilter {
+  return (triggerVerb === "non-combat-damage" || triggerVerb === "combat-damage" || triggerVerb === "lose-life") && e.dealer !== undefined ? e.dealer : e.subject;
+}
+
 function producerCanBeHeard(p: DeckCard, emit: SubjectFilter, heard: SubjectFilter, h: Hierarchy): boolean {
   // A CONJUNCTION OF TYPES the trigger demands ("this creature or another ARTIFACT CREATURE dies", `allTypes`) is a fact about the object
   // that dies, and the emit's umbrella type ("target permanent you own") cannot say it: a plain Artifact is never the artifact creature (#1295).
@@ -2370,8 +2376,8 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
               // flickers "a nonland permanent", a creature among five types, so the union always
               // "could be" the Kitten and a Constellation payoff read "When Displacer Kitten enters"
               // for an ENCHANTMENT entering. See `producerCanBeHeard`.
-              : producerCanBeHeard(p, e.subject, t.subject, h) && !(t.subject.notCommander === true && p.tags?.characteristics.commander === true)
-                ? undefined : emitSubjectNoun(nounSubject(e.subject, t.subject))),
+              : producerCanBeHeard(p, nounSide(e, t.verb), t.subject, h) && nounSide(e, t.verb).player !== true && !(t.subject.notCommander === true && p.tags?.characteristics.commander === true)
+                ? undefined : emitSubjectNoun(nounSubject(nounSide(e, t.verb), t.subject))),
           }),
           effectKind: a.effect.kind,
           repeatability: a.delayedBy === "chapter" || a.delayedBy === "spell" ? "oneshot"

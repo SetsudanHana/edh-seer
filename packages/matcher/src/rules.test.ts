@@ -1361,6 +1361,10 @@ describe("burn.effect and wincon.burn are derived (#1266)", () => {
     expect(burn(card([dmg({ control: "any", token: null, type: "creature", scope: "target" })]))).toBe(false);
     expect(burn(card([dmg({ control: "any", token: null, scope: "target", anyOf: [{ type: "creature" }, { type: "planeswalker" }] })]))).toBe(false);
   });
+  test("a branch inherits the parent's type: Sonar Strike's creature-only anyOf is not burn", () => {
+    expect(burn(card([dmg({ control: "any", token: null, scope: "target", type: "creature", anyOf: [{ combat: "attacking" }, { combat: "blocking" }, { tapped: true }] })]))).toBe(false);
+    expect(burn(card([dmg({ control: "any", token: null, type: "creature", anyOf: [{ scope: "target" }, { scope: "each", other: true }] })]))).toBe(false);
+  });
   test("damage to you (Sell-Sword Brute) is not burn; to a target opponent (Caesar) is", () => {
     expect(burn(card([dmg({ control: "you", token: null })]))).toBe(false);
     expect(burn(card([dmg({ control: "opp", token: null, scope: "target" })]))).toBe(true);

@@ -402,9 +402,6 @@ function subjectTypes(subject: { type?: string | string[]; subtype?: unknown; an
 
 /** The land types, CR 205.3i ("Lands have their own unique set of subtypes; these subtypes are called land types"). */
 const LAND_TYPES = new Set(["cave", "desert", "forest", "gate", "island", "lair", "locus", "mine", "mountain", "plains", "planet", "power-plant", "sphere", "swamp", "tower", "town", "urza's"]);
-/** A search SUBJECT that can only be a land (#1266): typed `land` ("a basic land card"), a LAND TYPE ("a Mountain card", "a basic Plains, Swamp, or Forest card", "a Gate card": Alpine Guide, Abzan Monument,
- *  District Guide), or an `anyOf` whose every branch is one of those ("a basic land card or Gate card"). Derive sometimes files a land type under `type` (The Cave of Two Lovers: ["mountain", "cave"]), so both
- *  fields take the same words. Nothing typed at all is NOT land-only ("a card named X", "a card"); a Shrine is no land. */
 /** Can this ability's damage or life loss land on a player other than you? See `effectKind.reachesPlayer`. The effect subject decides; where derive kept NONE (a model-`static` clause: Granite Shard,
  *  Herald of Hadar, but also the damage REDIRECTS Pariah and Palisade Giant) the ability's own damage / life-loss EMITS decide, and an ability with neither reads as no. */
 function abilityReachesPlayer(a: { effect: { subject?: SubjectFilter }; emits?: { verb: string; subject: SubjectFilter }[] }): boolean {
@@ -415,11 +412,15 @@ function abilityReachesPlayer(a: { effect: { subject?: SubjectFilter }; emits?: 
 /** Can this subject be a player other than you? An untyped subject, a `player` one, or an `anyOf` with a player or an untyped branch; control `you` and the card itself are not. */
 function subjectReachesPlayer(s: SubjectFilter): boolean {
   if (s.control === "you" || s.self === true) return false;
-  const typed = (b: Partial<SubjectFilter>): boolean => b.type !== undefined || b.subtype !== undefined;
+  // A branch inherits the parent's type: Sonar Strike's `{type: creature, anyOf: [{combat: attacking}, {tapped: true}]}` names creatures only.
+  const typed = (b: Partial<SubjectFilter>): boolean => (b.type ?? s.type) !== undefined || (b.subtype ?? s.subtype) !== undefined;
   if (s.anyOf !== undefined && s.anyOf.length > 0) return s.anyOf.some((b) => b.control !== "you" && (b.player === true || !typed(b)));
   return s.player === true || !typed(s);
 }
 
+/** A search SUBJECT that can only be a land (#1266): typed `land` ("a basic land card"), a LAND TYPE ("a Mountain card", "a basic Plains, Swamp, or Forest card", "a Gate card": Alpine Guide, Abzan Monument,
+ *  District Guide), or an `anyOf` whose every branch is one of those ("a basic land card or Gate card"). Derive sometimes files a land type under `type` (The Cave of Two Lovers: ["mountain", "cave"]), so both
+ *  fields take the same words. Nothing typed at all is NOT land-only ("a card named X", "a card"); a Shrine is no land. */
 function landOnlySubject(subject: { type?: string | string[]; subtype?: unknown; anyOf?: { type?: string | string[]; subtype?: unknown }[] }): boolean {
   const landWord = (w: unknown): boolean => w === "land" || LAND_TYPES.has(String(w).toLowerCase());
   if (subject.type !== undefined) return [subject.type].flat().every(landWord);

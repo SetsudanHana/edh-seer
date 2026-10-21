@@ -145,3 +145,11 @@ export function damageRecipient(object: string): SubjectFilter | undefined {
   }
   return { control: "any", token: null, anyOf: branches };
 }
+
+/** The card ITSELF is the one hit (#1266, burn): the fight-back half of "Garruk deals 3 damage to target creature. That creature deals damage equal to its power to him" (the grammar writes the object `him`,
+ *  `~` or `this`; Tahngarth, Polukranos), so it is no damage to a player or to any target. "Him" and "her" are the card only after the fight-back sentence; "~" is always the card's own name. */
+const FIGHT_BACK = /\b(?:that creature|those creatures|each of those creatures|it) deals? damage equal to (?:its|their) power to (?:him|her)\b/i;
+export function damageHitsSelf(object: string, clauseText: string): boolean {
+  const o = object.trim().toLowerCase();
+  return o === "~" || ((o === "him" || o === "her") && FIGHT_BACK.test(clauseText));
+}

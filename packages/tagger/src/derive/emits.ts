@@ -810,8 +810,8 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     for (const e of events) {
       const { anyOf, ...outer } = e.subject;
       for (const b of anyOf ?? []) {
-        const { player: _p, ...rest } = b;
-        halves.push({ ...e, subject: { ...outer, ...rest } });
+        // The player half keeps `player: true` (the sentence names it "a player", not the card or "a permanent"; the matcher reads a producer with no type as a player either way).
+        halves.push({ ...e, subject: { ...outer, ...b } });
       }
     }
     events.splice(0, events.length, ...halves);

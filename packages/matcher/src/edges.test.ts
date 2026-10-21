@@ -6915,3 +6915,33 @@ test("a recursion whose subject comes from the battlefield is fed by a sacrifice
   // The same mill still feeds a recursion that does not say where its card came from.
   expect(hits(mill, recursion())).toBeGreaterThan(0);
 });
+
+// #1266 (burn): a damage emit of "target player or planeswalker" is one event per half (player, planeswalker). The sentence names the DEALER for a damage or life-loss trigger, so the halves
+// read as one line and score one claim; for a `damaged` trigger the player half is "a player", never the card itself or "a permanent".
+describe("a damage emit split per half (#1266)", () => {
+  const spike = () => base("Lava Spike", [{
+    kind: "on-cast", effect: { kind: "damage", subject: { control: "any", token: null, scope: "target", anyOf: [{ player: true }, { type: "planeswalker" }] } },
+    emits: [
+      { verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", player: true }, dealer: { control: "you", token: null } },
+      { verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", type: "planeswalker" }, dealer: { control: "you", token: null } },
+    ],
+  } as never]);
+  const doubler = () => base("Fiery Emancipation", [{
+    kind: "static", effect: { kind: "damage-multiplier" },
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null } },
+  } as never]);
+  const spitfire = () => base("Chandra's Spitfire", [{
+    kind: "triggered", effect: { kind: "pump" },
+    trigger: { verbs: ["damaged"], subject: { control: "opp", token: null } },
+  } as never]);
+  test("Lava Spike -> Fiery Emancipation is one claim, naming Lava Spike as the dealer", () => {
+    const reasons = pairReasons(spike(), doubler(), H).filter((r) => r.tag === "non-combat-damage:any");
+    expect(claimCount(reasons)).toBe(1);
+    expect(reasons[0]!.text).toContain("When Lava Spike deals noncombat damage");
+  });
+  test("an opponent's damage trigger hears the player half as 'a player', not the card itself", () => {
+    const reasons = pairReasons(spike(), spitfire(), H).filter((r) => r.tag === "damaged:any");
+    expect(reasons.length).toBeGreaterThan(0);
+    for (const r of reasons) { expect(r.text).toContain("a player is dealt damage thanks to Lava Spike"); expect(r.text).not.toMatch(/When Lava Spike is dealt damage/); }
+  });
+});

@@ -495,6 +495,12 @@ function doubledKind(text: string): EffectKind | null {
   return null;
 }
 
+/** A sentence with "instead", a "would ..." frame and the action's OWN word ("damage" for a damage action, "lose"/"loses" for a life loss): it replaces that event rather than causing it.
+ *  Sentence by sentence, so Flames of the Blood Hand's separate "if that player would gain life ... instead" does not take its real damage with it. */
+function replacesDamageOrLife(clauseText: string, verb: string): boolean {
+  const own = verb === "deal-damage" ? /\bdamage\b/i : /\bloses?\b/i;
+  return clauseText.split(".").some((sentence) => /\binstead\b/i.test(sentence) && /\bwould (?:be dealt|deal|lose|gain|cause)\b/i.test(sentence) && own.test(sentence));
+}
 const PAYS_LIFE = /\bpays? (?:\d+|x|any amount of) life\b/i;
 const LOSES_LIFE = /\bloses? (?:\d+|x|that much|half|life)\b/i;
 export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
@@ -671,6 +677,12 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   }
   // Life change is one verb per direction, but which kind depends on whose life it is.
   if (verb === "gain-life") return "lifegain";
+  // A DAMAGE OR LIFE-LOSS REPLACEMENT IS NOT A NEW SOURCE (#1266, burn): "damage that would be dealt to enchanted creature is dealt to its controller instead" (Treacherous Link, Daughter of
+  // Autumn), "it deals that much damage plus 2 ... instead" (Pyromancer's Gauntlet), "if an opponent would lose life ... twice that much instead" (Bloodletter of Aclazotz), "if an opponent would
+  // gain life, that player loses that much instead" (Tainted Remedy, Plague Drone, Rain of Gore), "the next 2 damage ... would deal ... is dealt to any target instead" (Harm's Way). The sentence
+  // that holds both "instead" and a "would ..." frame modifies an event another card makes; the emit stays, the burn kind goes.
+  if ((verb === "deal-damage" || verb === "lose-life") && replacesDamageOrLife(clauseText, verb)) return null;
+  if (verb === "lose-life" && /\bunspent mana\b/i.test(action.object ?? "")) return null;
   if (verb === "lose-life") {
     // PAYING LIFE IS A COST, NOT A LOSS DEALT (#1266, burn): "unless any player pays 5 life" (Aether Rift), "unless they pay 3 life" (Breathstealer's Crypt),
     // "Pay 1 life" (Decomposition), "pay X life" as an additional cost. The `lose-life` EMIT stays (a life payment is a loss: the Rowan ruling); only the

@@ -5940,6 +5940,40 @@ describe("#1266 burn: who a damage or life loss hits", () => {
     expect(bond!.effect.kind).toBe("player-life-loss");
   });
 
+  it("Power Sink / Drain Power: 'lose all unspent mana' is no life loss", () => {
+    const a = abil([{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target spell" }, { verb: "lose-life", object: "all unspent mana" }] }], "Power Sink",
+      { 1: "Counter target spell unless its controller pays {X}. If that player doesn't, they tap all lands with mana abilities they control and lose all unspent mana." });
+    expect(a.some((x) => x.effect.kind === "player-life-loss")).toBe(false);
+  });
+
+  it("the fight-back half names the card itself: Tahngarth ('~'), Garruk ('him'), Polukranos ('this') are self damage, not damage to any target", () => {
+    const selfOf = (object: string, name: string, text: string) => dmg(abil([{ id: 2, abilityType: "activated", actions: [{ verb: "deal-damage", object: "target creature" }, { verb: "deal-damage", object }] }], name, { 2: text }))
+      .find((x) => x.effect.subject?.type === undefined)!;
+    const tah = selfOf("~", "Tahngarth, Talruum Hero", "{1}{R}, {T}: Tahngarth deals damage equal to its power to target creature. That creature deals damage equal to its power to Tahngarth.");
+    expect(tah.effect.subject?.self).toBe(true);
+    expect(tah.emits![0]!.subject.self).toBe(true);
+    const garruk = selfOf("him", "Garruk Relentless // Garruk, the Veil-Cursed", "0: Garruk deals 3 damage to target creature. That creature deals damage equal to its power to him.");
+    expect(garruk.effect.subject?.self).toBe(true);
+    // "him" with no fight-back sentence stays what it was (Roiling Vortex's "them" is a player, never read as the card).
+    const [other] = dmg(abil([{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell", control: "any" }, actions: [{ verb: "deal-damage", object: "him" }] }], "Some Card",
+      { 1: "Whenever a spell is cast, Some Card deals 2 damage to him." }));
+    expect(other!.effect.subject?.self).not.toBe(true);
+  });
+
+  it("a damage or life-loss REPLACEMENT is no new source: Treacherous Link, Pyromancer's Gauntlet, Bloodletter of Aclazotz, Tainted Remedy, Harm's Way derive no burn kind; Deflecting Palm's reflect keeps it", () => {
+    const kinds = (verb: string, object: string, text: string, name: string) =>
+      abil([{ id: 1, abilityType: "static", actions: [{ verb, object }] }], name, { 1: text }).map((x) => x.effect.kind);
+    const burn = (k: string[]) => k.some((x) => x === "damage" || x === "player-life-loss");
+    expect(burn(kinds("deal-damage", "enchanted creature's controller", "All damage that would be dealt to enchanted creature is dealt to its controller instead.", "Treacherous Link"))).toBe(false);
+    expect(burn(kinds("deal-damage", "that permanent or player", "If a red instant or sorcery spell you control would deal damage to a permanent or player, it deals that much damage plus 2 to that permanent or player instead.", "Pyromancer's Gauntlet"))).toBe(false);
+    expect(burn(kinds("lose-life", "they", "If an opponent would lose life during your turn, they lose twice that much life instead.", "Bloodletter of Aclazotz"))).toBe(false);
+    expect(burn(kinds("lose-life", "that player", "If an opponent would gain life, that player loses that much life instead.", "Tainted Remedy"))).toBe(false);
+    expect(burn(kinds("deal-damage", "any target", "The next 2 damage that a source of your choice would deal to you this turn is dealt to any target instead.", "Harm's Way"))).toBe(false);
+    expect(burn(kinds("deal-damage", "target player or planeswalker", "Flames of the Blood Hand deals 4 damage to target player or planeswalker. The damage can't be prevented. If that player would gain life this turn, that player gains no life instead.", "Flames of the Blood Hand"))).toBe(true);
+    expect(burn(kinds("lose-life", "each player who discarded a card with the greatest mana value", "Each player who discarded a card with the greatest mana value among cards discarded this way loses life equal to that mana value.", "Scythe Specter"))).toBe(true);
+    expect(burn(kinds("deal-damage", "that source's controller", "If damage is prevented this way, Deflecting Palm deals that much damage to that source's controller.", "Deflecting Palm"))).toBe(true);
+  });
+
   it("a life total SET is neither damage nor life loss (The Golden Throne, Arbiter of Knollridge)", () => {
     const throne = abil([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object: "The Golden Throne" }, { verb: "set-life", object: "1" }] }], "The Golden Throne",
       { 1: "If you would lose the game, instead exile The Golden Throne and your life total becomes 1." });

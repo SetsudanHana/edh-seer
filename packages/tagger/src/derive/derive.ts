@@ -14,7 +14,7 @@ import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMP
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { librarySearchOwner, printsSearch } from "./library-search.js";
-import { damageRecipient } from "./damage-recipient.js";
+import { damageHitsSelf, damageRecipient } from "./damage-recipient.js";
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
@@ -1459,6 +1459,7 @@ function effectSubject(
   // graveyard fill "enabled" it. The trigger side has carried this since the self-ETB work — the
   // effect side recognised every other spelling of self except the plain name.
   else if (isSelfSubject(object, cardName)) subject.self = true;
+  else if (BURN_RECIPIENT_KINDS.has(kind) && damageHitsSelf(object, clauseText)) subject.self = true;
   if (ATTACKS_YOU.test(object)) subject.control = "opp";
   // A COST REDUCTION OVER "SPELL(S) YOU CAST" IS A CLASS OF YOUR DECK (#717): Doran, Besieged by Time's
   // "Each creature spell you cast with toughness greater than its power costs {1} less" came back as
@@ -2549,6 +2550,7 @@ export function deriveAbilities(
       const emitsSelf = action.verb !== "fight" && (selfByIf || SELF_REFERENCE.test((action.object ?? "").trim())
         || /^this$/i.test((action.object ?? "").trim())
         || isSelfSubject(action.object ?? "", cardName)
+        || (action.verb === "deal-damage" && damageHitsSelf(action.object ?? "", text))
         // A COUNTER PUT ON THE CARD ITSELF (owner-reported 2026-09-17, Primal Amulet -> Exemplar of
         // Light). An add-counter's object is the COUNTER ("charge counter", "+1/+1"), never the
         // permanent receiving it, so the object could never say "this artifact" and 4,240 of the
