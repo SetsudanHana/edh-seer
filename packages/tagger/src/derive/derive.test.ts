@@ -5794,3 +5794,132 @@ describe("#1266 graveyard replacement effects", () => {
     expect(a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "enters").every((e) => e.subject.type === "creature")).toBe(true);
   });
 });
+
+// #1266 (burn): the recipient a damage / life-loss ability states is the subject it carries, on the effect AND on the emit.
+describe("#1266 burn: who a damage or life loss hits", () => {
+  const abil = (clauses: Parameters<typeof deriveAbilities>[0], name: string, texts: Record<number, string>) => deriveAbilities(clauses, name, texts).abilities;
+  const dmg = (a: ReturnType<typeof abil>) => a.filter((x) => x.effect.kind === "damage");
+  const branches = (s: { anyOf?: { player?: boolean; type?: unknown; control?: string }[] } | undefined) => s?.anyOf ?? [];
+  const monstrous = (object: string, text: string, name = "Wildfire Cerberus") => abil([{ id: 2, abilityType: "triggered", trigger: { event: "becomes-monstrous", subject: "this creature", control: "you" },
+    actions: [{ verb: "deal-damage", object, amount: "2" }] }], name, { 2: text });
+
+  it("Wildfire Cerberus: 'each opponent and each creature they control' keeps the opponent AND the creatures, both the opponent's", () => {
+    const [a] = dmg(monstrous("each opponent and each creature they control", "When this creature becomes monstrous, it deals 2 damage to each opponent and each creature they control."));
+    const eff = branches(a!.effect.subject);
+    expect(eff.some((b) => b.player === true && b.control === "opp")).toBe(true);
+    expect(eff.some((b) => b.type === "creature" && b.control === "opp")).toBe(true);
+    // The emits are one event per half: the opponent (untyped) and the opponent's creatures.
+    const halves = a!.emits!.filter((e) => e.verb === "non-combat-damage").map((e) => e.subject);
+    expect(halves.some((s) => s.type === undefined && s.control === "opp")).toBe(true);
+    expect(halves.some((s) => s.type === "creature" && s.control === "opp")).toBe(true);
+  });
+
+  it("Kumano Faces Kakkazan: the player half is kept beside the planeswalkers", () => {
+    const [a] = dmg(abil([{ id: 1, abilityType: "triggered", trigger: { event: "chapter", subject: "this saga", control: "you" },
+      actions: [{ verb: "deal-damage", object: "each opponent and each planeswalker they control", amount: "1" }] }], "Kumano Faces Kakkazan",
+    { 1: "I — This Saga deals 1 damage to each opponent and each planeswalker they control." }));
+    expect(branches(a!.effect.subject).some((b) => b.player === true)).toBe(true);
+    const halves = a!.emits!.map((e) => e.subject);
+    expect(halves.some((s) => s.type === "planeswalker" && s.control === "opp")).toBe(true);
+    expect(halves.some((s) => s.type === undefined && s.control === "opp")).toBe(true);
+  });
+
+  it("Chandra's Flame Wave: 'target player and each creature that player controls' is a player and the creatures", () => {
+    const [a] = dmg(abil([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "target player and each creature that player controls", amount: "2" }] }], "Chandra's Flame Wave",
+      { 1: "Chandra's Flame Wave deals 2 damage to target player and each creature that player controls." }));
+    expect(branches(a!.effect.subject).some((b) => b.player === true)).toBe(true);
+    const halves = a!.emits!.map((e) => e.subject);
+    expect(halves.some((s) => s.type === undefined && s.scope === "target")).toBe(true);
+    expect(halves.some((s) => s.type === "creature")).toBe(true);
+  });
+
+  it("Lava Spike: the EMIT of 'target player or planeswalker' keeps the player (it was typed planeswalker)", () => {
+    const [a] = dmg(abil([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "target player or planeswalker", amount: "3" }] }], "Lava Spike",
+      { 1: "Lava Spike deals 3 damage to target player or planeswalker." }));
+    const halves = a!.emits!.map((e) => e.subject);
+    expect(halves.some((s) => s.type === undefined && s.scope === "target")).toBe(true);
+    expect(halves.some((s) => s.type === "planeswalker")).toBe(true);
+  });
+
+  it("a creature-only target stays creature-typed (Garruk Relentless 0: 'target creature')", () => {
+    const [a] = dmg(abil([{ id: 2, abilityType: "activated", actions: [{ verb: "deal-damage", object: "target creature", amount: "3" }] }], "Garruk Relentless",
+      { 2: "0: Garruk deals 3 damage to target creature. That creature deals damage equal to its power to him." }));
+    expect(a!.effect.subject?.type).toBe("creature");
+    expect(a!.emits![0]!.subject.type).toBe("creature");
+  });
+
+  it("Lightning Bolt: 'any target' stays untyped, so it can hit a player", () => {
+    const [a] = dmg(abil([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "any target", amount: "3" }] }], "Lightning Bolt", { 1: "Lightning Bolt deals 3 damage to any target." }));
+    expect(a!.effect.subject?.type).toBeUndefined();
+    expect(a!.effect.subject?.anyOf).toBeUndefined();
+    expect(a!.emits![0]!.subject.type).toBeUndefined();
+  });
+
+  it("Sell-Sword Brute: 'deals 2 damage to you' is yours, on the effect and the emit", () => {
+    const [a] = dmg(abil([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "this creature", control: "you" }, actions: [{ verb: "deal-damage", object: "you", amount: "2" }] }], "Sell-Sword Brute",
+      { 1: "When this creature dies, it deals 2 damage to you." }));
+    expect(a!.effect.subject?.control).toBe("you");
+    expect(a!.emits![0]!.subject.control).toBe("you");
+  });
+
+  it("Caesar: 'you lose 1 life' is yours and is no life loss aimed at an opponent", () => {
+    const a = abil([{ id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "you", control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }, { verb: "lose-life", object: "you", amount: "1" }] }], "Caesar, Legion's Emperor",
+      { 2: "You draw a card and you lose 1 life." });
+    expect(a.some((x) => x.effect.kind === "player-life-loss")).toBe(false);
+    expect(a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "lose-life").every((e) => e.subject.control === "you")).toBe(true);
+  });
+
+  it("Banewasp Affliction: 'that creature's controller loses life' is a player, not the creature, and not you", () => {
+    const [a] = abil([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "enchanted creature", control: "any" }, actions: [{ verb: "lose-life", object: "that creature's controller", amount: "equal to its toughness" }] }], "Banewasp Affliction",
+      { 1: "When enchanted creature dies, that creature's controller loses life equal to its toughness." });
+    expect(a!.effect.kind).toBe("player-life-loss");
+    expect(a!.effect.subject?.type).toBeUndefined();
+    const e = a!.emits!.find((x) => x.verb === "lose-life")!;
+    expect(e.subject.type).toBeUndefined();
+    expect(e.subject.control).not.toBe("you");
+  });
+
+  it("Caltrops: 'deals 1 damage to it' (the attacking creature) is a creature on the effect too", () => {
+    const [a] = dmg(abil([{ id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "a creature", control: "any" }, actions: [{ verb: "deal-damage", object: "it", amount: "1" }] }], "Caltrops",
+      { 1: "Whenever a creature attacks, this artifact deals 1 damage to it." }));
+    expect(a!.effect.subject?.type).toBe("creature");
+  });
+
+  it("Thunderbreak Regent: 'that player' after an opponent's spell is an opponent, not the trigger's controller", () => {
+    const [a] = dmg(abil([{ id: 1, abilityType: "triggered", trigger: { event: "becomes-target", subject: "a Dragon you control", control: "you" }, actions: [{ verb: "deal-damage", object: "that player", amount: "3" }] }], "Thunderbreak Regent",
+      { 1: "Whenever a Dragon you control becomes the target of a spell or ability an opponent controls, this creature deals 3 damage to that player." }));
+    expect(a!.effect.subject?.control).toBe("opp");
+    expect(a!.emits![0]!.subject.control).toBe("opp");
+  });
+
+  it("Erratic Explosion: 'that permanent or player' keeps a player branch and does not take the trigger's control", () => {
+    const [a] = dmg(abil([{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell", control: "you" }, actions: [{ verb: "deal-damage", object: "that permanent or player", amount: "X" }] }], "Erratic Explosion",
+      { 1: "Whenever you cast a spell, Erratic Explosion deals damage equal to that card's mana value to that permanent or player." }));
+    expect(a!.effect.subject?.control).toBe("any");
+    expect(branches(a!.effect.subject).some((b) => b.player === true)).toBe(true);
+  });
+
+  it("Wrathful Red Dragon: 'any target that isn't a Dragon' is still any target (untyped, a player can be hit)", () => {
+    const [a] = dmg(abil([{ id: 1, abilityType: "triggered", trigger: { event: "damaged", subject: "a Dragon you control", control: "you" }, actions: [{ verb: "deal-damage", object: "any target that isn't a Dragon", amount: "that much" }] }], "Wrathful Red Dragon",
+      { 1: "Whenever a Dragon you control is dealt damage, it deals that much damage to any target that isn't a Dragon." }));
+    expect(a!.emits![0]!.subject.type).toBeUndefined();
+    expect(a!.emits![0]!.subject.subtype).toBeUndefined();
+  });
+
+  it("Curse of Leeches: 'they lose 1 life' after 'enchanted player' is not yours", () => {
+    const a = abil([{ id: 3, abilityType: "triggered", trigger: { event: "upkeep", subject: "enchanted player", control: "any" }, actions: [{ verb: "lose-life", object: "enchanted player", amount: "1" }, { verb: "gain-life", object: "you", amount: "1" }] }], "Curse of Leeches",
+      { 3: "At the beginning of enchanted player's upkeep, they lose 1 life and you gain 1 life." });
+    const loss = a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "lose-life");
+    expect(loss.length).toBeGreaterThan(0);
+    expect(loss.every((e) => e.subject.control !== "you")).toBe(true);
+  });
+
+  it("a life total SET is neither damage nor life loss (The Golden Throne, Arbiter of Knollridge)", () => {
+    const throne = abil([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object: "The Golden Throne" }, { verb: "set-life", object: "1" }] }], "The Golden Throne",
+      { 1: "If you would lose the game, instead exile The Golden Throne and your life total becomes 1." });
+    expect(throne.some((x) => ["player-life-loss", "damage", "drain"].includes(x.effect.kind))).toBe(false);
+    const arbiter = abil([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [{ verb: "set-life", object: "each player's life total", amount: "the highest life total among all players" }] }], "Arbiter of Knollridge",
+      { 1: "When this creature enters, each player's life total becomes the highest life total among all players." });
+    expect(arbiter.some((x) => ["player-life-loss", "damage", "drain"].includes(x.effect.kind))).toBe(false);
+  });
+});

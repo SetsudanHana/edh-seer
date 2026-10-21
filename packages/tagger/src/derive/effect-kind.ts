@@ -669,9 +669,13 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   }
   // Life change is one verb per direction, but which kind depends on whose life it is.
   if (verb === "gain-life") return "lifegain";
-  if (verb === "lose-life" || verb === "set-life") {
+  if (verb === "lose-life") {
     return parseSubject(action.object ?? "").control === "you" ? null : "player-life-loss";
   }
+  // A LIFE TOTAL SET IS NEITHER DAMAGE NOR LIFE LOSS (#1266, burn; "your life total becomes 1", "each player's life total becomes the highest"):
+  // the clause stores the number as the object, which read as a player-life-loss with no recipient. CR 119.5 makes the change a gain or a loss
+  // as the total demands, so no one direction is claimed.
+  if (verb === "set-life") return null;
   // ENERGY IS NOT MANA, AND THE NORMALIZER CALLS IT MANA. "Whenever a creature you control enters,
   // you get {E} (an energy counter)" arrives from the clause layer as `{verb: "add-mana", object:
   // "E"}`, and `SIMPLE` below turned that into `mana-generation` -- so Decoction Module's page read

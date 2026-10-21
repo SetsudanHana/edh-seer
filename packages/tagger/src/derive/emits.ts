@@ -5,6 +5,7 @@ import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
 import { controlFromRelation, counterKindOf, parseCounter, parseSubject, spellMove, COUNT_PHRASE } from "./subject.js";
 import { LAND_SUBTYPES } from "./subtypes.js";
+import { damageRecipient, isControllerPhrase } from "./damage-recipient.js";
 import { tokenTypeFor } from "./token-types.js";
 import { isEnergyObject, permanentHalf } from "./effect-kind.js";
 
@@ -458,6 +459,9 @@ const CONTROLLER_DEFAULT: ReadonlySet<string> = new Set([
   "flip-coin",
 ]);
 
+/** The object of a life loss itself names the player ("target opponent", "each opponent", "enchanted player") or points at one ("they lose 1 life", Curse of Leeches). */
+const OBJECT_NAMES_A_PLAYER = /\b(?:controllers?|owners?|players?|opponents?)\b|^\s*(?:they|them|he or she)\s*$/i;
+
 /** Does the text name a player at all? 226 of the 6,729 `any` objects do, and they are the ones the
  *  default must not touch: "target player" (92), "that player" (62 — an antecedent, genuinely
  *  ambiguous), "each player" (48), "players" (14), "a player" (7), "any player" (3). */
@@ -580,7 +584,10 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   if (action.verb === "other" && (action.object ?? "").toLowerCase().includes("counter that spell")) {
     return [{ verb: "counter-spell", subject: { control: "any", token: null, type: "spell", ...(targetsASpellEarlier(action.object ?? "", "that spell") ? { scope: "target" as const } : {}) } }];
   }
-  const subject = parseSubject(recipient ?? action.object ?? "");
+  // A DAMAGE OR LIFE LOSS NAMES WHO IT HITS (#1266, burn): "target player or planeswalker" keeps the player (Lava Spike was typed
+  // planeswalker), "each opponent and each creature they control" both halves, "that creature's controller" is the player.
+  const listed = action.verb === "deal-damage" || action.verb === "lose-life" ? damageRecipient(action.object ?? "") : undefined;
+  const subject = listed ?? parseSubject(recipient ?? action.object ?? "");
   // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
   // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
   // that are copies of target permanent an opponent controls" (Venser, Fervent Forger) parsed the original's control and
@@ -733,6 +740,8 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     && subject.control === "any"
     && CONTROLLER_DEFAULT.has(action.verb ?? "")
     && !NAMES_A_PLAYER.test(sentenceHead ?? "")
+    // "that creature's controller loses 2 life" names its player in the object, not as "player"/"opponent" (Banewasp Affliction).
+    && !(action.verb === "lose-life" && (isControllerPhrase(action.object ?? "") || OBJECT_NAMES_A_PLAYER.test(action.object ?? "")))
     ? "you" as const
     : subject.control;
   // ARRIVED TAPPED, the supply half of `SubjectFilter.entersTapped`. "Search your library for a land
@@ -793,6 +802,20 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     // check it (recall v4 #120).
     ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null, ...(action.verb === "fight" ? { type: "creature" } : {}) } } : {}),
   }));
+  // A LISTED RECIPIENT IS ONE EVENT PER HALF (#1266, burn): the matcher's `damaged` test reads the VICTIM's top-level type ("a player and a permanent never meet"), so a
+  // producer `anyOf` of [player, creature] would meet neither side's consumer. "Each opponent and each creature they control" is the opponent being dealt damage and
+  // the creatures being dealt damage, which is how Pestilence's "each creature and each player" already derives. The effect subject keeps the `anyOf`.
+  if (listed?.anyOf) {
+    const halves: GameEvent[] = [];
+    for (const e of events) {
+      const { anyOf, ...outer } = e.subject;
+      for (const b of anyOf ?? []) {
+        const { player: _p, ...rest } = b;
+        halves.push({ ...e, subject: { ...outer, ...rest } });
+      }
+    }
+    events.splice(0, events.length, ...halves);
+  }
   // Only a move that states no origin, or the stack: a spell named in a phrase that says graveyard, library or hand is a card there ("exile target instant or sorcery card from your graveyard, cast that spell").
   const spellMention = STACK_MOVES.has(action.verb ?? "") && (action.fromZone == null || action.fromZone === "stack") ? spellMove(action.object ?? "") : undefined;
   if (spellMention !== undefined && events.length > 0) {

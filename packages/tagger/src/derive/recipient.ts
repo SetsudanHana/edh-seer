@@ -104,6 +104,15 @@ export function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boole
     || (cardName !== undefined && (who === cardName || who.toLowerCase() === cardName.split(",")[0]!.toLowerCase()));
 }
 
+/** "...deals 3 damage to THAT PLAYER": an opponent when the sentence names one before the phrase ("a spell or ability an opponent
+ *  controls ... that player", Thunderbreak Regent) or when the card's own damage hit the player (#1263). Otherwise unknown. */
+export function thatPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean, cardName?: string): boolean {
+  const lower = clauseText.toLowerCase();
+  const at = lower.lastIndexOf("that player");
+  if (at < 0) return false;
+  return /\bopponents?\b/.test(lower.slice(0, at)) || damagedPlayerIsOpponent(clauseText, triggerIsSelf, cardName);
+}
+
 /** An actor phrase to the control it states, or undefined when it states nothing sharper than "any".
  *
  *  "its controller" is a DECISION, not a reading: the rules let you point Pongify at your own
