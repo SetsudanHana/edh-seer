@@ -1,5 +1,5 @@
 /** PURE CORE of the by-name role ratchet (#1266). A membership is `role:<category>` or
- *  `answer:<class>`, keyed BY CARD: the detectors read one card and the rule set, nothing of the
+ *  `answer:<class>` or `wincon:<class>`, keyed BY CARD: the detectors read one card and the rule set, nothing of the
  *  deck, so a card's memberships cannot differ between decks. */
 export type Membership = Record<string, string[]>;
 
