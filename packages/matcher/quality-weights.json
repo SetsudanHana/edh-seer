@@ -1,6 +1,6 @@
 {
   "deriveVersion": 367,
-  "rulesVersion": 30,
+  "rulesVersion": 31,
   "roles": {
     "ramp": {
       "weights": {
@@ -99,16 +99,18 @@
     },
     "burn": {
       "weights": {
-        "frequency": 1000000,
-        "rateFloor": 1000,
-        "manaValue": -2,
-        "timing": 0.5
+        "manaValue": -1.0762523877794479,
+        "frequency": 0.8098178522339534,
+        "timing": 2.598288987090294,
+        "extraValue": 1.150027753622799,
+        "rateCeiling": 1,
+        "amount": 0.30768083221257414
       },
-      "pairs": 24,
-      "heldOutAccuracy": 0,
-      "baselineAccuracy": 1,
-      "fallbackAccuracy": 1,
-      "fallback": true
+      "pairs": 156,
+      "heldOutAccuracy": 0.7946657718295507,
+      "baselineAccuracy": 0.3752915036821965,
+      "fallbackAccuracy": 0.9057495558129661,
+      "fallback": false
     },
     "stax": {
       "weights": {

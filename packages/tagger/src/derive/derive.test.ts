@@ -5930,6 +5930,16 @@ describe("#1266 burn: who a damage or life loss hits", () => {
     expect(back!.emits!.filter((e) => e.verb === "non-combat-damage")).toHaveLength(1);
   });
 
+  it("paying life is a cost, not a loss dealt: 'unless they pay 2 life' (Blood Clock) has no life-loss kind, its emit stays; 'pay X life ... each other player loses X life' (Bond of Agony) keeps it", () => {
+    const [clock] = abil([{ id: 1, abilityType: "triggered", trigger: { event: "upkeep", subject: "each player", control: "any" }, actions: [{ verb: "lose-life", object: "they", amount: "2" }] }], "Blood Clock",
+      { 1: "At the beginning of each player's upkeep, that player returns a permanent they control to its owner's hand unless they pay 2 life." });
+    expect(clock!.effect.kind).not.toBe("player-life-loss");
+    expect(clock!.emits!.some((e) => e.verb === "lose-life")).toBe(true);
+    const [bond] = abil([{ id: 1, abilityType: "spell", actions: [{ verb: "lose-life", object: "each other player", amount: "X" }] }], "Bond of Agony",
+      { 1: "As an additional cost to cast this spell, pay X life. Each other player loses X life." });
+    expect(bond!.effect.kind).toBe("player-life-loss");
+  });
+
   it("a life total SET is neither damage nor life loss (The Golden Throne, Arbiter of Knollridge)", () => {
     const throne = abil([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object: "The Golden Throne" }, { verb: "set-life", object: "1" }] }], "The Golden Throne",
       { 1: "If you would lose the game, instead exile The Golden Throne and your life total becomes 1." });

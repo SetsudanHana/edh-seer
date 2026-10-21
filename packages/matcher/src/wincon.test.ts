@@ -17,6 +17,9 @@ const tags = (id: string, kinds: string[], subtypes: string[] = [], anthem = fal
     kind: (anthem ? "static" : "on-cast") as never,
     effect: (anthem
       ? { kind, subject: { type: "creature", control: "you", token: null } }
+      : kind === "damage"
+        // Burn that can reach a player: derive 367 writes the recipient (any target / each opponent).
+        ? { kind, subject: { control: "opp", token: null, scope: "each" } }
       : kind === "token-generation"
         // Real token abilities name what they create, and that subject is the whole question: a
         // Treasure maker is ramp, a Goblin maker is a board.
@@ -65,7 +68,7 @@ test("each class is detected by its own structural signature", () => {
     mk("Colossus Hammer", { typeLine: "Artifact — Equipment", subtypes: ["equipment"] }),
     mk("Ghalta", { power: "12", mv: 12 }),
     mk("Gurmag Angler", { power: "5", mv: 7 }),
-    mk("Impact Tremors", { kinds: ["player-damage"], typeLine: "Enchantment" }),
+    mk("Impact Tremors", { kinds: ["damage"], typeLine: "Enchantment" }),
     mk("Bruvac", { oracleText: "Each opponent mills twice that many cards instead." }),
     mk("Thassa's Oracle", { oracleText: "If X is greater than or equal to the number of cards in your library, you win the game." }),
   ]);
@@ -156,7 +159,7 @@ test("the report ranks classes by size and carries the focus index", () => {
   const deck = [
     ...Array.from({ length: 6 }, (_, i) => mk(`Maker-${i}`, { kinds: ["token-generation"] })),
     mk("Intangible Virtue", { kinds: ["pump"], typeLine: "Enchantment", anthem: true }),
-    ...Array.from({ length: 2 }, (_, i) => mk(`Bolt-${i}`, { kinds: ["player-damage"], typeLine: "Instant" })),
+    ...Array.from({ length: 2 }, (_, i) => mk(`Bolt-${i}`, { kinds: ["damage"], typeLine: "Instant" })),
   ];
   const report = winconReport(deck);
   expect(report.classes.map((c) => c.class)).toEqual(["go-wide", "burn"]);
@@ -171,7 +174,7 @@ test("every plan names its cards, and go-wide names its payoffs", () => {
   const deck = [
     ...Array.from({ length: 3 }, (_, i) => mk(`Maker-${i}`, { kinds: ["token-generation"] })),
     mk("Intangible Virtue", { kinds: ["pump"], typeLine: "Enchantment", anthem: true }),
-    ...Array.from({ length: 2 }, (_, i) => mk(`Bolt-${i}`, { kinds: ["player-damage"], typeLine: "Instant" })),
+    ...Array.from({ length: 2 }, (_, i) => mk(`Bolt-${i}`, { kinds: ["damage"], typeLine: "Instant" })),
   ];
   const [wide, burn] = winconReport(deck).classes;
   expect(wide).toMatchObject({ class: "go-wide", cards: ["Maker-0", "Maker-1", "Maker-2"], payoffs: ["Intangible Virtue"] });
@@ -279,8 +282,8 @@ test("life you lose is not burn, and a count of creature cards is not the board"
  *  (an instant) is not a per-turn drain, and an X amount is not a number. */
 test("the burn plan carries its repeating drain per turn: one fire per card, X and one-shots left out", () => {
   const drain = (name: string, amount: string, kind = "triggered", repeats: string | null = "repeatable", scope = "each"): DeckCard => {
-    const dc = mk(name, { kinds: ["player-damage"] });
-    dc.tags!.abilities = [{ kind, effect: { kind: "player-damage", subject: { control: "opp", token: null, scope } }, amount, ...(repeats ? { repeats } : {}) } as never];
+    const dc = mk(name, { kinds: ["damage"] });
+    dc.tags!.abilities = [{ kind, effect: { kind: "damage", subject: { control: "opp", token: null, scope } }, amount, ...(repeats ? { repeats } : {}) } as never];
     return dc;
   };
   // Unset repeats (the rules could not tell) and a single-target drain are not "each opponent a turn".

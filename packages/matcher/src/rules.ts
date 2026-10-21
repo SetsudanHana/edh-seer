@@ -1,5 +1,6 @@
 import ruleSet from "./rules.json" with { type: "json" };
 import type { ManaLine, ManaLineSource } from "@edh-seer/tagger";
+import type { SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { classifyLand } from "./land-conditions.js";
 import { cardLines, isLoyaltyAbility, usableLoyalty } from "./mana-lines.js";
@@ -42,7 +43,11 @@ export type RuleClause =
       notSelf?: true;
       /** Refuse an ability one of whose emits the VICTIM MAY DECLINE (`GameEvent.victimMay`): "unless that player exiles cards from their graveyard" (Axebane Ferox), "any player may exile a card from their graveyard" (Carrion Rats),
        *  "its controller may exile three cards ... to ignore this effect" (Lost in Thought) are a price the other player chooses to pay, not graveyard hate (#1266; the same refusal as the edict's `notVictimMay` on `emits`). */
-      notVictimMay?: true }
+      notVictimMay?: true;
+      /** The effect's SUBJECT can be a PLAYER and is not you (#1266, burn): an untyped subject (any target, each opponent, each player), a `player` subject, or an `anyOf` with a player or an untyped
+       *  branch ("target player or planeswalker", "each creature and each player"). A subject typed to permanents only ("target creature") is removal, not burn; control `you` ("deals 2 damage to you") is refused;
+       *  a subject that is the card itself is refused. */
+      reachesPlayer?: true }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -400,6 +405,21 @@ const LAND_TYPES = new Set(["cave", "desert", "forest", "gate", "island", "lair"
 /** A search SUBJECT that can only be a land (#1266): typed `land` ("a basic land card"), a LAND TYPE ("a Mountain card", "a basic Plains, Swamp, or Forest card", "a Gate card": Alpine Guide, Abzan Monument,
  *  District Guide), or an `anyOf` whose every branch is one of those ("a basic land card or Gate card"). Derive sometimes files a land type under `type` (The Cave of Two Lovers: ["mountain", "cave"]), so both
  *  fields take the same words. Nothing typed at all is NOT land-only ("a card named X", "a card"); a Shrine is no land. */
+/** Can this ability's damage or life loss land on a player other than you? See `effectKind.reachesPlayer`. The effect subject decides; where derive kept NONE (a model-`static` clause: Granite Shard,
+ *  Herald of Hadar, but also the damage REDIRECTS Pariah and Palisade Giant) the ability's own damage / life-loss EMITS decide, and an ability with neither reads as no. */
+function abilityReachesPlayer(a: { effect: { subject?: SubjectFilter }; emits?: { verb: string; subject: SubjectFilter }[] }): boolean {
+  if (a.effect.subject !== undefined) return subjectReachesPlayer(a.effect.subject);
+  return (a.emits ?? []).some((e) => (e.verb === "non-combat-damage" || e.verb === "lose-life") && subjectReachesPlayer(e.subject));
+}
+
+/** Can this subject be a player other than you? An untyped subject, a `player` one, or an `anyOf` with a player or an untyped branch; control `you` and the card itself are not. */
+function subjectReachesPlayer(s: SubjectFilter): boolean {
+  if (s.control === "you" || s.self === true) return false;
+  const typed = (b: Partial<SubjectFilter>): boolean => b.type !== undefined || b.subtype !== undefined;
+  if (s.anyOf !== undefined && s.anyOf.length > 0) return s.anyOf.some((b) => b.control !== "you" && (b.player === true || !typed(b)));
+  return s.player === true || !typed(s);
+}
+
 function landOnlySubject(subject: { type?: string | string[]; subtype?: unknown; anyOf?: { type?: string | string[]; subtype?: unknown }[] }): boolean {
   const landWord = (w: unknown): boolean => w === "land" || LAND_TYPES.has(String(w).toLowerCase());
   if (subject.type !== undefined) return [subject.type].flat().every(landWord);
@@ -459,6 +479,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notSelf !== true || a.effect.subject?.self !== true)
         && (clause.notVictimMay !== true || !(a.emits ?? []).some((e) => e.victimMay === true))
         && (clause.librarySearch === undefined || (a.librarySearch !== undefined && clause.librarySearch.includes(a.librarySearch)))
+        && (clause.reachesPlayer !== true || abilityReachesPlayer(a))
         && (clause.notLandOnly !== true || !(a.effect.subject !== undefined && landOnlySubject(a.effect.subject)))
         && (clause.toughnessDown !== true || lowersToughness(a.amount)));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.

@@ -1,5 +1,5 @@
 {
-  "version": 30,
+  "version": 31,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -24,7 +24,6 @@
     "tuckRemoval": "(?:the owner of |put )target\\s+(?<class>[^.;:]{0,60}?)\\s+(?:shuffles it into|on (?:the )?(?:top|bottom) of|into) (?:its owner's|their) library",
     "shrinkRemoval": "target\\s+(?<class>creature[^.;:]{0,40}?)\\s+gets?\\s+[-−](?:\\d+|x)/[-−](?:[1-9]\\d*|x)",
     "counterShrinkRemoval": "-1/-1 counters? on (?:up to one |another )?target\\s+(?<class>creature)",
-    "burn": "deals? \\d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\\d+|x) life",
     "graveyardHate": "\\bexile[^.]*graveyard",
     "graveyardHateRecurring": "if a card[^.]{0,60}?would be put into (?:a|an opponent's|their) graveyard from anywhere[^.]{0,40}?exile it instead|cards? in [^.]{0,40}graveyards?[^.]{0,30}can'?t (?:enter|be cast|be played)|players can'?t cast[^.]{0,40}from[^.]{0,30}graveyards?|\\{[^}]{1,12}\\}[^.:]{0,40}:[^.]{0,80}?exile[^.]{0,60}?from (?:a|an opponent's|that|their)\\s+graveyard",
     "deathsExiledCreature": "(?:whenever a (?:nontoken )?creature an opponent controls dies, exile it|if a (?:nontoken )?creature an opponent (?:controls|owns) would die(?! this turn)[^.]*?,? (?:instead )?exile)",
@@ -202,9 +201,13 @@
     {
       "id": "burn.effect",
       "category": "burn",
-      "match": [{ "op": "effectKind", "in": ["non-combat-damage", "noncombat-damage", "player-damage", "drain"] }],
+      "match": [{ "op": "anyOf", "clauses": [
+        { "op": "effectKind", "in": ["damage", "non-combat-damage"], "reachesPlayer": true },
+        { "op": "effectKind", "in": ["player-life-loss", "drain"], "control": ["opp", "any"], "reachesPlayer": true },
+        { "op": "keyword", "in": ["Extort"] }
+      ] }],
       "not": [{ "op": "countsAsLand" }],
-      "why": "Noncombat life reduction of PLAYERS. Damage aimed at a creature is removal, and has its own rule."
+      "why": "NONCOMBAT LIFE REDUCTION OF PLAYERS, read from derived data (#1266; it was the printed `burn` pattern, which needed a digit and missed X damage, \"damage equal to\", \"divided as you choose\", drains and upkeep pingers). Damage counts when its subject CAN BE A PLAYER and is not you (`reachesPlayer`: any target, each opponent, a player anyOf like Lava Spike or Pestilence; a creature-only target is removal and has its own rule, \"deals 2 damage to you\" is a drawback); life loss counts when it is aimed at an opponent or any player, never at you (\"you lose 1 life\", paying life is a cost); Extort carries its drain only as reminder text, so the keyword is read. A life total SET is not read (derive 367). CEILING: an EMBLEM ultimate lives on its own node (Chandra, Spark Hunter; Karn, Living Legacy; Koth of the Hammer), so the planeswalker is not burn by it. CEILING: an ability GRANTED in quotes to a token or an equipped creature is not the card's own effect and derives none (Mortarpod, Mask of Immolation, Dance with Devils, Devils' Playground, Triskelavus, Dragonbroods' Relic, Sanctum Lurker's planeswalker grant). CEILING: a damage or life-loss clause the model labelled `static` keeps no subject (Duggan, Herald of Hadar, Gonti's Machinations, Chancellor of the Dross), so its effect subject is absent and `reachesPlayer` reads the ability's own damage / life-loss emits instead (Granite Shard, Herald of Hadar read; the redirects Pariah and Palisade Giant, whose emits name a creature or the card, do not). CEILING: a recipient with a relative clause derives a wrong subject (Desolation \"each player who sacrificed a Plains\" a Plains subtype; Strongarm Tactics \"each player who didn't discard a creature card\" and Kefka, Dancing Mad a creature/spell type), so those real burn cards are lost. CEILING: Power Sink's \"lose all unspent mana\" derives a life loss, a false gain. CEILING: an ability granted in a reminder or a quoted Role (Not Dead After All, Outlaws' Merriment's token)."
     },
     {
       "id": "stax.effect",
@@ -268,12 +271,6 @@
       ],
       "not": [{ "op": "countsAsLand" }],
       "why": "A SPELL ON THE STACK IS ANSWERED BY COUNTERING IT, TAKING IT, REMOVING IT FROM THE STACK, OR REDIRECTING IT, and the answer must be a TARGET (read from derived data since #1266; it was the printed `stack` pattern). Owner rulings 2026-10-14: Commandeer, Invert Polarity, Split Decision, and Mages' Contest by the same shape count. Retargeting your OWN copy is not (#491: derive never reads 'choose new targets for the copy' as a retarget). `control` is deliberately not read: Force of Negation and Defabricate can hit your own spell, and `opp` on a stack emit is a default, not an assertion. WHERE THE 'THAT SPELL' RULE LIVES NOW: a counter, steal or exile of 'that spell' / 'the chosen spell' / 'the spell' carries `scope: target` only when the SAME ability says 'target ... spell' within six sentences earlier -- `targetsASpellEarlier` in derive/emits.ts, with its CEILING (the gap is capped at 6; the corpus maximum is 5, Mages' Contest, on 2026-10-14; re-measure when new cards print). So Kira, Glasskites, Frost Titan and Counterbalance-style untargeted counters, and a cast trigger's own 'exile that spell' (Possibility Storm), stay out. CEILING: redirects that name no TARGET spell are not read by derive: Boltbender ('any number of other spells and/or abilities'), Speedball, New Warrior ('that spell'), Captured by the Consulate ('change the target to enchanted creature'), Psychic Battle ('change the target or targets')."
-    },
-    {
-      "id": "burn.text",
-      "category": "burn",
-      "match": [{ "op": "oracle", "pattern": "burn" }],
-      "not": [{ "op": "countsAsLand" }]
     },
     {
       "id": "boardWipe.text",
@@ -388,11 +385,12 @@
       "winconClass": "burn",
       "match": [
         { "op": "anyOf", "clauses": [
-          { "op": "effectKind", "in": ["drain", "player-damage", "player-life-loss", "non-combat-damage", "noncombat-damage"], "control": ["opp", "any"] },
-          { "op": "oracle", "pattern": "burn" }
+          { "op": "effectKind", "in": ["damage", "non-combat-damage"], "reachesPlayer": true },
+          { "op": "effectKind", "in": ["drain", "player-life-loss"], "control": ["opp", "any"], "reachesPlayer": true },
+          { "op": "keyword", "in": ["Extort"] }
         ] }
       ],
-      "why": "Same signal the `burn` build category uses. Damage aimed at a creature is removal and has its own rules; this is the half aimed at players. The effect must be aimed at an opponent or any player (#574): The Chain Veil's 'you lose 2 life' is `player-life-loss` too, and read as a burn plan on Chandra."
+      "why": "Same derived signal the `burn` build category uses (`burn.effect`, read from derive since #1266, with its CEILINGs: emblem ultimates, granted abilities, model-`static` clauses with no subject). Damage aimed at a creature is removal and has its own rules; this is the half that can reach a player. The effect must not be aimed at you (#574): The Chain Veil's 'you lose 2 life' is `player-life-loss` too, and read as a burn plan on Chandra."
     },
     {
       "id": "wincon.mill",

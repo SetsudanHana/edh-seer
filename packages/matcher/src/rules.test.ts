@@ -1339,3 +1339,56 @@ describe("tutor.text land-only refusal reads basic land types (#1266)", () => {
     expect(ruleMatches(rule, search({ control: "any", named: "ajani, valiant protector" }), set)).toBe(true);
   });
 });
+
+describe("burn.effect and wincon.burn are derived (#1266)", () => {
+  const set = loadRules();
+  const rule = set.rules.find((r) => r.id === "burn.effect")!;
+  const wincon = set.rules.find((r) => r.id === "wincon.burn")!;
+  // Effects as derive 367 writes them for these cards (cardTagsDerived).
+  const card = (abilities: object[], keywords: string[] = []): DeckCard => ({
+    card: { name: "x", oracleText: "", typeLine: "Instant", keywords } as unknown as Card,
+    tags: { abilities } as never,
+  });
+  const dmg = (subject?: object) => ({ effect: { kind: "damage", ...(subject ? { subject } : {}) } });
+  const loss = (kind: string, subject?: object) => ({ effect: { kind, ...(subject ? { subject } : {}) } });
+  const burn = (c: DeckCard) => ruleMatches(rule, c, set);
+  test("Lightning Bolt (any target), Lava Spike (player anyOf) and Pestilence (creature and player) are burn", () => {
+    expect(burn(card([dmg({ control: "any", token: null, scope: "target" })]))).toBe(true);
+    expect(burn(card([dmg({ control: "any", token: null, scope: "target", anyOf: [{ player: true }, { type: "planeswalker" }] })]))).toBe(true);
+    expect(burn(card([dmg({ control: "any", token: null, scope: "each", anyOf: [{ type: "creature" }, { player: true }] })]))).toBe(true);
+  });
+  test("damage to a creature only (Flame Slash) is removal, not burn", () => {
+    expect(burn(card([dmg({ control: "any", token: null, type: "creature", scope: "target" })]))).toBe(false);
+    expect(burn(card([dmg({ control: "any", token: null, scope: "target", anyOf: [{ type: "creature" }, { type: "planeswalker" }] })]))).toBe(false);
+  });
+  test("damage to you (Sell-Sword Brute) is not burn; to a target opponent (Caesar) is", () => {
+    expect(burn(card([dmg({ control: "you", token: null })]))).toBe(false);
+    expect(burn(card([dmg({ control: "opp", token: null, scope: "target" })]))).toBe(true);
+  });
+  test("life loss aimed at any player (Blood Artist) is burn; 'you lose 1 life' (Caesar) and a life total set (Arbiter of Knollridge) are not", () => {
+    expect(burn(card([loss("player-life-loss", { control: "any", token: null, scope: "target" })]))).toBe(true);
+    expect(burn(card([loss("drain", { control: "opp", token: null, scope: "each" })]))).toBe(true);
+    expect(burn(card([loss("", undefined)]))).toBe(false);
+    // A model-`static` clause keeps no effect subject; its emits decide (Granite Shard reads, Pariah's redirect to a creature does not).
+    const withEmit = (kind: string, verb: string, subject: object) => ({ effect: { kind }, emits: [{ verb, subject }] });
+    expect(burn(card([withEmit("damage", "non-combat-damage", { control: "any", token: null, scope: "target" })]))).toBe(true);
+    expect(burn(card([withEmit("player-life-loss", "lose-life", { control: "opp", token: null, scope: "each" })]))).toBe(true);
+    expect(burn(card([withEmit("damage", "non-combat-damage", { control: "any", token: null, type: "creature" })]))).toBe(false);
+    expect(burn(card([withEmit("damage", "non-combat-damage", { control: "any", token: null, self: true })]))).toBe(false);
+    expect(burn(card([dmg()]))).toBe(false);
+    expect(burn(card([loss("player-life-loss", { control: "you", token: null })]))).toBe(false);
+    expect(burn(card([]))).toBe(false);
+  });
+  test("an Extort card (Syndic of Tithes) is burn by its keyword, since the drain is only reminder text", () => {
+    expect(burn(card([], ["Extort"]))).toBe(true);
+  });
+  test("wincon.burn reads the same signal", () => {
+    expect(ruleMatches(wincon, card([dmg({ control: "any", token: null, scope: "target" })]), set)).toBe(true);
+    expect(ruleMatches(wincon, card([], ["Extort"]), set)).toBe(true);
+    expect(ruleMatches(wincon, card([dmg({ control: "you", token: null })]), set)).toBe(false);
+    expect(ruleMatches(wincon, card([dmg({ control: "any", token: null, type: "creature", scope: "target" })]), set)).toBe(false);
+  });
+  test("the printed `burn` pattern is gone: oracle text alone is no burn", () => {
+    expect(burn({ card: { name: "x", oracleText: "X deals 3 damage to any target.", typeLine: "Instant", keywords: [] } as unknown as Card, tags: null })).toBe(false);
+  });
+});

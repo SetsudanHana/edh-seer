@@ -495,6 +495,8 @@ function doubledKind(text: string): EffectKind | null {
   return null;
 }
 
+const PAYS_LIFE = /\bpays? (?:\d+|x|any amount of) life\b/i;
+const LOSES_LIFE = /\bloses? (?:\d+|x|that much|half|life)\b/i;
 export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
   const verb = action.verb ?? "";
   // CR 614.1c — "this creature enters with three +1/+1 counters on it" is a REPLACEMENT EFFECT on
@@ -670,6 +672,10 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // Life change is one verb per direction, but which kind depends on whose life it is.
   if (verb === "gain-life") return "lifegain";
   if (verb === "lose-life") {
+    // PAYING LIFE IS A COST, NOT A LOSS DEALT (#1266, burn): "unless any player pays 5 life" (Aether Rift), "unless they pay 3 life" (Breathstealer's Crypt),
+    // "Pay 1 life" (Decomposition), "pay X life" as an additional cost. The `lose-life` EMIT stays (a life payment is a loss: the Rowan ruling); only the
+    // effect kind is refused, when the clause says "pay N life" and no one "loses" any. Bounded alternations, no backtracking.
+    if (PAYS_LIFE.test(clauseText) && !LOSES_LIFE.test(clauseText)) return null;
     return parseSubject(action.object ?? "").control === "you" ? null : "player-life-loss";
   }
   // A LIFE TOTAL SET IS NEITHER DAMAGE NOR LIFE LOSS (#1266, burn; "your life total becomes 1", "each player's life total becomes the highest"):
