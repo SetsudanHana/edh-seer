@@ -3040,6 +3040,8 @@ export function deriveAbilities(
       if (action.verb === "search") {
         // #1266: a PRINTED search says whose library; a `search` ability read off a `put` (a dig) never gets here with this verb.
         // A model-written dig also says `search`; with the printed text in hand, the text must say it too.
+        // CEILING: with NO clause text (1 corpus card, Heaped Harvest, 2 actions, both real searches, measured at DERIVE 361) the verb is trusted, so a model-written dig with no
+        // recoverable text would read `yours`. Gating it would drop that real tutor.
         const nth = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === "search").length;
         const owner = clauseText === "" || printsSearch(clauseText) ? librarySearchOwner(action, clauseText, nth) : undefined;
         if (owner) for (const made of abilities.slice(firstOfAction)) if (made.effect.kind === "search") made.librarySearch = owner;

@@ -1147,7 +1147,9 @@ export interface Ability {
    *  `other` when the library is another player's ("that player's library", Sphinx Ambassador) or another player does the searching (Path to Exile, Scheming Symmetry,
    *  Pir's Whim). The tutor role reads `yours` only (owner 2026-10-21): a typed dig is not a tutor.
    *  ABSENT MEANS "NOT A PRINTED LIBRARY SEARCH": a `search` ability read off a `put` from the library (Commune with Nature, Hermit Druid; derive's `search` kind also covers
-   *  typed digs, for edges), a search of a graveyard or hand only, and every other kind of ability. */
+   *  typed digs, for edges), a search of a graveyard or hand only, a search of a pile cut from the library (Phyrexian Portal), and every other kind of ability.
+   *  PER SEARCH ACTION: a multi-zone search ("graveyard, hand, and library") is one action, so every ability that action makes carries the value, and absent means no
+   *  library among the zones that action searches. */
   librarySearch?: "yours" | "other";
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {

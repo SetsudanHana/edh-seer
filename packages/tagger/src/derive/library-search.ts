@@ -11,7 +11,10 @@ const ADVERBS = new Set(["may", "also", "then", "instead"]);
 const YOU = new Set(["you"]);
 
 const SEARCH_WORD = /\bsearch(?:es)?\b/gi;
-/** Where the nth search verb of the clause starts (the last one when the clause has fewer); -1 with none. */
+/** Where the nth search verb of the clause starts (the last one when the clause has fewer); -1 with none.
+ *  CEILING: the nth search ACTION is paired with the nth printed "search"/"searches" word. Prose that says the word without an action ("for each opponent who
+ *  searches a library") adds a word with no action, and the clamp to the last word when there are fewer words than actions can misalign the pairing.
+ *  Witness: Tempt with Discovery (4 printed matches, 3 actions); it reads right only because its object says "your library". */
 function searchAt(clauseText: string, nth: number): number {
   const all = [...clauseText.matchAll(SEARCH_WORD)];
   return all.length === 0 ? -1 : all[Math.min(nth, all.length - 1)]!.index;
@@ -48,20 +51,34 @@ function ownerAfterVerb(clauseText: string, nth: number): "yours" | "other" | un
   return OTHER_OWNER.test(probe) ? "other" : undefined;
 }
 
-/** The zones the printed verb names, up to its "for": "search your graveyard, hand, and/or library for an Aura card". Derive rewrites such an action to fromZone graveyard with the zones stripped from the object. */
-function printedZonesNameALibrary(clauseText: string, nth: number): boolean {
+/** The words the printed verb puts before its "for": "search your graveyard, hand, and/or library for an Aura card". Derive rewrites such an action to fromZone graveyard with the zones stripped from the object. */
+function printedZones(clauseText: string, nth: number): string {
   const at = searchAt(clauseText, nth);
-  if (at < 0) return false;
-  const zones = clauseText.slice(at, at + 80);
+  if (at < 0) return "";
+  const zones = clauseText.slice(at, at + 100);
   const cut = zones.indexOf(" for ");
-  return /\blibrar(?:y|ies)\b/i.test(cut < 0 ? zones : zones.slice(0, cut));
+  return cut < 0 ? zones : zones.slice(0, cut);
+}
+const LIBRARY_WORD = /\blibrar(?:y|ies)\b/i;
+/** "Search the other pile for a card" (Phyrexian Portal): a pile cut from the top of the library is a dig, not a search of the library. */
+const PILE_WORD = /\bpiles?\b/i;
+/** "the graveyard, hand, and library OF that spell's controller" (Invasive Surgery): the owner comes after the zone list. Anchored on the first word after the last " of ". */
+const OF_OTHER = /^(?:that|those|target|each|an opponent|its|defending|their|his or her)\b/i;
+function ownerOfZones(zones: string): "yours" | "other" | undefined {
+  const at = zones.lastIndexOf(" of ");
+  if (at < 0) return undefined;
+  const owner = zones.slice(at + 4);
+  if (/^you\b/i.test(owner)) return "yours";
+  return OF_OTHER.test(owner) ? "other" : undefined;
 }
 
 export function librarySearchOwner(action: Action, clauseText: string, nth = 0): "yours" | "other" | undefined {
   const object = (action.object ?? "").trim();
-  const libraryNamed = action.fromZone === "library" || /\blibrar(?:y|ies)\b/i.test(object) || printedZonesNameALibrary(clauseText, nth);
+  const zones = printedZones(clauseText, nth);
+  if (PILE_WORD.test(zones) && !LIBRARY_WORD.test(zones) && !LIBRARY_WORD.test(object)) return undefined;
+  const libraryNamed = action.fromZone === "library" || LIBRARY_WORD.test(object) || LIBRARY_WORD.test(zones);
   if (!libraryNamed) return undefined;
-  const named = OWN.test(object) ? "yours" : OTHER_OWNER.test(object) ? "other" : ownerAfterVerb(clauseText, nth);
+  const named = OWN.test(object) ? "yours" : OTHER_OWNER.test(object) ? "other" : ownerAfterVerb(clauseText, nth) ?? ownerOfZones(zones);
   if (named === "other") return "other";
   if (named === "yours") return searcherIsYou(clauseText, nth) ? "yours" : "other";
   return searcherIsYou(clauseText, nth) ? "yours" : "other";

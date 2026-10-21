@@ -5208,3 +5208,22 @@ describe("Ability.librarySearch: stored-answer shapes (#1266)", () => {
     expect(owner(spell([{ verb: "search", object: "your graveyard, hand, and/or library for an Aura card", fromZone: null }], "When this creature enters, you may search your graveyard, hand, and/or library for an Aura card."))).toEqual(["yours"]);
   });
 });
+
+describe("Ability.librarySearch: owner after the zone list, and non-library searches (#1266 review)", () => {
+  const spell = (actions: object[], text: string) => deriveAbilities([{ id: 1, abilityType: "spell" as const, actions }], undefined, { 1: text }, undefined, text).abilities;
+  const owner = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "search").map((a) => a.librarySearch);
+
+  test("'the graveyard, hand, and library of that spell's controller' is other (Invasive Surgery)", () => {
+    const text = "Counter target instant or sorcery spell. Delirium -- Search the graveyard, hand, and library of that spell's controller for any number of cards with the same name as that spell, exile them, then that player shuffles.";
+    expect(owner(spell([{ verb: "search", object: "any number of cards with the same name as that spell", fromZone: "graveyard" }], text))).toEqual(["other"]);
+  });
+
+  test("'the library of target opponent' is other", () => {
+    expect(owner(spell([{ verb: "search", object: "a card", fromZone: "library" }], "Search the library of target opponent for a card."))).toEqual(["other"]);
+  });
+
+  test("a search of a pile is not a library search (Phyrexian Portal)", () => {
+    const text = "Search the other pile for a card, put it into your hand.";
+    expect(owner(spell([{ verb: "search", object: "a card", fromZone: "library" }], text))).toEqual([undefined]);
+  });
+});
