@@ -5244,3 +5244,95 @@ describe("a stored search of a bare library takes its card from the put that fol
     expect(s!.effect.subject?.type).toBeUndefined();
   });
 });
+
+describe("retarget: a change-the-target of a TARGET spell or ability (#1266, CR 115.7)", () => {
+  const spell = (object: string, verb = "other") => deriveAbilities([{ id: 1, abilityType: "spell" as const, actions: [{ verb, object }] }]);
+  const retargets = (r: ReturnType<typeof spell>) => r.abilities.filter((a) => a.effect.kind === "retarget");
+
+  test("'change the target of target spell with a single target' is a retarget of a targeted spell (Misdirection)", () => {
+    const r = spell("change the target of target spell with a single target");
+    const [a] = retargets(r);
+    expect(a!.effect.subject).toMatchObject({ type: "spell", scope: "target" });
+    expect(a!.effect.subject?.abilityKind).toBeUndefined();
+    expect(r.unclaimed).toHaveLength(0);
+  });
+
+  test("'choose new targets for target spell' is one too (Redirect)", () => {
+    const r = spell("choose new targets for target spell");
+    expect(retargets(r)).toHaveLength(1);
+    expect(r.unclaimed).toHaveLength(0);
+  });
+
+  test("'target spell or ability' names the spell AND both ability kinds (Bolt Bend, Willbender)", () => {
+    const [a] = retargets(spell("change the target of target spell or ability with a single target"));
+    expect(a!.effect.subject).toMatchObject({ type: "spell", scope: "target", abilityKind: ["activated", "triggered"] });
+  });
+
+  test("'target activated ability' is the activated kind alone (Reroute)", () => {
+    const [a] = retargets(spell("change the target of target activated ability with a single target"));
+    expect(a!.effect.subject?.abilityKind).toEqual(["activated"]);
+    expect(a!.effect.subject?.scope).toBe("target");
+  });
+
+  test("a class of spell keeps its type; a restriction on its targets is carried (Muck Drubb)", () => {
+    const [a] = retargets(spell("change the target of target instant or sorcery spell with a single target to this creature"));
+    expect(a!.effect.subject?.type).toEqual(["instant", "sorcery"]);
+    const [b] = retargets(spell("change the target of target spell that targets only a single creature to this creature"));
+    expect(b!.effect.subject).toMatchObject({ type: "spell", scope: "target" });
+  });
+
+  test("the model's cost-modify misfile of the same words is read by its words (Divert)", () => {
+    expect(retargets(spell("change the target of target spell or ability with a single target", "cost-modify"))).toHaveLength(1);
+    expect(retargets(spell("change the targets of target instant or sorcery spell", "cost-modify"))).toHaveLength(1);
+  });
+
+  test("the model's words under cost-modify or exchange with the head in the CLAUSE are read from it (Shunt, Silver Wyvern, Spellskite, Meddle)", () => {
+    const from = (verb: string, object: string, text: string, abilityType: "spell" | "activated" = "spell") =>
+      deriveAbilities([{ id: 1, abilityType, actions: [{ verb, object }] }], undefined, { 1: text });
+    const shunt = from("cost-modify", "target spell with a single target", "Change the target of target spell with a single target.");
+    expect(retargets(shunt)).toHaveLength(1);
+    expect(shunt.unclaimed).toHaveLength(0);
+    const wyvern = from("cost-modify", "the target of target spell or ability that targets only this creature", "{U}: Change the target of target spell or ability that targets only this creature. The new target must be a creature.", "activated");
+    expect(retargets(wyvern)[0]!.effect.subject).toMatchObject({ type: "spell", scope: "target", abilityKind: ["activated", "triggered"] });
+    const skite = from("exchange", "a target of target spell or ability and this creature", "{U/P}: Change a target of target spell or ability to this creature.", "activated");
+    expect(retargets(skite)).toHaveLength(1);
+    const meddle = from("cost-modify", "change that spell's target to another creature", "If target spell has only one target and that target is a creature, change that spell's target to another creature.");
+    expect(retargets(meddle)[0]!.effect.subject).toMatchObject({ type: "spell", scope: "target" });
+  });
+
+  test("a sibling `other` action of a retargeting clause is not read as a second retarget (Wyll's Reversal)", () => {
+    const text = "You may choose new targets for the target spell or ability. Then copy it. You may choose new targets for the copy.";
+    const r = deriveAbilities([{ id: 1, abilityType: "spell" as const, actions: [
+      { verb: "other", object: "choose new targets for the target spell or ability" }, { verb: "copy", object: "that spell or ability" }, { verb: "other", object: "choose new targets for the copy" }] }], undefined, { 1: text });
+    expect(retargets(r)).toHaveLength(1);
+  });
+
+  test("a steal's 'choose new targets for it' is no retarget (Commandeer)", () => {
+    const text = "Gain control of target noncreature spell. You may choose new targets for it.";
+    const r = deriveAbilities([{ id: 1, abilityType: "spell" as const, actions: [{ verb: "gain-control", object: "target noncreature spell" }, { verb: "other", object: "you may choose new targets for it" }] }], undefined, { 1: text });
+    expect(retargets(r)).toHaveLength(0);
+  });
+
+  test("your OWN COPY is not stack interaction (#491)", () => {
+    for (const object of ["choose new targets for the copy", "you may choose new targets for the copy", "the copy may have new targets chosen for it"]) {
+      expect(retargets(spell(object))).toHaveLength(0);
+    }
+    expect(retargets(spell("choose new targets for the copy", "grant-ability"))).toHaveLength(0);
+  });
+
+  test("a bare 'that spell' or 'it' is no target spell and stays unclaimed", () => {
+    expect(retargets(spell("the spell's controller may choose new targets for it"))).toHaveLength(0);
+    expect(retargets(spell("choose new targets for that spell"))).toHaveLength(0);
+  });
+
+  test("a text change is not a target change", () => {
+    expect(retargets(spell("Change the text of target spell or permanent by replacing all instances of one color word with another"))).toHaveLength(0);
+  });
+
+  test("the head scan is linear on a long run of spaces", () => {
+    const t0 = performance.now();
+    spell("change the target of " + " ".repeat(50_000) + "target spell");
+    spell("choose new targets for ".repeat(5_000) + "x");
+    expect(performance.now() - t0).toBeLessThan(200);
+  });
+});

@@ -140,6 +140,45 @@ export function extraLoyalty(text: string): "yours" | "self" | undefined {
   return undefined;
 }
 
+/** "CHANGE THE TARGET OF TARGET SPELL ..." / "CHOOSE NEW TARGETS FOR TARGET SPELL OR ABILITY" (CR 115.7, #1266): the noun phrase
+ *  after the head ("target spell or ability"), cut at the first word that starts a condition or a destination, or undefined when the
+ *  text redirects nothing a TARGET names -- your own copy ("choose new targets for the copy", #491), "that spell", a text change.
+ *  Linear: fixed heads by `indexOf`, a split on sentence punctuation, then a word scan. */
+const RETARGET_HEADS = ["change the target of ", "change the targets of ", "change a target of ", "change any targets of ", "choose new targets for ", "choose a new target for "];
+const RETARGET_STOP: ReadonlySet<string> = new Set(["with", "that", "if", "to", "which", "unless"]);
+function retargetPhrase(text: string): string | undefined {
+  const lower = text.toLowerCase();
+  for (const head of RETARGET_HEADS) {
+    const at = lower.indexOf(head);
+    if (at < 0) continue;
+    let tail = lower.slice(at + head.length).split(/[.;,]/, 1)[0]!;
+    if (tail.startsWith("the target ")) tail = tail.slice(4);
+    if (!tail.startsWith("target ")) continue;
+    const words: string[] = [];
+    for (const word of tail.split(" ")) {
+      if (RETARGET_STOP.has(word)) break;
+      if (word !== "") words.push(word);
+    }
+    const phrase = words.join(" ");
+    return /\b(?:spells?|abilit(?:y|ies))$/.test(phrase) ? phrase : undefined;
+  }
+  return undefined;
+}
+/** The target spell/ability an action redirects, or undefined. The model writes the head into an `other` object (Redirect, Misdirection, Willbender)
+ *  and, on seven cards, files the words under another verb with the head left in the clause: `cost-modify` ("target spell with a single target" --
+ *  Shunt; "the target of target spell or ability that targets only this creature" -- Silver Wyvern; "change that spell's target to another
+ *  creature" -- Meddle, Quicksilver Dragon) and `exchange` ("a target of target spell or ability and this creature" -- Spellskite). Those read the CLAUSE
+ *  text, and only when the action's own object names the spell or ability it found, so a sibling action of the same clause is not read twice.
+ *  CEILING: "choose new targets for any number of other spells and/or abilities" (Boltbender) names no target, so it is not read. */
+export function retargetObject(object: string, verb = "other", clauseText = ""): string | undefined {
+  const own = retargetPhrase(object);
+  if (own !== undefined || (verb !== "cost-modify" && verb !== "exchange")) return own;
+  const lowerObject = object.toLowerCase();
+  const fromClause = retargetPhrase(clauseText);
+  if (fromClause !== undefined && lowerObject.includes(fromClause)) return fromClause;
+  return lowerObject.startsWith("change that spell's target") && clauseText.toLowerCase().includes("target spell") ? "target spell" : undefined;
+}
+
 /** Does a dig's object name a class -- a type, subtype, stat predicate or name, on the subject or
  *  in an `anyOf` branch? "Two of them" and "a card" do not. See the `put library -> hand` row. */
 function digNamesAClass(object: string): boolean {
@@ -437,6 +476,8 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // to `pump` and fed Laboratory Maniac's anthem payoffs (owner-judged FALSE, 2026-08-15: "it is
   // removal, you always would target opponent creatures"). Neither a pump nor a debuff: no kind.
   if (verb === "modify-pt" && !/^\s*[+-]/.test(String(action.amount ?? "")) && /\bbase power\b/i.test(clauseText)) return null;
+  // THE MODEL ANSWERS `other` FOR "change the target of" and misfiled it as `cost-modify` on some (Divert, Deflection, Shunt), so the words decide, not the verb.
+  if (retargetObject(action.object ?? "", verb, clauseText) !== undefined) return "retarget";
   if (verb === "other" && WINS.test(`${action.object ?? ""} ${clauseText}`)) return "win-game";
   // A PROCESSOR takes from cards an OPPONENT OWNS in exile (AF7b, 2026-09-16): the owner phrase is
   // what tells Ulamog's Nullifier's "two cards your opponents own" from a flicker returning your

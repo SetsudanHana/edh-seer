@@ -34,6 +34,7 @@ const TESTED: Record<string, string> = {
   "105.2a": "grammar/filter.test.ts — 'monocolored' is exactly one colour (`colorCount: mono`, #896)",
   "105.2b": "grammar/filter.test.ts — 'multicolored' is two or more colours (`colorCount: multi`, #896)",
   "110.5": "grammar/filter.test.ts — tapped/untapped is a status (`tapped`, #896)",
+  "115.7": "derive.test.ts — an effect that changes the target(s) of / chooses new targets for a TARGET spell or ability is `retarget`; your own copy's new targets are not (#1266, #491)",
   "115.1": "grammar/filter.test.ts — what a spell targets is `targets` (#896)",
   "205.4c": "grammar/filter.test.ts — nonbasic is `basic: false` (#896)",
   "205.4g": "grammar/filter.test.ts — snow is a supertype (`snow`, #896)",
