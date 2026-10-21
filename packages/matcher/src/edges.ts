@@ -1107,11 +1107,16 @@ function verbSatisfies(producer: GameEvent, consumer: GameEvent): boolean {
     && producer.dealer !== undefined;
 }
 
-function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolean {
+function originMatches(producer: SubjectFilter, consumer: SubjectFilter, verb: string): boolean {
   // A SPELL ON THE STACK IS NOT ON THE BATTLEFIELD (#1266): a leave, an exile or a steal whose subject comes from the stack (Reprieve, Defabricate, Commandeer) satisfies only a demand
   // that says so. Without this a consumer stating no origin ("whenever a creature leaves the battlefield", "when this leaves the battlefield") took it, since a spell subject matches any
-  // card type. One rule on the origin, for every verb, rather than a zone stamp that only `leaves` carries.
-  if (producer.fromZone === "stack" && consumer.fromZone !== "stack") return false;
+  // card type. ONE EXCEPTION, NAMED BY ITS VERB: "whenever one or more other cards are put into exile from anywhere" (The War Doctor) is an `exiled` demand with no type, no origin and no
+  // self, and a spell exiled from the stack IS a card put into exile (Spell Queller, Taigam, Torrential Gearhulk). A `leaves` demand is the battlefield in this engine and is never met from the stack.
+  // CEILING: an untyped `exiled` demand is read as "from anywhere", so a card that means only permanents exiled and states no type would take a stack exile too; the War Doctor is the only one.
+  if (producer.fromZone === "stack" && consumer.fromZone !== "stack") {
+    const fromAnywhere = verb === "exiled" && consumer.type === undefined && consumer.self !== true;
+    if (!fromAnywhere) return false;
+  }
   if (consumer.fromZone === undefined) return true;
   return producer.fromZone === consumer.fromZone;
 }
@@ -1177,7 +1182,7 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // own zone (Bolas's Citadel's library, an impulse draw's exile) and keeps it.
   const castFrom = producer.implied === true && producer.verb === "cast" && producer.subject.fromZone === undefined
     ? { ...producer.subject, fromZone: "hand" as const } : producer.subject;
-  if (!originMatches(castFrom, consumer.subject)) return false;
+  if (!originMatches(castFrom, consumer.subject, consumer.verb)) return false;
   if (combatSelfSupplied(producer, consumer)) return false;
   if (castSelfSupplied(producer, asked)) return false;
   if (selfEtbSelfSupplied(producer, consumer)) return false;

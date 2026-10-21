@@ -4315,6 +4315,16 @@ describe("a leave from the stack feeds no leaves-the-battlefield trigger", () =>
     expect(eventMatches(spellLeaves, self, H)).toBe(false);
   });
 
+  test("a spell exiled from the stack is a card put into exile from anywhere (The War Doctor), but not a creature exile (Kaya's Ghostform)", () => {
+    const spellExiled: GameEvent = { verb: "exiled", subject: { control: "opp", token: null, type: "spell", scope: "target", fromZone: "stack" } };
+    const anywhere: GameEvent = { verb: "exiled", subject: { control: "any", token: null, scope: "all", other: true } };
+    expect(eventMatches(spellExiled, anywhere, H)).toBe(true);
+    expect(eventMatches(spellExiled, { verb: "exiled", subject: { control: "any", token: null, type: "creature" } }, H)).toBe(false);
+    expect(eventMatches(spellExiled, { verb: "exiled", subject: { control: "any", token: null, self: true } }, H)).toBe(false);
+    // ...and a spell leaving the stack is still no battlefield leave, however untyped the demand.
+    expect(eventMatches(spellLeaves, n({ verb: "leaves", subject: { control: "any", token: null, scope: "all", other: true } }), H)).toBe(false);
+  });
+
   test("an exile from the stack satisfies no creature-exile demand", () => {
     const spellExiled: GameEvent = { verb: "exiled", subject: { control: "opp", token: null, type: "spell", scope: "target", fromZone: "stack" } };
     expect(eventMatches(spellExiled, { verb: "exiled", subject: { control: "any", token: null, type: "creature" } }, H)).toBe(false);
