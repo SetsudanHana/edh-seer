@@ -8,6 +8,7 @@
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
+import { graveyardReplacement } from "./graveyard-replacement.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
@@ -520,7 +521,7 @@ import { emblemRecipient } from "../emblem.js";
 // 361: #1266 -- `Ability.librarySearch` ("yours" | "other") on a `search` ability read off a printed search action naming a library; a typed dig carries none; a stored search of a bare library takes the card of the put after it (Tempt with Discovery's third search gets type land, its one claim change). No emit changes.
 // 362: #1266 -- a new effect kind `retarget` (CR 115.7), read off an action whose object changes the target of / chooses new targets for a TARGET spell or ability (Misdirection, Redirect, Bolt Bend, Willbender, Reroute, Deflecting Swat, Divert; the model's `other`, and its `cost-modify` / `exchange` misfiles read from the clause: Shunt, Silver Wyvern, Spellskite, Meddle). Subject: `scope: "target"`, `type: "spell"` and/or `abilityKind`. Those actions leave `unclaimed`. Your own copy's new targets ("choose new targets for the copy", #491) and "that spell" stay unclaimed. Also (#1266 task 2): a spell moved, returned, exiled or taken is an emit with `fromZone: "stack"` (the grammar no longer calls a returned spell a battlefield leave; "target spell or permanent" is two emits, the spell and the permanent half), a noncreature spell is `type: spell` + `notType`, and "that spell" / "the chosen spell" is `scope: target` only when the ability earlier says "target ... spell" (Swallowed by Leviathan, Invert Polarity, Mages' Contest).
 // 363: #1266 (graveyardHate) -- an `exiled` emit from a graveyard says whose graveyard it is: `owner: "you"` when the printed words make it yours ("exile that card from your graveyard": Necropotence, Bag of Holding, Toluz, Moonstone, Leonardo da Vinci; a discard by you; a card "put into your graveyard", Purgatory, Colfenor's Urn, Grolnok; a cost exiling "another card from your graveyard", Helbrute, Squee; each player's OWN graveyard with the cards coming back, Living Death, Living End, Scrap Mastery). Another player's, or any graveyard, stays unmarked. An exile whose object names only graveyards ("target cards from graveyards", "from a single graveyard", "all graveyards", "that player's graveyard", "from defending player's graveyard") takes `fromZone: graveyard` when the model stored none (Erebos's Intervention, Blue Mage's Cane, Hive of the Eye Tyrant, Nurgle's Conscription, Abstergo Entertainment, Burn Away, Strategic Betrayal, Crabomination). "That player's graveyard" after a card taken "from an opponent's graveyard" is `opp` (Nurgle's Conscription). Replacement effects ("would be put into a graveyard ... exile it instead") and the cast-from-graveyard riders are left to #1306 (a rider's pronoun exile takes no owner and no new zone).
-// 364: #1266 review of 363 -- a graveyard-only exile zoning refuses "the battlefield or" and a self-exile list ("this artifact and all cards from all graveyards": Savior of Ollenbock, Silent Gravestone keep their battlefield reading), and the rider guard covers "a spell cast from your graveyard this way" (Gale).
+// 364: #1266 -- (review of 363) a graveyard-only exile zoning refuses "the battlefield or" and a self-exile list ("this artifact and all cards from all graveyards") on the MODEL path; the grammar path still zones Savior of Ollenbock and Silent Gravestone to the graveyard (grammarClauseRecords sets fromZone first): follow-up issue #1309. The rider guard covers "a spell cast from your graveyard this way" (Gale). (task 2) "If <X> would be put into a graveyard, exile it instead" is ONE shape per kind: an opponent's or any graveyard "from anywhere" (Leyline of the Void, Rest in Peace, Dryad Militant, Valgavoth, Sanctifier en-Vec) is a graveyard-hate exile whose effect subject and emits say `opp` or `any`; your own graveyard (Magus of the Will, Walk-In Closet) is no hate and no owner; a SPELL rider ("If that spell / a spell cast this way would be put into a graveyard": Kess, Chandra, Mavinda, ...) exiles the spell FROM THE STACK (CR 614), #1306. Graveyard cards typed `spell` by a possessive (Grip of Amnesia, Bloodbond March) are typed as cards.
 export const DERIVE_VERSION = 364;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
@@ -1061,6 +1062,7 @@ const OBJECT_NAMES_AN_OWNER = /\b(?:from|in) (?:your|their|that player's|target 
 function zoneOwner(clauseText: string, zone: string | null | undefined, triggerIsSelf = false, cardName?: string, objectText?: string): Control | undefined {
   if (!zone || clauseText === "") return undefined;
   if (zone === "graveyard" && /\bfrom that player's graveyard\b/i.test(clauseText) && damagedPlayerIsOpponent(clauseText, triggerIsSelf, cardName)) return "opp";
+  if (zone === "graveyard" && graveyardReplacement(clauseText)?.kind === "hate" && graveyardReplacement(clauseText)?.whose === "opp") return "opp";
   for (const [re, control] of ZONE_OWNER) {
     // Anchored on the ZONE the action names, so "return it to your hand" cannot be read as a claim
     // about whose graveyard was searched.
@@ -2180,6 +2182,26 @@ export function deriveAbilities(
     // graveyards", "that player's graveyard", "from defending player's graveyard" came back with no origin, so the exile was no graveyard exile at all.
     const zoneless = (a: { verb?: string; fromZone?: string | null; object?: string }) =>
       !a.fromZone && ZONE_MOVING_VERBS.has(a.verb ?? "") && (OBJECT_IN_GRAVEYARD.test(a.object ?? "") || (a.verb === "exile" && exileNamesOnlyGraveyards(a.object ?? "") && !WOULD_BE_PUT_INTO.test(clauseText)));
+    // THE REPLACEMENT "IF <X> WOULD BE PUT INTO A GRAVEYARD, EXILE IT INSTEAD" (#1266 task 2, #1306), read off the printed clause, one shape for every card:
+    //   a SPELL rider ("If that spell would be put into your graveyard", Kess, Chandra, Mavinda) exiles the spell FROM THE STACK (CR 614: it never reaches the graveyard);
+    //   an opponent's or any graveyard ("from anywhere": Leyline of the Void, Rest in Peace, Dryad Militant, Valgavoth) is a graveyard-hate exile whose emit says whose;
+    //   YOUR graveyard (Magus of the Will, Walk-In Closet) is no graveyard exile and no hate.
+    // The replacement is the clause's LAST exile (the model sometimes also misreads the cast it follows as an exile of the same object: Mavinda, dropped).
+    const replacing = graveyardReplacement(clauseText);
+    if (replacing) {
+      const acts = clause.actions ?? [];
+      // The card's own exile ("Exile this Saga", a flicker's, a cost's) is no replacement.
+      const last = acts.map((a, i) => a.verb === "exile" && !/^this\b/i.test((a.object ?? "").trim()) ? i : -1).reduce((m, i) => Math.max(m, i), -1);
+      if (last >= 0) {
+        const cast = new Set(acts.filter((a) => a.verb === "cast" || a.verb === "play").map((a) => (a.object ?? "").trim().toLowerCase()));
+        clause = { ...clause, actions: acts.flatMap((a, i): Action[] => {
+          if (i !== last) return replacing.kind === "rider" && a.verb === "exile" && cast.has((a.object ?? "").trim().toLowerCase()) ? [] : [a];
+          if (replacing.kind === "rider") return a.fromZone === "stack" ? [a] : [{ ...a, object: "a spell cast this way", fromZone: "stack", toZone: "exile" } as Action];
+          if (replacing.kind === "hate") return [{ ...a, fromZone: "graveyard", toZone: "exile" } as Action];
+          return [{ ...a, fromZone: null, toZone: "exile" } as Action];
+        }) };
+      }
+    }
     if ((clause.actions ?? []).some(zoneless)) {
       clause = { ...clause, actions: (clause.actions ?? []).map((a) => zoneless(a) ? { ...a, fromZone: "graveyard" } : a) };
     }
@@ -2667,6 +2689,21 @@ export function deriveAbilities(
         && damagedPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
         for (const e of emits) if (e.verb === "leaves" && e.subject.control === "any" && e.subject.zone === "graveyard") e.subject.control = "opp";
       }
+      // #1306 shape 2: "all cards from target spell's controller's graveyard" (Grip of Amnesia), "all cards with the same name as that spell from their graveyard" (Bloodbond March) move
+      // CARDS in a graveyard; the word "spell" is only whose they are / what they are named after, so the emit is not typed `spell`.
+      if (action.fromZone === "graveyard" && /^(?:all )?cards?\b/i.test((action.object ?? "").trim())) {
+        // ...but "with the same name as THAT spell" after "casts a creature spell" is a card of the spell's own type (Bloodbond March returns creature cards).
+        const named = /\bsame name as that spell\b/i.test(action.object ?? "") && trigger?.subject.type !== undefined && trigger.subject.type !== "spell" ? trigger.subject.type : undefined;
+        for (const e of emits) if (e.subject.type === "spell") { if (named !== undefined) e.subject.type = named; else delete e.subject.type; }
+      }
+      // #1306: the spell a rider exiles is the one YOU cast ("cast this way"), whoever's graveyard it came from, so its stack emits are yours.
+      if (action.verb === "exile" && action.fromZone === "stack" && graveyardReplacement(text)?.kind === "rider" && /\bcast\b/i.test(action.object ?? "")) {
+        for (const e of emits) if ((e.verb === "exiled" || e.verb === "leaves") && e.subject.fromZone === "stack" && e.subject.control === "any") e.subject.control = "you";
+      }
+      // #1266 task 2: an opponent's-graveyard replacement says so on its emits too (Leyline of the Void, Valgavoth); "a graveyard" stays `any`.
+      if (action.verb === "exile" && action.fromZone === "graveyard" && graveyardReplacement(text) ?.kind === "hate" && graveyardReplacement(text)?.whose === "opp") {
+        for (const e of emits) if ((e.verb === "exiled" || e.verb === "leaves") && e.subject.fromZone === "graveyard") e.subject.control = "opp";
+      }
       // #1266: "that player's graveyard" AFTER a card taken "from an opponent's graveyard" in the same clause is THAT opponent's (Nurgle's Conscription), so the
       // exile and its graveyard leave say `opp` and no "leaves YOUR graveyard" payoff is fed by it. A bare "that player" (Go Blank's target player) stays `any`.
       if (action.verb === "exile" && action.fromZone === "graveyard" && /^that player's graveyard$/i.test((action.object ?? "").trim()) && opponentYardBefore(text)) {
@@ -2910,7 +2947,9 @@ export function deriveAbilities(
         && (kind !== "static" || namesItsTargets(subject) || effectKind === "ability-loss"
           // A RETARGET'S SUBJECT IS A TARGET (scope "target"), never a whole-deck class, and a fact kind claims nothing pairwise: Emissary of Grudges' activated ability is stored `static`.
           || effectKind === "retarget"
-          || (effectKind === "graveyard-recursion" && subject.zone === "graveyard"))
+          || (effectKind === "graveyard-recursion" && subject.zone === "graveyard")
+          // A STATIC GRAVEYARD-HATE REPLACEMENT (Leyline of the Void, Rest in Peace, #1266) keeps whose graveyard it hits; the `zone: graveyard` matches no printed card, like the recursion above.
+          || (effectKind === "graveyard-hate" && subject.zone === "graveyard" && graveyardReplacement(text)?.kind === "hate"))
         && (effectKind !== "clone" || subject.subtype !== undefined);
       // What the payoff's magnitude counts. Already consumed by edges.ts, impact.ts and buckets.ts;
       // derivation had simply never set it, so the channel was dark under TAGS_SOURCE=derived.

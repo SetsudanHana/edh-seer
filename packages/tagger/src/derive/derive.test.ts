@@ -5602,3 +5602,97 @@ describe("#1266 graveyard owner on an exiled emit", () => {
     expect(e?.subject.fromZone).toBeUndefined();
   });
 });
+
+// #1266 task 2 / #1306: "If <X> would be put into a graveyard, exile it instead" is one shape per kind of X.
+describe("#1266 graveyard replacement effects", () => {
+  const ab = (clauses: Parameters<typeof deriveAbilities>[0], name: string, texts: Record<number, string>) => deriveAbilities(clauses, name, texts).abilities;
+  const exiledEmits = (abilities: Ability[]) => abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "exiled" || e.verb === "leaves");
+
+  it("Leyline of the Void: an opponent's graveyard replacement is graveyard-hate over opp", () => {
+    const a = ab([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object: "a card" }] }], "Leyline of the Void",
+      { 2: "If a card would be put into an opponent's graveyard from anywhere, exile it instead." });
+    const hate = a.find((x) => x.effect.kind === "graveyard-hate");
+    expect(hate?.effect.subject?.control).toBe("opp");
+    expect(exiledEmits(a).every((e) => e.subject.owner !== "you" && e.subject.control === "opp" && e.subject.fromZone === "graveyard")).toBe(true);
+  });
+
+  it("Rest in Peace: 'a graveyard' replacement is graveyard-hate over any", () => {
+    const a = ab([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object: "a card or token" }] }], "Rest in Peace",
+      { 2: "If a card or token would be put into a graveyard from anywhere, exile it instead." });
+    const hate = a.find((x) => x.effect.kind === "graveyard-hate");
+    expect(hate?.effect.subject?.control).toBe("any");
+    expect(exiledEmits(a).some((e) => e.subject.owner === "you")).toBe(false);
+  });
+
+  it("Dryad Militant: an instant or sorcery replacement is graveyard-hate typed instant/sorcery over any", () => {
+    const a = ab([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object: "an instant or sorcery card", fromZone: "graveyard" }] }], "Dryad Militant",
+      { 2: "If an instant or sorcery card would be put into a graveyard from anywhere, exile it instead." });
+    const hate = a.find((x) => x.effect.kind === "graveyard-hate");
+    expect(hate?.effect.subject?.control).toBe("any");
+    expect(hate?.effect.subject?.type).toEqual(["instant", "sorcery"]);
+  });
+
+  it("Valgavoth: 'a card you didn't control ... an opponent's graveyard' is graveyard-hate over opp", () => {
+    const a = ab([{ id: 3, abilityType: "static", actions: [{ verb: "exile", object: "a card you didn't control" }] }], "Valgavoth, Terror Eater",
+      { 3: "If a card you didn't control would be put into an opponent's graveyard from anywhere, exile it instead." });
+    expect(a.find((x) => x.effect.kind === "graveyard-hate")?.effect.subject?.control).toBe("opp");
+  });
+
+  it("Sanctifier en-Vec: 'a black or red permanent, spell, or card not on the battlefield' is graveyard-hate over any", () => {
+    const a = ab([{ id: 3, abilityType: "static", actions: [{ verb: "exile", object: "it" }] }], "Sanctifier en-Vec",
+      { 3: "If a black or red permanent, spell, or card not on the battlefield would be put into a graveyard, exile it instead." });
+    expect(a.find((x) => x.effect.kind === "graveyard-hate")?.effect.subject?.control).toBe("any");
+  });
+
+  it.each([
+    ["Magus of the Will", "cards", "If a card would be put into your graveyard from anywhere this turn, exile that card instead."],
+    ["Walk-In Closet", "a card", "When you unlock this door, you may cast spells from your graveyard this turn, and if a card would be put into your graveyard from anywhere this turn, exile it instead."],
+  ])("%s: a replacement on YOUR graveyard is no hate and carries no owner", (name, object, text) => {
+    const a = ab([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object, fromZone: "graveyard", toZone: "exile" }] }], name, { 1: text });
+    expect(a.some((x) => x.effect.kind === "graveyard-hate")).toBe(false);
+    expect(exiledEmits(a).every((e) => e.subject.owner === undefined && e.subject.fromZone !== "graveyard")).toBe(true);
+  });
+
+  it("a card replacing ITSELF is neither hate nor owned (Waildrifter)", () => {
+    const a = ab([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object: "it" }] }], "Waildrifter", { 1: "If Waildrifter would be put into a graveyard from anywhere, exile it instead." });
+    expect(a.some((x) => x.effect.kind === "graveyard-hate")).toBe(false);
+  });
+
+  it("Kess's rider exiles the spell from the STACK: exiled and leaves say stack, none say graveyard", () => {
+    const a = ab([{ id: 2, abilityType: "static", actions: [
+      { verb: "cast", object: "an instant or sorcery spell from your graveyard", fromZone: "graveyard", toZone: "stack" },
+      { verb: "exile", object: "a spell cast this way", fromZone: "graveyard", toZone: "exile" }] }], "Kess, Dissident Mage",
+    { 2: "Once during each of your turns, you may cast an instant or sorcery spell from your graveyard. If a spell cast this way would be put into your graveyard, exile it instead." });
+    const rider = exiledEmits(a).filter((e) => e.subject.type === "spell");
+    expect(rider.map((e) => e.verb).sort()).toEqual(["exiled", "leaves"]);
+    expect(rider.every((e) => e.subject.fromZone === "stack" && e.subject.control === "you")).toBe(true);
+    // (the CAST leaves the graveyard, and that is a different, true `leaves`)
+    expect(exiledEmits(a).filter((e) => e.verb === "exiled").some((e) => e.subject.fromZone === "graveyard")).toBe(false);
+  });
+
+  it("Mavinda: the model's duplicate exile of the cast target is dropped, the rider is the stack exile", () => {
+    const a = ab([{ id: 2, abilityType: "activated", actions: [
+      { verb: "exile", object: "target instant or sorcery card from your graveyard" },
+      { verb: "cast", object: "target instant or sorcery card from your graveyard", fromZone: "graveyard", toZone: "stack" },
+      { verb: "exile", object: "that spell" }] }], "Mavinda, Students' Advocate",
+    { 2: "{0}: You may cast target instant or sorcery card from your graveyard this turn. If that spell would be put into your graveyard, exile it instead." });
+    const ex = exiledEmits(a).filter((e) => e.verb === "exiled");
+    expect(ex).toHaveLength(1);
+    expect(ex[0]?.subject.fromZone).toBe("stack");
+  });
+
+  it("Grip of Amnesia: the exiled cards are cards, not a spell", () => {
+    const a = ab([{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target spell" }, { verb: "exile", object: "all cards from target spell's controller's graveyard" }] }], "Grip of Amnesia",
+      { 1: "Counter target spell unless its controller exiles all cards from their graveyard." });
+    const ex = a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "exiled");
+    expect(ex.length).toBeGreaterThan(0);
+    expect(ex.every((e) => e.subject.type !== "spell")).toBe(true);
+  });
+
+  it("Bloodbond March: the returned cards are cards, not a spell", () => {
+    const a = ab([{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a creature spell", control: "any" },
+      actions: [{ verb: "return", object: "all cards with the same name as that spell", fromZone: "graveyard", toZone: "battlefield" }] }], "Bloodbond March",
+    { 1: "Whenever a player casts a creature spell, each player returns all cards with the same name as that spell from their graveyard to the battlefield." });
+    expect(a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "enters").every((e) => e.subject.type === "creature")).toBe(true);
+  });
+});
