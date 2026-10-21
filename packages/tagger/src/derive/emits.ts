@@ -382,18 +382,23 @@ function stackSubject(object: string, control: SubjectFilter["control"]): Subjec
  *  says "target ... spell" (Swallowed by Leviathan's "Choose target spell", Mages' Contest's "target spell's controller"), within six sentences; a trigger on any cast ("whenever an opponent casts a
  *  spell, counter that spell") names none, and "becomes the target OF a spell" (Kira) is not one. Word scan, bounded gap of seven words. */
 export function targetsASpellEarlier(text: string, anaphor: string): boolean {
+  return earlierTargetSpell(text, anaphor) !== undefined;
+}
+/** The "target ... spell" phrase itself ("target artifact or enchantment spell"), so a back-reference keeps the card types it names (Defabricate's "exile that spell"). */
+export function earlierTargetSpell(text: string, anaphor: string): string | undefined {
   const sentences = text.toLowerCase().split(".");
-  let named = -1;
+  let named = -1, phrase: string | undefined;
   for (let i = 0; i < sentences.length && named < 0; i++) {
     const words = sentences[i]!.split(/[ ,]+/);
     for (let w = 0; w < words.length; w++) {
       if (words[w] !== "target" || words[w + 1] === "of") continue;
-      if (words.slice(w + 1, w + 8).some((x) => x.startsWith("spell"))) { named = i; break; }
+      const end = words.slice(w + 1, w + 8).findIndex((x) => x.startsWith("spell"));
+      if (end >= 0) { named = i; phrase = words.slice(w, w + 2 + end).join(" ").replace(/'s$/, ""); break; }
     }
   }
-  if (named < 0) return false;
-  for (let j = named; j < sentences.length && j <= named + 6; j++) if (sentences[j]!.includes(anaphor)) return true;
-  return false;
+  if (named < 0) return undefined;
+  for (let j = named; j < sentences.length && j <= named + 6; j++) if (sentences[j]!.includes(anaphor)) return phrase;
+  return undefined;
 }
 /** The back-references to a spell the clause named earlier. */
 const SPELL_ANAPHORS = ["the chosen spell", "that spell", "the spell"];
@@ -791,10 +796,14 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   }
   // "THAT SPELL", "THE CHOSEN SPELL": a target when the same ability says "target ... spell" earlier, never on a trigger that names none (Counterbalance, Kira).
   const anaphor = SPELL_ANAPHORS.find((a) => (action.object ?? "").trim().toLowerCase() === a);
-  if (anaphor !== undefined && (STACK_MOVES.has(action.verb ?? "") || action.verb === "counter-spell") && targetsASpellEarlier(clauseText ?? "", anaphor)) {
+  const antecedent = anaphor !== undefined && (STACK_MOVES.has(action.verb ?? "") || action.verb === "counter-spell") ? earlierTargetSpell(clauseText ?? "", anaphor) : undefined;
+  if (antecedent !== undefined) {
+    // The spell is the one the earlier "target ... spell" named, with the card types that phrase gives.
     for (const e of events) {
-      e.subject.scope = "target";
-      if (action.verb !== "counter-spell") e.subject.fromZone = "stack";
+      const named = stackSubject(antecedent, e.subject.control);
+      // A counter is of a spell on the stack by nature and carries no origin, as its own "counter target spell" does.
+      if (action.verb === "counter-spell") delete named.fromZone;
+      e.subject = named;
     }
   }
   // A FIGHT IS TWO DAMAGE EVENTS (CR 701.14a): each creature deals damage to the other, and the emit

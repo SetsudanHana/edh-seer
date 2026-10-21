@@ -5365,6 +5365,15 @@ describe("a spell answered by a return, exile or steal is a spell ON THE STACK, 
     expect(leaves.find((e) => e.subject.fromZone === "stack")!.subject.stats).toEqual([{ metric: "mana-value", op: "gte", value: 1 }]);
   });
 
+  test("'exile that spell' after 'counter target artifact or enchantment spell' keeps the card types (Defabricate, Deny Existence)", () => {
+    const t = "Counter target artifact or enchantment spell. If that spell is countered this way, exile it instead of putting it into its owner's graveyard.";
+    const [e] = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target artifact or enchantment spell" }, { verb: "exile", object: "that spell", fromZone: "stack", toZone: "exile" }] }], t), "exiled");
+    expect(e!.subject).toMatchObject({ type: ["artifact", "enchantment"], scope: "target", fromZone: "stack" });
+    const split = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "vote", object: "denial or duplication" }, { verb: "counter-spell", object: "the spell" }] }], "Choose target instant or sorcery spell. If denial gets more votes, counter the spell."), "counter-spell");
+    expect(split[0]!.subject).toMatchObject({ type: ["instant", "sorcery"], scope: "target" });
+    expect(split[0]!.subject.fromZone).toBeUndefined();
+  });
+
   test("a mixed object the model stored as `stack` still has its permanent half on the battlefield (Swat Away)", () => {
     const leaves = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "put", object: "target spell or creature", fromZone: "stack", toZone: "library" }] }], "The owner of target spell or creature puts it on their choice of the top or bottom of their library."), "leaves");
     expect(leaves.map((e) => [e.subject.type, e.subject.fromZone]).sort()).toEqual([["creature", "battlefield"], ["spell", "stack"]]);

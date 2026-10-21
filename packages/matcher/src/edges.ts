@@ -1108,6 +1108,10 @@ function verbSatisfies(producer: GameEvent, consumer: GameEvent): boolean {
 }
 
 function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolean {
+  // A SPELL ON THE STACK IS NOT ON THE BATTLEFIELD (#1266): a leave, an exile or a steal whose subject comes from the stack (Reprieve, Defabricate, Commandeer) satisfies only a demand
+  // that says so. Without this a consumer stating no origin ("whenever a creature leaves the battlefield", "when this leaves the battlefield") took it, since a spell subject matches any
+  // card type. One rule on the origin, for every verb, rather than a zone stamp that only `leaves` carries.
+  if (producer.fromZone === "stack" && consumer.fromZone !== "stack") return false;
   if (consumer.fromZone === undefined) return true;
   return producer.fromZone === consumer.fromZone;
 }
