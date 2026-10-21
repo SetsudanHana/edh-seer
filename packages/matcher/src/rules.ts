@@ -34,7 +34,15 @@ export type RuleClause =
        *  digs, for edges) stays out of the tutor role (owner 2026-10-21). */
       librarySearch?: string[];
       /** Refuse an ability whose effect SUBJECT types are all `land` ("search for a basic land card": Farseek, Expedition Map). That is fixing, not a tutor. A subject with no type is NOT land-only. */
-      notLandOnly?: true }
+      notLandOnly?: true;
+      /** Refuse an ability whose effect SUBJECT is owned by you (`subject.owner: "you"`): a graveyard-hate effect over your own graveyard ("exile that card from your graveyard") is delve, escape and recursion
+       *  cost, not hate (#1266). An effect with no subject, or no owner, is not refused. */
+      notOwnedByYou?: true;
+      /** Refuse an ability whose effect SUBJECT is the card itself (`subject.self`): "Exile this card from your graveyard" derives a graveyard-hate effect over the card, which hates nothing (#1266). */
+      notSelf?: true;
+      /** Refuse an ability one of whose emits the VICTIM MAY DECLINE (`GameEvent.victimMay`): "unless that player exiles cards from their graveyard" (Axebane Ferox), "any player may exile a card from their graveyard" (Carrion Rats),
+       *  "its controller may exile three cards ... to ignore this effect" (Lost in Thought) are a price the other player chooses to pay, not graveyard hate (#1266; the same refusal as the edict's `notVictimMay` on `emits`). */
+      notVictimMay?: true }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -76,7 +84,9 @@ export type RuleClause =
       edict?: true;
       /** Refuse an emit the victim may decline (`GameEvent.victimMay`): "its controller may sacrifice it" (Star Athlete, Livio), "unless that player sacrifices it" (Enchanter's Bane). It is the opponent's choice with an
        *  alternative, which is not removal (#1295). */
-      notVictimMay?: true }
+      notVictimMay?: true;
+      /** Refuse an emit about THE CARD ITSELF (`subject.self`): "Exile this card from your graveyard" (renew, channel-like costs) moves the card and is no exile of anything else (#1266, graveyardHate). */
+      notSelf?: true }
   | { op: "typeLine"; contains: string }
   /** The card prints one of these KEYWORDS (Scryfall's `card.keywords`, compared case-insensitively). For a rule whose cue lives only in keyword reminder text, which derive does not read: Transmute and
    *  Transfigure search the library, and Typecycling does too (#1266). Compose with `not` to leave a keyword out (Landcycling fetches a land). */
@@ -445,6 +455,9 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope)))
         && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true)
         && (clause.notOnFlip !== true || a.onFlip === undefined)
+        && (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")
+        && (clause.notSelf !== true || a.effect.subject?.self !== true)
+        && (clause.notVictimMay !== true || !(a.emits ?? []).some((e) => e.victimMay === true))
         && (clause.librarySearch === undefined || (a.librarySearch !== undefined && clause.librarySearch.includes(a.librarySearch)))
         && (clause.notLandOnly !== true || !(a.effect.subject !== undefined && landOnlySubject(a.effect.subject)))
         && (clause.toughnessDown !== true || lowersToughness(a.amount)));
@@ -467,6 +480,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.edict !== true || e.subject.edict === true)
           && (clause.notVictimMay !== true || e.victimMay !== true)
           && (clause.notOwnedByYou !== true || e.subject.owner !== "you")
+          && (clause.notSelf !== true || e.subject.self !== true)
           && (clause.notPairedTarget !== true || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
             && (f.emits ?? []).some((g) => g.subject.scope === "target" && g.subject.fromZone === "graveyard" && g.subject.control === e.subject.control
               && JSON.stringify(g.subject.type) === JSON.stringify(e.subject.type))))

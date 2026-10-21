@@ -7,6 +7,7 @@ import { computeBuild } from "./build.js";
 import type { LandRecommendation } from "./land-count.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { manaTags, tapFor } from "./mana-test-support.js";
+import { realCard } from "./removal-test-support.js";
 
 const H: Hierarchy = {};
 
@@ -173,8 +174,9 @@ test("an answer row says how many of its answers exile, and how many recur", () 
   const deck = fillTo(100, [
     answer("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power."),
     answer("Murder", "Destroy target creature."),
-    answer("Bojuka Bog", "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.", "Land"),
-    answer("Rest in Peace", "When this enchantment enters, exile all graveyards.\nIf a card or token would be put into a graveyard from anywhere, exile it instead.", "Enchantment"),
+    // graveyard hate is read from derive (#1266), so these two carry their real derived abilities
+    realCard("Bojuka Bog"),
+    realCard("Rest in Peace"),
   ]);
   const dm = computeDeckMath(deck, H);
   const creature = dm.answers.find((a) => a.class === "creature")!;

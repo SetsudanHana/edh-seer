@@ -2,6 +2,8 @@ import { describe, expect, it, test } from "vitest";
 import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { targetsASpellEarlier } from "./emits.js";
+import { exileNamesOnlyGraveyards } from "./effect-kind.js";
+import { graveyardReplacement } from "./graveyard-replacement.js";
 import { deriveInputOf } from "../derive-input.js";
 import type { Ability, Characteristics } from "../schema.js";
 
@@ -5448,5 +5450,347 @@ describe("a spell answered by a return, exile or steal is a spell ON THE STACK, 
     expect(targetsASpellEarlier(text, "that spell")).toBe(false);
     expect(targetsASpellEarlier("target ".repeat(20_000) + "spell. counter that spell", "that spell")).toBe(true);
     expect(performance.now() - t0).toBeLessThan(500);
+  });
+});
+
+// #1266 (graveyardHate): an `exiled` emit from a graveyard says whose graveyard it is, so a rule can tell hate from
+// "exile that card from YOUR graveyard" (Necropotence, delve-shaped costs, Living Death's round trip).
+describe("#1266 graveyard owner on an exiled emit", () => {
+  const exiledOf = (clauses: Parameters<typeof deriveAbilities>[0], name: string, texts: Record<number, string>) =>
+    deriveAbilities(clauses, name, texts).abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "exiled");
+
+  it("Necropotence: a discard exiled from your graveyard is yours", () => {
+    const [e] = exiledOf([{ id: 2, abilityType: "triggered", trigger: { event: "discarded", subject: "a card", control: "you" },
+      actions: [{ verb: "exile", object: "that card", fromZone: "graveyard", toZone: "exile" }] }],
+    "Necropotence", { 2: "Whenever you discard a card, exile that card from your graveyard." });
+    expect(e?.subject.fromZone).toBe("graveyard");
+    expect(e?.subject.owner).toBe("you");
+  });
+
+  it("a discard trigger by you that names no graveyard still puts the card in yours", () => {
+    const [e] = exiledOf([{ id: 2, abilityType: "triggered", trigger: { event: "discarded", subject: "a card", control: "you" },
+      actions: [{ verb: "exile", object: "that card", fromZone: "graveyard", toZone: "exile" }] }],
+    "Test Card", { 2: "Whenever you discard a card, exile it." });
+    expect(e?.subject.owner).toBe("you");
+  });
+
+  it("Purgatory: a card put into your graveyard, exiled, is yours (fromZone read off the zone the event names)", () => {
+    const [e] = exiledOf([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "a nontoken creature", control: "you" },
+      actions: [{ verb: "exile", object: "that card" }] }],
+    "Purgatory", { 1: "Whenever a nontoken creature is put into your graveyard from the battlefield, exile that card." });
+    expect(e?.subject.fromZone).toBe("graveyard");
+    expect(e?.subject.owner).toBe("you");
+  });
+
+  it("an opponent's creature dying and exiled is not yours", () => {
+    const [e] = exiledOf([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "a creature", control: "opp" },
+      actions: [{ verb: "exile", object: "that card" }] }],
+    "Test Card", { 1: "Whenever a creature an opponent controls dies, exile it." });
+    expect(e?.subject.owner).not.toBe("you");
+  });
+
+  it("exile target card from your graveyard: yours", () => {
+    const [e] = exiledOf([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "target card from your graveyard", fromZone: "graveyard", toZone: "exile" }] }],
+    "Test Card", { 1: "Exile target card from your graveyard." });
+    expect(e?.subject.owner).toBe("you");
+  });
+
+  it("a cost that exiles another card from your graveyard (Helbrute, delve-shaped): yours", () => {
+    const [e] = exiledOf([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object: "another creature card", fromZone: "graveyard", toZone: "exile" }] }],
+    "Helbrute", { 2: "You may cast this card from your graveyard by exiling another creature card from your graveyard in addition to paying its other costs." });
+    expect(e?.subject.owner).toBe("you");
+  });
+
+  it("Living Death: each player exiles from their own graveyard and gets the cards back, which is no one else's yard", () => {
+    const [e] = exiledOf([{ id: 1, abilityType: "spell", actions: [
+      { verb: "exile", object: "all creature cards from their graveyard", fromZone: "graveyard", toZone: "exile" },
+      { verb: "sacrifice", object: "all creatures they control" },
+      { verb: "put", object: "all cards they exiled this way", fromZone: "exile", toZone: "battlefield" }] }],
+    "Living Death", { 1: "Each player exiles all creature cards from their graveyard, then sacrifices all creatures they control, then puts all cards they exiled this way onto the battlefield." });
+    expect(e?.subject.owner).toBe("you");
+  });
+
+  it("each player exiling from their graveyard with nothing coming back is not yours (Grave Consequences)", () => {
+    const [e] = exiledOf([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "any number of cards from their graveyard", fromZone: "graveyard", toZone: "exile" }] }],
+    "Grave Consequences", { 1: "Each player may exile any number of cards from their graveyard." });
+    expect(e?.subject.owner).not.toBe("you");
+  });
+
+  it("exile up to three target cards from a single graveyard: not yours, from the graveyard", () => {
+    const [e] = exiledOf([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" },
+      actions: [{ verb: "exile", object: "up to three target cards from a single graveyard", fromZone: "graveyard", toZone: "exile" }] }],
+    "Decompose", { 2: "When this enters, exile up to three target cards from a single graveyard." });
+    expect(e?.subject.fromZone).toBe("graveyard");
+    expect(e?.subject.owner).not.toBe("you");
+  });
+
+  it("Erebos's Intervention: 'target cards from graveyards' with no stored zone is a graveyard exile, not yours", () => {
+    const [e] = exiledOf([{ id: 3, abilityType: "spell", actions: [{ verb: "exile", object: "up to twice X target cards from graveyards" }] }],
+    "Erebos's Intervention", { 3: "Exile up to twice X target cards from graveyards." });
+    expect(e?.subject.fromZone).toBe("graveyard");
+    expect(e?.subject.owner).not.toBe("you");
+  });
+
+  it.each([
+    ["Blue Mage's Cane", "up to one target instant or sorcery card from defending player's graveyard", "Whenever this creature attacks, exile up to one target instant or sorcery card from defending player's graveyard."],
+    ["Abstergo Entertainment", "all graveyards", "Then exile all graveyards."],
+    ["Nurgle's Conscription", "that player's graveyard", "Then exile that player's graveyard."],
+    ["Crabomination", "a card at random from target opponent's graveyard", "Target opponent exiles a card at random from their graveyard."],
+    ["Cry of the Carnarium", "all creature cards in all graveyards that were put there from the battlefield this turn", "Exile all creature cards in all graveyards that were put there from the battlefield this turn."],
+  ])("%s: the exile names a graveyard, so it is a graveyard exile and not yours", (name, object, text) => {
+    const [e] = exiledOf([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object }] }], name, { 1: text });
+    expect(e?.subject.fromZone).toBe("graveyard");
+    expect(e?.subject.owner).not.toBe("you");
+  });
+
+  it("Nurgle's Conscription: that player's graveyard after 'from an opponent's graveyard' is the opponent's", () => {
+    const abilities = deriveAbilities([{ id: 1, abilityType: "spell", actions: [
+      { verb: "put", object: "target creature card from an opponent's graveyard", fromZone: "graveyard", toZone: "battlefield" },
+      { verb: "exile", object: "that player's graveyard" }] }],
+    "Nurgle's Conscription", { 1: "Put target creature card from an opponent's graveyard onto the battlefield tapped under your control, then exile that player's graveyard." }).abilities;
+    const ex = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "exiled");
+    expect(ex.length).toBeGreaterThan(0);
+    expect(ex.every((e) => e.subject.control === "opp" && e.subject.owner !== "you" && e.subject.fromZone === "graveyard")).toBe(true);
+  });
+
+  it("Go Blank: exile that player's graveyard is not yours", () => {
+    const [e] = exiledOf([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "that player's graveyard", fromZone: "graveyard", toZone: "exile" }] }],
+    "Go Blank", { 1: "Target player discards two cards. Then exile that player's graveyard." });
+    expect(e?.subject.owner).not.toBe("you");
+  });
+
+  it("a battlefield half beside the graveyard half keeps the model's zone (Angel of Serenity)", () => {
+    const [e] = exiledOf([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" },
+      actions: [{ verb: "exile", object: "up to three other target creatures from the battlefield and/or creature cards from graveyards" }] }],
+    "Angel of Serenity", { 2: "When this creature enters, you may exile up to three other target creatures from the battlefield and/or creature cards from graveyards." });
+    expect(e?.subject.fromZone).toBeUndefined();
+  });
+
+  it("a replacement rider's exile is not read as a graveyard exile here (Bosium Strip, #1306)", () => {
+    const es = exiledOf([{ id: 1, abilityType: "activated", actions: [{ verb: "exile", object: "instant and sorcery spells from the top of your graveyard" }] }],
+    "Bosium Strip", { 1: "Until end of turn, you may cast instant and sorcery spells from the top of your graveyard. If a spell cast this way would be put into a graveyard, exile it instead." });
+    expect(es.every((e) => e.subject.fromZone !== "graveyard")).toBe(true);
+  });
+
+  it("a replacement rider's 'exile it instead' keeps its emit unmarked (Maestros Ascendancy, #1306)", () => {
+    const es = exiledOf([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object: "a spell cast this way", fromZone: "graveyard", toZone: "exile" }] }],
+    "Maestros Ascendancy", { 1: "If a spell cast this way would be put into your graveyard, exile it instead." });
+    expect(es.every((e) => e.subject.owner === undefined)).toBe(true);
+  });
+
+  it("'from the battlefield OR creature card from a graveyard' is not a graveyard-only object (Savior of Ollenbock)", () => {
+    expect(exileNamesOnlyGraveyards("up to one other target creature from the battlefield or creature card from a graveyard")).toBe(false);
+    expect(exileNamesOnlyGraveyards("up to three other target creatures from the battlefield and/or creature cards from graveyards")).toBe(false);
+    expect(exileNamesOnlyGraveyards("up to twice X target cards from graveyards")).toBe(true);
+  });
+
+  it("'this artifact and all cards from all graveyards' does not zone the self-exile to a graveyard (Silent Gravestone)", () => {
+    const es = exiledOf([{ id: 2, abilityType: "activated", actions: [{ verb: "exile", object: "this artifact and all cards from all graveyards" }] }],
+    "Silent Gravestone", { 2: "{3}, {T}: Exile this artifact and all cards from all graveyards." });
+    expect(es.every((e) => e.subject.fromZone !== "graveyard")).toBe(true);
+  });
+
+  it("a rider's 'a spell cast from your graveyard this way' is left unmarked (Gale, #1306)", () => {
+    const es = exiledOf([{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" },
+      actions: [{ verb: "exile", object: "a spell cast from your graveyard this way", fromZone: "graveyard", toZone: "exile" }] }],
+    "Gale", { 1: "Whenever you cast a spell, you may cast up to one target card from your graveyard. If a spell cast from your graveyard this way would be put into your graveyard, exile it instead." });
+    expect(es.every((e) => e.subject.owner === undefined)).toBe(true);
+  });
+
+  it.each([
+    ["Promise of Tomorrow", { event: "dies", subject: "a creature you control", control: "you" }, "Whenever a creature you control dies, exile it.", "you"],
+    ["Cyclopean Mummy", { event: "dies", subject: "this creature", control: "you" }, "When this creature dies, exile it.", "you"],
+    ["Eater of Virtue", { event: "dies", subject: "equipped creature", control: "you" }, "Whenever equipped creature dies, exile it.", "you"],
+    ["Mari, the Killing Quill", { event: "dies", subject: "a creature an opponent controls", control: "opp" }, "Whenever a creature an opponent controls dies, exile it with a hit counter on it.", undefined],
+    ["Mimic Vat", { event: "dies", subject: "a nontoken creature", control: "any" }, "Whenever a nontoken creature dies, you may exile that card.", undefined],
+  ] as const)("%s: the card a dies trigger exiles is in the graveyard of whoever the trigger names", (name, trigger, text, owner) => {
+    const [e] = exiledOf([{ id: 1, abilityType: "triggered", trigger: { ...trigger }, actions: [{ verb: "exile", object: "it" }] }], name, { 1: text });
+    expect(e?.subject.ref).toBe("trigger");
+    expect(e?.subject.fromZone).toBe("graveyard");
+    expect(e?.subject.owner).toBe(owner);
+  });
+
+  it("Nightmare Shepherd: the graveyard-hate EFFECT of an own-trigger exile is owned by you too", () => {
+    const a = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "another nontoken creature you control", control: "you" }, actions: [{ verb: "exile", object: "it", fromZone: "graveyard", toZone: "exile" }] }],
+      "Nightmare Shepherd", { 1: "Whenever another nontoken creature you control dies, you may exile it." }).abilities;
+    expect(a.find((x) => x.effect.kind === "graveyard-hate")?.effect.subject?.owner).toBe("you");
+  });
+
+  it("Mairsil: 'from your hand or graveyard' is your graveyard (owner you, no graveyard-hate)", () => {
+    const a = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "Mairsil", control: "you" }, actions: [{ verb: "exile", object: "an artifact or creature card from your hand or graveyard", fromZone: "graveyard", toZone: "exile" }] }],
+      "Mairsil, the Pretender", { 1: "When Mairsil enters, you may exile an artifact or creature card from your hand or graveyard and put a cage counter on it." }).abilities;
+    expect(a.some((x) => x.effect.kind === "graveyard-hate")).toBe(false);
+    expect(a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "exiled").every((e) => e.subject.owner === "you")).toBe(true);
+  });
+
+  it("Planar Void: another card put into any graveyard stays not yours", () => {
+    const [e] = exiledOf([{ id: 1, abilityType: "triggered", trigger: { event: "put-into-graveyard", subject: "another card", control: "any" }, actions: [{ verb: "exile", object: "that card" }] }],
+      "Planar Void", { 1: "Whenever another card is put into a graveyard from anywhere, exile that card." });
+    expect(e?.subject.owner).toBeUndefined();
+  });
+
+  it.each([
+    ["Carrion Rats", "Whenever this creature attacks or blocks, any player may exile a card from their graveyard."],
+    ["Grave Consequences", "Each player may exile any number of cards from their graveyard."],
+    ["Axebane Ferox", "Whenever this creature becomes the target of a spell or ability an opponent controls, counter it unless that player exiles cards with total mana value 4 or greater from their graveyard."],
+    ["Lost in Thought", "Its controller may exile three cards from their graveyard for that player to ignore this effect until end of turn."],
+  ])("%s: an exile the victim chooses is `victimMay`", (name, text) => {
+    const es = exiledOf([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object: "cards from their graveyard", fromZone: "graveyard", toZone: "exile" }] }], name, { 1: text });
+    expect(es.length).toBeGreaterThan(0);
+    expect(es.every((e) => e.victimMay === true)).toBe(true);
+  });
+
+  it.each([
+    ["Augusta, Order Returned", "Whenever Augusta attacks, each player exiles a card from their graveyard."],
+    ["Curse of Oblivion", "At the beginning of enchanted player's upkeep, that player exiles two cards from their graveyard."],
+    ["Mudhole", "Target player exiles all land cards from their graveyard."],
+  ])("%s: a FORCED exile is not victimMay", (name, text) => {
+    const es = exiledOf([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "cards from their graveyard", fromZone: "graveyard", toZone: "exile" }] }], name, { 1: text });
+    expect(es.length).toBeGreaterThan(0);
+    expect(es.every((e) => e.victimMay !== true)).toBe(true);
+  });
+
+  it("an exile that names a hand AND a graveyard keeps the zone the model gave (Identity Crisis stays unzoned)", () => {
+    const [e] = exiledOf([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "all cards from target player's hand and graveyard" }] }],
+    "Identity Crisis", { 1: "Exile all cards from target player's hand and graveyard." });
+    expect(e?.subject.fromZone).toBeUndefined();
+  });
+});
+
+// #1266 task 2 / #1306: "If <X> would be put into a graveyard, exile it instead" is one shape per kind of X.
+describe("#1266 graveyard replacement effects", () => {
+  const ab = (clauses: Parameters<typeof deriveAbilities>[0], name: string, texts: Record<number, string>) => deriveAbilities(clauses, name, texts).abilities;
+  const exiledEmits = (abilities: Ability[]) => abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "exiled" || e.verb === "leaves");
+
+  it("Leyline of the Void: an opponent's graveyard replacement is graveyard-hate over opp", () => {
+    const a = ab([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object: "a card" }] }], "Leyline of the Void",
+      { 2: "If a card would be put into an opponent's graveyard from anywhere, exile it instead." });
+    const hate = a.find((x) => x.effect.kind === "graveyard-hate");
+    expect(hate?.effect.subject?.control).toBe("opp");
+    // CR 614.6: the replaced event never happens, so the card never entered (or left) a graveyard: an exiled emit and no `leaves`, no graveyard origin.
+    const em = a.flatMap((x) => x.emits ?? []);
+    expect(em.some((e) => e.verb === "leaves")).toBe(false);
+    expect(em.filter((e) => e.verb === "exiled").length).toBeGreaterThan(0);
+    expect(em.every((e) => e.subject.owner !== "you" && e.subject.fromZone !== "graveyard" && e.subject.zone !== "graveyard")).toBe(true);
+    expect(em.filter((e) => e.verb === "exiled").every((e) => e.subject.control === "opp")).toBe(true);
+  });
+
+  it("Anafenza and Dauthi Voidwalker: hate over opp, an exiled emit and no graveyard leave", () => {
+    for (const [name, object, text] of [
+      ["Dauthi Voidwalker", "a card", "If a card would be put into an opponent's graveyard from anywhere, instead exile it with a void counter on it."],
+      ["Anafenza, the Foremost", "that card", "If a nontoken creature an opponent owns would die or a creature card not on the battlefield would be put into an opponent's graveyard, exile that card instead."],
+    ] as const) {
+      const a = ab([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object }] }], name, { 2: text });
+      expect(a.find((x) => x.effect.kind === "graveyard-hate")?.effect.subject?.control, name).toBe("opp");
+      const em = a.flatMap((x) => x.emits ?? []);
+      expect(em.some((e) => e.verb === "leaves" || e.subject.fromZone === "graveyard"), name).toBe(false);
+    }
+  });
+
+  it("Rest in Peace's replacement supplies no graveyard leave either", () => {
+    const a = ab([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object: "a card or token" }] }], "Rest in Peace",
+      { 2: "If a card or token would be put into a graveyard from anywhere, exile it instead." });
+    expect(a.flatMap((x) => x.emits ?? []).some((e) => e.verb === "leaves")).toBe(false);
+  });
+
+  it("Sins of the Past: the card's own NAMED exile is not the rider (Invoke Calamity shape)", () => {
+    const a = ab([{ id: 1, abilityType: "spell", actions: [
+      { verb: "cast", object: "target instant or sorcery card from your graveyard", fromZone: "graveyard", toZone: "stack" },
+      { verb: "exile", object: "that spell" },
+      { verb: "exile", object: "Sins of the Past" }] }], "Sins of the Past",
+    { 1: "Until end of turn, you may cast target instant or sorcery card from your graveyard without paying its mana cost. If that spell would be put into your graveyard, exile it instead. Exile Sins of the Past." });
+    const ex = a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "exiled");
+    expect(ex.filter((e) => e.subject.fromZone === "stack")).toHaveLength(1);
+    expect(ex.some((e) => e.subject.self === true)).toBe(true);
+  });
+
+  it("Yawgmoth's Testament (a library replacement) and Samurai of the Pale Curtain (permanents only) are not read", () => {
+    expect(graveyardReplacement("If a card would be put into your graveyard or exile from anywhere this turn, put it on the bottom of your library instead.")).toBeUndefined();
+    expect(graveyardReplacement("If a permanent would be put into a graveyard, exile it instead.")).toBeUndefined();
+    // the two other cards whose sentence says "instead exile": neither is graveyard hate
+    expect(graveyardReplacement("If Ugin's Nexus would be put into a graveyard from the battlefield, instead exile it and take an extra turn after this one.")).toBeUndefined();
+    expect(graveyardReplacement("If a card would be put into enchanted player's graveyard from anywhere, instead that card is revealed and put on the bottom of that player's library.")).toBeUndefined();
+    expect(graveyardReplacement("If a card would be put into an opponent's graveyard from anywhere, instead exile it with a void counter on it.")).toEqual({ kind: "hate", whose: "opp" });
+    expect(graveyardReplacement("If a card or token would be put into a graveyard from anywhere, exile it instead.")?.kind).toBe("hate");
+  });
+
+  it("Rest in Peace: 'a graveyard' replacement is graveyard-hate over any", () => {
+    const a = ab([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object: "a card or token" }] }], "Rest in Peace",
+      { 2: "If a card or token would be put into a graveyard from anywhere, exile it instead." });
+    const hate = a.find((x) => x.effect.kind === "graveyard-hate");
+    expect(hate?.effect.subject?.control).toBe("any");
+    expect(exiledEmits(a).some((e) => e.subject.owner === "you")).toBe(false);
+  });
+
+  it("Dryad Militant: an instant or sorcery replacement is graveyard-hate typed instant/sorcery over any", () => {
+    const a = ab([{ id: 2, abilityType: "static", actions: [{ verb: "exile", object: "an instant or sorcery card", fromZone: "graveyard" }] }], "Dryad Militant",
+      { 2: "If an instant or sorcery card would be put into a graveyard from anywhere, exile it instead." });
+    const hate = a.find((x) => x.effect.kind === "graveyard-hate");
+    expect(hate?.effect.subject?.control).toBe("any");
+    expect(hate?.effect.subject?.type).toEqual(["instant", "sorcery"]);
+  });
+
+  it("Valgavoth: 'a card you didn't control ... an opponent's graveyard' is graveyard-hate over opp", () => {
+    const a = ab([{ id: 3, abilityType: "static", actions: [{ verb: "exile", object: "a card you didn't control" }] }], "Valgavoth, Terror Eater",
+      { 3: "If a card you didn't control would be put into an opponent's graveyard from anywhere, exile it instead." });
+    expect(a.find((x) => x.effect.kind === "graveyard-hate")?.effect.subject?.control).toBe("opp");
+  });
+
+  it("Sanctifier en-Vec: 'a black or red permanent, spell, or card not on the battlefield' is graveyard-hate over any", () => {
+    const a = ab([{ id: 3, abilityType: "static", actions: [{ verb: "exile", object: "it" }] }], "Sanctifier en-Vec",
+      { 3: "If a black or red permanent, spell, or card not on the battlefield would be put into a graveyard, exile it instead." });
+    expect(a.find((x) => x.effect.kind === "graveyard-hate")?.effect.subject?.control).toBe("any");
+  });
+
+  it.each([
+    ["Magus of the Will", "cards", "If a card would be put into your graveyard from anywhere this turn, exile that card instead."],
+    ["Walk-In Closet", "a card", "When you unlock this door, you may cast spells from your graveyard this turn, and if a card would be put into your graveyard from anywhere this turn, exile it instead."],
+  ])("%s: a replacement on YOUR graveyard is no hate and carries no owner", (name, object, text) => {
+    const a = ab([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object, fromZone: "graveyard", toZone: "exile" }] }], name, { 1: text });
+    expect(a.some((x) => x.effect.kind === "graveyard-hate")).toBe(false);
+    expect(exiledEmits(a).every((e) => e.subject.owner === undefined && e.subject.fromZone !== "graveyard")).toBe(true);
+  });
+
+  it("a card replacing ITSELF is neither hate nor owned (Waildrifter)", () => {
+    const a = ab([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object: "it" }] }], "Waildrifter", { 1: "If Waildrifter would be put into a graveyard from anywhere, exile it instead." });
+    expect(a.some((x) => x.effect.kind === "graveyard-hate")).toBe(false);
+  });
+
+  it("Kess's rider exiles the spell from the STACK: exiled and leaves say stack, none say graveyard", () => {
+    const a = ab([{ id: 2, abilityType: "static", actions: [
+      { verb: "cast", object: "an instant or sorcery spell from your graveyard", fromZone: "graveyard", toZone: "stack" },
+      { verb: "exile", object: "a spell cast this way", fromZone: "graveyard", toZone: "exile" }] }], "Kess, Dissident Mage",
+    { 2: "Once during each of your turns, you may cast an instant or sorcery spell from your graveyard. If a spell cast this way would be put into your graveyard, exile it instead." });
+    const rider = exiledEmits(a).filter((e) => e.subject.type === "spell");
+    expect(rider.map((e) => e.verb).sort()).toEqual(["exiled", "leaves"]);
+    expect(rider.every((e) => e.subject.fromZone === "stack" && e.subject.control === "you")).toBe(true);
+    // (the CAST leaves the graveyard, and that is a different, true `leaves`)
+    expect(exiledEmits(a).filter((e) => e.verb === "exiled").some((e) => e.subject.fromZone === "graveyard")).toBe(false);
+  });
+
+  it("Mavinda: the model's duplicate exile of the cast target is dropped, the rider is the stack exile", () => {
+    const a = ab([{ id: 2, abilityType: "activated", actions: [
+      { verb: "exile", object: "target instant or sorcery card from your graveyard" },
+      { verb: "cast", object: "target instant or sorcery card from your graveyard", fromZone: "graveyard", toZone: "stack" },
+      { verb: "exile", object: "that spell" }] }], "Mavinda, Students' Advocate",
+    { 2: "{0}: You may cast target instant or sorcery card from your graveyard this turn. If that spell would be put into your graveyard, exile it instead." });
+    const ex = exiledEmits(a).filter((e) => e.verb === "exiled");
+    expect(ex).toHaveLength(1);
+    expect(ex[0]?.subject.fromZone).toBe("stack");
+  });
+
+  it("Grip of Amnesia: the exiled cards are cards, not a spell", () => {
+    const a = ab([{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target spell" }, { verb: "exile", object: "all cards from target spell's controller's graveyard" }] }], "Grip of Amnesia",
+      { 1: "Counter target spell unless its controller exiles all cards from their graveyard." });
+    const ex = a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "exiled");
+    expect(ex.length).toBeGreaterThan(0);
+    expect(ex.every((e) => e.subject.type !== "spell")).toBe(true);
+  });
+
+  it("Bloodbond March: the returned cards are cards, not a spell", () => {
+    const a = ab([{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a creature spell", control: "any" },
+      actions: [{ verb: "return", object: "all cards with the same name as that spell", fromZone: "graveyard", toZone: "battlefield" }] }], "Bloodbond March",
+    { 1: "Whenever a player casts a creature spell, each player returns all cards with the same name as that spell from their graveyard to the battlefield." });
+    expect(a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "enters").every((e) => e.subject.type === "creature")).toBe(true);
   });
 });
