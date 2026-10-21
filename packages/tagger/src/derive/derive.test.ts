@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
+import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, exilesTopOfLibrary, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { targetsASpellEarlier } from "./emits.js";
 import { exileNamesOnlyGraveyards } from "./effect-kind.js";
@@ -5999,5 +5999,80 @@ describe("#1266 burn: who a damage or life loss hits", () => {
     const arbiter = abil([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [{ verb: "set-life", object: "each player's life total", amount: "the highest life total among all players" }] }], "Arbiter of Knollridge",
       { 1: "When this creature enters, each player's life total becomes the highest life total among all players." });
     expect(arbiter.some((x) => ["player-life-loss", "damage", "drain"].includes(x.effect.kind))).toBe(false);
+  });
+});
+
+// #1266 (wincon): the clause layer stores a win as the VERB `win-game` ("you win the game": Epic Struggle, Thassa's Oracle, Laboratory Maniac), and only the `other` escape hatch ever
+// reached the `win-game` kind: 1 corpus card derived it, ~60 printed it.
+test("a win-game VERB derives the win-game kind (Epic Struggle, Laboratory Maniac)", () => {
+  const epic = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" },
+      actions: [{ verb: "win-game", object: "the game" }] }],
+    "Epic Struggle", { 1: "At the beginning of your upkeep, if you control twenty or more creatures, you win the game." },
+  ).abilities;
+  expect(epic.map((a) => a.effect.kind)).toEqual(["win-game"]);
+  const maniac = deriveAbilities(
+    [{ id: 1, abilityType: "static", actions: [{ verb: "win-game", object: "you" }] }],
+    "Laboratory Maniac", { 1: "If you would draw a card while your library has no cards in it, you win the game instead." },
+  ).abilities;
+  expect(maniac.map((a) => a.effect.kind)).toEqual(["win-game"]);
+});
+
+// CR 701.17a: milling is the top cards of a library into the graveyard. "Exiles the top N cards of their library" is an exile, never a mill.
+test("exiling the top of a library is not a mill (Sire of Stagnation, Ulamog, Lidless Gaze)", () => {
+  const notMill = (a: { effect: { kind: string }; emits?: { verb: string }[] }): boolean => a.effect.kind !== "mill" && !(a.emits ?? []).some((e) => e.verb === "mill");
+  const sire = deriveAbilities(
+    [{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "a land", control: "opponent" },
+      actions: [{ verb: "mill", object: "that player", amount: "2" }, { verb: "draw", object: "you", amount: "2" }] }],
+    "Sire of Stagnation", { 2: "Whenever a land an opponent controls enters, that player exiles the top two cards of their library and you draw two cards." },
+  ).abilities;
+  expect(sire.every(notMill)).toBe(true);
+  expect(sire.some((a) => (a.emits ?? []).some((e) => e.verb === "exiled" && e.subject.fromZone === "library"))).toBe(true);
+  // The clause already carries the exile as an action of its own: the mill is dropped, not doubled.
+  const gaze = deriveAbilities(
+    [{ id: 1, abilityType: "spell", actions: [{ verb: "mill", object: "the top card of each player's library" },
+      { verb: "exile", object: "those cards", fromZone: "library", toZone: "exile" }] }],
+    "Lidless Gaze", { 1: "Exile the top card of each player's library." },
+  ).abilities;
+  expect(gaze.every(notMill)).toBe(true);
+  // A real mill, and a clause that says both words, stay mills.
+  const real = deriveAbilities(
+    [{ id: 1, abilityType: "spell", actions: [{ verb: "mill", object: "target player", amount: "3" }] }],
+    "Traumatize-like", { 1: "Target player mills three cards." },
+  ).abilities;
+  expect(real.some((a) => a.effect.kind === "mill")).toBe(true);
+});
+
+describe("exile-from-the-top rewrite (#1266 review)", () => {
+  const milled = (a: { effect: { kind: string }; emits?: { verb: string }[] }): boolean => a.effect.kind === "mill" || (a.emits ?? []).some((e) => e.verb === "mill");
+  test("an exile from YOUR library stays yours, and its restating follow-up is no second exile (Chandra, Heart of Fire; Atsushi)", () => {
+    for (const [name, object, followUp, text] of [
+      ["Chandra, Heart of Fire", "top three cards of your library", "cards exiled this way", "Discard your hand, then exile the top three cards of your library. Until end of turn, you may play cards exiled this way."],
+      ["Atsushi, the Blazing Sky", "the top two cards of your library", "those cards", "Exile the top two cards of your library. Until the end of your next turn, you may play those cards."],
+    ] as const) {
+      const ab = deriveAbilities([{ id: 1, abilityType: "activated", actions: [
+        { verb: "mill", object, fromZone: null, toZone: null, amount: "3", optional: false },
+        { verb: "exile", object: followUp, fromZone: null, toZone: null, amount: null, optional: false },
+        { verb: "play", object: followUp, fromZone: null, toZone: null, amount: null, optional: true }] }], name, { 1: text }).abilities;
+      const exiles = ab.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "exiled");
+      expect(exiles.length, name).toBe(1);
+      expect(exiles[0]!.subject.control, name).toBe("you");
+      expect(exiles[0]!.subject.fromZone, name).toBe("library");
+      expect(ab.some(milled), name).toBe(false);
+    }
+  });
+  test("a clause that says both mills and exiles stays a mill (Tibalt's Trickery)", () => {
+    const ab = deriveAbilities(
+      [{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target spell" }, { verb: "mill", object: "target spell's controller", amount: "1, 2, or 3 at random" }] }],
+      "Tibalt's Trickery", { 1: "Counter target spell. Its controller mills that many cards, then exiles cards from the top of their library until they exile a nonland card." },
+    ).abilities;
+    expect(ab.some(milled)).toBe(true);
+  });
+  test("the exile-top test is linear on a long run of 'exile top ' (CodeQL)", () => {
+    const t0 = performance.now();
+    expect(exilesTopOfLibrary("exile top ".repeat(20_000))).toBe(false);
+    expect(performance.now() - t0).toBeLessThan(100);
+    expect(exilesTopOfLibrary("That player exiles the top two cards of their library.")).toBe(true);
+    expect(exilesTopOfLibrary("Exile target creature. Look at the top card of your library.")).toBe(false);
   });
 });

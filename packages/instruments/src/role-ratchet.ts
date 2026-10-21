@@ -1,7 +1,7 @@
 /** FREE. By-name role-membership ratchet (#1266). Fails in BOTH directions: a card that gains or
  *  loses a role or answer class turns this red, so a rules.json edit is measured card by card.
  *
- *  Runs detectBuildCategories + detectAnswerClasses over EVERY commander-legal card in the corpus (the detectors
+ *  Runs detectBuildCategories + detectAnswerClasses + detectWincons over EVERY commander-legal card in the corpus (the detectors
  *  read the card and the rule set only, never the deck, so the card is the unit), keys membership BY CARD and
  *  diffs against the tracked packages/instruments/role-membership.json. A card with no role has no line.
  *
@@ -11,7 +11,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { connect, docToCard, isStickerCard, loadConfig, type CardDoc } from "@edh-seer/data";
 import { createTagsLookup, DERIVE_VERSION } from "@edh-seer/tagger";
-import { detectAnswerClasses, detectBuildCategories, type DeckCard } from "@edh-seer/matcher";
+import { detectAnswerClasses, detectBuildCategories, detectWincons, type DeckCard } from "@edh-seer/matcher";
 import { diffMembership, mergeMembership, serialiseSnapshot, versionDrift, type Membership, type VersionGroup } from "./role-ratchet-core.js";
 
 const SNAPSHOT = "packages/instruments/role-membership.json";
@@ -49,6 +49,8 @@ const m = new Map<string, string[]>();
 const add = (n: string, k: string): void => { m.set(n, [...(m.get(n) ?? []), k]); };
 for (const [cat, set] of detectBuildCategories(dc)) for (const n of set) add(n, `role:${cat}`);
 for (const [cls, mem] of detectAnswerClasses(dc)) for (const n of mem.cards) add(n, `answer:${cls}`);
+// detectWincons is per card too: each rule's `winconClass` plus `go-wide` (creature-token makers), no deck threshold.
+for (const [cls, set] of detectWincons(dc)) for (const n of set) add(n, `wincon:${cls}`);
 const perDeck = [m];
 await store.close();
 

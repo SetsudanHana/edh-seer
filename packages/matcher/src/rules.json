@@ -1,5 +1,5 @@
 {
-  "version": 31,
+  "version": 32,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -48,8 +48,6 @@
     "flickerTarget": "exile (?:another |any number of |up to (?:one|two) )?target (?![^.]{0,40}?(?:you don't control|an opponent controls))",
     "flashKeyword": "(?:^|\\n)flash\\b(?!back)",
     "bounceRemoval": "return target\\s+(?<class>[^.;:]{0,60}?)\\s+to (?:its owner's|their|the owner's|owner's) hand",
-    "millOpponents": "(?:target opponent|each opponent|target player|each player)[^.]{0,40}?mills|mills? \\w+ cards?[^.]{0,40}?(?:target opponent|each opponent)",
-    "altWin": "(?<!can['\u2019]t |cannot |would |don['\u2019]t |doesn['\u2019]t )(?:you win the game|wins? the game|loses? the game|lose the game)",
     "enchantCreature": "enchant creature",
     "voltronAura": "enchant creature(?: or planeswalker)? you control|enchanted creature (?:gets \\+(?![^.]*\\bis goaded)|has (?!base)|gains |can't be blocked)|umbra armor|totem armor|regenerate enchanted creature",
     "commanderDamage": "commander damage|deals combat damage to a player[^.]{0,60}?(?:that player loses the game|wins the game)"
@@ -395,14 +393,17 @@
     {
       "id": "wincon.mill",
       "winconClass": "mill",
-      "match": [{ "op": "oracle", "pattern": "millOpponents" }],
-      "why": "Mill aimed at OPPONENTS. Self-mill is fuel, not a wincon, and the same effect text serves both -- design 12.5 leaves the graph-decidable version open, so this asks who the mill points at."
+      "match": [{ "op": "emits", "verbs": ["mill"], "control": ["opp", "any"], "fromZone": [null], "abilityKind": ["mill"] }],
+      "why": "MILL AIMED AT AN OPPONENT OR AT ANY PLAYER (DERIVED since #1266, it was the printed `millOpponents` pattern). Self-mill is fuel, not a wincon, and the same effect text serves both: a `mill` EMIT of an opponent or any player (the printed pattern wanted the player named before 'mills' and missed 'that player mills' (Anowon, Crosstown Courier, Shriekgeist), 'its controller mills' (Countermand, Psychic Strike, Grisly Spectacle), 'defending player mills' (Nemesis of Reason), 'any number of target players each mill' (Riverchurn Monument)). NOT a mill: the graveyard half of a DIG ('put the rest into your graveyard': Fact or Fiction, Hermit Druid, Animal Magnetism; derive reads it as a mill with the player any and the cards `fromZone: library`, which a real mill never carries); MANIFEST DREAD (its mill emit sits under a kind-less ability: Manifest Dread, Fear of Impostors, Killer's Mask), checked on the same ability by `abilityKind`; and since derive 368 an EXILE of the top of a library is an exile, not a mill (CR 701.17a: Sire of Stagnation, Black Widow, Lidless Gaze, Plargg and Nassari, Possibility Storm, Ulamog; the own-library impulse cards fed 'enters your graveyard' payoffs as self-mill). CEILING: Jace, Vryn's Prodigy (its mill is the -9 emblem's, which lives on the emblem's own node); the reveal-until mills (Mind Grind: 'each opponent reveals cards from the top of their library until ... puts all cards revealed this way into their graveyard') derive `fromZone: library` like a dig and are not read, as the printed pattern missed them too; Ulamog, the Ceaseless Hunger now reads as an exile and is no mill plan though it empties a library; Chains of Mephistopheles (each player's incidental one-card mill) counts as any player's."
     },
     {
       "id": "wincon.altWin",
       "winconClass": "alt-win",
-      "match": [{ "op": "oracle", "pattern": "altWin" }],
-      "why": "A stated win or loss condition: a small closed set, and the one class that says so in words."
+      "match": [{ "op": "anyOf", "clauses": [
+        { "op": "effectKind", "in": ["win-game"] },
+        { "op": "emits", "verbs": ["loses-game"], "control": ["opp", "any"] }
+      ] }],
+      "why": "A STATED WIN OR LOSS CONDITION, DERIVED since #1266 (it was the printed `altWin` pattern): the `win-game` effect kind (CR 104.2b: Epic Struggle, Thassa's Oracle, Laboratory Maniac, Simic Ascendancy, Hellkite Tyrant, Revel in Riches; derive 368 reads the clause verb, 1 card derived it before) or a `loses-game` emit of an opponent or any player (Phage, Atemsis, Vorpal Sword, Triskaidekaphobia). YOUR OWN LOSS IS NEVER A PAYOFF (owner ruling 2026-10-16, #1252): a self 'you lose the game' (Phyrexian Pacts' upkeep, Lich's Mastery leaving, Phage's cast clause, Immortal Coil) emits `loses-game` of `control: you` and does not count; a card that prints both keeps the opponent's. Every derived `win-game` is `you`, unstated, or `any` (Celestial Convergence's symmetric win, Twenty-Toed Toad, Biovisionary); never an opponent's, so the rule keeps no control filter on it. No longer matched, the printed pattern's false positives: the poison reminder text '(A player with ten or more poison counters loses the game.)' (15 cards: Crypt Cobra, Marsh Viper, Pit Scorpion, Virulent Sliver, Snake Cult Initiation ...), and a REACTION to someone's loss ('Whenever a player loses the game': Blood Tyrant, Elbrus, Sengir, Share the Spoils, Curse of Vengeance). Not a win condition: 'can't lose the game' / 'can't win the game' (Platinum Angel, Everybody Lives!) and a replacement of your own loss (The Golden Throne) derive none. CEILING: Vraska, Golgari Queen (the -9 emblem's 'that player loses the game' lives on the emblem's own node, as Jace, Vryn's Prodigy's mill does); the loss of a player a trigger or 'the chosen player' names (Zenos yae Galvus // Shinryu) keeps whatever control derive read; a win printed inside a clause the model files under another verb is not read (the census over the commander-legal cards: 40 print a win sentence, 39 derive win-game, the residue is Everybody Lives!'s prohibition)."
     },
     {
       "id": "answers.damage",

@@ -1,17 +1,17 @@
 {
-  "deriveVersion": 367,
-  "rulesVersion": 31,
+  "deriveVersion": 368,
+  "rulesVersion": 32,
   "roles": {
     "ramp": {
       "weights": {
-        "manaValue": -0.17762009587420877,
-        "frequency": 0.3223806795169562,
-        "timing": 0.059787807418257455,
-        "extraValue": 0.45184602684053077,
-        "restriction": -0.007526911791139047,
-        "amount": 0.00001744671680126708,
-        "rateFloor": 0.29743504203947635,
-        "rateCeiling": 0.3602239200981139
+        "manaValue": -0.17816475441121743,
+        "frequency": 0.3192813188241595,
+        "timing": 0.05820808986603654,
+        "extraValue": 0.47982114167658835,
+        "restriction": -0.008485333517367648,
+        "amount": 0.000015674827284634097,
+        "rateFloor": 0.2996749807846277,
+        "rateCeiling": 0.36103412215198005
       },
       "pairs": 467,
       "heldOutAccuracy": 0.6443158620244952,
@@ -60,14 +60,14 @@
     },
     "targetedRemoval": {
       "weights": {
-        "manaValue": -0.505207177890429,
-        "frequency": 0.015140649858328688,
-        "timing": 1.40964084149803,
-        "breadth": 0.6346295489807399,
-        "permanence": 0.006517664475305108,
-        "drawback": -0.004754633384453533,
-        "extraValue": 2.0202335272412273,
-        "amount": 0.0015949166352918877
+        "manaValue": -0.504885607282953,
+        "frequency": 0.015154163392594646,
+        "timing": 1.4085776463125335,
+        "breadth": 0.633864498861595,
+        "permanence": 0.006522195122170971,
+        "drawback": -0.004769949797970005,
+        "extraValue": 2.0196556842506492,
+        "amount": 0.0015967216188435447
       },
       "pairs": 227,
       "heldOutAccuracy": 0.7295501388841449,
@@ -99,12 +99,12 @@
     },
     "burn": {
       "weights": {
-        "manaValue": -1.0762523877794479,
-        "frequency": 0.8098178522339534,
-        "timing": 2.598288987090294,
-        "extraValue": 1.150027753622799,
+        "manaValue": -1.0735834087567628,
+        "frequency": 0.8081032542516645,
+        "timing": 2.5870200918820094,
+        "extraValue": 1.1566595188369282,
         "rateCeiling": 1,
-        "amount": 0.30768083221257414
+        "amount": 0.3083925469777282
       },
       "pairs": 156,
       "heldOutAccuracy": 0.7946657718295507,

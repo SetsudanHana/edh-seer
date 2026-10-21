@@ -526,7 +526,8 @@ import { emblemRecipient } from "../emblem.js";
 // 365: #1266 review of 364 -- a graveyard-hate REPLACEMENT (Leyline of the Void, Rest in Peace, Sanctifier en-Vec, Anafenza, Dauthi Voidwalker, Valgavoth) emits `exiled` with no graveyard origin and NO `leaves` (CR 614.6: the replaced event never happens, so no "leaves your graveyard" payoff is fed; the graveyard-hate effect and its subject control are kept); a card's own NAMED exile ("Exile Sins of the Past", Invoke Calamity) is never taken for the spell rider; only "exile it / that card / them ... instead" is an exile replacement (Yawgmoth's Testament is not). Bloodbond March's returned cards are typed `creature` (the cast creature spell's type), so an artifact-creature ETB payoff is a safe under-claim. CEILING in graveyard-replacement.ts: Samurai of the Pale Curtain (permanents only, no "from anywhere") is left unread.
 // 366: #1266 task 3 -- the card a trigger exiles from a graveyard (`ref: trigger`) is in the graveyard of whoever the trigger names: a trigger of yours or the card's own ("Whenever a creature you control dies, exile it": Promise of Tomorrow, Cyclopean Mummy, Eater of Virtue, Bag of Devouring, the Rectors) is `owner: you`, an opponent's (Mari, Patron of the Vein) or an any-player one (Planar Void, Mimic Vat, Koh) is not. And "any player may exile" / "each player may exile" a card from their graveyard (Carrion Rats, Carrion Wurm, Grave Consequences) marks the exile `victimMay` like "unless that player exiles" (Axebane Ferox) and "its controller may exile" (Lost in Thought). A graveyard-hate effect whose emits are all yours carries `owner: you` too (Nightmare Shepherd, Brenard), and "your hand or graveyard" (Mairsil) is your graveyard, so it is no graveyard-hate.
 // 367: #1266 (burn) -- WHO A DAMAGE OR LIFE LOSS HITS reads off the printed recipient, on the effect subject AND the emits. A recipient that LISTS a player beside a permanent kept only the permanent: "each opponent and each creature they control" (Wildfire Cerberus), "... each planeswalker they control" (Kumano Faces Kakkazan), "target player and each creature that player controls" (Chandra's Flame Wave), "that permanent or player" (Erratic Explosion) and the EMIT of "target player or planeswalker" (Lava Spike: typed planeswalker, the player dropped; the effect already read it through the filter grammar). The effect keeps an `anyOf` with a player branch; the emits are one event per half (the matcher's `damaged` test reads a victim's top-level type, so one `anyOf` event would meet neither side). "X's controller" / "its owner" / "enchanted player" / "they" is the PLAYER, untyped, never X's type nor `you` (Repercussion, Banewasp Affliction, Curse of Leeches; a lose-life emit read `you` there and fed "whenever you lose life"). "that player" after an opponent's spell or the card's own damage is `opp`, not the trigger's `you` (Thunderbreak Regent, Megrim, Underworld Dreams). "any target that isn't a Dragon" is any target. A damage's "it" is the object the trigger names, as its emit already read it (Caltrops: effect subject creature, was untyped). A life total SET (CR 119.5: "your life total becomes 1", "each player's life total becomes the highest"; The Golden Throne, Arbiter of Knollridge, 17 clauses) is neither damage nor life loss: no kind. 465 cards' abilities changed (337 gained a player-shaped untyped half or took the controller as the player, 49 "that player" -> `opp`, 22 life loss `you` -> `any`, 45 effect only). Census over 3,869 damage / life-loss clauses (printed recipient class against the stored subject, clause level): 833 disagreements -> 286, the rest classifier artifacts, model-labelled `static` clauses (Duggan, Herald of Hadar: no subject kept by the static guard) and Braids's Frightful Return ("If they don't, they lose 3 life" reads `you`).
-export const DERIVE_VERSION = 367;
+// 368: #1266 (wincon) -- "you win the game" is the clause VERB `win-game` (Epic Struggle, Thassa's Oracle, Laboratory Maniac, Coalition Victory, Mortal Combat ...) and only the `other` escape hatch ever reached the `win-game` effect kind (CR 104.2b: an effect may state that a player wins the game): 1 corpus card derived it, now 39 of the 40 that print it (residue: see the commit); "can't win/lose" is the verb `cant` and derives none. And "exiles the top N cards of their library" is not a MILL (CR 701.17a: top cards into the GRAVEYARD): a `mill` action whose own sentence says exile and never says mill or graveyard is dropped where the clause already exiles from the library (Lidless Gaze, Plargg and Nassari) and rewritten to an exile from the library otherwise (Sire of Stagnation, Ulamog, Black Widow, Possibility Storm, and the own-library impulse cards Reckless Impulse, Seize Opportunity, Embrace the Unknown, Inspired Tinkering, Opera Love Song, Crossover Collaboration, Heroes' Hangout, Ecstatic Beauty, Atsushi, Lady Loki, Bre of Clan Stoutarm, The Infamous Cruelclaw, Chandra, Heart of Fire, which fed "enters your graveyard" payoffs as self-mill). Side effect of the card-by-card grammar switch: Halo Fountain, Bre of Clan Stoutarm and 7 impulse cards now derive from the grammar.
+export const DERIVE_VERSION = 368;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2035,6 +2036,19 @@ function homeOfMisplaced(
   return orphans.length === 0 ? undefined : orphans.length === 1 ? orphans[0] : "";
 }
 
+/** A sentence of the clause says EXILE ... TOP ... LIBRARY, in that order. LINEAR: split on the full stop, then three single scans (the first exile, the first top after it, a library after that); the
+ *  first match of each is the widest remainder, so this answers exactly what `/\bexiles?\b[^.]*\btop\b[^.]*\blibrar/i` did, which was polynomial on "exile top exile top ..." (CodeQL, #1266). */
+export function exilesTopOfLibrary(text: string): boolean {
+  for (const sentence of text.split(".")) {
+    const ex = /\bexiles?\b/i.exec(sentence);
+    if (ex === null) continue;
+    const afterExile = sentence.slice(ex.index + ex[0].length);
+    const top = /\btop\b/i.exec(afterExile);
+    if (top !== null && /librar/i.test(afterExile.slice(top.index + top[0].length))) return true;
+  }
+  return false;
+}
+
 export function deriveAbilities(
   clauses: ClauseRecord[],
   cardName?: string,
@@ -2089,6 +2103,29 @@ export function deriveAbilities(
     if (clauseTexts) clauseTexts = Object.fromEntries(Object.entries(clauseTexts).map(([id, t]) => [id, unbracketed(t)]));
     oracleText = unbracketed(oracleText ?? "");
   }
+  // EXILING THE TOP OF A LIBRARY IS NOT A MILL (CR 701.17a: milling puts the top cards of a library into the GRAVEYARD; #1266). The model files "that player exiles the top two cards of their
+  // library" (Sire of Stagnation), "defending player exiles the top twenty cards" (Ulamog, the Ceaseless Hunger) and "exiles cards from the top of their library until they exile a nonland card" (Black
+  // Widow, Plargg and Nassari, Possibility Storm, Lidless Gaze) under the verb `mill`. Where the clause's own sentence says exile and never says mill or graveyard, the action is an EXILE from the
+  // library: it is dropped when the clause already carries that exile as an action of its own (Lidless Gaze, Plargg), and rewritten to one otherwise.
+  const MILL_WORDS = /\bmills?\b|\bgraveyards?\b/i;
+  clauses = clauses.map((c) => {
+    const text = clauseTexts?.[c.id as number] ?? "";
+    if (!exilesTopOfLibrary(text) || MILL_WORDS.test(text) || !(c.actions ?? []).some((a) => a.verb === "mill")) return c;
+    const hasOwnExile = (c.actions ?? []).some((a) => a.verb === "exile" && a.fromZone === "library");
+    // The model's follow-up "exile those cards" / "exile cards exiled this way" (Atsushi, Chandra, Heart of Fire) restates the exile the rewritten action now IS: kept, it would exile the cards a second time
+    // with no zone and no owner.
+    const restates = (a: Action): boolean => !hasOwnExile && a.verb === "exile" && a.fromZone === null && /^(?:those cards|them|cards exiled this way|the exiled cards)$/i.test((a.object ?? "").trim());
+    const actions = (c.actions ?? []).filter((a) => !restates(a)).flatMap((a): Action[] => {
+      if (a.verb !== "mill") return [a];
+      if (hasOwnExile) return [];
+      // WHOSE LIBRARY: the object's own phrase when it names one ("top three cards of your library", "the top card of each player's library"), else the player it names ("that player" -> "that player's
+      // library"), else "their library". A fixed "their library" read an exile from YOUR library as any player's (Chandra, Heart of Fire; Atsushi).
+      const object = typeof a.object !== "string" || a.object === "" ? "cards from the top of their library"
+        : /librar/i.test(a.object) ? a.object : `cards from the top of ${a.object}'s library`;
+      return [{ ...a, verb: "exile", object, fromZone: "library", toZone: "exile" }];
+    });
+    return { ...c, actions };
+  });
   // The whole card's text, for the phantom-trigger guard below. CARD-scoped on purpose and never
   // per clause -- see `triggerHasCue`, where scoping it to the clause was measured and refuses 18
   // real modal triggers to catch 1 phantom. Absent `clauseTexts` disables the guard rather than

@@ -529,6 +529,9 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // THE MODEL ANSWERS `other` FOR "change the target of" and misfiled it as `cost-modify` on some (Divert, Deflection, Shunt), so the words decide, not the verb.
   if (retargetObject(action.object ?? "", verb, clauseText) !== undefined) return "retarget";
   if (verb === "other" && WINS.test(`${action.object ?? ""} ${clauseText}`)) return "win-game";
+  // THE VERB ITSELF (CR 104.2b: an effect may state that a player wins the game; #1266). The clause layer stores "you win the game" as `win-game` (Epic Struggle, Thassa's Oracle, Laboratory Maniac, 60 cards),
+  // and only the `other` escape hatch above ever reached the kind: 1 corpus card derived it. "Can't win the game" is the verb `cant`, never this one.
+  if (verb === "win-game") return "win-game";
   // A PROCESSOR takes from cards an OPPONENT OWNS in exile (AF7b, 2026-09-16): the owner phrase is
   // what tells Ulamog's Nullifier's "two cards your opponents own" from a flicker returning your
   // own exiled creature, and Oblivion Sower's "land cards that player owns from exile" from a
