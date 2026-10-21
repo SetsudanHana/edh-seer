@@ -87,37 +87,51 @@ test("a land does not reach the nonland detectors", () => {
   expect(m.get("stackInteraction")?.has("Riptide Laboratory")).toBeUndefined();
 });
 
-test("graveyard hate is a category, and it is the opponent's graveyard that makes it one", () => {
-  const m = detectBuildCategories([
-    mk("Bojuka Bog", "When this land enters, exile target player's graveyard.", "Land"),
-    mk("Rest in Peace", "If a card would be put into a graveyard from anywhere, exile it instead.", "Enchantment"),
-    // Delve, encore and escape all say "exile ... from your graveyard" and are not hate. The old
-    // negative-filter pattern caught all three; measured on the calibration decks it was wrong on
-    // two thirds of what it matched.
-    mk("Dig Through Time", "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.) Look at the top seven cards of your library."),
-    mk("Mizzix's Mastery", "Exile target card that's an instant or sorcery from your graveyard. Copy it."),
-    mk("Necropotence", "Whenever you discard a card, exile that card from your graveyard.", "Enchantment"),
-  ]);
-  const hate = m.get("graveyardHate") ?? new Set();
-  expect([...hate].sort()).toEqual(["Bojuka Bog", "Rest in Peace"]);
+test("graveyard hate is a category, and it is cards exiled from a graveyard that is not yours (read from derive, #1266)", () => {
+  const hate = (names: string[]) => [...(detectBuildCategories(names.map((n) => realCard(n))).get("graveyardHate") ?? new Set())].sort();
+  // an opponent's or any graveyard: a targeted exile, a single-graveyard exile, a mass exile
+  expect(hate(["Bojuka Bog", "Decompose", "Honor the Fallen"])).toEqual(["Bojuka Bog", "Decompose", "Honor the Fallen"]);
+  // the replacement: the card never reaches the graveyard (CR 614.6), opp or any
+  expect(hate(["Rest in Peace", "Leyline of the Void", "Dryad Militant", "Valgavoth, Terror Eater", "Dauthi Voidwalker", "Sanctifier en-Vec"]))
+    .toEqual(["Dauthi Voidwalker", "Dryad Militant", "Leyline of the Void", "Rest in Peace", "Sanctifier en-Vec", "Valgavoth, Terror Eater"]);
+  // YOUR graveyard (delve, a discard exiled, each player's own yard that comes back), the card itself, a spell rider, and a processor are not hate
+  expect(hate(["Necropotence", "Dig Through Time", "Mizzix's Mastery", "Living Death", "Adorned Crocodile", "Kess, Dissident Mage", "Mind Raker"])).toEqual([]);
 });
 
-/** Static hate is the half the old pattern could not see AT ALL: "graveyard" comes before "exile",
- *  so an exile-first regex misses the two most important cards in the class. */
+test("an exile the VICTIM CHOOSES is no graveyard hate (Carrion Rats, Axebane Ferox: derive marks it victimMay)", () => {
+  const set = loadRules();
+  const rule = set.rules.find((r) => r.id === "graveyardHate")!;
+  const card = realCard("Decompose");
+  const abilities = (card.tags!.abilities as unknown as { effect: Record<string, unknown>; emits?: { victimMay?: boolean }[] }[]).map((a) => ({ ...a, emits: a.emits?.map((e) => ({ ...e, victimMay: true })) }));
+  expect(ruleMatches(rule, card, set)).toBe(true);
+  expect(ruleMatches(rule, { card: card.card, tags: { ...card.tags!, abilities } as never }, set)).toBe(false);
+});
+
+/** Static hate says "graveyard" before "exile", which the old exile-first pattern could not see; derive reads the replacement now. */
 test("static hate counts, even though it never says exile first", () => {
-  const m = detectBuildCategories([
-    mk("Leyline of the Void", "If a card would be put into an opponent's graveyard from anywhere, exile it instead.", "Enchantment"),
-  ]);
+  const m = detectBuildCategories([realCard("Leyline of the Void")]);
   expect(m.get("graveyardHate")?.has("Leyline of the Void")).toBe(true);
 });
 
-test("a self-replacement clause on one spell is not graveyard hate", () => {
-  // "If that spell would be put into a graveyard, exile it instead" is how a card keeps its own
-  // spell around. Diluvian Primordial and Urabrask both read this way.
-  const m = detectBuildCategories([
-    mk("Diluvian Primordial", "You may cast target instant or sorcery card from that player's graveyard. If a spell cast this way would be put into a graveyard, exile it instead."),
-  ]);
-  expect(m.get("graveyardHate")?.has("Diluvian Primordial")).toBeUndefined();
+test("a spell rider ('if that spell would be put into a graveyard, exile it instead') is not graveyard hate", () => {
+  const m = detectBuildCategories([realCard("Kess, Dissident Mage")]);
+  expect(m.get("graveyardHate")?.has("Kess, Dissident Mage")).toBeUndefined();
+});
+
+test("an own-graveyard graveyard-hate effect cannot match, and a self exile cannot match", () => {
+  const set = loadRules();
+  const rule = set.rules.find((r) => r.id === "graveyardHate")!;
+  const own = realCard("Decompose");
+  const ownTags = (own.tags!.abilities as { effect: { kind: string; subject?: Record<string, unknown> }; emits?: { subject: Record<string, unknown> }[] }[]).map((a) => ({
+    ...a, effect: a.effect.kind === "graveyard-hate" ? { ...a.effect, subject: { ...a.effect.subject, owner: "you" } } : a.effect,
+    emits: a.emits?.map((e) => ({ ...e, subject: { ...e.subject, owner: "you" } })),
+  }));
+  expect(ruleMatches(rule, { card: own.card, tags: { ...own.tags!, abilities: ownTags } as never }, set)).toBe(false);
+  const self = realCard("Decompose");
+  const selfTags = (self.tags!.abilities as { effect: { kind: string; subject?: Record<string, unknown> }; emits?: { subject: Record<string, unknown> }[] }[]).map((a) => ({
+    ...a, effect: a.effect.kind === "graveyard-hate" ? { ...a.effect, subject: { ...a.effect.subject, self: true } } : a.effect,
+    emits: a.emits?.map((e) => ({ ...e, subject: { ...e.subject, self: true } })) }));
+  expect(ruleMatches(rule, { card: self.card, tags: { ...self.tags!, abilities: selfTags } as never }, set)).toBe(false);
 });
 
 test("answer classes come from the type the removal actually names", () => {
@@ -192,9 +206,7 @@ test("a blink is not an answer, however much it reads like removal", () => {
 });
 
 test("graveyard is an answer class too, and it comes from the hate rule", () => {
-  const classes = detectAnswerClasses([
-    mk("Bojuka Bog", "When this land enters, exile target player's graveyard.", "Land"),
-  ]);
+  const classes = detectAnswerClasses([realCard("Bojuka Bog")]);
   expect([...(classes.get("graveyard")?.cards ?? [])]).toEqual(["Bojuka Bog"]);
 });
 
@@ -263,9 +275,7 @@ test("recurring graveyard hate is the replacement effect, the prohibition and th
 /** The card the axis was written for. It IS graveyard hate and it is NOT recurring -- its trigger
  *  fires once, so it answers a card and not an engine. */
 test("Bojuka Bog is graveyard hate and is not recurring", () => {
-  const classes = detectAnswerClasses([
-    mk("Bojuka Bog", "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.", "Land"),
-  ]);
+  const classes = detectAnswerClasses([realCard("Bojuka Bog")]);
   expect(classes.get("graveyard")?.cards.has("Bojuka Bog")).toBe(true);
   expect(classes.get("graveyard")?.recurring.has("Bojuka Bog") ?? false).toBe(false);
 });
