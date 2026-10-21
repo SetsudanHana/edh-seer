@@ -442,18 +442,21 @@ test("card selection is scry/surveil/look-at-top; impulse draw is its own leaf; 
   expect(m.get("impulseDraw")).toEqual(new Set(["Light Up the Stage"]));
 });
 
-test("burn & drain: damage/life-loss to players (not creatures, not self)", () => {
+test("burn & drain: damage/life-loss to players (not creatures, not self), read from the derived abilities (#1266)", () => {
+  const fx = (kind: string, subject: object): CardTags["abilities"] => [{ kind: "on-cast", effect: { kind, subject }, repeats: "once" } as never];
   const m = detectBuildCategories([
-    mk("Lightning Helix", "Lightning Helix deals 3 damage to any target and you gain 3 life.", "Instant"),
-    mk("Exsanguinate", "Each opponent loses X life. You gain life equal to the life lost this way.", "Sorcery"),
-    mk("Lightning Bolt", "Lightning Bolt deals 3 damage to any target.", "Instant"),
-    mk("Flame Slash", "Flame Slash deals 4 damage to target creature.", "Sorcery"),
-    mk("Sign in Blood", "Target player draws two cards and loses 2 life.", "Sorcery"),
+    mk("Lightning Helix", "Lightning Helix deals 3 damage to any target and you gain 3 life.", "Instant", fx("damage", { control: "any", token: null, scope: "target" })),
+    mk("Exsanguinate", "Each opponent loses X life. You gain life equal to the life lost this way.", "Sorcery", fx("player-life-loss", { control: "opp", token: null, scope: "each" })),
+    mk("Lightning Bolt", "Lightning Bolt deals 3 damage to any target.", "Instant", fx("damage", { control: "any", token: null, scope: "target" })),
+    mk("Flame Slash", "Flame Slash deals 4 damage to target creature.", "Sorcery", fx("damage", { control: "any", token: null, type: "creature", scope: "target" })),
+    mk("Sign in Blood", "Target player draws two cards and loses 2 life.", "Sorcery", fx("player-life-loss", { control: "any", token: null, scope: "target" })),
+    mk("Sell-Sword Brute", "When this creature dies, it deals 2 damage to you.", "Creature", fx("damage", { control: "you", token: null })),
   ]);
-  // Lightning Bolt/Helix hit "any target"; Exsanguinate is opponent life-loss.
-  expect(m.get("burn")).toEqual(new Set(["Lightning Helix", "Exsanguinate", "Lightning Bolt"]));
-  // Flame Slash is creature-only damage → removal, not burn.
+  // Lightning Bolt/Helix hit "any target"; Exsanguinate and Sign in Blood are life loss on a player.
+  expect(m.get("burn")).toEqual(new Set(["Lightning Helix", "Exsanguinate", "Lightning Bolt", "Sign in Blood"]));
+  // Flame Slash is creature-only damage -> removal, not burn; damage to yourself is not burn.
   expect(m.get("burn") ?? new Set()).not.toContain("Flame Slash");
+  expect(m.get("burn") ?? new Set()).not.toContain("Sell-Sword Brute");
 });
 
 test("damage-to-creature is targeted removal; graveyard-hate exile is not removal", () => {

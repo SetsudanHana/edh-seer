@@ -14,7 +14,8 @@ import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMP
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { librarySearchOwner, printsSearch } from "./library-search.js";
-import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, victimDeclines } from "./recipient.js";
+import { creatureDamageSource, damageHitsSelf, damageRecipient } from "./damage-recipient.js";
+import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
 import { parse as parseFilterRaw } from "../grammar/filter.js";
@@ -524,7 +525,8 @@ import { emblemRecipient } from "../emblem.js";
 // 364: #1266 -- (review of 363) a graveyard-only exile zoning refuses "the battlefield or" and a self-exile list ("this artifact and all cards from all graveyards") on the MODEL path; the grammar path still zones Savior of Ollenbock and Silent Gravestone to the graveyard (grammarClauseRecords sets fromZone first): follow-up issue #1309. The rider guard covers "a spell cast from your graveyard this way" (Gale). (task 2) "If <X> would be put into a graveyard, exile it instead" is ONE shape per kind: an opponent's or any graveyard "from anywhere" (Leyline of the Void, Rest in Peace, Dryad Militant, Valgavoth, Sanctifier en-Vec) is a graveyard-hate exile whose effect subject and emits say `opp` or `any`; your own graveyard (Magus of the Will, Walk-In Closet) is no hate and no owner; a SPELL rider ("If that spell / a spell cast this way would be put into a graveyard": Kess, Chandra, Mavinda, ...) exiles the spell FROM THE STACK (CR 614), #1306. Graveyard cards typed `spell` by a possessive (Grip of Amnesia, Bloodbond March) are typed as cards.
 // 365: #1266 review of 364 -- a graveyard-hate REPLACEMENT (Leyline of the Void, Rest in Peace, Sanctifier en-Vec, Anafenza, Dauthi Voidwalker, Valgavoth) emits `exiled` with no graveyard origin and NO `leaves` (CR 614.6: the replaced event never happens, so no "leaves your graveyard" payoff is fed; the graveyard-hate effect and its subject control are kept); a card's own NAMED exile ("Exile Sins of the Past", Invoke Calamity) is never taken for the spell rider; only "exile it / that card / them ... instead" is an exile replacement (Yawgmoth's Testament is not). Bloodbond March's returned cards are typed `creature` (the cast creature spell's type), so an artifact-creature ETB payoff is a safe under-claim. CEILING in graveyard-replacement.ts: Samurai of the Pale Curtain (permanents only, no "from anywhere") is left unread.
 // 366: #1266 task 3 -- the card a trigger exiles from a graveyard (`ref: trigger`) is in the graveyard of whoever the trigger names: a trigger of yours or the card's own ("Whenever a creature you control dies, exile it": Promise of Tomorrow, Cyclopean Mummy, Eater of Virtue, Bag of Devouring, the Rectors) is `owner: you`, an opponent's (Mari, Patron of the Vein) or an any-player one (Planar Void, Mimic Vat, Koh) is not. And "any player may exile" / "each player may exile" a card from their graveyard (Carrion Rats, Carrion Wurm, Grave Consequences) marks the exile `victimMay` like "unless that player exiles" (Axebane Ferox) and "its controller may exile" (Lost in Thought). A graveyard-hate effect whose emits are all yours carries `owner: you` too (Nightmare Shepherd, Brenard), and "your hand or graveyard" (Mairsil) is your graveyard, so it is no graveyard-hate.
-export const DERIVE_VERSION = 366;
+// 367: #1266 (burn) -- WHO A DAMAGE OR LIFE LOSS HITS reads off the printed recipient, on the effect subject AND the emits. A recipient that LISTS a player beside a permanent kept only the permanent: "each opponent and each creature they control" (Wildfire Cerberus), "... each planeswalker they control" (Kumano Faces Kakkazan), "target player and each creature that player controls" (Chandra's Flame Wave), "that permanent or player" (Erratic Explosion) and the EMIT of "target player or planeswalker" (Lava Spike: typed planeswalker, the player dropped; the effect already read it through the filter grammar). The effect keeps an `anyOf` with a player branch; the emits are one event per half (the matcher's `damaged` test reads a victim's top-level type, so one `anyOf` event would meet neither side). "X's controller" / "its owner" / "enchanted player" / "they" is the PLAYER, untyped, never X's type nor `you` (Repercussion, Banewasp Affliction, Curse of Leeches; a lose-life emit read `you` there and fed "whenever you lose life"). "that player" after an opponent's spell or the card's own damage is `opp`, not the trigger's `you` (Thunderbreak Regent, Megrim, Underworld Dreams). "any target that isn't a Dragon" is any target. A damage's "it" is the object the trigger names, as its emit already read it (Caltrops: effect subject creature, was untyped). A life total SET (CR 119.5: "your life total becomes 1", "each player's life total becomes the highest"; The Golden Throne, Arbiter of Knollridge, 17 clauses) is neither damage nor life loss: no kind. 465 cards' abilities changed (337 gained a player-shaped untyped half or took the controller as the player, 49 "that player" -> `opp`, 22 life loss `you` -> `any`, 45 effect only). Census over 3,869 damage / life-loss clauses (printed recipient class against the stored subject, clause level): 833 disagreements -> 286, the rest classifier artifacts, model-labelled `static` clauses (Duggan, Herald of Hadar: no subject kept by the static guard) and Braids's Frightful Return ("If they don't, they lose 3 life" reads `you`).
+export const DERIVE_VERSION = 367;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -914,7 +916,7 @@ function drainAbility(clause: ClauseRecord, kind: AbilityKind, trigger: Ability[
   // Same wildcard-mesh guard as the per-action loop above: a static-typed drain clause with an
   // unconstrained subject would otherwise reproduce the whole-deck lord edge namesItsTargets exists
   // to prevent.
-  const subject = parseSubject(loss.object ?? "");
+  const subject = damageRecipient(loss.object ?? "") ?? parseSubject(loss.object ?? "");
   const keepSubject = kind !== "static" || namesItsTargets(subject);
   const ability: Ability = { kind, effect: keepSubject ? { kind: "drain", subject } : { kind: "drain" } };
   if (trigger) ability.trigger = trigger;
@@ -1342,6 +1344,9 @@ function spellsYouCast(s: SubjectFilter, who: string, clauseText: string): Subje
  *  deck's own creatures. */
 const ATTACKS_YOU = /\battacks? you\b/i;
 
+/** The effect kinds whose recipient is a PLAYER or a permanent, so the printed recipient decides who is hit. */
+const BURN_RECIPIENT_KINDS: ReadonlySet<string> = new Set(["damage", "player-life-loss", "drain"]);
+
 function effectSubject(
   action: Action, kind: string, triggerIsSelf = false, clauseText = "", cardName?: string, cardText = "",
 ): ReturnType<typeof parseSubject> {
@@ -1430,7 +1435,12 @@ function effectSubject(
   // aura/equipment host read as a class is a wider standing defect with its own item.
   if (MULTIPLIER_VERBS.has(action.verb ?? "") && UNEXPRESSIBLE_NARROWING.test(object)) return parseSubject("");
   const self = object.match(SELF_REFERENCE);
-  const subject = subjectFrom(self ? self[0] : countTruncated(object), cardName, cardText);
+  const parsed = subjectFrom(self ? self[0] : countTruncated(object), cardName, cardText);
+  // WHO A DAMAGE OR LIFE LOSS HITS (#1266, burn): a player beside a permanent ("each opponent and each creature they
+  // control", "target player and each creature that player controls") keeps its player half, and "that creature's
+  // controller" is the player, not the creature. The filter grammar's own `anyOf` with a player branch stands.
+  const recipient = BURN_RECIPIENT_KINDS.has(kind) ? damageRecipient(object) : undefined;
+  const subject = recipient && !parsed.anyOf?.some((b) => b.player === true) ? recipient as ReturnType<typeof parseSubject> : parsed;
   // ...and RECORD that it was self-referential. The match was already being used to avoid parsing
   // the condition after it, then discarded, so all 160 graveyard-recursion effects in the corpus
   // looked like recursion of a generic card. edges.ts then let any graveyard fill enable any of
@@ -1449,6 +1459,7 @@ function effectSubject(
   // graveyard fill "enabled" it. The trigger side has carried this since the self-ETB work — the
   // effect side recognised every other spelling of self except the plain name.
   else if (isSelfSubject(object, cardName)) subject.self = true;
+  else if (BURN_RECIPIENT_KINDS.has(kind) && damageHitsSelf(object, clauseText)) subject.self = true;
   if (ATTACKS_YOU.test(object)) subject.control = "opp";
   // A COST REDUCTION OVER "SPELL(S) YOU CAST" IS A CLASS OF YOUR DECK (#717): Doran, Besieged by Time's
   // "Each creature spell you cast with toughness greater than its power costs {1} less" came back as
@@ -1583,6 +1594,7 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
  *  unstated controller is inherited. */
 const DEATH_REPLACEMENT = /\bwould (?:die|be destroyed|be put into a graveyard)\b[^.]*\binstead\b/i;
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
+const THAT_PLAYER = /^that (?:player|opponent)$/i;
 /** The count an antecedent object states up front: "up to five Doctor cards", "two basic land cards". */
 // Never an open threshold: "two or more creature cards" is no fixed two (review).
 const ANTECEDENT_COUNT = /^(?:up to )?(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+)\b(?! or (?:more|fewer|less|greater))/i;
@@ -2538,6 +2550,7 @@ export function deriveAbilities(
       const emitsSelf = action.verb !== "fight" && (selfByIf || SELF_REFERENCE.test((action.object ?? "").trim())
         || /^this$/i.test((action.object ?? "").trim())
         || isSelfSubject(action.object ?? "", cardName)
+        || (action.verb === "deal-damage" && damageHitsSelf(action.object ?? "", text))
         // A COUNTER PUT ON THE CARD ITSELF (owner-reported 2026-09-17, Primal Amulet -> Exemplar of
         // Light). An add-counter's object is the COUNTER ("charge counter", "+1/+1"), never the
         // permanent receiving it, so the object could never say "this artifact" and 4,240 of the
@@ -2615,6 +2628,13 @@ export function deriveAbilities(
         // ROADMAP I7. The permanent arrives under a controller the schema cannot name, so the emit
         // claims nothing rather than claiming everyone. See `entersUnderAnotherPlayer`.
         .filter((e) => !(e.verb === "enters" && entersUnderAnotherPlayer(cardText)));
+      // THE CARD ITSELF HIT BY A FIGHT-BACK is bare `self` (Garruk's "him" kept the antecedent "target creature": a planeswalker typed creature, scope target) (#1266, burn).
+      const selfDamage = action.verb === "deal-damage" && damageHitsSelf(action.object ?? "", text);
+      if (selfDamage) for (const e of emits) e.subject = { control: "any", token: null, self: true };
+      // A CREATURE DEALS IT when the sentence says "target creature (you control) deals damage ...": the dealer is that creature, so a damage trigger hears "a creature ... thanks to <card>" (Rabid Bite), not the spell.
+      // CEILING: only a clause with ONE damage action (Garruk's two read the card as dealer of both).
+      const creatureSource = action.verb === "deal-damage" && !selfDamage && (clause.actions ?? []).filter((x) => x.verb === "deal-damage").length === 1 ? creatureDamageSource(text) : undefined;
+      if (creatureSource !== undefined) for (const e of emits) if (e.dealer !== undefined) e.dealer = { control: creatureSource, token: null, type: "creature" };
       if (emitsSelf) for (const e of emits) {
         if (!grantedTo) { e.subject.self = true; continue; }
         // The granted ability's "this permanent"/"it" is the recipient -- see `grantedTo`.
@@ -2663,7 +2683,8 @@ export function deriveAbilities(
       // Only an exile IN THIS CLAUSE is the antecedent: a cross-clause "the exiled cards" (Petradon) falls
       // back to the trigger's subject, which names the card and not what it exiled (review).
       const exiledHere = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).some((x) => x.verb === "exile");
-      const subjectAction = effectKind === "flicker" && antecedent && exiledHere && !emitsSelf ? { ...action, object: antecedent } : action;
+      // A DAMAGE'S "IT" / "THEM" is the object the trigger names (Caltrops: "deals 1 damage to it" is the attacking creature), not any target (#1266 burn): the emit already read it so.
+      const subjectAction = (effectKind === "flicker" && antecedent && exiledHere && !emitsSelf) || (effectKind === "damage" && refersToTrigger) ? { ...action, object: antecedent } : action;
       const subject = effectKind
         ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
@@ -2756,7 +2777,17 @@ export function deriveAbilities(
       }
       // See THAT_TYPED. Read BEFORE the actor, which is a stronger statement and overrides it.
       const objectText = (action.object ?? "").trim();
-      if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText)) {
+      // "...this creature deals 3 damage to THAT PLAYER" (Thunderbreak Regent) is the player the clause named, not the controller of the
+      // trigger's creature: it took the trigger's `you` below and read as damage to yourself (#1266, burn). An opponent when the sentence says so.
+      const thatPlayerHit = BURN_RECIPIENT_KINDS.has(effectKind ?? "") && THAT_PLAYER.test(objectText);
+      if (thatPlayerHit && thatPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
+        for (const e of emits) if (e.subject.control === "any" || e.subject.control === "you") e.subject.control = "opp";
+        if (subject) subject.control = "opp";
+      }
+      // ...and "that permanent or player" / "that player or a planeswalker that player controls" (Erratic Explosion, Vial Smasher) keep their own
+      // player branch: the trigger's `you` is not the controller of what they hit.
+      const playerList = BURN_RECIPIENT_KINDS.has(effectKind ?? "") && subject?.anyOf?.some((b) => b.player === true) === true;
+      if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText) && !thatPlayerHit && !playerList) {
         const ante = antecedentFor((clause.actions ?? []).indexOf(action));
         const inherited = ante ? subjectFrom(ante, cardName, enchantText).control : undefined;
         if (inherited && inherited !== "any") {

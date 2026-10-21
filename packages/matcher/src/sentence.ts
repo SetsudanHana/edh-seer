@@ -543,9 +543,11 @@ export function reasonSentence(input: {
  *  back to "a permanent" rather than to nothing, since the event still happened to SOMETHING. */
 type NounSubject = { subtype?: string | string[]; type?: string | string[] };
 export function emitSubjectNoun(subject: NounSubject & {
-  self?: boolean; anyOf?: readonly NounSubject[];
+  self?: boolean; anyOf?: readonly NounSubject[]; player?: boolean; control?: string;
 } | undefined): string | undefined {
   if (!subject || subject.self === true) return undefined;
+  // A PLAYER IS NOT A PERMANENT (#1266, burn): the player half of "each opponent and each creature they control" says who it is.
+  if (subject.player === true) return subject.control === "opp" ? "an opponent" : "a player";
   // A LIST NOBODY NARROWED IS NAMED WHOLE (#750). Bloodstained Mire finds "a Swamp or Mountain card";
   // when the caller cannot say which one the consumer took, "a Swamp" named the first branch as if it
   // were the one that entered, and an `anyOf` fetch fell through to "a permanent". A caller that CAN

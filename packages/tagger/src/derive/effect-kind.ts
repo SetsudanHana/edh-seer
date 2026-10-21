@@ -495,6 +495,19 @@ function doubledKind(text: string): EffectKind | null {
   return null;
 }
 
+/** A sentence with "instead", a "would ..." frame and the action's OWN word ("damage" for a damage action, "lose"/"loses" for a life loss): it replaces that event rather than causing it.
+ *  Sentence by sentence, so Flames of the Blood Hand's separate "if that player would gain life ... instead" does not take its real damage with it. */
+function replacesDamageOrLife(clauseText: string, verb: string): boolean {
+  const own = verb === "deal-damage" ? /\bdamage\b/i : /\bloses?\b/i;
+  return clauseText.split(".").some((sentence) => /\binstead\b/i.test(sentence) && /\bwould (?:be dealt|deal|lose|gain|cause)\b/i.test(sentence) && own.test(sentence)
+    // A REDIRECT WHOSE NEW RECIPIENT REACHES A PLAYER IS STILL BURN (#1266): "is dealt to any target instead" (Harm's Way, Shining Shoal, Glarecaster, Mirrorwood Treefolk), "to another target ... player"
+    // (Captain's Maneuver), "to that source's controller" (Reflect Damage, Eye for an Eye), "to that creature's controller" (Megatron). A redirect onto the card or "its controller" (Treacherous Link,
+    // Daughter of Autumn) and an amplifier ("plus 2") are not. Damage only: a life-loss replacement is never a new source.
+    && !(verb === "deal-damage" && REDIRECT_TO_A_PLAYER.test(sentence)));
+}
+const REDIRECT_TO_A_PLAYER = /\bdealt to (?:any (?:other )?target|another target [^.]{0,60}\bplayer|that (?:source|creature)'s controller)\b|\bdamage to that source's controller\b/i;
+const PAYS_LIFE = /\bpays? (?:\d+|x|any amount of) life\b/i;
+const LOSES_LIFE = /\bloses? (?:\d+|x|that much|half|life)\b/i;
 export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
   const verb = action.verb ?? "";
   // CR 614.1c — "this creature enters with three +1/+1 counters on it" is a REPLACEMENT EFFECT on
@@ -669,9 +682,23 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   }
   // Life change is one verb per direction, but which kind depends on whose life it is.
   if (verb === "gain-life") return "lifegain";
-  if (verb === "lose-life" || verb === "set-life") {
+  // A DAMAGE OR LIFE-LOSS REPLACEMENT IS NOT A NEW SOURCE (#1266, burn): "damage that would be dealt to enchanted creature is dealt to its controller instead" (Treacherous Link, Daughter of
+  // Autumn), "it deals that much damage plus 2 ... instead" (Pyromancer's Gauntlet), "if an opponent would lose life ... twice that much instead" (Bloodletter of Aclazotz), "if an opponent would
+  // gain life, that player loses that much instead" (Tainted Remedy, Plague Drone, Rain of Gore), "the next 2 damage ... would deal ... is dealt to any target instead" (Harm's Way). The sentence
+  // that holds both "instead" and a "would ..." frame modifies an event another card makes; the emit stays, the burn kind goes.
+  if ((verb === "deal-damage" || verb === "lose-life") && replacesDamageOrLife(clauseText, verb)) return null;
+  if (verb === "lose-life" && /\bunspent mana\b/i.test(action.object ?? "")) return null;
+  if (verb === "lose-life") {
+    // PAYING LIFE IS A COST, NOT A LOSS DEALT (#1266, burn): "unless any player pays 5 life" (Aether Rift), "unless they pay 3 life" (Breathstealer's Crypt),
+    // "Pay 1 life" (Decomposition), "pay X life" as an additional cost. The `lose-life` EMIT stays (a life payment is a loss: the Rowan ruling); only the
+    // effect kind is refused, when the clause says "pay N life" and no one "loses" any. Bounded alternations, no backtracking.
+    if (PAYS_LIFE.test(clauseText) && !LOSES_LIFE.test(clauseText)) return null;
     return parseSubject(action.object ?? "").control === "you" ? null : "player-life-loss";
   }
+  // A LIFE TOTAL SET IS NEITHER DAMAGE NOR LIFE LOSS (#1266, burn; "your life total becomes 1", "each player's life total becomes the highest"):
+  // the clause stores the number as the object, which read as a player-life-loss with no recipient. CR 119.5 makes the change a gain or a loss
+  // as the total demands, so no one direction is claimed.
+  if (verb === "set-life") return null;
   // ENERGY IS NOT MANA, AND THE NORMALIZER CALLS IT MANA. "Whenever a creature you control enters,
   // you get {E} (an energy counter)" arrives from the clause layer as `{verb: "add-mana", object:
   // "E"}`, and `SIMPLE` below turned that into `mana-generation` -- so Decoction Module's page read
