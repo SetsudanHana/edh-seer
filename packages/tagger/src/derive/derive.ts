@@ -517,7 +517,7 @@ import { emblemRecipient } from "../emblem.js";
 // 358: #1299 task 2 -- `CardTags.unclaimed` is persisted (every action no rule claimed, with its clause id), as `unknownTriggers` is. No ability changes.
 // 359: #1301 -- a `put` that is another effect's destination is claimed: `Ability.toZone` on the search it follows ("put it into your hand / onto the battlefield") and on the counter-spell it follows ("put it on top of its owner's library"); a dig's "put the rest on the bottom" is claimed as the remainder. No emit changes.
 // 360: #1301 review -- `toZone` is also set from a put that derives its own `enters` (Rampant Growth, Farseek); "one" counts as the searched card; the zone-tail strip is linear. No claim changes.
-// 361: #1266 -- `Ability.librarySearch` ("yours" | "other") on a `search` ability read off a printed search action naming a library; a typed dig carries none. No claim or emit changes.
+// 361: #1266 -- `Ability.librarySearch` ("yours" | "other") on a `search` ability read off a printed search action naming a library; a typed dig carries none; a stored search of a bare library takes the card of the put after it (Tempt with Discovery's third search gets type land, its one claim change). No emit changes.
 export const DERIVE_VERSION = 361;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
@@ -664,9 +664,9 @@ export function entersUnderAnotherPlayer(cardText: string): boolean {
  *  CEILING: the opponent use is real and dropped, the way Path to Exile's self-ramp is. */
 const POLYMORPH_REVEAL = /\b(?:its|that creature's) controller reveals cards from the top of their library until they reveal a creature card\b/i;
 
-/** A pronoun-ish object that points back at the card a search found or the spell a counter countered ("it", "them", "that card", "those cards", "the card", "that spell"; "it into your hand" is how some clauses are stored). */
 /** "your library", "their library", "that player's library": a search object that names a library and no card. */
 const BARE_LIBRARY = /^(?:your|their|its|that player's|target opponent's) library$/i;
+/** A pronoun-ish object that points back at the card a search found or the spell a counter countered ("it", "them", "that card", "those cards", "the card", "that spell"; "it into your hand" is how some clauses are stored). */
 const FOUND_OBJECT = /^(?:it|them|one|that card|those cards|the card|that spell)$/i;
 /** The zone phrase the stored object sometimes carries: "it into your hand", "up to two basic land cards onto the battlefield tapped", "those cards on top in any order". */
 // Cut at the FIRST " onto/into/on/in ", found by a bounded search and sliced. `.replace(/ (?:on|in)\s.*$/)` rescanned to the end from every
