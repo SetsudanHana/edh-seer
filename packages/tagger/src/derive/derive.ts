@@ -8,7 +8,7 @@
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
-import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
+import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
@@ -519,7 +519,8 @@ import { emblemRecipient } from "../emblem.js";
 // 360: #1301 review -- `toZone` is also set from a put that derives its own `enters` (Rampant Growth, Farseek); "one" counts as the searched card; the zone-tail strip is linear. No claim changes.
 // 361: #1266 -- `Ability.librarySearch` ("yours" | "other") on a `search` ability read off a printed search action naming a library; a typed dig carries none; a stored search of a bare library takes the card of the put after it (Tempt with Discovery's third search gets type land, its one claim change). No emit changes.
 // 362: #1266 -- a new effect kind `retarget` (CR 115.7), read off an action whose object changes the target of / chooses new targets for a TARGET spell or ability (Misdirection, Redirect, Bolt Bend, Willbender, Reroute, Deflecting Swat, Divert; the model's `other`, and its `cost-modify` / `exchange` misfiles read from the clause: Shunt, Silver Wyvern, Spellskite, Meddle). Subject: `scope: "target"`, `type: "spell"` and/or `abilityKind`. Those actions leave `unclaimed`. Your own copy's new targets ("choose new targets for the copy", #491) and "that spell" stay unclaimed. Also (#1266 task 2): a spell moved, returned, exiled or taken is an emit with `fromZone: "stack"` (the grammar no longer calls a returned spell a battlefield leave; "target spell or permanent" is two emits, the spell and the permanent half), a noncreature spell is `type: spell` + `notType`, and "that spell" / "the chosen spell" is `scope: target` only when the ability earlier says "target ... spell" (Swallowed by Leviathan, Invert Polarity, Mages' Contest).
-export const DERIVE_VERSION = 362;
+// 363: #1266 (graveyardHate) -- an `exiled` emit from a graveyard says whose graveyard it is: `owner: "you"` when the printed words make it yours ("exile that card from your graveyard": Necropotence, Bag of Holding, Toluz, Moonstone, Leonardo da Vinci; a discard by you; a card "put into your graveyard", Purgatory, Colfenor's Urn, Grolnok; a cost exiling "another card from your graveyard", Helbrute, Squee; each player's OWN graveyard with the cards coming back, Living Death, Living End, Scrap Mastery). Another player's, or any graveyard, stays unmarked. An exile whose object names only graveyards ("target cards from graveyards", "from a single graveyard", "all graveyards", "that player's graveyard", "from defending player's graveyard") takes `fromZone: graveyard` when the model stored none (Erebos's Intervention, Blue Mage's Cane, Hive of the Eye Tyrant, Nurgle's Conscription, Abstergo Entertainment, Burn Away, Strategic Betrayal, Crabomination). "That player's graveyard" after a card taken "from an opponent's graveyard" is `opp` (Nurgle's Conscription). Replacement effects ("would be put into a graveyard ... exile it instead") and the cast-from-graveyard riders are left to #1306 (a rider's pronoun exile takes no owner and no new zone).
+export const DERIVE_VERSION = 363;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1591,6 +1592,16 @@ const COST_NARROWING_UNHELD = /\bfirst\b|\bfrom (?:exile|a graveyard|your gravey
 const STAT_VS_STAT = /\bwith (power|toughness) greater than (?:its|their) (power|toughness)\b/i;
 /** "…card in your graveyard" / "…from a graveyard": an object that names its zone (#716, Emry). */
 const ZONE_MOVING_VERBS: ReadonlySet<string> = new Set(["cast", "play", "return", "put", "exile"]);
+/** A replacement rider ("If a spell cast this way would be put into a graveyard, exile it instead", #1306) is no graveyard exile: its zone is left to that work. */
+const WOULD_BE_PUT_INTO = /\bwould be put into\b/i;
+/** The rider's own object: "exile IT instead", "exile that spell / that card", "exile a spell cast this way". */
+const RIDER_OBJECT = /^(?:it|them|that (?:card|spell|creature)|those cards)$|\bcast this way$/i;
+/** "...from an opponent's graveyard ... that player's graveyard": the opponent's card was named before the pronoun that points back at it. Two index scans, no backtracking. */
+function opponentYardBefore(text: string): boolean {
+  const lower = text.toLowerCase();
+  const named = lower.indexOf("from an opponent's graveyard");
+  return named >= 0 && named < lower.indexOf("that player's graveyard");
+}
 const OBJECT_IN_GRAVEYARD = /\b(?:in|from) (?:your|a|an opponent's|target player's|their) graveyard\b/i;
 /** "…, then return it to the battlefield…" after an exile in the same clause (#715, Jill). */
 /** "...with a finality counter on it" -- the counter rides on the returned object itself (#886). */
@@ -2164,8 +2175,10 @@ export function deriveAbilities(
     // graveyard -- recursion -- read as a plain cast and Mnemonic Sphere's self-sacrifice fed nothing.
     // Only a verb that MOVES a card out of a zone (review): a count ("for each card in your
     // graveyard") names the graveyard without taking anything from it.
+    // ...AND AN EXILE WHOSE OBJECT NAMES ONLY GRAVEYARDS (#1266): "target cards from graveyards" (Erebos's Intervention), "from a single graveyard", "all
+    // graveyards", "that player's graveyard", "from defending player's graveyard" came back with no origin, so the exile was no graveyard exile at all.
     const zoneless = (a: { verb?: string; fromZone?: string | null; object?: string }) =>
-      !a.fromZone && ZONE_MOVING_VERBS.has(a.verb ?? "") && OBJECT_IN_GRAVEYARD.test(a.object ?? "");
+      !a.fromZone && ZONE_MOVING_VERBS.has(a.verb ?? "") && (OBJECT_IN_GRAVEYARD.test(a.object ?? "") || (a.verb === "exile" && exileNamesOnlyGraveyards(a.object ?? "") && !WOULD_BE_PUT_INTO.test(clauseText)));
     if ((clause.actions ?? []).some(zoneless)) {
       clause = { ...clause, actions: (clause.actions ?? []).map((a) => zoneless(a) ? { ...a, fromZone: "graveyard" } : a) };
     }
@@ -2652,6 +2665,17 @@ export function deriveAbilities(
       if (action.fromZone === "graveyard" && /\bfrom that player's graveyard\b/i.test(text)
         && damagedPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
         for (const e of emits) if (e.verb === "leaves" && e.subject.control === "any" && e.subject.zone === "graveyard") e.subject.control = "opp";
+      }
+      // #1266: "that player's graveyard" AFTER a card taken "from an opponent's graveyard" in the same clause is THAT opponent's (Nurgle's Conscription), so the
+      // exile and its graveyard leave say `opp` and no "leaves YOUR graveyard" payoff is fed by it. A bare "that player" (Go Blank's target player) stays `any`.
+      if (action.verb === "exile" && action.fromZone === "graveyard" && /^that player's graveyard$/i.test((action.object ?? "").trim()) && opponentYardBefore(text)) {
+        for (const e of emits) if ((e.verb === "exiled" || e.verb === "leaves") && e.subject.control === "any" && e.subject.fromZone === "graveyard") e.subject.control = "opp";
+      }
+      // #1266: WHOSE GRAVEYARD AN EXILE TAKES FROM, when the printed words say it is yours: the `exiled` emit carries `owner: "you"` (Necropotence, Bag of Holding,
+      // Helbrute's cost, Purgatory, Living Death's round trip), so a graveyard-HATE rule can refuse it. Another player's, or any, stays unmarked. "This card"
+      // from your graveyard is `self` already and keeps it.
+      if (action.verb === "exile" && !(RIDER_OBJECT.test((action.object ?? "").trim()) && WOULD_BE_PUT_INTO.test(text)) && exilesFromYourGraveyard(action.object ?? "", text)) {
+        for (const e of emits) if (e.verb === "exiled" && e.subject.fromZone === "graveyard" && e.subject.self !== true && e.subject.owner === undefined) e.subject.owner = "you";
       }
       // #1252: "that player loses the game" after damage the card's side deals to a player is the damaged
       // player -- an opponent (Phage, Vorpal Sword, Atemsis). Unresolved ("a creature deals ...") stays `any`.

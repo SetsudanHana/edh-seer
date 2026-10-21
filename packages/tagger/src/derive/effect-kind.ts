@@ -371,6 +371,37 @@ export function exilesOwnGraveyard(object: string, clauseText: string): boolean 
   return YOUR_YARD.test(clauseText) && !OTHER_YARD.test(clauseText);
 }
 
+/** WHOSE GRAVEYARD AN EXILE TAKES ITS CARDS FROM, as far as the printed words say it is YOURS (#1266, graveyardHate). A rule that wants graveyard HATE
+ *  must tell "exile that card from your graveyard" (Necropotence, Bag of Holding, a delve-shaped cost, Purgatory) from "exile that player's graveyard"; the
+ *  emit's `owner: "you"` is that answer (CR 400.3: a card goes to its OWNER's graveyard). Read off the object when it names a graveyard; off the clause when
+ *  the object is a pronoun or a bare class ("that card", "another creature card"): the clause says "your graveyard", or the trigger is YOUR discard
+ *  ("Whenever you discard a card, exile it": the card goes to your yard). An object naming "a graveyard" / "graveyards" / "that player's graveyard" is not.
+ *  EACH PLAYER FROM THEIR OWN GRAVEYARD, THE CARDS COMING BACK (Living Death, Living End, Scrap Mastery: "puts all cards they exiled this way onto the
+ *  battlefield") is every player's own yard and takes nothing from anyone: yours among them. Without the return (Grave Consequences, Curse of Oblivion)
+ *  it is not. Word tests only, no backtracking shape. */
+const ANY_YARD = /\bgraveyards?\b/i;
+const YOU_DISCARD = /\b(?:whenever|when) you discard\b/i;
+const EACH_PLAYER_EXILES = /\beach player exiles\b/i;
+const THEIR_YARD = /\btheir graveyard\b/i;
+const THEY_EXILED_THIS_WAY = /\bthey exiled this way\b/i;
+const ONTO_THE_BATTLEFIELD = /\bonto the battlefield\b/i;
+export function exilesFromYourGraveyard(object: string, clauseText: string): boolean {
+  if (EACH_PLAYER_EXILES.test(clauseText) && THEIR_YARD.test(object) && THEY_EXILED_THIS_WAY.test(clauseText) && ONTO_THE_BATTLEFIELD.test(clauseText)) return true;
+  if (ANY_YARD.test(object)) return YOUR_YARD.test(object) && !OTHER_YARD.test(object);
+  if (YOU_DISCARD.test(clauseText) && !OTHER_YARD.test(clauseText)) return true;
+  return exilesOwnGraveyard(object, clauseText);
+}
+
+/** An exile whose object names graveyards (and no other zone) takes its cards from one, though the model stored no origin: "up to twice X target cards from
+ *  graveyards" (Erebos's Intervention), "from a single graveyard", "all graveyards", "that player's graveyard", "from defending player's graveyard"
+ *  (#1266). A hand or library named beside it, a battlefield half ("all creatures and graveyards", "from the battlefield and/or creature cards from graveyards": Angel of Serenity; "put there from the battlefield" is only the history of a card in the yard), or a destination ("into that player's graveyard")
+ *  keeps the model's reading: one `fromZone` cannot hold two zones. CEILING: Identity Crisis, Thought Distortion, Ashiok's -10 and Ultimate Nullification
+ *  (a graveyard half beside a hand or the battlefield) stay unzoned. */
+const OTHER_ZONE_WORD = /\b(?:hands?|librar(?:y|ies)|into|onto|instead)\b|\band graveyards?\b|\bthe battlefield and\b|\bon the battlefield\b/i;
+export function exileNamesOnlyGraveyards(object: string): boolean {
+  return ANY_YARD.test(object) && !OTHER_ZONE_WORD.test(object);
+}
+
 /** The win clause has no verb of its own. `VERBS` carries no win member, so every "you win the game"
  *  in the corpus arrives as `other` with the meaning intact in the object -- measured identical on
  *  Simic Ascendancy, Revel in Riches and Hellkite Tyrant. `other` is a wide door (15 such actions
