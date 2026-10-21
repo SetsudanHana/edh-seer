@@ -91,7 +91,10 @@ export type RuleClause =
        *  alternative, which is not removal (#1295). */
       notVictimMay?: true;
       /** Refuse an emit about THE CARD ITSELF (`subject.self`): "Exile this card from your graveyard" (renew, channel-like costs) moves the card and is no exile of anything else (#1266, graveyardHate). */
-      notSelf?: true }
+      notSelf?: true;
+      /** The ABILITY's effect kind is in this list, tested on the SAME ability as the emit. Manifest dread and "manifests the top card of that player's library" derive a `mill` EMIT under a kind-less
+       *  ability (the card goes to the graveyard as a side effect), while a real mill carries the `mill` kind: `abilityKind: ["mill"]` is how `wincon.mill` tells the two apart (#1266). */
+      abilityKind?: string[] }
   | { op: "typeLine"; contains: string }
   /** The card prints one of these KEYWORDS (Scryfall's `card.keywords`, compared case-insensitively). For a rule whose cue lives only in keyword reminder text, which derive does not read: Transmute and
    *  Transfigure search the library, and Typecycling does too (#1266). Compose with `not` to leave a keyword out (Landcycling fetches a land). */
@@ -499,6 +502,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notFlickered !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.clause === a.clause && f.delayedUntil === undefined && f.returnIf !== true && f.effect.subject?.control !== "opp"))
         && (a.emits ?? []).some((e) =>
           clause.verbs.includes(e.verb)
+          && (clause.abilityKind === undefined || clause.abilityKind.includes(a.effect.kind))
           && (clause.edict !== true || e.subject.edict === true)
           && (clause.notVictimMay !== true || e.victimMay !== true)
           && (clause.notOwnedByYou !== true || e.subject.owner !== "you")

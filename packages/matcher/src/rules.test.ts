@@ -435,13 +435,14 @@ test("a conditionally-tapped land is not read as unconditionally tapped", () => 
  *  the sentence NAME its card — "wins by an alternate win condition (The Golden Throne)" is visibly
  *  wrong where "an alternate win condition" would have hidden it. */
 test("a card that prevents LOSING is not an alternate win condition", () => {
-  const alt = (c: DeckCard): boolean => (detectWincons([c]).get("alt-win") ?? new Set()).has(c.card.name);
-  expect(alt(mk("Platinum Angel", "Flying\nYou can't lose the game and your opponents can't win the game.", "Artifact Creature — Angel"))).toBe(false);
-  expect(alt(mk("The Golden Throne", "If you would lose the game, instead exile The Golden Throne and your life total becomes 1.", "Artifact"))).toBe(false);
-  // The control arm: making somebody ELSE lose is a real alternate win, and 18 of the 20 cards the
-  // detector finds are genuine. The fix must not cost them.
-  expect(alt(mk("Thassa's Oracle", "If X is greater than or equal to the number of cards in your library, you win the game.", "Creature — Merfolk Wizard"))).toBe(true);
-  expect(alt(mk("Vorpal Sword", "Whenever equipped creature deals combat damage to a player, that player loses the game.", "Artifact — Equipment"))).toBe(true);
+  // Real derived abilities (derive 368): a prohibition derives nothing, a win is the win-game kind, a loss is a loses-game emit.
+  const alt = (name: string): boolean => (detectWincons([realCard(name)]).get("alt-win") ?? new Set()).has(name);
+  expect(alt("Platinum Angel")).toBe(false);
+  expect(alt("Everybody Lives!")).toBe(false);
+  // The control arm: winning, or making somebody ELSE lose, is a real alternate win.
+  expect(alt("Thassa's Oracle")).toBe(true);
+  expect(alt("Laboratory Maniac")).toBe(true);
+  expect(alt("Vorpal Sword")).toBe(true);
 });
 
 // I5 (2026-08-25): IMPULSE DRAW IS NOT CARD SELECTION, and the `selection` pattern said so outright
@@ -1394,5 +1395,43 @@ describe("burn.effect and wincon.burn are derived (#1266)", () => {
   });
   test("the printed `burn` pattern is gone: oracle text alone is no burn", () => {
     expect(burn({ card: { name: "x", oracleText: "X deals 3 damage to any target.", typeLine: "Instant", keywords: [] } as unknown as Card, tags: null })).toBe(false);
+  });
+});
+
+describe("wincon.mill and wincon.altWin are derived (#1266)", () => {
+  const set = loadRules();
+  const mill = set.rules.find((r) => r.id === "wincon.mill")!;
+  const altWin = set.rules.find((r) => r.id === "wincon.altWin")!;
+  const is = (rule: Rule, name: string): boolean => ruleMatches(rule, realCard(name), set);
+  test("an opponent's or any player's mill is a mill plan (Traumatize, Anowon, Minister of Inquiries, Countermand)", () => {
+    for (const n of ["Traumatize", "Anowon, the Ruin Thief", "Minister of Inquiries", "Countermand"]) expect(is(mill, n), n).toBe(true);
+    // Chancellor of the Spires: the effect names no subject, the emit does.
+    expect(is(mill, "Chancellor of the Spires")).toBe(true);
+  });
+  test("your own mill is fuel, not a plan (Dogmeat)", () => {
+    expect(is(mill, "Dogmeat, Ever Loyal")).toBe(false);
+  });
+  test("a dig's remainder into the graveyard is not a mill (Fact or Fiction, Hermit Druid)", () => {
+    expect(is(mill, "Fact or Fiction")).toBe(false);
+    expect(is(mill, "Hermit Druid")).toBe(false);
+  });
+  test("manifest dread's graveyard half is no mill: its emit sits under a kind-less ability (Manifest Dread)", () => {
+    expect(is(mill, "Manifest Dread")).toBe(false);
+  });
+  test("exiling the top of a library is no mill (derive 368: Sire of Stagnation, Ulamog)", () => {
+    expect(is(mill, "Sire of Stagnation")).toBe(false);
+    expect(is(mill, "Ulamog, the Ceaseless Hunger")).toBe(false);
+  });
+  test("a win is an alternate win condition: the win-game kind, or an opponent's loss (Epic Struggle, Phage)", () => {
+    expect(is(altWin, "Epic Struggle")).toBe(true);
+    expect(is(altWin, "Phage the Untouchable")).toBe(true);
+  });
+  test("YOUR OWN LOSS is never a payoff (owner 2026-10-16, #1252): Demonic Pact, Lich's Mastery", () => {
+    expect(is(altWin, "Demonic Pact")).toBe(false);
+    expect(is(altWin, "Lich's Mastery")).toBe(false);
+  });
+  test("reminder text and a reaction to a loss are no win condition (Marsh Viper's poison reminder, Blood Tyrant)", () => {
+    expect(is(altWin, "Marsh Viper")).toBe(false);
+    expect(is(altWin, "Blood Tyrant")).toBe(false);
   });
 });

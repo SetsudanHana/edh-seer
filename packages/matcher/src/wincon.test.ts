@@ -4,6 +4,7 @@ import type { CardTags } from "@edh-seer/tagger";
 import { detectWincons, drainClock, focusIndex, millClock, poisonClock, winconReport } from "./wincon.js";
 import type { Reason } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
+import { realCard } from "./removal-test-support.js";
 
 /** `anthem` marks the ability as a STATIC pump on a class, which is what separates a real go-wide
  *  payoff from every combat trick that also carries the `pump` kind. */
@@ -69,13 +70,14 @@ test("each class is detected by its own structural signature", () => {
     mk("Ghalta", { power: "12", mv: 12 }),
     mk("Gurmag Angler", { power: "5", mv: 7 }),
     mk("Impact Tremors", { kinds: ["damage"], typeLine: "Enchantment" }),
-    mk("Bruvac", { oracleText: "Each opponent mills twice that many cards instead." }),
-    mk("Thassa's Oracle", { oracleText: "If X is greater than or equal to the number of cards in your library, you win the game." }),
+    // Real derived abilities (derive 368): an opponent's mill is a `mill` emit under the mill kind, a win is the win-game kind.
+    realCard("Traumatize"),
+    realCard("Thassa's Oracle"),
   ]);
   expect([...(classes.get("go-wide") ?? [])]).toEqual(["Krenko"]);
   expect([...(classes.get("voltron") ?? [])]).toEqual(["Colossus Hammer"]);
   expect([...(classes.get("burn") ?? [])]).toEqual(["Impact Tremors"]);
-  expect([...(classes.get("mill") ?? [])]).toEqual(["Bruvac"]);
+  expect([...(classes.get("mill") ?? [])]).toEqual(["Traumatize"]);
   expect([...(classes.get("alt-win") ?? [])]).toEqual(["Thassa's Oracle"]);
 });
 
@@ -189,7 +191,7 @@ test("two stray cards are not a win plan, but one alt-win is", () => {
     // One stray beater against twenty token makers: below the floor, and reporting it would drag
     // the focus index down as if the deck were split between two plans.
     mk("Big Body", { power: "6", mv: 4 }),
-    mk("Thassa's Oracle", { oracleText: "you win the game" }),
+    realCard("Thassa's Oracle"),
   ];
   const report = winconReport(deck);
   expect(report.classes.map((c) => c.class)).toEqual(["go-wide", "alt-win"]);
@@ -209,7 +211,7 @@ test("the combo class names the deck's payoffs for its loops", () => {
 /** A known combo is real data -- the report already carries it from the combo index -- but it is
  *  NOT chain detection, and the class exists to say the deck has one, not to claim we derived it. */
 test("a known combo becomes the combo class, and it is not inferred from the graph", () => {
-  const deck = [mk("Thassa's Oracle", { oracleText: "you win the game" }), mk("Consultation", {})];
+  const deck = [realCard("Thassa's Oracle"), mk("Consultation", {})];
   const report = winconReport(deck, { comboCards: ["Thassa's Oracle", "Consultation"] });
   expect(report.classes.find((c) => c.class === "combo")!.count).toBe(2);
   // Thassa's Oracle says it wins the game in words, so it is alt-win too. A card can serve two
