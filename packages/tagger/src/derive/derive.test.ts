@@ -5152,4 +5152,10 @@ describe("a put that is another effect's destination (#1301)", () => {
     deriveAbilities([{ id: 1, abilityType: "spell", actions: [searchAction, putOf("a b" + " ".repeat(50_000) + "x", "library", "hand")] }]);
     expect(performance.now() - t0).toBeLessThan(100);
   });
+
+  test("the zone-tail strip is linear on many zone words (CodeQL, #1304)", () => {
+    const t0 = performance.now();
+    deriveAbilities([{ id: 1, abilityType: "spell", actions: [searchAction, putOf("x on " + "a in ".repeat(20_000) + "x", "library", "hand")] }]);
+    expect(performance.now() - t0).toBeLessThan(100);
+  });
 });

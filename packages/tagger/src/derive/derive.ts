@@ -665,7 +665,10 @@ const POLYMORPH_REVEAL = /\b(?:its|that creature's) controller reveals cards fro
 /** A pronoun-ish object that points back at the card a search found or the spell a counter countered ("it", "them", "that card", "those cards", "the card", "that spell"; "it into your hand" is how some clauses are stored). */
 const FOUND_OBJECT = /^(?:it|them|one|that card|those cards|the card|that spell)$/i;
 /** The zone phrase the stored object sometimes carries: "it into your hand", "up to two basic land cards onto the battlefield tapped", "those cards on top in any order". */
-const ZONE_TAIL = / (?:onto|into|on|in)\s.*$/i; // a literal space: the object is trimmed, and `\s+` here was quadratic on a long run of spaces
+// Cut at the FIRST " onto/into/on/in ", found by a bounded search and sliced. `.replace(/ (?:on|in)\s.*$/)` rescanned to the end from every
+// " in ", which CodeQL flagged as polynomial (#1304); `\s+` before it was quadratic on a run of spaces (#1301 review).
+const ZONE_WORD = / (?:onto|into|on|in)\s/i;
+const withoutZoneTail = (s: string): string => { const at = s.search(ZONE_WORD); return at < 0 ? s : s.slice(0, at); };
 /** "put a card named Ezio into your hand": the searched card, by name (the planeswalker-named wizards, "search your library and/or graveyard"). */
 const NAMED_FOUND = /^(?:an? )?card named /i;
 /** "The rest", "the other(s)", "the remaining cards": what a dig leaves after the part it took. */
@@ -691,7 +694,7 @@ const DIG_REMAINDER = /^the (?:rest|others?|remaining cards?)\b/i;
  *  CEILING: the remainder needs a sibling action from the library, not a derived ability: Impulse derives nothing (its "put one into your hand" is untyped) and
  *  its remainder is claimed all the same, so the card still reports the put that matters. A remainder with no such sibling stays unclaimed. */
 function claimedAsDestination(action: Action, actions: readonly Action[], source: { to: string; action?: number }, owners: ReadonlyMap<number, Ability[]>, unclaimed: boolean): boolean {
-  const object = (action.object ?? "").trim().replace(ZONE_TAIL, "");
+  const object = withoutZoneTail((action.object ?? "").trim());
   const at = actions.indexOf(action);
   // The searched card named or described again: "put a card named Ezio into your hand", "put a basic land card onto the battlefield" (the search's own "a basic land card").
   // The nearest earlier search is its search.
