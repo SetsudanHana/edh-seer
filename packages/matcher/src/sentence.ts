@@ -408,7 +408,8 @@ export function emitPhrase(emits: readonly EmitLike[], triggerObject: "it" | "it
     const owner = who(exiled) === "you" ? "your" : who(exiled) === "an opponent" ? "an opponent's" : "a";
     if (zone === "graveyard") return `exiles a card from ${owner} graveyard`;
     if (zone === "library") return `exiles a card from ${owner} library`;
-    if (zone === "battlefield" || (zone === undefined && (exiled.subject.type !== undefined || exiled.subject.subtype !== undefined || exiled.subject.self === true))) {
+    // A SPELL EXILED FROM THE STACK (#1266: Spell Queller, Torrential Gearhulk) reads like a battlefield exile: "exiles a spell an opponent controls".
+    if (zone === "battlefield" || zone === "stack" || (zone === undefined && (exiled.subject.type !== undefined || exiled.subject.subtype !== undefined || exiled.subject.self === true))) {
       return `exiles ${noun(exiled)}`;
     }
   }

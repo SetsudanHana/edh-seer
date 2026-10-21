@@ -386,6 +386,8 @@ export function targetsASpellEarlier(text: string, anaphor: string): boolean {
 }
 /** The "target ... spell" phrase itself ("target artifact or enchantment spell"), so a back-reference keeps the card types it names (Defabricate's "exile that spell"). */
 export function earlierTargetSpell(text: string, anaphor: string): string | undefined {
+  // CEILING: the gap between the "target ... spell" and its back-reference is capped at six sentences, and the target phrase is looked for within seven words of "target". The corpus maximum
+  // is 5 sentences (Mages' Contest, a bidding ability) on 2026-10-14; a longer ability would be missed silently, so re-measure with a corpus query when new cards print.
   const sentences = text.toLowerCase().split(".");
   let named = -1, phrase: string | undefined;
   for (let i = 0; i < sentences.length && named < 0; i++) {
@@ -399,6 +401,17 @@ export function earlierTargetSpell(text: string, anaphor: string): string | unde
   if (named < 0) return undefined;
   for (let j = named; j < sentences.length && j <= named + 6; j++) if (sentences[j]!.includes(anaphor)) return phrase;
   return undefined;
+}
+/** The card types of "<types> spell is countered this way" ("an artifact or creature spell"), or undefined. A word scan from the phrase back to its determiner. */
+function counteredCardTypes(text: string): SubjectFilter["type"] | undefined {
+  const lower = text.toLowerCase();
+  const at = lower.indexOf(" spell is countered");
+  if (at < 0) return undefined;
+  const words = lower.slice(0, at).split(/[ ,]+/);
+  const det = Math.max(words.lastIndexOf("a"), words.lastIndexOf("an"));
+  if (det < 0 || words.length - det > 6) return undefined;
+  const type = parseSubject(`${words.slice(det + 1).join(" ")} spell`).type;
+  return type === undefined || type === "spell" ? undefined : type;
 }
 /** The back-references to a spell the clause named earlier. */
 const SPELL_ANAPHORS = ["the chosen spell", "that spell", "the spell"];
@@ -805,6 +818,11 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       if (action.verb === "counter-spell") delete named.fromZone;
       e.subject = named;
     }
+  }
+  // "IF AN ARTIFACT OR CREATURE SPELL IS COUNTERED THIS WAY, PUT THAT CARD ONTO THE BATTLEFIELD" (Desertion): what enters is the CARD, so it has the card types the sentence names, not `spell`.
+  for (const e of events) if (e.verb === "enters" && e.subject.type === "spell") {
+    const types = counteredCardTypes(clauseText ?? "");
+    if (types !== undefined) e.subject.type = types;
   }
   // A FIGHT IS TWO DAMAGE EVENTS (CR 701.14a): each creature deals damage to the other, and the emit
   // above carries only the half where YOUR creature is the dealer -- the object parses to the

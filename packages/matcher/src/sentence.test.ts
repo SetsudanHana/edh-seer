@@ -511,6 +511,9 @@ test("a blank effect is phrased from its emits, and only where the emit reads on
   expect(emitPhrase([e("taps", { control: "any", type: "creature", scope: "target" })])).toBe("taps a creature");
   // A typed exile off the board (Mari's emit before DERIVE 216 carried this shape, #823).
   expect(emitPhrase([e("exiled", { control: "opp", type: "creature" }), e("leaves", { control: "opp", type: "creature" })])).toBe("exiles a creature an opponent controls");
+  // A spell exiled from the stack reads like any exile (Spell Queller, Torrential Gearhulk, #1266).
+  expect(emitPhrase([e("exiled", { control: "opp", type: "spell", fromZone: "stack" }), e("leaves", { control: "opp", type: "spell", fromZone: "stack" })])).toBe("exiles a spell an opponent controls");
+  expect(emitPhrase([e("exiled", { control: "you", type: "spell", fromZone: "stack" })])).toBe("exiles a spell you control");
   // Displacer Kitten: the return is a sibling ability of the same clause, and makes it a flicker.
   const kitten = { control: "you", type: ["creature", "artifact"], scope: "target" };
   expect(emitPhrase([e("exiled", { ...kitten, fromZone: "battlefield" }), e("enters", { ...kitten, fromZone: "exile" })])).toBe("flickers a creature or artifact you control");

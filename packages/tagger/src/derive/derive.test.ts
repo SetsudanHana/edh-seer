@@ -5374,6 +5374,13 @@ describe("a spell answered by a return, exile or steal is a spell ON THE STACK, 
     expect(split[0]!.subject.fromZone).toBeUndefined();
   });
 
+  test("the card a countered spell puts onto the battlefield has the card types the sentence names (Desertion)", () => {
+    const t = "Counter target spell. If an artifact or creature spell is countered this way, put that card onto the battlefield under your control instead of into its owner's graveyard.";
+    const [e] = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "counter-spell", object: "target spell" }, { verb: "put", object: "that card", fromZone: "stack", toZone: "battlefield" }] }], t), "enters");
+    expect([e!.subject.type].flat().sort()).toEqual(["artifact", "creature"]);
+    expect(e!.subject.fromZone).toBe("stack");
+  });
+
   test("a mixed object the model stored as `stack` still has its permanent half on the battlefield (Swat Away)", () => {
     const leaves = emitsOf(run([{ id: 1, abilityType: "spell", actions: [{ verb: "put", object: "target spell or creature", fromZone: "stack", toZone: "library" }] }], "The owner of target spell or creature puts it on their choice of the top or bottom of their library."), "leaves");
     expect(leaves.map((e) => [e.subject.type, e.subject.fromZone]).sort()).toEqual([["creature", "battlefield"], ["spell", "stack"]]);

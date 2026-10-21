@@ -4310,6 +4310,11 @@ describe("a leave from the stack feeds no leaves-the-battlefield trigger", () =>
     expect(eventMatches(spellLeaves, n({ verb: "leaves", subject: { control: "any", token: null, type: "spell", fromZone: "stack" } }), H)).toBe(true);
   });
 
+  test("a stack-origin ENTERS is not refused: the card a counter puts onto the battlefield is a creature entering (Desertion)", () => {
+    const desertion = n({ verb: "enters", subject: { control: "any", token: null, type: "creature", scope: "target", fromZone: "stack" } });
+    expect(eventMatches(desertion, n({ verb: "enters", subject: { control: "you", token: null, type: "creature" } }), H)).toBe(true);
+  });
+
   test("a self 'when this leaves the battlefield' trigger refuses it", () => {
     const self = n({ verb: "leaves", subject: { control: "you", token: null, self: true as const } });
     expect(eventMatches(spellLeaves, self, H)).toBe(false);

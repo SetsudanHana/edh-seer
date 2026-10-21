@@ -1107,13 +1107,16 @@ function verbSatisfies(producer: GameEvent, consumer: GameEvent): boolean {
     && producer.dealer !== undefined;
 }
 
+/** The demands a stack origin is refused for: a spell does not leave the BATTLEFIELD, is not a creature exiled, and is not a permanent whose control changes. Its `enters` is another matter
+ *  (Desertion puts the countered card onto the battlefield under your control), and a `enters-graveyard` of a spell card is a card entering a graveyard. */
+const STACK_REFUSED: ReadonlySet<string> = new Set(["leaves", "exiled", "gains-control"]);
 function originMatches(producer: SubjectFilter, consumer: SubjectFilter, verb: string): boolean {
   // A SPELL ON THE STACK IS NOT ON THE BATTLEFIELD (#1266): a leave, an exile or a steal whose subject comes from the stack (Reprieve, Defabricate, Commandeer) satisfies only a demand
   // that says so. Without this a consumer stating no origin ("whenever a creature leaves the battlefield", "when this leaves the battlefield") took it, since a spell subject matches any
   // card type. ONE EXCEPTION, NAMED BY ITS VERB: "whenever one or more other cards are put into exile from anywhere" (The War Doctor) is an `exiled` demand with no type, no origin and no
   // self, and a spell exiled from the stack IS a card put into exile (Spell Queller, Taigam, Torrential Gearhulk). A `leaves` demand is the battlefield in this engine and is never met from the stack.
   // CEILING: an untyped `exiled` demand is read as "from anywhere", so a card that means only permanents exiled and states no type would take a stack exile too; the War Doctor is the only one.
-  if (producer.fromZone === "stack" && consumer.fromZone !== "stack") {
+  if (producer.fromZone === "stack" && consumer.fromZone !== "stack" && STACK_REFUSED.has(verb)) {
     const fromAnywhere = verb === "exiled" && consumer.type === undefined && consumer.self !== true;
     if (!fromAnywhere) return false;
   }
