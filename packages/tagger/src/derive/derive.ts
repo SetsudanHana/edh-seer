@@ -685,7 +685,9 @@ const DIG_REMAINDER = /^the (?:rest|others?|remaining cards?)\b/i;
  *    rest" beside another action out of the library is the dig's remainder. It carries no event of its own (the bottom is not an event anything
  *    watches; a top put is `top-set` and never reaches here), so it is claimed with no emit and no field.
  *  CEILING: a search that splits its cards over two destinations (Cultivate: one onto the battlefield, the other into your hand; Gifts Ungiven) holds the FIRST destination
- *  only; the second put is claimed (when it derives nothing) with no field.
+ *  only; the second put is claimed (when it derives nothing) with no field. A conditional alternative ("Otherwise, put it into your hand",
+ *  "... onto the battlefield instead") holds the first PRINTED destination too: Archdruid's Charm and Treasure Chest read `battlefield`, Celestial
+ *  Reunion `hand`, though the other branch is the common one.
  *  CEILING: the remainder needs a sibling action from the library, not a derived ability: Impulse derives nothing (its "put one into your hand" is untyped) and
  *  its remainder is claimed all the same, so the card still reports the put that matters. A remainder with no such sibling stays unclaimed. */
 function claimedAsDestination(action: Action, actions: readonly Action[], source: { to: string; action?: number }, owners: ReadonlyMap<number, Ability[]>, unclaimed: boolean): boolean {
