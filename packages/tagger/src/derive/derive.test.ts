@@ -5914,6 +5914,22 @@ describe("#1266 burn: who a damage or life loss hits", () => {
     expect(loss.every((e) => e.subject.control !== "you")).toBe(true);
   });
 
+  it("a relative clause or a name holding an 'or' / comma is not a list (Phyrexian Atlas, Gollum, Backdraft): no invented branch, no extra untyped event", () => {
+    const loss = (object: string, text: string, name: string) => abil([{ id: 1, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" }, actions: [{ verb: "lose-life", object, amount: "2" }] }], name, { 1: text })
+      .filter((x) => x.effect.kind === "player-life-loss");
+    const atlas = loss("each opponent who has three or more poison counters", "At the beginning of your upkeep, each opponent who has three or more poison counters loses 2 life.", "Phyrexian Atlas");
+    const gollum = loss("each opponent dealt combat damage this game by a creature named Gollum, Obsessed Stalker", "At the beginning of your upkeep, each opponent dealt combat damage this game by a creature named Gollum, Obsessed Stalker loses 2 life.", "Gollum, Obsessed Stalker");
+    for (const a of [...atlas, ...gollum]) {
+      expect(a.effect.subject?.anyOf).toBeUndefined();
+      expect(a.emits!.filter((e) => e.verb === "lose-life")).toHaveLength(1);
+      expect(a.emits![0]!.subject.anyOf).toBeUndefined();
+    }
+    const [back] = dmg(abil([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "target player who cast one or more sorcery spells this turn", amount: "6" }] }], "Backdraft",
+      { 1: "Backdraft deals damage to target player who cast one or more sorcery spells this turn." }));
+    expect(back!.effect.subject?.anyOf).toBeUndefined();
+    expect(back!.emits!.filter((e) => e.verb === "non-combat-damage")).toHaveLength(1);
+  });
+
   it("a life total SET is neither damage nor life loss (The Golden Throne, Arbiter of Knollridge)", () => {
     const throne = abil([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object: "The Golden Throne" }, { verb: "set-life", object: "1" }] }], "The Golden Throne",
       { 1: "If you would lose the game, instead exile The Golden Throne and your life total becomes 1." });

@@ -48,6 +48,7 @@
   "packages/matcher/src/upgrade-sections.ts": 4,
   "packages/tagger/src/bin/gen-schema-docs.ts": 1,
   "packages/tagger/src/derive-input.ts": 1,
+  "packages/tagger/src/derive/damage-recipient.ts": 3,
   "packages/tagger/src/derive/delay.ts": 2,
   "packages/tagger/src/derive/derive.ts": 32,
   "packages/tagger/src/derive/effect-kind.ts": 4,

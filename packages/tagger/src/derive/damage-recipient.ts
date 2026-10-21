@@ -22,7 +22,10 @@ const DETERMINERS: ReadonlySet<string> = new Set([
 ]);
 /** The words that open the FIRST item with a quantity or a pick ("target", "each", "up to one"); a later bare item inherits them. */
 const QUANTIFIERS: ReadonlySet<string> = new Set(["target", "each", "all", "any", "another", "up", "to", "one", "two", "three", "x"]);
+/** Words that open a relative clause or a condition: a fragment holding one is not a recipient phrase. */
+const CLAUSE_WORDS: ReadonlySet<string> = new Set(["who", "whose", "named", "dealt", "has", "have", "had", "cast", "is", "are", "was", "than", "didn't", "doesn't", "didn't", "if", "when", "which", "poison", "counters", "counter"]);
 const PLAYER_HEADS: ReadonlySet<string> = new Set(["player", "players", "opponent", "opponents"]);
+/** CEILING: CONTROL_TAILS are matched as a SUFFIX of the whole object, so a tail in the middle ("each creature target player controls and each player") is not read. */
 /** What the player-controls tail of a permanent item says about WHOSE permanents they are. */
 const CONTROL_TAILS = ["they control", "that player controls", "that opponent controls", "defending player controls", "target player controls", "target opponent controls", "that player or that planeswalker's controller controls"];
 /** A relative clause about the TARGET, not the type ("it has dealt damage to this game"): cut before parsing. */
@@ -44,7 +47,8 @@ export function isControllerPhrase(object: string): boolean {
 
 type Item = { text: string; kind: "player" | "other"; control?: "you" | "opp" };
 
-/** One list item as a player or not, and which player. */
+/** One list item as a player or not, and which player.
+ *  CEILING: only the first three words of an item are read for its player noun ("defending player", "target opponent"); a longer modifier run reads as not a player. */
 function classify(text: string): Item {
   const w = words(text);
   if (isControllerPhrase(text)) return { text, kind: "player" };
@@ -60,7 +64,10 @@ function classify(text: string): Item {
   return { text, kind: "player", ...(opp ? { control: "opp" as const } : {}) };
 }
 
-/** Split on ", ", " and/or ", " and ", " or " into items, dropping empty ones. */
+/** CEILING: items are split on every comma, "and", "or" and "and/or" and a BARE later item takes the first item's quantifier ("target player or planeswalker"
+ *  is a target planeswalker too). A list whose fragments are not all player, controller or typed-permanent phrases is refused wholesale (`damageRecipient`
+ *  returns undefined), so a clause that merely holds an "or" keeps the old single-noun reading rather than a guessed branch.
+ *  Split on ", ", " and/or ", " and ", " or " into items, dropping empty ones. */
 function splitItems(text: string): string[] {
   const out: string[] = [];
   let cur: string[] = [];
@@ -109,6 +116,19 @@ export function damageRecipient(object: string): SubjectFilter | undefined {
   const items = parts.map(classify);
   const players = items.filter((x) => x.kind === "player");
   if (players.length === 0 || players.length === items.length) return undefined;
+  // REFUSE A LIST THAT IS NOT CLEAN. A relative clause or a name can hold an "or", an "and" or a comma ("each opponent who has three or more poison
+  // counters", "a creature named Gollum, Obsessed Stalker", "target player who cast one or more sorcery spells"), and splitting there invents a branch.
+  // Every fragment must be a player phrase, a controller phrase or a typed permanent phrase with none of the clause words; anything else keeps the old reading.
+  for (const part of parts) {
+    const pw = words(part);
+    if (pw.some((x) => CLAUSE_WORDS.has(x))) return undefined;
+    const it = classify(part);
+    if (it.kind === "other") {
+      const ps = parseSubject(part);
+      const bareTarget = pw.every((x) => DETERMINERS.has(x) || x === "targets");
+      if (ps.type === undefined && ps.subtype === undefined && !bareTarget) return undefined;
+    }
+  }
   const opponentTail = tail !== "" && players.some((p) => p.control === "opp");
   const branches: Partial<SubjectFilter>[] = [];
   for (const it of items) {
