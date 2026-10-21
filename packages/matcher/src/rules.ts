@@ -29,7 +29,12 @@ export type RuleClause =
        *  is not a P/T pair at all does not match. A scaling or unreadable toughness ("-X") counts: the number is not printed, and the card states it as a lethal-shaped shrink. */
       toughnessDown?: true;
       /** Refuse an ability that happens on one side of a coin flip (`Ability.onFlip`): Orcish Captain's "If you lose the flip, it gets -0/-2" shrinks your own Orc by chance, and is no removal (#1295 item 5). */
-      notOnFlip?: true }
+      notOnFlip?: true;
+      /** Whose library a PRINTED search reads (`Ability.librarySearch`, #1266): present on the ability and in this list; absent never matches, which is how a typed dig (derive's `search` kind also covers
+       *  digs, for edges) stays out of the tutor role (owner 2026-10-21). */
+      librarySearch?: string[];
+      /** Refuse an ability whose effect SUBJECT types are all `land` ("search for a basic land card": Farseek, Expedition Map). That is fixing, not a tutor. A subject with no type is NOT land-only. */
+      notLandOnly?: true }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -73,6 +78,9 @@ export type RuleClause =
        *  alternative, which is not removal (#1295). */
       notVictimMay?: true }
   | { op: "typeLine"; contains: string }
+  /** The card prints one of these KEYWORDS (Scryfall's `card.keywords`, compared case-insensitively). For a rule whose cue lives only in keyword reminder text, which derive does not read: Transmute and
+   *  Transfigure search the library, and Typecycling does too (#1266). Compose with `not` to leave a keyword out (Landcycling fetches a land). */
+  | { op: "keyword"; in: string[] }
   /** Card subtypes, from the tagged characteristics -- "equipment", "aura", a creature type. */
   | { op: "subtype"; in: string[] }
   /** Printed power minus mana value, at least this much. The one stat predicate the taxonomy needs
@@ -377,6 +385,18 @@ function subjectTypes(subject: { type?: string | string[]; subtype?: unknown; an
   return (subject.anyOf ?? []).flatMap((b) => (b.type !== undefined ? [b.type].flat() : b.subtype !== undefined ? ["permanent"] : []));
 }
 
+/** The land types, CR 205.3i ("Lands have their own unique set of subtypes; these subtypes are called land types"). */
+const LAND_TYPES = new Set(["cave", "desert", "forest", "gate", "island", "lair", "locus", "mine", "mountain", "plains", "planet", "power-plant", "sphere", "swamp", "tower", "town", "urza's"]);
+/** A search SUBJECT that can only be a land (#1266): typed `land` ("a basic land card"), a LAND TYPE ("a Mountain card", "a basic Plains, Swamp, or Forest card", "a Gate card": Alpine Guide, Abzan Monument,
+ *  District Guide), or an `anyOf` whose every branch is one of those ("a basic land card or Gate card"). Derive sometimes files a land type under `type` (The Cave of Two Lovers: ["mountain", "cave"]), so both
+ *  fields take the same words. Nothing typed at all is NOT land-only ("a card named X", "a card"); a Shrine is no land. */
+function landOnlySubject(subject: { type?: string | string[]; subtype?: unknown; anyOf?: { type?: string | string[]; subtype?: unknown }[] }): boolean {
+  const landWord = (w: unknown): boolean => w === "land" || LAND_TYPES.has(String(w).toLowerCase());
+  if (subject.type !== undefined) return [subject.type].flat().every(landWord);
+  if (subject.subtype !== undefined) return [subject.subtype].flat().every(landWord);
+  return subject.anyOf !== undefined && subject.anyOf.length > 0 && subject.anyOf.every(landOnlySubject);
+}
+
 /** A debuff amount ("-5/-5", "-0/-3", "-X/-X, where X is the mana value of the exiled card") whose TOUGHNESS half is negative: the half after the slash opens with a minus
  *  and is not "-0". `+2/-2` counts (it kills a 2-toughness creature); "-2/-0" and "-2/+0" do not. */
 function lowersToughness(amount: string | undefined): boolean {
@@ -409,6 +429,10 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         const fetches = cardLines(dc, true).filter((l) => l.source === "fetch");
         return fetches.length === 0 || fetches.some((l) => !isLoyaltyAbility(l) || usableLoyalty(l));
       })();
+    case "keyword": {
+      const wanted = new Set(clause.in.map((k) => k.toLowerCase()));
+      return (dc.card.keywords ?? []).some((k) => wanted.has(k.toLowerCase()));
+    }
     case "typeLine":
       return (dc.card.typeLine ?? "").toLowerCase().includes(clause.contains);
     case "effectKind":
@@ -421,6 +445,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope)))
         && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true)
         && (clause.notOnFlip !== true || a.onFlip === undefined)
+        && (clause.librarySearch === undefined || (a.librarySearch !== undefined && clause.librarySearch.includes(a.librarySearch)))
+        && (clause.notLandOnly !== true || !(a.effect.subject !== undefined && landOnlySubject(a.effect.subject)))
         && (clause.toughnessDown !== true || lowersToughness(a.amount)));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.
     //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations (derive reads the polymorph family as played on YOUR creature, `control: you`: owner ruling 2026-10-02 / #962,

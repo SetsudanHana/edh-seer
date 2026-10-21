@@ -12,6 +12,7 @@ import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exilesOwnGraveyard, 
 import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
+import { librarySearchOwner, printsSearch } from "./library-search.js";
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
@@ -516,7 +517,8 @@ import { emblemRecipient } from "../emblem.js";
 // 358: #1299 task 2 -- `CardTags.unclaimed` is persisted (every action no rule claimed, with its clause id), as `unknownTriggers` is. No ability changes.
 // 359: #1301 -- a `put` that is another effect's destination is claimed: `Ability.toZone` on the search it follows ("put it into your hand / onto the battlefield") and on the counter-spell it follows ("put it on top of its owner's library"); a dig's "put the rest on the bottom" is claimed as the remainder. No emit changes.
 // 360: #1301 review -- `toZone` is also set from a put that derives its own `enters` (Rampant Growth, Farseek); "one" counts as the searched card; the zone-tail strip is linear. No claim changes.
-export const DERIVE_VERSION = 360;
+// 361: #1266 -- `Ability.librarySearch` ("yours" | "other") on a `search` ability read off a printed search action naming a library; a typed dig carries none; a stored search of a bare library takes the card of the put after it (Tempt with Discovery's third search gets type land, its one claim change). No emit changes.
+export const DERIVE_VERSION = 361;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -662,6 +664,8 @@ export function entersUnderAnotherPlayer(cardText: string): boolean {
  *  CEILING: the opponent use is real and dropped, the way Path to Exile's self-ramp is. */
 const POLYMORPH_REVEAL = /\b(?:its|that creature's) controller reveals cards from the top of their library until they reveal a creature card\b/i;
 
+/** "your library", "their library", "that player's library": a search object that names a library and no card. */
+const BARE_LIBRARY = /^(?:your|their|its|that player's|target opponent's) library$/i;
 /** A pronoun-ish object that points back at the card a search found or the spell a counter countered ("it", "them", "that card", "those cards", "the card", "that spell"; "it into your hand" is how some clauses are stored). */
 const FOUND_OBJECT = /^(?:it|them|one|that card|those cards|the card|that spell)$/i;
 /** The zone phrase the stored object sometimes carries: "it into your hand", "up to two basic land cards onto the battlefield tapped", "those cards on top in any order". */
@@ -2157,6 +2161,16 @@ export function deriveAbilities(
     if ((clause.actions ?? []).some(zoneless)) {
       clause = { ...clause, actions: (clause.actions ?? []).map((a) => zoneless(a) ? { ...a, fromZone: "graveyard" } : a) };
     }
+    // A STORED SEARCH OF A BARE LIBRARY TAKES ITS CARD FROM THE PUT THAT FOLLOWS (#1266): Tempt with Discovery's third search is stored as `your library`, then `put a land card`,
+    // because the grammar left that sentence unread; the first two were read as "a land card". The card the search finds is the put's, as the grammar's own reading has it, so
+    // "your library for a land card" is what the search says (the owner stays in the object). A put of a pronoun names nothing. 7 stored clauses have the shape.
+    const bareSearchFound = (a: Action, i: number, all: readonly Action[]): string => {
+      const next = all[i + 1], found = (next?.object ?? "").trim();
+      return a.verb === "search" && BARE_LIBRARY.test((a.object ?? "").trim()) && next?.verb === "put" && found !== "" && !FOUND_OBJECT.test(found) ? found : "";
+    };
+    if ((clause.actions ?? []).some((a, i, all) => bareSearchFound(a, i, all) !== "")) {
+      clause = { ...clause, actions: (clause.actions ?? []).map((a, i, all) => bareSearchFound(a, i, all) !== "" ? { ...a, object: `${(a.object ?? "").trim()} for ${bareSearchFound(a, i, all)}` } : a) };
+    }
     // A QUOTED GRANT THE MODEL LEFT WITHOUT AN ACTION (#711): Enduring Vitality's `Creatures you
     // control have "{T}: Add one mana of any color."` came back as a static clause with no actions,
     // the quoted ability segmented as a clause of its own -- so nothing said who receives it. The
@@ -3035,6 +3049,15 @@ export function deriveAbilities(
       const limbCombat = ability.trigger?.subject.combat ? { combat: ability.trigger.subject.combat } : {};
       // The grammar reads every limb itself (above); these twins are the stored path's.
       if (trigger && !grammarRead) for (const limb of orLimbTriggers(text)) abilities.push({ ...ability, trigger: { ...trigger, verbs: limb.verbs, subject: { ...limb.subject, ...limbCombat } } });
+      if (action.verb === "search") {
+        // #1266: a PRINTED search says whose library; a `search` ability read off a `put` (a dig) never gets here with this verb.
+        // A model-written dig also says `search`; with the printed text in hand, the text must say it too.
+        // CEILING: with NO clause text (1 corpus card, Heaped Harvest, 2 actions, both real searches, measured at DERIVE 361) the verb is trusted, so a model-written dig with no
+        // recoverable text would read `yours`. Gating it would drop that real tutor.
+        const nth = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === "search").length;
+        const owner = clauseText === "" || printsSearch(clauseText) ? librarySearchOwner(action, clauseText, nth) : undefined;
+        if (owner) for (const made of abilities.slice(firstOfAction)) if (made.effect.kind === "search") made.librarySearch = owner;
+      }
       if (action.verb === "search" || action.verb === "counter-spell") destinationOwners.set((clause.actions ?? []).indexOf(action), abilities.slice(firstOfAction));
     }
 
