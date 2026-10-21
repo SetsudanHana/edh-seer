@@ -44,7 +44,12 @@ test("breadth: any permanent or spell 3 > several types or nonland 2 > one type 
   expect(ingredients(dc("Beast Within"), "targetedRemoval").breadth).toBe(3);
   expect(ingredients(dc("Swords to Plowshares"), "targetedRemoval").breadth).toBe(1);
   expect(ingredients(dc("Counterspell"), "stackInteraction").breadth).toBe(3); // any spell
-  expect(ingredients(dc("Sink into Stupor // Soporific Springs"), "targetedRemoval").breadth).toBe(2); // nonland permanent
+  // Sink into Stupor answers a spell OR a nonland permanent: its spell half is derived now (#1266), so it answers any spell (3). The nonland half alone is a synthetic
+  // copy without the spell emit, the way the Wrath test below stands one in.
+  const sink = dc("Sink into Stupor // Soporific Springs");
+  expect(ingredients(sink, "targetedRemoval").breadth).toBe(3);
+  const permanentHalf = { ...sink, tags: { ...sink.tags!, abilities: sink.tags!.abilities.map((a) => ({ ...a, emits: (a.emits ?? []).filter((e) => e.subject.fromZone !== "stack") })) } };
+  expect(ingredients(permanentHalf, "targetedRemoval").breadth).toBe(2); // nonland permanent
 });
 
 test("permanence: exile 3 > destroy/sacrifice 2 > bounce 1", () => {

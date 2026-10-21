@@ -7,7 +7,7 @@
  *  consumed as if it were true. */
 import type { Action } from "../canonicalize.js";
 import type { EffectKind } from "../schema.js";
-import { parseSubject } from "./subject.js";
+import { parseSubject, spellMove } from "./subject.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
  *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
@@ -104,8 +104,10 @@ export function bounceOrigin(action: Action): "battlefield" | "stack" | undefine
   if (action.fromZone === "battlefield" || action.fromZone === "stack") return action.fromZone;
   const object = permanentHalf(action.object ?? "");
   if (action.fromZone || /\bcards?\b/i.test(object)) return undefined;
-  const permanent = PERMANENT_NOUN.test(object), spell = SPELL_NOUN.test(object);
-  return permanent && !spell ? "battlefield" : spell && !permanent ? "stack" : undefined;
+  // BOTH AT ONCE ("target spell or permanent", Venser) is a bounce whose effect subject is the PERMANENT half (the filter drops the spell): the battlefield, as it has always read.
+  const spells = spellMove(object);
+  if (spells === "only") return "stack";
+  return spells === "mixed" || PERMANENT_NOUN.test(object) ? "battlefield" : undefined;
 }
 function bouncesUnstated(action: Action): boolean {
   if (action.fromZone || action.toZone !== "hand" || (action.verb !== "return" && action.verb !== "put")) return false;

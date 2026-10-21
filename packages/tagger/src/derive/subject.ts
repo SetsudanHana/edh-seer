@@ -882,3 +882,20 @@ function orBranches(text: string): Partial<SubjectFilter>[] {
   }
   return out;
 }
+
+/** Words before "spell" that show the phrase is not naming a spell on the stack: "this spell" is the card itself ("... as you cast this spell"), and a spell that comes after
+ *  one of these belongs to a clause about casting or counting, not to the thing moved. */
+const NOT_A_STACK_OBJECT: ReadonlySet<string> = new Set(["this", "where", "as", "cast", "casts", "when", "if", "for", "from", "whenever"]);
+
+/** Does a moved phrase name a SPELL: "only" (target spell, noncreature spell, instant or sorcery spell, spell or ability) or "mixed" (spell or permanent, creature or spell)?
+ *  A spell has a determiner before it ("target spell", "that spell", "each spell"), so a card whose NAME holds the word ("Spell Crumple") is none. A word scan, not a regex. */
+export function spellMove(phrase: string): "only" | "mixed" | undefined {
+  const words = phrase.toLowerCase().split(" ");
+  const at = words.findIndex((w) => w === "spell" || w === "spells");
+  if (at < 1 || words[at + 1]?.startsWith("card") || words.slice(0, at).some((w) => NOT_A_STACK_OBJECT.has(w))) return undefined;
+  const joins = (w: string | undefined): boolean => w === "or" || w === "and/or";
+  const after = words[at + 2];
+  // "target creature spell or planeswalker spell": the second half is a spell too.
+  if (joins(words[at + 1]) && after !== undefined && !after.startsWith("abilit") && !words.slice(at + 2).some((w) => w === "spell" || w === "spells")) return "mixed";
+  return joins(words[at - 1]) ? "mixed" : "only";
+}

@@ -2541,6 +2541,17 @@
         ]
        },
        "verb": "leaves"
+      },
+      {
+       "instantSpeed": true,
+       "subject": {
+        "control": "opp",
+        "fromZone": "stack",
+        "scope": "target",
+        "token": null,
+        "type": "spell"
+       },
+       "verb": "leaves"
       }
      ],
      "kind": "on-cast",

@@ -873,7 +873,9 @@ test("an unstated origin is read off the object: a permanent is on the battlefie
   expect(k("target spell or permanent")).toBe("bounce");
   expect(bounceOrigin({ verb: "return", object: "target creature you control", toZone: "hand" })).toBe("battlefield");
   expect(bounceOrigin({ verb: "return", object: "target spell", toZone: "hand" })).toBe("stack");
-  expect(bounceOrigin({ verb: "return", object: "target spell or permanent", toZone: "hand" })).toBeUndefined();
+  // BOTH AT ONCE: the effect subject is the permanent half (the spell half is its own emit, #1266), so the zone is the battlefield; a creature SPELL is a spell.
+  expect(bounceOrigin({ verb: "return", object: "target spell or permanent", toZone: "hand" })).toBe("battlefield");
+  expect(bounceOrigin({ verb: "return", object: "target creature spell", toZone: "hand" })).toBe("stack");
   // A CARD is in a hidden zone or a graveyard, and a bare pronoun says nothing.
   expect(k("a creature card you own from outside the game")).toBeNull();
   expect(k("that card")).toBeNull();

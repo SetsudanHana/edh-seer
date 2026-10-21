@@ -3,7 +3,7 @@
  *  vocabulary, but without its `dies` emit no aristocrats edge ever forms. */
 import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
-import { controlFromRelation, counterKindOf, parseCounter, parseSubject, COUNT_PHRASE } from "./subject.js";
+import { controlFromRelation, counterKindOf, parseCounter, parseSubject, spellMove, COUNT_PHRASE } from "./subject.js";
 import { LAND_SUBTYPES } from "./subtypes.js";
 import { tokenTypeFor } from "./token-types.js";
 import { isEnergyObject, permanentHalf } from "./effect-kind.js";
@@ -279,6 +279,12 @@ const ZONE_EMITS: { verb: string; to: string; verbs: Verb[]; when?: (a: Action, 
   // EVERY EXILE PUTS SOMETHING INTO EXILE (CR 406.2), so `exiled` is unconditional (AF7b,
   // 2026-09-16); a battlefield exile ALSO left the battlefield. First row wins, so the conditional
   // one sits first.
+  // A SPELL ON THE STACK (#1266): "Return target spell to its owner's hand" (Reprieve), "exile target spell" (Spell Queller) leave the stack, and the emit says so
+  // (`fromZone: "stack"`, set in `actionEmits`). Not a battlefield leave: the zone on the subject is what keeps a leaves-the-battlefield payoff off it.
+  { verb: "exile", to: "exile", verbs: ["exiled", "leaves"], when: fromTheStack },
+  { verb: "return", to: "hand", verbs: ["leaves"], when: fromTheStack },
+  { verb: "put", to: "hand", verbs: ["leaves"], when: fromTheStack },
+  { verb: "put", to: "library", verbs: ["leaves"], when: fromTheStack },
   { verb: "exile", to: "exile", verbs: ["exiled", "leaves"], when: leftTheBattlefield },
   // ...but "exile it" with no antecedent left is a wildcard supply and stays silent, the refusal
   // every untyped pronoun emit gets; "the top card of your library" names its owner and origin.
@@ -330,6 +336,67 @@ function counterRecipient(clauseText: string): string | undefined {
   const forEach = tail.search(/\sfor each\b/i);
   return forEach >= 0 ? tail.slice(0, forEach).trimEnd() : tail;
 }
+
+/** A move whose stated origin is the stack: a spell. */
+function fromTheStack(a: Action): boolean {
+  return a.fromZone === "stack" && spellMove(a.object ?? "") !== undefined;
+}
+
+/** The verbs whose object can be a spell on the stack: it is returned, put into a library, exiled, or taken. */
+const STACK_MOVES: ReadonlySet<string> = new Set(["return", "put", "exile", "gain-control"]);
+/** ...and the events of those moves that are ABOUT the spell (a flicker's `enters` is about the permanent that returns). */
+const STACK_EVENTS: ReadonlySet<string> = new Set(["leaves", "exiled", "gains-control"]);
+/** Words that end the permanent half of "target spell or permanent with mana value 1 or greater": what follows describes both halves. */
+const HALF_ENDS: ReadonlySet<string> = new Set(["with", "an", "a", "you", "your", "that", "its", "their", "controlled", "of"]);
+
+/** The text of the SPELL half of an object: "target spell or nonland permanent an opponent controls" -> "target spell an opponent controls", and the clause after "that" is cut
+ *  ("target spell that targets only a single permanent or player" -> "target spell"; what a spell targets is not its class). */
+function spellHalfText(object: string): string {
+  const words = object.split(" ");
+  const cut = words.indexOf("that");
+  const head = cut < 0 ? words : words.slice(0, cut);
+  const at = head.findIndex((w) => w === "spell" || w === "spells");
+  const joins = (w: string | undefined): boolean => w === "or" || w === "and/or";
+  if (at < 0 || spellMove(head.join(" ")) !== "mixed") return head.join(" ");
+  if (joins(head[at - 1])) return "target spell";
+  if (!joins(head[at + 1])) return head.join(" ");
+  let j = at + 2;
+  while (j < head.length && !HALF_ENDS.has(head[j]!)) j++;
+  return [...head.slice(0, at + 1), ...head.slice(j)].join(" ");
+}
+
+/** The subject of an emit about a SPELL: its card types (noncreature = spell that is not a creature), `scope` when targeted, mana value, and `fromZone: "stack"` (#1266). */
+function stackSubject(object: string, control: SubjectFilter["control"]): SubjectFilter {
+  const half = parseSubject(spellHalfText(object));
+  const out: SubjectFilter = { control, token: null };
+  if (half.notType?.length) { out.type = "spell"; out.notType = half.notType; }
+  else out.type = half.type ?? "spell";
+  if (half.scope) out.scope = half.scope;
+  if (half.stats) out.stats = half.stats;
+  if (parseSubject(object).restricted) out.restricted = true;
+  out.fromZone = "stack";
+  return out;
+}
+
+/** "TARGET ... SPELL" EARLIER IN THE SAME ABILITY (the owner ruling, 2026-10-14): the spell "that spell" / "the chosen spell" names is a TARGET only when an earlier sentence
+ *  says "target ... spell" (Swallowed by Leviathan's "Choose target spell", Mages' Contest's "target spell's controller"), within six sentences; a trigger on any cast ("whenever an opponent casts a
+ *  spell, counter that spell") names none, and "becomes the target OF a spell" (Kira) is not one. Word scan, bounded gap of seven words. */
+export function targetsASpellEarlier(text: string, anaphor: string): boolean {
+  const sentences = text.toLowerCase().split(".");
+  let named = -1;
+  for (let i = 0; i < sentences.length && named < 0; i++) {
+    const words = sentences[i]!.split(/[ ,]+/);
+    for (let w = 0; w < words.length; w++) {
+      if (words[w] !== "target" || words[w + 1] === "of") continue;
+      if (words.slice(w + 1, w + 8).some((x) => x.startsWith("spell"))) { named = i; break; }
+    }
+  }
+  if (named < 0) return false;
+  for (let j = named; j < sentences.length && j <= named + 6; j++) if (sentences[j]!.includes(anaphor)) return true;
+  return false;
+}
+/** The back-references to a spell the clause named earlier. */
+const SPELL_ANAPHORS = ["the chosen spell", "that spell", "the spell"];
 
 /** Did this action move something OFF THE BATTLEFIELD? A stated battlefield origin says so; an
  *  unstated one says so only for a permanent-shaped object. See the `exile` row above. */
@@ -491,6 +558,10 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   const recipient = (action.verb === "add-counter" && counterKindOf(action.object ?? "") !== undefined)
     ? counterRecipient(clauseText ?? "")
     : undefined;
+  // A BID THE MODEL STORED AS ONE `other` ("You and target spell's controller bid life ... If you win the bidding, counter that spell", Mages' Contest) still counters that spell.
+  if (action.verb === "other" && (action.object ?? "").toLowerCase().includes("counter that spell")) {
+    return [{ verb: "counter-spell", subject: { control: "any", token: null, type: "spell", ...(targetsASpellEarlier(action.object ?? "", "that spell") ? { scope: "target" as const } : {}) } }];
+  }
   const subject = parseSubject(recipient ?? action.object ?? "");
   // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
   // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
@@ -704,6 +775,28 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     // check it (recall v4 #120).
     ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null, ...(action.verb === "fight" ? { type: "creature" } : {}) } } : {}),
   }));
+  // Only a move that states no origin, or the stack: a spell named in a phrase that says graveyard, library or hand is a card there ("exile target instant or sorcery card from your graveyard, cast that spell").
+  const spellMention = STACK_MOVES.has(action.verb ?? "") && (action.fromZone == null || action.fromZone === "stack") ? spellMove(action.object ?? "") : undefined;
+  if (spellMention !== undefined && events.length > 0) {
+    // ONLY A SPELL: the whole subject is that spell, on the stack. A MIXED object ("target spell or permanent", Venser) is two things: the permanent half stays as it was, off the
+    // battlefield, and the spell half is an emit of its own.
+    const about = events.filter((e) => STACK_EVENTS.has(e.verb));
+    if (spellMention === "only") for (const e of about) e.subject = stackSubject(action.object ?? "", e.subject.control);
+    else {
+      const spells = about.map((e) => ({ ...e, subject: stackSubject(action.object ?? "", e.subject.control) }));
+      // The permanent half is on the battlefield even when the model wrote `stack` for the whole phrase (Swat Away).
+      for (const e of about) if (e.subject.fromZone === undefined || e.subject.fromZone === "stack") e.subject.fromZone = "battlefield";
+      events.push(...spells);
+    }
+  }
+  // "THAT SPELL", "THE CHOSEN SPELL": a target when the same ability says "target ... spell" earlier, never on a trigger that names none (Counterbalance, Kira).
+  const anaphor = SPELL_ANAPHORS.find((a) => (action.object ?? "").trim().toLowerCase() === a);
+  if (anaphor !== undefined && (STACK_MOVES.has(action.verb ?? "") || action.verb === "counter-spell") && targetsASpellEarlier(clauseText ?? "", anaphor)) {
+    for (const e of events) {
+      e.subject.scope = "target";
+      if (action.verb !== "counter-spell") e.subject.fromZone = "stack";
+    }
+  }
   // A FIGHT IS TWO DAMAGE EVENTS (CR 701.14a): each creature deals damage to the other, and the emit
   // above carries only the half where YOUR creature is the dealer -- the object parses to the
   // opponent's creature as the victim. The mirror is the half the receiving side needs: Khalni

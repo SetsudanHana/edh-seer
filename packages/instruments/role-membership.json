@@ -11597,6 +11597,7 @@
 "Swarmyard": ["role:lands"],
 "Swashbuckler Extraordinaire": ["role:ramp"],
 "Swat": ["answer:creature","role:targetedRemoval"],
+"Swat Away": ["role:targetedRemoval"],
 "Swathcutter Giant": ["role:boardWipe"],
 "Sway of Illusion": ["role:draw"],
 "Sway of the Stars": ["role:draw"],
