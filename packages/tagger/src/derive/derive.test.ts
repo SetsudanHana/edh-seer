@@ -5227,3 +5227,20 @@ describe("Ability.librarySearch: owner after the zone list, and non-library sear
     expect(owner(spell([{ verb: "search", object: "a card", fromZone: "library" }], text))).toEqual([undefined]);
   });
 });
+
+describe("a stored search of a bare library takes its card from the put that follows (#1266, Tempt with Discovery)", () => {
+  const searches = (actions: object[]) => deriveAbilities([{ id: 1, abilityType: "spell" as const, actions }]).abilities.filter((a) => a.effect.kind === "search");
+  const put = (object: string) => ({ verb: "put", object, fromZone: "library", toZone: "battlefield" });
+  test("'your library' then a put of 'a land card' types the search land, and keeps whose library it is", () => {
+    const [mine] = searches([{ verb: "search", object: "your library", fromZone: "library" }, put("a land card")]);
+    expect(mine!.effect.subject?.type).toBe("land");
+    expect(mine!.librarySearch).toBe("yours");
+    const [theirs] = searches([{ verb: "search", object: "their library", fromZone: "library" }, put("a land card")]);
+    expect(theirs!.effect.subject?.type).toBe("land");
+    expect(theirs!.librarySearch).toBe("other");
+  });
+  test("a put of a pronoun leaves the search untyped", () => {
+    const [s] = searches([{ verb: "search", object: "your library", fromZone: "library" }, put("it")]);
+    expect(s!.effect.subject?.type).toBeUndefined();
+  });
+});

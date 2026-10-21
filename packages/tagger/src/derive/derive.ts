@@ -665,6 +665,8 @@ export function entersUnderAnotherPlayer(cardText: string): boolean {
 const POLYMORPH_REVEAL = /\b(?:its|that creature's) controller reveals cards from the top of their library until they reveal a creature card\b/i;
 
 /** A pronoun-ish object that points back at the card a search found or the spell a counter countered ("it", "them", "that card", "those cards", "the card", "that spell"; "it into your hand" is how some clauses are stored). */
+/** "your library", "their library", "that player's library": a search object that names a library and no card. */
+const BARE_LIBRARY = /^(?:your|their|its|that player's|target opponent's) library$/i;
 const FOUND_OBJECT = /^(?:it|them|one|that card|those cards|the card|that spell)$/i;
 /** The zone phrase the stored object sometimes carries: "it into your hand", "up to two basic land cards onto the battlefield tapped", "those cards on top in any order". */
 // Cut at the FIRST " onto/into/on/in ", found by a bounded search and sliced. `.replace(/ (?:on|in)\s.*$/)` rescanned to the end from every
@@ -2158,6 +2160,16 @@ export function deriveAbilities(
       !a.fromZone && ZONE_MOVING_VERBS.has(a.verb ?? "") && OBJECT_IN_GRAVEYARD.test(a.object ?? "");
     if ((clause.actions ?? []).some(zoneless)) {
       clause = { ...clause, actions: (clause.actions ?? []).map((a) => zoneless(a) ? { ...a, fromZone: "graveyard" } : a) };
+    }
+    // A STORED SEARCH OF A BARE LIBRARY TAKES ITS CARD FROM THE PUT THAT FOLLOWS (#1266): Tempt with Discovery's third search is stored as `your library`, then `put a land card`,
+    // because the grammar left that sentence unread; the first two were read as "a land card". The card the search finds is the put's, as the grammar's own reading has it, so
+    // "your library for a land card" is what the search says (the owner stays in the object). A put of a pronoun names nothing. 7 stored clauses have the shape.
+    const bareSearchFound = (a: Action, i: number, all: readonly Action[]): string => {
+      const next = all[i + 1], found = (next?.object ?? "").trim();
+      return a.verb === "search" && BARE_LIBRARY.test((a.object ?? "").trim()) && next?.verb === "put" && found !== "" && !FOUND_OBJECT.test(found) ? found : "";
+    };
+    if ((clause.actions ?? []).some((a, i, all) => bareSearchFound(a, i, all) !== "")) {
+      clause = { ...clause, actions: (clause.actions ?? []).map((a, i, all) => bareSearchFound(a, i, all) !== "" ? { ...a, object: `${(a.object ?? "").trim()} for ${bareSearchFound(a, i, all)}` } : a) };
     }
     // A QUOTED GRANT THE MODEL LEFT WITHOUT AN ACTION (#711): Enduring Vitality's `Creatures you
     // control have "{T}: Add one mana of any color."` came back as a static clause with no actions,

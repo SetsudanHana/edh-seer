@@ -11858,7 +11858,7 @@
 "Temporary Lockdown": ["role:boardWipe"],
 "Temporary Truce": ["role:draw"],
 "Tempt with Bunnies": ["role:draw"],
-"Tempt with Discovery": ["role:ramp","role:tutor"],
+"Tempt with Discovery": ["role:ramp"],
 "Tempting Contract": ["role:ramp"],
 "Tempting Witch": ["role:burn"],
 "Temur Ascendancy": ["role:draw"],
