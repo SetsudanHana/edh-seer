@@ -1233,6 +1233,20 @@ describe("removal.targeted is derived", () => {
     expect(ruleMatches(rule, realCard("Wrath of God"), set)).toBe(false);
     expect(ruleMatches(rule, blank("Wrath of God"), set)).toBe(false);
   });
+  test("TARGETED DAMAGE IS REMOVAL when its target can be a permanent, at any amount (owner ruling 2026-10-22, #1294): any target, creature, planeswalker, battle, 1-damage pings, repeatable pingers", () => {
+    for (const n of ["Lightning Bolt", "Lightning Helix", "Galvanic Blast", "Bee Sting", "Jolene, Plundering Pugilist", "Prodigal Pyromancer", "Flame Slash", "Fling", "Electrolyze", "Volcanic Spite", "Rampaging Raptor", "Aethertorch Renegade"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(true);
+  });
+  test("a pinger whose effect lost its subject to a cost still reads its targeted damage emits (Aethertorch Renegade: '{T}, Pay {E}{E}: 1 damage to target creature')", () => {
+    expect(realCard("Aethertorch Renegade").tags!.abilities.some((a) => a.effect.kind === "damage" && a.effect.subject === undefined)).toBe(true);
+  });
+  test("'target player or planeswalker' is removal through the planeswalker (Lava Spike), and on a land it fills removal.land (Sunscorched Desert)", () => {
+    expect(ruleMatches(rule, realCard("Lava Spike"), set)).toBe(true);
+    expect(ruleMatches(land, realCard("Sunscorched Desert"), set)).toBe(true);
+    expect(ruleMatches(rule, realCard("Sunscorched Desert"), set)).toBe(false);
+  });
+  test("damage that cannot reach a permanent is burn, not removal: 'target player' / 'target opponent' (Pyroclastic Elemental, Sudden Impact, Hired Claw, Fire and Brimstone), 'each opponent' (Purphoros), your own creature (Rile)", () => {
+    for (const n of ["Pyroclastic Elemental", "Sudden Impact", "Hired Claw", "Fire and Brimstone", "Purphoros, God of the Forge", "Rile", "Anathemancer"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
+  });
   test("a flicker of your own permanent is not removal (Abuelo: control you; Flicker: the return comes at once), with its printed text", () => {
     for (const n of ["Abuelo, Ancestral Echo", "Flicker"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
   });

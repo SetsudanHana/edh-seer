@@ -461,7 +461,7 @@ test("burn & drain: damage/life-loss to players (not creatures, not self), read 
 
 test("damage-to-creature is targeted removal; graveyard-hate exile is not removal", () => {
   const m = detectBuildCategories([
-    mk("Flame Slash", "Flame Slash deals 4 damage to target creature.", "Sorcery"),
+    realCard("Flame Slash"),
     mk("Release to Memory", "Exile target opponent's graveyard. For each creature card exiled this way, create a 1/1 colorless Spirit creature token.", "Instant"),
   ]);
   expect(m.get("targetedRemoval")).toContain("Flame Slash");
@@ -512,18 +512,15 @@ test("removal regex tolerates words between verb and target", () => {
   expect(m.get("targetedRemoval")).toEqual(new Set(["Solitude", "Shambling Ghast", "Yawgmoth, Thran Physician"]));
 });
 
-test("loosened damage removal catches qualified creature targets; any-target stays out", () => {
-  const m = detectBuildCategories([
-    mk("Eiganjo Bolt", "It deals 4 damage to target attacking or blocking creature.", "Instant"),
-    mk("Pinger", "This creature deals 1 damage to any target.", "Creature"),
-  ]);
-  expect(m.get("targetedRemoval")).toContain("Eiganjo Bolt");
-  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Pinger");
+test("damage removal catches qualified creature targets, and (owner ruling 2026-10-22, #1294) any-target pings and 'target player or planeswalker'; player-only damage stays out", () => {
+  const m = detectBuildCategories([realCard("Practiced Tactics"), realCard("Prodigal Pyromancer"), realCard("Lava Spike"), realCard("Pyroclastic Elemental")]);
+  for (const n of ["Practiced Tactics", "Prodigal Pyromancer", "Lava Spike"]) expect(m.get("targetedRemoval"), n).toContain(n);
+  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Pyroclastic Elemental");
 });
 
 test("land-based removal is detected (channel/activated); graveyard-exile land is not", () => {
   const m = detectBuildCategories([
-    mk("Eiganjo, Seat of the Empire", "{T}: Add {W}. Channel — {2}{W}, Discard this card: It deals 4 damage to target attacking or blocking creature.", "Legendary Land"),
+    realCard("Eiganjo, Seat of the Empire"),
     mk("Bojuka Land", "{T}: Add {B}. {1}, {T}, Sacrifice this land: Exile target player's graveyard.", "Land"),
   ]);
   expect(m.get("targetedRemoval")).toContain("Eiganjo, Seat of the Empire");
