@@ -12,12 +12,12 @@ export const VERB_WORDS: Readonly<Record<string, string>> = {
   "sacrifice": "sacrifice(?:s|d)?|sacrificing",
   "exile": "exil(?:e|es|ed|ing)", "destroy": "destroy(?:s|ed|ing)?|destruction", "tap": "tap(?:s|ped|ping)?|\\{t\\}", "untap": "untap(?:s|ped|ping)?|\\{q\\}",
   "draw": "draw(?:s|ing)?|drew", "mill": "mill(?:s|ed)?|graveyard", "search": "search(?:es|ed|ing)?|look(?:s)? at|reveals? cards? from the top", "put": "puts?|placed?|placing|putting|enters?|entered|begin the game|moves?|shuffles? [^.]{0,60} into|onto the battlefield",
-  "return": "returns?|returned|returning|back|until [^.]{0,60} leaves the battlefield|until [^.]{0,60} leaves play", "counter-spell": "counters?|countered",
+  "return": "returns?|returned|returning|back|onto the battlefield|into (?:your|their|its owner's|their owners'|that player's|his or her|target player's)[^.]{0,20}(?:hands?|librar(?:y|ies)|graveyards?)|until [^.]{0,60} leaves the battlefield|until [^.]{0,60} leaves play", "counter-spell": "counters?|countered",
   "copy": "cop(?:y|ies|ied|ying)", "gain-life": "gains?|gained|life|lifelink", "lose-life": "loses?|lost|life", "deal-damage": "deals?|dealt|damage",
   "add-mana": "adds?|added|mana", "add-counter": "puts?|put|counters?|bolster|adapt|proliferate|support|distribute|moves?|gets? \\{e\\}|enters? with|enters the battlefield with|place",
   "remove-counter": "pays?|paid|\\{e\\}|removes?|removed|counters?|proliferate", "grant-ability": "gains?|gained|has|have|had|with|gets?|can|can't|cannot|protection|haste|flying|lifelink|deathtouch|trample|vigilance|first strike|double strike|menace|reach|hexproof|indestructible|ward|keyword|ability|abilities|\\bis\\b|\\bare\\b|becomes?|loses?|doesn't|don't",
   "modify-pt": "\\d+/\\d+|gets?|get|[+-]\\d+/[+-]\\d+|[+-]x/[+-]x|base power|power|toughness|becomes?|has|have|with|equal to|swap|exchange|double|triple",
-  "prevent": "prevent(?:s|ed)?|prevention|instead|redirect|can't|cannot|won't|doesn't|don't|would be dealt",
+  "prevent": "protection from|prevent(?:s|ed)?|prevention|instead|redirect|can't|cannot|won't|doesn't|don't|would be dealt",
   "cast": "cast(?:s|ing)?|casts?|play|plays|copy|copies", "play": "plays?|played|playing|cast(?:s|ing)?|land|lands",
   "shuffle": "shuffl(?:e|es|ed|ing)", "reveal": "reveal(?:s|ed|ing)?|shows?|look(?:s|ed)? at", "attach": "attach(?:es|ed|ing)?|equip(?:ped)?|fortif(?:y|ied)|enchant(?:ed)?|aura|reconfigure|bestow|unattach",
   "transform": "transform(?:s|ed|ing)?|daybound|nightbound|disturb|meld|flip|convert|back face|day|night", "trigger-again": "trigger(?:s|ed)?|additional time|twice|an extra time|again|copy|copies|additional",
@@ -40,7 +40,7 @@ export const VERB_WORDS: Readonly<Record<string, string>> = {
   "airbend": "airbend", "waterbend": "waterbend", "proliferate": "proliferat(?:e|es|ed)",
 };
 /** The verbs a "none" verdict drops. One family per commit (#1321); empty until each is measured. */
-export const GUARDED_VERBS: Set<string> = new Set<string>(["add-mana", "goad", "shuffle", "scry", "mill", "search", "trigger-again", "gain-life", "add-counter", "remove-counter"]);
+export const GUARDED_VERBS: Set<string> = new Set<string>(["add-mana", "goad", "shuffle", "scry", "mill", "search", "trigger-again", "gain-life", "add-counter", "remove-counter", "transform", "prevent", "return", "roll-dice", "vote", "city-blessing"]);
 /** An action the guard never drops although its verb is guarded: a reading derive has for it already (an `add-mana` of {E} is the energy counter, CR 107.14, emitted as `counter-added`). */
 export function guardExempt(action: { verb?: string; object?: string }): boolean {
   return action.verb === "add-mana" && isEnergyObject(action.object ?? "");
