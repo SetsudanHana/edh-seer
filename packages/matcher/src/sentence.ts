@@ -19,6 +19,11 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   "player-life-loss": [(n) => (/^(\d+|X)$/.test(n) ? `makes each opponent lose ${n} life` : `makes each opponent lose life equal to ${n}`), "makes each opponent lose life"],
   "counter-placement": [(n) => (n === "1" ? "puts a counter on it" : `puts ${n} counters on it`), "puts counters on it"],
   "token-generation": [(n) => (n === "1" ? "makes a token" : `makes ${n} tokens`), "makes a token"],
+  // THE FACT KINDS THE ABILITY ROW NAMES (#1315): without an entry the card page printed the raw kind ("static — restriction"). Generic on purpose: `evasion` covers "except by Walls" and
+  // "by power 3 or greater" as well as "can't be blocked", and `restriction` is attack, block or both (`Ability.restricts` is not on the row). No pair reason is built from either.
+  evasion: [() => "restricts what can block it", "restricts what can block it"],
+  restriction: [() => "restricts attacking or blocking", "restricts attacking or blocking"],
+  retarget: [() => "changes what a spell or ability targets", "changes what a spell or ability targets"],
   // CR 114.2's own verb. An emblem is not a token, and the row must not say it is.
   emblem: [() => "gets an emblem", "gets an emblem"],
   "mana-generation": [(n) => `adds ${n} mana`, "adds mana"],

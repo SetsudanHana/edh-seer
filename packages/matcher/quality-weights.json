@@ -1,5 +1,5 @@
 {
-  "deriveVersion": 368,
+  "deriveVersion": 374,
   "rulesVersion": 32,
   "roles": {
     "ramp": {
@@ -99,12 +99,12 @@
     },
     "burn": {
       "weights": {
-        "manaValue": -1.0735834087567628,
-        "frequency": 0.8081032542516645,
-        "timing": 2.5870200918820094,
-        "extraValue": 1.1566595188369282,
+        "manaValue": -1.0760815071738732,
+        "frequency": 0.8089813560445737,
+        "timing": 2.609983115075939,
+        "extraValue": 1.1603438182062267,
         "rateCeiling": 1,
-        "amount": 0.3083925469777282
+        "amount": 0.30644845775363483
       },
       "pairs": 156,
       "heldOutAccuracy": 0.7946657718295507,

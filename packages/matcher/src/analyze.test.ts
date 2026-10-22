@@ -157,6 +157,14 @@ test("untagged cards contribute no edges but still appear in the report", () => 
   expect(report.cards.map((c) => c.name).sort()).toEqual(["A", "B"]);
 });
 
+test("a fact kind's static tag is kept off the deck's themes and its axis (#1315)", () => {
+  const evader = (n: string) => dc(n, [{ kind: "static", effect: { kind: "evasion", subject: { type: "creature", control: "you", scope: "all" } } }] as never);
+  const cards = [dc("Inalla", inallaAbility, ["wizard"]), dc("Payoff", kindredDiscoveryAbility), ...Array.from({ length: 12 }, (_, i) => evader(`Evader ${i}`))];
+  const report = analyzeDeckStructured(cards, undefined, H);
+  expect(report.themes.map((t) => t.tag)).not.toContain("static:evasion");
+  expect(report.cards.find((c) => c.name === "Payoff")!.axisWeight).toBe(1);
+});
+
 test("commander boost is applied to the commander's partners", () => {
   const cmd = dc("Cmd", inallaAbility, ["wizard"]);
   const payoff = dc("Payoff", kindredDiscoveryAbility);

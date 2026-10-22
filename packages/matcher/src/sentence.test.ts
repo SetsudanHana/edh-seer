@@ -594,3 +594,11 @@ test("a double-strike grant read from the verb double says double strike, never 
 test("effectPhrase: an intercepted graveyard fill does not bring a card back (#1083)", () => {
   expect(effectPhrase("graveyard-intercept", undefined)).toBe("takes an opponent's cards on the way to the graveyard");
 });
+
+describe("the fact kinds say what they are on the ability row (#1315)", () => {
+  test("evasion, restriction and retarget have a phrase, so the row never falls back to the raw kind", () => {
+    expect(effectPhrase("evasion", undefined)).toBe("restricts what can block it");
+    expect(effectPhrase("restriction", undefined)).toBe("restricts attacking or blocking");
+    expect(effectPhrase("retarget", undefined)).toBe("changes what a spell or ability targets");
+  });
+});

@@ -148,6 +148,63 @@ export function extraLoyalty(text: string): "yours" | "self" | undefined {
  *  Linear: fixed heads by `indexOf`, a split on sentence punctuation, then a word scan. */
 const RETARGET_HEADS = ["change the target of ", "change the targets of ", "change a target of ", "change any targets of ", "choose new targets for ", "choose a new target for "];
 const RETARGET_STOP: ReadonlySet<string> = new Set(["with", "that", "if", "to", "which", "unless"]);
+/** A BLOCKING RESTRICTION THE CARD'S OWN ATTACKER CARRIES (CR 509.1b: "A restriction may be created by an evasion ability (a static
+ *  ability an attacking creature has that restricts what can block it)"): "can't be blocked", "... except by Walls", "... by creatures with
+ *  power 3 or greater", "... this turn", "... as long as ...". The model stores it as `cant | be blocked ...` (or with the subject kept in the
+ *  object: "this creature can't be blocked"). It also files "MUST be blocked if able" (Gorm, The Foretold Soldier, Frodo Baggins, Maarika) as
+ *  `cant | not be blocked ...` and "must be blocked by two or more creatures" as `be blocked by fewer than two creatures`: a drawback, not
+ *  evasion, so a leading "not" and "fewer than" are refused (and the printed clause must say "can't be blocked").
+ *  "Can't block" is the other restriction and never has "be blocked" in its object. A quoted grant ("a token with 'This token can't be blocked'")
+ *  is a `create`/`grant-ability` verb and never reaches here. */
+export function cantBeBlocked(object: string, clauseText = ""): boolean {
+  if (!/\bbe blocked\b/i.test(object)) return false;
+  if (/^\s*not\b/i.test(object) || /\bfewer than\b/i.test(object) || /\bas though\b|\bblock or be blocked\b/i.test(object)) return false;
+  // THE PRINTED CLAUSE MUST SAY IT. The model also files other sentences as `cant | ... be blocked ...`: "Protection from Vampires" (Elite
+  // Inquisitor: protection's own blocking clause, a keyword, not a printed evasion), "can attack as though it didn't have defender" (Krotiq
+  // Nestguard, Colossus of Akros), "Creatures with swampwalk can be blocked as though ..." (Ur-Drago), "all creatures able to block target
+  // creature this turn do so" (Taunting Arbormage). Where the clause text is known it has to print "can't be blocked".
+  // CEILING: "can't block or be blocked by ..." (Sneaky Homunculus) is both a drawback and an evasion and is left unread; so is "can be blocked
+  // only by creatures in the same sector" (Space Beleren), a restriction that does not print "can't be blocked".
+  return clauseText === "" || /\b(?:can['\u2019]t|cannot) be blocked\b/i.test(clauseText);
+}
+
+/** A RESTRICTION ON ATTACKING OR BLOCKING (CR 508.1c: "effects that say a creature can't attack"; CR 509.1b: "effects that say a creature can't block"), and which of the two (#1315).
+ *  The model stores `cant | attack or block` (Pacifism, Arrest), `cant | block` (Gravecrawler, Bedlam), `cant | attack` (Moat), `cant | block this turn`, or keeps its subject in the
+ *  object ("enchanted creature can't block", Mishra's Domination). ONLY the bare forms read: "attack", "block", "attack or block", with "this turn" or "until your next turn".
+ *  Not "can't attack you or planeswalkers you control" (Vow of Flight; Propaganda's tax is a payable and is read first), not a requirement ("not attack each combat if able",
+ *  "doesn't attack"), not a narrowed block ("block creatures without flying", "block this creature"), not "alone" and not an "unless" condition, and never "be blocked" (evasion).
+ *  CEILING: the narrowed and conditional forms are left unread -- 32 "block creatures without flying", 26 "attack unless defending player controls an island", 12 "... alone",
+ *  11 "block this creature" stored objects (research/tagger/restriction-objects.ts, 2026-10-22); each is a real restriction that this kind would overclaim as total.
+ *  CEILING: a CONDITION on the sentence is refused (derive 374): 38 abilities on 34 cards that read as total at 373 (Childhood Horror, Putrid Imp, Barrage of Boulders, Demoralize, Aragorn's
+ *  monarch sentence, Clawing Torment's "As long as enchanted permanent is a creature, it gets -1/-1 and can't block" ...); a condition the clause text does not print is unseen.
+ *  Where the clause text is known it must print "can't|cannot attack|block". Linear: one `search`, one anchored match. */
+export function restrictedActions(object: string, clauseText = "", occurrence = 0): ("attack" | "block")[] | undefined {
+  if (/\bbe blocked\b/i.test(object)) return undefined;
+  const at = object.search(/\b(?:can['\u2019]t|cannot)\s/i);
+  const rest = (at < 0 ? object : object.slice(object.indexOf(" ", at) + 1)).trim();
+  const m = /^(attack|block)(?: or (attack|block))?(?: this turn| until your next turn)?$/i.exec(rest);
+  if (!m) return undefined;
+  if (clauseText !== "") {
+    // WHICH PRINTED "can't attack|block" THIS ACTION IS: the n-th, when the model stored the same object twice (Aragorn, King of Gondor: "up to one target creature can't block
+    // this turn. If you're the monarch, creatures can't block this turn"). A CONDITION on the sentence makes the restriction partial, so it is refused (#1315 review): a trailing one
+    // ("can't block unless / if / as long as / only / alone / except / while ...") and a LEADING one in the same sentence ("As long as seven or more cards are in your graveyard, this
+    // creature gets +2/+2 and can't block", "If you're the monarch, creatures can't block this turn"). A trigger head alone is not a condition ("Whenever Aragorn attacks, ..."), and an
+    // "Otherwise, it can't block" sentence is NOT refused: it is the either-or Aura's other half (Mishra's Domination, Bonds of Faith), whose condition is the sentence before.
+    // CEILING: a leading "As long as enchanted creature is red, it gets +1/+1 and can't block" on an Aura is refused too, like any same-sentence leading condition.
+    const hits = [...clauseText.matchAll(/\b(?:can['\u2019]t|cannot) (?:attack|block)\b/gi)];
+    const hit = hits[Math.min(occurrence, hits.length - 1)];
+    if (!hit) return undefined;
+    const from = clauseText.lastIndexOf(". ", hit.index) + 1;
+    const head = clauseText.slice(from === 0 ? 0 : from + 1, hit.index);
+    if (/\b(?:as long as|if|while)\b/i.test(head)) return undefined;
+    const after = clauseText.slice(hit.index + hit[0].length);
+    const end = after.indexOf(". ");
+    if (/\b(?:unless|if|as long as|only|alone|except|while)\b/i.test(end < 0 ? after : after.slice(0, end))) return undefined;
+  }
+  const out = [m[1]!.toLowerCase(), ...(m[2] ? [m[2].toLowerCase()] : [])] as ("attack" | "block")[];
+  return [...new Set(out)];
+}
+
 function retargetPhrase(text: string): string | undefined {
   const lower = text.toLowerCase();
   for (const head of RETARGET_HEADS) {
@@ -508,7 +565,7 @@ function replacesDamageOrLife(clauseText: string, verb: string): boolean {
 const REDIRECT_TO_A_PLAYER = /\bdealt to (?:any (?:other )?target|another target [^.]{0,60}\bplayer|that (?:source|creature)'s controller)\b|\bdamage to that source's controller\b/i;
 const PAYS_LIFE = /\bpays? (?:\d+|x|any amount of) life\b/i;
 const LOSES_LIFE = /\bloses? (?:\d+|x|that much|half|life)\b/i;
-export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
+export function actionEffectKind(action: Action, clauseText = "", occurrence = 0): EffectKind | null {
   const verb = action.verb ?? "";
   // CR 614.1c — "this creature enters with three +1/+1 counters on it" is a REPLACEMENT EFFECT on
   // the card's own entry, not an ability that places counters later. The FACT already derived
@@ -622,7 +679,13 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // turns the board off -- and the engine claimed Grim Guardian drains when Dress Down enters
   // (owner, 2026-09-05). Layer 6 of CR 613: an ability-removing effect. 73 corpus cards print it.
   if (verb === "cant" && /\babilit(?:y|ies)\b/i.test(action.object ?? "")) return "ability-loss";
-  if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
+  // CEILING: "can't be blocked unless defending player pays {3}" (Awesome Presence) is an evasion by CR 509.1b and stays a `tax` -- the payable
+  // reading is checked first, as it always was; one corpus card. Reading it as evasion would need a payable-evasion kind of its own.
+  if (verb === "cant") {
+    if (PAYABLE.test(action.object ?? "")) return "tax";
+    if (cantBeBlocked(action.object ?? "", clauseText)) return "evasion";
+    return restrictedActions(action.object ?? "", clauseText, occurrence) ? "restriction" : null;
+  }
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
   // THE OBJECT SOMETIMES STATES THE ORIGIN THE FIELD OMITTED. Hidetsugu and Kairi reads "put two
   // cards FROM YOUR HAND on top of your library" and the normalizer left `fromZone` unset, so the

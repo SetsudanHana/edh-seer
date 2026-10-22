@@ -62,3 +62,14 @@ test("an unmapped relation family weighs 0; an ordinary tag reads its own weight
   expect(maxAxisWeight([{ tag: "tutor:creature" } as never], axis)).toBe(0);
   expect(maxAxisWeight([{ tag: "draw:any" } as never], axis)).toBe(0.3);
 });
+
+test("a fact kind's static tag (static:evasion) never counts toward the deck's axis (#1315)", async () => {
+  const { axisThemeTags, isFactStaticTag } = await import("./edges.js");
+  const tag = (kind: string) => ({ oracleId: kind, abilities: [{ kind: "static", effect: { kind } }], characteristics: { types: ["Enchantment"], subtypes: [] } }) as never;
+  expect(isFactStaticTag("static:evasion")).toBe(true);
+  expect(isFactStaticTag("static:pump")).toBe(false);
+  expect(isFactStaticTag("enters:creature")).toBe(false);
+  const tags = axisThemeTags(tag("evasion"));
+  expect(tags.has("static:evasion")).toBe(false);
+  expect(axisThemeTags(tag("pump")).has("static:pump")).toBe(true);
+});

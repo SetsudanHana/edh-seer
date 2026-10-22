@@ -1,0 +1,7959 @@
+{
+ "Rancor": {
+  "oracleText": "Enchant creature\nEnchanted creature gets +2/+0 and has trample.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+2/+0",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "trample"
+    ]
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true,
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "subtype": "aura",
+       "zone": "graveyard",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Ethereal Armor": {
+  "oracleText": "Enchant creature\nEnchanted creature gets +1/+1 for each enchantment you control and has first strike.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump",
+     "scaling": "per-permanent",
+     "scalingSubject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "zone": "battlefield"
+     }
+    },
+    "host": true,
+    "amount": "+1/+1 for each enchantment you control",
+    "clause": 2,
+    "repeats": "continuous",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment"
+     }
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "first strike"
+    ]
+   }
+  ]
+ },
+ "Aqueous Form": {
+  "oracleText": "Enchant creature\nEnchanted creature can't be blocked.\nWhenever enchanted creature attacks, scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "keywords": [
+   "Enchant",
+   "Scry"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant",
+    "scry"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "evasion"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "scry",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "scry",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-turn",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Battle Mastery": {
+  "oracleText": "Enchant creature\nEnchanted creature has double strike. (It deals both first-strike and regular combat damage.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "speed-increase"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "double strike"
+    ]
+   }
+  ]
+ },
+ "Regeneration": {
+  "oracleText": "Enchant creature (Target a creature as you cast this. This card enters attached to that creature.)\n{G}: Regenerate enchanted creature. (The next time that creature would be destroyed this turn, instead tap it, remove it from combat, and heal all damage on it.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Heal",
+   "Regenerate",
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "heal",
+    "regenerate",
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{G}",
+    "emits": [
+     {
+      "verb": "regenerate",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{G}"
+    }
+   }
+  ]
+ },
+ "Crab Umbra": {
+  "oracleText": "Enchant creature\n{2}{U}: Untap enchanted creature.\nUmbra armor (If enchanted creature would be destroyed, instead remove all damage from it and destroy this Aura.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "keywords": [
+   "Umbra armor",
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "umbra armor",
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "cost": "{2}{U}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{U}"
+    }
+   }
+  ]
+ },
+ "Dying Wish": {
+  "oracleText": "Enchant creature you control\nWhen enchanted creature dies, target player loses X life and you gain X life, where X is its power.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "you",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "player-life-loss",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     },
+     "scaling": "x-cost"
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "its power",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "drain",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Clutch of Undeath": {
+  "oracleText": "Enchant creature\nEnchanted creature gets +3/+3 as long as it's a Zombie. Otherwise, it gets -3/-3.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 5,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 5,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+3/+3",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "debuff"
+    },
+    "host": true,
+    "amount": "-3/-3",
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Fists of the Demigod": {
+  "oracleText": "Enchant creature\nAs long as enchanted creature is black, it gets +1/+1 and has wither. (It deals damage to creatures in the form of -1/-1 counters.)\nAs long as enchanted creature is red, it gets +1/+1 and has first strike.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B",
+    "R"
+   ],
+   "identity": [
+    "B",
+    "R"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+1/+1",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "wither"
+    ]
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+1/+1",
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous",
+    "grants": [
+     "first strike"
+    ]
+   }
+  ]
+ },
+ "Pacifism": {
+  "oracleText": "Enchant creature\nEnchanted creature can't attack or block.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "restriction"
+    },
+    "host": true,
+    "restricts": [
+     "attack",
+     "block"
+    ],
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Shiny Impetus": {
+  "oracleText": "Enchant creature\nEnchanted creature gets +2/+2 and is goaded. (It attacks each combat if able and attacks a player other than you if able.)\nWhenever enchanted creature attacks, you create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Goad",
+   "Treasure",
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "goad",
+    "treasure",
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+2/+2",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "goad",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "subtype": "treasure"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "subtype": "treasure",
+       "type": "artifact"
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "subtype": "treasure",
+       "type": "artifact"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-turn",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Deep Freeze": {
+  "oracleText": "Enchant creature\nEnchanted creature has base power and toughness 0/4, has defender, loses all other abilities, and is a blue Wall in addition to its other colors and types.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "defender"
+    ]
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "colors": [
+       "U"
+      ],
+      "type": "creature",
+      "subtype": "wall",
+      "scope": "all"
+     }
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Cursed Flesh": {
+  "oracleText": "Enchant creature\nEnchanted creature gets -1/-1 and has fear. (It can't be blocked except by artifact creatures and/or black creatures.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "debuff"
+    },
+    "host": true,
+    "amount": "-1/-1",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "fear"
+    ]
+   }
+  ]
+ },
+ "Sky Tether": {
+  "oracleText": "Enchant creature\nEnchanted creature has defender and loses flying.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "defender"
+    ]
+   }
+  ]
+ },
+ "Control Magic": {
+  "oracleText": "Enchant creature\nYou control enchanted creature.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 4,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "gains-control",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Dream Coat": {
+  "oracleText": "Enchant creature\n{0}: Enchanted creature becomes the color or colors of your choice. Activate only once each turn.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "host": true,
+    "cost": "{0}",
+    "clause": 2,
+    "repeats": "per-turn",
+    "payment": {
+     "mana": "{0}"
+    }
+   }
+  ]
+ },
+ "Teferi's Curse": {
+  "oracleText": "Enchant artifact or creature\nEnchanted permanent has phasing. (It phases in or out before its controller untaps during each of their untap steps. While it's phased out, it's treated as though it doesn't exist.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": [
+     "creature",
+     "artifact"
+    ]
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "phasing"
+    ]
+   }
+  ]
+ },
+ "Inner Demon": {
+  "oracleText": "Enchant creature\nEnchanted creature gets +2/+2, has flying, and is a Demon in addition to its other types.\nWhen this Aura enters, all non-Demon creatures get -2/-2 until end of turn.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 4,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+2/+2",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "flying"
+    ]
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "type-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "debuff",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "notSubtype": [
+       "demon"
+      ],
+      "scope": "all"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "-2/-2",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "notSubtype": [
+        "demon"
+       ],
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Spirit Loop": {
+  "oracleText": "Enchant creature you control\nWhenever enchanted creature deals damage, you gain that much life.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "you",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "non-combat-damage"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "that much",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "subtype": "aura",
+      "self": true,
+      "zone": "battlefield"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "subtype": "aura",
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Mistform Mask": {
+  "oracleText": "Enchant creature\n{1}: Enchanted creature becomes the creature type of your choice until end of turn.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "host": true,
+    "cost": "{1}",
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{1}"
+    }
+   }
+  ]
+ },
+ "Nurgle's Rot": {
+  "oracleText": "Enchant creature an opponent controls\nWhen enchanted creature dies, return this card to its owner's hand and you create a 1/3 black Demon creature token named Plaguebearer of Nurgle.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "opp",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true,
+      "zone": "battlefield"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "battlefield",
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "subtype": "demon",
+      "colors": [
+       "B"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 1
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 3
+       }
+      ]
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "B"
+       ],
+       "type": "creature",
+       "subtype": "demon",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 3
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "B"
+       ],
+       "type": "creature",
+       "subtype": "demon",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 3
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Frenzied Fugue": {
+  "oracleText": "Enchant permanent\nWhen this Aura enters and at the beginning of your upkeep, gain control of enchanted permanent until end of turn. Untap that permanent. It gains haste until end of turn.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 4,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "permanent"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "gains-control",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "emits": [
+     {
+      "verb": "gains-control",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "speed-increase",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once",
+    "grants": [
+     "haste"
+    ]
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "speed-increase",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "clause": 2,
+    "repeats": "per-cycle",
+    "grants": [
+     "haste"
+    ]
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "emits": [
+     {
+      "verb": "gains-control",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "speed-increase",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "clause": 3,
+    "repeats": "per-cycle",
+    "grants": [
+     "haste"
+    ]
+   }
+  ]
+ },
+ "Bonesplitter": {
+  "oracleText": "Equipped creature gets +2/+0.\nEquip {1}",
+  "typeLine": "Artifact — Equipment",
+  "manaValue": 1,
+  "keywords": [
+   "Equip"
+  ],
+  "characteristics": {
+   "types": [
+    "artifact"
+   ],
+   "subtypes": [
+    "equipment"
+   ],
+   "layout": "normal",
+   "colors": [],
+   "identity": [],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "equip"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+2/+0",
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Eaten by Piranhas": {
+  "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nEnchant creature\nEnchanted creature loses all abilities and is a black Skeleton creature with base power and toughness 1/1. (It loses all other colors, card types, and creature types.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant",
+   "Flash"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant",
+    "flash"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Sugar Coat": {
+  "oracleText": "Flash\nEnchant creature or Food\nEnchanted permanent is a colorless Food artifact with \"{2}, {T}, Sacrifice this artifact: You gain 3 life\" and loses all other card types and abilities.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Enchant",
+   "Flash"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant",
+    "flash"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}, {T}, Sacrifice this artifact",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    },
+    "grantedBy": 3
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "{2}, {T}, Sacrifice this artifact",
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    },
+    "grantedBy": 3
+   }
+  ]
+ },
+ "Imprisoned in the Moon": {
+  "oracleText": "Enchant creature, land, or planeswalker\nEnchanted permanent is a colorless land with \"{T}: Add {C}\" and loses all other card types and abilities.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": [
+     "creature",
+     "land",
+     "planeswalker"
+    ]
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "land",
+        "planeswalker"
+       ]
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Hall of Triumph": {
+  "oracleText": "As Hall of Triumph enters, choose a color.\nCreatures you control of the chosen color get +1/+1.",
+  "typeLine": "Legendary Artifact",
+  "manaValue": 3,
+  "keywords": [],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "artifact"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [],
+   "identity": [],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "chosenType": true
+     }
+    },
+    "amount": "+1/+1",
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Hypnotic Siren": {
+  "oracleText": "Bestow {5}{U}{U} (If you cast this card for its bestow cost, it's an Aura spell with enchant creature. It becomes a creature again if it's not attached.)\nFlying\nYou control enchanted creature.\nEnchanted creature gets +1/+1 and has flying.",
+  "typeLine": "Enchantment Creature — Siren",
+  "manaValue": 1,
+  "keywords": [
+   "Flying",
+   "Bestow"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment",
+    "creature"
+   ],
+   "subtypes": [
+    "siren"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 1,
+   "power": "1",
+   "toughness": "1",
+   "token": false,
+   "keywords": [
+    "flying",
+    "bestow"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "gains-control",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+1/+1",
+    "clause": 4,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 4,
+    "repeats": "continuous",
+    "grants": [
+     "flying"
+    ]
+   }
+  ]
+ },
+ "Nyxborn Wolf": {
+  "oracleText": "Bestow {4}{G} (If you cast this card for its bestow cost, it's an Aura spell with enchant creature. It becomes a creature again if it's not attached.)\nEnchanted creature gets +3/+1.",
+  "typeLine": "Enchantment Creature — Wolf",
+  "manaValue": 3,
+  "keywords": [
+   "Bestow"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment",
+    "creature"
+   ],
+   "subtypes": [
+    "wolf"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 3,
+   "power": "3",
+   "toughness": "1",
+   "token": false,
+   "keywords": [
+    "bestow"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+3/+1",
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Boon Satyr": {
+  "oracleText": "Flash\nBestow {3}{G}{G} (If you cast this card for its bestow cost, it's an Aura spell with enchant creature. It becomes a creature again if it's not attached.)\nEnchanted creature gets +4/+2.",
+  "typeLine": "Enchantment Creature — Satyr",
+  "manaValue": 3,
+  "keywords": [
+   "Bestow",
+   "Flash"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment",
+    "creature"
+   ],
+   "subtypes": [
+    "satyr"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 3,
+   "power": "4",
+   "toughness": "2",
+   "token": false,
+   "keywords": [
+    "bestow",
+    "flash"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+4/+2",
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Cloudform": {
+  "oracleText": "When this enchantment enters, it becomes an Aura with enchant creature. Manifest the top card of your library and attach this enchantment to it. (To manifest a card, put it onto the battlefield face down as a 2/2 creature. Turn it face up any time for its mana cost if it's a creature card.)\nEnchanted creature has flying and hexproof.",
+  "typeLine": "Enchantment",
+  "manaValue": 3,
+  "keywords": [
+   "Manifest"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "manifest"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "animate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "enchantment",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "flying",
+     "hexproof"
+    ]
+   }
+  ]
+ },
+ "Corrupting Licid": {
+  "oracleText": "{B}, {T}: This creature loses this ability and becomes an Aura enchantment with enchant creature. Attach it to target creature. You may pay {B} to end this effect.\nEnchanted creature has fear. (It can't be blocked except by artifact creatures and/or black creatures.)",
+  "typeLine": "Creature — Licid",
+  "manaValue": 3,
+  "keywords": [],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "licid"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 3,
+   "power": "2",
+   "toughness": "2",
+   "token": false,
+   "keywords": []
+  },
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{B}, {T}",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "mana": "{B}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "animate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "enchantment",
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "cost": "{B}, {T}",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "mana": "{B}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{B}, {T}",
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{B}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "fear"
+    ]
+   }
+  ]
+ },
+ "Kestia, the Cultivator": {
+  "oracleText": "Bestow {3}{G}{W}{U} (If you cast this card for its bestow cost, it's an Aura spell with enchant creature. It becomes a creature again if it's not attached.)\nEnchanted creature gets +4/+4.\nWhenever an enchanted creature or enchantment creature you control attacks, draw a card.",
+  "typeLine": "Legendary Enchantment Creature — Nymph",
+  "manaValue": 4,
+  "keywords": [
+   "Bestow"
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "enchantment",
+    "creature"
+   ],
+   "subtypes": [
+    "nymph"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "identity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "cmc": 4,
+   "power": "4",
+   "toughness": "4",
+   "token": false,
+   "keywords": [
+    "bestow"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+4/+4",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "creature",
+       "enchantment"
+      ],
+      "allTypes": [
+       "enchantment",
+       "creature"
+      ],
+      "modified": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Estrid, the Masked": {
+  "oracleText": "+2: Untap each enchanted permanent you control.\n−1: Create a white Aura enchantment token named Mask attached to another target permanent. The token has enchant permanent and umbra armor.\n−7: Mill seven cards. Return all non-Aura enchantment cards from your graveyard to the battlefield, then do the same for Aura cards.\nEstrid, the Masked can be your commander.",
+  "typeLine": "Legendary Planeswalker — Estrid",
+  "manaValue": 4,
+  "keywords": [
+   "Mill"
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "planeswalker"
+   ],
+   "subtypes": [
+    "estrid"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "identity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "mill"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "permanent",
+      "scope": "each",
+      "status": [
+       "enchanted"
+      ]
+     }
+    },
+    "cost": "+2",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent",
+       "scope": "each"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "type": "permanent",
+      "scope": "each"
+     }
+    },
+    "payment": {
+     "loyalty": "+2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "enchantment",
+      "subtype": "aura",
+      "colors": [
+       "W"
+      ]
+     }
+    },
+    "cost": "−1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "W"
+       ],
+       "type": "enchantment",
+       "subtype": "aura"
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "W"
+       ],
+       "type": "enchantment",
+       "subtype": "aura"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mill",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−7",
+    "amount": "7",
+    "emits": [
+     {
+      "verb": "mill",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 7,
+     "ceiling": 7
+    },
+    "payment": {
+     "loyalty": "-7"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "notSubtype": [
+       "aura"
+      ],
+      "scope": "all",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "−7",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "enchantment",
+       "notSubtype": [
+        "aura"
+       ],
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "enchantment",
+       "notSubtype": [
+        "aura"
+       ],
+       "scope": "all",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "fromZone": "graveyard",
+      "type": "enchantment",
+      "notSubtype": [
+       "aura"
+      ],
+      "scope": "all"
+     }
+    },
+    "payment": {
+     "loyalty": "-7"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "scope": "all",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "−7",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "subtype": "aura",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "subtype": "aura",
+       "scope": "all",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "fromZone": "graveyard",
+      "subtype": "aura",
+      "scope": "all"
+     }
+    },
+    "payment": {
+     "loyalty": "-7"
+    }
+   }
+  ]
+ },
+ "Not Dead After All": {
+  "oracleText": "Until end of turn, target creature you control gains \"When this creature dies, return it to the battlefield tapped under its owner's control, then create a Wicked Role token attached to it.\" (Enchanted creature gets +1/+1. When this token is put into a graveyard, each opponent loses 1 life.)",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "keywords": [
+   "Role token"
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "role token"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "subtype": "role"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "subtype": "role",
+       "type": "enchantment"
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "subtype": "role",
+       "entersTapped": true,
+       "type": "enchantment"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 1
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "subtype": "role",
+       "entersTapped": true,
+       "type": "enchantment"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 1
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "subtype": "role",
+       "type": "enchantment"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "grantedBy": 1
+   }
+  ]
+ },
+ "Living Lectern": {
+  "oracleText": "{1}, Sacrifice this creature: Draw a card. Create a Sorcerer Role token attached to up to one other target creature you control. Activate only as a sorcery. (If you control another Role on it, put that one into the graveyard. Enchanted creature gets +1/+1 and has \"Whenever this creature attacks, scry 1.\")",
+  "typeLine": "Artifact Creature — Construct",
+  "manaValue": 2,
+  "keywords": [
+   "Role token",
+   "Scry"
+  ],
+  "characteristics": {
+   "types": [
+    "artifact",
+    "creature"
+   ],
+   "subtypes": [
+    "construct"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 2,
+   "power": "0",
+   "toughness": "4",
+   "token": false,
+   "keywords": [
+    "role token",
+    "scry"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}, Sacrifice this creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "{1}, Sacrifice this creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "subtype": "role"
+     }
+    },
+    "cost": "{1}, Sacrifice this creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "subtype": [
+        "sorcerer",
+        "role"
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "subtype": [
+        "sorcerer",
+        "role"
+       ]
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Curse of the Werefox": {
+  "oracleText": "Create a Monster Role token attached to target creature you control. When you do, that creature fights up to one target creature you don't control. (If you control another Role on it, put that one into the graveyard. Enchanted creature gets +1/+1 and has trample. Creatures that fight each deal damage equal to their power to the other.)",
+  "typeLine": "Sorcery",
+  "manaValue": 3,
+  "keywords": [
+   "Role token",
+   "Fight"
+  ],
+  "characteristics": {
+   "types": [
+    "sorcery"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "role token",
+    "fight"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "subtype": "role"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "subtype": "role",
+       "type": "enchantment"
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "subtype": "role",
+       "type": "enchantment"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "a",
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "subtype": "role",
+       "type": "enchantment"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "create-token"
+     ],
+     "subject": {
+      "control": "you",
+      "token": true,
+      "subtype": "role"
+     }
+    },
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "opp",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Arrest": {
+  "oracleText": "Enchant creature\nEnchanted creature can't attack or block, and its activated abilities can't be activated.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "restriction"
+    },
+    "host": true,
+    "restricts": [
+     "attack",
+     "block"
+    ],
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Utopia Vow": {
+  "oracleText": "Enchant creature\nEnchanted creature can't attack or block.\nEnchanted creature has \"{T}: Add one mana of any color.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "restriction"
+    },
+    "host": true,
+    "restricts": [
+     "attack",
+     "block"
+    ],
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 3
+   }
+  ]
+ },
+ "Pillory of the Sleepless": {
+  "oracleText": "Enchant creature\nEnchanted creature can't attack or block.\nEnchanted creature has \"At the beginning of your upkeep, you lose 1 life.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B",
+    "W"
+   ],
+   "identity": [
+    "B",
+    "W"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "restriction"
+    },
+    "host": true,
+    "restricts": [
+     "attack",
+     "block"
+    ],
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 3
+   }
+  ]
+ },
+ "Compulsory Rest": {
+  "oracleText": "Enchant creature\nEnchanted creature can't attack or block.\nEnchanted creature has \"{2}, Sacrifice this creature: You gain 2 life.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "restriction"
+    },
+    "host": true,
+    "restricts": [
+     "attack",
+     "block"
+    ],
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}, Sacrifice this creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    },
+    "grantedBy": 3
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "{2}, Sacrifice this creature",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "mana": "{2}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    },
+    "grantedBy": 3
+   }
+  ]
+ },
+ "Withercrown": {
+  "oracleText": "Enchant creature\nEnchanted creature has base power 0 and has \"At the beginning of your upkeep, you lose 1 life unless you sacrifice this creature.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 2
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Sunbond": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"Whenever you gain life, put that many +1/+1 counters on this creature.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 4,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "gain-life"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "that many",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1",
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "repeatable",
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Pendrell Flux": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"At the beginning of your upkeep, sacrifice this creature unless you pay its mana cost.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "unless": {
+     "cost": "its mana cost",
+     "payer": "you"
+    },
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Necrotic Plague": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"At the beginning of your upkeep, sacrifice this creature.\"\nWhen enchanted creature dies, its controller chooses target creature one of their opponents controls. Return this card from its owner's graveyard to the battlefield attached to that creature.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 4,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 2
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true,
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "graveyard",
+       "self": true
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "zone": "graveyard",
+       "fromZone": "graveyard",
+       "self": true
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Inevitable End": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"At the beginning of your upkeep, sacrifice a creature.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Splinter Twin": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"{T}: Create a token that's a copy of this creature, except it has haste. Exile that token at the beginning of the next end step.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 4,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "keyword": [
+       "haste"
+      ],
+      "copyOf": {
+       "type": "creature"
+      }
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "temporary": true,
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Idolized": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"Whenever this creature attacks alone, it gets +X/+X until end of turn, where X is the number of nonland permanents you control.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "scaling": "per-permanent",
+     "scalingSubject": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "all",
+      "zone": "battlefield"
+     }
+    },
+    "amount": "+X/+X, where X is the number of nonland permanents you control",
+    "clause": 3,
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "all"
+     }
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Malicious Intent": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"{T}: Target creature can't block this turn.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "restriction",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "restricts": [
+     "block"
+    ],
+    "cost": "{T}",
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Instill Furor": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"At the beginning of your end step, sacrifice this creature unless it attacked this turn.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Oblivion Crown": {
+  "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nEnchant creature\nEnchanted creature has \"Discard a card: This creature gets +1/+1 until end of turn.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant",
+   "Flash"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant",
+    "flash"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Mishra's Domination": {
+  "oracleText": "Enchant creature\nAs long as you control enchanted creature, it gets +2/+2. Otherwise, it can't block.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+2/+2",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "restriction"
+    },
+    "host": true,
+    "restricts": [
+     "block"
+    ],
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Dragon Mantle": {
+  "oracleText": "Enchant creature\nWhen this Aura enters, draw a card.\nEnchanted creature has \"{R}: This creature gets +1/+0 until end of turn.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "cost": "{R}",
+    "amount": "+1/+0",
+    "clause": 4,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{R}"
+    },
+    "grantedBy": 3
+   }
+  ]
+ },
+ "Talons of Falkenrath": {
+  "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nEnchant creature\nEnchanted creature has \"{1}{R}: This creature gets +2/+0 until end of turn.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant",
+   "Flash"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant",
+    "flash"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "cost": "{1}{R}",
+    "amount": "+2/+0",
+    "clause": 4,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{1}{R}"
+    },
+    "grantedBy": 3
+   }
+  ]
+ },
+ "Mark of Sakiko": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"Whenever this creature deals combat damage to a player, add that much {G}. Until end of turn, you don't lose this mana as steps and phases end.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "combat-damage"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "that much {g}",
+    "clause": 3,
+    "repeats": "per-cycle",
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Power of Fire": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"{T}: This creature deals 1 damage to any target.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Hermetic Study": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"{T}: This creature deals 1 damage to any target.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Umbra Mystic": {
+  "oracleText": "Auras attached to permanents you control have umbra armor. (If an enchanted permanent you control would be destroyed, instead remove all damage from it and destroy an Aura attached to it.)",
+  "typeLine": "Creature — Human Wizard",
+  "manaValue": 3,
+  "keywords": [],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "human",
+    "wizard"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 3,
+   "power": "2",
+   "toughness": "2",
+   "token": false,
+   "keywords": []
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "subtype": "aura",
+      "scope": "all"
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous",
+    "grants": [
+     "umbra armor"
+    ]
+   }
+  ]
+ },
+ "Bronzehide Lion": {
+  "oracleText": "{G}{W}: This creature gains indestructible until end of turn.\nWhen this creature dies, return it to the battlefield. It's an Aura enchantment with enchant creature you control and \"{G}{W}: Enchanted creature gains indestructible until end of turn,\" and it loses all other abilities.",
+  "typeLine": "Creature — Cat",
+  "manaValue": 2,
+  "keywords": [],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "cat"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G",
+    "W"
+   ],
+   "identity": [
+    "G",
+    "W"
+   ],
+   "cmc": 2,
+   "power": "3",
+   "toughness": "3",
+   "token": false,
+   "keywords": []
+  },
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{G}{W}",
+    "clause": 1,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{G}{W}"
+    },
+    "grants": [
+     "indestructible"
+    ]
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true,
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "zone": "graveyard",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "animate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "enchantment",
+      "subtype": "aura"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once",
+    "grants": [
+     "enchant"
+    ]
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once",
+    "grants": [
+     "enchant"
+    ]
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "cost": "{G}{W}",
+    "clause": 3,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{G}{W}"
+    },
+    "grants": [
+     "indestructible"
+    ],
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Transmogrifying Licid": {
+  "oracleText": "{1}, {T}: This creature loses this ability and becomes an Aura enchantment with enchant creature. Attach it to target creature. You may pay {1} to end this effect.\nEnchanted creature gets +1/+1 and is an artifact in addition to its other types.",
+  "typeLine": "Artifact Creature — Licid",
+  "manaValue": 3,
+  "keywords": [],
+  "characteristics": {
+   "types": [
+    "artifact",
+    "creature"
+   ],
+   "subtypes": [
+    "licid"
+   ],
+   "layout": "normal",
+   "colors": [],
+   "identity": [],
+   "cmc": 3,
+   "power": "2",
+   "toughness": "2",
+   "token": false,
+   "keywords": []
+  },
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{1}, {T}",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "mana": "{1}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "animate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "keyword": [
+       "enchant"
+      ],
+      "type": [
+       "creature",
+       "enchantment"
+      ],
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "cost": "{1}, {T}",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "mana": "{1}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}, {T}",
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+1/+1",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "type-grant",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact"
+      ],
+      "scope": "all"
+     }
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Lightform": {
+  "oracleText": "When this enchantment enters, it becomes an Aura with enchant creature. Manifest the top card of your library and attach this enchantment to it. (To manifest a card, put it onto the battlefield face down as a 2/2 creature. Turn it face up any time for its mana cost if it's a creature card.)\nEnchanted creature has flying and lifelink.",
+  "typeLine": "Enchantment",
+  "manaValue": 3,
+  "keywords": [
+   "Manifest"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "manifest"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "animate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "enchantment",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "flying",
+     "lifelink"
+    ]
+   }
+  ]
+ },
+ "Rageform": {
+  "oracleText": "When this enchantment enters, it becomes an Aura with enchant creature. Manifest the top card of your library and attach this enchantment to it. (To manifest a card, put it onto the battlefield face down as a 2/2 creature. Turn it face up any time for its mana cost if it's a creature card.)\nEnchanted creature has double strike. (It deals both first-strike and regular combat damage.)",
+  "typeLine": "Enchantment",
+  "manaValue": 4,
+  "keywords": [
+   "Manifest"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "manifest"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "animate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "clause": 1,
+    "repeats": "once",
+    "grants": [
+     "enchant"
+    ]
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "enchantment",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "speed-increase"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "double strike"
+    ]
+   }
+  ]
+ },
+ "Candletrap": {
+  "oracleText": "Enchant creature\nEnchanted creature has defender.\nPrevent all combat damage that would be dealt by enchanted creature.\nCoven — {2}{W}, Sacrifice this Aura: Exile enchanted creature. Activate only if you control three or more creatures with different powers.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "keywords": [
+   "Enchant",
+   "Coven"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant",
+    "coven"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "defender"
+    ]
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "continuous",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{W}, Sacrifice this Aura",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "aura",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "aura",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "threshold": {
+     "atLeast": 3
+    },
+    "thresholdSubject": {
+     "control": "you",
+     "token": null,
+     "type": "creature",
+     "scope": "all"
+    },
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{W}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{W}, Sacrifice this Aura",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "threshold": {
+     "atLeast": 3
+    },
+    "thresholdSubject": {
+     "control": "you",
+     "token": null,
+     "type": "creature",
+     "scope": "all"
+    },
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{W}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Nurturing Licid": {
+  "oracleText": "{G}, {T}: This creature loses this ability and becomes an Aura enchantment with enchant creature. Attach it to target creature. You may pay {G} to end this effect.\n{G}: Regenerate enchanted creature.",
+  "typeLine": "Creature — Licid",
+  "manaValue": 2,
+  "keywords": [
+   "Regenerate"
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "licid"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 2,
+   "power": "1",
+   "toughness": "1",
+   "token": false,
+   "keywords": [
+    "regenerate"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{G}, {T}",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "mana": "{G}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "animate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "keyword": [
+       "enchant"
+      ],
+      "type": [
+       "creature",
+       "enchantment"
+      ],
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "cost": "{G}, {T}",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "mana": "{G}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{G}, {T}",
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{G}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{G}",
+    "emits": [
+     {
+      "verb": "regenerate",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{G}"
+    }
+   }
+  ]
+ },
+ "Shade's Form": {
+  "oracleText": "Enchant creature\nEnchanted creature has \"{B}: This creature gets +1/+1 until end of turn.\"\nWhen enchanted creature dies, return that card to the battlefield under your control.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "cost": "{B}",
+    "amount": "+1/+1",
+    "clause": 3,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{B}"
+    },
+    "grantedBy": 2
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "zone": "graveyard",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Spiteful Returned": {
+  "oracleText": "Bestow {3}{B} (If you cast this card for its bestow cost, it's an Aura spell with enchant creature. It becomes a creature again if it's not attached.)\nWhenever this creature or enchanted creature attacks, defending player loses 2 life.\nEnchanted creature gets +1/+1.",
+  "typeLine": "Enchantment Creature — Zombie",
+  "manaValue": 2,
+  "keywords": [
+   "Bestow"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment",
+    "creature"
+   ],
+   "subtypes": [
+    "zombie"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 2,
+   "power": "1",
+   "toughness": "1",
+   "token": false,
+   "keywords": [
+    "bestow"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "player-life-loss",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "opp",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+1/+1",
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Springheart Nantuko": {
+  "oracleText": "Bestow {1}{G}\nEnchanted creature gets +1/+1.\nLandfall — Whenever a land you control enters, you may pay {1}{G} if this permanent is attached to a creature you control. If you do, create a token that's a copy of that creature. If you didn't create a token this way, create a 1/1 green Insect creature token.",
+  "typeLine": "Enchantment Creature — Insect Monk",
+  "manaValue": 2,
+  "keywords": [
+   "Bestow",
+   "Landfall"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment",
+    "creature"
+   ],
+   "subtypes": [
+    "insect",
+    "monk"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 2,
+   "power": "1",
+   "toughness": "1",
+   "token": false,
+   "keywords": [
+    "bestow",
+    "landfall"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+1/+1",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "type": "creature",
+      "copyOf": {
+       "type": "creature"
+      }
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "land"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "creature"
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "type": "creature",
+      "subtype": "insect",
+      "colors": [
+       "G"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 1
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "land"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "G"
+       ],
+       "type": "creature",
+       "subtype": "insect",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "G"
+       ],
+       "type": "creature",
+       "subtype": "insect",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Detective's Phoenix": {
+  "oracleText": "Bestow—{R}, Collect evidence 6. (To pay this bestow cost, pay {R} and exile cards with total mana value 6 or greater from your graveyard.)\nFlying, haste\nEnchanted creature gets +2/+2 and has flying and haste.\nYou may cast this card from your graveyard using its bestow ability.",
+  "typeLine": "Enchantment Creature — Phoenix",
+  "manaValue": 3,
+  "keywords": [
+   "Flying",
+   "Collect evidence",
+   "Haste",
+   "Bestow"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment",
+    "creature"
+   ],
+   "subtypes": [
+    "phoenix"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 3,
+   "power": "2",
+   "toughness": "2",
+   "token": false,
+   "keywords": [
+    "flying",
+    "collect evidence",
+    "haste",
+    "bestow"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+2/+2",
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous",
+    "grants": [
+     "flying",
+     "haste"
+    ]
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "speed-increase"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous",
+    "grants": [
+     "flying",
+     "haste"
+    ]
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true,
+      "zone": "graveyard"
+     }
+    },
+    "emits": [
+     {
+      "verb": "cast",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "self": true
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "zone": "graveyard",
+       "fromZone": "graveyard",
+       "self": true
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "continuous",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Glyph Elemental": {
+  "oracleText": "Bestow {1}{W} (If you cast this card for its bestow cost, it's an Aura spell with enchant creature. It becomes a creature again if it's not attached.)\nLandfall — Whenever a land you control enters, put a +1/+1 counter on this permanent.\nEnchanted creature gets +1/+1 for each +1/+1 counter on this Aura.",
+  "typeLine": "Enchantment Creature — Elemental",
+  "manaValue": 2,
+  "keywords": [
+   "Bestow",
+   "Landfall"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment",
+    "creature"
+   ],
+   "subtypes": [
+    "elemental"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 2,
+   "power": "2",
+   "toughness": "2",
+   "token": false,
+   "keywords": [
+    "bestow",
+    "landfall"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "land"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1",
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+1/+1 for each +1/+1 counter on this Aura",
+    "clause": 3,
+    "repeats": "continuous",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "counter": "+1/+1",
+      "subtype": "aura"
+     }
+    }
+   }
+  ]
+ },
+ "Darksteel Mutation": {
+  "oracleText": "Enchant creature\nEnchanted creature is an Insect artifact creature with base power and toughness 0/1 and has indestructible, and it loses all other abilities, card types, and creature types.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "indestructible"
+    ]
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Minimus Containment": {
+  "oracleText": "Enchant nonland permanent\nEnchanted permanent is a Treasure artifact with \"{T}, Sacrifice this artifact: Add one mana of any color,\" and it loses all other abilities. (If it was a creature, it's no longer a creature.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": [
+     "creature",
+     "artifact",
+     "enchantment",
+     "planeswalker",
+     "battle"
+    ],
+    "notType": [
+     "land"
+    ]
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Sacrifice this artifact",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    },
+    "grantedBy": 2
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}, Sacrifice this artifact",
+    "amount": "1",
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Crown of Awe": {
+  "oracleText": "Enchant creature\nEnchanted creature has protection from black and from red.\nSacrifice this Aura: Enchanted creature and other creatures that share a creature type with it gain protection from black and from red until end of turn.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "protection"
+    ]
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "Sacrifice this Aura",
+    "emits": [
+     {
+      "verb": "gains-control",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "payment": {
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "Sacrifice this Aura",
+    "clause": 3,
+    "repeats": "once",
+    "payment": {
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    },
+    "grants": [
+     "protection"
+    ]
+   }
+  ]
+ },
+ "Shifting Shadow": {
+  "oracleText": "Enchant creature\nEnchanted creature has haste and \"At the beginning of your upkeep, destroy this creature. Reveal cards from the top of your library until you reveal a creature card. Put that card onto the battlefield and attach Shifting Shadow to it, then put all other cards revealed this way on the bottom of your library in a random order.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": "creature"
+   }
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "speed-increase"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "haste"
+    ]
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 2
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "fromZone": "library"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 2
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Crystalline Nautilus": {
+  "oracleText": "Bestow {3}{U}{U} (If you cast this card for its bestow cost, it's an Aura spell with enchant creature. It becomes a creature again if it's not attached.)\nWhen this permanent becomes the target of a spell or ability, sacrifice it.\nEnchanted creature gets +4/+4 and has \"When this creature becomes the target of a spell or ability, sacrifice it.\"",
+  "typeLine": "Enchantment Creature — Nautilus",
+  "manaValue": 3,
+  "keywords": [
+   "Bestow"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment",
+    "creature"
+   ],
+   "subtypes": [
+    "nautilus"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 3,
+   "power": "4",
+   "toughness": "4",
+   "token": false,
+   "keywords": [
+    "bestow"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent",
+       "self": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent",
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+4/+4",
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 4,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 3
+   }
+  ]
+ },
+ "Silken Strength": {
+  "oracleText": "Flash\nEnchant creature or Vehicle\nWhen this Aura enters, untap enchanted permanent.\nEnchanted permanent gets +1/+2 and has reach.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "keywords": [
+   "Enchant",
+   "Flash"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant",
+    "flash"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "anyOf": [
+       {
+        "type": "creature"
+       },
+       {
+        "subtype": "vehicle"
+       }
+      ]
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+1/+2",
+    "clause": 4,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 4,
+    "repeats": "continuous",
+    "grants": [
+     "reach"
+    ]
+   }
+  ]
+ },
+ "Lightwheel Enhancements": {
+  "oracleText": "Enchant creature or Vehicle\nStart your engines! (If you have no speed, it starts at 1. It increases once on each of your turns when an opponent loses life. Max speed is 4.)\nEnchanted permanent gets +1/+1 and has vigilance.\nMax speed — You may cast this card from your graveyard.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "keywords": [
+   "Max speed",
+   "Enchant",
+   "Start your engines!"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "max speed",
+    "enchant",
+    "start your engines!"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+1/+1",
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous",
+    "grants": [
+     "vigilance"
+    ]
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true,
+      "zone": "graveyard"
+     }
+    },
+    "emits": [
+     {
+      "verb": "cast",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "self": true
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "zone": "graveyard",
+       "fromZone": "graveyard",
+       "self": true
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "continuous",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "requires": {
+     "marker": "speed",
+     "min": 4
+    }
+   }
+  ]
+ },
+ "Roadside Assistance": {
+  "oracleText": "Enchant creature or Vehicle\nWhen this Aura enters, create a 1/1 colorless Pilot creature token with \"This token saddles Mounts and crews Vehicles as though its power were 2 greater.\"\nEnchanted permanent gets +1/+1 and has lifelink.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "keywords": [
+   "Enchant"
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ]
+  },
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "subtype": "pilot",
+      "colors": [
+       "C"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 1
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "C"
+       ],
+       "type": "creature",
+       "subtype": [
+        "pilot",
+        "mount",
+        "vehicle"
+       ],
+       "scope": "all",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "C"
+       ],
+       "type": "creature",
+       "subtype": [
+        "pilot",
+        "mount",
+        "vehicle"
+       ],
+       "scope": "all",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+1/+1",
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous",
+    "grants": [
+     "lifelink"
+    ]
+   }
+  ]
+ }
+}

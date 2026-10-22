@@ -135,9 +135,9 @@ test("a tutor derives `search`, the verb it is printed with", () => {
 
 test("`cant` is a tax only when it can be paid through", () => {
   // Propaganda and Ghostly Prison both carry a live flat tag of { kind: "tax" }; Bedlam
-  // ("Creatures can't block") carries []. The difference is whether the restriction has a price.
+  // ("Creatures can't block") carried [] until #1315, which reads it as a `restriction`. The difference is whether the restriction has a price.
   expect(actionEffectKind({ verb: "cant", object: "attack you unless their controller pays {2}" })).toBe("tax");
-  expect(actionEffectKind({ verb: "cant", object: "block" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "block" })).toBe("restriction");
   expect(actionEffectKind({ verb: "cant", object: "" })).toBeNull();
 });
 
@@ -710,6 +710,23 @@ test("losing abilities is ability-loss, and a payable can't is still a tax", () 
   expect(actionEffectKind({ verb: "cant", object: "attack you unless its controller pays {2}" })).toBe("tax");
 });
 
+test("a restriction on being blocked is evasion (CR 509.1b); a payable one stays a tax, a MUST be blocked is neither (#1315)", () => {
+  for (const object of ["be blocked", "be blocked except by Walls", "be blocked except by creatures with flying or reach",
+    "be blocked by creatures with power 3 or greater", "be blocked by Spirits", "be blocked this turn", "this creature can't be blocked",
+    "be blocked as long as it's attacking alone", "be blocked by more than one creature", "be blocked except by three or more creatures"]) {
+    expect(actionEffectKind({ verb: "cant", object }), object).toBe("evasion");
+  }
+  // Awesome Presence: "can't be blocked unless defending player pays {3}" -- the payable reading wins, as before.
+  expect(actionEffectKind({ verb: "cant", object: "be blocked unless defending player pays {3}" })).toBe("tax");
+  // The model files "must be blocked if able" as `cant | not be blocked ...` (Gorm, The Foretold Soldier, Frodo): a drawback, not evasion.
+  expect(actionEffectKind({ verb: "cant", object: "not be blocked" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "not be blocked if able" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "be blocked by fewer than two creatures" })).toBeNull();
+  // "can't block" is a different restriction.
+  expect(actionEffectKind({ verb: "cant", object: "target creature can't block this turn" })).toBe("restriction"); // since #1315 (restriction): a bare "can't block", no longer unread
+  expect(actionEffectKind({ verb: "cant", object: "cast this spell except during the declare blockers step" })).toBeNull();
+});
+
 test("setting a base power and toughness is neither a pump nor a debuff", () => {
   // Sludge Monster: "have base power and toughness 2/2" is removal, and an unsigned "2/2" mapped to pump.
   expect(actionEffectKind({ verb: "modify-pt", object: "Non-Horror creatures with slime counters on them", amount: "2/2" },
@@ -951,4 +968,37 @@ test("an extra loyalty activation is extra-loyalty, for your planeswalkers or fo
 test("a discount counted off the opponents' life loss is a cost reduction", () => {
   const text = "Creature spells you cast cost {1} less to cast for each 1 life your opponents have lost this turn.";
   expect(actionEffectKind({ verb: "cost-modify", object: "Creature spells you cast" } as never, text)).toBe("cost-reduction");
+});
+
+test("a restriction on attacking or blocking is `restriction` (CR 508.1c, 509.1b); evasion, a payable, a requirement and a narrowed block are not (#1315)", () => {
+  for (const object of ["attack or block", "attack", "block", "block this turn", "attack or block this turn", "attack or block until your next turn", "enchanted creature can't block", "this creature can't block"]) {
+    expect(actionEffectKind({ verb: "cant", object }), object).toBe("restriction");
+  }
+  expect(actionEffectKind({ verb: "cant", object: "be blocked" })).toBe("evasion");
+  expect(actionEffectKind({ verb: "cant", object: "attack you or planeswalkers you control" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "enchanted creature can't attack you or planeswalkers you control" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "attack you unless its controller pays {2}" })).toBe("tax");
+  expect(actionEffectKind({ verb: "cant", object: "not attack each combat if able" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "doesn't attack each combat if able" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "block creatures without flying" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "block this creature" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "block or be blocked by creatures with power 2 or less" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "cast this spell unless you've been attacked this step" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "attack or block alone" })).toBeNull();
+});
+
+test("a CONDITIONAL restriction is not read as total: trailing and leading conditions refuse; 'Otherwise' and a trigger head do not (#1315 review)", () => {
+  const read = (object: string, text: string, n = 0) => actionEffectKind({ verb: "cant", object }, text, n);
+  expect(read("attack or block", "Enchanted creature can't attack or block.")).toBe("restriction");
+  expect(read("attack or block", "This creature can't attack or block alone.")).toBeNull();
+  expect(read("block", "This creature can't block if you control an enchantment.")).toBeNull();
+  expect(read("block", "Threshold \u2014 As long as there are seven or more cards in your graveyard, this creature gets +2/+2 and can't block.")).toBeNull();
+  expect(read("creatures can't block", "Ferocious \u2014 If you control a creature with power 4 or greater, creatures can't block this turn.")).toBeNull();
+  // Mishra's Domination, Bonds of Faith: the condition is the sentence BEFORE "Otherwise".
+  expect(read("block", "As long as you control enchanted creature, it gets +2/+2. Otherwise, it can't block.")).toBe("restriction");
+  expect(read("attack or block", "Enchanted creature gets +2/+2 as long as it's a Human. Otherwise, it can't attack or block.")).toBe("restriction");
+  // A trigger head is not a condition; Aragorn's second sentence is ("If you're the monarch ...") and is the SECOND identical stored object.
+  const aragorn = "Whenever Aragorn attacks, up to one target creature can't block this turn. If you're the monarch, creatures can't block this turn.";
+  expect(read("can't block this turn", aragorn, 0)).toBe("restriction");
+  expect(read("can't block this turn", aragorn, 1)).toBeNull();
 });

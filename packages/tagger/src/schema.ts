@@ -983,6 +983,17 @@ export const EFFECT_KINDS = [
   // Your own COPY's new targets are not it (#491). The model answers `other` (or a misfiled `cost-modify`), so it is read off
   // the action's object. A fact kind like `bounce`: the pair channels read it blank; `stackInteraction` reads it raw.
   "retarget",
+  // EVASION (CR 509.1b: a blocking restriction "may be created by an evasion ability"; #1315): "can't be blocked", "can't be blocked
+  // except by Walls / creatures with flying or reach", "... by creatures with power 3 or greater", "... this turn", "... as long as ...".
+  // The model stores `cant | be blocked ...`. NOT "can't block" (a drawback on the other side), NOT "must be blocked", and a payable
+  // "unless defending player pays" stays `tax`. The subject is whoever cannot be blocked ("this creature" is `self`; a static keeps one
+  // only when it names a class, so an Aura's host stays unnamed). A fact kind like `bounce`: the pair channels read it blank.
+  "evasion",
+  // RESTRICTION (CR 508.1c "effects that say a creature can't attack", CR 509.1b "effects that say a creature can't block"; #1315): "Enchanted creature can't attack
+  // or block" (Pacifism, Arrest, Utopia Vow), "can't block" (Mishra's Domination's "Otherwise", Gravecrawler, Bedlam), "can't attack" (Moat). WHICH actions are on
+  // `Ability.restricts`. A fact kind like `evasion`: the pair channels read it blank. NOT "can't be blocked" (evasion), NOT "can't attack you" (a tax, Propaganda), NOT
+  // a requirement ("attacks each combat if able"), and a block narrowed to a class ("can't block creatures without flying") is left unread.
+  "restriction",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];
@@ -1156,6 +1167,26 @@ export interface Ability {
    *  PER SEARCH ACTION: a multi-zone search ("graveyard, hand, and library") is one action, so every ability that action makes carries the value, and absent means no
    *  library among the zones that action searches. */
   librarySearch?: "yours" | "other";
+  /** THE EFFECT APPLIES TO THE PERMANENT THIS CARD IS ATTACHED TO (#1315): an Aura's "enchanted creature / permanent" (CR 303.4, Aura), an
+   *  Equipment's "equipped creature" (CR 301.5, Equipment). Set only on the effect kinds that are done TO a host -- `pump`, `debuff`, `keyword-grant`,
+   *  `speed-increase`, `type-grant`, `ability-loss`, `animate`, `evasion`, `restriction` -- and only when the printed recipient IS the host: "enchanted creature gets +2/+0",
+   *  "As long as enchanted creature is black, it gets +1/+1" (the `it`), and the "Otherwise, it gets -3/-3" half of an either-or Aura (Clutch of Undeath).
+   *  Not set for another class on the same card (Inner Demon's "all non-Demon creatures get -2/-2", Vampirism's "other creatures you control"), for a class of
+   *  enchanted creatures (the Magemarks' "creatures you control that are enchanted"), or for a player ("enchanted creature's controller").
+   *  A MARKER AND NOT `effect.subject.status: ["enchanted"]` ON PURPOSE: a static ability with a subject emits a `static:<kind>` tag in edges.ts and can form
+   *  whole-deck edges (see `namesItsTargets` and "A subject is attached ONLY when there is a kind" in derive.ts). No edge code reads this field; `effect.subject`
+   *  is exactly what it was. It says the buff is a host effect, which is all a voltron reading needs; WHICH hosts an Aura accepts is `characteristics.enchants`.
+   *  THE MARKER CARRIES NO POLARITY: a grant of defender, or a debuff, is `host` as much as a buff is; a reader that wants a buff filters the kind and the grant (`grants`, the sign of `amount`).
+   *  ABSENT MEANS "NOT SAID", NOT "NOT A HOST EFFECT". CEILING: a trigger on "this creature or equipped creature" (Razorfield Ripper), a recipient list ("equipped creature and Zombies you
+   *  control", Wand of Orcus), the inner pump of a quoted grant (Dragon Mantle), a base P/T setter (Aettir and Priwen, Belt of Giant Strength) and "doesn't untap" (Venarian Gold) carry none. */
+  host?: true;
+  /** THE CLAUSE THAT GRANTS THIS ABILITY (#1315). On an ability derived from a QUOTED ability another clause hands over (Sunbond's "Enchanted creature has 'Whenever you gain
+   *  life, put that many +1/+1 counters on this creature.'"), the id of the granting clause (`segment()`'s `granted` clause and its `parentId`): the granting clause's own
+   *  ability is a `keyword-grant` with empty `grants` and says nothing of what is granted, so a reader that must judge the grant (a buff or a curse) follows this to the
+   *  abilities that say it. Additive and read by no edge code. ABSENT on every ability no clause grants. */
+  grantedBy?: number;
+  /** WHICH ACTIONS A `restriction` ABILITY FORBIDS (#1315): `attack`, `block`, or both ("can't attack or block"). Only on an ability of effect kind `restriction`. */
+  restricts?: ("attack" | "block")[];
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {
     verbs: Verb[];

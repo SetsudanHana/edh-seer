@@ -95,6 +95,21 @@ export type RuleClause =
       /** The ABILITY's effect kind is in this list, tested on the SAME ability as the emit. Manifest dread and "manifests the top card of that player's library" derive a `mill` EMIT under a kind-less
        *  ability (the card goes to the graveyard as a side effect), while a real mill carries the `mill` kind: `abilityKind: ["mill"]` is how `wincon.mill` tells the two apart (#1266). */
       abilityKind?: string[] }
+  /** The card's `characteristics.enchants` (the Enchant line, #1315) can be a creature: the filter, or an `anyOf` branch of it ("creature or Vehicle", "artifact or creature"), names
+   *  `creature` or `permanent`, and that branch's control is not `opp` (an Aura only an opponent's creature can wear is a curse). `control` narrows to the listed controls ("you":
+   *  "Enchant creature you control"). */
+  | { op: "enchants"; control?: string[] }
+  /** An ability of the card whose effect lands on the ATTACHED permanent (`Ability.host`, #1315), tested on the SAME ability. `kinds` is the effect kind. Derive carries no polarity, so the
+   *  rest narrows it: `raises` (a pump whose amount has a "+" before a non-zero value on either side: Dream Coat derives a pump with no amount); `grantsAny` (some `grants` keyword is
+   *  in the list); `grantsNonEmpty`; `unlessPumpInClause` (refuse when another HOST pump shares this ability's `clause`: "+3/+3 as long as it's a Zombie. Otherwise -3/-3"). */
+  | { op: "hostEffect"; kinds: string[]; raises?: true; grantsAny?: string[]; grantsNonEmpty?: true; unlessPumpInClause?: true;
+      /** A `restriction` ability forbids one of these actions (`Ability.restricts`): "attack" is Pacifism, "block" alone is Mishra's Domination's "Otherwise, it can't block". */
+      restricts?: string[];
+      /** A QUOTED grant (owner 2026-10-22, "judge the quote"): the ability's `grants` is empty AND at least one ability of the card has `grantedBy` equal to this ability's `clause`
+       *  (the quoted ability, which derive writes as its own ability) AND none of those is a curse. A grant with no child ability is never counted: nothing says what it hands over. */
+      quoted?: { curse: { verbs: string[];
+        /** The emit lands on the grantee or its controller: `subject.self`, or `control: you` (in a quote, "you" is the creature's controller). */
+        aimedAtGrantee?: true }[] } }
   | { op: "typeLine"; contains: string }
   /** The card prints one of these KEYWORDS (Scryfall's `card.keywords`, compared case-insensitively). For a rule whose cue lives only in keyword reminder text, which derive does not read: Transmute and
    *  Transfigure search the library, and Typecycling does too (#1266). Compose with `not` to leave a keyword out (Landcycling fetches a land). */
@@ -403,6 +418,22 @@ function subjectTypes(subject: { type?: string | string[]; subtype?: unknown; an
   return (subject.anyOf ?? []).flatMap((b) => (b.type !== undefined ? [b.type].flat() : b.subtype !== undefined ? ["permanent"] : []));
 }
 
+/** Every ability granted by clause `clauseId` (`grantedBy`), at least one, and no emit of any of them a curse marker of `curse`. */
+function quotedGrantIsBenign(
+  abilities: readonly { clause?: number; grantedBy?: number; emits?: { verb: string; subject: { self?: boolean; control?: string } }[] }[],
+  clauseId: number | undefined,
+  curse: { verbs: string[]; aimedAtGrantee?: true }[],
+): boolean {
+  const children = clauseId === undefined ? [] : abilities.filter((c) => c.grantedBy === clauseId);
+  return children.length > 0 && !children.some((c) => (c.emits ?? []).some((e) => curse.some((m) =>
+    m.verbs.includes(e.verb)
+    && (m.aimedAtGrantee !== true || e.subject.self === true || e.subject.control === "you"))));
+}
+
+/** A pump amount that RAISES power or toughness: a "+" before a non-zero value on either side of "+2/+0", "+0/+2", "+X/+X", "+1/+1 for each ...". "+0/+0" and no amount do not. */
+const RAISES_STAT = /\+(?!0(?!\d))[0-9X]/i;
+const raisesStat = (amount: string | undefined): boolean => amount !== undefined && RAISES_STAT.test(amount);
+
 /** The land types, CR 205.3i ("Lands have their own unique set of subtypes; these subtypes are called land types"). */
 const LAND_TYPES = new Set(["cave", "desert", "forest", "gate", "island", "lair", "locus", "mine", "mountain", "plains", "planet", "power-plant", "sphere", "swamp", "tower", "town", "urza's"]);
 /** Can this ability's damage or life loss land on a player other than you? See `effectKind.reachesPlayer`. The effect subject decides; where derive kept NONE (a model-`static` clause: Granite Shard,
@@ -466,6 +497,29 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     case "keyword": {
       const wanted = new Set(clause.in.map((k) => k.toLowerCase()));
       return (dc.card.keywords ?? []).some((k) => wanted.has(k.toLowerCase()));
+    }
+    case "enchants": {
+      const e = dc.tags?.characteristics?.enchants as (Parameters<typeof subjectTypes>[0] & { control?: string; anyOf?: { control?: string }[] }) | undefined;
+      if (e === undefined) return false;
+      const branches = e.anyOf !== undefined && e.anyOf.length > 0 ? e.anyOf as (typeof e)[] : [e];
+      return branches.some((b) => {
+        // A branch that names only a SUBTYPE does not count ("Enchant Mountain": `subjectTypes` reads a bare subtype as "permanent", and a land type is no creature).
+        const types = b.type === undefined ? [] : [b.type].flat();
+        const control = b.control ?? e.control;
+        return (types.includes("creature") || types.includes("permanent")) && control !== "opp"
+          && (clause.control === undefined || (control !== undefined && clause.control.includes(control)));
+      });
+    }
+    case "hostEffect": {
+      const abilities = dc.tags?.abilities ?? [];
+      return abilities.some((a) =>
+        a.host === true && clause.kinds.includes(a.effect.kind)
+        && (clause.raises !== true || raisesStat(a.amount))
+        && (clause.grantsAny === undefined || (a.grants ?? []).some((g) => clause.grantsAny!.includes(g.toLowerCase())))
+        && (clause.grantsNonEmpty !== true || (a.grants ?? []).length > 0)
+        && (clause.restricts === undefined || (a.restricts ?? []).some((r) => clause.restricts!.includes(r)))
+        && (clause.quoted === undefined || ((a.grants ?? []).length === 0 && quotedGrantIsBenign(abilities, a.clause, clause.quoted.curse)))
+        && (clause.unlessPumpInClause !== true || !abilities.some((f) => f.host === true && f.effect.kind === "pump" && f.clause === a.clause)));
     }
     case "typeLine":
       return (dc.card.typeLine ?? "").toLowerCase().includes(clause.contains);
