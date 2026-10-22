@@ -49,7 +49,6 @@
     "flashKeyword": "(?:^|\\n)flash\\b(?!back)",
     "bounceRemoval": "return target\\s+(?<class>[^.;:]{0,60}?)\\s+to (?:its owner's|their|the owner's|owner's) hand",
     "enchantCreature": "enchant creature",
-    "voltronAura": "enchant creature(?: or planeswalker)? you control|enchanted creature (?:gets \\+(?![^.]*\\bis goaded)|has (?!base)|gains |can't be blocked)|umbra armor|totem armor|regenerate enchanted creature",
     "commanderDamage": "commander damage|deals combat damage to a player[^.]{0,60}?(?:that player loses the game|wins the game)"
   },
 
@@ -363,10 +362,27 @@
       "match": [
         { "op": "anyOf", "clauses": [
           { "op": "subtype", "in": ["equipment"] },
-          { "op": "oracle", "pattern": "voltronAura" }
+          { "op": "allOf", "clauses": [
+            { "op": "subtype", "in": ["aura"] },
+            { "op": "enchants" },
+            { "op": "not", "clause": { "op": "anyOf", "clauses": [
+              { "op": "emits", "verbs": ["goad", "gains-control"] },
+              { "op": "hostEffect", "kinds": ["ability-loss"] },
+              { "op": "hostEffect", "kinds": ["keyword-grant", "speed-increase"], "grantsAny": ["defender", "phasing"] },
+              { "op": "hostEffect", "kinds": ["debuff"], "unlessPumpInClause": true }
+            ] } },
+            { "op": "anyOf", "clauses": [
+              { "op": "enchants", "control": ["you"] },
+              { "op": "hostEffect", "kinds": ["pump"], "raises": true },
+              { "op": "hostEffect", "kinds": ["keyword-grant", "speed-increase"], "grantsNonEmpty": true },
+              { "op": "hostEffect", "kinds": ["evasion"] },
+              { "op": "emits", "verbs": ["regenerate"] },
+              { "op": "keyword", "in": ["umbra armor", "totem armor"] }
+            ] }
+          ] }
         ] }
       ],
-      "why": "Equipment and creature-enchanting auras, the same signature the archetype layer already uses. An aura that enchants a LAND is not voltron, which is why the subtype alone is not enough. An Aura counts only when it HELPS the creature it enchants (#574, measured 2026-09-27): a pump, a keyword or ability it has or gains, evasion, umbra armor, regeneration, or an Aura that can only enchant your own. 'Enchant creature' alone put Eaten by Piranhas, Sugar Coat and Imprisoned in the Moon -- removal cast on an opponent's creature -- in Rani's voltron plan; a goad Aura (Shiny Impetus) is aimed at an opponent's creature too."
+      "why": "Equipment and creature-enchanting Auras, DERIVED since #1315 (it was the printed `voltronAura` pattern). An Aura counts when it can enchant a creature (`characteristics.enchants` names creature or permanent, control not opp) and it HELPS the creature it enchants (#574): a host pump that raises power or toughness, a host keyword or speed grant, host evasion, regenerate, umbra or totem armor, or an Aura that can only enchant your own creature. It is refused when it hurts or takes the creature: goad, gains-control, a host ability-loss, a defender or phasing grant, or a host debuff with no host pump in the same clause. Owner rulings 2026-10-22: an either-or Aura (Clutch of Undeath, +3/+3 as a Zombie, otherwise -3/-3) stays voltron; a conditional buff (As long as enchanted creature is black, it gets +1/+1: the Demigod, Deity and Oversoul cycles, Rune of X, Favor of Jukai) IS voltron. CEILING (#1315, measured at derive 372; the role ratchet lists each by name): (1) an Aura that GRANTS A QUOTED ABILITY has a keyword-grant with empty `grants` and no polarity (Idolized is a buff, Pendrell Flux a curse; Teferi's Curse's phasing is not listed either), so it is NOT counted: 61 real Auras lost to that, among them Splinter Twin, Sunbond, Oblivion Crown, Dragon Mantle, Malicious Intent, Invocation of Saint Traft. (2) `enchants` is null on Aerial Modification, Siege Modification (creature or Vehicle, via animate) and Dance of the Dead (a card in a graveyard), so they are lost. (3) Awesome Presence and Dog Umbra (a conditional umbra armor) derive nothing a rule can read; Aspect of Wolf's pump has no sign. (4) Canopy Cover and Artifact Ward are refused because derive reads their 'can't be the target' as ability-loss. (5) Bestow creatures, Licids and the Cloudform / Lightform / Rageform enchantments are no Aura by subtype and are not voltron by this rule (55 cards the printed pattern counted)."
     },
     {
       "id": "wincon.stompy",

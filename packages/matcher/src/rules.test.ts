@@ -8,7 +8,7 @@ import type { DeckCard } from "./types.js";
 import type { ManaLine } from "@edh-seer/tagger";
 import { nonAccelerantRamp } from "./ramp-class.js";
 import { FREE_TAP, manaTags, mkLine, ritualLine, tapFor, triggerLine } from "./mana-test-support.js";
-import { realCard } from "./removal-test-support.js";
+import { realAura, realCard } from "./removal-test-support.js";
 import goldfish from "./fixtures/goldfish-cards.json" with { type: "json" };
 
 const mk = (name: string, oracleText: string, typeLine = "Instant"): DeckCard => ({
@@ -1434,4 +1434,20 @@ describe("wincon.mill and wincon.altWin are derived (#1266)", () => {
     expect(is(altWin, "Marsh Viper")).toBe(false);
     expect(is(altWin, "Blood Tyrant")).toBe(false);
   });
+});
+
+/** #1315: `wincon.voltron` reads the Enchant line and the host-effect abilities, not the printed text. Real derived rows (derive 372). */
+test("an Aura is voltron when it helps the creature it enchants, and not when it hurts or takes it", () => {
+  const voltron = (name: string): boolean => (detectWincons([realAura(name)]).get("voltron") ?? new Set()).has(name);
+  // Helps: pump, keyword, speed-increase, evasion, regenerate, umbra armor, an Aura only your creature can wear, and ruled either-or / conditional buffs (owner 2026-10-22).
+  for (const n of ["Rancor", "Ethereal Armor", "Aqueous Form", "Battle Mastery", "Regeneration", "Crab Umbra", "Dying Wish", "Spirit Loop", "Clutch of Undeath", "Fists of the Demigod", "Inner Demon"]) {
+    expect(voltron(n), n).toBe(true);
+  }
+  // Hurts or takes it, or helps nothing: removal, goad, control, shrink, defender and phasing grants, a pump with no amount.
+  for (const n of ["Pacifism", "Shiny Impetus", "Deep Freeze", "Cursed Flesh", "Sky Tether", "Control Magic", "Frenzied Fugue", "Dream Coat", "Mistform Mask", "Teferi's Curse", "Nurgle's Rot", "Eaten by Piranhas"]) {
+    expect(voltron(n), n).toBe(false);
+  }
+  // Equipment is still voltron by its subtype, and a non-Aura with a host-less pump is not.
+  expect(voltron("Bonesplitter")).toBe(true);
+  expect(voltron("Hall of Triumph")).toBe(false);
 });
