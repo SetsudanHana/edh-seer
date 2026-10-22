@@ -5,6 +5,7 @@
  *  an emit is returned in `unclaimed` instead of vanishing -- a dropped clause that produces
  *  silence is indistinguishable from a card that does nothing, which is exactly how Bitterblossom
  *  sat in the corpus as a vanilla bear. */
+import { GUARDED_VERBS, guardExempt, verbPrint } from "./verb-words.js";
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
@@ -1677,7 +1678,7 @@ function nthSentenceMatching(text: string, pattern: string, k: number): string {
 }
 /** The printed word(s) an action verb reads as, where they differ from the verb's name ("modify-pt" is "gets", "deal-damage" is "deals"). The default is the verb's first word, with its
  *  plural/third-person ending: "draw" reads "draws", "destroy" reads "destroys". */
-export const FLIP_VERB_WORDS:Record<string, string> = {
+export const FLIP_VERB_WORDS: Record<string, string> = {
   "modify-pt": "gets?", "deal-damage": "deals?", "gain-life": "gains?", "lose-life": "loses?|lose", "add-counter": "puts?", "remove-counter": "removes?", "gain-control": "gains? control",
   "counter-spell": "counters?", "extra-turn": "extra turn", "phase-out": "phases? out", "grant-ability": "gains?", "create": "creates?", "sacrifice": "sacrifices?",
 };
@@ -2233,6 +2234,16 @@ export function deriveAbilities(
     // cue localises the actor to a VERB, not to an action, so a clause with two actions of that verb
     // is ambiguous and is left alone -- a missing answer beats a wrong one.
     const clauseText = rehomed ?? textForClause(clause, clauseTexts);
+    // AN ACTION WHOSE VERB THE PRINTED TEXT NEVER STATES IS NOT THAT ACTION (#1321): see `verbPrint`. For a verb in GUARDED_VERBS it is dropped to `unclaimed`; printed on ANOTHER clause of the card it is a clause mix-up and kept.
+    // CEILING: a mix-up is kept whole (its clause's own sentence is not searched for the right one), so a verb the card prints once can still feed two clauses.
+    if (GUARDED_VERBS.size > 0 && (clause.actions ?? []).some((a) => GUARDED_VERBS.has(a.verb ?? ""))) {
+      const kept = (clause.actions ?? []).filter((a) => {
+        if (!GUARDED_VERBS.has(a.verb ?? "") || guardExempt(a) || verbPrint(a.verb ?? "", clauseText, clauseCosts?.[clause.id as number], oracleText) !== "none") return true;
+        unclaimed.push(a);
+        return false;
+      });
+      clause = { ...clause, actions: kept };
+    }
     // "EACH CREATURE YOU CONTROL BECOMES PREPARED" IS A PREPARE, NOT A GRANT (CR 722.3a). Codie,
     // Ravenous Codex's activated ability came back from the model as `grant-ability` even with
     // `prepare` in the vocabulary, so the one card that prepares a whole board prepared nothing.
