@@ -50,7 +50,7 @@
   "packages/tagger/src/derive-input.ts": 1,
   "packages/tagger/src/derive/damage-recipient.ts": 3,
   "packages/tagger/src/derive/delay.ts": 2,
-  "packages/tagger/src/derive/derive.ts": 36,
+  "packages/tagger/src/derive/derive.ts": 37,
   "packages/tagger/src/derive/effect-kind.ts": 9,
   "packages/tagger/src/derive/emits.ts": 6,
   "packages/tagger/src/derive/event-count.ts": 1,

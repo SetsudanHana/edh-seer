@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { deriveCardTags } from "./derive.js";
 import { GUARDED_VERBS, verbPrint } from "./verb-words.js";
 import { deriveInputOf } from "../derive-input.js";
@@ -14,7 +14,10 @@ const via = (name: string, typeLine: string, oracleText: string, clauses: object
 const SPELL = [{ id: 1, abilityType: "spell", actions: [act("scry", "top six cards of your library")] }];
 const DIG = "Look at the top six cards of your library. You may reveal a creature card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.";
 
-afterEach(() => GUARDED_VERBS.clear());
+// Each test sees the production allow-list and leaves it as it found it, so any test passes alone and in any order.
+let saved: string[] = [];
+beforeEach(() => { saved = [...GUARDED_VERBS]; });
+afterEach(() => { GUARDED_VERBS.clear(); for (const v of saved) GUARDED_VERBS.add(v); });
 
 describe("verbPrint: where is the verb printed", () => {
   test("own clause, cost included, reminder stripped", () => {
@@ -50,6 +53,7 @@ describe("verbPrint: where is the verb printed", () => {
 describe("the guard in derive", () => {
   const scries = (tags: ReturnType<typeof via>) => tags.abilities.filter((a) => (a.emits ?? []).some((e) => e.verb === "scry"));
   test("an unguarded verb is untouched (Basic Conjuration's dig reads as scry)", () => {
+    GUARDED_VERBS.delete("scry");
     expect(scries(via("Basic Conjuration", "Sorcery", DIG, SPELL)).length).toBeGreaterThan(0);
   });
   test("a guarded verb printed nowhere on the card is dropped to unclaimed", () => {
