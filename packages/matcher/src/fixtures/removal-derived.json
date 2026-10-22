@@ -2238,6 +2238,7 @@
     "effect": {
      "kind": "pump"
     },
+    "host": true,
     "amount": "+2/+2",
     "clause": 1,
     "repeats": "continuous"
@@ -2247,6 +2248,7 @@
     "effect": {
      "kind": "keyword-grant"
     },
+    "host": true,
     "clause": 1,
     "repeats": "continuous",
     "grants": [
@@ -2332,6 +2334,7 @@
       }
      }
     ],
+    "librarySearch": "yours",
     "clause": 2,
     "repeats": "per-cycle",
     "count": {
@@ -4457,7 +4460,8 @@
      "kind": "damage",
      "subject": {
       "control": "any",
-      "token": null
+      "token": null,
+      "player": true
      }
     },
     "trigger": {
@@ -4477,7 +4481,8 @@
       "verb": "non-combat-damage",
       "subject": {
        "control": "any",
-       "token": null
+       "token": null,
+       "player": true
       },
       "dealer": {
        "control": "you",
@@ -4587,9 +4592,7 @@
       "verb": "non-combat-damage",
       "subject": {
        "control": "any",
-       "token": null,
-       "type": "enchantment",
-       "scope": "target"
+       "token": null
       },
       "dealer": {
        "control": "you",
@@ -4829,6 +4832,8 @@
       }
      }
     ],
+    "librarySearch": "yours",
+    "toZone": "battlefield",
     "clause": 1,
     "repeats": "once"
    },
@@ -5126,7 +5131,8 @@
      "subject": {
       "control": "any",
       "token": null,
-      "scope": "target"
+      "scope": "target",
+      "player": true
      }
     },
     "amount": "2",
@@ -5136,7 +5142,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "scope": "target"
+       "scope": "target",
+       "player": true
       },
       "dealer": {
        "control": "you",
@@ -5163,6 +5170,7 @@
     "effect": {
      "kind": "pump"
     },
+    "host": true,
     "amount": "+1/+0 for each blood counter on this Equipment",
     "clause": 1,
     "repeats": "continuous",
@@ -5185,6 +5193,7 @@
     "effect": {
      "kind": "keyword-grant"
     },
+    "host": true,
     "clause": 1,
     "repeats": "continuous"
    },
@@ -5233,7 +5242,8 @@
        }
       }
      ]
-    }
+    },
+    "grantedBy": 1
    },
    {
     "kind": "activated",
@@ -5279,7 +5289,8 @@
        }
       }
      ]
-    }
+    },
+    "grantedBy": 1
    },
    {
     "kind": "activated",
@@ -9787,6 +9798,7 @@
     },
     "cost": "{G}, {T}",
     "amount": "1",
+    "toHand": "1",
     "clause": 1,
     "repeats": "per-cycle",
     "count": {
@@ -10471,6 +10483,7 @@
     "effect": {
      "kind": "pump"
     },
+    "host": true,
     "amount": "+2/+0",
     "clause": 1,
     "repeats": "continuous"
@@ -10480,6 +10493,7 @@
     "effect": {
      "kind": "keyword-grant"
     },
+    "host": true,
     "clause": 1,
     "repeats": "continuous",
     "grants": [
@@ -10528,7 +10542,8 @@
      }
     ],
     "clause": 3,
-    "repeats": "per-cycle"
+    "repeats": "per-cycle",
+    "grantedBy": 2
    }
   ]
  },
@@ -14780,13 +14795,15 @@
    {
     "kind": "on-cast",
     "effect": {
-     "kind": "to-hand",
+     "kind": "search",
      "subject": {
-      "control": "you",
-      "token": null
+      "control": "any",
+      "token": null,
+      "chosenType": true,
+      "scope": "all"
      }
     },
-    "amount": "all",
+    "toHand": "all",
     "clause": 1,
     "repeats": "once"
    },
@@ -15170,15 +15187,14 @@
    {
     "kind": "activated",
     "effect": {
-     "kind": "search",
+     "kind": "to-hand",
      "subject": {
-      "control": "any",
-      "token": null,
-      "scope": "all"
+      "control": "you",
+      "token": null
      }
     },
     "cost": "+1",
-    "toHand": "all",
+    "amount": "all",
     "clause": 2,
     "repeats": "per-cycle",
     "payment": {
@@ -15785,6 +15801,7 @@
      }
     },
     "amount": "1",
+    "chooses": true,
     "clause": 1,
     "repeats": "once",
     "count": {
@@ -16023,7 +16040,7 @@
     "effect": {
      "kind": "mill",
      "subject": {
-      "control": "any",
+      "control": "you",
       "token": null
      }
     },
@@ -16037,32 +16054,26 @@
       "subtype": "zombie"
      }
     },
-    "amount": "1",
     "emits": [
      {
       "verb": "mill",
       "subject": {
        "control": "you",
        "token": null,
-       "fromZone": "library",
-       "subtype": "zombie"
+       "fromZone": "library"
       }
      }
     ],
     "returnIf": true,
     "clause": 1,
-    "repeats": "repeatable",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    }
+    "repeats": "repeatable"
    },
    {
     "kind": "triggered",
     "effect": {
      "kind": "mill",
      "subject": {
-      "control": "any",
+      "control": "you",
       "token": null
      }
     },
@@ -16077,25 +16088,19 @@
       "self": true
      }
     },
-    "amount": "1",
     "emits": [
      {
       "verb": "mill",
       "subject": {
        "control": "you",
        "token": null,
-       "fromZone": "library",
-       "subtype": "zombie"
+       "fromZone": "library"
       }
      }
     ],
     "returnIf": true,
     "clause": 1,
-    "repeats": "once",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    }
+    "repeats": "once"
    }
   ]
  },
@@ -16706,6 +16711,569 @@
     "grants": [
      "indestructible"
     ]
+   }
+  ]
+ },
+ "Augur of Bolas": {
+  "oracleText": "When this creature enters, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order.",
+  "typeLine": "Creature — Merfolk Wizard",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "instant",
+       "sorcery"
+      ]
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "toHand": "1",
+    "chooses": true,
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Kiora, Master of the Depths": {
+  "oracleText": "+1: Untap up to one target creature and up to one target land.\n−2: Reveal the top four cards of your library. You may put a creature card and/or a land card from among them into your hand. Put the rest into your graveyard.\n−8: You get an emblem with \"Whenever a creature you control enters, you may have it fight target creature.\" Then create three 8/8 blue Octopus creature tokens.",
+  "typeLine": "Legendary Planeswalker — Kiora",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "target"
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "land"
+      ]
+     }
+    },
+    "cost": "−2",
+    "amount": "1",
+    "toHand": "2",
+    "chooses": true,
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mill",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "−2",
+    "emits": [
+     {
+      "verb": "mill",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "library"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "emblem",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−8",
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-8"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "subtype": "octopus",
+      "scope": "all",
+      "colors": [
+       "U"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 8
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 8
+       }
+      ]
+     }
+    },
+    "cost": "−8",
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "U"
+       ],
+       "type": "creature",
+       "subtype": "octopus",
+       "scope": "all",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 8
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 8
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "U"
+       ],
+       "type": "creature",
+       "subtype": "octopus",
+       "scope": "all",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 8
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 8
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    },
+    "payment": {
+     "loyalty": "-8"
+    }
+   }
+  ]
+ },
+ "Memories Returning": {
+  "oracleText": "Reveal the top five cards of your library. Put one of them into your hand. Then choose an opponent. They put one on the bottom of your library. Then you put one into your hand. Then they put one on the bottom of your library. Put the other into your hand.\nFlashback {7}{U}{U}",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "to-hand",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "to-hand",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "to-hand",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Boughside Wanderers": {
+  "oracleText": "When this creature enters, look at the top four cards of your library. You may reveal a permanent card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.\nLandfall — Whenever a land you control enters, this creature gets +2/+2 until end of turn.",
+  "typeLine": "Creature — Elf Scout",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "toHand": "1",
+    "chooses": true,
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "land"
+     }
+    },
+    "amount": "+2/+2",
+    "clause": 2,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Harper Recruiter": {
+  "oracleText": "Flying\nWhenever this creature attacks, look at the top four cards of your library. You may reveal a Cleric card, a Rogue card, a Warrior card, and/or a Wizard card from among them and put those cards into your hand. Put the rest on the bottom of your library in a random order.",
+  "typeLine": "Creature — Human Warrior",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": [
+       "cleric",
+       "rogue",
+       "warrior",
+       "wizard"
+      ]
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "toHand": "4",
+    "chooses": true,
+    "clause": 2,
+    "repeats": "per-cycle"
+   }
+  ]
+ },
+ "Follow the Lumarets": {
+  "oracleText": "Infusion — Look at the top four cards of your library. You may reveal a creature or land card from among them and put it into your hand. If you gained life this turn, you may instead reveal two creature and/or land cards from among them and put them into your hand. Put the rest on the bottom of your library in a random order.",
+  "typeLine": "Sorcery",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "land"
+      ]
+     }
+    },
+    "toHand": "1",
+    "chooses": true,
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "land"
+      ]
+     }
+    },
+    "amount": "2",
+    "toHand": "2",
+    "chooses": true,
+    "returnIf": true,
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Break Out": {
+  "oracleText": "Look at the top six cards of your library. You may reveal a creature card from among them. If that card has mana value 2 or less, you may put it onto the battlefield and it gains haste until end of turn. If you didn't put the revealed card onto the battlefield this way, put it into your hand. Put the rest on the bottom of your library in a random order.",
+  "typeLine": "Sorcery",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "stats": [
+        {
+         "metric": "mana-value",
+         "op": "lte",
+         "value": 2
+        }
+       ],
+       "fromZone": "library"
+      }
+     }
+    ],
+    "returnIf": true,
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "speed-increase",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "clause": 1,
+    "repeats": "once",
+    "grants": [
+     "haste"
+    ]
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "toHand": "1",
+    "chooses": true,
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Gift of the Gargantuan": {
+  "oracleText": "Look at the top four cards of your library. You may reveal a creature card and/or a land card from among them and put the revealed cards into your hand. Put the rest on the bottom of your library in any order.",
+  "typeLine": "Sorcery",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "land"
+      ]
+     }
+    },
+    "toHand": "2",
+    "chooses": true,
+    "clause": 1,
+    "repeats": "once"
    }
   ]
  }

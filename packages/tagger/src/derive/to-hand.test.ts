@@ -6,8 +6,8 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import { deriveAbilities, deriveCardTags } from "./derive.js";
 import { deriveInputOf } from "../derive-input.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
-import { actionEffectKind } from "./effect-kind.js";
-import { readToHand, toHandAmount, toHandChooses } from "./to-hand.js";
+import { actionEffectKind, handFillRead } from "./effect-kind.js";
+import { classIn, readToHand, toHandAmount, toHandChooses } from "./to-hand.js";
 
 const put = (object: string, toZone: string, optional = false): Action =>
   ({ verb: "put", object, fromZone: "library", toZone, amount: null, optional } as unknown as Action);
@@ -92,9 +92,9 @@ describe("actionEffectKind: a put from the top of your library into your hand is
     expect(run("that many cards from the top of your library", "Exile any number of cards from your hand face down. Put that many cards from the top of your library into your hand. Then look at the exiled cards and put them on top of your library in any order.").netZero).toBe(true);
     expect(run("one of those cards", "If you would draw a card, look at the top three cards of your library instead. Put one of those cards into your hand and the rest on the bottom of your library in any order.").netZero).toBe(true);
     expect(run("that card", DARK_CONFIDANT).netZero).toBe(false);
-    // Karn: the opponent picks. Truth or Tale: the opponent picks the pile. Eye of Yawgmoth: "a number of cards", your pick.
+    // Karn: the opponent picks. Eye of Yawgmoth: "a number of cards", your pick.
     expect(run("that card", "Reveal the top two cards of your library. An opponent chooses one of them. Put that card into your hand and exile the other with a silver counter on it.").chooses).toBe(false);
-    expect(run("a card from the chosen pile", "Reveal the top five cards of your library and separate them into two piles. An opponent chooses one of those piles. Put a card from the chosen pile into your hand, then put all other cards revealed this way on the bottom of your library in any order.").chooses).toBe(false);
+    // Truth or Tale: the opponent picks the PILE, you pick the card from it (ruling 4 reads only YOUR one-of-N pick as the Impulse line): see the review block below.
     expect(run("one", "Reveal a number of cards from the top of your library equal to the sacrificed creature's power. Put one into your hand and exile the rest.").chooses).toBe(true);
     // Atraxa: one per card type, not one.
     expect(run("a card of that type from among the revealed cards", "Reveal the top ten cards of your library. For each card type, you may put a card of that type from among the revealed cards into your hand.").amount).toBe("X");
@@ -217,5 +217,109 @@ describe("the printed-text grammar reads the same cards the same way (Mongo clau
   test("Coiling Oracle: the hand branch is to-hand and the land branch still enters", () => {
     const tags = fromGrammar("Coiling Oracle", "Creature \u2014 Snake Elf Druid", COILING);
     expect(tags.abilities.filter((a) => a.effect.kind === "to-hand")).toHaveLength(1);
+  });
+});
+
+/** THE REVIEW OF d7f7a5c5 (#1302): the count and the choice are read from the PICK SENTENCE when the clause holds the pick, not from the stored object's spelling. Real clause texts and real stored objects. */
+describe("count and choice come from the pick sentence", () => {
+  const read = (object: string, text: string, nth = 0) => handFillRead(put(object, "hand"), text, nth)!;
+  const AUGUR = "When this creature enters, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order.";
+  const KIORA = "Reveal the top four cards of your library. You may put a creature card and/or a land card from among them into your hand. Put the rest into your graveyard.";
+  const LUMARETS = "Look at the top four cards of your library. You may reveal a creature or land card from among them and put it into your hand. If you gained life this turn, you may instead reveal two creature and/or land cards from among them and put them into your hand. Put the rest on the bottom of your library in a random order.";
+  const MEMORIES = "Reveal the top five cards of your library. Put one of them into your hand. Then choose an opponent. They put one on the bottom of your library. Then you put one into your hand. Then they put one on the bottom of your library. Put the other into your hand.";
+
+  test("YOUR one-of-N pick is chosen whatever the object says: Augur of Bolas, Boughside Wanderers, Calix, Break Out", () => {
+    for (const [object, text] of [
+      ["the revealed instant or sorcery card", AUGUR],
+      ["the revealed permanent card", "When this creature enters, look at the top four cards of your library. You may reveal a permanent card from among them and put it into your hand. Put the rest on the bottom of your library in a random order."],
+      ["enchantment card", "Look at the top four cards of your library. You may reveal an enchantment card from among them and put that card into your hand. Put the rest on the bottom of your library in a random order."],
+      ["the revealed creature card not put onto the battlefield", "Look at the top six cards of your library. You may reveal a creature card from among them. If that card has mana value 2 or less, you may put it onto the battlefield and it gains haste until end of turn. If you didn't put the revealed card onto the battlefield this way, put it into your hand. Put the rest on the bottom of your library in a random order."],
+    ] as const) {
+      const r = read(object, text);
+      expect([r.amount, r.chooses, r.typed !== undefined], text).toEqual(["1", true, true]);
+    }
+    expect(read("the revealed creature card not put onto the battlefield", "Look at the top six cards of your library. You may reveal a creature card from among them. If you didn't put the revealed card onto the battlefield this way, put it into your hand.").typed?.cls).toBe("creature");
+  });
+
+  test("two named classes are two cards: Kiora, Benefaction of Rhonas, In the Presence of Ages, Relentless Pursuit, Gift of the Gargantuan", () => {
+    const r = read("a creature card and/or a land card from among them", KIORA);
+    expect([r.amount, r.chooses, r.typed?.cls]).toEqual(["2", true, "creature or land"]);
+    expect(read("a creature card and/or an enchantment card from among them", KIORA.replace("land", "enchantment")).amount).toBe("2");
+    expect(read("revealed creature card(s) and/or land card(s)", "Look at the top four cards of your library. You may reveal a creature card and/or a land card from among them and put the revealed cards into your hand. Put the rest on the bottom of your library in any order.").amount).toBe("2");
+  });
+
+  test("a card's second alternative has its own count (Follow the Lumarets: one, or two instead)", () => {
+    expect([read("revealed creature or land card", LUMARETS, 0).amount, read("revealed creature or land card", LUMARETS, 0).chooses]).toEqual(["1", true]);
+    expect([read("revealed creature and/or land cards", LUMARETS, 1).amount, read("revealed creature and/or land cards", LUMARETS, 1).typed?.cls]).toEqual(["2", "creature or land"]);
+  });
+
+  test("three picks in a row are cards to hand, not one pick (Memories Returning: 3 of 5)", () => {
+    for (const nth of [0, 1, 2]) { const r = read("one", MEMORIES, nth); expect([r.amount, r.chooses]).toEqual(["1", false]); }
+  });
+
+  test("'any number of' is all; a literal number is that number (Karumonix, Lead the Stampede, Forging the Anchor, You Meet in a Tavern, Fathom Trawl)", () => {
+    for (const [object, text] of [
+      ["revealed Rat cards", "When Karumonix enters, look at the top five cards of your library. You may reveal any number of Rat cards from among them and put the revealed cards into your hand. Put the rest on the bottom of your library in a random order."],
+      ["the revealed creature cards", "Look at the top five cards of your library. You may reveal any number of creature cards from among them and put the revealed cards into your hand. Put the rest on the bottom of your library in any order."],
+      ["creature cards from the top five cards of your library", "Form a Party \u2014 Look at the top five cards of your library. You may reveal any number of creature cards from among them and put them into your hand. Put the rest on the bottom of your library in a random order."],
+    ] as const) expect(read(object, text).amount, text).toBe("all");
+    expect(read("the nonland cards revealed this way", "Reveal cards from the top of your library until you reveal three nonland cards. Put the nonland cards revealed this way into your hand, then put the rest of the revealed cards on the bottom of your library in any order.").amount).toBe("3");
+  });
+
+  test("a predicate pick: 'with the chosen name' is not a class (Tamiyo), a list is one anyOf (Harper Recruiter), Niv-Mizzet's class is unreadable", () => {
+    const TAMIYO = "Choose a nonland card name, then reveal the top four cards of your library. Put all cards with the chosen name from among them into your hand and the rest into your graveyard.";
+    expect(read("all cards with the chosen name from among them", TAMIYO).typed).toBeUndefined();
+    expect(actionEffectKind(put("all cards with the chosen name from among them", "hand"), TAMIYO)).toBe("to-hand");
+    const HARPER = "Whenever this creature attacks, look at the top four cards of your library. You may reveal a Cleric card, a Rogue card, a Warrior card, and/or a Wizard card from among them and put those cards into your hand. Put the rest on the bottom of your library in a random order.";
+    expect(read("revealed cards", HARPER).typed?.cls).toBe("Cleric, Rogue, Warrior, or Wizard");
+    expect(read("revealed cards", HARPER).amount).toBe("4");
+    const NIV = "When Niv-Mizzet enters, reveal the top ten cards of your library. For each color pair, choose a card that's exactly those colors from among them. Put the chosen cards into your hand and the rest on the bottom of your library in a random order.";
+    expect(read("the chosen cards", NIV).typed?.cls).toBe("");
+  });
+
+  test("regression guards found by re-deriving: 'or' is one card, a reveal-until lists classes but takes one, X is no class, a plural pointer at 'each opponent chooses a card' is all, a fallback hand-put points back at its pick", () => {
+    const FRONTIER = "When this creature enters, look at the top five cards of your library. You may reveal a Mount creature card or a Plains card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.";
+    expect(read("a Mount creature card or a Plains card", FRONTIER).amount).toBe("1");
+    expect(read("a Mount creature card or a Plains card", FRONTIER).typed?.cls).toBe("Mount creature or Plains");
+    const CHILD = "Reveal cards from the top of your library until you reveal a Doctor card, a card with doctor's companion, or a Vehicle card. Put that card into your hand and the rest on the bottom of your library in a random order.";
+    expect(read("that card", CHILD).amount).toBe("1");
+    const STARGAZE = "Look at twice X cards from the top of your library. Put X cards from among them into your hand and the rest into your graveyard. You lose X life.";
+    expect([read("X cards from among them", STARGAZE).amount, read("X cards from among them", STARGAZE).typed]).toEqual(["X", undefined]);
+    const MANIFOLD = "Reveal the top ten cards of your library. Starting with the next opponent in turn order, each opponent chooses a different nonland card from among them. Put the chosen cards into your hand and the rest on the bottom of your library in a random order.";
+    expect(read("the chosen cards", MANIFOLD).amount).toBe("all");
+    const SONGBIRDS = "Whenever enchanted creature attacks, reveal cards from the top of your library until you reveal an Aura card. You may put that card onto the battlefield. If you don't, put it into your hand. Put the rest on the bottom of your library in a random order.";
+    expect([read("it", SONGBIRDS).typed?.cls, read("it", SONGBIRDS).amount]).toEqual(["Aura", "1"]);
+    // Coiling Oracle's condition is not pointed back at: its "Otherwise" hand-put stays untyped.
+    expect(read("that card", COILING).typed).toBeUndefined();
+  });
+
+  test("Truth or Tale: the opponent picks the PILE, you pick the card from it: your own one-of-N pick", () => {
+    const r = read("a card from the chosen pile", "Reveal the top five cards of your library and separate them into two piles. An opponent chooses one of those piles. Put a card from the chosen pile into your hand, then put all other cards revealed this way on the bottom of your library in any order.");
+    expect([r.amount, r.chooses]).toEqual(["1", true]);
+    // ...while an opponent who picks the CARD (Karn, Scion of Urza) is not you.
+    expect(read("that card", "Reveal the top two cards of your library. An opponent chooses one of them. Put that card into your hand and exile the other with a silver counter on it.").chooses).toBe(false);
+  });
+
+  test("the 'Otherwise' of an alternative is not a second pick in a row (Advice from the Fae keeps its pick)", () => {
+    const ADVICE = "Look at the top five cards of your library. If you control more creatures than each other player, put two of those cards into your hand. Otherwise, put one of them into your hand. Then put the rest on the bottom of your library in any order.";
+    expect(read("two of those cards", ADVICE, 0).chooses).toBe(true);
+    expect(read("one of those cards", ADVICE, 1).chooses).toBe(true);
+    // Without the alternative marker the same two sentences are a sequence.
+    expect(read("one of those cards", ADVICE.replace("Otherwise, put", "Put"), 1).chooses).toBe(false);
+  });
+});
+
+describe("no regex here is super-linear (CodeQL js/polynomial-redos; 40k characters, 200 ms)", () => {
+  const SHAPES: [string, string][] = [
+    ["spaces", " ".repeat(40000)], ["articles", "a ".repeat(20000)], ["cards", "card ".repeat(8000)], ["commas", "a card, ".repeat(5000)],
+    ["until", "until you reveal " + "a ".repeat(20000)], ["opponent", "an opponent chooses " + "of ".repeat(13000)], ["if", "if it's a " + "x ".repeat(20000)],
+    ["from among", "put a " + "creature ".repeat(4000) + "card from among"], ["revealed", "they revealed " + "x".repeat(40000)],
+  ];
+  const clause = (tail: string) => `Look at the top five cards of your library. ${tail} Put it into your hand.`;
+  test.each(SHAPES)("%s", (_name, tail) => {
+    const t0 = performance.now();
+    classIn(tail); classIn(tail, false); readToHand("that card", clause(tail), false); readToHand("a creature card and/or a land card from among them", clause(tail), false, 1);
+    toHandChooses("one", clause(tail));
+    expect(performance.now() - t0).toBeLessThan(200);
   });
 });

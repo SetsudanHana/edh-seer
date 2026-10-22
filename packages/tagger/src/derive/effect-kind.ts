@@ -245,10 +245,10 @@ export function retargetObject(object: string, verb = "other", clauseText = ""):
 /** Does a dig's object name a class -- a type, subtype, stat predicate or name, on the subject or
  *  in an `anyOf` branch? "Two of them" and "a card" do not. See the `put library -> hand` row. */
 /** The read of a `put library -> hand` that is the top of your own library going to your hand without a printed search (`to-hand.ts`), or `undefined`. One reading for the effect kind and for the ability's markers. */
-export function handFillRead(action: Action, clauseText: string): ToHandRead | undefined {
+export function handFillRead(action: Action, clauseText: string, nth = 0): ToHandRead | undefined {
   if (action.verb !== "put" || action.fromZone !== "library" || action.toZone !== "hand") return undefined;
   const object = String(action.object ?? "");
-  return readToHand(object, clauseText, digNamesAClass(object));
+  return readToHand(object, clauseText, digNamesAClass(object), nth);
 }
 function digNamesAClass(object: string): boolean {
   const s = parseSubject(object);
