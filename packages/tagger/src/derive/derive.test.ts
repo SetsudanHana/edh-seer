@@ -6346,6 +6346,15 @@ describe("restriction: a host that can't attack or block (#1315, CR 508.1c, 509.
     expect(rs(derive("Gravecrawler", "Creature — Zombie", "This creature can't block.\nYou may cast this card from your graveyard as long as you control a Zombie."))).toEqual(["block:false"]);
   });
 
+  test("Aragorn, King of Gondor: one restriction (the target half), the monarch half is conditional; Childhood Horror, Barrage of Boulders, Wirecat derive none", () => {
+    const aragorn = derive("Aragorn, King of Gondor", "Legendary Creature \u2014 Human Noble", "Vigilance, lifelink\nWhen Aragorn enters, you become the monarch.\nWhenever Aragorn attacks, up to one target creature can't block this turn. If you're the monarch, creatures can't block this turn.");
+    expect(rs(aragorn)).toEqual(["block:false"]);
+    expect(rs(derive("Childhood Horror", "Creature \u2014 Horror", "Flying\nThreshold \u2014 As long as there are seven or more cards in your graveyard, this creature gets +2/+2 and can't block."))).toEqual([]);
+    expect(rs(derive("Barrage of Boulders", "Sorcery", "Barrage of Boulders deals 1 damage to each creature you don't control.\nFerocious \u2014 If you control a creature with power 4 or greater, creatures can't block this turn."))).toEqual([]);
+    expect(rs(derive("Wirecat", "Artifact Creature \u2014 Cat", "This creature can't attack or block if an enchantment is on the battlefield."))).toEqual([]);
+    expect(rs(derive("Test Aura", AURA, "Enchant creature\nAs long as enchanted creature is red, it gets +1/+1 and can't block."))).toEqual([]);
+  });
+
   test("not a restriction: can't be blocked (evasion), can't attack you (Vow of Flight, Propaganda's tax), must attack", () => {
     expect(rs(derive("Aqueous Form", AURA, "Enchant creature\nEnchanted creature can't be blocked."))).toEqual([]);
     expect(rs(derive("Vow of Flight", AURA, "Enchant creature\nEnchanted creature gets +2/+2, has flying, and can't attack you or planeswalkers you control."))).toEqual([]);

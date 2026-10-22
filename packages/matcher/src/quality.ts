@@ -208,7 +208,8 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
   const all = d.tags?.abilities ?? [];
   out.drawback = all.some((a) => (a.emits ?? []).some(isDrawback)) || GIVES_A_PERMANENT.test(d.card.oracleText ?? "") ? 1 : 0;
   // A SECOND ABILITY WITH ITS OWN EFFECT, not a gift to the opponent (Swords' lifegain is the victim's).
-  const others = all.filter((a) => !abilities.includes(a) && a.effect.kind !== ""
+  // A `restriction` ("can't attack or block", "can't block") is a cost or a curse, never extra value -- self drawback or rider alike (owner 2026-10-22, #1315).
+  const others = all.filter((a) => !abilities.includes(a) && a.effect.kind !== "" && a.effect.kind !== "restriction"
     && !(a.emits ?? []).some((e) => e.subject.control === "opp"));
   const types = (d.tags?.characteristics.types ?? []).map((t) => t.toLowerCase());
   out.extraValue = (types.includes("creature") ? 1 : 0) + (others.length > 0 ? 1 : 0);

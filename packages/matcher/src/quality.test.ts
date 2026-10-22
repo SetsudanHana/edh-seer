@@ -88,6 +88,13 @@ test("extraValue: a body, or a second ability with its own effect", () => {
   expect(ingredients(dc("Swords to Plowshares"), "targetedRemoval").extraValue).toBe(0); // the lifegain is the victim's
 });
 
+test("extraValue: a `restriction` is no extra value, a drawback or a rider alike (owner 2026-10-22, #1315)", () => {
+  const swords = dc("Swords to Plowshares");
+  const withAbility = (kind: string): DeckCard => ({ ...swords, tags: { ...swords.tags!, abilities: [...swords.tags!.abilities, { kind: "static", effect: { kind } }] } }) as unknown as DeckCard;
+  expect(ingredients(withAbility("restriction"), "targetedRemoval").extraValue).toBe(0);
+  expect(ingredients(withAbility("pump"), "targetedRemoval").extraValue).toBe(1); // the control: a real second effect counts
+});
+
 // ---- the final review's fix pass (2026-09-27) ----
 
 test("the locator finds the role ability the build rules saw: Treasure ramp, a tuck, a phase-out", () => {

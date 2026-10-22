@@ -1349,6 +1349,13 @@ test("an ability-loss static reaches no partner on the page", () => {
   expect(staticKeysOf(humility)).toEqual([]);
 });
 
+test("a restriction static reaches no partner on the page (a curse is not a relation, #1315)", () => {
+  const bedlam = base("Bedlam", [
+    { kind: "static", effect: { kind: "restriction", subject: { control: "any", token: null, type: "creature", scope: "all" } }, restricts: ["block"] },
+  ] as unknown as CardTags["abilities"]);
+  expect(staticKeysOf(bedlam)).toEqual([]);
+});
+
 /** A "MAX SPEED" ROW SAYS WHAT IT NEEDS. The requirement rides from derive to the page, so a
  *  reader sees the condition the deck report only honours under a state (roadmap W18). */
 test("an ability row carries its game-state requirement", () => {

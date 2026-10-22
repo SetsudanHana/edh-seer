@@ -175,14 +175,32 @@ export function cantBeBlocked(object: string, clauseText = ""): boolean {
  *  "doesn't attack"), not a narrowed block ("block creatures without flying", "block this creature"), not "alone" and not an "unless" condition, and never "be blocked" (evasion).
  *  CEILING: the narrowed and conditional forms are left unread -- 32 "block creatures without flying", 26 "attack unless defending player controls an island", 12 "... alone",
  *  11 "block this creature" stored objects (research/tagger/restriction-objects.ts, 2026-10-22); each is a real restriction that this kind would overclaim as total.
+ *  CEILING: a CONDITION on the sentence is refused (derive 374): 38 abilities on 34 cards that read as total at 373 (Childhood Horror, Putrid Imp, Barrage of Boulders, Demoralize, Aragorn's
+ *  monarch sentence, Clawing Torment's "As long as enchanted permanent is a creature, it gets -1/-1 and can't block" ...); a condition the clause text does not print is unseen.
  *  Where the clause text is known it must print "can't|cannot attack|block". Linear: one `search`, one anchored match. */
-export function restrictedActions(object: string, clauseText = ""): ("attack" | "block")[] | undefined {
+export function restrictedActions(object: string, clauseText = "", occurrence = 0): ("attack" | "block")[] | undefined {
   if (/\bbe blocked\b/i.test(object)) return undefined;
   const at = object.search(/\b(?:can['\u2019]t|cannot)\s/i);
   const rest = (at < 0 ? object : object.slice(object.indexOf(" ", at) + 1)).trim();
   const m = /^(attack|block)(?: or (attack|block))?(?: this turn| until your next turn)?$/i.exec(rest);
   if (!m) return undefined;
-  if (clauseText !== "" && !/\b(?:can['\u2019]t|cannot) (?:attack|block)\b/i.test(clauseText)) return undefined;
+  if (clauseText !== "") {
+    // WHICH PRINTED "can't attack|block" THIS ACTION IS: the n-th, when the model stored the same object twice (Aragorn, King of Gondor: "up to one target creature can't block
+    // this turn. If you're the monarch, creatures can't block this turn"). A CONDITION on the sentence makes the restriction partial, so it is refused (#1315 review): a trailing one
+    // ("can't block unless / if / as long as / only / alone / except / while ...") and a LEADING one in the same sentence ("As long as seven or more cards are in your graveyard, this
+    // creature gets +2/+2 and can't block", "If you're the monarch, creatures can't block this turn"). A trigger head alone is not a condition ("Whenever Aragorn attacks, ..."), and an
+    // "Otherwise, it can't block" sentence is NOT refused: it is the either-or Aura's other half (Mishra's Domination, Bonds of Faith), whose condition is the sentence before.
+    // CEILING: a leading "As long as enchanted creature is red, it gets +1/+1 and can't block" on an Aura is refused too, like any same-sentence leading condition.
+    const hits = [...clauseText.matchAll(/\b(?:can['\u2019]t|cannot) (?:attack|block)\b/gi)];
+    const hit = hits[Math.min(occurrence, hits.length - 1)];
+    if (!hit) return undefined;
+    const from = clauseText.lastIndexOf(". ", hit.index) + 1;
+    const head = clauseText.slice(from === 0 ? 0 : from + 1, hit.index);
+    if (/\b(?:as long as|if|while)\b/i.test(head)) return undefined;
+    const after = clauseText.slice(hit.index + hit[0].length);
+    const end = after.indexOf(". ");
+    if (/\b(?:unless|if|as long as|only|alone|except|while)\b/i.test(end < 0 ? after : after.slice(0, end))) return undefined;
+  }
   const out = [m[1]!.toLowerCase(), ...(m[2] ? [m[2].toLowerCase()] : [])] as ("attack" | "block")[];
   return [...new Set(out)];
 }
@@ -547,7 +565,7 @@ function replacesDamageOrLife(clauseText: string, verb: string): boolean {
 const REDIRECT_TO_A_PLAYER = /\bdealt to (?:any (?:other )?target|another target [^.]{0,60}\bplayer|that (?:source|creature)'s controller)\b|\bdamage to that source's controller\b/i;
 const PAYS_LIFE = /\bpays? (?:\d+|x|any amount of) life\b/i;
 const LOSES_LIFE = /\bloses? (?:\d+|x|that much|half|life)\b/i;
-export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
+export function actionEffectKind(action: Action, clauseText = "", occurrence = 0): EffectKind | null {
   const verb = action.verb ?? "";
   // CR 614.1c — "this creature enters with three +1/+1 counters on it" is a REPLACEMENT EFFECT on
   // the card's own entry, not an ability that places counters later. The FACT already derived
@@ -666,7 +684,7 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   if (verb === "cant") {
     if (PAYABLE.test(action.object ?? "")) return "tax";
     if (cantBeBlocked(action.object ?? "", clauseText)) return "evasion";
-    return restrictedActions(action.object ?? "", clauseText) ? "restriction" : null;
+    return restrictedActions(action.object ?? "", clauseText, occurrence) ? "restriction" : null;
   }
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
   // THE OBJECT SOMETIMES STATES THE ORIGIN THE FIELD OMITTED. Hidetsugu and Kairi reads "put two

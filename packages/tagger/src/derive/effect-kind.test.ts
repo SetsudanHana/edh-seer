@@ -986,3 +986,19 @@ test("a restriction on attacking or blocking is `restriction` (CR 508.1c, 509.1b
   expect(actionEffectKind({ verb: "cant", object: "cast this spell unless you've been attacked this step" })).toBeNull();
   expect(actionEffectKind({ verb: "cant", object: "attack or block alone" })).toBeNull();
 });
+
+test("a CONDITIONAL restriction is not read as total: trailing and leading conditions refuse; 'Otherwise' and a trigger head do not (#1315 review)", () => {
+  const read = (object: string, text: string, n = 0) => actionEffectKind({ verb: "cant", object }, text, n);
+  expect(read("attack or block", "Enchanted creature can't attack or block.")).toBe("restriction");
+  expect(read("attack or block", "This creature can't attack or block alone.")).toBeNull();
+  expect(read("block", "This creature can't block if you control an enchantment.")).toBeNull();
+  expect(read("block", "Threshold \u2014 As long as there are seven or more cards in your graveyard, this creature gets +2/+2 and can't block.")).toBeNull();
+  expect(read("creatures can't block", "Ferocious \u2014 If you control a creature with power 4 or greater, creatures can't block this turn.")).toBeNull();
+  // Mishra's Domination, Bonds of Faith: the condition is the sentence BEFORE "Otherwise".
+  expect(read("block", "As long as you control enchanted creature, it gets +2/+2. Otherwise, it can't block.")).toBe("restriction");
+  expect(read("attack or block", "Enchanted creature gets +2/+2 as long as it's a Human. Otherwise, it can't attack or block.")).toBe("restriction");
+  // A trigger head is not a condition; Aragorn's second sentence is ("If you're the monarch ...") and is the SECOND identical stored object.
+  const aragorn = "Whenever Aragorn attacks, up to one target creature can't block this turn. If you're the monarch, creatures can't block this turn.";
+  expect(read("can't block this turn", aragorn, 0)).toBe("restriction");
+  expect(read("can't block this turn", aragorn, 1)).toBeNull();
+});
