@@ -1807,7 +1807,18 @@ function ownBoardKill(a: Ability): number | undefined {
  *  `play-from-top` (#856), `extra-loyalty` (#859), `retarget` (#1266) and `evasion` (#1315). Each derived blank before its kind existed, so reading it blank keeps
  *  every edge where it was. */
 // play-from-top and extra-loyalty are read raw by `playFromTopEdges` and `extraLoyaltyEdges`.
-const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top", "extra-loyalty", "retarget", "evasion"]);
+export const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top", "extra-loyalty", "retarget", "evasion"]);
+/** A fact kind's `static:<kind>` theme tag. No reason ever carries it, so it can only count in a deck's tag frequency and never score an edge. */
+export function isFactStaticTag(tag: string): boolean {
+  return tag.startsWith("static:") && FACT_KINDS.has(tag.slice("static:".length));
+}
+/** `cardThemeTags` for the deck's THEME AXIS and tag frequency (#1315): without the fact kinds' own `static:` tags. `buildAxis` divides by the
+ *  strongest tf*idf, so a tag no reason carries (316 evasion cards) can only deflate the boost of every real edge in a heavy-evasion deck. */
+export function axisThemeTags(tags: CardTags): Set<string> {
+  const out = cardThemeTags(tags);
+  for (const t of out) if (isFactStaticTag(t)) out.delete(t);
+  return out;
+}
 /** A SELF "YOU LOSE THE GAME" ABILITY IS NEVER A PAYOFF (owner ruling 2026-10-16, #1252; ALL ability
  *  kinds, ruling 2026-10-17: Forbidden Crypt, Nefarious Lich and Out of the Tombs are static or
  *  replacement-shaped). An ability whose ONLY effect is that its controller loses the game (Phage the Untouchable's "When Phage

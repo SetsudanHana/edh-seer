@@ -1376,10 +1376,13 @@ function effectSubject(
   // WHO CANNOT BE BLOCKED (#1315, CR 509.1b) is stated to the left of "can't be blocked": in the object when the model kept it
   // ("this creature can't be blocked", "creatures can't be blocked"), else in the clause ("Enchanted creature can't be blocked ...").
   // A "gets +1/+0 and" ahead of it is not the subject. "enchanted creature" and the other narrowings the filter cannot hold stay unnamed.
+  // CEILING: "enchanted / equipped creature" and the other narrowings stay unnamed, and a STATIC keeps no subject (`namesItsTargets`): 328 of the 541
+  // derived evasion abilities carry no type, subtype or self. A later task marks an Aura's / Equipment's host; until then a reader cannot tell
+  // whose evasion it is from the subject alone.
   if (kind === "evasion") {
     const object = action.object ?? "";
     const who = (CANT_BE_BLOCKED.exec(object)?.[1] ?? recipientBefore(clauseText, CANT_BE_BLOCKED))
-      ?.replace(/\s+(?:gets?|gains?|has|have|loses?)\b.*$/i, "").replace(/\s+and$/i, "").trim();
+      ?.replace(/\s+(?:gets?|gains?|has|have|loses?)\b.*$/i, "").trim().replace(/ and$/i, "");
     // A GRANTED ability's "this creature" is the grantee, not the card (Rime Transfusion's Aura): unnamed, never `self`.
     const granted = /["\u201c][^"\u201d]*\b(?:can['\u2019]t|cannot) be blocked/i.test(clauseText);
     if (!who || granted || UNEXPRESSIBLE_NARROWING.test(who) || /^(?:it|that creature|they|them)$/i.test(who)) return parseSubject("");

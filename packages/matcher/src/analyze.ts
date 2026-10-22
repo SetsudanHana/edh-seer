@@ -22,7 +22,7 @@ import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
 import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
-import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
+import { pairReasons, cardThemeTags, axisThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { GETS_AN_EMBLEM } from "@edh-seer/tagger/emblem";
 import { flipPerspective } from "./perspective.js";
@@ -436,7 +436,7 @@ export function analyzeDeckStructured(
   const deckFreq = new Map<string, number>();
   for (const dc of resolved) {
     if (!dc.tags) continue;
-    for (const tag of cardThemeTags(dc.tags)) deckFreq.set(tag, (deckFreq.get(tag) ?? 0) + 1);
+    for (const tag of axisThemeTags(dc.tags)) deckFreq.set(tag, (deckFreq.get(tag) ?? 0) + 1);
   }
 
   // DECK FIT: a condition naming something the deck does not have (owner, 2026-08-20). "If you have
@@ -457,7 +457,7 @@ export function analyzeDeckStructured(
   const commanderThemeTags = new Set<string>();
   for (const dc of resolved) {
     if (dc.tags && commanderSet.has(dc.card.name)) {
-      for (const tag of cardThemeTags(dc.tags)) commanderThemeTags.add(tag);
+      for (const tag of axisThemeTags(dc.tags)) commanderThemeTags.add(tag);
     }
   }
   const axis = buildAxis(commanderThemeTags, deckFreq, themeStats);
