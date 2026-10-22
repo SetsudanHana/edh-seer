@@ -1490,3 +1490,16 @@ test("a non-Aura card that buffs what it is attached to is voltron", () => {
   // Takes the creature (Hypnotic Siren), or has no host buff at all.
   for (const n of ["Hypnotic Siren", "Estrid, the Masked", "Not Dead After All", "Living Lectern", "Curse of the Werefox", "Umbra Mystic"]) expect(voltron(n), n).toBe(false);
 });
+
+/** #1326: the printed `graveyardHate` guard on removal.targeted / removal.land refused any card whose text exiled from a graveyard ANYWHERE: a cost (Grim Lavamancer), an escape line (Phlage),
+ *  a delve reminder (Magmatic Sinkhole). Real derived rows. Paired with graveyard hate that deals no damage, kills nothing and stays out: either half alone passes with a broken rule. */
+test("an exile from your own graveyard in a cost, escape or delve line does not stop targeted damage being removal", () => {
+  const removal = detectBuildCategories(["Grim Lavamancer", "Phlage, Titan of Fire's Fury", "Magmatic Sinkhole", "Harvest Pyre", "Molten-Tail Masticore"].map((n) => realCard(n))).get("targetedRemoval") ?? new Set<string>();
+  for (const n of ["Grim Lavamancer", "Phlage, Titan of Fire's Fury", "Magmatic Sinkhole", "Harvest Pyre", "Molten-Tail Masticore"]) expect(removal.has(n), n).toBe(true);
+});
+
+test("graveyard hate that removes nothing from the battlefield is still not targeted removal", () => {
+  const hate = ["Bojuka Bog", "Relic of Progenitus", "Tormod's Crypt", "Soul-Guide Lantern", "Nihil Spellbomb", "Scavenging Ooze", "Rest in Peace"];
+  const removal = detectBuildCategories(hate.map((n) => realCard(n))).get("targetedRemoval") ?? new Set<string>();
+  for (const n of hate) expect(removal.has(n), n).toBe(false);
+});
