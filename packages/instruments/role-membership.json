@@ -3116,7 +3116,7 @@
 "Crossway Troublemakers": ["role:draw"],
 "Crowded Crypt": ["role:ramp"],
 "Crown of Ascension": ["wincon:voltron"],
-"Crown of Awe": ["role:protection"],
+"Crown of Awe": ["role:protection","wincon:voltron"],
 "Crown of Flames": ["wincon:voltron"],
 "Crown of Fury": ["wincon:voltron"],
 "Crown of Gondor": ["wincon:voltron"],
