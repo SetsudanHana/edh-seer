@@ -56,12 +56,23 @@ export function toHandChooses(object: string, clauseText: string): boolean {
 const FOREIGN_CARD = /\b(?:opponents?|they|that player|defending player)\b[^,]*\brevealed\b/i;
 const FOREIGN_HAND = /\binto (?:their|that player's|his or her|an opponent's|its owner's) hand\b/i;
 
-/** Is this `put library -> hand` the top of YOUR OWN library going to YOUR hand, with no search? The clause must say "top" (a whole-library reveal is a tutor: Guided
- *  Passage), must not search (the search ability claims its own put), must say "your library", and must not hand the card to another player (Goblin Guide) or take
- *  the card another player revealed (Keen Duelist's second put). Needs the clause text: without it a search cannot be ruled out. CEILING: "each player" clauses that
- *  say "their library" (Conundrum Sphinx, Wandering Archaic) are not read: the player count is not an effect subject. */
+/** THE CARD'S TEXT TYPES THE CARD, whatever the stored object says (owner ruling 2026-09-16: a dig restricted to a class is a typed search, `digNamesAClass`): the put's own sentence holds
+ *  "If it's a land card, ... put it into your hand" (Dryad Greenseeker, Archghoul of Thraben) or "reveal a land card from among them and put it into your hand" (Nessian Wanderer). An object
+ *  of "it" / "that card" / "the revealed card" says none of that. Coiling Oracle's "Otherwise, put that card into your hand" has no condition in its sentence and is not typed.
+ *  CEILING: only the put's OWN sentence is read; a condition one sentence earlier ("If it's a land card, you may put it onto the battlefield. If you don't, put it into your hand", Risen Reef) is not. */
+const TYPED_CONDITION = /\bif (?:it's|it is|that card is|the card is) an? (?!card\b)[^,.]*\bcards?\b/i;
+const TYPED_FROM_AMONG = /\b(?:an?|any number of|up to \w+|all) (?!cards?\b)[^.]*?\bcards?\b[^.]*\bfrom among (?:them|those)\b/i;
+function clauseTypesTheCard(clauseText: string): boolean {
+  return clauseText.split(/(?<=\.)\s+/).some((sentence) => /\binto your hand\b/i.test(sentence) && (TYPED_CONDITION.test(sentence) || TYPED_FROM_AMONG.test(sentence)));
+}
+
+/** Is this `put library -> hand` the top of YOUR OWN library going to YOUR hand, with no search and no class? The clause must say "top" (a whole-library reveal is a tutor: Guided
+ *  Passage), must not search (the search ability claims its own put), must say "your library", must not type the card (a typed dig is `search`, or unclaimed), and must not hand the card to
+ *  another player (Goblin Guide) or take the card another player revealed (Keen Duelist's second put). Needs the clause text: without it a search cannot be ruled out. CEILING: "each
+ *  player" clauses that say "their library" (Conundrum Sphinx, Wandering Archaic) are not read: the player count is not an effect subject. CEILING: "for each of those cards, put that
+ *  card into your hand unless an opponent pays 3 life" (Sword-Point Diplomacy) reads `amount` 1, not the number of cards that get through. */
 export function putsTopCardsIntoYourHand(object: string, clauseText: string): boolean {
   if (clauseText === "") return false;
   if (!/\btop\b/i.test(clauseText) || /\bsearch(?:es|ed|ing)?\b/i.test(clauseText) || !/\byour library\b/i.test(clauseText)) return false;
-  return !FOREIGN_HAND.test(clauseText) && !FOREIGN_CARD.test(object);
+  return !FOREIGN_HAND.test(clauseText) && !FOREIGN_CARD.test(object) && !clauseTypesTheCard(clauseText);
 }

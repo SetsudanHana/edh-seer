@@ -58,6 +58,17 @@ describe("actionEffectKind: a put from the top of your library into your hand is
     expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "hand" } as Action, "Return target creature to its owner's hand.")).toBe("bounce");
   });
 
+  test("a dig the card's TEXT types is not to-hand, whatever the stored object says (2026-09-16 ruling; Archghoul of Thraben, Dryad Greenseeker, Nessian Wanderer)", () => {
+    for (const [object, text] of [
+      ["it", "Whenever this creature or another Zombie you control dies, look at the top card of your library. If it's a Zombie card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard."],
+      ["it", "{T}: Look at the top card of your library. If it's a land card, you may reveal it and put it into your hand."],
+      ["that card", "Whenever an enchantment you control enters, look at the top three cards of your library. You may reveal a land card from among them and put that card into your hand. Put the rest on the bottom of your library in a random order."],
+      ["the revealed card", "Look at the top three cards of your library. You may reveal a creature or land card from among them and put it into your hand. Put the rest on the bottom of your library in any order."],
+    ] as const) expect(actionEffectKind(put(object, "hand"), text), text).toBeNull();
+    // An untyped pick from among them, and an "Otherwise" branch beside a typed condition, are not typed.
+    expect(actionEffectKind(put("it", "hand"), "Look at the top three cards of your library. You may reveal a card from among them and put it into your hand.")).toBe("to-hand");
+  });
+
   test("a typed dig stays a search (owner ruling 2026-09-16): one action, one kind", () => {
     expect(actionEffectKind(put("an Elemental, Island, or Mountain card", "hand"),
       "Look at the top four cards of your library. You may reveal an Elemental, Island, or Mountain card from among them and put it into your hand.")).toBe("search");
