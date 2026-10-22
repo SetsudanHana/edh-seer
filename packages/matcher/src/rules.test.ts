@@ -1436,7 +1436,7 @@ describe("wincon.mill and wincon.altWin are derived (#1266)", () => {
   });
 });
 
-/** #1315: `wincon.voltron` reads the Enchant line and the host-effect abilities, not the printed text. Real derived rows (derive 373). */
+/** #1315: `wincon.voltron` reads the Enchant line and the host-effect abilities, not the printed text. Real derived rows (derive 374). */
 test("an Aura is voltron when it helps the creature it enchants, and not when it hurts or takes it", () => {
   const voltron = (name: string): boolean => (detectWincons([realAura(name)]).get("voltron") ?? new Set()).has(name);
   // Helps: pump, keyword, speed-increase, evasion, regenerate, umbra armor, an Aura only your creature can wear, and ruled either-or / conditional buffs (owner 2026-10-22).
@@ -1444,7 +1444,7 @@ test("an Aura is voltron when it helps the creature it enchants, and not when it
     expect(voltron(n), n).toBe(true);
   }
   // Hurts or takes it, or helps nothing: removal, goad, control, shrink, defender and phasing grants, a pump with no amount, a can't-attack restriction.
-  for (const n of ["Pacifism", "Shiny Impetus", "Deep Freeze", "Cursed Flesh", "Sky Tether", "Control Magic", "Frenzied Fugue", "Dream Coat", "Mistform Mask", "Teferi's Curse", "Nurgle's Rot", "Eaten by Piranhas", "Arrest", "Utopia Vow", "Compulsory Rest"]) {
+  for (const n of ["Pacifism", "Shiny Impetus", "Deep Freeze", "Cursed Flesh", "Sky Tether", "Control Magic", "Frenzied Fugue", "Dream Coat", "Mistform Mask", "Teferi's Curse", "Nurgle's Rot", "Eaten by Piranhas", "Arrest", "Utopia Vow", "Compulsory Rest", "Darksteel Mutation", "Minimus Containment"]) {
     expect(voltron(n), n).toBe(false);
   }
   // Equipment is still voltron by its subtype, and a non-Aura with a host-less pump is not.
@@ -1455,9 +1455,10 @@ test("an Aura is voltron when it helps the creature it enchants, and not when it
 /** Owner 2026-10-22 ("judge the quote"): an Aura that hands the creature a QUOTED ability is a buff unless the quote is a curse (a sacrifice, a death, life lost or damage dealt to the grantee). */
 test("a quoted grant is voltron when the granted ability is no curse", () => {
   const voltron = (name: string): boolean => (detectWincons([realAura(name)]).get("voltron") ?? new Set()).has(name);
-  for (const n of ["Sunbond", "Splinter Twin", "Idolized", "Dragon Mantle", "Shade's Form", "Malicious Intent", "Mark of Sakiko", "Power of Fire"]) expect(voltron(n), n).toBe(true);
+  for (const n of ["Sunbond", "Splinter Twin", "Idolized", "Dragon Mantle", "Shade's Form", "Malicious Intent", "Mark of Sakiko", "Power of Fire", "Shifting Shadow", "Crystalline Nautilus"]) expect(voltron(n), n).toBe(true);
   // Curses: sacrifice the creature or a creature, lose life; and Pillory also forbids attacking.
   for (const n of ["Pendrell Flux", "Necrotic Plague", "Inevitable End", "Instill Furor", "Withercrown", "Pillory of the Sleepless"]) expect(voltron(n), n).toBe(false);
+  // The quoted-curse check only stops a quote from being the POSITIVE: Shifting Shadow and Crystalline Nautilus carry another one (a pump, an evasion) and stay voltron.
   // CEILING: a quote derive wrote no child ability for (Oblivion Crown's discard cost) is not judged, so it is not counted.
   expect(voltron("Oblivion Crown")).toBe(false);
 });

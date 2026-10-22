@@ -9688,7 +9688,7 @@
 "Mine Raider": ["role:ramp"],
 "Minecart Daredevil // Ride the Rails": ["wincon:stompy"],
 "Mines of Moria": ["role:lands"],
-"Minimus Containment": ["role:ramp","wincon:voltron"],
+"Minimus Containment": ["role:ramp"],
 "Minion Missile": ["answer:creature","role:burn","role:targetedRemoval","wincon:burn"],
 "Minion Reflector": ["wincon:go-wide"],
 "Minion of Leshrac": ["answer:creature","answer:land","role:targetedRemoval"],
