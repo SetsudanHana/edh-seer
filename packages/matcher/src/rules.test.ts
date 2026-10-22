@@ -1436,18 +1436,36 @@ describe("wincon.mill and wincon.altWin are derived (#1266)", () => {
   });
 });
 
-/** #1315: `wincon.voltron` reads the Enchant line and the host-effect abilities, not the printed text. Real derived rows (derive 372). */
+/** #1315: `wincon.voltron` reads the Enchant line and the host-effect abilities, not the printed text. Real derived rows (derive 373). */
 test("an Aura is voltron when it helps the creature it enchants, and not when it hurts or takes it", () => {
   const voltron = (name: string): boolean => (detectWincons([realAura(name)]).get("voltron") ?? new Set()).has(name);
   // Helps: pump, keyword, speed-increase, evasion, regenerate, umbra armor, an Aura only your creature can wear, and ruled either-or / conditional buffs (owner 2026-10-22).
-  for (const n of ["Rancor", "Ethereal Armor", "Aqueous Form", "Battle Mastery", "Regeneration", "Crab Umbra", "Dying Wish", "Spirit Loop", "Clutch of Undeath", "Fists of the Demigod", "Inner Demon"]) {
+  for (const n of ["Rancor", "Ethereal Armor", "Aqueous Form", "Battle Mastery", "Regeneration", "Crab Umbra", "Dying Wish", "Spirit Loop", "Clutch of Undeath", "Fists of the Demigod", "Inner Demon", "Mishra's Domination"]) {
     expect(voltron(n), n).toBe(true);
   }
-  // Hurts or takes it, or helps nothing: removal, goad, control, shrink, defender and phasing grants, a pump with no amount.
-  for (const n of ["Pacifism", "Shiny Impetus", "Deep Freeze", "Cursed Flesh", "Sky Tether", "Control Magic", "Frenzied Fugue", "Dream Coat", "Mistform Mask", "Teferi's Curse", "Nurgle's Rot", "Eaten by Piranhas"]) {
+  // Hurts or takes it, or helps nothing: removal, goad, control, shrink, defender and phasing grants, a pump with no amount, a can't-attack restriction.
+  for (const n of ["Pacifism", "Shiny Impetus", "Deep Freeze", "Cursed Flesh", "Sky Tether", "Control Magic", "Frenzied Fugue", "Dream Coat", "Mistform Mask", "Teferi's Curse", "Nurgle's Rot", "Eaten by Piranhas", "Arrest", "Utopia Vow", "Compulsory Rest"]) {
     expect(voltron(n), n).toBe(false);
   }
   // Equipment is still voltron by its subtype, and a non-Aura with a host-less pump is not.
   expect(voltron("Bonesplitter")).toBe(true);
   expect(voltron("Hall of Triumph")).toBe(false);
+});
+
+/** Owner 2026-10-22 ("judge the quote"): an Aura that hands the creature a QUOTED ability is a buff unless the quote is a curse (a sacrifice, a death, life lost or damage dealt to the grantee). */
+test("a quoted grant is voltron when the granted ability is no curse", () => {
+  const voltron = (name: string): boolean => (detectWincons([realAura(name)]).get("voltron") ?? new Set()).has(name);
+  for (const n of ["Sunbond", "Splinter Twin", "Idolized", "Dragon Mantle", "Shade's Form", "Malicious Intent", "Mark of Sakiko", "Power of Fire"]) expect(voltron(n), n).toBe(true);
+  // Curses: sacrifice the creature or a creature, lose life; and Pillory also forbids attacking.
+  for (const n of ["Pendrell Flux", "Necrotic Plague", "Inevitable End", "Instill Furor", "Withercrown", "Pillory of the Sleepless"]) expect(voltron(n), n).toBe(false);
+  // CEILING: a quote derive wrote no child ability for (Oblivion Crown's discard cost) is not judged, so it is not counted.
+  expect(voltron("Oblivion Crown")).toBe(false);
+});
+
+/** The owner's correction of the brief: bestow creatures, Licids and the Cloudform family are not Auras by subtype but act as one. */
+test("a non-Aura card that buffs what it is attached to is voltron", () => {
+  const voltron = (name: string): boolean => (detectWincons([realAura(name)]).get("voltron") ?? new Set()).has(name);
+  for (const n of ["Nyxborn Wolf", "Boon Satyr", "Cloudform", "Lightform", "Rageform", "Corrupting Licid", "Kestia, the Cultivator"]) expect(voltron(n), n).toBe(true);
+  // Takes the creature (Hypnotic Siren), or has no host buff at all.
+  for (const n of ["Hypnotic Siren", "Estrid, the Masked", "Not Dead After All", "Living Lectern", "Curse of the Werefox", "Umbra Mystic"]) expect(voltron(n), n).toBe(false);
 });

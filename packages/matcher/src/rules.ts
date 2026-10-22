@@ -102,7 +102,16 @@ export type RuleClause =
   /** An ability of the card whose effect lands on the ATTACHED permanent (`Ability.host`, #1315), tested on the SAME ability. `kinds` is the effect kind. Derive carries no polarity, so the
    *  rest narrows it: `raises` (a pump whose amount has a "+" before a non-zero value on either side: Dream Coat derives a pump with no amount); `grantsAny` (some `grants` keyword is
    *  in the list); `grantsNonEmpty`; `unlessPumpInClause` (refuse when another HOST pump shares this ability's `clause`: "+3/+3 as long as it's a Zombie. Otherwise -3/-3"). */
-  | { op: "hostEffect"; kinds: string[]; raises?: true; grantsAny?: string[]; grantsNonEmpty?: true; unlessPumpInClause?: true }
+  | { op: "hostEffect"; kinds: string[]; raises?: true; grantsAny?: string[]; grantsNonEmpty?: true; unlessPumpInClause?: true;
+      /** A `restriction` ability forbids one of these actions (`Ability.restricts`): "attack" is Pacifism, "block" alone is Mishra's Domination's "Otherwise, it can't block". */
+      restricts?: string[];
+      /** A QUOTED grant (owner 2026-10-22, "judge the quote"): the ability's `grants` is empty AND at least one ability of the card has `grantedBy` equal to this ability's `clause`
+       *  (the quoted ability, which derive writes as its own ability) AND none of those is a curse. A grant with no child ability is never counted: nothing says what it hands over. */
+      quoted?: { curse: { verbs: string[];
+        /** The emit lands on the grantee or its controller: `subject.self`, or `control: you` (in a quote, "you" is the creature's controller). */
+        aimedAtGrantee?: true;
+        /** The emit does not count when the child's COST text contains this (lowercase): "{T}, Sacrifice this creature: ..." pays the sacrifice, it is not suffered. */
+        unlessCostHas?: string }[] } }
   | { op: "typeLine"; contains: string }
   /** The card prints one of these KEYWORDS (Scryfall's `card.keywords`, compared case-insensitively). For a rule whose cue lives only in keyword reminder text, which derive does not read: Transmute and
    *  Transfigure search the library, and Typecycling does too (#1266). Compose with `not` to leave a keyword out (Landcycling fetches a land). */
@@ -411,6 +420,19 @@ function subjectTypes(subject: { type?: string | string[]; subtype?: unknown; an
   return (subject.anyOf ?? []).flatMap((b) => (b.type !== undefined ? [b.type].flat() : b.subtype !== undefined ? ["permanent"] : []));
 }
 
+/** Every ability granted by clause `clauseId` (`grantedBy`), at least one, and no emit of any of them a curse marker of `curse`. */
+function quotedGrantIsBenign(
+  abilities: readonly { clause?: number; grantedBy?: number; cost?: string; emits?: { verb: string; subject: { self?: boolean; control?: string } }[] }[],
+  clauseId: number | undefined,
+  curse: { verbs: string[]; aimedAtGrantee?: true; unlessCostHas?: string }[],
+): boolean {
+  const children = clauseId === undefined ? [] : abilities.filter((c) => c.grantedBy === clauseId);
+  return children.length > 0 && !children.some((c) => (c.emits ?? []).some((e) => curse.some((m) =>
+    m.verbs.includes(e.verb)
+    && (m.aimedAtGrantee !== true || e.subject.self === true || e.subject.control === "you")
+    && (m.unlessCostHas === undefined || !(c.cost ?? "").toLowerCase().includes(m.unlessCostHas)))));
+}
+
 /** A pump amount that RAISES power or toughness: a "+" before a non-zero value on either side of "+2/+0", "+0/+2", "+X/+X", "+1/+1 for each ...". "+0/+0" and no amount do not. */
 const RAISES_STAT = /\+(?!0(?!\d))[0-9X]/i;
 const raisesStat = (amount: string | undefined): boolean => amount !== undefined && RAISES_STAT.test(amount);
@@ -498,6 +520,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.raises !== true || raisesStat(a.amount))
         && (clause.grantsAny === undefined || (a.grants ?? []).some((g) => clause.grantsAny!.includes(g.toLowerCase())))
         && (clause.grantsNonEmpty !== true || (a.grants ?? []).length > 0)
+        && (clause.restricts === undefined || (a.restricts ?? []).some((r) => clause.restricts!.includes(r)))
+        && (clause.quoted === undefined || ((a.grants ?? []).length === 0 && quotedGrantIsBenign(abilities, a.clause, clause.quoted.curse)))
         && (clause.unlessPumpInClause !== true || !abilities.some((f) => f.host === true && f.effect.kind === "pump" && f.clause === a.clause)));
     }
     case "typeLine":
