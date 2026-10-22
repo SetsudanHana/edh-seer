@@ -1677,7 +1677,7 @@ function nthSentenceMatching(text: string, pattern: string, k: number): string {
 }
 /** The printed word(s) an action verb reads as, where they differ from the verb's name ("modify-pt" is "gets", "deal-damage" is "deals"). The default is the verb's first word, with its
  *  plural/third-person ending: "draw" reads "draws", "destroy" reads "destroys". */
-const FLIP_VERB_WORDS: Record<string, string> = {
+export const FLIP_VERB_WORDS:Record<string, string> = {
   "modify-pt": "gets?", "deal-damage": "deals?", "gain-life": "gains?", "lose-life": "loses?|lose", "add-counter": "puts?", "remove-counter": "removes?", "gain-control": "gains? control",
   "counter-spell": "counters?", "extra-turn": "extra turn", "phase-out": "phases? out", "grant-ability": "gains?", "create": "creates?", "sacrifice": "sacrifices?",
 };
