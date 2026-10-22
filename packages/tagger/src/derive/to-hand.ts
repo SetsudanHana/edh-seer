@@ -18,7 +18,7 @@ const LEADING_COUNT = /^(?:up to )?(one|two|three|four|five|six|seven|eight|nine
  *  this way"). A single named card ("that card", "it", "the other", "a historic card") is "1". CEILING: "up to two" and "you may" are not told apart from "two": the amount is
  *  the most that reaches the hand. */
 export function toHandAmount(object: string, sentence = ""): string {
-  const o = object.trim().toLowerCase().replace(/\s+into your hand$/, "");
+  const o = withoutHandTail(object);
   if (/\bpiles?\b/.test(o) && !/^(?:a|one) card from\b/.test(o)) return "pile";
   if (EVERYTHING.test(o)) return "all";
   if (OPEN_COUNT.test(o)) return "X";
@@ -41,6 +41,8 @@ const POINTER = /^(?:that card|it|the revealed card)$/;
 const lower = (s: string): string => s.toLowerCase();
 const sentencesOf = (clause: string): string[] => clause.split(/(?<=[.!?])\s+/);
 const NUMBER = /^(one|two|three|four|five|six|seven|eight|nine|ten|twenty|\d{1,2})$/;
+/** The object, trimmed and lowercased, without a trailing "into your hand" ("the other into your hand"). `endsWith` + `slice`: a `\s+` regex over a long run of spaces is quadratic (CodeQL js/polynomial-redos). */
+const withoutHandTail = (object: string): string => { const o = object.trim().toLowerCase(); return o.endsWith(" into your hand") ? o.slice(0, -15).trimEnd() : o; };
 const countOf = (word: string): string => COUNT[word] ?? word;
 
 /** A sentence that is the OTHER branch of an alternative: "Otherwise, put one of them into your hand", "If you don't put the card onto the battlefield, put it into your hand", "... put each of those cards into your hand
@@ -215,7 +217,7 @@ export function readToHand(object: string, clauseText: string, objectTyped: bool
   }
   // A SEQUENCE of hand-puts (Memories Returning: one, then one, then the other) is cards to hand; an ALTERNATIVE (instead / otherwise / opens on an if) is another branch of the same pick.
   const sequence = hand.length >= 2 && hand.slice(1).every(({ text }) => !OTHER_BRANCH.test(text));
-  const o = lower(object).trim().replace(/\s+into your hand$/, "");
+  const o = withoutHandTail(object);
   const picks = lower(mine.text).includes("from among") || (pointed !== undefined && lower(pointed).includes("from among")) || PICK.test(o)
     || (POINTER.test(o) && /\bfrom among (?:them|those cards)\b|\bchooses? (?:one|two|three|a card|any number) of (?:them|those)\b/i.test(clauseText));
   const chooses = amount !== "pile" && amount !== "all" && !sequence && !/\bat random\b/i.test(object) && !opponentPicksCards(sentences) && LOOKS_AT_MANY.test(clauseText) && picks;

@@ -322,4 +322,20 @@ describe("no regex here is super-linear (CodeQL js/polynomial-redos; 40k charact
     toHandChooses("one", clause(tail));
     expect(performance.now() - t0).toBeLessThan(200);
   });
+  // The stored OBJECT is text too: a long run of spaces inside it, or before "into your hand", must not be quadratic.
+  test.each([["inner spaces", "a" + " ".repeat(40000) + "b"], ["trailing", "a" + " ".repeat(40000) + "into your hand"], ["words", "a ".repeat(20000)]])("object: %s", (_name, object) => {
+    const t0 = performance.now();
+    readToHand(object, clause(""), false); toHandAmount(object, "Put it into your hand."); toHandChooses(object, clause(""));
+    expect(performance.now() - t0).toBeLessThan(200);
+  });
+});
+
+describe("a library card is never the permanent that entered (self-reference)", () => {
+  test("Niv-Mizzet Reborn's hand-fill has no self subject: 'the chosen cards' is not 'this creature'", () => {
+    const text = "When Niv-Mizzet enters, reveal the top ten cards of your library. For each color pair, choose a card that's exactly those colors from among them. Put the chosen cards into your hand and the rest on the bottom of your library in a random order.";
+    const { abilities } = deriveAbilities([rec(1, "triggered", [put("the chosen cards", "hand")], { event: "enters", subject: "Niv-Mizzet Reborn" } as never)], "Niv-Mizzet Reborn", { 1: text }, undefined, text);
+    const dig = abilities.filter((a) => a.effect.kind === "search" || a.effect.kind === "to-hand");
+    expect(dig.length).toBeGreaterThan(0);
+    for (const a of dig) expect(a.effect.subject?.self, JSON.stringify(a.effect)).toBeUndefined();
+  });
 });
