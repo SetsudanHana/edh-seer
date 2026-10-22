@@ -1162,6 +1162,18 @@ export interface Ability {
    *  PER SEARCH ACTION: a multi-zone search ("graveyard, hand, and library") is one action, so every ability that action makes carries the value, and absent means no
    *  library among the zones that action searches. */
   librarySearch?: "yours" | "other";
+  /** THE EFFECT APPLIES TO THE PERMANENT THIS CARD IS ATTACHED TO (#1315): an Aura's "enchanted creature / permanent" (CR 303.4, Aura), an
+   *  Equipment's "equipped creature" (CR 301.5, Equipment). Set only on the effect kinds that are done TO a host -- `pump`, `debuff`, `keyword-grant`,
+   *  `speed-increase`, `type-grant`, `ability-loss`, `animate`, `evasion` -- and only when the printed recipient IS the host: "enchanted creature gets +2/+0",
+   *  "As long as enchanted creature is black, it gets +1/+1" (the `it`), and the "Otherwise, it gets -3/-3" half of an either-or Aura (Clutch of Undeath).
+   *  Not set for another class on the same card (Inner Demon's "all non-Demon creatures get -2/-2", Vampirism's "other creatures you control"), for a class of
+   *  enchanted creatures (the Magemarks' "creatures you control that are enchanted"), or for a player ("enchanted creature's controller").
+   *  A MARKER AND NOT `effect.subject.status: ["enchanted"]` ON PURPOSE: a static ability with a subject emits a `static:<kind>` tag in edges.ts and can form
+   *  whole-deck edges (see `namesItsTargets` and "A subject is attached ONLY when there is a kind" in derive.ts). No edge code reads this field; `effect.subject`
+   *  is exactly what it was. It says the buff is a host effect, which is all a voltron reading needs; WHICH hosts an Aura accepts is `characteristics.enchants`.
+   *  ABSENT MEANS "NOT SAID", NOT "NOT A HOST EFFECT": a trigger's "it" ("Whenever equipped creature attacks, it gets +1/+0"), a clause that mixes recipients, and
+   *  an effect the kind list does not name carry none. */
+  host?: true;
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {
     verbs: Verb[];

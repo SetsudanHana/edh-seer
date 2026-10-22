@@ -5,6 +5,7 @@ import { targetsASpellEarlier } from "./emits.js";
 import { exileNamesOnlyGraveyards } from "./effect-kind.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { deriveInputOf } from "../derive-input.js";
+import { segment } from "../segment.js";
 import type { Ability, Characteristics } from "../schema.js";
 
 test("one ability per action, sharing the clause kind and trigger", () => {
@@ -6126,5 +6127,112 @@ describe("exile-from-the-top rewrite (#1266 review)", () => {
     expect(performance.now() - t0).toBeLessThan(100);
     expect(exilesTopOfLibrary("That player exiles the top two cards of their library.")).toBe(true);
     expect(exilesTopOfLibrary("Exile target creature. Look at the top card of your library.")).toBe(false);
+  });
+});
+
+describe("host: an effect on the attached permanent (#1315)", () => {
+  // Oracle text read from the corpus 2026-10-22. `viaGrammar` is the path a grammar-derived card takes (`clauseSource: "grammar"`), `viaModel` the stored model clauses.
+  const viaGrammar = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  const viaModel = (name: string, oracleText: string, clauses: Parameters<typeof deriveAbilities>[0]) => {
+    const texts: Record<number, string> = {};
+    for (const c of segment(oracleText, [], "Enchantment — Aura")) texts[c.id] = c.text;
+    return deriveAbilities(clauses, name, texts, undefined, oracleText).abilities;
+  };
+  /** kind -> host flag, for the kinds a host marker is read for, in order; the other abilities (draws, recursion, triggers) are ignored. */
+  const KINDS = ["pump", "debuff", "keyword-grant", "speed-increase", "type-grant", "ability-loss", "animate", "evasion"];
+  const hosts = (abilities: Ability[]) => abilities.filter((a) => KINDS.includes(a.effect.kind)).map((a) => `${a.effect.kind}:${a.host === true}`);
+
+  test("Rancor, both paths: the pump and the trample grant are on the host; the return trigger has no marker", () => {
+    const text = "Enchant creature\nEnchanted creature gets +2/+0 and has trample.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.";
+    const model = viaModel("Rancor", text, [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "static", actions: [{ verb: "modify-pt", object: "enchanted creature +2/+0" }, { verb: "grant-ability", object: "enchanted creature has trample" }] },
+      { id: 3, abilityType: "triggered", trigger: { event: "dies", subject: "this Aura", control: "you" }, actions: [{ verb: "return", object: "it", fromZone: "graveyard", toZone: "hand" }] },
+    ] as never);
+    expect(hosts(model)).toEqual(["pump:true", "keyword-grant:true"]);
+    expect(model.filter((a) => a.host).every((a) => a.effect.subject === undefined)).toBe(true);
+    expect(hosts(viaGrammar("Rancor", "Enchantment — Aura", text))).toEqual(["pump:true", "keyword-grant:true"]);
+  });
+
+  test("Ethereal Armor (pump + first strike), Battle Mastery (speed-increase), Aqueous Form (evasion), Cursed Flesh (debuff + fear)", () => {
+    expect(hosts(viaGrammar("Ethereal Armor", "Enchantment — Aura", "Enchant creature\nEnchanted creature gets +1/+1 for each enchantment you control and has first strike."))).toEqual(["pump:true", "keyword-grant:true"]);
+    expect(hosts(viaGrammar("Battle Mastery", "Enchantment — Aura", "Enchant creature\nEnchanted creature has double strike. (It deals both first-strike and regular combat damage.)"))).toEqual(["speed-increase:true"]);
+    expect(hosts(viaGrammar("Aqueous Form", "Enchantment — Aura", "Enchant creature\nEnchanted creature can't be blocked.\nWhenever enchanted creature attacks, scry 1."))).toEqual(["evasion:true"]);
+    expect(hosts(viaGrammar("Cursed Flesh", "Enchantment — Aura", "Enchant creature\nEnchanted creature gets -1/-1 and has fear."))).toEqual(["debuff:true", "keyword-grant:true"]);
+  });
+
+  test("Deep Freeze (stored model clauses): the defender grant, the ability loss and the Wall are on the host", () => {
+    const text = "Enchant creature\nEnchanted creature has base power and toughness 0/4, has defender, loses all other abilities, and is a blue Wall in addition to its other colors and types.";
+    const out = hosts(viaModel("Deep Freeze", text, [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "static", actions: [
+        { verb: "modify-pt", object: "enchanted creature", amount: "0/4" },
+        { verb: "grant-ability", object: "enchanted creature gains defender" },
+        { verb: "cant", object: "enchanted creature can't have abilities other than defender" },
+        { verb: "animate", object: "enchanted creature becomes a blue Wall in addition to its other colors and types" },
+      ] },
+    ] as never));
+    expect(out).toEqual(["keyword-grant:true", "ability-loss:true", "animate:true"]);
+  });
+
+  test("'it' after 'As long as enchanted creature ...' is the host (Fists of the Demigod, Rune of Might, Favor of Jukai)", () => {
+    expect(hosts(viaGrammar("Fists of the Demigod", "Enchantment — Aura", "Enchant creature\nAs long as enchanted creature is black, it gets +1/+1 and has wither.\nAs long as enchanted creature is red, it gets +1/+1 and has first strike."))).toEqual(["pump:true", "keyword-grant:true", "pump:true", "keyword-grant:true"]);
+    expect(hosts(viaGrammar("Rune of Might", "Enchantment — Aura Rune", "Enchant permanent\nWhen this Aura enters, draw a card.\nAs long as enchanted permanent is a creature, it gets +1/+1 and has trample."))).toEqual(["pump:true", "keyword-grant:true"]);
+    // The Channel half is a different permanent: a target creature, no host.
+    expect(hosts(viaGrammar("Favor of Jukai", "Enchantment — Aura", "Enchant artifact or creature\nAs long as enchanted permanent is a creature, it gets +3/+3 and has reach.\nChannel — {1}{G}, Discard this card: Target creature gets +3/+3 and gains reach until end of turn."))).toEqual(["pump:true", "keyword-grant:true", "pump:false", "keyword-grant:false"]);
+  });
+
+  test("a model-stored 'it' recipient follows the same rule (the either-or Aura's 'Otherwise, it gets -3/-3')", () => {
+    const text = "Enchant creature\nEnchanted creature gets +3/+3 as long as it's a Zombie. Otherwise, it gets -3/-3.";
+    const clauses = [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "static", actions: [{ verb: "modify-pt", object: "it", amount: "+3/+3" }, { verb: "modify-pt", object: "it", amount: "-3/-3" }] },
+    ] as never;
+    expect(hosts(viaModel("Clutch of Undeath", text, clauses))).toEqual(["pump:true", "debuff:true"]);
+    expect(hosts(viaGrammar("Clutch of Undeath", "Enchantment — Aura", text))).toEqual(["pump:true", "debuff:true"]);
+  });
+
+  test("another class on the same card is not the host (Inner Demon, Vampirism, Mammoth Harness)", () => {
+    // Inner Demon: the Aura's own buff is the host; the ETB's "all non-Demon creatures get -2/-2" is a board effect.
+    expect(hosts(viaGrammar("Inner Demon", "Enchantment — Aura", "Enchant creature\nEnchanted creature gets +2/+2, has flying, and is a Demon in addition to its other types.\nWhen this Aura enters, all non-Demon creatures get -2/-2 until end of turn.")))
+      .toEqual(["pump:true", "keyword-grant:true", "type-grant:true", "debuff:false"]);
+    expect(hosts(viaGrammar("Vampirism", "Enchantment — Aura", "Enchant creature\nWhen this Aura enters, draw a card at the beginning of the next turn's upkeep.\nEnchanted creature gets +1/+1 for each other creature you control.\nOther creatures you control get -1/-1.")))
+      .toEqual(["pump:true", "debuff:false"]);
+    const harness = "Enchant creature\nEnchanted creature loses flying.\nWhenever enchanted creature blocks or becomes blocked by a creature, the other creature gains first strike until end of turn.";
+    const model = viaModel("Mammoth Harness", harness, [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "static", actions: [{ verb: "cant", object: "flying" }] },
+      { id: 3, abilityType: "triggered", trigger: { event: "blocks", subject: "enchanted creature", control: "any" }, actions: [{ verb: "grant-ability", object: "first strike until end of turn" }] },
+      { id: 4, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "enchanted creature", control: "any" }, actions: [{ verb: "grant-ability", object: "first strike until end of turn" }] },
+    ] as never);
+    expect(hosts(model)).toEqual(["keyword-grant:false", "keyword-grant:false"]);
+    expect(hosts(viaGrammar("Mammoth Harness", "Enchantment — Aura", harness)).includes("keyword-grant:true")).toBe(false);
+  });
+
+  test("the Magemarks buff a CLASS of enchanted creatures, not their own host (Guardian's Magemark)", () => {
+    const out = viaGrammar("Guardian's Magemark", "Enchantment — Aura", "Flash\nEnchant creature\nCreatures you control that are enchanted get +1/+1.");
+    expect(hosts(out)).toEqual(["pump:false"]);
+  });
+
+  test("an Equipment's 'equipped creature' is the host (Bonesplitter)", () => {
+    expect(hosts(viaGrammar("Bonesplitter", "Artifact — Equipment", "Equipped creature gets +2/+0.\nEquip {1}"))).toEqual(["pump:true", "keyword-grant:false"]); // the second is the Equip keyword itself: no recipient
+  });
+
+  test("a condition ahead of the recipient is not the recipient (Hexgold Halberd's 'During your turn, equipped creature has first strike and trample')", () => {
+    expect(hosts(viaGrammar("Hexgold Halberd", "Artifact — Equipment", "During your turn, equipped creature has first strike and trample.\nEquip {2}{R}")).slice(0, 1)).toEqual(["keyword-grant:true"]);
+  });
+
+  test("the host's controller is a player, not the host", () => {
+    const a = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "enchanted creature's controller has hexproof" }] }] as never, "Test", { 1: "Enchanted creature's controller has hexproof." }).abilities;
+    expect(a.some((x) => x.host)).toBe(false);
+    // ... and "Enchanted creatures you control have shroud" (Greater Auramancy) is a class.
+    expect(deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "enchanted creatures you control have shroud" }] }] as never, "Test", { 1: "Enchanted creatures you control have shroud." }).abilities.some((x) => x.host)).toBe(false);
+    // ... and a Curse's "enchanted player" is a player.
+    const curse = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "enchanted player has hexproof" }] }] as never, "Test", { 1: "Enchanted player has hexproof." }).abilities;
+    expect(curse.some((x) => x.host)).toBe(false);
   });
 });

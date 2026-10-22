@@ -40,6 +40,8 @@ const TESTED: Record<string, string> = {
   "205.4c": "grammar/filter.test.ts — nonbasic is `basic: false` (#896)",
   "205.4g": "grammar/filter.test.ts — snow is a supertype (`snow`, #896)",
   "509.1b": "derive.test.ts — a blocking restriction an attacker carries (`cant | be blocked ...`: except by Walls, by power 3 or greater, this turn) is `evasion`; \"must be blocked\" and \"can't block\" are not (#1315)",
+  "301.5": "derive.test.ts — an Equipment's 'equipped creature' recipient is the host: `Ability.host` (Bonesplitter, Hexgold Halberd, #1315)",
+  "303.4": "derive.test.ts — an Aura's 'enchanted creature / permanent' recipient is the host: `Ability.host` (Rancor, Fists of the Demigod, Clutch of Undeath, #1315)",
   "111.4": "grammar/filter.test.ts — a token's own name is not a card to look for ('Marit Lage, a legendary ... token', 'token ... named Storm Crow') (#896)",
   "601": "schema.test.ts — a spell is cast, so a cast trigger naming no class implies spell (VERB_IMPLIED_CLASS, #1166)",
   "603.6a": "schema.test.ts — only a permanent enters, so an enters trigger naming no class implies permanent (VERB_IMPLIED_CLASS, #1166)",
