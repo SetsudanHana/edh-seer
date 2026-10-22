@@ -1,5 +1,5 @@
 {
-  "deriveVersion": 378,
+  "deriveVersion": 379,
   "rulesVersion": 32,
   "roles": {
     "ramp": {
@@ -60,17 +60,15 @@
     },
     "targetedRemoval": {
       "weights": {
-        "manaValue": -0.504885607282953,
-        "frequency": 0.015154163392594646,
-        "timing": 1.4085776463125335,
-        "breadth": 0.633864498861595,
-        "permanence": 0.006522195122170971,
-        "drawback": -0.004769949797970005,
-        "extraValue": 2.0196556842506492,
-        "amount": 0.0015967216188435447
+        "manaValue": -0.4346839484470587,
+        "frequency": 0.01386234681304931,
+        "timing": 1.2739891903618474,
+        "breadth": 0.7472389554094186,
+        "permanence": 0.007792344405596636,
+        "extraValue": 1.8431433888854394
       },
       "pairs": 227,
-      "heldOutAccuracy": 0.7295501388841449,
+      "heldOutAccuracy": 0.7424639548882473,
       "baselineAccuracy": 0.678298902710795,
       "fallbackAccuracy": 0.77642567213369,
       "fallback": false

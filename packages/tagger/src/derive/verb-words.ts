@@ -15,7 +15,7 @@ export const VERB_WORDS: Readonly<Record<string, string>> = {
   "return": "returns?|returned|returning|back|until [^.]{0,60} leaves the battlefield|until [^.]{0,60} leaves play", "counter-spell": "counters?|countered",
   "copy": "cop(?:y|ies|ied|ying)", "gain-life": "gains?|gained|life|lifelink", "lose-life": "loses?|lost|life", "deal-damage": "deals?|dealt|damage",
   "add-mana": "adds?|added|mana", "add-counter": "puts?|put|counters?|bolster|adapt|proliferate|support|distribute|moves?|gets? \\{e\\}|enters? with|enters the battlefield with|place",
-  "remove-counter": "removes?|removed|counters?|proliferate", "grant-ability": "gains?|gained|has|have|had|with|gets?|can|can't|cannot|protection|haste|flying|lifelink|deathtouch|trample|vigilance|first strike|double strike|menace|reach|hexproof|indestructible|ward|keyword|ability|abilities|\\bis\\b|\\bare\\b|becomes?|loses?|doesn't|don't",
+  "remove-counter": "pays?|paid|\\{e\\}|removes?|removed|counters?|proliferate", "grant-ability": "gains?|gained|has|have|had|with|gets?|can|can't|cannot|protection|haste|flying|lifelink|deathtouch|trample|vigilance|first strike|double strike|menace|reach|hexproof|indestructible|ward|keyword|ability|abilities|\\bis\\b|\\bare\\b|becomes?|loses?|doesn't|don't",
   "modify-pt": "\\d+/\\d+|gets?|get|[+-]\\d+/[+-]\\d+|[+-]x/[+-]x|base power|power|toughness|becomes?|has|have|with|equal to|swap|exchange|double|triple",
   "prevent": "prevent(?:s|ed)?|prevention|instead|redirect|can't|cannot|won't|doesn't|don't|would be dealt",
   "cast": "cast(?:s|ing)?|casts?|play|plays|copy|copies", "play": "plays?|played|playing|cast(?:s|ing)?|land|lands",
@@ -40,7 +40,7 @@ export const VERB_WORDS: Readonly<Record<string, string>> = {
   "airbend": "airbend", "waterbend": "waterbend", "proliferate": "proliferat(?:e|es|ed)",
 };
 /** The verbs a "none" verdict drops. One family per commit (#1321); empty until each is measured. */
-export const GUARDED_VERBS: Set<string> = new Set<string>(["add-mana", "goad", "shuffle", "scry", "mill", "search"]);
+export const GUARDED_VERBS: Set<string> = new Set<string>(["add-mana", "goad", "shuffle", "scry", "mill", "search", "trigger-again", "gain-life", "add-counter", "remove-counter"]);
 /** An action the guard never drops although its verb is guarded: a reading derive has for it already (an `add-mana` of {E} is the energy counter, CR 107.14, emitted as `counter-added`). */
 export function guardExempt(action: { verb?: string; object?: string }): boolean {
   return action.verb === "add-mana" && isEnergyObject(action.object ?? "");
@@ -52,7 +52,7 @@ export function printsVerbWord(verb: string, text: string): boolean {
   let re = wordRe.get(verb);
   if (!re) {
     const first = KEYWORD(verb.split("-")[0]!);
-    re = new RegExp(`\\b(?:${VERB_WORDS[verb] ?? first}|${first})(?![\\w'])`, "i");
+    re = new RegExp(`(?<![\\w'])(?:${VERB_WORDS[verb] ?? first}|${first})(?![\\w'])`, "i");
     wordRe.set(verb, re);
   }
   return re.test(text);
@@ -69,6 +69,12 @@ export function verbPrint(verb: string, clauseText: string | undefined, cost: st
   const stripped = stripReminderText(whole);
   // A KEYWORD LINE ("Crew 4", "Equip {3}", "Cycling {2}", "Awaken 4-{5}{U}") is its reminder text: the action IS the reminder, so a short stripped line is tested with the reminder kept.
   if (printsVerbWord(verb, stripped) || (stripped.length <= 60 && printsVerbWord(verb, whole))) return "own";
+  // ...and the clause text may have lost the reminder already (segment strips it): the CARD'S RAW LINE that starts with the short clause carries it ("Awaken 4-{5}{U} (... put four +1/+1 counters ...)").
+  if (stripped.length <= 60 && cardText) {
+    const head = stripReminderText(clauseText);
+    const line = head === "" ? undefined : cardText.split("\n").find((l) => l.startsWith(head));
+    if (line !== undefined && printsVerbWord(verb, line)) return "own";
+  }
   if (cardText === undefined || cardText === "") return "none";
   return printsVerbWord(verb, stripReminderText(cardText)) ? "card" : "none";
 }

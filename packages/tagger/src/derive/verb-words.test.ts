@@ -23,8 +23,13 @@ describe("verbPrint: where is the verb printed", () => {
     expect(verbPrint("scry", "Draw a card, then discard a card from your hand and gain 3 life. (Then scry 2.)", undefined, "Draw a card, then discard a card from your hand and gain 3 life. (Then scry 2.)")).toBe("none");
   });
   test("a short keyword line keeps its reminder: the reminder is the action", () => {
-    expect(verbPrint("exile", "Cycling {2}", undefined, "Cycling {2} ({2}, Discard this card: Exile it.)")).toBe("none");
+    expect(verbPrint("exile", "Cycling {2}", undefined, "Cycling {2} ({2}, Discard this card: Draw a card.)")).toBe("none");
     expect(verbPrint("discard", "Crew 1 (Tap any number of creatures. Discard a card.)", undefined, "x")).toBe("own");
+  });
+  test("a keyword line whose reminder is on the card's raw line keeps the action (Awaken puts the counters)", () => {
+    const awaken = "Awaken 4—{5}{U} (If you cast this spell for {5}{U}, also put four +1/+1 counters on target land you control and it becomes a 0/0 Elemental creature with haste. It's still a land.)";
+    expect(verbPrint("add-counter", "Awaken 4—{5}{U}", undefined, `Return target creature to its owner's hand.\n${awaken}`)).toBe("own");
+    expect(verbPrint("add-counter", "Cycling {2}", undefined, "Cycling {2} ({2}, Discard this card: Draw a card.)")).toBe("none");
   });
   test("a word on another clause of the card is a clause mix-up, a word nowhere is none", () => {
     expect(verbPrint("scry", DIG, undefined, `${DIG}\nScry 2.`)).toBe("card");
