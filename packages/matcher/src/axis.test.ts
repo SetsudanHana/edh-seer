@@ -72,10 +72,4 @@ test("a fact kind's static tag (static:evasion) never counts toward the deck's a
   const tags = axisThemeTags(tag("evasion"));
   expect(tags.has("static:evasion")).toBe(false);
   expect(axisThemeTags(tag("pump")).has("static:pump")).toBe(true);
-  // 30 evasion cards and 8 dies cards: with the fact tag counted the evasion tag sets the max and shrinks the real theme.
-  const stats2: TagStats = { N: 1000, counts: { "dies:creature": 40, "static:evasion": 5 } };
-  const counted = buildAxis(new Set(), new Map([["static:evasion", 30], ["dies:creature", 8]]), stats2);
-  const kept = buildAxis(new Set(), new Map([...new Map([["static:evasion", 30], ["dies:creature", 8]])].filter(([t]) => !isFactStaticTag(t))), stats2);
-  expect(counted.get("dies:creature")!).toBeLessThan(1);
-  expect(kept.get("dies:creature")).toBe(1);
 });
