@@ -3,6 +3,7 @@ import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, exilesTopOfLibra
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { targetsASpellEarlier } from "./emits.js";
 import { exileNamesOnlyGraveyards } from "./effect-kind.js";
+import { victimDeclines } from "./recipient.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { deriveInputOf } from "../derive-input.js";
 import { segment } from "../segment.js";
@@ -4745,6 +4746,41 @@ describe("#1295 removal-shaped emits", () => {
     for (const x of cost) expect(x.victimMay).toBeUndefined();
   });
 
+  const damageEmits = (name: string, text: string, typeLine: string) => emitsOf(name, text, typeLine).filter((x) => x.verb === "non-combat-damage");
+
+  test("a damage REDIRECT is marked: 'is dealt to any target instead' (Harm's Way, Shining Shoal, Glarecaster, Mirrorwood Treefolk, Ward of Piety, Zhalfirin Crusader, Captain's Maneuver; owner ruling 2026-10-22, #1294)", () => {
+    const cards: [string, string, string][] = [
+      ["Harm's Way", "The next 2 damage that a source of your choice would deal to you and/or permanents you control this turn is dealt to any target instead.", "Instant"],
+      ["Ward of Piety", "Enchant creature\n{1}{W}: The next 1 damage that would be dealt to enchanted creature this turn is dealt to any target instead.", "Enchantment — Aura"],
+      ["Captain's Maneuver", "The next X damage that would be dealt to target creature, planeswalker, or player this turn is dealt to another target creature, planeswalker, or player instead.", "Instant"],
+    ];
+    for (const [n, t, ty] of cards) {
+      const d = damageEmits(n, t, ty);
+      expect(d.length, n).toBeGreaterThan(0);
+      for (const x of d) expect(x.redirect, n).toBe(true);
+    }
+  });
+
+  test("prevent-then-deal DEALS the damage and is no redirect (Refraction Trap, Divine Deflection, Vengeful Archon)", () => {
+    const cards: [string, string, string][] = [
+      ["Refraction Trap", "Prevent the next 3 damage that a source of your choice would deal to you and/or permanents you control this turn. If damage is prevented this way, Refraction Trap deals that much damage to any target.", "Instant"],
+      ["Divine Deflection", "Prevent the next X damage that would be dealt to you and/or permanents you control this turn. If damage is prevented this way, Divine Deflection deals that much damage to any target.", "Instant"],
+      ["Vengeful Archon", "Flying\n{X}: Prevent the next X damage that would be dealt to you this turn. If damage is prevented this way, this creature deals that much damage to target player or planeswalker.", "Creature — Archon"],
+      ["Lightning Bolt", "Lightning Bolt deals 3 damage to any target.", "Instant"],
+      ["Ram Through", "Target creature you control deals damage equal to its power to target creature you don't control. If the creature you control has trample, excess damage is dealt to that creature's controller instead.", "Instant"],
+    ];
+    for (const [n, t, ty] of cards) for (const x of damageEmits(n, t, ty)) expect(x.redirect, n).toBeUndefined();
+  });
+
+  test("damage the VICTIM may have dealt reads as the victim's option (Requiem Monolith: 'That creature's controller may have this artifact deal 1 damage to it'); a plain deal does not", () => {
+    const monolith = "{T}: Until end of turn, target creature gains \"Whenever this creature is dealt damage, you draw that many cards and lose that much life.\" That creature's controller may have this artifact deal 1 damage to it. Activate only as a sorcery.";
+    expect(victimDeclines(monolith, "deal-damage")).toBe(true);
+    expect(victimDeclines("Lightning Bolt deals 3 damage to any target.", "deal-damage")).toBe(false);
+    expect(victimDeclines("Target opponent may have this card deal 4 damage to them. If they don't, you draw three cards.", "deal-damage")).toBe(true);
+    // Pandemonium: the controller picks a target, so it is damage someone aims.
+    expect(victimDeclines("Whenever a creature enters, that creature's controller may have it deal damage equal to its power to any target.", "deal-damage")).toBe(false);
+  });
+
   test("another word on the card does not set the target's control (Premature Burial, Blazing Hope, Soul Snare)", () => {
     const burial = emitsOf("Premature Burial", "Destroy target nonblack creature that entered since your last turn ended.").filter((x) => x.verb === "dies");
     expect(burial.map((x) => x.subject.control)).toEqual(["opp"]);
@@ -5892,6 +5928,23 @@ describe("#1266 burn: who a damage or life loss hits", () => {
     const halves = a!.emits!.map((e) => e.subject);
     expect(halves.some((s) => s.type === undefined && s.scope === "target")).toBe(true);
     expect(halves.some((s) => s.type === "planeswalker")).toBe(true);
+  });
+
+  it.each([
+    ["Pyroclastic Elemental", "target player", "{1}{R}{R}: This creature deals 1 damage to target player."],
+    ["Sudden Impact", "target player", "Sudden Impact deals damage to target player equal to the number of cards in that player's hand."],
+    ["Anathemancer", "target player", "When this creature enters, it deals damage to target player equal to the number of nonbasic lands that player controls."],
+    ["Runeflare Trap", "target player", "Runeflare Trap deals damage to target player equal to the number of cards in that player's hand."],
+    ["Fire and Brimstone", "target player who attacked this turn", "Fire and Brimstone deals 4 damage to target player who attacked this turn and 4 damage to you."],
+    ["Knight Rampager", "target opponent chosen at random", "When this creature dies, it deals 4 damage to target opponent chosen at random."],
+    ["Hired Claw", "target opponent", "Whenever you attack with one or more Lizards, this creature deals 1 damage to target opponent."],
+  ])("%s: damage to '%s' is PLAYER-ONLY, on the effect and the emit (#1294; it read like 'any target')", (name, object, text) => {
+    const [a] = dmg(abil([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object, amount: "1" }] }], name, { 1: text }));
+    expect(a!.effect.subject?.player).toBe(true);
+    expect(a!.effect.subject?.scope).toBe("target");
+    expect(a!.effect.subject?.type).toBeUndefined();
+    expect(a!.emits!.every((e) => e.subject.player === true && e.subject.scope === "target")).toBe(true);
+    expect(a!.effect.subject?.control).toBe(object.startsWith("target opponent") ? "opp" : "any");
   });
 
   it("a creature-only target stays creature-typed (Garruk Relentless 0: 'target creature')", () => {

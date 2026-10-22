@@ -5,7 +5,7 @@ import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
 import { controlFromRelation, counterKindOf, parseCounter, parseSubject, spellMove, COUNT_PHRASE } from "./subject.js";
 import { LAND_SUBTYPES } from "./subtypes.js";
-import { damageRecipient, isControllerPhrase } from "./damage-recipient.js";
+import { damageRecipient, isControllerPhrase, playerOnlyRecipient } from "./damage-recipient.js";
 import { tokenTypeFor } from "./token-types.js";
 import { isEnergyObject, permanentHalf } from "./effect-kind.js";
 
@@ -606,7 +606,9 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // A DAMAGE OR LIFE LOSS NAMES WHO IT HITS (#1266, burn): "target player or planeswalker" keeps the player (Lava Spike was typed
   // planeswalker), "each opponent and each creature they control" both halves, "that creature's controller" is the player.
   const listed = action.verb === "deal-damage" || action.verb === "lose-life" ? damageRecipient(action.object ?? "") : undefined;
-  const subject = listed ?? parseSubject(recipient ?? action.object ?? "");
+  // ...and damage to "target player" / "target opponent" is player-only (#1294), no "any target".
+  const playerOnly = action.verb === "deal-damage" && listed === undefined ? playerOnlyRecipient(action.object ?? "") : undefined;
+  const subject = listed ?? playerOnly ?? parseSubject(recipient ?? action.object ?? "");
   // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
   // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
   // that are copies of target permanent an opponent controls" (Venser, Fervent Forger) parsed the original's control and

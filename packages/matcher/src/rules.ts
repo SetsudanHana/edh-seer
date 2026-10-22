@@ -47,7 +47,13 @@ export type RuleClause =
       /** The effect's SUBJECT can be a PLAYER and is not you (#1266, burn): an untyped subject (any target, each opponent, each player), a `player` subject, or an `anyOf` with a player or an untyped
        *  branch ("target player or planeswalker", "each creature and each player"). A subject typed to permanents only ("target creature") is removal, not burn; control `you` ("deals 2 damage to you") is refused;
        *  a subject that is the card itself is refused. */
-      reachesPlayer?: true }
+      reachesPlayer?: true;
+      /** Refuse an ability one of whose emits is a damage REDIRECT (`GameEvent.redirect`, #1294): "the next 2 damage ... is dealt to any target instead" (Harm's Way, Glarecaster) deals no damage of its own. */
+      notRedirect?: true;
+      /** The effect TARGETS something (`scope: target`, so no `scope` option beside it) that can be a PERMANENT not only yours (#1294, the removal ruling of 2026-10-22: targeted damage is removal when its allowed target includes a permanent on the battlefield, at any amount):
+       *  a typed subject that is not a player ("target creature", "creature or planeswalker", a battle), an UNTYPED one with no `player` flag ("any target"), or an `anyOf` with such a branch ("target player or planeswalker", Lava Spike).
+       *  "Target player" and "target opponent" carry `player: true` since derive 381 and are refused; control `you` and the card itself are refused. An effect with no subject reads its targeted `non-combat-damage` emits instead (Aethertorch Renegade). */
+      reachesPermanent?: true }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -452,6 +458,22 @@ function subjectReachesPlayer(s: SubjectFilter): boolean {
   return s.player === true || !typed(s);
 }
 
+/** Can this subject be a permanent that is not only yours? See `effectKind.reachesPermanent`. A branch inherits the parent's type and control, as in `subjectReachesPlayer`. */
+function subjectReachesPermanent(s: SubjectFilter): boolean {
+  if (s.control === "you" || s.self === true) return false;
+  // A branch counts when it is neither yours nor a player: a typed one ("planeswalker") and an untyped, non-player one both name something that is not a player.
+  const branchOk = (b: Partial<SubjectFilter>): boolean => (b.control ?? s.control) !== "you" && (b.player ?? s.player) !== true;
+  if (s.anyOf !== undefined && s.anyOf.length > 0) return s.anyOf.some(branchOk);
+  return s.player !== true;
+}
+
+/** `effectKind.reachesPermanent` for one ability. The effect subject decides; where derive kept NONE (Aethertorch Renegade: the "Pay {E}{E}" cost leaves the effect subject-less) the ability's own TARGETED damage
+ *  emits decide, as `abilityReachesPlayer` does. */
+function abilityReachesPermanent(a: { effect: { subject?: SubjectFilter }; emits?: { verb: string; subject: SubjectFilter }[] }): boolean {
+  if (a.effect.subject !== undefined) return a.effect.subject.scope === "target" && subjectReachesPermanent(a.effect.subject);
+  return (a.emits ?? []).some((e) => e.verb === "non-combat-damage" && e.subject.scope === "target" && subjectReachesPermanent(e.subject));
+}
+
 /** A search SUBJECT that can only be a land (#1266): typed `land` ("a basic land card"), a LAND TYPE ("a Mountain card", "a basic Plains, Swamp, or Forest card", "a Gate card": Alpine Guide, Abzan Monument,
  *  District Guide), or an `anyOf` whose every branch is one of those ("a basic land card or Gate card"). Derive sometimes files a land type under `type` (The Cave of Two Lovers: ["mountain", "cave"]), so both
  *  fields take the same words. Nothing typed at all is NOT land-only ("a card named X", "a card"); a Shrine is no land. */
@@ -537,7 +559,9 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notSelf !== true || a.effect.subject?.self !== true)
         && (clause.notVictimMay !== true || !(a.emits ?? []).some((e) => e.victimMay === true))
         && (clause.librarySearch === undefined || (a.librarySearch !== undefined && clause.librarySearch.includes(a.librarySearch)))
+        && (clause.notRedirect !== true || !(a.emits ?? []).some((e) => e.redirect === true))
         && (clause.reachesPlayer !== true || abilityReachesPlayer(a))
+        && (clause.reachesPermanent !== true || abilityReachesPermanent(a))
         && (clause.notLandOnly !== true || !(a.effect.subject !== undefined && landOnlySubject(a.effect.subject)))
         && (clause.toughnessDown !== true || lowersToughness(a.amount)));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.

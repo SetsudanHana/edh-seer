@@ -146,6 +146,21 @@ export function damageRecipient(object: string): SubjectFilter | undefined {
   return { control: "any", token: null, anyOf: branches };
 }
 
+/** DAMAGE THAT CAN ONLY HIT A PLAYER (#1294): "target player", "target opponent", "that player", "that opponent". `parseSubject` reads these as an untyped subject, byte for byte what it
+ *  reads for "any target", so a role asking "can this damage reach a permanent?" could not tell Pyroclastic Elemental from Lightning Bolt. The player subject states the player, as the
+ *  "player or planeswalker" branch of `damageRecipient` does. "Any target" stays untyped. Exact phrases only: a longer phrase ("target player who controls ...") keeps its reading. */
+const PLAYER_ONLY_OBJECTS: ReadonlySet<string> = new Set(["target player", "target opponent", "that player", "that opponent"]);
+/** What may follow the noun without changing who is hit: a qualifier on the same player ("target player who attacked this turn", "target opponent chosen at random", "target opponent previously dealt damage by it"). */
+const PLAYER_QUALIFIERS: ReadonlySet<string> = new Set(["who", "chosen", "previously"]);
+export function playerOnlyRecipient(object: string): SubjectFilter | undefined {
+  const t = object.trim().toLowerCase();
+  const w = words(t);
+  if (!PLAYER_ONLY_OBJECTS.has(w.slice(0, 2).join(" ")) || (w.length > 2 && !PLAYER_QUALIFIERS.has(w[2]!))) return undefined;
+  // A player has no type: a qualifier clause ("who cast one or more sorcery spells") must not leak one onto it (Backdraft read `sorcery`).
+  const { type: _ty, subtype: _st, ...s } = parseSubject(t);
+  return { ...s, player: true };
+}
+
 /** The card ITSELF is the one hit (#1266, burn): the fight-back half of "Garruk deals 3 damage to target creature. That creature deals damage equal to its power to him" (the grammar writes the object `him`,
  *  `~` or `this`; Tahngarth, Polukranos), so it is no damage to a player or to any target. "Him" and "her" are the card only after the fight-back sentence; "~" is always the card's own name. */
 const FIGHT_BACK = /\b(?:that creature|those creatures|each of those creatures|it) deals? damage equal to (?:its|their) power to (?:him|her)\b/i;
