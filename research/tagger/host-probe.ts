@@ -1,4 +1,5 @@
-// LOCAL RESEARCH ONLY: print a card's oracle text, stored clauses and derived abilities (#1315).
+// LOCAL RESEARCH ONLY (#1315): print a card's oracle text, stored clauses and derived abilities (kind, amount, grants, clause, host). FREE: reads Mongo, writes nothing.
+// Run from the repo root after `set -a && source packages/tagger/.env && set +a`: npx tsx research/tagger/host-probe.ts "Rancor" "Pacifism"
 import { connect, loadConfig } from "@edh-seer/data";
 const store = await connect(loadConfig());
 for (const name of process.argv.slice(2)) {

@@ -10,7 +10,7 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
-import { POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { FACT_KINDS, POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { keywordAbilities } from "./implied.js";
 import { isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
@@ -1473,7 +1473,7 @@ export function identityKeyOf(colors: readonly string[]): string {
  *  type is spelled out to its members here so the candidate index below is keyed on printed types
  *  only. CEILING: a subject with neither type nor subtype ("permanents you control") makes no key
  *  -- measured at 0 of 1,117 static subjects, so the branch is not worth its line yet. */
-const kindNotARelation = (kind: string): boolean => ROLE_NOT_SYNERGY.has(kind) || kind === "debuff" || kind === "ability-loss" || kind === "restriction";
+const kindNotARelation = (kind: string): boolean => ROLE_NOT_SYNERGY.has(kind) || kind === "debuff" || kind === "ability-loss" || FACT_KINDS.has(kind);
 const asList = (v: string | string[] | undefined): string[] => v === undefined ? [] : Array.isArray(v) ? v : [v];
 const concreteTypes = (types: string[]): string[] => [...new Set(types.flatMap((raw) => {
   const t = raw.toLowerCase();

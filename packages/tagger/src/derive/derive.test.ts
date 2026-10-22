@@ -6355,6 +6355,15 @@ describe("restriction: a host that can't attack or block (#1315, CR 508.1c, 509.
     expect(rs(derive("Test Aura", AURA, "Enchant creature\nAs long as enchanted creature is red, it gets +1/+1 and can't block."))).toEqual([]);
   });
 
+  test("a long run of spaces in a restriction or evasion recipient is linear (CodeQL js/polynomial-redos)", () => {
+    const t0 = performance.now();
+    for (const [object, text] of [["block", `a${" ".repeat(40_000)}b can't block`], ["be blocked", `a${" ".repeat(40_000)}b can't be blocked`]] as const) {
+      deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "cant", object }] }] as never, "Test", { 1: text }, undefined, text);
+    }
+    deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "cant", object: "block" }] }] as never, "Test", { 1: `\u201c`.repeat(30_000) + " can't block" });
+    expect(performance.now() - t0).toBeLessThan(500);
+  });
+
   test("not a restriction: can't be blocked (evasion), can't attack you (Vow of Flight, Propaganda's tax), must attack", () => {
     expect(rs(derive("Aqueous Form", AURA, "Enchant creature\nEnchanted creature can't be blocked."))).toEqual([]);
     expect(rs(derive("Vow of Flight", AURA, "Enchant creature\nEnchanted creature gets +2/+2, has flying, and can't attack you or planeswalkers you control."))).toEqual([]);

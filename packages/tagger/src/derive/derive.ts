@@ -1385,15 +1385,15 @@ function effectSubject(
   // ("this creature can't be blocked", "creatures can't be blocked"), else in the clause ("Enchanted creature can't be blocked ...").
   // A "gets +1/+0 and" ahead of it is not the subject. "enchanted creature" and the other narrowings the filter cannot hold stay unnamed.
   // CEILING: "enchanted / equipped creature" and the other narrowings stay unnamed, and a STATIC keeps no subject (`namesItsTargets`): 328 of the 541
-  // derived evasion abilities carry no type, subtype or self. A later task marks an Aura's / Equipment's host; until then a reader cannot tell
-  // whose evasion it is from the subject alone.
+  // derived evasion abilities carry no type, subtype or self. WHOSE it is, an Aura's / Equipment's host, is `Ability.host` (derive 370), not the subject.
   if (kind === "evasion" || kind === "restriction") {
     const object = action.object ?? "";
     const re = kind === "evasion" ? CANT_BE_BLOCKED : CANT_ATTACK_OR_BLOCK;
+    // The recipient ends at the first "gets|gains|has|have|loses". A SPLIT at a single space, not `\s+(...)\b.*$` (quadratic on a long run of spaces: 556 ms on "a" + 40,000 spaces, 0 ms now).
     const who = (re.exec(object)?.[1] ?? recipientBefore(clauseText, re))
-      ?.replace(/\s+(?:gets?|gains?|has|have|loses?)\b.*$/i, "").trim().replace(/ and$/i, "");
+      ?.split(/\s(?=(?:gets?|gains?|has|have|loses?)\b)/i)[0]?.trim().replace(/ and$/i, "");
     // A GRANTED ability's "this creature" is the grantee, not the card (Rime Transfusion's Aura): unnamed, never `self`.
-    const granted = (kind === "evasion" ? /["\u201c][^"\u201d]*\b(?:can['\u2019]t|cannot) be blocked/i : /["\u201c][^"\u201d]*\b(?:can['\u2019]t|cannot) (?:attack|block)/i).test(clauseText);
+    const granted = (kind === "evasion" ? /["\u201c][^"\u201c\u201d]*\b(?:can['\u2019]t|cannot) be blocked/i : /["\u201c][^"\u201c\u201d]*\b(?:can['\u2019]t|cannot) (?:attack|block)/i).test(clauseText);
     if (!who || granted || UNEXPRESSIBLE_NARROWING.test(who) || /^(?:it|that creature|they|them)$/i.test(who)) return parseSubject("");
     const s = subjectFrom(who, cardName, cardText);
     if (SELF_REFERENCE.test(who) || isSelfSubject(who, cardName)) s.self = true;

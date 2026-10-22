@@ -1,7 +1,7 @@
 import { MIN_INDEXABLE_PARTNERS } from "./partner-shard.js";
 import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories } from "./build.js";
 import { POOL_CLASSES } from "./answer-pool.js";
-import { directedReasons } from "./edges.js";
+import { directedReasons, FACT_KINDS } from "./edges.js";
 import { expect, test, vi } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -1354,6 +1354,20 @@ test("a restriction static reaches no partner on the page (a curse is not a rela
     { kind: "static", effect: { kind: "restriction", subject: { control: "any", token: null, type: "creature", scope: "all" } }, restricts: ["block"] },
   ] as unknown as CardTags["abilities"]);
   expect(staticKeysOf(bedlam)).toEqual([]);
+});
+
+test("every fact kind's static reaches no partner on the page, not only restriction (evasion: Shifting Sliver, retarget; #1315)", () => {
+  for (const kind of FACT_KINDS) {
+    const card = base(`Fact ${kind}`, [
+      { kind: "static", effect: { kind, subject: { control: "any", token: null, type: "creature", subtype: "sliver", scope: "all" } } },
+    ] as unknown as CardTags["abilities"]);
+    expect(staticKeysOf(card), kind).toEqual([]);
+  }
+  // the control: a real static still reaches its class
+  const anthem = base("Anthem", [
+    { kind: "static", effect: { kind: "keyword-grant", subject: { control: "any", token: null, type: "creature", subtype: "sliver", scope: "all" } }, grants: ["flying"] },
+  ] as unknown as CardTags["abilities"]);
+  expect(staticKeysOf(anthem).length).toBeGreaterThan(0);
 });
 
 /** A "MAX SPEED" ROW SAYS WHAT IT NEEDS. The requirement rides from derive to the page, so a

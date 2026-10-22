@@ -1169,7 +1169,7 @@ export interface Ability {
   librarySearch?: "yours" | "other";
   /** THE EFFECT APPLIES TO THE PERMANENT THIS CARD IS ATTACHED TO (#1315): an Aura's "enchanted creature / permanent" (CR 303.4, Aura), an
    *  Equipment's "equipped creature" (CR 301.5, Equipment). Set only on the effect kinds that are done TO a host -- `pump`, `debuff`, `keyword-grant`,
-   *  `speed-increase`, `type-grant`, `ability-loss`, `animate`, `evasion` -- and only when the printed recipient IS the host: "enchanted creature gets +2/+0",
+   *  `speed-increase`, `type-grant`, `ability-loss`, `animate`, `evasion`, `restriction` -- and only when the printed recipient IS the host: "enchanted creature gets +2/+0",
    *  "As long as enchanted creature is black, it gets +1/+1" (the `it`), and the "Otherwise, it gets -3/-3" half of an either-or Aura (Clutch of Undeath).
    *  Not set for another class on the same card (Inner Demon's "all non-Demon creatures get -2/-2", Vampirism's "other creatures you control"), for a class of
    *  enchanted creatures (the Magemarks' "creatures you control that are enchanted"), or for a player ("enchanted creature's controller").
